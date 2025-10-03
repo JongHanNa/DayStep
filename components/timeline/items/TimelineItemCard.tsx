@@ -463,7 +463,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         
         {/* 제목과 설명 */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <h3 className={cn(
               'font-semibold text-base leading-6 relative',
               // 최종 완료 상태 사용
@@ -473,7 +473,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
             )}>
               {/* 커스텀 취소선 */}
               {shouldShowStrikethrough && (
-                <div 
+                <div
                   className="absolute top-1/2 left-0 h-0.5 bg-black dark:bg-white transition-all duration-500 ease-out transform origin-left -translate-y-1/2 z-10"
                   style={{
                     width: '100%',
@@ -488,7 +488,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Repeat className="h-3.5 w-3.5 text-muted-foreground hover:text-primary transition-colors cursor-help" />
+                    <Repeat className="h-3.5 w-3.5 text-muted-foreground hover:text-primary transition-colors cursor-help flex-shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>반복 할일</p>
@@ -496,40 +496,26 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                 </Tooltip>
               </TooltipProvider>
             )}
-          </div>
 
-          {/* 동기부여 메시지 배지들 */}
-          {linkedMotivationMessages.length > 0 && (
-            <div className="mt-1.5">
-              {linkedMotivationMessages.length === 1 ? (
+            {/* 동기부여 메시지 배지들 - 제목과 같은 라인에 표시 */}
+            {linkedMotivationMessages.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-1 min-w-0 ml-1 overflow-hidden">
                 <MotivationBadge
                   message={linkedMotivationMessages[0]}
-                  variant="preview"
+                  variant="compact"
                   size="sm"
-                  className="max-w-full"
+                  className="flex-1 min-w-0 max-w-none"
                 />
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {linkedMotivationMessages.slice(0, 2).map((message, index) => (
-                    <MotivationBadge
-                      key={message.id}
-                      message={message}
-                      variant="preview"
-                      size="sm"
-                      className="flex-1 min-w-0"
-                    />
-                  ))}
-                  {linkedMotivationMessages.length > 2 && (
-                    <div className="flex items-center justify-center px-2 py-1 bg-muted rounded-md">
-                      <span className="text-xs text-muted-foreground">
-                        +{linkedMotivationMessages.length - 2}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                {linkedMotivationMessages.length > 1 && (
+                  <div className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md flex-shrink-0">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      외 {linkedMotivationMessages.length - 1}개
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         
         {/* 포모도로 타이머 (시간 지정된 할일만) */}

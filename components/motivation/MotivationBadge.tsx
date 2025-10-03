@@ -11,7 +11,7 @@ import { OptimizedMotion } from '@/components/ui/optimized-motion';
 interface MotivationBadgeProps {
   message: MotivationMessage;
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'icon-only' | 'with-text' | 'preview';
+  variant?: 'icon-only' | 'with-text' | 'preview' | 'compact';
   className?: string;
   onClick?: () => void;
   disabled?: boolean;
@@ -33,6 +33,8 @@ const MotivationBadge: React.FC<MotivationBadgeProps> = ({
   const lines = message.content.split('\n');
   const title = lines[0] || '';
   const content = lines.slice(1).join('\n').trim();
+  // compact variant를 위한 전체 content (줄바꿈을 공백으로 변환)
+  const fullContent = message.content.replace(/\n/g, ' ').trim();
 
   const sizeClasses = {
     sm: 'w-6 h-6',
@@ -142,6 +144,60 @@ const MotivationBadge: React.FC<MotivationBadgeProps> = ({
 
         <Dialog open={isPopupOpen} onOpenChange={handleClosePopup}>
           <DialogContent className="p-0 border-0 bg-transparent shadow-none">
+            <DialogTitle className="sr-only">
+              {title || '동기부여 메시지'}
+            </DialogTitle>
+            <MotivationMessageComponent
+              message={message}
+              variant="popup"
+              onClick={handleClosePopup}
+            />
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // Compact variant - 할일 카드에 최적화된 초미니멀 디자인
+  if (variant === 'compact') {
+    return (
+      <>
+        <OptimizedMotion className="flex-1 min-w-0">
+          <div
+            onClick={handleClick}
+            className={cn(
+              'flex items-center gap-1.5 px-2 py-1 rounded-md shadow-sm transition-all duration-200 w-full',
+              'transform hover:scale-101 active:scale-99',
+              disabled
+                ? 'opacity-50'
+                : 'hover:shadow cursor-pointer',
+              className
+            )}
+            style={{
+              backgroundColor: message.color ? message.color + '08' : 'rgba(156, 163, 175, 0.08)'
+            }}
+            onMouseEnter={(e) => {
+              if (!disabled) {
+                e.currentTarget.style.backgroundColor = message.color ? message.color + '15' : 'rgba(156, 163, 175, 0.15)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = message.color ? message.color + '08' : 'rgba(156, 163, 175, 0.08)';
+            }}
+          >
+            <IconComponent
+              size={10}
+              style={{ color: message.color || 'rgb(107, 114, 128)' }}
+              className="opacity-70 flex-shrink-0"
+            />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate flex-1 min-w-0">
+              {fullContent}
+            </span>
+          </div>
+        </OptimizedMotion>
+
+        <Dialog open={isPopupOpen} onOpenChange={handleClosePopup}>
+          <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-lg">
             <DialogTitle className="sr-only">
               {title || '동기부여 메시지'}
             </DialogTitle>
