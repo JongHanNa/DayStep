@@ -270,13 +270,18 @@ export class ReminderScheduler {
         });
       }
 
-      // DB에서 모든 스케줄 정보 삭제
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await (supabase as any)
-          .from('scheduled_reminders')
-          .delete()
-          .eq('user_id', user.id);
+      // DB에서 모든 스케줄 정보 삭제 (테이블 없으면 무시)
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await (supabase as any)
+            .from('scheduled_reminders')
+            .delete()
+            .eq('user_id', user.id);
+        }
+      } catch (dbError) {
+        // scheduled_reminders 테이블이 아직 생성되지 않은 경우 조용히 무시
+        console.debug('scheduled_reminders table not found - skipping DB cleanup');
       }
 
       console.log('All reminders cancelled');
