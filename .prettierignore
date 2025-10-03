@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+dist/
+
+# Environment and configuration files
+.env*
+*.log
+
+# Generated files
+*.tsbuildinfo
+types/supabase.ts
+
+# Mobile specific
+mobile/
+ios/
+android/
+
+# Ignore files that shouldn't be formatted
+*.min.js
+*.min.css
+public/

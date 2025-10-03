@@ -1,0 +1,1 @@
+export { ContactGroups } from '../src/index';

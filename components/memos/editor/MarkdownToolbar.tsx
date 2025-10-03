@@ -1,0 +1,100 @@
+import React from 'react';
+import { 
+  Bold, 
+  Italic, 
+  Strikethrough, 
+  Code, 
+  List, 
+  ListOrdered,
+  Quote,
+  Minus,
+  Hash,
+  Square,
+  CheckSquare,
+  Highlighter
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface MarkdownToolbarProps {
+  onInsert: (text: string, cursorOffset?: number) => void;
+}
+
+// 키보드 툴바 컴포넌트
+const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert }) => {
+  const tools = [
+    {
+      icon: <Hash size={16} />,
+      label: 'Header',
+      action: () => onInsert('# ', 0),
+    },
+    {
+      icon: <Bold size={16} />,
+      label: 'Bold',
+      action: () => onInsert('****', -2),
+    },
+    {
+      icon: <Italic size={16} />,
+      label: 'Italic', 
+      action: () => onInsert('**', -1),
+    },
+    {
+      icon: <Strikethrough size={16} />,
+      label: 'Strikethrough',
+      action: () => onInsert('~~~~', -2),
+    },
+    {
+      icon: <Code size={16} />,
+      label: 'Code',
+      action: () => onInsert('``', -1),
+    },
+    {
+      icon: <Square size={16} />,
+      label: 'Checkbox',
+      action: () => onInsert('- [ ] ', 0),
+    },
+    {
+      icon: <Highlighter size={16} />,
+      label: 'Highlight',
+      action: () => onInsert('====', -2),
+    },
+    {
+      icon: <Quote size={16} />,
+      label: 'Quote',
+      action: () => onInsert('> ', 0),
+    },
+    {
+      icon: <List size={16} />,
+      label: 'List',
+      action: () => onInsert('- ', 0),
+    },
+    {
+      icon: <ListOrdered size={16} />,
+      label: 'Ordered List',
+      action: () => onInsert('1. ', 0),
+    },
+    {
+      icon: <Minus size={16} />,
+      label: 'Divider',
+      action: () => onInsert('\n---\n', 0),
+    },
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-1 p-2 bg-background border-b border-border">
+      {tools.map((tool) => (
+        <Button
+          key={tool.label}
+          variant="ghost"
+          size="sm"
+          onClick={tool.action}
+          className="h-8 w-8 p-0 hover:bg-accent"
+          title={tool.label}
+        >
+          {tool.icon}
+        </Button>
+      ))}
+    </div>
+  );
+};
+
+export default MarkdownToolbar;

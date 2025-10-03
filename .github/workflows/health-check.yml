@@ -1,0 +1,66 @@
+name: Health Check
+
+on:
+  schedule:
+    # 매일 오전 9시 (UTC)에 실행
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    name: Application Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check dependencies for vulnerabilities
+        run: npm audit --audit-level moderate
+
+      - name: Check for outdated dependencies
+        run: npm outdated || true
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type checking
+        run: npx tsc --noEmit
+
+      - name: Check build health
+        run: |
+          echo "Checking web build..."
+          npm run build:web
+          echo "Checking mobile build..."
+          npm run build:mobile
+
+      - name: Run Capacitor doctor
+        run: npm run mobile:doctor
+
+      - name: Generate health report
+        run: |
+          echo "# Health Check Report" > health-report.md
+          echo "Generated on: $(date)" >> health-report.md
+          echo "" >> health-report.md
+          echo "## Build Status" >> health-report.md
+          echo "✅ Web build: Success" >> health-report.md
+          echo "✅ Mobile build: Success" >> health-report.md
+          echo "" >> health-report.md
+          echo "## Dependencies" >> health-report.md
+          echo "See npm audit output for security details" >> health-report.md
+
+      - name: Upload health report
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report-${{ github.run_number }}
+          path: health-report.md
+          retention-days: 30

@@ -1,0 +1,32 @@
+{
+  "name": "@daystep/contact-groups",
+  "version": "1.0.0",
+  "description": "Local ContactGroups plugin for DayStep",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "ios/",
+    "android/"
+  ],
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JongHanNa/Willist.git"
+  },
+  "author": "DayStep Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@capacitor/core": "^7.0.0"
+  },
+  "peerDependencies": {
+    "@capacitor/core": "^7.0.0"
+  }
+}

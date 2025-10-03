@@ -1,0 +1,1324 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Sheet } from 'react-modal-sheet';
+import { Button } from '@/components/ui/button';
+import MarkdownEditor from './MarkdownEditor';
+import { Badge } from '@/components/ui/badge';
+import {
+  StickyNote,
+  Pin,
+  PinOff,
+  Link,
+  X,
+  Trash2,
+  Search,
+  Plus,
+  Edit3,
+  Check,
+  Save,
+  Clock,
+  AlertCircle,
+  Tag,
+} from 'lucide-react';
+import TaskLinkModal from './TaskLinkModal';
+import { cn } from '@/lib/utils';
+import { createModalConfig } from '@/lib/modal-config';
+import { useQuickMemoStore, QuickMemo } from '@/state/stores/quickMemoStore';
+import { useTodoStore } from '@/state/stores/todoStore';
+import { useMemoTagStore } from '@/state/stores/memoTagStore';
+import { useAuth } from '@/app/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useKeyboardAwareModal } from '@/hooks/useKeyboardAwareModal';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { TAG_COLOR_PALETTE } from '@/lib/memo-tag-constants';
+
+interface QuickMemoSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) => {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  
+  // Quick Memo Store
+  const {
+    loading,
+    error,
+    filters,
+    createMemo,
+    updateMemo,
+    deleteMemo,
+    pinMemo,
+    unpinMemo,
+    setFilter,
+    getFilteredMemos,
+    setSelectedMemoForEdit,
+    initialize,
+    ui: { selectedMemoForEdit },
+  } = useQuickMemoStore();
+
+  // Todo Store (할일 연결용)
+  const { todos } = useTodoStore();
+
+  // Memo Tag Store (태그 관리용)
+  const {
+    tags,
+    templates,
+    getTagsForMemo,
+    getFilteredTags,
+    getFilteredTemplates,
+    updateMemoTags,
+    updateMemoTagsWithTemplates,
+    loadAllTags,
+    loadTemplates,
+    loadMemoTagLinks,
+    createTagFromTemplate,
+    createDefaultTagsForUser,
+    createTag,
+    templatesLoading
+  } = useMemoTagStore();
+
+  // 로컬 상태
+  const [searchQuery, setSearchQuery] = useState(filters.searchQuery);
+  const [taskLinkModalOpen, setTaskLinkModalOpen] = useState(false);
+  const [selectedMemoForLink, setSelectedMemoForLink] = useState<QuickMemo | null>(null);
+
+  // 새 태그 생성 모달 상태
+  const [showCreateTagModal, setShowCreateTagModal] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#3B82F6');
+
+  // 통합된 메모 편집 모달 상태
+  const [memoEditorOpen, setMemoEditorOpen] = useState(false);
+  const [memoEditorMode, setMemoEditorMode] = useState<'create' | 'edit'>('create');
+  const [memoContent, setMemoContent] = useState('');
+  const [originalMemoContent, setOriginalMemoContent] = useState('');
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [currentEditingMemo, setCurrentEditingMemo] = useState<QuickMemo | null>(null);
+  const [hasUserEditedContent, setHasUserEditedContent] = useState(false);
+
+  // 태그 관련 상태
+  const [selectedTags, setSelectedTags] = useState<string[]>([]); // 실제 사용자 태그만
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]); // 선택된 템플릿 태그들
+  const [showTagSelector, setShowTagSelector] = useState(false);
+  const [tagSelectorTab, setTagSelectorTab] = useState<'user' | 'templates'>('user'); // 탭 상태
+  const [showTemplateCreation, setShowTemplateCreation] = useState(false);
+  const [processingTemplates, setProcessingTemplates] = useState<Set<string>>(new Set()); // 처리 중인 템플릿 ID들
+  const [addedTemplates, setAddedTemplates] = useState<Set<string>>(new Set()); // 방금 추가된 템플릿 ID들
+
+  // 키보드 적응형 모달 기능
+  const keyboardAwareModal = useKeyboardAwareModal({
+    offsetRatio: 0.8, // 키보드 높이의 80%만큼 이동
+    animationDuration: 250,
+    extraPadding: 20,
+    minTopPadding: 60
+  });
+
+  // 자동 저장 기능
+  const autoSave = useAutoSave(memoContent, {
+    onSave: async () => {
+      if (!memoContent.trim()) {
+        throw new Error('내용을 입력해주세요');
+      }
+
+      // Capacitor 백업 인증 패턴으로 사용자 ID 확보
+      let userId: string | null = null;
+
+      try {
+        const { data: { session } } = await import('@/lib/supabase').then(m => m.supabase.auth.getSession());
+        if (session?.user?.id) {
+          userId = session.user.id;
+        }
+      } catch (authError) {
+        console.log('⚠️ 웹 세션 확보 실패:', authError);
+      }
+
+      if (!userId) {
+        try {
+          const { isCapacitorEnvironment } = await import('@/lib/supabaseWebViewHelper');
+          if (isCapacitorEnvironment()) {
+            const { Preferences } = await import('@capacitor/preferences');
+            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
+            if (value) {
+              const session = JSON.parse(value);
+              userId = session.user?.id;
+            }
+          }
+        } catch (capacitorError) {
+          console.log('⚠️ Capacitor 백업 인증 실패:', capacitorError);
+        }
+      }
+
+      if (!userId) {
+        throw new Error('사용자 인증이 필요합니다');
+      }
+
+      if (memoEditorMode === 'edit' && currentEditingMemo) {
+        await updateMemo({
+          id: currentEditingMemo.id,
+          content: memoContent.trim(),
+        });
+
+        // 새로운 방식: 사용자 태그와 템플릿 태그 별도 처리
+        if (selectedTags.length > 0 || selectedTemplates.length > 0 || getTagsForMemo(currentEditingMemo.id).length > 0) {
+          await updateMemoTagsWithTemplates(currentEditingMemo.id, selectedTags, selectedTemplates, userId);
+        }
+      } else {
+        const newMemo = await createMemo({
+          content: memoContent.trim(),
+          related_task_id: selectedTaskId,
+          user_id: userId,
+        });
+
+        // 새 메모에 태그 연결 (사용자 태그 + 템플릿 태그 직접 연결)
+        if ((selectedTags.length > 0 || selectedTemplates.length > 0) && newMemo) {
+          await updateMemoTagsWithTemplates(newMemo.id, selectedTags, selectedTemplates, userId);
+        }
+
+        // 새 메모 생성 시 편집 모드로 전환
+        setCurrentEditingMemo(newMemo);
+        setMemoEditorMode('edit');
+        setOriginalMemoContent(memoContent.trim());
+      }
+    },
+    onDelete: async () => {
+      // 편집 모드에서만 삭제 (새 메모 생성 중에는 삭제하지 않음)
+      if (memoEditorMode === 'edit' && currentEditingMemo) {
+        console.log('🗑️ [QuickMemo] 빈 메모 자동 삭제:', currentEditingMemo.id);
+        await deleteMemo(currentEditingMemo.id);
+
+        // 삭제 완료 토스트 알림
+        toast({
+          title: '빈 메모가 삭제되었습니다',
+          description: '내용이 없는 메모가 자동으로 삭제되었습니다.',
+        });
+
+        // 편집 상태 초기화 (모달은 닫지 않고 새 메모 모드로 전환)
+        setCurrentEditingMemo(null);
+        setMemoEditorMode('create');
+        setOriginalMemoContent('');
+      }
+    },
+    debounceMs: 1000,
+    enabled: memoEditorOpen && isAuthenticated && hasUserEditedContent
+  });
+
+  // 필터링된 메모 목록
+  const filteredMemos = getFilteredMemos();
+
+  // 컴포넌트 마운트 시 초기화
+  useEffect(() => {
+    if (open && isAuthenticated && user?.id) {
+      initialize(user.id);
+      loadAllTags(user.id); // 태그도 함께 로드
+    }
+  }, [open, isAuthenticated, user?.id, initialize, loadAllTags]);
+
+  // 메모 편집 시 기존 태그 로드 (사용자 태그와 템플릿 태그 분리)
+  useEffect(() => {
+    if (currentEditingMemo && user?.id) {
+      const memoTags = getTagsForMemo(currentEditingMemo.id);
+
+      // 사용자 태그와 템플릿 태그 분리
+      const userTags = memoTags.filter(tag => !tag.is_template);
+      const templateTags = memoTags.filter(tag => tag.is_template);
+
+      // 사용자 태그 ID 설정
+      setSelectedTags(userTags.map(tag => tag.id));
+
+      // 템플릿 태그는 원본 template_id로 설정
+      setSelectedTemplates(templateTags.map(tag => tag.template_id).filter(Boolean) as string[]);
+    } else {
+      setSelectedTags([]); // 새 메모 생성 시 태그 초기화
+      setSelectedTemplates([]); // 새 메모 생성 시 템플릿 초기화
+    }
+  }, [currentEditingMemo, getTagsForMemo, user?.id]);
+
+  // 모달 닫힐 때 템플릿 상태 초기화
+  useEffect(() => {
+    if (!open) {
+      setProcessingTemplates(new Set());
+      setAddedTemplates(new Set());
+      setSelectedTemplates([]); // 선택된 템플릿 태그도 초기화
+    }
+  }, [open]);
+
+  // 템플릿 로딩 (공용 데이터이므로 인증 불필요)
+  useEffect(() => {
+    if (open && isAuthenticated && user?.id) {
+      console.log('🔄 템플릿 및 태그 링크 로딩 시작...');
+      loadTemplates(); // 템플릿도 함께 로드
+      loadMemoTagLinks(user.id); // 메모 태그 링크도 함께 로드
+    }
+  }, [open, isAuthenticated, user?.id, loadTemplates, loadMemoTagLinks]);
+
+  // 검색어 디바운싱
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilter({ searchQuery });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, setFilter]);
+
+  // 수정 모달 모니터링
+  useEffect(() => {
+    if (selectedMemoForEdit && !memoEditorOpen) {
+      openMemoEditor('edit', selectedMemoForEdit);
+    }
+  }, [selectedMemoForEdit, memoEditorOpen]);
+
+  // 통합된 메모 편집기 열기
+  const openMemoEditor = (mode: 'create' | 'edit', memo?: QuickMemo) => {
+    setMemoEditorMode(mode);
+
+    if (mode === 'edit' && memo) {
+      setCurrentEditingMemo(memo);
+      setMemoContent(memo.content);
+      setOriginalMemoContent(memo.content);
+      setSelectedTaskId(memo.related_task_id || null);
+      // 기존 메모 편집 시에는 사용자 편집으로 간주하지 않음 (초기값 로딩이므로)
+      setHasUserEditedContent(false);
+    } else {
+      setCurrentEditingMemo(null);
+      setMemoContent('');
+      setOriginalMemoContent('');
+      setSelectedTaskId(null);
+      // 새 메모 생성 시에도 사용자 편집으로 간주하지 않음 (초기 상태)
+      setHasUserEditedContent(false);
+    }
+
+    setMemoEditorOpen(true);
+    setShowExitConfirm(false);
+  };
+
+  // 메모 편집기 닫기
+  const closeMemoEditor = () => {
+    setMemoEditorOpen(false);
+    setSelectedMemoForEdit(null);
+    setMemoContent('');
+    setOriginalMemoContent('');
+    setSelectedTaskId(null);
+    setCurrentEditingMemo(null);
+    setShowExitConfirm(false);
+    setHasUserEditedContent(false);
+  };
+
+  // 변경사항 확인 (자동 저장 시에는 저장 대기중인 경우만 변경사항으로 간주)
+  const hasChanges = memoContent !== originalMemoContent && autoSave.saveStatus === 'pending';
+
+
+  // 메모 편집 취소 시도
+  const handleCancelMemoEdit = () => {
+    if (hasChanges) {
+      setShowExitConfirm(true);
+    } else {
+      closeMemoEditor();
+    }
+  };
+
+  // 변경사항 저장하고 닫기
+  const handleSaveAndClose = async () => {
+    if (autoSave.saveStatus === 'pending') {
+      // 대기중인 자동 저장을 즉시 실행
+      autoSave.triggerSave();
+      // 저장 완료까지 잠시 기다림
+      setTimeout(() => {
+        closeMemoEditor();
+      }, 500);
+    } else {
+      closeMemoEditor();
+    }
+  };
+
+  // 변경사항 무시하고 닫기
+  const handleDiscardAndClose = () => {
+    closeMemoEditor();
+  };
+
+  // 메모 삭제
+  const handleDeleteMemo = async (memoId: string) => {
+    try {
+      await deleteMemo(memoId);
+      toast({
+        title: '메모가 삭제되었습니다',
+        description: '선택한 메모가 삭제되었습니다.',
+      });
+    } catch (error) {
+      toast({
+        title: '메모 삭제 실패',
+        description: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // 메모 핀 토글
+  const handleTogglePin = async (memo: QuickMemo) => {
+    try {
+      if (memo.is_pinned) {
+        await unpinMemo(memo.id);
+      } else {
+        await pinMemo(memo.id);
+      }
+    } catch (error) {
+      toast({
+        title: '핀 설정 실패',
+        description: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // 할일 연결/해제
+  const handleToggleTaskLink = async (memo: QuickMemo) => {
+    setSelectedMemoForLink(memo);
+    setTaskLinkModalOpen(true);
+  };
+
+  // 새 태그 생성
+  const handleCreateTag = async () => {
+    if (!user?.id || !newTagName.trim()) {
+      toast({
+        title: '오류',
+        description: '태그 이름을 입력해주세요.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const tagData = {
+        name: newTagName.trim(),
+        color: newTagColor,
+        category: 'general', // 기본값으로 설정
+        position: tags.length,
+        is_active: true,
+      };
+
+      const newTag = await createTag(tagData, user.id);
+
+      if (newTag) {
+        toast({
+          title: '성공',
+          description: `"${newTag.name}" 태그가 생성되었습니다.`,
+        });
+
+        // 모달 닫기 및 상태 리셋
+        setShowCreateTagModal(false);
+        setNewTagName('');
+        setNewTagColor('#3B82F6');
+      }
+    } catch (error) {
+      toast({
+        title: '태그 생성 실패',
+        description: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // 중앙 집중식 모달 설정 - 전체 화면 타입
+  const modalConfig = createModalConfig('FULLSCREEN');
+
+  return (
+    <>
+    <Sheet
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      {...modalConfig}
+    >
+      <Sheet.Container className="bg-background">
+        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+          <div className="flex items-center justify-between px-4 py-3">
+            {/* 왼쪽: 취소 버튼 */}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+            >
+              닫기
+            </Button>
+
+            {/* 가운데: 제목과 개수 */}
+            <div className="flex items-center gap-2">
+              <StickyNote className="h-5 w-5 text-brand" />
+              <h2 className="text-lg font-semibold">퀵메모</h2>
+              <Badge variant="outline" className="text-xs">
+                {filteredMemos.length}개
+              </Badge>
+            </div>
+
+            {/* 오른쪽: 메모 추가 버튼 */}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => openMemoEditor('create')}
+              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              추가
+            </Button>
+          </div>
+        </Sheet.Header>
+
+        <Sheet.Content>
+          <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
+            <div className="px-4 pb-4" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+              {/* 검색 및 필터 영역 */}
+              <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: '#f8f8f8' }}>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="메모 검색..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-md bg-background"
+                  />
+                </div>
+              </div>
+
+              {/* 메모 목록 영역 */}
+              <div className="space-y-3">
+                {loading && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    메모를 불러오는 중...
+                  </div>
+                )}
+
+                {error && (
+                  <div className="text-center py-8 text-red-500">
+                    {error}
+                  </div>
+                )}
+
+                {!loading && !error && filteredMemos.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <StickyNote className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                    <p className="text-sm">아직 메모가 없습니다</p>
+                    <p className="text-xs text-muted-foreground/70">위에서 첫 번째 메모를 작성해보세요</p>
+                  </div>
+                )}
+
+                {filteredMemos.map((memo) => {
+                  const linkedTodo = memo.related_task_id
+                    ? todos.find(todo => todo.id === memo.related_task_id)
+                    : null;
+
+                  // related_task_id가 있으면 연결됨으로 표시 (todos 스토어에 없어도)
+                  const isLinked = memo.related_task_id || memo.linked_timeline_task_id;
+
+                  return (
+                    <div
+                      key={memo.id}
+                      className={cn(
+                        'group p-3 py-2.5 rounded-lg bg-white cursor-pointer shadow-sm',
+                        'hover:shadow-md transition-all duration-200',
+                        memo.is_pinned && 'ring-1 ring-brand/30 bg-brand/5'
+                      )}
+                      onClick={() => openMemoEditor('edit', memo)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* 색상 인디케이터 - 타임라인과 동일한 패턴 */}
+                        <div
+                          className="w-2 h-8 rounded-full flex-shrink-0"
+                          style={{
+                            backgroundColor: memo.is_pinned
+                              ? '#f97316' // orange-500 - 핀된 메모
+                              : isLinked
+                                ? '#22c55e' // green-500 - 연결된 메모
+                                : '#3b82f6' // blue-500 - 기본 메모
+                          }}
+                        />
+
+                        {/* 메모 콘텐츠 영역 */}
+                        <div className="flex-1 min-w-0">
+                          {/* 메모 헤더 */}
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {memo.is_pinned && (
+                                <Pin className="h-3 w-3 text-brand" />
+                              )}
+
+                              {isLinked && (
+                                <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                  <Link className="h-3 w-3" />
+                                  연결됨
+                                </Badge>
+                              )}
+
+                              {/* 메모 태그들 표시 - 타임라인과 동일한 배지 형태 */}
+                              {(() => {
+                                const memoTags = getTagsForMemo(memo.id);
+                                if (memoTags.length === 0) return null;
+
+                                return (
+                                  <div className="flex items-center gap-1 flex-wrap">
+                                    {memoTags.slice(0, 2).map((tag) => (
+                                      <div
+                                        key={tag.id}
+                                        className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+                                        title={`${tag.name}${tag.is_template ? ' (템플릿)' : ''}`}
+                                      >
+                                        <div
+                                          className="w-2 h-2 rounded-full flex-shrink-0"
+                                          style={{ backgroundColor: tag.color }}
+                                        />
+                                        <span className="truncate max-w-[50px]">{tag.name}</span>
+                                        {tag.is_template && (
+                                          <span className="text-blue-500 text-[10px] font-bold">(T)</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {memoTags.length > 2 && (
+                                      <span className="text-xs text-gray-400 px-1">
+                                        +{memoTags.length - 2}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleTogglePin(memo);
+                                }}
+                                className="h-7 w-7 p-0"
+                              >
+                                {memo.is_pinned ? (
+                                  <PinOff className="h-3 w-3" />
+                                ) : (
+                                  <Pin className="h-3 w-3" />
+                                )}
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleTaskLink(memo);
+                                }}
+                                className="h-7 w-7 p-0"
+                              >
+                                {memo.related_task_id ? (
+                                  <X className="h-3 w-3" />
+                                ) : (
+                                  <Link className="h-3 w-3" />
+                                )}
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openMemoEditor('edit', memo);
+                                }}
+                                className="h-7 w-7 p-0"
+                              >
+                                <Edit3 className="h-3 w-3" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteMemo(memo.id);
+                                }}
+                                className="h-7 w-7 p-0 text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* 메모 내용 */}
+                          <div className="space-y-2">
+                            <div className="relative max-h-24 overflow-hidden">
+                              <p className="text-sm text-foreground whitespace-pre-wrap">
+                                {memo.content}
+                              </p>
+                              {memo.content.length > 150 && (
+                                <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-card to-transparent flex items-end justify-center">
+                                  <span className="text-xs text-muted-foreground bg-card px-1">
+                                    ...더보기
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* 연결된 할일 정보 */}
+                            {linkedTodo && (
+                              <div className="flex items-center gap-2 p-2 rounded bg-muted/50">
+                                <Link className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">
+                                  연결된 할일: {linkedTodo.content}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* 메모 메타 정보 */}
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>
+                                {format(new Date(memo.created_at), 'M월 d일 HH:mm', { locale: ko })}
+                              </span>
+
+                              {memo.updated_at !== memo.created_at && (
+                                <span>
+                                  수정: {format(new Date(memo.updated_at), 'HH:mm', { locale: ko })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                  })}
+              </div>
+            </div>
+          </Sheet.Scroller>
+        </Sheet.Content>
+      </Sheet.Container>
+    </Sheet>
+
+    {/* 통합된 메모 편집기 모달 */}
+    <Sheet
+      isOpen={memoEditorOpen}
+      onClose={handleCancelMemoEdit}
+      {...modalConfig}
+    >
+      <Sheet.Container
+        ref={keyboardAwareModal.containerRef}
+        className="bg-background"
+        style={{
+          transition: 'padding-bottom 250ms ease-out',
+        }}
+      >
+        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+          <div className="flex items-center justify-between px-4 py-3">
+            {/* 왼쪽: 취소 버튼 */}
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleCancelMemoEdit}
+              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+            >
+              취소
+            </Button>
+
+            {/* 가운데: 제목 */}
+            <div className="flex items-center gap-2">
+              <Edit3 className="h-5 w-5 text-brand" />
+              <h2 className="text-lg font-semibold">
+                {memoEditorMode === 'edit' ? '메모 수정' : '새 메모'}
+              </h2>
+            </div>
+
+            {/* 오른쪽: 할일 연결 버튼 */}
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  const memoForLink = memoEditorMode === 'edit' && currentEditingMemo
+                    ? currentEditingMemo
+                    : {
+                        id: 'new',
+                        content: memoContent,
+                        related_task_id: selectedTaskId,
+                      } as QuickMemo;
+                  setSelectedMemoForLink(memoForLink);
+                  setTaskLinkModalOpen(true);
+                }}
+                className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+              >
+                <Link className="h-4 w-4 mr-1" />
+                연결
+              </Button>
+              {/* 자동 저장 상태 표시 */}
+              <div className="flex items-center gap-2">
+                {autoSave.saveStatus === 'pending' && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 animate-pulse" />
+                    <span>저장 대기중...</span>
+                  </div>
+                )}
+                
+                {autoSave.saveStatus === 'saving' && (
+                  <div className="flex items-center gap-1 text-xs text-brand">
+                    <Save className="h-3 w-3 animate-spin" />
+                    <span>{!memoContent.trim() && currentEditingMemo ? '삭제 중...' : '저장 중...'}</span>
+                  </div>
+                )}
+                
+                {autoSave.saveStatus === 'saved' && (
+                  <div className="flex items-center gap-1 text-xs text-green-600">
+                    <Check className="h-3 w-3" />
+                    <span>{!memoContent.trim() && currentEditingMemo ? '삭제됨' : '저장됨'}</span>
+                  </div>
+                )}
+                
+                {autoSave.saveStatus === 'error' && (
+                  <Button
+                    onClick={autoSave.triggerSave}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    재시도
+                  </Button>
+                )}
+
+              </div>
+            </div>
+          </div>
+        </Sheet.Header>
+
+        <Sheet.Content>
+          <div
+            className="flex flex-col h-full"
+            style={{
+              pointerEvents: 'auto',
+              touchAction: 'manipulation',
+              backgroundColor: 'white'
+            }}
+          >
+            <div className="flex-1 overflow-hidden">
+              <div
+                className="h-full px-4 pt-4"
+                style={{
+                  overflowY: 'auto',
+                  touchAction: 'pan-y',
+                  pointerEvents: 'auto',
+                }}
+              >
+                <div className="space-y-4">
+                  {/* 할일 연결 상태 표시 */}
+                  {selectedTaskId && (
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Link className="h-3 w-3" />
+                        연결됨
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* 태그 선택 섹션 */}
+                  <div className="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-gray-600" />
+                        <span className="text-sm font-medium text-gray-700">태그</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowTagSelector(!showTagSelector)}
+                        className="text-xs h-7 px-2"
+                      >
+                        {showTagSelector ? '숨기기' : '선택'}
+                      </Button>
+                    </div>
+
+                    {/* 선택된 태그들 표시 (사용자 태그 + 템플릿 태그) */}
+                    {(selectedTags.length > 0 || selectedTemplates.length > 0) && (
+                      <div className="flex flex-wrap gap-2">
+                        {/* 사용자 태그 표시 */}
+                        {selectedTags.map((tagId) => {
+                          const tag = getFilteredTags().find(t => t.id === tagId);
+                          if (!tag) return null;
+                          return (
+                            <Badge
+                              key={`user-${tag.id}`}
+                              variant="outline"
+                              className="text-xs flex items-center gap-1 px-2 py-1"
+                              style={{ borderColor: tag.color, color: tag.color }}
+                            >
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: tag.color }}
+                              />
+                              {tag.name}
+                              <button
+                                onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
+                                className="ml-1 hover:text-red-500 transition-colors"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          );
+                        })}
+
+                        {/* 템플릿 태그 표시 */}
+                        {selectedTemplates.map((templateId) => {
+                          const template = getFilteredTemplates().find(t => t.id === templateId);
+                          if (!template) return null;
+                          return (
+                            <Badge
+                              key={`template-${template.id}`}
+                              variant="outline"
+                              className="text-xs flex items-center gap-1 px-2 py-1 border-dashed"
+                              style={{ borderColor: template.color, color: template.color }}
+                            >
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: template.color }}
+                              />
+                              {template.name}
+                              <span className="text-xs opacity-60">(템플릿)</span>
+                              <button
+                                onClick={() => setSelectedTemplates(prev => prev.filter(id => id !== templateId))}
+                                className="ml-1 hover:text-red-500 transition-colors"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* 태그 선택기 */}
+                    {showTagSelector && (
+                      <div className="space-y-3">
+                        {/* 탭 헤더 */}
+                        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                          <button
+                            onClick={() => setTagSelectorTab('user')}
+                            className={cn(
+                              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors',
+                              tagSelectorTab === 'user'
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
+                            )}
+                          >
+                            내 태그 ({getFilteredTags().length})
+                          </button>
+                          <button
+                            onClick={() => setTagSelectorTab('templates')}
+                            className={cn(
+                              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors',
+                              tagSelectorTab === 'templates'
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
+                            )}
+                          >
+                            템플릿 ({getFilteredTemplates().length})
+                          </button>
+                        </div>
+
+                        {/* 디버깅용 강제 로드 버튼 */}
+                        <button
+                          onClick={() => {
+                            console.log('🔧 강제 템플릿 재로드 시작');
+                            loadTemplates(true);
+                          }}
+                          className="px-3 py-1 text-xs bg-red-100 text-red-600 rounded"
+                        >
+                          🔧 템플릿 강제 로드 (디버그)
+                        </button>
+
+                        {/* 사용자 태그 탭 */}
+                        {tagSelectorTab === 'user' && (
+                          <div className="space-y-2">
+                            {getFilteredTags().length > 0 ? (
+                              <div className="grid grid-cols-2 gap-2">
+                                {getFilteredTags().map((tag) => {
+                                  const isSelected = selectedTags.includes(tag.id);
+                                  return (
+                                    <button
+                                      key={tag.id}
+                                      onClick={() => {
+                                        setSelectedTags(prev =>
+                                          isSelected
+                                            ? prev.filter(id => id !== tag.id)
+                                            : [...prev, tag.id]
+                                        );
+                                      }}
+                                      className={cn(
+                                        'flex items-center gap-2 p-2 rounded-md border transition-all text-left',
+                                        isSelected
+                                          ? 'border-blue-300 bg-blue-50'
+                                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                                      )}
+                                    >
+                                      <div
+                                        className="w-3 h-3 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: tag.color }}
+                                      />
+                                      <span className="text-sm truncate">{tag.name}</span>
+                                      {isSelected && (
+                                        <Check className="h-3 w-3 text-blue-600 ml-auto flex-shrink-0" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="text-center py-6 text-gray-500 text-sm">
+                                <Tag className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                                <p>아직 생성된 태그가 없습니다</p>
+                                <p className="text-xs text-gray-400 mb-3">나만의 태그를 만들어보세요</p>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowCreateTagModal(true)}
+                                  className="mt-2"
+                                >
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  새 태그 만들기
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* 템플릿 태그 탭 */}
+                        {tagSelectorTab === 'templates' && (
+                          <div className="space-y-3">
+                            {templatesLoading ? (
+                              <div className="text-center py-4">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                                <p className="text-sm text-gray-500 mt-2">템플릿 로딩 중...</p>
+                              </div>
+                            ) : getFilteredTemplates().length > 0 ? (
+                              <div className="space-y-3">
+                                {/* 카테고리별 템플릿 표시 */}
+                                {['productivity', 'personal', 'priority', 'type'].map(category => {
+                                  const categoryTemplates = getFilteredTemplates().filter(t => t.category === category);
+                                  if (categoryTemplates.length === 0) return null;
+
+                                  const categoryInfo = {
+                                    productivity: { name: '생산성', icon: '💼' },
+                                    personal: { name: '개인', icon: '👤' },
+                                    priority: { name: '우선순위', icon: '⭐' },
+                                    type: { name: '유형', icon: '🏷️' }
+                                  }[category];
+
+                                  return (
+                                    <div key={category} className="space-y-2">
+                                      <h4 className="text-xs font-medium text-gray-700 flex items-center gap-1">
+                                        <span>{categoryInfo?.icon}</span>
+                                        {categoryInfo?.name}
+                                      </h4>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        {categoryTemplates.map((template) => (
+                                          <button
+                                            key={template.id}
+                                            onClick={() => {
+                                              // 템플릿 태그 토글 (실제 태그 생성하지 않음)
+                                              setSelectedTemplates(prev => {
+                                                const isSelected = prev.includes(template.id);
+                                                if (isSelected) {
+                                                  // 이미 선택된 경우 제거
+                                                  return prev.filter(id => id !== template.id);
+                                                } else {
+                                                  // 새로 선택
+                                                  setAddedTemplates(prev => new Set([...prev, template.id]));
+
+                                                  // 성공 피드백
+                                                  toast({
+                                                    title: "✨ 템플릿 태그 선택됨",
+                                                    description: `"${template.name}" 태그가 메모에 추가됩니다`
+                                                  });
+
+                                                  // 2초 후 애니메이션 상태 초기화
+                                                  setTimeout(() => {
+                                                    setAddedTemplates(prev => {
+                                                      const newSet = new Set(prev);
+                                                      newSet.delete(template.id);
+                                                      return newSet;
+                                                    });
+                                                  }, 2000);
+
+                                                  return [...prev, template.id];
+                                                }
+                                              });
+                                            }}
+                                            className={cn(
+                                              "flex items-center gap-2 p-2 rounded-md border transition-all text-left relative overflow-hidden",
+                                              selectedTemplates.includes(template.id)
+                                                ? "border-blue-400 bg-blue-50"
+                                                : addedTemplates.has(template.id)
+                                                ? "border-green-300 bg-green-50 scale-105"
+                                                : "border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50"
+                                            )}
+                                          >
+                                            <div
+                                              className="w-3 h-3 rounded-full flex-shrink-0"
+                                              style={{ backgroundColor: template.color }}
+                                            />
+                                            <span className="text-sm truncate">{template.name}</span>
+
+                                            {/* 상태별 아이콘 */}
+                                            {selectedTemplates.includes(template.id) ? (
+                                              <Check className="h-3 w-3 text-blue-600 ml-auto flex-shrink-0" />
+                                            ) : addedTemplates.has(template.id) ? (
+                                              <Check className="h-3 w-3 text-green-600 ml-auto flex-shrink-0" />
+                                            ) : (
+                                              <Plus className="h-3 w-3 text-gray-400 ml-auto flex-shrink-0" />
+                                            )}
+
+                                            {/* 성공 시 반짝이는 효과 */}
+                                            {addedTemplates.has(template.id) && (
+                                              <div className="absolute inset-0 bg-gradient-to-r from-green-100 to-blue-100 opacity-50 animate-pulse rounded-md"></div>
+                                            )}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="text-center py-4 text-gray-500 text-sm">
+                                <Tag className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                                <p>사용 가능한 템플릿이 없습니다</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 메모 내용 입력 */}
+                  <MarkdownEditor
+                    value={memoContent}
+                    onChange={(value) => {
+                      setMemoContent(value);
+                      // 사용자가 실제로 내용을 변경했을 때만 편집 상태로 표시
+                      if (!hasUserEditedContent && value !== originalMemoContent) {
+                        setHasUserEditedContent(true);
+                      }
+                    }}
+                    placeholder="메모 내용을 입력하세요..."
+                    className="text-sm"
+                    minHeight={600}
+                    onFocus={keyboardAwareModal.handleEditorFocus}
+                    onBlur={keyboardAwareModal.handleEditorBlur}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+    </Sheet>
+
+
+    {/* 변경사항 확인 다이얼로그 */}
+    <Sheet
+      isOpen={showExitConfirm}
+      onClose={() => setShowExitConfirm(false)}
+      detent="content-height"
+    >
+      <Sheet.Container className="bg-background">
+        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+          <div className="flex items-center justify-between px-4 py-3">
+            {/* 왼쪽: 빈 공간 */}
+            <div className="w-12"></div>
+
+            {/* 가운데: 제목 */}
+            <h2 className="text-lg font-semibold">변경사항이 있습니다</h2>
+
+            {/* 오른쪽: 닫기 버튼 */}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setShowExitConfirm(false)}
+              className="bg-brand hover:bg-brand-hover text-white font-medium px-3 py-2 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </Sheet.Header>
+
+        <Sheet.Content style={{ backgroundColor: 'white' }}>
+          <div className="px-4 pb-4">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {autoSave.saveStatus === 'pending' 
+                  ? '저장 대기중인 변경사항이 있습니다. 어떻게 하시겠어요?'
+                  : '메모에 변경사항이 있습니다. 어떻게 하시겠어요?'
+                }
+              </p>
+              
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={handleSaveAndClose}
+                  className="w-full"
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  저장하고 닫기
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleDiscardAndClose}
+                  className="w-full"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  저장하지 않고 닫기
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowExitConfirm(false)}
+                  className="w-full"
+                >
+                  계속 편집하기
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+    </Sheet>
+
+    {/* 할일 연결 모달 */}
+    <TaskLinkModal
+      open={taskLinkModalOpen}
+      onOpenChange={(open) => {
+        setTaskLinkModalOpen(open);
+        // 할일 연결 모달이 닫힐 때 새로운 연결 상태를 메모 편집기에 반영
+        if (!open && selectedMemoForLink?.id === 'new' && memoEditorOpen) {
+          // TaskLinkModal에서 할일이 연결된 경우 selectedTaskId가 자동으로 업데이트됨
+        }
+      }}
+      memoId={selectedMemoForLink?.id || ''}
+      currentLinkedTaskId={selectedMemoForLink?.related_task_id || null}
+      currentLinkedDate={selectedMemoForLink?.linked_date || null}
+      currentTimelineTaskId={selectedMemoForLink?.linked_timeline_task_id || null}
+    />
+
+    {/* 새 태그 생성 모달 */}
+    <Sheet
+      isOpen={showCreateTagModal}
+      onClose={() => {
+        setShowCreateTagModal(false);
+        setNewTagName('');
+        setNewTagColor('#3B82F6');
+      }}
+      detent="content-height"
+    >
+      <Sheet.Container className="bg-background">
+        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+          <div className="flex items-center justify-between px-4 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowCreateTagModal(false);
+                setNewTagName('');
+                setNewTagColor('#3B82F6');
+              }}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+
+            <h2 className="text-lg font-semibold">새 태그 만들기</h2>
+
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleCreateTag}
+              disabled={!newTagName.trim()}
+              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+            >
+              <Check className="h-4 w-4 mr-1" />
+              생성
+            </Button>
+          </div>
+        </Sheet.Header>
+
+        <Sheet.Content>
+          <div className="px-4 py-6 space-y-6">
+            {/* 태그 이름 입력 */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                태그 이름 *
+              </label>
+              <input
+                type="text"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="예: 중요, 업무, 개인"
+                className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-brand"
+                maxLength={50}
+                autoFocus
+              />
+              <div className="text-xs text-gray-500">
+                {newTagName.length}/50
+              </div>
+            </div>
+
+            {/* 태그 색상 선택 */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                태그 색상
+              </label>
+              <div className="grid grid-cols-7 gap-2">
+                {TAG_COLOR_PALETTE.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewTagColor(color)}
+                    className={cn(
+                      "w-8 h-8 rounded-full border-2 transition-all",
+                      newTagColor === color
+                        ? "border-gray-900 dark:border-gray-100 scale-110"
+                        : "border-gray-300 dark:border-gray-600 hover:scale-105"
+                    )}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
+
+              {/* 선택된 색상 미리보기 */}
+              <div className="flex items-center gap-2 mt-3">
+                <span className="text-xs text-gray-500">미리보기:</span>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: newTagColor }}
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300">
+                    {newTagName || '태그 이름'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+    </Sheet>
+    </>
+  );
+};
+
+export default QuickMemoSheet;

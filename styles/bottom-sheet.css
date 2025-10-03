@@ -1,0 +1,127 @@
+/* react-modal-sheet 커스터마이징 스타일 */
+.react-modal-sheet-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.react-modal-sheet-container {
+  background: var(--background);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -10px 25px -3px rgba(0, 0, 0, 0.1), 0 -4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+
+.react-modal-sheet-header {
+  padding: 1rem 1.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.react-modal-sheet-drag-indicator {
+  width: 3rem;
+  height: 0.25rem;
+  background: var(--muted-foreground);
+  opacity: 0.3;
+  border-radius: 9999px;
+  margin: 0 auto 0.5rem;
+}
+
+.react-modal-sheet-content {
+  padding: 0; /* 내부에서 제어하도록 패딩 제거 */
+  max-height: 80vh;
+  overflow-y: auto;
+  /* Capacitor 환경에서 스크롤 최적화 */
+  -webkit-overflow-scrolling: touch;
+  position: relative; /* 경계 명확화 */
+  
+  /* 웹 환경에서 강화된 경계 설정 */
+  height: 80vh; /* 고정 높이 설정 */
+  overflow: hidden; /* 부모는 스크롤 차단, 자식에서만 스크롤 */
+}
+
+/* TodoFormModal 전용 스타일 */
+.react-modal-sheet-content .scrollable-container {
+  height: calc(80vh - 2rem); /* 헤더 공간 제외 */
+  max-height: calc(80vh - 2rem); /* 웹 환경에서 최대 높이 강제 제한 */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0.25rem; /* 기본 여백만 */
+  
+  /* 웹 환경에서 경계 강화 */
+  position: relative;
+  contain: layout style; /* 레이아웃 포함 블록으로 격리 */
+}
+
+/* 폼 경계 제한 */
+.react-modal-sheet-content .scrollable-container form {
+  max-height: none; /* 폼 자체 높이 제한 해제 */
+  overflow: visible; /* 폼은 스크롤하지 않음 */
+  /* 웹 환경에서 위치 고정 */
+  position: relative;
+  transform: translateZ(0); /* 하드웨어 가속으로 위치 고정 */
+}
+
+/* 고무줄 효과 활성화 - 타임라인 방식과 동일하게 적용 */
+.react-modal-sheet-content {
+  /* 타임라인 PullToRefresh와 동일한 고무줄 효과 설정 */
+  overflow-y: auto !important; /* 강제로 스크롤 활성화 */
+  -webkit-overflow-scrolling: touch !important; /* iOS 터치 스크롤 최적화 */
+  overscroll-behavior: auto !important; /* 고무줄 효과 허용 */
+}
+
+.react-modal-sheet-content .scrollable-container {
+  /* 타임라인과 동일한 고무줄 효과 */
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: auto !important; /* 세로 방향 고무줄 효과 허용 */
+  overscroll-behavior-x: contain; /* 가로 방향만 제한 */
+  scroll-behavior: smooth;
+  
+  /* 스크롤 최적화 */
+  min-height: 0;
+  max-height: calc(80vh - 2rem);
+  will-change: scroll-position;
+  
+  /* GPU 가속으로 부드러운 스크롤 */
+  transform: translate3d(0, 0, 0);
+}
+
+/* 웹 브라우저 전용 최적화 */
+@media (hover: hover) and (pointer: fine) {
+  .react-modal-sheet-content {
+    /* 웹에서도 타임라인과 동일한 고무줄 효과 강제 적용 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: auto !important; /* 웹에서도 고무줄 효과 활성화 */
+  }
+  
+  .react-modal-sheet-content .scrollable-container {
+    /* 웹에서도 타임라인과 동일한 고무줄 효과 강제 적용 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: auto !important; /* 웹에서도 고무줄 효과 활성화 */
+    overscroll-behavior-x: contain; /* 가로만 제한 */
+    
+    /* 경계 보호는 유지하되 고무줄 효과는 허용 */
+    max-height: calc(80vh - 2rem);
+    
+    /* 위치 고정은 유지 */
+    top: 0;
+    bottom: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  
+  /* 폼 격리는 유지하되 고무줄 효과는 허용 */
+  .react-modal-sheet-content .scrollable-container form {
+    max-width: 100%;
+    contain: layout style; /* paint 제거로 고무줄 효과 허용 */
+  }
+}
+
+/* 다크 모드 대응 */
+@media (prefers-color-scheme: dark) {
+  .react-modal-sheet-backdrop {
+    background: rgba(0, 0, 0, 0.7);
+  }
+}

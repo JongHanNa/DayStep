@@ -1,0 +1,26 @@
+[
+  {
+    "pkg": "@capgo/capacitor-social-login",
+    "classpath": "SocialLoginPlugin"
+  },
+  {
+    "pkg": "@capacitor/preferences",
+    "classpath": "PreferencesPlugin"
+  },
+  {
+    "pkg": "@capacitor/local-notifications",
+    "classpath": "LocalNotificationsPlugin"
+  },
+  {
+    "pkg": "@capacitor-community/contacts",
+    "classpath": "ContactsPlugin"
+  },
+  {
+    "pkg": "@daystep/widget-bridge",
+    "classpath": "WidgetBridgePlugin"
+  },
+  {
+    "pkg": "ContactGroups",
+    "classpath": "ContactGroupsPlugin"
+  }
+]

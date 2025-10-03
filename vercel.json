@@ -1,0 +1,16 @@
+{
+  "env": {
+    "NEXT_PUBLIC_SITE_URL": "https://daystep.vercel.app",
+    "BUILD_TARGET": "web"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SITE_URL": "https://daystep.vercel.app",
+      "BUILD_TARGET": "web"
+    }
+  },
+  "regions": ["icn1"],
+  "github": {
+    "silent": true
+  }
+}

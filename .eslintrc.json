@@ -1,0 +1,61 @@
+{
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "rules": {
+    // React specific rules
+    "react-hooks/exhaustive-deps": "warn",
+    "react/jsx-no-useless-fragment": "warn",
+    "react/self-closing-comp": "warn",
+    "react/jsx-key": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/no-array-index-key": "warn",
+    
+    
+    // Code quality rules
+    "prefer-const": "warn",
+    "no-var": "error",
+    "no-console": "off",
+    "eqeqeq": ["warn", "always"],
+    "curly": ["warn", "all"],
+    "no-implicit-globals": "error",
+    "no-return-await": "warn",
+    
+    // Performance rules
+    "react/jsx-no-bind": ["warn", {
+      "allowArrowFunctions": true,
+      "allowFunctions": false,
+      "allowBind": false
+    }]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off"
+      }
+    },
+    {
+      "files": ["mobile/**/*"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["services/**/*", "components/notifications/**/*"],
+      "rules": {
+        "no-console": "off",
+        "react/self-closing-comp": "warn"
+      }
+    },
+    {
+      "files": ["scripts/**/*", "*.config.{js,ts}"],
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-var-requires": "off"
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "DayStep - 나만의 다짐과 할일 관리",
+  "short_name": "DayStep",
+  "description": "새해 다짐과 할일을 체계적으로 관리하는 개인 생산성 앱 - DayStep",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "새 할일 추가",
+      "short_name": "할일 추가",
+      "description": "빠르게 새로운 할일을 추가합니다",
+      "url": "/todos?action=new"
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}
