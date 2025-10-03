@@ -1073,7 +1073,20 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                               />
                               {tag.name}
                               <button
-                                onClick={() => setSelectedTags(prev => prev.filter(id => id !== tagId))}
+                                onClick={async () => {
+                                  const newSelectedTags = selectedTags.filter(id => id !== tagId);
+                                  setSelectedTags(newSelectedTags);
+
+                                  // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                  if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
+                                    await updateMemoTagsWithTemplates(
+                                      currentEditingMemo.id,
+                                      newSelectedTags,
+                                      selectedTemplates,
+                                      user.id
+                                    );
+                                  }
+                                }}
                                 className="ml-1 hover:text-red-500 transition-colors"
                               >
                                 <X className="h-3 w-3" />
@@ -1100,7 +1113,20 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                               {template.name}
                               <span className="text-xs opacity-60">(템플릿)</span>
                               <button
-                                onClick={() => setSelectedTemplates(prev => prev.filter(id => id !== templateId))}
+                                onClick={async () => {
+                                  const newSelectedTemplates = selectedTemplates.filter(id => id !== templateId);
+                                  setSelectedTemplates(newSelectedTemplates);
+
+                                  // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                  if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
+                                    await updateMemoTagsWithTemplates(
+                                      currentEditingMemo.id,
+                                      selectedTags,
+                                      newSelectedTemplates,
+                                      user.id
+                                    );
+                                  }
+                                }}
                                 className="ml-1 hover:text-red-500 transition-colors"
                               >
                                 <X className="h-3 w-3" />
@@ -1161,12 +1187,22 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                                   return (
                                     <button
                                       key={tag.id}
-                                      onClick={() => {
-                                        setSelectedTags(prev =>
-                                          isSelected
-                                            ? prev.filter(id => id !== tag.id)
-                                            : [...prev, tag.id]
-                                        );
+                                      onClick={async () => {
+                                        const newSelectedTags = isSelected
+                                          ? selectedTags.filter(id => id !== tag.id)
+                                          : [...selectedTags, tag.id];
+
+                                        setSelectedTags(newSelectedTags);
+
+                                        // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                        if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
+                                          await updateMemoTagsWithTemplates(
+                                            currentEditingMemo.id,
+                                            newSelectedTags,
+                                            selectedTemplates,
+                                            user.id
+                                          );
+                                        }
                                       }}
                                       className={cn(
                                         'flex items-center gap-2 p-2 rounded-md border transition-all text-left',
@@ -1239,35 +1275,40 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                                         {categoryTemplates.map((template) => (
                                           <button
                                             key={template.id}
-                                            onClick={() => {
-                                              // 템플릿 태그 토글 (실제 태그 생성하지 않음)
-                                              setSelectedTemplates(prev => {
-                                                const isSelected = prev.includes(template.id);
-                                                if (isSelected) {
-                                                  // 이미 선택된 경우 제거
-                                                  return prev.filter(id => id !== template.id);
-                                                } else {
-                                                  // 새로 선택
-                                                  setAddedTemplates(prev => new Set([...prev, template.id]));
+                                            onClick={async () => {
+                                              const isSelected = selectedTemplates.includes(template.id);
 
-                                                  // 성공 피드백
-                                                  toast({
-                                                    title: "✨ 템플릿 태그 선택됨",
-                                                    description: `"${template.name}" 태그가 메모에 추가됩니다`
+                                              const newSelectedTemplates = isSelected
+                                                ? selectedTemplates.filter(id => id !== template.id)
+                                                : [...selectedTemplates, template.id];
+
+                                              setSelectedTemplates(newSelectedTemplates);
+
+                                              // 성공 피드백 (추가 시에만)
+                                              if (!isSelected) {
+                                                setAddedTemplates(prev => new Set([...prev, template.id]));
+                                                toast({
+                                                  title: "✨ 템플릿 태그 선택됨",
+                                                  description: `"${template.name}" 태그가 메모에 추가됩니다`
+                                                });
+                                                setTimeout(() => {
+                                                  setAddedTemplates(prev => {
+                                                    const newSet = new Set(prev);
+                                                    newSet.delete(template.id);
+                                                    return newSet;
                                                   });
+                                                }, 2000);
+                                              }
 
-                                                  // 2초 후 애니메이션 상태 초기화
-                                                  setTimeout(() => {
-                                                    setAddedTemplates(prev => {
-                                                      const newSet = new Set(prev);
-                                                      newSet.delete(template.id);
-                                                      return newSet;
-                                                    });
-                                                  }, 2000);
-
-                                                  return [...prev, template.id];
-                                                }
-                                              });
+                                              // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                              if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
+                                                await updateMemoTagsWithTemplates(
+                                                  currentEditingMemo.id,
+                                                  selectedTags,
+                                                  newSelectedTemplates,
+                                                  user.id
+                                                );
+                                              }
                                             }}
                                             className={cn(
                                               "flex items-center gap-2 p-2 rounded-md border transition-all text-left relative overflow-hidden",
