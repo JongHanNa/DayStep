@@ -20,6 +20,9 @@ import {
   Clock,
   AlertCircle,
   Tag,
+  Hash,
+  Repeat,
+  Calendar,
 } from 'lucide-react';
 import TaskLinkModal from './TaskLinkModal';
 import { cn } from '@/lib/utils';
@@ -62,7 +65,10 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   } = useQuickMemoStore();
 
   // Todo Store (할일 연결용)
-  const { todos } = useTodoStore();
+  const { todos, fetchTodoById } = useTodoStore();
+
+  // 메모에 연결된 할일을 별도로 관리 (현재 뷰에 없는 할일도 표시하기 위함)
+  const [linkedTodosMap, setLinkedTodosMap] = useState<Map<string, any>>(new Map());
 
   // Memo Tag Store (태그 관리용)
   const {
@@ -218,6 +224,44 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
       loadAllTags(user.id); // 태그도 함께 로드
     }
   }, [open, isAuthenticated, user?.id, initialize, loadAllTags]);
+
+  // 메모에 연결된 할일 로드 (현재 뷰에 없는 할일도 가져오기)
+  useEffect(() => {
+    const loadLinkedTodos = async () => {
+      const newLinkedTodosMap = new Map(linkedTodosMap);
+      let hasUpdates = false;
+
+      for (const memo of filteredMemos) {
+        if (memo.related_task_id && !linkedTodosMap.has(memo.related_task_id)) {
+          // todos 배열에서 먼저 찾기
+          const existingTodo = todos.find(t => t.id === memo.related_task_id);
+          if (existingTodo) {
+            newLinkedTodosMap.set(memo.related_task_id, existingTodo);
+            hasUpdates = true;
+          } else {
+            // todos 배열에 없으면 DB에서 직접 가져오기
+            try {
+              const linkedTodo = await fetchTodoById(memo.related_task_id);
+              if (linkedTodo) {
+                newLinkedTodosMap.set(memo.related_task_id, linkedTodo);
+                hasUpdates = true;
+              }
+            } catch (error) {
+              console.warn(`연결된 할일 로드 실패 (${memo.related_task_id}):`, error);
+            }
+          }
+        }
+      }
+
+      if (hasUpdates) {
+        setLinkedTodosMap(newLinkedTodosMap);
+      }
+    };
+
+    if (filteredMemos.length > 0) {
+      loadLinkedTodos();
+    }
+  }, [filteredMemos, todos, fetchTodoById]);
 
   // 메모 편집 시 기존 태그 로드 (사용자 태그와 템플릿 태그 분리)
   useEffect(() => {
@@ -512,8 +556,9 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                 )}
 
                 {filteredMemos.map((memo) => {
+                  // 연결된 할일 찾기: todos 배열 우선, 없으면 linkedTodosMap에서 찾기
                   const linkedTodo = memo.related_task_id
-                    ? todos.find(todo => todo.id === memo.related_task_id)
+                    ? (todos.find(todo => todo.id === memo.related_task_id) || linkedTodosMap.get(memo.related_task_id))
                     : null;
 
                   // related_task_id가 있으면 연결됨으로 표시 (todos 스토어에 없어도)
@@ -667,11 +712,91 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
 
                             {/* 연결된 할일 정보 */}
                             {linkedTodo && (
-                              <div className="flex items-center gap-2 p-2 rounded bg-muted/50">
-                                <Link className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">
-                                  연결된 할일: {linkedTodo.content}
-                                </span>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 p-2 rounded bg-muted/50">
+                                  <Link className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">
+                                    연결된 할일: {linkedTodo.content}
+                                  </span>
+                                </div>
+
+                                {/* 할일 타입 및 연결 방식 상세 정보 */}
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {(() => {
+                                    // 반복 할일 여부 판별 (camelCase 속성 사용)
+                                    const isRecurringTodo = linkedTodo.recurrencePattern && linkedTodo.recurrencePattern !== 'none';
+
+                                    // 반복 할일 연결 방식 판별
+                                    let connectionType: 'single' | 'recurring' | 'instance' | null = null;
+                                    if (isRecurringTodo) {
+                                      if (memo.recurrence_type === 'single') {
+                                        connectionType = 'single'; // 동일메모
+                                      } else if (memo.recurrence_type === 'recurring') {
+                                        connectionType = 'recurring'; // 반복메모
+                                      } else if (memo.linked_date) {
+                                        connectionType = 'instance'; // 특정날짜
+                                      }
+                                    }
+
+                                    return (
+                                      <>
+                                        {/* 할일 타입 배지 */}
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs flex items-center gap-1"
+                                          style={{
+                                            borderColor: isRecurringTodo ? '#a855f7' : '#3b82f6',
+                                            color: isRecurringTodo ? '#a855f7' : '#3b82f6'
+                                          }}
+                                        >
+                                          {isRecurringTodo ? (
+                                            <>
+                                              <Repeat className="h-3 w-3" />
+                                              반복 할일
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Hash className="h-3 w-3" />
+                                              일반 할일
+                                            </>
+                                          )}
+                                        </Badge>
+
+                                        {/* 반복 할일인 경우 연결 방식 배지 */}
+                                        {isRecurringTodo && connectionType && (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-xs flex items-center gap-1"
+                                            style={{
+                                              borderColor: connectionType === 'single' ? '#06b6d4' :
+                                                          connectionType === 'recurring' ? '#8b5cf6' :
+                                                          '#10b981',
+                                              color: connectionType === 'single' ? '#06b6d4' :
+                                                    connectionType === 'recurring' ? '#8b5cf6' :
+                                                    '#10b981'
+                                            }}
+                                          >
+                                            {connectionType === 'single' && '동일메모'}
+                                            {connectionType === 'recurring' && '반복메모'}
+                                            {connectionType === 'instance' && (
+                                              <>
+                                                <Calendar className="h-3 w-3" />
+                                                특정날짜
+                                              </>
+                                            )}
+                                          </Badge>
+                                        )}
+
+                                        {/* 특정 날짜 정보 표시 */}
+                                        {memo.linked_date && connectionType === 'instance' && (
+                                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                            {format(new Date(memo.linked_date), 'M월 d일', { locale: ko })}
+                                          </span>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
+                                </div>
                               </div>
                             )}
 
@@ -814,11 +939,99 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                 <div className="space-y-4">
                   {/* 할일 연결 상태 표시 */}
                   {selectedTaskId && (
-                    <div className="flex gap-2">
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Link className="h-3 w-3" />
-                        연결됨
-                      </Badge>
+                    <div className="space-y-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-2">
+                        <Link className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          할일 연결됨
+                        </span>
+                      </div>
+
+                      {(() => {
+                        // 연결된 할일 찾기: todos 배열 우선, 없으면 linkedTodosMap에서 찾기
+                        const linkedTodo = todos.find(todo => todo.id === selectedTaskId)
+                          || linkedTodosMap.get(selectedTaskId);
+                        if (!linkedTodo) return null;
+
+                        // 반복 할일 여부 판별 (camelCase 속성 사용)
+                        const isRecurringTodo = linkedTodo.recurrencePattern && linkedTodo.recurrencePattern !== 'none';
+
+                        // 반복 할일 연결 방식 판별 (편집 모달에서는 currentEditingMemo 사용)
+                        let connectionType: 'single' | 'recurring' | 'instance' | null = null;
+                        if (isRecurringTodo && currentEditingMemo) {
+                          if (currentEditingMemo.recurrence_type === 'single') {
+                            connectionType = 'single'; // 동일메모
+                          } else if (currentEditingMemo.recurrence_type === 'recurring') {
+                            connectionType = 'recurring'; // 반복메모
+                          } else if (currentEditingMemo.linked_date) {
+                            connectionType = 'instance'; // 특정날짜
+                          }
+                        }
+
+                        return (
+                          <div className="space-y-2">
+                            <div className="text-sm text-blue-800 dark:text-blue-200">
+                              {linkedTodo.content}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {/* 할일 타입 배지 */}
+                              <Badge
+                                variant="outline"
+                                className="text-xs flex items-center gap-1"
+                                style={{
+                                  borderColor: isRecurringTodo ? '#a855f7' : '#3b82f6',
+                                  color: isRecurringTodo ? '#a855f7' : '#3b82f6'
+                                }}
+                              >
+                                {isRecurringTodo ? (
+                                  <>
+                                    <Repeat className="h-3 w-3" />
+                                    반복 할일
+                                  </>
+                                ) : (
+                                  <>
+                                    <Hash className="h-3 w-3" />
+                                    일반 할일
+                                  </>
+                                )}
+                              </Badge>
+
+                              {/* 반복 할일인 경우 연결 방식 배지 */}
+                              {isRecurringTodo && connectionType && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs flex items-center gap-1"
+                                  style={{
+                                    borderColor: connectionType === 'single' ? '#06b6d4' :
+                                                connectionType === 'recurring' ? '#8b5cf6' :
+                                                '#10b981',
+                                    color: connectionType === 'single' ? '#06b6d4' :
+                                          connectionType === 'recurring' ? '#8b5cf6' :
+                                          '#10b981'
+                                  }}
+                                >
+                                  {connectionType === 'single' && '동일메모'}
+                                  {connectionType === 'recurring' && '반복메모'}
+                                  {connectionType === 'instance' && (
+                                    <>
+                                      <Calendar className="h-3 w-3" />
+                                      특정날짜
+                                    </>
+                                  )}
+                                </Badge>
+                              )}
+
+                              {/* 특정 날짜 정보 표시 */}
+                              {currentEditingMemo?.linked_date && connectionType === 'instance' && (
+                                <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                  {format(new Date(currentEditingMemo.linked_date), 'M월 d일', { locale: ko })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

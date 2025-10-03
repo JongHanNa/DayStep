@@ -436,11 +436,15 @@ export async function fetchTodosForDateRange(
     }
 
     const path = `/todos?${queryParams.join('&')}`;
-    
-    const todos = await fetchWithJWT(path);
+
+    const rawTodos = await fetchWithJWT(path);
+
+    // 🔥 중요: raw JSON 데이터를 Todo 클래스로 변환 (camelCase 변환)
+    const { Todo } = await import('../entities/todo/Todo');
+    const todos = (rawTodos || []).map((rawTodo: any) => Todo.fromDatabase(rawTodo));
 
     console.log('✅ 날짜별 할일 목록 조회 성공:', { count: todos?.length || 0, isRetry });
-    return todos || [];
+    return todos;
   } catch (error) {
     console.error('❌ 날짜별 할일 목록 조회 실패:', error);
     
