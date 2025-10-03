@@ -2,9 +2,8 @@ import React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 
-// Vercel 배포: Dynamic 렌더링 강제 (OAuth 및 인증 처리)
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// 모바일 빌드 호환성을 위해 layout에서는 force-dynamic 제거
+// 개별 페이지/라우트에서 필요시 설정
 import { generateSEO } from "@/lib/seo";
 import { AuthProvider, AuthState } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
