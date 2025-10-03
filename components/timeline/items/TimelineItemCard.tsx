@@ -496,100 +496,6 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                 </Tooltip>
               </TooltipProvider>
             )}
-            {hasLinkedMemos && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // 할일 클릭 이벤트 방지
-                        setIsMemosExpanded(!isMemosExpanded);
-                      }}
-                      className="flex items-center gap-1 p-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200"
-                    >
-                      <StickyNote className="h-4 w-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                        {displayMemos.length}
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          'h-3 w-3 text-gray-400 dark:text-gray-500 transition-transform duration-200',
-                          isMemosExpanded && 'rotate-180'
-                        )}
-                      />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {displayMemos.length === 1
-                        ? '연결된 메모 1개 (클릭하여 보기)'
-                        : `연결된 메모 ${displayMemos.length}개 (클릭하여 보기)`
-                      }
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            {/* 메모 태그들 표시 */}
-            {memoTags.length > 0 && (
-              <div className="flex items-center gap-1.5 ml-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1.5">
-                        <Tag className="h-3 w-3 text-gray-400 dark:text-gray-500" />
-                        <div className="flex flex-wrap gap-1.5 max-w-[200px]">
-                          {memoTags.slice(0, 2).map((tag) => (
-                            <div
-                              key={tag.id}
-                              className={cn(
-                                "flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium",
-                                "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300",
-                                "hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
-                                tag.is_template && "ring-1 ring-blue-400 ring-opacity-50"
-                              )}
-                            >
-                              <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: tag.color }}
-                              />
-                              <span className="truncate max-w-[60px]">
-                                {tag.name}
-                              </span>
-                              {tag.is_template && (
-                                <span className="text-blue-500 text-[10px] ml-0.5">(T)</span>
-                              )}
-                            </div>
-                          ))}
-                          {memoTags.length > 2 && (
-                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                              <span>+{memoTags.length - 2}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="space-y-1 max-w-xs">
-                        <p className="font-medium">메모 태그:</p>
-                        {memoTags.map((tag) => (
-                          <div key={tag.id} className="flex items-center gap-2">
-                            <div
-                              className={`w-3 h-3 rounded-full ${tag.is_template ? 'ring-1 ring-blue-400 ring-opacity-50' : ''}`}
-                              style={{ backgroundColor: tag.color }}
-                            />
-                            <span className="text-sm">
-                              {tag.name}
-                              {tag.is_template && <span className="text-xs text-blue-500 ml-1">(템플릿)</span>}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            )}
           </div>
 
           {/* 동기부여 메시지 배지들 */}
@@ -780,16 +686,97 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
           </div>
         )}
       </div>
-      
+
+      {/* 메모 아코디언 토글 버튼 - 접혔을 때만 표시 */}
+      {hasLinkedMemos && !isMemosExpanded && (
+        <div
+          className={cn(
+            'mt-2 py-2 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-b-lg transition-all duration-200',
+            // 카드 padding에 맞춰 동적 negative margin
+            '-mx-3 -mb-2.5 px-3'
+          )}
+          onClick={(e) => {
+            e.stopPropagation(); // 할일 클릭 이벤트 방지
+            e.preventDefault(); // 기본 동작 방지
+          }}
+        >
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // 할일 클릭 이벤트 방지
+                    e.preventDefault(); // 기본 동작 방지
+                    setIsMemosExpanded(!isMemosExpanded);
+                  }}
+                  className="w-full flex items-center justify-between"
+                >
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    0/{displayMemos.length}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 text-gray-400 dark:text-gray-500 transition-transform duration-200',
+                      isMemosExpanded && 'rotate-180'
+                    )}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {displayMemos.length === 1
+                    ? '연결된 메모 1개 (클릭하여 보기)'
+                    : `연결된 메모 ${displayMemos.length}개 (클릭하여 보기)`
+                  }
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
+
       {/* 아코디언 형태로 연결된 메모 표시 - 전체 카드 너비 활용 */}
       {hasLinkedMemos && (
         <div
           className={cn(
             'overflow-hidden transition-all duration-200 ease-out',
-            isMemosExpanded ? 'max-h-96 opacity-100 mt-3' : 'max-h-0 opacity-0'
+            isMemosExpanded ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'
           )}
         >
-          <div 
+          {/* 메모 태그들 표시 - 아코디언 내부 상단 */}
+          {memoTags.length > 0 && isMemosExpanded && (
+            <div className="mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Tag className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                <div className="flex flex-wrap gap-1.5">
+                  {memoTags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium",
+                        "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300",
+                        "hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
+                        tag.is_template && "ring-1 ring-blue-400 ring-opacity-50"
+                      )}
+                    >
+                      <div
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      <span className="truncate max-w-[120px]">
+                        {tag.name}
+                      </span>
+                      {tag.is_template && (
+                        <span className="text-blue-500 text-[10px] ml-0.5">(T)</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div
             className="space-y-2 max-h-80 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {displayMemos.map((memo) => (
@@ -822,6 +809,54 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* 메모 아코디언 토글 버튼 - 펼쳐졌을 때 하단에 표시 (overflow 밖에 배치) */}
+      {hasLinkedMemos && isMemosExpanded && (
+        <div
+          className={cn(
+            'mt-2 py-2 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-b-lg transition-all duration-200',
+            // 카드 padding에 맞춰 동적 negative margin
+            '-mx-4 -mb-4 px-4'
+          )}
+          onClick={(e) => {
+            e.stopPropagation(); // 할일 클릭 이벤트 방지
+            e.preventDefault(); // 기본 동작 방지
+          }}
+        >
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // 할일 클릭 이벤트 방지
+                    e.preventDefault(); // 기본 동작 방지
+                    setIsMemosExpanded(!isMemosExpanded);
+                  }}
+                  className="w-full flex items-center justify-between"
+                >
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    0/{displayMemos.length}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      'h-3.5 w-3.5 text-gray-400 dark:text-gray-500 transition-transform duration-200',
+                      isMemosExpanded && 'rotate-180'
+                    )}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {displayMemos.length === 1
+                    ? '연결된 메모 1개 (클릭하여 접기)'
+                    : `연결된 메모 ${displayMemos.length}개 (클릭하여 접기)`
+                  }
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
       
