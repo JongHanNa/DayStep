@@ -258,6 +258,12 @@ export class ReminderScheduler {
    */
   async cancelAllReminders(): Promise<void> {
     try {
+      // ✅ 웹 환경에서는 아무 작업도 하지 않고 즉시 리턴
+      if (!Capacitor.isNativePlatform()) {
+        console.debug('cancelAllReminders skipped - not a native platform');
+        return;
+      }
+
       // 모든 대기 중인 알림 가져오기
       const pendingNotifications = await LocalNotifications.getPending();
       // Checking pending notifications
