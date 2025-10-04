@@ -426,9 +426,6 @@ export const BubbleTimelineView: React.FC = () => {
     <div className="flex flex-col h-full w-full px-4 py-6">
       {/* 타임라인 컨테이너 */}
       <div className="relative flex-1">
-        {/* 세로 연결 라인 (왼쪽) */}
-        <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
-
         {/* 버블 아이템 리스트 */}
         <div className="relative space-y-0">
           {timedItems.map((item, index) => {

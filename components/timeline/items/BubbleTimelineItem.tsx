@@ -169,10 +169,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     const baseHeight = 64; // 1-10분: 64px (원형)
 
     // 11분 이상일 때만 추가 높이 적용
-    if (durationMinutes <= 10) {
-      console.log(`🎈 [${item.title}] 원형 버블:`, { durationMinutes, height: baseHeight });
-      return baseHeight;
-    }
+    if (durationMinutes <= 10) return baseHeight;
 
     // 10분 초과분에 대해 10분당 20px 추가
     // 예: 11-20분 → 20px 추가 → 84px
@@ -180,17 +177,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     //     31-40분 → 60px 추가 → 124px
     const extraMinutes = durationMinutes - 10;
     const extraHeight = Math.ceil(extraMinutes / 10) * 20;
-    const finalHeight = Math.min(baseHeight + extraHeight, 200); // 최대 200px
-
-    console.log(`🎈 [${item.title}] 타원형 버블:`, {
-      durationMinutes,
-      extraMinutes,
-      extraHeight,
-      finalHeight
-    });
-
-    return finalHeight;
-  }, [durationMinutes, item.title]);
+    return Math.min(baseHeight + extraHeight, 200); // 최대 200px
+  }, [durationMinutes]);
 
   // 버블 너비 (고정)
   const bubbleWidth = 64;
@@ -207,10 +195,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     const baseHeight = 16; // 1-10분: 16px (기본)
 
     // 11분 이상일 때만 추가 높이 적용
-    if (gapMinutes <= 10) {
-      console.log(`📏 [${item.title}] 연결 막대 (짧음):`, { gapMinutes, height: baseHeight, nextItem: nextItem?.title });
-      return baseHeight;
-    }
+    if (gapMinutes <= 10) return baseHeight;
 
     // 10분 초과분에 대해 10분당 20px 추가
     // 예: 11-20분 → 20px 추가 → 36px
@@ -218,18 +203,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     //     31-40분 → 60px 추가 → 76px
     const extraMinutes = gapMinutes - 10;
     const extraHeight = Math.ceil(extraMinutes / 10) * 20;
-    const finalHeight = Math.min(baseHeight + extraHeight, 200); // 최대 200px
-
-    console.log(`📏 [${item.title}] 연결 막대 (긴):`, {
-      gapMinutes,
-      extraMinutes,
-      extraHeight,
-      finalHeight,
-      nextItem: nextItem?.title
-    });
-
-    return finalHeight;
-  }, [gapMinutes, item.title, nextItem?.title]);
+    return Math.min(baseHeight + extraHeight, 200); // 최대 200px
+  }, [gapMinutes]);
 
   // 현재 시간 기준 진행률 계산 (0-100)
   const progressPercentage = useMemo(() => {
@@ -314,7 +289,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   return (
     <div
       className={cn(
-        'relative flex items-center gap-4 py-2',
+        'relative flex items-start gap-4 py-2',
         'cursor-pointer select-none transition-all',
         !isDragging && 'hover:bg-gray-50 dark:hover:bg-gray-800/30',
       )}
@@ -331,34 +306,37 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseLeave}
     >
-      {/* 왼쪽: 버블 아이콘 영역 (연결 막대는 하단에만) */}
-      <div className="relative flex items-center justify-center" style={{ width: '64px' }}>
-        {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 (absolute) */}
-        {isDragging && displayStartTime && (
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
-            {formatTime(displayStartTime)}
-          </div>
-        )}
+      {/* 왼쪽: 버블 + 연결 막대 영역 */}
+      <div className="flex flex-col items-center" style={{ width: '64px' }}>
+        {/* 버블 아이콘 컨테이너 */}
+        <div className="relative">
+          {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 (absolute) */}
+          {isDragging && displayStartTime && (
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
+              {formatTime(displayStartTime)}
+            </div>
+          )}
 
-        {/* 버블 아이콘 - 카드와 정렬되는 기준점! */}
-        <div
-          className="flex items-center justify-center transition-all duration-300"
-          style={bubbleStyle}
-        >
-          <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+          {/* 버블 아이콘 */}
+          <div
+            className="flex items-center justify-center transition-all duration-300"
+            style={bubbleStyle}
+          >
+            <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+          </div>
+
+          {/* 드래그 중일 때만 종료 시간 표시 - 버블 하단 (absolute) */}
+          {isDragging && displayEndTime && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
+              {formatTime(displayEndTime)}
+            </div>
+          )}
         </div>
 
-        {/* 드래그 중일 때만 종료 시간 표시 - 버블 하단 (absolute) */}
-        {isDragging && displayEndTime && (
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
-            {formatTime(displayEndTime)}
-          </div>
-        )}
-
-        {/* 하단 연결 막대 - absolute로 버블 아래에 배치 (항상 표시) */}
+        {/* 하단 연결 막대 - normal flow로 실제 간격 생성 */}
         {nextItem && (
           <div
-            className="absolute top-full left-1/2 -translate-x-1/2 w-0.5"
+            className="w-0.5"
             style={{
               height: `${connectorHeight}px`,
               backgroundColor: progressPercentage >= 100 ? itemColor : '#E5E5E5',
@@ -368,7 +346,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         )}
       </div>
 
-      {/* 오른쪽: 할일 카드 - 버블과 중앙 정렬! */}
+      {/* 오른쪽: 할일 카드 */}
       <div className={cn(
         "flex-1 min-h-16 flex items-center",
         isDragging && "opacity-0"
