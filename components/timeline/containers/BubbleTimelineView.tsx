@@ -37,6 +37,7 @@ export const BubbleTimelineView: React.FC = () => {
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dragStartY, setDragStartY] = useState(0);
   const [dragCurrentY, setDragCurrentY] = useState(0);
+  const [dragCurrentX, setDragCurrentX] = useState(0);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [initialTouch, setInitialTouch] = useState<{x: number; y: number} | null>(null);
 
@@ -225,8 +226,9 @@ export const BubbleTimelineView: React.FC = () => {
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
 
     if (isDragging && draggedItemId) {
-      // 이미 드래그 중이면 위치 업데이트
+      // 이미 드래그 중이면 위치 업데이트 (X, Y 모두)
       setDragCurrentY(clientY);
+      setDragCurrentX(clientX);
     } else if (initialTouch && !longPressTimer && draggedItemId) {
       // ✅ 정지 상태 확인: 50px 이상 움직였으면 스크롤로 간주 (리스트뷰와 동일)
       const deltaX = Math.abs(clientX - initialTouch.x);
@@ -243,6 +245,7 @@ export const BubbleTimelineView: React.FC = () => {
       const timer = setTimeout(() => {
         setIsDragging(true);
         setDragCurrentY(clientY); // 드래그 시작 시 현재 위치로 설정
+        setDragCurrentX(clientX); // X 좌표도 설정
 
         // 🔒 완전한 스크롤 차단 활성화 (리스트뷰와 동일)
         enableScrollLock();
@@ -298,6 +301,7 @@ export const BubbleTimelineView: React.FC = () => {
         setDraggedItemId(null);
         setDragStartY(0);
         setDragCurrentY(0);
+        setDragCurrentX(0);
         setInitialTouch(null);
 
         // 🔓 스크롤 차단 해제
@@ -327,6 +331,7 @@ export const BubbleTimelineView: React.FC = () => {
     setDraggedItemId(null);
     setDragStartY(0);
     setDragCurrentY(0);
+    setDragCurrentX(0);
     setInitialTouch(null);
 
     // 🔓 스크롤 차단 해제 (리스트뷰와 동일)
@@ -337,7 +342,9 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 시간 변경 확정
   const handleConfirmTimeChange = useCallback(async () => {
-    if (!pendingTimeChange) return;
+    if (!pendingTimeChange) {
+      return;
+    }
 
     const { itemId, newStartTime, newEndTime } = pendingTimeChange;
 
@@ -360,7 +367,9 @@ export const BubbleTimelineView: React.FC = () => {
 
   // DateTimeRangePicker에서 시간 변경 시
   const handleTimeRangeChange = useCallback((range: { startDate: Date; endDate?: Date; isAllDay: boolean }) => {
-    if (!pendingTimeChange || !range.endDate) return;
+    if (!pendingTimeChange || !range.endDate) {
+      return;
+    }
 
     setPendingTimeChange({
       ...pendingTimeChange,
@@ -486,9 +495,9 @@ export const BubbleTimelineView: React.FC = () => {
         <div
           className="fixed z-[100] pointer-events-none"
           style={{
-            top: dragCurrentY - 60,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            top: dragCurrentY,
+            left: dragCurrentX,
+            transform: 'translate(-50%, -50%)',
           }}
         >
           <div className="bg-white dark:bg-gray-800 rounded-xl px-5 py-3 shadow-2xl border-2 border-blue-400 dark:border-blue-500">
