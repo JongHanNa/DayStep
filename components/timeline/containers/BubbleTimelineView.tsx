@@ -494,28 +494,13 @@ export const BubbleTimelineView: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 rounded-xl px-5 py-3 shadow-2xl border-2 border-blue-400 dark:border-blue-500">
             {(() => {
               const item = timedItems.find(i => i.id === draggedItemId);
-              if (!item || !item.startTime) return <div className="text-sm font-medium">시간 이동 중...</div>;
-
-              const minutesChange = Math.round(dragCurrentY - dragStartY);
-              const newStartTime = new Date(new Date(item.startTime).getTime() + minutesChange * 60 * 1000);
-              const newEndTime = item.endTime
-                ? new Date(new Date(item.endTime).getTime() + minutesChange * 60 * 1000)
-                : null;
-
-              const formatTime = (date: Date) => {
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                return `${hours}:${minutes}`;
-              };
+              if (!item) {
+                return <div className="text-sm font-medium">시간 이동 중...</div>;
+              }
 
               return (
-                <div className="space-y-1">
-                  <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
-                    {formatTime(newStartTime)} ~ {newEndTime ? formatTime(newEndTime) : ''}
-                  </div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {item.title}
-                  </div>
+                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {item.title}
                 </div>
               );
             })()}

@@ -106,6 +106,25 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     };
   }, [progressPercentage, itemColor]);
 
+  // 드래그 중 변경된 시간 계산
+  const displayStartTime = useMemo(() => {
+    if (!startTime) return null;
+    if (isDragging && dragOffset !== 0) {
+      const minutesChange = Math.round(dragOffset);
+      return new Date(startTime.getTime() + minutesChange * 60 * 1000);
+    }
+    return startTime;
+  }, [startTime, isDragging, dragOffset]);
+
+  const displayEndTime = useMemo(() => {
+    if (!endTime) return null;
+    if (isDragging && dragOffset !== 0) {
+      const minutesChange = Math.round(dragOffset);
+      return new Date(endTime.getTime() + minutesChange * 60 * 1000);
+    }
+    return endTime;
+  }, [endTime, isDragging, dragOffset]);
+
   // 시간 포맷
   const formatTime = (date: Date | null) => {
     if (!date) return '';
@@ -147,6 +166,13 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           />
         )}
 
+        {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 */}
+        {isDragging && displayStartTime && (
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-semibold">
+            {formatTime(displayStartTime)}
+          </div>
+        )}
+
         {/* 버블 아이콘 */}
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300"
@@ -155,10 +181,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
         </div>
 
-        {/* 드래그 중일 때만 시작 시간 표시 */}
-        {isDragging && startTime && (
+        {/* 드래그 중일 때만 종료 시간 표시 - 버블 하단 */}
+        {isDragging && displayEndTime && (
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-semibold">
-            {formatTime(startTime)}
+            {formatTime(displayEndTime)}
           </div>
         )}
 
@@ -170,13 +196,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
             transition: 'background-color 0.3s ease',
           }}
         />
-
-        {/* 드래그 중일 때만 종료 시간 표시 */}
-        {isDragging && endTime && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-semibold">
-            {formatTime(endTime)}
-          </div>
-        )}
       </div>
 
       {/* 오른쪽: 할일 카드 */}
