@@ -136,7 +136,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   return (
     <div
       className={cn(
-        'relative flex items-start gap-4 py-2',
+        'relative flex items-center gap-4 py-2',
         'cursor-pointer select-none transition-all',
         !isDragging && 'hover:bg-gray-50 dark:hover:bg-gray-800/30',
       )}
