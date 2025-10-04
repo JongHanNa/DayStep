@@ -91,28 +91,15 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       originalEndTime.getSeconds()
     );
 
-    console.log(`🔧 [${item.title}] 시간 정규화:`, {
-      원본_endTime: originalEndTime.toISOString(),
-      정규화_endTime: normalized.toISOString()
-    });
-
     return normalized;
-  }, [originalStartTime, originalEndTime, item.title]);
+  }, [originalStartTime, originalEndTime]);
 
   // 할일 시간 간격(분) 계산
   const durationMinutes = useMemo(() => {
     if (!startTime || !endTime) return 10; // 기본값 10분
 
-    // 디버깅: 실제 시간 데이터 출력
-    console.log(`⏰ [${item.title}] 시간 데이터:`, {
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      sameDay: isSameDay(startTime, endTime)
-    });
-
     // 같은 날이 아니면 기본값 (반복 할일 등의 경우)
     if (!isSameDay(startTime, endTime)) {
-      console.warn(`⚠️ [${item.title}] 시작/종료가 다른 날 → 기본값 사용`);
       return 10;
     }
 
@@ -120,12 +107,11 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
     // 비정상 값 체크 (24시간 = 1440분 초과 또는 음수)
     if (minutes > 1440 || minutes < 0) {
-      console.error(`❌ [${item.title}] 비정상 시간: ${minutes}분 → 기본값 사용`);
       return 10;
     }
 
     return Math.max(1, minutes); // 최소 1분
-  }, [startTime, endTime, item.title]);
+  }, [startTime, endTime]);
 
   // 다음 할일까지의 간격(분) 계산
   const gapMinutes = useMemo(() => {
@@ -145,24 +131,15 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           originalNextStart.getSeconds()
         );
 
-    // 디버깅: 실제 간격 데이터 출력
-    console.log(`🔗 [${item.title} → ${nextItem.title}] 간격 데이터:`, {
-      currentEnd: endTime.toISOString(),
-      원본_nextStart: originalNextStart.toISOString(),
-      정규화_nextStart: nextStart.toISOString(),
-      sameDay: isSameDay(endTime, nextStart)
-    });
-
     const gap = Math.round((nextStart.getTime() - endTime.getTime()) / (60 * 1000));
 
     // 비정상 값 체크 (24시간 = 1440분 초과 또는 음수)
     if (gap > 1440 || gap < 0) {
-      console.error(`❌ [${item.title} → ${nextItem.title}] 비정상 간격: ${gap}분 → 기본값 사용`);
       return 10;
     }
 
     return Math.max(1, gap); // 최소 1분
-  }, [endTime, nextItem, item.title]);
+  }, [endTime, nextItem]);
 
   // 버블 높이 계산 (10분 단위로 20px씩 증가, 최대 200px)
   const bubbleHeight = useMemo(() => {
@@ -294,8 +271,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         !isDragging && 'hover:bg-gray-50 dark:hover:bg-gray-800/30',
       )}
       style={{
-        transform: isDragging ? `translateY(${dragOffset}px)` : undefined,
-        transition: isDragging ? 'none' : 'transform 0.2s ease-out',
         zIndex: isDragging ? 50 : undefined,
       }}
       onTouchStart={onTouchStart}
@@ -306,43 +281,57 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseLeave}
     >
-      {/* 왼쪽: 버블 + 연결 막대 영역 */}
-      <div className="flex flex-col items-center" style={{ width: '64px' }}>
-        {/* 버블 아이콘 컨테이너 */}
-        <div className="relative">
-          {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 (absolute) */}
-          {isDragging && displayStartTime && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
-              {formatTime(displayStartTime)}
-            </div>
-          )}
+      {/* 왼쪽: 버블 + 연결 막대 영역 (래퍼로 분리) */}
+      <div className="relative" style={{ width: '64px' }}>
+        {/* 버블 아이콘 컨테이너 (드래그 시 transform 적용됨) */}
+        <div
+          className="flex flex-col items-center"
+          style={{
+            transform: isDragging ? `translateY(${dragOffset}px)` : undefined,
+            transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+          }}
+        >
+          <div className="relative">
+            {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 (absolute) */}
+            {isDragging && displayStartTime && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
+                {formatTime(displayStartTime)}
+              </div>
+            )}
 
-          {/* 버블 아이콘 */}
-          <div
-            className="flex items-center justify-center transition-all duration-300"
-            style={bubbleStyle}
-          >
-            <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+            {/* 버블 아이콘 */}
+            <div
+              className="flex items-center justify-center transition-all duration-300"
+              style={bubbleStyle}
+            >
+              <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+            </div>
+
+            {/* 드래그 중일 때만 종료 시간 표시 - 버블 하단 (absolute) */}
+            {isDragging && displayEndTime && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
+                {formatTime(displayEndTime)}
+              </div>
+            )}
           </div>
-
-          {/* 드래그 중일 때만 종료 시간 표시 - 버블 하단 (absolute) */}
-          {isDragging && displayEndTime && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
-              {formatTime(displayEndTime)}
-            </div>
-          )}
         </div>
 
-        {/* 하단 연결 막대 - normal flow로 실제 간격 생성 */}
+        {/* 연결 막대 - 래퍼에 absolute (드래그 영향 안 받음) */}
         {nextItem && (
           <div
-            className="w-0.5"
+            className="absolute left-1/2 -translate-x-1/2 w-0.5"
             style={{
+              top: `${bubbleHeight}px`,
               height: `${connectorHeight}px`,
               backgroundColor: progressPercentage >= 100 ? itemColor : '#E5E5E5',
               transition: 'background-color 0.3s ease',
             }}
           />
+        )}
+
+        {/* 간격 유지용 투명 공간 (연결 막대가 absolute라서 간격 안 만들어지므로) */}
+        {nextItem && (
+          <div style={{ height: `${connectorHeight}px`, width: '1px', opacity: 0 }} />
         )}
       </div>
 
