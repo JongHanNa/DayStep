@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 저장소 정보
 
 **저장소 이름**: DayStep  
-**원격 저장소**: https://github.com/JongHanNa/Willist.git  
+**원격 저장소**: https://github.com/JongHanNa/DayStep.git  
 **설명**: 나만의 할일 관리 앱 - Personal productivity app for managing todos and templates
 
 ## 프로젝트 개요
@@ -109,7 +109,7 @@ npm run debug:mobile      # 모바일 빌드 디버깅
 # 앱 기능에 필요한 설정
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_SITE_URL=http://localhost:3000  # 프로덕션에서는 https://willist.app
+NEXT_PUBLIC_SITE_URL=http://localhost:3000  # 프로덕션에서는 https://DayStep.app
 
 # Task Master AI에 필요한 설정 (최소 하나는 필요)
 ANTHROPIC_API_KEY=your_anthropic_api_key
