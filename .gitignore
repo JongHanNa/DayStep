@@ -95,11 +95,12 @@ node_modules/
 
 public/sw.js
 
-# Task files
-# tasks.json
-# tasks/ 
 .gradle/
 .gradle/.serena/
 
 # Serena MCP cache
 .serena/
+
+# Task files
+# tasks.json
+# tasks/ 

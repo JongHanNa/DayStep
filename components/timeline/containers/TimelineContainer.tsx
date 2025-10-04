@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import TimelineWeekView from './TimelineWeekView';
 import TimelineMonthView from './TimelineMonthView';
 import ModernDayView from './ModernDayView';
+import { BubbleTimelineView } from './BubbleTimelineView';
 import { TimelineDndProvider } from '../dnd';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useRepositoryStore } from '@/state/stores/repositoryStore';
@@ -175,6 +176,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   
   const {
     viewMode,
+    viewStyle,
     currentDate,
     isLoading,
     error,
@@ -510,6 +512,14 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   const renderView = useMemo(() => {
     switch (deferredViewMode) {
       case 'daily':
+        // viewStyle에 따라 다른 컴포넌트 렌더링
+        if (viewStyle === 'bubble') {
+          return (
+            <Suspense fallback={<TimelineLoadingFallback />}>
+              <BubbleTimelineView />
+            </Suspense>
+          );
+        }
         return (
           <Suspense fallback={<TimelineLoadingFallback />}>
             <ModernDayView />
@@ -530,7 +540,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
       default:
         return null;
     }
-  }, [deferredViewMode]);
+  }, [deferredViewMode, viewStyle]);
 
   // Optimistic UI handlers
   const handleRetry = () => {

@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { RotateCcw, ChevronLeft, ChevronRight, List, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isTodayInViewRange } from '@/lib/date-utils';
 import { getTailwindClasses } from '@/lib/theme-colors';
@@ -25,7 +25,7 @@ interface TimelineHeaderProps {
 }
 
 const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
-  const { currentDate, setCurrentDate, navigateToToday, viewMode } = useTimelineViewStore();
+  const { currentDate, setCurrentDate, navigateToToday, viewMode, viewStyle, toggleViewStyle } = useTimelineViewStore();
   const { timeFormat } = useSettingsStore();
   const [isOpen, setIsOpen] = useState(false);
   const currentTime = useCurrentTime();
@@ -246,6 +246,23 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
           </div>
         </div>
         
+        {/* 뷰 스타일 전환 버튼 */}
+        <div className="absolute right-16 top-1/2 -translate-y-1/2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleViewStyle}
+            className="w-8 h-8 p-0 hover:bg-accent/50"
+            title={viewStyle === 'modern' ? '버블 뷰로 전환' : '리스트 뷰로 전환'}
+          >
+            {viewStyle === 'modern' ? (
+              <Circle className="w-4 h-4" />
+            ) : (
+              <List className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+
         {/* 다음 날짜 버튼 */}
         <div className="absolute right-6 top-1/2 -translate-y-1/2">
           <Button

@@ -325,42 +325,13 @@ export const useDragAndDrop = ({ currentDate, timeFormat, todos, timedItems = []
       ? format(actualStartTime, 'HH:mm')
       : format(actualStartTime, 'a h:mm', { locale: ko });
     setPreviewTime(actualTimeStr);
-    
-    // 300ms 후 드래그 모드 확정 (좌표는 이미 설정됨)
-    const timer = setTimeout(() => {
-      
-      // 드래그 상태 활성화 (좌표 재설정 없이)
-      setIsDragging(true);
-      setDraggedItemId(itemId);
-      setDraggedTodo(todo);
-      
-      // 드래그 확정 시 카드 위치 변화 감지
-      const currentTodoElement = document.querySelector(`[data-todo-id="${itemId}"]`) as HTMLElement;
-      if (currentTodoElement) {
-        const currentRect = currentTodoElement.getBoundingClientRect();
-        const positionChanged = Math.abs(currentRect.top - todoRect.top) > 1;
-        
-        console.log('🔍 드래그 확정 시 카드 위치 변화 감지:', {
-          초기위치: { top: todoRect.top, height: todoRect.height },
-          현재위치: { top: currentRect.top, height: currentRect.height },
-          위치변화: positionChanged ? `${Math.round(currentRect.top - todoRect.top)}px 이동` : '변화없음',
-          터치기준차이: Math.round((currentRect.top + (currentRect.height / 2) - clientY) * 100) / 100
-        });
-      }
-      
-      // 완전한 스크롤 차단으로 전환
-      enableScrollLock();
-      
-      // 햅틱 피드백
-      if ('vibrate' in navigator) {
-        navigator.vibrate([50, 30, 50]);
-      }
-      
-      console.log('🎯 드래그 확정:', { itemId, todo: todo.content });
-    }, 300);
-    
-    setLongPressTimer(timer);
-  }, [findTodo, enableScrollLock, timeFormat]);
+
+    // ✅ 버블뷰 방식: 즉시 draggedItemId와 todo 설정, 타이머는 handlePressMove에서 시작
+    setDraggedItemId(itemId);
+    setDraggedTodo(todo);
+
+    console.log('🎯 드래그 준비 완료 (타이머는 정지 상태 확인 후 시작):', { itemId, todo: todo.content });
+  }, [findTodo, timeFormat]);
 
   // 🎯 드래그 취소
   const cancelDrag = useCallback((reason = '취소') => {
@@ -368,12 +339,16 @@ export const useDragAndDrop = ({ currentDate, timeFormat, todos, timedItems = []
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
-    
+
     // 실제로 드래그 중인 경우에만 스크롤 차단 해제
     if (isDragging) {
       disableScrollLock();
     }
-    
+
+    // ✅ 버블뷰 방식: draggedItemId와 draggedTodo도 초기화
+    setDraggedItemId(null);
+    setDraggedTodo(null);
+
     console.log(`🎯 드래그 취소: ${reason}`);
   }, [longPressTimer, isDragging, disableScrollLock]);
 
@@ -382,37 +357,60 @@ export const useDragAndDrop = ({ currentDate, timeFormat, todos, timedItems = []
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     
-    
-    // 길게 누르기 중일 때: 움직임이 크면 스크롤로 인식하고 취소
-    if (longPressTimer && !isDragging) {
+
+    // ✅ 버블뷰 방식: 정지 상태 확인 후 타이머 시작
+    if (!longPressTimer && !isDragging && draggedItemId) {
       const moveDistance = Math.sqrt(
-        Math.pow(clientX - pressStartPos.x, 2) + 
+        Math.pow(clientX - pressStartPos.x, 2) +
         Math.pow(clientY - pressStartPos.y, 2)
       );
-      
-      if (moveDistance > 50) { 
-        // 50px 이상 이동하면 스크롤로 판단 (임계값 증가)
-        cancelDrag('스크롤 감지');
+
+      if (moveDistance > 50) {
+        // 스크롤로 간주하고 초기화
+        setDraggedItemId(null);
+        setDraggedTodo(null);
+        console.log('🚫 드래그 취소: 스크롤 감지 (50px 이상 이동)');
         return;
       }
+
+      // ✅ 정지 상태 확인 후 타이머 시작!
+      const timer = setTimeout(() => {
+        setIsDragging(true);
+
+        // 완전한 스크롤 차단으로 전환
+        enableScrollLock();
+
+        // 햅틱 피드백
+        if ('vibrate' in navigator) {
+          navigator.vibrate([50, 30, 50]);
+        }
+
+        console.log('🎯 드래그 확정 (타이머 완료):', {
+          itemId: draggedItemId,
+          todo: draggedTodo?.content
+        });
+      }, 300);
+
+      setLongPressTimer(timer);
+      console.log('⏱️ 드래그 타이머 시작 (정지 상태 확인 완료)');
     }
-    
-    // 드래그 모드일 때: 위치 업데이트 + 자동 스크롤
-    if (isDragging) {
+
+    // 🎯 프리뷰 카드가 나타나면 즉시 위치 업데이트 시작
+    if (draggedItemId) {
       e.preventDefault();
       e.stopPropagation();
-      
-      // 🎯 드래그 중에는 스크롤 완전 고정, 위치와 시간만 업데이트
+
+      // 🎯 위치와 시간 업데이트 (드래그 확정 전에도 프리뷰 카드가 손가락을 따라다니도록)
       // 파란선이 타임라인 범위를 벗어나지 않도록 제한
       const timelineForConstraint = getTimelineSection();
       let constrainedY = clientY; // 기본값은 원본 위치
-      
+
       if (timelineForConstraint) {
         const rect = timelineForConstraint.getBoundingClientRect();
-        
+
         // 🚨 중요: 부드러운 경계 처리 - 경계에서 갑작스러운 변화 방지
         const EDGE_BUFFER = 20; // 경계 근처 완충 구간
-        
+
         if (clientY < rect.top) {
           constrainedY = rect.top;
         } else if (clientY > rect.bottom) {
@@ -426,19 +424,26 @@ export const useDragAndDrop = ({ currentDate, timeFormat, todos, timedItems = []
             constrainedY = rect.bottom;
           }
         }
-        
+
         setCurrentDragY(constrainedY);
       } else {
         setCurrentDragY(clientY);
       }
       setCurrentDragX(clientX);
       
-      // 🚀 브라우저 뷰포트 기반 자동 스크롤 (Production 방식)
-      const SCROLL_ZONE = 240; // 뷰포트 가장자리 240px 영역 (확장됨)
-      const MAX_SCROLL_SPEED = 24; // 최대 스크롤 속도 (더 빠르게 조정)
-      
-      const timeline = getTimelineSection();
-      if (timeline) {
+      // 실시간 시간 미리보기 (제한된 좌표 사용)
+      const time = calculateTimeFromPosition(constrainedY);
+      if (time) {
+        setPreviewTime(time);
+      }
+
+      // 🚀 브라우저 뷰포트 기반 자동 스크롤 (드래그 확정 후에만 실행)
+      if (isDragging) {
+        const SCROLL_ZONE = 240; // 뷰포트 가장자리 240px 영역 (확장됨)
+        const MAX_SCROLL_SPEED = 24; // 최대 스크롤 속도 (더 빠르게 조정)
+
+        const timeline = getTimelineSection();
+        if (timeline) {
         // Production 방식: 브라우저 뷰포트 경계 기준 감지
         const viewportHeight = window.innerHeight;
         const isNearTopEdge = clientY < SCROLL_ZONE; // 뷰포트 상단에서 80px 이내
@@ -496,11 +501,11 @@ export const useDragAndDrop = ({ currentDate, timeFormat, todos, timedItems = []
               if (newScrollY > 0) {
                 autoScrollRafRef.current = requestAnimationFrame(smoothScrollUp);
               } else {
-                console.log('⬆️ 자동 스크롤 완료 (최상단 도달)');
+                //console.log('⬆️ 자동 스크롤 완료 (최상단 도달)');
                 autoScrollRafRef.current = null;
               }
             } else {
-              console.log('⬆️ 자동 스크롤 완료 (이미 최상단)');
+              //console.log('⬆️ 자동 스크롤 완료 (이미 최상단)');
               autoScrollRafRef.current = null;
             }
           };
@@ -554,25 +559,20 @@ export const useDragAndDrop = ({ currentDate, timeFormat, todos, timedItems = []
               if (newScrollY < maxScroll) {
                 autoScrollRafRef.current = requestAnimationFrame(smoothScrollDown);
               } else {
-                console.log('⬇️ 자동 스크롤 완료 (최하단 도달)');
+                //console.log('⬇️ 자동 스크롤 완료 (최하단 도달)');
                 autoScrollRafRef.current = null;
               }
             } else {
-              console.log('⬇️ 자동 스크롤 완료 (이미 최하단)');
+              //console.log('⬇️ 자동 스크롤 완료 (이미 최하단)');
               autoScrollRafRef.current = null;
             }
           };
           autoScrollRafRef.current = requestAnimationFrame(smoothScrollDown);
         }
-      }
-      
-      // 실시간 시간 미리보기 (제한된 좌표 사용)
-      const time = calculateTimeFromPosition(constrainedY);
-      if (time) {
-        setPreviewTime(time);
+        }
       }
     }
-  }, [longPressTimer, isDragging, pressStartPos, cancelDrag, calculateTimeFromPosition, getTimelineSection]);
+  }, [longPressTimer, isDragging, pressStartPos, draggedItemId, draggedTodo, enableScrollLock, disableScrollLock, calculateTimeFromPosition, getTimelineSection]);
 
   // 🎯 드래그 완료 핸들러 (간소화됨)
   const handleDragEnd = useCallback((onRecurringUpdate?: (data: {
