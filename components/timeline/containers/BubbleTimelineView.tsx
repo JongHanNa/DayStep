@@ -433,12 +433,14 @@ export const BubbleTimelineView: React.FC = () => {
         <div className="relative space-y-0">
           {timedItems.map((item, index) => {
             const prevItem = index > 0 ? timedItems[index - 1] : null;
+            const nextItem = index < timedItems.length - 1 ? timedItems[index + 1] : null;
 
             return (
               <BubbleTimelineItem
                 key={item.id}
                 item={item}
                 prevItem={prevItem}
+                nextItem={nextItem}
                 isDragging={isDragging && draggedItemId === item.id}
                 dragOffset={isDragging && draggedItemId === item.id ? dragCurrentY - dragStartY : 0}
                 isToday={isToday}
