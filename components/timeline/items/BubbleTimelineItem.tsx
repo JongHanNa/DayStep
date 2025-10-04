@@ -155,16 +155,14 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     >
       {/* 왼쪽: 버블 아이콘 */}
       <div className="flex flex-col items-center" style={{ width: '64px' }}>
-        {/* 이전 할일과의 연결 막대 */}
-        {prevItem && (
-          <div
-            className="w-0.5 h-4"
-            style={{
-              backgroundColor: connectorColor || '#E5E5E5',
-              transition: 'background-color 0.3s ease',
-            }}
-          />
-        )}
+        {/* 이전 할일과의 연결 막대 (첫 번째 아이템도 동일한 높이 유지를 위해 항상 렌더링) */}
+        <div
+          className="w-0.5 h-4"
+          style={{
+            backgroundColor: prevItem ? (connectorColor || '#E5E5E5') : 'transparent',
+            transition: 'background-color 0.3s ease',
+          }}
+        />
 
         {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 */}
         {isDragging && displayStartTime && (
