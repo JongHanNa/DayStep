@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,12 @@ export const BubbleTimelineView: React.FC = () => {
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [initialTouch, setInitialTouch] = useState<{x: number; y: number} | null>(null);
 
+  // 스크롤 차단 관련 ref
+  const preventScrollRef = useRef<((e: Event) => void) | null>(null);
+  const savedScrollPositionRef = useRef(0);
+  const savedBodyScrollPositionRef = useRef(0);
+  const scrollWatcherRef = useRef<number | null>(null);
+
   // 시간 변경 모달 상태
   const [showTimeChangeModal, setShowTimeChangeModal] = useState(false);
   const [pendingTimeChange, setPendingTimeChange] = useState<{
@@ -58,6 +64,131 @@ export const BubbleTimelineView: React.FC = () => {
     return items.filter(item => item.startTime && item.endTime);
   }, [items]);
 
+  // 🎯 완전한 터치 스크롤 차단 시스템 (리스트뷰와 동일)
+  const enableScrollLock = useCallback(() => {
+    // 현재 스크롤 위치 저장
+    savedBodyScrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
+    const timelineContainer = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
+    if (timelineContainer) {
+      savedScrollPositionRef.current = timelineContainer.scrollTop;
+    }
+
+    // 이벤트 리스너로 스크롤 완전 차단
+    const preventScroll = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    preventScrollRef.current = preventScroll;
+
+    // 모든 스크롤 관련 이벤트 차단
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    document.addEventListener('wheel', preventScroll, { passive: false });
+    document.addEventListener('scroll', preventScroll, { passive: false });
+
+    // Body 전체 터치 스크롤 차단
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
+
+    // 타임라인 컨테이너 터치 스크롤 완전 차단
+    if (timelineContainer) {
+      timelineContainer.style.touchAction = 'none';
+      timelineContainer.style.overflowY = 'hidden';
+    }
+
+    // 모든 스크롤 가능 요소 차단
+    document.querySelectorAll('.overflow-y-auto, .overflow-auto').forEach(element => {
+      const el = element as HTMLElement;
+      el.style.touchAction = 'none';
+      el.style.overflow = 'hidden';
+    });
+
+    // CSS 클래스 기반 강화 차단
+    document.body.classList.add('dragging-active');
+
+    // 스크롤 위치 강제 고정 감시 시작
+    const watchScroll = () => {
+      // Body 스크롤 강제 고정
+      if (window.pageYOffset !== savedBodyScrollPositionRef.current) {
+        window.scrollTo(0, savedBodyScrollPositionRef.current);
+      }
+
+      // 타임라인 스크롤 고정
+      const container = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
+      if (container && container.scrollTop !== savedScrollPositionRef.current) {
+        container.scrollTop = savedScrollPositionRef.current;
+      }
+
+      scrollWatcherRef.current = requestAnimationFrame(watchScroll);
+    };
+
+    scrollWatcherRef.current = requestAnimationFrame(watchScroll);
+
+    console.log('🔒 [BubbleView] 스크롤 차단 활성화', {
+      bodyScroll: window.pageYOffset || document.documentElement.scrollTop,
+      timelineScroll: timelineContainer?.scrollTop
+    });
+  }, []);
+
+  const disableScrollLock = useCallback(() => {
+    // 스크롤 감시 해제
+    if (scrollWatcherRef.current) {
+      cancelAnimationFrame(scrollWatcherRef.current);
+      scrollWatcherRef.current = null;
+    }
+
+    // 이벤트 리스너 완전 해제
+    if (preventScrollRef.current) {
+      document.removeEventListener('touchmove', preventScrollRef.current);
+      document.removeEventListener('wheel', preventScrollRef.current);
+      document.removeEventListener('scroll', preventScrollRef.current);
+      preventScrollRef.current = null;
+    }
+
+    // Body 스타일 개별 복원
+    document.body.style.overflow = 'initial';
+    document.body.style.touchAction = 'auto';
+    document.body.style.userSelect = 'auto';
+    document.body.style.webkitUserSelect = 'auto';
+    document.body.style.position = 'static';
+    document.body.style.width = 'auto';
+    document.body.classList.remove('dragging-active');
+
+    // 타임라인 컨테이너 완전 복원
+    const timelineContainer = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
+    if (timelineContainer) {
+      timelineContainer.style.touchAction = 'auto';
+      timelineContainer.style.overflowY = 'auto';
+      timelineContainer.style.overflow = 'auto';
+
+      // 저장된 스크롤 위치로 복원
+      setTimeout(() => {
+        if (savedScrollPositionRef.current >= 0) {
+          timelineContainer.scrollTop = savedScrollPositionRef.current;
+        }
+      }, 0);
+    }
+
+    // Body 스크롤 위치 복원
+    if (savedBodyScrollPositionRef.current >= 0) {
+      setTimeout(() => {
+        window.scrollTo(0, savedBodyScrollPositionRef.current);
+      }, 0);
+    }
+
+    // 모든 스크롤 요소 완전 복원
+    document.querySelectorAll('.overflow-y-auto, .overflow-auto').forEach(element => {
+      const el = element as HTMLElement;
+      el.style.touchAction = 'auto';
+      el.style.overflow = 'auto';
+      el.style.overflowY = 'auto';
+    });
+
+    console.log('🔄 [BubbleView] 스크롤 차단 해제');
+  }, []);
+
   // 롱프레스 시작 (터치/마우스 통합)
   const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent, itemId: string) => {
     // ✅ 브라우저 기본 동작 방지 (세 손가락 제스처 등)
@@ -65,6 +196,17 @@ export const BubbleTimelineView: React.FC = () => {
 
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+
+    // 🔒 터치 즉시 현재 스크롤 위치 저장 (리스트뷰와 동일)
+    savedBodyScrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
+    const timelineContainer = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
+    if (timelineContainer) {
+      savedScrollPositionRef.current = timelineContainer.scrollTop;
+      console.log('💾 [BubbleView] 터치 시작 시 스크롤 위치 저장:', {
+        bodyScroll: savedBodyScrollPositionRef.current,
+        timelineScroll: savedScrollPositionRef.current
+      });
+    }
 
     // ✅ 초기 위치만 저장 (타이머는 handleDragMove에서 시작)
     setDragStartY(clientY);
@@ -101,6 +243,16 @@ export const BubbleTimelineView: React.FC = () => {
       const timer = setTimeout(() => {
         setIsDragging(true);
         setDragCurrentY(clientY); // 드래그 시작 시 현재 위치로 설정
+
+        // 🔒 완전한 스크롤 차단 활성화 (리스트뷰와 동일)
+        enableScrollLock();
+
+        // 햅틱 피드백
+        if ('vibrate' in navigator) {
+          navigator.vibrate([50, 30, 50]);
+        }
+
+        console.log('🎯 [BubbleView] 드래그 확정 (타이머 완료)');
       }, 300);
 
       setLongPressTimer(timer);
@@ -116,19 +268,22 @@ export const BubbleTimelineView: React.FC = () => {
         setDraggedItemId(null);
       }
     }
-  }, [isDragging, draggedItemId, initialTouch, longPressTimer]);;
+  }, [isDragging, draggedItemId, initialTouch, longPressTimer, enableScrollLock]);;
 
   // 드래그 종료 (터치/마우스 통합)
   const handleDragEnd = useCallback(async () => {
-    // ✅ 실제로 드래그 중이 아니면 무시 (다른 카드의 이벤트로 인한 오작동 방지)
-    if (!isDragging) {
-      return;
-    }
-
     // 타이머가 있으면 취소
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
+    }
+
+    // ✅ 실제로 드래그 중이 아니면 무시 (다른 카드의 이벤트로 인한 오작동 방지)
+    if (!isDragging) {
+      // 드래그 중이 아니어도 초기 상태 정리
+      setDraggedItemId(null);
+      setInitialTouch(null);
+      return;
     }
 
     if (draggedItemId) {
@@ -144,6 +299,9 @@ export const BubbleTimelineView: React.FC = () => {
         setDragStartY(0);
         setDragCurrentY(0);
         setInitialTouch(null);
+
+        // 🔓 스크롤 차단 해제
+        disableScrollLock();
         return;
       }
 
@@ -170,7 +328,12 @@ export const BubbleTimelineView: React.FC = () => {
     setDragStartY(0);
     setDragCurrentY(0);
     setInitialTouch(null);
-  }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer]);;
+
+    // 🔓 스크롤 차단 해제 (리스트뷰와 동일)
+    disableScrollLock();
+
+    console.log('✅ [BubbleView] 드래그 완료 및 스크롤 차단 해제');
+  }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer, disableScrollLock]);;
 
   // 시간 변경 확정
   const handleConfirmTimeChange = useCallback(async () => {
@@ -215,6 +378,40 @@ export const BubbleTimelineView: React.FC = () => {
       today.getDate() === currentDate.getDate()
     );
   }, [currentDate]);
+
+  // 🎯 컴포넌트 언마운트 시 정리 (리스트뷰와 동일)
+  React.useEffect(() => {
+    return () => {
+      // 컴포넌트가 언마운트될 때 스크롤 차단 완전 해제
+      if (preventScrollRef.current) {
+        document.removeEventListener('touchmove', preventScrollRef.current);
+        document.removeEventListener('wheel', preventScrollRef.current);
+        document.removeEventListener('scroll', preventScrollRef.current);
+      }
+
+      if (scrollWatcherRef.current) {
+        cancelAnimationFrame(scrollWatcherRef.current);
+      }
+
+      // 모든 스타일 명시적 복원
+      document.body.style.overflow = 'initial';
+      document.body.style.touchAction = 'auto';
+      document.body.style.userSelect = 'auto';
+      document.body.style.position = 'static';
+      document.body.style.width = 'auto';
+      document.body.classList.remove('dragging-active');
+
+      // 모든 스크롤 요소 복원
+      document.querySelectorAll('.overflow-y-auto, .overflow-auto').forEach(element => {
+        const el = element as HTMLElement;
+        el.style.touchAction = 'auto';
+        el.style.overflow = 'auto';
+        el.style.overflowY = 'auto';
+      });
+
+      console.log('🧹 [BubbleView] 컴포넌트 언마운트 시 드래그 정리 완료');
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-full w-full px-4 py-6">
