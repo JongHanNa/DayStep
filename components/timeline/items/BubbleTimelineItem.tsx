@@ -281,17 +281,20 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseLeave}
     >
-      {/* 왼쪽: 버블 + 연결 막대 영역 (래퍼로 분리) */}
-      <div className="relative" style={{ width: '64px' }}>
-        {/* 버블 아이콘 컨테이너 (드래그 시 transform 적용됨) */}
-        <div
-          className="flex flex-col items-center"
-          style={{
-            transform: isDragging ? `translateY(${dragOffset}px)` : undefined,
-            transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-          }}
-        >
-          <div className="relative">
+      {/* 왼쪽: 버블 + 연결 막대 영역 */}
+      <div className="flex flex-col" style={{ width: '64px' }}>
+        {/* 버블과 할일 카드가 정렬될 영역 */}
+        <div className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
+          {/* 버블 아이콘 (드래그 시 transform 적용) */}
+          <div
+            className="flex items-center justify-center absolute left-0 top-0"
+            style={{
+              width: `${bubbleWidth}px`,
+              height: `${bubbleHeight}px`,
+              transform: isDragging ? `translateY(${dragOffset}px)` : undefined,
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+            }}
+          >
             {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 (absolute) */}
             {isDragging && displayStartTime && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
@@ -316,33 +319,31 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           </div>
         </div>
 
-        {/* 연결 막대 - 래퍼에 absolute (드래그 영향 안 받음) */}
+        {/* 연결 막대 + 투명 공간 영역 (버블 아래) */}
         {nextItem && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 w-0.5"
-            style={{
-              top: `${bubbleHeight}px`,
-              height: `${connectorHeight}px`,
-              backgroundColor: progressPercentage >= 100 ? itemColor : '#E5E5E5',
-              transition: 'background-color 0.3s ease',
-            }}
-          />
-        )}
-
-        {/* 간격 유지용 투명 공간 (연결 막대가 absolute라서 간격 안 만들어지므로) */}
-        {nextItem && (
-          <div style={{ height: `${connectorHeight}px`, width: '1px', opacity: 0 }} />
+          <div className="relative" style={{ height: `${connectorHeight}px` }}>
+            {/* 연결 막대 */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-0.5 top-0"
+              style={{
+                height: `${connectorHeight}px`,
+                backgroundColor: progressPercentage >= 100 ? itemColor : '#E5E5E5',
+                transition: 'background-color 0.3s ease',
+              }}
+            />
+          </div>
         )}
       </div>
 
-      {/* 오른쪽: 할일 카드 */}
-      <div className={cn(
-        "flex-1 min-h-16 flex items-center",
-        isDragging && "opacity-0"
-      )}>
+      {/* 오른쪽: 할일 카드 (버블과 같은 높이로 정렬) */}
+      <div
+        className="flex items-center flex-1"
+        style={{ height: `${bubbleHeight}px` }}
+      >
         <div className={cn(
           "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-shadow",
-          !isDragging && "hover:shadow-md"
+          !isDragging && "hover:shadow-md",
+          isDragging && "opacity-0"
         )}>
           {/* 시간 표시 - 할일 제목 위 */}
           {startTime && endTime && (
