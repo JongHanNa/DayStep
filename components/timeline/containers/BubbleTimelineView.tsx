@@ -422,19 +422,170 @@ export const BubbleTimelineView: React.FC = () => {
     };
   }, []);
 
+  // 연결 막대 segment 정보 계산
+  const connectorSegments = useMemo(() => {
+    const segments: Array<{
+      topColor: string;
+      bottomColor: string;
+      progress: number;
+      top: number;
+      height: number;
+    }> = [];
+
+    let accumulatedHeight = 0;
+
+    console.log('🔍 [BubbleView] timedItems:', timedItems.map((item, idx) => ({
+      index: idx,
+      id: item.id,
+      title: item.title,
+      color: item.color,
+      startTime: item.startTime,
+      endTime: item.endTime
+    })));
+
+    timedItems.forEach((item, index) => {
+      const prevItem = index > 0 ? timedItems[index - 1] : null;
+
+      // 버블 아이콘 높이 계산 (BubbleTimelineItem과 동일한 로직)
+      const startTime = item.startTime ? new Date(item.startTime) : null;
+      const endTime = item.endTime ? new Date(item.endTime) : null;
+
+      let durationMinutes = 10;
+      if (startTime && endTime) {
+        const isSameDay = (date1: Date, date2: Date) => {
+          return date1.getFullYear() === date2.getFullYear() &&
+                 date1.getMonth() === date2.getMonth() &&
+                 date1.getDate() === date2.getDate();
+        };
+
+        // 시간 정규화 (BubbleTimelineItem과 동일)
+        const normalizedEndTime = isSameDay(startTime, endTime)
+          ? endTime
+          : new Date(
+              startTime.getFullYear(),
+              startTime.getMonth(),
+              startTime.getDate(),
+              endTime.getHours(),
+              endTime.getMinutes(),
+              endTime.getSeconds()
+            );
+
+        const minutes = Math.round((normalizedEndTime.getTime() - startTime.getTime()) / (60 * 1000));
+        if (minutes > 0 && minutes <= 1440) {
+          durationMinutes = minutes;
+        }
+      }
+
+      const bubbleHeight = durationMinutes <= 10 ? 64 : Math.min(64 + Math.ceil((durationMinutes - 10) / 10) * 20, 200);
+
+      // 연결 막대 segment 추가 (이전 아이템이 있는 경우)
+      if (prevItem && prevItem.endTime && item.startTime) {
+        const prevEndTime = new Date(prevItem.endTime);
+        const currStartTime = new Date(item.startTime);
+
+        // 시간 정규화 헬퍼
+        const isSameDay = (date1: Date, date2: Date) => {
+          return date1.getFullYear() === date2.getFullYear() &&
+                 date1.getMonth() === date2.getMonth() &&
+                 date1.getDate() === date2.getDate();
+        };
+
+        // 이전 할일 종료 시간 정규화 (현재 할일 시작 날짜 기준)
+        const normalizedPrevEnd = isSameDay(prevEndTime, currStartTime)
+          ? prevEndTime
+          : new Date(
+              currStartTime.getFullYear(),
+              currStartTime.getMonth(),
+              currStartTime.getDate(),
+              prevEndTime.getHours(),
+              prevEndTime.getMinutes(),
+              prevEndTime.getSeconds()
+            );
+
+        // 현재 할일 시작 시간 정규화
+        const normalizedCurrStart = isSameDay(normalizedPrevEnd, currStartTime)
+          ? currStartTime
+          : new Date(
+              normalizedPrevEnd.getFullYear(),
+              normalizedPrevEnd.getMonth(),
+              normalizedPrevEnd.getDate(),
+              currStartTime.getHours(),
+              currStartTime.getMinutes(),
+              currStartTime.getSeconds()
+            );
+
+        const gapMinutes = Math.round((normalizedCurrStart.getTime() - normalizedPrevEnd.getTime()) / (60 * 1000));
+        const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
+
+        // 연결 막대 진행률 계산
+        let progress = 0;
+        const now = currentTime.getTime();
+        const prevEnd = normalizedPrevEnd.getTime();
+        const currStart = normalizedCurrStart.getTime();
+
+        // 간격이 0인 경우 (할일이 연속됨) - 현재 시간이 해당 시점을 지났는지만 확인
+        if (prevEnd === currStart) {
+          progress = now >= currStart ? 100 : 0;
+        } else if (now < prevEnd) {
+          progress = 0;
+        } else if (now >= currStart) {
+          progress = 100;
+        } else {
+          progress = Math.round(((now - prevEnd) / (currStart - prevEnd)) * 100);
+        }
+
+        console.log(`🔗 [BubbleView] Connector ${index-1}→${index}:`, {
+          prevEnd: normalizedPrevEnd.toLocaleTimeString(),
+          currStart: normalizedCurrStart.toLocaleTimeString(),
+          now: new Date(currentTime).toLocaleTimeString(),
+          gapMinutes,
+          progress,
+          prevColor: prevItem.color,
+          currColor: item.color
+        });
+
+        segments.push({
+          topColor: prevItem.color || '#3B82F6',
+          bottomColor: item.color || '#3B82F6',
+          progress,
+          top: accumulatedHeight,
+          height: connectorHeight
+        });
+
+        accumulatedHeight += connectorHeight;
+      }
+
+      accumulatedHeight += bubbleHeight;
+    });
+
+    console.log('🎨 [BubbleView] Connector segments:', segments);
+    return segments;
+  }, [timedItems, currentTime]);
+
   return (
     <div className="flex flex-col h-full w-full px-4 py-6">
       {/* 타임라인 컨테이너 */}
       <div className="relative flex-1">
-        {/* ✨ 전체 연결선 (버블 아이콘 중앙을 관통) */}
-        <div
-          className="absolute left-[32px] w-0.5 bg-gray-300 dark:bg-gray-600"
-          style={{
-            top: 0,
-            height: '100%',
-            zIndex: 0
-          }}
-        />
+        {/* ✨ 연결선 segments (점진적 색칠) */}
+        {connectorSegments.map((segment) => (
+          <div
+            key={`connector-${segment.top}-${segment.height}`}
+            className="absolute w-0.5"
+            style={{
+              left: '32px',
+              top: `${segment.top}px`,
+              height: `${segment.height}px`,
+              background: segment.progress > 0
+                ? `linear-gradient(to bottom,
+                    ${segment.topColor} 0%,
+                    ${segment.topColor} ${segment.progress / 2}%,
+                    ${segment.bottomColor} ${50 + segment.progress / 2}%,
+                    ${segment.bottomColor} 100%)`
+                : '#E5E5E5',
+              zIndex: 0
+            }}
+          />
+        ))}
 
         {/* 버블 아이템 리스트 */}
         <div className="relative space-y-0" style={{ zIndex: 1 }}>

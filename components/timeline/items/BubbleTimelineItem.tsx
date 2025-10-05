@@ -211,6 +211,20 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return Math.round(((now - start) / (end - start)) * 100);
   }, [isToday, startTime, endTime, currentTime]);
 
+  // 연결 막대 진행률 계산 (이전 할일 종료 ~ 현재 할일 시작)
+  const connectorProgressPercentage = useMemo(() => {
+    if (!isToday || !prevItem?.endTime || !startTime) return 0;
+
+    const now = currentTime.getTime();
+    const prevEnd = new Date(prevItem.endTime).getTime();
+    const currStart = startTime.getTime();
+
+    if (now < prevEnd) return 0;
+    if (now >= currStart) return 100;
+
+    return Math.round(((now - prevEnd) / (currStart - prevEnd)) * 100);
+  }, [isToday, prevItem, startTime, currentTime]);
+
   // 연결 막대 색상 결정 (이전 할일과의 연결)
   const connectorColor = useMemo(() => {
     if (!prevItem || !prevItem.endTime) return 'transparent';
@@ -225,7 +239,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return 'transparent';
   }, [prevItem, isToday, currentTime]);
 
-  // 버블 스타일 결정 (색상 + 크기)
+  // 버블 스타일 결정 (색상 + 크기 + 점진적 색칠)
   const bubbleStyle = useMemo(() => {
     const baseStyle = {
       width: `${bubbleWidth}px`,
@@ -233,12 +247,11 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       borderRadius: borderRadius,
     };
 
-    // 진행 중이거나 완료된 경우 할일 색상
+    // 진행률에 따라 점진적으로 색칠 (위에서 아래로)
     if (progressPercentage > 0) {
       return {
         ...baseStyle,
-        backgroundColor: itemColor,
-        borderColor: itemColor,
+        background: `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, #E5E5E5 ${progressPercentage}%, #E5E5E5 100%)`,
       };
     }
 
@@ -246,7 +259,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return {
       ...baseStyle,
       backgroundColor: '#E5E5E5',
-      borderColor: '#E5E5E5',
     };
   }, [progressPercentage, itemColor, bubbleWidth, bubbleHeight, borderRadius]);
 
