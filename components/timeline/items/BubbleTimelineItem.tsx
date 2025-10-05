@@ -99,32 +99,37 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       return originalEndTime;
     }
 
-    // 다른 날이면 startTime의 날짜에 endTime의 시간을 적용
-    const normalized = new Date(
-      originalStartTime.getFullYear(),
-      originalStartTime.getMonth(),
-      originalStartTime.getDate(),
-      originalEndTime.getHours(),
-      originalEndTime.getMinutes(),
-      originalEndTime.getSeconds()
-    );
+    // 반복 할일인 경우에만 정규화 (일반 할일은 다음날 종료 허용)
+    if (item.type === 'todo' && item.data.recurrence_pattern !== 'none') {
+      // 다른 날이면 startTime의 날짜에 endTime의 시간을 적용
+      const normalized = new Date(
+        originalStartTime.getFullYear(),
+        originalStartTime.getMonth(),
+        originalStartTime.getDate(),
+        originalEndTime.getHours(),
+        originalEndTime.getMinutes(),
+        originalEndTime.getSeconds()
+      );
+      return normalized;
+    }
 
-    return normalized;
-  }, [originalStartTime, originalEndTime]);
+    // 일반 할일은 원본 endTime 사용
+    return originalEndTime;
+  }, [originalStartTime, originalEndTime, item.type, item.data]);
 
   // 할일 시간 간격(분) 계산
   const durationMinutes = useMemo(() => {
     if (!startTime || !endTime) return 10; // 기본값 10분
 
-    // 같은 날이 아니면 기본값 (반복 할일 등의 경우)
-    if (!isSameDay(startTime, endTime)) {
-      return 10;
+    let minutes = Math.round((endTime.getTime() - startTime.getTime()) / (60 * 1000));
+
+    // 음수면 다음날 종료 (24시간 더하기)
+    if (minutes < 0) {
+      minutes += 24 * 60; // 1440분 추가
     }
 
-    const minutes = Math.round((endTime.getTime() - startTime.getTime()) / (60 * 1000));
-
-    // 비정상 값 체크 (24시간 = 1440분 초과 또는 음수)
-    if (minutes > 1440 || minutes < 0) {
+    // 24시간 초과 체크 (반복 할일의 비정상 값)
+    if (minutes > 1440) {
       return 10;
     }
 
@@ -159,20 +164,20 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return Math.max(1, gap); // 최소 1분
   }, [endTime, nextItem]);
 
-  // 버블 높이 계산 (10분 단위로 20px씩 증가, 최대 200px)
+  // 버블 높이 계산 (10분 단위로 10px씩 증가, 최대 500px)
   const bubbleHeight = useMemo(() => {
     const baseHeight = 64; // 1-10분: 64px (원형)
 
     // 11분 이상일 때만 추가 높이 적용
     if (durationMinutes <= 10) return baseHeight;
 
-    // 10분 초과분에 대해 10분당 20px 추가
-    // 예: 11-20분 → 20px 추가 → 84px
-    //     21-30분 → 40px 추가 → 104px
-    //     31-40분 → 60px 추가 → 124px
+    // 10분 초과분에 대해 10분당 10px 추가
+    // 예: 11-20분 → 10px 추가 → 74px
+    //     1시간(60분) → 50분 추가 → 50px 추가 → 114px
+    //     7시간(420분) → 410분 추가 → 410px 추가 → 474px
     const extraMinutes = durationMinutes - 10;
-    const extraHeight = Math.ceil(extraMinutes / 10) * 20;
-    return Math.min(baseHeight + extraHeight, 200); // 최대 200px
+    const extraHeight = Math.ceil(extraMinutes / 10) * 10;
+    return Math.min(baseHeight + extraHeight, 500); // 최대 500px (약 7.5시간)
   }, [durationMinutes]);
 
   // borderRadius 계산 (타원형 효과)
@@ -182,20 +187,20 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return `${bubbleWidth / 2}px / ${Math.min(bubbleHeight / 2, bubbleWidth / 2)}px`;
   }, [durationMinutes, bubbleHeight]);
 
-  // 연결 막대 높이 계산 (간격에 비례, 최대 200px)
+  // 연결 막대 높이 계산 (간격에 비례, 최대 500px)
   const connectorHeight = useMemo(() => {
     const baseHeight = 16; // 1-10분: 16px (기본)
 
     // 11분 이상일 때만 추가 높이 적용
     if (gapMinutes <= 10) return baseHeight;
 
-    // 10분 초과분에 대해 10분당 20px 추가
-    // 예: 11-20분 → 20px 추가 → 36px
-    //     21-30분 → 40px 추가 → 56px
-    //     31-40분 → 60px 추가 → 76px
+    // 10분 초과분에 대해 10분당 10px 추가 (버블과 동일한 비율)
+    // 예: 11-20분 → 10px 추가 → 26px
+    //     1시간(60분) → 50분 추가 → 66px
+    //     3시간(180분) → 170분 추가 → 186px
     const extraMinutes = gapMinutes - 10;
-    const extraHeight = Math.ceil(extraMinutes / 10) * 20;
-    return Math.min(baseHeight + extraHeight, 200); // 최대 200px
+    const extraHeight = Math.ceil(extraMinutes / 10) * 10;
+    return Math.min(baseHeight + extraHeight, 500); // 최대 500px
   }, [gapMinutes]);
 
   // 현재 시간 기준 진행률 계산 (0-100)
@@ -282,6 +287,17 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return endTime;
   }, [endTime, isDragging, dragOffset]);
 
+  // 다음날 종료 여부 판단
+  const isNextDay = useMemo(() => {
+    if (!startTime || !endTime) return false;
+
+    // 종료 시간이 시작 시간보다 작으면 다음날 종료
+    const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
+    const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
+
+    return endMinutes < startMinutes;
+  }, [startTime, endTime]);
+
   // 시간 포맷
   const formatTime = (date: Date | null) => {
     if (!date) return '';
@@ -354,7 +370,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           {/* 시간 표시 - 할일 제목 위 */}
           {startTime && endTime && (
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
-              {formatTime(startTime)} ~ {formatTime(endTime)} 🔄
+              {formatTime(startTime)} ~ {formatTime(endTime)}
+              {isNextDay && <span className="text-xs font-medium text-blue-600 dark:text-blue-400">+1</span>}
+              {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && ' 🔄'}
             </div>
           )}
 
