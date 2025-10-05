@@ -808,10 +808,10 @@ export const useTimelineViewStore = create<TimelineViewState>()(
                 startTime: finalStartTime,
                 endTime: finalEndTime,
                 isAllDay,
-                color: todo.priority === 'high' ? '#EF4444' : todo.priority === 'medium' ? '#F59E0B' : '#10B981',
+                color: todo.color || (todo.priority === 'high' ? '#EF4444' : todo.priority === 'medium' ? '#F59E0B' : '#10B981'),
                 userId: todo.user_id,
-                createdAt: todo.created_at && !isNaN(new Date(todo.created_at).getTime()) 
-                  ? convertUtcToKst(new Date(todo.created_at)) 
+                createdAt: todo.created_at && !isNaN(new Date(todo.created_at).getTime())
+                  ? convertUtcToKst(new Date(todo.created_at))
                   : new Date(),
                 updatedAt: (todo.updated_at && !isNaN(new Date(todo.updated_at).getTime()))
                   ? convertUtcToKst(new Date(todo.updated_at))
