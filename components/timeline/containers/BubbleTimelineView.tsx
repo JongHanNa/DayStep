@@ -28,7 +28,12 @@ import DateTimeRangePicker from '../controls/DateTimeRangePicker';
  * - 시간 변경 모달로 최종 확인
  */
 export const BubbleTimelineView: React.FC = () => {
-  const { currentDate, getFilteredAndSortedItems, viewMode } = useTimelineViewStore();
+  const {
+    currentDate,
+    getFilteredAndSortedItems,
+    viewMode,
+    items: storeItems  // 🔧 스토어의 실제 items 상태도 의존 (리스트뷰와 동일)
+  } = useTimelineViewStore();
   const updateTodo = useTodoStore(state => state.updateTodo);
   const currentTime = useCurrentTime();
 
@@ -55,10 +60,15 @@ export const BubbleTimelineView: React.FC = () => {
     newEndTime: Date;
   } | null>(null);
 
-  // 필터링된 아이템
+  // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
+    console.log('🔄 BubbleTimelineView - items 재계산:', {
+      currentDate: currentDate.toISOString(),
+      storeItemsCount: storeItems.length,
+      filteredItemsCount: getFilteredAndSortedItems().length
+    });
     return getFilteredAndSortedItems();
-  }, [getFilteredAndSortedItems]);
+  }, [getFilteredAndSortedItems, currentDate, storeItems]); // 🔧 storeItems 의존성 추가
 
   // 시간 지정 할일만 필터링
   const timedItems = useMemo(() => {
