@@ -217,20 +217,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     const dayStart = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 0, 0, 0);
     const dayEnd = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 23, 59, 59, 999);
 
-    // 🔍 디버깅 로그
-    if (item.title === '수면') {
-      console.log('🛌 수면 할일 진행률 계산:', {
-        dateStatus,
-        currentDate: viewingDate.toLocaleString('ko-KR'),
-        startTime: startTime.toLocaleString('ko-KR'),
-        endTime: endTime.toLocaleString('ko-KR'),
-        dayStart: dayStart.toLocaleString('ko-KR'),
-        dayEnd: dayEnd.toLocaleString('ko-KR'),
-        '할일이 이 날짜 이후 시작?': startTime.getTime() > dayEnd.getTime(),
-        '할일이 이 날짜와 교차?': !(startTime.getTime() > dayEnd.getTime() || endTime.getTime() < dayStart.getTime())
-      });
-    }
-
     // 과거 날짜: 실제 현재 시간으로 진행률 계산
     // (반복 할일은 시간 정규화되어 있으므로 날짜 비교가 아닌 시간 비교 필요)
     if (dateStatus === 'past') {
@@ -248,19 +234,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       const endHour = endTime.getHours();
       const endMinute = endTime.getMinutes();
       const endTimeOfDay = endHour * 60 + endMinute; // 0~1439 (분)
-
-      // 🔍 디버깅 로그
-      if (item.title === '수면') {
-        console.log('🛌 [과거 날짜] 수면 할일 시간 비교:', {
-          nowTime: `${nowHour}:${String(nowMinute).padStart(2, '0')}`,
-          startTime: `${startHour}:${String(startMinute).padStart(2, '0')}`,
-          endTime: `${endHour}:${String(endMinute).padStart(2, '0')}`,
-          nowTimeOfDay: `${nowTimeOfDay}분`,
-          startTimeOfDay: `${startTimeOfDay}분`,
-          endTimeOfDay: `${endTimeOfDay}분`,
-          '크로스데이?': endTimeOfDay < startTimeOfDay
-        });
-      }
 
       // 크로스데이 할일 감지 (종료 시간 < 시작 시간)
       // 예: 22:30~05:30 → 1350분~330분
@@ -320,27 +293,11 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       const endMinute = endTime.getMinutes();
       const endTimeOfDay = endHour * 60 + endMinute;
 
-      // 🔍 디버깅 로그
-      if (item.title === '수면') {
-        console.log('🛌 [오늘] 수면 할일 시간 비교:', {
-          nowTime: `${nowHour}:${String(nowMinute).padStart(2, '0')}`,
-          startTime: `${startHour}:${String(startMinute).padStart(2, '0')}`,
-          endTime: `${endHour}:${String(endMinute).padStart(2, '0')}`,
-          nowTimeOfDay: `${nowTimeOfDay}분`,
-          startTimeOfDay: `${startTimeOfDay}분`,
-          endTimeOfDay: `${endTimeOfDay}분`,
-          '크로스데이?': endTimeOfDay < startTimeOfDay
-        });
-      }
-
       // 크로스데이 할일 (예: 22:30~05:30+1)
       // 오늘 날짜 뷰에서는 "오늘 시작하는" 할일만 표시
       if (endTimeOfDay < startTimeOfDay) {
         // 아직 시작 전 (00:00 ~ startTime)
         if (nowTimeOfDay < startTimeOfDay) {
-          if (item.title === '수면') {
-            console.log('✅ [크로스데이] 아직 시작 전 → 0%');
-          }
           return 0;
         }
 
@@ -348,16 +305,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         const progress = nowTimeOfDay - startTimeOfDay;
         const duration = 1439 - startTimeOfDay;
         const percentage = Math.round((progress / duration) * 100);
-
-        if (item.title === '수면') {
-          console.log('✅ [크로스데이] 오늘 부분 진행 중:', {
-            startTimeOfDay: `${startTimeOfDay}분`,
-            nowTimeOfDay: `${nowTimeOfDay}분`,
-            progress: `${progress}분`,
-            duration: `${duration}분`,
-            percentage: `${percentage}%`
-          });
-        }
 
         return percentage;
       }
