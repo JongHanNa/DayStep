@@ -426,8 +426,18 @@ export const BubbleTimelineView: React.FC = () => {
     <div className="flex flex-col h-full w-full px-4 py-6">
       {/* 타임라인 컨테이너 */}
       <div className="relative flex-1">
+        {/* ✨ 전체 연결선 (버블 아이콘 중앙을 관통) */}
+        <div
+          className="absolute left-[32px] w-0.5 bg-gray-300 dark:bg-gray-600"
+          style={{
+            top: 0,
+            height: '100%',
+            zIndex: 0
+          }}
+        />
+
         {/* 버블 아이템 리스트 */}
-        <div className="relative space-y-0">
+        <div className="relative space-y-0" style={{ zIndex: 1 }}>
           {timedItems.map((item, index) => {
             const prevItem = index > 0 ? timedItems[index - 1] : null;
             const nextItem = index < timedItems.length - 1 ? timedItems[index + 1] : null;

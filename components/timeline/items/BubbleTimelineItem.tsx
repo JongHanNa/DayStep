@@ -282,7 +282,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       className={cn(
         'relative flex items-start gap-4',
         'cursor-pointer select-none transition-all',
-        !isDragging && 'hover:bg-gray-50 dark:hover:bg-gray-800/30',
+        // hover 배경 제거 - 카드에서만 hover 효과 적용하여 연결선 가려짐 방지
       )}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -334,18 +334,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           </div>
         </div>
 
-        {/* 연결 막대 + 투명 공간 영역 (버블 아래) */}
+        {/* 투명 공간 영역 (버블 아래) - 연결선은 BubbleTimelineView에서 전체 관통선으로 처리 */}
         {nextItem && (
           <div className="relative" style={{ height: `${connectorHeight}px` }}>
-            {/* 연결 막대 */}
-            <div
-              className="absolute left-1/2 -translate-x-1/2 w-0.5 top-0"
-              style={{
-                height: `${connectorHeight}px`,
-                backgroundColor: progressPercentage >= 100 ? itemColor : '#E5E5E5',
-                transition: 'background-color 0.3s ease',
-              }}
-            />
+            {/* 연결 막대 제거 - 간격 확보용 투명 공간만 유지 */}
           </div>
         )}
       </div>
@@ -356,8 +348,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         style={{ height: `${bubbleHeight}px` }}
       >
         <div className={cn(
-          "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-shadow",
-          !isDragging && "hover:shadow-md",
+          "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-all",
+          !isDragging && "hover:shadow-md hover:bg-gray-200 dark:hover:bg-gray-700",
           isDragging && "opacity-0"
         )}>
           {/* 시간 표시 - 할일 제목 위 */}
