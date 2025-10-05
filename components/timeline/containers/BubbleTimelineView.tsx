@@ -592,22 +592,44 @@ export const BubbleTimelineView: React.FC = () => {
               const connectorEndPercent = ((accumulatedHeight + connectorHeight) / totalHeight) * 100;
 
               // 연결선 진행 상태
+              const connectorMidPercent = (connectorStartPercent + connectorEndPercent) / 2;
+              const transitionRange = 3; // 그라데이션 전환 영역 (%)
+              const gradientStart = Math.max(connectorStartPercent, connectorMidPercent - transitionRange);
+              const gradientEnd = Math.min(connectorEndPercent, connectorMidPercent + transitionRange);
+
               if (now >= nextStartTime.getTime()) {
+                // 완료된 연결선 - 중앙 기준 자연스러운 그라데이션
                 gradientStops.push(
-                  { color: nextItem.color || '#3B82F6', position: connectorStartPercent },
+                  { color: item.color || '#3B82F6', position: connectorStartPercent },
+                  { color: item.color || '#3B82F6', position: gradientStart },
+                  { color: nextItem.color || '#3B82F6', position: gradientEnd },
                   { color: nextItem.color || '#3B82F6', position: connectorEndPercent }
                 );
               } else if (now >= endTime.getTime()) {
                 const connectorProgress = ((now - endTime.getTime()) / (nextStartTime.getTime() - endTime.getTime())) * 100;
                 const connectorColoredEnd = connectorStartPercent + (connectorEndPercent - connectorStartPercent) * (connectorProgress / 100);
 
-                gradientStops.push(
-                  { color: item.color || '#3B82F6', position: connectorStartPercent },
-                  { color: nextItem.color || '#3B82F6', position: connectorColoredEnd },
-                  { color: '#E5E5E5', position: connectorColoredEnd },
-                  { color: '#E5E5E5', position: connectorEndPercent }
-                );
+                if (connectorColoredEnd <= connectorMidPercent) {
+                  // 진행이 중간점 이전 - 상단 색상만 진행
+                  gradientStops.push(
+                    { color: item.color || '#3B82F6', position: connectorStartPercent },
+                    { color: item.color || '#3B82F6', position: connectorColoredEnd },
+                    { color: '#E5E5E5', position: connectorColoredEnd },
+                    { color: '#E5E5E5', position: connectorEndPercent }
+                  );
+                } else {
+                  // 진행이 중간점 이후 - 상단 완료, 하단 진행 중
+                  gradientStops.push(
+                    { color: item.color || '#3B82F6', position: connectorStartPercent },
+                    { color: item.color || '#3B82F6', position: gradientStart },
+                    { color: nextItem.color || '#3B82F6', position: gradientEnd },
+                    { color: nextItem.color || '#3B82F6', position: connectorColoredEnd },
+                    { color: '#E5E5E5', position: connectorColoredEnd },
+                    { color: '#E5E5E5', position: connectorEndPercent }
+                  );
+                }
               } else {
+                // 대기 중인 연결선 - 회색으로 표시
                 gradientStops.push(
                   { color: '#E5E5E5', position: connectorStartPercent },
                   { color: '#E5E5E5', position: connectorEndPercent }
@@ -656,27 +678,54 @@ export const BubbleTimelineView: React.FC = () => {
           const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
           const connectorEndPercent = ((accumulatedHeight + connectorHeight) / totalHeight) * 100;
 
+          const connectorMidPercent = (connectorStartPercent + connectorEndPercent) / 2;
+          const transitionRange = 3; // 그라데이션 전환 영역 (%)
+          const gradientStart = Math.max(connectorStartPercent, connectorMidPercent - transitionRange);
+          const gradientEnd = Math.min(connectorEndPercent, connectorMidPercent + transitionRange);
           let connectorColor = '#E5E5E5';
+
           if (isToday) {
             const now = currentTime.getTime();
             if (now >= normalizedNextStart.getTime()) {
-              connectorColor = nextItem.color || '#3B82F6';
+              // 완료된 연결선 - 중앙 기준 자연스러운 그라데이션
+              gradientStops.push(
+                { color: item.color || bubbleColor, position: connectorStartPercent },
+                { color: item.color || bubbleColor, position: gradientStart },
+                { color: nextItem.color || '#3B82F6', position: gradientEnd },
+                { color: nextItem.color || '#3B82F6', position: connectorEndPercent }
+              );
+              accumulatedHeight += connectorHeight;
+              return;
             } else if (now >= endTime.getTime()) {
               const connectorProgress = ((now - endTime.getTime()) / (normalizedNextStart.getTime() - endTime.getTime())) * 100;
               const connectorColoredEnd = connectorStartPercent + (connectorEndPercent - connectorStartPercent) * (connectorProgress / 100);
 
-              gradientStops.push(
-                { color: item.color || '#3B82F6', position: connectorStartPercent },
-                { color: nextItem.color || '#3B82F6', position: connectorColoredEnd },
-                { color: '#E5E5E5', position: connectorColoredEnd },
-                { color: '#E5E5E5', position: connectorEndPercent }
-              );
+              if (connectorColoredEnd <= connectorMidPercent) {
+                // 진행이 중간점 이전 - 상단 색상만 진행
+                gradientStops.push(
+                  { color: item.color || bubbleColor, position: connectorStartPercent },
+                  { color: item.color || bubbleColor, position: connectorColoredEnd },
+                  { color: '#E5E5E5', position: connectorColoredEnd },
+                  { color: '#E5E5E5', position: connectorEndPercent }
+                );
+              } else {
+                // 진행이 중간점 이후 - 상단 완료, 하단 진행 중
+                gradientStops.push(
+                  { color: item.color || bubbleColor, position: connectorStartPercent },
+                  { color: item.color || bubbleColor, position: gradientStart },
+                  { color: nextItem.color || '#3B82F6', position: gradientEnd },
+                  { color: nextItem.color || '#3B82F6', position: connectorColoredEnd },
+                  { color: '#E5E5E5', position: connectorColoredEnd },
+                  { color: '#E5E5E5', position: connectorEndPercent }
+                );
+              }
 
               accumulatedHeight += connectorHeight;
               return;
             }
           }
 
+          // 대기 중이거나 과거 할일의 연결선 - 중앙 기준 색상 분할
           gradientStops.push(
             { color: connectorColor, position: connectorStartPercent },
             { color: connectorColor, position: connectorEndPercent }
