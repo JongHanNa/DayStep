@@ -432,15 +432,6 @@ export const BubbleTimelineView: React.FC = () => {
     let totalHeight = 0;
     let accumulatedHeight = 0;
 
-    console.log('🔍 [BubbleView] timedItems:', timedItems.map((item, idx) => ({
-      index: idx,
-      id: item.id,
-      title: item.title,
-      color: item.color,
-      startTime: item.startTime,
-      endTime: item.endTime
-    })));
-
     // 전체 높이 계산
     timedItems.forEach((item, index) => {
       const startTime = item.startTime ? new Date(item.startTime) : null;
@@ -479,24 +470,27 @@ export const BubbleTimelineView: React.FC = () => {
         const nextItem = timedItems[index + 1];
         if (endTime && nextItem.startTime) {
           const nextStartTime = new Date(nextItem.startTime);
-          const isSameDay = (date1: Date, date2: Date) => {
-            return date1.getFullYear() === date2.getFullYear() &&
-                   date1.getMonth() === date2.getMonth() &&
-                   date1.getDate() === date2.getDate();
-          };
 
-          const normalizedNextStart = isSameDay(endTime, nextStartTime)
-            ? nextStartTime
-            : new Date(
-                endTime.getFullYear(),
-                endTime.getMonth(),
-                endTime.getDate(),
-                nextStartTime.getHours(),
-                nextStartTime.getMinutes(),
-                nextStartTime.getSeconds()
-              );
+          // 항상 현재 날짜(오늘)를 기준으로 정규화 (반복 할일 시간 비교를 위해)
+          const normalizedEndTime = new Date(
+            currentTime.getFullYear(),
+            currentTime.getMonth(),
+            currentTime.getDate(),
+            endTime.getHours(),
+            endTime.getMinutes(),
+            endTime.getSeconds()
+          );
 
-          const gapMinutes = Math.round((normalizedNextStart.getTime() - endTime.getTime()) / (60 * 1000));
+          const normalizedNextStart = new Date(
+            currentTime.getFullYear(),
+            currentTime.getMonth(),
+            currentTime.getDate(),
+            nextStartTime.getHours(),
+            nextStartTime.getMinutes(),
+            nextStartTime.getSeconds()
+          );
+
+          const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
           const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
           totalHeight += connectorHeight;
         }
@@ -544,8 +538,28 @@ export const BubbleTimelineView: React.FC = () => {
       let bubbleColor = '#E5E5E5'; // 기본 회색
       if (isToday && startTime && endTime) {
         const now = currentTime.getTime();
-        const start = startTime.getTime();
-        const end = endTime.getTime();
+
+        // 현재 날짜(오늘)를 기준으로 정규화 (반복 할일 시간 비교를 위해)
+        const normalizedStartTime = new Date(
+          currentTime.getFullYear(),
+          currentTime.getMonth(),
+          currentTime.getDate(),
+          startTime.getHours(),
+          startTime.getMinutes(),
+          startTime.getSeconds()
+        );
+
+        const normalizedEndTime = new Date(
+          currentTime.getFullYear(),
+          currentTime.getMonth(),
+          currentTime.getDate(),
+          endTime.getHours(),
+          endTime.getMinutes(),
+          endTime.getSeconds()
+        );
+
+        const start = normalizedStartTime.getTime();
+        const end = normalizedEndTime.getTime();
 
         if (now >= end) {
           bubbleColor = item.color || '#3B82F6'; // 완료된 할일
@@ -568,24 +582,27 @@ export const BubbleTimelineView: React.FC = () => {
             const nextItem = timedItems[index + 1];
             if (endTime && nextItem.startTime) {
               const nextStartTime = new Date(nextItem.startTime);
-              const isSameDay = (date1: Date, date2: Date) => {
-                return date1.getFullYear() === date2.getFullYear() &&
-                       date1.getMonth() === date2.getMonth() &&
-                       date1.getDate() === date2.getDate();
-              };
 
-              const normalizedNextStart = isSameDay(endTime, nextStartTime)
-                ? nextStartTime
-                : new Date(
-                    endTime.getFullYear(),
-                    endTime.getMonth(),
-                    endTime.getDate(),
-                    nextStartTime.getHours(),
-                    nextStartTime.getMinutes(),
-                    nextStartTime.getSeconds()
-                  );
+              // 항상 현재 날짜(오늘)를 기준으로 정규화 (반복 할일 시간 비교를 위해)
+              const normalizedEndTime = new Date(
+                currentTime.getFullYear(),
+                currentTime.getMonth(),
+                currentTime.getDate(),
+                endTime.getHours(),
+                endTime.getMinutes(),
+                endTime.getSeconds()
+              );
 
-              const gapMinutes = Math.round((normalizedNextStart.getTime() - endTime.getTime()) / (60 * 1000));
+              const normalizedNextStart = new Date(
+                currentTime.getFullYear(),
+                currentTime.getMonth(),
+                currentTime.getDate(),
+                nextStartTime.getHours(),
+                nextStartTime.getMinutes(),
+                nextStartTime.getSeconds()
+              );
+
+              const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
               const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
 
               const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
@@ -597,7 +614,8 @@ export const BubbleTimelineView: React.FC = () => {
               const gradientStart = Math.max(connectorStartPercent, connectorMidPercent - transitionRange);
               const gradientEnd = Math.min(connectorEndPercent, connectorMidPercent + transitionRange);
 
-              if (now >= nextStartTime.getTime()) {
+              // 간격 0분일 때도 완료된 연결선으로 판단
+              if (now >= normalizedNextStart.getTime() || (gapMinutes === 0 && now >= normalizedEndTime.getTime())) {
                 // 완료된 연결선 - 중앙 기준 자연스러운 그라데이션
                 gradientStops.push(
                   { color: item.color || '#3B82F6', position: connectorStartPercent },
@@ -605,8 +623,8 @@ export const BubbleTimelineView: React.FC = () => {
                   { color: nextItem.color || '#3B82F6', position: gradientEnd },
                   { color: nextItem.color || '#3B82F6', position: connectorEndPercent }
                 );
-              } else if (now >= endTime.getTime()) {
-                const connectorProgress = ((now - endTime.getTime()) / (nextStartTime.getTime() - endTime.getTime())) * 100;
+              } else if (now >= normalizedEndTime.getTime()) {
+                const connectorProgress = ((now - normalizedEndTime.getTime()) / (normalizedNextStart.getTime() - normalizedEndTime.getTime())) * 100;
                 const connectorColoredEnd = connectorStartPercent + (connectorEndPercent - connectorStartPercent) * (connectorProgress / 100);
 
                 if (connectorColoredEnd <= connectorMidPercent) {
@@ -655,24 +673,27 @@ export const BubbleTimelineView: React.FC = () => {
         const nextItem = timedItems[index + 1];
         if (endTime && nextItem.startTime) {
           const nextStartTime = new Date(nextItem.startTime);
-          const isSameDay = (date1: Date, date2: Date) => {
-            return date1.getFullYear() === date2.getFullYear() &&
-                   date1.getMonth() === date2.getMonth() &&
-                   date1.getDate() === date2.getDate();
-          };
 
-          const normalizedNextStart = isSameDay(endTime, nextStartTime)
-            ? nextStartTime
-            : new Date(
-                endTime.getFullYear(),
-                endTime.getMonth(),
-                endTime.getDate(),
-                nextStartTime.getHours(),
-                nextStartTime.getMinutes(),
-                nextStartTime.getSeconds()
-              );
+          // 항상 현재 날짜(오늘)를 기준으로 정규화 (반복 할일 시간 비교를 위해)
+          const normalizedEndTime = new Date(
+            currentTime.getFullYear(),
+            currentTime.getMonth(),
+            currentTime.getDate(),
+            endTime.getHours(),
+            endTime.getMinutes(),
+            endTime.getSeconds()
+          );
 
-          const gapMinutes = Math.round((normalizedNextStart.getTime() - endTime.getTime()) / (60 * 1000));
+          const normalizedNextStart = new Date(
+            currentTime.getFullYear(),
+            currentTime.getMonth(),
+            currentTime.getDate(),
+            nextStartTime.getHours(),
+            nextStartTime.getMinutes(),
+            nextStartTime.getSeconds()
+          );
+
+          const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
           const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
 
           const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
@@ -686,7 +707,8 @@ export const BubbleTimelineView: React.FC = () => {
 
           if (isToday) {
             const now = currentTime.getTime();
-            if (now >= normalizedNextStart.getTime()) {
+            // 간격 0분일 때도 완료된 연결선으로 판단
+            if (now >= normalizedNextStart.getTime() || (gapMinutes === 0 && now >= normalizedEndTime.getTime())) {
               // 완료된 연결선 - 중앙 기준 자연스러운 그라데이션
               gradientStops.push(
                 { color: item.color || bubbleColor, position: connectorStartPercent },
@@ -696,8 +718,8 @@ export const BubbleTimelineView: React.FC = () => {
               );
               accumulatedHeight += connectorHeight;
               return;
-            } else if (now >= endTime.getTime()) {
-              const connectorProgress = ((now - endTime.getTime()) / (normalizedNextStart.getTime() - endTime.getTime())) * 100;
+            } else if (now >= normalizedEndTime.getTime()) {
+              const connectorProgress = ((now - normalizedEndTime.getTime()) / (normalizedNextStart.getTime() - normalizedEndTime.getTime())) * 100;
               const connectorColoredEnd = connectorStartPercent + (connectorEndPercent - connectorStartPercent) * (connectorProgress / 100);
 
               if (connectorColoredEnd <= connectorMidPercent) {
@@ -741,8 +763,6 @@ export const BubbleTimelineView: React.FC = () => {
       .sort((a, b) => a.position - b.position)
       .map(stop => `${stop.color} ${stop.position.toFixed(2)}%`)
       .join(', ');
-
-    console.log('🎨 [BubbleView] Connector gradient:', { totalHeight, gradientStops });
 
     return {
       totalHeight,
