@@ -13,6 +13,8 @@ interface BubbleTimelineItemProps {
   dragOffset: number;
   isToday: boolean;
   currentTime: Date;
+  currentDate: Date;  // viewing date (어제/오늘/내일 등)
+  dateStatus: 'past' | 'today' | 'future';  // 부모로부터 전달받는 날짜 상태
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
@@ -38,6 +40,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   dragOffset,
   isToday,
   currentTime,
+  currentDate,  // viewing date (어제/오늘/내일 등)
+  dateStatus,  // 부모로부터 전달받는 날짜 상태
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -204,32 +208,215 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   }, [gapMinutes]);
 
   // 현재 시간 기준 진행률 계산 (0-100)
+  // 크로스데이 할일 처리: currentDate 날짜의 시작(00:00)과 끝(23:59:59)을 기준으로 계산
   const progressPercentage = useMemo(() => {
-    if (!isToday || !startTime || !endTime) return 0;
+    if (!startTime || !endTime) return 0;
 
-    const now = currentTime.getTime();
-    const start = startTime.getTime();
-    const end = endTime.getTime();
+    // currentDate (viewing date)의 00:00:00 ~ 23:59:59 범위 계산
+    const viewingDate = new Date(currentDate);  // ✅ currentDate 사용
+    const dayStart = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 0, 0, 0);
+    const dayEnd = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 23, 59, 59, 999);
 
-    if (now < start) return 0;
-    if (now >= end) return 100;
+    // 🔍 디버깅 로그
+    if (item.title === '수면') {
+      console.log('🛌 수면 할일 진행률 계산:', {
+        dateStatus,
+        currentDate: viewingDate.toLocaleString('ko-KR'),
+        startTime: startTime.toLocaleString('ko-KR'),
+        endTime: endTime.toLocaleString('ko-KR'),
+        dayStart: dayStart.toLocaleString('ko-KR'),
+        dayEnd: dayEnd.toLocaleString('ko-KR'),
+        '할일이 이 날짜 이후 시작?': startTime.getTime() > dayEnd.getTime(),
+        '할일이 이 날짜와 교차?': !(startTime.getTime() > dayEnd.getTime() || endTime.getTime() < dayStart.getTime())
+      });
+    }
 
-    return Math.round(((now - start) / (end - start)) * 100);
-  }, [isToday, startTime, endTime, currentTime]);
+    // 과거 날짜: 실제 현재 시간으로 진행률 계산
+    // (반복 할일은 시간 정규화되어 있으므로 날짜 비교가 아닌 시간 비교 필요)
+    if (dateStatus === 'past') {
+      // 실제 현재 시간 (분 단위)
+      const nowHour = currentTime.getHours();
+      const nowMinute = currentTime.getMinutes();
+      const nowTimeOfDay = nowHour * 60 + nowMinute;
+
+      // 시작 시간 (분 단위)
+      const startHour = startTime.getHours();
+      const startMinute = startTime.getMinutes();
+      const startTimeOfDay = startHour * 60 + startMinute; // 0~1439 (분)
+
+      // 종료 시간 (분 단위)
+      const endHour = endTime.getHours();
+      const endMinute = endTime.getMinutes();
+      const endTimeOfDay = endHour * 60 + endMinute; // 0~1439 (분)
+
+      // 🔍 디버깅 로그
+      if (item.title === '수면') {
+        console.log('🛌 [과거 날짜] 수면 할일 시간 비교:', {
+          nowTime: `${nowHour}:${String(nowMinute).padStart(2, '0')}`,
+          startTime: `${startHour}:${String(startMinute).padStart(2, '0')}`,
+          endTime: `${endHour}:${String(endMinute).padStart(2, '0')}`,
+          nowTimeOfDay: `${nowTimeOfDay}분`,
+          startTimeOfDay: `${startTimeOfDay}분`,
+          endTimeOfDay: `${endTimeOfDay}분`,
+          '크로스데이?': endTimeOfDay < startTimeOfDay
+        });
+      }
+
+      // 크로스데이 할일 감지 (종료 시간 < 시작 시간)
+      // 예: 22:30~05:30 → 1350분~330분
+      if (endTimeOfDay < startTimeOfDay) {
+        // 전체 길이: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 종료)
+        const totalDuration = (1439 - startTimeOfDay) + endTimeOfDay;
+
+        // 현재 시간이 다음날 종료 시간 이후면 100%
+        if (nowTimeOfDay >= endTimeOfDay) {
+          if (item.title === '수면') {
+            console.log('✅ [크로스데이] 이미 종료됨 → 100%');
+          }
+          return 100;
+        }
+
+        // 현재 시간이 다음날 (종료 전)
+        // 진행: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 현재)
+        const progress = (1439 - startTimeOfDay) + nowTimeOfDay;
+        const percentage = Math.round((progress / totalDuration) * 100);
+
+        if (item.title === '수면') {
+          console.log('✅ [크로스데이] 진행 중:', {
+            어제부분: `${1439 - startTimeOfDay}분`,
+            오늘부분: `${nowTimeOfDay}분`,
+            전체진행: `${progress}분`,
+            전체길이: `${totalDuration}분`,
+            percentage: `${percentage}%`
+          });
+        }
+
+        return percentage;
+      }
+
+      // 일반 할일: 과거 날짜는 100% 색칠
+      if (item.title === '수면') {
+        console.log('✅ [일반 할일] 과거 날짜 → 100%');
+      }
+      return 100;
+    }
+
+    // 미래 날짜: 0% (회색)
+    if (dateStatus === 'future') return 0;
+
+    // 오늘: 00:00 ~ 현재 시간까지의 진행률 (시간만 비교)
+    if (dateStatus === 'today') {
+      const nowHour = currentTime.getHours();
+      const nowMinute = currentTime.getMinutes();
+      const nowTimeOfDay = nowHour * 60 + nowMinute; // 현재 시간 (분)
+
+      // 시작 시간 (분 단위)
+      const startHour = startTime.getHours();
+      const startMinute = startTime.getMinutes();
+      const startTimeOfDay = startHour * 60 + startMinute;
+
+      // 종료 시간 (분 단위)
+      const endHour = endTime.getHours();
+      const endMinute = endTime.getMinutes();
+      const endTimeOfDay = endHour * 60 + endMinute;
+
+      // 🔍 디버깅 로그
+      if (item.title === '수면') {
+        console.log('🛌 [오늘] 수면 할일 시간 비교:', {
+          nowTime: `${nowHour}:${String(nowMinute).padStart(2, '0')}`,
+          startTime: `${startHour}:${String(startMinute).padStart(2, '0')}`,
+          endTime: `${endHour}:${String(endMinute).padStart(2, '0')}`,
+          nowTimeOfDay: `${nowTimeOfDay}분`,
+          startTimeOfDay: `${startTimeOfDay}분`,
+          endTimeOfDay: `${endTimeOfDay}분`,
+          '크로스데이?': endTimeOfDay < startTimeOfDay
+        });
+      }
+
+      // 크로스데이 할일 (예: 22:30~05:30+1)
+      // 오늘 날짜 뷰에서는 "오늘 시작하는" 할일만 표시
+      if (endTimeOfDay < startTimeOfDay) {
+        // 아직 시작 전 (00:00 ~ startTime)
+        if (nowTimeOfDay < startTimeOfDay) {
+          if (item.title === '수면') {
+            console.log('✅ [크로스데이] 아직 시작 전 → 0%');
+          }
+          return 0;
+        }
+
+        // 진행 중 (startTime ~ 23:59)
+        const progress = nowTimeOfDay - startTimeOfDay;
+        const duration = 1439 - startTimeOfDay;
+        const percentage = Math.round((progress / duration) * 100);
+
+        if (item.title === '수면') {
+          console.log('✅ [크로스데이] 오늘 부분 진행 중:', {
+            startTimeOfDay: `${startTimeOfDay}분`,
+            nowTimeOfDay: `${nowTimeOfDay}분`,
+            progress: `${progress}분`,
+            duration: `${duration}분`,
+            percentage: `${percentage}%`
+          });
+        }
+
+        return percentage;
+      }
+
+      // 일반 할일: 시작 전이면 0%, 종료 후면 100%, 진행 중이면 비율
+      if (nowTimeOfDay < startTimeOfDay) {
+        if (item.title === '수면') {
+          console.log('✅ [일반 할일] 시작 전 → 0%');
+        }
+        return 0;
+      }
+
+      if (nowTimeOfDay >= endTimeOfDay) {
+        if (item.title === '수면') {
+          console.log('✅ [일반 할일] 종료 후 → 100%');
+        }
+        return 100;
+      }
+
+      const percentage = Math.round(((nowTimeOfDay - startTimeOfDay) / (endTimeOfDay - startTimeOfDay)) * 100);
+
+      if (item.title === '수면') {
+        console.log('✅ [일반 할일] 진행 중:', {
+          duration: `${endTimeOfDay - startTimeOfDay}분`,
+          progress: `${nowTimeOfDay - startTimeOfDay}분`,
+          percentage: `${percentage}%`
+        });
+      }
+
+      return percentage;
+    }
+
+    return 0;
+  }, [dateStatus, startTime, endTime, currentTime, currentDate]);
 
   // 연결 막대 진행률 계산 (이전 할일 종료 ~ 현재 할일 시작)
   const connectorProgressPercentage = useMemo(() => {
-    if (!isToday || !prevItem?.endTime || !startTime) return 0;
+    if (!prevItem?.endTime || !startTime) return 0;
 
-    const now = currentTime.getTime();
-    const prevEnd = new Date(prevItem.endTime).getTime();
-    const currStart = startTime.getTime();
+    // 과거 날짜: 100% 완료
+    if (dateStatus === 'past') return 100;
 
-    if (now < prevEnd) return 0;
-    if (now >= currStart) return 100;
+    // 미래 날짜: 0% (회색)
+    if (dateStatus === 'future') return 0;
 
-    return Math.round(((now - prevEnd) / (currStart - prevEnd)) * 100);
-  }, [isToday, prevItem, startTime, currentTime]);
+    // 오늘: 현재 시간 기준 진행률 계산
+    if (dateStatus === 'today') {
+      const now = currentTime.getTime();
+      const prevEnd = new Date(prevItem.endTime).getTime();
+      const currStart = startTime.getTime();
+
+      if (now < prevEnd) return 0;
+      if (now >= currStart) return 100;
+
+      return Math.round(((now - prevEnd) / (currStart - prevEnd)) * 100);
+    }
+
+    return 0;
+  }, [dateStatus, prevItem, startTime, currentTime]);
 
   // 연결 막대 색상 결정 (이전 할일과의 연결)
   const connectorColor = useMemo(() => {
