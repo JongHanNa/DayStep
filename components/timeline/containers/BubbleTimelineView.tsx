@@ -563,7 +563,7 @@ export const BubbleTimelineView: React.FC = () => {
   }, [timedItems, currentTime]);
 
   return (
-    <div className="flex flex-col h-full w-full px-4 py-6">
+    <div className="flex flex-col h-full w-full px-4 py-6 overflow-y-auto">
       {/* 타임라인 컨테이너 */}
       <div className="relative flex-1">
         {/* ✨ 연결선 segments (점진적 색칠) */}

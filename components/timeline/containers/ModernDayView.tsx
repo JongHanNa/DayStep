@@ -408,7 +408,7 @@ const ModernDayView: React.FC<ModernDayViewProps> = memo(({ className }) => {
           {/* 헤더 섹션 제거됨 - SwipeCalendar에서 처리 */}
 
           {/* 오늘 날짜 메인 컨텐츠 영역 - 실시간 업데이트, 현재 시간 마커 등 포함 */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             {timedItems.length === 0 && anytimeItems.length === 0 ? (
               // 오늘 날짜 전용 "계획 없음" 표시
               <div className="flex items-center justify-center h-full px-6">
@@ -503,7 +503,7 @@ const ModernDayView: React.FC<ModernDayViewProps> = memo(({ className }) => {
           {/* 헤더 섹션 제거됨 - SwipeCalendar에서 처리 */}
 
           {/* 오늘이 아닌 날짜 메인 컨텐츠 영역 - 단순화된 정적 표시 */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             {timedItems.length === 0 && anytimeItems.length === 0 ? (
               // 오늘이 아닌 날짜 전용 "계획 없음" 표시
               <div className="flex items-center justify-center h-full px-6">

@@ -109,23 +109,18 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   // Quick Memo Store hooks
   const { pinnedMemos, initialize: initializeQuickMemo } = useQuickMemoStore();
 
-  // Capacitor/WebView 환경에서 스크롤바 숨김 보장
+  // Capacitor/WebView 환경에서 스크롤 최적화 (스크롤 기능 유지)
   useEffect(() => {
-    const applyScrollbarHide = () => {
-      // body와 html에 overflow hidden 강제 적용
-      const htmlElement = document.documentElement;
-      const bodyElement = document.body;
-
-      htmlElement.style.overflow = 'hidden';
-      bodyElement.style.overflow = 'hidden';
-
-      // main 컨테이너에 scrollbar-hide 보장
+    const applyScrollOptimization = () => {
+      // main 컨테이너에 scrollbar-hide 보장 (스크롤 기능은 유지)
       const mainElement = document.querySelector('main');
       if (mainElement && !mainElement.classList.contains('scrollbar-hide')) {
         mainElement.classList.add('scrollbar-hide');
+        mainElement.style.overflowY = 'auto'; // 스크롤 기능 명시적 활성화
+        (mainElement.style as any).webkitOverflowScrolling = 'touch'; // iOS 스크롤 최적화
       }
 
-      // WebView 환경에서 추가 CSS 주입
+      // WebView 환경에서 추가 최적화
       const isWebView = window.navigator.userAgent.includes('wv') ||
                         window.navigator.userAgent.includes('Mobile') ||
                         (window as any).Capacitor;
@@ -136,6 +131,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
           const style = document.createElement('style');
           style.id = 'scrollbar-hide-override';
           style.textContent = `
+            /* 스크롤바만 숨기고 스크롤 기능은 유지 */
             * {
               scrollbar-width: none !important;
               -ms-overflow-style: none !important;
@@ -145,11 +141,10 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
               width: 0 !important;
               height: 0 !important;
             }
-            html, body {
-              overflow: hidden !important;
-            }
+            /* html, body는 overflow hidden 제거 - 스크롤 허용 */
             main {
               overflow-y: auto !important;
+              -webkit-overflow-scrolling: touch !important;
             }
           `;
           document.head.appendChild(style);
@@ -157,10 +152,10 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
       }
     };
 
-    applyScrollbarHide();
+    applyScrollOptimization();
 
     // 페이지 로드 완료 후 한번 더 적용
-    const timer = setTimeout(applyScrollbarHide, 100);
+    const timer = setTimeout(applyScrollOptimization, 100);
 
     return () => clearTimeout(timer);
   }, [pathname]); // pathname 변경시마다 실행
