@@ -46,6 +46,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   onMouseUp,
   onMouseLeave,
 }) => {
+  // 버블 위치 계산을 위한 ref
+  const bubbleWrapperRef = React.useRef<HTMLDivElement>(null);
+
   // 아이콘 결정
   const IconComponent = useMemo(() => {
     // Todo 타입에서 아이콘 정보 가져오기
@@ -55,6 +58,17 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     }
     return Icons.Circle;
   }, [item.type, item.data]);
+
+  // 버블의 화면 절대 좌표 계산
+  const bubbleFixedPosition = useMemo(() => {
+    if (!isDragging || !bubbleWrapperRef.current) return null;
+
+    const rect = bubbleWrapperRef.current.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top + dragOffset,
+    };
+  }, [isDragging, dragOffset]);
 
   // 할일 색상
   const itemColor = item.color || '#3B82F6';
@@ -270,9 +284,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         'cursor-pointer select-none transition-all',
         !isDragging && 'hover:bg-gray-50 dark:hover:bg-gray-800/30',
       )}
-      style={{
-        zIndex: isDragging ? 50 : undefined,
-      }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -284,15 +295,19 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       {/* 왼쪽: 버블 + 연결 막대 영역 */}
       <div className="flex flex-col" style={{ width: '64px' }}>
         {/* 버블과 할일 카드가 정렬될 영역 */}
-        <div className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
-          {/* 버블 아이콘 (드래그 시 transform 적용) */}
+        <div ref={bubbleWrapperRef} className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
+          {/* 버블 아이콘 (드래그 시 fixed positioning) */}
           <div
-            className="flex items-center justify-center absolute left-0 top-0"
+            className="flex items-center justify-center"
             style={{
+              position: isDragging && bubbleFixedPosition ? 'fixed' : 'absolute',
+              left: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.left}px` : 0,
+              top: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.top}px` : 0,
               width: `${bubbleWidth}px`,
               height: `${bubbleHeight}px`,
-              transform: isDragging ? `translateY(${dragOffset}px)` : undefined,
+              transform: !isDragging ? undefined : undefined,
               transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+              zIndex: isDragging ? 100 : undefined,
             }}
           >
             {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 (absolute) */}
