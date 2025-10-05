@@ -340,44 +340,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return 0;
   }, [dateStatus, startTime, endTime, currentTime, currentDate]);
 
-  // 연결 막대 진행률 계산 (이전 할일 종료 ~ 현재 할일 시작)
-  const connectorProgressPercentage = useMemo(() => {
-    if (!prevItem?.endTime || !startTime) return 0;
-
-    // 과거 날짜: 100% 완료
-    if (dateStatus === 'past') return 100;
-
-    // 미래 날짜: 0% (회색)
-    if (dateStatus === 'future') return 0;
-
-    // 오늘: 현재 시간 기준 진행률 계산
-    if (dateStatus === 'today') {
-      const now = currentTime.getTime();
-      const prevEnd = new Date(prevItem.endTime).getTime();
-      const currStart = startTime.getTime();
-
-      if (now < prevEnd) return 0;
-      if (now >= currStart) return 100;
-
-      return Math.round(((now - prevEnd) / (currStart - prevEnd)) * 100);
-    }
-
-    return 0;
-  }, [dateStatus, prevItem, startTime, currentTime]);
-
-  // 연결 막대 색상 결정 (이전 할일과의 연결)
-  const connectorColor = useMemo(() => {
-    if (!prevItem || !prevItem.endTime) return 'transparent';
-
-    const prevEnd = new Date(prevItem.endTime);
-
-    // 오늘이고 현재 시간이 이전 할일 종료 이후라면 이전 할일 색상
-    if (isToday && currentTime.getTime() > prevEnd.getTime()) {
-      return prevItem.color || '#3B82F6';
-    }
-
-    return 'transparent';
-  }, [prevItem, isToday, currentTime]);
 
   // 버블 스타일 결정 (색상 + 크기 + 점진적 색칠)
   const bubbleStyle = useMemo(() => {
