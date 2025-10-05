@@ -307,80 +307,88 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   };
 
   return (
-    <div
-      className={cn(
-        'relative flex items-start gap-4',
-        'cursor-pointer select-none transition-all',
-        // hover 배경 제거 - 카드에서만 hover 효과 적용하여 연결선 가려짐 방지
-      )}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseLeave}
-    >
-      {/* 왼쪽: 버블 + 연결 막대 영역 */}
-      <div className="flex flex-col" style={{ width: '64px' }}>
-        {/* 버블과 할일 카드가 정렬될 영역 */}
-        <div ref={bubbleWrapperRef} className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
-          {/* 버블 아이콘 (드래그 시 fixed positioning) */}
-          <div
-            className="flex items-center justify-center"
-            style={{
-              position: isDragging && bubbleFixedPosition ? 'fixed' : 'absolute',
-              left: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.left}px` : 0,
-              top: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.top}px` : 0,
-              width: `${bubbleWidth}px`,
-              height: `${bubbleHeight}px`,
-              transform: !isDragging ? undefined : undefined,
-              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-              zIndex: isDragging ? 100 : undefined,
-            }}
-          >
-            {/* 버블 아이콘 */}
+    <>
+      {/* 클릭 가능한 영역: 버블 + 카드만 포함 */}
+      <div
+        className={cn(
+          'relative flex items-start gap-4',
+          'cursor-pointer select-none transition-all',
+          // hover 배경 제거 - 카드에서만 hover 효과 적용하여 연결선 가려짐 방지
+        )}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseLeave}
+      >
+        {/* 왼쪽: 버블 영역 */}
+        <div className="flex flex-col" style={{ width: '64px' }}>
+          {/* 버블과 할일 카드가 정렬될 영역 */}
+          <div ref={bubbleWrapperRef} className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
+            {/* 버블 아이콘 (드래그 시 fixed positioning) */}
             <div
-              className="flex items-center justify-center transition-all duration-300"
-              style={bubbleStyle}
+              className="flex items-center justify-center"
+              style={{
+                position: isDragging && bubbleFixedPosition ? 'fixed' : 'absolute',
+                left: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.left}px` : 0,
+                top: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.top}px` : 0,
+                width: `${bubbleWidth}px`,
+                height: `${bubbleHeight}px`,
+                transform: !isDragging ? undefined : undefined,
+                transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                zIndex: isDragging ? 100 : undefined,
+              }}
             >
-              <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+              {/* 버블 아이콘 */}
+              <div
+                className="flex items-center justify-center transition-all duration-300"
+                style={bubbleStyle}
+              >
+                <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 투명 공간 영역 (버블 아래) - 연결선은 BubbleTimelineView에서 전체 관통선으로 처리 */}
-        {nextItem && (
-          <div className="relative" style={{ height: `${connectorHeight}px` }}>
+        {/* 오른쪽: 할일 카드 (버블과 같은 높이로 정렬) */}
+        <div
+          className="flex items-center flex-1"
+          style={{ height: `${bubbleHeight}px` }}
+        >
+          <div className={cn(
+            "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-all",
+            !isDragging && "hover:shadow-md hover:bg-gray-200 dark:hover:bg-gray-700",
+            isDragging && "opacity-0"
+          )}>
+            {/* 시간 표시 - 할일 제목 위 */}
+            {startTime && endTime && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                {formatTime(startTime)} ~ {formatTime(endTime)}
+                {isNextDay && <span className="text-xs font-medium text-blue-600 dark:text-blue-400">+1</span>}
+                {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && ' 🔄'}
+              </div>
+            )}
+
+            <h3 className="font-medium text-base text-gray-900 dark:text-gray-100">
+              {item.title}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      {/* 연결 간격 공간 (클릭 불가능 영역) - 별도 div로 분리 */}
+      {nextItem && (
+        <div className="relative flex items-start gap-4">
+          {/* 왼쪽: 간격 공간 (버블 너비와 동일) */}
+          <div className="relative" style={{ width: '64px', height: `${connectorHeight}px` }}>
             {/* 연결 막대 제거 - 간격 확보용 투명 공간만 유지 */}
           </div>
-        )}
-      </div>
-
-      {/* 오른쪽: 할일 카드 (버블과 같은 높이로 정렬) */}
-      <div
-        className="flex items-center flex-1"
-        style={{ height: `${bubbleHeight}px` }}
-      >
-        <div className={cn(
-          "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-all",
-          !isDragging && "hover:shadow-md hover:bg-gray-200 dark:hover:bg-gray-700",
-          isDragging && "opacity-0"
-        )}>
-          {/* 시간 표시 - 할일 제목 위 */}
-          {startTime && endTime && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
-              {formatTime(startTime)} ~ {formatTime(endTime)}
-              {isNextDay && <span className="text-xs font-medium text-blue-600 dark:text-blue-400">+1</span>}
-              {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && ' 🔄'}
-            </div>
-          )}
-
-          <h3 className="font-medium text-base text-gray-900 dark:text-gray-100">
-            {item.title}
-          </h3>
+          {/* 오른쪽: 빈 공간 (레이아웃 유지) */}
+          <div className="flex-1"></div>
         </div>
-      </div>
+      )}
 
       {/* 드래그 중 시간 표시 (fixed position으로 항상 위에 표시) */}
       {isDragging && bubbleFixedPosition && displayStartTime && (
@@ -420,6 +428,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           {formatTime(displayEndTime)}
         </div>
       )}
-    </div>
+    </>
   );
 };
