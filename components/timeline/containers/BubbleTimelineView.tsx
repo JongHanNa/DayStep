@@ -842,7 +842,7 @@ export const BubbleTimelineView: React.FC = () => {
         {/* ✨ 하나의 연속된 연결선 (첫 버블부터 마지막 버블까지 관통) */}
         {connectorData.totalHeight > 0 && (
           <div
-            className="absolute w-0.5"
+            className="absolute w-1"
             style={{
               left: '32px',
               top: 0,
