@@ -422,16 +422,14 @@ export const BubbleTimelineView: React.FC = () => {
     };
   }, []);
 
-  // 연결 막대 segment 정보 계산
-  const connectorSegments = useMemo(() => {
-    const segments: Array<{
-      topColor: string;
-      bottomColor: string;
-      progress: number;
-      top: number;
-      height: number;
+  // 연결선 전체 높이와 gradient stops 계산
+  const connectorData = useMemo(() => {
+    const gradientStops: Array<{
+      color: string;
+      position: number;
     }> = [];
 
+    let totalHeight = 0;
     let accumulatedHeight = 0;
 
     console.log('🔍 [BubbleView] timedItems:', timedItems.map((item, idx) => ({
@@ -443,10 +441,8 @@ export const BubbleTimelineView: React.FC = () => {
       endTime: item.endTime
     })));
 
+    // 전체 높이 계산
     timedItems.forEach((item, index) => {
-      const prevItem = index > 0 ? timedItems[index - 1] : null;
-
-      // 버블 아이콘 높이 계산 (BubbleTimelineItem과 동일한 로직)
       const startTime = item.startTime ? new Date(item.startTime) : null;
       const endTime = item.endTime ? new Date(item.endTime) : null;
 
@@ -458,7 +454,69 @@ export const BubbleTimelineView: React.FC = () => {
                  date1.getDate() === date2.getDate();
         };
 
-        // 시간 정규화 (BubbleTimelineItem과 동일)
+        const normalizedEndTime = isSameDay(startTime, endTime)
+          ? endTime
+          : new Date(
+              startTime.getFullYear(),
+              startTime.getMonth(),
+              startTime.getDate(),
+              endTime.getHours(),
+              endTime.getMinutes(),
+              endTime.getSeconds()
+            );
+
+        const minutes = Math.round((normalizedEndTime.getTime() - startTime.getTime()) / (60 * 1000));
+        if (minutes > 0 && minutes <= 1440) {
+          durationMinutes = minutes;
+        }
+      }
+
+      const bubbleHeight = durationMinutes <= 10 ? 64 : Math.min(64 + Math.ceil((durationMinutes - 10) / 10) * 20, 200);
+      totalHeight += bubbleHeight;
+
+      // 다음 아이템까지의 간격 추가
+      if (index < timedItems.length - 1) {
+        const nextItem = timedItems[index + 1];
+        if (endTime && nextItem.startTime) {
+          const nextStartTime = new Date(nextItem.startTime);
+          const isSameDay = (date1: Date, date2: Date) => {
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+          };
+
+          const normalizedNextStart = isSameDay(endTime, nextStartTime)
+            ? nextStartTime
+            : new Date(
+                endTime.getFullYear(),
+                endTime.getMonth(),
+                endTime.getDate(),
+                nextStartTime.getHours(),
+                nextStartTime.getMinutes(),
+                nextStartTime.getSeconds()
+              );
+
+          const gapMinutes = Math.round((normalizedNextStart.getTime() - endTime.getTime()) / (60 * 1000));
+          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
+          totalHeight += connectorHeight;
+        }
+      }
+    });
+
+    // Gradient stops 생성
+    timedItems.forEach((item, index) => {
+      const prevItem = index > 0 ? timedItems[index - 1] : null;
+      const startTime = item.startTime ? new Date(item.startTime) : null;
+      const endTime = item.endTime ? new Date(item.endTime) : null;
+
+      let durationMinutes = 10;
+      if (startTime && endTime) {
+        const isSameDay = (date1: Date, date2: Date) => {
+          return date1.getFullYear() === date2.getFullYear() &&
+                 date1.getMonth() === date2.getMonth() &&
+                 date1.getDate() === date2.getDate();
+        };
+
         const normalizedEndTime = isSameDay(startTime, endTime)
           ? endTime
           : new Date(
@@ -478,114 +536,188 @@ export const BubbleTimelineView: React.FC = () => {
 
       const bubbleHeight = durationMinutes <= 10 ? 64 : Math.min(64 + Math.ceil((durationMinutes - 10) / 10) * 20, 200);
 
-      // 연결 막대 segment 추가 (이전 아이템이 있는 경우)
-      if (prevItem && prevItem.endTime && item.startTime) {
-        const prevEndTime = new Date(prevItem.endTime);
-        const currStartTime = new Date(item.startTime);
+      // 버블 시작/끝 위치에 색상 추가
+      const bubbleStartPercent = (accumulatedHeight / totalHeight) * 100;
+      const bubbleEndPercent = ((accumulatedHeight + bubbleHeight) / totalHeight) * 100;
 
-        // 시간 정규화 헬퍼
-        const isSameDay = (date1: Date, date2: Date) => {
-          return date1.getFullYear() === date2.getFullYear() &&
-                 date1.getMonth() === date2.getMonth() &&
-                 date1.getDate() === date2.getDate();
-        };
-
-        // 이전 할일 종료 시간 정규화 (현재 할일 시작 날짜 기준)
-        const normalizedPrevEnd = isSameDay(prevEndTime, currStartTime)
-          ? prevEndTime
-          : new Date(
-              currStartTime.getFullYear(),
-              currStartTime.getMonth(),
-              currStartTime.getDate(),
-              prevEndTime.getHours(),
-              prevEndTime.getMinutes(),
-              prevEndTime.getSeconds()
-            );
-
-        // 현재 할일 시작 시간 정규화
-        const normalizedCurrStart = isSameDay(normalizedPrevEnd, currStartTime)
-          ? currStartTime
-          : new Date(
-              normalizedPrevEnd.getFullYear(),
-              normalizedPrevEnd.getMonth(),
-              normalizedPrevEnd.getDate(),
-              currStartTime.getHours(),
-              currStartTime.getMinutes(),
-              currStartTime.getSeconds()
-            );
-
-        const gapMinutes = Math.round((normalizedCurrStart.getTime() - normalizedPrevEnd.getTime()) / (60 * 1000));
-        const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
-
-        // 연결 막대 진행률 계산
-        let progress = 0;
+      // 시간 진행에 따른 색상 결정
+      let bubbleColor = '#E5E5E5'; // 기본 회색
+      if (isToday && startTime && endTime) {
         const now = currentTime.getTime();
-        const prevEnd = normalizedPrevEnd.getTime();
-        const currStart = normalizedCurrStart.getTime();
+        const start = startTime.getTime();
+        const end = endTime.getTime();
 
-        // 간격이 0인 경우 (할일이 연속됨) - 현재 시간이 해당 시점을 지났는지만 확인
-        if (prevEnd === currStart) {
-          progress = now >= currStart ? 100 : 0;
-        } else if (now < prevEnd) {
-          progress = 0;
-        } else if (now >= currStart) {
-          progress = 100;
-        } else {
-          progress = Math.round(((now - prevEnd) / (currStart - prevEnd)) * 100);
+        if (now >= end) {
+          bubbleColor = item.color || '#3B82F6'; // 완료된 할일
+        } else if (now >= start) {
+          // 진행 중인 할일 - gradient로 처리하기 위해 여러 stops 추가
+          const progressPercent = ((now - start) / (end - start)) * 100;
+          const coloredEndPercent = bubbleStartPercent + (bubbleEndPercent - bubbleStartPercent) * (progressPercent / 100);
+
+          gradientStops.push(
+            { color: item.color || '#3B82F6', position: bubbleStartPercent },
+            { color: item.color || '#3B82F6', position: coloredEndPercent },
+            { color: '#E5E5E5', position: coloredEndPercent },
+            { color: '#E5E5E5', position: bubbleEndPercent }
+          );
+
+          accumulatedHeight += bubbleHeight;
+
+          // 연결선 처리
+          if (index < timedItems.length - 1) {
+            const nextItem = timedItems[index + 1];
+            if (endTime && nextItem.startTime) {
+              const nextStartTime = new Date(nextItem.startTime);
+              const isSameDay = (date1: Date, date2: Date) => {
+                return date1.getFullYear() === date2.getFullYear() &&
+                       date1.getMonth() === date2.getMonth() &&
+                       date1.getDate() === date2.getDate();
+              };
+
+              const normalizedNextStart = isSameDay(endTime, nextStartTime)
+                ? nextStartTime
+                : new Date(
+                    endTime.getFullYear(),
+                    endTime.getMonth(),
+                    endTime.getDate(),
+                    nextStartTime.getHours(),
+                    nextStartTime.getMinutes(),
+                    nextStartTime.getSeconds()
+                  );
+
+              const gapMinutes = Math.round((normalizedNextStart.getTime() - endTime.getTime()) / (60 * 1000));
+              const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
+
+              const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
+              const connectorEndPercent = ((accumulatedHeight + connectorHeight) / totalHeight) * 100;
+
+              // 연결선 진행 상태
+              if (now >= nextStartTime.getTime()) {
+                gradientStops.push(
+                  { color: nextItem.color || '#3B82F6', position: connectorStartPercent },
+                  { color: nextItem.color || '#3B82F6', position: connectorEndPercent }
+                );
+              } else if (now >= endTime.getTime()) {
+                const connectorProgress = ((now - endTime.getTime()) / (nextStartTime.getTime() - endTime.getTime())) * 100;
+                const connectorColoredEnd = connectorStartPercent + (connectorEndPercent - connectorStartPercent) * (connectorProgress / 100);
+
+                gradientStops.push(
+                  { color: item.color || '#3B82F6', position: connectorStartPercent },
+                  { color: nextItem.color || '#3B82F6', position: connectorColoredEnd },
+                  { color: '#E5E5E5', position: connectorColoredEnd },
+                  { color: '#E5E5E5', position: connectorEndPercent }
+                );
+              } else {
+                gradientStops.push(
+                  { color: '#E5E5E5', position: connectorStartPercent },
+                  { color: '#E5E5E5', position: connectorEndPercent }
+                );
+              }
+
+              accumulatedHeight += connectorHeight;
+            }
+          }
+          return; // 이미 처리했으므로 skip
         }
-
-        console.log(`🔗 [BubbleView] Connector ${index-1}→${index}:`, {
-          prevEnd: normalizedPrevEnd.toLocaleTimeString(),
-          currStart: normalizedCurrStart.toLocaleTimeString(),
-          now: new Date(currentTime).toLocaleTimeString(),
-          gapMinutes,
-          progress,
-          prevColor: prevItem.color,
-          currColor: item.color
-        });
-
-        segments.push({
-          topColor: prevItem.color || '#3B82F6',
-          bottomColor: item.color || '#3B82F6',
-          progress,
-          top: accumulatedHeight,
-          height: connectorHeight
-        });
-
-        accumulatedHeight += connectorHeight;
       }
 
+      gradientStops.push(
+        { color: bubbleColor, position: bubbleStartPercent },
+        { color: bubbleColor, position: bubbleEndPercent }
+      );
+
       accumulatedHeight += bubbleHeight;
+
+      // 연결선 추가
+      if (index < timedItems.length - 1) {
+        const nextItem = timedItems[index + 1];
+        if (endTime && nextItem.startTime) {
+          const nextStartTime = new Date(nextItem.startTime);
+          const isSameDay = (date1: Date, date2: Date) => {
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+          };
+
+          const normalizedNextStart = isSameDay(endTime, nextStartTime)
+            ? nextStartTime
+            : new Date(
+                endTime.getFullYear(),
+                endTime.getMonth(),
+                endTime.getDate(),
+                nextStartTime.getHours(),
+                nextStartTime.getMinutes(),
+                nextStartTime.getSeconds()
+              );
+
+          const gapMinutes = Math.round((normalizedNextStart.getTime() - endTime.getTime()) / (60 * 1000));
+          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
+
+          const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
+          const connectorEndPercent = ((accumulatedHeight + connectorHeight) / totalHeight) * 100;
+
+          let connectorColor = '#E5E5E5';
+          if (isToday) {
+            const now = currentTime.getTime();
+            if (now >= normalizedNextStart.getTime()) {
+              connectorColor = nextItem.color || '#3B82F6';
+            } else if (now >= endTime.getTime()) {
+              const connectorProgress = ((now - endTime.getTime()) / (normalizedNextStart.getTime() - endTime.getTime())) * 100;
+              const connectorColoredEnd = connectorStartPercent + (connectorEndPercent - connectorStartPercent) * (connectorProgress / 100);
+
+              gradientStops.push(
+                { color: item.color || '#3B82F6', position: connectorStartPercent },
+                { color: nextItem.color || '#3B82F6', position: connectorColoredEnd },
+                { color: '#E5E5E5', position: connectorColoredEnd },
+                { color: '#E5E5E5', position: connectorEndPercent }
+              );
+
+              accumulatedHeight += connectorHeight;
+              return;
+            }
+          }
+
+          gradientStops.push(
+            { color: connectorColor, position: connectorStartPercent },
+            { color: connectorColor, position: connectorEndPercent }
+          );
+
+          accumulatedHeight += connectorHeight;
+        }
+      }
     });
 
-    console.log('🎨 [BubbleView] Connector segments:', segments);
-    return segments;
-  }, [timedItems, currentTime]);
+    // Gradient string 생성
+    const gradientString = gradientStops
+      .sort((a, b) => a.position - b.position)
+      .map(stop => `${stop.color} ${stop.position.toFixed(2)}%`)
+      .join(', ');
+
+    console.log('🎨 [BubbleView] Connector gradient:', { totalHeight, gradientStops });
+
+    return {
+      totalHeight,
+      gradient: `linear-gradient(to bottom, ${gradientString})`
+    };
+  }, [timedItems, currentTime, isToday]);
 
   return (
     <div className="flex flex-col h-full w-full px-4 py-6 overflow-y-auto">
       {/* 타임라인 컨테이너 */}
       <div className="relative flex-1">
-        {/* ✨ 연결선 segments (점진적 색칠) */}
-        {connectorSegments.map((segment) => (
+        {/* ✨ 하나의 연속된 연결선 (첫 버블부터 마지막 버블까지 관통) */}
+        {connectorData.totalHeight > 0 && (
           <div
-            key={`connector-${segment.top}-${segment.height}`}
             className="absolute w-0.5"
             style={{
               left: '32px',
-              top: `${segment.top}px`,
-              height: `${segment.height}px`,
-              background: segment.progress > 0
-                ? `linear-gradient(to bottom,
-                    ${segment.topColor} 0%,
-                    ${segment.topColor} ${segment.progress / 2}%,
-                    ${segment.bottomColor} ${50 + segment.progress / 2}%,
-                    ${segment.bottomColor} 100%)`
-                : '#E5E5E5',
+              top: 0,
+              height: `${connectorData.totalHeight}px`,
+              background: connectorData.gradient,
               zIndex: 0
             }}
           />
-        ))}
+        )}
 
         {/* 버블 아이템 리스트 */}
         <div className="relative space-y-0" style={{ zIndex: 1 }}>

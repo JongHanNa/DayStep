@@ -49,6 +49,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 버블 위치 계산을 위한 ref
   const bubbleWrapperRef = React.useRef<HTMLDivElement>(null);
 
+  // 버블 너비 (고정) - useMemo보다 먼저 선언
+  const bubbleWidth = 64;
+
   // 아이콘 결정
   const IconComponent = useMemo(() => {
     // Todo 타입에서 아이콘 정보 가져오기
@@ -65,8 +68,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
     const rect = bubbleWrapperRef.current.getBoundingClientRect();
     return {
-      left: rect.left,
+      left: rect.left, // 원래 위치 그대로 사용
       top: rect.top + dragOffset,
+      centerX: rect.left + bubbleWidth / 2, // 시간 표시 중앙 정렬용
     };
   }, [isDragging, dragOffset]);
 
@@ -170,9 +174,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     const extraHeight = Math.ceil(extraMinutes / 10) * 20;
     return Math.min(baseHeight + extraHeight, 200); // 최대 200px
   }, [durationMinutes]);
-
-  // 버블 너비 (고정)
-  const bubbleWidth = 64;
 
   // borderRadius 계산 (타원형 효과)
   const borderRadius = useMemo(() => {
@@ -322,13 +323,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               zIndex: isDragging ? 100 : undefined,
             }}
           >
-            {/* 드래그 중일 때만 시작 시간 표시 - 버블 상단 (absolute) */}
-            {isDragging && displayStartTime && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
-                {formatTime(displayStartTime)}
-              </div>
-            )}
-
             {/* 버블 아이콘 */}
             <div
               className="flex items-center justify-center transition-all duration-300"
@@ -336,13 +330,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
             >
               <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
             </div>
-
-            {/* 드래그 중일 때만 종료 시간 표시 - 버블 하단 (absolute) */}
-            {isDragging && displayEndTime && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-xs text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
-                {formatTime(displayEndTime)}
-              </div>
-            )}
           </div>
         </div>
 
@@ -376,6 +363,45 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           </h3>
         </div>
       </div>
+
+      {/* 드래그 중 시간 표시 (fixed position으로 항상 위에 표시) */}
+      {isDragging && bubbleFixedPosition && displayStartTime && (
+        <div
+          className="text-xs font-semibold whitespace-nowrap text-gray-700 dark:text-gray-300"
+          style={{
+            position: 'fixed',
+            left: `${bubbleFixedPosition.centerX}px`,
+            top: `${bubbleFixedPosition.top - 30}px`,
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          }}
+        >
+          {formatTime(displayStartTime)}
+        </div>
+      )}
+
+      {isDragging && bubbleFixedPosition && displayEndTime && (
+        <div
+          className="text-xs font-semibold whitespace-nowrap text-gray-700 dark:text-gray-300"
+          style={{
+            position: 'fixed',
+            left: `${bubbleFixedPosition.centerX}px`,
+            top: `${bubbleFixedPosition.top + bubbleHeight + 8}px`,
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          }}
+        >
+          {formatTime(displayEndTime)}
+        </div>
+      )}
     </div>
   );
 };
