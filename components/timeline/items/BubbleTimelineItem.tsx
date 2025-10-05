@@ -165,7 +165,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       return 10;
     }
 
-    return Math.max(1, gap); // 최소 1분
+    // ✅ 간격이 0분이면 0 반환 (버블 간격 없음)
+    return Math.max(0, gap);
   }, [endTime, nextItem]);
 
   // 버블 높이 계산 (10분 단위로 10px씩 증가, 최대 500px)
@@ -193,6 +194,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   // 연결 막대 높이 계산 (간격에 비례, 최대 500px)
   const connectorHeight = useMemo(() => {
+    // ✅ 간격이 0분이면 연결선 높이도 0 (버블 간격 없음)
+    if (gapMinutes === 0) return 0;
+
     const baseHeight = 16; // 1-10분: 16px (기본)
 
     // 11분 이상일 때만 추가 높이 적용

@@ -62,11 +62,6 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
-    console.log('🔄 BubbleTimelineView - items 재계산:', {
-      currentDate: currentDate.toISOString(),
-      storeItemsCount: storeItems.length,
-      filteredItemsCount: getFilteredAndSortedItems().length
-    });
     return getFilteredAndSortedItems();
   }, [getFilteredAndSortedItems, currentDate, storeItems]); // 🔧 storeItems 의존성 추가
 
@@ -136,11 +131,6 @@ export const BubbleTimelineView: React.FC = () => {
     };
 
     scrollWatcherRef.current = requestAnimationFrame(watchScroll);
-
-    console.log('🔒 [BubbleView] 스크롤 차단 활성화', {
-      bodyScroll: window.pageYOffset || document.documentElement.scrollTop,
-      timelineScroll: timelineContainer?.scrollTop
-    });
   }, []);
 
   const disableScrollLock = useCallback(() => {
@@ -196,8 +186,6 @@ export const BubbleTimelineView: React.FC = () => {
       el.style.overflow = 'auto';
       el.style.overflowY = 'auto';
     });
-
-    console.log('🔄 [BubbleView] 스크롤 차단 해제');
   }, []);
 
   // 롱프레스 시작 (터치/마우스 통합)
@@ -213,10 +201,6 @@ export const BubbleTimelineView: React.FC = () => {
     const timelineContainer = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
     if (timelineContainer) {
       savedScrollPositionRef.current = timelineContainer.scrollTop;
-      console.log('💾 [BubbleView] 터치 시작 시 스크롤 위치 저장:', {
-        bodyScroll: savedBodyScrollPositionRef.current,
-        timelineScroll: savedScrollPositionRef.current
-      });
     }
 
     // ✅ 초기 위치만 저장 (타이머는 handleDragMove에서 시작)
@@ -264,8 +248,6 @@ export const BubbleTimelineView: React.FC = () => {
         if ('vibrate' in navigator) {
           navigator.vibrate([50, 30, 50]);
         }
-
-        console.log('🎯 [BubbleView] 드래그 확정 (타이머 완료)');
       }, 300);
 
       setLongPressTimer(timer);
@@ -346,8 +328,6 @@ export const BubbleTimelineView: React.FC = () => {
 
     // 🔓 스크롤 차단 해제 (리스트뷰와 동일)
     disableScrollLock();
-
-    console.log('✅ [BubbleView] 드래그 완료 및 스크롤 차단 해제');
   }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer, disableScrollLock]);;
 
   // 시간 변경 확정
@@ -441,8 +421,6 @@ export const BubbleTimelineView: React.FC = () => {
         el.style.overflow = 'auto';
         el.style.overflowY = 'auto';
       });
-
-      console.log('🧹 [BubbleView] 컴포넌트 언마운트 시 드래그 정리 완료');
     };
   }, []);
 
@@ -463,7 +441,7 @@ export const BubbleTimelineView: React.FC = () => {
                  date1.getDate() === date2.getDate();
         };
 
-        const normalizedEndTime = isSameDay(startTime, endTime)
+        let normalizedEndTime = isSameDay(startTime, endTime)
           ? endTime
           : new Date(
               startTime.getFullYear(),
@@ -473,6 +451,11 @@ export const BubbleTimelineView: React.FC = () => {
               endTime.getMinutes(),
               endTime.getSeconds()
             );
+
+        // ✅ 자정을 넘어가는 할일 처리: 정규화된 종료 시간이 시작 시간보다 이전이면 다음 날로 조정
+        if (normalizedEndTime.getTime() < startTime.getTime()) {
+          normalizedEndTime = new Date(normalizedEndTime.getTime() + 24 * 60 * 60 * 1000);
+        }
 
         const minutes = Math.round((normalizedEndTime.getTime() - startTime.getTime()) / (60 * 1000));
         if (minutes > 0 && minutes <= 1440) {
@@ -509,7 +492,9 @@ export const BubbleTimelineView: React.FC = () => {
           );
 
           const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
-          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500);
+
+          // ✅ 간격이 0분 이하면 연결선 높이를 0으로 설정 (버블 간격 없음)
+          const connectorHeight = gapMinutes <= 0 ? 0 : (gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500));
           totalHeight += connectorHeight;
         }
       }
