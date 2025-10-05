@@ -81,7 +81,17 @@ export function setupRealtimeSync() {
       
       // 실시간 변경 감지 - 스토어 업데이트로 즉시 동기화
       if (payload.eventType === 'INSERT' && payload.new) {
-        // Zustand에 직접 추가
+        // ✅ 반복 할일 인스턴스는 클라이언트에서 가상 생성하므로 Realtime 동기화 스킵
+        if (payload.new.parent_todo_id) {
+          console.log('🔄 반복 할일 인스턴스 INSERT 감지 - 클라이언트에서 생성하므로 스킵:', {
+            id: payload.new.id,
+            parentId: payload.new.parent_todo_id,
+            content: payload.new.content
+          });
+          return;
+        }
+
+        // Zustand에 직접 추가 (parent todo만)
         const currentState = useTodoStore.getState();
         const newTodo = Todo.fromDatabase(payload.new);
         if (!currentState.todos.find(t => t.id === newTodo.id)) {

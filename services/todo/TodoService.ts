@@ -238,25 +238,14 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             const todos = [Todo.fromDatabase(parentTodo)];
             
             console.log('ℹ️ [TodoService] 할일 생성 완료 - 리마인더는 앱 시작 시 일괄 스케줄링됨');
-            
-            // 반복 일정인 경우 인스턴스들 생성
+
+            // ✅ 반복 일정 인스턴스는 DB에 저장하지 않음 (클라이언트에서 가상 생성)
+            // recurrence-utils.ts의 generateRecurrenceInstances()가 메모리에서 인스턴스 생성
             if (input.recurrence_pattern && input.recurrence_pattern !== 'none') {
-              const instances = await this.generateRecurrenceInstances(parentTodo, input);
-              
-              for (const instanceData of instances) {
-                try {
-                  const instance = await createTodoWithJWT(instanceData);
-                  const todo = Todo.fromDatabase(instance);
-                  todos.push(todo);
-                  
-                  console.log('ℹ️ [TodoService] 반복 인스턴스 생성 - 리마인더는 일괄 스케줄링됨:', { instanceId: instance.id });
-                } catch (error) {
-                  console.warn('⚠️ [TodoService] 반복 인스턴스 생성 실패:', error);
-                }
-              }
+              console.log('✅ 반복 할일 parent 저장 완료 - 인스턴스는 클라이언트(TimelineContainer)에서 생성됨');
             }
-            
-            console.log('✅ [TodoService] JWT 할일 생성 성공:', { parentTodo, instanceCount: todos.length - 1 });
+
+            console.log('✅ [TodoService] JWT 할일 생성 성공:', { parentTodo });
             return todos;
           } catch (error) {
             console.error('❌ [TodoService] JWT 할일 생성 실패:', error);
@@ -385,22 +374,11 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         );
 
         const todos = [Todo.fromDatabase(parentData as any)];
-        
-        // 반복 일정인 경우 인스턴스들 생성
+
+        // ✅ 반복 일정 인스턴스는 DB에 저장하지 않음 (클라이언트에서 가상 생성)
+        // recurrence-utils.ts의 generateRecurrenceInstances()가 메모리에서 인스턴스 생성
         if (input.recurrence_pattern && input.recurrence_pattern !== 'none') {
-          const instances = await this.generateRecurrenceInstances(parentData as any, input);
-          
-          if (instances.length > 0) {
-            const instancesData = await this.executeQuery(
-              this.client
-                .from('todos')
-                .insert(instances)
-                .select(),
-              { instanceCount: instances.length }
-            );
-            
-            todos.push(...(instancesData as any[]).map(item => Todo.fromDatabase(item)));
-          }
+          console.log('✅ 반복 할일 parent 저장 완료 - 인스턴스는 클라이언트(TimelineContainer)에서 생성됨');
         }
 
         return todos;

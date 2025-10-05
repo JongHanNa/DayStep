@@ -170,6 +170,12 @@ export async function fetchWithJWT(
       const isTimeoutError = error.message?.includes('timeout');
       const isNetworkError = error.message?.includes('fetch');
 
+      // ✅ AbortError는 React 재렌더링으로 인한 정상적인 요청 취소이므로 조용히 처리
+      if (isAbortError) {
+        // 컴포넌트 언마운트나 재렌더링으로 인한 정상적인 취소 - 에러 로그 제거
+        throw error; // 재시도 없이 바로 종료
+      }
+
       // 더 상세한 에러 로깅 (안전한 처리)
       const errorInfo: any = {
         errorName: error?.name || 'Unknown',
@@ -182,7 +188,7 @@ export async function fetchWithJWT(
         path: path,
         method: options?.method || 'GET'
       };
-      
+
       // error 객체가 존재할 때만 추가 정보 포함
       if (error && typeof error === 'object') {
         try {
@@ -191,12 +197,12 @@ export async function fetchWithJWT(
           errorInfo.errorKeys = ['unable_to_get_keys'];
         }
       }
-      
+
       console.error(`❌ JWT API 요청 오류 (시도 ${attempt + 1}):`, errorInfo);
-      
+
       // 에러 상세 정보
       console.error('🔍 에러 상세 분석:', error);
-      
+
       // 네트워크 관련 추가 정보
       if (isNetworkError) {
         console.error('🌐 네트워크 에러 세부사항:', {

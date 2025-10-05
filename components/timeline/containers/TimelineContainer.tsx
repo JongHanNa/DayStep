@@ -292,10 +292,17 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
       timelineTasksCount: timelineTasks.length
     });
 
-    const { loadItemsFromSources } = useTimelineViewStore.getState();
-    loadItemsFromSources(todos, repositoryItems, timelineTasks).catch(error => {
-      console.error('❌ loadItemsFromSources 실행 중 오류:', error);
-    });
+    // ✅ 300ms debounce로 빠른 연속 업데이트 방지 (불필요한 fetch 요청 제거)
+    const debounceTimeoutId = setTimeout(() => {
+      const { loadItemsFromSources } = useTimelineViewStore.getState();
+      loadItemsFromSources(todos, repositoryItems, timelineTasks).catch(error => {
+        console.error('❌ loadItemsFromSources 실행 중 오류:', error);
+      });
+    }, 300);
+
+    return () => {
+      clearTimeout(debounceTimeoutId);
+    };
   }, [todos, repositoryItems, timelineTasks, isAuthenticated, authLoading]);
 
   // 이전 중복 날짜별 로드 로직 제거됨 - 위의 최적화된 로직으로 통합
