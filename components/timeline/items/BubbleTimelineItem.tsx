@@ -194,13 +194,13 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     // 11분 이상일 때만 추가 높이 적용
     if (gapMinutes <= 10) return baseHeight;
 
-    // 10분 초과분에 대해 10분당 10px 추가 (버블과 동일한 비율)
+    // 10분 초과분에 대해 10분당 10px 추가
     // 예: 11-20분 → 10px 추가 → 26px
     //     1시간(60분) → 50분 추가 → 66px
-    //     3시간(180분) → 170분 추가 → 186px
+    //     12시간(720분) → 710분 추가 → 726px → 최대 500px 제한
     const extraMinutes = gapMinutes - 10;
     const extraHeight = Math.ceil(extraMinutes / 10) * 10;
-    return Math.min(baseHeight + extraHeight, 500); // 최대 500px
+    return Math.min(baseHeight + extraHeight, 500); // 최대 500px (약 8시간 간격)
   }, [gapMinutes]);
 
   // 현재 시간 기준 진행률 계산 (0-100)

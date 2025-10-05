@@ -501,7 +501,7 @@ export const BubbleTimelineView: React.FC = () => {
           );
 
           const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
-          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
+          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500);
           totalHeight += connectorHeight;
         }
       }
@@ -613,7 +613,7 @@ export const BubbleTimelineView: React.FC = () => {
               );
 
               const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
-              const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
+              const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500);
 
               const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
               const connectorEndPercent = ((accumulatedHeight + connectorHeight) / totalHeight) * 100;
@@ -704,7 +704,7 @@ export const BubbleTimelineView: React.FC = () => {
           );
 
           const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
-          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 20, 200);
+          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500);
 
           const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
           const connectorEndPercent = ((accumulatedHeight + connectorHeight) / totalHeight) * 100;
