@@ -801,7 +801,7 @@ export const BubbleTimelineView: React.FC = () => {
           <div
             className="absolute w-1"
             style={{
-              left: '32px',
+              left: 'calc(32px - 2px)', // 버블 중심(32px) - 연결선 절반(2px) = 정중앙 정렬
               top: 0,
               height: `${connectorData.totalHeight}px`,
               background: connectorData.gradient,
