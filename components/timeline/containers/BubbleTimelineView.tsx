@@ -558,17 +558,6 @@ export const BubbleTimelineView: React.FC = () => {
       const bubbleStartPercent = (accumulatedHeight / totalHeight) * 100;
       const bubbleEndPercent = ((accumulatedHeight + bubbleHeight) / totalHeight) * 100;
 
-      // 🔍 버블 높이 누적 로그
-      console.log('📏 [버블] 높이 누적:', {
-        title: item.title,
-        bubbleHeight: `${bubbleHeight}px`,
-        이전누적: `${accumulatedHeight}px`,
-        이후누적: `${accumulatedHeight + bubbleHeight}px`,
-        totalHeight: `${totalHeight}px`,
-        bubbleStartPercent: `${bubbleStartPercent.toFixed(2)}%`,
-        bubbleEndPercent: `${bubbleEndPercent.toFixed(2)}%`
-      });
-
       // 시간 진행에 따른 색상 결정 (크로스데이 할일 처리)
       let bubbleColor = '#E5E5E5'; // 기본 회색
 
@@ -577,29 +566,44 @@ export const BubbleTimelineView: React.FC = () => {
       const dayStart = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 0, 0, 0);
       const dayEnd = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 23, 59, 59, 999);
 
-      // 시간 관련 변수 선언 (모든 로직에서 사용)
+      // 반복 할일의 경우 시간을 viewing date 기준으로 정규화
+      const normalizedStartTime = startTime ? new Date(
+        viewingDate.getFullYear(),
+        viewingDate.getMonth(),
+        viewingDate.getDate(),
+        startTime.getHours(),
+        startTime.getMinutes(),
+        startTime.getSeconds()
+      ) : null;
+
+      const normalizedEndTime = endTime ? new Date(
+        viewingDate.getFullYear(),
+        viewingDate.getMonth(),
+        viewingDate.getDate(),
+        endTime.getHours(),
+        endTime.getMinutes(),
+        endTime.getSeconds()
+      ) : null;
+
+      // 시간 관련 변수 선언 (정규화된 시간 기반)
       const now = currentTime.getTime();
-      const effectiveStart = startTime && endTime ? Math.max(startTime.getTime(), dayStart.getTime()) : 0;
-      const effectiveEnd = startTime && endTime ? Math.min(endTime.getTime(), dayEnd.getTime()) : 0;
+      const effectiveStart = normalizedStartTime && normalizedEndTime ? Math.max(normalizedStartTime.getTime(), dayStart.getTime()) : 0;
+      const effectiveEnd = normalizedStartTime && normalizedEndTime ? Math.min(normalizedEndTime.getTime(), dayEnd.getTime()) : 0;
 
       // 과거 날짜: 해당 날짜 범위 내에서만 색칠
-      if (dateStatus === 'past' && startTime && endTime) {
+      if (dateStatus === 'past' && normalizedStartTime && normalizedEndTime) {
         // 할일이 이 날짜와 겹치지 않으면 회색
-        if (startTime.getTime() > dayEnd.getTime() || endTime.getTime() < dayStart.getTime()) {
+        if (normalizedStartTime.getTime() > dayEnd.getTime() || normalizedEndTime.getTime() < dayStart.getTime()) {
           bubbleColor = '#E5E5E5';
         } else {
-          // 이 날짜에 해당하는 부분만 색칠
-          const effectiveStart = Math.max(startTime.getTime(), dayStart.getTime());
-          const effectiveEnd = Math.min(endTime.getTime(), dayEnd.getTime());
-
           // 이 날짜 범위 내에서는 23:59:59까지 완료로 간주
           bubbleColor = item.color || '#3B82F6';
         }
       }
       // 오늘: 00:00 ~ 현재 시간까지만 색칠
-      else if (dateStatus === 'today' && startTime && endTime) {
+      else if (dateStatus === 'today' && normalizedStartTime && normalizedEndTime) {
         // 할일이 오늘과 겹치지 않으면 회색
-        if (startTime.getTime() > dayEnd.getTime() || endTime.getTime() < dayStart.getTime()) {
+        if (normalizedStartTime.getTime() > dayEnd.getTime() || normalizedEndTime.getTime() < dayStart.getTime()) {
           bubbleColor = '#E5E5E5';
         }
         // 현재 시간이 할일 종료 후 (오늘 범위 기준)
@@ -637,6 +641,24 @@ export const BubbleTimelineView: React.FC = () => {
         );
       }
 
+      // 🔍 디버깅: 이전 버블 상태 확인
+      if (item.title?.includes('사워') || item.title?.includes('샤워')) {
+        console.log(`🔵 [이전 버블] ${item.title}`, {
+          dateStatus,
+          bubbleColor,
+          itemColor: item.color,
+          '원본 startTime': startTime?.toLocaleString('ko-KR'),
+          '원본 endTime': endTime?.toLocaleString('ko-KR'),
+          '정규화 startTime': normalizedStartTime?.toLocaleString('ko-KR'),
+          '정규화 endTime': normalizedEndTime?.toLocaleString('ko-KR'),
+          dayStart: dayStart.toLocaleString('ko-KR'),
+          dayEnd: dayEnd.toLocaleString('ko-KR'),
+          now: now.toLocaleString('ko-KR'),
+          effectiveStart: effectiveStart ? new Date(effectiveStart).toLocaleString('ko-KR') : 'N/A',
+          effectiveEnd: effectiveEnd ? new Date(effectiveEnd).toLocaleString('ko-KR') : 'N/A',
+        });
+      }
+
       // 🔗 연결선 처리 (모든 버블에 대해 실행)
       if (index < timedItems.length - 1) {
         const nextItem = timedItems[index + 1];
@@ -668,31 +690,52 @@ export const BubbleTimelineView: React.FC = () => {
           const connectorStartPercent = (accumulatedHeight / totalHeight) * 100;
           const connectorEndPercent = ((accumulatedHeight + connectorHeight) / totalHeight) * 100;
 
-          // 연결선 진행 상태
-          const connectorMidPercent = (connectorStartPercent + connectorEndPercent) / 2;
-          const transitionRange = 3; // 그라데이션 전환 영역 (%)
-          const gradientStart = Math.max(connectorStartPercent, connectorMidPercent - transitionRange);
-          const gradientEnd = Math.min(connectorEndPercent, connectorMidPercent + transitionRange);
+          const connectorLengthPercent = connectorEndPercent - connectorStartPercent;
 
-          // 🔍 연결선이 현재 viewing date와 실제로 겹치는지 확인
-          const connectorRealStart = endTime.getTime();
-          const connectorRealEnd = nextStartTime.getTime();
+          // ✅ 시간 기준 중간점 계산 (타임라인 높이 비율이 아닌 실제 시간 기준)
+          const gapDuration = normalizedNextStart.getTime() - normalizedEndTime.getTime();
+          const midTime = normalizedEndTime.getTime() + (gapDuration / 2);
+          const midTimeFromDayStart = midTime - dayStart.getTime();
+          const dayDuration = dayEnd.getTime() - dayStart.getTime();
+          const connectorMidPercent = (midTimeFromDayStart / dayDuration) * 100;
 
-          // 🔍 디버깅 로그 (모든 연결선)
-          console.log('🔗 [연결선] 교차 체크:', {
-            from: item.title,
-            to: nextItem.title,
-            dateStatus,
-            connectorHeight: `${connectorHeight}px`,
-            connectorStartPercent: `${connectorStartPercent.toFixed(2)}%`,
-            connectorEndPercent: `${connectorEndPercent.toFixed(2)}%`,
-            accumulatedHeight: `${accumulatedHeight}px`,
-            totalHeight: `${totalHeight}px`,
-            connectorRealStart: new Date(connectorRealStart).toLocaleString('ko-KR'),
-            connectorRealEnd: new Date(connectorRealEnd).toLocaleString('ko-KR'),
-            dayStart: dayStart.toLocaleString('ko-KR'),
-            dayEnd: dayEnd.toLocaleString('ko-KR'),
-          });
+          const transitionRange = 0; // 전환 구간 완전 제거 (hard stop으로 정확한 50:50 균형)
+          const gradientStart = connectorMidPercent; // 시간 기준 중간점에서 즉시 전환
+          const gradientEnd = connectorMidPercent;   // 시간 기준 중간점에서 즉시 전환
+
+          // 🔍 디버깅: 연결선 gradient 계산 정보
+          if (item.title?.includes('사워') || nextItem.title?.includes('주일')) {
+            console.log(`🎨 [연결선 Gradient] ${item.title} → ${nextItem.title}`, {
+              connectorStartPercent: connectorStartPercent.toFixed(2) + '%',
+              connectorEndPercent: connectorEndPercent.toFixed(2) + '%',
+              connectorLengthPercent: connectorLengthPercent.toFixed(2) + '%',
+              connectorMidPercent: connectorMidPercent.toFixed(2) + '%',
+              transitionRange: transitionRange.toFixed(2) + '%',
+              gradientStart: gradientStart.toFixed(2) + '%',
+              gradientEnd: gradientEnd.toFixed(2) + '%',
+              itemColor: item.color,
+              nextItemColor: nextItem.color,
+            });
+          }
+
+          // 🔍 연결선 시간을 현재 viewing date 기준으로 정규화 (반복 할일 처리)
+          const connectorRealStart = new Date(
+            currentTime.getFullYear(),
+            currentTime.getMonth(),
+            currentTime.getDate(),
+            normalizedEndTime.getHours(),
+            normalizedEndTime.getMinutes(),
+            normalizedEndTime.getSeconds()
+          ).getTime();
+
+          const connectorRealEnd = new Date(
+            currentTime.getFullYear(),
+            currentTime.getMonth(),
+            currentTime.getDate(),
+            normalizedNextStart.getHours(),
+            normalizedNextStart.getMinutes(),
+            normalizedNextStart.getSeconds()
+          ).getTime();
 
           // viewing date 범위 내에서 연결선의 실제 시작/종료 시간
           const connEffectiveStart = Math.max(connectorRealStart, dayStart.getTime());
@@ -700,96 +743,74 @@ export const BubbleTimelineView: React.FC = () => {
 
           // ✅ 과거 날짜는 무조건 100% 색칠
           if (dateStatus === 'past') {
-            console.log('✅ [연결선] 과거 날짜 100% 색칠:', {
-              from: item.title,
-              to: nextItem.title,
-              connectorStartPercent: `${connectorStartPercent.toFixed(2)}%`,
-              connectorEndPercent: `${connectorEndPercent.toFixed(2)}%`,
-              gradientStops: [
-                `${item.color || '#3B82F6'} ${connectorStartPercent.toFixed(2)}%`,
-                `${item.color || '#3B82F6'} ${gradientStart.toFixed(2)}%`,
-                `${nextItem.color || '#3B82F6'} ${gradientEnd.toFixed(2)}%`,
-                `${nextItem.color || '#3B82F6'} ${connectorEndPercent.toFixed(2)}%`
-              ]
-            });
-            gradientStops.push(
-              { color: item.color || '#3B82F6', position: connectorStartPercent },
-              { color: item.color || '#3B82F6', position: gradientStart },
-              { color: nextItem.color || '#3B82F6', position: gradientEnd },
-              { color: nextItem.color || '#3B82F6', position: connectorEndPercent }
-            );
+            const stops = [
+              { color: bubbleColor, position: connectorStartPercent - 0.01 }, // 버블 마무리 (블렌딩 방지)
+              { color: item.color || '#3B82F6', position: connectorStartPercent }, // 상단 시작 (현재 할일 색)
+              { color: item.color || '#3B82F6', position: connectorMidPercent }, // 상단 끝 (50%)
+              { color: nextItem.color || '#3B82F6', position: connectorMidPercent }, // 하단 시작 (다음 할일 색, 50%)
+              { color: nextItem.color || '#3B82F6', position: connectorEndPercent }, // 하단 끝
+              { color: nextItem.color || '#3B82F6', position: connectorEndPercent } // 다음 버블 차단
+            ];
+            gradientStops.push(...stops);
+
+            // 🔍 디버깅: gradient stops
+            if (item.title?.includes('사워') || nextItem.title?.includes('주일')) {
+              console.log(`  📍 [Past] Gradient Stops:`, stops.map(s => `${s.color} @ ${s.position.toFixed(2)}%`));
+            }
           }
-          // 오늘 날짜: 간격 0분일 때도 완료된 연결선으로 판단
-          else if (dateStatus === 'today' && (now >= connEffectiveEnd || (gapMinutes === 0 && now >= connEffectiveStart))) {
-            // 완료된 연결선 - 중앙 기준 자연스러운 그라데이션
-            console.log('✅ [연결선] 오늘 완료:', {
-              from: item.title,
-              to: nextItem.title,
-              now: new Date(now).toLocaleString('ko-KR'),
-              connEffectiveStart: new Date(connEffectiveStart).toLocaleString('ko-KR'),
-              connEffectiveEnd: new Date(connEffectiveEnd).toLocaleString('ko-KR'),
-              connectorStartPercent: `${connectorStartPercent.toFixed(2)}%`,
-              connectorEndPercent: `${connectorEndPercent.toFixed(2)}%`,
-              gradientStops: [
-                `${item.color || '#3B82F6'} ${connectorStartPercent.toFixed(2)}%`,
-                `${item.color || '#3B82F6'} ${gradientStart.toFixed(2)}%`,
-                `${nextItem.color || '#3B82F6'} ${gradientEnd.toFixed(2)}%`,
-                `${nextItem.color || '#3B82F6'} ${connectorEndPercent.toFixed(2)}%`
-              ]
-            });
-            gradientStops.push(
-              { color: item.color || '#3B82F6', position: connectorStartPercent },
-              { color: item.color || '#3B82F6', position: gradientStart },
-              { color: nextItem.color || '#3B82F6', position: gradientEnd },
-              { color: nextItem.color || '#3B82F6', position: connectorEndPercent }
-            );
+          // 오늘 날짜: 연결선이 시작했고 완료됨 (간격 0분일 때도 완료된 연결선으로 판단)
+          else if (dateStatus === 'today' && now >= connEffectiveStart && (now >= connEffectiveEnd || (gapMinutes === 0 && now >= connEffectiveStart))) {
+            const stops = [
+              { color: bubbleColor, position: connectorStartPercent - 0.01 }, // 버블 마무리 (블렌딩 방지)
+              { color: item.color || '#3B82F6', position: connectorStartPercent }, // 상단 시작 (현재 할일 색)
+              { color: item.color || '#3B82F6', position: connectorMidPercent }, // 상단 끝 (50%)
+              { color: nextItem.color || '#3B82F6', position: connectorMidPercent }, // 하단 시작 (다음 할일 색, 50%)
+              { color: nextItem.color || '#3B82F6', position: connectorEndPercent }, // 하단 끝
+              { color: nextItem.color || '#3B82F6', position: connectorEndPercent } // 다음 버블 차단
+            ];
+            gradientStops.push(...stops);
+
+            // 🔍 디버깅: gradient stops
+            if (item.title?.includes('사워') || nextItem.title?.includes('주일')) {
+              console.log(`  📍 [Today-Completed] Gradient Stops:`, stops.map(s => `${s.color} @ ${s.position.toFixed(2)}%`));
+            }
           }
           // 오늘 날짜: 진행 중인 연결선
           else if (dateStatus === 'today' && now >= connEffectiveStart) {
             const connectorProgress = ((now - connEffectiveStart) / (connEffectiveEnd - connEffectiveStart)) * 100;
             const connectorColoredEnd = connectorStartPercent + (connectorEndPercent - connectorStartPercent) * (connectorProgress / 100);
 
-            console.log('⏳ [연결선] 오늘 진행 중:', {
-              from: item.title,
-              to: nextItem.title,
-              connectorProgress: `${connectorProgress.toFixed(2)}%`,
-              connectorColoredEnd: `${connectorColoredEnd.toFixed(2)}%`,
-              connectorMidPercent: `${connectorMidPercent.toFixed(2)}%`,
-              '중간점 이전?': connectorColoredEnd <= connectorMidPercent
-            });
-
             if (connectorColoredEnd <= connectorMidPercent) {
               // 진행이 중간점 이전 - 상단 색상만 진행
-              console.log('  → 상단 색상만 진행');
               gradientStops.push(
+                { color: bubbleColor, position: connectorStartPercent }, // 이전 버블 색상 종료
                 { color: item.color || '#3B82F6', position: connectorStartPercent },
                 { color: item.color || '#3B82F6', position: connectorColoredEnd },
                 { color: '#E5E5E5', position: connectorColoredEnd },
-                { color: '#E5E5E5', position: connectorEndPercent }
+                { color: '#E5E5E5', position: connectorEndPercent },
+                { color: '#E5E5E5', position: connectorEndPercent } // 다음 버블 차단
               );
             } else {
               // 진행이 중간점 이후 - 상단 완료, 하단 진행 중
-              console.log('  → 상단 완료, 하단 진행 중');
               gradientStops.push(
+                { color: bubbleColor, position: connectorStartPercent }, // 이전 버블 색상 종료
                 { color: item.color || '#3B82F6', position: connectorStartPercent },
                 { color: item.color || '#3B82F6', position: gradientStart },
                 { color: nextItem.color || '#3B82F6', position: gradientEnd },
                 { color: nextItem.color || '#3B82F6', position: connectorColoredEnd },
                 { color: '#E5E5E5', position: connectorColoredEnd },
-                { color: '#E5E5E5', position: connectorEndPercent }
+                { color: '#E5E5E5', position: connectorEndPercent },
+                { color: '#E5E5E5', position: connectorEndPercent } // 다음 버블 차단
               );
             }
           }
           // 대기 중이거나 미래 날짜인 연결선 - 회색으로 표시
           else {
-            console.log('⏸️ [연결선] 대기 중 또는 미래 → 회색:', {
-              from: item.title,
-              to: nextItem.title,
-              dateStatus
-            });
             gradientStops.push(
+              { color: bubbleColor, position: connectorStartPercent }, // 이전 버블 색상 종료
               { color: '#E5E5E5', position: connectorStartPercent },
-              { color: '#E5E5E5', position: connectorEndPercent }
+              { color: '#E5E5E5', position: connectorEndPercent },
+              { color: '#E5E5E5', position: connectorEndPercent } // 다음 버블 차단
             );
           }
 
@@ -807,14 +828,6 @@ export const BubbleTimelineView: React.FC = () => {
       .sort((a, b) => a.position - b.position)
       .map(stop => `${stop.color} ${stop.position.toFixed(2)}%`)
       .join(', ');
-
-    // 🔍 최종 Gradient Stops 검증
-    console.log('🎨 [Gradient] 최종 Stops:', {
-      totalStops: gradientStops.length,
-      firstStop: gradientStops[0],
-      lastStop: gradientStops[gradientStops.length - 1],
-      gradientString: gradientString.substring(0, 200) + (gradientString.length > 200 ? '...' : '')
-    });
 
     return {
       totalHeight,
