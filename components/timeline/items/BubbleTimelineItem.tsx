@@ -9,6 +9,7 @@ import { Check } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import MotivationBadge from '@/components/motivation/MotivationBadge';
 
 interface BubbleTimelineItemProps {
   item: TimelineItem;
@@ -717,7 +718,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
         {/* 오른쪽: 할일 카드 (버블과 같은 높이로 정렬) */}
         <div
-          className="flex items-center flex-1"
+          className="flex items-center flex-1 min-w-0"
           style={{ height: `${bubbleHeight}px` }}
         >
           <div
@@ -756,9 +757,33 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
             )}
 
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-base text-gray-900 dark:text-gray-100 flex-1">
-                {item.title}
-              </h3>
+              {/* 제목과 동기부여 메시지 */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h3 className="font-medium text-base text-gray-900 dark:text-gray-100">
+                    {item.title}
+                  </h3>
+
+                  {/* 동기부여 메시지 배지들 - 제목과 같은 라인에 표시 */}
+                  {linkedMotivationMessages.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0 ml-1 overflow-hidden">
+                      <MotivationBadge
+                        message={linkedMotivationMessages[0]}
+                        variant="compact"
+                        size="sm"
+                        className="flex-1 min-w-0 max-w-none"
+                      />
+                      {linkedMotivationMessages.length > 1 && (
+                        <div className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md flex-shrink-0">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            외 {linkedMotivationMessages.length - 1}개
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* 완료 체크박스 */}
               {item.type === 'todo' && (
