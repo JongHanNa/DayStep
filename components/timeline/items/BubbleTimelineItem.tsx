@@ -208,6 +208,41 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return Math.min(baseHeight + extraHeight, 500); // 최대 500px (약 8시간 간격)
   }, [gapMinutes]);
 
+  // 다음 할일의 색상
+  const nextItemColor = nextItem?.color || '#3B82F6';
+
+  // 다음 할일의 시작 시간 기준 진행률 계산
+  const nextProgressPercentage = useMemo(() => {
+    if (!nextItem || !nextItem.startTime || !nextItem.endTime) return 0;
+
+    const nextStartTime = new Date(nextItem.startTime);
+    const nextEndTime = new Date(nextItem.endTime);
+
+    // 날짜 상태에 따라 진행률 계산
+    if (dateStatus === 'past') return 100; // 과거는 100%
+    if (dateStatus === 'future') return 0; // 미래는 0%
+
+    // 오늘: 현재 시간이 다음 할일 시작 시간 이전이면 0%
+    const nowHour = currentTime.getHours();
+    const nowMinute = currentTime.getMinutes();
+    const nowTimeOfDay = nowHour * 60 + nowMinute;
+
+    const nextStartHour = nextStartTime.getHours();
+    const nextStartMinute = nextStartTime.getMinutes();
+    const nextStartTimeOfDay = nextStartHour * 60 + nextStartMinute;
+
+    if (nowTimeOfDay < nextStartTimeOfDay) return 0;
+
+    // 이미 시작했으면 진행률 계산 (간단히 >0으로 처리)
+    const nextEndHour = nextEndTime.getHours();
+    const nextEndMinute = nextEndTime.getMinutes();
+    const nextEndTimeOfDay = nextEndHour * 60 + nextEndMinute;
+
+    if (nowTimeOfDay >= nextEndTimeOfDay) return 100;
+
+    return Math.round(((nowTimeOfDay - nextStartTimeOfDay) / (nextEndTimeOfDay - nextStartTimeOfDay)) * 100);
+  }, [nextItem, dateStatus, currentTime]);
+
   // 현재 시간 기준 진행률 계산 (0-100)
   // 크로스데이 할일 처리: currentDate 날짜의 시작(00:00)과 끝(23:59:59)을 기준으로 계산
   const progressPercentage = useMemo(() => {
@@ -342,6 +377,75 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   }, [dateStatus, startTime, endTime, currentTime, currentDate]);
 
 
+  // 연결 막대 진행률 계산 (현재 종료 ~ 다음 시작 사이)
+  const connectorProgressPercentage = useMemo(() => {
+    if (!nextItem || !endTime || !nextItem.startTime) return 0;
+
+    // 조건 1: 현재 버블이 100% 완료되지 않았으면 연결 막대는 0%
+    if (progressPercentage < 100) return 0;
+
+    // 조건 2: 다음 버블이 이미 시작했으면 연결 막대는 100%
+    if (nextProgressPercentage > 0) return 100;
+
+    // 조건 3: 현재 종료 ~ 다음 시작 사이
+    // 날짜 상태 확인
+    if (dateStatus === 'past') return 100; // 과거는 100%
+    if (dateStatus === 'future') return 0; // 미래는 0%
+
+    // 오늘: 현재 시간 기준 진행률 계산
+    const nowHour = currentTime.getHours();
+    const nowMinute = currentTime.getMinutes();
+    const nowTimeOfDay = nowHour * 60 + nowMinute;
+
+    const endHour = endTime.getHours();
+    const endMinute = endTime.getMinutes();
+    const endTimeOfDay = endHour * 60 + endMinute;
+
+    const nextStartTime = new Date(nextItem.startTime);
+    const nextStartHour = nextStartTime.getHours();
+    const nextStartMinute = nextStartTime.getMinutes();
+    const nextStartTimeOfDay = nextStartHour * 60 + nextStartMinute;
+
+    // 아직 현재 할일 종료 전이면 0%
+    if (nowTimeOfDay < endTimeOfDay) return 0;
+
+    // 다음 할일 시작 후면 100%
+    if (nowTimeOfDay >= nextStartTimeOfDay) return 100;
+
+    // 사이 구간: 진행률 계산
+    const elapsed = nowTimeOfDay - endTimeOfDay;
+    const total = nextStartTimeOfDay - endTimeOfDay;
+
+    // total이 0이거나 음수면 0% 반환
+    if (total <= 0) return 0;
+
+    return Math.min(100, Math.round((elapsed / total) * 100));
+  }, [progressPercentage, nextProgressPercentage, dateStatus, currentTime, endTime, nextItem]);
+
+  // 연결 막대 색상 (그라데이션: 이전 색 → 다음 색)
+  const connectorGradient = useMemo(() => {
+    if (connectorProgressPercentage === 0) {
+      // 아직 시작 전이면 회색
+      return '#E5E5E5';
+    }
+
+    if (connectorProgressPercentage === 100) {
+      // 완전히 완료되면 그라데이션 (이전 색 → 다음 색)
+      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} 50%, ${nextItemColor} 50%, ${nextItemColor} 100%)`;
+    }
+
+    // 진행 중: 진행률에 따라 점진적 색칠
+    // 0-50%: 이전 색으로 색칠
+    // 50-100%: 다음 색으로 색칠
+    if (connectorProgressPercentage <= 50) {
+      // 0-50% 구간: 이전 색으로 진행률만큼 색칠
+      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${connectorProgressPercentage}%, #E5E5E5 ${connectorProgressPercentage}%, #E5E5E5 100%)`;
+    } else {
+      // 50-100% 구간: 이전 색 50% + 다음 색으로 진행률만큼 색칠
+      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} 50%, ${nextItemColor} 50%, ${nextItemColor} ${connectorProgressPercentage}%, #E5E5E5 ${connectorProgressPercentage}%, #E5E5E5 100%)`;
+    }
+  }, [connectorProgressPercentage, itemColor, nextItemColor]);
+
   // 버블 스타일 결정 (색상 + 크기 + 점진적 색칠)
   const bubbleStyle = useMemo(() => {
     const baseStyle = {
@@ -424,6 +528,20 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         <div className="flex flex-col" style={{ width: '64px' }}>
           {/* 버블과 할일 카드가 정렬될 영역 */}
           <div ref={bubbleWrapperRef} className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
+            {/* 버블 뒤에 숨은 연결 막대 (버블과 동일한 높이) */}
+            <div
+              className="absolute w-1"
+              style={{
+                left: 'calc(50% - 2px)', // 버블 중심 정렬
+                top: 0,
+                height: `${bubbleHeight}px`,
+                background: progressPercentage > 0
+                  ? `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, #E5E5E5 ${progressPercentage}%, #E5E5E5 100%)`
+                  : '#E5E5E5',
+                zIndex: 0, // 버블 뒤로 배치
+              }}
+            />
+
             {/* 버블 아이콘 (드래그 시 fixed positioning) */}
             <div
               className="flex items-center justify-center"
@@ -435,7 +553,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 height: `${bubbleHeight}px`,
                 transform: !isDragging ? undefined : undefined,
                 transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                zIndex: isDragging ? 100 : undefined,
+                zIndex: isDragging ? 100 : 1, // 버블은 막대보다 앞에
               }}
             >
               {/* 버블 아이콘 */}
@@ -480,10 +598,20 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         <div className="relative flex items-start gap-4">
           {/* 왼쪽: 간격 공간 (버블 너비와 동일) */}
           <div className="relative" style={{ width: '64px', height: `${connectorHeight}px` }}>
-            {/* 연결 막대 제거 - 간격 확보용 투명 공간만 유지 */}
+            {/* 연결 막대 (버블 중심 정렬, 시간 진행에 따라 색칠) */}
+            <div
+              className="absolute w-1"
+              style={{
+                left: 'calc(50% - 2px)', // 버블 중심 정렬
+                top: 0,
+                height: `${connectorHeight}px`,
+                background: connectorGradient,
+                zIndex: 0,
+              }}
+            />
           </div>
           {/* 오른쪽: 빈 공간 (레이아웃 유지) */}
-          <div className="flex-1"></div>
+          <div className="flex-1" />
         </div>
       )}
 

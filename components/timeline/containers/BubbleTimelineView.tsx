@@ -424,106 +424,11 @@ export const BubbleTimelineView: React.FC = () => {
     };
   }, []);
 
-  // 연결선 전체 높이 계산 (연결선은 항상 회색)
-  const connectorData = useMemo(() => {
-    let totalHeight = 0;
-
-    // 전체 높이만 계산 (버블 높이 + 연결선 높이)
-    timedItems.forEach((item, index) => {
-      const startTime = item.startTime ? new Date(item.startTime) : null;
-      const endTime = item.endTime ? new Date(item.endTime) : null;
-
-      let durationMinutes = 10;
-      if (startTime && endTime) {
-        const isSameDay = (date1: Date, date2: Date) => {
-          return date1.getFullYear() === date2.getFullYear() &&
-                 date1.getMonth() === date2.getMonth() &&
-                 date1.getDate() === date2.getDate();
-        };
-
-        let normalizedEndTime = isSameDay(startTime, endTime)
-          ? endTime
-          : new Date(
-              startTime.getFullYear(),
-              startTime.getMonth(),
-              startTime.getDate(),
-              endTime.getHours(),
-              endTime.getMinutes(),
-              endTime.getSeconds()
-            );
-
-        // ✅ 자정을 넘어가는 할일 처리: 정규화된 종료 시간이 시작 시간보다 이전이면 다음 날로 조정
-        if (normalizedEndTime.getTime() < startTime.getTime()) {
-          normalizedEndTime = new Date(normalizedEndTime.getTime() + 24 * 60 * 60 * 1000);
-        }
-
-        const minutes = Math.round((normalizedEndTime.getTime() - startTime.getTime()) / (60 * 1000));
-        if (minutes > 0 && minutes <= 1440) {
-          durationMinutes = minutes;
-        }
-      }
-
-      const bubbleHeight = durationMinutes <= 10 ? 64 : Math.min(64 + Math.ceil((durationMinutes - 10) / 10) * 20, 200);
-      totalHeight += bubbleHeight;
-
-      // 다음 아이템까지의 간격 추가
-      if (index < timedItems.length - 1) {
-        const nextItem = timedItems[index + 1];
-        if (endTime && nextItem.startTime) {
-          const nextStartTime = new Date(nextItem.startTime);
-
-          // 항상 현재 날짜(오늘)를 기준으로 정규화 (반복 할일 시간 비교를 위해)
-          const normalizedEndTime = new Date(
-            currentTime.getFullYear(),
-            currentTime.getMonth(),
-            currentTime.getDate(),
-            endTime.getHours(),
-            endTime.getMinutes(),
-            endTime.getSeconds()
-          );
-
-          const normalizedNextStart = new Date(
-            currentTime.getFullYear(),
-            currentTime.getMonth(),
-            currentTime.getDate(),
-            nextStartTime.getHours(),
-            nextStartTime.getMinutes(),
-            nextStartTime.getSeconds()
-          );
-
-          const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
-
-          // ✅ 0~10분 간격은 동일한 16px 높이로 표시
-          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500);
-          totalHeight += connectorHeight;
-        }
-      }
-    });
-
-    return {
-      totalHeight,
-      gradient: '#E5E5E5' // 연결선은 항상 회색
-    };
-  }, [timedItems, currentTime]);
 
   return (
     <div className="flex flex-col h-full w-full px-4 py-6 overflow-y-auto">
       {/* 타임라인 컨테이너 */}
       <div className="relative flex-1">
-        {/* ✨ 하나의 연속된 연결선 (첫 버블부터 마지막 버블까지 관통) */}
-        {connectorData.totalHeight > 0 && (
-          <div
-            className="absolute w-1"
-            style={{
-              left: 'calc(32px - 2px)', // 버블 중심(32px) - 연결선 절반(2px) = 정중앙 정렬
-              top: 0,
-              height: `${connectorData.totalHeight}px`,
-              background: connectorData.gradient,
-              zIndex: 0
-            }}
-          />
-        )}
-
         {/* 버블 아이템 리스트 */}
         <div className="relative space-y-0" style={{ zIndex: 1 }}>
           {timedItems.map((item, index) => {
