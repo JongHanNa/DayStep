@@ -426,7 +426,7 @@ export const BubbleTimelineView: React.FC = () => {
 
 
   return (
-    <div className="flex flex-col h-full w-full px-4 py-6 overflow-y-auto">
+    <div className="flex flex-col h-full w-full py-6 overflow-y-auto">
       {/* 타임라인 컨테이너 */}
       <div className="relative flex-1">
         {/* 버블 아이템 리스트 */}
@@ -465,6 +465,20 @@ export const BubbleTimelineView: React.FC = () => {
                 currentTime={currentTime}
                 currentDate={currentDate}
                 dateStatus={itemDateStatus}
+                onTodoClick={(itemId: string) => {
+                  // 할일 수정 모달 열기 로직은 부모 컴포넌트에서 처리
+                  console.log('Todo clicked:', itemId);
+                }}
+                onToggleComplete={async (itemId: string) => {
+                  // 완료 상태 토글
+                  const actualId = itemId.startsWith('todo-') ? itemId.replace('todo-', '') : itemId;
+                  const todo = timedItems.find(t => t.id === itemId);
+                  if (todo && todo.type === 'todo') {
+                    await updateTodo(actualId, {
+                      completed: !todo.data?.completed
+                    });
+                  }
+                }}
                 onTouchStart={(e) => handleDragStart(e, item.id)}
                 onTouchMove={handleDragMove}
                 onTouchEnd={handleDragEnd}

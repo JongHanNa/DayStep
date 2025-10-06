@@ -4,6 +4,11 @@ import React, { useMemo } from 'react';
 import { TimelineItem } from '@/types/timeline-view';
 import { cn } from '@/lib/utils';
 import * as Icons from 'lucide-react';
+import { getUnifiedIcon, UnifiedIconKey } from '@/lib/icon-collection';
+import { Check } from 'lucide-react';
+import { useTodoStore } from '@/state/stores/todoStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
+import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
 
 interface BubbleTimelineItemProps {
   item: TimelineItem;
@@ -15,6 +20,8 @@ interface BubbleTimelineItemProps {
   currentTime: Date;
   currentDate: Date;  // viewing date (어제/오늘/내일 등)
   dateStatus: 'past' | 'today' | 'future';  // 부모로부터 전달받는 날짜 상태
+  onTodoClick: (itemId: string) => void;
+  onToggleComplete: (itemId: string) => void;
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
@@ -42,6 +49,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   currentTime,
   currentDate,  // viewing date (어제/오늘/내일 등)
   dateStatus,  // 부모로부터 전달받는 날짜 상태
+  onTodoClick,
+  onToggleComplete,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -56,13 +65,71 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 버블 너비 (고정) - useMemo보다 먼저 선언
   const bubbleWidth = 64;
 
-  // 아이콘 결정
-  const IconComponent = useMemo(() => {
-    // Todo 타입에서 아이콘 정보 가져오기
-    const iconName = item.type === 'todo' ? item.data.icon : null;
-    if (iconName && iconName in Icons) {
-      return Icons[iconName as keyof typeof Icons] as React.ComponentType<{ className?: string }>;
+  // 스토어 훅
+  const { todos, todoCompletions } = useTodoStore();
+  const { getMotivationsForTodo } = useMotivationStore();
+  const { memos } = useQuickMemoStore();
+
+  // 타임라인 ID에서 실제 UUID 추출
+  const extractTaskId = (timelineId: string) => {
+    let taskId = timelineId.replace(/^todo-/, '');
+    if (taskId.includes('-recurrence-')) {
+      taskId = taskId.split('-recurrence-')[0];
     }
+    return taskId;
+  };
+
+  const actualTaskId = extractTaskId(item.id);
+
+  // 동기부여 메시지
+  const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
+
+  // 메모 확인
+  const linkedMemos = item.type === 'todo'
+    ? memos.filter(memo =>
+        memo.related_task_id === actualTaskId ||
+        memo.linked_timeline_task_id === actualTaskId
+      )
+    : [];
+
+  // 완료 상태 계산
+  const isCompleted = useMemo(() => {
+    if (item.type !== 'todo') return false;
+    const todoData = item.data;
+    if (!todoData) return false;
+
+    const isRecurring = (todoData as any).is_recurrence_instance ||
+                       (todoData.recurrence_pattern && todoData.recurrence_pattern !== 'none');
+
+    if (isRecurring) {
+      const originalId = (todoData as any).recurrence_source_id || todoData.id;
+      const occurrenceDate = (todoData as any).recurrence_occurrence_date;
+      const { isRecurrenceCompleted } = useTodoStore.getState();
+      return isRecurrenceCompleted(originalId, occurrenceDate);
+    } else {
+      const actualTodoId = item.id.startsWith('todo-') ? item.id.replace('todo-', '') : item.id;
+      const storeCurrentTodo = todos.find(t => t.id === actualTodoId);
+      return storeCurrentTodo ? storeCurrentTodo.completed : (todoData.completed || false);
+    }
+  }, [item.type, item.data, item.id, todos, todoCompletions]);
+
+  // 아이콘 결정 - getUnifiedIcon 활용
+  const IconComponent = useMemo(() => {
+    if (item.type !== 'todo') return Icons.Circle;
+
+    const iconKey = item.data?.icon;
+    if (!iconKey) return Icons.Circle;
+
+    const iconData = getUnifiedIcon(iconKey as UnifiedIconKey);
+    if (iconData) {
+      return iconData.component;
+    }
+
+    // 폴백: lucide-react 아이콘
+    if (iconKey in Icons) {
+      return Icons[iconKey as keyof typeof Icons] as React.ComponentType<{ className?: string }>;
+    }
+
     return Icons.Circle;
   }, [item.type, item.data]);
 
@@ -422,7 +489,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return Math.min(100, Math.round((elapsed / total) * 100));
   }, [progressPercentage, nextProgressPercentage, dateStatus, currentTime, endTime, nextItem]);
 
-  // 연결 막대 색상 (그라데이션: 이전 색 → 다음 색)
+  // 연결 막대 색상 (그라데이션: 이전 색 → 다음 색) - 중앙에서 부드러운 블렌딩
   const connectorGradient = useMemo(() => {
     if (connectorProgressPercentage === 0) {
       // 아직 시작 전이면 회색
@@ -430,19 +497,21 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     }
 
     if (connectorProgressPercentage === 100) {
-      // 완전히 완료되면 그라데이션 (이전 색 → 다음 색)
-      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} 50%, ${nextItemColor} 50%, ${nextItemColor} 100%)`;
+      // 완전히 완료되면 부드러운 그라데이션 (이전 색 → 중앙 블렌딩 → 다음 색)
+      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} 40%, ${nextItemColor} 60%, ${nextItemColor} 100%)`;
     }
 
     // 진행 중: 진행률에 따라 점진적 색칠
     // 0-50%: 이전 색으로 색칠
-    // 50-100%: 다음 색으로 색칠
+    // 50-100%: 다음 색으로 색칠 (중앙 블렌딩 포함)
     if (connectorProgressPercentage <= 50) {
       // 0-50% 구간: 이전 색으로 진행률만큼 색칠
       return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${connectorProgressPercentage}%, #E5E5E5 ${connectorProgressPercentage}%, #E5E5E5 100%)`;
     } else {
-      // 50-100% 구간: 이전 색 50% + 다음 색으로 진행률만큼 색칠
-      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} 50%, ${nextItemColor} 50%, ${nextItemColor} ${connectorProgressPercentage}%, #E5E5E5 ${connectorProgressPercentage}%, #E5E5E5 100%)`;
+      // 50-100% 구간: 이전 색 40% + 블렌딩 40-60% + 다음 색으로 진행률만큼 색칠
+      const blendStart = 40;
+      const blendEnd = 60;
+      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${blendStart}%, ${nextItemColor} ${blendEnd}%, ${nextItemColor} ${connectorProgressPercentage}%, #E5E5E5 ${connectorProgressPercentage}%, #E5E5E5 100%)`;
     }
   }, [connectorProgressPercentage, itemColor, nextItemColor]);
 
@@ -506,6 +575,85 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   };
+
+  // 남은 시간 계산 (현재 진행 중인 할일일 때)
+  const remainingMinutes = useMemo(() => {
+    if (!endTime || dateStatus !== 'today') return null;
+
+    const nowHour = currentTime.getHours();
+    const nowMinute = currentTime.getMinutes();
+    const nowTimeOfDay = nowHour * 60 + nowMinute;
+
+    const endHour = endTime.getHours();
+    const endMinute = endTime.getMinutes();
+    const endTimeOfDay = endHour * 60 + endMinute;
+
+    const startHour = startTime?.getHours() || 0;
+    const startMinute = startTime?.getMinutes() || 0;
+    const startTimeOfDay = startHour * 60 + startMinute;
+
+    // 현재 진행 중인지 확인
+    if (nowTimeOfDay >= startTimeOfDay && nowTimeOfDay < endTimeOfDay) {
+      return endTimeOfDay - nowTimeOfDay;
+    }
+
+    return null;
+  }, [endTime, startTime, currentTime, dateStatus]);
+
+  // 간격 메시지 생성
+  const gapMessage = useMemo(() => {
+    if (!nextItem || gapMinutes <= 0) return null;
+
+    // 과거 날짜
+    if (dateStatus === 'past') {
+      return '지나간 순간들';
+    }
+
+    // 미래 날짜
+    if (dateStatus === 'future') {
+      return '준비하세요';
+    }
+
+    // 오늘
+    if (dateStatus === 'today') {
+      // 현재 할일이 끝났는지 확인
+      if (!endTime) return null;
+
+      const nowHour = currentTime.getHours();
+      const nowMinute = currentTime.getMinutes();
+      const nowTimeOfDay = nowHour * 60 + nowMinute;
+
+      const endHour = endTime.getHours();
+      const endMinute = endTime.getMinutes();
+      const endTimeOfDay = endHour * 60 + endMinute;
+
+      // 아직 현재 할일 진행 중
+      if (nowTimeOfDay < endTimeOfDay) {
+        return null;
+      }
+
+      // 다음 할일 시작 시간 확인
+      const nextStartTime = nextItem.startTime ? new Date(nextItem.startTime) : null;
+      if (!nextStartTime) return null;
+
+      const nextStartHour = nextStartTime.getHours();
+      const nextStartMinute = nextStartTime.getMinutes();
+      const nextStartTimeOfDay = nextStartHour * 60 + nextStartMinute;
+
+      // 다음 할일까지 남은 시간
+      const remainingGap = nextStartTimeOfDay - nowTimeOfDay;
+
+      if (remainingGap > 0) {
+        return `다음 일정까지 남은 시간 ${remainingGap}분`;
+      } else if (remainingGap === 0) {
+        return '다음 일정 시작!';
+      } else {
+        return '다음 일정 진행 중';
+      }
+    }
+
+    return '당연히 쉬어야 할 시간';
+  }, [nextItem, gapMinutes, dateStatus, currentTime, endTime]);
 
   return (
     <>
@@ -572,23 +720,105 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           className="flex items-center flex-1"
           style={{ height: `${bubbleHeight}px` }}
         >
-          <div className={cn(
-            "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-all",
-            !isDragging && "hover:shadow-md hover:bg-gray-200 dark:hover:bg-gray-700",
-            isDragging && "opacity-0"
-          )}>
+          <div
+            className={cn(
+              "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-all",
+              !isDragging && "hover:shadow-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer",
+              isDragging && "opacity-0"
+            )}
+            onClick={(e) => {
+              // 체크박스 클릭이 아닐 때만 할일 수정 모달 열기
+              const target = e.target as HTMLElement;
+              if (!target.closest('.completion-checkbox')) {
+                onTodoClick(item.id);
+              }
+            }}
+          >
             {/* 시간 표시 - 할일 제목 위 */}
             {startTime && endTime && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
-                {formatTime(startTime)} ~ {formatTime(endTime)}
-                {isNextDay && <span className="text-xs font-medium text-blue-600 dark:text-blue-400">+1</span>}
-                {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && ' 🔄'}
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 flex-wrap">
+                <span>
+                  {formatTime(startTime)} ~ {formatTime(endTime)}
+                  {isNextDay && <span className="text-xs font-medium text-blue-600 dark:text-blue-400 ml-1">+1</span>}
+                </span>
+                <span className="text-gray-400 dark:text-gray-500">
+                  ({durationMinutes}분)
+                </span>
+                {remainingMinutes !== null && remainingMinutes > 0 && (
+                  <span className="text-blue-600 dark:text-blue-400 font-medium">
+                    ({remainingMinutes}분 남음)
+                  </span>
+                )}
+                {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && (
+                  <span>🔄</span>
+                )}
               </div>
             )}
 
-            <h3 className="font-medium text-base text-gray-900 dark:text-gray-100">
-              {item.title}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-base text-gray-900 dark:text-gray-100 flex-1">
+                {item.title}
+              </h3>
+
+              {/* 완료 체크박스 */}
+              {item.type === 'todo' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleComplete(item.id);
+                  }}
+                  className={cn(
+                    'completion-checkbox w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
+                    'transition-all duration-300 ease-out hover:scale-110',
+                    isCompleted
+                      ? 'border-transparent text-white transform scale-105'
+                      : 'bg-white'
+                  )}
+                  style={{
+                    backgroundColor: isCompleted ? (item.color || '#22C55E') : 'white',
+                    borderColor: isCompleted ? 'transparent' : (item.color || '#D1D5DB')
+                  }}
+                >
+                  {/* 체크마크 배경 채우기 효과 */}
+                  <div
+                    className={cn(
+                      'absolute inset-0 rounded-full transition-all duration-500 ease-out',
+                      isCompleted ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
+                    )}
+                    style={{
+                      backgroundColor: item.color || '#22C55E'
+                    }}
+                  />
+
+                  {/* 체크마크 */}
+                  <Check
+                    className={cn(
+                      'w-4 h-4 text-white transition-all duration-700 ease-out transform relative z-10',
+                      isCompleted
+                        ? 'opacity-100 scale-100 rotate-0'
+                        : 'opacity-0 scale-0 rotate-180'
+                    )}
+                    style={{
+                      transitionDelay: isCompleted ? '200ms' : '0ms'
+                    }}
+                  />
+                </button>
+              )}
+            </div>
+
+            {/* 동기부여 메시지 */}
+            {linkedMotivationMessages.length > 0 && (
+              <div className="mt-1.5 text-xs text-purple-600 dark:text-purple-400 font-medium">
+                💪 {linkedMotivationMessages[0].content}
+              </div>
+            )}
+
+            {/* 메모 */}
+            {linkedMemos.length > 0 && (
+              <div className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
+                📝 {linkedMemos.length}개의 메모
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -610,8 +840,14 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               }}
             />
           </div>
-          {/* 오른쪽: 빈 공간 (레이아웃 유지) */}
-          <div className="flex-1" />
+          {/* 오른쪽: 간격 정보 표시 */}
+          <div className="flex-1 flex items-center" style={{ height: `${connectorHeight}px` }}>
+            {gapMessage && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 italic px-2">
+                {gapMessage}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
