@@ -493,8 +493,8 @@ export const BubbleTimelineView: React.FC = () => {
 
           const gapMinutes = Math.round((normalizedNextStart.getTime() - normalizedEndTime.getTime()) / (60 * 1000));
 
-          // ✅ 간격이 0분 이하면 연결선 높이를 0으로 설정 (버블 간격 없음)
-          const connectorHeight = gapMinutes <= 0 ? 0 : (gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500));
+          // ✅ 0~10분 간격은 동일한 16px 높이로 표시
+          const connectorHeight = gapMinutes <= 10 ? 16 : Math.min(16 + Math.ceil((gapMinutes - 10) / 10) * 10, 500);
           totalHeight += connectorHeight;
         }
       }
