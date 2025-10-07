@@ -831,13 +831,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               )}
             </div>
 
-            {/* 동기부여 메시지 */}
-            {linkedMotivationMessages.length > 0 && (
-              <div className="mt-1.5 text-xs text-purple-600 dark:text-purple-400 font-medium">
-                💪 {linkedMotivationMessages[0].content}
-              </div>
-            )}
-
             {/* 메모 */}
             {linkedMemos.length > 0 && (
               <div className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
