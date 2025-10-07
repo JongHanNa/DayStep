@@ -571,11 +571,8 @@ export const BubbleTimelineView: React.FC = () => {
       <TodoFormModal
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
-        defaultValues={{
-          start_time: addModalStartTime?.toISOString(),
-          end_time: addModalEndTime?.toISOString(),
-        }}
-        viewMode={viewMode}
+        initialStartTime={addModalStartTime}
+        initialEndTime={addModalEndTime}
       />
     </div>
   );
