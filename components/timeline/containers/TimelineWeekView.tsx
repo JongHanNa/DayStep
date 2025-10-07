@@ -73,7 +73,7 @@ const TimelineWeekView: React.FC = () => {
                     )}
                     style={{
                       borderLeftWidth: '3px',
-                      borderLeftColor: item.color || '#3B82F6'
+                      borderLeftColor: item.color || 'hsl(var(--status-pending))'
                     }}
                   >
                     <div className="font-medium truncate">{item.title}</div>
@@ -104,7 +104,7 @@ const TimelineWeekView: React.FC = () => {
                           )}
                           style={{
                             borderLeftWidth: '3px',
-                            borderLeftColor: item.color || '#3B82F6'
+                            borderLeftColor: item.color || 'hsl(var(--status-pending))'
                           }}
                         >
                           <div className="flex items-center justify-between">

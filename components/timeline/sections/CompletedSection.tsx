@@ -33,7 +33,7 @@ const CompletedSection = memo(({
       <div className="flex items-center justify-between mb-4 px-0">
         <button
           onClick={onToggleCollapse}
-          className="flex items-center justify-between gap-2 px-3 py-2 rounded-full transition-colors bg-[#e5e5e5] hover:bg-[#d5d5d5]"
+          className="flex items-center justify-between gap-2 px-3 py-2 rounded-full transition-colors bg-section-header hover:bg-section-header-hover"
         >
           <div className="flex items-center gap-2">
             <span className="font-bold text-base text-gray-700 dark:text-gray-300">완료된 할일</span>

@@ -76,7 +76,7 @@ const AllDayItemsSection = memo(() => {
             )}
             style={{
               borderLeftWidth: '4px',
-              borderLeftColor: item.color || '#3B82F6'
+              borderLeftColor: item.color || 'hsl(var(--status-pending))'
             }}
           >
             <div className="flex items-start justify-between">

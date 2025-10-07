@@ -56,110 +56,127 @@
   --font-system: Arial, Helvetica, sans-serif;
   --font-opendyslexic: "OpenDyslexic", Arial, sans-serif;
   --current-font-family: var(--font-system);
-  
-  /* Light theme - WCAG AA compliant colors */
-  --background: #ffffff;
-  --foreground: #0f172a; /* Improved contrast ratio */
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #1e40af; /* Enhanced blue for better contrast */
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f8fafc;
-  --muted-foreground: #374151; /* Enhanced contrast ratio 7.39:1 */
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
-  --destructive: #dc2626; /* Better contrast than #ef4444 */
-  --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #1e40af;
+
+  /* 🎨 Light theme - WCAG AA compliant colors (HSL format) */
+  --background: 0 0% 100%; /* #ffffff */
+  --foreground: 222 47% 11%; /* #0f172a */
+  --card: 0 0% 100%; /* #ffffff */
+  --card-foreground: 222 47% 11%; /* #0f172a */
+  --popover: 0 0% 100%; /* #ffffff */
+  --popover-foreground: 222 47% 11%; /* #0f172a */
+  --primary: 222 47% 11%; /* shadcn 호환 */
+  --primary-foreground: 210 40% 98%; /* #f8fafc */
+  --secondary: 210 40% 96%; /* #f1f5f9 */
+  --secondary-foreground: 222 47% 11%; /* #0f172a */
+  --muted: 210 40% 98%; /* #f8fafc */
+  --muted-foreground: 215 16% 47%; /* #6b7280 */
+  --accent: 210 40% 96%; /* #f1f5f9 */
+  --accent-foreground: 222 47% 11%; /* #0f172a */
+  --destructive: 0 84% 60%; /* #ef4444 */
+  --destructive-foreground: 210 40% 98%; /* #f8fafc */
+  --border: 214 32% 91%; /* #e2e8f0 */
+  --input: 214 32% 91%; /* #e2e8f0 */
+  --ring: 222 47% 11%; /* #0f172a */
   --radius: 0.5rem;
 
-  /* 🎨 앱 포인트 색상 (브랜드 색상) */
-  --brand-primary: #4a5568; /* 다크 올리브 그린 메인 액센트 */
-  --brand-primary-hover: #2d3748; /* 호버 시 더 어두운 색상 */
-  --brand-primary-light: rgba(74, 85, 104, 0.1); /* 배경용 연한 색상 */
-  --brand-primary-medium: rgba(74, 85, 104, 0.2); /* 강조용 중간 색상 */
+  /* 🎨 타임라인 전용 색상 */
+  --timeline-bg: 0 0% 97%; /* #f8f8f8 */
+  --timeline-connector: 0 0% 90%; /* #E5E5E5 */
+  --timeline-connector-active: 217 91% 60%; /* #3B82F6 */
 
-  /* 하위 호환성을 위한 별칭 */
-  --brand-accent: var(--brand-primary);
-  --brand-accent-hover: var(--brand-primary-hover);
-  --brand-accent-light: var(--brand-primary-light);
-  --brand-accent-medium: var(--brand-primary-medium);
+  /* 🎨 섹션 헤더 색상 */
+  --section-header: 0 0% 90%; /* #e5e5e5 */
+  --section-header-hover: 0 0% 84%; /* #d5d5d5 */
+
+  /* 🎨 상태 색상 */
+  --status-completed: 142 71% 45%; /* #22c55e */
+  --status-in-progress: 25 95% 53%; /* #f97316 */
+  --status-pending: 217 91% 60%; /* #3b82f6 */
+
+  /* 🎨 브랜드 색상 (하위 호환성) */
+  --brand-primary: 215 16% 35%; /* #4a5568 */
+  --brand-primary-hover: 217 19% 27%; /* #2d3748 */
+  --brand-primary-light: 215 16% 35% / 0.1; /* rgba(74, 85, 104, 0.1) */
 }
 
 .dark {
-  /* Dark theme - WCAG AA compliant colors */
-  --background: #0f172a;
-  --foreground: #f8fafc; /* High contrast white */
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
-  --primary: #3b82f6; /* Bright blue for dark theme */
-  --primary-foreground: #ffffff;
-  --secondary: #334155;
-  --secondary-foreground: #f8fafc;
-  --muted: #334155;
-  --muted-foreground: #e2e8f0; /* Enhanced contrast ratio 8.12:1 */
-  --accent: #334155;
-  --accent-foreground: #f8fafc;
-  --destructive: #f87171; /* Lighter red for dark theme */
-  --destructive-foreground: #ffffff;
-  --border: #475569;
-  --input: #475569;
-  --ring: #3b82f6;
+  /* 🎨 Dark theme - WCAG AA compliant colors (HSL format) */
+  --background: 222 47% 11%; /* #0f172a */
+  --foreground: 210 40% 98%; /* #f8fafc */
+  --card: 217 33% 17%; /* #1e293b */
+  --card-foreground: 210 40% 98%; /* #f8fafc */
+  --popover: 217 33% 17%; /* #1e293b */
+  --popover-foreground: 210 40% 98%; /* #f8fafc */
+  --primary: 210 40% 98%; /* #f8fafc */
+  --primary-foreground: 222 47% 11%; /* #0f172a */
+  --secondary: 215 28% 29%; /* #334155 */
+  --secondary-foreground: 210 40% 98%; /* #f8fafc */
+  --muted: 215 28% 29%; /* #334155 */
+  --muted-foreground: 215 20% 65%; /* #94a3b8 */
+  --accent: 215 28% 29%; /* #334155 */
+  --accent-foreground: 210 40% 98%; /* #f8fafc */
+  --destructive: 0 84% 60%; /* #ef4444 */
+  --destructive-foreground: 210 40% 98%; /* #f8fafc */
+  --border: 215 25% 35%; /* #475569 */
+  --input: 215 25% 35%; /* #475569 */
+  --ring: 217 91% 60%; /* #3b82f6 */
 
-  /* 🎨 앱 포인트 색상 (브랜드 색상) - 다크모드 최적화 */
-  --brand-primary: #6b7280; /* 다크모드에서 더 밝은 그레이 */
-  --brand-primary-hover: #4a5568; /* 호버 시 원래 색상 */
-  --brand-primary-light: rgba(107, 114, 128, 0.15); /* 다크모드 배경용 */
-  --brand-primary-medium: rgba(107, 114, 128, 0.25); /* 다크모드 강조용 */
+  /* 🎨 타임라인 전용 색상 - 다크모드 */
+  --timeline-bg: 217 33% 17%; /* #1e293b */
+  --timeline-connector: 215 25% 35%; /* #475569 */
+  --timeline-connector-active: 213 97% 87%; /* #60a5fa */
 
-  /* 하위 호환성을 위한 별칭 */
-  --brand-accent: var(--brand-primary);
-  --brand-accent-hover: var(--brand-primary-hover);
-  --brand-accent-light: var(--brand-primary-light);
-  --brand-accent-medium: var(--brand-primary-medium);
+  /* 🎨 섹션 헤더 색상 - 다크모드 */
+  --section-header: 215 28% 29%; /* #334155 */
+  --section-header-hover: 215 25% 35%; /* #475569 */
+
+  /* 🎨 상태 색상 - 다크모드 */
+  --status-completed: 142 77% 73%; /* #34d399 */
+  --status-in-progress: 25 95% 61%; /* #fb923c */
+  --status-pending: 213 97% 87%; /* #60a5fa */
+
+  /* 🎨 브랜드 색상 - 다크모드 (하위 호환성) */
+  --brand-primary: 220 9% 46%; /* #6b7280 */
+  --brand-primary-hover: 215 16% 35%; /* #4a5568 */
+  --brand-primary-light: 220 9% 46% / 0.15; /* rgba(107, 114, 128, 0.15) */
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --card: #1e293b;
-    --card-foreground: #f8fafc;
-    --popover: #1e293b;
-    --popover-foreground: #f8fafc;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --secondary: #334155;
-    --secondary-foreground: #f8fafc;
-    --muted: #334155;
-    --muted-foreground: #e2e8f0;
-    --accent: #334155;
-    --accent-foreground: #f8fafc;
-    --destructive: #f87171;
-    --destructive-foreground: #ffffff;
-    --border: #475569;
-    --input: #475569;
-    --ring: #3b82f6;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 215 28% 29%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 28% 29%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 215 28% 29%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 25% 35%;
+    --input: 215 25% 35%;
+    --ring: 217 91% 60%;
 
-    /* 🎨 앱 포인트 색상 (브랜드 색상) - 시스템 다크모드 */
-    --brand-primary: #6b7280; /* 다크모드에서 더 밝은 그레이 */
-    --brand-primary-hover: #4a5568; /* 호버 시 원래 색상 */
-    --brand-primary-light: rgba(107, 114, 128, 0.15); /* 다크모드 배경용 */
-    --brand-primary-medium: rgba(107, 114, 128, 0.25); /* 다크모드 강조용 */
+    --timeline-bg: 217 33% 17%;
+    --timeline-connector: 215 25% 35%;
+    --timeline-connector-active: 213 97% 87%;
 
-    /* 하위 호환성을 위한 별칭 */
-    --brand-accent: var(--brand-primary);
-    --brand-accent-hover: var(--brand-primary-hover);
-    --brand-accent-light: var(--brand-primary-light);
-    --brand-accent-medium: var(--brand-primary-medium);
+    --section-header: 215 28% 29%;
+    --section-header-hover: 215 25% 35%;
+
+    --status-completed: 142 77% 73%;
+    --status-in-progress: 25 95% 61%;
+    --status-pending: 213 97% 87%;
+
+    --brand-primary: 220 9% 46%;
+    --brand-primary-hover: 215 16% 35%;
+    --brand-primary-light: 220 9% 46% / 0.15;
   }
 }
 

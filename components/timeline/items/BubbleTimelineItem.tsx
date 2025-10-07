@@ -11,6 +11,15 @@ import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
 import MotivationBadge from '@/components/motivation/MotivationBadge';
 
+// 🎨 테마 색상 상수 (CSS 변수 사용)
+const THEME_COLORS = {
+  DEFAULT_TODO: 'hsl(var(--status-pending))',         // #3B82F6 → CSS 변수
+  CONNECTOR: 'hsl(var(--timeline-connector))',        // #E5E5E5 → CSS 변수
+  TIMELINE_BG_LIGHT: 'hsl(var(--timeline-bg))',       // #f8f8f8 → CSS 변수
+  COMPLETED: 'hsl(var(--status-completed))',          // #22C55E → CSS 변수
+  BORDER_DEFAULT: 'hsl(var(--border))',                // #D1D5DB → CSS 변수
+} as const;
+
 interface BubbleTimelineItemProps {
   item: TimelineItem;
   prevItem: TimelineItem | null;
@@ -149,7 +158,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   }, [isDragging, dragOffset]);
 
   // 할일 색상
-  const itemColor = item.color || '#3B82F6';
+  const itemColor = item.color || THEME_COLORS.DEFAULT_TODO;
 
   // 시작/종료 시간 (원본)
   const originalStartTime = item.startTime ? new Date(item.startTime) : null;
@@ -279,7 +288,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   }, [gapMinutes]);
 
   // 다음 할일의 색상
-  const nextItemColor = nextItem?.color || '#3B82F6';
+  const nextItemColor = nextItem?.color || THEME_COLORS.DEFAULT_TODO;
 
   // 다음 할일의 시작 시간 기준 진행률 계산
   const nextProgressPercentage = useMemo(() => {
@@ -496,7 +505,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   const connectorGradient = useMemo(() => {
     if (connectorProgressPercentage === 0) {
       // 아직 시작 전이면 회색
-      return '#E5E5E5';
+      return THEME_COLORS.CONNECTOR;
     }
 
     if (connectorProgressPercentage === 100) {
@@ -509,12 +518,12 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     // 50-100%: 다음 색으로 색칠 (중앙 블렌딩 포함)
     if (connectorProgressPercentage <= 50) {
       // 0-50% 구간: 이전 색으로 진행률만큼 색칠
-      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${connectorProgressPercentage}%, #E5E5E5 ${connectorProgressPercentage}%, #E5E5E5 100%)`;
+      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${connectorProgressPercentage}%, ${THEME_COLORS.CONNECTOR} ${connectorProgressPercentage}%, ${THEME_COLORS.CONNECTOR} 100%)`;
     } else {
       // 50-100% 구간: 이전 색 40% + 블렌딩 40-60% + 다음 색으로 진행률만큼 색칠
       const blendStart = 40;
       const blendEnd = 60;
-      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${blendStart}%, ${nextItemColor} ${blendEnd}%, ${nextItemColor} ${connectorProgressPercentage}%, #E5E5E5 ${connectorProgressPercentage}%, #E5E5E5 100%)`;
+      return `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${blendStart}%, ${nextItemColor} ${blendEnd}%, ${nextItemColor} ${connectorProgressPercentage}%, ${THEME_COLORS.CONNECTOR} ${connectorProgressPercentage}%, ${THEME_COLORS.CONNECTOR} 100%)`;
     }
   }, [connectorProgressPercentage, itemColor, nextItemColor]);
 
@@ -530,14 +539,14 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     if (progressPercentage > 0) {
       return {
         ...baseStyle,
-        background: `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, #E5E5E5 ${progressPercentage}%, #E5E5E5 100%)`,
+        background: `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} 100%)`,
       };
     }
 
     // 아직 시작 전이면 회색
     return {
       ...baseStyle,
-      backgroundColor: '#E5E5E5',
+      backgroundColor: THEME_COLORS.CONNECTOR,
     };
   }, [progressPercentage, itemColor, bubbleWidth, bubbleHeight, borderRadius]);
 
@@ -716,8 +725,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 top: 0,
                 height: `${bubbleHeight}px`,
                 background: progressPercentage > 0
-                  ? `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, #E5E5E5 ${progressPercentage}%, #E5E5E5 100%)`
-                  : '#E5E5E5',
+                  ? `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} 100%)`
+                  : THEME_COLORS.CONNECTOR,
                 zIndex: 0, // 버블 뒤로 배치
               }}
             />
@@ -754,7 +763,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         >
           <div
             className={cn(
-              "bg-[#f8f8f8] dark:bg-[#1e293b] rounded-lg w-full transition-all relative",
+              "bg-timeline-bg rounded-lg w-full transition-all relative",
               isDragging && "opacity-0"
             )}
           >
@@ -849,8 +858,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                       : 'bg-white'
                   )}
                   style={{
-                    backgroundColor: isCompleted ? (item.color || '#22C55E') : 'white',
-                    borderColor: isCompleted ? 'transparent' : (item.color || '#D1D5DB')
+                    backgroundColor: isCompleted ? (item.color || THEME_COLORS.COMPLETED) : 'white',
+                    borderColor: isCompleted ? 'transparent' : (item.color || THEME_COLORS.BORDER_DEFAULT)
                   }}
                 >
                   {/* 체크마크 배경 채우기 효과 */}
@@ -860,7 +869,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                       isCompleted ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
                     )}
                     style={{
-                      backgroundColor: item.color || '#22C55E'
+                      backgroundColor: item.color || THEME_COLORS.COMPLETED
                     }}
                   />
 

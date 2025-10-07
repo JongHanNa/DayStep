@@ -84,7 +84,7 @@ const TimelineMonthView: React.FC = () => {
                           key={item.id}
                           className="text-xs p-1 rounded cursor-pointer hover:bg-accent"
                           style={{
-                            borderLeft: `2px solid ${item.color || '#3B82F6'}`
+                            borderLeft: `2px solid ${item.color || 'hsl(var(--status-pending))'}`
                           }}
                         >
                           <div className="truncate font-medium">
