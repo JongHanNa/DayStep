@@ -693,10 +693,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       {/* 클릭 가능한 영역: 버블 + 카드 전체 포함 (호버 효과도 포함) */}
       <div
         className={cn(
-          'relative flex items-start gap-4',
+          'flex items-start gap-4',
           'cursor-pointer select-none transition-all',
-          !isDragging && 'hover:shadow-md rounded-lg',
-          isDragging && 'opacity-50'
+          !isDragging && 'hover:shadow-md rounded-lg'
         )}
         onClick={(e) => {
           // 체크박스 클릭이 아닐 때만 할일 수정 모달 열기
@@ -714,7 +713,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         onMouseLeave={onMouseLeave}
       >
         {/* 왼쪽: 버블 영역 */}
-        <div className="flex flex-col" style={{ width: '64px' }}>
+        <div className="flex flex-col relative" style={{ width: '64px', zIndex: 20 }}>
           {/* 버블과 할일 카드가 정렬될 영역 */}
           <div ref={bubbleWrapperRef} className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
             {/* 버블 뒤에 숨은 연결 막대 (버블과 동일한 높이) */}
@@ -724,10 +723,12 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 left: 'calc(50% - 2px)', // 버블 중심 정렬
                 top: 0,
                 height: `${bubbleHeight}px`,
-                background: progressPercentage > 0
-                  ? `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} 100%)`
-                  : THEME_COLORS.CONNECTOR,
-                zIndex: 0, // 버블 뒤로 배치
+                background: isDragging
+                  ? (progressPercentage > 0 ? itemColor : THEME_COLORS.CONNECTOR)  // 드래그 중이어도 진행률 체크
+                  : (progressPercentage > 0
+                      ? `linear-gradient(to bottom, ${itemColor} 0%, ${itemColor} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} ${progressPercentage}%, ${THEME_COLORS.CONNECTOR} 100%)`
+                      : THEME_COLORS.CONNECTOR),
+                zIndex: 1, // 버블 뒤로 배치
               }}
             />
 
@@ -742,7 +743,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 height: `${bubbleHeight}px`,
                 transform: !isDragging ? undefined : undefined,
                 transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                zIndex: isDragging ? 100 : 1, // 버블은 막대보다 앞에
+                zIndex: isDragging ? 100 : 10, // 버블은 막대보다 앞에
               }}
             >
               {/* 버블 아이콘 */}
