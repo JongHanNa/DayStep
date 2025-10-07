@@ -48,7 +48,10 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
     // CSS 클래스 적용
     root.classList.remove('light', 'dark');
     root.classList.add(effectiveTheme);
-    
+
+    // DaisyUI 테마 설정 추가
+    root.setAttribute('data-theme', effectiveTheme === 'light' ? 'daystep_light' : 'daystep_dark');
+
     // CSS 변수 업데이트 - 중앙화된 색상 관리 사용
     updateCSSVariables(root);
 
@@ -76,7 +79,10 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
         const root = document.documentElement;
         root.classList.remove('light', 'dark');
         root.classList.add(systemTheme);
-        
+
+        // DaisyUI 테마 설정 추가
+        root.setAttribute('data-theme', systemTheme === 'light' ? 'daystep_light' : 'daystep_dark');
+
         // CSS 변수 업데이트 - 중앙화된 색상 관리 사용
         updateCSSVariables(root);
 

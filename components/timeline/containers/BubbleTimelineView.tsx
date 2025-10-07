@@ -550,10 +550,10 @@ export const BubbleTimelineView: React.FC = () => {
               />
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={handleCancelTimeChange}>
+              <Button variant="outline" size="sm" onClick={handleCancelTimeChange}>
                 취소
               </Button>
-              <Button onClick={handleConfirmTimeChange}>
+              <Button size="sm" onClick={handleConfirmTimeChange}>
                 확인
               </Button>
             </DialogFooter>
