@@ -754,7 +754,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         >
           <div
             className={cn(
-              "bg-[#f8f8f8] dark:bg-[#1e293b] rounded-lg px-4 py-3 w-full transition-all",
+              "bg-[#f8f8f8] dark:bg-[#1e293b] rounded-lg px-4 py-3 w-full transition-all relative",
               isDragging && "opacity-0"
             )}
           >
@@ -793,8 +793,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               </div>
             )}
 
-            <div className="flex items-center gap-3 w-full">
-              {/* 제목과 동기부여 메시지 */}
+            {/* 제목과 동기부여 메시지 - 우측 패딩 추가 (버튼 공간 확보) */}
+            <div className="flex items-center gap-3 w-full pr-10">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <h3 className={cn(
@@ -824,27 +824,35 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   )}
                 </div>
               </div>
+            </div>
 
-              {/* 완료 체크박스 - 카드 높이의 중앙에 고정 */}
-              {item.type === 'todo' && (
-                <div className="flex items-center" style={{ height: '100%' }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleComplete(item.id);
-                    }}
-                    className={cn(
-                      'completion-checkbox w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
-                      'transition-all duration-300 ease-out hover:scale-110',
-                      isCompleted
-                        ? 'border-transparent text-white transform scale-105'
-                        : 'bg-white'
-                    )}
-                    style={{
-                      backgroundColor: isCompleted ? (item.color || '#22C55E') : 'white',
-                      borderColor: isCompleted ? 'transparent' : (item.color || '#D1D5DB')
-                    }}
-                  >
+            {/* 메모 */}
+            {linkedMemos.length > 0 && (
+              <div className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
+                📝 {linkedMemos.length}개의 메모
+              </div>
+            )}
+
+            {/* 완료 체크박스 - 카드 우측 중앙에 절대 위치 */}
+            {item.type === 'todo' && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleComplete(item.id);
+                  }}
+                  className={cn(
+                    'completion-checkbox w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
+                    'transition-all duration-300 ease-out hover:scale-110',
+                    isCompleted
+                      ? 'border-transparent text-white transform scale-105'
+                      : 'bg-white'
+                  )}
+                  style={{
+                    backgroundColor: isCompleted ? (item.color || '#22C55E') : 'white',
+                    borderColor: isCompleted ? 'transparent' : (item.color || '#D1D5DB')
+                  }}
+                >
                   {/* 체크마크 배경 채우기 효과 */}
                   <div
                     className={cn(
@@ -869,14 +877,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     }}
                   />
                 </button>
-                </div>
-              )}
-            </div>
-
-            {/* 메모 */}
-            {linkedMemos.length > 0 && (
-              <div className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
-                📝 {linkedMemos.length}개의 메모
               </div>
             )}
           </div>
