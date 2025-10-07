@@ -754,7 +754,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         >
           <div
             className={cn(
-              "bg-[#f8f8f8] dark:bg-[#1e293b] rounded-lg px-4 py-3 w-full transition-all relative",
+              "bg-[#f8f8f8] dark:bg-[#1e293b] rounded-lg w-full transition-all relative",
               isDragging && "opacity-0"
             )}
           >
