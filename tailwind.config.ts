@@ -143,7 +143,8 @@ export default {
           "--animation-btn": "0.25s",
           "--animation-input": "0.2s",
           "--btn-text-case": "none",
-          "--border-btn": "1px",
+          "--border-btn": "0",              // Soft Button: 테두리 제거
+          "--btn-focus-scale": "0.98",      // Soft Button: 클릭 시 살짝 축소 효과
           "--tab-border": "1px",
           "--tab-radius": "0.5rem",
         },
@@ -174,6 +175,13 @@ export default {
           "--rounded-box": "0.5rem",
           "--rounded-btn": "0.5rem",
           "--rounded-badge": "1rem",
+          "--animation-btn": "0.25s",
+          "--animation-input": "0.2s",
+          "--btn-text-case": "none",
+          "--border-btn": "0",              // Soft Button: 테두리 제거
+          "--btn-focus-scale": "0.98",      // Soft Button: 클릭 시 살짝 축소 효과
+          "--tab-border": "1px",
+          "--tab-radius": "0.5rem",
         },
       },
     ],
