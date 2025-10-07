@@ -36,6 +36,7 @@ export const BubbleTimelineView: React.FC = () => {
     items: storeItems  // 🔧 스토어의 실제 items 상태도 의존 (리스트뷰와 동일)
   } = useTimelineViewStore();
   const updateTodo = useTodoStore(state => state.updateTodo);
+  const todos = useTodoStore(state => state.todos);
   const currentTime = useCurrentTime();
 
   // 드래그 상태
@@ -65,6 +66,10 @@ export const BubbleTimelineView: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addModalStartTime, setAddModalStartTime] = useState<Date | null>(null);
   const [addModalEndTime, setAddModalEndTime] = useState<Date | null>(null);
+
+  // 할일 수정 모달 상태
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
 
   // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
@@ -479,8 +484,24 @@ export const BubbleTimelineView: React.FC = () => {
                 currentDate={currentDate}
                 dateStatus={itemDateStatus}
                 onTodoClick={(itemId: string) => {
-                  // 할일 수정 모달 열기 로직은 부모 컴포넌트에서 처리
-                  console.log('Todo clicked:', itemId);
+                  // 할일 수정 모달 열기
+                  // 1. 'todo-' 접두사 제거
+                  let actualId = itemId.startsWith('todo-') ? itemId.replace('todo-', '') : itemId;
+
+                  // 2. 반복 할일 접미사 제거 (-recurrence-2025-10-07-0)
+                  if (actualId.includes('-recurrence-')) {
+                    actualId = actualId.split('-recurrence-')[0];
+                  }
+
+                  // 3. 실제 todo 객체 찾기
+                  const todo = todos.find(t => t.id === actualId);
+
+                  if (todo) {
+                    setEditingTodoId(actualId);
+                    setIsEditModalOpen(true);
+                  } else {
+                    console.error('할일을 찾을 수 없습니다:', actualId);
+                  }
                 }}
                 onToggleComplete={async (itemId: string) => {
                   // 완료 상태 토글
@@ -573,6 +594,13 @@ export const BubbleTimelineView: React.FC = () => {
         onOpenChange={setIsAddModalOpen}
         initialStartTime={addModalStartTime}
         initialEndTime={addModalEndTime}
+      />
+
+      {/* 할일 수정 모달 */}
+      <TodoFormModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        editingTodo={editingTodoId ? (todos.find(t => t.id === editingTodoId) as any) || null : null}
       />
     </div>
   );

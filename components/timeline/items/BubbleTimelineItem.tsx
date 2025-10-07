@@ -681,13 +681,21 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   return (
     <>
-      {/* 클릭 가능한 영역: 버블 + 카드만 포함 */}
+      {/* 클릭 가능한 영역: 버블 + 카드 전체 포함 (호버 효과도 포함) */}
       <div
         className={cn(
           'relative flex items-start gap-4',
           'cursor-pointer select-none transition-all',
-          // hover 배경 제거 - 카드에서만 hover 효과 적용하여 연결선 가려짐 방지
+          !isDragging && 'hover:shadow-md rounded-lg',
+          isDragging && 'opacity-50'
         )}
+        onClick={(e) => {
+          // 체크박스 클릭이 아닐 때만 할일 수정 모달 열기
+          const target = e.target as HTMLElement;
+          if (!target.closest('.completion-checkbox')) {
+            onTodoClick(item.id);
+          }
+        }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -746,17 +754,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         >
           <div
             className={cn(
-              "bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 w-full shadow-sm transition-all",
-              !isDragging && "hover:shadow-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer",
+              "bg-[#f8f8f8] dark:bg-[#1e293b] rounded-lg px-4 py-3 w-full transition-all",
               isDragging && "opacity-0"
             )}
-            onClick={(e) => {
-              // 체크박스 클릭이 아닐 때만 할일 수정 모달 열기
-              const target = e.target as HTMLElement;
-              if (!target.closest('.completion-checkbox')) {
-                onTodoClick(item.id);
-              }
-            }}
           >
             {/* 시간 표시 - 할일 제목 위 */}
             {startTime && endTime && (
@@ -766,11 +766,25 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   {isNextDay && <span className="text-xs font-medium text-blue-600 dark:text-blue-400 ml-1">+1</span>}
                 </span>
                 <span className="text-gray-400 dark:text-gray-500">
-                  ({durationMinutes}분)
+                  ({(() => {
+                    if (durationMinutes >= 60) {
+                      const hours = Math.floor(durationMinutes / 60);
+                      const minutes = durationMinutes % 60;
+                      return minutes > 0 ? `${hours}시간 ${minutes}분` : `${hours}시간`;
+                    }
+                    return `${durationMinutes}분`;
+                  })()})
                 </span>
                 {remainingMinutes !== null && remainingMinutes > 0 && (
                   <span className="text-blue-600 dark:text-blue-400 font-medium">
-                    ({remainingMinutes}분 남음)
+                    ({(() => {
+                      if (remainingMinutes >= 60) {
+                        const hours = Math.floor(remainingMinutes / 60);
+                        const minutes = remainingMinutes % 60;
+                        return minutes > 0 ? `${hours}시간 ${minutes}분 남음` : `${hours}시간 남음`;
+                      }
+                      return `${remainingMinutes}분 남음`;
+                    })()})
                   </span>
                 )}
                 {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && (
@@ -779,11 +793,14 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               </div>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 w-full">
               {/* 제목과 동기부여 메시지 */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
-                  <h3 className="font-medium text-base text-gray-900 dark:text-gray-100">
+                  <h3 className={cn(
+                    "font-medium text-base text-gray-900 dark:text-gray-100",
+                    isCompleted && "line-through decoration-red-500 dark:decoration-red-400 decoration-2"
+                  )}>
                     {item.title}
                   </h3>
 
@@ -808,25 +825,26 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 </div>
               </div>
 
-              {/* 완료 체크박스 */}
+              {/* 완료 체크박스 - 카드 높이의 중앙에 고정 */}
               {item.type === 'todo' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleComplete(item.id);
-                  }}
-                  className={cn(
-                    'completion-checkbox w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
-                    'transition-all duration-300 ease-out hover:scale-110',
-                    isCompleted
-                      ? 'border-transparent text-white transform scale-105'
-                      : 'bg-white'
-                  )}
-                  style={{
-                    backgroundColor: isCompleted ? (item.color || '#22C55E') : 'white',
-                    borderColor: isCompleted ? 'transparent' : (item.color || '#D1D5DB')
-                  }}
-                >
+                <div className="flex items-center" style={{ height: '100%' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleComplete(item.id);
+                    }}
+                    className={cn(
+                      'completion-checkbox w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
+                      'transition-all duration-300 ease-out hover:scale-110',
+                      isCompleted
+                        ? 'border-transparent text-white transform scale-105'
+                        : 'bg-white'
+                    )}
+                    style={{
+                      backgroundColor: isCompleted ? (item.color || '#22C55E') : 'white',
+                      borderColor: isCompleted ? 'transparent' : (item.color || '#D1D5DB')
+                    }}
+                  >
                   {/* 체크마크 배경 채우기 효과 */}
                   <div
                     className={cn(
@@ -851,6 +869,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     }}
                   />
                 </button>
+                </div>
               )}
             </div>
 
@@ -869,9 +888,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         <div
           className={cn(
             "relative flex items-start gap-4",
-            // ✅ 미래 시간 간격이면 클릭 가능한 스타일 추가 (connectorProgressPercentage < 100)
-            dateStatus === 'today' && connectorProgressPercentage < 100 &&
-              "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg"
+            // ✅ 미래 시간 간격이면 클릭 가능 (호버 효과 제거, 커서만 pointer)
+            dateStatus === 'today' && connectorProgressPercentage < 100 && "cursor-pointer"
           )}
           onClick={() => {
             // ✅ 미래 시간 간격만 클릭 가능 (아직 시작 안 한 간격)
