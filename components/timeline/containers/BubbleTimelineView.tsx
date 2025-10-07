@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import DateTimeRangePicker from '../controls/DateTimeRangePicker';
+import TodoFormModal from '@/components/todos/TodoFormModal';
 
 /**
  * 버블 스타일 타임라인 뷰 컴포넌트
@@ -59,6 +60,11 @@ export const BubbleTimelineView: React.FC = () => {
     newStartTime: Date;
     newEndTime: Date;
   } | null>(null);
+
+  // 할일 추가 모달 상태
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addModalStartTime, setAddModalStartTime] = useState<Date | null>(null);
+  const [addModalEndTime, setAddModalEndTime] = useState<Date | null>(null);
 
   // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
@@ -355,6 +361,13 @@ export const BubbleTimelineView: React.FC = () => {
     setPendingTimeChange(null);
   }, []);
 
+  // 간격 클릭 핸들러 (할일 추가 모달 표시)
+  const handleGapClick = useCallback((startTime: Date, endTime: Date) => {
+    setAddModalStartTime(startTime);
+    setAddModalEndTime(endTime);
+    setIsAddModalOpen(true);
+  }, []);
+
   // DateTimeRangePicker에서 시간 변경 시
   const handleTimeRangeChange = useCallback((range: { startDate: Date; endDate?: Date; isAllDay: boolean }) => {
     if (!pendingTimeChange || !range.endDate) {
@@ -485,6 +498,7 @@ export const BubbleTimelineView: React.FC = () => {
                 onMouseDown={(e) => handleDragStart(e, item.id)}
                 onMouseMove={handleDragMove}
                 onMouseUp={handleDragEnd}
+                onGapClick={handleGapClick}
               />
             );
           })}
@@ -552,6 +566,17 @@ export const BubbleTimelineView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* 할일 추가 모달 */}
+      <TodoFormModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        defaultValues={{
+          start_time: addModalStartTime?.toISOString(),
+          end_time: addModalEndTime?.toISOString(),
+        }}
+        viewMode={viewMode}
+      />
     </div>
   );
 };

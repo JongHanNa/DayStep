@@ -30,6 +30,7 @@ interface BubbleTimelineItemProps {
   onMouseMove?: (e: React.MouseEvent) => void;
   onMouseUp?: () => void;
   onMouseLeave?: () => void;
+  onGapClick?: (startTime: Date, endTime: Date) => void;  // 간격 클릭 핸들러
 }
 
 /**
@@ -59,6 +60,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   onMouseMove,
   onMouseUp,
   onMouseLeave,
+  onGapClick,  // 간격 클릭 핸들러
 }) => {
   // 버블 위치 계산을 위한 ref
   const bubbleWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -603,7 +605,14 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   // 간격 메시지 생성
   const gapMessage = useMemo(() => {
-    if (!nextItem || gapMinutes <= 0) return null;
+    if (!nextItem || gapMinutes <= 0) {
+      return null;
+    }
+
+    // ✅ 간격이 20분 미만이면 메시지 표시 안 함
+    if (gapMinutes < 20) {
+      return null;
+    }
 
     // 과거 날짜
     if (dateStatus === 'past') {
@@ -618,7 +627,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     // 오늘
     if (dateStatus === 'today') {
       // 현재 할일이 끝났는지 확인
-      if (!endTime) return null;
+      if (!endTime) {
+        return null;
+      }
 
       const nowHour = currentTime.getHours();
       const nowMinute = currentTime.getMinutes();
@@ -635,7 +646,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
       // 다음 할일 시작 시간 확인
       const nextStartTime = nextItem.startTime ? new Date(nextItem.startTime) : null;
-      if (!nextStartTime) return null;
+      if (!nextStartTime) {
+        return null;
+      }
 
       const nextStartHour = nextStartTime.getHours();
       const nextStartMinute = nextStartTime.getMinutes();
@@ -645,11 +658,21 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       const remainingGap = nextStartTimeOfDay - nowTimeOfDay;
 
       if (remainingGap > 0) {
+        // ✅ 1시간(60분) 이상이면 시간+분 형식으로 표시
+        const hours = Math.floor(remainingGap / 60);
+        const minutes = remainingGap % 60;
+
+        if (hours > 0) {
+          return minutes > 0
+            ? `다음 일정까지 남은 시간 ${hours}시간 ${minutes}분`
+            : `다음 일정까지 남은 시간 ${hours}시간`;
+        }
         return `다음 일정까지 남은 시간 ${remainingGap}분`;
       } else if (remainingGap === 0) {
         return '다음 일정 시작!';
       } else {
-        return '다음 일정 진행 중';
+        // ✅ "다음 일정 진행 중" → "지나간 순간들"로 변경
+        return '지나간 순간들';
       }
     }
 
@@ -841,9 +864,22 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         </div>
       </div>
 
-      {/* 연결 간격 공간 (클릭 불가능 영역) - 별도 div로 분리 */}
+      {/* 연결 간격 공간 - 클릭 가능 영역 */}
       {nextItem && (
-        <div className="relative flex items-start gap-4">
+        <div
+          className={cn(
+            "relative flex items-start gap-4",
+            // ✅ 미래 시간 간격이면 클릭 가능한 스타일 추가 (connectorProgressPercentage < 100)
+            dateStatus === 'today' && connectorProgressPercentage < 100 &&
+              "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg"
+          )}
+          onClick={() => {
+            // ✅ 미래 시간 간격만 클릭 가능 (아직 시작 안 한 간격)
+            if (dateStatus === 'today' && connectorProgressPercentage < 100 && onGapClick && endTime && nextItem.startTime) {
+              onGapClick(endTime, new Date(nextItem.startTime));
+            }
+          }}
+        >
           {/* 왼쪽: 간격 공간 (버블 너비와 동일) */}
           <div className="relative" style={{ width: '64px', height: `${connectorHeight}px` }}>
             {/* 연결 막대 (버블 중심 정렬, 시간 진행에 따라 색칠) */}
