@@ -738,7 +738,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         onMouseLeave={onMouseLeave}
       >
         {/* 왼쪽: 버블 영역 */}
-        <div className="flex flex-col relative" style={{ width: '64px', zIndex: 20 }}>
+        <div className="flex flex-col relative" style={{ width: '64px', zIndex: isDragging ? 9999 : 20 }}>
           {/* 버블과 할일 카드가 정렬될 영역 */}
           <div ref={bubbleWrapperRef} className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
             {/* 버블 뒤에 숨은 연결 막대 (버블과 동일한 높이) */}
@@ -768,7 +768,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 height: `${bubbleHeight}px`,
                 transform: !isDragging ? undefined : undefined,
                 transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                zIndex: isDragging ? 100 : 10, // 버블은 막대보다 앞에
+                zIndex: isDragging ? 9999 : 10, // 드래그 시 최상단 레이어, 일반 시 막대보다 앞에
               }}
             >
               {/* 버블 아이콘 */}
