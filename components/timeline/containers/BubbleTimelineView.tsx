@@ -201,9 +201,6 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 롱프레스 시작 (터치/마우스 통합)
   const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent, itemId: string) => {
-    // ✅ 브라우저 기본 동작 방지 (세 손가락 제스처 등)
-    e.preventDefault();
-
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
 
@@ -218,15 +215,14 @@ export const BubbleTimelineView: React.FC = () => {
     setDragStartY(clientY);
     setInitialTouch({ x: clientX, y: clientY });
     setDraggedItemId(itemId);
+
+    // ⚡ NOTE: preventDefault는 BubbleTimelineItem에서 DOM 레벨로 처리
+    // React synthetic events는 Chrome DevTools 모바일 모드에서 passive로 처리되어
+    // preventDefault()가 무시되므로, 직접 DOM listener를 사용
   }, []);
 
   // 드래그 이동 (터치/마우스 통합)
   const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    // ✅ 드래그 중이거나 초기 터치 있을 때 브라우저 스크롤 방지
-    if (isDragging || initialTouch) {
-      e.preventDefault();
-    }
-
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
 
