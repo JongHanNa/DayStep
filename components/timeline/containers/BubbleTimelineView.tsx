@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { TimelineItem } from '@/types/timeline-view';
 import { BubbleTimelineItem } from '../items/BubbleTimelineItem';
 import { useCurrentTime } from '@/lib/hooks/useCurrentTime';
+import { isRecurringTodo } from '@/lib/utils/recurring';
+import { Todo as DbTodo } from '@/types';
 import {
   Dialog,
   DialogContent,
@@ -70,6 +72,7 @@ export const BubbleTimelineView: React.FC = () => {
   // 할일 수정 모달 상태
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const [selectedTodo, setSelectedTodo] = useState<any | null>(null);
 
   // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
@@ -480,23 +483,163 @@ export const BubbleTimelineView: React.FC = () => {
                 currentDate={currentDate}
                 dateStatus={itemDateStatus}
                 onTodoClick={(itemId: string) => {
-                  // 할일 수정 모달 열기
-                  // 1. 'todo-' 접두사 제거
-                  let actualId = itemId.startsWith('todo-') ? itemId.replace('todo-', '') : itemId;
+                  // 리스트뷰와 동일한 로직 적용
+                  const timelineItem = timedItems.find(t => t.id === itemId);
 
-                  // 2. 반복 할일 접미사 제거 (-recurrence-2025-10-07-0)
-                  if (actualId.includes('-recurrence-')) {
-                    actualId = actualId.split('-recurrence-')[0];
-                  }
+                  if (timelineItem && timelineItem.type === 'todo') {
+                    // 반복 할일인지 확인
+                    const isRecurring = isRecurringTodo(timelineItem);
 
-                  // 3. 실제 todo 객체 찾기
-                  const todo = todos.find(t => t.id === actualId);
+                    if (isRecurring || itemId.includes('-recurrence-')) {
+                      // 반복 할일: 원본 할일 데이터 + 인스턴스 시간 조합
+                      if (itemId.includes('-recurrence-')) {
+                        // 반복 인스턴스: 원본 할일 ID로 원본 데이터 찾기
+                        const originalId = (timelineItem.data as any)?.recurrence_source_id || timelineItem.data?.id;
+                        const originalTodo: any = todos.find(t => t.id === originalId);
 
-                  if (todo) {
-                    setEditingTodoId(actualId);
-                    setIsEditModalOpen(true);
-                  } else {
-                    console.error('할일을 찾을 수 없습니다:', actualId);
+                        if (originalTodo && timelineItem.data) {
+                          // 원본 할일의 반복 설정 + 인스턴스의 조정된 시간 조합
+                          const combinedData: DbTodo & { _instanceInfo?: any } = {
+                            id: originalTodo.id,
+                            user_id: originalTodo.userId || originalTodo.user_id,
+                            content: originalTodo.content,
+                            completed: timelineItem.data.completed || originalTodo.completed,
+                            order_index: originalTodo.orderIndex || originalTodo.order_index || 0,
+                            created_at: (() => {
+                              const date = originalTodo.createdAt || originalTodo.created_at;
+                              if (date && typeof date === 'string') { return date; }
+                              if (date instanceof Date) { return date.toISOString(); }
+                              return new Date().toISOString();
+                            })(),
+                            updated_at: (() => {
+                              const date = originalTodo.updatedAt || originalTodo.updated_at;
+                              if (date && typeof date === 'string') { return date; }
+                              if (date instanceof Date) { return date.toISOString(); }
+                              return new Date().toISOString();
+                            })(),
+                            priority: originalTodo.priority,
+                            icon: originalTodo.icon,
+                            color: originalTodo.color,
+                            schedule_type: originalTodo.schedule_type || originalTodo.scheduleType ||
+                                          (originalTodo.start_time || originalTodo.startTime ? 'timed' : 'anytime'),
+                            start_time: (() => {
+                              const originalTime = originalTodo.start_time || originalTodo.startTime;
+                              if (originalTime) {
+                                if (typeof originalTime === 'string') { return originalTime; }
+                                if (originalTime instanceof Date) { return originalTime.toISOString(); }
+                                try { return new Date(originalTime).toISOString(); } catch { /* fallback */ }
+                              }
+                              if (timelineItem.data.start_time) { return timelineItem.data.start_time; }
+                              if (timelineItem.startTime) {
+                                if (typeof timelineItem.startTime === 'string') { return timelineItem.startTime; }
+                                if (timelineItem.startTime instanceof Date) { return timelineItem.startTime.toISOString(); }
+                              }
+                              return null;
+                            })(),
+                            end_time: (() => {
+                              const originalStartTime = originalTodo.start_time || originalTodo.startTime;
+                              const originalEndTime = originalTodo.end_time || originalTodo.endTime;
+
+                              if (originalStartTime && originalEndTime) {
+                                try {
+                                  const startDate = new Date(originalStartTime);
+                                  const endDate = new Date(originalEndTime);
+                                  const isSameDay = startDate.toDateString() === endDate.toDateString();
+
+                                  if (isSameDay) {
+                                    const durationMs = endDate.getTime() - startDate.getTime();
+                                    const instanceStartTime = new Date(originalStartTime);
+                                    const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
+                                    return instanceEndTime.toISOString();
+                                  } else {
+                                    const startHour = startDate.getHours();
+                                    const startMinute = startDate.getMinutes();
+                                    const endHour = endDate.getHours();
+                                    const endMinute = endDate.getMinutes();
+                                    const durationMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+                                    const instanceStartTime = new Date(originalStartTime);
+                                    const instanceEndTime = new Date(instanceStartTime.getTime() + (durationMinutes * 60 * 1000));
+                                    return instanceEndTime.toISOString();
+                                  }
+                                } catch (e) {
+                                  console.warn('반복 할일 종료시간 계산 실패:', e);
+                                }
+                              }
+
+                              if (timelineItem.data.end_time) { return timelineItem.data.end_time; }
+                              if (timelineItem.endTime) {
+                                if (typeof timelineItem.endTime === 'string') { return timelineItem.endTime; }
+                                if (timelineItem.endTime instanceof Date) { return timelineItem.endTime.toISOString(); }
+                              }
+                              return null;
+                            })(),
+                            recurrence_pattern: originalTodo.recurrence_pattern || originalTodo.recurrencePattern || 'none',
+                            recurrence_end_date: (() => {
+                              const date = originalTodo.recurrence_end_date || originalTodo.recurrenceEndDate;
+                              if (!date) { return null; }
+                              if (typeof date === 'string') {
+                                return date.includes('T') ? date.split('T')[0] : date;
+                              }
+                              if (date instanceof Date) { return date.toISOString().split('T')[0]; }
+                              try { return new Date(date).toISOString().split('T')[0]; } catch { return null; }
+                            })(),
+                            recurrence_count: originalTodo.recurrence_count || originalTodo.recurrenceCount || null,
+                            recurrence_interval: originalTodo.recurrence_interval || originalTodo.recurrenceInterval || 1,
+                            recurrence_days_of_week: originalTodo.recurrence_days_of_week || originalTodo.recurrenceDaysOfWeek || null,
+                            recurrence_day_of_month: originalTodo.recurrence_day_of_month || originalTodo.recurrenceDayOfMonth || null,
+                            departure_location: originalTodo.departure_location || originalTodo.departureLocation || null,
+                            departure_time: (() => {
+                              const time = originalTodo.departure_time || originalTodo.departureTime;
+                              if (!time) return null;
+                              if (typeof time === 'string') return time;
+                              if (time instanceof Date) return time.toISOString();
+                              try { return new Date(time).toISOString(); } catch { return null; }
+                            })(),
+                            parent_todo_id: originalTodo.parent_todo_id || originalTodo.parentTodoId || null,
+                            _instanceInfo: {
+                              instanceId: timelineItem.id,
+                              instanceDate: (timelineItem.data as any).recurrence_occurrence_date,
+                              startTime: timelineItem.startTime,
+                              endTime: timelineItem.endTime
+                            }
+                          };
+
+                          setSelectedTodo(combinedData);
+                        } else {
+                          setSelectedTodo(timelineItem.data);
+                        }
+                      } else {
+                        setSelectedTodo(timelineItem.data);
+                      }
+                      setIsEditModalOpen(true);
+                    } else {
+                      // 일반 할일: 타임라인에 실제 표시된 시간으로 업데이트
+                      if (timelineItem.data) {
+                        const updatedTodoData = {
+                          ...timelineItem.data,
+                          schedule_type: timelineItem.data?.schedule_type ||
+                                        (timelineItem.data as any)?.scheduleType ||
+                                        (timelineItem.startTime ? 'timed' : 'anytime'),
+                          start_time: (() => {
+                            if (timelineItem.startTime) {
+                              if (typeof timelineItem.startTime === 'string') { return timelineItem.startTime; }
+                              if (timelineItem.startTime instanceof Date) { return timelineItem.startTime.toISOString(); }
+                            }
+                            return timelineItem.data?.start_time || null;
+                          })(),
+                          end_time: (() => {
+                            if (timelineItem.endTime) {
+                              if (typeof timelineItem.endTime === 'string') { return timelineItem.endTime; }
+                              if (timelineItem.endTime instanceof Date) { return timelineItem.endTime.toISOString(); }
+                            }
+                            return timelineItem.data?.end_time || null;
+                          })()
+                        };
+
+                        setSelectedTodo(updatedTodoData);
+                        setIsEditModalOpen(true);
+                      }
+                    }
                   }
                 }}
                 onToggleComplete={async (itemId: string) => {
@@ -592,11 +735,11 @@ export const BubbleTimelineView: React.FC = () => {
         initialEndTime={addModalEndTime}
       />
 
-      {/* 할일 수정 모달 */}
+      {/* 할일 수정 모달 - DB에서 조회한 최신 데이터 사용 */}
       <TodoFormModal
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
-        editingTodo={editingTodoId ? (todos.find(t => t.id === editingTodoId) as any) || null : null}
+        editingTodo={selectedTodo}
       />
     </div>
   );
