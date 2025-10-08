@@ -70,7 +70,7 @@ export const useAuthStore = createStore<AuthStoreState>(
     initialize: async () => {
       logStoreAction("AuthStore", "initialize");
 
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         state.loading = true;
         state.error = null;
       });
@@ -112,13 +112,13 @@ export const useAuthStore = createStore<AuthStoreState>(
           }
         });
 
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           state.initialized = true;
           state.loading = false;
         });
       } catch (error) {
         console.error("인증 초기화 오류:", error);
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           state.loading = false;
           state.error =
             error instanceof Error
@@ -135,7 +135,7 @@ export const useAuthStore = createStore<AuthStoreState>(
     signInWithGoogle: async () => {
       logStoreAction("AuthStore", "signInWithGoogle");
 
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         loadingHelpers.setLoading(state);
       });
 
@@ -151,14 +151,14 @@ export const useAuthStore = createStore<AuthStoreState>(
           throw error;
         }
 
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           loadingHelpers.setSuccess(state);
         });
 
         return true;
       } catch (error) {
         console.error("Google 로그인 오류:", error);
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           loadingHelpers.setError(
             state,
             error instanceof Error
@@ -176,7 +176,7 @@ export const useAuthStore = createStore<AuthStoreState>(
     signInWithKakao: async () => {
       logStoreAction("AuthStore", "signInWithKakao");
 
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         loadingHelpers.setError(state, "Kakao 로그인은 현재 개발 중입니다.");
       });
 
@@ -189,7 +189,7 @@ export const useAuthStore = createStore<AuthStoreState>(
     signOut: async () => {
       logStoreAction("AuthStore", "signOut");
 
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         loadingHelpers.setLoading(state);
       });
 
@@ -203,12 +203,12 @@ export const useAuthStore = createStore<AuthStoreState>(
         get().setAuthState(null, null, null);
         get().clearTokenRefresh();
 
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           loadingHelpers.setSuccess(state);
         });
       } catch (error) {
         console.error("로그아웃 오류:", error);
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           loadingHelpers.setError(
             state,
             error instanceof Error ? error.message : "로그아웃에 실패했습니다."
@@ -271,14 +271,14 @@ export const useAuthStore = createStore<AuthStoreState>(
         // 로컬 상태 업데이트
         const updatedAppUser = appUser.update(data.name);
 
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           state.appUser = updatedAppUser;
         });
 
         return true;
       } catch (error) {
         console.error("프로필 업데이트 오류:", error);
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           state.error =
             error instanceof Error
               ? error.message
@@ -308,7 +308,7 @@ export const useAuthStore = createStore<AuthStoreState>(
         if (userData) {
           // 기존 사용자
           const appUserEntity = AppUser.fromDatabase(userData);
-          set((state: any) => {
+          set((state: AuthStoreState) => {
             state.appUser = appUserEntity;
           });
         } else {
@@ -333,7 +333,7 @@ export const useAuthStore = createStore<AuthStoreState>(
           }
 
           const appUserEntity = AppUser.fromDatabase(createdUser);
-          set((state: any) => {
+          set((state: AuthStoreState) => {
             state.appUser = appUserEntity;
           });
         }
@@ -356,7 +356,7 @@ export const useAuthStore = createStore<AuthStoreState>(
           get().refreshSession();
         }, refreshTime);
 
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           state.tokenRefreshTimer = timer;
           state.sessionExpiresAt = expiresAt;
         });
@@ -370,7 +370,7 @@ export const useAuthStore = createStore<AuthStoreState>(
       const { tokenRefreshTimer } = get();
       if (tokenRefreshTimer) {
         clearTimeout(tokenRefreshTimer);
-        set((state: any) => {
+        set((state: AuthStoreState) => {
           state.tokenRefreshTimer = null;
           state.sessionExpiresAt = null;
         });
@@ -385,7 +385,7 @@ export const useAuthStore = createStore<AuthStoreState>(
       session: Session | null,
       appUser?: AppUser | null
     ) => {
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         state.user = user;
         state.session = session;
         state.isAuthenticated = !!user;
@@ -400,7 +400,7 @@ export const useAuthStore = createStore<AuthStoreState>(
      * 에러 상태 설정
      */
     setError: (error: string | null) => {
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         state.error = error;
       });
     },
@@ -409,7 +409,7 @@ export const useAuthStore = createStore<AuthStoreState>(
      * 로딩 상태 설정
      */
     setLoading: (loading: boolean) => {
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         state.loading = loading;
       });
     },
@@ -420,7 +420,7 @@ export const useAuthStore = createStore<AuthStoreState>(
     reset: () => {
       get().clearTokenRefresh();
 
-      set((state: any) => {
+      set((state: AuthStoreState) => {
         state.user = null;
         state.appUser = null;
         state.session = null;

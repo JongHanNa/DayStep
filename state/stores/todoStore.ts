@@ -92,7 +92,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         completed: "all" as const,
         showCompleted: true,
         customFilters: {},
-        filters: {} as any,
+        filters: {},
       },
 
       // 통계 정보
@@ -123,7 +123,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
       // === 데이터 로드 액션들 ===
       fetchTodosForCurrentView: async () => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.loading = true;
           state.error = null;
         });
@@ -138,7 +138,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             }
           } catch {}
 
-          if (!userId && (window as any).Capacitor) {
+          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
             const { Preferences } = await import('@capacitor/preferences');
             const { value } = await Preferences.get({ key: 'supabase_auth_session' });
             if (value) {
@@ -152,7 +152,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
           const todos = await fetchTodosForCurrentViewAction(userId);
 
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.todos = todos;
             state.loading = false;
             
@@ -176,7 +176,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             });
           });
         } catch (error) {
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.loading = false;
             state.error = `할일 목록 조회에 실패했습니다: ${(error as Error).message}`;
           });
@@ -186,7 +186,7 @@ export const useTodoStore = createStore<TodoStoreState>(
       },
 
       fetchTodosForDate: async (utcStart: Date, utcEnd: Date) => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.loading = true;
         });
 
@@ -200,7 +200,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             }
           } catch {}
 
-          if (!userId && (window as any).Capacitor) {
+          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
             const { Preferences } = await import('@capacitor/preferences');
             const { value } = await Preferences.get({ key: 'supabase_auth_session' });
             if (value) {
@@ -213,15 +213,15 @@ export const useTodoStore = createStore<TodoStoreState>(
           }
 
           const todos = await fetchTodosForDateAction(userId, utcStart, utcEnd);
-          
-          set((state: any) => {
+
+          set((state: TodoStoreState) => {
             state.todos = todos;
             state.loading = false;
           });
 
           return todos;
         } catch (error) {
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.loading = false;
             state.error = `날짜별 할일 조회에 실패했습니다: ${(error as Error).message}`;
           });
@@ -288,7 +288,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         );
 
         // UI 즉시 업데이트
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.todos.unshift(optimisticTodo);
           const pendingOps = optimisticManager.getPendingOperations();
           // 안전한 상태 수정 패턴 적용
@@ -306,7 +306,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           // 성공 시 낙관적 업데이트를 실제 데이터로 교체
           optimisticManager.completeOperation(tempId);
 
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.todos = state.todos.filter((t: Todo) => t.id !== tempId);
             state.todos.push(newTodo);
 
@@ -317,7 +317,7 @@ export const useTodoStore = createStore<TodoStoreState>(
               state.recurringGroups.set(newTodo.parentTodoId, existing);
             }
 
-            state.todos.sort((a: any, b: any) => a.orderIndex - b.orderIndex);
+            state.todos.sort((a: Todo, b: Todo) => a.orderIndex - b.orderIndex);
             
             const pendingOps = optimisticManager.getPendingOperations();
             // 안전한 상태 수정 패턴 적용
@@ -342,7 +342,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           // 실패 시 원본 데이터로 롤백
           optimisticManager.failOperation(tempId);
 
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.todos = state.todos.filter((t: Todo) => t.id !== tempId);
             const pendingOps = optimisticManager.getPendingOperations();
             const newRetryingOps = new Set(state.optimisticState.retryingOperations);
@@ -398,7 +398,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           originalTodo
         );
 
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           const index = state.todos.findIndex((t: Todo) => t.id === id);
           if (index !== -1) {
             const beforeUpdate = { ...state.todos[index] };
@@ -422,7 +422,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
           optimisticManager.completeOperation(id);
 
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             const index = state.todos.findIndex((t: Todo) => t.id === id);
             if (index !== -1) {
               state.todos[index] = finalTodo;
@@ -474,7 +474,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             // OptimisticManager에서 작업 실패 처리
             optimisticManager.failOperation(id);
 
-            set((state: any) => {
+            set((state: TodoStoreState) => {
               // 새로고침된 데이터에서 해당 할일 찾기
               const currentTodo = state.todos.find((t: Todo) => t.id === id);
               
@@ -523,7 +523,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         );
 
         // UI 즉시 업데이트
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.todos = state.todos.filter((t: Todo) => t.id !== id);
           const pendingOps = optimisticManager.getPendingOperations();
           // 안전한 상태 수정 패턴 적용
@@ -540,7 +540,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
           optimisticManager.completeOperation(id);
 
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             const pendingOps = optimisticManager.getPendingOperations();
             // 안전한 상태 수정 패턴 적용
             state.optimisticState = {
@@ -555,7 +555,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           // 실패 시 원본 데이터로 복원
           optimisticManager.failOperation(id);
 
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             if (todoToDelete) {
               state.todos.push(todoToDelete);
               state.todos.sort((a: Todo, b: Todo) => a.orderIndex - b.orderIndex);
@@ -582,7 +582,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           const createdTodos = await createTodoWithRecurrenceAction(input);
 
           // 상태 업데이트
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.todos.push(...createdTodos);
 
             // 반복 일정 그룹 관리
@@ -592,7 +592,7 @@ export const useTodoStore = createStore<TodoStoreState>(
               input.recurrence_pattern || "none"
             );
 
-            state.todos.sort((a: any, b: any) => a.orderIndex - b.orderIndex);
+            state.todos.sort((a: Todo, b: Todo) => a.orderIndex - b.orderIndex);
             state.refreshStats();
           });
 
@@ -600,7 +600,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         } catch (error) {
           resetLoadState(get, set, "crud");
           
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.error = `반복 할일 생성에 실패했습니다: ${(error as Error).message}`;
           });
           throw error;
@@ -616,7 +616,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
         try {
           // 낙관적 업데이트
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             if (updateType === "this") {
               const index = state.todos.findIndex((t: Todo) => t.id === id);
               if (index !== -1) {
@@ -628,7 +628,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
               state.todos = state.todos.map((t: Todo) =>
                 t.id === parentId || t.parentTodoId === parentId
-                  ? { ...t, ...updates }
+                  ? { ...t, ...updates } as Todo
                   : t
               );
             }
@@ -643,7 +643,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         } catch (error) {
           resetLoadState(get, set, "crud");
           
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.todos = originalTodos;
             state.error = `반복 할일 업데이트에 실패했습니다: ${(error as Error).message}`;
           });
@@ -666,7 +666,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         } catch (error) {
           resetLoadState(get, set, "crud");
           
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.error = `반복 할일 삭제에 실패했습니다: ${(error as Error).message}`;
           });
           throw error;
@@ -686,10 +686,10 @@ export const useTodoStore = createStore<TodoStoreState>(
         const newCompletedState = !todo.completed;
 
         // 즉시 스토어 상태 업데이트 (Optimistic Update)
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           const todoIndex = state.todos.findIndex((t: Todo) => t.id === id);
           if (todoIndex !== -1) {
-            state.todos[todoIndex].completed = !state.todos[todoIndex].completed;
+            state.todos[todoIndex] = { ...state.todos[todoIndex], completed: newCompletedState };
           }
         });
 
@@ -699,10 +699,10 @@ export const useTodoStore = createStore<TodoStoreState>(
         } catch (error) {
           console.error('❌ [todoStore] 백엔드 업데이트 실패:', error);
           // 실패 시 스토어 상태를 원래대로 되돌림
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             const todoIndex = state.todos.findIndex((t: Todo) => t.id === id);
             if (todoIndex !== -1) {
-              state.todos[todoIndex].completed = !state.todos[todoIndex].completed;
+              state.todos[todoIndex] = { ...state.todos[todoIndex], completed: !newCompletedState };
             }
           });
           return false;
@@ -718,7 +718,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         try {
           const completions = await loadCompletionsForDateRangeAction(startDate, endDate);
 
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.todoCompletions = completions;
           });
         } catch (error) {
@@ -735,9 +735,9 @@ export const useTodoStore = createStore<TodoStoreState>(
           );
 
           // 로컬 상태 업데이트
-          set((state: any) => {
+          set((state: TodoStoreState) => {
             state.todoCompletions = result.completions;
-            state.lastUpdated = Date.now(); // 강제 리렌더링 트리거
+            state.lastUpdated = new Date(); // 강제 리렌더링 트리거
           });
 
           // 🔄 실시간 UI 업데이트를 위한 완료 기록 재로드
@@ -820,25 +820,25 @@ export const useTodoStore = createStore<TodoStoreState>(
 
       // 필터링 및 검색
       setSearchQuery: (query: string) => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.filters.searchQuery = query;
         });
       },
 
       setCompletedFilter: (completed: "all" | "pending" | "completed") => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.filters.completed = completed;
         });
       },
 
       setShowCompleted: (show: boolean) => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.filters.showCompleted = show;
         });
       },
 
       setSortBy: (sortBy: string, sortOrder: "asc" | "desc" = "asc") => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.filters.sortBy = sortBy;
           state.filters.sortOrder = sortOrder;
         });
@@ -846,21 +846,21 @@ export const useTodoStore = createStore<TodoStoreState>(
 
       // 선택 상태 관리
       selectTodo: (todo: Todo | null) => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.selectedTodo = todo;
         });
       },
 
       // 드래그 앤 드롭
       startDrag: (todo: Todo) => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.dragState.isDragging = true;
           state.dragState.draggedTodo = todo;
         });
       },
 
       endDrag: () => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.dragState.isDragging = false;
           state.dragState.draggedTodo = null;
           state.dragState.dropTarget = null;
@@ -868,7 +868,7 @@ export const useTodoStore = createStore<TodoStoreState>(
       },
 
       setDropTarget: (targetId: string | null) => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.dragState.dropTarget = targetId;
         });
       },
@@ -902,7 +902,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           todayCompleted,
         };
 
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.stats = stats;
         });
       },
@@ -975,7 +975,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
       // 스토어 초기화
       reset: () => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.todos = [];
           state.selectedTodo = null;
           state.loading = false;
@@ -990,6 +990,8 @@ export const useTodoStore = createStore<TodoStoreState>(
             sortOrder: "asc",
             completed: "all",
             showCompleted: true,
+            customFilters: {},
+            filters: {},
           };
           state.stats = {
             totalCount: 0,
@@ -1018,7 +1020,7 @@ export const useTodoStore = createStore<TodoStoreState>(
       },
 
       clearFailedOperations: () => {
-        set((state: any) => {
+        set((state: TodoStoreState) => {
           state.optimisticState.pendingOperations = state.optimisticState.pendingOperations.filter(
             (op: any) => op.status !== "failed"
           );

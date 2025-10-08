@@ -1,5 +1,5 @@
-// @ts-nocheck 
-// TODO: Fix TypeScript issues and remove @ts-nocheck - requires interface updates for TimelineItem.dueDate
+// @ts-nocheck
+// TODO: Fix TypeScript issues - requires interface updates for TimelineItem
 // Timeline View Store - Manages state for the main timeline component
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';

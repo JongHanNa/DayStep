@@ -132,7 +132,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     updateSettings: (newSettings: Partial<TimerSettings>) => {
       logStoreAction("PomodoroStore", "updateSettings", newSettings);
 
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.settings = { ...state.settings, ...newSettings };
       });
     },
@@ -182,7 +182,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
           interrupted: false,
         };
 
-        set((state: any) => {
+        set((state: PomodoroStoreState) => {
           state.currentSession = newSession;
           state.timerState = {
             ...state.timerState,
@@ -209,7 +209,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     pauseTimer: createAsyncAction(async () => {
       logStoreAction("PomodoroStore", "pauseTimer");
 
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.timerState = {
           ...state.timerState,
           isPaused: true,
@@ -224,7 +224,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     resumeTimer: createAsyncAction(async () => {
       logStoreAction("PomodoroStore", "resumeTimer");
 
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.timerState = {
           ...state.timerState,
           isPaused: false,
@@ -248,7 +248,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
           interrupted: true,
         };
 
-        set((state: any) => {
+        set((state: PomodoroStoreState) => {
           state.sessions.push(interruptedSession);
           state.currentSession = null;
           state.timerState = {
@@ -264,7 +264,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
           };
         });
       } else {
-        set((state: any) => {
+        set((state: PomodoroStoreState) => {
           state.currentSession = null;
           state.timerState = {
             isRunning: false,
@@ -299,7 +299,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
 
         await get().saveSession(completedSession);
 
-        set((state: any) => {
+        set((state: PomodoroStoreState) => {
           state.currentSession = null;
           state.timerState = {
             ...state.timerState,
@@ -320,7 +320,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     saveSession: createAsyncAction(async (session: PomodoroSession) => {
       logStoreAction("PomodoroStore", "saveSession", session);
 
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         // 중복 방지
         const existingIndex = state.sessions.findIndex(
           (s: any) => s.id === session.id
@@ -407,7 +407,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
         weekSessions,
       };
 
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.stats = stats;
       });
     },
@@ -454,7 +454,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
      * 설정 모달 상태 관리
      */
     setSettingsOpen: (open: boolean) => {
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.isSettingsOpen = open;
       });
     },
@@ -463,7 +463,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
      * 통계 모달 상태 관리
      */
     setStatsOpen: (open: boolean) => {
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.isStatsOpen = open;
       });
     },
@@ -472,7 +472,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
      * 알림 표시 상태 관리
      */
     setShowNotifications: (show: boolean) => {
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.showNotifications = show;
       });
     },
@@ -483,7 +483,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     connectTodo: (todoId: string) => {
       logStoreAction("PomodoroStore", "connectTodo", { todoId });
 
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.connectedTodoId = todoId;
       });
     },
@@ -494,7 +494,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     disconnectTodo: () => {
       logStoreAction("PomodoroStore", "disconnectTodo");
 
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.connectedTodoId = null;
       });
     },
@@ -503,7 +503,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
      * 스토어 초기화
      */
     reset: () => {
-      set((state: any) => {
+      set((state: PomodoroStoreState) => {
         state.timerState = {
           isRunning: false,
           isPaused: false,

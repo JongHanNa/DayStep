@@ -216,7 +216,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         throw error;
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.tasks = data;
         state.refreshStats();
       });
@@ -270,7 +270,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         updated_at: new Date().toISOString(),
       };
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.tasks.push(optimisticTask);
         state.refreshStats();
       });
@@ -286,7 +286,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           throw error;
         }
 
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           // 낙관적 업데이트 제거하고 실제 데이터로 교체
           state.tasks = state.tasks.filter((t: any) => t.id !== tempId);
           state.tasks.push(created);
@@ -296,7 +296,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         return created;
       } catch (error) {
         // 낙관적 업데이트 롤백
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           state.tasks = state.tasks.filter((t: any) => t.id !== tempId);
           state.refreshStats();
         });
@@ -315,7 +315,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         const originalTasks = [...get().tasks];
 
         // 낙관적 업데이트
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           const index = state.tasks.findIndex((t: any) => t.id === id);
           if (index !== -1) {
             state.tasks[index] = { ...state.tasks[index], ...data };
@@ -335,7 +335,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
             throw error;
           }
 
-          set((state: any) => {
+          set((state: TimelineStoreState) => {
             const index = state.tasks.findIndex((t: any) => t.id === id);
             if (index !== -1) {
               state.tasks[index] = updated;
@@ -346,7 +346,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           return updated;
         } catch (error) {
           // 낙관적 업데이트 롤백
-          set((state: any) => {
+          set((state: TimelineStoreState) => {
             state.tasks = originalTasks;
             state.refreshStats();
           });
@@ -365,7 +365,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
       const originalTasks = [...get().tasks];
 
       // 낙관적 업데이트
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.tasks = state.tasks.filter((t: any) => t.id !== id);
         state.refreshStats();
       });
@@ -383,7 +383,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         return true;
       } catch (error) {
         // 낙관적 업데이트 롤백
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           state.tasks = originalTasks;
           state.refreshStats();
         });
@@ -402,7 +402,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
       });
 
       if (result) {
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           state.currentTask = result;
         });
         return true;
@@ -421,7 +421,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
       });
 
       if (result) {
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           if (state.currentTask?.id === id) {
             state.currentTask = null;
           }
@@ -440,7 +440,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
       });
 
       if (result) {
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           if (state.currentTask?.id === id) {
             state.currentTask = null;
           }
@@ -471,7 +471,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         throw error;
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.sessions = data;
         state.refreshStats();
       });
@@ -493,7 +493,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         throw error;
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.sessions.unshift(created);
         state.refreshStats();
       });
@@ -519,7 +519,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           throw error;
         }
 
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           const index = state.sessions.findIndex((s: any) => s.id === id);
           if (index !== -1) {
             state.sessions[index] = updated;
@@ -572,7 +572,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
 
       if (!session) return false;
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.timerState.isRunning = true;
         state.timerState.currentSession = session;
         state.timerState.timeRemaining = 1500; // 25 minutes
@@ -590,7 +590,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
      * 포모도로 타이머 일시정지
      */
     pauseTimer: () => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.timerState.isRunning = false;
       });
     },
@@ -605,7 +605,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         await get().completeSession(currentSession.id);
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.timerState.isRunning = false;
         state.timerState.currentSession = null;
         state.timerState.timeRemaining = 1500;
@@ -619,7 +619,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
      * 타이머 틱 (1초마다 호출)
      */
     tickTimer: () => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         if (state.timerState.isRunning && state.timerState.timeRemaining > 0) {
           state.timerState.timeRemaining -= 1;
 
@@ -648,7 +648,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
      * 타이머 단계 전환
      */
     switchPhase: (phase: "work" | "short-break" | "long-break") => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.timerState.currentPhase = phase;
         state.timerState.timeRemaining =
           phase === "work" ? 1500 : phase === "short-break" ? 300 : 900;
@@ -670,7 +670,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         throw error;
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.templates = data;
       });
     }),
@@ -691,7 +691,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         throw error;
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.templates.unshift(created);
       });
 
@@ -716,7 +716,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           throw error;
         }
 
-        set((state: any) => {
+        set((state: TimelineStoreState) => {
           const index = state.templates.findIndex((t: any) => t.id === id);
           if (index !== -1) {
             state.templates[index] = updated;
@@ -742,7 +742,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         throw error;
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.templates = state.templates.filter((t: any) => t.id !== id);
       });
 
@@ -771,38 +771,38 @@ export const useTimelineStore = createStore<TimelineStoreState>(
 
     // 필터링 관련 액션들
     setSearchQuery: (query: string) => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.filters.searchQuery = query;
       });
     },
 
     setStatusFilter: (status: TaskStatus | "all") => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.filters.status = status;
       });
     },
 
     setPriorityFilter: (priority: TaskPriority | "all") => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.filters.priority = priority;
       });
     },
 
 
     setDateRange: (start: Date | null, end: Date | null) => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.filters.dateRange = { start, end };
       });
     },
 
     setShowCompleted: (show: boolean) => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.filters.showCompleted = show;
       });
     },
 
     setSortBy: (sortBy: string, sortOrder: "asc" | "desc" = "asc") => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.filters.sortBy = sortBy;
         state.filters.sortOrder = sortOrder;
       });
@@ -812,7 +812,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
      * 작업 선택
      */
     selectTask: (task: TimelineTask | null) => {
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.currentTask = task;
       });
     },
@@ -833,7 +833,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "timeline_tasks" },
           (payload) => {
-            set((state: any) => {
+            set((state: TimelineStoreState) => {
               realtimeHelpers.handleInsert(state, payload.new);
               state.refreshStats();
             });
@@ -843,7 +843,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "timeline_tasks" },
           (payload) => {
-            set((state: any) => {
+            set((state: TimelineStoreState) => {
               realtimeHelpers.handleUpdate(state, payload.new);
               state.refreshStats();
             });
@@ -853,7 +853,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           "postgres_changes",
           { event: "DELETE", schema: "public", table: "timeline_tasks" },
           (payload) => {
-            set((state: any) => {
+            set((state: TimelineStoreState) => {
               realtimeHelpers.handleDelete(state, (payload.old as any).id);
               state.refreshStats();
             });
@@ -863,7 +863,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "pomodoro_sessions" },
           (payload) => {
-            set((state: any) => {
+            set((state: TimelineStoreState) => {
               state.sessions.unshift(payload.new);
               state.refreshStats();
             });
@@ -871,7 +871,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         )
         .subscribe();
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.isSubscribed = true;
         state.channel = channel;
       });
@@ -890,7 +890,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         supabase.removeChannel(channel);
       }
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.isSubscribed = false;
         state.channel = null;
       });
@@ -949,7 +949,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
         todayWorkTime,
       };
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.stats = stats;
       });
     },
@@ -1103,7 +1103,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
     reset: () => {
       get().unsubscribe();
 
-      set((state: any) => {
+      set((state: TimelineStoreState) => {
         state.tasks = [];
         state.sessions = [];
         state.templates = [];

@@ -157,7 +157,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
 
       const items = data.map((item) => RepositoryItem.fromDatabase(item));
 
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.items = items;
         state.refreshStats();
       });
@@ -209,7 +209,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         updated_at: new Date().toISOString(),
       } as any);
 
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.items.unshift(optimisticItem);
         state.refreshStats();
       });
@@ -227,7 +227,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
 
         const newItem = RepositoryItem.fromDatabase(created);
 
-        set((state: any) => {
+        set((state: RepositoryStoreState) => {
           // 낙관적 업데이트 제거하고 실제 데이터로 교체
           state.items = state.items.filter((i: any) => i.id !== tempId);
           state.items.unshift(newItem);
@@ -237,7 +237,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         return newItem;
       } catch (error) {
         // 낙관적 업데이트 롤백
-        set((state: any) => {
+        set((state: RepositoryStoreState) => {
           state.items = state.items.filter((i: any) => i.id !== tempId);
           state.refreshStats();
         });
@@ -256,7 +256,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         const originalItems = [...get().items];
 
         // 낙관적 업데이트
-        set((state: any) => {
+        set((state: RepositoryStoreState) => {
           const index = state.items.findIndex((i: any) => i.id === id);
           if (index !== -1) {
             state.items[index] = { ...state.items[index], ...data };
@@ -278,7 +278,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
 
           const updatedItem = RepositoryItem.fromDatabase(updated);
 
-          set((state: any) => {
+          set((state: RepositoryStoreState) => {
             const index = state.items.findIndex((i: any) => i.id === id);
             if (index !== -1) {
               state.items[index] = updatedItem;
@@ -289,7 +289,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
           return updatedItem;
         } catch (error) {
           // 낙관적 업데이트 롤백
-          set((state: any) => {
+          set((state: RepositoryStoreState) => {
             state.items = originalItems;
             state.refreshStats();
           });
@@ -308,7 +308,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
       const originalItems = [...get().items];
 
       // 낙관적 업데이트
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.items = state.items.filter((i: any) => i.id !== id);
         state.refreshStats();
       });
@@ -326,7 +326,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         return true;
       } catch (error) {
         // 낙관적 업데이트 롤백
-        set((state: any) => {
+        set((state: RepositoryStoreState) => {
           state.items = originalItems;
           state.refreshStats();
         });
@@ -357,7 +357,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
       }
 
       // 로컬 상태 업데이트
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.items.forEach((item: any) => {
           if (item.category === category) {
             const index = state.items.findIndex((i: any) => i.id === item.id);
@@ -392,7 +392,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         }
 
         // 로컬 상태 업데이트
-        set((state: any) => {
+        set((state: RepositoryStoreState) => {
           state.items.forEach((item: any) => {
             if (item.category === fromCategory) {
               const index = state.items.findIndex((i: any) => i.id === item.id);
@@ -412,7 +412,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 검색어 설정
      */
     setSearchQuery: (query: string) => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.filters.searchQuery = query;
       });
     },
@@ -421,7 +421,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 타입 필터 설정
      */
     setTypeFilter: (type: "all" | "todo") => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.filters.type = type;
       });
     },
@@ -430,7 +430,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 카테고리 필터 설정
      */
     setCategoryFilter: (category: string | "all") => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.filters.category = category;
       });
     },
@@ -439,7 +439,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 정렬 설정
      */
     setSortBy: (sortBy: string, sortOrder: "asc" | "desc" = "desc") => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.filters.sortBy = sortBy;
         state.filters.sortOrder = sortOrder;
       });
@@ -449,7 +449,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 아이템 선택
      */
     selectItem: (item: RepositoryItem | null) => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.selectedItem = item;
       });
     },
@@ -458,7 +458,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 드래그 시작
      */
     startDrag: (item: RepositoryItem) => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.dragState.isDragging = true;
         state.dragState.draggedItem = item;
       });
@@ -468,7 +468,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 드래그 종료
      */
     endDrag: () => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.dragState.isDragging = false;
         state.dragState.draggedItem = null;
         state.dragState.dropTarget = null;
@@ -479,7 +479,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
      * 드롭 타겟 설정
      */
     setDropTarget: (targetId: string | null) => {
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.dragState.dropTarget = targetId;
       });
     },
@@ -508,7 +508,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
           { event: "INSERT", schema: "public", table: "repository_items" },
           (payload) => {
             const newItem = RepositoryItem.fromDatabase(payload.new as any);
-            set((state: any) => {
+            set((state: RepositoryStoreState) => {
               state.items.unshift(newItem);
               state.refreshStats();
             });
@@ -519,7 +519,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
           { event: "UPDATE", schema: "public", table: "repository_items" },
           (payload) => {
             const updatedItem = RepositoryItem.fromDatabase(payload.new as any);
-            set((state: any) => {
+            set((state: RepositoryStoreState) => {
               const index = state.items.findIndex(
                 (i: any) => i.id === updatedItem.id
               );
@@ -534,7 +534,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
           "postgres_changes",
           { event: "DELETE", schema: "public", table: "repository_items" },
           (payload) => {
-            set((state: any) => {
+            set((state: RepositoryStoreState) => {
               state.items = state.items.filter(
                 (i: any) => i.id !== (payload.old as any).id
               );
@@ -544,7 +544,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         )
         .subscribe();
 
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.isSubscribed = true;
         state.channel = channel;
       });
@@ -563,7 +563,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         supabase.removeChannel(channel);
       }
 
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.isSubscribed = false;
         state.channel = null;
       });
@@ -593,7 +593,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
           (stats.categoryBreakdown[category] || 0) + 1;
       });
 
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.stats = stats;
         state.filters.categories = Object.keys(stats.categoryBreakdown);
       });
@@ -661,7 +661,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         throw error;
       }
 
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.items = state.items.filter((item: any) => !ids.includes(item.id));
         state.refreshStats();
       });
@@ -688,7 +688,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
           throw error;
         }
 
-        set((state: any) => {
+        set((state: RepositoryStoreState) => {
           state.items.forEach((item: any) => {
             if (ids.includes(item.id)) {
               const index = state.items.findIndex((i: any) => i.id === item.id);
@@ -732,7 +732,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         return false;
       } catch (error) {
         console.error("아이템 복원 오류:", error);
-        set((state: any) => {
+        set((state: RepositoryStoreState) => {
           state.error =
             error instanceof Error ? error.message : "복원에 실패했습니다.";
         });
@@ -746,7 +746,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
     reset: () => {
       get().unsubscribe();
 
-      set((state: any) => {
+      set((state: RepositoryStoreState) => {
         state.items = [];
         state.selectedItem = null;
         state.loading = false;
