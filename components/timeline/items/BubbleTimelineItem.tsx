@@ -718,7 +718,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         className={cn(
           'flex items-start gap-4',
           'cursor-pointer select-none transition-all',
-          !isDragging && 'hover:shadow-md rounded-lg'
+          !isDragging && 'hover:shadow-[0_0_12px_rgba(0,0,0,0.1)] rounded-lg'
         )}
         style={{
           touchAction: 'none',  // ⚡ CSS 레벨 터치 스크롤 차단 (브라우저 개입 방지)
