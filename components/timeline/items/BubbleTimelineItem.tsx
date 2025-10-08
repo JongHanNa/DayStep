@@ -358,9 +358,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
         // 현재 시간이 다음날 종료 시간 이후면 100%
         if (nowTimeOfDay >= endTimeOfDay) {
-          if (item.title === '수면') {
-            console.log('✅ [크로스데이] 이미 종료됨 → 100%');
-          }
           return 100;
         }
 
@@ -369,23 +366,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         const progress = (1439 - startTimeOfDay) + nowTimeOfDay;
         const percentage = Math.round((progress / totalDuration) * 100);
 
-        if (item.title === '수면') {
-          console.log('✅ [크로스데이] 진행 중:', {
-            어제부분: `${1439 - startTimeOfDay}분`,
-            오늘부분: `${nowTimeOfDay}분`,
-            전체진행: `${progress}분`,
-            전체길이: `${totalDuration}분`,
-            percentage: `${percentage}%`
-          });
-        }
-
         return percentage;
       }
 
       // 일반 할일: 과거 날짜는 100% 색칠
-      if (item.title === '수면') {
-        console.log('✅ [일반 할일] 과거 날짜 → 100%');
-      }
       return 100;
     }
 
@@ -426,28 +410,14 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
       // 일반 할일: 시작 전이면 0%, 종료 후면 100%, 진행 중이면 비율
       if (nowTimeOfDay < startTimeOfDay) {
-        if (item.title === '수면') {
-          console.log('✅ [일반 할일] 시작 전 → 0%');
-        }
         return 0;
       }
 
       if (nowTimeOfDay >= endTimeOfDay) {
-        if (item.title === '수면') {
-          console.log('✅ [일반 할일] 종료 후 → 100%');
-        }
         return 100;
       }
 
       const percentage = Math.round(((nowTimeOfDay - startTimeOfDay) / (endTimeOfDay - startTimeOfDay)) * 100);
-
-      if (item.title === '수면') {
-        console.log('✅ [일반 할일] 진행 중:', {
-          duration: `${endTimeOfDay - startTimeOfDay}분`,
-          progress: `${nowTimeOfDay - startTimeOfDay}분`,
-          percentage: `${percentage}%`
-        });
-      }
 
       return percentage;
     }
