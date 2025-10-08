@@ -861,10 +861,57 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               </div>
             </div>
 
-            {/* 메모 */}
+            {/* 메모 드롭다운 */}
             {linkedMemos.length > 0 && (
-              <div className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
-                📝 {linkedMemos.length}개의 메모
+              <div className="relative mt-1.5" onClick={(e) => e.stopPropagation()}>
+                <div className="dropdown dropdown-bottom">
+                  <div
+                    tabIndex={0}
+                    role="button"
+                    className="btn btn-ghost btn-xs gap-1 h-auto min-h-0 px-2 py-1"
+                  >
+                    <span className="text-xs">📝 {linkedMemos.length}</span>
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  <div
+                    tabIndex={0}
+                    className="dropdown-content menu bg-base-100 rounded-box z-[1] w-72 p-3 shadow-lg border border-base-300 mt-1"
+                  >
+                    <div className="space-y-2">
+                      {linkedMemos.map((memo) => (
+                        <div
+                          key={memo.id}
+                          className={cn(
+                            "p-2 rounded-md text-sm",
+                            "bg-gray-50 dark:bg-gray-800",
+                            memo.is_pinned && "border-l-4 border-blue-500"
+                          )}
+                        >
+                          <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                            {memo.content}
+                          </div>
+                          {memo.created_at && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {new Date(memo.created_at).toLocaleString('ko-KR', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
