@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { format, addMinutes, addDays } from 'date-fns';
 import type { Todo, ScheduleType, RecurrencePattern } from '@/types';
 import { UnifiedIconKey } from '@/lib/icon-collection';
@@ -516,6 +516,34 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     occurrenceDate,
     setOccurrenceDate,
   };
+
+  // duration 변경 시 자동으로 endTime 업데이트
+  useEffect(() => {
+    // 시간 지정 모드이고, 시작 시간이 설정되어 있을 때만 실행
+    if (scheduleType === 'timed' && startDate && startTime) {
+      try {
+        // 시작 시간 파싱
+        const startDateTime = new Date(`${startDate}T${startTime}`);
+
+        if (!isNaN(startDateTime.getTime())) {
+          // duration을 사용하여 종료 시간 계산
+          const endDateTime = addMinutes(startDateTime, durationMinutes);
+
+          // 종료 날짜와 시간 업데이트
+          const newEndDate = format(endDateTime, 'yyyy-MM-dd');
+          const newEndTime = format(endDateTime, 'HH:mm');
+
+          // 현재 endDate, endTime과 다른 경우에만 업데이트 (무한 루프 방지)
+          if (newEndDate !== endDate || newEndTime !== endTime) {
+            setEndDate(newEndDate);
+            setEndTime(newEndTime);
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ endTime 자동 계산 실패:', error);
+      }
+    }
+  }, [durationHours, durationMins, startDate, startTime, scheduleType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 계산된 값들
   const computed = {
