@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Clock, Calendar, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Eye, EyeOff, Circle, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -88,6 +88,26 @@ export default function TimelinePage() {
           오늘 날짜의 타임라인 표시 방식을 조정할 수 있습니다
         </div>
       </div>
+
+      {/* 버블 아이콘 형태 설정 */}
+      <Link href="/settings/timeline/bubble-shape">
+        <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-indigo-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                  <Circle className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="font-medium">버블 아이콘 형태</h3>
+                  <p className="text-sm text-muted-foreground">타임라인 버블 모양 선택</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* 메인 설정 */}
       <Card>

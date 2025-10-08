@@ -9,6 +9,7 @@ import { Check } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useSettingsStore } from '@/state/stores/settingsStore';
 import MotivationBadge from '@/components/motivation/MotivationBadge';
 
 // 🎨 테마 색상 상수 (CSS 변수 사용)
@@ -81,6 +82,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   const { todos, todoCompletions } = useTodoStore();
   const { getMotivationsForTodo } = useMotivationStore();
   const { memos } = useQuickMemoStore();
+  const { bubbleShape } = useSettingsStore();
 
   // 타임라인 ID에서 실제 UUID 추출
   const extractTaskId = (timelineId: string) => {
@@ -250,26 +252,31 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   // 버블 높이 계산 (10분 단위로 10px씩 증가, 최대 500px)
   const bubbleHeight = useMemo(() => {
-    const baseHeight = 64; // 1-10분: 64px (원형)
+    const baseHeight = 80; // 1-10분: 80px (arrow 위아래 20px씩 고려)
 
     // 11분 이상일 때만 추가 높이 적용
     if (durationMinutes <= 10) return baseHeight;
 
     // 10분 초과분에 대해 10분당 10px 추가
-    // 예: 11-20분 → 10px 추가 → 74px
-    //     1시간(60분) → 50분 추가 → 50px 추가 → 114px
-    //     7시간(420분) → 410분 추가 → 410px 추가 → 474px
+    // 예: 11-20분 → 10px 추가 → 90px
+    //     1시간(60분) → 50분 추가 → 50px 추가 → 130px
+    //     7시간(420분) → 410분 추가 → 410px 추가 → 490px
     const extraMinutes = durationMinutes - 10;
     const extraHeight = Math.ceil(extraMinutes / 10) * 10;
     return Math.min(baseHeight + extraHeight, 500); // 최대 500px (약 7.5시간)
   }, [durationMinutes]);
 
-  // borderRadius 계산 (타원형 효과)
+  // borderRadius 계산 (형태별 + 타원형 효과)
   const borderRadius = useMemo(() => {
-    if (durationMinutes <= 10) return '50%'; // 완전한 원형
-    // 타원형: 가로 반지름 / 세로 반지름
+    // 사각형: 고정 borderRadius
+    if (bubbleShape === 'square') return '12px';
+
+    // 화살표: 약간 둥근 모서리
+    if (bubbleShape === 'arrow') return '8px';
+
+    // 원형 (circle): 모두 타원형(돔 모양)으로 통일
     return `${bubbleWidth / 2}px / ${Math.min(bubbleHeight / 2, bubbleWidth / 2)}px`;
-  }, [durationMinutes, bubbleHeight]);
+  }, [bubbleShape, bubbleHeight]);
 
   // 연결 막대 높이 계산 (간격에 비례, 최대 500px)
   const connectorHeight = useMemo(() => {
@@ -499,10 +506,25 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   // 버블 스타일 결정 (색상 + 크기 + 점진적 색칠)
   const bubbleStyle = useMemo(() => {
+    // arrow 모양일 때 위아래 고정 크기 (px)
+    const arrowTopHeight = 20; // 위쪽 V자 높이
+    const arrowBottomHeight = 20; // 아래쪽 뾰족 높이
+
     const baseStyle = {
       width: `${bubbleWidth}px`,
       height: `${bubbleHeight}px`,
-      borderRadius: borderRadius,
+      borderRadius: bubbleShape === 'arrow' ? 0 : borderRadius, // arrow는 날카롭게, 나머지는 기존값
+      // arrow 모양일 때 clip-path 추가 (위아래 고정, 중간 가변)
+      ...(bubbleShape === 'arrow' && {
+        clipPath: `polygon(
+          0px 0px,
+          ${bubbleWidth / 2}px ${arrowTopHeight}px,
+          ${bubbleWidth}px 0px,
+          ${bubbleWidth}px ${bubbleHeight - arrowBottomHeight}px,
+          ${bubbleWidth / 2}px ${bubbleHeight}px,
+          0px ${bubbleHeight - arrowBottomHeight}px
+        )`
+      })
     };
 
     // 진행률에 따라 점진적으로 색칠 (위에서 아래로)
@@ -518,7 +540,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       ...baseStyle,
       backgroundColor: THEME_COLORS.CONNECTOR,
     };
-  }, [progressPercentage, itemColor, bubbleWidth, bubbleHeight, borderRadius]);
+  }, [progressPercentage, itemColor, bubbleWidth, bubbleHeight, borderRadius, bubbleShape]);
 
   // 드래그 중 변경된 시간 계산
   const displayStartTime = useMemo(() => {
@@ -746,6 +768,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 className="flex items-center justify-center transition-all duration-300"
                 style={bubbleStyle}
               >
+                {/* 모든 모양에서 할일 아이콘 표시 */}
                 <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
               </div>
             </div>
