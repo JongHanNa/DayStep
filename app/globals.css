@@ -62,12 +62,7 @@
   --font-opendyslexic: "OpenDyslexic", Arial, sans-serif;
   --current-font-family: var(--font-system);
 
-  /* 🎨 브랜드 색상 팔레트 (Design Tokens - Single Source of Truth) */
-  --brand-primary: 215 17% 35%;       /* #4a5568 다크 올리브 그린 */
-  --brand-primary-dark: 220 9% 46%;   /* #6b7280 밝은 회색 */
-  --brand-white: 0 0% 100%;           /* #ffffff */
-
-  /* 🎨 Light theme - WCAG AA compliant colors (HSL format) */
+  /* 🎨 Default (Olive) Light theme - WCAG AA compliant colors (HSL format) */
   --background: 0 0% 100%; /* #ffffff */
   --foreground: 222 47% 11%; /* #0f172a */
   --card: 0 0% 100%; /* #ffffff */
@@ -75,6 +70,8 @@
   --popover: 0 0% 100%; /* #ffffff */
   --popover-foreground: 222 47% 11%; /* #0f172a */
 
+  --primary: 215 17% 35%; /* #4a5568 다크 올리브 그린 */
+  --primary-foreground: 0 0% 100%; /* #ffffff 흰색 */
   --secondary: 210 40% 96%; /* #f1f5f9 */
   --secondary-foreground: 222 47% 11%; /* #0f172a */
   --muted: 210 40% 98%; /* #f8fafc */
@@ -159,10 +156,7 @@
 
 :root[data-palette="default"].dark,
 .dark {
-  /* 🎨 다크 모드 색상 오버라이드 */
-  --brand-primary: var(--brand-primary-dark);
-
-  /* 🎨 Dark theme - WCAG AA compliant colors (HSL format) */
+  /* 🎨 Default (Olive) Dark theme - WCAG AA compliant colors (HSL format) */
   --background: 222 47% 11%; /* #0f172a */
   --foreground: 210 40% 98%; /* #f8fafc */
   --card: 217 33% 17%; /* #1e293b */
@@ -170,6 +164,8 @@
   --popover: 217 33% 17%; /* #1e293b */
   --popover-foreground: 210 40% 98%; /* #f8fafc */
 
+  --primary: 220 9% 46%; /* #6b7280 밝은 회색 */
+  --primary-foreground: 0 0% 100%; /* #ffffff 흰색 */
   --secondary: 215 28% 29%; /* #334155 */
   --secondary-foreground: 210 40% 98%; /* #f8fafc */
   --muted: 215 28% 29%; /* #334155 */

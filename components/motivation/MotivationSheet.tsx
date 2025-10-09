@@ -294,8 +294,8 @@ const MotivationSheet: React.FC<MotivationSheetProps> = ({
           <div className="flex-1 overflow-hidden">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="h-full flex flex-col">
               <TabsList className="grid grid-cols-2 mx-6 mt-4 bg-muted shadow-sm">
-                <TabsTrigger value="browse" className="data-[state=active]:bg-card data-[state=active]:shadow-sm" style={{'--tw-shadow-color': 'var(--brand-primary-light)'} as React.CSSProperties}>찾아보기</TabsTrigger>
-                <TabsTrigger value="create" className="data-[state=active]:bg-card data-[state=active]:shadow-sm" style={{'--tw-shadow-color': 'var(--brand-primary-light)'} as React.CSSProperties}>
+                <TabsTrigger value="browse" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">찾아보기</TabsTrigger>
+                <TabsTrigger value="create" className="data-[state=active]:bg-card data-[state=active]:shadow-sm">
                   {editingMessageId ? '수정하기' : '만들기'}
                 </TabsTrigger>
               </TabsList>
@@ -307,7 +307,7 @@ const MotivationSheet: React.FC<MotivationSheetProps> = ({
                     {recommendedMessages.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                          <div className="w-1 h-4 rounded-full" style={{backgroundColor: 'var(--brand-primary)'}}></div>
+                          <div className="w-1 h-4 rounded-full bg-primary"></div>
                           추천 메시지
                         </h4>
                         <div className="space-y-2">
@@ -463,8 +463,7 @@ const MotivationSheet: React.FC<MotivationSheetProps> = ({
                       <div className="flex gap-3 pt-4">
                         <Button
                           onClick={editingMessageId ? handleUpdateMessage : handleCreateMessage}
-                          className="flex-1 gap-2 shadow-sm hover:shadow-md transition-shadow"
-                          style={{backgroundColor: 'var(--brand-primary)', borderColor: 'var(--brand-primary)'}}
+                          className="flex-1 gap-2 shadow-sm hover:shadow-md transition-shadow bg-primary border-primary text-primary-foreground hover:bg-primary/90"
                         >
                           <Save size={16} />
                           {editingMessageId ? '메시지 수정' : '메시지 저장'}

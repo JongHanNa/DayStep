@@ -73,13 +73,13 @@ export interface ThemePaletteOption {
 export const THEME_PALETTE_OPTIONS: ThemePaletteOption[] = [
   {
     value: 'default',
-    label: 'Default (올리브 그린)',
-    description: '차분하고 집중하기 좋은 다크 올리브 그린 테마',
+    label: 'Olive (올리브 그린)',
+    description: '차분하고 집중하기 좋은 올리브 그린 테마',
     previewColor: '#4a5568' // 기존 primary 색상
   },
   {
     value: 'bubblegum',
-    label: 'Bubblegum (핑크)',
+    label: 'Pink (핑크)',
     description: '화사하고 밝은 핑크 계열 테마',
     previewColor: '#d8497f' // bubblegum primary 색상
   }

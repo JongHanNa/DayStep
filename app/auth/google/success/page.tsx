@@ -72,9 +72,9 @@ function GoogleAuthSuccessContent() {
   }, [searchParams]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-brand-primary/10 to-brand-primary/5">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-primary/5">
       <div className="text-center p-8 max-w-md mx-auto">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-6" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-6" />
 
         <h1 className="text-2xl font-semibold text-foreground mb-3">
           Google Calendar 연동 중...
@@ -100,9 +100,9 @@ function GoogleAuthSuccessContent() {
 export default function GoogleAuthSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-brand-primary/10 to-brand-primary/5">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/10 to-primary/5">
         <div className="text-center p-8 max-w-md mx-auto">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-6" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-6" />
           <h1 className="text-2xl font-semibold text-foreground mb-3">
             로딩 중...
           </h1>
