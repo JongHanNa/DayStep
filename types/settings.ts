@@ -51,3 +51,41 @@ export const DEFAULT_TODO_COMPLETION_SETTINGS: TodoCompletionSettings = {
   showCompletedItems: true,
   completedItemsOpacity: 0.7
 };
+
+/**
+ * 테마 팔레트 타입 정의
+ */
+export type ThemePalette = 'default' | 'bubblegum';
+
+/**
+ * 사전 정의된 테마 팔레트 옵션들
+ */
+export interface ThemePaletteOption {
+  value: ThemePalette;
+  label: string;
+  description: string;
+  previewColor: string; // Tailwind 클래스 또는 hex
+}
+
+/**
+ * 테마 팔레트 옵션 목록
+ */
+export const THEME_PALETTE_OPTIONS: ThemePaletteOption[] = [
+  {
+    value: 'default',
+    label: 'Default (올리브 그린)',
+    description: '차분하고 집중하기 좋은 다크 올리브 그린 테마',
+    previewColor: '#4a5568' // 기존 primary 색상
+  },
+  {
+    value: 'bubblegum',
+    label: 'Bubblegum (핑크)',
+    description: '화사하고 밝은 핑크 계열 테마',
+    previewColor: '#d8497f' // bubblegum primary 색상
+  }
+];
+
+/**
+ * 기본 테마 팔레트
+ */
+export const DEFAULT_THEME_PALETTE: ThemePalette = 'default';

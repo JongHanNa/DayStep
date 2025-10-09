@@ -51,6 +51,11 @@
   touch-action: none !important;
 }
 
+/* =========================================
+   🎨 Default 테마 (기존 다크 올리브 그린)
+   ========================================= */
+
+:root[data-palette="default"],
 :root {
   /* Font family variables */
   --font-system: Arial, Helvetica, sans-serif;
@@ -98,12 +103,61 @@
   --status-pending: 217 91% 60%; /* #3b82f6 */
 }
 
+/* =========================================
+   🎨 Bubblegum 테마 (핑크 계열)
+   ========================================= */
+
+:root[data-palette="bubblegum"] {
+  /* Font family variables - 상속 */
+  --font-system: Arial, Helvetica, sans-serif;
+  --font-opendyslexic: "OpenDyslexic", Arial, sans-serif;
+  --current-font-family: var(--font-system);
+
+  /* 🎨 Bubblegum Light theme colors */
+  --background: 0 6% 93.3%; /* oklch(0.9399 0.0203 345.6985) */
+  --foreground: 0 0% 29.4%; /* oklch(0.4712 0 0) */
+  --card: 87 23% 85.6%; /* oklch(0.9498 0.0500 86.8891) */
+  --card-foreground: 0 0% 29.4%; /* oklch(0.4712 0 0) */
+  --popover: 0 0% 100%; /* oklch(1.0000 0 0) */
+  --popover-foreground: 0 0% 29.4%; /* oklch(0.4712 0 0) */
+
+  --primary: 348 63% 55.6%; /* oklch(0.6209 0.1801 348.1385) - 핑크 */
+  --primary-foreground: 0 0% 100%; /* oklch(1.0000 0 0) */
+  --secondary: 198 33% 74.4%; /* oklch(0.8095 0.0694 198.1863) */
+  --secondary-foreground: 0 0% 20%; /* oklch(0.3211 0 0) */
+  --muted: 212 24% 86.3%; /* oklch(0.8800 0.0504 212.0952) */
+  --muted-foreground: 0 0% 36.1%; /* oklch(0.5795 0 0) */
+  --accent: 88 38% 88.7%; /* oklch(0.9195 0.0801 87.6670) */
+  --accent-foreground: 0 0% 20%; /* oklch(0.3211 0 0) */
+  --destructive: 22 74% 64.8%; /* oklch(0.7091 0.1697 21.9551) */
+  --destructive-foreground: 0 0% 100%; /* oklch(1.0000 0 0) */
+  --border: 348 63% 55.6%; /* oklch(0.6209 0.1801 348.1385) */
+  --input: 0 0% 57.5%; /* oklch(0.9189 0 0) */
+  --ring: 351 63% 57.9%; /* oklch(0.7002 0.1597 350.7532) */
+  --radius: 0.4rem;
+
+  /* 🎨 타임라인 전용 색상 - Bubblegum */
+  --timeline-bg: 343 20% 92%; /* 연한 핑크 배경 */
+  --timeline-connector: 348 15% 85%; /* 핑크 계열 커넥터 */
+  --timeline-connector-active: 348 63% 55.6%; /* primary와 동일 */
+
+  /* 🎨 섹션 헤더 색상 - Bubblegum */
+  --section-header: 343 20% 92%;
+  --section-header-hover: 343 20% 88%;
+
+  /* 🎨 상태 색상 - Bubblegum */
+  --status-completed: 142 71% 45%;
+  --status-in-progress: 25 95% 53%;
+  --status-pending: 348 63% 55.6%; /* primary 핑크 */
+}
+
 /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
 [data-theme="light"] {
   --color-primary: oklch(0.4671 0.039 264.71); /* primary: #4a5568 다크 회색 */
   --color-primary-content: oklch(1.0000 0 0); /* primary-content: #ffffff 흰색 */
 }
 
+:root[data-palette="default"].dark,
 .dark {
   /* 🎨 다크 모드 색상 오버라이드 */
   --brand-primary: var(--brand-primary-dark);
@@ -141,6 +195,44 @@
   --status-completed: 142 77% 73%; /* #34d399 */
   --status-in-progress: 25 95% 61%; /* #fb923c */
   --status-pending: 213 97% 87%; /* #60a5fa */
+}
+
+:root[data-palette="bubblegum"].dark {
+  /* 🎨 Bubblegum Dark theme colors */
+  --background: 234 13% 19.2%; /* oklch(0.2497 0.0305 234.1628) */
+  --foreground: 349 9% 90.4%; /* oklch(0.9306 0.0197 349.0785) */
+  --card: 234 12% 22.9%; /* oklch(0.2902 0.0299 233.5352) */
+  --card-foreground: 349 9% 90.4%; /* oklch(0.9306 0.0197 349.0785) */
+  --popover: 234 12% 22.9%; /* oklch(0.2902 0.0299 233.5352) */
+  --popover-foreground: 349 9% 90.4%; /* oklch(0.9306 0.0197 349.0785) */
+
+  --primary: 88 38% 88.7%; /* oklch(0.9195 0.0801 87.6670) */
+  --primary-foreground: 234 13% 19.2%; /* oklch(0.2497 0.0305 234.1628) */
+  --secondary: 4 37% 76.7%; /* oklch(0.7794 0.0803 4.1330) */
+  --secondary-foreground: 234 13% 19.2%; /* oklch(0.2497 0.0305 234.1628) */
+  --muted: 256 3% 21.7%; /* oklch(0.2713 0.0086 255.5780) */
+  --muted-foreground: 4 37% 76.7%; /* oklch(0.7794 0.0803 4.1330) */
+  --accent: 357 45% 70.8%; /* oklch(0.6699 0.0988 356.9762) */
+  --accent-foreground: 349 9% 90.4%; /* oklch(0.9306 0.0197 349.0785) */
+  --destructive: 350 71% 67.5%; /* oklch(0.6702 0.1806 350.3599) */
+  --destructive-foreground: 234 13% 19.2%; /* oklch(0.2497 0.0305 234.1628) */
+  --border: 242 15% 30.9%; /* oklch(0.3907 0.0399 242.2181) */
+  --input: 232 12% 24.8%; /* oklch(0.3093 0.0305 232.0027) */
+  --ring: 202 41% 68.7%; /* oklch(0.6998 0.0896 201.8672) */
+
+  /* 🎨 타임라인 전용 색상 - Bubblegum Dark */
+  --timeline-bg: 234 12% 22.9%; /* card와 동일 */
+  --timeline-connector: 242 15% 30.9%; /* border와 동일 */
+  --timeline-connector-active: 88 38% 88.7%; /* primary와 동일 */
+
+  /* 🎨 섹션 헤더 색상 - Bubblegum Dark */
+  --section-header: 234 12% 22.9%;
+  --section-header-hover: 242 15% 30.9%;
+
+  /* 🎨 상태 색상 - Bubblegum Dark */
+  --status-completed: 142 77% 73%;
+  --status-in-progress: 25 95% 61%;
+  --status-pending: 213 97% 87%;
 }
 
 /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Dark 모드 (data-theme 필수) */

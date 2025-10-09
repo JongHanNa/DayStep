@@ -2,6 +2,7 @@
 
 import { ThemeContext, Theme, ThemeContextType } from '@/hooks/useTheme';
 import { useEffect, useState } from 'react';
+import { useSettingsStore } from '@/state/stores/settingsStore';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const themePalette = useSettingsStore((state) => state.themePalette);
 
   // 시스템 테마 감지
   const getSystemTheme = (): 'light' | 'dark' => {
@@ -48,7 +50,8 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
     root.classList.remove('light', 'dark');
     root.classList.add(effectiveTheme);
     root.setAttribute('data-theme', effectiveTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
-  }, [theme]);
+    root.setAttribute('data-palette', themePalette); // 테마 팔레트 적용
+  }, [theme, themePalette]);
 
   // 시스템 테마 변경 감지
   useEffect(() => {
@@ -63,11 +66,12 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
       root.classList.remove('light', 'dark');
       root.classList.add(systemTheme);
       root.setAttribute('data-theme', systemTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
+      root.setAttribute('data-palette', themePalette); // 테마 팔레트 적용
     };
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, themePalette]);
 
   const updateTheme = (newTheme: Theme) => {
     setTheme(newTheme);

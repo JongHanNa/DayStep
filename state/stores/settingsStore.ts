@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { 
-  TodoCompletionSettings, 
+import {
+  TodoCompletionSettings,
   DEFAULT_TODO_COMPLETION_SETTINGS,
-  CompletionBehavior 
+  CompletionBehavior,
+  ThemePalette,
+  DEFAULT_THEME_PALETTE
 } from '@/types/settings';
 
 export type TimeFormat = '12h' | '24h';
@@ -29,6 +31,9 @@ interface SettingsState {
   // 할일 완료 설정
   todoCompletion: TodoCompletionSettings;
 
+  // 테마 팔레트 설정
+  themePalette: ThemePalette;
+
   // Actions
   setTimeFormat: (format: TimeFormat) => void;
   setFontFamily: (family: FontFamily) => void;
@@ -39,6 +44,7 @@ interface SettingsState {
   setCompletionBehavior: (behavior: CompletionBehavior) => void;
   setShowCompletedItems: (show: boolean) => void;
   setCompletedItemsOpacity: (opacity: number) => void;
+  setThemePalette: (palette: ThemePalette) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -65,7 +71,10 @@ export const useSettingsStore = create<SettingsState>()(
 
         // 할일 완료 설정 기본값
         todoCompletion: DEFAULT_TODO_COMPLETION_SETTINGS,
-        
+
+        // 테마 팔레트 기본값
+        themePalette: DEFAULT_THEME_PALETTE,
+
         // Actions
         setTimeFormat: (format: TimeFormat) => {
           console.log('⚙️ 시간 표기법 설정 변경:', format);
@@ -126,6 +135,11 @@ export const useSettingsStore = create<SettingsState>()(
             }
           }));
         },
+
+        setThemePalette: (palette: ThemePalette) => {
+          console.log('⚙️ 테마 팔레트 설정 변경:', palette);
+          set({ themePalette: palette });
+        },
       }),
       {
         name: 'settings-store',
@@ -137,6 +151,7 @@ export const useSettingsStore = create<SettingsState>()(
           fontSize: state.fontSize,
           bubbleShape: state.bubbleShape,
           todoCompletion: state.todoCompletion,
+          themePalette: state.themePalette,
         }),
       }
     ),
