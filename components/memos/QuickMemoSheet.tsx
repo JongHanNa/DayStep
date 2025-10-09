@@ -489,14 +489,14 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
               type="button"
               size="sm"
               onClick={() => onOpenChange(false)}
-              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
             >
               닫기
             </Button>
 
             {/* 가운데: 제목과 개수 */}
             <div className="flex items-center gap-2">
-              <StickyNote className="h-5 w-5 text-brand" />
+              <StickyNote className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-semibold">퀵메모</h2>
               <Badge variant="outline" className="text-xs">
                 {filteredMemos.length}개
@@ -508,7 +508,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
               type="button"
               size="sm"
               onClick={() => openMemoEditor('create')}
-              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
             >
               <Plus className="h-4 w-4 mr-1" />
               추가
@@ -845,14 +845,14 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
               type="button"
               size="sm"
               onClick={handleCancelMemoEdit}
-              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
             >
               취소
             </Button>
 
             {/* 가운데: 제목 */}
             <div className="flex items-center gap-2">
-              <Edit3 className="h-5 w-5 text-brand" />
+              <Edit3 className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-semibold">
                 {memoEditorMode === 'edit' ? '메모 수정' : '새 메모'}
               </h2>
@@ -873,7 +873,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                   setSelectedMemoForLink(memoForLink);
                   setTaskLinkModalOpen(true);
                 }}
-                className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
               >
                 <Link className="h-4 w-4 mr-1" />
                 연결
@@ -1402,7 +1402,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
               type="button"
               size="sm"
               onClick={() => setShowExitConfirm(false)}
-              className="bg-brand hover:bg-brand-hover text-white font-medium px-3 py-2 rounded-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-3 py-2 rounded-full"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -1500,7 +1500,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
               size="sm"
               onClick={handleCreateTag}
               disabled={!newTagName.trim()}
-              className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
             >
               <Check className="h-4 w-4 mr-1" />
               생성

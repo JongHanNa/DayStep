@@ -65,9 +65,9 @@
   --popover: 0 0% 100%; /* #ffffff */
   --popover-foreground: 222 47% 11%; /* #0f172a */
 
-  /* 🎨 Primary 색상 (oklch 형식 - DaisyUI와 Tailwind 공유) */
-  --primary: oklch(0.4671 0.039 264.71); /* #4a5568 다크 회색 */
-  --primary-foreground: oklch(1.0000 0 0); /* #ffffff 흰색 */
+  /* 🎨 Primary 색상 (HSL 형식 - Tailwind 전용) */
+  --primary: 215 17% 35%; /* #4a5568 다크 회색 */
+  --primary-foreground: 0 0% 100%; /* #ffffff 흰색 */
 
   --secondary: 210 40% 96%; /* #f1f5f9 */
   --secondary-foreground: 222 47% 11%; /* #0f172a */
@@ -112,9 +112,9 @@
   --popover: 217 33% 17%; /* #1e293b */
   --popover-foreground: 210 40% 98%; /* #f8fafc */
 
-  /* 🎨 Primary 색상 (oklch 형식 - DaisyUI와 Tailwind 공유) */
-  --primary: oklch(0.583 0.054 261.36); /* #6b7280 밝은 회색 */
-  --primary-foreground: oklch(1.0000 0 0); /* #ffffff 흰색 */
+  /* 🎨 Primary 색상 (HSL 형식 - Tailwind 전용) */
+  --primary: 220 9% 46%; /* #6b7280 밝은 회색 */
+  --primary-foreground: 0 0% 100%; /* #ffffff 흰색 */
 
   --secondary: 215 28% 29%; /* #334155 */
   --secondary-foreground: 210 40% 98%; /* #f8fafc */
@@ -158,9 +158,9 @@
     --popover: 217 33% 17%;
     --popover-foreground: 210 40% 98%;
 
-    /* 🎨 Primary 색상 (oklch 형식 - DaisyUI와 Tailwind 공유) */
-    --primary: oklch(0.583 0.054 261.36); /* #6b7280 밝은 회색 */
-    --primary-foreground: oklch(1.0000 0 0);
+    /* 🎨 Primary 색상 (HSL 형식 - Tailwind 전용) */
+    --primary: 220 9% 46%; /* #6b7280 밝은 회색 */
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 215 28% 29%;
     --secondary-foreground: 210 40% 98%;

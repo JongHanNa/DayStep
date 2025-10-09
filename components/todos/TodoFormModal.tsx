@@ -142,14 +142,14 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 type="button"
                 size="sm"
                 onClick={() => onOpenChange(false)}
-                className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
               >
                 취소
               </Button>
 
               {/* 가운데: 제목 */}
               <div className="flex items-center gap-2">
-                <Edit className="h-5 w-5 text-brand" />
+                <Edit className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">할일 수정</h2>
               </div>
 
@@ -159,7 +159,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 size="sm"
                 onClick={handlers.handleSubmit}
                 disabled={uiState.isSubmitting || uiState.isDeleting || !values.content.trim()}
-                className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full disabled:bg-gray-400 disabled:opacity-60"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full disabled:bg-gray-400 disabled:opacity-60"
               >
                 {uiState.isSubmitting ? '수정 중...' : '완료'}
               </Button>
@@ -172,14 +172,14 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 type="button"
                 size="sm"
                 onClick={() => onOpenChange(false)}
-                className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-full"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
               >
                 취소
               </Button>
 
               {/* 가운데: 제목 */}
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-brand" />
+                <Clock className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">새 할일 추가</h2>
               </div>
 

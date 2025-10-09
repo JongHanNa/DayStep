@@ -220,13 +220,13 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               size="lg"
               className={cn(
                 'h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200',
-                'bg-brand hover:bg-brand-hover text-white border-0',
+                'bg-primary hover:bg-primary/90 text-primary-foreground border-0',
                 'hover:scale-110 active:scale-95',
                 'flex items-center justify-center p-0',
                 isOpen && 'rotate-45'
               )}
             >
-              <Plus className="h-8 w-8 stroke-[3] text-white" />
+              <Plus className="h-8 w-8 stroke-[3]" />
             </Button>
           </DropdownMenuTrigger>
           
@@ -239,8 +239,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               onClick={handleAddTodo}
               className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
             >
-              <div className="p-2 rounded-full bg-brand-light">
-                <Clock className="h-4 w-4 text-brand" />
+              <div className="p-2 rounded-full bg-primary/10">
+                <Clock className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-foreground">할일 추가</div>
@@ -252,8 +252,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               onClick={handleOpenQuickMemo}
               className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
             >
-              <div className="p-2 rounded-full bg-brand-light">
-                <StickyNote className="h-4 w-4 text-brand" />
+              <div className="p-2 rounded-full bg-primary/10">
+                <StickyNote className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-foreground">퀵메모</div>
@@ -265,8 +265,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               onClick={handleOpenContactList}
               className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
             >
-              <div className="p-2 rounded-full bg-brand-light">
-                <Users className="h-4 w-4 text-brand" />
+              <div className="p-2 rounded-full bg-primary/10">
+                <Users className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-foreground">인물</div>
@@ -278,8 +278,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               onClick={handleAddNewContact}
               className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
             >
-              <div className="p-2 rounded-full bg-brand-light">
-                <User className="h-4 w-4 text-brand" />
+              <div className="p-2 rounded-full bg-primary/10">
+                <User className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-foreground">새 연락처</div>
@@ -291,8 +291,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               onClick={() => setMotivationSheetOpen(true)}
               className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
             >
-              <div className="p-2 rounded-full bg-brand-light">
-                <Heart className="h-4 w-4 text-brand" />
+              <div className="p-2 rounded-full bg-primary/10">
+                <Heart className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
                 <div className="font-medium text-foreground">동기부여</div>
