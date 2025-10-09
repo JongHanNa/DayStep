@@ -133,19 +133,7 @@
   --ring: 351 63% 57.9%; /* oklch(0.7002 0.1597 350.7532) */
   --radius: 0.4rem;
 
-  /* 🎨 타임라인 전용 색상 - Bubblegum */
-  --timeline-bg: 343 20% 92%; /* 연한 핑크 배경 */
-  --timeline-connector: 348 15% 85%; /* 핑크 계열 커넥터 */
-  --timeline-connector-active: 348 63% 55.6%; /* primary와 동일 */
 
-  /* 🎨 섹션 헤더 색상 - Bubblegum */
-  --section-header: 343 20% 92%;
-  --section-header-hover: 343 20% 88%;
-
-  /* 🎨 상태 색상 - Bubblegum */
-  --status-completed: 142 71% 45%;
-  --status-in-progress: 25 95% 53%;
-  --status-pending: 348 63% 55.6%; /* primary 핑크 */
 }
 
 /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
