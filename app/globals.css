@@ -64,8 +64,11 @@
   --card-foreground: 222 47% 11%; /* #0f172a */
   --popover: 0 0% 100%; /* #ffffff */
   --popover-foreground: 222 47% 11%; /* #0f172a */
-  --primary: 215 16% 35%; /* #4a5568 - DaisyUI primary와 동기화 */
-  --primary-foreground: 210 40% 98%; /* #f8fafc */
+
+  /* 🎨 Primary 색상 (oklch 형식 - DaisyUI와 Tailwind 공유) */
+  --primary: oklch(0.4671 0.039 264.71); /* #4a5568 다크 회색 */
+  --primary-foreground: oklch(1.0000 0 0); /* #ffffff 흰색 */
+
   --secondary: 210 40% 96%; /* #f1f5f9 */
   --secondary-foreground: 222 47% 11%; /* #0f172a */
   --muted: 210 40% 98%; /* #f8fafc */
@@ -92,11 +95,12 @@
   --status-completed: 142 71% 45%; /* #22c55e */
   --status-in-progress: 25 95% 53%; /* #f97316 */
   --status-pending: 217 91% 60%; /* #3b82f6 */
+}
 
-  /* 🎨 브랜드 색상 (하위 호환성) */
-  --brand-primary: 215 16% 35%; /* #4a5568 */
-  --brand-primary-hover: 217 19% 27%; /* #2d3748 */
-  --brand-primary-light: 215 16% 35% / 0.1; /* rgba(74, 85, 104, 0.1) */
+/* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
+[data-theme="light"] {
+  --color-primary: oklch(0.4671 0.039 264.71); /* primary: #4a5568 다크 회색 */
+  --color-primary-content: oklch(1.0000 0 0); /* primary-content: #ffffff 흰색 */
 }
 
 .dark {
@@ -107,8 +111,11 @@
   --card-foreground: 210 40% 98%; /* #f8fafc */
   --popover: 217 33% 17%; /* #1e293b */
   --popover-foreground: 210 40% 98%; /* #f8fafc */
-  --primary: 220 9% 46%; /* #6b7280 - DaisyUI dark primary와 동기화 */
-  --primary-foreground: 210 40% 98%; /* #f8fafc */
+
+  /* 🎨 Primary 색상 (oklch 형식 - DaisyUI와 Tailwind 공유) */
+  --primary: oklch(0.583 0.054 261.36); /* #6b7280 밝은 회색 */
+  --primary-foreground: oklch(1.0000 0 0); /* #ffffff 흰색 */
+
   --secondary: 215 28% 29%; /* #334155 */
   --secondary-foreground: 210 40% 98%; /* #f8fafc */
   --muted: 215 28% 29%; /* #334155 */
@@ -134,11 +141,12 @@
   --status-completed: 142 77% 73%; /* #34d399 */
   --status-in-progress: 25 95% 61%; /* #fb923c */
   --status-pending: 213 97% 87%; /* #60a5fa */
+}
 
-  /* 🎨 브랜드 색상 - 다크모드 (하위 호환성) */
-  --brand-primary: 220 9% 46%; /* #6b7280 */
-  --brand-primary-hover: 215 16% 35%; /* #4a5568 */
-  --brand-primary-light: 220 9% 46% / 0.15; /* rgba(107, 114, 128, 0.15) */
+/* 🎨 DaisyUI 5.x 전용 CSS 변수 - Dark 모드 (data-theme 필수) */
+[data-theme="dark"] {
+  --color-primary: oklch(0.583 0.054 261.36); /* primary: #6b7280 밝은 회색 */
+  --color-primary-content: oklch(1.0000 0 0); /* primary-content: #ffffff 흰색 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -149,8 +157,11 @@
     --card-foreground: 210 40% 98%;
     --popover: 217 33% 17%;
     --popover-foreground: 210 40% 98%;
-    --primary: 220 9% 46%; /* #6b7280 - DaisyUI dark primary와 동기화 */
-    --primary-foreground: 210 40% 98%;
+
+    /* 🎨 Primary 색상 (oklch 형식 - DaisyUI와 Tailwind 공유) */
+    --primary: oklch(0.583 0.054 261.36); /* #6b7280 밝은 회색 */
+    --primary-foreground: oklch(1.0000 0 0);
+
     --secondary: 215 28% 29%;
     --secondary-foreground: 210 40% 98%;
     --muted: 215 28% 29%;
@@ -173,10 +184,6 @@
     --status-completed: 142 77% 73%;
     --status-in-progress: 25 95% 61%;
     --status-pending: 213 97% 87%;
-
-    --brand-primary: 220 9% 46%;
-    --brand-primary-hover: 215 16% 35%;
-    --brand-primary-light: 220 9% 46% / 0.15;
   }
 }
 
@@ -285,11 +292,6 @@ body {
     text-wrap: balance;
   }
 
-  /* 브랜드 색상 텍스트 클래스 */
-  .text-brand {
-    color: var(--brand-primary);
-  }
-  
   /* 스크롤바 숨김 - 스크롤 기능은 유지 (캐퍼시터 환경 최적화) */
   .scrollbar-hide {
     scrollbar-width: none !important; /* Firefox */

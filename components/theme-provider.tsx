@@ -44,12 +44,10 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
 
     setResolvedTheme(effectiveTheme);
 
-    // CSS 클래스 적용
+    // CSS 클래스 + data-theme 속성 적용 (DaisyUI는 data-theme 필수)
     root.classList.remove('light', 'dark');
     root.classList.add(effectiveTheme);
-
-    // DaisyUI 테마 설정
-    root.setAttribute('data-theme', effectiveTheme === 'light' ? 'daystep_light' : 'daystep_dark');
+    root.setAttribute('data-theme', effectiveTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
   }, [theme]);
 
   // 시스템 테마 변경 감지
@@ -64,9 +62,7 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
       const root = document.documentElement;
       root.classList.remove('light', 'dark');
       root.classList.add(systemTheme);
-
-      // DaisyUI 테마 설정
-      root.setAttribute('data-theme', systemTheme === 'light' ? 'daystep_light' : 'daystep_dark');
+      root.setAttribute('data-theme', systemTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
     };
 
     mediaQuery.addEventListener('change', handleChange);

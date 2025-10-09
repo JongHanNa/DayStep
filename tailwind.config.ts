@@ -91,14 +91,6 @@ export default {
           'in-progress': "hsl(var(--status-in-progress))",
           pending: "hsl(var(--status-pending))",
         },
-
-        // 🎨 브랜드 색상 (하위 호환성)
-        brand: {
-          DEFAULT: "hsl(var(--brand-primary))",
-          primary: "hsl(var(--brand-primary))",
-          hover: "hsl(var(--brand-primary-hover))",
-          light: "hsl(var(--brand-primary-light))",
-        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -109,83 +101,7 @@ export default {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: [
-      {
-        daystep_light: {
-          // DaisyUI 기본 색상
-          "primary": "#4a5568",          // 브랜드 메인 색상
-          "primary-focus": "#2d3748",    // 호버 상태
-          "primary-content": "#ffffff",  // 텍스트 색상
-
-          "secondary": "#f1f5f9",
-          "secondary-content": "#0f172a",
-
-          "accent": "#3b82f6",
-          "accent-content": "#ffffff",
-
-          "neutral": "#1e293b",
-          "neutral-content": "#f8fafc",
-
-          "base-100": "#ffffff",    // 메인 배경
-          "base-200": "#f8fafc",    // 보조 배경
-          "base-300": "#e2e8f0",    // 더 어두운 배경
-          "base-content": "#0f172a", // 텍스트
-
-          "info": "#3b82f6",
-          "success": "#22c55e",
-          "warning": "#f97316",
-          "error": "#dc2626",
-
-          // 커스텀 CSS 변수 (DaisyUI 5.0+ 지원)
-          "--rounded-box": "0.5rem",
-          "--rounded-btn": "0.5rem",
-          "--rounded-badge": "1rem",
-          "--animation-btn": "0.25s",
-          "--animation-input": "0.2s",
-          "--btn-text-case": "none",
-          "--border-btn": "0",              // Soft Button: 테두리 제거
-          "--btn-focus-scale": "0.98",      // Soft Button: 클릭 시 살짝 축소 효과
-          "--tab-border": "1px",
-          "--tab-radius": "0.5rem",
-        },
-        daystep_dark: {
-          "primary": "#6b7280",
-          "primary-focus": "#4a5568",
-          "primary-content": "#ffffff",
-
-          "secondary": "#334155",
-          "secondary-content": "#f8fafc",
-
-          "accent": "#60a5fa",
-          "accent-content": "#ffffff",
-
-          "neutral": "#0f172a",
-          "neutral-content": "#f8fafc",
-
-          "base-100": "#0f172a",
-          "base-200": "#1e293b",
-          "base-300": "#334155",
-          "base-content": "#f8fafc",
-
-          "info": "#60a5fa",
-          "success": "#34d399",
-          "warning": "#fb923c",
-          "error": "#f87171",
-
-          "--rounded-box": "0.5rem",
-          "--rounded-btn": "0.5rem",
-          "--rounded-badge": "1rem",
-          "--animation-btn": "0.25s",
-          "--animation-input": "0.2s",
-          "--btn-text-case": "none",
-          "--border-btn": "0",              // Soft Button: 테두리 제거
-          "--btn-focus-scale": "0.98",      // Soft Button: 클릭 시 살짝 축소 효과
-          "--tab-border": "1px",
-          "--tab-radius": "0.5rem",
-        },
-      },
-    ],
-    darkTheme: "daystep_dark",
+    themes: false,  // 🎨 DaisyUI 내장 테마 완전 비활성화 - globals.css의 CSS 변수만 사용
     base: true,
     styled: true,
     utils: true,
