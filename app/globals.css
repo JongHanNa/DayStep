@@ -57,6 +57,11 @@
   --font-opendyslexic: "OpenDyslexic", Arial, sans-serif;
   --current-font-family: var(--font-system);
 
+  /* 🎨 브랜드 색상 팔레트 (Design Tokens - Single Source of Truth) */
+  --brand-primary: 215 17% 35%;       /* #4a5568 다크 올리브 그린 */
+  --brand-primary-dark: 220 9% 46%;   /* #6b7280 밝은 회색 */
+  --brand-white: 0 0% 100%;           /* #ffffff */
+
   /* 🎨 Light theme - WCAG AA compliant colors (HSL format) */
   --background: 0 0% 100%; /* #ffffff */
   --foreground: 222 47% 11%; /* #0f172a */
@@ -64,10 +69,6 @@
   --card-foreground: 222 47% 11%; /* #0f172a */
   --popover: 0 0% 100%; /* #ffffff */
   --popover-foreground: 222 47% 11%; /* #0f172a */
-
-  /* 🎨 Primary 색상 (HSL 형식 - Tailwind 전용) */
-  --primary: 215 17% 35%; /* #4a5568 다크 회색 */
-  --primary-foreground: 0 0% 100%; /* #ffffff 흰색 */
 
   --secondary: 210 40% 96%; /* #f1f5f9 */
   --secondary-foreground: 222 47% 11%; /* #0f172a */
@@ -104,6 +105,9 @@
 }
 
 .dark {
+  /* 🎨 다크 모드 색상 오버라이드 */
+  --brand-primary: var(--brand-primary-dark);
+
   /* 🎨 Dark theme - WCAG AA compliant colors (HSL format) */
   --background: 222 47% 11%; /* #0f172a */
   --foreground: 210 40% 98%; /* #f8fafc */
@@ -111,10 +115,6 @@
   --card-foreground: 210 40% 98%; /* #f8fafc */
   --popover: 217 33% 17%; /* #1e293b */
   --popover-foreground: 210 40% 98%; /* #f8fafc */
-
-  /* 🎨 Primary 색상 (HSL 형식 - Tailwind 전용) */
-  --primary: 220 9% 46%; /* #6b7280 밝은 회색 */
-  --primary-foreground: 0 0% 100%; /* #ffffff 흰색 */
 
   --secondary: 215 28% 29%; /* #334155 */
   --secondary-foreground: 210 40% 98%; /* #f8fafc */
@@ -149,43 +149,6 @@
   --color-primary-content: oklch(1.0000 0 0); /* primary-content: #ffffff 흰색 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-
-    /* 🎨 Primary 색상 (HSL 형식 - Tailwind 전용) */
-    --primary: 220 9% 46%; /* #6b7280 밝은 회색 */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 215 28% 29%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 28% 29%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 215 28% 29%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 215 25% 35%;
-    --input: 215 25% 35%;
-    --ring: 217 91% 60%;
-
-    --timeline-bg: 217 33% 17%;
-    --timeline-connector: 215 25% 35%;
-    --timeline-connector-active: 213 97% 87%;
-
-    --section-header: 215 28% 29%;
-    --section-header-hover: 215 25% 35%;
-
-    --status-completed: 142 77% 73%;
-    --status-in-progress: 25 95% 61%;
-    --status-pending: 213 97% 87%;
-  }
-}
 
 * {
   border-color: var(--border);
