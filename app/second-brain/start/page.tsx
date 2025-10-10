@@ -488,14 +488,30 @@ export default function SecondBrainStartPage() {
               )}
 
               {/* 버튼 */}
-              <div className="card-actions justify-end mt-6 gap-3">
+              <div className="card-actions flex-col mt-6 gap-3">
                 {progress?.completed ? (
                   /* 완료 후 */
                   <>
-                    <button onClick={handleEditOnboarding} className="btn btn-ghost">
-                      설정 수정하기
-                    </button>
-                    <button onClick={handleSkipToMain} className="btn btn-primary">
+                    <div className="alert alert-info w-full">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        className="stroke-current shrink-0 w-6 h-6"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">설정 페이지에서 각 영역을 수정할 수 있습니다.</p>
+                        <p className="text-xs opacity-70 mt-1">하단 네비게이션 → 설정 메뉴</p>
+                      </div>
+                    </div>
+                    <button onClick={handleSkipToMain} className="btn btn-primary w-full">
                       수집함으로 이동
                     </button>
                   </>
