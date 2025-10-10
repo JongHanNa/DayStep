@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useOnboardingStore } from '@/state/stores/secondBrain/onboardingStore';
-import { Plus, X, Pencil } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import type { CreateAreaInput } from '@/types/second-brain';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
@@ -33,14 +33,9 @@ export default function OnboardingStep1Page() {
   const { createArea, areas } = useAreaStore();
   const { completeStep, incrementCreatedCount } = useOnboardingStore();
 
-  // 프리셋 영역 (편집 가능하도록 state로 관리)
-  const [areaPresets, setAreaPresets] = useState<AreaPreset[]>(AREA_PRESETS);
+  // 프리셋 영역
+  const [areaPresets] = useState<AreaPreset[]>(AREA_PRESETS);
   const [selectedAreas, setSelectedAreas] = useState<AreaPreset[]>([]);
-
-  // 편집 관련 state
-  const [editingArea, setEditingArea] = useState<(AreaPreset & { index: number }) | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
   // 커스텀 영역 추가 state
   const [customAreaModalOpen, setCustomAreaModalOpen] = useState(false);
@@ -58,59 +53,6 @@ export default function OnboardingStep1Page() {
     } else {
       setSelectedAreas([...selectedAreas, area]);
     }
-  };
-
-  // 편집 관련 핸들러
-  const handleEditArea = (area: AreaPreset, index: number) => {
-    setEditingArea({ ...area, index });
-    setEditDialogOpen(true);
-  };
-
-  const handleIconChange = (iconKey: UnifiedIconKey) => {
-    if (editingArea) {
-      setEditingArea({ ...editingArea, icon: iconKey });
-    }
-  };
-
-  const handleColorChange = (colorId: string) => {
-    if (editingArea) {
-      const color = getColorById(colorId).hex;
-      setEditingArea({ ...editingArea, color });
-    }
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingArea || !editingArea.title.trim()) {
-      alert('제목을 입력해주세요.');
-      return;
-    }
-
-    // 1. areaPresets 업데이트
-    const updatedPresets = [...areaPresets];
-    const oldTitle = areaPresets[editingArea.index].title;
-    updatedPresets[editingArea.index] = {
-      title: editingArea.title,
-      icon: editingArea.icon,
-      color: editingArea.color,
-      description: editingArea.description,
-    };
-    setAreaPresets(updatedPresets);
-
-    // 2. 이미 선택된 경우 selectedAreas도 업데이트
-    const selectedIndex = selectedAreas.findIndex((a) => a.title === oldTitle);
-    if (selectedIndex !== -1) {
-      const updatedSelected = [...selectedAreas];
-      updatedSelected[selectedIndex] = updatedPresets[editingArea.index];
-      setSelectedAreas(updatedSelected);
-    }
-
-    setEditDialogOpen(false);
-    setEditingArea(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditDialogOpen(false);
-    setEditingArea(null);
   };
 
   // 커스텀 영역 추가 핸들러
@@ -231,51 +173,40 @@ export default function OnboardingStep1Page() {
               const isSelected = selectedAreas.some((a) => a.title === area.title);
               const IconComponent = getUnifiedIcon(area.icon as UnifiedIconKey).component;
               return (
-                <div key={area.title} className="relative">
-                  <button
-                    onClick={() => handleToggleArea(area)}
-                    className={`card transition-all w-full ${
-                      isSelected
-                        ? 'bg-primary text-primary-content ring-2 ring-primary'
-                        : 'bg-base-200 hover:bg-base-300'
-                    }`}
-                  >
-                    <div className="card-body p-4">
-                      <div className="flex items-start justify-between">
-                        <IconComponent className="w-8 h-8" />
-                        {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
-                            <svg
-                              className="w-3 h-3"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="font-semibold mt-2">{area.title}</h3>
-                      <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
-                        {area.description}
-                      </p>
+                <button
+                  key={area.title}
+                  onClick={() => handleToggleArea(area)}
+                  className={`card transition-all w-full ${
+                    isSelected
+                      ? 'bg-primary text-primary-content ring-2 ring-primary'
+                      : 'bg-base-200 hover:bg-base-300'
+                  }`}
+                >
+                  <div className="card-body p-4">
+                    <div className="flex items-start justify-between">
+                      <IconComponent className="w-8 h-8" />
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
-                  </button>
-                  {/* 편집 버튼 */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditArea(area, index);
-                    }}
-                    className="btn btn-ghost btn-sm btn-circle absolute top-2 right-2 z-10"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                </div>
+                    <h3 className="font-semibold mt-2">{area.title}</h3>
+                    <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
+                      {area.description}
+                    </p>
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -343,75 +274,6 @@ export default function OnboardingStep1Page() {
           </button>
         </div>
       </div>
-
-      {/* 편집 다이얼로그 */}
-      {editDialogOpen && editingArea && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">영역 편집</h3>
-
-            {/* 아이콘 및 색상 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">아이콘 및 색상</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setIconBrowserOpen(true)}
-                className="btn btn-outline w-full justify-start"
-                style={{
-                  backgroundColor: editingArea.color + '20',
-                  borderColor: editingArea.color,
-                }}
-              >
-                {(() => {
-                  const IconComponent = getUnifiedIcon(editingArea.icon as UnifiedIconKey).component;
-                  return <IconComponent className="w-6 h-6 mr-2" />;
-                })()}
-                <span>변경하기</span>
-              </button>
-            </div>
-
-            {/* 제목 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">제목</span>
-              </label>
-              <input
-                type="text"
-                value={editingArea.title}
-                onChange={(e) => setEditingArea({ ...editingArea, title: e.target.value })}
-                className="input input-bordered"
-                placeholder="예: 직장"
-              />
-            </div>
-
-            {/* 설명 */}
-            <div className="form-control mb-6">
-              <label className="label">
-                <span className="label-text">설명</span>
-              </label>
-              <textarea
-                value={editingArea.description}
-                onChange={(e) => setEditingArea({ ...editingArea, description: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="예: 업무 프로젝트 및 커리어 개발"
-              />
-            </div>
-
-            {/* 버튼 */}
-            <div className="modal-action">
-              <button onClick={handleCancelEdit} className="btn btn-ghost">
-                취소
-              </button>
-              <button onClick={handleSaveEdit} className="btn btn-primary">
-                저장
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelEdit} />
-        </dialog>
-      )}
 
       {/* 커스텀 영역 추가 다이얼로그 */}
       {customAreaModalOpen && (
@@ -481,16 +343,6 @@ export default function OnboardingStep1Page() {
           <div className="modal-backdrop" onClick={handleCancelCustomArea} />
         </dialog>
       )}
-
-      {/* 편집용 아이콘 브라우저 모달 */}
-      <EnhancedIconBrowserModal
-        open={iconBrowserOpen}
-        onClose={() => setIconBrowserOpen(false)}
-        onIconSelect={handleIconChange}
-        selectedIcon={editingArea?.icon}
-        selectedColor={editingArea?.color}
-        onColorSelect={handleColorChange}
-      />
 
       {/* 커스텀 영역 추가용 아이콘 브라우저 모달 */}
       <EnhancedIconBrowserModal

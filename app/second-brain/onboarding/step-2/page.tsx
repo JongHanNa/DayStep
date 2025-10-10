@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useOnboardingStore } from '@/state/stores/secondBrain/onboardingStore';
-import { Plus, X, Pencil } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import type { CreateResourceInput } from '@/types/second-brain';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
@@ -33,14 +33,9 @@ export default function OnboardingStep2Page() {
   const { createResource, resources } = useResourceStore();
   const { completeStep, incrementCreatedCount } = useOnboardingStore();
 
-  // 프리셋 자원 (편집 가능하도록 state로 관리)
-  const [resourcePresets, setResourcePresets] = useState<ResourcePreset[]>(RESOURCE_PRESETS);
+  // 프리셋 자원
+  const [resourcePresets] = useState<ResourcePreset[]>(RESOURCE_PRESETS);
   const [selectedResources, setSelectedResources] = useState<ResourcePreset[]>([]);
-
-  // 편집 관련 state
-  const [editingResource, setEditingResource] = useState<(ResourcePreset & { index: number }) | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
   // 커스텀 자원 추가 state
   const [customResourceModalOpen, setCustomResourceModalOpen] = useState(false);
@@ -58,59 +53,6 @@ export default function OnboardingStep2Page() {
     } else {
       setSelectedResources([...selectedResources, resource]);
     }
-  };
-
-  // 편집 관련 핸들러
-  const handleEditResource = (resource: ResourcePreset, index: number) => {
-    setEditingResource({ ...resource, index });
-    setEditDialogOpen(true);
-  };
-
-  const handleIconChange = (iconKey: UnifiedIconKey) => {
-    if (editingResource) {
-      setEditingResource({ ...editingResource, icon: iconKey });
-    }
-  };
-
-  const handleColorChange = (colorId: string) => {
-    if (editingResource) {
-      const color = getColorById(colorId).hex;
-      setEditingResource({ ...editingResource, color });
-    }
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingResource || !editingResource.title.trim()) {
-      alert('제목을 입력해주세요.');
-      return;
-    }
-
-    // 1. resourcePresets 업데이트
-    const updatedPresets = [...resourcePresets];
-    const oldTitle = resourcePresets[editingResource.index].title;
-    updatedPresets[editingResource.index] = {
-      title: editingResource.title,
-      icon: editingResource.icon,
-      color: editingResource.color,
-      description: editingResource.description,
-    };
-    setResourcePresets(updatedPresets);
-
-    // 2. 이미 선택된 경우 selectedResources도 업데이트
-    const selectedIndex = selectedResources.findIndex((r) => r.title === oldTitle);
-    if (selectedIndex !== -1) {
-      const updatedSelected = [...selectedResources];
-      updatedSelected[selectedIndex] = updatedPresets[editingResource.index];
-      setSelectedResources(updatedSelected);
-    }
-
-    setEditDialogOpen(false);
-    setEditingResource(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditDialogOpen(false);
-    setEditingResource(null);
   };
 
   // 커스텀 자원 추가 핸들러
@@ -231,51 +173,40 @@ export default function OnboardingStep2Page() {
               const isSelected = selectedResources.some((r) => r.title === resource.title);
               const IconComponent = getUnifiedIcon(resource.icon as UnifiedIconKey).component;
               return (
-                <div key={resource.title} className="relative">
-                  <button
-                    onClick={() => handleToggleResource(resource)}
-                    className={`card transition-all w-full ${
-                      isSelected
-                        ? 'bg-primary text-primary-content ring-2 ring-primary'
-                        : 'bg-base-200 hover:bg-base-300'
-                    }`}
-                  >
-                    <div className="card-body p-4">
-                      <div className="flex items-start justify-between">
-                        <IconComponent className="w-8 h-8" />
-                        {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
-                            <svg
-                              className="w-3 h-3"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="font-semibold mt-2">{resource.title}</h3>
-                      <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
-                        {resource.description}
-                      </p>
+                <button
+                  key={resource.title}
+                  onClick={() => handleToggleResource(resource)}
+                  className={`card transition-all w-full ${
+                    isSelected
+                      ? 'bg-primary text-primary-content ring-2 ring-primary'
+                      : 'bg-base-200 hover:bg-base-300'
+                  }`}
+                >
+                  <div className="card-body p-4">
+                    <div className="flex items-start justify-between">
+                      <IconComponent className="w-8 h-8" />
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
-                  </button>
-                  {/* 편집 버튼 */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditResource(resource, index);
-                    }}
-                    className="btn btn-ghost btn-sm btn-circle absolute top-2 right-2 z-10"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                </div>
+                    <h3 className="font-semibold mt-2">{resource.title}</h3>
+                    <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
+                      {resource.description}
+                    </p>
+                  </div>
+                </button>
               );
             })}
           </div>
@@ -343,75 +274,6 @@ export default function OnboardingStep2Page() {
           </button>
         </div>
       </div>
-
-      {/* 편집 다이얼로그 */}
-      {editDialogOpen && editingResource && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">자원 편집</h3>
-
-            {/* 아이콘 및 색상 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">아이콘 및 색상</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setIconBrowserOpen(true)}
-                className="btn btn-outline w-full justify-start"
-                style={{
-                  backgroundColor: editingResource.color + '20',
-                  borderColor: editingResource.color,
-                }}
-              >
-                {(() => {
-                  const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
-                  return <IconComponent className="w-6 h-6 mr-2" />;
-                })()}
-                <span>변경하기</span>
-              </button>
-            </div>
-
-            {/* 제목 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">제목</span>
-              </label>
-              <input
-                type="text"
-                value={editingResource.title}
-                onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
-                className="input input-bordered"
-                placeholder="예: 독서"
-              />
-            </div>
-
-            {/* 설명 */}
-            <div className="form-control mb-6">
-              <label className="label">
-                <span className="label-text">설명</span>
-              </label>
-              <textarea
-                value={editingResource.description}
-                onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="예: 읽고 싶은 책, 독서 노트"
-              />
-            </div>
-
-            {/* 버튼 */}
-            <div className="modal-action">
-              <button onClick={handleCancelEdit} className="btn btn-ghost">
-                취소
-              </button>
-              <button onClick={handleSaveEdit} className="btn btn-primary">
-                저장
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelEdit} />
-        </dialog>
-      )}
 
       {/* 커스텀 자원 추가 다이얼로그 */}
       {customResourceModalOpen && (
@@ -481,16 +343,6 @@ export default function OnboardingStep2Page() {
           <div className="modal-backdrop" onClick={handleCancelCustomResource} />
         </dialog>
       )}
-
-      {/* 편집용 아이콘 브라우저 모달 */}
-      <EnhancedIconBrowserModal
-        open={iconBrowserOpen}
-        onClose={() => setIconBrowserOpen(false)}
-        onIconSelect={handleIconChange}
-        selectedIcon={editingResource?.icon}
-        selectedColor={editingResource?.color}
-        onColorSelect={handleColorChange}
-      />
 
       {/* 커스텀 자원 추가용 아이콘 브라우저 모달 */}
       <EnhancedIconBrowserModal
