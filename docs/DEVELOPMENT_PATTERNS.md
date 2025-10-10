@@ -528,6 +528,77 @@ export function TodoCard({ todo, onUpdate }: TodoCardProps) {
 <button className="btn btn-outline">취소</button> // 테두리 있음
 ```
 
+#### 아이콘 및 시각 효과 패턴
+
+**Lucide React 아이콘 사용**
+
+```tsx
+// ✅ 올바른 방법 - Lucide 아이콘 사용
+import { Check, X, Loader2, Plus, Trash2 } from 'lucide-react';
+
+<button className="btn btn-primary">
+  <Check className="w-4 h-4 mr-2" />
+  완료
+</button>
+
+<button className="btn btn-ghost">
+  <X className="w-4 h-4 mr-2" />
+  취소
+</button>
+
+<div className="flex items-center gap-2">
+  <Loader2 className="w-4 h-4 animate-spin" />
+  로딩 중...
+</div>
+
+// ❌ 잘못된 방법 - 기본 이모지 사용
+<button className="btn btn-primary">
+  ✅ 완료
+</button>
+
+<button className="btn btn-ghost">
+  ❌ 취소
+</button>
+
+<div>🔄 로딩 중...</div>
+```
+
+**그라디언트 효과 금지**
+
+```tsx
+// ✅ 올바른 방법 - 단색 배경과 CSS 변수
+<div className="bg-primary text-primary-foreground rounded-lg p-4">
+  콘텐츠
+</div>
+
+<button className="bg-accent text-accent-foreground">
+  버튼
+</button>
+
+<div className="bg-status-completed text-white p-2 rounded">
+  완료됨
+</div>
+
+// ❌ 잘못된 방법 - 그라디언트 배경
+<div className="bg-gradient-to-r from-purple-500 to-pink-500">
+  콘텐츠
+</div>
+
+<div style={{ background: 'linear-gradient(to right, #3B82F6, #8B5CF6)' }}>
+  콘텐츠
+</div>
+
+<h1 className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+  제목
+</h1>
+```
+
+**원칙**:
+- 아이콘은 Lucide React만 사용 (일관된 미니멀 디자인)
+- 기본 이모지(❌, ✅, 🔄 등) 사용 금지
+- 그라디언트 효과 사용 금지 (배경, 텍스트 모두)
+- 단색 배경과 CSS 변수(`bg-primary`, `bg-accent` 등)로 구현
+
 ---
 
 ## 개발 워크플로우
