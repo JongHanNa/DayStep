@@ -4,27 +4,54 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useOnboardingStore } from '@/state/stores/secondBrain/onboardingStore';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Pencil } from 'lucide-react';
 import type { CreateResourceInput } from '@/types/second-brain';
+import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
+import { getColorById } from '@/lib/color-palette';
+import type { UnifiedIconKey } from '@/lib/icon-collection';
+import { getUnifiedIcon } from '@/lib/icon-collection';
 
 const RESOURCE_PRESETS = [
-  { title: '독서', icon: '📚', color: '#FF6B6B', description: '읽고 싶은 책, 독서 노트' },
-  { title: '프로그래밍', icon: '💻', color: '#4ECDC4', description: '코딩, 개발 자료' },
-  { title: '영화', icon: '🎬', color: '#95E1D3', description: '영화 리뷰, 추천 목록' },
-  { title: '여행', icon: '✈️', color: '#F38181', description: '여행지 정보, 계획' },
-  { title: '요리', icon: '🍳', color: '#AA96DA', description: '레시피, 맛집 정보' },
-  { title: '음악', icon: '🎵', color: '#DBAC6C', description: '플레이리스트, 음악 감상' },
+  { title: '독서', icon: 'lucide-Book', color: '#FF6B6B', description: '읽고 싶은 책, 독서 노트' },
+  { title: '프로그래밍', icon: 'lucide-Laptop', color: '#4ECDC4', description: '코딩, 개발 자료' },
+  { title: '영화', icon: 'lucide-Film', color: '#95E1D3', description: '영화 리뷰, 추천 목록' },
+  { title: '여행', icon: 'lucide-Plane', color: '#F38181', description: '여행지 정보, 계획' },
+  { title: '요리', icon: 'lucide-ChefHat', color: '#AA96DA', description: '레시피, 맛집 정보' },
+  { title: '음악', icon: 'lucide-Music', color: '#DBAC6C', description: '플레이리스트, 음악 감상' },
 ];
+
+type ResourcePreset = {
+  title: string;
+  icon: string;
+  color: string;
+  description: string;
+};
 
 export default function OnboardingStep2Page() {
   const router = useRouter();
   const { createResource } = useResourceStore();
   const { completeStep } = useOnboardingStore();
 
-  const [selectedResources, setSelectedResources] = useState<typeof RESOURCE_PRESETS>([]);
-  const [customResource, setCustomResource] = useState<string>('');
+  // 프리셋 자원 (편집 가능하도록 state로 관리)
+  const [resourcePresets, setResourcePresets] = useState<ResourcePreset[]>(RESOURCE_PRESETS);
+  const [selectedResources, setSelectedResources] = useState<ResourcePreset[]>([]);
 
-  const handleToggleResource = (resource: typeof RESOURCE_PRESETS[0]) => {
+  // 편집 관련 state
+  const [editingResource, setEditingResource] = useState<(ResourcePreset & { index: number }) | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
+
+  // 커스텀 자원 추가 state
+  const [customResourceModalOpen, setCustomResourceModalOpen] = useState(false);
+  const [customIconBrowserOpen, setCustomIconBrowserOpen] = useState(false);
+  const [newCustomResource, setNewCustomResource] = useState<ResourcePreset>({
+    title: '',
+    icon: 'lucide-MapPin',
+    color: '#A8DADC',
+    description: ''
+  });
+
+  const handleToggleResource = (resource: ResourcePreset) => {
     if (selectedResources.some((r) => r.title === resource.title)) {
       setSelectedResources(selectedResources.filter((r) => r.title !== resource.title));
     } else {
@@ -32,18 +59,90 @@ export default function OnboardingStep2Page() {
     }
   };
 
-  const handleAddCustomResource = () => {
-    if (!customResource.trim()) return;
+  // 편집 관련 핸들러
+  const handleEditResource = (resource: ResourcePreset, index: number) => {
+    setEditingResource({ ...resource, index });
+    setEditDialogOpen(true);
+  };
 
-    const newResource = {
-      title: customResource,
-      icon: '🔖',
-      color: '#A8DADC',
-      description: '',
+  const handleIconChange = (iconKey: UnifiedIconKey) => {
+    if (editingResource) {
+      setEditingResource({ ...editingResource, icon: iconKey });
+    }
+  };
+
+  const handleColorChange = (colorId: string) => {
+    if (editingResource) {
+      const color = getColorById(colorId).hex;
+      setEditingResource({ ...editingResource, color });
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingResource || !editingResource.title.trim()) {
+      alert('제목을 입력해주세요.');
+      return;
+    }
+
+    // 1. resourcePresets 업데이트
+    const updatedPresets = [...resourcePresets];
+    const oldTitle = resourcePresets[editingResource.index].title;
+    updatedPresets[editingResource.index] = {
+      title: editingResource.title,
+      icon: editingResource.icon,
+      color: editingResource.color,
+      description: editingResource.description,
     };
+    setResourcePresets(updatedPresets);
 
-    setSelectedResources([...selectedResources, newResource]);
-    setCustomResource('');
+    // 2. 이미 선택된 경우 selectedResources도 업데이트
+    const selectedIndex = selectedResources.findIndex((r) => r.title === oldTitle);
+    if (selectedIndex !== -1) {
+      const updatedSelected = [...selectedResources];
+      updatedSelected[selectedIndex] = updatedPresets[editingResource.index];
+      setSelectedResources(updatedSelected);
+    }
+
+    setEditDialogOpen(false);
+    setEditingResource(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditDialogOpen(false);
+    setEditingResource(null);
+  };
+
+  // 커스텀 자원 추가 핸들러
+  const handleOpenCustomResourceModal = () => {
+    setNewCustomResource({
+      title: '',
+      icon: 'lucide-MapPin',
+      color: '#A8DADC',
+      description: ''
+    });
+    setCustomResourceModalOpen(true);
+  };
+
+  const handleCustomIconChange = (iconKey: UnifiedIconKey) => {
+    setNewCustomResource({ ...newCustomResource, icon: iconKey });
+  };
+
+  const handleCustomColorChange = (colorId: string) => {
+    const color = getColorById(colorId).hex;
+    setNewCustomResource({ ...newCustomResource, color });
+  };
+
+  const handleSaveCustomResource = () => {
+    if (!newCustomResource.title.trim()) {
+      alert('제목을 입력해주세요.');
+      return;
+    }
+    setSelectedResources([...selectedResources, newCustomResource]);
+    setCustomResourceModalOpen(false);
+  };
+
+  const handleCancelCustomResource = () => {
+    setCustomResourceModalOpen(false);
   };
 
   const handleRemoveResource = (title: string) => {
@@ -103,43 +202,55 @@ export default function OnboardingStep2Page() {
         <div className="space-y-4 mb-8">
           <h2 className="text-lg font-semibold">추천 주제</h2>
           <div className="grid grid-cols-2 gap-3">
-            {RESOURCE_PRESETS.map((resource) => {
+            {resourcePresets.map((resource, index) => {
               const isSelected = selectedResources.some((r) => r.title === resource.title);
+              const IconComponent = getUnifiedIcon(resource.icon as UnifiedIconKey).component;
               return (
-                <button
-                  key={resource.title}
-                  onClick={() => handleToggleResource(resource)}
-                  className={`card transition-all ${
-                    isSelected
-                      ? 'bg-primary text-primary-content ring-2 ring-primary'
-                      : 'bg-base-200 hover:bg-base-300'
-                  }`}
-                >
-                  <div className="card-body p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="text-3xl">{resource.icon}</div>
-                      {isSelected && (
-                        <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
-                          <svg
-                            className="w-3 h-3"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                      )}
+                <div key={resource.title} className="relative">
+                  <button
+                    onClick={() => handleToggleResource(resource)}
+                    className={`card transition-all w-full ${
+                      isSelected
+                        ? 'bg-primary text-primary-content ring-2 ring-primary'
+                        : 'bg-base-200 hover:bg-base-300'
+                    }`}
+                  >
+                    <div className="card-body p-4">
+                      <div className="flex items-start justify-between">
+                        <IconComponent className="w-8 h-8" />
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
+                            <svg
+                              className="w-3 h-3"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="font-semibold mt-2">{resource.title}</h3>
+                      <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
+                        {resource.description}
+                      </p>
                     </div>
-                    <h3 className="font-semibold mt-2">{resource.title}</h3>
-                    <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
-                      {resource.description}
-                    </p>
-                  </div>
-                </button>
+                  </button>
+                  {/* 편집 버튼 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditResource(resource, index);
+                    }}
+                    className="btn btn-ghost btn-sm btn-circle absolute top-2 right-2 z-10"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -148,20 +259,10 @@ export default function OnboardingStep2Page() {
         {/* 커스텀 자원 추가 */}
         <div className="space-y-4 mb-8">
           <h2 className="text-lg font-semibold">직접 추가</h2>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={customResource}
-              onChange={(e) => setCustomResource(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddCustomResource()}
-              placeholder="예: 사진, 그림 그리기, 게임"
-              className="input input-bordered flex-1"
-            />
-            <button onClick={handleAddCustomResource} className="btn btn-primary">
-              <Plus className="w-4 h-4" />
-              추가
-            </button>
-          </div>
+          <button onClick={handleOpenCustomResourceModal} className="btn btn-outline w-full">
+            <Plus className="w-4 h-4" />
+            새 자원 추가하기
+          </button>
         </div>
 
         {/* 선택된 자원 목록 */}
@@ -169,28 +270,31 @@ export default function OnboardingStep2Page() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">선택된 자원 ({selectedResources.length}개)</h2>
             <div className="space-y-2">
-              {selectedResources.map((resource) => (
-                <div
-                  key={resource.title}
-                  className="flex items-center justify-between p-3 bg-base-200 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{resource.icon}</div>
-                    <div>
-                      <div className="font-medium">{resource.title}</div>
-                      {resource.description && (
-                        <div className="text-xs text-base-content/60">{resource.description}</div>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveResource(resource.title)}
-                    className="btn btn-ghost btn-sm btn-circle"
+              {selectedResources.map((resource) => {
+                const IconComponent = getUnifiedIcon(resource.icon as UnifiedIconKey).component;
+                return (
+                  <div
+                    key={resource.title}
+                    className="flex items-center justify-between p-3 bg-base-200 rounded-lg"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-3">
+                      <IconComponent className="w-6 h-6" />
+                      <div>
+                        <div className="font-medium">{resource.title}</div>
+                        {resource.description && (
+                          <div className="text-xs text-base-content/60">{resource.description}</div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveResource(resource.title)}
+                      className="btn btn-ghost btn-sm btn-circle"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -211,6 +315,164 @@ export default function OnboardingStep2Page() {
           </button>
         </div>
       </div>
+
+      {/* 편집 다이얼로그 */}
+      {editDialogOpen && editingResource && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">자원 편집</h3>
+
+            {/* 아이콘 및 색상 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">아이콘 및 색상</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setIconBrowserOpen(true)}
+                className="btn btn-outline w-full justify-start"
+                style={{
+                  backgroundColor: editingResource.color + '20',
+                  borderColor: editingResource.color,
+                }}
+              >
+                {(() => {
+                  const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
+                  return <IconComponent className="w-6 h-6 mr-2" />;
+                })()}
+                <span>변경하기</span>
+              </button>
+            </div>
+
+            {/* 제목 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">제목</span>
+              </label>
+              <input
+                type="text"
+                value={editingResource.title}
+                onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
+                className="input input-bordered"
+                placeholder="예: 독서"
+              />
+            </div>
+
+            {/* 설명 */}
+            <div className="form-control mb-6">
+              <label className="label">
+                <span className="label-text">설명</span>
+              </label>
+              <textarea
+                value={editingResource.description}
+                onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
+                className="textarea textarea-bordered h-20"
+                placeholder="예: 읽고 싶은 책, 독서 노트"
+              />
+            </div>
+
+            {/* 버튼 */}
+            <div className="modal-action">
+              <button onClick={handleCancelEdit} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleSaveEdit} className="btn btn-primary">
+                저장
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelEdit} />
+        </dialog>
+      )}
+
+      {/* 커스텀 자원 추가 다이얼로그 */}
+      {customResourceModalOpen && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">새 자원 추가</h3>
+
+            {/* 아이콘 및 색상 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">아이콘 및 색상</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setCustomIconBrowserOpen(true)}
+                className="btn btn-outline w-full justify-start"
+                style={{
+                  backgroundColor: newCustomResource.color + '20',
+                  borderColor: newCustomResource.color,
+                }}
+              >
+                {(() => {
+                  const IconComponent = getUnifiedIcon(newCustomResource.icon as UnifiedIconKey).component;
+                  return <IconComponent className="w-6 h-6 mr-2" />;
+                })()}
+                <span>변경하기</span>
+              </button>
+            </div>
+
+            {/* 제목 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">제목</span>
+              </label>
+              <input
+                type="text"
+                value={newCustomResource.title}
+                onChange={(e) => setNewCustomResource({ ...newCustomResource, title: e.target.value })}
+                className="input input-bordered"
+                placeholder="예: 사진, 그림 그리기, 게임"
+              />
+            </div>
+
+            {/* 설명 */}
+            <div className="form-control mb-6">
+              <label className="label">
+                <span className="label-text">설명</span>
+              </label>
+              <textarea
+                value={newCustomResource.description}
+                onChange={(e) => setNewCustomResource({ ...newCustomResource, description: e.target.value })}
+                className="textarea textarea-bordered h-20"
+                placeholder="예: 사진 촬영 및 편집"
+              />
+            </div>
+
+            {/* 버튼 */}
+            <div className="modal-action">
+              <button onClick={handleCancelCustomResource} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleSaveCustomResource} className="btn btn-primary">
+                저장
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelCustomResource} />
+        </dialog>
+      )}
+
+      {/* 편집용 아이콘 브라우저 모달 */}
+      <EnhancedIconBrowserModal
+        open={iconBrowserOpen}
+        onClose={() => setIconBrowserOpen(false)}
+        onIconSelect={handleIconChange}
+        selectedIcon={editingResource?.icon}
+        selectedColor={editingResource?.color}
+        onColorSelect={handleColorChange}
+      />
+
+      {/* 커스텀 자원 추가용 아이콘 브라우저 모달 */}
+      <EnhancedIconBrowserModal
+        open={customIconBrowserOpen}
+        onClose={() => setCustomIconBrowserOpen(false)}
+        onIconSelect={handleCustomIconChange}
+        selectedIcon={newCustomResource.icon}
+        selectedColor={newCustomResource.color}
+        onColorSelect={handleCustomColorChange}
+      />
     </div>
   );
 }

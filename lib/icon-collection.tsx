@@ -9,7 +9,7 @@ import {
   IceCream, Wine, Pizza, Car, Train, Plane, MapPin, Camera, Luggage, Laptop, Smartphone,
   Headphones, Gamepad2, Tv, Wifi, Sun, Moon, Star, Flower, Leaf, Snowflake, Hammer,
   Wrench, Scissors, Key, Lock, Settings, Shield, Target, Flag, Repeat, Smile, Zap, TrendingUp,
-  Sparkles, Book, Palette
+  Sparkles, Book, Palette, Film, Music
 } from 'lucide-react';
 
 // 필요한 Phosphor 아이콘만 import
@@ -56,7 +56,7 @@ export type LucideIconKey =
   // 여행
   | 'Car' | 'Train' | 'Plane' | 'MapPin' | 'Camera' | 'Luggage'
   // 기술
-  | 'Laptop' | 'Smartphone' | 'Headphones' | 'Gamepad2' | 'Tv' | 'Wifi'
+  | 'Laptop' | 'Smartphone' | 'Headphones' | 'Gamepad2' | 'Tv' | 'Wifi' | 'Film' | 'Music'
   // 자연
   | 'Sun' | 'Moon' | 'Star' | 'Flower' | 'Leaf' | 'Snowflake' | 'Palette'
   // 도구
@@ -133,6 +133,8 @@ const lucideIconsData: Record<LucideIconKey, Omit<UnifiedIconData, 'style' | 'co
   Gamepad2: { label: '게임패드', category: '기술', color: 'text-indigo-500', keywords: ['게임패드', '게임', '오락', '취미'] },
   Tv: { label: 'TV', category: '기술', color: 'text-gray-800', keywords: ['TV', '텔레비전', '방송', '오락'] },
   Wifi: { label: 'WiFi', category: '기술', color: 'text-blue-500', keywords: ['WiFi', '인터넷', '연결', '통신'] },
+  Film: { label: '영화', category: '기술', color: 'text-purple-600', keywords: ['영화', '영상', '시청', '엔터테인먼트', '취미'] },
+  Music: { label: '음악', category: '기술', color: 'text-pink-500', keywords: ['음악', '노래', '감상', '취미', '플레이리스트'] },
 
   // 자연
   Sun: { label: '태양', category: '자연', color: 'text-yellow-500', keywords: ['태양', '햇빛', '날씨', '밝음'] },
@@ -173,7 +175,7 @@ const createLucideIconsCollection = (): Record<string, UnifiedIconData> => {
     IceCream, Wine, Pizza, Car, Train, Plane, MapPin, Camera, Luggage, Laptop, Smartphone,
     Headphones, Gamepad2, Tv, Wifi, Sun, Moon, Star, Flower, Leaf, Snowflake, Hammer,
     Wrench, Scissors, Key, Lock, Settings, Shield, Target, Flag, Repeat, Smile, Zap, TrendingUp,
-    Sparkles, Book, Palette
+    Sparkles, Book, Palette, Film, Music
   };
 
   Object.entries(lucideIconsData).forEach(([iconKey, data]) => {
