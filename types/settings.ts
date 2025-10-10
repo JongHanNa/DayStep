@@ -89,3 +89,8 @@ export const THEME_PALETTE_OPTIONS: ThemePaletteOption[] = [
  * 기본 테마 팔레트
  */
 export const DEFAULT_THEME_PALETTE: ThemePalette = 'default';
+
+/**
+ * Second Brain 항목 타입 정의 (상태 선택용)
+ */
+export type SecondBrainItemType = 'area' | 'resource' | 'archive';

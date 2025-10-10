@@ -100,7 +100,10 @@ function SettingsPageContent() {
           <h3 className="text-lg font-semibold text-foreground mb-4">Second Brain 설정</h3>
           <div className="bg-card border border-border rounded-xl divide-y divide-border">
             {/* Areas (책임 영역) */}
-            <Link href="/settings/second-brain/areas" className="group">
+            <Link
+              href="/settings/second-brain/areas"
+              className="group"
+            >
               <div
                 className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
                 role="button"
@@ -118,7 +121,10 @@ function SettingsPageContent() {
             </Link>
 
             {/* Resources (관심 자원) */}
-            <Link href="/settings/second-brain/resources" className="group">
+            <Link
+              href="/settings/second-brain/resources"
+              className="group"
+            >
               <div
                 className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
                 role="button"

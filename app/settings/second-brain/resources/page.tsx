@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { Plus, X, Pencil, ArrowLeft } from 'lucide-react';
-import type { CreateResourceInput, Resource } from '@/types/second-brain';
+import type { CreateResourceInput, Resource, CreateAreaInput } from '@/types/second-brain';
+import type { SecondBrainItemType } from '@/types/settings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -12,12 +14,14 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 
 export default function ResourcesSettingsPage() {
   const router = useRouter();
-  const { createResource, updateResource, deleteResource, resources, fetchResources } = useResourceStore();
+  const { createResource, updateResource, deleteResource, resources, fetchResources, archiveResource, unarchiveResource } = useResourceStore();
+  const { createArea, deleteArea: deleteAreaFromStore } = useAreaStore();
 
   // 편집 관련 state
   const [editingResource, setEditingResource] = useState<(Resource & { isNew?: boolean }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
+  const [itemType, setItemType] = useState<SecondBrainItemType>('resource');
 
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -42,12 +46,14 @@ export default function ResourcesSettingsPage() {
       user_id: '',
       isNew: true,
     });
+    setItemType('resource');
     setEditDialogOpen(true);
   };
 
   // 자원 편집 핸들러
   const handleEditResource = (resource: Resource) => {
     setEditingResource({ ...resource, isNew: false });
+    setItemType(resource.is_archived ? 'archive' : 'resource');
     setEditDialogOpen(true);
   };
 
@@ -66,6 +72,11 @@ export default function ResourcesSettingsPage() {
     }
   };
 
+  // 상태 변경 핸들러
+  const handleItemTypeChange = async (newType: SecondBrainItemType) => {
+    setItemType(newType);
+  };
+
   // 저장 핸들러
   const handleSaveEdit = async () => {
     if (!editingResource || !editingResource.title.trim()) {
@@ -75,32 +86,95 @@ export default function ResourcesSettingsPage() {
 
     try {
       if (editingResource.isNew) {
-        // 새 자원 생성
-        const resourceData: CreateResourceInput = {
-          title: editingResource.title,
-          description: editingResource.description || '',
-          icon: editingResource.icon,
-          color: editingResource.color,
-          order_index: resources.length,
-          is_archived: false,
-        };
-        await createResource(resourceData);
+        // 새 항목 생성
+        if (itemType === 'area') {
+          // 영역으로 생성
+          const areaData: CreateAreaInput = {
+            title: editingResource.title,
+            description: editingResource.description || '',
+            icon: editingResource.icon,
+            color: editingResource.color,
+            order_index: 0,
+            is_archived: false,
+          };
+          await createArea(areaData);
+        } else if (itemType === 'resource') {
+          // 자원으로 생성
+          const resourceData: CreateResourceInput = {
+            title: editingResource.title,
+            description: editingResource.description || '',
+            icon: editingResource.icon,
+            color: editingResource.color,
+            order_index: resources.length,
+            is_archived: false,
+          };
+          await createResource(resourceData);
+        } else if (itemType === 'archive') {
+          // 아카이브 상태로 생성
+          const resourceData: CreateResourceInput = {
+            title: editingResource.title,
+            description: editingResource.description || '',
+            icon: editingResource.icon,
+            color: editingResource.color,
+            order_index: resources.length,
+            is_archived: true,
+          };
+          const newResource = await createResource(resourceData);
+          await archiveResource(newResource.id);
+        }
       } else {
-        // 기존 자원 수정
-        await updateResource(editingResource.id, {
-          title: editingResource.title,
-          description: editingResource.description || '',
-          icon: editingResource.icon,
-          color: editingResource.color,
-        });
+        // 기존 항목 수정
+        const originalType: SecondBrainItemType = editingResource.is_archived ? 'archive' : 'resource';
+
+        if (originalType === itemType) {
+          // 같은 타입 내에서 수정
+          if (itemType === 'archive') {
+            // 아카이브 상태 유지
+            await updateResource(editingResource.id, {
+              title: editingResource.title,
+              description: editingResource.description || '',
+              icon: editingResource.icon,
+              color: editingResource.color,
+            });
+          } else {
+            // 일반 자원 수정
+            await updateResource(editingResource.id, {
+              title: editingResource.title,
+              description: editingResource.description || '',
+              icon: editingResource.icon,
+              color: editingResource.color,
+            });
+          }
+        } else {
+          // 타입 변경
+          if (itemType === 'area') {
+            // Resource → Area 변환
+            const areaData: CreateAreaInput = {
+              title: editingResource.title,
+              description: editingResource.description || '',
+              icon: editingResource.icon,
+              color: editingResource.color,
+              order_index: 0,
+              is_archived: false,
+            };
+            await deleteResource(editingResource.id);
+            await createArea(areaData);
+          } else if (itemType === 'archive') {
+            // Resource → Archive
+            await archiveResource(editingResource.id);
+          } else if (itemType === 'resource' && originalType === 'archive') {
+            // Archive → Resource
+            await unarchiveResource(editingResource.id);
+          }
+        }
       }
 
       setEditDialogOpen(false);
       setEditingResource(null);
       await fetchResources();
     } catch (error) {
-      console.error('자원 저장 실패:', error);
-      alert('자원 저장에 실패했습니다.');
+      console.error('저장 실패:', error);
+      alert('저장에 실패했습니다.');
     }
   };
 
@@ -142,7 +216,7 @@ export default function ResourcesSettingsPage() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <button
               onClick={() => router.back()}
               className="btn btn-ghost btn-sm btn-circle"
@@ -236,8 +310,24 @@ export default function ResourcesSettingsPage() {
         <dialog open className="modal modal-open">
           <div className="modal-box">
             <h3 className="font-bold text-lg mb-4">
-              {editingResource.isNew ? '새 자원 추가' : '자원 편집'}
+              {editingResource.isNew ? '새 항목 추가' : '항목 편집'}
             </h3>
+
+            {/* 상태 선택 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">상태</span>
+              </label>
+              <select
+                value={itemType}
+                onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
+                className="select select-bordered"
+              >
+                <option value="area">책임 영역</option>
+                <option value="resource">관심 자원</option>
+                <option value="archive">아카이브</option>
+              </select>
+            </div>
 
             {/* 아이콘 및 색상 */}
             <div className="form-control mb-4">
