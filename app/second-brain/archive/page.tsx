@@ -6,10 +6,15 @@ import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import { Archive, Target, Folder, MapPin, BookOpen, Trash2, Copy, RefreshCw } from 'lucide-react';
+import { Archive, Target, Folder, MapPin, BookOpen, Trash2, Copy, RefreshCw, Pencil } from 'lucide-react';
 import { format, getYear } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import type { Goal, Project, Area, Resource } from '@/types/second-brain';
+import type { Goal, Project, Area, Resource, CreateAreaInput, CreateResourceInput } from '@/types/second-brain';
+import type { SecondBrainItemType } from '@/types/settings';
+import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
+import { getColorById } from '@/lib/color-palette';
+import type { UnifiedIconKey } from '@/lib/icon-collection';
+import { getUnifiedIcon } from '@/lib/icon-collection';
 
 type ArchiveType = 'all' | 'goals' | 'projects' | 'areas' | 'resources';
 
@@ -21,9 +26,29 @@ interface GroupedItem {
 export default function ArchivePage() {
   const { goals, fetchGoals } = useGoalStore();
   const { projects, fetchProjects } = useProjectStore();
-  const { areas, fetchAreas } = useAreaStore();
-  const { resources, fetchResources } = useResourceStore();
+  const {
+    areas,
+    fetchAreas,
+    createArea,
+    updateArea,
+    deleteArea,
+    unarchiveArea
+  } = useAreaStore();
+  const {
+    resources,
+    fetchResources,
+    createResource,
+    updateResource,
+    deleteResource,
+    unarchiveResource
+  } = useResourceStore();
   const [filterType, setFilterType] = useState<ArchiveType>('all');
+
+  // 편집 모달 관련 state
+  const [editingItem, setEditingItem] = useState<((Area | Resource) & { originalType: 'area' | 'resource' }) | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
+  const [itemType, setItemType] = useState<SecondBrainItemType>('archive');
 
   useEffect(() => {
     fetchGoals();
@@ -80,6 +105,121 @@ export default function ArchivePage() {
     return 'resource';
   };
 
+  // 편집 모달 핸들러
+  const handleEditClick = (item: Goal | Project | Area | Resource) => {
+    const itemType = getItemType(item);
+
+    // Goal과 Project는 편집 불가
+    if (itemType === 'goal' || itemType === 'project') {
+      alert('목표와 프로젝트는 이 화면에서 편집할 수 없습니다.');
+      return;
+    }
+
+    const editableItem = item as Area | Resource;
+    setEditingItem({
+      ...editableItem,
+      originalType: itemType as 'area' | 'resource'
+    });
+    setItemType('archive');
+    setEditDialogOpen(true);
+  };
+
+  const handleIconChange = (iconKey: UnifiedIconKey) => {
+    if (editingItem) {
+      setEditingItem({ ...editingItem, icon: iconKey });
+    }
+  };
+
+  const handleColorChange = (colorId: string) => {
+    if (editingItem) {
+      const color = getColorById(colorId).hex;
+      setEditingItem({ ...editingItem, color });
+    }
+  };
+
+  const handleItemTypeChange = (newType: SecondBrainItemType) => {
+    setItemType(newType);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingItem || !editingItem.title.trim()) {
+      alert('제목을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const originalType = editingItem.originalType;
+
+      if (itemType === 'archive') {
+        // 아카이브 상태 유지 - 메타데이터만 수정
+        if (originalType === 'area') {
+          await updateArea(editingItem.id, {
+            title: editingItem.title,
+            description: editingItem.description || '',
+            icon: editingItem.icon,
+            color: editingItem.color,
+          });
+        } else {
+          await updateResource(editingItem.id, {
+            title: editingItem.title,
+            description: editingItem.description || '',
+            icon: editingItem.icon,
+            color: editingItem.color,
+          });
+        }
+      } else if (itemType === 'area') {
+        // Archive → Area
+        if (originalType === 'area') {
+          await unarchiveArea(editingItem.id);
+        } else {
+          // Resource → Area (변환)
+          const areaData: CreateAreaInput = {
+            title: editingItem.title,
+            description: editingItem.description || '',
+            icon: editingItem.icon,
+            color: editingItem.color,
+            order_index: 0,
+            is_archived: false,
+          };
+          await deleteResource(editingItem.id);
+          await createArea(areaData);
+        }
+      } else if (itemType === 'resource') {
+        // Archive → Resource
+        if (originalType === 'resource') {
+          await unarchiveResource(editingItem.id);
+        } else {
+          // Area → Resource (변환)
+          const resourceData: CreateResourceInput = {
+            title: editingItem.title,
+            description: editingItem.description || '',
+            icon: editingItem.icon,
+            color: editingItem.color,
+            order_index: 0,
+            is_archived: false,
+          };
+          await deleteArea(editingItem.id);
+          await createResource(resourceData);
+        }
+      }
+
+      setEditDialogOpen(false);
+      setEditingItem(null);
+
+      // 데이터 새로고침
+      await fetchAreas();
+      await fetchResources();
+    } catch (error) {
+      console.error('저장 실패:', error);
+      alert('저장에 실패했습니다.');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditDialogOpen(false);
+    setEditingItem(null);
+  };
+
   // 항목 렌더링
   const renderItem = (item: Goal | Project | Area | Resource) => {
     const itemType = getItemType(item);
@@ -107,6 +247,15 @@ export default function ArchivePage() {
               </div>
             </div>
             <div className="flex flex-col gap-1">
+              {(itemType === 'area' || itemType === 'resource') && (
+                <button
+                  onClick={() => handleEditClick(item)}
+                  className="btn btn-ghost btn-sm btn-square"
+                  title="편집"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
               <button className="btn btn-ghost btn-sm btn-square" title="복제">
                 <Copy className="w-4 h-4" />
               </button>
@@ -210,6 +359,101 @@ export default function ArchivePage() {
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />
+
+      {/* 편집 모달 */}
+      {editDialogOpen && editingItem && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">항목 편집</h3>
+
+            {/* 상태 선택 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">상태</span>
+              </label>
+              <select
+                value={itemType}
+                onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
+                className="select select-bordered"
+              >
+                <option value="area">책임 영역</option>
+                <option value="resource">관심 자원</option>
+                <option value="archive">아카이브</option>
+              </select>
+            </div>
+
+            {/* 아이콘 및 색상 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">아이콘 및 색상</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setIconBrowserOpen(true)}
+                className="btn btn-outline w-full justify-start"
+                style={{
+                  backgroundColor: editingItem.color + '20',
+                  borderColor: editingItem.color,
+                }}
+              >
+                {(() => {
+                  const IconComponent = getUnifiedIcon(editingItem.icon as UnifiedIconKey).component;
+                  return <IconComponent className="w-6 h-6 mr-2" />;
+                })()}
+                <span>변경하기</span>
+              </button>
+            </div>
+
+            {/* 제목 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">제목</span>
+              </label>
+              <input
+                type="text"
+                value={editingItem.title}
+                onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
+                className="input input-bordered"
+                placeholder="제목을 입력하세요"
+              />
+            </div>
+
+            {/* 설명 */}
+            <div className="form-control mb-6">
+              <label className="label">
+                <span className="label-text">설명</span>
+              </label>
+              <textarea
+                value={editingItem.description || ''}
+                onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                className="textarea textarea-bordered h-20"
+                placeholder="설명을 입력하세요"
+              />
+            </div>
+
+            {/* 버튼 */}
+            <div className="modal-action">
+              <button onClick={handleCancelEdit} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleSaveEdit} className="btn btn-primary">
+                저장
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelEdit} />
+        </dialog>
+      )}
+
+      {/* 아이콘 브라우저 모달 */}
+      <EnhancedIconBrowserModal
+        open={iconBrowserOpen}
+        onClose={() => setIconBrowserOpen(false)}
+        onIconSelect={handleIconChange}
+        selectedIcon={editingItem?.icon}
+        selectedColor={editingItem?.color}
+        onColorSelect={handleColorChange}
+      />
     </div>
   );
 }
