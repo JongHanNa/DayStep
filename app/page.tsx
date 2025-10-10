@@ -128,7 +128,7 @@ function TimelinePageContent() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-full safe-area-container timeline-background scrollbar-hide">
+      <div className="min-h-full safe-area-container timeline-background scrollbar-hide pb-20">
         <TimelineContainer />
       </div>
     </AuthGuard>

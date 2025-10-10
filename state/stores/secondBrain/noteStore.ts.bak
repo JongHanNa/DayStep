@@ -1,0 +1,302 @@
+/**
+ * Note Store - 노트 관리
+ * PARA 구조로 분류되는 메모 시스템
+ */
+
+import { createStore } from '@/state/utils/storeUtils';
+import type { Note, CreateNoteInput, UpdateNoteInput, NoteType } from '@/types/second-brain';
+import { mockNotes, saveMockDataToLocalStorage } from '@/lib/mockData/secondBrain';
+
+interface NoteStoreState {
+  notes: Note[];
+  loading: boolean;
+  error: string | null;
+
+  // Actions
+  fetchNotes: () => Promise<void>;
+  fetchNotesByType: (type: NoteType) => Promise<Note[]>;
+  fetchNotesByProject: (projectId: string) => Promise<Note[]>;
+  fetchNotesByArea: (areaId: string) => Promise<Note[]>;
+  fetchNotesByResource: (resourceId: string) => Promise<Note[]>;
+  createNote: (data: CreateNoteInput) => Promise<Note>;
+  updateNote: (id: string, data: UpdateNoteInput) => Promise<Note>;
+  deleteNote: (id: string) => Promise<boolean>;
+  pinNote: (id: string) => Promise<Note>;
+  unpinNote: (id: string) => Promise<Note>;
+  searchNotes: (query: string) => Promise<Note[]>;
+  searchNotesByTags: (tags: string[]) => Promise<Note[]>;
+}
+
+export const useNoteStore = createStore<NoteStoreState>(
+  (set, get) => ({
+    notes: [],
+    loading: false,
+    error: null,
+
+    fetchNotes: async () => {
+      try {
+        set({ loading: true, error: null });
+        // Mock 데이터 로드
+        const notes = mockNotes;
+        set({ notes, loading: false });
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
+          loading: false,
+        });
+      }
+    },
+
+    fetchNotesByType: async (type: NoteType) => {
+      try {
+        set({ loading: true, error: null });
+        const filteredNotes = get().notes.filter((note) => note.memo_type === type);
+        set({ loading: false });
+        return filteredNotes;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+
+    fetchNotesByProject: async (projectId: string) => {
+      try {
+        set({ loading: true, error: null });
+        const filteredNotes = get().notes.filter((note) => note.project_id === projectId);
+        set({ loading: false });
+        return filteredNotes;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+
+    fetchNotesByArea: async (areaId: string) => {
+      try {
+        set({ loading: true, error: null });
+        const filteredNotes = get().notes.filter((note) => note.area_id === areaId);
+        set({ loading: false });
+        return filteredNotes;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+
+    fetchNotesByResource: async (resourceId: string) => {
+      try {
+        set({ loading: true, error: null });
+        const filteredNotes = get().notes.filter((note) => note.resource_id === resourceId);
+        set({ loading: false });
+        return filteredNotes;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+
+    createNote: async (data: CreateNoteInput) => {
+      try {
+        set({ loading: true, error: null });
+
+        const newNote: Note = {
+          id: `note-${Date.now()}`,
+          user_id: 'mock-user-123',
+          ...data,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const updatedNotes = [...get().notes, newNote];
+        set({ notes: updatedNotes, loading: false });
+
+        // LocalStorage 저장
+        saveMockDataToLocalStorage();
+
+        return newNote;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트 생성에 실패했습니다.',
+          loading: false,
+        });
+        throw error;
+      }
+    },
+
+    updateNote: async (id: string, data: UpdateNoteInput) => {
+      try {
+        set({ loading: true, error: null });
+
+        const updatedNotes = get().notes.map((note) =>
+          note.id === id
+            ? {
+                ...note,
+                ...data,
+                updated_at: new Date().toISOString(),
+              }
+            : note
+        );
+
+        set({ notes: updatedNotes, loading: false });
+
+        // LocalStorage 저장
+        saveMockDataToLocalStorage();
+
+        const updatedNote = updatedNotes.find((n) => n.id === id);
+        if (!updatedNote) throw new Error('노트를 찾을 수 없습니다.');
+
+        return updatedNote;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트 수정에 실패했습니다.',
+          loading: false,
+        });
+        throw error;
+      }
+    },
+
+    deleteNote: async (id: string) => {
+      try {
+        set({ loading: true, error: null });
+
+        const updatedNotes = get().notes.filter((note) => note.id !== id);
+        set({ notes: updatedNotes, loading: false });
+
+        // LocalStorage 저장
+        saveMockDataToLocalStorage();
+
+        return true;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트 삭제에 실패했습니다.',
+          loading: false,
+        });
+        throw error;
+      }
+    },
+
+    pinNote: async (id: string) => {
+      try {
+        set({ loading: true, error: null });
+
+        const updatedNotes = get().notes.map((note) =>
+          note.id === id
+            ? {
+                ...note,
+                is_pinned: true,
+                updated_at: new Date().toISOString(),
+              }
+            : note
+        );
+
+        set({ notes: updatedNotes, loading: false });
+
+        // LocalStorage 저장
+        saveMockDataToLocalStorage();
+
+        const pinnedNote = updatedNotes.find((n) => n.id === id);
+        if (!pinnedNote) throw new Error('노트를 찾을 수 없습니다.');
+
+        return pinnedNote;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트 고정에 실패했습니다.',
+          loading: false,
+        });
+        throw error;
+      }
+    },
+
+    unpinNote: async (id: string) => {
+      try {
+        set({ loading: true, error: null });
+
+        const updatedNotes = get().notes.map((note) =>
+          note.id === id
+            ? {
+                ...note,
+                is_pinned: false,
+                updated_at: new Date().toISOString(),
+              }
+            : note
+        );
+
+        set({ notes: updatedNotes, loading: false });
+
+        // LocalStorage 저장
+        saveMockDataToLocalStorage();
+
+        const unpinnedNote = updatedNotes.find((n) => n.id === id);
+        if (!unpinnedNote) throw new Error('노트를 찾을 수 없습니다.');
+
+        return unpinnedNote;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트 고정 해제에 실패했습니다.',
+          loading: false,
+        });
+        throw error;
+      }
+    },
+
+    searchNotes: async (query: string) => {
+      try {
+        set({ loading: true, error: null });
+
+        const lowerQuery = query.toLowerCase();
+        const filteredNotes = get().notes.filter(
+          (note) =>
+            note.title.toLowerCase().includes(lowerQuery) ||
+            note.content.toLowerCase().includes(lowerQuery) ||
+            note.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
+        );
+
+        set({ loading: false });
+        return filteredNotes;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트 검색에 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+
+    searchNotesByTags: async (tags: string[]) => {
+      try {
+        set({ loading: true, error: null });
+
+        const filteredNotes = get().notes.filter((note) =>
+          tags.some((tag) => note.tags.includes(tag))
+        );
+
+        set({ loading: false });
+        return filteredNotes;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트 검색에 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+  }),
+  {
+    name: 'note-store',
+    persist: {
+      name: 'daystep-notes',
+    },
+  }
+);

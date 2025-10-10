@@ -7,7 +7,7 @@ import "./globals.css";
 import { generateSEO } from "@/lib/seo";
 import { AuthProvider, AuthState } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
-import { BottomNavigation } from "@/components/layout/BottomNavigation";
+import SecondBrainBottomNav from "@/components/layout/SecondBrainBottomNav";
 import { openDyslexic } from "@/lib/fonts";
 import { FontProvider } from "@/components/providers/FontProvider";
 // 성능 모니터링 비활성화
@@ -60,7 +60,7 @@ export default function RootLayout({
                     >
                       {children}
                     </main>
-                    <BottomNavigation />
+                    <SecondBrainBottomNav />
                     <TodoPickerPanel />
                     <Toaster
                   position="top-right"
