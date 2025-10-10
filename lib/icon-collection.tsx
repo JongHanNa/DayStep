@@ -8,7 +8,8 @@ import {
   Coffee, Gift, Baby, Dumbbell, Bike, Mountain, Waves, TreePine, Apple, Cookie, ChefHat,
   IceCream, Wine, Pizza, Car, Train, Plane, MapPin, Camera, Luggage, Laptop, Smartphone,
   Headphones, Gamepad2, Tv, Wifi, Sun, Moon, Star, Flower, Leaf, Snowflake, Hammer,
-  Wrench, Scissors, Key, Lock, Settings, Shield, Target, Flag, Repeat, Smile, Zap, TrendingUp
+  Wrench, Scissors, Key, Lock, Settings, Shield, Target, Flag, Repeat, Smile, Zap, TrendingUp,
+  Sparkles, Book, Palette
 } from 'lucide-react';
 
 // 필요한 Phosphor 아이콘만 import
@@ -43,11 +44,11 @@ export type LucideIconKey =
   // 집안일
   | 'Home' | 'Bath' | 'Utensils' | 'ShirtIcon' | 'Trash2' | 'WashingMachine'
   // 업무
-  | 'Briefcase' | 'FileText' | 'Calendar' | 'Clock' | 'Mail' | 'Phone'
+  | 'Briefcase' | 'FileText' | 'Calendar' | 'Clock' | 'Mail' | 'Phone' | 'Book'
   // 건강
   | 'Heart' | 'Activity' | 'Pill' | 'Thermometer' | 'Stethoscope' | 'Cross'
   // 관계
-  | 'Users' | 'UserPlus' | 'MessageCircle' | 'Coffee' | 'Gift' | 'Baby'
+  | 'Users' | 'UserPlus' | 'MessageCircle' | 'Coffee' | 'Gift' | 'Baby' | 'Sparkles'
   // 운동
   | 'Dumbbell' | 'Bike' | 'Mountain' | 'Waves' | 'TreePine'
   // 음식
@@ -57,7 +58,7 @@ export type LucideIconKey =
   // 기술
   | 'Laptop' | 'Smartphone' | 'Headphones' | 'Gamepad2' | 'Tv' | 'Wifi'
   // 자연
-  | 'Sun' | 'Moon' | 'Star' | 'Flower' | 'Leaf' | 'Snowflake'
+  | 'Sun' | 'Moon' | 'Star' | 'Flower' | 'Leaf' | 'Snowflake' | 'Palette'
   // 도구
   | 'Hammer' | 'Wrench' | 'Scissors' | 'Key' | 'Lock' | 'Settings'
   // 동기부여
@@ -83,6 +84,7 @@ const lucideIconsData: Record<LucideIconKey, Omit<UnifiedIconData, 'style' | 'co
   Clock: { label: '시계', category: '업무', color: 'text-gray-800', keywords: ['시계', '시간', '약속', '스케줄'] },
   Mail: { label: '메일', category: '업무', color: 'text-blue-500', keywords: ['메일', '이메일', '소통', '연락'] },
   Phone: { label: '전화', category: '업무', color: 'text-green-500', keywords: ['전화', '통화', '연락', '소통'] },
+  Book: { label: '책', category: '업무', color: 'text-indigo-600', keywords: ['책', '학습', '공부', '자기개발', '성장', '독서'] },
 
   // 건강
   Heart: { label: '하트', category: '건강', color: 'text-red-500', keywords: ['하트', '심장', '건강', '사랑'] },
@@ -99,6 +101,7 @@ const lucideIconsData: Record<LucideIconKey, Omit<UnifiedIconData, 'style' | 'co
   Coffee: { label: '커피', category: '관계', color: 'text-amber-700', keywords: ['커피', '만남', '대화', '휴식'] },
   Gift: { label: '선물', category: '관계', color: 'text-red-500', keywords: ['선물', '기념일', '축하', '사랑'] },
   Baby: { label: '아기', category: '관계', color: 'text-pink-400', keywords: ['아기', '육아', '가족', '돌봄'] },
+  Sparkles: { label: '반짝임', category: '관계', color: 'text-purple-400', keywords: ['반짝임', '나', '자기발견', '성찰', '개인'] },
 
   // 운동
   Dumbbell: { label: '덤벨', category: '운동', color: 'text-gray-700', keywords: ['덤벨', '운동', '헬스', '근력'] },
@@ -138,6 +141,7 @@ const lucideIconsData: Record<LucideIconKey, Omit<UnifiedIconData, 'style' | 'co
   Flower: { label: '꽃', category: '자연', color: 'text-pink-500', keywords: ['꽃', '자연', '아름다움', '봄'] },
   Leaf: { label: '잎', category: '자연', color: 'text-green-500', keywords: ['잎', '자연', '식물', '성장'] },
   Snowflake: { label: '눈꽃', category: '자연', color: 'text-blue-300', keywords: ['눈꽃', '겨울', '차가움', '아름다움'] },
+  Palette: { label: '팔레트', category: '자연', color: 'text-purple-500', keywords: ['팔레트', '취미', '예술', '창의성', '여가', '그림'] },
 
   // 도구
   Hammer: { label: '망치', category: '도구', color: 'text-amber-600', keywords: ['망치', '도구', '수리', '작업'] },
@@ -168,7 +172,8 @@ const createLucideIconsCollection = (): Record<string, UnifiedIconData> => {
     Coffee, Gift, Baby, Dumbbell, Bike, Mountain, Waves, TreePine, Apple, Cookie, ChefHat,
     IceCream, Wine, Pizza, Car, Train, Plane, MapPin, Camera, Luggage, Laptop, Smartphone,
     Headphones, Gamepad2, Tv, Wifi, Sun, Moon, Star, Flower, Leaf, Snowflake, Hammer,
-    Wrench, Scissors, Key, Lock, Settings, Shield, Target, Flag, Repeat, Smile, Zap, TrendingUp
+    Wrench, Scissors, Key, Lock, Settings, Shield, Target, Flag, Repeat, Smile, Zap, TrendingUp,
+    Sparkles, Book, Palette
   };
 
   Object.entries(lucideIconsData).forEach(([iconKey, data]) => {

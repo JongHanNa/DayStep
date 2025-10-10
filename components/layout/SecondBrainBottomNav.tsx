@@ -42,6 +42,11 @@ const navGroups = [
 export default function SecondBrainBottomNav() {
   const pathname = usePathname();
 
+  // 온보딩 페이지에서는 네비게이션 숨기기
+  if (pathname?.startsWith('/second-brain/onboarding')) {
+    return null;
+  }
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 safe-area-bottom z-50">
       {/* 가로 스크롤 컨테이너 */}
