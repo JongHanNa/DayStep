@@ -13,6 +13,15 @@ interface OnboardingStoreState {
   loading: boolean;
   error: string | null;
 
+  // 온보딩 중 생성된 항목 개수 추적
+  createdCounts: {
+    areas: number;
+    resources: number;
+    goals: number;
+    projects: number;
+    todos: number;
+  };
+
   // Actions
   fetchProgress: () => Promise<void>;
   startOnboarding: () => Promise<OnboardingProgress>;
@@ -20,6 +29,11 @@ interface OnboardingStoreState {
   skipOnboarding: () => Promise<OnboardingProgress>;
   resetOnboarding: () => Promise<OnboardingProgress>;
   setCurrentStep: (step: OnboardingStep) => void;
+  goToStep: (step: OnboardingStep) => void;
+  getCompletionRate: () => number;
+  isStepCompleted: (step: OnboardingStep) => boolean;
+  incrementCreatedCount: (step: OnboardingStep, count: number) => void;
+  resetCreatedCounts: () => void;
 }
 
 export const useOnboardingStore = createStore<OnboardingStoreState>(
@@ -28,6 +42,15 @@ export const useOnboardingStore = createStore<OnboardingStoreState>(
     currentStep: 1,
     loading: false,
     error: null,
+
+    // 초기 생성 개수는 모두 0
+    createdCounts: {
+      areas: 0,
+      resources: 0,
+      goals: 0,
+      projects: 0,
+      todos: 0,
+    },
 
     fetchProgress: async () => {
       try {
@@ -220,6 +243,68 @@ export const useOnboardingStore = createStore<OnboardingStoreState>(
 
     setCurrentStep: (step: OnboardingStep) => {
       set({ currentStep: step });
+    },
+
+    goToStep: (step: OnboardingStep) => {
+      set({ currentStep: step });
+    },
+
+    getCompletionRate: () => {
+      const progress = get().progress;
+      if (!progress) return 0;
+
+      const completedSteps = [
+        progress.step_1_areas,
+        progress.step_2_resources,
+        progress.step_3_goals,
+        progress.step_4_projects,
+        progress.step_5_todos,
+      ].filter(Boolean).length;
+
+      return (completedSteps / 5) * 100;
+    },
+
+    isStepCompleted: (step: OnboardingStep) => {
+      const progress = get().progress;
+      if (!progress) return false;
+
+      const stepKey = `step_${step}_${
+        step === 1 ? 'areas' :
+        step === 2 ? 'resources' :
+        step === 3 ? 'goals' :
+        step === 4 ? 'projects' :
+        'todos'
+      }` as keyof OnboardingProgress;
+
+      return progress[stepKey] === true;
+    },
+
+    incrementCreatedCount: (step: OnboardingStep, count: number) => {
+      const stepKeys: Record<OnboardingStep, keyof OnboardingStoreState['createdCounts']> = {
+        1: 'areas',
+        2: 'resources',
+        3: 'goals',
+        4: 'projects',
+        5: 'todos',
+      };
+
+      const key = stepKeys[step];
+
+      set((state) => {
+        state.createdCounts[key] += count;
+      });
+    },
+
+    resetCreatedCounts: () => {
+      set({
+        createdCounts: {
+          areas: 0,
+          resources: 0,
+          goals: 0,
+          projects: 0,
+          todos: 0,
+        },
+      });
     },
   }),
   {

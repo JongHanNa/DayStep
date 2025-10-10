@@ -7,14 +7,15 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useOnboardingStore } from '@/state/stores/secondBrain/onboardingStore';
 import { Plus, X } from 'lucide-react';
 import type { CreateProjectInput } from '@/types/second-brain';
+import OnboardingStepNav from '@/components/onboarding/OnboardingStepNav';
 
 export default function OnboardingStep4Page() {
   const router = useRouter();
-  const { createProject } = useProjectStore();
+  const { createProject, projects } = useProjectStore();
   const { areas, fetchAreas } = useAreaStore();
-  const { completeStep } = useOnboardingStore();
+  const { completeStep, incrementCreatedCount } = useOnboardingStore();
 
-  const [projects, setProjects] = useState<Array<{
+  const [selectedProjects, setSelectedProjects] = useState<Array<{
     title: string;
     description: string;
     areaId?: string;
@@ -36,7 +37,7 @@ export default function OnboardingStep4Page() {
       return;
     }
 
-    setProjects([...projects, newProject]);
+    setSelectedProjects([...selectedProjects, newProject]);
     setNewProject({
       title: '',
       description: '',
@@ -45,11 +46,11 @@ export default function OnboardingStep4Page() {
   };
 
   const handleRemoveProject = (index: number) => {
-    setProjects(projects.filter((_, i) => i !== index));
+    setSelectedProjects(selectedProjects.filter((_, i) => i !== index));
   };
 
   const handleNext = async () => {
-    if (projects.length === 0) {
+    if (selectedProjects.length === 0) {
       // 프로젝트 없이 건너뛰기 허용
       await completeStep(4);
       router.push('/second-brain/onboarding/step-5');
@@ -58,7 +59,7 @@ export default function OnboardingStep4Page() {
 
     try {
       // 프로젝트들을 생성
-      for (const [index, project] of projects.entries()) {
+      for (const [index, project] of selectedProjects.entries()) {
         const projectData: CreateProjectInput = {
           title: project.title,
           description: project.description || undefined,
@@ -70,6 +71,9 @@ export default function OnboardingStep4Page() {
         };
         await createProject(projectData);
       }
+
+      // 온보딩 4단계에서 생성한 프로젝트 개수 업데이트
+      incrementCreatedCount(4, selectedProjects.length);
 
       // 온보딩 4단계 완료
       await completeStep(4);
@@ -89,22 +93,40 @@ export default function OnboardingStep4Page() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+      {/* 스텝 네비게이션 */}
+      <div className="sticky top-0 z-10">
+        <OnboardingStepNav />
+      </div>
+
+      {/* 페이지 헤더 */}
+      <div className="bg-base-100 border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold">프로젝트 설정하기</h1>
-            <span className="text-sm text-base-content/50">4/5</span>
-          </div>
+          <h1 className="text-2xl font-bold mb-2">프로젝트 설정하기</h1>
           <p className="text-sm text-base-content/70">
             진행 중인 프로젝트를 추가하세요 (선택사항)
           </p>
-          <progress className="progress progress-primary w-full mt-2" value="80" max="100" />
         </div>
       </div>
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-3xl mx-auto px-4 py-6 pb-24">
+        {/* 이미 생성된 프로젝트 */}
+        {projects.length > 0 && (
+          <div className="card bg-base-200 mb-6">
+            <div className="card-body">
+              <h2 className="card-title">이미 생성된 프로젝트 ({projects.length}개)</h2>
+              <div className="space-y-2">
+                {projects.map((project) => (
+                  <div key={project.id} className="flex items-center gap-2 p-2 bg-base-100 rounded">
+                    <span>{project.icon}</span>
+                    <span className="text-sm font-medium">{project.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 안내 메시지 */}
         <div className="alert alert-info mb-6">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
@@ -173,11 +195,11 @@ export default function OnboardingStep4Page() {
         </div>
 
         {/* 추가된 프로젝트 목록 */}
-        {projects.length > 0 && (
+        {selectedProjects.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">추가된 프로젝트 ({projects.length}개)</h2>
+            <h2 className="text-lg font-semibold">추가된 프로젝트 ({selectedProjects.length}개)</h2>
             <div className="space-y-3">
-              {projects.map((project, index) => (
+              {selectedProjects.map((project, index) => (
                 <div key={index} className="card bg-base-200">
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between">
@@ -208,7 +230,7 @@ export default function OnboardingStep4Page() {
           </div>
         )}
 
-        {projects.length === 0 && (
+        {selectedProjects.length === 0 && (
           <div className="text-center py-8">
             <p className="text-base-content/50">아직 추가된 프로젝트가 없습니다</p>
             <p className="text-sm text-base-content/30 mt-2">
@@ -221,16 +243,19 @@ export default function OnboardingStep4Page() {
       {/* 하단 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-bottom">
         <div className="max-w-3xl mx-auto flex gap-3">
-          <button onClick={() => router.push('/second-brain/onboarding/step-3')} className="btn btn-ghost flex-1">
-            이전
+          <button
+            onClick={() => router.push('/second-brain/start')}
+            className="btn btn-ghost"
+          >
+            나가기
           </button>
-          {projects.length === 0 ? (
+          {selectedProjects.length === 0 ? (
             <button onClick={handleSkip} className="btn btn-primary flex-1">
-              건너뛰기
+              건너뛰고 계속
             </button>
           ) : (
             <button onClick={handleNext} className="btn btn-primary flex-1">
-              다음 ({projects.length}개 추가됨)
+              저장하고 계속 ({selectedProjects.length}개)
             </button>
           )}
         </div>

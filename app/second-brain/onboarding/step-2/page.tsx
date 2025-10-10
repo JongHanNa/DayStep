@@ -10,6 +10,7 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
+import OnboardingStepNav from '@/components/onboarding/OnboardingStepNav';
 
 const RESOURCE_PRESETS = [
   { title: '독서', icon: 'lucide-Book', color: '#FF6B6B', description: '읽고 싶은 책, 독서 노트' },
@@ -29,8 +30,8 @@ type ResourcePreset = {
 
 export default function OnboardingStep2Page() {
   const router = useRouter();
-  const { createResource } = useResourceStore();
-  const { completeStep } = useOnboardingStore();
+  const { createResource, resources } = useResourceStore();
+  const { completeStep, incrementCreatedCount } = useOnboardingStore();
 
   // 프리셋 자원 (편집 가능하도록 state로 관리)
   const [resourcePresets, setResourcePresets] = useState<ResourcePreset[]>(RESOURCE_PRESETS);
@@ -169,6 +170,9 @@ export default function OnboardingStep2Page() {
         await createResource(resourceData);
       }
 
+      // 온보딩 2단계에서 생성한 자원 개수 업데이트
+      incrementCreatedCount(2, selectedResources.length);
+
       // 온보딩 2단계 완료
       await completeStep(2);
 
@@ -182,22 +186,43 @@ export default function OnboardingStep2Page() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+      {/* 스텝 네비게이션 */}
+      <div className="sticky top-0 z-10">
+        <OnboardingStepNav />
+      </div>
+
+      {/* 페이지 헤더 */}
+      <div className="bg-base-100 border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold">관심 자원 만들기</h1>
-            <span className="text-sm text-base-content/50">2/5</span>
-          </div>
+          <h1 className="text-2xl font-bold mb-2">관심 자원 만들기</h1>
           <p className="text-sm text-base-content/70">
             관심 있는 주제나 취미를 선택하세요 (책임 없음)
           </p>
-          <progress className="progress progress-primary w-full mt-2" value="40" max="100" />
         </div>
       </div>
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-3xl mx-auto px-4 py-6 pb-24">
+        {/* 이미 생성된 자원 */}
+        {resources.length > 0 && (
+          <div className="card bg-base-200 mb-6">
+            <div className="card-body">
+              <h2 className="card-title">이미 생성된 자원 ({resources.length}개)</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {resources.map((resource) => {
+                  const IconComponent = getUnifiedIcon(resource.icon as UnifiedIconKey).component;
+                  return (
+                    <div key={resource.id} className="flex items-center gap-2 p-2 bg-base-100 rounded">
+                      <IconComponent className="w-5 h-5" />
+                      <span className="text-sm font-medium">{resource.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 프리셋 자원 */}
         <div className="space-y-4 mb-8">
           <h2 className="text-lg font-semibold">추천 주제</h2>
@@ -303,15 +328,18 @@ export default function OnboardingStep2Page() {
       {/* 하단 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-bottom">
         <div className="max-w-3xl mx-auto flex gap-3">
-          <button onClick={() => router.push('/second-brain/onboarding/step-1')} className="btn btn-ghost flex-1">
-            이전
+          <button
+            onClick={() => router.push('/second-brain/start')}
+            className="btn btn-ghost"
+          >
+            나가기
           </button>
           <button
             onClick={handleNext}
             disabled={selectedResources.length === 0}
             className="btn btn-primary flex-1"
           >
-            다음 ({selectedResources.length}개 선택)
+            저장하고 계속 ({selectedResources.length}개 선택)
           </button>
         </div>
       </div>

@@ -10,6 +10,7 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
+import OnboardingStepNav from '@/components/onboarding/OnboardingStepNav';
 
 const AREA_PRESETS = [
   { title: '직장', icon: 'lucide-Briefcase', color: '#DBAC6C', description: '업무 프로젝트 및 커리어 개발' },
@@ -29,8 +30,8 @@ type AreaPreset = {
 
 export default function OnboardingStep1Page() {
   const router = useRouter();
-  const { createArea } = useAreaStore();
-  const { completeStep } = useOnboardingStore();
+  const { createArea, areas } = useAreaStore();
+  const { completeStep, incrementCreatedCount } = useOnboardingStore();
 
   // 프리셋 영역 (편집 가능하도록 state로 관리)
   const [areaPresets, setAreaPresets] = useState<AreaPreset[]>(AREA_PRESETS);
@@ -169,6 +170,9 @@ export default function OnboardingStep1Page() {
         await createArea(areaData);
       }
 
+      // 온보딩 1단계에서 생성한 영역 개수 업데이트
+      incrementCreatedCount(1, selectedAreas.length);
+
       // 온보딩 1단계 완료
       await completeStep(1);
 
@@ -182,22 +186,43 @@ export default function OnboardingStep1Page() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+      {/* 스텝 네비게이션 */}
+      <div className="sticky top-0 z-10">
+        <OnboardingStepNav />
+      </div>
+
+      {/* 페이지 헤더 */}
+      <div className="bg-base-100 border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold">책임 영역 만들기</h1>
-            <span className="text-sm text-base-content/50">1/5</span>
-          </div>
+          <h1 className="text-2xl font-bold mb-2">책임 영역 만들기</h1>
           <p className="text-sm text-base-content/70">
             지속적으로 관심을 가져야 하는 영역을 선택하세요
           </p>
-          <progress className="progress progress-primary w-full mt-2" value="20" max="100" />
         </div>
       </div>
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-3xl mx-auto px-4 py-6 pb-24">
+        {/* 이미 생성된 영역 */}
+        {areas.length > 0 && (
+          <div className="card bg-base-200 mb-6">
+            <div className="card-body">
+              <h2 className="card-title">이미 생성된 영역 ({areas.length}개)</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {areas.map((area) => {
+                  const IconComponent = getUnifiedIcon(area.icon as UnifiedIconKey).component;
+                  return (
+                    <div key={area.id} className="flex items-center gap-2 p-2 bg-base-100 rounded">
+                      <IconComponent className="w-5 h-5" />
+                      <span className="text-sm font-medium">{area.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 프리셋 영역 */}
         <div className="space-y-4 mb-8">
           <h2 className="text-lg font-semibold">추천 영역</h2>
@@ -303,15 +328,18 @@ export default function OnboardingStep1Page() {
       {/* 하단 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-bottom">
         <div className="max-w-3xl mx-auto flex gap-3">
-          <button onClick={() => router.push('/second-brain/start')} className="btn btn-ghost flex-1">
-            이전
+          <button
+            onClick={() => router.push('/second-brain/start')}
+            className="btn btn-ghost"
+          >
+            나가기
           </button>
           <button
             onClick={handleNext}
             disabled={selectedAreas.length === 0}
             className="btn btn-primary flex-1"
           >
-            다음 ({selectedAreas.length}개 선택)
+            저장하고 계속 ({selectedAreas.length}개 선택)
           </button>
         </div>
       </div>
