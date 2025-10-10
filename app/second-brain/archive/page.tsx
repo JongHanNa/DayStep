@@ -99,9 +99,15 @@ export default function ArchivePage() {
 
   // 항목 타입 판별
   const getItemType = (item: Goal | Project | Area | Resource): string => {
-    if ('timeframe' in item) return 'goal';
-    if ('status' in item && ('total_todos' in item)) return 'project';
-    if ('standard' in item) return 'area';
+    if ('timeframe' in item) {
+      return 'goal';
+    }
+    if ('status' in item && 'total_todos' in item) {
+      return 'project';
+    }
+    if ('standard' in item) {
+      return 'area';
+    }
     return 'resource';
   };
 
@@ -247,7 +253,7 @@ export default function ArchivePage() {
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              {(itemType === 'area' || itemType === 'resource') && (
+              {(itemType === 'area' || itemType === 'resource') ? (
                 <button
                   onClick={() => handleEditClick(item)}
                   className="btn btn-ghost btn-sm btn-square"
@@ -255,7 +261,7 @@ export default function ArchivePage() {
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
-              )}
+              ) : null}
               <button className="btn btn-ghost btn-sm btn-square" title="복제">
                 <Copy className="w-4 h-4" />
               </button>
