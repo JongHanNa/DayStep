@@ -13,7 +13,7 @@ import {
 
 export default function SecondBrainStartPage() {
   const router = useRouter();
-  const { progress, fetchProgress, startOnboarding } = useOnboardingStore();
+  const { progress, fetchProgress, startOnboarding, goToStep, getCompletionRate } = useOnboardingStore();
 
   useEffect(() => {
     fetchProgress();
@@ -26,6 +26,37 @@ export default function SecondBrainStartPage() {
 
   const handleSkipToMain = () => {
     router.push('/second-brain/inbox');
+  };
+
+  const handleContinueOnboarding = () => {
+    // 마지막 미완료 단계로 이동
+    if (progress) {
+      if (!progress.step_1_areas) {
+        goToStep(1);
+        router.push('/second-brain/onboarding/step-1');
+      } else if (!progress.step_2_resources) {
+        goToStep(2);
+        router.push('/second-brain/onboarding/step-2');
+      } else if (!progress.step_3_goals) {
+        goToStep(3);
+        router.push('/second-brain/onboarding/step-3');
+      } else if (!progress.step_4_projects) {
+        goToStep(4);
+        router.push('/second-brain/onboarding/step-4');
+      } else if (!progress.step_5_todos) {
+        goToStep(5);
+        router.push('/second-brain/onboarding/step-5');
+      } else {
+        // 모두 완료 - 1단계부터 다시 시작
+        goToStep(1);
+        router.push('/second-brain/onboarding/step-1');
+      }
+    }
+  };
+
+  const handleEditOnboarding = () => {
+    goToStep(1);
+    router.push('/second-brain/onboarding/step-1');
   };
 
   return (
@@ -42,9 +73,9 @@ export default function SecondBrainStartPage() {
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* 온보딩 완료 여부에 따른 분기 */}
-        {progress?.completed ? (
-          <div className="space-y-6">
+        <div className="space-y-6">
+          {/* 온보딩 상태 알림 */}
+          {progress?.completed ? (
             <div className="alert alert-success">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -61,23 +92,34 @@ export default function SecondBrainStartPage() {
               </svg>
               <span>온보딩이 완료되었습니다!</span>
             </div>
-
-            <div className="card bg-base-200">
-              <div className="card-body">
-                <h2 className="card-title">시작하기</h2>
-                <p className="text-sm text-base-content/70">
-                  Second Brain 시스템을 사용할 준비가 되었습니다.
-                </p>
-                <div className="card-actions justify-end mt-4">
-                  <button onClick={handleSkipToMain} className="btn btn-primary">
-                    수집함으로 이동
-                  </button>
+          ) : progress ? (
+            <div className="alert alert-info">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current shrink-0 h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div>
+                <div className="font-medium">온보딩이 진행 중입니다</div>
+                <div className="text-sm mt-1">
+                  {[1, 2, 3, 4, 5].filter((s) => {
+                    const key = `step_${s}_${s === 1 ? 'areas' : s === 2 ? 'resources' : s === 3 ? 'goals' : s === 4 ? 'projects' : 'todos'}`;
+                    return progress[key as keyof typeof progress] === true;
+                  }).length}/5 단계 완료됨
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
+          ) : null}
+
+          {/* 항상 보이는 히어로 섹션 */}
             {/* 히어로 메시지 */}
             <div className="card bg-base-200">
               <div className="card-body">
@@ -302,13 +344,54 @@ export default function SecondBrainStartPage() {
               </div>
             </div>
 
-            {/* 온보딩 시작 */}
-            <div className="card bg-base-200">
-              <div className="card-body">
-                <h3 className="card-title">지금 시작하기</h3>
-                <p className="text-sm text-base-content/70">
-                  5분이면 충분합니다. 하나씩 따라하며 시스템을 내 것으로 만드세요.
-                </p>
+          {/* 온보딩 시작/설정 */}
+          <div className="card bg-base-200">
+            <div className="card-body">
+              <h3 className="card-title">
+                {progress?.completed ? '시스템 설정' : progress ? '온보딩 진행' : '지금 시작하기'}
+              </h3>
+              <p className="text-sm text-base-content/70">
+                {progress?.completed
+                  ? 'Second Brain 시스템을 사용할 준비가 되었습니다.'
+                  : progress
+                  ? '온보딩을 계속 진행하거나 설정을 수정할 수 있습니다.'
+                  : '5분이면 충분합니다. 하나씩 따라하며 시스템을 내 것으로 만드세요.'
+                }
+              </p>
+
+              {/* 온보딩 단계 표시 (진행 중일 때만) */}
+              {progress && !progress.completed && (
+                <>
+                  <progress
+                    className="progress progress-primary w-full mt-2 mb-4"
+                    value={getCompletionRate()}
+                    max="100"
+                  />
+                  <div className="grid grid-cols-1 gap-2 text-sm mb-4">
+                    {[
+                      { step: 1, label: '책임 영역 만들기', key: 'step_1_areas' },
+                      { step: 2, label: '관심 자원 만들기', key: 'step_2_resources' },
+                      { step: 3, label: '목표 설정하기', key: 'step_3_goals' },
+                      { step: 4, label: '프로젝트 설정하기', key: 'step_4_projects' },
+                      { step: 5, label: '할일 배정하기', key: 'step_5_todos' },
+                    ].map(({ step, label, key }) => (
+                      <div key={step} className="flex items-center gap-2">
+                        {progress[key as keyof typeof progress] ? (
+                          <CheckCircle className="w-4 h-4 text-success" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-base-300" />
+                        )}
+                        <span className={progress[key as keyof typeof progress] ? 'text-base-content' : 'text-base-content/50'}>
+                          {label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* 단계 미리보기 (시작 전일 때만) */}
+              {!progress && (
                 <div className="space-y-2 mt-4">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-primary text-primary-content flex items-center justify-center text-xs font-bold">
@@ -356,8 +439,10 @@ export default function SecondBrainStartPage() {
                     </span>
                   </div>
                 </div>
+              )}
 
-                {/* GTD/PARA 간단 설명 */}
+              {/* GTD/PARA 간단 설명 */}
+              {!progress && (
                 <details className="mt-4">
                   <summary className="text-xs text-base-content/60 cursor-pointer hover:text-base-content/80">
                     GTD + PARA 시스템 자세히 보기
@@ -400,19 +485,45 @@ export default function SecondBrainStartPage() {
                     </div>
                   </div>
                 </details>
+              )}
 
-                <div className="card-actions justify-end mt-6">
-                  <button onClick={handleSkipToMain} className="btn btn-ghost">
-                    건너뛰기
-                  </button>
-                  <button onClick={handleStartOnboarding} className="btn btn-primary">
-                    온보딩 시작
-                  </button>
-                </div>
+              {/* 버튼 */}
+              <div className="card-actions justify-end mt-6 gap-3">
+                {progress?.completed ? (
+                  /* 완료 후 */
+                  <>
+                    <button onClick={handleEditOnboarding} className="btn btn-ghost">
+                      설정 수정하기
+                    </button>
+                    <button onClick={handleSkipToMain} className="btn btn-primary">
+                      수집함으로 이동
+                    </button>
+                  </>
+                ) : progress ? (
+                  /* 진행 중 */
+                  <>
+                    <button onClick={handleEditOnboarding} className="btn btn-ghost">
+                      처음부터 다시
+                    </button>
+                    <button onClick={handleContinueOnboarding} className="btn btn-primary">
+                      계속 진행하기
+                    </button>
+                  </>
+                ) : (
+                  /* 시작 전 */
+                  <>
+                    <button onClick={handleSkipToMain} className="btn btn-ghost">
+                      건너뛰기
+                    </button>
+                    <button onClick={handleStartOnboarding} className="btn btn-primary">
+                      온보딩 시작
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* 하단 네비게이션 */}
