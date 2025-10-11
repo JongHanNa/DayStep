@@ -199,7 +199,7 @@ export const useGoalStore = createStore<GoalStoreState>(
           goal.id === id
             ? {
                 ...goal,
-                status: 'active' as const,
+                status: 'in_progress' as const,
                 updated_at: new Date().toISOString(),
               }
             : goal

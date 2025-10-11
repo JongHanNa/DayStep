@@ -96,15 +96,22 @@ export interface Goal {
   // PARA 연결
   area_id?: string;
   area?: Area; // 관계 데이터
+  resource_id?: string;
+  resource?: Resource; // 관계 데이터
+
+  // 날짜
+  start_date?: string; // ISO date string (시작일)
+  target_date?: string; // ISO date string (종료일)
 
   // 기간
   timeframe?: 'quarter' | 'year' | '5_years';
-  target_date?: string; // ISO date string
+  target_year?: number; // 연간목표 (2025, 2026, 2027...)
+  target_quarter?: 1 | 2 | 3 | 4; // 분기목표 (1~4분기)
 
   // 메타데이터
   icon?: string;
   color: string;
-  status: 'active' | 'completed' | 'archived';
+  status: 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived';
 
   // 연결된 프로젝트 (파생 데이터)
   projects?: Project[];
@@ -286,7 +293,7 @@ export type UpdateResourceInput = Partial<CreateResourceInput>;
 export type CreateProjectInput = Omit<Project, 'id' | 'user_id' | 'total_todos' | 'completed_todos' | 'progress' | 'created_at' | 'updated_at' | 'area' | 'parent_project'>;
 export type UpdateProjectInput = Partial<CreateProjectInput>;
 
-export type CreateGoalInput = Omit<Goal, 'id' | 'user_id' | 'projects' | 'progress' | 'created_at' | 'updated_at' | 'area'>;
+export type CreateGoalInput = Omit<Goal, 'id' | 'user_id' | 'projects' | 'progress' | 'created_at' | 'updated_at' | 'area' | 'resource'>;
 export type UpdateGoalInput = Partial<CreateGoalInput>;
 
 export type CreateNoteInput = Omit<Note, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'project' | 'area' | 'resource'>;
