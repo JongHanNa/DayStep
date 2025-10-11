@@ -76,6 +76,19 @@ export const mockAreas: Area[] = [
     created_at: new Date('2025-01-01').toISOString(),
     updated_at: new Date('2025-01-01').toISOString(),
   },
+  {
+    id: 'area-5',
+    user_id: MOCK_USER_ID,
+    title: '사이드 프로젝트',
+    description: '블로그 운영 및 콘텐츠 제작',
+    standard: '주 1회 콘텐츠 발행',
+    icon: '📝',
+    color: '#8E44AD',
+    order_index: 4,
+    is_archived: true,
+    created_at: new Date('2024-06-01').toISOString(),
+    updated_at: new Date('2025-01-15').toISOString(),
+  },
 ];
 
 // ============================================

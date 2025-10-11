@@ -31,8 +31,8 @@ export const useAreaStore = createStore<AreaStoreState>(
     fetchAreas: async () => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드
-        const areas = mockAreas.filter((a) => !a.is_archived);
+        // Mock 데이터 로드 (아카이브 포함)
+        const areas = mockAreas;
         set({ areas, loading: false });
       } catch (error) {
         set({

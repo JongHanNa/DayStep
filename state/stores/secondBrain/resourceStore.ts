@@ -31,8 +31,8 @@ export const useResourceStore = createStore<ResourceStoreState>(
     fetchResources: async () => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드
-        const resources = mockResources.filter((r) => !r.is_archived);
+        // Mock 데이터 로드 (아카이브 포함)
+        const resources = mockResources;
         set({ resources, loading: false });
       } catch (error) {
         set({

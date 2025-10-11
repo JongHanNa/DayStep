@@ -32,8 +32,8 @@ export const useGoalStore = createStore<GoalStoreState>(
     fetchGoals: async () => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드 (archived 제외)
-        const goals = mockGoals.filter((g) => g.status !== 'archived');
+        // Mock 데이터 로드 (아카이브 포함)
+        const goals = mockGoals;
         set({ goals, loading: false });
       } catch (error) {
         set({

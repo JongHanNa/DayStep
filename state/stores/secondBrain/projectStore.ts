@@ -33,8 +33,8 @@ export const useProjectStore = createStore<ProjectStoreState>(
     fetchProjects: async () => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드 (archived 제외)
-        const projects = mockProjects.filter((p) => p.status !== 'archived');
+        // Mock 데이터 로드 (아카이브 포함)
+        const projects = mockProjects;
         set({ projects, loading: false });
       } catch (error) {
         set({
