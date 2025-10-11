@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useOnboardingStore } from '@/state/stores/secondBrain/onboardingStore';
 import { Plus, X } from 'lucide-react';
 import type { CreateGoalInput } from '@/types/second-brain';
@@ -13,25 +14,35 @@ export default function OnboardingStep3Page() {
   const router = useRouter();
   const { createGoal, goals } = useGoalStore();
   const { areas, fetchAreas } = useAreaStore();
+  const { resources, fetchResources } = useResourceStore();
   const { completeStep, incrementCreatedCount } = useOnboardingStore();
 
   const [selectedGoals, setSelectedGoals] = useState<Array<{
     title: string;
-    description: string;
-    areaId?: string;
+    status: 'not_started' | 'in_progress' | 'completed' | 'suspended';
+    paraSelection?: string; // 'area-{id}' | 'resource-{id}' | ''
+    startDate?: string;
+    targetDate?: string;
     timeframe?: 'quarter' | 'year' | '5_years';
+    targetYear?: number;
+    targetQuarter?: 1 | 2 | 3 | 4;
   }>>([]);
 
   const [newGoal, setNewGoal] = useState({
     title: '',
-    description: '',
-    areaId: '',
+    status: 'not_started' as 'not_started' | 'in_progress' | 'completed' | 'suspended',
+    paraSelection: '', // 'area-{id}' | 'resource-{id}' | ''
+    startDate: '',
+    targetDate: '',
     timeframe: 'year' as 'quarter' | 'year' | '5_years',
+    targetYear: new Date().getFullYear(),
+    targetQuarter: 1 as 1 | 2 | 3 | 4,
   });
 
   useEffect(() => {
     fetchAreas();
-  }, [fetchAreas]);
+    fetchResources();
+  }, [fetchAreas, fetchResources]);
 
   const handleAddGoal = () => {
     if (!newGoal.title.trim()) {
@@ -42,9 +53,13 @@ export default function OnboardingStep3Page() {
     setSelectedGoals([...selectedGoals, newGoal]);
     setNewGoal({
       title: '',
-      description: '',
-      areaId: '',
+      status: 'not_started',
+      paraSelection: '',
+      startDate: '',
+      targetDate: '',
       timeframe: 'year',
+      targetYear: new Date().getFullYear(),
+      targetQuarter: 1,
     });
   };
 
@@ -63,14 +78,30 @@ export default function OnboardingStep3Page() {
     try {
       // 목표들을 생성
       for (const goal of selectedGoals) {
+        // paraSelection에서 area_id 또는 resource_id 추출
+        let area_id: string | undefined;
+        let resource_id: string | undefined;
+
+        if (goal.paraSelection) {
+          if (goal.paraSelection.startsWith('area-')) {
+            area_id = goal.paraSelection.replace('area-', '');
+          } else if (goal.paraSelection.startsWith('resource-')) {
+            resource_id = goal.paraSelection.replace('resource-', '');
+          }
+        }
+
         const goalData: CreateGoalInput = {
           title: goal.title,
-          description: goal.description || undefined,
-          area_id: goal.areaId || undefined,
+          status: goal.status,
+          area_id,
+          resource_id,
+          start_date: goal.startDate || undefined,
+          target_date: goal.targetDate || undefined,
           timeframe: goal.timeframe,
+          target_year: goal.targetYear || undefined,
+          target_quarter: goal.targetQuarter || undefined,
           icon: '🎯',
           color: '#4ECDC4',
-          status: 'active',
         };
         await createGoal(goalData);
       }
@@ -147,39 +178,78 @@ export default function OnboardingStep3Page() {
                 type="text"
                 value={newGoal.title}
                 onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                placeholder="예: 앱 출시하여 월 500만원 부수입 달성"
+                placeholder="예: 충동적 행동 30% 감소"
                 className="input input-bordered"
               />
             </div>
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">목표 설명 (선택)</span>
+                <span className="label-text">상태</span>
               </label>
-              <textarea
-                value={newGoal.description}
-                onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
-                placeholder="목표에 대한 자세한 설명을 입력하세요"
-                className="textarea textarea-bordered h-20"
-              />
+              <select
+                value={newGoal.status}
+                onChange={(e) => setNewGoal({ ...newGoal, status: e.target.value as 'not_started' | 'in_progress' | 'completed' | 'suspended' })}
+                className="select select-bordered"
+              >
+                <option value="not_started">시작 안함</option>
+                <option value="in_progress">진행중</option>
+                <option value="completed">완료</option>
+                <option value="suspended">중단</option>
+              </select>
             </div>
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">연결할 영역 (선택)</span>
+                <span className="label-text">연결할 영역/자원 (선택)</span>
               </label>
               <select
-                value={newGoal.areaId}
-                onChange={(e) => setNewGoal({ ...newGoal, areaId: e.target.value })}
+                value={newGoal.paraSelection}
+                onChange={(e) => setNewGoal({ ...newGoal, paraSelection: e.target.value })}
                 className="select select-bordered"
               >
                 <option value="">선택 안 함</option>
-                {areas.map((area) => (
-                  <option key={area.id} value={area.id}>
-                    {area.icon} {area.title}
-                  </option>
-                ))}
+                <optgroup label="영역">
+                  {areas.map((area) => (
+                    <option key={area.id} value={`area-${area.id}`}>
+                      {area.icon} {area.title}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="자원">
+                  {resources.map((resource) => (
+                    <option key={resource.id} value={`resource-${resource.id}`}>
+                      {resource.icon} {resource.title}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">시작일 (선택)</span>
+                </label>
+                <input
+                  type="date"
+                  value={newGoal.startDate}
+                  onChange={(e) => setNewGoal({ ...newGoal, startDate: e.target.value })}
+                  className="input input-bordered"
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">종료일 (선택)</span>
+                </label>
+                <input
+                  type="date"
+                  value={newGoal.targetDate}
+                  onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
+                  className="input input-bordered"
+                />
+              </div>
             </div>
 
             <div className="form-control">
@@ -197,6 +267,44 @@ export default function OnboardingStep3Page() {
               </select>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">연간목표 (선택)</span>
+                </label>
+                <select
+                  value={newGoal.targetYear}
+                  onChange={(e) => setNewGoal({ ...newGoal, targetYear: parseInt(e.target.value) })}
+                  className="select select-bordered"
+                >
+                  {Array.from({ length: 6 }, (_, i) => {
+                    const year = new Date().getFullYear() + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}년
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">분기목표 (선택)</span>
+                </label>
+                <select
+                  value={newGoal.targetQuarter}
+                  onChange={(e) => setNewGoal({ ...newGoal, targetQuarter: parseInt(e.target.value) as 1 | 2 | 3 | 4 })}
+                  className="select select-bordered"
+                >
+                  <option value={1}>1분기 (1~3월)</option>
+                  <option value={2}>2분기 (4~6월)</option>
+                  <option value={3}>3분기 (7~9월)</option>
+                  <option value={4}>4분기 (10~12월)</option>
+                </select>
+              </div>
+            </div>
+
             <button onClick={handleAddGoal} className="btn btn-primary mt-4">
               <Plus className="w-4 h-4" />
               목표 추가
@@ -209,36 +317,81 @@ export default function OnboardingStep3Page() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">추가된 목표 ({selectedGoals.length}개)</h2>
             <div className="space-y-3">
-              {selectedGoals.map((goal, index) => (
-                <div key={index} className="card bg-base-200">
-                  <div className="card-body p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{goal.title}</h3>
-                        {goal.description && (
-                          <p className="text-sm text-base-content/70 mt-1">{goal.description}</p>
-                        )}
-                        <div className="flex items-center gap-2 mt-2">
-                          {goal.areaId && (
-                            <span className="badge badge-sm">
-                              {areas.find((a) => a.id === goal.areaId)?.title}
+              {selectedGoals.map((goal, index) => {
+                const statusLabels = {
+                  not_started: '시작 안함',
+                  in_progress: '진행중',
+                  completed: '완료',
+                  suspended: '중단',
+                };
+
+                // paraSelection 파싱
+                let paraLabel: string | null = null;
+                if (goal.paraSelection) {
+                  if (goal.paraSelection.startsWith('area-')) {
+                    const areaId = goal.paraSelection.replace('area-', '');
+                    const area = areas.find((a) => a.id === areaId);
+                    if (area) paraLabel = `영역: ${area.title}`;
+                  } else if (goal.paraSelection.startsWith('resource-')) {
+                    const resourceId = goal.paraSelection.replace('resource-', '');
+                    const resource = resources.find((r) => r.id === resourceId);
+                    if (resource) paraLabel = `자원: ${resource.title}`;
+                  }
+                }
+
+                return (
+                  <div key={index} className="card bg-base-200">
+                    <div className="card-body p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{goal.title}</h3>
+                            <span className="badge badge-sm badge-primary">
+                              {statusLabels[goal.status]}
                             </span>
-                          )}
-                          <span className="badge badge-sm badge-ghost">
-                            {goal.timeframe === 'quarter' ? '분기' : goal.timeframe === 'year' ? '연간' : '5년'}
-                          </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {paraLabel && (
+                              <span className="badge badge-sm">
+                                {paraLabel}
+                              </span>
+                            )}
+                            {goal.startDate && (
+                              <span className="badge badge-sm badge-ghost">
+                                시작: {new Date(goal.startDate).toLocaleDateString('ko-KR')}
+                              </span>
+                            )}
+                            {goal.targetDate && (
+                              <span className="badge badge-sm badge-ghost">
+                                종료: {new Date(goal.targetDate).toLocaleDateString('ko-KR')}
+                              </span>
+                            )}
+                            <span className="badge badge-sm badge-ghost">
+                              {goal.timeframe === 'quarter' ? '분기' : goal.timeframe === 'year' ? '연간' : '5년'}
+                            </span>
+                            {goal.targetYear && (
+                              <span className="badge badge-sm badge-accent">
+                                {goal.targetYear}년
+                              </span>
+                            )}
+                            {goal.targetQuarter && (
+                              <span className="badge badge-sm badge-accent">
+                                {goal.targetQuarter}분기
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        <button
+                          onClick={() => handleRemoveGoal(index)}
+                          className="btn btn-ghost btn-sm btn-circle"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleRemoveGoal(index)}
-                        className="btn btn-ghost btn-sm btn-circle"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
