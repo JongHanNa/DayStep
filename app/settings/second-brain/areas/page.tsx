@@ -4,13 +4,30 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { Plus, X, Pencil, ArrowLeft } from 'lucide-react';
+import { Plus, X, Pencil, ArrowLeft, Lightbulb } from 'lucide-react';
 import type { CreateAreaInput, Area, CreateResourceInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
+
+// 추천 영역 프리셋 (온보딩 step-1과 동일)
+const AREA_PRESETS = [
+  { title: '직장', icon: 'lucide-Briefcase', color: '#DBAC6C', description: '업무 프로젝트 및 커리어 개발' },
+  { title: '가족', icon: 'lucide-Users', color: '#FF6B6B', description: '가족 관계 및 행사' },
+  { title: '건강', icon: 'lucide-Heart', color: '#4ECDC4', description: '운동, 식습관, 건강관리' },
+  { title: '나', icon: 'lucide-Sparkles', color: '#C7B3E5', description: '나에 대한 생각, 발견, 성찰' },
+  { title: '자기개발', icon: 'lucide-Book', color: '#F38181', description: '학습, 성장, 스킬 향상' },
+  { title: '취미', icon: 'lucide-Palette', color: '#AA96DA', description: '여가 활동 및 관심사' },
+];
+
+type AreaPreset = {
+  title: string;
+  icon: string;
+  color: string;
+  description: string;
+};
 
 export default function AreasSettingsPage() {
   const router = useRouter();
@@ -26,6 +43,10 @@ export default function AreasSettingsPage() {
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [areaToDelete, setAreaToDelete] = useState<Area | null>(null);
+
+  // 추천 항목 추가 다이얼로그
+  const [presetDialogOpen, setPresetDialogOpen] = useState(false);
+  const [selectedPresets, setSelectedPresets] = useState<AreaPreset[]>([]);
 
   useEffect(() => {
     fetchAreas();
@@ -211,6 +232,57 @@ export default function AreasSettingsPage() {
     setAreaToDelete(null);
   };
 
+  // 추천 항목 추가 다이얼로그 열기
+  const handleOpenPresetDialog = () => {
+    setSelectedPresets([]);
+    setPresetDialogOpen(true);
+  };
+
+  // 추천 항목 토글
+  const handleTogglePreset = (preset: AreaPreset) => {
+    if (selectedPresets.some((p) => p.title === preset.title)) {
+      setSelectedPresets(selectedPresets.filter((p) => p.title !== preset.title));
+    } else {
+      setSelectedPresets([...selectedPresets, preset]);
+    }
+  };
+
+  // 추천 항목 일괄 추가
+  const handleAddPresets = async () => {
+    if (selectedPresets.length === 0) {
+      alert('최소 1개 이상의 영역을 선택해주세요.');
+      return;
+    }
+
+    try {
+      // 선택한 영역들을 생성
+      for (const [index, preset] of selectedPresets.entries()) {
+        const areaData: CreateAreaInput = {
+          title: preset.title,
+          description: preset.description,
+          icon: preset.icon,
+          color: preset.color,
+          order_index: areas.length + index,
+          is_archived: false,
+        };
+        await createArea(areaData);
+      }
+
+      setPresetDialogOpen(false);
+      setSelectedPresets([]);
+      await fetchAreas();
+    } catch (error) {
+      console.error('영역 추가 실패:', error);
+      alert('영역 추가에 실패했습니다.');
+    }
+  };
+
+  // 추천 항목 추가 취소
+  const handleCancelPresets = () => {
+    setPresetDialogOpen(false);
+    setSelectedPresets([]);
+  };
+
   return (
     <div className="min-h-screen bg-base-100 pb-20">
       {/* 헤더 */}
@@ -240,10 +312,16 @@ export default function AreasSettingsPage() {
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">영역 목록 ({areas.length}개)</h2>
-            <button onClick={handleAddArea} className="btn btn-primary btn-sm">
-              <Plus className="w-4 h-4" />
-              새 영역 추가
-            </button>
+            <div className="flex gap-2">
+              <button onClick={handleOpenPresetDialog} className="btn btn-ghost btn-sm">
+                <Lightbulb className="w-4 h-4" />
+                추천 항목 추가
+              </button>
+              <button onClick={handleAddArea} className="btn btn-primary btn-sm">
+                <Plus className="w-4 h-4" />
+                새 영역 추가
+              </button>
+            </div>
           </div>
 
           {areas.length === 0 ? (
@@ -426,6 +504,90 @@ export default function AreasSettingsPage() {
         selectedColor={editingArea?.color}
         onColorSelect={handleColorChange}
       />
+
+      {/* 추천 항목 추가 다이얼로그 */}
+      {presetDialogOpen && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <h3 className="font-bold text-lg mb-4">추천 영역 추가하기</h3>
+            <p className="text-sm text-base-content/70 mb-6">
+              시작하기 좋은 영역들을 준비했어요. 여러 개를 선택할 수 있습니다.
+            </p>
+
+            {/* 프리셋 영역 그리드 */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {AREA_PRESETS.map((preset) => {
+                const isSelected = selectedPresets.some((p) => p.title === preset.title);
+                const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey).component;
+
+                return (
+                  <button
+                    key={preset.title}
+                    onClick={() => handleTogglePreset(preset)}
+                    className={`card transition-all w-full ${
+                      isSelected
+                        ? 'bg-primary text-primary-content ring-2 ring-primary'
+                        : 'bg-base-200 hover:bg-base-300'
+                    }`}
+                  >
+                    <div className="card-body p-4">
+                      <div className="flex items-start justify-between">
+                        <IconComponent className="w-8 h-8" />
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
+                            <svg
+                              className="w-3 h-3"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="font-semibold mt-2">{preset.title}</h3>
+                      <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
+                        {preset.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 선택된 항목 표시 */}
+            {selectedPresets.length > 0 && (
+              <div className="alert alert-info mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm">
+                  {selectedPresets.length}개 영역이 선택되었습니다
+                </span>
+              </div>
+            )}
+
+            {/* 버튼 */}
+            <div className="modal-action">
+              <button onClick={handleCancelPresets} className="btn btn-ghost">
+                취소
+              </button>
+              <button
+                onClick={handleAddPresets}
+                disabled={selectedPresets.length === 0}
+                className="btn btn-primary"
+              >
+                {selectedPresets.length > 0 ? `${selectedPresets.length}개 추가` : '항목 선택'}
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelPresets} />
+        </dialog>
+      )}
     </div>
   );
 }

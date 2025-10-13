@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { Plus, X, Pencil, ArrowLeft } from 'lucide-react';
 import type { CreateGoalInput, Goal } from '@/types/second-brain';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
@@ -13,9 +15,11 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 export default function GoalsSettingsPage() {
   const router = useRouter();
   const { createGoal, updateGoal, deleteGoal, goals, fetchGoals } = useGoalStore();
+  const { areas, fetchAreas } = useAreaStore();
+  const { resources, fetchResources } = useResourceStore();
 
   // 편집 관련 state
-  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean }) | null>(null);
+  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
@@ -25,7 +29,9 @@ export default function GoalsSettingsPage() {
 
   useEffect(() => {
     fetchGoals();
-  }, [fetchGoals]);
+    fetchAreas();
+    fetchResources();
+  }, [fetchGoals, fetchAreas, fetchResources]);
 
   // 새 목표 추가 핸들러
   const handleAddGoal = () => {
@@ -35,11 +41,17 @@ export default function GoalsSettingsPage() {
       description: '',
       icon: 'lucide-Target',
       color: '#A8DADC',
-      order_index: goals.length,
-      is_archived: false,
+      status: 'not_started',
+      start_date: '',
+      target_date: '',
+      timeframe: 'year',
+      target_year: new Date().getFullYear(),
+      target_quarter: 1,
+      progress: 0,
       created_at: '',
       updated_at: '',
       user_id: '',
+      paraSelection: '',
       isNew: true,
     });
     setEditDialogOpen(true);
@@ -47,7 +59,15 @@ export default function GoalsSettingsPage() {
 
   // 목표 편집 핸들러
   const handleEditGoal = (goal: Goal) => {
-    setEditingGoal({ ...goal, isNew: false });
+    // paraSelection 생성 (area_id 또는 resource_id에서)
+    let paraSelection = '';
+    if (goal.area_id) {
+      paraSelection = `area-${goal.area_id}`;
+    } else if (goal.resource_id) {
+      paraSelection = `resource-${goal.resource_id}`;
+    }
+
+    setEditingGoal({ ...goal, paraSelection, isNew: false });
     setEditDialogOpen(true);
   };
 
@@ -74,6 +94,18 @@ export default function GoalsSettingsPage() {
     }
 
     try {
+      // paraSelection에서 area_id 또는 resource_id 추출
+      let area_id: string | undefined;
+      let resource_id: string | undefined;
+
+      if (editingGoal.paraSelection) {
+        if (editingGoal.paraSelection.startsWith('area-')) {
+          area_id = editingGoal.paraSelection.replace('area-', '');
+        } else if (editingGoal.paraSelection.startsWith('resource-')) {
+          resource_id = editingGoal.paraSelection.replace('resource-', '');
+        }
+      }
+
       if (editingGoal.isNew) {
         // 새 목표 생성
         const goalData: CreateGoalInput = {
@@ -81,8 +113,14 @@ export default function GoalsSettingsPage() {
           description: editingGoal.description || '',
           icon: editingGoal.icon,
           color: editingGoal.color,
-          order_index: goals.length,
-          is_archived: false,
+          status: editingGoal.status,
+          area_id,
+          resource_id,
+          start_date: editingGoal.start_date || undefined,
+          target_date: editingGoal.target_date || undefined,
+          timeframe: editingGoal.timeframe,
+          target_year: editingGoal.target_year || undefined,
+          target_quarter: editingGoal.target_quarter || undefined,
         };
         await createGoal(goalData);
       } else {
@@ -92,6 +130,14 @@ export default function GoalsSettingsPage() {
           description: editingGoal.description || '',
           icon: editingGoal.icon,
           color: editingGoal.color,
+          status: editingGoal.status,
+          area_id,
+          resource_id,
+          start_date: editingGoal.start_date || undefined,
+          target_date: editingGoal.target_date || undefined,
+          timeframe: editingGoal.timeframe,
+          target_year: editingGoal.target_year || undefined,
+          target_quarter: editingGoal.target_quarter || undefined,
         });
       }
 
@@ -276,7 +322,7 @@ export default function GoalsSettingsPage() {
             </div>
 
             {/* 설명 */}
-            <div className="form-control mb-6">
+            <div className="form-control mb-4">
               <label className="label">
                 <span className="label-text">설명</span>
               </label>
@@ -286,6 +332,133 @@ export default function GoalsSettingsPage() {
                 className="textarea textarea-bordered h-20"
                 placeholder="예: 매일 운동하고 균형 잡힌 식사하기"
               />
+            </div>
+
+            {/* 상태 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">상태</span>
+              </label>
+              <select
+                value={editingGoal.status}
+                onChange={(e) => setEditingGoal({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived' })}
+                className="select select-bordered"
+              >
+                <option value="not_started">시작 안함</option>
+                <option value="in_progress">진행중</option>
+                <option value="completed">완료</option>
+                <option value="suspended">중단</option>
+              </select>
+            </div>
+
+            {/* 연결할 영역/자원 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">연결할 영역/자원 (선택)</span>
+              </label>
+              <select
+                value={editingGoal.paraSelection}
+                onChange={(e) => setEditingGoal({ ...editingGoal, paraSelection: e.target.value })}
+                className="select select-bordered"
+              >
+                <option value="">선택 안 함</option>
+                <optgroup label="영역">
+                  {areas.map((area) => (
+                    <option key={area.id} value={`area-${area.id}`}>
+                      {area.icon} {area.title}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="자원">
+                  {resources.map((resource) => (
+                    <option key={resource.id} value={`resource-${resource.id}`}>
+                      {resource.icon} {resource.title}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* 시작일/종료일 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">시작일 (선택)</span>
+                </label>
+                <input
+                  type="date"
+                  value={editingGoal.start_date || ''}
+                  onChange={(e) => setEditingGoal({ ...editingGoal, start_date: e.target.value })}
+                  className="input input-bordered"
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">종료일 (선택)</span>
+                </label>
+                <input
+                  type="date"
+                  value={editingGoal.target_date || ''}
+                  onChange={(e) => setEditingGoal({ ...editingGoal, target_date: e.target.value })}
+                  className="input input-bordered"
+                />
+              </div>
+            </div>
+
+            {/* 기간 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">기간</span>
+              </label>
+              <select
+                value={editingGoal.timeframe}
+                onChange={(e) => setEditingGoal({ ...editingGoal, timeframe: e.target.value as 'quarter' | 'year' | '5_years' })}
+                className="select select-bordered"
+              >
+                <option value="quarter">분기 (3개월)</option>
+                <option value="year">연간 (1년)</option>
+                <option value="5_years">장기 (5년)</option>
+              </select>
+            </div>
+
+            {/* 연간목표/분기목표 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">연간목표 (선택)</span>
+                </label>
+                <select
+                  value={editingGoal.target_year || new Date().getFullYear()}
+                  onChange={(e) => setEditingGoal({ ...editingGoal, target_year: parseInt(e.target.value) })}
+                  className="select select-bordered"
+                >
+                  {Array.from({ length: 6 }, (_, i) => {
+                    const year = new Date().getFullYear() + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}년
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">분기목표 (선택)</span>
+                </label>
+                <select
+                  value={editingGoal.target_quarter || 1}
+                  onChange={(e) => setEditingGoal({ ...editingGoal, target_quarter: parseInt(e.target.value) as 1 | 2 | 3 | 4 })}
+                  className="select select-bordered"
+                >
+                  <option value={1}>1분기 (1~3월)</option>
+                  <option value={2}>2분기 (4~6월)</option>
+                  <option value={3}>3분기 (7~9월)</option>
+                  <option value={4}>4분기 (10~12월)</option>
+                </select>
+              </div>
             </div>
 
             {/* 버튼 */}

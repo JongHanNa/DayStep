@@ -3,8 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { Plus, X, Pencil, ArrowLeft } from 'lucide-react';
-import type { CreateProjectInput, Project } from '@/types/second-brain';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { Plus, X, Pencil, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import type { CreateProjectInput, CreateNoteInput, Project, NoteType } from '@/types/second-brain';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -13,11 +17,35 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 export default function ProjectsSettingsPage() {
   const router = useRouter();
   const { createProject, updateProject, deleteProject, projects, fetchProjects } = useProjectStore();
+  const { goals, fetchGoals } = useGoalStore();
+  const { areas, fetchAreas } = useAreaStore();
+  const { resources, fetchResources } = useResourceStore();
+  const { createNote } = useNoteStore();
 
   // 편집 관련 state
-  const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean }) | null>(null);
+  const [editingProject, setEditingProject] = useState<(Project & {
+    isNew?: boolean;
+    paraSelection?: string;
+    notes?: Array<{
+      title: string;
+      content: string;
+      memoType: NoteType;
+      paraSelection?: string;
+      isPinned: boolean;
+    }>;
+  }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
+  const [showNoteSection, setShowNoteSection] = useState(false);
+
+  // 노트 추가 state
+  const [newNote, setNewNote] = useState({
+    title: '',
+    content: '',
+    memoType: 'note' as NoteType,
+    paraSelection: '',
+    isPinned: false,
+  });
 
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -25,7 +53,10 @@ export default function ProjectsSettingsPage() {
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+    fetchGoals();
+    fetchAreas();
+    fetchResources();
+  }, [fetchProjects, fetchGoals, fetchAreas, fetchResources]);
 
   // 새 프로젝트 추가 핸들러
   const handleAddProject = () => {
@@ -35,20 +66,38 @@ export default function ProjectsSettingsPage() {
       description: '',
       icon: 'lucide-FolderOpen',
       color: '#A8DADC',
+      status: 'not_started',
+      goal_id: '',
+      start_date: '',
+      target_end_date: '',
+      total_todos: 0,
+      completed_todos: 0,
+      progress: 0,
       order_index: projects.length,
-      is_archived: false,
       created_at: '',
       updated_at: '',
       user_id: '',
+      paraSelection: '',
+      notes: [],
       isNew: true,
     });
     setEditDialogOpen(true);
+    setShowNoteSection(false);
   };
 
   // 프로젝트 편집 핸들러
   const handleEditProject = (project: Project) => {
-    setEditingProject({ ...project, isNew: false });
+    // paraSelection 생성 (area_id 또는 resource_id에서)
+    let paraSelection = '';
+    if (project.area_id) {
+      paraSelection = `area-${project.area_id}`;
+    } else if (project.resource_id) {
+      paraSelection = `resource-${project.resource_id}`;
+    }
+
+    setEditingProject({ ...project, paraSelection, notes: [], isNew: false });
     setEditDialogOpen(true);
+    setShowNoteSection(false);
   };
 
   // 아이콘 변경 핸들러
@@ -66,6 +115,38 @@ export default function ProjectsSettingsPage() {
     }
   };
 
+  // 노트 추가 핸들러
+  const handleAddNote = () => {
+    if (!newNote.title.trim()) {
+      alert('노트 제목을 입력해주세요.');
+      return;
+    }
+
+    if (editingProject) {
+      setEditingProject({
+        ...editingProject,
+        notes: [...(editingProject.notes || []), newNote],
+      });
+      setNewNote({
+        title: '',
+        content: '',
+        memoType: 'note',
+        paraSelection: '',
+        isPinned: false,
+      });
+    }
+  };
+
+  // 노트 제거 핸들러
+  const handleRemoveNote = (noteIndex: number) => {
+    if (editingProject && editingProject.notes) {
+      setEditingProject({
+        ...editingProject,
+        notes: editingProject.notes.filter((_, i) => i !== noteIndex),
+      });
+    }
+  };
+
   // 저장 핸들러
   const handleSaveEdit = async () => {
     if (!editingProject || !editingProject.title.trim()) {
@@ -74,6 +155,18 @@ export default function ProjectsSettingsPage() {
     }
 
     try {
+      // paraSelection에서 area_id 또는 resource_id 추출
+      let area_id: string | undefined;
+      let resource_id: string | undefined;
+
+      if (editingProject.paraSelection) {
+        if (editingProject.paraSelection.startsWith('area-')) {
+          area_id = editingProject.paraSelection.replace('area-', '');
+        } else if (editingProject.paraSelection.startsWith('resource-')) {
+          resource_id = editingProject.paraSelection.replace('resource-', '');
+        }
+      }
+
       if (editingProject.isNew) {
         // 새 프로젝트 생성
         const projectData: CreateProjectInput = {
@@ -81,10 +174,44 @@ export default function ProjectsSettingsPage() {
           description: editingProject.description || '',
           icon: editingProject.icon,
           color: editingProject.color,
+          status: editingProject.status,
+          goal_id: editingProject.goal_id || undefined,
+          area_id,
+          resource_id,
+          start_date: editingProject.start_date || undefined,
+          target_end_date: editingProject.target_end_date || undefined,
           order_index: projects.length,
-          is_archived: false,
         };
-        await createProject(projectData);
+        const createdProject = await createProject(projectData);
+
+        // 프로젝트에 연결된 노트들 생성
+        if (editingProject.notes && editingProject.notes.length > 0) {
+          for (const note of editingProject.notes) {
+            // 노트의 paraSelection 파싱
+            let note_area_id: string | undefined;
+            let note_resource_id: string | undefined;
+
+            if (note.paraSelection) {
+              if (note.paraSelection.startsWith('area-')) {
+                note_area_id = note.paraSelection.replace('area-', '');
+              } else if (note.paraSelection.startsWith('resource-')) {
+                note_resource_id = note.paraSelection.replace('resource-', '');
+              }
+            }
+
+            const noteData: CreateNoteInput = {
+              title: note.title,
+              content: note.content,
+              memo_type: note.memoType,
+              project_id: createdProject.id,
+              area_id: note_area_id,
+              resource_id: note_resource_id,
+              is_pinned: note.isPinned,
+              tags: [],
+            };
+            await createNote(noteData);
+          }
+        }
       } else {
         // 기존 프로젝트 수정
         await updateProject(editingProject.id, {
@@ -92,7 +219,42 @@ export default function ProjectsSettingsPage() {
           description: editingProject.description || '',
           icon: editingProject.icon,
           color: editingProject.color,
+          status: editingProject.status,
+          goal_id: editingProject.goal_id || undefined,
+          area_id,
+          resource_id,
+          start_date: editingProject.start_date || undefined,
+          target_end_date: editingProject.target_end_date || undefined,
         });
+
+        // 노트는 편집 시에는 생성하지 않음 (새로 추가할 때만 생성)
+        if (editingProject.notes && editingProject.notes.length > 0) {
+          for (const note of editingProject.notes) {
+            // 노트의 paraSelection 파싱
+            let note_area_id: string | undefined;
+            let note_resource_id: string | undefined;
+
+            if (note.paraSelection) {
+              if (note.paraSelection.startsWith('area-')) {
+                note_area_id = note.paraSelection.replace('area-', '');
+              } else if (note.paraSelection.startsWith('resource-')) {
+                note_resource_id = note.paraSelection.replace('resource-', '');
+              }
+            }
+
+            const noteData: CreateNoteInput = {
+              title: note.title,
+              content: note.content,
+              memo_type: note.memoType,
+              project_id: editingProject.id,
+              area_id: note_area_id,
+              resource_id: note_resource_id,
+              is_pinned: note.isPinned,
+              tags: [],
+            };
+            await createNote(noteData);
+          }
+        }
       }
 
       setEditDialogOpen(false);
@@ -276,7 +438,7 @@ export default function ProjectsSettingsPage() {
             </div>
 
             {/* 설명 */}
-            <div className="form-control mb-6">
+            <div className="form-control mb-4">
               <label className="label">
                 <span className="label-text">설명</span>
               </label>
@@ -286,6 +448,236 @@ export default function ProjectsSettingsPage() {
                 className="textarea textarea-bordered h-20"
                 placeholder="예: 회사 웹사이트 디자인 및 기능 개선"
               />
+            </div>
+
+            {/* 연결할 목표 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">연결할 목표 (선택)</span>
+              </label>
+              <select
+                value={editingProject.goal_id || ''}
+                onChange={(e) => setEditingProject({ ...editingProject, goal_id: e.target.value })}
+                className="select select-bordered"
+              >
+                <option value="">선택 안 함</option>
+                {goals.map((goal) => (
+                  <option key={goal.id} value={goal.id}>
+                    {goal.icon} {goal.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 진행상황 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">진행상황</span>
+              </label>
+              <select
+                value={editingProject.status}
+                onChange={(e) => setEditingProject({ ...editingProject, status: e.target.value as 'not_started' | 'active' | 'on_hold' | 'completed' | 'archived' })}
+                className="select select-bordered"
+              >
+                <option value="not_started">시작안함</option>
+                <option value="active">진행중</option>
+                <option value="on_hold">중단</option>
+                <option value="completed">완료</option>
+              </select>
+            </div>
+
+            {/* 연결할 영역/자원 */}
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">연결할 영역/자원 (선택)</span>
+              </label>
+              <select
+                value={editingProject.paraSelection}
+                onChange={(e) => setEditingProject({ ...editingProject, paraSelection: e.target.value })}
+                className="select select-bordered"
+              >
+                <option value="">선택 안 함</option>
+                <optgroup label="영역">
+                  {areas.map((area) => (
+                    <option key={area.id} value={`area-${area.id}`}>
+                      {area.icon} {area.title}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="자원">
+                  {resources.map((resource) => (
+                    <option key={resource.id} value={`resource-${resource.id}`}>
+                      {resource.icon} {resource.title}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* 시작일/종료일 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">시작일 (선택)</span>
+                </label>
+                <input
+                  type="date"
+                  value={editingProject.start_date || ''}
+                  onChange={(e) => setEditingProject({ ...editingProject, start_date: e.target.value })}
+                  className="input input-bordered"
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">종료일 (선택)</span>
+                </label>
+                <input
+                  type="date"
+                  value={editingProject.target_end_date || ''}
+                  onChange={(e) => setEditingProject({ ...editingProject, target_end_date: e.target.value })}
+                  className="input input-bordered"
+                />
+              </div>
+            </div>
+
+            {/* 노트 섹션 */}
+            <div className="border-t border-base-300 pt-4 mt-4">
+              <button
+                type="button"
+                onClick={() => setShowNoteSection(!showNoteSection)}
+                className="flex items-center gap-2 text-sm font-medium mb-2"
+              >
+                {showNoteSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                노트 추가 (선택) {editingProject.notes && editingProject.notes.length > 0 && `(${editingProject.notes.length}개)`}
+              </button>
+
+              {showNoteSection && (
+                <div className="space-y-4 p-4 bg-base-100 rounded-lg">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">노트 제목</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newNote.title}
+                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                      placeholder="예: 기획 초안"
+                      className="input input-bordered input-sm"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">노트 내용</span>
+                    </label>
+                    <textarea
+                      value={newNote.content}
+                      onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                      placeholder="노트 내용을 입력하세요"
+                      className="textarea textarea-bordered textarea-sm h-16"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">분류</span>
+                      </label>
+                      <select
+                        value={newNote.memoType}
+                        onChange={(e) => setNewNote({ ...newNote, memoType: e.target.value as NoteType })}
+                        className="select select-bordered select-sm"
+                      >
+                        <option value="work_in_progress">중간 작업물</option>
+                        <option value="read_later">나중에 보기</option>
+                        <option value="reference">레퍼런스</option>
+                        <option value="note">일반 노트</option>
+                      </select>
+                    </div>
+
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">연결할 영역/자원 (선택)</span>
+                      </label>
+                      <select
+                        value={newNote.paraSelection}
+                        onChange={(e) => setNewNote({ ...newNote, paraSelection: e.target.value })}
+                        className="select select-bordered select-sm"
+                      >
+                        <option value="">선택 안 함</option>
+                        <optgroup label="영역">
+                          {areas.map((area) => (
+                            <option key={area.id} value={`area-${area.id}`}>
+                              {area.icon} {area.title}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="자원">
+                          {resources.map((resource) => (
+                            <option key={resource.id} value={`resource-${resource.id}`}>
+                              {resource.icon} {resource.title}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label cursor-pointer justify-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={newNote.isPinned}
+                        onChange={(e) => setNewNote({ ...newNote, isPinned: e.target.checked })}
+                        className="checkbox checkbox-sm"
+                      />
+                      <span className="label-text">고정하기</span>
+                    </label>
+                  </div>
+
+                  <button onClick={handleAddNote} className="btn btn-sm btn-ghost w-full">
+                    <Plus className="w-3 h-3" />
+                    노트 추가
+                  </button>
+
+                  {/* 추가된 노트 목록 */}
+                  {editingProject.notes && editingProject.notes.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      <p className="text-sm font-medium">추가된 노트 ({editingProject.notes.length}개)</p>
+                      {editingProject.notes.map((note, index) => {
+                        const memoTypeLabels = {
+                          work_in_progress: '중간 작업물',
+                          read_later: '나중에 보기',
+                          reference: '레퍼런스',
+                          note: '일반 노트',
+                        };
+
+                        return (
+                          <div key={index} className="p-2 bg-base-200 rounded flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium">{note.title}</p>
+                                <span className="badge badge-xs">{memoTypeLabels[note.memoType]}</span>
+                                {note.isPinned && <span className="badge badge-xs badge-accent">고정</span>}
+                              </div>
+                              {note.content && (
+                                <p className="text-xs text-base-content/70 mt-1 line-clamp-2">{note.content}</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleRemoveNote(index)}
+                              className="btn btn-ghost btn-xs btn-circle"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 버튼 */}
