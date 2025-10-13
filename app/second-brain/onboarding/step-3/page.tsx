@@ -137,7 +137,7 @@ export default function OnboardingStep3Page() {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold mb-2">목표 설정하기</h1>
           <p className="text-sm text-base-content/70">
-            달성하고 싶은 목표를 설정하세요 (선택사항)
+            달성하고 싶은 목표를 설정하세요
           </p>
         </div>
       </div>
