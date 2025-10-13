@@ -56,11 +56,15 @@ export interface Project {
   user_id: string;
   title: string;
   description?: string;
-  status: 'active' | 'on_hold' | 'completed' | 'archived';
+  status: 'not_started' | 'active' | 'on_hold' | 'completed' | 'archived';
 
   // PARA 연결
+  goal_id?: string;
+  goal?: Goal; // 관계 데이터
   area_id?: string;
   area?: Area; // 관계 데이터
+  resource_id?: string;
+  resource?: Resource; // 관계 데이터
   parent_project_id?: string;
   parent_project?: Project; // 관계 데이터
 
@@ -290,7 +294,7 @@ export type UpdateAreaInput = Partial<CreateAreaInput>;
 export type CreateResourceInput = Omit<Resource, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 export type UpdateResourceInput = Partial<CreateResourceInput>;
 
-export type CreateProjectInput = Omit<Project, 'id' | 'user_id' | 'total_todos' | 'completed_todos' | 'progress' | 'created_at' | 'updated_at' | 'area' | 'parent_project'>;
+export type CreateProjectInput = Omit<Project, 'id' | 'user_id' | 'total_todos' | 'completed_todos' | 'progress' | 'created_at' | 'updated_at' | 'goal' | 'area' | 'resource' | 'parent_project'>;
 export type UpdateProjectInput = Partial<CreateProjectInput>;
 
 export type CreateGoalInput = Omit<Goal, 'id' | 'user_id' | 'projects' | 'progress' | 'created_at' | 'updated_at' | 'area' | 'resource'>;
