@@ -10,7 +10,6 @@ import ModernDayView from './ModernDayView';
 import { BubbleTimelineView } from './BubbleTimelineView';
 import { TimelineDndProvider } from '../dnd';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useRepositoryStore } from '@/state/stores/repositoryStore';
 import { useTimelineStore } from '@/state/stores/timelineStore';
 import { OptimisticIndicator } from '@/components/ui/optimistic-indicator';
 import { useToast } from '@/hooks/use-toast';
@@ -85,7 +84,6 @@ const AllDayItemsSection = memo(() => {
               </div>
               <span className="text-xs text-muted-foreground ml-2">
                 {item.type === 'todo' && '할 일'}
-                {item.type === 'repository' && '보관함'}
                 {item.type === 'timeline-task' && '작업'}
               </span>
             </div>
@@ -187,7 +185,6 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   // Load data from all sources - memoized selectors for performance
   const todos = useTodoStore(state => state.todos);
   const fetchTodosForDate = useTodoStore(state => state.fetchTodosForDate);
-  const repositoryItems = useRepositoryStore(state => state.items);
   const timelineTasks = useTimelineStore(state => state.tasks);
   
   // Timeline View Store에서 items 가져오기
@@ -288,14 +285,13 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
 
     console.log('📊 데이터 변경 감지 - 타임라인 업데이트:', {
       todosCount: todos.length,
-      repositoryItemsCount: repositoryItems.length,
       timelineTasksCount: timelineTasks.length
     });
 
     // ✅ 300ms debounce로 빠른 연속 업데이트 방지 (불필요한 fetch 요청 제거)
     const debounceTimeoutId = setTimeout(() => {
       const { loadItemsFromSources } = useTimelineViewStore.getState();
-      loadItemsFromSources(todos, repositoryItems, timelineTasks).catch(error => {
+      loadItemsFromSources(todos, timelineTasks).catch(error => {
         console.error('❌ loadItemsFromSources 실행 중 오류:', error);
       });
     }, 300);
@@ -303,7 +299,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
     return () => {
       clearTimeout(debounceTimeoutId);
     };
-  }, [todos, repositoryItems, timelineTasks, isAuthenticated, authLoading]);
+  }, [todos, timelineTasks, isAuthenticated, authLoading]);
 
   // 이전 중복 날짜별 로드 로직 제거됨 - 위의 최적화된 로직으로 통합
   

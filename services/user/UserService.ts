@@ -173,7 +173,6 @@ export class UserService extends BaseService implements UserRepository, IUserSer
 
         // 관련 데이터도 함께 삭제하는 트랜잭션 실행
         await this.executeTransaction([
-          { name: 'delete_repository_items', params: { user_id: id } },
           { name: 'delete_todos', params: { user_id: id } },
           { name: 'delete_user', params: { user_id: id } },
         ], 'delete_user_cascade');
@@ -245,7 +244,6 @@ export class UserService extends BaseService implements UserRepository, IUserSer
   async getUserActivityStats(userId: string): Promise<{
     totalTodos: number;
     completedTodos: number;
-    repositoryItems: number;
     joinDate: Date;
     lastActivity: Date | null;
   }> {
@@ -265,64 +263,38 @@ export class UserService extends BaseService implements UserRepository, IUserSer
           );
         }
 
-        // 병렬로 통계 조회
-        const [todosStats, repositoryCount] = await Promise.all([
-          // 할일 통계 (전체/완료)
-          Promise.all([
-            this.executeQuery(
-              this.client
-                .from('todos')
-                .select('id', { count: 'exact', head: true })
-                .eq('user_id', userId)
-            ),
-            this.executeQuery(
-              this.client
-                .from('todos')
-                .select('id', { count: 'exact', head: true })
-                .eq('user_id', userId)
-                .eq('completed', true)
-            ),
-          ]),
-          // 보관함 아이템 개수
+        // 할일 통계 조회 (전체/완료)
+        const todosStats = await Promise.all([
           this.executeQuery(
             this.client
-              .from('repository_items')
+              .from('todos')
               .select('id', { count: 'exact', head: true })
               .eq('user_id', userId)
+          ),
+          this.executeQuery(
+            this.client
+              .from('todos')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', userId)
+              .eq('completed', true)
           ),
         ]);
 
         // 최근 활동 조회 (가장 최근 업데이트된 항목)
-        const lastActivities = await Promise.all([
-          this.executeSingleQuery(
-            this.client
-              .from('todos')
-              .select('updated_at')
-              .eq('user_id', userId)
-              .order('updated_at', { ascending: false })
-              .limit(1)
-          ),
-          this.executeSingleQuery(
-            this.client
-              .from('repository_items')
-              .select('updated_at')
-              .eq('user_id', userId)
-              .order('updated_at', { ascending: false })
-              .limit(1)
-          ),
-        ]);
-
-        const lastActivityDates = lastActivities
-          .filter(Boolean)
-          .map((activity: any) => new Date(activity.updated_at))
-          .sort((a, b) => b.getTime() - a.getTime());
+        const lastActivity = await this.executeSingleQuery(
+          this.client
+            .from('todos')
+            .select('updated_at')
+            .eq('user_id', userId)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+        );
 
         return {
           totalTodos: (todosStats[0] as any).count || 0,
           completedTodos: (todosStats[1] as any).count || 0,
-          repositoryItems: (repositoryCount as any).count || 0,
           joinDate: user.createdAt,
-          lastActivity: lastActivityDates.length > 0 ? lastActivityDates[0] : null,
+          lastActivity: lastActivity ? new Date((lastActivity as any).updated_at) : null,
         };
       },
       { userId }
@@ -335,7 +307,6 @@ export class UserService extends BaseService implements UserRepository, IUserSer
   async createDataBackup(userId: string): Promise<{
     user: User;
     todos: any[];
-    repositoryItems: any[];
     createdAt: Date;
   }> {
     return this.executeWithPerformanceTracking(
@@ -353,28 +324,18 @@ export class UserService extends BaseService implements UserRepository, IUserSer
           );
         }
 
-        // 모든 사용자 데이터를 병렬로 조회
-        const [todos, repositoryItems] = await Promise.all([
-          this.executeQuery(
-            this.client
-              .from('todos')
-              .select('*')
-              .eq('user_id', userId)
-              .order('order_index', { ascending: true })
-          ),
-          this.executeQuery(
-            this.client
-              .from('repository_items')
-              .select('*')
-              .eq('user_id', userId)
-              .order('created_at', { ascending: false })
-          ),
-        ]);
+        // 모든 사용자 데이터 조회
+        const todos = await this.executeQuery(
+          this.client
+            .from('todos')
+            .select('*')
+            .eq('user_id', userId)
+            .order('order_index', { ascending: true })
+        );
 
         return {
           user,
           todos: todos as any[],
-          repositoryItems: repositoryItems as any[],
           createdAt: new Date(),
         };
       },
@@ -413,7 +374,6 @@ export class UserService extends BaseService implements UserRepository, IUserSer
 
         // 관련 데이터만 삭제 (사용자 계정은 유지)
         await this.executeTransaction([
-          { name: 'delete_repository_items', params: { user_id: userId } },
           { name: 'delete_todos', params: { user_id: userId } },
         ], 'reset_user_data');
       },

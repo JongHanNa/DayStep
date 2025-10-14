@@ -17,7 +17,6 @@ export type RecurrencePattern =
 // Application types based on database schema
 export type User = Tables<"users">;
 export type Todo = Tables<"todos">;
-export type RepositoryItem = Tables<"repository_items">;
 export type TimelineTask = Tables<"timeline_tasks">;
 export type PomodoroSession = Tables<"pomodoro_sessions">;
 export type TaskTemplate = Tables<"task_templates">;
@@ -128,7 +127,6 @@ export interface MemoInstance {
 // Input types for forms
 export type UserInsert = TablesInsert<"users">;
 export type TodoInsert = TablesInsert<"todos">;
-export type RepositoryItemInsert = TablesInsert<"repository_items">;
 export type TimelineTaskInsert = TablesInsert<"timeline_tasks">;
 export type PomodoroSessionInsert = TablesInsert<"pomodoro_sessions">;
 export type TaskTemplateInsert = TablesInsert<"task_templates">;
@@ -160,7 +158,6 @@ export interface MemoInstanceInsert {
 // Update types for forms
 export type UserUpdate = TablesUpdate<"users">;
 export type TodoUpdate = TablesUpdate<"todos">;
-export type RepositoryItemUpdate = TablesUpdate<"repository_items">;
 export type TimelineTaskUpdate = TablesUpdate<"timeline_tasks">;
 export type PomodoroSessionUpdate = TablesUpdate<"pomodoro_sessions">;
 export type TaskTemplateUpdate = TablesUpdate<"task_templates">;
@@ -244,9 +241,6 @@ export interface AuthUser {
     avatar_url?: string;
   };
 }
-
-// Repository item types enum
-export type RepositoryItemType = "todo";
 
 // Extended Todo interface with helper methods
 export interface TodoWithMethods extends Todo {
@@ -388,7 +382,6 @@ export type {
   TimelineItemType,
   BaseTimelineItem,
   TodoTimelineItem,
-  RepositoryTimelineItem,
   TimelineTaskItem,
   TimelineItem,
   TimelineGroup,

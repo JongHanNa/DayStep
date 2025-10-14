@@ -22,7 +22,6 @@ import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { TimelineItem } from '@/types';
 import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useRepositoryStore } from '@/state/stores/repositoryStore';
 import { useTimelineStore } from '@/state/stores/timelineStore';
 
 interface TimelineDndProviderProps {
@@ -40,7 +39,6 @@ export const TimelineDndProvider: React.FC<TimelineDndProviderProps> = ({ childr
   const [activeItem, setActiveItem] = useState<TimelineItem | null>(null);
   const { updateItem, moveItemToDate } = useTimelineViewStore();
   const updateTodo = useTodoStore(state => state.updateTodo);
-  const updateRepositoryItem = useRepositoryStore(state => state.updateItem);
   const updateTimelineTask = useTimelineStore(state => state.updateTask);
 
   // Configure sensors for better touch and keyboard support
@@ -99,10 +97,6 @@ export const TimelineDndProvider: React.FC<TimelineDndProviderProps> = ({ childr
         // Todo items don't have direct date properties, only due_date
         // updateTodo(item.id, { due_date: newDate.toISOString() });
         break;
-      case 'repository':
-        // Repository items don't have scheduledFor property
-        // updateRepositoryItem(item.id, { scheduledFor: newDate });
-        break;
       case 'timeline-task':
         // Timeline tasks use start_time and end_time
         // updateTimelineTask(item.id, { start_time: newDate.toISOString() });
@@ -133,9 +127,7 @@ export const TimelineDndProvider: React.FC<TimelineDndProviderProps> = ({ childr
           <div className="bg-background border rounded-md p-2 shadow-lg opacity-90">
             <div className="text-sm font-medium">{activeItem.title}</div>
             <div className="text-xs text-muted-foreground">
-              {activeItem.type === 'todo' ? '할일' : 
-               activeItem.type === 'repository' ? '템플릿' : 
-               '타임라인'}
+              {activeItem.type === 'todo' ? '할일' : '타임라인'}
             </div>
           </div>
         ) : null}

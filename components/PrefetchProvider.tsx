@@ -39,8 +39,6 @@ export function PrefetchProvider() {
         if (path.includes("/todos")) {
           import("@/components/todos/TodoStats");
           import("@/components/todos/TodoFilter");
-        } else if (path.includes("/repository")) {
-          import("@/components/repository/RepositoryList");
         }
       }
     };

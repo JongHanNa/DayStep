@@ -1,12 +1,12 @@
 // Timeline View specific type definitions for main timeline component
-import { Todo, RepositoryItem, TimelineTask } from './index';
+import { Todo, TimelineTask } from './index';
 import { TaskStatus, TaskPriority } from './timeline';
 
 // Timeline view modes
 export type TimelineViewMode = 'daily' | 'weekly' | 'monthly';
 
 // Timeline item types that can be displayed
-export type TimelineItemType = 'todo' | 'repository' | 'timeline-task' | 'calendar' | 'gap' | 'current-time' | 'remaining-time';
+export type TimelineItemType = 'todo' | 'timeline-task' | 'calendar' | 'gap' | 'current-time' | 'remaining-time';
 
 // Base timeline item interface
 export interface BaseTimelineItem {
@@ -28,13 +28,6 @@ export interface TodoTimelineItem extends BaseTimelineItem {
   data: Todo;
   isCompleted: boolean;
   priority?: 'low' | 'medium' | 'high';
-}
-
-// Repository item as timeline item
-export interface RepositoryTimelineItem extends BaseTimelineItem {
-  type: 'repository';
-  data: RepositoryItem;
-  sourceType: 'todo';
 }
 
 // Timeline task as timeline item
@@ -59,7 +52,6 @@ export interface CalendarTimelineItem extends BaseTimelineItem {
 // Union type for all timeline items
 export type TimelineItem =
   | TodoTimelineItem
-  | RepositoryTimelineItem
   | TimelineTaskItem
   | CalendarTimelineItem;
 

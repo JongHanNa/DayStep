@@ -4,7 +4,6 @@
  */
 
 import { Todo } from '@/entities/todo/Todo';
-import { RepositoryItem } from '@/entities/repository/RepositoryItem';
 import { TodoInsert, TodoUpdate, CreateTodoInput, UpdateTodoInput, ScheduleType, RecurrencePattern } from '@/types';
 import { BaseService, ServiceError } from '../base/BaseService';
 import { TodoRepository, TodoService as ITodoService } from './TodoRepository';
@@ -901,118 +900,13 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
     );
   }
 
-  /**
-   * 할일을 보관함으로 아카이브
-   */
-  async archiveToRepository(todoId: string, category?: string): Promise<void> {
-    return this.executeWithPerformanceTracking(
-      'archiveToRepository',
-      async () => {
-        this.validateRequiredFields({ todoId }, ['todoId'], 'archiveToRepository');
-
-        const todo = await this.findById(todoId);
-        if (!todo) {
-          throw new ServiceError(
-            '할일을 찾을 수 없습니다.',
-            'TODO_NOT_FOUND',
-            undefined,
-            { todoId }
-          );
-        }
-
-        // 보관함 아이템 생성 데이터 준비
-        const repositoryData = RepositoryItem.fromTodo(
-          todo.userId,
-          todo.id,
-          todo.content,
-          todo.content,
-          category
-        );
-
-        // 트랜잭션으로 보관함 생성과 할일 삭제를 동시에 수행
-        await this.executeTransaction([
-          {
-            name: 'create_repository_item',
-            params: repositoryData
-          },
-          {
-            name: 'delete_todo',
-            params: { todo_id: todoId }
-          }
-        ], 'archive_todo_to_repository');
-      },
-      { todoId, category }
-    );
-  }
-
-  /**
-   * 보관함에서 할일로 복원
-   */
-  async restoreFromRepository(repositoryItemId: string): Promise<Todo> {
-    return this.executeWithPerformanceTracking(
-      'restoreFromRepository',
-      async () => {
-        this.validateRequiredFields({ repositoryItemId }, ['repositoryItemId'], 'restoreFromRepository');
-
-        // 보관함 아이템 조회
-        const repositoryItem = await this.executeSingleQuery(
-          this.client
-            .from('repository_items')
-            .select('*')
-            .eq('id', repositoryItemId)
-            .eq('type', 'todo'),
-          { repositoryItemId }
-        );
-
-        if (!repositoryItem) {
-          throw new ServiceError(
-            '보관함 아이템을 찾을 수 없습니다.',
-            'REPOSITORY_ITEM_NOT_FOUND',
-            undefined,
-            { repositoryItemId }
-          );
-        }
-
-        // 새 할일 생성을 위한 순서 인덱스 계산
-        const { count } = (await this.executeQuery(
-          this.client
-            .from('todos')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', (repositoryItem as any).user_id)
-        )) as any;
-
-        const todoData: TodoInsert = {
-          user_id: (repositoryItem as any).user_id,
-          content: (repositoryItem as any).content,
-          title: (repositoryItem as any).title || (repositoryItem as any).content,
-          completed: false,
-          order_index: count || 0,
-        };
-
-        // 트랜잭션으로 할일 생성과 보관함 아이템 삭제를 동시에 수행
-        const result = await this.executeTransaction([
-          {
-            name: 'create_todo',
-            params: todoData
-          },
-          {
-            name: 'delete_repository_item',
-            params: { item_id: repositoryItemId }
-          }
-        ], 'restore_todo_from_repository');
-
-        return Todo.fromDatabase((result as any).todo);
-      },
-      { repositoryItemId }
-    );
-  }
 
   /**
    * 할일 일괄 작업
    */
   async bulkOperation(
-    todoIds: string[], 
-    operation: 'complete' | 'delete' | 'archive'
+    todoIds: string[],
+    operation: 'complete' | 'delete'
   ): Promise<{
     success: number;
     failed: number;
@@ -1034,11 +928,6 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           delete: async (id: string) => {
             const todo = await this.findById(id);
             await this.delete(id);
-            return todo!;
-          },
-          archive: async (id: string) => {
-            const todo = await this.findById(id);
-            await this.archiveToRepository(id);
             return todo!;
           },
         };

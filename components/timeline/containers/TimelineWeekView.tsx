@@ -79,7 +79,6 @@ const TimelineWeekView: React.FC = () => {
                     <div className="font-medium truncate">{item.title}</div>
                     <div className="text-[10px] text-muted-foreground mt-0.5">
                       {item.type === 'todo' && '할 일'}
-                      {item.type === 'repository' && '보관함'}
                       {item.type === 'timeline-task' && '작업'}
                     </div>
                   </div>

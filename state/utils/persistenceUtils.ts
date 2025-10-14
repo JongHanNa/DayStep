@@ -5,7 +5,6 @@
 
 import { User } from "@/entities/user/User";
 import { Todo } from "@/entities/todo/Todo";
-import { RepositoryItem } from "@/entities/repository/RepositoryItem";
 
 /**
  * 저장소 키 접두사
@@ -482,53 +481,6 @@ export class EntityPersistenceManager {
         recurrence_days_of_week: item.recurrenceDaysOfWeek || null,
         recurrence_day_of_month: item.recurrenceDayOfMonth || null,
         parent_todo_id: item.parentTodoId || null,
-        created_at: item.createdAt,
-        updated_at: item.updatedAt,
-      })
-    );
-  }
-
-  /**
-   * 보관함 데이터 저장
-   */
-  async saveRepositoryItems(
-    userId: string,
-    items: RepositoryItem[]
-  ): Promise<boolean> {
-    const serializedItems = items.map((item) => ({
-      id: item.id,
-      userId: item.userId,
-      type: item.type,
-      title: item.title,
-      content: item.content,
-      category: item.category,
-      sourceId: item.sourceId,
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
-    }));
-
-    return this.storage.saveData(userId, "repository", serializedItems, {
-      metadata: { itemCount: items.length },
-    });
-  }
-
-  /**
-   * 보관함 데이터 로드
-   */
-  async loadRepositoryItems(userId: string): Promise<RepositoryItem[]> {
-    const data = await this.storage.loadData<any[]>(userId, "repository");
-
-    if (!data) return [];
-
-    return data.map((item) =>
-      RepositoryItem.fromDatabase({
-        id: item.id,
-        user_id: item.userId,
-        type: item.type,
-        title: item.title,
-        content: item.content,
-        category: item.category,
-        source_id: item.sourceId,
         created_at: item.createdAt,
         updated_at: item.updatedAt,
       })

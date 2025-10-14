@@ -446,17 +446,16 @@ export const useTodoStore = createStore<TodoStoreState>(
             const { useTimelineViewStore } = await import('./timelineViewStore');
             const timelineStore = useTimelineViewStore.getState();
             const updatedTodos = get().todos;
-            const repositoryItems: any[] = []; // 필요시 repositoryStore에서 가져오기
             const timelineTasks: any[] = []; // 필요시 추가
-            
+
             // 🔍 TodoStore에서 TimelineStore로 전달할 데이터 확인
             console.log('🔍 [TodoStore] TimelineStore로 전달할 할일 데이터:', {
               총개수: updatedTodos.length,
               수정된할일ID: finalTodo.id,
               수정된할일데이터: updatedTodos.find((t: any) => t.id === finalTodo.id)
             });
-            
-            await timelineStore.loadItemsFromSources(updatedTodos, repositoryItems, timelineTasks);
+
+            await timelineStore.loadItemsFromSources(updatedTodos, timelineTasks);
             console.log('✅ [TodoStore] 타임라인 새로고침 완료');
           } catch (refreshError) {
             console.warn('⚠️ [TodoStore] 타임라인 새로고침 실패:', refreshError);

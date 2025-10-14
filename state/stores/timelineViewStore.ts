@@ -63,7 +63,7 @@ import {
   TimelineAnimationState,
   TimelineItemDimensions
 } from '@/types/timeline-view';
-import { Todo, RepositoryItem, TimelineTask } from '@/types';
+import { Todo, TimelineTask } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { 
   loadTimelineDisplayPreferencesWithJWT, 
@@ -161,7 +161,7 @@ interface TimelineViewState {
   restoreScrollPosition: () => number;
   
   // Utility actions
-  loadItemsFromSources: (todos: any[], repositoryItems: any[], timelineTasks: any[]) => Promise<void>;
+  loadItemsFromSources: (todos: any[], timelineTasks: any[]) => Promise<void>;
   getFilteredAndSortedItems: () => TimelineItem[];
   getItemsForDateRange: (start: Date, end: Date) => TimelineItem[];
   computeViewData: () => void;
@@ -169,7 +169,7 @@ interface TimelineViewState {
 
 // 더 넓은 날짜 범위로 기본 필터 설정 (과거 1년 ~ 미래 1년)
 const defaultFilters: TimelineViewFilters = {
-  itemTypes: ['todo', 'repository', 'timeline-task', 'calendar'],
+  itemTypes: ['todo', 'timeline-task', 'calendar'],
   dateRange: {
     start: subYears(new Date(), 1), // 1년 전부터
     end: addYears(new Date(), 1)    // 1년 후까지
@@ -565,20 +565,19 @@ export const useTimelineViewStore = create<TimelineViewState>()(
         },
 
         // Utility actions
-        loadItemsFromSources: async (todos, repositoryItems, timelineTasks) => {
+        loadItemsFromSources: async (todos, timelineTasks) => {
           try {
             // 중복 호출 방지: 데이터 해시로 실제 변경 감지 (내용 변경도 포함)
             const storeCurrentDate = get().currentDate instanceof Date ? get().currentDate : new Date(get().currentDate);
             const currentDataHash = JSON.stringify({
               currentDate: format(storeCurrentDate, 'yyyy-MM-dd'), // 🔧 날짜 포함으로 반복 할일 처리 보장
-              todos: todos.map(t => ({ 
-                id: t.id, 
-                updated_at: t.updated_at, 
-                content: t.content, 
+              todos: todos.map(t => ({
+                id: t.id,
+                updated_at: t.updated_at,
+                content: t.content,
                 start_time: t.start_time,
-                schedule_type: t.schedule_type 
+                schedule_type: t.schedule_type
               })),
-              repositoryItems: repositoryItems.map(ri => ({ id: ri.id, updated_at: ri.updated_at, content: ri.content })),
               timelineTasks: timelineTasks.map(tt => ({ id: tt.id, updated_at: tt.updated_at, title: tt.title, start_time: tt.start_time }))
             });
             
@@ -842,28 +841,6 @@ export const useTimelineViewStore = create<TimelineViewState>()(
                 앱화면날짜_KST: kstDateString
               });
             }
-          });
-
-          // Convert repository items to timeline items
-          repositoryItems.forEach(item => {
-            const safeStartTime = new Date(item.created_at);
-            const safeCreatedAt = new Date(item.created_at);
-            const safeUpdatedAt = new Date(item.updated_at || item.created_at);
-            
-            items.push({
-              id: `repository-${item.id}`,
-              type: 'repository',
-              title: item.title,
-              description: item.description,
-              startTime: safeStartTime,
-              isAllDay: true,
-              color: '#8B5CF6', // purple
-              userId: item.user_id,
-              createdAt: safeCreatedAt,
-              updatedAt: safeUpdatedAt,
-              data: item,
-              sourceType: item.item_type
-            });
           });
 
           // Convert timeline tasks to timeline items

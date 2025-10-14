@@ -511,22 +511,4 @@ export class Todo {
     };
   }
 
-  /**
-   * 할일을 보관함 아이템으로 변환하기 위한 데이터 반환
-   */
-  toRepositoryItemData(): {
-    type: 'todo';
-    title: string;
-    content: string;
-    source_id: string;
-  } {
-    return {
-      type: 'todo',
-      title: this.content.length > 30 
-        ? `${this.content.substring(0, 30)}...`
-        : this.content,
-      content: this.content,
-      source_id: this.id,
-    };
-  }
 }

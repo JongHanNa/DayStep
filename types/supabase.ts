@@ -430,50 +430,6 @@ export type Database = {
           },
         ]
       }
-      repository_items: {
-        Row: {
-          category: string | null
-          content: string
-          created_at: string
-          id: string
-          source_id: string | null
-          title: string
-          type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          category?: string | null
-          content: string
-          created_at?: string
-          id?: string
-          source_id?: string | null
-          title: string
-          type: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          category?: string | null
-          content?: string
-          created_at?: string
-          id?: string
-          source_id?: string | null
-          title?: string
-          type?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "repository_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       task_templates: {
         Row: {
           category: string | null

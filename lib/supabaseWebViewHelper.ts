@@ -475,30 +475,6 @@ export async function fetchTodosForDateRange(
 
 
 /**
- * 보관함 아이템 조회
- */
-export async function fetchRepositoryItems(userId: string, options: QueryOptions = {}): Promise<any[]> {
-  console.log('📦 보관함 아이템 조회:', { userId, options });
-
-  try {
-    const items = await queryRLSTableWithJWT('repository_items', {
-      column: 'user_id',
-      operator: 'eq',
-      value: userId
-    }, {
-      order: 'created_at.desc',
-      ...options
-    });
-
-    console.log('✅ 보관함 아이템 조회 성공:', { count: items?.length || 0 });
-    return items || [];
-  } catch (error) {
-    console.error('❌ 보관함 아이템 조회 실패:', error);
-    return [];
-  }
-}
-
-/**
  * 타임라인 태스크 조회
  */
 export async function fetchTimelineTasks(
@@ -857,23 +833,6 @@ export async function deleteTodoWithJWT(todoId: string): Promise<any> {
     return result;
   } catch (error) {
     console.error('❌ JWT 할일 삭제 실패:', error);
-    throw error;
-  }
-}
-
-
-/**
- * JWT 방식으로 보관함 아이템 생성
- */
-export async function createRepositoryItemWithJWT(itemData: Record<string, any>): Promise<any> {
-  console.log('📦 JWT 방식으로 보관함 아이템 생성:', { itemData });
-
-  try {
-    const result = await createWithJWT('repository_items', itemData);
-    console.log('✅ JWT 보관함 아이템 생성 성공:', { result });
-    return result;
-  } catch (error) {
-    console.error('❌ JWT 보관함 아이템 생성 실패:', error);
     throw error;
   }
 }

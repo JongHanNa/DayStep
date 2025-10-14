@@ -1,5 +1,4 @@
 import { Todo } from '@/entities/todo/Todo'
-import { RepositoryItem } from '@/entities/repository/RepositoryItem'
 
 // Test data factory functions
 export const createMockTodo = (overrides: Partial<Todo> = {}): Todo => {
@@ -32,33 +31,6 @@ export const createMockTodo = (overrides: Partial<Todo> = {}): Todo => {
     recurrence_days_of_week: (overrides as any).recurrenceDaysOfWeek || null,
     recurrence_day_of_month: (overrides as any).recurrenceDayOfMonth || null,
     parent_todo_id: (overrides as any).parentTodoId || null,
-    created_at: (overrides.createdAt || defaultData.createdAt).toISOString(),
-    updated_at: (overrides.updatedAt || defaultData.updatedAt).toISOString(),
-  })
-}
-
-
-export const createMockRepositoryItem = (overrides: Partial<RepositoryItem> = {}): RepositoryItem => {
-  const defaultData = {
-    id: 'test-repo-item-id',
-    userId: 'test-user-id',
-    type: 'todo' as const,
-    title: 'Test Repository Item',
-    content: 'Test repository item content',
-    category: 'work',
-    sourceId: 'source-id',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-  
-  return RepositoryItem.fromDatabase({
-    id: overrides.id || defaultData.id,
-    user_id: overrides.userId || defaultData.userId,
-    type: overrides.type || defaultData.type,
-    title: overrides.title || defaultData.title,
-    content: overrides.content || defaultData.content,
-    category: overrides.category || defaultData.category,
-    source_id: overrides.sourceId || defaultData.sourceId,
     created_at: (overrides.createdAt || defaultData.createdAt).toISOString(),
     updated_at: (overrides.updatedAt || defaultData.updatedAt).toISOString(),
   })

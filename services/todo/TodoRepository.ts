@@ -80,10 +80,8 @@ export interface TodoService {
     duplicates: Todo[][];
     suggestions: string[];
   }>;
-  
-  archiveToRepository(todoId: string, category?: string): Promise<void>;
-  restoreFromRepository(repositoryItemId: string): Promise<Todo>;
-  bulkOperation(todoIds: string[], operation: 'complete' | 'delete' | 'archive'): Promise<{
+
+  bulkOperation(todoIds: string[], operation: 'complete' | 'delete'): Promise<{
     success: number;
     failed: number;
     errors: string[];

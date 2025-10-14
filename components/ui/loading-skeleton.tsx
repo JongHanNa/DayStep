@@ -99,46 +99,24 @@ export function TodoItemSkeleton({ className }: { className?: string }) {
   );
 }
 
-
-/**
- * 보관함 항목 스켈레톤
- */
-export function RepositoryItemSkeleton({ className }: { className?: string }) {
-  return (
-    <div className={cn('p-3 border rounded-lg space-y-2', className)}>
-      <div className="flex items-center justify-between">
-        <LoadingSkeleton className="h-4 w-2/3" />
-        <LoadingSkeleton className="h-6 w-16" variant="rounded" />
-      </div>
-      <LoadingSkeleton className="h-3 w-1/2" />
-      <div className="flex items-center space-x-2">
-        <LoadingSkeleton className="h-4 w-20" />
-        <LoadingSkeleton className="h-4 w-16" />
-      </div>
-    </div>
-  );
-}
-
 /**
  * 페이지 로딩 스켈레톤
  */
-export function PageLoadingSkeleton({ 
+export function PageLoadingSkeleton({
   title = true,
   items = 5,
   variant = 'card',
-  className 
+  className
 }: {
   title?: boolean;
   items?: number;
-  variant?: 'card' | 'todo' | 'repository';
+  variant?: 'card' | 'todo';
   className?: string;
 }) {
   const renderSkeleton = () => {
     switch (variant) {
       case 'todo':
         return <TodoItemSkeleton />;
-      case 'repository':
-        return <RepositoryItemSkeleton />;
       default:
         return <CardSkeleton />;
     }

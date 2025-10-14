@@ -30,7 +30,6 @@ export interface UserService {
   getUserActivityStats(userId: string): Promise<{
     totalTodos: number;
     completedTodos: number;
-    repositoryItems: number;
     joinDate: Date;
     lastActivity: Date | null;
   }>;
@@ -38,7 +37,6 @@ export interface UserService {
   createDataBackup(userId: string): Promise<{
     user: User;
     todos: any[];
-    repositoryItems: any[];
     createdAt: Date;
   }>;
   

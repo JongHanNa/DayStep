@@ -4,7 +4,6 @@ import { lazy, Suspense } from "react";
 import {
   LoadingSkeleton,
   TodoItemSkeleton,
-  RepositoryItemSkeleton,
 } from "@/components/ui/loading-skeleton";
 import { CenteredLoadingSpinner } from "@/components/ui/loading-spinner";
 
@@ -18,11 +17,6 @@ const TodoStatsComponent = lazy(() =>
 const TodoFilterComponent = lazy(() =>
   import("@/components/todos/TodoFilter").then((module) => ({
     default: module.TodoFilter,
-  }))
-);
-const RepositoryListComponent = lazy(() =>
-  import("@/components/repository/RepositoryList").then((module) => ({
-    default: module.RepositoryList,
   }))
 );
 
@@ -56,23 +50,6 @@ export function LazyTodoFilter() {
       }
     >
       <TodoFilterComponent />
-    </Suspense>
-  );
-}
-
-
-export function LazyRepositoryList() {
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-3">
-          {Array.from({ length: 6 }, (_, i) => (
-            <RepositoryItemSkeleton key={i} />
-          ))}
-        </div>
-      }
-    >
-      <RepositoryListComponent />
     </Suspense>
   );
 }
@@ -187,13 +164,6 @@ export const prefetchTodoComponents = () => {
   }
 };
 
-
-export const prefetchRepositoryComponents = () => {
-  if (typeof window !== "undefined") {
-    import("@/components/repository/RepositoryList");
-  }
-};
-
 export const prefetchAuthComponents = () => {
   if (typeof window !== "undefined") {
     import("@/components/auth/LoginButton");
@@ -225,7 +195,6 @@ export const smartPrefetch = () => {
       // 200ms 지연 후 프리페칭 시작
       setTimeout(() => {
         prefetchTodoComponents();
-        prefetchRepositoryComponents();
         prefetchImageComponents(); // 이미지 컴포넌트도 프리페치
       }, 200);
     }

@@ -1,5 +1,3 @@
-import { RepositoryItemType } from '@/types';
-
 /**
  * Domain Validation Utilities
  * 도메인별 유효성 검증 규칙을 중앙화
@@ -20,15 +18,6 @@ export const ValidationRules = {
     CONTENT_MAX_LENGTH: 200,
     CONTENT_MIN_LENGTH: 1,
     ORDER_MIN_VALUE: 0,
-  },
-  
-  // 보관함 아이템 관련
-  REPOSITORY_ITEM: {
-    TITLE_MAX_LENGTH: 100,
-    TITLE_MIN_LENGTH: 1,
-    CONTENT_MAX_LENGTH: 1000,
-    CONTENT_MIN_LENGTH: 1,
-    CATEGORY_MAX_LENGTH: 50,
   },
 } as const;
 
@@ -85,64 +74,6 @@ export function isValidTodoOrder(orderIndex: number): { valid: boolean; error?: 
   
   if (!Number.isInteger(orderIndex)) {
     return { valid: false, error: '순서는 정수여야 합니다.' };
-  }
-  
-  return { valid: true };
-}
-
-/**
- * 보관함 아이템 제목 검증
- */
-export function isValidRepositoryItemTitle(title: string): { valid: boolean; error?: string } {
-  const trimmedTitle = title.trim();
-  
-  if (trimmedTitle.length < ValidationRules.REPOSITORY_ITEM.TITLE_MIN_LENGTH) {
-    return { valid: false, error: '보관함 아이템 제목은 필수입니다.' };
-  }
-  
-  if (trimmedTitle.length > ValidationRules.REPOSITORY_ITEM.TITLE_MAX_LENGTH) {
-    return { valid: false, error: `제목은 ${ValidationRules.REPOSITORY_ITEM.TITLE_MAX_LENGTH}자를 초과할 수 없습니다.` };
-  }
-  
-  return { valid: true };
-}
-
-/**
- * 보관함 아이템 내용 검증
- */
-export function isValidRepositoryItemContent(content: string): { valid: boolean; error?: string } {
-  const trimmedContent = content.trim();
-  
-  if (trimmedContent.length < ValidationRules.REPOSITORY_ITEM.CONTENT_MIN_LENGTH) {
-    return { valid: false, error: '보관함 아이템 내용은 필수입니다.' };
-  }
-  
-  if (trimmedContent.length > ValidationRules.REPOSITORY_ITEM.CONTENT_MAX_LENGTH) {
-    return { valid: false, error: `내용은 ${ValidationRules.REPOSITORY_ITEM.CONTENT_MAX_LENGTH}자를 초과할 수 없습니다.` };
-  }
-  
-  return { valid: true };
-}
-
-/**
- * 보관함 아이템 타입 검증
- */
-export function isValidRepositoryItemType(type: string): type is RepositoryItemType {
-  const validTypes: RepositoryItemType[] = ['todo'];
-  return validTypes.includes(type as RepositoryItemType);
-}
-
-/**
- * 보관함 아이템 카테고리 검증
- */
-export function isValidRepositoryItemCategory(category: string | null | undefined): { valid: boolean; error?: string } {
-  if (!category) {
-    return { valid: true }; // 카테고리는 선택사항
-  }
-  
-  const trimmedCategory = category.trim();
-  if (trimmedCategory.length > ValidationRules.REPOSITORY_ITEM.CATEGORY_MAX_LENGTH) {
-    return { valid: false, error: `카테고리는 ${ValidationRules.REPOSITORY_ITEM.CATEGORY_MAX_LENGTH}자를 초과할 수 없습니다.` };
   }
   
   return { valid: true };
