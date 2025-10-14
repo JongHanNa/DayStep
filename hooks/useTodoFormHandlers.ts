@@ -404,7 +404,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     try {
       // 기본 할일 데이터 구성
       const todoData: any = {
-        content: values.content.trim(),
+        title: values.content.trim(), // ✅ title 필드로 전송 (UI는 content 사용)
         priority: values.priority,
         icon: values.selectedIcon,
         color: getColorById(values.selectedColor).hex,
@@ -728,7 +728,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     try {
       // 기본 할일 데이터 구성
       const todoData: any = {
-        content: values.content.trim(),
+        title: values.content.trim(), // ✅ title 필드로 전송 (UI는 content 사용)
         priority: values.priority,
         icon: values.selectedIcon,
         color: getColorById(values.selectedColor).hex,

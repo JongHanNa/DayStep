@@ -248,7 +248,7 @@ export class WidgetSyncService {
    * 할일 제목을 시간 정보와 함께 포맷팅
    */
   private formatTitleWithTime(todo: Todo): string {
-    let displayTitle = todo.content.length > 30 ? todo.content.substring(0, 30) + '...' : todo.content;
+    let displayTitle = todo.title.length > 30 ? todo.title.substring(0, 30) + '...' : todo.title;
     
     // 시간 지정 할일인 경우 시간 정보 추가
     if (todo.startTime) {

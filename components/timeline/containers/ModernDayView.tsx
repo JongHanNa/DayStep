@@ -310,7 +310,7 @@ const ModernDayView: React.FC<ModernDayViewProps> = memo(({ className }) => {
       open: true,
       data: {
         ...data,
-        todoTitle: todo.content || '할일'
+        todoTitle: todo.title || '할일'
       }
     });
   }, [todos]);
@@ -609,7 +609,7 @@ const ModernDayView: React.FC<ModernDayViewProps> = memo(({ className }) => {
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-blue-500 flex-shrink-0"></div>
               <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex-1">
-                {draggedTodo?.content || ''}
+                {draggedTodo?.title || ''}
               </div>
             </div>
           </div>

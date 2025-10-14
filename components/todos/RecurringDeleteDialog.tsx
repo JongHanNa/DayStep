@@ -128,7 +128,7 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
             반복 일정 삭제
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            &ldquo;{todo.content}&rdquo; ({getRecurrenceDescription()})를 어떻게 삭제하시겠습니까?
+            &ldquo;{todo.title}&rdquo; ({getRecurrenceDescription()})를 어떻게 삭제하시겠습니까?
           </p>
         </div>
 

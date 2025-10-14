@@ -86,7 +86,7 @@ export function setupRealtimeSync() {
           console.log('🔄 반복 할일 인스턴스 INSERT 감지 - 클라이언트에서 생성하므로 스킵:', {
             id: payload.new.id,
             parentId: payload.new.parent_todo_id,
-            content: payload.new.content
+            title: payload.new.title
           });
           return;
         }
@@ -125,14 +125,14 @@ export function setupRealtimeSync() {
       console.log(`📻 [${platform}] Broadcast 할일 변경 감지:`, {
         event: payload.payload?.eventType,
         id: payload.payload?.id,
-        content: payload.payload?.content,
+        title: payload.payload?.title,
         timestamp: new Date().toLocaleTimeString()
       });
-      
+
       // Broadcast로 받은 변경사항도 동일하게 처리
       const broadcastData = payload.payload;
       if (broadcastData?.eventType === 'UPDATE' && broadcastData?.data) {
-        console.log(`✏️ [${platform}] Broadcast 할일 수정됨:`, broadcastData.data.content);
+        console.log(`✏️ [${platform}] Broadcast 할일 수정됨:`, broadcastData.data.title);
         const currentState = useTodoStore.getState();
         const index = currentState.todos.findIndex(t => t.id === broadcastData.data.id);
         if (index !== -1) {

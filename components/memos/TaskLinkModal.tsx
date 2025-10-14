@@ -195,12 +195,12 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
   const filteredTodos = todos.filter(todo => {
     // 반복 할일 여부 확인: recurrence_pattern이 'none'이 아니거나 null이 아닌 경우
     const isRecurring = todo.recurrence_pattern && todo.recurrence_pattern !== 'none';
-    
+
     if (activeTab === 'regular' && isRecurring) return false;
     if (activeTab === 'recurring' && !isRecurring) return false;
-    
+
     if (!searchQuery) return true;
-    return todo.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return todo.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
 
@@ -300,7 +300,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
                         </h4>
                         <div className="mt-2">
                           <p className="text-sm text-blue-800 dark:text-blue-200">
-                            {linkedTodo.content}
+                            {linkedTodo.title}
                             {currentLinkedDate && ` (${format(new Date(currentLinkedDate), 'M월 d일', { locale: ko })})`}
                           </p>
                           <p className="text-xs text-blue-600 dark:text-blue-400">
@@ -387,7 +387,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
                               
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">
-                                  {todo.content}
+                                  {todo.title}
                                 </p>
                                 <div className="flex items-center gap-2 mt-1">
                                   <Badge 
@@ -493,7 +493,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
                                   
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-foreground truncate">
-                                      {todo.content}
+                                      {todo.title}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
                                       <Badge variant="outline" className="text-xs">

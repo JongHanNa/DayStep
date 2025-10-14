@@ -74,7 +74,7 @@ export const createTodoAction = createAsyncAction(async (data: CreateTodoInput) 
   const todoData = {
     ...data,
     user_id: userId,
-    title: data.title || data.content,
+    title: data.title,
     schedule_type: data.schedule_type || "anytime",
     recurrence_pattern: data.recurrence_pattern || "none",
   };

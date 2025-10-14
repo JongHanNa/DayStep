@@ -8,7 +8,6 @@ export class Todo {
   private constructor(
     public readonly id: string,
     public readonly userId: string,
-    public readonly content: string,
     public readonly title: string,
     public readonly completed: boolean,
     public readonly orderIndex: number,
@@ -63,13 +62,12 @@ export class Todo {
     const departureLocation = record.departureLocation ?? record.departure_location;
     const departureTime = record.departureTime ?? record.departure_time;
 
-    // title 필드 (없으면 content를 사용)
-    const title = data.title || data.content;
+    // title 필드
+    const title = data.title;
 
     return new Todo(
       data.id,
       userId || '',
-      data.content,
       title,
       data.completed,
       orderIndex || 0,
@@ -106,7 +104,7 @@ export class Todo {
    */
   static create(
     userId: string,
-    content: string,
+    title: string,
     scheduleType: ScheduleType,
     options: {
       orderIndex?: number;
@@ -123,7 +121,7 @@ export class Todo {
     } = {}
   ): {
     user_id: string;
-    content: string;
+    title: string;
     completed: boolean;
     order_index: number;
     schedule_type: ScheduleType;
@@ -139,11 +137,11 @@ export class Todo {
     parent_todo_id?: string;
   } {
     // 비즈니스 규칙 검증
-    if (!content.trim()) {
+    if (!title.trim()) {
       throw new Error('할일 내용은 필수입니다.');
     }
 
-    if (content.length > 500) {
+    if (title.length > 500) {
       throw new Error('할일 내용은 500자를 초과할 수 없습니다.');
     }
 
@@ -163,7 +161,7 @@ export class Todo {
 
     return {
       user_id: userId,
-      content: content.trim(),
+      title: title.trim(),
       completed: false,
       order_index: options.orderIndex ?? 0,
       priority: options.priority,
@@ -373,7 +371,6 @@ export class Todo {
     return new Todo(
       this.id,
       this.userId,
-      this.content,
       this.title,
       !this.completed,
       this.orderIndex,
@@ -400,25 +397,24 @@ export class Todo {
   /**
    * 할일 내용 수정
    */
-  updateContent(content: string): Todo {
+  updateContent(title: string): Todo {
     // 비즈니스 규칙 검증
-    if (!content.trim()) {
+    if (!title.trim()) {
       throw new Error('할일 내용은 필수입니다.');
     }
 
-    if (content.length > 500) {
+    if (title.length > 500) {
       throw new Error('할일 내용은 500자를 초과할 수 없습니다.');
     }
 
-    if (content.trim() === this.content) {
+    if (title.trim() === this.title) {
       return this; // 내용이 같으면 변경 없음
     }
 
     return new Todo(
       this.id,
       this.userId,
-      content.trim(),
-      this.title,
+      title.trim(),
       this.completed,
       this.orderIndex,
       this.createdAt,
@@ -480,7 +476,6 @@ export class Todo {
     return {
       id: this.id,
       user_id: this.userId,
-      content: this.content,
       title: this.title,
       completed: this.completed,
       order_index: this.orderIndex,

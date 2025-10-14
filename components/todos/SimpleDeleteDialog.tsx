@@ -72,7 +72,7 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
                   삭제할 할일
                 </p>
                 <p className="text-sm text-gray-700 break-words">
-                  &ldquo;{todo.content}&rdquo;
+                  &ldquo;{todo.title}&rdquo;
                 </p>
               </div>
             </div>

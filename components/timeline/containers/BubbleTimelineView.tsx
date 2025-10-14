@@ -502,8 +502,7 @@ export const BubbleTimelineView: React.FC = () => {
                           const combinedData: DbTodo & { _instanceInfo?: any } = {
                             id: originalTodo.id,
                             user_id: originalTodo.userId || originalTodo.user_id,
-                            content: originalTodo.content,
-                            title: originalTodo.title || originalTodo.content,
+                            title: originalTodo.title,
                             completed: timelineItem.data.completed || originalTodo.completed,
                             order_index: originalTodo.orderIndex || originalTodo.order_index || 0,
                             created_at: (() => {

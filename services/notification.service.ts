@@ -45,7 +45,7 @@ export class NotificationService {
     try {
       console.log('📋 할일 리마인더 스케쥴링 시작:', {
         id: todo.id,
-        content: todo.content.substring(0, 30) + '...',
+        content: todo.title.substring(0, 30) + '...',
         startTime: todo.startTime
       });
 
@@ -76,7 +76,7 @@ export class NotificationService {
         // 네이티브 플랫폼에서는 DayStepWidget 플러그인 사용
         const options: NotificationOptions = {
           title: '할일 리마인더',
-          body: `곧 시작: ${todo.content}`,
+          body: `곧 시작: ${todo.title}`,
           scheduledTime: reminderTime.toISOString(),
           todoId: todo.id,
           type: 'todo'
@@ -100,7 +100,7 @@ export class NotificationService {
         const notification: LocalNotificationSchema = {
           id: parseInt(todo.id),
           title: '할일 리마인더',
-          body: `곧 시작: ${todo.content}`,
+          body: `곧 시작: ${todo.title}`,
           schedule: {
             at: reminderTime
           },

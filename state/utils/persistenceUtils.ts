@@ -442,7 +442,7 @@ export class EntityPersistenceManager {
     const serializedTodos = todos.map((todo) => ({
       id: todo.id,
       userId: todo.userId,
-      content: todo.content,
+      content: todo.title,
       completed: todo.completed,
       orderIndex: todo.orderIndex,
       createdAt: todo.createdAt.toISOString(),

@@ -168,7 +168,7 @@ export class BackgroundSyncService {
       const result = await WidgetBridge.syncTodos({
         todos: todos.map(todo => ({
           id: todo.id,
-          title: todo.content,
+          title: todo.title,
           completed: todo.completed,
           priority: ((todo as any).priority as 'high' | 'medium' | 'low') || 'medium',
           dueDate: (todo as any).due_date || undefined,

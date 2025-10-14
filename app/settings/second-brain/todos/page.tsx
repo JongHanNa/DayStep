@@ -151,7 +151,7 @@ export default function TodosSettingsPage() {
       // 선택한 할일들을 생성
       for (const preset of selectedPresets) {
         const todoData: CreateTodoInput = {
-          content: preset.content,
+          title: preset.content,
           completed: false,
           priority: preset.priority,
           schedule_type: 'anytime',

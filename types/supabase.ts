@@ -732,7 +732,6 @@ export type Database = {
         Row: {
           color: string | null
           completed: boolean
-          content: string
           created_at: string
           departure_location: string | null
           departure_time: string | null
@@ -757,7 +756,6 @@ export type Database = {
         Insert: {
           color?: string | null
           completed?: boolean
-          content: string
           created_at?: string
           departure_location?: string | null
           departure_time?: string | null
@@ -782,7 +780,6 @@ export type Database = {
         Update: {
           color?: string | null
           completed?: boolean
-          content?: string
           created_at?: string
           departure_location?: string | null
           departure_time?: string | null

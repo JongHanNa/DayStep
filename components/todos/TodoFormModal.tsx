@@ -392,7 +392,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
             uiState.setShowRecurringUpdateDialog(false);
           }
         }}
-        todoTitle={editingTodo.content}
+        todoTitle={editingTodo.title}
         originalTime={uiState.originalTimeForUpdate}
         newTime={uiState.newTimeForUpdate}
         occurrenceDate={uiState.occurrenceDate}

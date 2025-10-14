@@ -99,7 +99,7 @@ export class ReminderScheduler {
       
       if (!this.isInitialized || !scheduledTime) {
         console.log('🚫 알림 스케줄링 스킵:', {
-          할일: todo.title || todo.content,
+          할일: todo.title,
           초기화됨: this.isInitialized,
           시작시간: scheduledTime
         });
@@ -135,7 +135,7 @@ export class ReminderScheduler {
           await LocalNotifications.schedule({
             notifications: [{
               title: '작업 준비 알림 📋',
-              body: `"${todo.title || todo.content}" 작업이 ${settings.beforeWork.minutes}분 후에 시작돼요!`,
+              body: `"${todo.title}" 작업이 ${settings.beforeWork.minutes}분 후에 시작돼요!`,
               id: notificationId,
               schedule: { at: beforeReminderDate },
               actionTypeId: 'BEFORE_WORK_REMINDER',
@@ -164,7 +164,7 @@ export class ReminderScheduler {
           await LocalNotifications.schedule({
             notifications: [{
               title: '작업 시작 알림 🚀',
-              body: `"${todo.title || todo.content}" 작업을 시작할 시간이에요!`,
+              body: `"${todo.title}" 작업을 시작할 시간이에요!`,
               id: notificationId,
               schedule: { at: scheduledDate },
               actionTypeId: 'WORK_START_REMINDER',
@@ -195,7 +195,7 @@ export class ReminderScheduler {
           await LocalNotifications.schedule({
             notifications: [{
               title: '작업 완료 시간 ✅',
-              body: `"${todo.title || todo.content}" 작업 완료 예정 시간이에요!`,
+              body: `"${todo.title}" 작업 완료 예정 시간이에요!`,
               id: notificationId,
               schedule: { at: endTime },
               actionTypeId: 'WORK_COMPLETE_REMINDER',

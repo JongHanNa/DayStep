@@ -89,7 +89,7 @@ export interface RecurrenceValidation {
  * 할일 데이터 구성을 위한 기본 정보
  */
 export interface TodoDataBase {
-  content: string;
+  title: string;
   priority: TodoPriority;
   icon: string;
   schedule_type: string;

@@ -260,7 +260,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
                 <div className="flex items-center gap-2 p-2 rounded bg-muted/50">
                   <Link className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">
-                    {linkedTodo.content}
+                    {linkedTodo.title}
                   </span>
                 </div>
               )}

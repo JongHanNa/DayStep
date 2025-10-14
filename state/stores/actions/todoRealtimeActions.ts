@@ -47,7 +47,7 @@ export const subscribeToRealtimeUpdates = (
             state.optimisticState.pendingOperations.some(
               (op: any) =>
                 op.type === "create" &&
-                op.data.content === newTodo.content
+                op.data.title === newTodo.title
             );
 
           if (!isOptimistic) {

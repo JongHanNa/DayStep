@@ -270,8 +270,7 @@ export interface TodoWithMethods extends Todo {
 
 // Create Todo input with required fields for new schema
 export interface CreateTodoInput {
-  content: string;
-  title?: string; // Optional title, defaults to content if not provided
+  title: string; // Required title field
   priority?: "low" | "medium" | "high";
   icon?: string; // Icon key for todo category
   color?: string; // Color hex value or color ID

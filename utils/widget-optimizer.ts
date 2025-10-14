@@ -211,7 +211,7 @@ export class WidgetOptimizer {
   private transformToWidgetTodos(todos: Todo[]): WidgetTodo[] {
     return todos.map((todo): WidgetTodo => {
       // 시간 정보를 제목에 포함
-      let displayTitle = this.optimizeTitle(todo.content);
+      let displayTitle = this.optimizeTitle(todo.title);
       
       // 시간 지정 할일인 경우 시간 정보 추가
       if (todo.startTime) {
@@ -371,7 +371,7 @@ export class WidgetOptimizer {
   private generateHash(todos: Todo[]): string {
     const relevantData = todos.map(todo => ({
       id: todo.id,
-      content: todo.content,
+      title: todo.title,
       completed: todo.completed,
       orderIndex: todo.orderIndex,
       updatedAt: todo.updatedAt.toISOString()
@@ -465,7 +465,7 @@ export class WidgetOptimizer {
       .slice(0, 5)
       .map(todo => ({
         id: todo.id,
-        title: todo.content.substring(0, 30),
+        title: todo.title.substring(0, 30),
         completed: todo.completed,
         priority: 'medium' as const,
         createdAt: todo.createdAt.toISOString(),

@@ -20,19 +20,19 @@ export const useNotification = () => {
     reminderMinutes: number = 60
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      console.log(`📅 할일 알림 예약: "${todo.content}" - ${reminderMinutes}분 후`);
+      console.log(`📅 할일 알림 예약: "${todo.title}" - ${reminderMinutes}분 후`);
 
       if (isNative) {
         // 네이티브 환경: iOS/Android 시스템 알림
         const result = await NotificationHelper.safeScheduleNotification({
           title: '할일 리마인더',
-          body: `곧 시작: ${todo.content}`,
+          body: `곧 시작: ${todo.title}`,
           delay: reminderMinutes * 60, // 분을 초로 변환
           id: `todo_${todo.id}`,
         });
 
         if (result.success) {
-          console.log(`✅ 네이티브 알림 예약 성공: ${todo.content}`);
+          console.log(`✅ 네이티브 알림 예약 성공: ${todo.title}`);
           return {
             success: true,
             message: `${reminderMinutes}분 후 알림이 예약되었습니다.`
@@ -50,13 +50,13 @@ export const useNotification = () => {
         
         const success = await mobileNotificationService.scheduleTodoReminder({
           todoId: todo.id,
-          title: todo.content,
-          content: todo.content,
+          title: todo.title,
+          content: todo.title,
           startTime: reminderDate.toISOString()
         });
 
         if (success) {
-          console.log(`✅ 웹뷰 알림 예약 성공: ${todo.content}`);
+          console.log(`✅ 웹뷰 알림 예약 성공: ${todo.title}`);
           return {
             success: true,
             message: `${reminderMinutes}분 후 알림이 예약되었습니다.`
@@ -318,7 +318,7 @@ export const useNotification = () => {
   const showTaskCompletionNotification = useCallback(async (todo: Todo) => {
     const result = await showAchievementNotification(
       '할일 완료! 🎉',
-      `"${todo.content}" 작업을 완료했습니다!`
+      `"${todo.title}" 작업을 완료했습니다!`
     );
 
     return result;

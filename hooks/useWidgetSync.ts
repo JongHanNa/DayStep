@@ -79,7 +79,7 @@ export const useWidgetSync = () => {
       .slice(0, 20) // 최대 20개만
       .map((todo): WidgetTodo => ({
         id: todo.id,
-        title: (todo as any).title || todo.content,
+        title: (todo as any).title || todo.title,
         completed: todo.completed,
         priority: ((todo as any).priority as 'high' | 'medium' | 'low') || 'medium',
         dueDate: (todo as any).due_date || undefined,

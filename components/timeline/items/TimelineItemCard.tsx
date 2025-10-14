@@ -187,7 +187,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         ...item.data,
         color: todoFromStore.color,
         icon: todoFromStore.icon,
-        content: todoFromStore.content,
+        title: todoFromStore.title,
         priority: todoFromStore.priority,
         completed: todoFromStore.completed // 완료 상태도 병합
       };

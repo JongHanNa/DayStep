@@ -574,7 +574,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
               todos: todos.map(t => ({
                 id: t.id,
                 updated_at: t.updated_at,
-                content: t.content,
+                title: t.title,
                 start_time: t.start_time,
                 schedule_type: t.schedule_type
               })),
@@ -604,9 +604,9 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             앱화면날짜_KST: kstDateString,
             DB필터범위_UTC: `${utcStart.toISOString()} ~ ${utcEnd.toISOString()}`,
             totalTodos: todos.length,
-            todoDetails: todos.map(t => ({ 
-              id: t.id, 
-              content: t.content,
+            todoDetails: todos.map(t => ({
+              id: t.id,
+              title: t.title,
               scheduleType: t.scheduleType || t.schedule_type || '없음',
               startTime: t.startTime || t.start_time || '없음',
               createdAt: t.createdAt || t.created_at,
@@ -632,8 +632,8 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             원본할일수: todos.length,
             일반할일수: regularTodos.length,
             반복할일수: recurringTodos.length,
-            일반할일제목들: regularTodos.map(t => t.content),
-            반복할일제목들: recurringTodos.map(t => t.content)
+            일반할일제목들: regularTodos.map(t => t.title),
+            반복할일제목들: recurringTodos.map(t => t.title)
           });
           
           // 반복 할일의 가상 인스턴스들 생성 (현재 보는 날짜 범위에서, 제외 날짜 고려)
@@ -674,7 +674,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
           console.log('🔄 반복 할일 인스턴스 생성 결과:', {
             반복할일수: recurringTodos.length,
             생성된인스턴스수: recurrenceInstances.length,
-            인스턴스제목들: recurrenceInstances.map(inst => inst.data.content)
+            인스턴스제목들: recurrenceInstances.map(inst => inst.data.title)
           });
           
           // 일반 할일과 반복 할일 인스턴스를 합쳐서 처리
@@ -687,7 +687,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             일반할일수: regularTodos.length,
             반복할일인스턴스수: recurrenceInstances.length,
             총처리할할일수: allTodosToProcess.length,
-            처리할할일제목들: allTodosToProcess.map(t => t.content)
+            처리할할일제목들: allTodosToProcess.map(t => t.title)
           });
 
           // Convert todos to timeline items using new schema
@@ -802,7 +802,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
               const timelineItem: TimelineItem = {
                 id: `todo-${todo.id}`,
                 type: 'todo' as const,
-                title: todo.content,
+                title: todo.title,
                 description: todo.description,
                 startTime: finalStartTime,
                 endTime: finalEndTime,
@@ -833,7 +833,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             } catch (error) {
               console.error(`❌ [할일 ${todo.id}] 타임라인 아이템 생성 중 오류:`, error);
               console.error(`❌ [할일 ${todo.id}] 할일 데이터:`, {
-                content: todo.content,
+                title: todo.title,
                 scheduleType: todo.scheduleType,
                 start_time: todo.start_time,
                 end_time: todo.end_time,

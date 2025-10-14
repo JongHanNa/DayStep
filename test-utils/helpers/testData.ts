@@ -5,7 +5,7 @@ export const createMockTodo = (overrides: Partial<Todo> = {}): Todo => {
   const defaultData = {
     id: 'test-todo-id',
     userId: 'test-user-id',
-    content: 'Test todo content',
+    title: 'Test todo title',
     completed: false,
     orderIndex: 0,
     createdAt: new Date(),
@@ -15,7 +15,7 @@ export const createMockTodo = (overrides: Partial<Todo> = {}): Todo => {
   return Todo.fromDatabase({
     id: overrides.id || defaultData.id,
     user_id: overrides.userId || defaultData.userId,
-    content: overrides.content || defaultData.content,
+    title: (overrides as any).title || defaultData.title,
     completed: overrides.completed ?? defaultData.completed,
     order_index: overrides.orderIndex ?? defaultData.orderIndex,
     category: (overrides as any).category || null,

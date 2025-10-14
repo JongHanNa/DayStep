@@ -259,7 +259,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         const tempId = `temp-${Date.now()}`;
         const optimisticTodo = Todo.fromDatabase({
           id: tempId,
-          content: data.content,
+          title: data.title,
           completed: data.completed ?? false,
           order_index: todoData.order_index,
           priority: data.priority,

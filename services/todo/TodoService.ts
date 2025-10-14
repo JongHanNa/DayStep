@@ -148,8 +148,8 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
       'createWithRecurrence',
       async () => {
         this.validateRequiredFields(
-          input, 
-          ['content', 'schedule_type'], 
+          input,
+          ['title', 'schedule_type'],
           'createWithRecurrence'
         );
 
@@ -357,7 +357,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         console.log('📝 [TodoService] 웹 환경 insertData 확인:', {
           order_index: insertData.order_index,
           user_id: insertData.user_id,
-          content: insertData.content,
+          title: insertData.title,
           schedule_type: insertData.schedule_type,
           departure_location: insertData.departure_location,
           departure_time: insertData.departure_time
@@ -394,8 +394,8 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
       'create',
       async () => {
         this.validateRequiredFields(
-          todoData, 
-          ['user_id', 'content'], 
+          todoData,
+          ['user_id', 'title'],
           'create'
         );
 
@@ -463,7 +463,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
 
         // 새로운 스키마에 맞게 변환
         const createInput: CreateTodoInput = {
-          content: todoData.content,
+          title: todoData.title,
           priority: todoData.priority as any,
           schedule_type: (todoData as any).schedule_type || 'anytime',
           start_time: (todoData as any).start_time,
@@ -813,7 +813,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             .from('todos')
             .select('*')
             .eq('user_id', userId)
-            .ilike('content', `%${query}%`)
+            .ilike('title', `%${query}%`)
             .order('order_index', { ascending: true }),
           { userId, query }
         );
@@ -862,10 +862,10 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         for (const todo of allTodos) {
           if (processed.has(todo.id)) continue;
 
-          const similar = allTodos.filter(other => 
-            other.id !== todo.id && 
+          const similar = allTodos.filter(other =>
+            other.id !== todo.id &&
             !processed.has(other.id) &&
-            this.isSimilarContent(todo.content, other.content)
+            this.isSimilarContent(todo.title, other.title)
           );
 
           if (similar.length > 0) {
@@ -974,17 +974,17 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         if (format === 'json') {
           return JSON.stringify(todos.map(todo => ({
             id: todo.id,
-            content: todo.content,
+            title: todo.title,
             completed: todo.completed,
             orderIndex: todo.orderIndex,
             createdAt: todo.createdAt.toISOString(),
             updatedAt: todo.updatedAt.toISOString(),
           })), null, 2);
         } else if (format === 'csv') {
-          const headers = ['ID', '내용', '완료여부', '순서', '생성일', '수정일'];
+          const headers = ['ID', '제목', '완료여부', '순서', '생성일', '수정일'];
           const rows = todos.map(todo => [
             todo.id,
-            `"${todo.content.replace(/"/g, '""')}"`, // CSV 이스케이프
+            `"${todo.title.replace(/"/g, '""')}"`, // CSV 이스케이프
             todo.completed ? '완료' : '미완료',
             todo.orderIndex.toString(),
             todo.createdAt.toISOString(),
@@ -1045,14 +1045,13 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           todos,
           async (todoData: any) => {
             // 필수 필드 확인
-            if (!todoData.content || typeof todoData.content !== 'string') {
-              throw new ServiceError('할일 내용이 필요합니다.', 'MISSING_CONTENT');
+            if (!todoData.title || typeof todoData.title !== 'string') {
+              throw new ServiceError('할일 제목이 필요합니다.', 'MISSING_TITLE');
             }
 
             const insertData: TodoInsert = {
               user_id: userId,
-              content: todoData.content.trim(),
-              title: todoData.title || todoData.content.trim(),
+              title: todoData.title.trim(),
               completed: Boolean(todoData.completed),
               order_index: todoData.orderIndex || 0,
             };
@@ -1075,12 +1074,12 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
   }
 
   /**
-   * 내용 유사도 검사 (간단한 구현)
+   * 제목 유사도 검사 (간단한 구현)
    */
-  private isSimilarContent(content1: string, content2: string): boolean {
+  private isSimilarContent(title1: string, title2: string): boolean {
     const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, '');
-    const norm1 = normalize(content1);
-    const norm2 = normalize(content2);
+    const norm1 = normalize(title1);
+    const norm2 = normalize(title2);
     
     // 완전히 동일하거나 한쪽이 다른 쪽을 포함하는 경우
     return norm1 === norm2 || 
@@ -1161,7 +1160,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         console.log('🚫 제외된 날짜 스킵:', {
           date: currentDateString,
           parentTodoId: parentTodo.id,
-          todoContent: input.content
+          todoTitle: input.title
         });
         continue; // 제외된 날짜는 인스턴스 생성하지 않음
       }
@@ -1669,7 +1668,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               parentId,
               excludedDate,
               userId,
-              todoContent: todo.content
+              todoTitle: todo.title
             });
 
             // JWT 방식으로 제외 날짜 기록
@@ -1726,7 +1725,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             console.log('🗑️ 반복 일정 전체 삭제:', {
               parentId,
               userId,
-              todoContent: todo.content
+              todoTitle: todo.title
             });
 
             try {

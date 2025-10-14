@@ -110,7 +110,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
             if (todo.recurrenceEndDate) {
               const endDate = new Date(todo.recurrenceEndDate);
               if (today > endDate) {
-                console.log(`🚫 [필터] ${todo.content}: 반복 종료됨 (${endDate.toLocaleDateString('ko-KR')})`);
+                console.log(`🚫 [필터] ${todo.title}: 반복 종료됨 (${endDate.toLocaleDateString('ko-KR')})`);
                 return false;
               }
             }
@@ -119,12 +119,12 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
             if (todo.recurrenceDaysOfWeek && Array.isArray(todo.recurrenceDaysOfWeek)) {
               const isValidDay = todo.recurrenceDaysOfWeek.includes(todayDayOfWeek);
               if (!isValidDay) {
-                console.log(`🚫 [필터] ${todo.content}: 오늘 요일(${todayDayOfWeek}) 해당 안됨 (허용: ${JSON.stringify(todo.recurrenceDaysOfWeek)})`);
+                console.log(`🚫 [필터] ${todo.title}: 오늘 요일(${todayDayOfWeek}) 해당 안됨 (허용: ${JSON.stringify(todo.recurrenceDaysOfWeek)})`);
                 return false;
               }
             }
-            
-            console.log(`✅ [통과] ${todo.content}: 오늘 반복 할일에 포함`);
+
+            console.log(`✅ [통과] ${todo.title}: 오늘 반복 할일에 포함`);
             return true;
           })
           .map(todo => {
@@ -141,8 +141,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
             // 오늘 날짜에 원본 시간 적용
             const todayWithTime = new Date(today);
             todayWithTime.setHours(hours, minutes, seconds, 0);
-            
-            console.log(`🔄 [변환] ${todo.content}: ${originalTime.toLocaleString('ko-KR')} → ${todayWithTime.toLocaleString('ko-KR')}`);
+
+            console.log(`🔄 [변환] ${todo.title}: ${originalTime.toLocaleString('ko-KR')} → ${todayWithTime.toLocaleString('ko-KR')}`);
             
             return {
               ...todo,
@@ -173,7 +173,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
       // 타임라인 할일들 확인
       todayTodos.forEach(todo => {
         const todoTime = todo.startTime ? new Date(todo.startTime) : null;
-        console.log(`🧪 [디버그] ${todo.content}: ${todoTime ? todoTime.toLocaleString('ko-KR') : '시간 없음'}`);
+        console.log(`🧪 [디버그] ${todo.title}: ${todoTime ? todoTime.toLocaleString('ko-KR') : '시간 없음'}`);
       });
       
       // 현재 시간 이후 할일 필터링
@@ -183,13 +183,13 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
         }
         const todoTime = new Date(todo.startTime);
         const isUpcoming = todoTime > now;
-        console.log(`🧪 [디버그] ${todo.content}: 현재 시간 이후: ${isUpcoming}`);
+        console.log(`🧪 [디버그] ${todo.title}: 현재 시간 이후: ${isUpcoming}`);
         return isUpcoming;
       });
       
       console.log('🧪 [테스트] 현재 시간 이후 할일:', upcomingTodos.length, '개');
       upcomingTodos.forEach(todo => {
-        console.log(`🧪 [테스트] - ${todo.content}: ${todo.startTime ? new Date(todo.startTime).toLocaleTimeString('ko-KR') : '시간 없음'}`);
+        console.log(`🧪 [테스트] - ${todo.title}: ${todo.startTime ? new Date(todo.startTime).toLocaleTimeString('ko-KR') : '시간 없음'}`);
       });
 
       // 위젯 동기화는 타임라인에서 필터링된 오늘 할일 전송

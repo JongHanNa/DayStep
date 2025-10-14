@@ -190,7 +190,7 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
 
   // 초기화 함수 (useCallback으로 메모이제이션)
   const initializeFormFromTodo = useCallback((todo: Todo) => {
-    setContent(todo.content || '');
+    setContent(todo.title || '');
     setPriority((todo.priority as 'low' | 'medium' | 'high') || 'medium');
     setSelectedIcon((todo.icon as UnifiedIconKey) || 'home');
     // DB에서 hex 값 또는 colorId가 올 수 있으므로 둘 다 처리
