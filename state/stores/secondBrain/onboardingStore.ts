@@ -290,7 +290,7 @@ export const useOnboardingStore = createStore<OnboardingStoreState>(
 
       const key = stepKeys[step];
 
-      set((state) => {
+      set((state: OnboardingStoreState) => {
         state.createdCounts[key] += count;
       });
     },

@@ -10,7 +10,10 @@ const path = require('path');
 
 const API_ROUTES = [
   'app/api/analytics/performance/route.ts',
-  'app/api/auth/callback/route.ts', 
+  'app/api/auth/callback/route.ts',
+  'app/api/auth/google/refresh/route.ts',
+  'app/api/auth/google/url/route.ts',
+  'app/api/health/route.ts',
   'app/auth/callback/route.ts',
   'app/api/sse/route.ts'
 ];

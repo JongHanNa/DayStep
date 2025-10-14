@@ -864,7 +864,7 @@ export const useTimelineStore = createStore<TimelineStoreState>(
           { event: "INSERT", schema: "public", table: "pomodoro_sessions" },
           (payload) => {
             set((state: TimelineStoreState) => {
-              state.sessions.unshift(payload.new);
+              state.sessions.unshift(payload.new as PomodoroSession);
               state.refreshStats();
             });
           }

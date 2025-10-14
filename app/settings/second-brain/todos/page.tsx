@@ -8,18 +8,17 @@ import type { CreateTodoInput } from '@/types';
 
 // 추천 할일 프리셋 (온보딩 step-5와 동일)
 const TODO_PRESETS = [
-  { content: '독서 시간 30분', priority: 'medium' as const, description: '매일 책 읽는 습관 만들기' },
-  { content: '운동하기', priority: 'medium' as const, description: '건강한 몸 만들기' },
-  { content: '프로젝트 계획 세우기', priority: 'high' as const, description: '체계적인 업무 진행' },
-  { content: '정리 정돈하기', priority: 'low' as const, description: '깔끔한 환경 유지' },
-  { content: '새로운 기술 학습', priority: 'medium' as const, description: '지속적인 성장' },
-  { content: '건강 체크하기', priority: 'high' as const, description: '규칙적인 건강 관리' },
+  { content: '독서 시간 30분', priority: 'medium' as const },
+  { content: '운동하기', priority: 'medium' as const },
+  { content: '프로젝트 계획 세우기', priority: 'high' as const },
+  { content: '정리 정돈하기', priority: 'low' as const },
+  { content: '새로운 기술 학습', priority: 'medium' as const },
+  { content: '건강 체크하기', priority: 'high' as const },
 ];
 
 type TodoPreset = {
   content: string;
   priority: 'low' | 'medium' | 'high';
-  description: string;
 };
 
 export default function TodosSettingsPage() {
@@ -46,7 +45,6 @@ export default function TodosSettingsPage() {
     setEditingTodo({
       id: '',
       title: '',
-      description: '',
       start_time: '',
       end_time: '',
       isNew: true,
@@ -75,7 +73,6 @@ export default function TodosSettingsPage() {
     try {
       const todoData: any = {
         title: editingTodo.title,
-        description: editingTodo.description || '',
         start_time: editingTodo.start_time ? new Date(editingTodo.start_time).toISOString() : null,
         end_time: editingTodo.end_time ? new Date(editingTodo.end_time).toISOString() : null,
       };
@@ -178,9 +175,9 @@ export default function TodosSettingsPage() {
   };
 
   // 날짜/시간 포맷팅
-  const formatDateTime = (dateTimeString: string) => {
-    if (!dateTimeString) return '';
-    const date = new Date(dateTimeString);
+  const formatDateTime = (dateTime: Date | string) => {
+    if (!dateTime) return '';
+    const date = dateTime instanceof Date ? dateTime : new Date(dateTime);
     return date.toLocaleString('ko-KR', {
       month: 'short',
       day: 'numeric',
@@ -247,21 +244,18 @@ export default function TodosSettingsPage() {
                 >
                   <div className="flex-1">
                     <div className="font-semibold">{todo.title}</div>
-                    {todo.description && (
-                      <div className="text-sm text-base-content/60 mt-1">{todo.description}</div>
-                    )}
-                    {(todo.start_time || todo.end_time) && (
+                    {(todo.startTime || todo.endTime) && (
                       <div className="flex gap-3 mt-2 text-xs text-base-content/60">
-                        {todo.start_time && (
+                        {todo.startTime && (
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {formatDateTime(todo.start_time)}
+                            {formatDateTime(todo.startTime)}
                           </div>
                         )}
-                        {todo.end_time && (
+                        {todo.endTime && (
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {formatDateTime(todo.end_time)}
+                            {formatDateTime(todo.endTime)}
                           </div>
                         )}
                       </div>
@@ -309,19 +303,6 @@ export default function TodosSettingsPage() {
                 onChange={(e) => setEditingTodo({ ...editingTodo, title: e.target.value })}
                 className="input input-bordered"
                 placeholder="예: 보고서 작성"
-              />
-            </div>
-
-            {/* 설명 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">설명</span>
-              </label>
-              <textarea
-                value={editingTodo.description || ''}
-                onChange={(e) => setEditingTodo({ ...editingTodo, description: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="예: 월간 실적 보고서 작성 및 제출"
               />
             </div>
 
@@ -418,9 +399,6 @@ export default function TodosSettingsPage() {
                       <div className="flex items-start justify-between">
                         <div className="text-left flex-1">
                           <h3 className="font-semibold">{preset.content}</h3>
-                          <p className={`text-xs mt-1 ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
-                            {preset.description}
-                          </p>
                         </div>
                         {isSelected && (
                           <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center ml-2">

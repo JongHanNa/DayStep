@@ -74,7 +74,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedResources = get().resources.map((resource) =>
+        const updatedResources = get().resources.map((resource: Resource) =>
           resource.id === id
             ? {
                 ...resource,
@@ -89,7 +89,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedResource = updatedResources.find((r) => r.id === id);
+        const updatedResource = updatedResources.find((r: Resource) => r.id === id);
         if (!updatedResource) throw new Error('자원을 찾을 수 없습니다.');
 
         return updatedResource;
@@ -106,7 +106,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedResources = get().resources.filter((resource) => resource.id !== id);
+        const updatedResources = get().resources.filter((resource: Resource) => resource.id !== id);
         set({ resources: updatedResources, loading: false });
 
         // LocalStorage 저장
@@ -126,7 +126,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedResources = get().resources.map((resource) =>
+        const updatedResources = get().resources.map((resource: Resource) =>
           resource.id === id
             ? {
                 ...resource,
@@ -136,12 +136,12 @@ export const useResourceStore = createStore<ResourceStoreState>(
             : resource
         );
 
-        set({ resources: updatedResources.filter((r) => !r.is_archived), loading: false });
+        set({ resources: updatedResources.filter((r: Resource) => !r.is_archived), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const archivedResource = updatedResources.find((r) => r.id === id);
+        const archivedResource = updatedResources.find((r: Resource) => r.id === id);
         if (!archivedResource) throw new Error('자원을 찾을 수 없습니다.');
 
         return archivedResource;
@@ -160,7 +160,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
 
         // 아카이브된 자원 포함하여 로드
         const allResources = mockResources;
-        const updatedResources = allResources.map((resource) =>
+        const updatedResources = allResources.map((resource: Resource) =>
           resource.id === id
             ? {
                 ...resource,
@@ -170,12 +170,12 @@ export const useResourceStore = createStore<ResourceStoreState>(
             : resource
         );
 
-        set({ resources: updatedResources.filter((r) => !r.is_archived), loading: false });
+        set({ resources: updatedResources.filter((r: Resource) => !r.is_archived), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const unarchivedResource = updatedResources.find((r) => r.id === id);
+        const unarchivedResource = updatedResources.find((r: Resource) => r.id === id);
         if (!unarchivedResource) throw new Error('자원을 찾을 수 없습니다.');
 
         return unarchivedResource;
@@ -192,7 +192,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedResources = get().resources.map((resource) => {
+        const updatedResources = get().resources.map((resource: Resource) => {
           const newIndex = resourceIds.indexOf(resource.id);
           return {
             ...resource,
@@ -202,7 +202,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
         });
 
         // order_index로 정렬
-        updatedResources.sort((a, b) => a.order_index - b.order_index);
+        updatedResources.sort((a: Resource, b: Resource) => a.order_index - b.order_index);
 
         set({ resources: updatedResources, loading: false });
 

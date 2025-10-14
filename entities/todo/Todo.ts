@@ -9,6 +9,7 @@ export class Todo {
     public readonly id: string,
     public readonly userId: string,
     public readonly content: string,
+    public readonly title: string,
     public readonly completed: boolean,
     public readonly orderIndex: number,
     public readonly createdAt: Date,
@@ -16,12 +17,12 @@ export class Todo {
     public readonly priority: string | null = null,
     public readonly icon: string | null = null,
     public readonly color: string | null = null,
-    
+
     // 새로운 스케줄 관리 필드들
     public readonly scheduleType: ScheduleType,
     public readonly startTime: Date | null = null,
     public readonly endTime: Date | null = null,
-    
+
     // 반복 일정 필드들
     public readonly recurrencePattern: RecurrencePattern,
     public readonly recurrenceEndDate: Date | null = null,
@@ -62,10 +63,14 @@ export class Todo {
     const departureLocation = record.departureLocation ?? record.departure_location;
     const departureTime = record.departureTime ?? record.departure_time;
 
+    // title 필드 (없으면 content를 사용)
+    const title = data.title || data.content;
+
     return new Todo(
       data.id,
       userId || '',
       data.content,
+      title,
       data.completed,
       orderIndex || 0,
       new Date(createdAt || new Date()),
@@ -73,12 +78,12 @@ export class Todo {
       data.priority,
       data.icon,
       data.color,
-      
+
       // 새로운 스케줄 필드들
       scheduleType,
       startTime ? new Date(startTime) : null,
       endTime ? new Date(endTime) : null,
-      
+
       // 반복 일정 필드들
       recurrencePattern,
       recurrenceEndDate ? new Date(recurrenceEndDate) : null,
@@ -369,6 +374,7 @@ export class Todo {
       this.id,
       this.userId,
       this.content,
+      this.title,
       !this.completed,
       this.orderIndex,
       this.createdAt,
@@ -385,7 +391,9 @@ export class Todo {
       this.recurrenceInterval,
       this.recurrenceDaysOfWeek,
       this.recurrenceDayOfMonth,
-      this.parentTodoId
+      this.parentTodoId,
+      this.departureLocation,
+      this.departureTime
     );
   }
 
@@ -410,6 +418,7 @@ export class Todo {
       this.id,
       this.userId,
       content.trim(),
+      this.title,
       this.completed,
       this.orderIndex,
       this.createdAt,
@@ -426,7 +435,9 @@ export class Todo {
       this.recurrenceInterval,
       this.recurrenceDaysOfWeek,
       this.recurrenceDayOfMonth,
-      this.parentTodoId
+      this.parentTodoId,
+      this.departureLocation,
+      this.departureTime
     );
   }
 
@@ -470,12 +481,13 @@ export class Todo {
       id: this.id,
       user_id: this.userId,
       content: this.content,
+      title: this.title,
       completed: this.completed,
       order_index: this.orderIndex,
       priority: this.priority,
       icon: this.icon,
       color: this.color,
-      
+
       // 새로운 스케줄 필드들
       schedule_type: this.scheduleType,
       start_time: this.startTime?.toISOString() || null,
@@ -484,7 +496,7 @@ export class Todo {
       // 출발 정보 필드들
       departure_location: this.departureLocation,
       departure_time: this.departureTime?.toISOString() || null,
-      
+
       // 반복 필드들
       recurrence_pattern: this.recurrencePattern,
       recurrence_end_date: this.recurrenceEndDate?.toISOString().split('T')[0] || null,
@@ -493,7 +505,7 @@ export class Todo {
       recurrence_days_of_week: this.recurrenceDaysOfWeek,
       recurrence_day_of_month: this.recurrenceDayOfMonth,
       parent_todo_id: this.parentTodoId,
-      
+
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),
     };

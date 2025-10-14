@@ -984,6 +984,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         const todoData: TodoInsert = {
           user_id: (repositoryItem as any).user_id,
           content: (repositoryItem as any).content,
+          title: (repositoryItem as any).title || (repositoryItem as any).content,
           completed: false,
           order_index: count || 0,
         };
@@ -1162,6 +1163,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             const insertData: TodoInsert = {
               user_id: userId,
               content: todoData.content.trim(),
+              title: todoData.title || todoData.content.trim(),
               completed: Boolean(todoData.completed),
               order_index: todoData.orderIndex || 0,
             };

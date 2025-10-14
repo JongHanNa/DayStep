@@ -259,7 +259,7 @@ export const useRepositoryStore = createStore<RepositoryStoreState>(
         set((state: RepositoryStoreState) => {
           const index = state.items.findIndex((i: any) => i.id === id);
           if (index !== -1) {
-            state.items[index] = { ...state.items[index], ...data };
+            state.items[index] = { ...state.items[index], ...data } as RepositoryItem;
           }
           state.refreshStats();
         });

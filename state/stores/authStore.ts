@@ -21,6 +21,7 @@ interface AuthStoreState extends BaseStoreState {
   // UI 상태
   loading: boolean;
   error: string | null;
+  lastUpdated: Date | null;
 
   // 세션 관리
   tokenRefreshTimer: NodeJS.Timeout | null;
@@ -61,6 +62,7 @@ export const useAuthStore = createStore<AuthStoreState>(
     isAuthenticated: false,
     loading: true,
     error: null,
+    lastUpdated: null,
     tokenRefreshTimer: null,
     sessionExpiresAt: null,
 
@@ -427,6 +429,7 @@ export const useAuthStore = createStore<AuthStoreState>(
         state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
+        state.lastUpdated = null;
         state.tokenRefreshTimer = null;
         state.sessionExpiresAt = null;
       });

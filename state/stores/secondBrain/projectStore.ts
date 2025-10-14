@@ -79,7 +79,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedProjects = get().projects.map((project) =>
+        const updatedProjects = get().projects.map((project: Project) =>
           project.id === id
             ? {
                 ...project,
@@ -94,7 +94,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedProject = updatedProjects.find((p) => p.id === id);
+        const updatedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!updatedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
 
         return updatedProject;
@@ -111,7 +111,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedProjects = get().projects.filter((project) => project.id !== id);
+        const updatedProjects = get().projects.filter((project: Project) => project.id !== id);
         set({ projects: updatedProjects, loading: false });
 
         // LocalStorage 저장
@@ -131,7 +131,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedProjects = get().projects.map((project) =>
+        const updatedProjects = get().projects.map((project: Project) =>
           project.id === id
             ? {
                 ...project,
@@ -148,7 +148,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const completedProject = updatedProjects.find((p) => p.id === id);
+        const completedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!completedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
 
         return completedProject;
@@ -165,7 +165,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedProjects = get().projects.map((project) =>
+        const updatedProjects = get().projects.map((project: Project) =>
           project.id === id
             ? {
                 ...project,
@@ -175,12 +175,12 @@ export const useProjectStore = createStore<ProjectStoreState>(
             : project
         );
 
-        set({ projects: updatedProjects.filter((p) => p.status !== 'archived'), loading: false });
+        set({ projects: updatedProjects.filter((p: Project) => p.status !== 'archived'), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const archivedProject = updatedProjects.find((p) => p.id === id);
+        const archivedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!archivedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
 
         return archivedProject;
@@ -199,7 +199,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         // 아카이브된 프로젝트 포함하여 로드
         const allProjects = mockProjects;
-        const updatedProjects = allProjects.map((project) =>
+        const updatedProjects = allProjects.map((project: Project) =>
           project.id === id
             ? {
                 ...project,
@@ -209,12 +209,12 @@ export const useProjectStore = createStore<ProjectStoreState>(
             : project
         );
 
-        set({ projects: updatedProjects.filter((p) => p.status !== 'archived'), loading: false });
+        set({ projects: updatedProjects.filter((p: Project) => p.status !== 'archived'), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const unarchivedProject = updatedProjects.find((p) => p.id === id);
+        const unarchivedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!unarchivedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
 
         return unarchivedProject;
@@ -233,7 +233,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         const progress = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : 0;
 
-        const updatedProjects = get().projects.map((project) =>
+        const updatedProjects = get().projects.map((project: Project) =>
           project.id === id
             ? {
                 ...project,
@@ -250,7 +250,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedProject = updatedProjects.find((p) => p.id === id);
+        const updatedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!updatedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
 
         return updatedProject;
@@ -267,7 +267,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedProjects = get().projects.map((project) => {
+        const updatedProjects = get().projects.map((project: Project) => {
           const newIndex = projectIds.indexOf(project.id);
           return {
             ...project,
@@ -277,7 +277,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         });
 
         // order_index로 정렬
-        updatedProjects.sort((a, b) => a.order_index - b.order_index);
+        updatedProjects.sort((a: Project, b: Project) => a.order_index - b.order_index);
 
         set({ projects: updatedProjects, loading: false });
 

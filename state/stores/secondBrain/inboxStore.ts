@@ -38,7 +38,7 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
         // Mock 데이터 로드 (삭제된 항목 제외)
-        const inboxItems = mockInboxItems.filter((item) => item.status !== 'deleted');
+        const inboxItems = mockInboxItems.filter((item: InboxItem) => item.status !== 'deleted');
         set({ inboxItems, loading: false });
       } catch (error) {
         set({
@@ -51,7 +51,7 @@ export const useInboxStore = createStore<InboxStoreState>(
     fetchInboxItemsByStatus: async (status: GTDStatus) => {
       try {
         set({ loading: true, error: null });
-        const filteredItems = get().inboxItems.filter((item) => item.status === status);
+        const filteredItems = get().inboxItems.filter((item: InboxItem) => item.status === status);
         set({ loading: false });
         return filteredItems;
       } catch (error) {
@@ -95,7 +95,7 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedInboxItems = get().inboxItems.map((item) =>
+        const updatedInboxItems = get().inboxItems.map((item: InboxItem) =>
           item.id === id
             ? {
                 ...item,
@@ -110,7 +110,7 @@ export const useInboxStore = createStore<InboxStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedItem = updatedInboxItems.find((i) => i.id === id);
+        const updatedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!updatedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
 
         return updatedItem;
@@ -127,7 +127,7 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedInboxItems = get().inboxItems.map((item) =>
+        const updatedInboxItems = get().inboxItems.map((item: InboxItem) =>
           item.id === id
             ? {
                 ...item,
@@ -137,7 +137,7 @@ export const useInboxStore = createStore<InboxStoreState>(
             : item
         );
 
-        set({ inboxItems: updatedInboxItems.filter((item) => item.status !== 'deleted'), loading: false });
+        set({ inboxItems: updatedInboxItems.filter((item: InboxItem) => item.status !== 'deleted'), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
@@ -156,7 +156,7 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedInboxItems = get().inboxItems.map((item) =>
+        const updatedInboxItems = get().inboxItems.map((item: InboxItem) =>
           item.id === id
             ? {
                 ...item,
@@ -173,7 +173,7 @@ export const useInboxStore = createStore<InboxStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const clarifiedItem = updatedInboxItems.find((i) => i.id === id);
+        const clarifiedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!clarifiedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
 
         return clarifiedItem;
@@ -190,7 +190,7 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedInboxItems = get().inboxItems.map((item) =>
+        const updatedInboxItems = get().inboxItems.map((item: InboxItem) =>
           item.id === id
             ? {
                 ...item,
@@ -205,7 +205,7 @@ export const useInboxStore = createStore<InboxStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const completedItem = updatedInboxItems.find((i) => i.id === id);
+        const completedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!completedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
 
         return completedItem;
@@ -222,7 +222,7 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedInboxItems = get().inboxItems.map((item) =>
+        const updatedInboxItems = get().inboxItems.map((item: InboxItem) =>
           item.id === id
             ? {
                 ...item,
@@ -239,7 +239,7 @@ export const useInboxStore = createStore<InboxStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const delegatedItem = updatedInboxItems.find((i) => i.id === id);
+        const delegatedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!delegatedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
 
         return delegatedItem;

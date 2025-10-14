@@ -9,7 +9,7 @@ import type { Todo } from '@/types';
 // 확장된 Todo 타입 (예정 시간 포함)
 interface TodoWithSchedule extends Todo {
   status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  title?: string;
+  title: string;
 }
 
 /**

@@ -794,6 +794,7 @@ export type Database = {
           recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type: Database["public"]["Enums"]["schedule_type_enum"]
           start_time: string | null
+          title: string
           updated_at: string
           user_id: string
         }
@@ -818,6 +819,7 @@ export type Database = {
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
           start_time?: string | null
+          title: string
           updated_at?: string
           user_id: string
         }
@@ -842,6 +844,7 @@ export type Database = {
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
           start_time?: string | null
+          title?: string
           updated_at?: string
           user_id?: string
         }

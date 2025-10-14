@@ -74,7 +74,7 @@ export const useAreaStore = createStore<AreaStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedAreas = get().areas.map((area) =>
+        const updatedAreas = get().areas.map((area: Area) =>
           area.id === id
             ? {
                 ...area,
@@ -89,7 +89,7 @@ export const useAreaStore = createStore<AreaStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedArea = updatedAreas.find((a) => a.id === id);
+        const updatedArea = updatedAreas.find((a: Area) => a.id === id);
         if (!updatedArea) throw new Error('영역을 찾을 수 없습니다.');
 
         return updatedArea;
@@ -106,7 +106,7 @@ export const useAreaStore = createStore<AreaStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedAreas = get().areas.filter((area) => area.id !== id);
+        const updatedAreas = get().areas.filter((area: Area) => area.id !== id);
         set({ areas: updatedAreas, loading: false });
 
         // LocalStorage 저장
@@ -126,7 +126,7 @@ export const useAreaStore = createStore<AreaStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedAreas = get().areas.map((area) =>
+        const updatedAreas = get().areas.map((area: Area) =>
           area.id === id
             ? {
                 ...area,
@@ -136,12 +136,12 @@ export const useAreaStore = createStore<AreaStoreState>(
             : area
         );
 
-        set({ areas: updatedAreas.filter((a) => !a.is_archived), loading: false });
+        set({ areas: updatedAreas.filter((a: Area) => !a.is_archived), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const archivedArea = updatedAreas.find((a) => a.id === id);
+        const archivedArea = updatedAreas.find((a: Area) => a.id === id);
         if (!archivedArea) throw new Error('영역을 찾을 수 없습니다.');
 
         return archivedArea;
@@ -160,7 +160,7 @@ export const useAreaStore = createStore<AreaStoreState>(
 
         // 아카이브된 영역 포함하여 로드
         const allAreas = mockAreas;
-        const updatedAreas = allAreas.map((area) =>
+        const updatedAreas = allAreas.map((area: Area) =>
           area.id === id
             ? {
                 ...area,
@@ -170,12 +170,12 @@ export const useAreaStore = createStore<AreaStoreState>(
             : area
         );
 
-        set({ areas: updatedAreas.filter((a) => !a.is_archived), loading: false });
+        set({ areas: updatedAreas.filter((a: Area) => !a.is_archived), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const unarchivedArea = updatedAreas.find((a) => a.id === id);
+        const unarchivedArea = updatedAreas.find((a: Area) => a.id === id);
         if (!unarchivedArea) throw new Error('영역을 찾을 수 없습니다.');
 
         return unarchivedArea;
@@ -192,7 +192,7 @@ export const useAreaStore = createStore<AreaStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedAreas = get().areas.map((area) => {
+        const updatedAreas = get().areas.map((area: Area) => {
           const newIndex = areaIds.indexOf(area.id);
           return {
             ...area,
@@ -202,7 +202,7 @@ export const useAreaStore = createStore<AreaStoreState>(
         });
 
         // order_index로 정렬
-        updatedAreas.sort((a, b) => a.order_index - b.order_index);
+        updatedAreas.sort((a: Area, b: Area) => a.order_index - b.order_index);
 
         set({ areas: updatedAreas, loading: false });
 

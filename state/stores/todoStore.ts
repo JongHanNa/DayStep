@@ -91,7 +91,6 @@ export const useTodoStore = createStore<TodoStoreState>(
         sortOrder: "asc" as const,
         completed: "all" as const,
         showCompleted: true,
-        customFilters: {},
         filters: {},
       },
 
@@ -620,7 +619,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             if (updateType === "this") {
               const index = state.todos.findIndex((t: Todo) => t.id === id);
               if (index !== -1) {
-                state.todos[index] = { ...state.todos[index], ...updates };
+                state.todos[index] = { ...state.todos[index], ...updates } as Todo;
               }
             } else if (updateType === "all") {
               const todo = state.todos.find((t: Todo) => t.id === id);
@@ -689,7 +688,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         set((state: TodoStoreState) => {
           const todoIndex = state.todos.findIndex((t: Todo) => t.id === id);
           if (todoIndex !== -1) {
-            state.todos[todoIndex] = { ...state.todos[todoIndex], completed: newCompletedState };
+            state.todos[todoIndex] = { ...state.todos[todoIndex], completed: newCompletedState } as Todo;
           }
         });
 
@@ -702,7 +701,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           set((state: TodoStoreState) => {
             const todoIndex = state.todos.findIndex((t: Todo) => t.id === id);
             if (todoIndex !== -1) {
-              state.todos[todoIndex] = { ...state.todos[todoIndex], completed: !newCompletedState };
+              state.todos[todoIndex] = { ...state.todos[todoIndex], completed: !newCompletedState } as Todo;
             }
           });
           return false;
@@ -990,7 +989,6 @@ export const useTodoStore = createStore<TodoStoreState>(
             sortOrder: "asc",
             completed: "all",
             showCompleted: true,
-            customFilters: {},
             filters: {},
           };
           state.stats = {

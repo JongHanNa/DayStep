@@ -93,6 +93,7 @@ export function useModernDayViewHandlers({
               id: originalTodo.id,
               user_id: originalTodo.userId || originalTodo.user_id,
               content: originalTodo.content,
+              title: originalTodo.title || originalTodo.content,
               completed: timelineItem.data.completed || originalTodo.completed,
               order_index: originalTodo.orderIndex || originalTodo.order_index || 0,
               created_at: (() => {
@@ -274,6 +275,7 @@ export function useModernDayViewHandlers({
               id: todo.id,
               user_id: todo.userId,
               content: todo.content,
+              title: todo.title || todo.content,
               completed: todo.completed,
               order_index: todo.orderIndex,
               created_at: todo.createdAt.toISOString(),

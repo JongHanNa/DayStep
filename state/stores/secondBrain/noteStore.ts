@@ -50,7 +50,7 @@ export const useNoteStore = createStore<NoteStoreState>(
     fetchNotesByType: async (type: NoteType) => {
       try {
         set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note) => note.memo_type === type);
+        const filteredNotes = get().notes.filter((note: Note) => note.memo_type === type);
         set({ loading: false });
         return filteredNotes;
       } catch (error) {
@@ -65,7 +65,7 @@ export const useNoteStore = createStore<NoteStoreState>(
     fetchNotesByProject: async (projectId: string) => {
       try {
         set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note) => note.project_id === projectId);
+        const filteredNotes = get().notes.filter((note: Note) => note.project_id === projectId);
         set({ loading: false });
         return filteredNotes;
       } catch (error) {
@@ -80,7 +80,7 @@ export const useNoteStore = createStore<NoteStoreState>(
     fetchNotesByArea: async (areaId: string) => {
       try {
         set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note) => note.area_id === areaId);
+        const filteredNotes = get().notes.filter((note: Note) => note.area_id === areaId);
         set({ loading: false });
         return filteredNotes;
       } catch (error) {
@@ -95,7 +95,7 @@ export const useNoteStore = createStore<NoteStoreState>(
     fetchNotesByResource: async (resourceId: string) => {
       try {
         set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note) => note.resource_id === resourceId);
+        const filteredNotes = get().notes.filter((note: Note) => note.resource_id === resourceId);
         set({ loading: false });
         return filteredNotes;
       } catch (error) {
@@ -139,7 +139,7 @@ export const useNoteStore = createStore<NoteStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.map((note) =>
+        const updatedNotes = get().notes.map((note: Note) =>
           note.id === id
             ? {
                 ...note,
@@ -154,7 +154,7 @@ export const useNoteStore = createStore<NoteStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedNote = updatedNotes.find((n) => n.id === id);
+        const updatedNote = updatedNotes.find((n: Note) => n.id === id);
         if (!updatedNote) throw new Error('노트를 찾을 수 없습니다.');
 
         return updatedNote;
@@ -171,7 +171,7 @@ export const useNoteStore = createStore<NoteStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.filter((note) => note.id !== id);
+        const updatedNotes = get().notes.filter((note: Note) => note.id !== id);
         set({ notes: updatedNotes, loading: false });
 
         // LocalStorage 저장
@@ -191,7 +191,7 @@ export const useNoteStore = createStore<NoteStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.map((note) =>
+        const updatedNotes = get().notes.map((note: Note) =>
           note.id === id
             ? {
                 ...note,
@@ -206,7 +206,7 @@ export const useNoteStore = createStore<NoteStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const pinnedNote = updatedNotes.find((n) => n.id === id);
+        const pinnedNote = updatedNotes.find((n: Note) => n.id === id);
         if (!pinnedNote) throw new Error('노트를 찾을 수 없습니다.');
 
         return pinnedNote;
@@ -223,7 +223,7 @@ export const useNoteStore = createStore<NoteStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.map((note) =>
+        const updatedNotes = get().notes.map((note: Note) =>
           note.id === id
             ? {
                 ...note,
@@ -238,7 +238,7 @@ export const useNoteStore = createStore<NoteStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const unpinnedNote = updatedNotes.find((n) => n.id === id);
+        const unpinnedNote = updatedNotes.find((n: Note) => n.id === id);
         if (!unpinnedNote) throw new Error('노트를 찾을 수 없습니다.');
 
         return unpinnedNote;
@@ -257,10 +257,10 @@ export const useNoteStore = createStore<NoteStoreState>(
 
         const lowerQuery = query.toLowerCase();
         const filteredNotes = get().notes.filter(
-          (note) =>
+          (note: Note) =>
             note.title.toLowerCase().includes(lowerQuery) ||
             note.content.toLowerCase().includes(lowerQuery) ||
-            note.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
+            note.tags.some((tag: string) => tag.toLowerCase().includes(lowerQuery))
         );
 
         set({ loading: false });
@@ -278,7 +278,7 @@ export const useNoteStore = createStore<NoteStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const filteredNotes = get().notes.filter((note) =>
+        const filteredNotes = get().notes.filter((note: Note) =>
           tags.some((tag) => note.tags.includes(tag))
         );
 

@@ -76,7 +76,7 @@ export const useGoalStore = createStore<GoalStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedGoals = get().goals.map((goal) =>
+        const updatedGoals = get().goals.map((goal: Goal) =>
           goal.id === id
             ? {
                 ...goal,
@@ -91,8 +91,10 @@ export const useGoalStore = createStore<GoalStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedGoal = updatedGoals.find((g) => g.id === id);
-        if (!updatedGoal) throw new Error('목표를 찾을 수 없습니다.');
+        const updatedGoal = updatedGoals.find((g: Goal) => g.id === id);
+        if (!updatedGoal) {
+          throw new Error('목표를 찾을 수 없습니다.');
+        }
 
         return updatedGoal;
       } catch (error) {
@@ -108,7 +110,7 @@ export const useGoalStore = createStore<GoalStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedGoals = get().goals.filter((goal) => goal.id !== id);
+        const updatedGoals = get().goals.filter((goal: Goal) => goal.id !== id);
         set({ goals: updatedGoals, loading: false });
 
         // LocalStorage 저장
@@ -128,7 +130,7 @@ export const useGoalStore = createStore<GoalStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedGoals = get().goals.map((goal) =>
+        const updatedGoals = get().goals.map((goal: Goal) =>
           goal.id === id
             ? {
                 ...goal,
@@ -144,8 +146,10 @@ export const useGoalStore = createStore<GoalStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const completedGoal = updatedGoals.find((g) => g.id === id);
-        if (!completedGoal) throw new Error('목표를 찾을 수 없습니다.');
+        const completedGoal = updatedGoals.find((g: Goal) => g.id === id);
+        if (!completedGoal) {
+          throw new Error('목표를 찾을 수 없습니다.');
+        }
 
         return completedGoal;
       } catch (error) {
@@ -161,7 +165,7 @@ export const useGoalStore = createStore<GoalStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedGoals = get().goals.map((goal) =>
+        const updatedGoals = get().goals.map((goal: Goal) =>
           goal.id === id
             ? {
                 ...goal,
@@ -171,13 +175,15 @@ export const useGoalStore = createStore<GoalStoreState>(
             : goal
         );
 
-        set({ goals: updatedGoals.filter((g) => g.status !== 'archived'), loading: false });
+        set({ goals: updatedGoals.filter((g: Goal) => g.status !== 'archived'), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const archivedGoal = updatedGoals.find((g) => g.id === id);
-        if (!archivedGoal) throw new Error('목표를 찾을 수 없습니다.');
+        const archivedGoal = updatedGoals.find((g: Goal) => g.id === id);
+        if (!archivedGoal) {
+          throw new Error('목표를 찾을 수 없습니다.');
+        }
 
         return archivedGoal;
       } catch (error) {
@@ -195,7 +201,7 @@ export const useGoalStore = createStore<GoalStoreState>(
 
         // 아카이브된 목표 포함하여 로드
         const allGoals = mockGoals;
-        const updatedGoals = allGoals.map((goal) =>
+        const updatedGoals = allGoals.map((goal: Goal) =>
           goal.id === id
             ? {
                 ...goal,
@@ -205,13 +211,15 @@ export const useGoalStore = createStore<GoalStoreState>(
             : goal
         );
 
-        set({ goals: updatedGoals.filter((g) => g.status !== 'archived'), loading: false });
+        set({ goals: updatedGoals.filter((g: Goal) => g.status !== 'archived'), loading: false });
 
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const unarchivedGoal = updatedGoals.find((g) => g.id === id);
-        if (!unarchivedGoal) throw new Error('목표를 찾을 수 없습니다.');
+        const unarchivedGoal = updatedGoals.find((g: Goal) => g.id === id);
+        if (!unarchivedGoal) {
+          throw new Error('목표를 찾을 수 없습니다.');
+        }
 
         return unarchivedGoal;
       } catch (error) {
@@ -227,7 +235,7 @@ export const useGoalStore = createStore<GoalStoreState>(
       try {
         set({ loading: true, error: null });
 
-        const updatedGoals = get().goals.map((goal) =>
+        const updatedGoals = get().goals.map((goal: Goal) =>
           goal.id === id
             ? {
                 ...goal,
@@ -242,8 +250,10 @@ export const useGoalStore = createStore<GoalStoreState>(
         // LocalStorage 저장
         saveMockDataToLocalStorage();
 
-        const updatedGoal = updatedGoals.find((g) => g.id === id);
-        if (!updatedGoal) throw new Error('목표를 찾을 수 없습니다.');
+        const updatedGoal = updatedGoals.find((g: Goal) => g.id === id);
+        if (!updatedGoal) {
+          throw new Error('목표를 찾을 수 없습니다.');
+        }
 
         return updatedGoal;
       } catch (error) {
