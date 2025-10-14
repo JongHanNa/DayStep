@@ -321,19 +321,6 @@ export default function GoalsSettingsPage() {
               />
             </div>
 
-            {/* 설명 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">설명</span>
-              </label>
-              <textarea
-                value={editingGoal.description || ''}
-                onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="예: 매일 운동하고 균형 잡힌 식사하기"
-              />
-            </div>
-
             {/* 상태 */}
             <div className="form-control mb-4">
               <label className="label">

@@ -437,19 +437,6 @@ export default function ProjectsSettingsPage() {
               />
             </div>
 
-            {/* 설명 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">설명</span>
-              </label>
-              <textarea
-                value={editingProject.description || ''}
-                onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="예: 회사 웹사이트 디자인 및 기능 개선"
-              />
-            </div>
-
             {/* 연결할 목표 */}
             <div className="form-control mb-4">
               <label className="label">
