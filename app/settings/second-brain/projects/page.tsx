@@ -8,8 +8,7 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { Plus, ArrowLeft, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, GripVertical } from 'lucide-react';
-import ProjectCard from '@/components/second-brain/ProjectCard';
-import ProjectStatusTabs from '@/components/second-brain/ProjectStatusTabs';
+import ProjectGoalSection from '@/components/second-brain/ProjectGoalSection';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -46,8 +45,10 @@ export default function ProjectsSettingsPage() {
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
 
-  const [selectedStatus, setSelectedStatus] = useState<'not_started' | 'active' | 'on_hold' | 'completed'>('not_started');
   const [isCreating, setIsCreating] = useState(false);
+
+  // 접기/펼치기 상태 관리 (기본: 모두 펼침)
+  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set(['no-goal']));
 
   // 편집 관련 state
   const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
@@ -105,10 +106,46 @@ export default function ProjectsSettingsPage() {
     fetchResources();
   }, [fetchGoals, fetchAreas, fetchResources]);
 
-  // 선택된 상태의 프로젝트 필터링 (useMemo로 캐싱)
-  const filteredProjects = useMemo(() => {
-    return projects.filter((project) => project.status === selectedStatus);
-  }, [projects, selectedStatus]);
+  // 초기 로딩 시 모든 목표를 펼친 상태로 설정
+  useEffect(() => {
+    const allGoalIds = new Set<string>(['no-goal']);
+    goals.forEach((goal) => allGoalIds.add(goal.id));
+    setExpandedGoals(allGoalIds);
+  }, [goals]);
+
+  // 목표별로 프로젝트 그룹화 (useMemo로 캐싱)
+  const projectsByGoal = useMemo(() => {
+    const grouped: { [key: string]: Project[] } = {
+      'no-goal': [], // 목표없음
+    };
+
+    // 프로젝트를 목표별로 분류
+    projects.forEach((project) => {
+      if (!project.goal_id) {
+        grouped['no-goal'].push(project);
+      } else {
+        if (!grouped[project.goal_id]) {
+          grouped[project.goal_id] = [];
+        }
+        grouped[project.goal_id].push(project);
+      }
+    });
+
+    return grouped;
+  }, [projects]);
+
+  // 목표 섹션 접기/펼치기 토글
+  const toggleGoalSection = (goalId: string) => {
+    setExpandedGoals((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(goalId)) {
+        newSet.delete(goalId);
+      } else {
+        newSet.add(goalId);
+      }
+      return newSet;
+    });
+  };
 
   // 새 프로젝트 추가 핸들러 - "새 프로젝트" 카드를 즉시 생성
   const handleAddProject = async () => {
@@ -389,48 +426,61 @@ export default function ProjectsSettingsPage() {
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-3xl mx-auto px-4 py-6">
-        {/* 상태별 탭 */}
-        <ProjectStatusTabs
-          projects={projects}
-          selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
-        />
-
-        {/* 프로젝트 목록 */}
-        <div className="mt-6 space-y-3">
-          {filteredProjects.length === 0 ? (
-            <div className="card bg-base-200">
-              <div className="card-body text-center py-12">
-                <p className="text-base-content/60">
-                  {selectedStatus === 'not_started' && '시작 안함 프로젝트가 없습니다.'}
-                  {selectedStatus === 'active' && '진행중인 프로젝트가 없습니다.'}
-                  {selectedStatus === 'on_hold' && '중단된 프로젝트가 없습니다.'}
-                  {selectedStatus === 'completed' && '완료된 프로젝트가 없습니다.'}
-                </p>
-                <button
-                  onClick={handleAddProject}
-                  className="btn btn-primary btn-sm mt-4 mx-auto"
-                  disabled={isCreating}
-                >
-                  {isCreating ? (
-                    <span className="loading loading-spinner loading-xs"></span>
-                  ) : (
-                    <Plus className="w-4 h-4" />
-                  )}
-                  {isCreating ? '생성 중...' : '새 프로젝트 추가'}
-                </button>
-              </div>
+        {/* 프로젝트 목록이 없을 때 */}
+        {projects.length === 0 ? (
+          <div className="card bg-base-200">
+            <div className="card-body text-center py-12">
+              <p className="text-base-content/60">
+                아직 프로젝트가 없습니다. 새 프로젝트를 추가해보세요.
+              </p>
+              <button
+                onClick={handleAddProject}
+                className="btn btn-primary btn-sm mt-4 mx-auto"
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <span className="loading loading-spinner loading-xs"></span>
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                {isCreating ? '생성 중...' : '새 프로젝트 추가'}
+              </button>
             </div>
-          ) : (
-            filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onEditClick={handleEditProject}
+          </div>
+        ) : (
+          /* 목표별 프로젝트 그룹 */
+          <div className="space-y-4">
+            {/* 목표없음 섹션 (항상 먼저 표시) */}
+            {projectsByGoal['no-goal'] && projectsByGoal['no-goal'].length > 0 && (
+              <ProjectGoalSection
+                goalId="no-goal"
+                projects={projectsByGoal['no-goal']}
+                isExpanded={expandedGoals.has('no-goal')}
+                onToggle={() => toggleGoalSection('no-goal')}
+                onEditProject={handleEditProject}
               />
-            ))
-          )}
-        </div>
+            )}
+
+            {/* 각 목표별 섹션 */}
+            {goals.map((goal) => {
+              const goalProjects = projectsByGoal[goal.id] || [];
+              // 프로젝트가 없는 목표는 표시하지 않음
+              if (goalProjects.length === 0) return null;
+
+              return (
+                <ProjectGoalSection
+                  key={goal.id}
+                  goalId={goal.id}
+                  goal={goal}
+                  projects={goalProjects}
+                  isExpanded={expandedGoals.has(goal.id)}
+                  onToggle={() => toggleGoalSection(goal.id)}
+                  onEditProject={handleEditProject}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 편집/추가 다이얼로그 */}
@@ -488,14 +538,11 @@ export default function ProjectsSettingsPage() {
                 className="select select-bordered"
               >
                 <option value="">선택 안 함</option>
-                {goals.map((goal) => {
-                  const GoalIcon = getUnifiedIcon(goal.icon as UnifiedIconKey).component;
-                  return (
-                    <option key={goal.id} value={goal.id}>
-                      {goal.title}
-                    </option>
-                  );
-                })}
+                {goals.map((goal) => (
+                  <option key={goal.id} value={goal.id}>
+                    {goal.title}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -533,24 +580,18 @@ export default function ProjectsSettingsPage() {
               >
                 <option value="">선택 안 함</option>
                 <optgroup label="영역">
-                  {areas.map((area) => {
-                    const AreaIcon = getUnifiedIcon(area.icon as UnifiedIconKey).component;
-                    return (
-                      <option key={area.id} value={`area-${area.id}`}>
-                        {area.title}
-                      </option>
-                    );
-                  })}
+                  {areas.map((area) => (
+                    <option key={area.id} value={`area-${area.id}`}>
+                      {area.title}
+                    </option>
+                  ))}
                 </optgroup>
                 <optgroup label="자원">
-                  {resources.map((resource) => {
-                    const ResourceIcon = getUnifiedIcon(resource.icon as UnifiedIconKey).component;
-                    return (
-                      <option key={resource.id} value={`resource-${resource.id}`}>
-                        {resource.title}
-                      </option>
-                    );
-                  })}
+                  {resources.map((resource) => (
+                    <option key={resource.id} value={`resource-${resource.id}`}>
+                      {resource.title}
+                    </option>
+                  ))}
                 </optgroup>
               </select>
             </div>
@@ -1018,29 +1059,6 @@ export default function ProjectsSettingsPage() {
         </dialog>
       )}
 
-    </div>
-  );
-}
-
-// ========== 할일 프리뷰 카드 컴포넌트 ==========
-function TodoPreviewCard({ todo }: { todo: TodoItem }) {
-  return (
-    <div className="flex items-start gap-2 p-3 bg-base-100 rounded-lg shadow-2xl border-2 border-primary max-w-xs">
-      <GripVertical className="w-4 h-4 text-base-content/40 flex-shrink-0 mt-1" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <p className="font-medium truncate text-sm">{todo.title}</p>
-          {todo.isHighlight && (
-            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-          )}
-        </div>
-        {todo.scheduledDate && (
-          <p className="text-xs text-base-content/60">
-            <Calendar className="w-3 h-3 inline mr-1" />
-            {format(todo.scheduledDate, 'M/d')}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
