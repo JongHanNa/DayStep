@@ -449,36 +449,49 @@ export default function ProjectsSettingsPage() {
           </div>
         ) : (
           /* 목표별 프로젝트 그룹 */
-          <div className="space-y-4">
-            {/* 목표없음 섹션 (항상 먼저 표시) */}
-            {projectsByGoal['no-goal'] && projectsByGoal['no-goal'].length > 0 && (
-              <ProjectGoalSection
-                goalId="no-goal"
-                projects={projectsByGoal['no-goal']}
-                isExpanded={expandedGoals.has('no-goal')}
-                onToggle={() => toggleGoalSection('no-goal')}
-                onEditProject={handleEditProject}
-              />
-            )}
+          <div className="space-y-6">
+            {/* 목표별 프로젝트 그룹 헤더 */}
+            <div className="border-b border-base-300 pb-3">
+              <h2 className="text-xl font-bold text-base-content">
+                목표별 프로젝트
+              </h2>
+              <p className="text-sm text-base-content/60 mt-1">
+                목표에 따라 그룹화된 프로젝트 목록
+              </p>
+            </div>
 
-            {/* 각 목표별 섹션 */}
-            {goals.map((goal) => {
-              const goalProjects = projectsByGoal[goal.id] || [];
-              // 프로젝트가 없는 목표는 표시하지 않음
-              if (goalProjects.length === 0) return null;
-
-              return (
+            {/* 목표별 섹션들 */}
+            <div className="space-y-4">
+              {/* 목표없음 섹션 (항상 먼저 표시) */}
+              {projectsByGoal['no-goal'] && projectsByGoal['no-goal'].length > 0 && (
                 <ProjectGoalSection
-                  key={goal.id}
-                  goalId={goal.id}
-                  goal={goal}
-                  projects={goalProjects}
-                  isExpanded={expandedGoals.has(goal.id)}
-                  onToggle={() => toggleGoalSection(goal.id)}
+                  goalId="no-goal"
+                  projects={projectsByGoal['no-goal']}
+                  isExpanded={expandedGoals.has('no-goal')}
+                  onToggle={() => toggleGoalSection('no-goal')}
                   onEditProject={handleEditProject}
                 />
-              );
-            })}
+              )}
+
+              {/* 각 목표별 섹션 */}
+              {goals.map((goal) => {
+                const goalProjects = projectsByGoal[goal.id] || [];
+                // 프로젝트가 없는 목표는 표시하지 않음
+                if (goalProjects.length === 0) return null;
+
+                return (
+                  <ProjectGoalSection
+                    key={goal.id}
+                    goalId={goal.id}
+                    goal={goal}
+                    projects={goalProjects}
+                    isExpanded={expandedGoals.has(goal.id)}
+                    onToggle={() => toggleGoalSection(goal.id)}
+                    onEditProject={handleEditProject}
+                  />
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

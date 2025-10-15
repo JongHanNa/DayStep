@@ -248,9 +248,6 @@ export default function GoalsSettingsPage() {
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold">{goal.title}</div>
-                        {goal.description && (
-                          <div className="text-sm text-base-content/60">{goal.description}</div>
-                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">

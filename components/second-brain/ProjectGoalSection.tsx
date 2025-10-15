@@ -61,11 +61,6 @@ const ProjectGoalSection = memo(function ProjectGoalSection({
             <h3 className="font-semibold text-lg truncate">
               {isNoGoalSection ? '목표없음' : goal?.title}
             </h3>
-            {!isNoGoalSection && goal?.description && (
-              <p className="text-sm text-base-content/60 truncate">
-                {goal.description}
-              </p>
-            )}
           </div>
 
           {/* 프로젝트 개수 뱃지 */}
