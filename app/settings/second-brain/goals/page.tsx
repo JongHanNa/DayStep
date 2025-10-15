@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { Plus, X, Pencil, ArrowLeft } from 'lucide-react';
-import type { CreateGoalInput, Goal } from '@/types/second-brain';
+import type { CreateGoalInput, Goal, Project, UpdateProjectInput } from '@/types/second-brain';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -17,6 +19,7 @@ export default function GoalsSettingsPage() {
   const { createGoal, updateGoal, deleteGoal, goals, fetchGoals } = useGoalStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
+  const { projects, createProject, updateProject, deleteProject } = useProjectStore();
 
   // 편집 관련 state
   const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
@@ -26,6 +29,13 @@ export default function GoalsSettingsPage() {
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [goalToDelete, setGoalToDelete] = useState<Goal | null>(null);
+
+  // 프로젝트 관련 state
+  const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [projectDeleteConfirmOpen, setProjectDeleteConfirmOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     fetchGoals();
@@ -181,6 +191,130 @@ export default function GoalsSettingsPage() {
   const handleCancelDelete = () => {
     setDeleteConfirmOpen(false);
     setGoalToDelete(null);
+  };
+
+  // 현재 편집 중인 목표에 연결된 프로젝트 필터링
+  const filteredProjects = useMemo(() => {
+    if (!editingGoal || editingGoal.isNew) return [];
+    return projects.filter((project) => project.goal_id === editingGoal.id);
+  }, [projects, editingGoal]);
+
+  // 프로젝트 추가 핸들러 - 즉시 생성
+  const handleAddProject = async () => {
+    if (!editingGoal || editingGoal.isNew) {
+      alert('먼저 목표를 저장해주세요.');
+      return;
+    }
+
+    if (isCreating) return; // 중복 클릭 방지
+
+    setIsCreating(true);
+    try {
+      // 프로젝트 즉시 생성
+      const createdProject = await createProject({
+        title: '새 프로젝트',
+        icon: 'lucide-FolderOpen',
+        color: '#A8DADC',
+        status: 'not_started',
+        goal_id: editingGoal.id,
+        order_index: projects.length,
+      });
+
+      console.log('새 프로젝트 생성 완료:', createdProject);
+
+      // 생성된 프로젝트 편집 다이얼로그 열기
+      handleEditProject(createdProject);
+    } catch (error) {
+      console.error('프로젝트 생성 실패:', error);
+      alert('프로젝트 생성에 실패했습니다.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // 프로젝트 편집 핸들러
+  const handleEditProject = (project: Project) => {
+    let paraSelection = '';
+    if (project.area_id) {
+      paraSelection = `area-${project.area_id}`;
+    } else if (project.resource_id) {
+      paraSelection = `resource-${project.resource_id}`;
+    }
+
+    setEditingProject({ ...project, paraSelection, isNew: false });
+    setProjectDialogOpen(true);
+  };
+
+  // 프로젝트 저장 핸들러
+  const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+    try {
+      if ((projectData as any).isNew) {
+        await createProject({
+          title: projectData.title!,
+          description: projectData.description || '',
+          icon: projectData.icon!,
+          color: projectData.color!,
+          status: projectData.status!,
+          goal_id: projectData.goal_id || undefined,
+          area_id,
+          resource_id,
+          start_date: projectData.start_date || undefined,
+          target_end_date: projectData.target_end_date || undefined,
+          order_index: projectData.order_index!,
+        });
+      } else {
+        await updateProject(projectData.id!, {
+          title: projectData.title!,
+          description: projectData.description || '',
+          icon: projectData.icon!,
+          color: projectData.color!,
+          status: projectData.status!,
+          goal_id: projectData.goal_id || undefined,
+          area_id,
+          resource_id,
+          start_date: projectData.start_date || undefined,
+          target_end_date: projectData.target_end_date || undefined,
+        });
+      }
+
+      setProjectDialogOpen(false);
+      setEditingProject(null);
+    } catch (error) {
+      console.error('프로젝트 저장 실패:', error);
+      alert('프로젝트 저장에 실패했습니다.');
+    }
+  };
+
+  // 프로젝트 편집 취소 핸들러
+  const handleCancelProjectEdit = () => {
+    setProjectDialogOpen(false);
+    setEditingProject(null);
+  };
+
+  // 프로젝트 삭제 확인 다이얼로그 열기
+  const handleDeleteProjectClick = (project: Project) => {
+    setProjectToDelete(project);
+    setProjectDeleteConfirmOpen(true);
+  };
+
+  // 프로젝트 삭제 실행
+  const handleConfirmProjectDelete = async () => {
+    if (!projectToDelete) return;
+
+    try {
+      await deleteProject(projectToDelete.id);
+      setProjectDeleteConfirmOpen(false);
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error('프로젝트 삭제 실패:', error);
+      alert('프로젝트 삭제에 실패했습니다.');
+    }
+  };
+
+  // 프로젝트 삭제 취소
+  const handleCancelProjectDelete = () => {
+    setProjectDeleteConfirmOpen(false);
+    setProjectToDelete(null);
   };
 
   return (
@@ -407,7 +541,7 @@ export default function GoalsSettingsPage() {
             </div>
 
             {/* 연간목표/분기목표 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">연간목표 (선택)</span>
@@ -444,6 +578,78 @@ export default function GoalsSettingsPage() {
                 </select>
               </div>
             </div>
+
+            {/* 프로젝트 영역 */}
+            {!editingGoal.isNew && (
+              <div className="card bg-base-200 mb-4">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">연결된 프로젝트</h2>
+                    <button
+                      onClick={handleAddProject}
+                      className="btn btn-ghost btn-sm"
+                      disabled={isCreating}
+                    >
+                      {isCreating ? (
+                        <span className="loading loading-spinner loading-xs" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                      {isCreating ? '생성 중...' : '추가'}
+                    </button>
+                  </div>
+
+                  {filteredProjects.length === 0 ? (
+                    <div className="text-center py-8 text-base-content/60">
+                      연결된 프로젝트가 없습니다.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredProjects.map((project) => {
+                        const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
+                        return (
+                          <div
+                            key={project.id}
+                            onClick={() => handleEditProject(project)}
+                            className="flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
+                          >
+                            <div
+                              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{
+                                backgroundColor: project.color + '30',
+                                borderColor: project.color,
+                                borderWidth: '2px',
+                              }}
+                            >
+                              <ProjectIconComponent className="w-5 h-5" style={{ color: project.color }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{project.title}</div>
+                              <div className="text-sm text-base-content/60">
+                                {project.status === 'not_started' && '시작 안함'}
+                                {project.status === 'active' && '진행중'}
+                                {project.status === 'on_hold' && '중단'}
+                                {project.status === 'completed' && '완료'}
+                              </div>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProjectClick(project);
+                              }}
+                              className="btn btn-ghost btn-sm btn-circle flex-shrink-0"
+                              aria-label="프로젝트 제거"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* 버튼 */}
             <div className="modal-action">
@@ -493,6 +699,44 @@ export default function GoalsSettingsPage() {
         selectedColor={editingGoal?.color}
         onColorSelect={handleColorChange}
       />
+
+      {/* 프로젝트 편집 다이얼로그 */}
+      <ProjectEditDialog
+        open={projectDialogOpen}
+        editingProject={editingProject}
+        goals={goals}
+        areas={areas}
+        resources={resources}
+        onSave={handleSaveProject}
+        onCancel={handleCancelProjectEdit}
+        onDelete={handleDeleteProjectClick}
+        onProjectChange={setEditingProject}
+      />
+
+      {/* 프로젝트 삭제 확인 다이얼로그 */}
+      {projectDeleteConfirmOpen && projectToDelete && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">프로젝트 삭제</h3>
+            <p className="mb-6">
+              <strong>{projectToDelete.title}</strong> 프로젝트를 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-base-content/60">
+                이 작업은 되돌릴 수 없습니다.
+              </span>
+            </p>
+            <div className="modal-action">
+              <button onClick={handleCancelProjectDelete} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleConfirmProjectDelete} className="btn btn-error">
+                삭제
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelProjectDelete} />
+        </dialog>
+      )}
     </div>
   );
 }
