@@ -60,22 +60,13 @@ export default function ProjectsSettingsPage() {
 
   // 노트 상태 (프론트엔드 전용)
   const [notes, setNotes] = useState<NoteItem[]>([]);
-  const [showNoteModal, setShowNoteModal] = useState(false);
-  const [newNoteTitle, setNewNoteTitle] = useState('');
-  const [newNoteContent, setNewNoteContent] = useState('');
-  const [newNoteCategory, setNewNoteCategory] = useState<'중간 작업물' | '나중에 보기' | '레퍼런스'>('중간 작업물');
-  const [newNoteLinked, setNewNoteLinked] = useState('');
-  const [newNoteIsPinned, setNewNoteIsPinned] = useState(false);
+  const [editingNote, setEditingNote] = useState<NoteItem | null>(null);
+  const [showNoteEditModal, setShowNoteEditModal] = useState(false);
 
   // 할일 상태 (프론트엔드 전용)
   const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [showTodoModal, setShowTodoModal] = useState(false);
-  const [newTodoTitle, setNewTodoTitle] = useState('');
-  const [newTodoClarification, setNewTodoClarification] = useState('');
-  const [newTodoNextAction, setNewTodoNextAction] = useState('');
-  const [newTodoDate, setNewTodoDate] = useState('');
-  const [newTodoIsHighlight, setNewTodoIsHighlight] = useState(false);
-  const [newTodoCompleted, setNewTodoCompleted] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
+  const [showTodoEditModal, setShowTodoEditModal] = useState(false);
 
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -267,34 +258,18 @@ export default function ProjectsSettingsPage() {
     setProjectToDelete(null);
   };
 
-  // 노트 추가
+  // 노트 추가 - 즉시 "새 노트" 카드 생성
   const handleAddNote = () => {
-    if (!newNoteTitle.trim()) {
-      alert('노트 제목을 입력해주세요.');
-      return;
-    }
     const newNote: NoteItem = {
       id: `note-${Date.now()}`,
-      title: newNoteTitle,
-      content: newNoteContent,
-      category: newNoteCategory,
-      linkedAreaOrResource: newNoteLinked || undefined,
-      isPinned: newNoteIsPinned,
+      title: '새 노트',
+      content: '',
+      category: '중간 작업물',
+      isPinned: false,
     };
 
-    // 고정된 노트는 앞에 추가, 아니면 뒤에 추가
-    if (newNoteIsPinned) {
-      setNotes([newNote, ...notes]);
-    } else {
-      setNotes([...notes, newNote]);
-    }
-
-    setShowNoteModal(false);
-    setNewNoteTitle('');
-    setNewNoteContent('');
-    setNewNoteCategory('중간 작업물');
-    setNewNoteLinked('');
-    setNewNoteIsPinned(false);
+    // 맨 뒤에 추가
+    setNotes([...notes, newNote]);
   };
 
   // 노트 제거
@@ -302,29 +277,41 @@ export default function ProjectsSettingsPage() {
     setNotes(notes.filter((note) => note.id !== noteId));
   };
 
-  // 할일 추가
-  const handleAddTodo = () => {
-    if (!newTodoTitle.trim()) {
-      alert('할일 제목을 입력해주세요.');
+  // 노트 편집 열기
+  const handleNoteClick = (note: NoteItem) => {
+    setEditingNote({ ...note });
+    setShowNoteEditModal(true);
+  };
+
+  // 노트 편집 저장
+  const handleSaveNoteEdit = () => {
+    if (!editingNote || !editingNote.title.trim()) {
+      alert('노트 제목을 입력해주세요.');
       return;
     }
+
+    setNotes(notes.map((note) => (note.id === editingNote.id ? editingNote : note)));
+    setShowNoteEditModal(false);
+    setEditingNote(null);
+  };
+
+  // 노트 편집 취소
+  const handleCancelNoteEdit = () => {
+    setShowNoteEditModal(false);
+    setEditingNote(null);
+  };
+
+  // 할일 추가 - 즉시 "새 할일" 카드 생성
+  const handleAddTodo = () => {
     const newTodo: TodoItem = {
       id: `todo-${Date.now()}`,
-      title: newTodoTitle,
-      completed: newTodoCompleted,
-      scheduledDate: newTodoDate ? new Date(newTodoDate) : undefined,
-      clarification: newTodoClarification || undefined,
-      nextActionStatus: newTodoNextAction || undefined,
-      isHighlight: newTodoIsHighlight,
+      title: '새 할일',
+      completed: false,
+      isHighlight: false,
     };
+
+    // 맨 뒤에 추가
     setTodos([...todos, newTodo]);
-    setShowTodoModal(false);
-    setNewTodoTitle('');
-    setNewTodoClarification('');
-    setNewTodoNextAction('');
-    setNewTodoDate('');
-    setNewTodoIsHighlight(false);
-    setNewTodoCompleted(false);
   };
 
   // 할일 완료 토글
@@ -339,6 +326,30 @@ export default function ProjectsSettingsPage() {
   // 할일 제거
   const handleRemoveTodo = (todoId: string) => {
     setTodos(todos.filter((todo) => todo.id !== todoId));
+  };
+
+  // 할일 편집 열기
+  const handleTodoClick = (todo: TodoItem) => {
+    setEditingTodo({ ...todo });
+    setShowTodoEditModal(true);
+  };
+
+  // 할일 편집 저장
+  const handleSaveTodoEdit = () => {
+    if (!editingTodo || !editingTodo.title.trim()) {
+      alert('할일 제목을 입력해주세요.');
+      return;
+    }
+
+    setTodos(todos.map((todo) => (todo.id === editingTodo.id ? editingTodo : todo)));
+    setShowTodoEditModal(false);
+    setEditingTodo(null);
+  };
+
+  // 할일 편집 취소
+  const handleCancelTodoEdit = () => {
+    setShowTodoEditModal(false);
+    setEditingTodo(null);
   };
 
   return (
@@ -466,19 +477,6 @@ export default function ProjectsSettingsPage() {
               />
             </div>
 
-            {/* 설명 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">설명 (선택)</span>
-              </label>
-              <textarea
-                value={editingProject.description || ''}
-                onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
-                className="textarea textarea-bordered h-24"
-                placeholder="프로젝트에 대한 간단한 설명을 입력하세요"
-              />
-            </div>
-
             {/* 연결할 목표 */}
             <div className="form-control mb-4">
               <label className="label">
@@ -589,7 +587,7 @@ export default function ProjectsSettingsPage() {
               <div className="card-body">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">연결된 노트</h2>
-                  <button onClick={() => setShowNoteModal(true)} className="btn btn-ghost btn-sm">
+                  <button onClick={handleAddNote} className="btn btn-ghost btn-sm">
                     <Plus className="w-4 h-4" />
                     추가
                   </button>
@@ -624,7 +622,8 @@ export default function ProjectsSettingsPage() {
                         return (
                           <div
                             key={note.id}
-                            className="flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors"
+                            onClick={() => handleNoteClick(note)}
+                            className="flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
                           >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
@@ -638,7 +637,10 @@ export default function ProjectsSettingsPage() {
                               )}
                             </div>
                             <button
-                              onClick={() => handleRemoveNote(note.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveNote(note.id);
+                              }}
                               className="btn btn-ghost btn-sm btn-circle"
                               aria-label="노트 제거"
                             >
@@ -658,7 +660,7 @@ export default function ProjectsSettingsPage() {
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">연결된 할일</h2>
-                    <button onClick={() => setShowTodoModal(true)} className="btn btn-ghost btn-sm">
+                    <button onClick={handleAddTodo} className="btn btn-ghost btn-sm">
                       <Plus className="w-4 h-4" />
                       추가
                     </button>
@@ -676,6 +678,7 @@ export default function ProjectsSettingsPage() {
                           todo={todo}
                           onToggle={handleToggleTodo}
                           onRemove={handleRemoveTodo}
+                          onEdit={handleTodoClick}
                         />
                       ))}
                     </div>
@@ -793,11 +796,11 @@ export default function ProjectsSettingsPage() {
         onColorSelect={handleColorChange}
       />
 
-      {/* 노트 추가 모달 */}
-      {showNoteModal && (
+      {/* 노트 편집 모달 */}
+      {showNoteEditModal && editingNote && (
         <dialog open className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">노트 추가</h3>
+            <h3 className="font-bold text-lg mb-4">노트 편집</h3>
 
             {/* 제목 */}
             <div className="form-control mb-4">
@@ -806,8 +809,8 @@ export default function ProjectsSettingsPage() {
               </label>
               <input
                 type="text"
-                value={newNoteTitle}
-                onChange={(e) => setNewNoteTitle(e.target.value)}
+                value={editingNote.title}
+                onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
                 className="input input-bordered"
                 placeholder="예: 회의 내용"
               />
@@ -820,25 +823,25 @@ export default function ProjectsSettingsPage() {
               </label>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setNewNoteCategory('중간 작업물')}
+                  onClick={() => setEditingNote({ ...editingNote, category: '중간 작업물' })}
                   className={`btn btn-sm flex-1 ${
-                    newNoteCategory === '중간 작업물' ? 'btn-primary' : 'btn-ghost'
+                    editingNote.category === '중간 작업물' ? 'btn-primary' : 'btn-ghost'
                   }`}
                 >
                   중간 작업물
                 </button>
                 <button
-                  onClick={() => setNewNoteCategory('나중에 보기')}
+                  onClick={() => setEditingNote({ ...editingNote, category: '나중에 보기' })}
                   className={`btn btn-sm flex-1 ${
-                    newNoteCategory === '나중에 보기' ? 'btn-primary' : 'btn-ghost'
+                    editingNote.category === '나중에 보기' ? 'btn-primary' : 'btn-ghost'
                   }`}
                 >
                   나중에 보기
                 </button>
                 <button
-                  onClick={() => setNewNoteCategory('레퍼런스')}
+                  onClick={() => setEditingNote({ ...editingNote, category: '레퍼런스' })}
                   className={`btn btn-sm flex-1 ${
-                    newNoteCategory === '레퍼런스' ? 'btn-primary' : 'btn-ghost'
+                    editingNote.category === '레퍼런스' ? 'btn-primary' : 'btn-ghost'
                   }`}
                 >
                   레퍼런스
@@ -852,8 +855,8 @@ export default function ProjectsSettingsPage() {
                 <span className="label-text">연결할 영역/자원 (선택)</span>
               </label>
               <select
-                value={newNoteLinked}
-                onChange={(e) => setNewNoteLinked(e.target.value)}
+                value={editingNote.linkedAreaOrResource || ''}
+                onChange={(e) => setEditingNote({ ...editingNote, linkedAreaOrResource: e.target.value })}
                 className="select select-bordered"
               >
                 <option value="">선택 안 함</option>
@@ -879,8 +882,8 @@ export default function ProjectsSettingsPage() {
               <label className="cursor-pointer flex items-center gap-2">
                 <input
                   type="checkbox"
-                  checked={newNoteIsPinned}
-                  onChange={(e) => setNewNoteIsPinned(e.target.checked)}
+                  checked={editingNote.isPinned}
+                  onChange={(e) => setEditingNote({ ...editingNote, isPinned: e.target.checked })}
                   className="checkbox"
                 />
                 <span className="label-text">고정하기</span>
@@ -893,31 +896,31 @@ export default function ProjectsSettingsPage() {
                 <span className="label-text">내용</span>
               </label>
               <textarea
-                value={newNoteContent}
-                onChange={(e) => setNewNoteContent(e.target.value)}
+                value={editingNote.content}
+                onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
                 className="textarea textarea-bordered h-24"
                 placeholder="노트 내용을 입력하세요"
               />
             </div>
 
             <div className="modal-action">
-              <button onClick={() => setShowNoteModal(false)} className="btn btn-ghost">
+              <button onClick={handleCancelNoteEdit} className="btn btn-ghost">
                 취소
               </button>
-              <button onClick={handleAddNote} className="btn btn-primary">
-                추가
+              <button onClick={handleSaveNoteEdit} className="btn btn-primary">
+                저장
               </button>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setShowNoteModal(false)} />
+          <div className="modal-backdrop" onClick={handleCancelNoteEdit} />
         </dialog>
       )}
 
-      {/* 할일 추가 모달 */}
-      {showTodoModal && (
+      {/* 할일 편집 모달 */}
+      {showTodoEditModal && editingTodo && (
         <dialog open className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">할일 추가</h3>
+            <h3 className="font-bold text-lg mb-4">할일 편집</h3>
 
             {/* 제목 */}
             <div className="form-control mb-4">
@@ -926,8 +929,8 @@ export default function ProjectsSettingsPage() {
               </label>
               <input
                 type="text"
-                value={newTodoTitle}
-                onChange={(e) => setNewTodoTitle(e.target.value)}
+                value={editingTodo.title}
+                onChange={(e) => setEditingTodo({ ...editingTodo, title: e.target.value })}
                 className="input input-bordered"
                 placeholder="예: 요구사항 정리"
               />
@@ -939,8 +942,8 @@ export default function ProjectsSettingsPage() {
                 <span className="label-text">명료화 (선택)</span>
               </label>
               <textarea
-                value={newTodoClarification}
-                onChange={(e) => setNewTodoClarification(e.target.value)}
+                value={editingTodo.clarification || ''}
+                onChange={(e) => setEditingTodo({ ...editingTodo, clarification: e.target.value })}
                 className="textarea textarea-bordered h-20"
                 placeholder="할일에 대한 자세한 설명을 입력하세요"
               />
@@ -953,8 +956,8 @@ export default function ProjectsSettingsPage() {
               </label>
               <input
                 type="text"
-                value={newTodoNextAction}
-                onChange={(e) => setNewTodoNextAction(e.target.value)}
+                value={editingTodo.nextActionStatus || ''}
+                onChange={(e) => setEditingTodo({ ...editingTodo, nextActionStatus: e.target.value })}
                 className="input input-bordered"
                 placeholder="예: 팀장님께 확인 필요"
               />
@@ -967,8 +970,8 @@ export default function ProjectsSettingsPage() {
               </label>
               <input
                 type="date"
-                value={newTodoDate}
-                onChange={(e) => setNewTodoDate(e.target.value)}
+                value={editingTodo.scheduledDate ? format(editingTodo.scheduledDate, 'yyyy-MM-dd') : ''}
+                onChange={(e) => setEditingTodo({ ...editingTodo, scheduledDate: e.target.value ? new Date(e.target.value) : undefined })}
                 className="input input-bordered"
               />
             </div>
@@ -978,8 +981,8 @@ export default function ProjectsSettingsPage() {
               <label className="cursor-pointer flex items-center gap-2">
                 <input
                   type="checkbox"
-                  checked={newTodoIsHighlight}
-                  onChange={(e) => setNewTodoIsHighlight(e.target.checked)}
+                  checked={editingTodo.isHighlight}
+                  onChange={(e) => setEditingTodo({ ...editingTodo, isHighlight: e.target.checked })}
                   className="checkbox"
                 />
                 <span className="label-text flex items-center gap-1">
@@ -994,8 +997,8 @@ export default function ProjectsSettingsPage() {
               <label className="cursor-pointer flex items-center gap-2">
                 <input
                   type="checkbox"
-                  checked={newTodoCompleted}
-                  onChange={(e) => setNewTodoCompleted(e.target.checked)}
+                  checked={editingTodo.completed}
+                  onChange={(e) => setEditingTodo({ ...editingTodo, completed: e.target.checked })}
                   className="checkbox"
                 />
                 <span className="label-text">완료됨</span>
@@ -1003,17 +1006,18 @@ export default function ProjectsSettingsPage() {
             </div>
 
             <div className="modal-action">
-              <button onClick={() => setShowTodoModal(false)} className="btn btn-ghost">
+              <button onClick={handleCancelTodoEdit} className="btn btn-ghost">
                 취소
               </button>
-              <button onClick={handleAddTodo} className="btn btn-primary">
-                추가
+              <button onClick={handleSaveTodoEdit} className="btn btn-primary">
+                저장
               </button>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setShowTodoModal(false)} />
+          <div className="modal-backdrop" onClick={handleCancelTodoEdit} />
         </dialog>
       )}
+
     </div>
   );
 }
@@ -1046,10 +1050,12 @@ function TodoDraggableItem({
   todo,
   onToggle,
   onRemove,
+  onEdit,
 }: {
   todo: TodoItem;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
+  onEdit: (todo: TodoItem) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: todo.id,
@@ -1060,13 +1066,15 @@ function TodoDraggableItem({
     <div
       ref={setNodeRef}
       {...attributes}
-      className={`flex items-start gap-2 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors ${
+      onClick={() => onEdit(todo)}
+      className={`flex items-start gap-2 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer ${
         isDragging ? 'opacity-50' : ''
       }`}
     >
       {/* 드래그 핸들 */}
       <div
         {...listeners}
+        onClick={(e) => e.stopPropagation()}
         className="flex items-center justify-center w-6 h-6 mt-1 rounded cursor-grab active:cursor-grabbing hover:bg-base-300 transition-colors flex-shrink-0"
         aria-label="드래그하여 날짜 지정"
       >
@@ -1076,7 +1084,10 @@ function TodoDraggableItem({
       <input
         type="checkbox"
         checked={todo.completed}
-        onChange={() => onToggle(todo.id)}
+        onChange={(e) => {
+          e.stopPropagation();
+          onToggle(todo.id);
+        }}
         className="checkbox checkbox-sm mt-1 flex-shrink-0"
       />
       <div className="flex-1 min-w-0">
