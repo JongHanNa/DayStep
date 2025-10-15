@@ -15,28 +15,49 @@ import type { Modifier } from '@dnd-kit/core';
 import { restrictToWindowEdges, snapCenterToCursor } from '@dnd-kit/modifiers';
 
 /**
- * 스크롤 가능한 컨테이너 내부의 DragOverlay 위치를 보정하는 custom modifier
+ * Capacitor 네이티브 환경 감지
  *
  * @description
- * DragOverlay는 document.body 레벨에 렌더링되어 viewport 기준 좌표를 사용하지만,
- * 모달이나 스크롤 가능한 컨테이너 내부에서 드래그할 때는 스크롤 오프셋이 계산에 포함되지 않습니다.
- * 이 modifier는 .modal-box 컨테이너의 scrollTop 값을 감지하여 프리뷰 위치를 보정합니다.
+ * Capacitor WebView 환경인지 확인합니다.
+ * Capacitor는 window.Capacitor 객체를 제공하므로 이를 통해 감지합니다.
  */
-const adjustForScrollContainer: Modifier = ({ transform }) => {
-  // 스크롤 가능한 모달 컨테이너 찾기
-  const modalBox = document.querySelector('.modal-box');
-
-  if (!modalBox) {
-    return transform;
-  }
-
-  // 스크롤 오프셋만큼 Y 위치 보정 (스크롤된 만큼 아래로 내림)
-  return {
-    ...transform,
-    x: transform.x,
-    y: transform.y + modalBox.scrollTop,
-  };
+const isCapacitorEnvironment = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return (window as any).Capacitor !== undefined;
 };
+
+/**
+ * Capacitor WebView 환경을 위한 좌표 보정 modifier (현재 사용 안 함)
+ *
+ * @description
+ * ❌ 이 modifier는 효과가 없어서 제거됨
+ *
+ * 이유: transform.x/y는 절대 좌표가 아닌 드래그 이동 델타(변화량)입니다.
+ * devicePixelRatio로 나누는 것은 초기 위치에 영향을 주지 않고,
+ * 오히려 이동 거리를 줄여서 반응이 둔해집니다.
+ *
+ * DragOverlay의 초기 위치 문제는 dragOverlayProps.style에서 CSS 변수로 해결합니다.
+ */
+// const adjustForWebView: Modifier = ({ transform }) => {
+//   if (!isCapacitorEnvironment()) {
+//     return transform;
+//   }
+//   const scale = window.devicePixelRatio || 1;
+//   return {
+//     ...transform,
+//     x: transform.x / scale,
+//     y: transform.y / scale,
+//   };
+// };
+
+// ❌ Portal 사용으로 더 이상 필요 없음 (제거됨)
+// DragOverlay를 document.body에 렌더링하므로 스크롤 컨테이너 보정 불필요
+//
+// const adjustForScrollContainer: Modifier = ({ transform }) => {
+//   const modalBox = document.querySelector('.modal-box');
+//   if (!modalBox) return transform;
+//   return { ...transform, y: transform.y + modalBox.scrollTop };
+// };
 
 export interface UseDndKitOptions<T> {
   /**
@@ -142,6 +163,9 @@ export function useDndKit<T = unknown>({
 }: UseDndKitOptions<T>): UseDndKitReturn<T> {
   const [activeItem, setActiveItem] = useState<T | null>(null);
 
+  // Capacitor 환경 감지
+  const isCapacitor = isCapacitorEnvironment();
+
   // 센서 설정: 웹 브라우저 + Capacitor 모바일 호환
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -151,7 +175,11 @@ export function useDndKit<T = unknown>({
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        distance: 5, // 5px 이동 후 드래그 시작 (터치)
+        // Capacitor WebView에서는 터치 좌표 부정확도를 보완하기 위해
+        // 거리 임계값과 지연 시간을 증가시킵니다
+        distance: isCapacitor ? 8 : 5, // WebView: 8px, 브라우저: 5px
+        delay: isCapacitor ? 100 : 0,  // WebView: 100ms 지연, 브라우저: 즉시
+        tolerance: isCapacitor ? 3 : 0, // WebView: 3px 허용 오차
       },
     })
   );
@@ -205,7 +233,10 @@ export function useDndKit<T = unknown>({
       },
     },
     dragOverlayProps: {
-      modifiers: [snapCenterToCursor, adjustForScrollContainer, restrictToWindowEdges] as Modifier[],
+      // Portal로 document.body에 렌더링되므로 스크롤 보정 불필요
+      // - snapCenterToCursor: 커서/손가락 위치에 프리뷰 중앙 정렬
+      // - restrictToWindowEdges: 화면 밖으로 나가지 않도록 제한
+      modifiers: [snapCenterToCursor, restrictToWindowEdges] as Modifier[],
     },
   };
 }

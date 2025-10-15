@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
@@ -703,25 +704,28 @@ export default function ProjectsSettingsPage() {
                 </div>
               </div>
 
-              {/* 드래그 프리뷰 오버레이 */}
-              <DragOverlay {...dragOverlayProps}>
-                {activeTodo && (
-                  <div className="bg-base-100 border-2 border-primary rounded-lg p-3 shadow-2xl max-w-xs opacity-90">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm">{activeTodo.title}</p>
-                      {activeTodo.isHighlight && (
-                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+              {/* 드래그 프리뷰 오버레이 - Portal로 document.body에 렌더링 */}
+              {typeof window !== 'undefined' && createPortal(
+                <DragOverlay {...dragOverlayProps}>
+                  {activeTodo && (
+                    <div className="bg-base-100 border-2 border-primary rounded-lg p-3 shadow-2xl max-w-xs opacity-90">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">{activeTodo.title}</p>
+                        {activeTodo.isHighlight && (
+                          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        )}
+                      </div>
+                      {activeTodo.scheduledDate && (
+                        <p className="text-xs text-base-content/60 mt-1">
+                          <Calendar className="w-3 h-3 inline mr-1" />
+                          {format(activeTodo.scheduledDate, 'M/d')}
+                        </p>
                       )}
                     </div>
-                    {activeTodo.scheduledDate && (
-                      <p className="text-xs text-base-content/60 mt-1">
-                        <Calendar className="w-3 h-3 inline mr-1" />
-                        {format(activeTodo.scheduledDate, 'M/d')}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </DragOverlay>
+                  )}
+                </DragOverlay>,
+                document.body
+              )}
             </DndContext>
 
             {/* 버튼 */}
