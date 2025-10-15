@@ -6,7 +6,7 @@ import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { Plus, ArrowLeft, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star } from 'lucide-react';
+import { Plus, ArrowLeft, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, GripVertical } from 'lucide-react';
 import ProjectCard from '@/components/second-brain/ProjectCard';
 import ProjectStatusTabs from '@/components/second-brain/ProjectStatusTabs';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
@@ -14,7 +14,8 @@ import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import type { CreateProjectInput, UpdateProjectInput, Project } from '@/types/second-brain';
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDndKit } from '@/hooks/useDndKit';
+import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths } from 'date-fns';
 
 // 프론트엔드 전용 타입
@@ -78,14 +79,32 @@ export default function ProjectsSettingsPage() {
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // DnD 설정 (Capacitor 호환)
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // 8px 이동 후 드래그 시작 (터치 스크롤과 구분)
-      },
-    })
-  );
+  // useDndKit Hook 사용 (범용 드래그 앤 드롭)
+  const { sensors, activeItem: activeTodo, handleDragStart, handleDragEnd: handleDndEnd, dndContextProps, dragOverlayProps } = useDndKit<TodoItem>({
+    onDragEnd: (active, over) => {
+      // over가 없거나 ID가 없으면 무시
+      if (!over || !over.id) return;
+
+      const todoId = active.id as string;
+      const dateString = over.id as string;
+
+      // dateString이 유효한 날짜 형식인지 확인 (yyyy-MM-dd)
+      // 이 검증으로 할일 아이템 위나 다른 드롭 영역에 드롭하는 것을 방지
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return;
+
+      const scheduledDate = new Date(dateString);
+
+      // 유효한 날짜인지 확인 (Invalid Date 방지)
+      if (isNaN(scheduledDate.getTime())) return;
+
+      setTodos(
+        todos.map((todo) =>
+          todo.id === todoId ? { ...todo, scheduledDate } : todo
+        )
+      );
+    },
+    getActiveItem: (id) => todos.find((t) => t.id === id),
+  });
 
   useEffect(() => {
     // projects는 Zustand persist가 자동으로 localStorage에서 복원
@@ -319,27 +338,6 @@ export default function ProjectsSettingsPage() {
   // 할일 제거
   const handleRemoveTodo = (todoId: string) => {
     setTodos(todos.filter((todo) => todo.id !== todoId));
-  };
-
-  // 드래그 엔드 핸들러 (할일을 달력 날짜로 드롭)
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    const todoId = active.id as string;
-    const dateString = over.id as string;
-
-    // dateString이 유효한 날짜 형식인지 확인
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return;
-
-    const scheduledDate = new Date(dateString);
-
-    setTodos(
-      todos.map((todo) =>
-        todo.id === todoId ? { ...todo, scheduledDate } : todo
-      )
-    );
   };
 
   return (
@@ -654,7 +652,7 @@ export default function ProjectsSettingsPage() {
             </div>
 
             {/* ========== 할일 영역 ========== */}
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDndEnd} {...dndContextProps}>
               <div className="card bg-base-200 mb-4">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-4">
@@ -688,9 +686,14 @@ export default function ProjectsSettingsPage() {
               <div className="card bg-base-200 mb-4">
                 <div className="card-body">
                   <h2 className="text-lg font-semibold mb-4">할일 계획</h2>
-                  <p className="text-sm text-base-content/60 mb-4">
-                    위 할일을 원하는 날짜로 드래그하여 계획하세요.
-                  </p>
+                  <div className="flex items-start gap-2 p-3 bg-base-100 rounded-lg mb-4">
+                    <div className="flex items-center justify-center w-6 h-6 rounded bg-base-200 flex-shrink-0">
+                      <GripVertical className="w-4 h-4 text-base-content/40" />
+                    </div>
+                    <p className="text-sm text-base-content/70">
+                      <strong>드래그 방법:</strong> 위 할일의 왼쪽 핸들(<GripVertical className="w-3 h-3 inline" />)을 잡고 원하는 날짜로 드래그하세요.
+                    </p>
+                  </div>
 
                   <CalendarDropArea
                     selectedDate={selectedDate}
@@ -699,6 +702,26 @@ export default function ProjectsSettingsPage() {
                   />
                 </div>
               </div>
+
+              {/* 드래그 프리뷰 오버레이 */}
+              <DragOverlay {...dragOverlayProps}>
+                {activeTodo && (
+                  <div className="bg-base-100 border-2 border-primary rounded-lg p-3 shadow-2xl max-w-xs opacity-90">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">{activeTodo.title}</p>
+                      {activeTodo.isHighlight && (
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      )}
+                    </div>
+                    {activeTodo.scheduledDate && (
+                      <p className="text-xs text-base-content/60 mt-1">
+                        <Calendar className="w-3 h-3 inline mr-1" />
+                        {format(activeTodo.scheduledDate, 'M/d')}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </DragOverlay>
             </DndContext>
 
             {/* 버튼 */}
@@ -991,6 +1014,29 @@ export default function ProjectsSettingsPage() {
   );
 }
 
+// ========== 할일 프리뷰 카드 컴포넌트 ==========
+function TodoPreviewCard({ todo }: { todo: TodoItem }) {
+  return (
+    <div className="flex items-start gap-2 p-3 bg-base-100 rounded-lg shadow-2xl border-2 border-primary max-w-xs">
+      <GripVertical className="w-4 h-4 text-base-content/40 flex-shrink-0 mt-1" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="font-medium truncate text-sm">{todo.title}</p>
+          {todo.isHighlight && (
+            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+          )}
+        </div>
+        {todo.scheduledDate && (
+          <p className="text-xs text-base-content/60">
+            <Calendar className="w-3 h-3 inline mr-1" />
+            {format(todo.scheduledDate, 'M/d')}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ========== 할일 드래그 가능 아이템 컴포넌트 ==========
 function TodoDraggableItem({
   todo,
@@ -1010,17 +1056,24 @@ function TodoDraggableItem({
     <div
       ref={setNodeRef}
       {...attributes}
-      {...listeners}
-      className={`flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-move ${
+      className={`flex items-start gap-2 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors ${
         isDragging ? 'opacity-50' : ''
       }`}
     >
+      {/* 드래그 핸들 */}
+      <div
+        {...listeners}
+        className="flex items-center justify-center w-6 h-6 mt-1 rounded cursor-grab active:cursor-grabbing hover:bg-base-300 transition-colors flex-shrink-0"
+        aria-label="드래그하여 날짜 지정"
+      >
+        <GripVertical className="w-4 h-4 text-base-content/40" />
+      </div>
+
       <input
         type="checkbox"
         checked={todo.completed}
         onChange={() => onToggle(todo.id)}
-        className="checkbox checkbox-sm mt-1"
-        onClick={(e) => e.stopPropagation()}
+        className="checkbox checkbox-sm mt-1 flex-shrink-0"
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
@@ -1052,7 +1105,7 @@ function TodoDraggableItem({
           e.stopPropagation();
           onRemove(todo.id);
         }}
-        className="btn btn-ghost btn-sm btn-circle"
+        className="btn btn-ghost btn-sm btn-circle flex-shrink-0"
         aria-label="할일 제거"
       >
         <X className="w-4 h-4" />
@@ -1162,15 +1215,16 @@ function CalendarDayCell({
     <div
       ref={setNodeRef}
       className={`
-        min-h-[60px] p-2 border rounded-lg transition-colors
-        ${isOver ? 'bg-primary/20 border-primary' : 'border-base-300'}
+        min-h-[70px] p-2 border-2 rounded-lg transition-all duration-200
+        ${isOver ? 'bg-primary/30 border-primary shadow-lg scale-105' : 'border-base-300'}
         ${!isCurrentMonth ? 'opacity-40' : ''}
         ${isToday ? 'bg-primary/10 border-primary' : 'bg-base-100'}
+        hover:border-primary/50 hover:shadow-md cursor-pointer
       `}
     >
       <div className="text-sm font-medium mb-1">{format(date, 'd')}</div>
       {todosCount > 0 && (
-        <div className="text-xs bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center">
+        <div className="text-xs bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center font-semibold">
           {todosCount}
         </div>
       )}
