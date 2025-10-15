@@ -39,6 +39,7 @@ export default function ResourcesSettingsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
   const [itemType, setItemType] = useState<SecondBrainItemType>('resource');
+  const [isCreatingResource, setIsCreatingResource] = useState(false);
 
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -52,23 +53,29 @@ export default function ResourcesSettingsPage() {
     fetchResources();
   }, [fetchResources]);
 
-  // 새 자원 추가 핸들러
-  const handleAddResource = () => {
-    setEditingResource({
-      id: '',
-      title: '',
-      description: '',
-      icon: 'lucide-BookOpen',
-      color: '#A8DADC',
-      order_index: resources.length,
-      is_archived: false,
-      created_at: '',
-      updated_at: '',
-      user_id: '',
-      isNew: true,
-    });
-    setItemType('resource');
-    setEditDialogOpen(true);
+  // 새 자원 추가 핸들러 - 즉시 생성
+  const handleAddResource = async () => {
+    if (isCreatingResource) return; // 중복 클릭 방지
+
+    setIsCreatingResource(true);
+    try {
+      // 자원 즉시 생성
+      const createdResource = await createResource({
+        title: '새 자원',
+        description: '',
+        icon: 'lucide-BookOpen',
+        color: '#A8DADC',
+        order_index: resources.length,
+        is_archived: false,
+      });
+
+      console.log('새 자원 생성 완료:', createdResource);
+    } catch (error) {
+      console.error('자원 생성 실패:', error);
+      alert('자원 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingResource(false);
+    }
   };
 
   // 자원 편집 핸들러
@@ -317,9 +324,17 @@ export default function ResourcesSettingsPage() {
                 <Lightbulb className="w-4 h-4" />
                 추천 항목 추가
               </button>
-              <button onClick={handleAddResource} className="btn btn-primary btn-sm">
-                <Plus className="w-4 h-4" />
-                새 자원 추가
+              <button
+                onClick={handleAddResource}
+                className="btn btn-primary btn-sm"
+                disabled={isCreatingResource}
+              >
+                {isCreatingResource ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                {isCreatingResource ? '생성 중...' : '새 자원 추가'}
               </button>
             </div>
           </div>

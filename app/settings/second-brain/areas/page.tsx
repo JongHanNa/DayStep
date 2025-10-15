@@ -39,6 +39,7 @@ export default function AreasSettingsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
   const [itemType, setItemType] = useState<SecondBrainItemType>('area');
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
 
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -52,23 +53,29 @@ export default function AreasSettingsPage() {
     fetchAreas();
   }, [fetchAreas]);
 
-  // 새 영역 추가 핸들러
-  const handleAddArea = () => {
-    setEditingArea({
-      id: '',
-      title: '',
-      description: '',
-      icon: 'lucide-MapPin',
-      color: '#A8DADC',
-      order_index: areas.length,
-      is_archived: false,
-      created_at: '',
-      updated_at: '',
-      user_id: '',
-      isNew: true,
-    });
-    setItemType('area');
-    setEditDialogOpen(true);
+  // 새 영역 추가 핸들러 - 즉시 생성
+  const handleAddArea = async () => {
+    if (isCreatingArea) return; // 중복 클릭 방지
+
+    setIsCreatingArea(true);
+    try {
+      // 영역 즉시 생성
+      const createdArea = await createArea({
+        title: '새 영역',
+        description: '',
+        icon: 'lucide-MapPin',
+        color: '#A8DADC',
+        order_index: areas.length,
+        is_archived: false,
+      });
+
+      console.log('새 영역 생성 완료:', createdArea);
+    } catch (error) {
+      console.error('영역 생성 실패:', error);
+      alert('영역 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingArea(false);
+    }
   };
 
   // 영역 편집 핸들러
@@ -317,9 +324,17 @@ export default function AreasSettingsPage() {
                 <Lightbulb className="w-4 h-4" />
                 추천 항목 추가
               </button>
-              <button onClick={handleAddArea} className="btn btn-primary btn-sm">
-                <Plus className="w-4 h-4" />
-                새 영역 추가
+              <button
+                onClick={handleAddArea}
+                className="btn btn-primary btn-sm"
+                disabled={isCreatingArea}
+              >
+                {isCreatingArea ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                {isCreatingArea ? '생성 중...' : '새 영역 추가'}
               </button>
             </div>
           </div>

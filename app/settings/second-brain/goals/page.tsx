@@ -36,6 +36,7 @@ export default function GoalsSettingsPage() {
   const [projectDeleteConfirmOpen, setProjectDeleteConfirmOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingGoal, setIsCreatingGoal] = useState(false);
 
   useEffect(() => {
     fetchGoals();
@@ -43,28 +44,31 @@ export default function GoalsSettingsPage() {
     fetchResources();
   }, [fetchGoals, fetchAreas, fetchResources]);
 
-  // 새 목표 추가 핸들러
-  const handleAddGoal = () => {
-    setEditingGoal({
-      id: '',
-      title: '',
-      description: '',
-      icon: 'lucide-Target',
-      color: '#A8DADC',
-      status: 'not_started',
-      start_date: '',
-      target_date: '',
-      timeframe: 'year',
-      target_year: new Date().getFullYear(),
-      target_quarter: 1,
-      progress: 0,
-      created_at: '',
-      updated_at: '',
-      user_id: '',
-      paraSelection: '',
-      isNew: true,
-    });
-    setEditDialogOpen(true);
+  // 새 목표 추가 핸들러 - 즉시 생성
+  const handleAddGoal = async () => {
+    if (isCreatingGoal) return; // 중복 클릭 방지
+
+    setIsCreatingGoal(true);
+    try {
+      // 목표 즉시 생성
+      const createdGoal = await createGoal({
+        title: '새 목표',
+        description: '',
+        icon: 'lucide-Target',
+        color: '#A8DADC',
+        status: 'not_started',
+        timeframe: 'year',
+        target_year: new Date().getFullYear(),
+        target_quarter: 1,
+      });
+
+      console.log('새 목표 생성 완료:', createdGoal);
+    } catch (error) {
+      console.error('목표 생성 실패:', error);
+      alert('목표 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingGoal(false);
+    }
   };
 
   // 목표 편집 핸들러
@@ -221,9 +225,6 @@ export default function GoalsSettingsPage() {
       });
 
       console.log('새 프로젝트 생성 완료:', createdProject);
-
-      // 생성된 프로젝트 편집 다이얼로그 열기
-      handleEditProject(createdProject);
     } catch (error) {
       console.error('프로젝트 생성 실패:', error);
       alert('프로젝트 생성에 실패했습니다.');
@@ -346,9 +347,17 @@ export default function GoalsSettingsPage() {
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">목표 목록 ({goals.length}개)</h2>
-            <button onClick={handleAddGoal} className="btn btn-primary btn-sm">
-              <Plus className="w-4 h-4" />
-              새 목표 추가
+            <button
+              onClick={handleAddGoal}
+              className="btn btn-primary btn-sm"
+              disabled={isCreatingGoal}
+            >
+              {isCreatingGoal ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+              {isCreatingGoal ? '생성 중...' : '새 목표 추가'}
             </button>
           </div>
 
