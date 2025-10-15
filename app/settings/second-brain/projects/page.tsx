@@ -527,10 +527,10 @@ export default function ProjectsSettingsPage() {
               />
             </div>
 
-            {/* 연결할 목표 */}
+            {/* 목표 */}
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text">연결할 목표 (선택)</span>
+                <span className="label-text">목표</span>
               </label>
               <select
                 value={editingProject.goal_id || ''}
@@ -568,10 +568,10 @@ export default function ProjectsSettingsPage() {
               </select>
             </div>
 
-            {/* 연결할 영역/자원 */}
+            {/* 영역/자원 */}
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text">연결할 영역/자원 (선택)</span>
+                <span className="label-text">영역/자원 (선택)</span>
               </label>
               <select
                 value={editingProject.paraSelection}
@@ -890,10 +890,10 @@ export default function ProjectsSettingsPage() {
               </div>
             </div>
 
-            {/* 연결할 영역/자원 */}
+            {/* 영역/자원 */}
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text">연결할 영역/자원 (선택)</span>
+                <span className="label-text">영역/자원 (선택)</span>
               </label>
               <select
                 value={editingNote.linkedAreaOrResource || ''}

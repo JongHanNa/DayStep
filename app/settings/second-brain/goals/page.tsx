@@ -338,10 +338,10 @@ export default function GoalsSettingsPage() {
               </select>
             </div>
 
-            {/* 연결할 영역/자원 */}
+            {/* 영역/자원 */}
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text">연결할 영역/자원 (선택)</span>
+                <span className="label-text">영역/자원 (선택)</span>
               </label>
               <select
                 value={editingGoal.paraSelection}
