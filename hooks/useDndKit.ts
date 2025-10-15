@@ -88,7 +88,7 @@ export interface UseDndKitReturn<T> {
    * DndContext에 전달할 공통 props
    */
   dndContextProps: {
-    collisionDetection: typeof closestCenter;
+    collisionDetection: typeof pointerWithin;
     modifiers: typeof restrictToWindowEdges[];
     measuring: {
       droppable: {
