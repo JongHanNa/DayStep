@@ -12,7 +12,7 @@ import {
   MeasuringStrategy,
 } from '@dnd-kit/core';
 import type { Modifier } from '@dnd-kit/core';
-import { restrictToWindowEdges, snapCenterToCursor } from '@dnd-kit/modifiers';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 
 /**
  * Capacitor 네이티브 환경 감지
@@ -233,10 +233,10 @@ export function useDndKit<T = unknown>({
       },
     },
     dragOverlayProps: {
-      // Portal로 document.body에 렌더링되므로 스크롤 보정 불필요
-      // - snapCenterToCursor: 커서/손가락 위치에 프리뷰 중앙 정렬
-      // - restrictToWindowEdges: 화면 밖으로 나가지 않도록 제한
-      modifiers: [snapCenterToCursor, restrictToWindowEdges] as Modifier[],
+      // Portal로 document.body에 렌더링
+      // TimelineDndProvider와 동일하게 restrictToWindowEdges만 사용
+      // snapCenterToCursor 제거: X축 드래그 제약 해결
+      modifiers: [restrictToWindowEdges] as Modifier[],
     },
   };
 }
