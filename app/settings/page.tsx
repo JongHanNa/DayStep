@@ -177,23 +177,6 @@ function SettingsPageContent() {
               </div>
             </Link>
 
-            {/* Todos (할일) */}
-            <Link href="/settings/second-brain/todos" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 last:rounded-b-xl"
-                role="button"
-                aria-label="할일 (Todos) - 실행할 작업 관리"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">할일 (Todos)</h4>
-                  <p className="text-xs text-muted-foreground">실행할 작업 관리</p>
-                </div>
-              </div>
-            </Link>
           </div>
         </div>
 
