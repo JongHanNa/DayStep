@@ -8,12 +8,12 @@ import { Target, Plus } from 'lucide-react';
 
 export default function GoalsPage() {
   const { goals, fetchGoals } = useGoalStore();
-  const { projects, fetchProjects } = useProjectStore();
+  const { projects } = useProjectStore(); // Zustand persist가 자동으로 복원
 
   useEffect(() => {
     fetchGoals();
-    fetchProjects();
-  }, [fetchGoals, fetchProjects]);
+    // projects는 Zustand persist가 자동으로 복원
+  }, [fetchGoals]);
 
   return (
     <div className="min-h-screen bg-base-100 pb-20">

@@ -5,7 +5,7 @@
 
 import { createStore } from '@/state/utils/storeUtils';
 import type { Project, CreateProjectInput, UpdateProjectInput } from '@/types/second-brain';
-import { mockProjects, saveMockDataToLocalStorage } from '@/lib/mockData/secondBrain';
+import { mockProjects } from '@/lib/mockData/secondBrain';
 
 interface ProjectStoreState {
   projects: Project[];
@@ -13,7 +13,6 @@ interface ProjectStoreState {
   error: string | null;
 
   // Actions
-  fetchProjects: () => Promise<void>;
   createProject: (data: CreateProjectInput) => Promise<Project>;
   updateProject: (id: string, data: UpdateProjectInput) => Promise<Project>;
   deleteProject: (id: string) => Promise<boolean>;
@@ -26,23 +25,9 @@ interface ProjectStoreState {
 
 export const useProjectStore = createStore<ProjectStoreState>(
   (set, get) => ({
-    projects: [],
+    projects: mockProjects, // 초기값: mockProjects (persist가 localStorage에서 복원하지 않으면 사용)
     loading: false,
     error: null,
-
-    fetchProjects: async () => {
-      try {
-        set({ loading: true, error: null });
-        // Mock 데이터 로드 (아카이브 포함)
-        const projects = mockProjects;
-        set({ projects, loading: false });
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '프로젝트를 불러오는데 실패했습니다.',
-          loading: false,
-        });
-      }
-    },
 
     createProject: async (data: CreateProjectInput) => {
       try {
@@ -62,8 +47,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         const updatedProjects = [...get().projects, newProject];
         set({ projects: updatedProjects, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
 
         return newProject;
       } catch (error) {
@@ -91,8 +75,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         set({ projects: updatedProjects, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
 
         const updatedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!updatedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
@@ -114,8 +97,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         const updatedProjects = get().projects.filter((project: Project) => project.id !== id);
         set({ projects: updatedProjects, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
 
         return true;
       } catch (error) {
@@ -145,8 +127,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         set({ projects: updatedProjects, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
 
         const completedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!completedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
@@ -177,8 +158,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         set({ projects: updatedProjects.filter((p: Project) => p.status !== 'archived'), loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
 
         const archivedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!archivedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
@@ -211,8 +191,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         set({ projects: updatedProjects.filter((p: Project) => p.status !== 'archived'), loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
 
         const unarchivedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!unarchivedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
@@ -247,8 +226,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         set({ projects: updatedProjects, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
 
         const updatedProject = updatedProjects.find((p: Project) => p.id === id);
         if (!updatedProject) throw new Error('프로젝트를 찾을 수 없습니다.');
@@ -281,8 +259,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         set({ projects: updatedProjects, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // Zustand persist 미들웨어가 자동으로 localStorage에 저장
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '프로젝트 순서 변경에 실패했습니다.',

@@ -25,7 +25,7 @@ interface GroupedItem {
 
 export default function ArchivePage() {
   const { goals, fetchGoals } = useGoalStore();
-  const { projects, fetchProjects } = useProjectStore();
+  const { projects } = useProjectStore(); // Zustand persist가 자동으로 복원
   const {
     areas,
     fetchAreas,
@@ -52,10 +52,10 @@ export default function ArchivePage() {
 
   useEffect(() => {
     fetchGoals();
-    fetchProjects();
+    // projects는 Zustand persist가 자동으로 복원
     fetchAreas();
     fetchResources();
-  }, [fetchGoals, fetchProjects, fetchAreas, fetchResources]);
+  }, [fetchGoals, fetchAreas, fetchResources]);
 
   // 아카이브된 항목만 필터링
   const archivedGoals = goals.filter((g) => g.status === 'archived' || g.status === 'completed');

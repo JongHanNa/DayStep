@@ -1,17 +1,16 @@
 'use client';
 
 import { memo } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Project } from '@/types/second-brain';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 
 interface ProjectCardProps {
   project: Project;
+  onEditClick: (project: Project) => void;
 }
 
-const ProjectCard = memo(function ProjectCard({ project }: ProjectCardProps) {
-  const router = useRouter();
+const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectCardProps) {
   const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
 
   // 진행률 계산
@@ -35,9 +34,9 @@ const ProjectCard = memo(function ProjectCard({ project }: ProjectCardProps) {
     archived: 'bg-base-content/10 text-base-content/50',
   };
 
-  // 카드 클릭 시 편집 페이지로 바로 이동
+  // 카드 클릭 시 편집 모달 열기
   const handleClick = () => {
-    router.push(`/settings/second-brain/projects/${project.id}/edit`);
+    onEditClick(project);
   };
 
   return (
