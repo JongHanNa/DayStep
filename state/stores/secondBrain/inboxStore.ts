@@ -20,12 +20,14 @@ interface InboxStoreState {
   // Actions
   fetchInboxItems: () => Promise<void>;
   fetchInboxItemsByStatus: (status: GTDStatus) => Promise<InboxItem[]>;
+  fetchInboxItemsByType: (type: 'todo' | 'note' | 'project' | 'goal') => Promise<InboxItem[]>;
   createInboxItem: (data: CreateInboxItemInput) => Promise<InboxItem>;
   updateInboxItem: (id: string, data: UpdateInboxItemInput) => Promise<InboxItem>;
   deleteInboxItem: (id: string) => Promise<boolean>;
   clarifyInboxItem: (id: string, status: GTDStatus, clarifyData?: Partial<InboxItem>) => Promise<InboxItem>;
   completeInboxItem: (id: string) => Promise<InboxItem>;
   delegateInboxItem: (id: string, delegatedTo: string) => Promise<InboxItem>;
+  convertTodoToProject: (todoId: string, projectTitle?: string) => Promise<{ deletedTodoId: string; newProjectId: string }>;
 }
 
 export const useInboxStore = createStore<InboxStoreState>(
@@ -52,6 +54,24 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
         const filteredItems = get().inboxItems.filter((item: InboxItem) => item.status === status);
+        set({ loading: false });
+        return filteredItems;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '수집함 항목을 불러오는데 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+
+    fetchInboxItemsByType: async (type: 'todo' | 'note' | 'project' | 'goal') => {
+      try {
+        set({ loading: true, error: null });
+        const filteredItems = get().inboxItems.filter((item: InboxItem) => {
+          // status가 'inbox'이고 item_type이 일치하는 항목만 반환
+          return item.status === 'inbox' && item.item_type === type;
+        });
         set({ loading: false });
         return filteredItems;
       } catch (error) {
@@ -246,6 +266,55 @@ export const useInboxStore = createStore<InboxStoreState>(
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '위임 처리에 실패했습니다.',
+          loading: false,
+        });
+        throw error;
+      }
+    },
+
+    convertTodoToProject: async (todoId: string, projectTitle?: string) => {
+      try {
+        set({ loading: true, error: null });
+
+        // 할일 찾기
+        const todo = get().inboxItems.find((item: InboxItem) => item.id === todoId);
+        if (!todo) throw new Error('할일을 찾을 수 없습니다.');
+
+        // 할일 삭제 (status를 deleted로 변경)
+        const updatedInboxItems = get().inboxItems.map((item: InboxItem) =>
+          item.id === todoId
+            ? {
+                ...item,
+                status: 'deleted' as const,
+                updated_at: new Date().toISOString(),
+              }
+            : item
+        ).filter((item: InboxItem) => item.status !== 'deleted');
+
+        // 프로젝트 수집함에 새 항목 생성
+        const newProjectInboxItem: InboxItem = {
+          id: `inbox-project-${Date.now()}`,
+          user_id: todo.user_id,
+          content: projectTitle || todo.content,
+          status: 'inbox',
+          item_type: 'project',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const finalInboxItems = [...updatedInboxItems, newProjectInboxItem];
+        set({ inboxItems: finalInboxItems, loading: false });
+
+        // LocalStorage 저장
+        saveMockDataToLocalStorage();
+
+        return {
+          deletedTodoId: todoId,
+          newProjectId: newProjectInboxItem.id,
+        };
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '프로젝트 변환에 실패했습니다.',
           loading: false,
         });
         throw error;

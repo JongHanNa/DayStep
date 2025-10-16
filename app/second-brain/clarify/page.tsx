@@ -2,157 +2,138 @@
 
 import { useEffect, useState } from 'react';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import { X, ThumbsUp, ThumbsDown, Calendar, Users, Clock } from 'lucide-react';
+import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
+import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
+import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
+import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProjectsSection';
+import GTDGuideSection from '@/components/second-brain/clarify/GTDGuideSection';
+import type { InboxItem } from '@/types/second-brain';
 
 export default function ClarifyPage() {
-  const { inboxItems, fetchInboxItemsByStatus, clarifyInboxItem } = useInboxStore();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [unprocessedItems, setUnprocessedItems] = useState<typeof inboxItems>([]);
+  const { inboxItems, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
+  const { projects } = useProjectStore();
+
+  const [activeTab, setActiveTab] = useState<InboxTabType>('todos');
+  const [todoInbox, setTodoInbox] = useState<InboxItem[]>([]);
+  const [noteInbox, setNoteInbox] = useState<InboxItem[]>([]);
+  const [projectInbox, setProjectInbox] = useState<InboxItem[]>([]);
+  const [goalInbox, setGoalInbox] = useState<InboxItem[]>([]);
 
   useEffect(() => {
-    loadUnprocessedItems();
+    loadInboxData();
   }, []);
 
-  const loadUnprocessedItems = async () => {
-    const items = await fetchInboxItemsByStatus('inbox');
-    setUnprocessedItems(items);
+  const loadInboxData = async () => {
+    await fetchInboxItems();
+    const todos = await fetchInboxItemsByType('todo');
+    const notes = await fetchInboxItemsByType('note');
+    const projects = await fetchInboxItemsByType('project');
+    const goals = await fetchInboxItemsByType('goal');
+
+    setTodoInbox(todos);
+    setNoteInbox(notes);
+    setProjectInbox(projects);
+    setGoalInbox(goals);
   };
 
-  const currentItem = unprocessedItems[currentIndex];
-
-  const handleActionable = async (isActionable: boolean) => {
-    if (!currentItem) return;
-
-    if (!isActionable) {
-      // 실행 불가능 → 삭제/보관/언젠가
-      const action = confirm('나중에 다시 볼까요? (취소하면 삭제됩니다)');
-      await clarifyInboxItem(currentItem.id, action ? 'someday' : 'deleted');
-      moveToNext();
-    } else {
-      // 실행 가능 → 다음 질문
-      // 임시: 바로 다음 행동으로 분류
-      await clarifyInboxItem(currentItem.id, 'next_action');
-      moveToNext();
-    }
+  const handleRefresh = () => {
+    loadInboxData();
   };
-
-  const moveToNext = () => {
-    if (currentIndex < unprocessedItems.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else {
-      loadUnprocessedItems();
-      setCurrentIndex(0);
-    }
-  };
-
-  const handleSkip = () => {
-    moveToNext();
-  };
-
-  if (!currentItem) {
-    return (
-      <div className="min-h-screen bg-base-100 pb-20">
-        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-          <div className="max-w-3xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold">명료화</h1>
-            <p className="text-sm text-base-content/70">
-              수집한 항목을 분류하고 처리하세요
-            </p>
-          </div>
-        </div>
-
-        <div className="max-w-3xl mx-auto px-4 py-6">
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">✨</div>
-            <p className="text-lg font-semibold text-base-content/70 mb-2">
-              모든 항목을 처리했습니다!
-            </p>
-            <p className="text-sm text-base-content/50">
-              수집함에 새로운 항목을 추가해보세요
-            </p>
-          </div>
-        </div>
-
-        <SecondBrainBottomNav />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-base-100 pb-20">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold">명료화</h1>
-            <button onClick={handleSkip} className="btn btn-ghost btn-sm">
-              <X className="w-4 h-4" />
-              건너뛰기
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-base-content/70">
-              {currentIndex + 1} / {unprocessedItems.length}
-            </p>
-            <progress
-              className="progress progress-primary w-32"
-              value={currentIndex + 1}
-              max={unprocessedItems.length}
-            />
-          </div>
+          <h1 className="text-2xl font-bold mb-1">명료화</h1>
+          <p className="text-sm text-base-content/70">
+            수집한 항목을 분류하고 처리하세요
+          </p>
         </div>
       </div>
 
-      {/* 메인 콘텐츠 - Tinder 스타일 */}
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* 카드 */}
-        <div className="card bg-gradient-to-br from-primary/5 to-secondary/5 shadow-xl mb-8">
-          <div className="card-body p-8">
-            <p className="text-xl text-center min-h-[120px] flex items-center justify-center">
-              {currentItem.content}
-            </p>
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
+        {/* 수집함 영역 */}
+        <section>
+          <h2 className="text-xl font-bold mb-4">수집함 비우기</h2>
+
+          {/* 수집함 탭 */}
+          <InboxTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            counts={{
+              todos: todoInbox.length,
+              notes: noteInbox.length,
+              projects: projectInbox.length,
+              goals: goalInbox.length,
+            }}
+          />
+
+          {/* 수집함 리스트 */}
+          <div className="mt-4">
+            {activeTab === 'todos' && (
+              <TodoInboxList
+                todos={todoInbox}
+                projects={projects}
+                onRefresh={handleRefresh}
+              />
+            )}
+            {activeTab === 'notes' && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📝</div>
+                <p className="text-lg font-semibold text-base-content/70 mb-2">
+                  노트 수집함
+                </p>
+                <p className="text-sm text-base-content/50">
+                  노트 수집 기능은 추후 구현 예정입니다
+                </p>
+              </div>
+            )}
+            {activeTab === 'projects' && (
+              <ProjectInboxList
+                projects={projectInbox}
+                onProjectClick={(project) => {
+                  alert(`프로젝트 편집 기능은 추후 구현됩니다:\n${project.content}`);
+                }}
+              />
+            )}
+            {activeTab === 'goals' && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🎯</div>
+                <p className="text-lg font-semibold text-base-content/70 mb-2">
+                  목표 수집함
+                </p>
+                <p className="text-sm text-base-content/50">
+                  목표 수집 기능은 추후 구현 예정입니다
+                </p>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
 
-        {/* 질문 */}
-        <div className="card bg-base-200 mb-8">
-          <div className="card-body">
-            <h2 className="card-title text-center justify-center">
-              이것은 실행 가능한가요?
-            </h2>
-            <p className="text-sm text-base-content/60 text-center">
-              구체적인 행동으로 옮길 수 있나요?
-            </p>
-          </div>
-        </div>
+        {/* 구분선 */}
+        <div className="divider"></div>
 
-        {/* 액션 버튼 */}
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => handleActionable(false)}
-            className="btn btn-lg btn-outline hover:btn-error"
-          >
-            <ThumbsDown className="w-6 h-6" />
-            아니요
-          </button>
-          <button
-            onClick={() => handleActionable(true)}
-            className="btn btn-lg btn-primary"
-          >
-            <ThumbsUp className="w-6 h-6" />
-            예
-          </button>
-        </div>
+        {/* 진행중인 프로젝트 영역 */}
+        <section>
+          <ActiveProjectsSection
+            projects={projects}
+            goals={[]}
+            onProjectClick={(project) => {
+              alert(`프로젝트 상세 보기:\n${project.title}`);
+            }}
+          />
+        </section>
 
-        {/* 가이드 */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-base-content/40">
-            &ldquo;아니요&rdquo; → 삭제하거나 언젠가 목록으로
-            <br />
-            &ldquo;예&rdquo; → 다음 행동 또는 프로젝트로 변환
-          </p>
-        </div>
+        {/* 구분선 */}
+        <div className="divider"></div>
+
+        {/* GTD 알고리즘 설명 영역 */}
+        <section>
+          <GTDGuideSection />
+        </section>
       </div>
 
       {/* 하단 네비게이션 */}

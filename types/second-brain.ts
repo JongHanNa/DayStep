@@ -201,8 +201,8 @@ export interface InboxItem {
   content: string;
   status: GTDStatus;
 
-  // 수집 타입 (할일 또는 노트)
-  item_type?: 'todo' | 'note';
+  // 수집 타입 (할일, 노트, 프로젝트, 목표)
+  item_type?: 'todo' | 'note' | 'project' | 'goal';
 
   // GTD 분류 정보
   context?: GTDContext;
