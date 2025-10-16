@@ -10,14 +10,16 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import type { InboxItem } from '@/types/second-brain';
 
 export default function InboxPage() {
-  const { inboxItems, fetchInboxItems, createInboxItem, deleteInboxItem } = useInboxStore();
+  const { inboxItems, fetchInboxItems, createInboxItem, updateInboxItem, deleteInboxItem } = useInboxStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
 
   const [activeTab, setActiveTab] = useState<'todo' | 'note'>('todo');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingItem, setEditingItem] = useState<InboxItem | null>(null);
 
   // 할일 폼 데이터
   const [todoForm, setTodoForm] = useState<TodoFormData>({
@@ -62,19 +64,72 @@ export default function InboxPage() {
     });
   };
 
-  const handleAdd = async () => {
-    try {
-      if (activeTab === 'todo') {
-        // 할일 추가
-        if (!todoForm.title.trim()) {
-          alert('할일 제목을 입력해주세요.');
-          return;
-        }
+  // 즉시 생성 패턴
+  const handleQuickAdd = async () => {
+    if (isCreating) return; // 중복 생성 방지
 
+    try {
+      setIsCreating(true);
+
+      if (activeTab === 'todo') {
         await createInboxItem({
-          content: todoForm.title,
+          content: '새 할일',
           status: 'inbox',
           item_type: 'todo',
+          is_completed: false,
+        });
+      } else {
+        await createInboxItem({
+          content: '새 노트',
+          status: 'inbox',
+          item_type: 'note',
+          note_title: '새 노트',
+          note_content: '',
+          note_category: '중간 작업물',
+          is_pinned: false,
+        });
+      }
+    } catch (error) {
+      console.error('항목 생성 실패:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // 카드 클릭 → 편집 모달
+  const handleCardClick = (item: InboxItem) => {
+    setEditingItem(item);
+
+    // 탭 필터링과 동일한 조건: item_type이 없으면 todo로 간주
+    if (!item.item_type || item.item_type === 'todo') {
+      setTodoForm({
+        title: item.content,
+        clarification: item.clarification || '',
+        nextActionStatus: item.next_action_status || '',
+        scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
+        isHighlight: item.is_highlight || false,
+        completed: item.is_completed || false,
+      });
+    } else {
+      setNoteForm({
+        title: item.note_title || item.content,
+        content: item.note_content || '',
+        category: item.note_category || '중간 작업물',
+        linkedAreaOrResource: item.linked_area_or_resource || '',
+        isPinned: item.is_pinned || false,
+      });
+    }
+  };
+
+  // 항목 업데이트
+  const handleUpdate = async () => {
+    if (!editingItem) return;
+
+    try {
+      // 탭 필터링과 동일한 조건: item_type이 없으면 todo로 간주
+      if (!editingItem.item_type || editingItem.item_type === 'todo') {
+        await updateInboxItem(editingItem.id, {
+          content: todoForm.title,
           clarification: todoForm.clarification,
           next_action_status: todoForm.nextActionStatus,
           scheduled_date: todoForm.scheduledDate?.toISOString(),
@@ -82,12 +137,6 @@ export default function InboxPage() {
           is_completed: todoForm.completed,
         });
       } else {
-        // 노트 추가
-        if (!noteForm.title.trim()) {
-          alert('노트 제목을 입력해주세요.');
-          return;
-        }
-
         // linkedAreaOrResource에서 area_id 또는 resource_id 추출
         let area_id: string | undefined;
         let resource_id: string | undefined;
@@ -100,10 +149,8 @@ export default function InboxPage() {
           }
         }
 
-        await createInboxItem({
+        await updateInboxItem(editingItem.id, {
           content: noteForm.title,
-          status: 'inbox',
-          item_type: 'note',
           note_title: noteForm.title,
           note_content: noteForm.content,
           note_category: noteForm.category,
@@ -114,10 +161,10 @@ export default function InboxPage() {
         });
       }
 
+      setEditingItem(null);
       resetForms();
-      setShowAddModal(false);
     } catch (error) {
-      console.error('항목 추가 실패:', error);
+      console.error('항목 수정 실패:', error);
     }
   };
 
@@ -156,9 +203,17 @@ export default function InboxPage() {
                 {filteredItems.length}개의 항목
               </p>
             </div>
-            <button onClick={() => setShowAddModal(true)} className="btn btn-primary btn-sm">
-              <Plus className="w-4 h-4" />
-              추가
+            <button
+              onClick={handleQuickAdd}
+              className="btn btn-primary btn-sm"
+              disabled={isCreating}
+            >
+              {isCreating ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+              {isCreating ? '생성 중...' : '추가'}
             </button>
           </div>
 
@@ -211,7 +266,11 @@ export default function InboxPage() {
         ) : (
           <div className="space-y-2">
             {filteredItems.map((item) => (
-              <div key={item.id} className="card bg-base-200 hover:bg-base-300 transition-colors">
+              <div
+                key={item.id}
+                className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer"
+                onClick={() => handleCardClick(item)}
+              >
                 <div className="card-body p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
@@ -246,14 +305,20 @@ export default function InboxPage() {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleClarify(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClarify(item.id);
+                        }}
                         className="btn btn-ghost btn-sm btn-square"
                         title="명료화"
                       >
                         <ArrowRight className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(item.id);
+                        }}
                         className="btn btn-ghost btn-sm btn-square text-error"
                         title="삭제"
                       >
@@ -268,32 +333,16 @@ export default function InboxPage() {
         )}
       </div>
 
-      {/* 추가 모달 */}
-      {showAddModal && (
+      {/* 편집 모달 */}
+      {editingItem && (
         <div className="modal modal-open">
           <div className="modal-box max-w-2xl">
             <h3 className="font-bold text-lg mb-4">
-              새로운 {activeTab === 'todo' ? '할 일' : '노트'} 추가
+              {!editingItem.item_type || editingItem.item_type === 'todo' ? '할 일' : '노트'} 편집
             </h3>
 
-            {/* 탭 */}
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={() => setActiveTab('todo')}
-                className={`btn btn-sm flex-1 ${activeTab === 'todo' ? 'bg-base-300' : 'btn-ghost'}`}
-              >
-                할 일
-              </button>
-              <button
-                onClick={() => setActiveTab('note')}
-                className={`btn btn-sm flex-1 ${activeTab === 'note' ? 'bg-base-300' : 'btn-ghost'}`}
-              >
-                노트
-              </button>
-            </div>
-
             {/* 폼 필드 */}
-            {activeTab === 'todo' ? (
+            {!editingItem.item_type || editingItem.item_type === 'todo' ? (
               <TodoFormFields
                 todo={todoForm}
                 onChange={setTodoForm}
@@ -313,25 +362,30 @@ export default function InboxPage() {
             )}
 
             <div className="modal-action">
-              <button onClick={() => {
-                setShowAddModal(false);
-                resetForms();
-              }} className="btn btn-ghost">
+              <button
+                onClick={() => {
+                  setEditingItem(null);
+                  resetForms();
+                }}
+                className="btn btn-ghost"
+              >
                 취소
               </button>
               <button
-                onClick={handleAdd}
-                disabled={activeTab === 'todo' ? !todoForm.title.trim() : !noteForm.title.trim()}
+                onClick={handleUpdate}
                 className="btn btn-primary"
               >
-                추가
+                저장
               </button>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => {
-            setShowAddModal(false);
-            resetForms();
-          }} />
+          <div
+            className="modal-backdrop"
+            onClick={() => {
+              setEditingItem(null);
+              resetForms();
+            }}
+          />
         </div>
       )}
 

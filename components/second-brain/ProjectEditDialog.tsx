@@ -550,7 +550,7 @@ export default function ProjectEditDialog({
 
             <NoteFormFields
               note={editingNote}
-              onChange={setEditingNote}
+              onChange={(updatedNote) => setEditingNote({ ...editingNote, ...updatedNote })}
               areas={areas}
               resources={resources}
             />
@@ -576,7 +576,7 @@ export default function ProjectEditDialog({
 
             <TodoFormFields
               todo={editingTodo}
-              onChange={setEditingTodo}
+              onChange={(updatedTodo) => setEditingTodo({ ...editingTodo, ...updatedTodo })}
             />
 
             <div className="modal-action">
