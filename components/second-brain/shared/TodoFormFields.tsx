@@ -1,9 +1,10 @@
 'use client';
 
-import { Star, Plus } from 'lucide-react';
+import { Star, Folder, StickyNote } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
-import type { Project, Note } from '@/types/second-brain';
+import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
+import ProjectSelector from './ProjectSelector';
+import NoteSelector from './NoteSelector';
 
 /**
  * 할일 폼 필드 타입
@@ -16,8 +17,8 @@ export interface TodoFormData {
   scheduledDate?: Date;
   isHighlight: boolean;
   completed: boolean;
-  projectId?: string; // 연결된 프로젝트 ID
-  noteId?: string; // 연결된 노트 ID
+  projectIds?: string[]; // 연결된 프로젝트 IDs (다중 선택)
+  noteIds?: string[]; // 연결된 노트 IDs (다중 선택)
 }
 
 interface TodoFormFieldsProps {
@@ -29,7 +30,11 @@ interface TodoFormFieldsProps {
   projects?: Project[]; // 프로젝트 목록
   notes?: Note[]; // 노트 목록
   onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
+  onUpdateProject?: (id: string, title: string) => Promise<void>; // 프로젝트 수정
+  onDeleteProject?: (id: string) => Promise<void>; // 프로젝트 삭제
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
+  onUpdateNote?: (id: string, title: string) => Promise<void>; // 노트 수정
+  onDeleteNote?: (id: string) => Promise<void>; // 노트 삭제
 }
 
 // 다음행동상황 옵션
@@ -59,44 +64,12 @@ export default function TodoFormFields({
   projects = [],
   notes = [],
   onCreateProject,
+  onUpdateProject,
+  onDeleteProject,
   onCreateNote,
+  onUpdateNote,
+  onDeleteNote,
 }: TodoFormFieldsProps) {
-  const [showProjectInput, setShowProjectInput] = useState(false);
-  const [newProjectTitle, setNewProjectTitle] = useState('');
-  const [showNoteInput, setShowNoteInput] = useState(false);
-  const [newNoteTitle, setNewNoteTitle] = useState('');
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [isCreatingNote, setIsCreatingNote] = useState(false);
-
-  const handleCreateProject = async () => {
-    if (!newProjectTitle.trim() || !onCreateProject) return;
-    try {
-      setIsCreatingProject(true);
-      const project = await onCreateProject(newProjectTitle.trim());
-      onChange({ ...todo, projectId: project.id });
-      setNewProjectTitle('');
-      setShowProjectInput(false);
-    } catch (error) {
-      console.error('프로젝트 생성 실패:', error);
-    } finally {
-      setIsCreatingProject(false);
-    }
-  };
-
-  const handleCreateNote = async () => {
-    if (!newNoteTitle.trim() || !onCreateNote) return;
-    try {
-      setIsCreatingNote(true);
-      const note = await onCreateNote(newNoteTitle.trim());
-      onChange({ ...todo, noteId: note.id });
-      setNewNoteTitle('');
-      setShowNoteInput(false);
-    } catch (error) {
-      console.error('노트 생성 실패:', error);
-    } finally {
-      setIsCreatingNote(false);
-    }
-  };
 
   const toggleNextActionStatus = (status: string) => {
     const currentStatuses = todo.nextActionStatuses || [];
@@ -125,7 +98,7 @@ export default function TodoFormFields({
       {/* 명료화 */}
       <div className="form-control mb-4">
         <label className="label">
-          <span className="label-text">명료화 (선택)</span>
+          <span className="label-text">명료화</span>
         </label>
         <select
           value={todo.clarification || ''}
@@ -141,142 +114,10 @@ export default function TodoFormFields({
         </select>
       </div>
 
-      {/* 프로젝트 */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text">프로젝트 (선택)</span>
-        </label>
-        {!showProjectInput ? (
-          <div className="flex gap-2">
-            <select
-              value={todo.projectId || ''}
-              onChange={(e) => onChange({ ...todo, projectId: e.target.value })}
-              className="select select-bordered flex-1"
-            >
-              <option value="">선택 안 함</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.title}
-                </option>
-              ))}
-            </select>
-            {onCreateProject && (
-              <button
-                onClick={() => setShowProjectInput(true)}
-                className="btn btn-ghost btn-square"
-                title="새 프로젝트"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newProjectTitle}
-              onChange={(e) => setNewProjectTitle(e.target.value)}
-              className="input input-bordered flex-1"
-              placeholder="새 프로젝트 제목"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreateProject();
-                if (e.key === 'Escape') {
-                  setShowProjectInput(false);
-                  setNewProjectTitle('');
-                }
-              }}
-            />
-            <button
-              onClick={handleCreateProject}
-              className="btn btn-primary"
-              disabled={!newProjectTitle.trim() || isCreatingProject}
-            >
-              {isCreatingProject ? <span className="loading loading-spinner loading-xs" /> : '생성'}
-            </button>
-            <button
-              onClick={() => {
-                setShowProjectInput(false);
-                setNewProjectTitle('');
-              }}
-              className="btn btn-ghost"
-            >
-              취소
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* 노트 */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text">노트 (선택)</span>
-        </label>
-        {!showNoteInput ? (
-          <div className="flex gap-2">
-            <select
-              value={todo.noteId || ''}
-              onChange={(e) => onChange({ ...todo, noteId: e.target.value })}
-              className="select select-bordered flex-1"
-            >
-              <option value="">선택 안 함</option>
-              {notes.map((note) => (
-                <option key={note.id} value={note.id}>
-                  {note.title}
-                </option>
-              ))}
-            </select>
-            {onCreateNote && (
-              <button
-                onClick={() => setShowNoteInput(true)}
-                className="btn btn-ghost btn-square"
-                title="새 노트"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newNoteTitle}
-              onChange={(e) => setNewNoteTitle(e.target.value)}
-              className="input input-bordered flex-1"
-              placeholder="새 노트 제목"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleCreateNote();
-                if (e.key === 'Escape') {
-                  setShowNoteInput(false);
-                  setNewNoteTitle('');
-                }
-              }}
-            />
-            <button
-              onClick={handleCreateNote}
-              className="btn btn-primary"
-              disabled={!newNoteTitle.trim() || isCreatingNote}
-            >
-              {isCreatingNote ? <span className="loading loading-spinner loading-xs" /> : '생성'}
-            </button>
-            <button
-              onClick={() => {
-                setShowNoteInput(false);
-                setNewNoteTitle('');
-              }}
-              className="btn btn-ghost"
-            >
-              취소
-            </button>
-          </div>
-        )}
-      </div>
-
       {/* 다음행동상황 (다중 선택) */}
       <div className="form-control mb-4">
         <label className="label">
-          <span className="label-text">다음행동상황 (선택)</span>
+          <span className="label-text">다음행동상황</span>
         </label>
         <div className="flex flex-wrap gap-2">
           {NEXT_ACTION_OPTIONS.map((option) => {
@@ -297,7 +138,7 @@ export default function TodoFormFields({
       {/* 날짜 */}
       <div className="form-control mb-4">
         <label className="label">
-          <span className="label-text">날짜 (선택)</span>
+          <span className="label-text">날짜</span>
         </label>
         <input
           type="date"
@@ -339,6 +180,42 @@ export default function TodoFormFields({
           />
           <span className="label-text">완료됨</span>
         </label>
+      </div>
+
+      {/* 프로젝트 추가 (다중 선택) */}
+      <div className="form-control mb-4">
+        <label className="label">
+          <span className="label-text flex items-center gap-2">
+            <Folder className="w-4 h-4" />
+            프로젝트 추가
+          </span>
+        </label>
+        <ProjectSelector
+          selectedProjectIds={todo.projectIds || []}
+          projects={projects}
+          onProjectsChange={(projectIds) => onChange({ ...todo, projectIds })}
+          onCreateProject={onCreateProject}
+          onUpdateProject={onUpdateProject}
+          onDeleteProject={onDeleteProject}
+        />
+      </div>
+
+      {/* 노트 추가 (다중 선택) */}
+      <div className="form-control mb-6">
+        <label className="label">
+          <span className="label-text flex items-center gap-2">
+            <StickyNote className="w-4 h-4" />
+            노트 추가
+          </span>
+        </label>
+        <NoteSelector
+          selectedNoteIds={todo.noteIds || []}
+          notes={notes}
+          onNotesChange={(noteIds) => onChange({ ...todo, noteIds })}
+          onCreateNote={onCreateNote}
+          onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
+        />
       </div>
     </>
   );

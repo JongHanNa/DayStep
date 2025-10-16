@@ -5,6 +5,8 @@ import { Calendar, Star, Plus } from 'lucide-react';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -15,6 +17,8 @@ interface TodoInboxListProps {
 
 export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh }: TodoInboxListProps) {
   const { updateInboxItem, convertTodoToProject } = useInboxStore();
+  const { createProject, updateProject, deleteProject } = useProjectStore();
+  const { createNote, updateNote, deleteNote } = useNoteStore();
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
   const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
 
@@ -27,8 +31,8 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       scheduledDate: todo.scheduled_date ? new Date(todo.scheduled_date) : undefined,
       isHighlight: todo.is_highlight || false,
       completed: todo.is_completed || false,
-      projectId: todo.project_id,
-      noteId: undefined, // 노트 연결은 추후 구현
+      projectIds: todo.project_id ? [todo.project_id] : [], // 기존 단일 선택 호환
+      noteIds: [], // 새 필드
     });
   };
 
@@ -64,7 +68,7 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
         scheduled_date: todoForm.scheduledDate ? todoForm.scheduledDate.toISOString() : undefined,
         is_highlight: todoForm.isHighlight,
         is_completed: todoForm.completed,
-        project_id: todoForm.projectId,
+        project_id: todoForm.projectIds?.[0], // 첫 번째 프로젝트만 저장 (기존 호환)
       });
 
       setEditingTodo(null);
@@ -93,6 +97,44 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       console.error('프로젝트 변환 실패:', error);
       alert('프로젝트 변환에 실패했습니다.');
     }
+  };
+
+  // 프로젝트 관련 핸들러
+  const handleCreateProject = async (title: string) => {
+    return await createProject({
+      title,
+      description: '',
+      status: 'active',
+      color: '#6366f1',
+      order_index: projects.length,
+    });
+  };
+
+  const handleUpdateProject = async (id: string, title: string) => {
+    await updateProject(id, { title });
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    await deleteProject(id);
+  };
+
+  // 노트 관련 핸들러
+  const handleCreateNote = async (title: string) => {
+    return await createNote({
+      title,
+      content: '',
+      memo_type: 'note',
+      tags: [],
+      is_pinned: false,
+    });
+  };
+
+  const handleUpdateNote = async (id: string, title: string) => {
+    await updateNote(id, { title });
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    await deleteNote(id);
   };
 
   if (todos.length === 0) {
@@ -153,6 +195,12 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
               onChange={setTodoForm}
               projects={projects}
               notes={notes}
+              onCreateProject={handleCreateProject}
+              onUpdateProject={handleUpdateProject}
+              onDeleteProject={handleDeleteProject}
+              onCreateNote={handleCreateNote}
+              onUpdateNote={handleUpdateNote}
+              onDeleteNote={handleDeleteNote}
             />
 
             <div className="flex flex-col gap-2 mt-6">

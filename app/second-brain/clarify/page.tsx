@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
@@ -17,6 +18,7 @@ import type { InboxItem } from '@/types/second-brain';
 export default function ClarifyPage() {
   const { inboxItems, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
   const { projects } = useProjectStore();
+  const { notes, fetchNotes } = useNoteStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
 
@@ -34,6 +36,7 @@ export default function ClarifyPage() {
     await fetchInboxItems();
     await fetchAreas();
     await fetchResources();
+    await fetchNotes();
     const todos = await fetchInboxItemsByType('todo');
     const notes = await fetchInboxItemsByType('note');
     const projects = await fetchInboxItemsByType('project');
@@ -84,6 +87,7 @@ export default function ClarifyPage() {
               <TodoInboxList
                 todos={todoInbox}
                 projects={projects}
+                notes={notes}
                 onRefresh={handleRefresh}
               />
             )}
