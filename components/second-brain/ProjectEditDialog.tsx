@@ -369,7 +369,7 @@ export default function ProjectEditDialog({
           <div className="card bg-base-200 mb-4">
             <div className="card-body">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">연결된 노트</h2>
+                <h2 className="text-lg font-semibold">노트</h2>
                 <button onClick={handleAddNote} className="btn btn-ghost btn-sm">
                   <Plus className="w-4 h-4" />
                   추가
@@ -378,7 +378,7 @@ export default function ProjectEditDialog({
 
               {notes.length === 0 ? (
                 <div className="text-center py-8 text-base-content/60">
-                  연결된 노트가 없습니다.
+                  노트가 없습니다.
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -440,7 +440,7 @@ export default function ProjectEditDialog({
             <div className="card bg-base-200 mb-4">
               <div className="card-body">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">연결된 할일</h2>
+                  <h2 className="text-lg font-semibold">할일</h2>
                   <button onClick={handleAddTodo} className="btn btn-ghost btn-sm">
                     <Plus className="w-4 h-4" />
                     추가
@@ -449,7 +449,7 @@ export default function ProjectEditDialog({
 
                 {todos.length === 0 ? (
                   <div className="text-center py-8 text-base-content/60">
-                    연결된 할일이 없습니다.
+                    할일이 없습니다.
                   </div>
                 ) : (
                   <div className="space-y-2">
