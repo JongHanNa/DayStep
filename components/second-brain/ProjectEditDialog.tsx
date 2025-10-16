@@ -648,13 +648,13 @@ function TodoDraggableItem({
           {todo.isHighlight && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
         </div>
 
-        {(todo.clarification || todo.nextActionStatus || todo.scheduledDate) && (
+        {(todo.clarification || (todo.nextActionStatuses && todo.nextActionStatuses.length > 0) || todo.scheduledDate) && (
           <div className="space-y-1 text-xs text-base-content/60">
             {todo.clarification && (
               <p className="line-clamp-2">{todo.clarification}</p>
             )}
-            {todo.nextActionStatus && (
-              <p>다음행동: {todo.nextActionStatus}</p>
+            {todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
+              <p>다음행동: {todo.nextActionStatuses.join(', ')}</p>
             )}
             {todo.scheduledDate && (
               <p>

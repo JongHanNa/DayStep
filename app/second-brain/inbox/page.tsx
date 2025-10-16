@@ -4,18 +4,22 @@ import { useEffect, useState } from 'react';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
-import type { InboxItem } from '@/types/second-brain';
+import type { InboxItem, Project, Note } from '@/types/second-brain';
 
 export default function InboxPage() {
   const { inboxItems, fetchInboxItems, createInboxItem, updateInboxItem, deleteInboxItem } = useInboxStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
+  const { projects, createProject } = useProjectStore();
+  const { notes, fetchNotes, createNote } = useNoteStore();
 
   const [activeTab, setActiveTab] = useState<'todo' | 'note'>('todo');
   const [isCreating, setIsCreating] = useState(false);
@@ -25,10 +29,12 @@ export default function InboxPage() {
   const [todoForm, setTodoForm] = useState<TodoFormData>({
     title: '',
     clarification: '',
-    nextActionStatus: '',
+    nextActionStatuses: [],
     scheduledDate: undefined,
     isHighlight: false,
     completed: false,
+    projectId: '',
+    noteId: '',
   });
 
   // 노트 폼 데이터
@@ -44,16 +50,19 @@ export default function InboxPage() {
     fetchInboxItems();
     fetchAreas();
     fetchResources();
-  }, [fetchInboxItems, fetchAreas, fetchResources]);
+    fetchNotes();
+  }, [fetchInboxItems, fetchAreas, fetchResources, fetchNotes]);
 
   const resetForms = () => {
     setTodoForm({
       title: '',
       clarification: '',
-      nextActionStatus: '',
+      nextActionStatuses: [],
       scheduledDate: undefined,
       isHighlight: false,
       completed: false,
+      projectId: '',
+      noteId: '',
     });
     setNoteForm({
       title: '',
@@ -102,13 +111,26 @@ export default function InboxPage() {
 
     // 탭 필터링과 동일한 조건: item_type이 없으면 todo로 간주
     if (!item.item_type || item.item_type === 'todo') {
+      // next_action_status가 JSON 배열 문자열이면 파싱, 아니면 빈 배열
+      let nextActionStatuses: string[] = [];
+      if (item.next_action_status) {
+        try {
+          nextActionStatuses = JSON.parse(item.next_action_status);
+        } catch {
+          // JSON이 아니면 빈 배열
+          nextActionStatuses = [];
+        }
+      }
+
       setTodoForm({
         title: item.content,
         clarification: item.clarification || '',
-        nextActionStatus: item.next_action_status || '',
+        nextActionStatuses,
         scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
         isHighlight: item.is_highlight || false,
         completed: item.is_completed || false,
+        projectId: item.project_id || '',
+        noteId: '', // inbox item에는 noteId 연결 필드 없음 (추후 필요시 추가)
       });
     } else {
       setNoteForm({
@@ -128,13 +150,20 @@ export default function InboxPage() {
     try {
       // 탭 필터링과 동일한 조건: item_type이 없으면 todo로 간주
       if (!editingItem.item_type || editingItem.item_type === 'todo') {
+        // nextActionStatuses 배열을 JSON 문자열로 변환
+        const nextActionStatusJson =
+          todoForm.nextActionStatuses && todoForm.nextActionStatuses.length > 0
+            ? JSON.stringify(todoForm.nextActionStatuses)
+            : '';
+
         await updateInboxItem(editingItem.id, {
           content: todoForm.title,
           clarification: todoForm.clarification,
-          next_action_status: todoForm.nextActionStatus,
+          next_action_status: nextActionStatusJson,
           scheduled_date: todoForm.scheduledDate?.toISOString(),
           is_highlight: todoForm.isHighlight,
           is_completed: todoForm.completed,
+          project_id: todoForm.projectId || undefined,
         });
       } else {
         // linkedAreaOrResource에서 area_id 또는 resource_id 추출
@@ -180,6 +209,27 @@ export default function InboxPage() {
   const handleClarify = (id: string) => {
     // 명료화 페이지로 이동 (추후 구현)
     alert('명료화 기능은 추후 구현 예정입니다.');
+  };
+
+  // 새 프로젝트 생성 핸들러
+  const handleCreateProject = async (title: string): Promise<Project> => {
+    return await createProject({
+      title,
+      status: 'active',
+      color: '#3B82F6',
+      order_index: projects.length,
+    });
+  };
+
+  // 새 노트 생성 핸들러
+  const handleCreateNote = async (title: string): Promise<Note> => {
+    return await createNote({
+      title,
+      content: '',
+      memo_type: 'note',
+      tags: [],
+      is_pinned: false,
+    });
   };
 
   // 탭별 필터링
@@ -348,7 +398,10 @@ export default function InboxPage() {
                 onChange={setTodoForm}
                 titlePlaceholder="예: 슈퍼업 레퍼런스 정리"
                 clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
-                nextActionStatusPlaceholder="예: 감자기 생각난 해야 할 일"
+                projects={projects}
+                notes={notes}
+                onCreateProject={handleCreateProject}
+                onCreateNote={handleCreateNote}
               />
             ) : (
               <NoteFormFields
