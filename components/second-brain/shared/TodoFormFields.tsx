@@ -57,12 +57,18 @@ export default function TodoFormFields({
         <label className="label">
           <span className="label-text">명료화 (선택)</span>
         </label>
-        <textarea
+        <select
           value={todo.clarification || ''}
           onChange={(e) => onChange({ ...todo, clarification: e.target.value })}
-          className="textarea textarea-bordered h-20"
-          placeholder={clarificationPlaceholder}
-        />
+          className="select select-bordered w-full"
+        >
+          <option value="">선택 안 함</option>
+          <option value="다시알림">다시알림</option>
+          <option value="언젠가">언젠가</option>
+          <option value="대기중">대기중</option>
+          <option value="다음행동">다음행동</option>
+          <option value="일정">일정</option>
+        </select>
       </div>
 
       {/* 다음행동상황 */}
