@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -15,6 +16,7 @@ import NoteFormFields, { type NoteFormData } from '@/components/second-brain/sha
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 
 export default function InboxPage() {
+  const router = useRouter();
   const { inboxItems, fetchInboxItems, createInboxItem, updateInboxItem, deleteInboxItem } = useInboxStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
@@ -207,8 +209,8 @@ export default function InboxPage() {
   };
 
   const handleClarify = (id: string) => {
-    // 명료화 페이지로 이동 (추후 구현)
-    alert('명료화 기능은 추후 구현 예정입니다.');
+    // 명료화 페이지로 이동
+    router.push('/second-brain/clarify');
   };
 
   // 새 프로젝트 생성 핸들러

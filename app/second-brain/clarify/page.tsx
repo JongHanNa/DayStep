@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
 import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
+import NoteInboxList from '@/components/second-brain/clarify/NoteInboxList';
 import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
 import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProjectsSection';
 import GTDGuideSection from '@/components/second-brain/clarify/GTDGuideSection';
@@ -14,6 +17,8 @@ import type { InboxItem } from '@/types/second-brain';
 export default function ClarifyPage() {
   const { inboxItems, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
   const { projects } = useProjectStore();
+  const { areas, fetchAreas } = useAreaStore();
+  const { resources, fetchResources } = useResourceStore();
 
   const [activeTab, setActiveTab] = useState<InboxTabType>('todos');
   const [todoInbox, setTodoInbox] = useState<InboxItem[]>([]);
@@ -27,6 +32,8 @@ export default function ClarifyPage() {
 
   const loadInboxData = async () => {
     await fetchInboxItems();
+    await fetchAreas();
+    await fetchResources();
     const todos = await fetchInboxItemsByType('todo');
     const notes = await fetchInboxItemsByType('note');
     const projects = await fetchInboxItemsByType('project');
@@ -81,15 +88,12 @@ export default function ClarifyPage() {
               />
             )}
             {activeTab === 'notes' && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">📝</div>
-                <p className="text-lg font-semibold text-base-content/70 mb-2">
-                  노트 수집함
-                </p>
-                <p className="text-sm text-base-content/50">
-                  노트 수집 기능은 추후 구현 예정입니다
-                </p>
-              </div>
+              <NoteInboxList
+                notes={noteInbox}
+                areas={areas}
+                resources={resources}
+                onRefresh={handleRefresh}
+              />
             )}
             {activeTab === 'projects' && (
               <ProjectInboxList
