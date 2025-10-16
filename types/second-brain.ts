@@ -201,6 +201,9 @@ export interface InboxItem {
   content: string;
   status: GTDStatus;
 
+  // 수집 타입 (할일 또는 노트)
+  item_type?: 'todo' | 'note';
+
   // GTD 분류 정보
   context?: GTDContext;
   energy_level?: EnergyLevel;
@@ -215,6 +218,20 @@ export interface InboxItem {
   waiting_for?: string;
   delegated_to?: string;
   delegated_at?: string;
+
+  // 할일 타입 전용 필드
+  clarification?: string; // 명료화
+  next_action_status?: string; // 다음행동상황
+  scheduled_date?: string; // 예정 날짜 (ISO date string)
+  is_highlight?: boolean; // 오늘의 하이라이트
+  is_completed?: boolean; // 완료 여부
+
+  // 노트 타입 전용 필드
+  note_title?: string; // 노트 제목
+  note_content?: string; // 노트 내용
+  note_category?: '중간 작업물' | '나중에 보기' | '레퍼런스'; // 노트 분류
+  is_pinned?: boolean; // 고정 여부
+  linked_area_or_resource?: string; // 영역/자원 연결 ('area-{id}' 또는 'resource-{id}')
 
   // 메타데이터
   clarified_at?: string;

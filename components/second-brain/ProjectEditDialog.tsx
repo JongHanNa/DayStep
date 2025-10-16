@@ -11,25 +11,16 @@ import type { Project, Goal, Area, Resource } from '@/types/second-brain';
 import { useDndKit } from '@/hooks/useDndKit';
 import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths } from 'date-fns';
+import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 
-// 프론트엔드 전용 타입
-interface TodoItem {
+// 프론트엔드 전용 타입 (FormData 타입 + id 필드)
+interface TodoItem extends TodoFormData {
   id: string;
-  title: string;
-  completed: boolean;
-  scheduledDate?: Date;
-  clarification?: string;
-  nextActionStatus?: string;
-  isHighlight: boolean;
 }
 
-interface NoteItem {
+interface NoteItem extends NoteFormData {
   id: string;
-  title: string;
-  content: string;
-  category: '중간 작업물' | '나중에 보기' | '레퍼런스';
-  linkedAreaOrResource?: string;
-  isPinned: boolean;
 }
 
 interface ProjectEditDialogProps {
@@ -557,106 +548,12 @@ export default function ProjectEditDialog({
           <div className="modal-box">
             <h3 className="font-bold text-lg mb-4">노트 편집</h3>
 
-            {/* 제목 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">제목</span>
-              </label>
-              <input
-                type="text"
-                value={editingNote.title}
-                onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
-                className="input input-bordered"
-                placeholder="예: 회의 내용"
-              />
-            </div>
-
-            {/* 분류 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">분류</span>
-              </label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setEditingNote({ ...editingNote, category: '중간 작업물' })}
-                  className={`btn btn-sm flex-1 ${
-                    editingNote.category === '중간 작업물' ? 'bg-base-300' : ''
-                  }`}
-                >
-                  중간 작업물
-                </button>
-                <button
-                  onClick={() => setEditingNote({ ...editingNote, category: '나중에 보기' })}
-                  className={`btn btn-sm flex-1 ${
-                    editingNote.category === '나중에 보기' ? 'bg-base-300' : ''
-                  }`}
-                >
-                  나중에 보기
-                </button>
-                <button
-                  onClick={() => setEditingNote({ ...editingNote, category: '레퍼런스' })}
-                  className={`btn btn-sm flex-1 ${
-                    editingNote.category === '레퍼런스' ? 'bg-base-300' : ''
-                  }`}
-                >
-                  레퍼런스
-                </button>
-              </div>
-            </div>
-
-            {/* 영역/자원 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">영역/자원 (선택)</span>
-              </label>
-              <select
-                value={editingNote.linkedAreaOrResource || ''}
-                onChange={(e) => setEditingNote({ ...editingNote, linkedAreaOrResource: e.target.value })}
-                className="select select-bordered"
-              >
-                <option value="">선택 안 함</option>
-                <optgroup label="영역">
-                  {areas.map((area) => (
-                    <option key={area.id} value={`area-${area.id}`}>
-                      {area.title}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="자원">
-                  {resources.map((resource) => (
-                    <option key={resource.id} value={`resource-${resource.id}`}>
-                      {resource.title}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
-
-            {/* 고정하기 */}
-            <div className="form-control mb-4">
-              <label className="cursor-pointer flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={editingNote.isPinned}
-                  onChange={(e) => setEditingNote({ ...editingNote, isPinned: e.target.checked })}
-                  className="checkbox"
-                />
-                <span className="label-text">고정하기</span>
-              </label>
-            </div>
-
-            {/* 내용 */}
-            <div className="form-control mb-6">
-              <label className="label">
-                <span className="label-text">내용</span>
-              </label>
-              <textarea
-                value={editingNote.content}
-                onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                className="textarea textarea-bordered h-24"
-                placeholder="노트 내용을 입력하세요"
-              />
-            </div>
+            <NoteFormFields
+              note={editingNote}
+              onChange={setEditingNote}
+              areas={areas}
+              resources={resources}
+            />
 
             <div className="modal-action">
               <button onClick={handleCancelNoteEdit} className="btn btn-ghost">
@@ -677,88 +574,10 @@ export default function ProjectEditDialog({
           <div className="modal-box">
             <h3 className="font-bold text-lg mb-4">할일 편집</h3>
 
-            {/* 제목 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">제목</span>
-              </label>
-              <input
-                type="text"
-                value={editingTodo.title}
-                onChange={(e) => setEditingTodo({ ...editingTodo, title: e.target.value })}
-                className="input input-bordered"
-                placeholder="예: 요구사항 정리"
-              />
-            </div>
-
-            {/* 명료화 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">명료화 (선택)</span>
-              </label>
-              <textarea
-                value={editingTodo.clarification || ''}
-                onChange={(e) => setEditingTodo({ ...editingTodo, clarification: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="할일에 대한 자세한 설명을 입력하세요"
-              />
-            </div>
-
-            {/* 다음행동상황 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">다음행동상황 (선택)</span>
-              </label>
-              <input
-                type="text"
-                value={editingTodo.nextActionStatus || ''}
-                onChange={(e) => setEditingTodo({ ...editingTodo, nextActionStatus: e.target.value })}
-                className="input input-bordered"
-                placeholder="예: 팀장님께 확인 필요"
-              />
-            </div>
-
-            {/* 날짜 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">날짜 (선택)</span>
-              </label>
-              <input
-                type="date"
-                value={editingTodo.scheduledDate ? format(editingTodo.scheduledDate, 'yyyy-MM-dd') : ''}
-                onChange={(e) => setEditingTodo({ ...editingTodo, scheduledDate: e.target.value ? new Date(e.target.value) : undefined })}
-                className="input input-bordered"
-              />
-            </div>
-
-            {/* 오늘의 하이라이트 */}
-            <div className="form-control mb-4">
-              <label className="cursor-pointer flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={editingTodo.isHighlight}
-                  onChange={(e) => setEditingTodo({ ...editingTodo, isHighlight: e.target.checked })}
-                  className="checkbox"
-                />
-                <span className="label-text flex items-center gap-1">
-                  <Star className="w-4 h-4" />
-                  오늘의 하이라이트
-                </span>
-              </label>
-            </div>
-
-            {/* 완료 여부 */}
-            <div className="form-control mb-6">
-              <label className="cursor-pointer flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={editingTodo.completed}
-                  onChange={(e) => setEditingTodo({ ...editingTodo, completed: e.target.checked })}
-                  className="checkbox"
-                />
-                <span className="label-text">완료됨</span>
-              </label>
-            </div>
+            <TodoFormFields
+              todo={editingTodo}
+              onChange={setEditingTodo}
+            />
 
             <div className="modal-action">
               <button onClick={handleCancelTodoEdit} className="btn btn-ghost">
