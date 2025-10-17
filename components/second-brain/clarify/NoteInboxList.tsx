@@ -5,6 +5,8 @@ import { Pin } from 'lucide-react';
 import type { InboxItem, Area, Resource } from '@/types/second-brain';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
+import { Sheet } from 'react-modal-sheet';
+import { createModalConfig } from '@/lib/modal-config';
 
 interface NoteInboxListProps {
   notes: InboxItem[];
@@ -122,42 +124,57 @@ export default function NoteInboxList({ notes, areas, resources, onRefresh }: No
       </div>
 
       {/* 노트 편집 모달 */}
-      {editingNote && noteForm && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4">노트 편집</h3>
-
-            <NoteFormFields
-              note={noteForm}
-              onChange={setNoteForm}
-              areas={areas}
-              resources={resources}
-            />
-
-            <div className="modal-action">
+      <Sheet
+        isOpen={!!(editingNote && noteForm)}
+        onClose={() => {
+          setEditingNote(null);
+          setNoteForm(null);
+        }}
+        {...createModalConfig('FULLSCREEN')}
+      >
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+            <div className="flex items-center justify-between px-4 py-3">
+              {/* 왼쪽: 취소 버튼 */}
               <button
                 onClick={() => {
                   setEditingNote(null);
                   setNoteForm(null);
                 }}
-                className="btn btn-ghost"
+                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
               >
                 취소
               </button>
-              <button onClick={handleSave} className="btn btn-primary">
+
+              {/* 가운데: 제목 */}
+              <h3 className="text-lg font-semibold">노트 편집</h3>
+
+              {/* 오른쪽: 저장 버튼 */}
+              <button
+                onClick={handleSave}
+                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
+              >
                 저장
               </button>
             </div>
-          </div>
-          <div
-            className="modal-backdrop"
-            onClick={() => {
-              setEditingNote(null);
-              setNoteForm(null);
-            }}
-          />
-        </dialog>
-      )}
+          </Sheet.Header>
+
+          <Sheet.Content>
+            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
+              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+                {noteForm && (
+                  <NoteFormFields
+                    note={noteForm}
+                    onChange={setNoteForm}
+                    areas={areas}
+                    resources={resources}
+                  />
+                )}
+              </div>
+            </Sheet.Scroller>
+          </Sheet.Content>
+        </Sheet.Container>
+      </Sheet>
     </>
   );
 }

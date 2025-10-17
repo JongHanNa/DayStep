@@ -14,6 +14,8 @@ import { ko } from 'date-fns/locale';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
+import { Sheet } from 'react-modal-sheet';
+import { createModalConfig } from '@/lib/modal-config';
 
 export default function InboxPage() {
   const router = useRouter();
@@ -386,63 +388,73 @@ export default function InboxPage() {
       </div>
 
       {/* 편집 모달 */}
-      {editingItem && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <h3 className="font-bold text-lg mb-4">
-              {!editingItem.item_type || editingItem.item_type === 'todo' ? '할 일' : '노트'} 편집
-            </h3>
-
-            {/* 폼 필드 */}
-            {!editingItem.item_type || editingItem.item_type === 'todo' ? (
-              <TodoFormFields
-                todo={todoForm}
-                onChange={setTodoForm}
-                titlePlaceholder="예: 슈퍼업 레퍼런스 정리"
-                clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
-                projects={projects}
-                notes={notes}
-                onCreateProject={handleCreateProject}
-                onCreateNote={handleCreateNote}
-              />
-            ) : (
-              <NoteFormFields
-                note={noteForm}
-                onChange={setNoteForm}
-                areas={areas}
-                resources={resources}
-                titlePlaceholder="예: 새로운 브랜딩 관점 변경된 분석틀"
-                contentPlaceholder="세컨드 브레인에 관련된 노트들이 프로젝트에 연결되어 있지 않으면 일 때문에 하던 것들은 노트만 달랑 이 프로젝트에 연결하여라면 분류됩니다"
-              />
-            )}
-
-            <div className="modal-action">
+      <Sheet
+        isOpen={!!editingItem}
+        onClose={() => {
+          setEditingItem(null);
+          resetForms();
+        }}
+        {...createModalConfig('FULLSCREEN')}
+      >
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+            <div className="flex items-center justify-between px-4 py-3">
+              {/* 왼쪽: 취소 버튼 */}
               <button
                 onClick={() => {
                   setEditingItem(null);
                   resetForms();
                 }}
-                className="btn btn-ghost"
+                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
               >
                 취소
               </button>
+
+              {/* 가운데: 제목 */}
+              <h3 className="text-lg font-semibold">
+                {editingItem && (!editingItem.item_type || editingItem.item_type === 'todo') ? '할 일' : '노트'} 편집
+              </h3>
+
+              {/* 오른쪽: 저장 버튼 */}
               <button
                 onClick={handleUpdate}
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
               >
                 저장
               </button>
             </div>
-          </div>
-          <div
-            className="modal-backdrop"
-            onClick={() => {
-              setEditingItem(null);
-              resetForms();
-            }}
-          />
-        </div>
-      )}
+          </Sheet.Header>
+
+          <Sheet.Content>
+            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
+              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+                {/* 폼 필드 */}
+                {editingItem && (!editingItem.item_type || editingItem.item_type === 'todo') ? (
+                  <TodoFormFields
+                    todo={todoForm}
+                    onChange={setTodoForm}
+                    titlePlaceholder="예: 슈퍼업 레퍼런스 정리"
+                    clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
+                    projects={projects}
+                    notes={notes}
+                    onCreateProject={handleCreateProject}
+                    onCreateNote={handleCreateNote}
+                  />
+                ) : (
+                  <NoteFormFields
+                    note={noteForm}
+                    onChange={setNoteForm}
+                    areas={areas}
+                    resources={resources}
+                    titlePlaceholder="예: 새로운 브랜딩 관점 변경된 분석틀"
+                    contentPlaceholder="세컨드 브레인에 관련된 노트들이 프로젝트에 연결되어 있지 않으면 일 때문에 하던 것들은 노트만 달랑 이 프로젝트에 연결하여라면 분류됩니다"
+                  />
+                )}
+              </div>
+            </Sheet.Scroller>
+          </Sheet.Content>
+        </Sheet.Container>
+      </Sheet>
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />

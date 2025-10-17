@@ -7,6 +7,8 @@ import TodoFormFields, { type TodoFormData } from '@/components/second-brain/sha
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { Sheet } from 'react-modal-sheet';
+import { createModalConfig } from '@/lib/modal-config';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -185,55 +187,72 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       </div>
 
       {/* 할일 편집 모달 */}
-      {editingTodo && todoForm && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4">할일 편집</h3>
-
-            <TodoFormFields
-              todo={todoForm}
-              onChange={setTodoForm}
-              projects={projects}
-              notes={notes}
-              onCreateProject={handleCreateProject}
-              onUpdateProject={handleUpdateProject}
-              onDeleteProject={handleDeleteProject}
-              onCreateNote={handleCreateNote}
-              onUpdateNote={handleUpdateNote}
-              onDeleteNote={handleDeleteNote}
-            />
-
-            <div className="flex flex-col gap-2 mt-6">
-              <button onClick={handleConvertToProject} className="btn btn-outline w-full">
-                <Plus className="w-4 h-4" />
-                프로젝트로 변환
+      <Sheet
+        isOpen={!!(editingTodo && todoForm)}
+        onClose={() => {
+          setEditingTodo(null);
+          setTodoForm(null);
+        }}
+        {...createModalConfig('FULLSCREEN')}
+      >
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+            <div className="flex items-center justify-between px-4 py-3">
+              {/* 왼쪽: 취소 버튼 */}
+              <button
+                onClick={() => {
+                  setEditingTodo(null);
+                  setTodoForm(null);
+                }}
+                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
+              >
+                취소
               </button>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setEditingTodo(null);
-                    setTodoForm(null);
-                  }}
-                  className="btn btn-ghost flex-1"
-                >
-                  취소
-                </button>
-                <button onClick={handleSave} className="btn btn-primary flex-1">
-                  저장
-                </button>
-              </div>
+              {/* 가운데: 제목 */}
+              <h3 className="text-lg font-semibold">할일 편집</h3>
+
+              {/* 오른쪽: 저장 버튼 */}
+              <button
+                onClick={handleSave}
+                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
+              >
+                저장
+              </button>
             </div>
-          </div>
-          <div
-            className="modal-backdrop"
-            onClick={() => {
-              setEditingTodo(null);
-              setTodoForm(null);
-            }}
-          />
-        </dialog>
-      )}
+          </Sheet.Header>
+
+          <Sheet.Content>
+            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
+              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+                {todoForm && (
+                  <>
+                    <TodoFormFields
+                      todo={todoForm}
+                      onChange={setTodoForm}
+                      projects={projects}
+                      notes={notes}
+                      onCreateProject={handleCreateProject}
+                      onUpdateProject={handleUpdateProject}
+                      onDeleteProject={handleDeleteProject}
+                      onCreateNote={handleCreateNote}
+                      onUpdateNote={handleUpdateNote}
+                      onDeleteNote={handleDeleteNote}
+                    />
+
+                    <div className="mt-6">
+                      <button onClick={handleConvertToProject} className="btn btn-outline w-full">
+                        <Plus className="w-4 h-4" />
+                        프로젝트로 변환
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Sheet.Scroller>
+          </Sheet.Content>
+        </Sheet.Container>
+      </Sheet>
     </>
   );
 }

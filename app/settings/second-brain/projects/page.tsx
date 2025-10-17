@@ -10,6 +10,8 @@ import { Plus, ArrowLeft } from 'lucide-react';
 import ProjectGoalSection from '@/components/second-brain/ProjectGoalSection';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { CreateProjectInput, UpdateProjectInput, Project } from '@/types/second-brain';
+import { Sheet } from 'react-modal-sheet';
+import { createModalConfig } from '@/lib/modal-config';
 
 export default function ProjectsSettingsPage() {
   const router = useRouter();
@@ -312,29 +314,39 @@ export default function ProjectsSettingsPage() {
       />
 
       {/* 삭제 확인 다이얼로그 */}
-      {deleteConfirmOpen && projectToDelete && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">프로젝트 삭제</h3>
-            <p className="mb-6">
-              <strong>{projectToDelete.title}</strong> 프로젝트를 삭제하시겠습니까?
-              <br />
-              <span className="text-sm text-base-content/60">
-                이 작업은 되돌릴 수 없습니다.
-              </span>
-            </p>
-            <div className="modal-action">
-              <button onClick={handleCancelDelete} className="btn btn-ghost">
-                취소
-              </button>
-              <button onClick={handleConfirmDelete} className="btn btn-error">
-                삭제
-              </button>
+      <Sheet
+        isOpen={deleteConfirmOpen && !!projectToDelete}
+        onClose={handleCancelDelete}
+        detent="content-height"
+      >
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+            <div className="px-4 py-3">
+              <h3 className="font-bold text-lg">프로젝트 삭제</h3>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelDelete} />
-        </dialog>
-      )}
+          </Sheet.Header>
+
+          <Sheet.Content>
+            <div className="px-4 py-6">
+              <p className="mb-6">
+                <strong>{projectToDelete?.title}</strong> 프로젝트를 삭제하시겠습니까?
+                <br />
+                <span className="text-sm text-base-content/60">
+                  이 작업은 되돌릴 수 없습니다.
+                </span>
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button onClick={handleCancelDelete} className="btn btn-ghost">
+                  취소
+                </button>
+                <button onClick={handleConfirmDelete} className="btn btn-error">
+                  삭제
+                </button>
+              </div>
+            </div>
+          </Sheet.Content>
+        </Sheet.Container>
+      </Sheet>
 
     </div>
   );

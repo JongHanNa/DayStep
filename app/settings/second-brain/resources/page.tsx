@@ -11,6 +11,8 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
+import { Sheet } from 'react-modal-sheet';
+import { createModalConfig } from '@/lib/modal-config';
 
 // 추천 자원 프리셋 (온보딩 step-2와 동일)
 const RESOURCE_PRESETS = [
@@ -399,116 +401,137 @@ export default function ResourcesSettingsPage() {
       </div>
 
       {/* 편집/추가 다이얼로그 */}
-      {editDialogOpen && editingResource && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">
-              {editingResource.isNew ? '새 항목 추가' : '항목 편집'}
-            </h3>
-
-            {/* 상태 선택 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">상태</span>
-              </label>
-              <select
-                value={itemType}
-                onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
-                className="select select-bordered"
-              >
-                <option value="area">책임 영역</option>
-                <option value="resource">관심 자원</option>
-                <option value="archive">아카이브</option>
-              </select>
-            </div>
-
-            {/* 아이콘 및 색상 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">아이콘 및 색상</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setIconBrowserOpen(true)}
-                className="btn btn-outline w-full justify-start"
-                style={{
-                  backgroundColor: editingResource.color + '20',
-                  borderColor: editingResource.color,
-                }}
-              >
-                {(() => {
-                  const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
-                  return <IconComponent className="w-6 h-6 mr-2" />;
-                })()}
-                <span>변경하기</span>
-              </button>
-            </div>
-
-            {/* 제목 */}
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text">제목</span>
-              </label>
-              <input
-                type="text"
-                value={editingResource.title}
-                onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
-                className="input input-bordered"
-                placeholder="예: 프로그래밍"
-              />
-            </div>
-
-            {/* 설명 */}
-            <div className="form-control mb-6">
-              <label className="label">
-                <span className="label-text">설명</span>
-              </label>
-              <textarea
-                value={editingResource.description || ''}
-                onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="예: 개발 언어 및 프레임워크 학습"
-              />
-            </div>
-
-            {/* 버튼 */}
-            <div className="modal-action">
-              <button onClick={handleCancelEdit} className="btn btn-ghost">
+      <Sheet
+        isOpen={editDialogOpen && !!editingResource}
+        onClose={handleCancelEdit}
+        {...createModalConfig('FULLSCREEN')}
+      >
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+            <div className="flex items-center justify-between px-4 py-3">
+              <button onClick={handleCancelEdit} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
                 취소
               </button>
-              <button onClick={handleSaveEdit} className="btn btn-primary">
+              <h3 className="text-lg font-semibold">
+                {editingResource?.isNew ? '새 항목 추가' : '항목 편집'}
+              </h3>
+              <button onClick={handleSaveEdit} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
                 저장
               </button>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelEdit} />
-        </dialog>
-      )}
+          </Sheet.Header>
+
+          <Sheet.Content>
+            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
+              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+                {editingResource && (
+                  <>
+                    {/* 상태 선택 */}
+                    <div className="form-control mb-4">
+                      <label className="label">
+                        <span className="label-text">상태</span>
+                      </label>
+                      <select
+                        value={itemType}
+                        onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
+                        className="select select-bordered"
+                      >
+                        <option value="area">책임 영역</option>
+                        <option value="resource">관심 자원</option>
+                        <option value="archive">아카이브</option>
+                      </select>
+                    </div>
+
+                    {/* 아이콘 및 색상 */}
+                    <div className="form-control mb-4">
+                      <label className="label">
+                        <span className="label-text">아이콘 및 색상</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIconBrowserOpen(true)}
+                        className="btn btn-outline w-full justify-start"
+                        style={{
+                          backgroundColor: editingResource.color + '20',
+                          borderColor: editingResource.color,
+                        }}
+                      >
+                        {(() => {
+                          const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
+                          return <IconComponent className="w-6 h-6 mr-2" />;
+                        })()}
+                        <span>변경하기</span>
+                      </button>
+                    </div>
+
+                    {/* 제목 */}
+                    <div className="form-control mb-4">
+                      <label className="label">
+                        <span className="label-text">제목</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editingResource.title}
+                        onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
+                        className="input input-bordered"
+                        placeholder="예: 프로그래밍"
+                      />
+                    </div>
+
+                    {/* 설명 */}
+                    <div className="form-control mb-6">
+                      <label className="label">
+                        <span className="label-text">설명</span>
+                      </label>
+                      <textarea
+                        value={editingResource.description || ''}
+                        onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
+                        className="textarea textarea-bordered h-20"
+                        placeholder="예: 개발 언어 및 프레임워크 학습"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </Sheet.Scroller>
+          </Sheet.Content>
+        </Sheet.Container>
+      </Sheet>
 
       {/* 삭제 확인 다이얼로그 */}
-      {deleteConfirmOpen && resourceToDelete && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">자원 삭제</h3>
-            <p className="mb-6">
-              <strong>{resourceToDelete.title}</strong> 자원을 삭제하시겠습니까?
-              <br />
-              <span className="text-sm text-base-content/60">
-                이 작업은 되돌릴 수 없습니다.
-              </span>
-            </p>
-            <div className="modal-action">
-              <button onClick={handleCancelDelete} className="btn btn-ghost">
-                취소
-              </button>
-              <button onClick={handleConfirmDelete} className="btn btn-error">
-                삭제
-              </button>
+      <Sheet
+        isOpen={deleteConfirmOpen && !!resourceToDelete}
+        onClose={handleCancelDelete}
+        detent="content-height"
+      >
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+            <div className="px-4 py-3">
+              <h3 className="font-bold text-lg">자원 삭제</h3>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelDelete} />
-        </dialog>
-      )}
+          </Sheet.Header>
+
+          <Sheet.Content>
+            <div className="px-4 py-6">
+              <p className="mb-6">
+                <strong>{resourceToDelete?.title}</strong> 자원을 삭제하시겠습니까?
+                <br />
+                <span className="text-sm text-base-content/60">
+                  이 작업은 되돌릴 수 없습니다.
+                </span>
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button onClick={handleCancelDelete} className="btn btn-ghost">
+                  취소
+                </button>
+                <button onClick={handleConfirmDelete} className="btn btn-error">
+                  삭제
+                </button>
+              </div>
+            </div>
+          </Sheet.Content>
+        </Sheet.Container>
+      </Sheet>
 
       {/* 아이콘 브라우저 모달 */}
       <EnhancedIconBrowserModal
@@ -521,88 +544,96 @@ export default function ResourcesSettingsPage() {
       />
 
       {/* 추천 항목 추가 다이얼로그 */}
-      {presetDialogOpen && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <h3 className="font-bold text-lg mb-4">추천 자원 추가하기</h3>
-            <p className="text-sm text-base-content/70 mb-6">
-              시작하기 좋은 자원들을 준비했어요. 여러 개를 선택할 수 있습니다.
-            </p>
-
-            {/* 프리셋 자원 그리드 */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {RESOURCE_PRESETS.map((preset) => {
-                const isSelected = selectedPresets.some((p) => p.title === preset.title);
-                const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey).component;
-
-                return (
-                  <button
-                    key={preset.title}
-                    onClick={() => handleTogglePreset(preset)}
-                    className={`card transition-all w-full ${
-                      isSelected
-                        ? 'bg-primary text-primary-content ring-2 ring-primary'
-                        : 'bg-base-200 hover:bg-base-300'
-                    }`}
-                  >
-                    <div className="card-body p-4">
-                      <div className="flex items-start justify-between">
-                        <IconComponent className="w-8 h-8" />
-                        {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
-                            <svg
-                              className="w-3 h-3"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="font-semibold mt-2">{preset.title}</h3>
-                      <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
-                        {preset.description}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* 선택된 항목 표시 */}
-            {selectedPresets.length > 0 && (
-              <div className="alert alert-info mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-sm">
-                  {selectedPresets.length}개 자원이 선택되었습니다
-                </span>
-              </div>
-            )}
-
-            {/* 버튼 */}
-            <div className="modal-action">
-              <button onClick={handleCancelPresets} className="btn btn-ghost">
+      <Sheet
+        isOpen={presetDialogOpen}
+        onClose={handleCancelPresets}
+        {...createModalConfig('FULLSCREEN')}
+      >
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+            <div className="flex items-center justify-between px-4 py-3">
+              <button onClick={handleCancelPresets} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
                 취소
               </button>
+              <h3 className="text-lg font-semibold">추천 자원 추가하기</h3>
               <button
                 onClick={handleAddPresets}
                 disabled={selectedPresets.length === 0}
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
               >
                 {selectedPresets.length > 0 ? `${selectedPresets.length}개 추가` : '항목 선택'}
               </button>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelPresets} />
-        </dialog>
-      )}
+          </Sheet.Header>
+
+          <Sheet.Content>
+            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
+              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+                <p className="text-sm text-base-content/70 mb-6">
+                  시작하기 좋은 자원들을 준비했어요. 여러 개를 선택할 수 있습니다.
+                </p>
+
+                {/* 프리셋 자원 그리드 */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  {RESOURCE_PRESETS.map((preset) => {
+                    const isSelected = selectedPresets.some((p) => p.title === preset.title);
+                    const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey).component;
+
+                    return (
+                      <button
+                        key={preset.title}
+                        onClick={() => handleTogglePreset(preset)}
+                        className={`card transition-all w-full ${
+                          isSelected
+                            ? 'bg-primary text-primary-content ring-2 ring-primary'
+                            : 'bg-base-200 hover:bg-base-300'
+                        }`}
+                      >
+                        <div className="card-body p-4">
+                          <div className="flex items-start justify-between">
+                            <IconComponent className="w-8 h-8" />
+                            {isSelected && (
+                              <div className="w-5 h-5 rounded-full bg-primary-content text-primary flex items-center justify-center">
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <h3 className="font-semibold mt-2">{preset.title}</h3>
+                          <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
+                            {preset.description}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 선택된 항목 표시 */}
+                {selectedPresets.length > 0 && (
+                  <div className="alert alert-info mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm">
+                      {selectedPresets.length}개 자원이 선택되었습니다
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Sheet.Scroller>
+          </Sheet.Content>
+        </Sheet.Container>
+      </Sheet>
     </div>
   );
 }

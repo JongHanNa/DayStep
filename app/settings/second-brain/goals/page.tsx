@@ -13,6 +13,8 @@ import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
+import { Sheet } from 'react-modal-sheet';
+import { createModalConfig } from '@/lib/modal-config';
 
 export default function GoalsSettingsPage() {
   const router = useRouter();
