@@ -203,7 +203,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
         viewMode: 'daily',
         currentDate: getKSTCurrentDate(), // KST 기준 현재 날짜
         selectedDate: null,
-        viewStyle: 'modern', // 기본값: 기존 모던 스타일
+        viewStyle: 'bubble', // 기본값: 버블 스타일
         items: [],
         isLoading: false,
         error: null,

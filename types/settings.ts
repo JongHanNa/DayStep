@@ -47,7 +47,7 @@ export const COMPLETION_BEHAVIOR_OPTIONS: CompletionBehaviorOption[] = [
  * 기본 할일 완료 설정값
  */
 export const DEFAULT_TODO_COMPLETION_SETTINGS: TodoCompletionSettings = {
-  behavior: 'move-to-completed', // 기존 동작 유지
+  behavior: 'strikethrough-inline', // 현재 위치에서 취소선 표시가 기본값
   showCompletedItems: true,
   completedItemsOpacity: 0.7
 };
