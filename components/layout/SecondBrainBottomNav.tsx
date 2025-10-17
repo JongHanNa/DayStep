@@ -51,7 +51,7 @@ export default function SecondBrainBottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 safe-area-bottom z-50">
       {/* 가로 스크롤 컨테이너 */}
       <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex justify-center px-2 py-1 gap-1">
+        <div className="flex justify-start md:justify-center px-2 py-1 gap-1">
           {navGroups.map((group, groupIndex) => (
             <div key={group.id} className="flex items-center gap-1">
               {/* 그룹 구분선 */}
