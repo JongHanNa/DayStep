@@ -219,10 +219,19 @@ export default function ProjectEditDialog({
   return (
     <>
       <dialog open className="modal modal-open">
-        <div className="modal-box max-w-2xl">
-          <h3 className="font-bold text-lg mb-4">
-            {editingProject.isNew ? '새 프로젝트 추가' : '프로젝트 편집'}
-          </h3>
+        <div className="modal-box w-full max-w-7xl">
+          {/* 헤더 (취소-제목-저장) */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
+            <button onClick={onCancel} className="btn btn-ghost btn-sm">
+              취소
+            </button>
+            <h3 className="font-bold text-lg">
+              {editingProject.isNew ? '새 프로젝트 추가' : '프로젝트 편집'}
+            </h3>
+            <button onClick={handleSave} className="btn btn-primary btn-sm">
+              저장
+            </button>
+          </div>
 
           {/* 아이콘 및 색상 */}
           <div className="form-control mb-4">
@@ -503,31 +512,21 @@ export default function ProjectEditDialog({
             )}
           </DndContext>
 
-          {/* 버튼 */}
-          <div className="flex items-center justify-between mt-6">
-            <div>
-              {!editingProject.isNew && (
-                <button
-                  onClick={() => {
-                    onCancel();
-                    onDelete(editingProject as Project);
-                  }}
-                  className="btn btn-ghost text-error"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  삭제
-                </button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <button onClick={onCancel} className="btn btn-ghost">
-                취소
-              </button>
-              <button onClick={handleSave} className="btn btn-primary">
-                저장
+          {/* 삭제 버튼 (하단) */}
+          {!editingProject.isNew && (
+            <div className="mt-6 pt-4 border-t border-base-300">
+              <button
+                onClick={() => {
+                  onCancel();
+                  onDelete(editingProject as Project);
+                }}
+                className="btn btn-ghost text-error"
+              >
+                <Trash2 className="w-4 h-4" />
+                삭제
               </button>
             </div>
-          </div>
+          )}
         </div>
         <div className="modal-backdrop" onClick={onCancel} />
       </dialog>
@@ -545,8 +544,17 @@ export default function ProjectEditDialog({
       {/* 노트 편집 모달 */}
       {showNoteEditModal && editingNote && (
         <dialog open className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">노트 편집</h3>
+          <div className="modal-box w-full max-w-4xl">
+            {/* 헤더 (취소-제목-저장) */}
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
+              <button onClick={handleCancelNoteEdit} className="btn btn-ghost btn-sm">
+                취소
+              </button>
+              <h3 className="font-bold text-lg">노트 편집</h3>
+              <button onClick={handleSaveNoteEdit} className="btn btn-primary btn-sm">
+                저장
+              </button>
+            </div>
 
             <NoteFormFields
               note={editingNote}
@@ -554,15 +562,6 @@ export default function ProjectEditDialog({
               areas={areas}
               resources={resources}
             />
-
-            <div className="modal-action">
-              <button onClick={handleCancelNoteEdit} className="btn btn-ghost">
-                취소
-              </button>
-              <button onClick={handleSaveNoteEdit} className="btn btn-primary">
-                저장
-              </button>
-            </div>
           </div>
           <div className="modal-backdrop" onClick={handleCancelNoteEdit} />
         </dialog>
@@ -571,22 +570,22 @@ export default function ProjectEditDialog({
       {/* 할일 편집 모달 */}
       {showTodoEditModal && editingTodo && (
         <dialog open className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">할일 편집</h3>
+          <div className="modal-box w-full max-w-4xl">
+            {/* 헤더 (취소-제목-저장) */}
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
+              <button onClick={handleCancelTodoEdit} className="btn btn-ghost btn-sm">
+                취소
+              </button>
+              <h3 className="font-bold text-lg">할일 편집</h3>
+              <button onClick={handleSaveTodoEdit} className="btn btn-primary btn-sm">
+                저장
+              </button>
+            </div>
 
             <TodoFormFields
               todo={editingTodo}
               onChange={(updatedTodo) => setEditingTodo({ ...editingTodo, ...updatedTodo })}
             />
-
-            <div className="modal-action">
-              <button onClick={handleCancelTodoEdit} className="btn btn-ghost">
-                취소
-              </button>
-              <button onClick={handleSaveTodoEdit} className="btn btn-primary">
-                저장
-              </button>
-            </div>
           </div>
           <div className="modal-backdrop" onClick={handleCancelTodoEdit} />
         </dialog>
