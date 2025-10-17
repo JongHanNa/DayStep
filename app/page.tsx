@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { useEffect } from 'react';
 import {
   CheckCircle2,
   Calendar,
@@ -19,6 +20,27 @@ import FAQSection from '@/components/landing/FAQSection';
 export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+
+  // 캐퍼시터 환경에서는 랜딩페이지 건너뛰기
+  useEffect(() => {
+    // 로딩 중이거나 브라우저 환경이 아니면 대기
+    if (loading || typeof window === 'undefined') return;
+
+    // Capacitor 환경 감지
+    const isCapacitor = window.location.protocol === 'capacitor:';
+
+    if (isCapacitor) {
+      console.log('📱 Capacitor 환경 감지 - 랜딩페이지 건너뛰기');
+
+      if (isAuthenticated) {
+        console.log('✅ 인증됨 - 시작 페이지로 이동');
+        router.push('/second-brain/start');
+      } else {
+        console.log('❌ 비인증 - 로그인 페이지로 이동');
+        router.push('/login');
+      }
+    }
+  }, [isAuthenticated, loading, router]);
 
   // "데스크톱에서 시작하기" 버튼 클릭 핸들러
   const handleGetStarted = () => {
