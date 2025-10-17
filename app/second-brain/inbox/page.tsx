@@ -35,8 +35,8 @@ export default function InboxPage() {
     scheduledDate: undefined,
     isHighlight: false,
     completed: false,
-    projectId: '',
-    noteId: '',
+    projectIds: [],
+    noteIds: [],
   });
 
   // 노트 폼 데이터
@@ -63,8 +63,8 @@ export default function InboxPage() {
       scheduledDate: undefined,
       isHighlight: false,
       completed: false,
-      projectId: '',
-      noteId: '',
+      projectIds: [],
+      noteIds: [],
     });
     setNoteForm({
       title: '',
@@ -131,8 +131,8 @@ export default function InboxPage() {
         scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
         isHighlight: item.is_highlight || false,
         completed: item.is_completed || false,
-        projectId: item.project_id || '',
-        noteId: '', // inbox item에는 noteId 연결 필드 없음 (추후 필요시 추가)
+        projectIds: item.project_id ? [item.project_id] : [],
+        noteIds: [], // inbox item에는 noteId 연결 필드 없음 (추후 필요시 추가)
       });
     } else {
       setNoteForm({
@@ -165,7 +165,7 @@ export default function InboxPage() {
           scheduled_date: todoForm.scheduledDate?.toISOString(),
           is_highlight: todoForm.isHighlight,
           is_completed: todoForm.completed,
-          project_id: todoForm.projectId || undefined,
+          project_id: todoForm.projectIds?.[0] || undefined, // 첫 번째 프로젝트 ID만 저장
         });
       } else {
         // linkedAreaOrResource에서 area_id 또는 resource_id 추출
