@@ -24,7 +24,7 @@ const navGroups = [
   {
     id: 'productivity',
     items: [
-      { id: 'timeline', label: '타임라인', icon: Clock, href: '/' },
+      { id: 'timeline', label: '타임라인', icon: Clock, href: '/timeline' },
       { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
       { id: 'notes', label: '노트', icon: FileText, href: '/second-brain/notes' },
       { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },
@@ -42,8 +42,13 @@ const navGroups = [
 export default function SecondBrainBottomNav() {
   const pathname = usePathname();
 
-  // 온보딩 페이지에서는 네비게이션 숨기기
-  if (pathname?.startsWith('/second-brain/onboarding')) {
+  // 네비게이션을 숨길 페이지 목록
+  const hiddenPaths = ['/', '/login'];
+  const isOnboarding = pathname?.startsWith('/second-brain/onboarding');
+  const isHiddenPath = hiddenPaths.includes(pathname || '');
+
+  // 온보딩, 랜딩, 로그인 페이지에서는 네비게이션 숨기기
+  if (isOnboarding || isHiddenPath) {
     return null;
   }
 

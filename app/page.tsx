@@ -1,151 +1,278 @@
 'use client';
 
-// Vercel 배포: Dynamic 렌더링 강제 (OAuth 콜백 및 인증 처리를 위해 필요)
-// 참고: 'use client' 컴포넌트에서는 revalidate 사용 불가 (서버 컴포넌트 전용)
-
-import { useEffect, useState, Suspense, useCallback, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { TimelineContainer } from '@/components/timeline';
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { themeColors } from '@/lib/theme-colors';
+import {
+  CheckCircle2,
+  Calendar,
+  Target,
+  Brain,
+  Sparkles,
+  ArrowRight,
+  Smartphone
+} from 'lucide-react';
+import LandingNav from '@/components/layout/LandingNav';
+import StatsSection from '@/components/landing/StatsSection';
+import TestimonialsSection from '@/components/landing/TestimonialsSection';
+import FAQSection from '@/components/landing/FAQSection';
 
-function TimelinePageContent() {
-
-  const { isAuthenticated, loading, appUser } = useAuth();
+export default function LandingPage() {
+  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isProcessingOAuth, setIsProcessingOAuth] = useState(false);
-  const [hasTriedRouteHandler, setHasTriedRouteHandler] = useState(false);
-  
-  // 🎯 OAuth 콜백 처리 - code 파라미터가 있으면 세션 교환
-  const handleOAuthCallback = useCallback(async () => {
-      const code = searchParams.get('code');
-      
-      if (!code || isProcessingOAuth || hasTriedRouteHandler) {
-        return;
-      }
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔧 [홈페이지 OAuth] code 파라미터 감지, 세션 교환 시작:', code);
-      }
-      setIsProcessingOAuth(true);
-      
-      try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 [홈페이지 OAuth] exchangeCodeForSession 호출 전...');
-        }
-        
-        // 5초 타임아웃 추가
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('exchangeCodeForSession timeout')), 5000)
-        );
-        
-        const result = await Promise.race([
-          supabase.auth.exchangeCodeForSession(code),
-          timeoutPromise
-        ]);
-        const { data, error } = result as { data: { session?: any, user?: any }, error?: any };
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📊 [홈페이지 OAuth] exchangeCodeForSession 결과:', { 
-            hasData: !!data, 
-            hasError: !!error, 
-            errorMessage: error?.message 
-          });
-        }
-        
-        if (error) {
-          console.error('❌ [홈페이지 OAuth] 세션 교환 실패:', error.message);
-          // 에러 시 로그인 페이지로 리다이렉트
-          router.replace('/login?error=' + encodeURIComponent(error.message));
-          return;
-        }
-        
-        if (data.session && data.user) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('✅ [홈페이지 OAuth] 세션 교환 성공:', {
-              userId: data.user.id,
-              email: data.user.email
-            });
-          }
-          
-          // URL에서 code 파라미터 제거
-          router.replace('/');
-        } else {
-          console.error('❌ [홈페이지 OAuth] 세션 교환 성공했지만 데이터가 없음');
-          router.replace('/login?error=no_session_data');
-        }
-      } catch (error) {
-        console.error('❌ [홈페이지 OAuth] 예상치 못한 오류:', error);
-        
-        if (error instanceof Error && error.message === 'exchangeCodeForSession timeout') {
-          console.error('💥 [홈페이지 OAuth] PKCE verifier 타임아웃 - Route Handler로 폴백');
-          setHasTriedRouteHandler(true);
-          // PKCE verifier 문제로 Route Handler 호출 (한 번만)
-          // 🔧 브라우저 네비게이션 강제 사용으로 클라이언트 라우팅 문제 해결
-          window.location.href = `/auth/callback?code=${code}`;
-        } else {
-          // 🔧 브라우저 네비게이션 강제 사용
-          window.location.href = '/login?error=oauth_processing_failed';
-        }
-      } finally {
-        setIsProcessingOAuth(false);
-      }
-    }, [searchParams, router, isProcessingOAuth, hasTriedRouteHandler]);
-    
-  useEffect(() => {
-    handleOAuthCallback();
-  }, [handleOAuthCallback]);
-  
-  useEffect(() => {
-    // console.log('🏠 HomePage - AuthContext 상태:', {
-    //   isAuthenticated,
-    //   loading,
-    //   hasAppUser: !!appUser,
-    //   userId: appUser?.id,
-    //   현재시간: new Date().toISOString()
-    // });
-  }, [isAuthenticated, loading, appUser]);
 
-  // OAuth 처리 중이면 로딩 표시 (메모화)
-  const loadingComponent = useMemo(() => {
-    if (!isProcessingOAuth) return null;
+  // "데스크톱에서 시작하기" 버튼 클릭 핸들러
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      router.push('/second-brain/start');
+    } else {
+      router.push('/login');
+    }
+  };
+
+  // "모바일 앱 다운로드" 버튼 클릭 핸들러
+  const handleMobileDownload = () => {
+    // TODO: 앱 다운로드 페이지 또는 모달 구현
+    alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
+  };
+
+  // 로딩 중이면 로딩 화면 표시
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
+      <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400 mx-auto mb-6"></div>
-          <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">로그인 처리 중...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
+          <p className="text-lg text-base-content/70 font-medium">로딩 중...</p>
         </div>
       </div>
     );
-  }, [isProcessingOAuth]);
-  
-  if (loadingComponent) {
-    return loadingComponent;
   }
 
   return (
-    <AuthGuard requireAuth={true}>
-      <div className="min-h-full safe-area-container timeline-background scrollbar-hide pb-20">
-        <TimelineContainer />
-      </div>
-    </AuthGuard>
-  );
-}
+    <div className="min-h-screen bg-base-100 overflow-y-auto scrollbar-hide">
+      {/* 상단 네비게이션 */}
+      <LandingNav />
 
-export default function TimelinePage() {
-  return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400 mx-auto mb-6"></div>
-          <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">페이지 로딩 중...</p>
+      {/* Hero Section */}
+      <section id="hero" className="relative min-h-screen flex items-center justify-center px-4 py-20 pt-32">
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          {/* Logo/Title */}
+          <div className="space-y-4">
+            <h1 className="text-6xl sm:text-7xl font-bold text-primary">
+              DayStep
+            </h1>
+            <p className="text-2xl sm:text-3xl font-semibold text-base-content">
+              하루를 체계적으로 관리하는 가장 쉬운 방법
+            </p>
+          </div>
+
+          {/* Description */}
+          <p className="text-lg sm:text-xl text-base-content/70 max-w-2xl mx-auto leading-relaxed">
+            타임라인으로 하루를 시각화하고, Second Brain으로 생각을 정리하며,
+            목표를 향해 한 걸음씩 나아가세요.
+          </p>
+
+          {/* Dual CTA Buttons */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={handleGetStarted}
+              className="btn btn-primary btn-lg gap-2 px-8 w-full sm:w-auto"
+            >
+              데스크톱에서 시작하기
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleMobileDownload}
+              className="btn btn-soft btn-lg gap-2 px-8 w-full sm:w-auto"
+            >
+              모바일 앱 다운로드
+              <Smartphone className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-sm text-base-content/50">iOS, Android 지원</p>
+
+          {/* Quick Stats */}
+          <div className="pt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto">
+            <div className="space-y-2">
+              <div className="text-3xl font-bold text-primary">간편</div>
+              <p className="text-sm text-base-content/60">직관적인 인터페이스</p>
+            </div>
+            <div className="space-y-2">
+              <div className="text-3xl font-bold text-primary">체계적</div>
+              <p className="text-sm text-base-content/60">Second Brain 시스템</p>
+            </div>
+            <div className="space-y-2">
+              <div className="text-3xl font-bold text-primary">효율적</div>
+              <p className="text-sm text-base-content/60">타임라인 뷰</p>
+            </div>
+          </div>
         </div>
-      </div>
-    }>
-      <TimelinePageContent />
-    </Suspense>
+      </section>
+
+      {/* Stats Section */}
+      <StatsSection />
+
+      {/* Features Section */}
+      <section id="features" className="py-20 px-4 bg-base-100">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-base-content mb-4">
+              주요 기능
+            </h2>
+            <p className="text-lg text-base-content/70">
+              생산성을 높이는 강력한 도구들
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-base-content">
+                타임라인 뷰
+              </h3>
+              <p className="text-base-content/70">
+                하루 일정을 시각적으로 관리하고 시간대별로 할일을 배치하세요.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
+                <Brain className="w-6 h-6 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold text-base-content">
+                Second Brain
+              </h3>
+              <p className="text-base-content/70">
+                생각을 수집하고, 명료화하며, 체계적으로 정리하는 시스템.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
+                <Target className="w-6 h-6 text-secondary" />
+              </div>
+              <h3 className="text-xl font-semibold text-base-content">
+                목표 관리
+              </h3>
+              <p className="text-base-content/70">
+                장기 목표를 설정하고 단계별로 달성해 나가세요.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-info" />
+              </div>
+              <h3 className="text-xl font-semibold text-base-content">
+                할일 관리
+              </h3>
+              <p className="text-base-content/70">
+                프로젝트별로 할일을 정리하고 우선순위를 관리하세요.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-success" />
+              </div>
+              <h3 className="text-xl font-semibold text-base-content">
+                AI 추천
+              </h3>
+              <p className="text-base-content/70">
+                상황에 맞는 동기부여 문구와 추천 할일을 제공합니다.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-warning" />
+              </div>
+              <h3 className="text-xl font-semibold text-base-content">
+                반복 일정
+              </h3>
+              <p className="text-base-content/70">
+                매일, 매주, 매월 반복되는 일정을 자동으로 생성하세요.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
+      {/* FAQ Section */}
+      <FAQSection />
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-base-100">
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          <h2 className="text-4xl font-bold text-base-content">
+            지금 바로 시작하세요
+          </h2>
+          <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+            무료로 시작하고, 생산성을 높이는 첫 걸음을 내딛으세요.
+          </p>
+          <button
+            onClick={handleGetStarted}
+            className="btn btn-primary btn-lg gap-2 px-8"
+          >
+            시작하기
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-4 bg-base-200 border-t border-base-300">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* About */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-base-content">DayStep</h3>
+              <p className="text-sm text-base-content/60">
+                하루를 체계적으로 관리하는 생산성 앱
+              </p>
+            </div>
+
+            {/* Links */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-base-content">링크</h3>
+              <ul className="space-y-2 text-sm text-base-content/60">
+                <li>
+                  <a href="/terms" className="hover:text-base-content transition-colors">
+                    이용약관
+                  </a>
+                </li>
+                <li>
+                  <a href="/privacy" className="hover:text-base-content transition-colors">
+                    개인정보처리방침
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-base-content">문의</h3>
+              <p className="text-sm text-base-content/60">
+                support@daystep.app
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-base-300 text-center text-sm text-base-content/60">
+            © 2024 DayStep. All rights reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
