@@ -62,7 +62,10 @@ export default function SecondBrainBottomNav() {
               {/* 그룹 컨테이너 */}
               <div className="flex gap-1">
                 {group.items.map((item) => {
-                  const isActive = pathname === item.href;
+                  // trailing slash 정규화: 웹/모바일 환경 모두 지원
+                  const normalizedPathname = pathname?.replace(/\/$/, '') || '';
+                  const normalizedHref = item.href.replace(/\/$/, '');
+                  const isActive = normalizedPathname === normalizedHref || pathname === item.href;
                   const Icon = item.icon;
 
                   return (
