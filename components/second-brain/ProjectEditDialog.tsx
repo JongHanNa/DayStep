@@ -13,6 +13,7 @@ import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/co
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import { useModalStore } from '@/state/stores/modalStore';
 
 // 프론트엔드 전용 타입 (FormData 타입 + id 필드)
 interface TodoItem extends TodoFormData {
@@ -46,6 +47,18 @@ export default function ProjectEditDialog({
   onDelete,
   onProjectChange,
 }: ProjectEditDialogProps) {
+  const { openModal, closeModal } = useModalStore();
+
+  // 모달 열림/닫힘 상태 관리
+  useEffect(() => {
+    if (open) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [open, openModal, closeModal]);
+
   // 아이콘 브라우저 모달
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 

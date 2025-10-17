@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Inbox, Search, Target, CheckSquare, Clock, Compass, FileText, Archive, Timer, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useModalStore } from '@/state/stores/modalStore';
 
 const navGroups = [
   {
@@ -41,11 +42,17 @@ const navGroups = [
 
 export default function SecondBrainBottomNav() {
   const pathname = usePathname();
+  const isModalOpen = useModalStore((state) => state.isModalOpen);
 
   // 네비게이션을 숨길 페이지 목록
   const hiddenPaths = ['/', '/login'];
   const isOnboarding = pathname?.startsWith('/second-brain/onboarding');
   const isHiddenPath = hiddenPaths.includes(pathname || '');
+
+  // 모달이 열려있으면 네비게이션 숨기기
+  if (isModalOpen) {
+    return null;
+  }
 
   // 온보딩, 랜딩, 로그인 페이지에서는 네비게이션 숨기기
   if (isOnboarding || isHiddenPath) {
