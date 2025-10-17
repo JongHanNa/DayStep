@@ -219,18 +219,31 @@ export default function ProjectEditDialog({
   return (
     <>
       <dialog open className="modal modal-open">
-        <div className="modal-box w-full max-w-7xl">
-          {/* 헤더 (취소-제목-저장) */}
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
+        <div className="modal-box w-full max-w-7xl px-3">
+          {/* 헤더 (취소-제목-삭제-저장) */}
+          <div className="flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300">
             <button onClick={onCancel} className="btn btn-ghost btn-sm">
               취소
             </button>
             <h3 className="font-bold text-lg">
               {editingProject.isNew ? '새 프로젝트 추가' : '프로젝트 편집'}
             </h3>
-            <button onClick={handleSave} className="btn btn-primary btn-sm">
-              저장
-            </button>
+            <div className="flex items-center gap-2">
+              {!editingProject.isNew && (
+                <button
+                  onClick={() => {
+                    onCancel();
+                    onDelete(editingProject as Project);
+                  }}
+                  className="btn btn-ghost btn-sm text-error"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              <button onClick={handleSave} className="btn btn-primary btn-sm">
+                저장
+              </button>
+            </div>
           </div>
 
           {/* 아이콘 및 색상 */}
@@ -367,7 +380,7 @@ export default function ProjectEditDialog({
 
           {/* ========== 노트 영역 ========== */}
           <div className="card bg-base-200 mb-4">
-            <div className="card-body">
+            <div className="card-body p-3">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">노트</h2>
                 <button onClick={handleAddNote} className="btn btn-ghost btn-sm">
@@ -438,7 +451,7 @@ export default function ProjectEditDialog({
           {/* ========== 할일 영역 ========== */}
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDndEnd} {...dndContextProps}>
             <div className="card bg-base-200 mb-4">
-              <div className="card-body">
+              <div className="card-body p-3">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">할일</h2>
                   <button onClick={handleAddTodo} className="btn btn-ghost btn-sm">
@@ -469,7 +482,7 @@ export default function ProjectEditDialog({
 
             {/* ========== 달력 영역 ========== */}
             <div className="card bg-base-200 mb-4">
-              <div className="card-body">
+              <div className="card-body p-3">
                 <h2 className="text-lg font-semibold mb-4">할일 계획</h2>
                 <div className="flex items-start gap-2 p-3 bg-base-100 rounded-lg mb-4">
                   <div className="flex items-center justify-center w-6 h-6 rounded bg-base-200 flex-shrink-0">
@@ -511,22 +524,6 @@ export default function ProjectEditDialog({
               document.body
             )}
           </DndContext>
-
-          {/* 삭제 버튼 (하단) */}
-          {!editingProject.isNew && (
-            <div className="mt-6 pt-4 border-t border-base-300">
-              <button
-                onClick={() => {
-                  onCancel();
-                  onDelete(editingProject as Project);
-                }}
-                className="btn btn-ghost text-error"
-              >
-                <Trash2 className="w-4 h-4" />
-                삭제
-              </button>
-            </div>
-          )}
         </div>
         <div className="modal-backdrop" onClick={onCancel} />
       </dialog>
