@@ -299,9 +299,9 @@ export default function AreasSettingsPage() {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/settings')}
               className="btn btn-ghost btn-sm btn-circle"
-              aria-label="뒤로가기"
+              aria-label="설정으로 돌아가기"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>

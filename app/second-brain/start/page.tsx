@@ -339,10 +339,7 @@ export default function SecondBrainStartPage() {
               </div>
 
               {/* 버튼 */}
-              <div className="card-actions flex-col gap-3">
-                <button onClick={handleSkipToMain} className="btn btn-ghost w-full">
-                  나중에 설정하기 (수집함으로 이동)
-                </button>
+              <div className="card-actions">
                 <button onClick={handleStartSetup} className="btn btn-primary w-full">
                   <Settings className="w-4 h-4" />
                   설정에서 시작하기
