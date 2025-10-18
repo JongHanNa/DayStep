@@ -369,8 +369,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         }
 
         // ✅ 수정: 현재 시간이 다음날 (종료 전)
-        // 진행: (내일 00:00 ~ 현재)만 계산
-        const progress = nowTimeOfDay;
+        // 진행: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 현재)
+        const progress = (1439 - startTimeOfDay) + nowTimeOfDay;
         const percentage = Math.round((progress / totalDuration) * 100);
 
         return percentage;
