@@ -365,44 +365,49 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     const dayStart = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 0, 0, 0);
     const dayEnd = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), viewingDate.getDate(), 23, 59, 59, 999);
 
-    // 과거 날짜: 실제 현재 시간으로 진행률 계산
-    // (반복 할일은 시간 정규화되어 있으므로 날짜 비교가 아닌 시간 비교 필요)
+    // 과거 날짜: 크로스데이 할일은 종료 시점 확인 후 진행률, 일반 할일은 100%
     if (dateStatus === 'past') {
-      // 실제 현재 시간 (분 단위)
-      const nowHour = currentTime.getHours();
-      const nowMinute = currentTime.getMinutes();
-      const nowTimeOfDay = nowHour * 60 + nowMinute;
+      // 시작/종료 시간 (분 단위)
+      const startTimeOfDay = startTime.getHours() * 60 + startTime.getMinutes();
+      const endTimeOfDay = endTime.getHours() * 60 + endTime.getMinutes();
 
-      // 시작 시간 (분 단위)
-      const startHour = startTime.getHours();
-      const startMinute = startTime.getMinutes();
-      const startTimeOfDay = startHour * 60 + startMinute; // 0~1439 (분)
+      // 크로스데이 할일인지 확인
+      const isCrossDay = endTimeOfDay < startTimeOfDay;
 
-      // 종료 시간 (분 단위)
-      const endHour = endTime.getHours();
-      const endMinute = endTime.getMinutes();
-      const endTimeOfDay = endHour * 60 + endMinute; // 0~1439 (분)
+      if (isCrossDay) {
+        // endTime이 viewing date(보고 있는 날짜) 안에 있는지 확인
+        const endDate = new Date(endTime);
+        endDate.setHours(0, 0, 0, 0);
 
-      // 크로스데이 할일 감지 (종료 시간 < 시작 시간)
-      // 예: 22:30~05:30 → 1350분~330분
-      if (endTimeOfDay < startTimeOfDay) {
-        // 전체 길이: (오늘 시작 ~ 23:59) + (내일 00:00 ~ 종료)
-        const totalDuration = (1439 - startTimeOfDay) + endTimeOfDay;
+        const viewingDate = new Date(currentDate);
+        viewingDate.setHours(0, 0, 0, 0);
 
-        // 현재 시간이 다음날 종료 시간 이후면 100%
-        if (nowTimeOfDay >= endTimeOfDay) {
+        // endTime이 viewing date 안에 있으면 이미 종료됨 (100%)
+        if (endDate.getTime() <= viewingDate.getTime()) {
           return 100;
         }
 
-        // ✅ 수정: 현재 시간이 다음날 (종료 전)
-        // 진행: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 현재)
-        const progress = (1439 - startTimeOfDay) + nowTimeOfDay;
-        const percentage = Math.round((progress / totalDuration) * 100);
+        // endTime이 viewing date 이후면 진행 중 (현재 시간 기준)
+        const nowHour = currentTime.getHours();
+        const nowMinute = currentTime.getMinutes();
+        const nowTimeOfDay = nowHour * 60 + nowMinute;
 
-        return percentage;
+        // 전체 시간: (시작 ~ 23:59) + (00:00 ~ 종료)
+        const totalDuration = (1439 - startTimeOfDay) + endTimeOfDay;
+
+        // 아직 종료 전이면 진행률 계산
+        if (nowTimeOfDay < endTimeOfDay) {
+          // 진행: (시작 ~ 23:59) + (00:00 ~ 현재)
+          const progress = (1439 - startTimeOfDay) + nowTimeOfDay;
+          const percentage = Math.round((progress / totalDuration) * 100);
+          return percentage;
+        }
+
+        // 종료 후면 100%
+        return 100;
       }
 
-      // 일반 할일: 과거 날짜는 100% 색칠
+      // 일반 할일: 과거 날짜는 100%
       return 100;
     }
 
@@ -426,12 +431,15 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       const endTimeOfDay = endHour * 60 + endMinute;
 
       // ✅ 전날 시작 크로스데이 (예: 어제 22:30 ~ 오늘 05:30)
-      // 오늘 날짜 뷰에서는 00:00 ~ endTime까지 진행률 계산
+      // 전체 할일 시간 기준으로 진행률 계산
       if (isPreviousDay) {
         // 종료 전이면 진행률 계산
         if (nowTimeOfDay < endTimeOfDay) {
-          const progress = nowTimeOfDay; // 00:00부터의 경과 시간
-          const totalDuration = endTimeOfDay; // 00:00 ~ endTime
+          // 전체 시간: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 종료)
+          const totalDuration = (1439 - startTimeOfDay) + endTimeOfDay;
+
+          // 진행: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 현재)
+          const progress = (1439 - startTimeOfDay) + nowTimeOfDay;
           const percentage = Math.round((progress / totalDuration) * 100);
           return percentage;
         }
