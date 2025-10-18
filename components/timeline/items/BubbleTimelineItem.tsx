@@ -174,7 +174,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   };
 
   // 시간 정규화: startTime과 endTime을 같은 날로 변환
-  // (반복 할일의 경우 endTime이 반복 종료일로 설정되어 있어서 정규화 필요)
+  // (원본 반복 할일의 경우 endTime이 반복 종료일로 설정되어 있어서 정규화 필요)
+  // ✅ 반복 인스턴스는 이미 정확한 날짜가 설정되어 있으므로 정규화 제외
   const startTime = originalStartTime;
   const endTime = useMemo(() => {
     if (!originalStartTime || !originalEndTime) return null;
@@ -184,8 +185,11 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       return originalEndTime;
     }
 
-    // 반복 할일인 경우에만 정규화 (일반 할일은 다음날 종료 허용)
-    if (item.type === 'todo' && item.data.recurrence_pattern !== 'none') {
+    // ✅ 원본 반복 할일만 정규화 (반복 인스턴스는 정규화 제외)
+    // 반복 인스턴스는 recurrence-utils.ts에서 이미 정확한 날짜로 생성됨
+    const isRecurrenceInstance = 'is_recurrence_instance' in item.data && item.data.is_recurrence_instance === true;
+
+    if (item.type === 'todo' && item.data.recurrence_pattern !== 'none' && !isRecurrenceInstance) {
       // 다른 날이면 startTime의 날짜에 endTime의 시간을 적용
       const normalized = new Date(
         originalStartTime.getFullYear(),
@@ -195,10 +199,11 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         originalEndTime.getMinutes(),
         originalEndTime.getSeconds()
       );
+
       return normalized;
     }
 
-    // 일반 할일은 원본 endTime 사용
+    // 일반 할일 및 반복 인스턴스는 원본 endTime 사용
     return originalEndTime;
   }, [originalStartTime, originalEndTime, item.type, item.data]);
 
@@ -329,6 +334,27 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return Math.round(((nowTimeOfDay - nextStartTimeOfDay) / (nextEndTimeOfDay - nextStartTimeOfDay)) * 100);
   }, [nextItem, dateStatus, currentTime]);
 
+  // ✅ 전날 시작 여부 판단 (크로스데이 할일의 전날 부분)
+  const isPreviousDay = useMemo(() => {
+    if (!startTime || !endTime || !currentDate) return false;
+
+    // 크로스데이 여부 확인 (시간만 비교)
+    const startTimeOfDay = startTime.getHours() * 60 + startTime.getMinutes();
+    const endTimeOfDay = endTime.getHours() * 60 + endTime.getMinutes();
+    const isCrossDay = endTimeOfDay < startTimeOfDay;
+
+    if (!isCrossDay) return false;  // 일반 할일은 전날 시작 아님
+
+    // 크로스데이 할일: startTime의 날짜가 currentDate보다 이전이면 전날 시작
+    const currentDay = new Date(currentDate);
+    currentDay.setHours(0, 0, 0, 0);
+
+    const startDay = new Date(startTime);
+    startDay.setHours(0, 0, 0, 0);
+
+    return startDay.getTime() < currentDay.getTime();
+  }, [startTime, endTime, currentDate, item.data.title]);
+
   // 현재 시간 기준 진행률 계산 (0-100)
   // 크로스데이 할일 처리: currentDate 날짜의 시작(00:00)과 끝(23:59:59)을 기준으로 계산
   const progressPercentage = useMemo(() => {
@@ -399,7 +425,22 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       const endMinute = endTime.getMinutes();
       const endTimeOfDay = endHour * 60 + endMinute;
 
-      // ✅ 수정: 크로스데이 할일 (예: 22:30~05:30+1)
+      // ✅ 전날 시작 크로스데이 (예: 어제 22:30 ~ 오늘 05:30)
+      // 오늘 날짜 뷰에서는 00:00 ~ endTime까지 진행률 계산
+      if (isPreviousDay) {
+        // 종료 전이면 진행률 계산
+        if (nowTimeOfDay < endTimeOfDay) {
+          const progress = nowTimeOfDay; // 00:00부터의 경과 시간
+          const totalDuration = endTimeOfDay; // 00:00 ~ endTime
+          const percentage = Math.round((progress / totalDuration) * 100);
+          return percentage;
+        }
+
+        // 종료 후면 100%
+        return 100;
+      }
+
+      // ✅ 오늘 시작 크로스데이 (예: 오늘 22:30 ~ 내일 05:30+1)
       // 오늘 날짜 뷰에서는 "오늘 시작하는" 할일만 표시
       if (endTimeOfDay < startTimeOfDay) {
         // 아직 시작 전 (00:00 ~ startTime)
@@ -407,7 +448,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           return 0;
         }
 
-        // ✅ 수정: 진행 중 (startTime ~ 23:59)
+        // ✅ 진행 중 (startTime ~ 23:59)
         // 진행 = 현재 시간 - 시작 시간
         const progress = nowTimeOfDay - startTimeOfDay;
         const totalDuration = (1439 - startTimeOfDay) + endTimeOfDay;
@@ -431,7 +472,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     }
 
     return 0;
-  }, [dateStatus, startTime, endTime, currentTime, currentDate]);
+  }, [dateStatus, startTime, endTime, currentTime, currentDate, isPreviousDay]);
 
 
   // 연결 막대 진행률 계산 (현재 종료 ~ 다음 시작 사이)
@@ -566,12 +607,17 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   const isNextDay = useMemo(() => {
     if (!startTime || !endTime) return false;
 
+    // ✅ 전날 시작 크로스데이는 다음날 종료가 아님 (상호 배타적)
+    if (isPreviousDay) {
+      return false;
+    }
+
     // 종료 시간이 시작 시간보다 작으면 다음날 종료
     const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
     const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
 
     return endMinutes < startMinutes;
-  }, [startTime, endTime]);
+  }, [startTime, endTime, isPreviousDay, item.data.title]);
 
   // 시간 포맷
   const formatTime = (date: Date | null) => {
@@ -791,7 +837,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
             {startTime && endTime && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 flex-wrap">
                 <span>
-                  {formatTime(startTime)} ~ {formatTime(endTime)}
+                  {formatTime(startTime)}
+                  {isPreviousDay && <span className="text-xs font-medium text-orange-600 dark:text-orange-400 ml-1">-1</span>}
+                  {' ~ '}
+                  {formatTime(endTime)}
                   {isNextDay && <span className="text-xs font-medium text-blue-600 dark:text-blue-400 ml-1">+1</span>}
                 </span>
                 <span className="text-gray-400 dark:text-gray-500">

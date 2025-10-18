@@ -738,7 +738,15 @@ export const useTimelineViewStore = create<TimelineViewState>()(
                 isAllDay = true;
               } else if (scheduleType === 'timed') {
                 // 시간 지정 일정: Todo의 startTime, endTime 속성 사용
-                const parsedStartTime = safeParseDate(todo.startTime || todo.start_time, 'startTime');
+                // 🔧 반복 인스턴스 호환성: is_recurrence_instance가 true면 start_time을 우선적으로 읽음
+                const isRecurrenceInstance = 'is_recurrence_instance' in todo && todo.is_recurrence_instance === true;
+
+                // 반복 인스턴스는 start_time을 우선, 아니면 startTime을 우선
+                const startTimeValue = isRecurrenceInstance
+                  ? (todo.start_time || todo.startTime)
+                  : (todo.startTime || todo.start_time);
+
+                const parsedStartTime = safeParseDate(startTimeValue, 'startTime');
                 if (!parsedStartTime) {
                   console.warn(`⚠️ [할일 ${todo.id}] timed 스케줄이지만 startTime 없거나 파싱 실패, createdAt 사용`);
                   const parsedCreatedAt = safeParseDate(todo.createdAt, 'createdAt');
@@ -751,8 +759,13 @@ export const useTimelineViewStore = create<TimelineViewState>()(
                 } else {
                   startTime = parsedStartTime;
                 }
-                // 🔧 endTime 파싱: camelCase와 snake_case 모두 지원 (반복 인스턴스 호환성)
-                endTime = safeParseDate(todo.endTime, 'endTime') || safeParseDate(todo.end_time, 'end_time') || undefined;
+
+                // 🔧 endTime 파싱: 반복 인스턴스는 end_time을 우선, 아니면 endTime을 우선
+                const endTimeValue = isRecurrenceInstance
+                  ? (todo.end_time || todo.endTime)
+                  : (todo.endTime || todo.end_time);
+
+                endTime = safeParseDate(endTimeValue, 'endTime') || undefined;
                 isAllDay = false;
               } else if (scheduleType === 'anytime') {
                 // 언제든지 일정: Todo의 createdAt 사용, 종일로 처리
@@ -977,24 +990,39 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             
             // 🔧 시간 지정 일정과 anytime 할일 날짜 필터링
             let itemDate: Date;
-            
+
             // 1순위: startTime이 있는 경우 (시간 지정 할일)
             if (item.startTime) {
               itemDate = new Date(item.startTime);
-              const itemTime = itemDate.getTime();
-              const startTime = safeStartDate.getTime();
-              const endTime = safeEndDate.getTime();
-              const isInRange = itemTime >= startTime && itemTime <= endTime;
-              
+              const itemStartTime = itemDate.getTime();
+              const rangeStartTime = safeStartDate.getTime();
+              const rangeEndTime = safeEndDate.getTime();
+
+              // ✅ 조건 1: startTime이 범위에 속함 (일반 할일)
+              const startInRange = itemStartTime >= rangeStartTime && itemStartTime <= rangeEndTime;
+
+              // ✅ 조건 2: 크로스데이 할일 - endTime이 범위에 속함 (전날 시작 → 오늘 종료)
+              let endInRange = false;
+              if (item.endTime) {
+                const itemEndDate = new Date(item.endTime);
+                const itemEndTime = itemEndDate.getTime();
+                endInRange = itemEndTime >= rangeStartTime && itemEndTime <= rangeEndTime;
+              }
+
+              const isInRange = startInRange || endInRange;
+
               console.log(`🔍 시간 지정 할일 날짜 확인: ${item.title.substring(0, 20)}`, {
                 itemId: item.id.substring(0, 8),
                 itemDate: itemDate.toISOString(),
-                itemTime: itemTime,
-                startTime: startTime,
-                endTime: endTime,
+                itemStartTime: itemStartTime,
+                itemEndTime: item.endTime ? new Date(item.endTime).getTime() : null,
+                rangeStartTime: rangeStartTime,
+                rangeEndTime: rangeEndTime,
+                startInRange,
+                endInRange,
                 isInRange
               });
-              
+
               return isInRange;
             }
             

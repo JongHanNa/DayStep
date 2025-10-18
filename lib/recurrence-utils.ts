@@ -116,16 +116,16 @@ export function generateRecurrenceInstances({
     }
 
     // 가상 할일 인스턴스들 생성
-    return occurrences.map((occurrenceDate, index) => {
+    const instances = occurrences.map((occurrenceDate, index) => {
       const dateString = format(occurrenceDate, 'yyyy-MM-dd');
-      
+
       // 원본 할일의 시간 정보 유지
       let instanceStartTime: Date;
       let instanceEndTime: Date | null = null;
 
       // 🆕 시간 override 확인 - 특정 날짜에 대한 시간 변경이 있는지 체크
       const override = timeOverrides[dateString];
-      
+
       if (override) {
         // 🎯 시간 override가 있는 경우: override 시간 사용
         console.log(`⏰ 시간 override 적용: ${dateString}`, override);
@@ -134,7 +134,7 @@ export function generateRecurrenceInstances({
       } else if (start_time) {
         // 🔧 한국 시간대를 고려한 정확한 시간 처리 (기존 로직)
         const originalStart = new Date(start_time);
-        
+
         // 🔧 완전히 새로운 접근법: "의도한 로컬 시간" 직접 추출
         // 브라우저 환경에서 Date 객체의 getHours()는 로컬 시간을 반환
         // 이는 우리가 원하는 "의도한 로컬 시간"과 일치함
@@ -148,17 +148,17 @@ export function generateRecurrenceInstances({
         const year = occurrenceDate.getFullYear();
         const month = occurrenceDate.getMonth();
         const day = occurrenceDate.getDate();
-        
+
         // 새로운 날짜에 의도한 로컬 시간을 적용
         instanceStartTime = new Date(year, month, day, intentedLocalTime.hours, intentedLocalTime.minutes, intentedLocalTime.seconds);
-        
+
         // 종료 시간도 설정 - 원시 데이터와 엔티티 모두 지원
         const endTimeValue = originalTodo.end_time || originalTodo.endTime;
         if (endTimeValue) {
           const originalEnd = new Date(endTimeValue);
           const duration = originalEnd.getTime() - originalStart.getTime();
           instanceEndTime = new Date(instanceStartTime.getTime() + duration);
-          
+
           // 종료 시간 계산 완료
         } else {
           // 원본 할일에 종료 시간이 없는 경우 (종일 일정 등)
@@ -167,22 +167,88 @@ export function generateRecurrenceInstances({
         instanceStartTime = startOfDay(occurrenceDate);
       }
 
+      const instanceData = {
+        ...originalTodo,
+        id: `${originalTodo.id}-recurrence-${format(occurrenceDate, 'yyyy-MM-dd')}-${index}`,
+        start_time: instanceStartTime.toISOString(),
+        end_time: instanceEndTime?.toISOString() || null,
+        schedule_type: schedule_type, // 명시적으로 schedule_type 포함
+        is_recurrence_instance: true,
+        recurrence_source_id: originalTodo.id,
+        recurrence_occurrence_date: format(occurrenceDate, 'yyyy-MM-dd')
+      };
+
       return {
         id: `${originalTodo.id}-recurrence-${format(occurrenceDate, 'yyyy-MM-dd')}-${index}`,
         originalId: originalTodo.id,
         occurrenceDate: instanceStartTime,
-        data: {
-          ...originalTodo,
-          id: `${originalTodo.id}-recurrence-${format(occurrenceDate, 'yyyy-MM-dd')}-${index}`,
-          start_time: instanceStartTime.toISOString(),
-          end_time: instanceEndTime?.toISOString() || null,
-          schedule_type: schedule_type, // 명시적으로 schedule_type 포함
-          is_recurrence_instance: true,
-          recurrence_source_id: originalTodo.id,
-          recurrence_occurrence_date: format(occurrenceDate, 'yyyy-MM-dd')
-        }
+        data: instanceData
       };
     });
+
+    // 🆕 크로스데이 할일의 전날 인스턴스 추가
+    const additionalInstances: GeneratedRecurrenceItem[] = [];
+
+    instances.forEach((instance, index) => {
+      const startTime = new Date(instance.data.start_time);
+      const endTime = instance.data.end_time ? new Date(instance.data.end_time) : null;
+
+      if (!endTime) return; // 종료 시간 없으면 스킵
+
+      // 크로스데이 여부 확인 (시간만 비교)
+      const startTimeOfDay = startTime.getHours() * 60 + startTime.getMinutes();
+      const endTimeOfDay = endTime.getHours() * 60 + endTime.getMinutes();
+      const isCrossDay = endTimeOfDay < startTimeOfDay;
+
+      if (isCrossDay) {
+        // 전날 날짜 계산
+        const previousDay = new Date(instance.occurrenceDate);
+        previousDay.setDate(previousDay.getDate() - 1);
+        const prevDateString = format(previousDay, 'yyyy-MM-dd');
+
+        // 전날 시작 시간 (전날 같은 시간)
+        const prevInstanceStartTime = new Date(previousDay);
+        prevInstanceStartTime.setHours(startTime.getHours(), startTime.getMinutes(), startTime.getSeconds());
+
+        // ✅ 오늘 종료 시간 (occurrence date 당일의 endTime)
+        // instance.occurrenceDate는 이미 22:30 같은 시간이 포함되어 있으므로
+        // 날짜 부분만 추출하여 endTime 시간을 설정
+        const occurrenceDateOnly = new Date(instance.occurrenceDate);
+        occurrenceDateOnly.setHours(0, 0, 0, 0);  // 자정으로 초기화
+        const prevInstanceEndTime = new Date(
+          occurrenceDateOnly.getFullYear(),
+          occurrenceDateOnly.getMonth(),
+          occurrenceDateOnly.getDate(),
+          endTime.getHours(),
+          endTime.getMinutes(),
+          endTime.getSeconds()
+        );
+
+        // 전날 인스턴스가 조회 범위에 속하는지 확인
+        // (endTime이 rangeStart ~ rangeEnd에 속하면 표시)
+        if (prevInstanceEndTime >= rangeStart && prevInstanceEndTime <= endOfDay(rangeEnd)) {
+          const prevInstanceData = {
+            ...originalTodo,
+            id: `${originalTodo.id}-recurrence-${prevDateString}-prev`,
+            start_time: prevInstanceStartTime.toISOString(),
+            end_time: prevInstanceEndTime.toISOString(),
+            schedule_type: schedule_type,
+            is_recurrence_instance: true,
+            recurrence_source_id: originalTodo.id,
+            recurrence_occurrence_date: prevDateString
+          };
+
+          additionalInstances.push({
+            id: `${originalTodo.id}-recurrence-${prevDateString}-prev`,
+            originalId: originalTodo.id,
+            occurrenceDate: prevInstanceStartTime,
+            data: prevInstanceData
+          });
+        }
+      }
+    });
+
+    return [...instances, ...additionalInstances];
 
   } catch (error) {
     console.error(`❌ [반복 할일 ${originalTodo.id}] 인스턴스 생성 중 오류:`, error);
