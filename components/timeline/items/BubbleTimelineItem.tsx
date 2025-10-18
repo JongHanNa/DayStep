@@ -360,7 +360,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       // 크로스데이 할일 감지 (종료 시간 < 시작 시간)
       // 예: 22:30~05:30 → 1350분~330분
       if (endTimeOfDay < startTimeOfDay) {
-        // 전체 길이: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 종료)
+        // 전체 길이: (오늘 시작 ~ 23:59) + (내일 00:00 ~ 종료)
         const totalDuration = (1439 - startTimeOfDay) + endTimeOfDay;
 
         // 현재 시간이 다음날 종료 시간 이후면 100%
@@ -368,9 +368,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           return 100;
         }
 
-        // 현재 시간이 다음날 (종료 전)
-        // 진행: (어제 시작 ~ 23:59) + (오늘 00:00 ~ 현재)
-        const progress = (1439 - startTimeOfDay) + nowTimeOfDay;
+        // ✅ 수정: 현재 시간이 다음날 (종료 전)
+        // 진행: (내일 00:00 ~ 현재)만 계산
+        const progress = nowTimeOfDay;
         const percentage = Math.round((progress / totalDuration) * 100);
 
         return percentage;
@@ -399,7 +399,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       const endMinute = endTime.getMinutes();
       const endTimeOfDay = endHour * 60 + endMinute;
 
-      // 크로스데이 할일 (예: 22:30~05:30+1)
+      // ✅ 수정: 크로스데이 할일 (예: 22:30~05:30+1)
       // 오늘 날짜 뷰에서는 "오늘 시작하는" 할일만 표시
       if (endTimeOfDay < startTimeOfDay) {
         // 아직 시작 전 (00:00 ~ startTime)
@@ -407,10 +407,11 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           return 0;
         }
 
-        // 진행 중 (startTime ~ 23:59)
+        // ✅ 수정: 진행 중 (startTime ~ 23:59)
+        // 진행 = 현재 시간 - 시작 시간
         const progress = nowTimeOfDay - startTimeOfDay;
-        const duration = 1439 - startTimeOfDay;
-        const percentage = Math.round((progress / duration) * 100);
+        const totalDuration = (1439 - startTimeOfDay) + endTimeOfDay;
+        const percentage = Math.round((progress / totalDuration) * 100);
 
         return percentage;
       }
