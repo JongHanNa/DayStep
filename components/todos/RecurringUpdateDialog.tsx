@@ -68,8 +68,13 @@ export default function RecurringUpdateDialog({
     return formatTime(start);
   };
 
+  // 환경별 모달 위치 결정
+  const modalPositionClass = process.env.BUILD_TARGET === 'mobile'
+    ? 'modal-middle'  // Capacitor: 항상 중앙
+    : 'modal-bottom sm:modal-middle';  // 웹: 반응형 (모바일 하단, 데스크톱 중앙)
+
   return (
-    <dialog ref={dialogRef} className="modal modal-bottom sm:modal-middle">
+    <dialog ref={dialogRef} className={`modal ${modalPositionClass}`}>
       <div className="modal-box max-w-md">
         {/* 헤더 */}
         <div className="flex items-center gap-2 mb-4">

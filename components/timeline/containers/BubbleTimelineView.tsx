@@ -9,17 +9,8 @@ import { BubbleTimelineItem } from '../items/BubbleTimelineItem';
 import { useCurrentTime } from '@/lib/hooks/useCurrentTime';
 import { isRecurringTodo } from '@/lib/utils/recurring';
 import { Todo as DbTodo } from '@/types';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import DateTimeRangePicker from '../controls/DateTimeRangePicker';
 import TodoFormModal from '@/components/todos/TodoFormModal';
+import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
 
 /**
  * 버블 스타일 타임라인 뷰 컴포넌트
@@ -56,13 +47,17 @@ export const BubbleTimelineView: React.FC = () => {
   const savedBodyScrollPositionRef = useRef(0);
   const scrollWatcherRef = useRef<number | null>(null);
 
-  // 시간 변경 모달 상태
-  const [showTimeChangeModal, setShowTimeChangeModal] = useState(false);
-  const [pendingTimeChange, setPendingTimeChange] = useState<{
-    itemId: string;
-    newStartTime: Date;
-    newEndTime: Date;
-  } | null>(null);
+  // 반복 할일 업데이트 다이얼로그 상태
+  const [recurringUpdateDialog, setRecurringUpdateDialog] = useState<{
+    open: boolean;
+    data?: {
+      todoId: string;
+      todoTitle: string;
+      originalTime: { start: Date; end?: Date };
+      newTime: { start: Date; end?: Date };
+      occurrenceDate: Date;
+    };
+  }>({ open: false });
 
   // 할일 추가 모달 상태
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -318,13 +313,38 @@ export const BubbleTimelineView: React.FC = () => {
         const newStartTime = new Date(new Date(draggedItem.startTime).getTime() + minutesChange * 60 * 1000);
         const newEndTime = new Date(new Date(draggedItem.endTime).getTime() + minutesChange * 60 * 1000);
 
-        // 시간 변경 모달 표시
-        setPendingTimeChange({
-          itemId: draggedItem.id,
-          newStartTime,
-          newEndTime
-        });
-        setShowTimeChangeModal(true);
+        // 반복 할일 확인
+        const draggedTodo = draggedItem.data;
+        const recurrencePattern = draggedTodo?.recurrence_pattern || draggedTodo?.recurrencePattern;
+        const isRecurring = (recurrencePattern && recurrencePattern !== 'none') ||
+                           (draggedItem.id && draggedItem.id.includes('-recurrence-'));
+
+        if (isRecurring) {
+          // 반복 할일: RecurringUpdateDialog 표시
+          setRecurringUpdateDialog({
+            open: true,
+            data: {
+              todoId: draggedItem.id.includes('-recurrence-') ?
+                draggedItem.id.split('-recurrence-')[0] : draggedItem.id,
+              todoTitle: draggedItem.title || '할일',
+              originalTime: {
+                start: new Date(draggedItem.startTime),
+                end: new Date(draggedItem.endTime)
+              },
+              newTime: {
+                start: newStartTime,
+                end: newEndTime
+              },
+              occurrenceDate: currentDate
+            }
+          });
+        } else {
+          // 일반 할일: 바로 업데이트
+          await updateTodo(draggedItem.id, {
+            start_time: newStartTime.toISOString(),
+            end_time: newEndTime.toISOString(),
+          });
+        }
       }
     }
 
@@ -338,32 +358,44 @@ export const BubbleTimelineView: React.FC = () => {
 
     // 🔓 스크롤 차단 해제 (리스트뷰와 동일)
     disableScrollLock();
-  }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer, disableScrollLock]);;
+  }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer, disableScrollLock, currentDate, updateTodo]);;
 
-  // 시간 변경 확정
-  const handleConfirmTimeChange = useCallback(async () => {
-    if (!pendingTimeChange) {
+  // 반복 할일 업데이트 선택 핸들러
+  const handleRecurringUpdateChoice = useCallback(async (choice: 'this-only' | 'from-now' | 'all') => {
+    if (!recurringUpdateDialog.data) {
       return;
     }
 
-    const { itemId, newStartTime, newEndTime } = pendingTimeChange;
+    const { todoId, newTime, occurrenceDate } = recurringUpdateDialog.data;
 
-    // 할일 시간 업데이트
-    await updateTodo(itemId, {
-      start_time: newStartTime.toISOString(),
-      end_time: newEndTime.toISOString(),
-    });
+    try {
+      if (choice === 'this-only') {
+        // 해당 인스턴스만 수정
+        await updateTodo(todoId, {
+          start_time: newTime.start.toISOString(),
+          end_time: newTime.end?.toISOString(),
+        });
+      } else if (choice === 'from-now') {
+        // 해당 날짜 이후 모든 인스턴스 수정
+        // TODO: 반복 할일 이후 업데이트 로직 구현 필요
+        await updateTodo(todoId, {
+          start_time: newTime.start.toISOString(),
+          end_time: newTime.end?.toISOString(),
+        });
+      } else if (choice === 'all') {
+        // 모든 인스턴스 수정
+        await updateTodo(todoId, {
+          start_time: newTime.start.toISOString(),
+          end_time: newTime.end?.toISOString(),
+        });
+      }
 
-    // 모달 닫기
-    setShowTimeChangeModal(false);
-    setPendingTimeChange(null);
-  }, [pendingTimeChange, updateTodo]);
-
-  // 시간 변경 취소
-  const handleCancelTimeChange = useCallback(() => {
-    setShowTimeChangeModal(false);
-    setPendingTimeChange(null);
-  }, []);
+      // 다이얼로그 닫기
+      setRecurringUpdateDialog({ open: false });
+    } catch (error) {
+      console.error('반복 할일 시간 변경 실패:', error);
+    }
+  }, [recurringUpdateDialog, updateTodo]);
 
   // 간격 클릭 핸들러 (할일 추가 모달 표시)
   const handleGapClick = useCallback((startTime: Date, endTime: Date) => {
@@ -371,19 +403,6 @@ export const BubbleTimelineView: React.FC = () => {
     setAddModalEndTime(endTime);
     setIsAddModalOpen(true);
   }, []);
-
-  // DateTimeRangePicker에서 시간 변경 시
-  const handleTimeRangeChange = useCallback((range: { startDate: Date; endDate?: Date; isAllDay: boolean }) => {
-    if (!pendingTimeChange || !range.endDate) {
-      return;
-    }
-
-    setPendingTimeChange({
-      ...pendingTimeChange,
-      newStartTime: range.startDate,
-      newEndTime: range.endDate
-    });
-  }, [pendingTimeChange]);
 
   // 오늘인지 확인
   const isToday = useMemo(() => {
@@ -665,39 +684,17 @@ export const BubbleTimelineView: React.FC = () => {
         </div>
       </div>
 
-      {/* 시간 변경 모달 */}
-      {pendingTimeChange && (
-        <Dialog open={showTimeChangeModal} onOpenChange={setShowTimeChangeModal}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>시간 변경</DialogTitle>
-              <DialogDescription>
-                {timedItems.find(item => item.id === pendingTimeChange.itemId)?.title}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <DateTimeRangePicker
-                value={{
-                  startDate: pendingTimeChange.newStartTime,
-                  endDate: pendingTimeChange.newEndTime,
-                  isAllDay: false
-                }}
-                onChange={handleTimeRangeChange}
-                viewMode={viewMode}
-                allowRange={true}
-                allowAllDay={false}
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" size="sm" onClick={handleCancelTimeChange}>
-                취소
-              </Button>
-              <Button size="sm" onClick={handleConfirmTimeChange}>
-                확인
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {/* 반복 할일 업데이트 다이얼로그 */}
+      {recurringUpdateDialog.data && (
+        <RecurringUpdateDialog
+          open={recurringUpdateDialog.open}
+          onOpenChange={(open) => setRecurringUpdateDialog({ open })}
+          todoTitle={recurringUpdateDialog.data.todoTitle}
+          originalTime={recurringUpdateDialog.data.originalTime}
+          newTime={recurringUpdateDialog.data.newTime}
+          occurrenceDate={recurringUpdateDialog.data.occurrenceDate}
+          onUpdateChoice={handleRecurringUpdateChoice}
+        />
       )}
 
       {/* 드래그 프리뷰 카드 (손가락 따라다님) */}
