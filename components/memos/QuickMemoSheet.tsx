@@ -465,9 +465,9 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     <>
     {open && (
       <dialog open className="modal modal-open">
-        <div className="modal-box w-full max-w-7xl">
+        <div className="modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden">
           {/* 헤더 (닫기-제목-추가) */}
-          <div className="flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300">
+          <div className="flex-shrink-0 flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10">
             <button onClick={() => onOpenChange(false)} className="btn btn-ghost btn-sm">
               닫기
             </button>
@@ -485,7 +485,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
           </div>
 
           {/* 콘텐츠 영역 */}
-          <div>
+          <div className="flex-1 overflow-y-auto">
               {/* 검색 및 필터 영역 */}
               <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: '#f8f8f8' }}>
                 <div className="relative">
@@ -795,9 +795,9 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     {/* 통합된 메모 편집기 모달 */}
     {memoEditorOpen && (
       <dialog open className="modal modal-open">
-        <div className="modal-box w-full max-w-7xl">
+        <div className="modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden">
           {/* 헤더 (취소-제목-연결+자동저장) */}
-          <div className="flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300">
+          <div className="flex-shrink-0 flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10">
             <button onClick={handleCancelMemoEdit} className="btn btn-ghost btn-sm">
               취소
             </button>
@@ -859,7 +859,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
           </div>
 
           {/* 콘텐츠 영역 */}
-          <div>
+          <div className="flex-1 overflow-y-auto">
                 <div className="space-y-4">
                   {/* 할일 연결 상태 표시 */}
                   {selectedTaskId && (
