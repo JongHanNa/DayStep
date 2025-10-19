@@ -735,41 +735,15 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     return '당연히 쉬어야 할 시간';
   }, [nextItem, gapMinutes, dateStatus, currentTime, endTime]);
 
-  // 🔥 Non-passive touchstart listener (Chrome DevTools 모바일 모드 호환)
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) return;
-
-    // ⚡ CRITICAL: Direct DOM listener with { passive: false }
-    // React synthetic events are passive in Chrome DevTools mobile mode
-    const handleTouchStartNonPassive = (e: TouchEvent) => {
-      e.preventDefault(); // This works because { passive: false }
-      // Convert to React synthetic event and call handler
-      onTouchStart(e as any);
-    };
-
-    element.addEventListener('touchstart', handleTouchStartNonPassive, { passive: false });
-
-    return () => {
-      element.removeEventListener('touchstart', handleTouchStartNonPassive);
-    };
-  }, [onTouchStart]);
-
   return (
     <>
       {/* 클릭 가능한 영역: 버블 + 카드 전체 포함 (호버 효과도 포함) */}
       <div
-        ref={containerRef}
         className={cn(
           'flex items-start gap-4',
           'cursor-pointer select-none transition-all',
-          !isDragging && 'hover:shadow-[0_0_12px_rgba(0,0,0,0.1)] rounded-lg'
+          !isDragging && process.env.BUILD_TARGET === 'web' && 'hover:shadow-[0_0_12px_rgba(0,0,0,0.1)] rounded-lg'
         )}
-        style={{
-          touchAction: 'none',  // ⚡ CSS 레벨 터치 스크롤 차단 (브라우저 개입 방지)
-        }}
         onClick={(e) => {
           // 체크박스 클릭이 아닐 때만 할일 수정 모달 열기
           const target = e.target as HTMLElement;
@@ -777,6 +751,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
             onTodoClick(item.id);
           }
         }}
+        onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown}
@@ -976,7 +951,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   }}
                   className={cn(
                     'completion-checkbox w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
-                    'transition-all duration-300 ease-out hover:scale-110',
+                    'transition-all duration-300 ease-out',
+                    process.env.BUILD_TARGET === 'web' && 'hover:scale-110',
                     isCompleted
                       ? 'border-transparent text-white transform scale-105'
                       : 'bg-white'
