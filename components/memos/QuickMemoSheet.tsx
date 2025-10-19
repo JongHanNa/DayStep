@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useQuickMemoStore, QuickMemo } from '@/state/stores/quickMemoStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useMemoTagStore } from '@/state/stores/memoTagStore';
+import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoSave } from '@/hooks/useAutoSave';
@@ -43,7 +44,20 @@ interface QuickMemoSheetProps {
 const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  
+
+  // Modal Store (하단 네비게이션 숨김용)
+  const { openModal, closeModal } = useModalStore();
+
+  // 모달 열림/닫힘 상태 관리
+  useEffect(() => {
+    if (open) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [open, openModal, closeModal]);
+
   // Quick Memo Store
   const {
     loading,

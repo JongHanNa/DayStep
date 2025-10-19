@@ -232,9 +232,9 @@ export default function ProjectEditDialog({
   return (
     <>
       <dialog open className="modal modal-open">
-        <div className="modal-box w-full max-w-7xl px-3">
+        <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (취소-제목-삭제-저장) */}
-          <div className="flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300">
+          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
             <button onClick={onCancel} className="btn btn-ghost btn-sm">
               취소
             </button>
@@ -259,8 +259,10 @@ export default function ProjectEditDialog({
             </div>
           </div>
 
-          {/* 아이콘 및 색상 */}
-          <div className="form-control mb-4">
+          {/* 콘텐츠 영역 */}
+          <div className="flex-1 overflow-y-auto">
+            {/* 아이콘 및 색상 */}
+            <div className="form-control mb-4">
             <label className="label">
               <span className="label-text">아이콘 및 색상</span>
             </label>
@@ -537,6 +539,7 @@ export default function ProjectEditDialog({
               document.body
             )}
           </DndContext>
+          </div>
         </div>
         <div className="modal-backdrop" onClick={onCancel} />
       </dialog>
@@ -554,9 +557,9 @@ export default function ProjectEditDialog({
       {/* 노트 편집 모달 */}
       {showNoteEditModal && editingNote && (
         <dialog open className="modal modal-open">
-          <div className="modal-box w-full max-w-4xl">
+          <div className={`modal-box w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 (취소-제목-저장) */}
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
               <button onClick={handleCancelNoteEdit} className="btn btn-ghost btn-sm">
                 취소
               </button>
@@ -566,12 +569,15 @@ export default function ProjectEditDialog({
               </button>
             </div>
 
-            <NoteFormFields
-              note={editingNote}
-              onChange={(updatedNote) => setEditingNote({ ...editingNote, ...updatedNote })}
-              areas={areas}
-              resources={resources}
-            />
+            {/* 콘텐츠 영역 */}
+            <div className="flex-1 overflow-y-auto">
+              <NoteFormFields
+                note={editingNote}
+                onChange={(updatedNote) => setEditingNote({ ...editingNote, ...updatedNote })}
+                areas={areas}
+                resources={resources}
+              />
+            </div>
           </div>
           <div className="modal-backdrop" onClick={handleCancelNoteEdit} />
         </dialog>
@@ -580,9 +586,9 @@ export default function ProjectEditDialog({
       {/* 할일 편집 모달 */}
       {showTodoEditModal && editingTodo && (
         <dialog open className="modal modal-open">
-          <div className="modal-box w-full max-w-4xl">
+          <div className={`modal-box w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 (취소-제목-저장) */}
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
               <button onClick={handleCancelTodoEdit} className="btn btn-ghost btn-sm">
                 취소
               </button>
@@ -592,10 +598,13 @@ export default function ProjectEditDialog({
               </button>
             </div>
 
-            <TodoFormFields
-              todo={editingTodo}
-              onChange={(updatedTodo) => setEditingTodo({ ...editingTodo, ...updatedTodo })}
-            />
+            {/* 콘텐츠 영역 */}
+            <div className="flex-1 overflow-y-auto">
+              <TodoFormFields
+                todo={editingTodo}
+                onChange={(updatedTodo) => setEditingTodo({ ...editingTodo, ...updatedTodo })}
+              />
+            </div>
           </div>
           <div className="modal-backdrop" onClick={handleCancelTodoEdit} />
         </dialog>
