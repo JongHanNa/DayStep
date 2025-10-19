@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sheet } from 'react-modal-sheet';
 import { Button } from '@/components/ui/button';
 import MarkdownEditor from './MarkdownEditor';
 import { Badge } from '@/components/ui/badge';
@@ -26,13 +25,11 @@ import {
 } from 'lucide-react';
 import TaskLinkModal from './TaskLinkModal';
 import { cn } from '@/lib/utils';
-import { createModalConfig } from '@/lib/modal-config';
 import { useQuickMemoStore, QuickMemo } from '@/state/stores/quickMemoStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useMemoTagStore } from '@/state/stores/memoTagStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useKeyboardAwareModal } from '@/hooks/useKeyboardAwareModal';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -117,13 +114,6 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   const [processingTemplates, setProcessingTemplates] = useState<Set<string>>(new Set()); // 처리 중인 템플릿 ID들
   const [addedTemplates, setAddedTemplates] = useState<Set<string>>(new Set()); // 방금 추가된 템플릿 ID들
 
-  // 키보드 적응형 모달 기능
-  const keyboardAwareModal = useKeyboardAwareModal({
-    offsetRatio: 0.8, // 키보드 높이의 80%만큼 이동
-    animationDuration: 250,
-    extraPadding: 20,
-    minTopPadding: 60
-  });
 
   // 자동 저장 기능
   const autoSave = useAutoSave(memoContent, {
@@ -471,54 +461,31 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     return null;
   }
 
-  // 중앙 집중식 모달 설정 - 전체 화면 타입
-  const modalConfig = createModalConfig('FULLSCREEN');
-
   return (
     <>
-    <Sheet
-      isOpen={open}
-      onClose={() => onOpenChange(false)}
-      {...modalConfig}
-    >
-      <Sheet.Container className="bg-background">
-        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-          <div className="flex items-center justify-between px-4 py-3">
-            {/* 왼쪽: 취소 버튼 */}
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
-            >
+    {open && (
+      <dialog open className="modal modal-open">
+        <div className="modal-box w-full max-w-7xl">
+          {/* 헤더 (닫기-제목-추가) */}
+          <div className="flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300">
+            <button onClick={() => onOpenChange(false)} className="btn btn-ghost btn-sm">
               닫기
-            </Button>
-
-            {/* 가운데: 제목과 개수 */}
+            </button>
             <div className="flex items-center gap-2">
               <StickyNote className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">퀵메모</h2>
+              <h3 className="font-bold text-lg">퀵메모</h3>
               <Badge variant="outline" className="text-xs">
                 {filteredMemos.length}개
               </Badge>
             </div>
-
-            {/* 오른쪽: 메모 추가 버튼 */}
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => openMemoEditor('create')}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
-            >
+            <button onClick={() => openMemoEditor('create')} className="btn btn-primary btn-sm">
               <Plus className="h-4 w-4 mr-1" />
               추가
-            </Button>
+            </button>
           </div>
-        </Sheet.Header>
 
-        <Sheet.Content>
-          <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
-            <div className="px-4 pb-4" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+          {/* 콘텐츠 영역 */}
+          <div>
               {/* 검색 및 필터 영역 */}
               <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: '#f8f8f8' }}>
                 <div className="relative">
@@ -819,49 +786,26 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                   );
                   })}
               </div>
-            </div>
-          </Sheet.Scroller>
-        </Sheet.Content>
-      </Sheet.Container>
-    </Sheet>
+          </div>
+        </div>
+        <div className="modal-backdrop" onClick={() => onOpenChange(false)} />
+      </dialog>
+    )}
 
     {/* 통합된 메모 편집기 모달 */}
-    <Sheet
-      isOpen={memoEditorOpen}
-      onClose={handleCancelMemoEdit}
-      {...modalConfig}
-    >
-      <Sheet.Container
-        ref={keyboardAwareModal.containerRef}
-        className="bg-background"
-        style={{
-          transition: 'padding-bottom 250ms ease-out',
-        }}
-      >
-        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-          <div className="flex items-center justify-between px-4 py-3">
-            {/* 왼쪽: 취소 버튼 */}
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleCancelMemoEdit}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
-            >
+    {memoEditorOpen && (
+      <dialog open className="modal modal-open">
+        <div className="modal-box w-full max-w-7xl">
+          {/* 헤더 (취소-제목-연결+자동저장) */}
+          <div className="flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300">
+            <button onClick={handleCancelMemoEdit} className="btn btn-ghost btn-sm">
               취소
-            </Button>
-
-            {/* 가운데: 제목 */}
+            </button>
+            <h3 className="font-bold text-lg">
+              {memoEditorMode === 'edit' ? '메모 수정' : '새 메모'}
+            </h3>
             <div className="flex items-center gap-2">
-              <Edit3 className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">
-                {memoEditorMode === 'edit' ? '메모 수정' : '새 메모'}
-              </h2>
-            </div>
-
-            {/* 오른쪽: 할일 연결 버튼 */}
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
+              <button
                 onClick={() => {
                   const memoForLink = memoEditorMode === 'edit' && currentEditingMemo
                     ? currentEditingMemo
@@ -873,11 +817,11 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                   setSelectedMemoForLink(memoForLink);
                   setTaskLinkModalOpen(true);
                 }}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
+                className="btn btn-primary btn-sm"
               >
                 <Link className="h-4 w-4 mr-1" />
                 연결
-              </Button>
+              </button>
               {/* 자동 저장 상태 표시 */}
               <div className="flex items-center gap-2">
                 {autoSave.saveStatus === 'pending' && (
@@ -886,56 +830,36 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                     <span>저장 대기중...</span>
                   </div>
                 )}
-                
+
                 {autoSave.saveStatus === 'saving' && (
                   <div className="flex items-center gap-1 text-xs text-brand">
                     <Save className="h-3 w-3 animate-spin" />
                     <span>{!memoContent.trim() && currentEditingMemo ? '삭제 중...' : '저장 중...'}</span>
                   </div>
                 )}
-                
+
                 {autoSave.saveStatus === 'saved' && (
                   <div className="flex items-center gap-1 text-xs text-green-600">
                     <Check className="h-3 w-3" />
                     <span>{!memoContent.trim() && currentEditingMemo ? '삭제됨' : '저장됨'}</span>
                   </div>
                 )}
-                
+
                 {autoSave.saveStatus === 'error' && (
-                  <Button
+                  <button
                     onClick={autoSave.triggerSave}
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700"
+                    className="btn btn-ghost btn-sm text-error"
                   >
                     <AlertCircle className="h-3 w-3 mr-1" />
                     재시도
-                  </Button>
+                  </button>
                 )}
-
               </div>
             </div>
           </div>
-        </Sheet.Header>
 
-        <Sheet.Content>
-          <div
-            className="flex flex-col h-full"
-            style={{
-              pointerEvents: 'auto',
-              touchAction: 'manipulation',
-              backgroundColor: 'white'
-            }}
-          >
-            <div className="flex-1 overflow-hidden">
-              <div
-                className="h-full px-4 pt-4"
-                style={{
-                  overflowY: 'auto',
-                  touchAction: 'pan-y',
-                  pointerEvents: 'auto',
-                }}
-              >
+          {/* 콘텐츠 영역 */}
+          <div>
                 <div className="space-y-4">
                   {/* 할일 연결 상태 표시 */}
                   {selectedTaskId && (
@@ -1370,86 +1294,60 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                     placeholder="메모 내용을 입력하세요..."
                     className="text-sm"
                     minHeight={600}
-                    onFocus={keyboardAwareModal.handleEditorFocus}
-                    onBlur={keyboardAwareModal.handleEditorBlur}
                   />
                 </div>
-              </div>
-            </div>
           </div>
-        </Sheet.Content>
-      </Sheet.Container>
-    </Sheet>
+        </div>
+        <div className="modal-backdrop" onClick={handleCancelMemoEdit} />
+      </dialog>
+    )}
 
 
     {/* 변경사항 확인 다이얼로그 */}
-    <Sheet
-      isOpen={showExitConfirm}
-      onClose={() => setShowExitConfirm(false)}
-      detent="content-height"
-    >
-      <Sheet.Container className="bg-background">
-        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-          <div className="flex items-center justify-between px-4 py-3">
-            {/* 왼쪽: 빈 공간 */}
+    {showExitConfirm && (
+      <dialog open className="modal modal-open">
+        <div className="modal-box">
+          {/* 헤더 (빈공간-제목-닫기) */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
             <div className="w-12"></div>
-
-            {/* 가운데: 제목 */}
-            <h2 className="text-lg font-semibold">변경사항이 있습니다</h2>
-
-            {/* 오른쪽: 닫기 버튼 */}
-            <Button
-              type="button"
-              size="sm"
+            <h3 className="font-bold text-lg">변경사항이 있습니다</h3>
+            <button
               onClick={() => setShowExitConfirm(false)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-3 py-2 rounded-full"
+              className="btn btn-ghost btn-sm btn-circle"
             >
               <X className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
-        </Sheet.Header>
 
-        <Sheet.Content style={{ backgroundColor: 'white' }}>
-          <div className="px-4 pb-4">
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {autoSave.saveStatus === 'pending' 
-                  ? '저장 대기중인 변경사항이 있습니다. 어떻게 하시겠어요?'
-                  : '메모에 변경사항이 있습니다. 어떻게 하시겠어요?'
-                }
-              </p>
-              
-              <div className="flex flex-col gap-2">
-                <Button
-                  onClick={handleSaveAndClose}
-                  className="w-full"
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  저장하고 닫기
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  onClick={handleDiscardAndClose}
-                  className="w-full"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  저장하지 않고 닫기
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowExitConfirm(false)}
-                  className="w-full"
-                >
-                  계속 편집하기
-                </Button>
-              </div>
+          {/* 콘텐츠 */}
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {autoSave.saveStatus === 'pending'
+                ? '저장 대기중인 변경사항이 있습니다. 어떻게 하시겠어요?'
+                : '메모에 변경사항이 있습니다. 어떻게 하시겠어요?'
+              }
+            </p>
+
+            <div className="flex flex-col gap-2">
+              <button onClick={handleSaveAndClose} className="btn btn-primary w-full">
+                <Check className="h-4 w-4 mr-2" />
+                저장하고 닫기
+              </button>
+
+              <button onClick={handleDiscardAndClose} className="btn btn-outline w-full">
+                <X className="h-4 w-4 mr-2" />
+                저장하지 않고 닫기
+              </button>
+
+              <button onClick={() => setShowExitConfirm(false)} className="btn btn-ghost w-full">
+                계속 편집하기
+              </button>
             </div>
           </div>
-        </Sheet.Content>
-      </Sheet.Container>
-    </Sheet>
+        </div>
+        <div className="modal-backdrop" onClick={() => setShowExitConfirm(false)} />
+      </dialog>
+    )}
 
     {/* 할일 연결 모달 */}
     <TaskLinkModal
@@ -1468,48 +1366,36 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     />
 
     {/* 새 태그 생성 모달 */}
-    <Sheet
-      isOpen={showCreateTagModal}
-      onClose={() => {
-        setShowCreateTagModal(false);
-        setNewTagName('');
-        setNewTagColor('#3B82F6');
-      }}
-      detent="content-height"
-    >
-      <Sheet.Container className="bg-background">
-        <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-          <div className="flex items-center justify-between px-4 py-3">
-            <Button
-              variant="ghost"
-              size="sm"
+    {showCreateTagModal && (
+      <dialog open className="modal modal-open">
+        <div className="modal-box">
+          {/* 헤더 (취소-제목-생성) */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
+            <button
               onClick={() => {
                 setShowCreateTagModal(false);
                 setNewTagName('');
                 setNewTagColor('#3B82F6');
               }}
-              className="h-8 w-8 p-0"
+              className="btn btn-ghost btn-sm"
             >
-              <X className="h-4 w-4" />
-            </Button>
+              취소
+            </button>
 
-            <h2 className="text-lg font-semibold">새 태그 만들기</h2>
+            <h3 className="font-bold text-lg">새 태그 만들기</h3>
 
-            <Button
-              type="button"
-              size="sm"
+            <button
               onClick={handleCreateTag}
               disabled={!newTagName.trim()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
+              className="btn btn-primary btn-sm"
             >
               <Check className="h-4 w-4 mr-1" />
               생성
-            </Button>
+            </button>
           </div>
-        </Sheet.Header>
 
-        <Sheet.Content>
-          <div className="px-4 py-6 space-y-6">
+          {/* 콘텐츠 */}
+          <div className="space-y-6">
             {/* 태그 이름 입력 */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1566,11 +1452,15 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                 </div>
               </div>
             </div>
-
           </div>
-        </Sheet.Content>
-      </Sheet.Container>
-    </Sheet>
+        </div>
+        <div className="modal-backdrop" onClick={() => {
+          setShowCreateTagModal(false);
+          setNewTagName('');
+          setNewTagColor('#3B82F6');
+        }} />
+      </dialog>
+    )}
     </>
   );
 };
