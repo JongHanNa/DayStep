@@ -482,7 +482,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
         <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (닫기-제목-추가) */}
           <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-            <button onClick={() => onOpenChange(false)} className="btn btn-ghost btn-sm">
+            <button onClick={() => onOpenChange(false)} className="btn btn-primary btn-sm rounded-full">
               닫기
             </button>
             <div className="flex items-center gap-2">
@@ -492,7 +492,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                 {filteredMemos.length}개
               </Badge>
             </div>
-            <button onClick={() => openMemoEditor('create')} className="btn btn-primary btn-sm">
+            <button onClick={() => openMemoEditor('create')} className="btn btn-primary btn-sm rounded-full">
               <Plus className="h-4 w-4 mr-1" />
               추가
             </button>
@@ -812,7 +812,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
         <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (취소-제목-연결+자동저장) */}
           <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-            <button onClick={handleCancelMemoEdit} className="btn btn-ghost btn-sm">
+            <button onClick={handleCancelMemoEdit} className="btn btn-primary btn-sm rounded-full">
               취소
             </button>
             <h3 className="font-bold text-lg">
@@ -831,7 +831,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                   setSelectedMemoForLink(memoForLink);
                   setTaskLinkModalOpen(true);
                 }}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm rounded-full"
               >
                 <Link className="h-4 w-4 mr-1" />
                 연결
@@ -1391,7 +1391,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                 setNewTagName('');
                 setNewTagColor('#3B82F6');
               }}
-              className="btn btn-ghost btn-sm"
+              className="btn btn-primary btn-sm rounded-full"
             >
               취소
             </button>
@@ -1401,7 +1401,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
             <button
               onClick={handleCreateTag}
               disabled={!newTagName.trim()}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm rounded-full"
             >
               <Check className="h-4 w-4 mr-1" />
               생성

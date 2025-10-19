@@ -235,7 +235,7 @@ export default function ProjectEditDialog({
         <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (취소-제목-삭제-저장) */}
           <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-            <button onClick={onCancel} className="btn btn-ghost btn-sm">
+            <button onClick={onCancel} className="btn btn-primary btn-sm rounded-full">
               취소
             </button>
             <h3 className="font-bold text-lg">
@@ -248,12 +248,12 @@ export default function ProjectEditDialog({
                     onCancel();
                     onDelete(editingProject as Project);
                   }}
-                  className="btn btn-ghost btn-sm text-error"
+                  className="btn btn-ghost btn-sm text-error rounded-full"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}
-              <button onClick={handleSave} className="btn btn-primary btn-sm">
+              <button onClick={handleSave} className="btn btn-primary btn-sm rounded-full">
                 저장
               </button>
             </div>
@@ -560,11 +560,11 @@ export default function ProjectEditDialog({
           <div className={`modal-box w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 (취소-제목-저장) */}
             <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-              <button onClick={handleCancelNoteEdit} className="btn btn-ghost btn-sm">
+              <button onClick={handleCancelNoteEdit} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
               <h3 className="font-bold text-lg">노트 편집</h3>
-              <button onClick={handleSaveNoteEdit} className="btn btn-primary btn-sm">
+              <button onClick={handleSaveNoteEdit} className="btn btn-primary btn-sm rounded-full">
                 저장
               </button>
             </div>
@@ -589,11 +589,11 @@ export default function ProjectEditDialog({
           <div className={`modal-box w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 (취소-제목-저장) */}
             <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-              <button onClick={handleCancelTodoEdit} className="btn btn-ghost btn-sm">
+              <button onClick={handleCancelTodoEdit} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
               <h3 className="font-bold text-lg">할일 편집</h3>
-              <button onClick={handleSaveTodoEdit} className="btn btn-primary btn-sm">
+              <button onClick={handleSaveTodoEdit} className="btn btn-primary btn-sm rounded-full">
                 저장
               </button>
             </div>
