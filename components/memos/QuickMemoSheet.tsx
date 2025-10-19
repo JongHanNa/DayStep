@@ -465,9 +465,9 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     <>
     {open && (
       <dialog open className="modal modal-open">
-        <div className="modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden">
+        <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (닫기-제목-추가) */}
-          <div className="flex-shrink-0 flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10">
+          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
             <button onClick={() => onOpenChange(false)} className="btn btn-ghost btn-sm">
               닫기
             </button>
@@ -795,9 +795,9 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     {/* 통합된 메모 편집기 모달 */}
     {memoEditorOpen && (
       <dialog open className="modal modal-open">
-        <div className="modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden">
+        <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (취소-제목-연결+자동저장) */}
-          <div className="flex-shrink-0 flex items-center justify-between pt-[30px] mb-6 pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10">
+          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
             <button onClick={handleCancelMemoEdit} className="btn btn-ghost btn-sm">
               취소
             </button>
