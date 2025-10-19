@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { TimelineItem } from '@/types/timeline-view';
 import { cn } from '@/lib/utils';
 import * as Icons from 'lucide-react';
@@ -760,7 +761,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         onMouseLeave={onMouseLeave}
       >
         {/* 왼쪽: 버블 영역 */}
-        <div className="flex flex-col relative" style={{ width: '64px', zIndex: isDragging ? 9999 : 20 }}>
+        <div className="flex flex-col relative" style={{ width: '64px' }}>
           {/* 버블과 할일 카드가 정렬될 영역 */}
           <div ref={bubbleWrapperRef} className="relative flex items-center" style={{ height: `${bubbleHeight}px` }}>
             {/* 버블 뒤에 숨은 연결 막대 (버블과 동일한 높이) */}
@@ -779,29 +780,53 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               }}
             />
 
-            {/* 버블 아이콘 (드래그 시 fixed positioning) */}
-            <div
-              className="flex items-center justify-center"
-              style={{
-                position: isDragging && bubbleFixedPosition ? 'fixed' : 'absolute',
-                left: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.left}px` : 0,
-                top: isDragging && bubbleFixedPosition ? `${bubbleFixedPosition.top}px` : 0,
-                width: `${bubbleWidth}px`,
-                height: `${bubbleHeight}px`,
-                transform: !isDragging ? undefined : undefined,
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                zIndex: isDragging ? 9999 : 10, // 드래그 시 최상단 레이어, 일반 시 막대보다 앞에
-              }}
-            >
-              {/* 버블 아이콘 */}
+            {/* 버블 아이콘 - 드래그 중: Portal, 일반: absolute */}
+            {isDragging && bubbleFixedPosition && typeof window !== 'undefined' ? (
+              // 드래그 중: document.body에 Portal로 렌더링 (iOS WebView 레이어 충돌 완전 해결)
+              createPortal(
+                <div
+                  className="flex items-center justify-center"
+                  style={{
+                    position: 'fixed',
+                    left: `${bubbleFixedPosition.left}px`,
+                    top: `${bubbleFixedPosition.top}px`,
+                    width: `${bubbleWidth}px`,
+                    height: `${bubbleHeight}px`,
+                    zIndex: 999999, // 최상위 레이어
+                    pointerEvents: 'none', // 터치 이벤트 투과
+                  }}
+                >
+                  <div
+                    className="flex items-center justify-center transition-all duration-300"
+                    style={bubbleStyle}
+                  >
+                    <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+                  </div>
+                </div>,
+                document.body
+              )
+            ) : (
+              // 일반 상태: absolute positioning
               <div
-                className="flex items-center justify-center transition-all duration-300"
-                style={bubbleStyle}
+                className="flex items-center justify-center"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  width: `${bubbleWidth}px`,
+                  height: `${bubbleHeight}px`,
+                  transition: 'transform 0.2s ease-out',
+                  zIndex: 10, // 막대보다 앞에
+                }}
               >
-                {/* 모든 모양에서 할일 아이콘 표시 */}
-                <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+                <div
+                  className="flex items-center justify-center transition-all duration-300"
+                  style={bubbleStyle}
+                >
+                  <IconComponent className={cn('w-8 h-8', progressPercentage > 0 ? 'text-white' : 'text-gray-500')} />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -812,7 +837,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
         >
           <div
             className={cn(
-              "bg-timeline-bg rounded-lg w-full transition-all relative",
+              "bg-timeline-bg rounded-lg w-full relative",
               isDragging && "opacity-0"
             )}
           >
