@@ -597,24 +597,24 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     };
   }, [progressPercentage, itemColor, bubbleWidth, bubbleHeight, borderRadius, bubbleShape]);
 
-  // 드래그 중 변경된 시간 계산
+  // 드래그 중 변경된 시간 계산 (scrollOffset 포함)
   const displayStartTime = useMemo(() => {
     if (!startTime) return null;
-    if (isDragging && dragOffset !== 0) {
-      const minutesChange = Math.round(dragOffset);
+    if (isDragging && (dragOffset !== 0 || scrollOffset !== 0)) {
+      const minutesChange = Math.round(dragOffset + scrollOffset);
       return new Date(startTime.getTime() + minutesChange * 60 * 1000);
     }
     return startTime;
-  }, [startTime, isDragging, dragOffset]);
+  }, [startTime, isDragging, dragOffset, scrollOffset]);
 
   const displayEndTime = useMemo(() => {
     if (!endTime) return null;
-    if (isDragging && dragOffset !== 0) {
-      const minutesChange = Math.round(dragOffset);
+    if (isDragging && (dragOffset !== 0 || scrollOffset !== 0)) {
+      const minutesChange = Math.round(dragOffset + scrollOffset);
       return new Date(endTime.getTime() + minutesChange * 60 * 1000);
     }
     return endTime;
-  }, [endTime, isDragging, dragOffset]);
+  }, [endTime, isDragging, dragOffset, scrollOffset]);
 
   // 다음날 종료 여부 판단
   const isNextDay = useMemo(() => {
