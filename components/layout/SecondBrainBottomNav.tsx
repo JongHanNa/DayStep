@@ -2,47 +2,47 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Inbox, Search, Target, CheckSquare, Clock, Compass, FileText, Archive, Timer, Settings } from 'lucide-react';
+import { Home, CheckSquare, Target, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModalStore } from '@/state/stores/modalStore';
+import { useNavigationStore } from '@/state/stores/navigationStore';
+import GroupMenu from './GroupMenu';
 
-const navGroups = [
-  {
-    id: 'start',
-    items: [
-      { id: 'start', label: '시작', icon: Home, href: '/second-brain/start' }
-    ]
-  },
-  {
-    id: 'routine',
-    items: [
-      { id: 'inbox', label: '수집', icon: Inbox, href: '/second-brain/inbox' },
-      { id: 'clarify', label: '명료화', icon: Search, href: '/second-brain/clarify' },
-      { id: 'plan', label: '계획', icon: CheckSquare, href: '/second-brain/plan' },
-      { id: 'review', label: '점검', icon: Target, href: '/second-brain/review' },
-    ]
-  },
-  {
-    id: 'productivity',
-    items: [
-      { id: 'timeline', label: '타임라인', icon: Clock, href: '/timeline' },
-      { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
-      { id: 'notes', label: '노트', icon: FileText, href: '/second-brain/notes' },
-      { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },
-    ]
-  },
-  {
-    id: 'tools',
-    items: [
-      { id: 'focus', label: '집중', icon: Timer, href: '/second-brain/focus' },
-      { id: 'settings', label: '설정', icon: Settings, href: '/settings' },
-    ]
-  }
+interface MainTab {
+  id: string;
+  label: string;
+  icon: typeof Home;
+  href?: string;
+  groupType?: 'routine' | 'productivity';
+}
+
+const mainTabs: MainTab[] = [
+  { id: 'start', label: '시작', icon: Home, href: '/second-brain/start' },
+  { id: 'routine', label: '루틴', icon: CheckSquare, groupType: 'routine' },
+  { id: 'productivity', label: '생산성', icon: Target, groupType: 'productivity' },
+  { id: 'settings', label: '설정', icon: Settings, href: '/settings' },
+];
+
+// 루틴 그룹 경로
+const routinePaths = [
+  '/second-brain/inbox',
+  '/second-brain/clarify',
+  '/second-brain/plan',
+  '/second-brain/review',
+];
+
+// 생산성 그룹 경로
+const productivityPaths = [
+  '/timeline',
+  '/second-brain/goals',
+  '/second-brain/notes',
+  '/second-brain/archive',
 ];
 
 export default function SecondBrainBottomNav() {
   const pathname = usePathname();
   const isModalOpen = useModalStore((state) => state.isModalOpen);
+  const { selectedGroup, setSelectedGroup, clearSelectedGroup } = useNavigationStore();
 
   // 네비게이션을 숨길 페이지 목록
   const hiddenPaths = ['/', '/login'];
@@ -59,52 +59,95 @@ export default function SecondBrainBottomNav() {
     return null;
   }
 
+  // 현재 경로가 어느 그룹에 속하는지 확인
+  const normalizedPathname = pathname?.replace(/\/$/, '') || '';
+  const isRoutineActive = routinePaths.some(
+    (path) => normalizedPathname === path.replace(/\/$/, '')
+  );
+  const isProductivityActive = productivityPaths.some(
+    (path) => normalizedPathname === path.replace(/\/$/, '')
+  );
+
+  // 탭 클릭 핸들러 (토글 기능)
+  const handleTabClick = (tab: MainTab) => {
+    if (tab.groupType) {
+      // 같은 그룹을 다시 클릭하면 닫기 (토글)
+      if (selectedGroup === tab.groupType) {
+        clearSelectedGroup();
+      } else {
+        // 다른 그룹이면 전환
+        setSelectedGroup(tab.groupType);
+      }
+    }
+  };
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 safe-area-bottom z-50">
-      {/* 가로 스크롤 컨테이너 */}
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex justify-start md:justify-center px-2 py-1 gap-1">
-          {navGroups.map((group, groupIndex) => (
-            <div key={group.id} className="flex items-center gap-1">
-              {/* 그룹 구분선 */}
-              {groupIndex > 0 && (
-                <div className="w-px h-8 bg-base-300 mx-1" />
-              )}
+    <>
+      {/* 그룹 메뉴 (조건부 렌더링) */}
+      {selectedGroup && <GroupMenu groupType={selectedGroup} />}
 
-              {/* 그룹 컨테이너 */}
-              <div className="flex gap-1">
-                {group.items.map((item) => {
-                  // trailing slash 정규화: 웹/모바일 환경 모두 지원
-                  const normalizedPathname = pathname?.replace(/\/$/, '') || '';
-                  const normalizedHref = item.href.replace(/\/$/, '');
-                  const isActive = normalizedPathname === normalizedHref || pathname === item.href;
-                  const Icon = item.icon;
+      {/* 하단 네비게이션 */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 safe-area-bottom z-50">
+        <div className="flex justify-around items-center px-2 py-1">
+          {mainTabs.map((tab) => {
+            const Icon = tab.icon;
+            let isActive = false;
 
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className={cn(
-                        'flex flex-col items-center justify-center',
-                        'min-w-[70px] px-3 py-2 rounded-lg',
-                        'transition-all duration-200',
-                        isActive
-                          ? 'bg-primary text-primary-content'
-                          : 'text-base-content/70 hover:bg-base-200 active:scale-95'
-                      )}
-                    >
-                      <Icon className={cn('w-5 h-5 mb-1', isActive ? 'stroke-[2.5]' : 'stroke-2')} />
-                      <span className={cn('text-[10px] font-medium', isActive && 'font-semibold')}>
-                        {item.label}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+            // 활성 상태 결정
+            if (tab.href) {
+              const normalizedHref = tab.href.replace(/\/$/, '');
+              isActive = normalizedPathname === normalizedHref;
+            } else if (tab.groupType === 'routine') {
+              isActive = isRoutineActive;
+            } else if (tab.groupType === 'productivity') {
+              isActive = isProductivityActive;
+            }
+
+            // 링크 또는 버튼
+            if (tab.href) {
+              return (
+                <Link
+                  key={tab.id}
+                  href={tab.href}
+                  className={cn(
+                    'flex flex-col items-center justify-center',
+                    'min-w-[70px] px-3 py-2 rounded-lg',
+                    'transition-all duration-200',
+                    isActive
+                      ? 'bg-primary text-primary-content'
+                      : 'text-base-content/70 hover:bg-base-200 active:scale-95'
+                  )}
+                >
+                  <Icon className={cn('w-5 h-5 mb-1', isActive ? 'stroke-[2.5]' : 'stroke-2')} />
+                  <span className={cn('text-[10px] font-medium', isActive && 'font-semibold')}>
+                    {tab.label}
+                  </span>
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab)}
+                className={cn(
+                  'flex flex-col items-center justify-center',
+                  'min-w-[70px] px-3 py-2 rounded-lg',
+                  'transition-all duration-200',
+                  isActive
+                    ? 'bg-primary text-primary-content'
+                    : 'text-base-content/70 hover:bg-base-200 active:scale-95'
+                )}
+              >
+                <Icon className={cn('w-5 h-5 mb-1', isActive ? 'stroke-[2.5]' : 'stroke-2')} />
+                <span className={cn('text-[10px] font-medium', isActive && 'font-semibold')}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }

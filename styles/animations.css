@@ -269,6 +269,22 @@
   scroll-snap-align: start;
 }
 
+/* 슬라이드 업 + 페이드 인 애니메이션 (말풍선 메뉴) */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up-fade {
+  animation: slideUpFade 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 /* 성능 모니터링을 위한 디버그 클래스 */
 .debug-paint {
   outline: 1px solid red;
