@@ -394,7 +394,6 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   useEffect(() => {
     // 인증 완료 후에만 스크롤 처리 실행
     if (!isAuthenticated || authLoading || !appUser) {
-      console.log('🚫 TimelineContainer - 인증 미완료 상태로 스크롤 처리 스킵');
       return;
     }
 
@@ -405,22 +404,14 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
       // 현재 날짜가 오늘인 경우 현재 시간으로 스크롤
       const today = new Date();
       const isToday = today.toDateString() === new Date(deferredCurrentDate).toDateString();
-      
+
       if (isToday && deferredViewMode === 'daily') {
       // 현재 시간 기준으로 스크롤 위치 계산
       const currentHour = today.getHours();
       const currentMinute = today.getMinutes();
-      
+
       // 각 시간 슬롯의 높이
       const scrollPosition = currentHour * UI_LAYOUT.SLOT_HEIGHT + (currentMinute / 60) * UI_LAYOUT.SLOT_HEIGHT;
-      
-      console.log('TimelineContainer - 자동 스크롤 설정:', {
-        isToday,
-        currentHour,
-        currentMinute,
-        scrollPosition,
-        targetScroll: Math.max(0, scrollPosition - 200)
-      });
       
       // 현재 시간 라벨을 찾아서 스크롤
       const timer = setTimeout(() => {
@@ -454,19 +445,14 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
             const scrollableArea = sidebar.querySelector('[class*="min-h"]');
             if (scrollableArea) {
               scrollableArea.scrollTop = scrollPosition;
-              console.log('TimelineContainer - 사이드바 직접 스크롤:', {
-                scrollTop: scrollableArea.scrollTop,
-                targetPosition: scrollPosition
-              });
             }
           }
-          
+
           // 메인 컨테이너도 강제로 스크롤
           Object.defineProperty(container, 'scrollTop', {
             writable: true,
             value: scrollPosition - 200
           });
-          console.log('TimelineContainer - 강제 스크롤 실행');
         }
       }, 1000); // 더 늦게 실행
       

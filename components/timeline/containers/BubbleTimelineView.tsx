@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { cn } from '@/lib/utils';
@@ -41,11 +41,21 @@ export const BubbleTimelineView: React.FC = () => {
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [initialTouch, setInitialTouch] = useState<{x: number; y: number} | null>(null);
 
+  // 자동 스크롤 상태 (ref로 변경하여 즉시 반영)
+  const autoScrollDirectionRef = useRef<'up' | 'down' | null>(null);
+  const autoScrollIntervalRef = useRef<number | null>(null);
+  const [autoScrollTrigger, setAutoScrollTrigger] = useState(0); // 렌더링 트리거용
+  const scrollAccumulatedRef = useRef(0); // ✅ useState → useRef 변경 (동기 업데이트)
+  const [scrollAccumulatedTrigger, setScrollAccumulatedTrigger] = useState(0); // ✅ 리렌더링 트리거 (버블 위치 업데이트용)
+
   // 스크롤 차단 관련 ref
   const preventScrollRef = useRef<((e: Event) => void) | null>(null);
   const savedScrollPositionRef = useRef(0);
   const savedBodyScrollPositionRef = useRef(0);
   const scrollWatcherRef = useRef<number | null>(null);
+
+  // 🎯 스크롤 컨테이너 ref
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // 반복 할일 업데이트 다이얼로그 상태
   const [recurringUpdateDialog, setRecurringUpdateDialog] = useState<{
@@ -79,11 +89,118 @@ export const BubbleTimelineView: React.FC = () => {
     return items.filter(item => item.startTime && item.endTime);
   }, [items]);
 
+  // 🎯 자동 스크롤 상수
+  const SCROLL_THRESHOLD = 180; // 경계 감지 영역 (px) - 넓은 트리거 존으로 사용성 개선
+  const SCROLL_SPEED = 8; // 스크롤 속도 (px/frame)
+  const HEADER_HEIGHT = 64; // 타임라인 헤더 높이
+  const BOTTOM_NAV_HEIGHT = 64; // 하단 네비게이션 높이
+
+  // 🎯 자동 스크롤 경계 감지
+  const checkAutoScroll = useCallback((clientY: number) => {
+    const viewportHeight = window.innerHeight;
+    const topBoundary = HEADER_HEIGHT + SCROLL_THRESHOLD;
+    // ✅ 수정: 하단 경계는 화면 하단에서 네비게이션과 THRESHOLD 영역 제외
+    // (네비게이션 위 180px 영역이 트리거 존)
+    const bottomBoundary = viewportHeight - BOTTOM_NAV_HEIGHT - SCROLL_THRESHOLD;
+
+    // 상단 경계 감지
+    if (clientY < topBoundary) {
+      // ✅ 방향 전환 감지: 아래→위로 바뀌면 누적량 리셋 (ref + 리렌더링 트리거)
+      if (autoScrollDirectionRef.current === 'down') {
+        scrollAccumulatedRef.current = 0;  // ref 리셋
+        setScrollAccumulatedTrigger(prev => prev + 1);  // ✅ 리렌더링 트리거 (버블 위치 업데이트)
+      }
+      autoScrollDirectionRef.current = 'up';
+      setAutoScrollTrigger(prev => prev + 1); // 렌더링 트리거
+      return;
+    }
+
+    // 하단 경계 감지
+    if (clientY > bottomBoundary) {
+      // ✅ 방향 전환 감지: 위→아래로 바뀌면 누적량 리셋 (ref + 리렌더링 트리거)
+      if (autoScrollDirectionRef.current === 'up') {
+        scrollAccumulatedRef.current = 0;  // ref 리셋
+        setScrollAccumulatedTrigger(prev => prev + 1);  // ✅ 리렌더링 트리거 (버블 위치 업데이트)
+      }
+      autoScrollDirectionRef.current = 'down';
+      setAutoScrollTrigger(prev => prev + 1); // 렌더링 트리거
+      return;
+    }
+
+    // 경계 벗어남
+    autoScrollDirectionRef.current = null;
+    scrollAccumulatedRef.current = 0; // ref 리셋
+    setScrollAccumulatedTrigger(prev => prev + 1);  // ✅ 리렌더링 트리거 (버블 위치 업데이트)
+    setAutoScrollTrigger(prev => prev + 1); // 렌더링 트리거
+  }, []);
+
+  // 🎯 자동 스크롤 실행 useEffect
+  useEffect(() => {
+    const autoScrollDirection = autoScrollDirectionRef.current;
+
+    if (!isDragging || !autoScrollDirection) {
+      // 자동 스크롤 중지
+      if (autoScrollIntervalRef.current) {
+        cancelAnimationFrame(autoScrollIntervalRef.current);
+        autoScrollIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // 자동 스크롤 시작
+    const scroll = () => {
+      const timelineContainer = scrollContainerRef.current;
+      const currentDirection = autoScrollDirectionRef.current; // 최신 방향 읽기
+
+      // ✅ 방향이 없으면 조용히 종료 (경쟁 조건 대응)
+      if (!timelineContainer || !currentDirection) {
+        return;
+      }
+
+      const scrollAmount = currentDirection === 'up' ? -SCROLL_SPEED : SCROLL_SPEED;
+      const newScrollTop = timelineContainer.scrollTop + scrollAmount;
+
+      // 스크롤 위치 업데이트
+      const maxScroll = timelineContainer.scrollHeight - timelineContainer.clientHeight;
+
+      // 스크롤 범위 체크
+      if (newScrollTop >= 0 && newScrollTop <= maxScroll) {
+        const beforeScroll = timelineContainer.scrollTop;  // ✅ 스크롤 전 위치 저장
+        timelineContainer.scrollTop = newScrollTop;
+        const afterScroll = timelineContainer.scrollTop;  // ✅ 스크롤 후 실제 위치
+        const actualScrolled = afterScroll - beforeScroll;  // ✅ 실제 스크롤된 양 계산
+
+        savedScrollPositionRef.current = newScrollTop;
+
+        // ✅ 실제 스크롤된 양만 누적 (요청량이 아닌 실제 스크롤량 사용)
+        scrollAccumulatedRef.current += actualScrolled;
+        // ⚡ NOTE: 매 프레임마다 setState는 성능 문제 → 10px마다 한 번만 트리거
+        if (Math.abs(scrollAccumulatedRef.current) % 10 < Math.abs(actualScrolled)) {
+          setScrollAccumulatedTrigger(prev => prev + 1);  // ✅ 리렌더링 트리거 (버블 위치 업데이트)
+        }
+      }
+
+      // 다음 프레임 예약 (방향이 여전히 유효할 때만)
+      if (autoScrollDirectionRef.current) {
+        autoScrollIntervalRef.current = requestAnimationFrame(scroll);
+      }
+    };
+
+    autoScrollIntervalRef.current = requestAnimationFrame(scroll);
+
+    return () => {
+      if (autoScrollIntervalRef.current) {
+        cancelAnimationFrame(autoScrollIntervalRef.current);
+        autoScrollIntervalRef.current = null;
+      }
+    };
+  }, [isDragging, autoScrollTrigger]); // autoScrollTrigger 의존성으로 변경
+
   // 🎯 완전한 터치 스크롤 차단 시스템 (리스트뷰와 동일)
   const enableScrollLock = useCallback(() => {
     // 현재 스크롤 위치 저장
     savedBodyScrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
-    const timelineContainer = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
+    const timelineContainer = scrollContainerRef.current;
     if (timelineContainer) {
       savedScrollPositionRef.current = timelineContainer.scrollTop;
     }
@@ -105,17 +222,24 @@ export const BubbleTimelineView: React.FC = () => {
     document.body.style.overflow = 'hidden';
     document.body.style.touchAction = 'none';
     document.body.style.userSelect = 'none';
-    document.body.style.webkitUserSelect = 'none';
 
-    // 타임라인 컨테이너 터치 스크롤 완전 차단
+    // 타임라인 컨테이너 터치 스크롤 차단 (overflowY는 자동 스크롤을 위해 유지)
     if (timelineContainer) {
       timelineContainer.style.touchAction = 'none';
-      timelineContainer.style.overflowY = 'hidden';
+      // ✅ overflowY = 'hidden' 제거: 자동 스크롤이 작동하려면 overflow가 활성화되어야 함
+      // 수동 스크롤은 이미 touchAction + 이벤트 차단으로 막혀있음
     }
 
-    // 모든 스크롤 가능 요소 차단
+    // 모든 스크롤 가능 요소 차단 (단, 타임라인 컨테이너는 제외 - 자동 스크롤 필요)
     document.querySelectorAll('.overflow-y-auto, .overflow-auto').forEach(element => {
       const el = element as HTMLElement;
+
+      // 🎯 타임라인 컨테이너는 자동 스크롤을 위해 overflow 유지
+      if (el === scrollContainerRef.current) {
+        el.style.touchAction = 'none'; // touchAction만 차단
+        return; // overflow는 건드리지 않음
+      }
+
       el.style.touchAction = 'none';
       el.style.overflow = 'hidden';
     });
@@ -125,22 +249,25 @@ export const BubbleTimelineView: React.FC = () => {
 
     // 스크롤 위치 강제 고정 감시 시작
     const watchScroll = () => {
-      // Body 스크롤 강제 고정
-      if (window.pageYOffset !== savedBodyScrollPositionRef.current) {
-        window.scrollTo(0, savedBodyScrollPositionRef.current);
-      }
+      // 🎯 자동 스크롤 중이 아닐 때만 위치 고정
+      if (!autoScrollDirectionRef.current) {
+        // Body 스크롤 강제 고정
+        if (window.pageYOffset !== savedBodyScrollPositionRef.current) {
+          window.scrollTo(0, savedBodyScrollPositionRef.current);
+        }
 
-      // 타임라인 스크롤 고정
-      const container = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
-      if (container && container.scrollTop !== savedScrollPositionRef.current) {
-        container.scrollTop = savedScrollPositionRef.current;
+        // 타임라인 스크롤 고정
+        const container = scrollContainerRef.current;
+        if (container && container.scrollTop !== savedScrollPositionRef.current) {
+          container.scrollTop = savedScrollPositionRef.current;
+        }
       }
 
       scrollWatcherRef.current = requestAnimationFrame(watchScroll);
     };
 
     scrollWatcherRef.current = requestAnimationFrame(watchScroll);
-  }, []);
+  }, []); // 의존성 제거 (ref 사용)
 
   const disableScrollLock = useCallback(() => {
     // 스크롤 감시 해제
@@ -161,13 +288,12 @@ export const BubbleTimelineView: React.FC = () => {
     document.body.style.overflow = 'initial';
     document.body.style.touchAction = 'auto';
     document.body.style.userSelect = 'auto';
-    document.body.style.webkitUserSelect = 'auto';
     document.body.style.position = 'static';
     document.body.style.width = 'auto';
     document.body.classList.remove('dragging-active');
 
     // 타임라인 컨테이너 완전 복원
-    const timelineContainer = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
+    const timelineContainer = scrollContainerRef.current;
     if (timelineContainer) {
       timelineContainer.style.touchAction = 'auto';
       timelineContainer.style.overflowY = 'auto';
@@ -204,7 +330,7 @@ export const BubbleTimelineView: React.FC = () => {
 
     // 🔒 터치 즉시 현재 스크롤 위치 저장 (리스트뷰와 동일)
     savedBodyScrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
-    const timelineContainer = document.querySelector('.flex.flex-col.h-full.w-full') as HTMLElement;
+    const timelineContainer = scrollContainerRef.current;
     if (timelineContainer) {
       savedScrollPositionRef.current = timelineContainer.scrollTop;
     }
@@ -228,6 +354,9 @@ export const BubbleTimelineView: React.FC = () => {
       // 이미 드래그 중이면 위치 업데이트 (X, Y 모두)
       setDragCurrentY(clientY);
       setDragCurrentX(clientX);
+
+      // 🎯 자동 스크롤 경계 체크
+      checkAutoScroll(clientY);
     } else if (initialTouch && !longPressTimer && draggedItemId) {
       // ✅ 정지 상태 확인: 50px 이상 움직였으면 스크롤로 간주 (리스트뷰와 동일)
       const deltaX = Math.abs(clientX - initialTouch.x);
@@ -268,7 +397,7 @@ export const BubbleTimelineView: React.FC = () => {
         setDraggedItemId(null);
       }
     }
-  }, [isDragging, draggedItemId, initialTouch, longPressTimer, enableScrollLock]);;
+  }, [isDragging, draggedItemId, initialTouch, longPressTimer, enableScrollLock, checkAutoScroll]);
 
   // 드래그 종료 (터치/마우스 통합)
   const handleDragEnd = useCallback(async () => {
@@ -300,6 +429,9 @@ export const BubbleTimelineView: React.FC = () => {
         setDragCurrentY(0);
         setDragCurrentX(0);
         setInitialTouch(null);
+
+        // 🎯 자동 스크롤 상태 초기화
+        autoScrollDirectionRef.current = null;
 
         // 🔓 스크롤 차단 해제
         disableScrollLock();
@@ -356,6 +488,9 @@ export const BubbleTimelineView: React.FC = () => {
     setDragCurrentX(0);
     setInitialTouch(null);
 
+    // 🎯 자동 스크롤 상태 초기화
+    autoScrollDirectionRef.current = null;
+
     // 🔓 스크롤 차단 해제 (리스트뷰와 동일)
     disableScrollLock();
   }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer, disableScrollLock, currentDate, updateTodo]);;
@@ -366,7 +501,7 @@ export const BubbleTimelineView: React.FC = () => {
       return;
     }
 
-    const { todoId, newTime, occurrenceDate } = recurringUpdateDialog.data;
+    const { todoId, newTime } = recurringUpdateDialog.data;
 
     try {
       if (choice === 'this-only') {
@@ -414,23 +549,16 @@ export const BubbleTimelineView: React.FC = () => {
     );
   }, [currentDate]);
 
-  // 날짜 상태 분류 (과거/오늘/미래)
-  const dateStatus = useMemo(() => {
-    const today = new Date();
-    const compareDate = new Date(currentDate);
-
-    // 날짜만 비교 (시간 제외)
-    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const compareDateOnly = new Date(compareDate.getFullYear(), compareDate.getMonth(), compareDate.getDate());
-
-    if (compareDateOnly < todayDateOnly) return 'past';
-    if (compareDateOnly > todayDateOnly) return 'future';
-    return 'today';
-  }, [currentDate]);
 
   // 🎯 컴포넌트 언마운트 시 정리 (리스트뷰와 동일)
   React.useEffect(() => {
     return () => {
+      // 🎯 자동 스크롤 정리
+      if (autoScrollIntervalRef.current) {
+        cancelAnimationFrame(autoScrollIntervalRef.current);
+        autoScrollIntervalRef.current = null;
+      }
+
       // 컴포넌트가 언마운트될 때 스크롤 차단 완전 해제
       if (preventScrollRef.current) {
         document.removeEventListener('touchmove', preventScrollRef.current);
@@ -462,9 +590,9 @@ export const BubbleTimelineView: React.FC = () => {
 
 
   return (
-    <div className="flex flex-col h-full w-full py-6 overflow-y-auto">
+    <div ref={scrollContainerRef} className="w-full py-6 overflow-y-auto" style={{ height: '100vh' }}>
       {/* 타임라인 컨테이너 */}
-      <div className="relative flex-1">
+      <div className="relative min-h-full">
         {/* 버블 아이템 리스트 */}
         <div className="relative space-y-0" style={{ zIndex: 1 }}>
           {timedItems.map((item, index) => {
@@ -497,6 +625,8 @@ export const BubbleTimelineView: React.FC = () => {
                 nextItem={nextItem}
                 isDragging={isDragging && draggedItemId === item.id}
                 dragOffset={isDragging && draggedItemId === item.id ? dragCurrentY - dragStartY : 0}
+                scrollOffset={isDragging && draggedItemId === item.id ? scrollAccumulatedRef.current : 0}
+                dragCurrentY={isDragging && draggedItemId === item.id ? dragCurrentY : undefined}
                 isToday={isToday}
                 currentTime={currentTime}
                 currentDate={currentDate}
@@ -609,10 +739,20 @@ export const BubbleTimelineView: React.FC = () => {
                             departure_location: originalTodo.departure_location || originalTodo.departureLocation || null,
                             departure_time: (() => {
                               const time = originalTodo.departure_time || originalTodo.departureTime;
-                              if (!time) return null;
-                              if (typeof time === 'string') return time;
-                              if (time instanceof Date) return time.toISOString();
-                              try { return new Date(time).toISOString(); } catch { return null; }
+                              if (!time) {
+                                return null;
+                              }
+                              if (typeof time === 'string') {
+                                return time;
+                              }
+                              if (time instanceof Date) {
+                                return time.toISOString();
+                              }
+                              try {
+                                return new Date(time).toISOString();
+                              } catch {
+                                return null;
+                              }
                             })(),
                             parent_todo_id: originalTodo.parent_todo_id || originalTodo.parentTodoId || null,
                             _instanceInfo: {

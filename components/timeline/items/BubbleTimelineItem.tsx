@@ -28,6 +28,8 @@ interface BubbleTimelineItemProps {
   nextItem: TimelineItem | null;
   isDragging: boolean;
   dragOffset: number;
+  scrollOffset?: number; // 자동 스크롤 보정용
+  dragCurrentY?: number; // ✅ 드래그 중 손가락 Y 좌표 (프리뷰 카드와 동일)
   isToday: boolean;
   currentTime: Date;
   currentDate: Date;  // viewing date (어제/오늘/내일 등)
@@ -58,6 +60,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   nextItem,
   isDragging,
   dragOffset,
+  scrollOffset = 0, // 자동 스크롤 보정용 (기본값 0)
+  dragCurrentY, // ✅ 드래그 중 손가락 Y 좌표
   isToday,
   currentTime,
   currentDate,  // viewing date (어제/오늘/내일 등)
@@ -150,15 +154,15 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   // 버블의 화면 절대 좌표 계산
   const bubbleFixedPosition = useMemo(() => {
-    if (!isDragging || !bubbleWrapperRef.current) return null;
+    if (!isDragging || !bubbleWrapperRef.current || dragCurrentY === undefined) return null;
 
     const rect = bubbleWrapperRef.current.getBoundingClientRect();
     return {
       left: rect.left, // 원래 위치 그대로 사용
-      top: rect.top + dragOffset,
+      top: dragCurrentY, // ✅ 프리뷰 카드와 동일한 손가락 Y 좌표 사용
       centerX: rect.left + bubbleWidth / 2, // 시간 표시 중앙 정렬용
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragCurrentY]);
 
   // 할일 색상
   const itemColor = item.color || THEME_COLORS.DEFAULT_TODO;
@@ -790,6 +794,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     position: 'fixed',
                     left: `${bubbleFixedPosition.left}px`,
                     top: `${bubbleFixedPosition.top}px`,
+                    transform: 'translate(0, -50%)', // ✅ Y축만 중앙 정렬 (프리뷰 카드와 동일)
                     width: `${bubbleWidth}px`,
                     height: `${bubbleHeight}px`,
                     zIndex: 999999, // 최상위 레이어
@@ -1064,7 +1069,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           style={{
             position: 'fixed',
             left: `${bubbleFixedPosition.centerX}px`,
-            top: `${bubbleFixedPosition.top - 30}px`,
+            top: `${bubbleFixedPosition.top - bubbleHeight / 2 - 30}px`,
             transform: 'translateX(-50%)',
             zIndex: 100,
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -1083,7 +1088,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           style={{
             position: 'fixed',
             left: `${bubbleFixedPosition.centerX}px`,
-            top: `${bubbleFixedPosition.top + bubbleHeight + 8}px`,
+            top: `${bubbleFixedPosition.top + bubbleHeight / 2 + 8}px`,
             transform: 'translateX(-50%)',
             zIndex: 100,
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
