@@ -495,6 +495,32 @@ export const BubbleTimelineView: React.FC = () => {
     disableScrollLock();
   }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer, disableScrollLock, currentDate, updateTodo]);;
 
+  // 🎯 드래그 중 전역 마우스 이벤트 처리 (아이템 영역 벗어나도 추적)
+  useEffect(() => {
+    if (!isDragging) {
+      return;
+    }
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      // MouseEvent를 React.MouseEvent처럼 처리
+      handleDragMove(e as any);
+    };
+
+    const handleGlobalMouseUp = () => {
+      handleDragEnd();
+    };
+
+    // 전역 이벤트 리스너 등록 (화면 어디서든 마우스 추적)
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      // 정리
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
   // 반복 할일 업데이트 선택 핸들러
   const handleRecurringUpdateChoice = useCallback(async (choice: 'this-only' | 'from-now' | 'all') => {
     if (!recurringUpdateDialog.data) {
