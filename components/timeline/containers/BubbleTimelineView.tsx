@@ -616,9 +616,9 @@ export const BubbleTimelineView: React.FC = () => {
 
 
   return (
-    <div ref={scrollContainerRef} className="w-full py-6 overflow-y-auto" style={{ height: '100vh' }}>
+    <div ref={scrollContainerRef} className="w-full">
       {/* 타임라인 컨테이너 */}
-      <div className="relative min-h-full">
+      <div className="relative">
         {/* 버블 아이템 리스트 */}
         <div className="relative space-y-0" style={{ zIndex: 1 }}>
           {timedItems.map((item, index) => {
