@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Home, CheckSquare, Target, Settings } from 'lucide-react';
+import { Home, CheckSquare, Target, Settings, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useNavigationStore } from '@/state/stores/navigationStore';
@@ -13,14 +13,23 @@ interface MainTab {
   label: string;
   icon: typeof Home;
   href?: string;
-  groupType?: 'routine' | 'productivity';
+  groupType?: 'routine' | 'productivity' | 'start';
 }
 
 const mainTabs: MainTab[] = [
-  { id: 'start', label: '시작', icon: Home, href: '/second-brain/start' },
+  { id: 'system-info', label: '시스템 설명', icon: BookOpen, href: '/second-brain/start' },
+  { id: 'start', label: '시작', icon: Home, groupType: 'start' },
   { id: 'routine', label: '루틴', icon: CheckSquare, groupType: 'routine' },
   { id: 'productivity', label: '생산성', icon: Target, groupType: 'productivity' },
   { id: 'settings', label: '설정', icon: Settings, href: '/settings' },
+];
+
+// 시작 그룹 경로
+const startPaths = [
+  '/settings/second-brain/areas',
+  '/settings/second-brain/resources',
+  '/settings/second-brain/goals',
+  '/settings/second-brain/projects',
 ];
 
 // 루틴 그룹 경로
@@ -61,6 +70,9 @@ export default function SecondBrainBottomNav() {
 
   // 현재 경로가 어느 그룹에 속하는지 확인
   const normalizedPathname = pathname?.replace(/\/$/, '') || '';
+  const isStartActive = startPaths.some(
+    (path) => normalizedPathname === path.replace(/\/$/, '')
+  );
   const isRoutineActive = routinePaths.some(
     (path) => normalizedPathname === path.replace(/\/$/, '')
   );
@@ -97,6 +109,8 @@ export default function SecondBrainBottomNav() {
             if (tab.href) {
               const normalizedHref = tab.href.replace(/\/$/, '');
               isActive = normalizedPathname === normalizedHref;
+            } else if (tab.groupType === 'start') {
+              isActive = isStartActive;
             } else if (tab.groupType === 'routine') {
               isActive = isRoutineActive;
             } else if (tab.groupType === 'productivity') {

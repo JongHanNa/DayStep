@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type GroupType = 'routine' | 'productivity' | null;
+type GroupType = 'routine' | 'productivity' | 'start' | null;
 
 interface NavigationStore {
   selectedGroup: GroupType;

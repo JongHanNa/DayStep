@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Inbox, Search, CheckSquare, Target, Clock, Compass, FileText, Archive, LucideIcon } from 'lucide-react';
+import { Inbox, Search, CheckSquare, Target, Clock, Compass, FileText, Archive, BookOpen, FolderOpen, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigationStore } from '@/state/stores/navigationStore';
 
@@ -13,10 +13,10 @@ interface MenuItem {
 }
 
 interface GroupMenuProps {
-  groupType: 'routine' | 'productivity';
+  groupType: 'routine' | 'productivity' | 'start';
 }
 
-const menuItems: Record<'routine' | 'productivity', MenuItem[]> = {
+const menuItems: Record<'routine' | 'productivity' | 'start', MenuItem[]> = {
   routine: [
     { id: 'inbox', label: '수집', icon: Inbox, href: '/second-brain/inbox' },
     { id: 'clarify', label: '명료화', icon: Search, href: '/second-brain/clarify' },
@@ -29,6 +29,12 @@ const menuItems: Record<'routine' | 'productivity', MenuItem[]> = {
     { id: 'notes', label: '노트', icon: FileText, href: '/second-brain/notes' },
     { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },
   ],
+  start: [
+    { id: 'areas', label: '책임', icon: Target, href: '/settings/second-brain/areas' },
+    { id: 'resources', label: '자원', icon: BookOpen, href: '/settings/second-brain/resources' },
+    { id: 'goals', label: '목표', icon: Compass, href: '/settings/second-brain/goals' },
+    { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/settings/second-brain/projects' },
+  ],
 };
 
 export default function GroupMenu({ groupType }: GroupMenuProps) {
@@ -37,9 +43,9 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
   const items = menuItems[groupType];
 
   // 클릭한 버튼 위치에 맞게 꼬리 위치 계산
-  // 하단 네비: [시작(0), 루틴(1), 생산성(2), 설정(3)]
-  const totalTabs = 4;
-  const buttonIndex = groupType === 'routine' ? 1 : 2;
+  // 하단 네비: [시스템 설명(0), 시작(1), 루틴(2), 생산성(3), 설정(4)]
+  const totalTabs = 5;
+  const buttonIndex = groupType === 'start' ? 1 : groupType === 'routine' ? 2 : 3;
 
   // 화면 중앙을 기준으로 버튼까지의 상대 위치 계산
   const containerCenter = 50; // 말풍선 중앙 (화면 기준 50%)
