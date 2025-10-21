@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Star, Plus } from 'lucide-react';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
-import { Sheet } from 'react-modal-sheet';
-import { createModalConfig } from '@/lib/modal-config';
+import { useModalStore } from '@/state/stores/modalStore';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -21,8 +20,19 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   const { updateInboxItem, convertTodoToProject } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
+  const { openModal, closeModal } = useModalStore();
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
   const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
+
+  // 편집 모달 상태 관리 (하단 네비 숨김)
+  useEffect(() => {
+    if (editingTodo) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [editingTodo, openModal, closeModal]);
 
   const handleTodoClick = (todo: InboxItem) => {
     setEditingTodo(todo);
@@ -186,45 +196,33 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
         ))}
       </div>
 
-      {/* 할일 편집 모달 */}
-      <Sheet
-        isOpen={!!(editingTodo && todoForm)}
-        onClose={() => {
-          setEditingTodo(null);
-          setTodoForm(null);
-        }}
-        {...createModalConfig('FULLSCREEN')}
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="flex items-center justify-between px-4 py-3">
-              {/* 왼쪽: 취소 버튼 */}
+      {/* 할일 편집 모달 - DaisyUI dialog */}
+      {editingTodo && todoForm && (
+        <dialog open className="modal modal-open">
+          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
               <button
                 onClick={() => {
                   setEditingTodo(null);
                   setTodoForm(null);
                 }}
-                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
+                className="btn btn-primary btn-sm rounded-full"
               >
                 취소
               </button>
 
-              {/* 가운데: 제목 */}
               <h3 className="text-lg font-semibold">할일 편집</h3>
 
-              {/* 오른쪽: 저장 버튼 */}
               <button
                 onClick={handleSave}
-                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
+                className="btn btn-primary btn-sm rounded-full"
               >
                 저장
               </button>
             </div>
-          </Sheet.Header>
 
-          <Sheet.Content>
-            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
-              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
                 {todoForm && (
                   <>
                     <TodoFormFields
@@ -249,10 +247,14 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
                   </>
                 )}
               </div>
-            </Sheet.Scroller>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => {
+            setEditingTodo(null);
+            setTodoForm(null);
+          }} />
+        </dialog>
+      )}
     </>
   );
 }

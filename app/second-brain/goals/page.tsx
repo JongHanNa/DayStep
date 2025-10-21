@@ -13,8 +13,7 @@ import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
-import { Sheet } from 'react-modal-sheet';
-import { createModalConfig } from '@/lib/modal-config';
+import { useModalStore } from '@/state/stores/modalStore';
 
 export default function GoalsPage() {
   const { createGoal, updateGoal, deleteGoal, goals, fetchGoals } = useGoalStore();
@@ -39,11 +38,43 @@ export default function GoalsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isCreatingGoal, setIsCreatingGoal] = useState(false);
 
+  const { openModal, closeModal } = useModalStore();
+
   useEffect(() => {
     fetchGoals();
     fetchAreas();
     fetchResources();
   }, [fetchGoals, fetchAreas, fetchResources]);
+
+  // 편집 모달 상태 관리 (하단 네비 숨김)
+  useEffect(() => {
+    if (editDialogOpen) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [editDialogOpen, openModal, closeModal]);
+
+  // 삭제 확인 모달 상태 관리 (하단 네비 숨김)
+  useEffect(() => {
+    if (deleteConfirmOpen) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [deleteConfirmOpen, openModal, closeModal]);
+
+  // 프로젝트 삭제 확인 모달 상태 관리 (하단 네비 숨김)
+  useEffect(() => {
+    if (projectDeleteConfirmOpen) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [projectDeleteConfirmOpen, openModal, closeModal]);
 
   // 새 목표 추가 핸들러 - 즉시 생성
   const handleAddGoal = async () => {
@@ -407,30 +438,37 @@ export default function GoalsPage() {
         </div>
       </div>
 
-      {/* 편집/추가 모달 - FULLSCREEN */}
-      <Sheet
-        isOpen={editDialogOpen && !!editingGoal}
-        onClose={handleCancelEdit}
-        {...createModalConfig('FULLSCREEN')}
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="flex items-center justify-between px-4 py-3">
-              <button onClick={handleCancelEdit} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
+      {/* 편집/추가 모달 - DaisyUI dialog */}
+      {editDialogOpen && editingGoal && (
+        <dialog open className="modal modal-open">
+          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+              <button onClick={handleCancelEdit} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
               <h3 className="text-lg font-semibold">
-                {editingGoal?.isNew ? '새 목표 추가' : '목표 편집'}
+                {editingGoal.isNew ? '새 목표 추가' : '목표 편집'}
               </h3>
-              <button onClick={handleSaveEdit} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
-                저장
-              </button>
+              <div className="flex gap-2">
+                {!editingGoal.isNew && (
+                  <button
+                    onClick={() => {
+                      setEditDialogOpen(false);
+                      handleDeleteClick(editingGoal);
+                    }}
+                    className="btn btn-ghost btn-sm text-error rounded-full"
+                  >
+                    삭제
+                  </button>
+                )}
+                <button onClick={handleSaveEdit} className="btn btn-primary btn-sm rounded-full">
+                  저장
+                </button>
+              </div>
             </div>
-          </Sheet.Header>
 
-          <Sheet.Content>
-            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
-              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
                 {editingGoal && (
                   <>
                     {/* 아이콘 및 색상 */}
@@ -670,45 +708,36 @@ export default function GoalsPage() {
                   </>
                 )}
               </div>
-            </Sheet.Scroller>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
-
-      {/* 삭제 확인 모달 - content-height */}
-      <Sheet
-        isOpen={deleteConfirmOpen && !!goalToDelete}
-        onClose={handleCancelDelete}
-        detent="content-height"
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="px-4 py-3">
-              <h3 className="font-bold text-lg">목표 삭제</h3>
             </div>
-          </Sheet.Header>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelEdit} />
+        </dialog>
+      )}
 
-          <Sheet.Content>
-            <div className="px-4 py-6">
-              <p className="mb-6">
-                <strong>{goalToDelete?.title}</strong> 목표를 삭제하시겠습니까?
-                <br />
-                <span className="text-sm text-base-content/60">
-                  이 작업은 되돌릴 수 없습니다.
-                </span>
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button onClick={handleCancelDelete} className="btn btn-ghost">
-                  취소
-                </button>
-                <button onClick={handleConfirmDelete} className="btn btn-error">
-                  삭제
-                </button>
-              </div>
+      {/* 삭제 확인 모달 - DaisyUI dialog */}
+      {deleteConfirmOpen && goalToDelete && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">목표 삭제</h3>
+            <p className="mb-6">
+              <strong>{goalToDelete.title}</strong> 목표를 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-base-content/60">
+                이 작업은 되돌릴 수 없습니다.
+              </span>
+            </p>
+            <div className="modal-action">
+              <button onClick={handleCancelDelete} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleConfirmDelete} className="btn btn-error">
+                삭제
+              </button>
             </div>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelDelete} />
+        </dialog>
+      )}
 
       {/* 아이콘 브라우저 모달 */}
       <EnhancedIconBrowserModal
@@ -733,40 +762,30 @@ export default function GoalsPage() {
         onProjectChange={setEditingProject}
       />
 
-      {/* 프로젝트 삭제 확인 모달 - content-height */}
-      <Sheet
-        isOpen={projectDeleteConfirmOpen && !!projectToDelete}
-        onClose={handleCancelProjectDelete}
-        detent="content-height"
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="px-4 py-3">
-              <h3 className="font-bold text-lg">프로젝트 삭제</h3>
+      {/* 프로젝트 삭제 확인 모달 - DaisyUI dialog */}
+      {projectDeleteConfirmOpen && projectToDelete && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">프로젝트 삭제</h3>
+            <p className="mb-6">
+              <strong>{projectToDelete.title}</strong> 프로젝트를 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-base-content/60">
+                이 작업은 되돌릴 수 없습니다.
+              </span>
+            </p>
+            <div className="modal-action">
+              <button onClick={handleCancelProjectDelete} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleConfirmProjectDelete} className="btn btn-error">
+                삭제
+              </button>
             </div>
-          </Sheet.Header>
-
-          <Sheet.Content>
-            <div className="px-4 py-6">
-              <p className="mb-6">
-                <strong>{projectToDelete?.title}</strong> 프로젝트를 삭제하시겠습니까?
-                <br />
-                <span className="text-sm text-base-content/60">
-                  이 작업은 되돌릴 수 없습니다.
-                </span>
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button onClick={handleCancelProjectDelete} className="btn btn-ghost">
-                  취소
-                </button>
-                <button onClick={handleConfirmProjectDelete} className="btn btn-error">
-                  삭제
-                </button>
-              </div>
-            </div>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelProjectDelete} />
+        </dialog>
+      )}
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />

@@ -11,8 +11,7 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
-import { Sheet } from 'react-modal-sheet';
-import { createModalConfig } from '@/lib/modal-config';
+import { useModalStore } from '@/state/stores/modalStore';
 
 // 추천 자원 프리셋 (온보딩 step-2와 동일)
 const RESOURCE_PRESETS = [
@@ -34,6 +33,7 @@ type ResourcePreset = {
 export default function ResourcesPage() {
   const { createResource, updateResource, deleteResource, resources, fetchResources, archiveResource, unarchiveResource } = useResourceStore();
   const { createArea, deleteArea: deleteAreaFromStore } = useAreaStore();
+  const { openModal, closeModal } = useModalStore();
 
   // 편집 관련 state
   const [editingResource, setEditingResource] = useState<(Resource & { isNew?: boolean }) | null>(null);
@@ -53,6 +53,26 @@ export default function ResourcesPage() {
   useEffect(() => {
     fetchResources();
   }, [fetchResources]);
+
+  // 편집 모달 상태 관리 (하단 네비 숨김)
+  useEffect(() => {
+    if (editDialogOpen) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [editDialogOpen, openModal, closeModal]);
+
+  // 추천 모달 상태 관리 (하단 네비 숨김)
+  useEffect(() => {
+    if (presetDialogOpen) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [presetDialogOpen, openModal, closeModal]);
 
   // 새 자원 추가 핸들러 - 즉시 생성
   const handleAddResource = async () => {
@@ -389,137 +409,133 @@ export default function ResourcesPage() {
       </div>
 
       {/* 편집/추가 다이얼로그 */}
-      <Sheet
-        isOpen={editDialogOpen && !!editingResource}
-        onClose={handleCancelEdit}
-        {...createModalConfig('FULLSCREEN')}
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="flex items-center justify-between px-4 py-3">
-              <button onClick={handleCancelEdit} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
+      {editDialogOpen && editingResource && (
+        <dialog open className="modal modal-open">
+          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+            {/* 헤더 */}
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+              <button onClick={handleCancelEdit} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
-              <h3 className="text-lg font-semibold">
-                {editingResource?.isNew ? '새 항목 추가' : '항목 편집'}
+              <h3 className="font-bold text-lg">
+                {editingResource.isNew ? '새 항목 추가' : '항목 편집'}
               </h3>
-              <button onClick={handleSaveEdit} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
-                저장
-              </button>
-            </div>
-          </Sheet.Header>
-
-          <Sheet.Content>
-            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
-              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
-                {editingResource && (
-                  <>
-                    {/* 상태 선택 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">상태</span>
-                      </label>
-                      <select
-                        value={itemType}
-                        onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
-                        className="select select-bordered"
-                      >
-                        <option value="area">책임 영역</option>
-                        <option value="resource">관심 자원</option>
-                        <option value="archive">아카이브</option>
-                      </select>
-                    </div>
-
-                    {/* 아이콘 및 색상 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">아이콘 및 색상</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setIconBrowserOpen(true)}
-                        className="btn btn-outline w-full justify-start"
-                        style={{
-                          backgroundColor: editingResource.color + '20',
-                          borderColor: editingResource.color,
-                        }}
-                      >
-                        {(() => {
-                          const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
-                          return <IconComponent className="w-6 h-6 mr-2" />;
-                        })()}
-                        <span>변경하기</span>
-                      </button>
-                    </div>
-
-                    {/* 제목 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">제목</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={editingResource.title}
-                        onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
-                        className="input input-bordered"
-                        placeholder="예: 프로그래밍"
-                      />
-                    </div>
-
-                    {/* 설명 */}
-                    <div className="form-control mb-6">
-                      <label className="label">
-                        <span className="label-text">설명</span>
-                      </label>
-                      <textarea
-                        value={editingResource.description || ''}
-                        onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
-                        className="textarea textarea-bordered h-20"
-                        placeholder="예: 개발 언어 및 프레임워크 학습"
-                      />
-                    </div>
-                  </>
+              <div className="flex gap-2">
+                {!editingResource.isNew && (
+                  <button
+                    onClick={() => {
+                      setEditDialogOpen(false);
+                      handleDeleteClick(editingResource);
+                    }}
+                    className="btn btn-ghost btn-sm text-error rounded-full"
+                  >
+                    삭제
+                  </button>
                 )}
+                <button onClick={handleSaveEdit} className="btn btn-primary btn-sm rounded-full">
+                  저장
+                </button>
               </div>
-            </Sheet.Scroller>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+            </div>
+
+            {/* 콘텐츠 영역 */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
+                {/* 상태 선택 */}
+                <div className="form-control mb-4">
+                  <label className="label">
+                    <span className="label-text">상태</span>
+                  </label>
+                  <select
+                    value={itemType}
+                    onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
+                    className="select select-bordered"
+                  >
+                    <option value="area">책임 영역</option>
+                    <option value="resource">관심 자원</option>
+                    <option value="archive">아카이브</option>
+                  </select>
+                </div>
+
+                {/* 아이콘 및 색상 */}
+                <div className="form-control mb-4">
+                  <label className="label">
+                    <span className="label-text">아이콘 및 색상</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIconBrowserOpen(true)}
+                    className="btn btn-outline w-full justify-start"
+                    style={{
+                      backgroundColor: editingResource.color + '20',
+                      borderColor: editingResource.color,
+                    }}
+                  >
+                    {(() => {
+                      const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
+                      return <IconComponent className="w-6 h-6 mr-2" />;
+                    })()}
+                    <span>변경하기</span>
+                  </button>
+                </div>
+
+                {/* 제목 */}
+                <div className="form-control mb-4">
+                  <label className="label">
+                    <span className="label-text">제목</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editingResource.title}
+                    onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
+                    className="input input-bordered"
+                    placeholder="예: 프로그래밍"
+                  />
+                </div>
+
+                {/* 설명 */}
+                <div className="form-control mb-6">
+                  <label className="label">
+                    <span className="label-text">설명</span>
+                  </label>
+                  <textarea
+                    value={editingResource.description || ''}
+                    onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
+                    className="textarea textarea-bordered h-20"
+                    placeholder="예: 개발 언어 및 프레임워크 학습"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelEdit} />
+        </dialog>
+      )}
 
       {/* 삭제 확인 다이얼로그 */}
-      <Sheet
-        isOpen={deleteConfirmOpen && !!resourceToDelete}
-        onClose={handleCancelDelete}
-        detent="content-height"
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="px-4 py-3">
-              <h3 className="font-bold text-lg">자원 삭제</h3>
+      {deleteConfirmOpen && resourceToDelete && (
+        <dialog open className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">자원 삭제</h3>
+            <p className="mb-6">
+              <strong>{resourceToDelete.title}</strong> 자원을 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-base-content/60">
+                이 작업은 되돌릴 수 없습니다.
+              </span>
+            </p>
+            <div className="modal-action">
+              <button onClick={handleCancelDelete} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleConfirmDelete} className="btn btn-error">
+                삭제
+              </button>
             </div>
-          </Sheet.Header>
-
-          <Sheet.Content>
-            <div className="px-4 py-6">
-              <p className="mb-6">
-                <strong>{resourceToDelete?.title}</strong> 자원을 삭제하시겠습니까?
-                <br />
-                <span className="text-sm text-base-content/60">
-                  이 작업은 되돌릴 수 없습니다.
-                </span>
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button onClick={handleCancelDelete} className="btn btn-ghost">
-                  취소
-                </button>
-                <button onClick={handleConfirmDelete} className="btn btn-error">
-                  삭제
-                </button>
-              </div>
-            </div>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelDelete} />
+        </dialog>
+      )}
 
       {/* 아이콘 브라우저 모달 */}
       <EnhancedIconBrowserModal
@@ -532,31 +548,27 @@ export default function ResourcesPage() {
       />
 
       {/* 추천 항목 추가 다이얼로그 */}
-      <Sheet
-        isOpen={presetDialogOpen}
-        onClose={handleCancelPresets}
-        {...createModalConfig('FULLSCREEN')}
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="flex items-center justify-between px-4 py-3">
-              <button onClick={handleCancelPresets} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
+      {presetDialogOpen && (
+        <dialog open className="modal modal-open">
+          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+            {/* 헤더 */}
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+              <button onClick={handleCancelPresets} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
-              <h3 className="text-lg font-semibold">추천 자원 추가하기</h3>
+              <h3 className="font-bold text-lg">추천 자원 추가하기</h3>
               <button
                 onClick={handleAddPresets}
                 disabled={selectedPresets.length === 0}
-                className="btn btn-primary btn-sm px-4 py-2 rounded-full"
+                className="btn btn-primary btn-sm rounded-full"
               >
                 {selectedPresets.length > 0 ? `${selectedPresets.length}개 추가` : '항목 선택'}
               </button>
             </div>
-          </Sheet.Header>
 
-          <Sheet.Content>
-            <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
-              <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
+            {/* 콘텐츠 영역 */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
                 <p className="text-sm text-base-content/70 mb-6">
                   시작하기 좋은 자원들을 준비했어요. 여러 개를 선택할 수 있습니다.
                 </p>
@@ -618,10 +630,11 @@ export default function ResourcesPage() {
                   </div>
                 )}
               </div>
-            </Sheet.Scroller>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={handleCancelPresets} />
+        </dialog>
+      )}
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />
