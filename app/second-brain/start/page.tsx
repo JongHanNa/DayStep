@@ -13,7 +13,7 @@ export default function SecondBrainStartPage() {
   const router = useRouter();
 
   const handleStartSetup = () => {
-    router.push('/settings/second-brain/areas');
+    router.push('/second-brain/areas');
   };
 
   const handleSkipToMain = () => {

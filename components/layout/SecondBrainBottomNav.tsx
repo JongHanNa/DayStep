@@ -26,10 +26,10 @@ const mainTabs: MainTab[] = [
 
 // 시작 그룹 경로
 const startPaths = [
-  '/settings/second-brain/areas',
-  '/settings/second-brain/resources',
-  '/settings/second-brain/goals',
-  '/settings/second-brain/projects',
+  '/second-brain/areas',
+  '/second-brain/resources',
+  '/second-brain/goals',
+  '/second-brain/projects',
 ];
 
 // 루틴 그룹 경로

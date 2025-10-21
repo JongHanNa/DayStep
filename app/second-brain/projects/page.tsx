@@ -1,20 +1,19 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import ProjectGoalSection from '@/components/second-brain/ProjectGoalSection';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { CreateProjectInput, UpdateProjectInput, Project } from '@/types/second-brain';
 import { Sheet } from 'react-modal-sheet';
 import { createModalConfig } from '@/lib/modal-config';
 
-export default function ProjectsSettingsPage() {
-  const router = useRouter();
+export default function ProjectsPage() {
   const { projects, createProject, updateProject, deleteProject } = useProjectStore();
   const { goals, fetchGoals } = useGoalStore();
   const { areas, fetchAreas } = useAreaStore();
@@ -198,17 +197,10 @@ export default function ProjectsSettingsPage() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.back()}
-              className="btn btn-ghost btn-sm btn-circle"
-              aria-label="뒤로가기"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+          <div className="flex items-center justify-between">
             <div className="flex-1">
               <h1 className="text-2xl font-bold">프로젝트 (Projects)</h1>
-              <p className="text-sm text-base-content/70">
+              <p className="text-sm text-base-content/70 mt-1">
                 진행 중인 프로젝트를 관리하세요
               </p>
             </div>
@@ -348,6 +340,8 @@ export default function ProjectsSettingsPage() {
         </Sheet.Container>
       </Sheet>
 
+      {/* 하단 네비게이션 */}
+      <SecondBrainBottomNav />
     </div>
   );
 }

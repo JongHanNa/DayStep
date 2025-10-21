@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { Plus, X, Pencil, ArrowLeft, Lightbulb } from 'lucide-react';
-import type { CreateResourceInput, Resource, CreateAreaInput } from '@/types/second-brain';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { Plus, X, Pencil, Lightbulb } from 'lucide-react';
+import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
+import type { CreateAreaInput, Area, CreateResourceInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
@@ -14,91 +15,90 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 import { Sheet } from 'react-modal-sheet';
 import { createModalConfig } from '@/lib/modal-config';
 
-// 추천 자원 프리셋 (온보딩 step-2와 동일)
-const RESOURCE_PRESETS = [
-  { title: '독서', icon: 'lucide-Book', color: '#FF6B6B', description: '읽고 싶은 책, 독서 노트' },
-  { title: '프로그래밍', icon: 'lucide-Laptop', color: '#4ECDC4', description: '코딩, 개발 자료' },
-  { title: '영화', icon: 'lucide-Film', color: '#95E1D3', description: '영화 리뷰, 추천 목록' },
-  { title: '여행', icon: 'lucide-Plane', color: '#F38181', description: '여행지 정보, 계획' },
-  { title: '요리', icon: 'lucide-ChefHat', color: '#AA96DA', description: '레시피, 맛집 정보' },
-  { title: '음악', icon: 'lucide-Music', color: '#DBAC6C', description: '플레이리스트, 음악 감상' },
+// 추천 영역 프리셋 (온보딩 step-1과 동일)
+const AREA_PRESETS = [
+  { title: '직장', icon: 'lucide-Briefcase', color: '#DBAC6C', description: '업무 프로젝트 및 커리어 개발' },
+  { title: '가족', icon: 'lucide-Users', color: '#FF6B6B', description: '가족 관계 및 행사' },
+  { title: '건강', icon: 'lucide-Heart', color: '#4ECDC4', description: '운동, 식습관, 건강관리' },
+  { title: '나', icon: 'lucide-Sparkles', color: '#C7B3E5', description: '나에 대한 생각, 발견, 성찰' },
+  { title: '자기개발', icon: 'lucide-Book', color: '#F38181', description: '학습, 성장, 스킬 향상' },
+  { title: '취미', icon: 'lucide-Palette', color: '#AA96DA', description: '여가 활동 및 관심사' },
 ];
 
-type ResourcePreset = {
+type AreaPreset = {
   title: string;
   icon: string;
   color: string;
   description: string;
 };
 
-export default function ResourcesSettingsPage() {
-  const router = useRouter();
-  const { createResource, updateResource, deleteResource, resources, fetchResources, archiveResource, unarchiveResource } = useResourceStore();
-  const { createArea, deleteArea: deleteAreaFromStore } = useAreaStore();
+export default function AreasPage() {
+  const { createArea, updateArea, deleteArea, areas, fetchAreas, archiveArea, unarchiveArea } = useAreaStore();
+  const { createResource, deleteResource: deleteResourceFromStore } = useResourceStore();
 
   // 편집 관련 state
-  const [editingResource, setEditingResource] = useState<(Resource & { isNew?: boolean }) | null>(null);
+  const [editingArea, setEditingArea] = useState<(Area & { isNew?: boolean }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
-  const [itemType, setItemType] = useState<SecondBrainItemType>('resource');
-  const [isCreatingResource, setIsCreatingResource] = useState(false);
+  const [itemType, setItemType] = useState<SecondBrainItemType>('area');
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
 
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(null);
+  const [areaToDelete, setAreaToDelete] = useState<Area | null>(null);
 
   // 추천 항목 추가 다이얼로그
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
-  const [selectedPresets, setSelectedPresets] = useState<ResourcePreset[]>([]);
+  const [selectedPresets, setSelectedPresets] = useState<AreaPreset[]>([]);
 
   useEffect(() => {
-    fetchResources();
-  }, [fetchResources]);
+    fetchAreas();
+  }, [fetchAreas]);
 
-  // 새 자원 추가 핸들러 - 즉시 생성
-  const handleAddResource = async () => {
-    if (isCreatingResource) return; // 중복 클릭 방지
+  // 새 영역 추가 핸들러 - 즉시 생성
+  const handleAddArea = async () => {
+    if (isCreatingArea) return; // 중복 클릭 방지
 
-    setIsCreatingResource(true);
+    setIsCreatingArea(true);
     try {
-      // 자원 즉시 생성
-      const createdResource = await createResource({
-        title: '새 자원',
+      // 영역 즉시 생성
+      const createdArea = await createArea({
+        title: '새 영역',
         description: '',
-        icon: 'lucide-BookOpen',
+        icon: 'lucide-MapPin',
         color: '#A8DADC',
-        order_index: resources.length,
+        order_index: areas.length,
         is_archived: false,
       });
 
-      console.log('새 자원 생성 완료:', createdResource);
+      console.log('새 영역 생성 완료:', createdArea);
     } catch (error) {
-      console.error('자원 생성 실패:', error);
-      alert('자원 생성에 실패했습니다.');
+      console.error('영역 생성 실패:', error);
+      alert('영역 생성에 실패했습니다.');
     } finally {
-      setIsCreatingResource(false);
+      setIsCreatingArea(false);
     }
   };
 
-  // 자원 편집 핸들러
-  const handleEditResource = (resource: Resource) => {
-    setEditingResource({ ...resource, isNew: false });
-    setItemType(resource.is_archived ? 'archive' : 'resource');
+  // 영역 편집 핸들러
+  const handleEditArea = (area: Area) => {
+    setEditingArea({ ...area, isNew: false });
+    setItemType(area.is_archived ? 'archive' : 'area');
     setEditDialogOpen(true);
   };
 
   // 아이콘 변경 핸들러
   const handleIconChange = (iconKey: UnifiedIconKey) => {
-    if (editingResource) {
-      setEditingResource({ ...editingResource, icon: iconKey });
+    if (editingArea) {
+      setEditingArea({ ...editingArea, icon: iconKey });
     }
   };
 
   // 색상 변경 핸들러
   const handleColorChange = (colorId: string) => {
-    if (editingResource) {
+    if (editingArea) {
       const color = getColorById(colorId).hex;
-      setEditingResource({ ...editingResource, color });
+      setEditingArea({ ...editingArea, color });
     }
   };
 
@@ -109,99 +109,99 @@ export default function ResourcesSettingsPage() {
 
   // 저장 핸들러
   const handleSaveEdit = async () => {
-    if (!editingResource || !editingResource.title.trim()) {
+    if (!editingArea || !editingArea.title.trim()) {
       alert('제목을 입력해주세요.');
       return;
     }
 
     try {
-      if (editingResource.isNew) {
+      if (editingArea.isNew) {
         // 새 항목 생성
-        if (itemType === 'area') {
-          // 영역으로 생성
-          const areaData: CreateAreaInput = {
-            title: editingResource.title,
-            description: editingResource.description || '',
-            icon: editingResource.icon,
-            color: editingResource.color,
+        if (itemType === 'resource') {
+          // 자원으로 생성
+          const resourceData: CreateResourceInput = {
+            title: editingArea.title,
+            description: editingArea.description || '',
+            icon: editingArea.icon,
+            color: editingArea.color,
             order_index: 0,
             is_archived: false,
           };
-          await createArea(areaData);
-        } else if (itemType === 'resource') {
-          // 자원으로 생성
-          const resourceData: CreateResourceInput = {
-            title: editingResource.title,
-            description: editingResource.description || '',
-            icon: editingResource.icon,
-            color: editingResource.color,
-            order_index: resources.length,
+          await createResource(resourceData);
+        } else if (itemType === 'area') {
+          // 영역으로 생성
+          const areaData: CreateAreaInput = {
+            title: editingArea.title,
+            description: editingArea.description || '',
+            icon: editingArea.icon,
+            color: editingArea.color,
+            order_index: areas.length,
             is_archived: false,
           };
-          await createResource(resourceData);
+          await createArea(areaData);
         } else if (itemType === 'archive') {
           // 아카이브 상태로 생성
-          const resourceData: CreateResourceInput = {
-            title: editingResource.title,
-            description: editingResource.description || '',
-            icon: editingResource.icon,
-            color: editingResource.color,
-            order_index: resources.length,
+          const areaData: CreateAreaInput = {
+            title: editingArea.title,
+            description: editingArea.description || '',
+            icon: editingArea.icon,
+            color: editingArea.color,
+            order_index: areas.length,
             is_archived: true,
           };
-          const newResource = await createResource(resourceData);
-          await archiveResource(newResource.id);
+          const newArea = await createArea(areaData);
+          await archiveArea(newArea.id);
         }
       } else {
         // 기존 항목 수정
-        const originalType: SecondBrainItemType = editingResource.is_archived ? 'archive' : 'resource';
+        const originalType: SecondBrainItemType = editingArea.is_archived ? 'archive' : 'area';
 
         if (originalType === itemType) {
           // 같은 타입 내에서 수정
           if (itemType === 'archive') {
             // 아카이브 상태 유지
-            await updateResource(editingResource.id, {
-              title: editingResource.title,
-              description: editingResource.description || '',
-              icon: editingResource.icon,
-              color: editingResource.color,
+            await updateArea(editingArea.id, {
+              title: editingArea.title,
+              description: editingArea.description || '',
+              icon: editingArea.icon,
+              color: editingArea.color,
             });
           } else {
-            // 일반 자원 수정
-            await updateResource(editingResource.id, {
-              title: editingResource.title,
-              description: editingResource.description || '',
-              icon: editingResource.icon,
-              color: editingResource.color,
+            // 일반 영역 수정
+            await updateArea(editingArea.id, {
+              title: editingArea.title,
+              description: editingArea.description || '',
+              icon: editingArea.icon,
+              color: editingArea.color,
             });
           }
         } else {
           // 타입 변경
-          if (itemType === 'area') {
-            // Resource → Area 변환
-            const areaData: CreateAreaInput = {
-              title: editingResource.title,
-              description: editingResource.description || '',
-              icon: editingResource.icon,
-              color: editingResource.color,
+          if (itemType === 'resource') {
+            // Area → Resource 변환
+            const resourceData: CreateResourceInput = {
+              title: editingArea.title,
+              description: editingArea.description || '',
+              icon: editingArea.icon,
+              color: editingArea.color,
               order_index: 0,
               is_archived: false,
             };
-            await deleteResource(editingResource.id);
-            await createArea(areaData);
+            await deleteArea(editingArea.id);
+            await createResource(resourceData);
           } else if (itemType === 'archive') {
-            // Resource → Archive
-            await archiveResource(editingResource.id);
-          } else if (itemType === 'resource' && originalType === 'archive') {
-            // Archive → Resource
-            await unarchiveResource(editingResource.id);
+            // Area → Archive
+            await archiveArea(editingArea.id);
+          } else if (itemType === 'area' && originalType === 'archive') {
+            // Archive → Area
+            await unarchiveArea(editingArea.id);
           }
         }
       }
 
       setEditDialogOpen(false);
-      setEditingResource(null);
-      await fetchResources();
+      setEditingArea(null);
+      await fetchAreas();
     } catch (error) {
       console.error('저장 실패:', error);
       alert('저장에 실패했습니다.');
@@ -211,34 +211,34 @@ export default function ResourcesSettingsPage() {
   // 취소 핸들러
   const handleCancelEdit = () => {
     setEditDialogOpen(false);
-    setEditingResource(null);
+    setEditingArea(null);
   };
 
   // 삭제 확인 다이얼로그 열기
-  const handleDeleteClick = (resource: Resource) => {
-    setResourceToDelete(resource);
+  const handleDeleteClick = (area: Area) => {
+    setAreaToDelete(area);
     setDeleteConfirmOpen(true);
   };
 
   // 삭제 실행
   const handleConfirmDelete = async () => {
-    if (!resourceToDelete) return;
+    if (!areaToDelete) return;
 
     try {
-      await deleteResource(resourceToDelete.id);
+      await deleteArea(areaToDelete.id);
       setDeleteConfirmOpen(false);
-      setResourceToDelete(null);
-      await fetchResources();
+      setAreaToDelete(null);
+      await fetchAreas();
     } catch (error) {
-      console.error('자원 삭제 실패:', error);
-      alert('자원 삭제에 실패했습니다.');
+      console.error('영역 삭제 실패:', error);
+      alert('영역 삭제에 실패했습니다.');
     }
   };
 
   // 삭제 취소
   const handleCancelDelete = () => {
     setDeleteConfirmOpen(false);
-    setResourceToDelete(null);
+    setAreaToDelete(null);
   };
 
   // 추천 항목 추가 다이얼로그 열기
@@ -248,7 +248,7 @@ export default function ResourcesSettingsPage() {
   };
 
   // 추천 항목 토글
-  const handleTogglePreset = (preset: ResourcePreset) => {
+  const handleTogglePreset = (preset: AreaPreset) => {
     if (selectedPresets.some((p) => p.title === preset.title)) {
       setSelectedPresets(selectedPresets.filter((p) => p.title !== preset.title));
     } else {
@@ -259,30 +259,30 @@ export default function ResourcesSettingsPage() {
   // 추천 항목 일괄 추가
   const handleAddPresets = async () => {
     if (selectedPresets.length === 0) {
-      alert('최소 1개 이상의 자원을 선택해주세요.');
+      alert('최소 1개 이상의 영역을 선택해주세요.');
       return;
     }
 
     try {
-      // 선택한 자원들을 생성
+      // 선택한 영역들을 생성
       for (const [index, preset] of selectedPresets.entries()) {
-        const resourceData: CreateResourceInput = {
+        const areaData: CreateAreaInput = {
           title: preset.title,
           description: preset.description,
           icon: preset.icon,
           color: preset.color,
-          order_index: resources.length + index,
+          order_index: areas.length + index,
           is_archived: false,
         };
-        await createResource(resourceData);
+        await createArea(areaData);
       }
 
       setPresetDialogOpen(false);
       setSelectedPresets([]);
-      await fetchResources();
+      await fetchAreas();
     } catch (error) {
-      console.error('자원 추가 실패:', error);
-      alert('자원 추가에 실패했습니다.');
+      console.error('영역 추가 실패:', error);
+      alert('영역 추가에 실패했습니다.');
     }
   };
 
@@ -297,95 +297,84 @@ export default function ResourcesSettingsPage() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => router.back()}
-              className="btn btn-ghost btn-sm btn-circle"
-              aria-label="뒤로가기"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold">관심 자원 (Resources)</h1>
-              <p className="text-sm text-base-content/70">
-                관심 있는 주제와 자료를 관리하세요
-              </p>
-            </div>
-          </div>
+          <h1 className="text-2xl font-bold">책임 영역 (Areas)</h1>
+          <p className="text-sm text-base-content/70 mt-1">
+            지속적으로 관심을 가져야 하는 영역을 관리하세요
+          </p>
         </div>
       </div>
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-3xl mx-auto px-4 py-6">
-        {/* 자원 목록 */}
+        {/* 영역 목록 */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">자원 목록 ({resources.length}개)</h2>
+            <h2 className="text-lg font-semibold">영역 목록 ({areas.length}개)</h2>
             <div className="flex gap-2">
               <button onClick={handleOpenPresetDialog} className="btn btn-ghost btn-sm">
                 <Lightbulb className="w-4 h-4" />
                 추천 항목 추가
               </button>
               <button
-                onClick={handleAddResource}
+                onClick={handleAddArea}
                 className="btn btn-primary btn-sm"
-                disabled={isCreatingResource}
+                disabled={isCreatingArea}
               >
-                {isCreatingResource ? (
+                {isCreatingArea ? (
                   <span className="loading loading-spinner loading-xs" />
                 ) : (
                   <Plus className="w-4 h-4" />
                 )}
-                {isCreatingResource ? '생성 중...' : '새 자원 추가'}
+                {isCreatingArea ? '생성 중...' : '새 영역 추가'}
               </button>
             </div>
           </div>
 
-          {resources.length === 0 ? (
+          {areas.length === 0 ? (
             <div className="card bg-base-200">
               <div className="card-body text-center py-12">
                 <p className="text-base-content/60">
-                  아직 자원이 없습니다. 새 자원을 추가해보세요.
+                  아직 영역이 없습니다. 새 영역을 추가해보세요.
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-2">
-              {resources.map((resource) => {
-                const IconComponent = getUnifiedIcon(resource.icon as UnifiedIconKey).component;
+              {areas.map((area) => {
+                const IconComponent = getUnifiedIcon(area.icon as UnifiedIconKey).component;
                 return (
                   <div
-                    key={resource.id}
+                    key={area.id}
                     className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
                         className="w-12 h-12 rounded-lg flex items-center justify-center"
                         style={{
-                          backgroundColor: resource.color + '30',
-                          borderColor: resource.color,
+                          backgroundColor: area.color + '30',
+                          borderColor: area.color,
                           borderWidth: '2px',
                         }}
                       >
-                        <IconComponent className="w-6 h-6" style={{ color: resource.color }} />
+                        <IconComponent className="w-6 h-6" style={{ color: area.color }} />
                       </div>
                       <div className="flex-1">
-                        <div className="font-semibold">{resource.title}</div>
-                        {resource.description && (
-                          <div className="text-sm text-base-content/60">{resource.description}</div>
+                        <div className="font-semibold">{area.title}</div>
+                        {area.description && (
+                          <div className="text-sm text-base-content/60">{area.description}</div>
                         )}
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleEditResource(resource)}
+                        onClick={() => handleEditArea(area)}
                         className="btn btn-ghost btn-sm btn-circle"
                         aria-label="수정"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteClick(resource)}
+                        onClick={() => handleDeleteClick(area)}
                         className="btn btn-ghost btn-sm btn-circle text-error"
                         aria-label="삭제"
                       >
@@ -402,7 +391,7 @@ export default function ResourcesSettingsPage() {
 
       {/* 편집/추가 다이얼로그 */}
       <Sheet
-        isOpen={editDialogOpen && !!editingResource}
+        isOpen={editDialogOpen && !!editingArea}
         onClose={handleCancelEdit}
         {...createModalConfig('FULLSCREEN')}
       >
@@ -413,7 +402,7 @@ export default function ResourcesSettingsPage() {
                 취소
               </button>
               <h3 className="text-lg font-semibold">
-                {editingResource?.isNew ? '새 항목 추가' : '항목 편집'}
+                {editingArea?.isNew ? '새 항목 추가' : '항목 편집'}
               </h3>
               <button onClick={handleSaveEdit} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
                 저장
@@ -424,7 +413,7 @@ export default function ResourcesSettingsPage() {
           <Sheet.Content>
             <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
               <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
-                {editingResource && (
+                {editingArea && (
                   <>
                     {/* 상태 선택 */}
                     <div className="form-control mb-4">
@@ -452,12 +441,12 @@ export default function ResourcesSettingsPage() {
                         onClick={() => setIconBrowserOpen(true)}
                         className="btn btn-outline w-full justify-start"
                         style={{
-                          backgroundColor: editingResource.color + '20',
-                          borderColor: editingResource.color,
+                          backgroundColor: editingArea.color + '20',
+                          borderColor: editingArea.color,
                         }}
                       >
                         {(() => {
-                          const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
+                          const IconComponent = getUnifiedIcon(editingArea.icon as UnifiedIconKey).component;
                           return <IconComponent className="w-6 h-6 mr-2" />;
                         })()}
                         <span>변경하기</span>
@@ -471,10 +460,10 @@ export default function ResourcesSettingsPage() {
                       </label>
                       <input
                         type="text"
-                        value={editingResource.title}
-                        onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
+                        value={editingArea.title}
+                        onChange={(e) => setEditingArea({ ...editingArea, title: e.target.value })}
                         className="input input-bordered"
-                        placeholder="예: 프로그래밍"
+                        placeholder="예: 직장"
                       />
                     </div>
 
@@ -484,10 +473,10 @@ export default function ResourcesSettingsPage() {
                         <span className="label-text">설명</span>
                       </label>
                       <textarea
-                        value={editingResource.description || ''}
-                        onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
+                        value={editingArea.description || ''}
+                        onChange={(e) => setEditingArea({ ...editingArea, description: e.target.value })}
                         className="textarea textarea-bordered h-20"
-                        placeholder="예: 개발 언어 및 프레임워크 학습"
+                        placeholder="예: 업무 프로젝트 및 커리어 개발"
                       />
                     </div>
                   </>
@@ -500,21 +489,21 @@ export default function ResourcesSettingsPage() {
 
       {/* 삭제 확인 다이얼로그 */}
       <Sheet
-        isOpen={deleteConfirmOpen && !!resourceToDelete}
+        isOpen={deleteConfirmOpen && !!areaToDelete}
         onClose={handleCancelDelete}
         detent="content-height"
       >
         <Sheet.Container className="bg-background">
           <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
             <div className="px-4 py-3">
-              <h3 className="font-bold text-lg">자원 삭제</h3>
+              <h3 className="font-bold text-lg">영역 삭제</h3>
             </div>
           </Sheet.Header>
 
           <Sheet.Content>
             <div className="px-4 py-6">
               <p className="mb-6">
-                <strong>{resourceToDelete?.title}</strong> 자원을 삭제하시겠습니까?
+                <strong>{areaToDelete?.title}</strong> 영역을 삭제하시겠습니까?
                 <br />
                 <span className="text-sm text-base-content/60">
                   이 작업은 되돌릴 수 없습니다.
@@ -538,8 +527,8 @@ export default function ResourcesSettingsPage() {
         open={iconBrowserOpen}
         onClose={() => setIconBrowserOpen(false)}
         onIconSelect={handleIconChange}
-        selectedIcon={editingResource?.icon}
-        selectedColor={editingResource?.color}
+        selectedIcon={editingArea?.icon}
+        selectedColor={editingArea?.color}
         onColorSelect={handleColorChange}
       />
 
@@ -555,7 +544,7 @@ export default function ResourcesSettingsPage() {
               <button onClick={handleCancelPresets} className="btn btn-primary btn-sm px-4 py-2 rounded-full">
                 취소
               </button>
-              <h3 className="text-lg font-semibold">추천 자원 추가하기</h3>
+              <h3 className="text-lg font-semibold">추천 영역 추가하기</h3>
               <button
                 onClick={handleAddPresets}
                 disabled={selectedPresets.length === 0}
@@ -570,12 +559,12 @@ export default function ResourcesSettingsPage() {
             <Sheet.Scroller draggableAt="top" style={{ overflowX: 'hidden', backgroundColor: 'white' }}>
               <div className="px-4 py-6" style={{ overflowX: 'hidden', touchAction: 'pan-y' }}>
                 <p className="text-sm text-base-content/70 mb-6">
-                  시작하기 좋은 자원들을 준비했어요. 여러 개를 선택할 수 있습니다.
+                  시작하기 좋은 영역들을 준비했어요. 여러 개를 선택할 수 있습니다.
                 </p>
 
-                {/* 프리셋 자원 그리드 */}
+                {/* 프리셋 영역 그리드 */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
-                  {RESOURCE_PRESETS.map((preset) => {
+                  {AREA_PRESETS.map((preset) => {
                     const isSelected = selectedPresets.some((p) => p.title === preset.title);
                     const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey).component;
 
@@ -625,7 +614,7 @@ export default function ResourcesSettingsPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className="text-sm">
-                      {selectedPresets.length}개 자원이 선택되었습니다
+                      {selectedPresets.length}개 영역이 선택되었습니다
                     </span>
                   </div>
                 )}
@@ -634,6 +623,9 @@ export default function ResourcesSettingsPage() {
           </Sheet.Content>
         </Sheet.Container>
       </Sheet>
+
+      {/* 하단 네비게이션 */}
+      <SecondBrainBottomNav />
     </div>
   );
 }

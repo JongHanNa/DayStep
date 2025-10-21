@@ -30,10 +30,10 @@ const menuItems: Record<'routine' | 'productivity' | 'start', MenuItem[]> = {
     { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },
   ],
   start: [
-    { id: 'areas', label: '책임', icon: Target, href: '/settings/second-brain/areas' },
-    { id: 'resources', label: '자원', icon: BookOpen, href: '/settings/second-brain/resources' },
-    { id: 'goals', label: '목표', icon: Compass, href: '/settings/second-brain/goals' },
-    { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/settings/second-brain/projects' },
+    { id: 'areas', label: '책임', icon: Target, href: '/second-brain/areas' },
+    { id: 'resources', label: '자원', icon: BookOpen, href: '/second-brain/resources' },
+    { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
+    { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/second-brain/projects' },
   ],
 };
 
