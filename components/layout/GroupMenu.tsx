@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Inbox, Search, CheckSquare, Target, Clock, Compass, FileText, Archive, BookOpen, FolderOpen, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigationStore } from '@/state/stores/navigationStore';
@@ -42,6 +43,22 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
   const { clearSelectedGroup } = useNavigationStore();
   const items = menuItems[groupType];
 
+  // 화면 크기 감지 (모바일: ≤640px)
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobileScreen(window.innerWidth <= 640);
+    };
+
+    // 초기 체크
+    checkScreenSize();
+
+    // 리사이즈 이벤트 리스너
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   // 클릭한 버튼 위치에 맞게 꼬리 위치 계산
   // 하단 네비: [시스템 설명(0), 시작(1), 루틴(2), 생산성(3), 설정(4)]
   const totalTabs = 5;
@@ -52,6 +69,11 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
   const buttonScreenPosition = ((buttonIndex + 0.5) / totalTabs) * 100; // 37.5% 또는 62.5%
   const offset = buttonScreenPosition - containerCenter; // -12.5% 또는 +12.5%
   const tailPosition = `calc(50% + ${offset}vw)`;
+
+  // 꼬리 표시 조건: Capacitor 환경 OR 웹 모바일 화면
+  const shouldShowTail =
+    process.env.BUILD_TARGET === 'mobile' ||
+    (process.env.BUILD_TARGET === 'web' && isMobileScreen);
 
   const handleItemClick = (href: string) => {
     clearSelectedGroup();
@@ -74,13 +96,15 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
       <div className="absolute bottom-20 left-0 right-0 flex justify-center px-4 animate-slide-up-fade">
         {/* 말풍선 박스 */}
         <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-300 max-w-xs">
-          {/* 하단 삼각형 꼬리 (클릭한 버튼 위치) */}
-          <div
-            className="absolute -bottom-3 transform -translate-x-1/2"
-            style={{ left: tailPosition }}
-          >
-            <div className="w-6 h-6 bg-base-100 border-r border-b border-base-300 rotate-45" />
-          </div>
+          {/* 하단 삼각형 꼬리 (클릭한 버튼 위치) - Capacitor 또는 웹 모바일 화면에서 표시 */}
+          {shouldShowTail && (
+            <div
+              className="absolute -bottom-3 transform -translate-x-1/2"
+              style={{ left: tailPosition }}
+            >
+              <div className="w-6 h-6 bg-base-100 border-r border-b border-base-300 rotate-45" />
+            </div>
+          )}
 
           {/* 메뉴 아이템 - 4x1 가로 스크롤 */}
           <div className="flex justify-center overflow-x-auto scrollbar-hide gap-2 px-4 py-3">
