@@ -11,10 +11,7 @@ import {
   Calendar,
   CheckCircle,
   Layers,
-  Settings,
-  Target,
-  BookOpen,
-  FolderOpen
+  Settings
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -95,91 +92,6 @@ function SettingsPageContent() {
 
       {/* 설정 메뉴 - 미니멀 리스트 */}
       <div className="space-y-8">
-        {/* Second Brain 설정 */}
-        <div>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Second Brain 설정</h3>
-          <div className="bg-card border border-border rounded-xl divide-y divide-border">
-            {/* Areas (책임 영역) */}
-            <Link
-              href="/settings/second-brain/areas"
-              className="group"
-            >
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
-                role="button"
-                aria-label="책임 영역 (Areas) - 지속적 책임 영역 관리"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Target className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">책임 영역 (Areas)</h4>
-                  <p className="text-xs text-muted-foreground">지속적 책임 영역 관리</p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Resources (관심 자원) */}
-            <Link
-              href="/settings/second-brain/resources"
-              className="group"
-            >
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="관심 자원 (Resources) - 관심 주제 및 자료 관리"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">관심 자원 (Resources)</h4>
-                  <p className="text-xs text-muted-foreground">관심 주제 및 자료 관리</p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Goals (목표) */}
-            <Link href="/settings/second-brain/goals" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="목표 (Goals) - 장기 목표 설정 및 관리"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Target className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">목표 (Goals)</h4>
-                  <p className="text-xs text-muted-foreground">장기 목표 설정 및 관리</p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Projects (프로젝트) */}
-            <Link href="/settings/second-brain/projects" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="프로젝트 (Projects) - 진행 중인 프로젝트 관리"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <FolderOpen className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">프로젝트 (Projects)</h4>
-                  <p className="text-xs text-muted-foreground">진행 중인 프로젝트 관리</p>
-                </div>
-              </div>
-            </Link>
-
-          </div>
-        </div>
-
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-4">앱 설정</h3>
           <div className="bg-card border border-border rounded-xl divide-y divide-border">
