@@ -29,41 +29,41 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 interface FloatingNoteCardProps {
-  memo: Note;
+  note: Note;
   onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
 
-const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({ 
-  memo, 
+const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
+  note,
   onClose,
   className,
-  style 
+  style
 }) => {
   const { toast } = useToast();
   const cardRef = useRef<HTMLDivElement>(null);
-  
+
   // Store hooks
   const { updateNote, unpinNote } = useNoteStore();
   const { todos } = useTodoStore();
 
   // 로컬 상태
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(memo.content);
+  const [editContent, setEditContent] = useState(note.content);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   // 연결된 할일 찾기
-  const linkedTodo = memo.related_task_id 
-    ? todos.find(todo => todo.id === memo.related_task_id)
+  const linkedTodo = note.related_task_id
+    ? todos.find(todo => todo.id === note.related_task_id)
     : null;
 
   // 편집 모드 시작
   const startEditing = () => {
     setIsEditing(true);
-    setEditContent(memo.content);
+    setEditContent(note.content);
   };
 
   // 편집 저장
@@ -79,11 +79,11 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
 
     try {
       await updateNote({
-        id: memo.id,
+        id: note.id,
         content: editContent.trim(),
       });
       setIsEditing(false);
-      
+
       toast({
         title: '노트가 수정되었습니다',
         description: '변경사항이 저장되었습니다.',
@@ -100,13 +100,13 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
   // 편집 취소
   const cancelEdit = () => {
     setIsEditing(false);
-    setEditContent(memo.content);
+    setEditContent(note.content);
   };
 
   // 핀 해제 (플로팅 카드 닫기)
   const handleUnpin = async () => {
     try {
-      await unpinNote(memo.id);
+      await unpinNote(note.id);
       onClose?.();
     } catch (error) {
       toast({
@@ -214,7 +214,7 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
                 placeholder="노트 내용을 입력하세요..."
                 autoFocus
               />
-              
+
               <div className="flex items-center justify-end gap-2">
                 <Button
                   variant="ghost"
@@ -225,7 +225,7 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
                   <X className="h-3 w-3 mr-1" />
                   취소
                 </Button>
-                
+
                 <Button
                   size="sm"
                   onClick={saveEdit}
@@ -242,9 +242,9 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
             <div className="space-y-3">
               <div className="relative group">
                 <p className="text-sm text-foreground whitespace-pre-wrap">
-                  {memo.content}
+                  {note.content}
                 </p>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -254,7 +254,7 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
                   <Edit3 className="h-3 w-3" />
                 </Button>
               </div>
-              
+
               {/* 연결된 할일 정보 */}
               {linkedTodo && (
                 <div className="flex items-center gap-2 p-2 rounded bg-muted/50">
@@ -264,13 +264,13 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
                   </span>
                 </div>
               )}
-              
+
               {/* 노트 메타 정보 */}
               <div className="text-xs text-muted-foreground">
-                {format(new Date(memo.created_at), 'M월 d일 HH:mm', { locale: ko })}
-                {memo.updated_at !== memo.created_at && (
+                {format(new Date(note.created_at), 'M월 d일 HH:mm', { locale: ko })}
+                {note.updated_at !== note.created_at && (
                   <span className="ml-2">
-                    (수정: {format(new Date(memo.updated_at), 'HH:mm', { locale: ko })})
+                    (수정: {format(new Date(note.updated_at), 'HH:mm', { locale: ko })})
                   </span>
                 )}
               </div>
