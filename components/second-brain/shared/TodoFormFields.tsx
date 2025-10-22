@@ -19,6 +19,7 @@ export interface TodoFormData {
   completed: boolean;
   projectIds?: string[]; // 연결된 프로젝트 IDs (다중 선택)
   noteIds?: string[]; // 연결된 노트 IDs (다중 선택)
+  displayOrder?: number; // 같은 날짜 내 표시 순서
 }
 
 interface TodoFormFieldsProps {
