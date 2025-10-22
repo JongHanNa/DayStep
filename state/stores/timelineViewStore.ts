@@ -169,7 +169,7 @@ interface TimelineViewState {
 
 // 더 넓은 날짜 범위로 기본 필터 설정 (과거 1년 ~ 미래 1년)
 const defaultFilters: TimelineViewFilters = {
-  itemTypes: ['todo', 'timeline-task', 'calendar'],
+  itemTypes: ['todo', 'calendar'],
   dateRange: {
     start: subYears(new Date(), 1), // 1년 전부터
     end: addYears(new Date(), 1)    // 1년 후까지
@@ -856,31 +856,8 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             }
           });
 
-          // Convert timeline tasks to timeline items
-          timelineTasks.forEach(task => {
-            const safeStartTime = task.planned_start_time ? new Date(task.planned_start_time) : new Date(task.created_at);
-            const safeEndTime = task.planned_end_time ? new Date(task.planned_end_time) : undefined;
-            const safeCreatedAt = new Date(task.created_at);
-            const safeUpdatedAt = new Date(task.updated_at || task.created_at);
-            
-            items.push({
-              id: `timeline-task-${task.id}`,
-              type: 'timeline-task',
-              title: task.title,
-              description: task.description,
-              startTime: safeStartTime,
-              endTime: safeEndTime,
-              isAllDay: false,
-              color: task.priority === 'high' ? '#DC2626' : task.priority === 'medium' ? '#F97316' : '#22C55E',
-              userId: task.user_id,
-              createdAt: safeCreatedAt,
-              updatedAt: safeUpdatedAt,
-              data: task,
-              status: task.status,
-              priority: task.priority,
-              plannedDuration: task.planned_duration || undefined
-            });
-          });
+          // Timeline tasks have been removed - now using todos-only timeline
+          // timelineTasks parameter is kept for backward compatibility but ignored
 
             set((state) => {
               console.log('📊 TimelineViewStore에 최종 저장:', {
@@ -1063,7 +1040,6 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             if (!filters.showCompleted) {
               filtered = filtered.filter(item => {
                 if (item.type === 'todo') return !item.isCompleted;
-                if (item.type === 'timeline-task') return item.status !== 'completed';
                 return true;
               });
             }
@@ -1072,20 +1048,14 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             if (!settings.todoCompletion.showCompletedItems) {
               filtered = filtered.filter(item => {
                 if (item.type === 'todo') return !item.isCompleted;
-                if (item.type === 'timeline-task') return item.status !== 'completed';
                 return true;
               });
             }
             // showCompletedItems가 true면 완료된 할일도 표시 (취소선 스타일로)
           }
 
-          // Filter cancelled items
-          if (!filters.showCancelled) {
-            filtered = filtered.filter(item => {
-              if (item.type === 'timeline-task') return item.status !== 'cancelled';
-              return true;
-            });
-          }
+          // Filter cancelled items - todos don't have cancelled status, calendar items are read-only
+          // No filtering needed for cancelled items
 
           // Filter by priorities
           if (filters.priorities && filters.priorities.length > 0) {
@@ -1093,9 +1063,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
               if (item.type === 'todo' && item.priority) {
                 return filters.priorities!.includes(item.priority);
               }
-              if (item.type === 'timeline-task') {
-                return filters.priorities!.includes(item.priority);
-              }
+              // Calendar items don't have priorities
               return true;
             });
           }
@@ -1148,8 +1116,8 @@ export const useTimelineViewStore = create<TimelineViewState>()(
                 break;
               case 'priority':
                 const priorityOrder = { high: 3, medium: 2, low: 1 };
-                const aPriority = (a.type === 'todo' || a.type === 'timeline-task') ? a.priority || 'medium' : 'medium';
-                const bPriority = (b.type === 'todo' || b.type === 'timeline-task') ? b.priority || 'medium' : 'medium';
+                const aPriority = (a.type === 'todo') ? a.priority || 'medium' : 'medium';
+                const bPriority = (b.type === 'todo') ? b.priority || 'medium' : 'medium';
                 comparison = priorityOrder[bPriority] - priorityOrder[aPriority];
                 break;
               case 'type':

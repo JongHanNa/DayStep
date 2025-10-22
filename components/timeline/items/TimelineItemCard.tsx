@@ -453,11 +453,9 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
           style={{
             backgroundColor: item.type === 'todo' && todoColor
               ? todoColor.hex
-              : item.type === 'repository' 
+              : item.type === 'repository'
                 ? '#22c55e' // green-500
-                : item.type === 'timeline-task'
-                  ? '#f97316' // orange-500
-                  : '#3b82f6' // blue-500 (fallback)
+                : '#3b82f6' // blue-500 (calendar or fallback)
           }}
         />
         

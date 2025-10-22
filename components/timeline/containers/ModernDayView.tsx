@@ -210,7 +210,7 @@ const ModernDayView: React.FC<ModernDayViewProps> = memo(({ className }) => {
           }
         }
       } else {
-        // 다른 타입의 아이템 (repository, timeline-task 등)
+        // 다른 타입의 아이템 (repository, calendar 등)
         // 다른 타입은 완료 상태가 없으므로 기존 로직 유지
         if (item.isAllDay) {
           allDayItems.push(item);

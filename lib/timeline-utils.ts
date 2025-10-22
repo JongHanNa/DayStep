@@ -12,7 +12,7 @@ export interface TimelineGap {
 
 export interface EnhancedTimelineItem {
   id: string;
-  type: 'todo' | 'repository' | 'timeline-task' | 'gap' | 'current-time' | 'remaining-time';
+  type: 'todo' | 'repository' | 'calendar' | 'gap' | 'current-time' | 'remaining-time';
   title: string;
   description?: string;
   scheduledTime?: string;
