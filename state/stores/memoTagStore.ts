@@ -696,7 +696,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         const state = get();
         const results: MemoTag[] = [];
 
-        // memo_tag_links에서 해당 메모의 모든 활성 링크 조회
+        // note_tag_links에서 해당 메모의 모든 활성 링크 조회
         const memoLinks = state.memoTagLinks.filter(
           link => link.memo_id === memoId && link.is_active
         );

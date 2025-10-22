@@ -19,7 +19,7 @@ CREATE TABLE memo_tags (
 );
 
 -- 2. 메모-태그 연결 테이블 (Many-to-Many)
-CREATE TABLE memo_tag_links (
+CREATE TABLE note_tag_links (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   memo_id UUID REFERENCES quick_memos(id) ON DELETE CASCADE NOT NULL,
@@ -34,13 +34,13 @@ CREATE TABLE memo_tag_links (
 -- 3. 인덱스 생성 (성능 최적화)
 CREATE INDEX idx_memo_tags_user_id ON memo_tags(user_id);
 CREATE INDEX idx_memo_tags_position ON memo_tags(user_id, position);
-CREATE INDEX idx_memo_tag_links_memo_id ON memo_tag_links(memo_id);
-CREATE INDEX idx_memo_tag_links_tag_id ON memo_tag_links(tag_id);
-CREATE INDEX idx_memo_tag_links_user_id ON memo_tag_links(user_id);
+CREATE INDEX idx_note_tag_links_memo_id ON note_tag_links(memo_id);
+CREATE INDEX idx_note_tag_links_tag_id ON note_tag_links(tag_id);
+CREATE INDEX idx_note_tag_links_user_id ON note_tag_links(user_id);
 
 -- 4. RLS (Row Level Security) 정책 활성화
 ALTER TABLE memo_tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_tag_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE note_tag_links ENABLE ROW LEVEL SECURITY;
 
 -- 5. RLS 정책 생성 - memo_tags
 CREATE POLICY "memo_tags_select_own" ON memo_tags
@@ -55,17 +55,17 @@ CREATE POLICY "memo_tags_update_own" ON memo_tags
 CREATE POLICY "memo_tags_delete_own" ON memo_tags
   FOR DELETE USING (auth.uid() = user_id);
 
--- 6. RLS 정책 생성 - memo_tag_links
-CREATE POLICY "memo_tag_links_select_own" ON memo_tag_links
+-- 6. RLS 정책 생성 - note_tag_links
+CREATE POLICY "note_tag_links_select_own" ON note_tag_links
   FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "memo_tag_links_insert_own" ON memo_tag_links
+CREATE POLICY "note_tag_links_insert_own" ON note_tag_links
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "memo_tag_links_update_own" ON memo_tag_links
+CREATE POLICY "note_tag_links_update_own" ON note_tag_links
   FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "memo_tag_links_delete_own" ON memo_tag_links
+CREATE POLICY "note_tag_links_delete_own" ON note_tag_links
   FOR DELETE USING (auth.uid() = user_id);
 
 -- 7. updated_at 자동 업데이트 트리거
@@ -97,8 +97,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 9. 메모 삭제 시 태그 링크도 자동 삭제 (CASCADE로 이미 처리되지만 명시적 확인)
--- quick_memos 테이블의 ON DELETE CASCADE가 memo_tag_links에도 적용됨
+-- quick_memos 테이블의 ON DELETE CASCADE가 note_tag_links에도 적용됨
 
 COMMENT ON TABLE memo_tags IS '퀵메모 태그 정의 테이블';
-COMMENT ON TABLE memo_tag_links IS '퀵메모와 태그의 Many-to-Many 연결 테이블';
+COMMENT ON TABLE note_tag_links IS '퀵메모와 태그의 Many-to-Many 연결 테이블';
 COMMENT ON FUNCTION create_default_memo_tags IS '새 사용자를 위한 기본 태그 생성 함수';

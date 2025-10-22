@@ -117,7 +117,7 @@ export type Database = {
           },
         ]
       }
-      memo_tag_links: {
+      note_tag_links: {
         Row: {
           assigned_at: string
           id: string
@@ -147,14 +147,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "memo_tag_links_tag_id_fkey"
+            foreignKeyName: "note_tag_links_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "note_tags"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "memo_tag_links_template_id_fkey"
+            foreignKeyName: "note_tag_links_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "note_tag_templates"

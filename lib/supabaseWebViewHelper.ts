@@ -2248,7 +2248,7 @@ export async function deleteMemoTagWithJWT(
     }
 
     // 연결된 메모-태그 링크가 있는지 확인
-    const linkedMemos = await queryRLSTableWithJWT('memo_tag_links', [
+    const linkedMemos = await queryRLSTableWithJWT('note_tag_links', [
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
@@ -2261,7 +2261,7 @@ export async function deleteMemoTagWithJWT(
       console.warn(`⚠️ 태그 ${tagId}에 연결된 메모가 있습니다. 링크도 함께 삭제됩니다.`);
 
       // 먼저 모든 링크 삭제
-      await deleteWithJWT('memo_tag_links', [
+      await deleteWithJWT('note_tag_links', [
         { column: 'tag_id', operator: 'eq', value: tagId },
         { column: 'user_id', operator: 'eq', value: userId }
       ]);
@@ -2293,7 +2293,7 @@ export async function linkMemoToTagWithJWT(
 
   try {
     // 이미 연결되어 있는지 확인
-    const existingLinks = await queryRLSTableWithJWT('memo_tag_links', [
+    const existingLinks = await queryRLSTableWithJWT('note_tag_links', [
       { column: 'memo_id', operator: 'eq', value: memoId },
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
@@ -2308,7 +2308,7 @@ export async function linkMemoToTagWithJWT(
     }
 
     // 메모당 태그 개수 제한 확인 (선택사항: 10개 제한)
-    const currentTags = await queryRLSTableWithJWT('memo_tag_links', [
+    const currentTags = await queryRLSTableWithJWT('note_tag_links', [
       { column: 'memo_id', operator: 'eq', value: memoId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
@@ -2326,7 +2326,7 @@ export async function linkMemoToTagWithJWT(
       user_id: userId
     };
 
-    const result = await createWithJWT('memo_tag_links', linkData);
+    const result = await createWithJWT('note_tag_links', linkData);
     console.log('✅ JWT 메모-태그 연결 성공:', { id: result?.id });
     return result;
   } catch (error) {
@@ -2346,7 +2346,7 @@ export async function unlinkMemoFromTagWithJWT(
   console.log('🔓 JWT 방식으로 메모-태그 연결 해제:', { memoId, tagId, userId });
 
   try {
-    await deleteWithJWT('memo_tag_links', [
+    await deleteWithJWT('note_tag_links', [
       { column: 'memo_id', operator: 'eq', value: memoId },
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
@@ -2370,7 +2370,7 @@ export async function unlinkAllTagsFromMemoWithJWT(
   console.log('🔓 JWT 방식으로 메모의 모든 태그 연결 해제:', { memoId, userId });
 
   try {
-    await deleteWithJWT('memo_tag_links', [
+    await deleteWithJWT('note_tag_links', [
       { column: 'memo_id', operator: 'eq', value: memoId },
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
@@ -2397,9 +2397,9 @@ export async function fetchTagsForMemoWithJWT(
     const query = `
       select note_tags.*
       from note_tags
-      inner join memo_tag_links on note_tags.id = memo_tag_links.tag_id
-      where memo_tag_links.memo_id = '${memoId}'
-        and memo_tag_links.user_id = '${userId}'
+      inner join note_tag_links on note_tags.id = note_tag_links.tag_id
+      where note_tag_links.memo_id = '${memoId}'
+        and note_tag_links.user_id = '${userId}'
         and note_tags.user_id = '${userId}'
       order by note_tags.name asc
     `;
@@ -2417,7 +2417,7 @@ export async function fetchTagsForMemoWithJWT(
 
     // 폴백: 링크를 먼저 조회하고 태그를 개별적으로 가져오기
     try {
-      const links = await queryRLSTableWithJWT('memo_tag_links', [
+      const links = await queryRLSTableWithJWT('note_tag_links', [
         { column: 'memo_id', operator: 'eq', value: memoId },
         { column: 'user_id', operator: 'eq', value: userId }
       ], {
@@ -2455,7 +2455,7 @@ export async function fetchTagMemosWithJWT(
   console.log('🔍 JWT 방식으로 태그에 연결된 메모들 조회:', { tagId, userId });
 
   try {
-    const links = await queryRLSTableWithJWT('memo_tag_links', [
+    const links = await queryRLSTableWithJWT('note_tag_links', [
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
@@ -2703,14 +2703,14 @@ export async function updateMemoTagsWithTemplates(
 
   try {
     // 1. 기존 연결 모두 삭제
-    await deleteWithJWT('memo_tag_links', [
+    await deleteWithJWT('note_tag_links', [
       { column: 'memo_id', operator: 'eq', value: memoId },
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
 
     // 2. 사용자 태그 연결
     for (const tagId of userTagIds) {
-      await createWithJWT('memo_tag_links', {
+      await createWithJWT('note_tag_links', {
         user_id: userId,
         memo_id: memoId,
         tag_id: tagId,
@@ -2721,7 +2721,7 @@ export async function updateMemoTagsWithTemplates(
 
     // 3. 템플릿 태그 직접 연결
     for (const templateId of templateTagIds) {
-      await createWithJWT('memo_tag_links', {
+      await createWithJWT('note_tag_links', {
         user_id: userId,
         memo_id: memoId,
         tag_id: null, // 템플릿 태그이므로 tag_id는 null
@@ -2748,7 +2748,7 @@ export async function fetchMemoTagLinksWithJWT(userId: string): Promise<MemoTagL
   console.log('🔗 JWT 방식으로 메모 태그 링크 조회:', { userId });
 
   try {
-    const links = await queryRLSTableWithJWT('memo_tag_links', [
+    const links = await queryRLSTableWithJWT('note_tag_links', [
       {
         column: 'user_id',
         operator: 'eq',
