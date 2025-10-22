@@ -699,7 +699,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
 
             {/* 노트 */}
             <div className="space-y-2">
-              <Label htmlFor="notes">메모</Label>
+              <Label htmlFor="notes">노트</Label>
               {isEditMode ? (
                 <Textarea
                   id="notes"

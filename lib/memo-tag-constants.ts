@@ -28,7 +28,7 @@ export const MEMO_TAG_CATEGORIES: MemoTagCategory[] = [
   {
     category: 'type',
     name: '유형',
-    description: '메모의 종류와 성격을 구분하는 태그',
+    description: '노트의 종류와 성격을 구분하는 태그',
     icon: 'tag'
   },
   {
@@ -86,16 +86,16 @@ export const CATEGORY_COLORS = {
  */
 export const DEFAULT_TAG_TEMPLATES = {
   productivity: [
-    { name: '업무', color: '#3B82F6', icon: 'briefcase', description: '업무 관련 메모' },
+    { name: '업무', color: '#3B82F6', icon: 'briefcase', description: '업무 관련 노트' },
     { name: '공부', color: '#8B5CF6', icon: 'book-open', description: '학습 및 공부 관련' },
-    { name: '프로젝트', color: '#06B6D4', icon: 'folder', description: '프로젝트 관련 메모' },
+    { name: '프로젝트', color: '#06B6D4', icon: 'folder', description: '프로젝트 관련 노트' },
     { name: '미팅', color: '#10B981', icon: 'users', description: '회의 및 미팅 관련' },
     { name: '아이디어', color: '#F59E0B', icon: 'lightbulb', description: '떠오른 아이디어 기록' }
   ],
   personal: [
-    { name: '개인', color: '#EC4899', icon: 'user', description: '개인적인 메모' },
-    { name: '가족', color: '#F97316', icon: 'heart', description: '가족 관련 메모' },
-    { name: '건강', color: '#84CC16', icon: 'activity', description: '건강 관련 메모' },
+    { name: '개인', color: '#EC4899', icon: 'user', description: '개인적인 노트' },
+    { name: '가족', color: '#F97316', icon: 'heart', description: '가족 관련 노트' },
+    { name: '건강', color: '#84CC16', icon: 'activity', description: '건강 관련 노트' },
     { name: '취미', color: '#A855F7', icon: 'music', description: '취미 활동 관련' },
     { name: '여행', color: '#14B8A6', icon: 'map-pin', description: '여행 계획 및 기록' }
   ],
@@ -107,7 +107,7 @@ export const DEFAULT_TAG_TEMPLATES = {
   ],
   type: [
     { name: '할일', color: '#3B82F6', icon: 'check-square', description: '해야 할 일' },
-    { name: '메모', color: '#6B7280', icon: 'sticky-note', description: '단순 메모' },
+    { name: '노트', color: '#6B7280', icon: 'sticky-note', description: '단순 노트' },
     { name: '링크', color: '#8B5CF6', icon: 'link', description: '링크 및 참조' },
     { name: '목표', color: '#F59E0B', icon: 'target', description: '목표 및 계획' }
   ]

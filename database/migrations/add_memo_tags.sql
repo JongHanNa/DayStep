@@ -18,7 +18,7 @@ CREATE TABLE memo_tags (
   UNIQUE(user_id, name)
 );
 
--- 2. 메모-태그 연결 테이블 (Many-to-Many)
+-- 2. 노트-태그 연결 테이블 (Many-to-Many)
 CREATE TABLE note_tag_links (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE note_tag_links (
   assigned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   is_active BOOLEAN DEFAULT true NOT NULL,
 
-  -- 메모-태그 중복 연결 방지
+  -- 노트-태그 중복 연결 방지
   UNIQUE(memo_id, tag_id)
 );
 
@@ -100,5 +100,5 @@ $$ LANGUAGE plpgsql;
 -- quick_memos 테이블의 ON DELETE CASCADE가 note_tag_links에도 적용됨
 
 COMMENT ON TABLE memo_tags IS '퀵노트 태그 정의 테이블';
-COMMENT ON TABLE note_tag_links IS '퀵메모와 태그의 Many-to-Many 연결 테이블';
+COMMENT ON TABLE note_tag_links IS '노트와 태그의 Many-to-Many 연결 테이블';
 COMMENT ON FUNCTION create_default_memo_tags IS '새 사용자를 위한 기본 태그 생성 함수';

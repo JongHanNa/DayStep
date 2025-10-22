@@ -64,7 +64,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
         >
           <StickyNote className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-            연결된 메모
+            연결된 노트
           </span>
           <span className="text-sm text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full min-w-[24px] text-center">
             {linkedMemos.length}
@@ -105,7 +105,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                      메모
+                      노트
                     </span>
                     <span className="text-xs text-gray-400 dark:text-gray-500">
                       {format(new Date(memo.created_at), 'M월 d일 HH:mm', { locale: ko })}

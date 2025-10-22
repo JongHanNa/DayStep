@@ -186,7 +186,7 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
                     연결된 퀵노트 {linkedMemos.length}개 발견
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    이 할일에 연결된 메모들을 어떻게 처리할지 선택해주세요.
+                    이 할일에 연결된 노트들을 어떻게 처리할지 선택해주세요.
                   </p>
                 </div>
               </div>

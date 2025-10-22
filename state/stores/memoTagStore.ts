@@ -184,7 +184,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         try {
           const tags = await fetchTagsForMemoWithJWT(memoId, userId);
 
-          // 메모-태그 링크 정보도 업데이트
+          // 노트-태그 링크 정보도 업데이트
           const links: MemoTagLink[] = tags.map(tag => ({
             id: `${memoId}-${tag.id}`,
             user_id: userId,
@@ -696,7 +696,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         const state = get();
         const results: MemoTag[] = [];
 
-        // note_tag_links에서 해당 메모의 모든 활성 링크 조회
+        // note_tag_links에서 해당 노트의 모든 활성 링크 조회
         const memoLinks = state.memoTagLinks.filter(
           link => link.memo_id === memoId && link.is_active
         );
@@ -753,8 +753,8 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
       // 기본 태그 생성
       createDefaultTags: async (userId) => {
         const defaultTags = [
-          { name: '업무', color: '#3B82F6', description: '업무 관련 메모' },
-          { name: '개인', color: '#10B981', description: '개인적인 메모' },
+          { name: '업무', color: '#3B82F6', description: '업무 관련 노트' },
+          { name: '개인', color: '#10B981', description: '개인적인 노트' },
           { name: '중요', color: '#EF4444', description: '중요한 내용' },
           { name: '아이디어', color: '#8B5CF6', description: '창의적인 아이디어' },
         ];

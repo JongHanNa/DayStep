@@ -2247,7 +2247,7 @@ export async function deleteMemoTagWithJWT(
       throw new Error('미리 정의된 태그는 삭제할 수 없습니다.');
     }
 
-    // 연결된 메모-태그 링크가 있는지 확인
+    // 연결된 노트-태그 링크가 있는지 확인
     const linkedMemos = await queryRLSTableWithJWT('note_tag_links', [
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
@@ -2256,9 +2256,9 @@ export async function deleteMemoTagWithJWT(
       limit: 1
     });
 
-    // 연결된 메모가 있으면 경고 (선택사항: 강제 삭제할지 사용자에게 확인)
+    // 연결된 노트가 있으면 경고 (선택사항: 강제 삭제할지 사용자에게 확인)
     if (linkedMemos && linkedMemos.length > 0) {
-      console.warn(`⚠️ 태그 ${tagId}에 연결된 메모가 있습니다. 링크도 함께 삭제됩니다.`);
+      console.warn(`⚠️ 태그 ${tagId}에 연결된 노트가 있습니다. 링크도 함께 삭제됩니다.`);
 
       // 먼저 모든 링크 삭제
       await deleteWithJWT('note_tag_links', [
@@ -2282,14 +2282,14 @@ export async function deleteMemoTagWithJWT(
 }
 
 /**
- * JWT 방식으로 메모에 태그 연결
+ * JWT 방식으로 노트에 태그 연결
  */
 export async function linkMemoToTagWithJWT(
   memoId: string,
   tagId: string,
   userId: string
 ): Promise<MemoTagLink | null> {
-  console.log('🔗 JWT 방식으로 메모에 태그 연결:', { memoId, tagId, userId });
+  console.log('🔗 JWT 방식으로 노트에 태그 연결:', { memoId, tagId, userId });
 
   try {
     // 이미 연결되어 있는지 확인
@@ -2303,11 +2303,11 @@ export async function linkMemoToTagWithJWT(
     });
 
     if (existingLinks && existingLinks.length > 0) {
-      console.log('ℹ️ 이미 연결된 메모-태그:', { memoId, tagId });
+      console.log('ℹ️ 이미 연결된 노트-태그:', { memoId, tagId });
       return existingLinks[0];
     }
 
-    // 메모당 태그 개수 제한 확인 (선택사항: 10개 제한)
+    // 노트당 태그 개수 제한 확인 (선택사항: 10개 제한)
     const currentTags = await queryRLSTableWithJWT('note_tag_links', [
       { column: 'memo_id', operator: 'eq', value: memoId },
       { column: 'user_id', operator: 'eq', value: userId }
@@ -2316,7 +2316,7 @@ export async function linkMemoToTagWithJWT(
     });
 
     if (currentTags && currentTags.length >= 10) {
-      throw new Error('메모당 최대 10개의 태그만 연결할 수 있습니다.');
+      throw new Error('노트당 최대 10개의 태그만 연결할 수 있습니다.');
     }
 
     // 새 링크 생성
@@ -2327,23 +2327,23 @@ export async function linkMemoToTagWithJWT(
     };
 
     const result = await createWithJWT('note_tag_links', linkData);
-    console.log('✅ JWT 메모-태그 연결 성공:', { id: result?.id });
+    console.log('✅ JWT 노트-태그 연결 성공:', { id: result?.id });
     return result;
   } catch (error) {
-    console.error('❌ JWT 메모-태그 연결 실패:', error);
+    console.error('❌ JWT 노트-태그 연결 실패:', error);
     throw error;
   }
 }
 
 /**
- * JWT 방식으로 메모에서 태그 연결 해제
+ * JWT 방식으로 노트에서 태그 연결 해제
  */
 export async function unlinkMemoFromTagWithJWT(
   memoId: string,
   tagId: string,
   userId: string
 ): Promise<boolean> {
-  console.log('🔓 JWT 방식으로 메모-태그 연결 해제:', { memoId, tagId, userId });
+  console.log('🔓 JWT 방식으로 노트-태그 연결 해제:', { memoId, tagId, userId });
 
   try {
     await deleteWithJWT('note_tag_links', [
@@ -2352,22 +2352,22 @@ export async function unlinkMemoFromTagWithJWT(
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
 
-    console.log('✅ JWT 메모-태그 연결 해제 성공:', { memoId, tagId });
+    console.log('✅ JWT 노트-태그 연결 해제 성공:', { memoId, tagId });
     return true;
   } catch (error) {
-    console.error('❌ JWT 메모-태그 연결 해제 실패:', error);
+    console.error('❌ JWT 노트-태그 연결 해제 실패:', error);
     return false;
   }
 }
 
 /**
- * JWT 방식으로 메모의 모든 태그 연결 해제
+ * JWT 방식으로 노트의 모든 태그 연결 해제
  */
 export async function unlinkAllTagsFromMemoWithJWT(
   memoId: string,
   userId: string
 ): Promise<boolean> {
-  console.log('🔓 JWT 방식으로 메모의 모든 태그 연결 해제:', { memoId, userId });
+  console.log('🔓 JWT 방식으로 노트의 모든 태그 연결 해제:', { memoId, userId });
 
   try {
     await deleteWithJWT('note_tag_links', [
@@ -2375,25 +2375,25 @@ export async function unlinkAllTagsFromMemoWithJWT(
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
 
-    console.log('✅ JWT 메모의 모든 태그 연결 해제 성공:', { memoId });
+    console.log('✅ JWT 노트의 모든 태그 연결 해제 성공:', { memoId });
     return true;
   } catch (error) {
-    console.error('❌ JWT 메모의 모든 태그 연결 해제 실패:', error);
+    console.error('❌ JWT 노트의 모든 태그 연결 해제 실패:', error);
     return false;
   }
 }
 
 /**
- * JWT 방식으로 특정 메모에 연결된 모든 태그 조회
+ * JWT 방식으로 특정 노트에 연결된 모든 태그 조회
  */
 export async function fetchTagsForMemoWithJWT(
   memoId: string,
   userId: string
 ): Promise<MemoTag[]> {
-  console.log('🔍 JWT 방식으로 메모에 연결된 태그들 조회:', { memoId, userId });
+  console.log('🔍 JWT 방식으로 노트에 연결된 태그들 조회:', { memoId, userId });
 
   try {
-    // 메모-태그 링크를 통해 태그 정보 조회 (JOIN 쿼리)
+    // 노트-태그 링크를 통해 태그 정보 조회 (JOIN 쿼리)
     const query = `
       select note_tags.*
       from note_tags
@@ -2410,10 +2410,10 @@ export async function fetchTagsForMemoWithJWT(
       body: JSON.stringify({ query })
     });
 
-    console.log('✅ JWT 메모에 연결된 태그들 조회 성공:', { memoId, count: tags?.length || 0 });
+    console.log('✅ JWT 노트에 연결된 태그들 조회 성공:', { memoId, count: tags?.length || 0 });
     return tags || [];
   } catch (error) {
-    console.error('❌ JWT 메모에 연결된 태그들 조회 실패:', error);
+    console.error('❌ JWT 노트에 연결된 태그들 조회 실패:', error);
 
     // 폴백: 링크를 먼저 조회하고 태그를 개별적으로 가져오기
     try {
@@ -2452,7 +2452,7 @@ export async function fetchTagMemosWithJWT(
   tagId: string,
   userId: string
 ): Promise<string[]> {
-  console.log('🔍 JWT 방식으로 태그에 연결된 메모들 조회:', { tagId, userId });
+  console.log('🔍 JWT 방식으로 태그에 연결된 노트들 조회:', { tagId, userId });
 
   try {
     const links = await queryRLSTableWithJWT('note_tag_links', [
@@ -2464,23 +2464,23 @@ export async function fetchTagMemosWithJWT(
     });
 
     const memoIds = links?.map((link: any) => link.memo_id) || [];
-    console.log('✅ JWT 태그에 연결된 메모들 조회 성공:', { tagId, count: memoIds.length });
+    console.log('✅ JWT 태그에 연결된 노트들 조회 성공:', { tagId, count: memoIds.length });
     return memoIds;
   } catch (error) {
-    console.error('❌ JWT 태그에 연결된 메모들 조회 실패:', error);
+    console.error('❌ JWT 태그에 연결된 노트들 조회 실패:', error);
     return [];
   }
 }
 
 /**
- * JWT 방식으로 메모에 다중 태그 연결 (배치 처리)
+ * JWT 방식으로 노트에 다중 태그 연결 (배치 처리)
  */
 export async function linkMemoToMultipleTagsWithJWT(
   memoId: string,
   tagIds: string[],
   userId: string
 ): Promise<MemoTagLink[]> {
-  console.log('🔗 JWT 방식으로 메모에 다중 태그 연결:', { memoId, tagIds, userId });
+  console.log('🔗 JWT 방식으로 노트에 다중 태그 연결:', { memoId, tagIds, userId });
 
   try {
     const results: MemoTagLink[] = [];
@@ -2498,10 +2498,10 @@ export async function linkMemoToMultipleTagsWithJWT(
       }
     }
 
-    console.log('✅ JWT 메모에 다중 태그 연결 완료:', { memoId, successCount: results.length });
+    console.log('✅ JWT 노트에 다중 태그 연결 완료:', { memoId, successCount: results.length });
     return results;
   } catch (error) {
-    console.error('❌ JWT 메모에 다중 태그 연결 실패:', error);
+    console.error('❌ JWT 노트에 다중 태그 연결 실패:', error);
     throw error;
   }
 }
@@ -2684,7 +2684,7 @@ export async function createDefaultTagsForUserWithJWT(userId: string): Promise<n
 }
 
 /**
- * 메모에 태그 및 템플릿 태그 연결 (혼합 지원)
+ * 노트에 태그 및 템플릿 태그 연결 (혼합 지원)
  * - userTagIds: 실제 사용자 태그 ID들
  * - templateTagIds: 템플릿 태그 ID들 (note_tags 생성 없이 직접 연결)
  */
@@ -2694,7 +2694,7 @@ export async function updateMemoTagsWithTemplates(
   templateTagIds: string[],
   userId: string
 ): Promise<void> {
-  console.log('🔗 메모에 사용자 태그 + 템플릿 태그 연결:', {
+  console.log('🔗 노트에 사용자 태그 + 템플릿 태그 연결:', {
     memoId,
     userTagCount: userTagIds.length,
     templateTagCount: templateTagIds.length,

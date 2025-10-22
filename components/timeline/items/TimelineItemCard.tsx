@@ -110,7 +110,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         if (instanceDate) {
           memosToDisplay = await getDisplayNotesForTask(actualTaskId, instanceDate);
         } else {
-          // 날짜 추출 실패 시 기본 메모만 표시
+          // 날짜 추출 실패 시 기본 노트만 표시
           memosToDisplay = notes.filter(memo =>
             memo.related_task_id === actualTaskId ||
             memo.linked_timeline_task_id === actualTaskId
@@ -782,7 +782,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                        메모
+                        노트
                       </span>
                       <span className="text-xs text-gray-400 dark:text-gray-500">
                         {format(new Date(memo.created_at), 'M월 d일 HH:mm', { locale: ko })}

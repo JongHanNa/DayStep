@@ -101,7 +101,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
     const updatedMemos = memos.filter(memo => memo.id !== memoId);
     onMemosChange(updatedMemos);
     
-    // 모든 메모가 삭제되면 접기
+    // 모든 노트가 삭제되면 접기
     if (updatedMemos.length === 0) {
       setIsExpanded(false);
     }
@@ -109,10 +109,10 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
 
   const getMemoTypeLabel = (type: string) => {
     switch (type) {
-      case 'quick': return '퀵메모';
-      case 'daily': return '일일메모';
-      case 'reflection': return '묵상메모';
-      default: return '메모';
+      case 'quick': return '퀵노트';
+      case 'daily': return '일일노트';
+      case 'reflection': return '묵상노트';
+      default: return '노트';
     }
   };
 
@@ -130,7 +130,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
         >
           <StickyNote className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">
-            함께 추가할 메모
+            함께 추가할 노트
           </span>
           {memos.length > 0 && (
             <span className="text-sm text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full min-w-[24px] text-center">
@@ -182,7 +182,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
                           노트 {index + 1}
                         </span>
                         <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
-                          퀵메모
+                          퀵노트
                         </span>
                       </div>
 
@@ -225,7 +225,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
                         </div>
                       ) : (
                         <span className="text-muted-foreground italic">
-                          클릭하여 메모를 입력하세요...
+                          클릭하여 노트를 입력하세요...
                         </span>
                       )}
                     </div>

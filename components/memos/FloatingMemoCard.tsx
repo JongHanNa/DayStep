@@ -85,7 +85,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
       setIsEditing(false);
       
       toast({
-        title: '메모가 수정되었습니다',
+        title: '노트가 수정되었습니다',
         description: '변경사항이 저장되었습니다.',
       });
     } catch (error) {

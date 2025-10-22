@@ -78,7 +78,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   // Todo Store (할일 연결용)
   const { todos, fetchTodoById } = useTodoStore();
 
-  // 메모에 연결된 할일을 별도로 관리 (현재 뷰에 없는 할일도 표시하기 위함)
+  // 노트에 연결된 할일을 별도로 관리 (현재 뷰에 없는 할일도 표시하기 위함)
   const [linkedTodosMap, setLinkedTodosMap] = useState<Map<string, any>>(new Map());
 
   // Memo Tag Store (태그 관리용)
@@ -185,7 +185,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
           user_id: userId,
         });
 
-        // 새 메모에 태그 연결 (사용자 태그 + 템플릿 태그 직접 연결)
+        // 새 노트에 태그 연결 (사용자 태그 + 템플릿 태그 직접 연결)
         if ((selectedTags.length > 0 || selectedTemplates.length > 0) && newMemo) {
           await updateMemoTagsWithTemplates(newMemo.id, selectedTags, selectedTemplates, userId);
         }
@@ -204,8 +204,8 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
 
         // 삭제 완료 토스트 알림
         toast({
-          title: '빈 메모가 삭제되었습니다',
-          description: '내용이 없는 메모가 자동으로 삭제되었습니다.',
+          title: '빈 노트가 삭제되었습니다',
+          description: '내용이 없는 노트가 자동으로 삭제되었습니다.',
         });
 
         // 편집 상태 초기화 (모달은 닫지 않고 새 노트 모드로 전환)
@@ -229,7 +229,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     }
   }, [open, isAuthenticated, user?.id, initialize, loadAllTags]);
 
-  // 메모에 연결된 할일 로드 (현재 뷰에 없는 할일도 가져오기)
+  // 노트에 연결된 할일 로드 (현재 뷰에 없는 할일도 가져오기)
   useEffect(() => {
     const loadLinkedTodos = async () => {
       const newLinkedTodosMap = new Map(linkedTodosMap);
@@ -393,8 +393,8 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     try {
       await deleteNote(memoId);
       toast({
-        title: '메모가 삭제되었습니다',
-        description: '선택한 메모가 삭제되었습니다.',
+        title: '노트가 삭제되었습니다',
+        description: '선택한 노트가 삭제되었습니다.',
       });
     } catch (error) {
       toast({
@@ -487,7 +487,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
             </button>
             <div className="flex items-center gap-2">
               <StickyNote className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-lg">퀵메모</h3>
+              <h3 className="font-bold text-lg">퀵노트</h3>
               <Badge variant="outline" className="text-xs">
                 {filteredNotes.length}개
               </Badge>
@@ -518,7 +518,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
               <div className="space-y-3">
                 {loading && (
                   <div className="text-center py-8 text-muted-foreground">
-                    메모를 불러오는 중...
+                    노트를 불러오는 중...
                   </div>
                 )}
 
@@ -531,8 +531,8 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                 {!loading && !error && filteredNotes.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <StickyNote className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                    <p className="text-sm">아직 메모가 없습니다</p>
-                    <p className="text-xs text-muted-foreground/70">위에서 첫 번째 메모를 작성해보세요</p>
+                    <p className="text-sm">아직 노트가 없습니다</p>
+                    <p className="text-xs text-muted-foreground/70">위에서 첫 번째 노트를 작성해보세요</p>
                   </div>
                 )}
 
@@ -561,10 +561,10 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                           className="w-2 h-8 rounded-full flex-shrink-0"
                           style={{
                             backgroundColor: memo.is_pinned
-                              ? '#f97316' // orange-500 - 핀된 메모
+                              ? '#f97316' // orange-500 - 핀된 노트
                               : isLinked
-                                ? '#22c55e' // green-500 - 연결된 메모
-                                : '#3b82f6' // blue-500 - 기본 메모
+                                ? '#22c55e' // green-500 - 연결된 노트
+                                : '#3b82f6' // blue-500 - 기본 노트
                           }}
                         />
 
@@ -711,9 +711,9 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                     let connectionType: 'single' | 'recurring' | 'instance' | null = null;
                                     if (isRecurringTodo) {
                                       if (memo.recurrence_type === 'single') {
-                                        connectionType = 'single'; // 동일메모
+                                        connectionType = 'single'; // 동일노트
                                       } else if (memo.recurrence_type === 'recurring') {
-                                        connectionType = 'recurring'; // 반복메모
+                                        connectionType = 'recurring'; // 반복노트
                                       } else if (memo.linked_date) {
                                         connectionType = 'instance'; // 특정날짜
                                       }
@@ -757,8 +757,8 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                                     '#10b981'
                                             }}
                                           >
-                                            {connectionType === 'single' && '동일메모'}
-                                            {connectionType === 'recurring' && '반복메모'}
+                                            {connectionType === 'single' && '동일노트'}
+                                            {connectionType === 'recurring' && '반복노트'}
                                             {connectionType === 'instance' && (
                                               <>
                                                 <Calendar className="h-3 w-3" />
@@ -816,7 +816,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
               취소
             </button>
             <h3 className="font-bold text-lg">
-              {memoEditorMode === 'edit' ? '노트 수정' : '새 메모'}
+              {memoEditorMode === 'edit' ? '노트 수정' : '새 노트'}
             </h3>
             <div className="flex items-center gap-2">
               <button
@@ -898,9 +898,9 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                         let connectionType: 'single' | 'recurring' | 'instance' | null = null;
                         if (isRecurringTodo && currentEditingMemo) {
                           if (currentEditingMemo.recurrence_type === 'single') {
-                            connectionType = 'single'; // 동일메모
+                            connectionType = 'single'; // 동일노트
                           } else if (currentEditingMemo.recurrence_type === 'recurring') {
-                            connectionType = 'recurring'; // 반복메모
+                            connectionType = 'recurring'; // 반복노트
                           } else if (currentEditingMemo.linked_date) {
                             connectionType = 'instance'; // 특정날짜
                           }
@@ -949,8 +949,8 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                           '#10b981'
                                   }}
                                 >
-                                  {connectionType === 'single' && '동일메모'}
-                                  {connectionType === 'recurring' && '반복메모'}
+                                  {connectionType === 'single' && '동일노트'}
+                                  {connectionType === 'recurring' && '반복노트'}
                                   {connectionType === 'instance' && (
                                     <>
                                       <Calendar className="h-3 w-3" />
@@ -1015,7 +1015,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                   const newSelectedTags = selectedTags.filter(id => id !== tagId);
                                   setSelectedTags(newSelectedTags);
 
-                                  // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                  // 편집 모드이고 노트가 있으면 즉시 DB 업데이트
                                   if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
                                     await updateMemoTagsWithTemplates(
                                       currentEditingMemo.id,
@@ -1055,7 +1055,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                   const newSelectedTemplates = selectedTemplates.filter(id => id !== templateId);
                                   setSelectedTemplates(newSelectedTemplates);
 
-                                  // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                  // 편집 모드이고 노트가 있으면 즉시 DB 업데이트
                                   if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
                                     await updateMemoTagsWithTemplates(
                                       currentEditingMemo.id,
@@ -1132,7 +1132,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
 
                                         setSelectedTags(newSelectedTags);
 
-                                        // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                        // 편집 모드이고 노트가 있으면 즉시 DB 업데이트
                                         if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
                                           await updateMemoTagsWithTemplates(
                                             currentEditingMemo.id,
@@ -1227,7 +1227,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                                 setAddedTemplates(prev => new Set([...prev, template.id]));
                                                 toast({
                                                   title: "✨ 템플릿 태그 선택됨",
-                                                  description: `"${template.name}" 태그가 메모에 추가됩니다`
+                                                  description: `"${template.name}" 태그가 노트에 추가됩니다`
                                                 });
                                                 setTimeout(() => {
                                                   setAddedTemplates(prev => {
@@ -1238,7 +1238,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                                 }, 2000);
                                               }
 
-                                              // 편집 모드이고 메모가 있으면 즉시 DB 업데이트
+                                              // 편집 모드이고 노트가 있으면 즉시 DB 업데이트
                                               if (memoEditorMode === 'edit' && currentEditingMemo && user?.id) {
                                                 await updateMemoTagsWithTemplates(
                                                   currentEditingMemo.id,
@@ -1338,7 +1338,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
             <p className="text-sm text-muted-foreground">
               {autoSave.saveStatus === 'pending'
                 ? '저장 대기중인 변경사항이 있습니다. 어떻게 하시겠어요?'
-                : '메모에 변경사항이 있습니다. 어떻게 하시겠어요?'
+                : '노트에 변경사항이 있습니다. 어떻게 하시겠어요?'
               }
             </p>
 

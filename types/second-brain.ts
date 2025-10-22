@@ -135,7 +135,7 @@ export interface Goal {
 export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 
 /**
- * 노트 (Note) - PARA 구조로 분류되는 메모
+ * 노트 (Note) - PARA 구조로 분류되는 노트
  */
 export interface Note {
   id: string;
@@ -265,7 +265,7 @@ export interface ReviewSession {
   projects_reviewed: boolean;
   someday_reviewed: boolean;
 
-  // 메모
+  // 노트
   notes?: string;
 
   // 완료 시간

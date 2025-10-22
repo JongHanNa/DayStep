@@ -162,7 +162,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
           // 특정 인스턴스 연결: 날짜는 필수
           options.linkDate = selectedDate;
         } else if (recurrenceType === 'recurring' && selectedDate) {
-          // 반복 메모: 선택적으로 날짜 설정 가능
+          // 반복 노트: 선택적으로 날짜 설정 가능
           options.linkDate = selectedDate;
         }
       }

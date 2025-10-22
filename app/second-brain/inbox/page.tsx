@@ -308,7 +308,7 @@ export default function InboxPage() {
             <div className="text-sm">
               <p className="font-medium mb-1">빠른 수집을 위한 페이지입니다</p>
               <p className="text-base-content/70">
-                스크린샷, 메모, 머릿속 아이디어 등을 고민 없이 바로 수집하세요.
+                스크린샷, 노트, 머릿속 아이디어 등을 고민 없이 바로 수집하세요.
                 어느 것에 속하는지는 다음 명료화 단계에서 정리할 수 있습니다.
               </p>
             </div>

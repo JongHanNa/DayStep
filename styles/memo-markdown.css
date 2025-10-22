@@ -8,7 +8,7 @@
   overflow-wrap: break-word;
 }
 
-/* 헤더 스타일 - CodeMirror와 일관성 유지하되 메모에 맞게 조정 */
+/* 헤더 스타일 - CodeMirror와 일관성 유지하되 노트에 맞게 조정 */
 .memo-markdown-content h1 {
   font-size: 1.5em !important;
   font-weight: bold !important;
