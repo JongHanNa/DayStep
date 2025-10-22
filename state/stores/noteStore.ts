@@ -16,7 +16,7 @@ import {
   createMultipleMemoInstancesWithJWT,
 } from '@/lib/supabaseWebViewHelper';
 import { supabase } from '@/lib/supabase';
-import type { MemoInstance, CreateMemoInstanceInput, UpdateMemoInstanceInput } from '@/types';
+import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } from '@/types';
 
 // Note 타입 정의
 export interface Note {
@@ -132,18 +132,18 @@ interface NoteStoreActions {
   getNotesByTaskId: (taskId: string) => Note[];
   getLinkedNotesByTaskId: (taskId: string) => Note[];
   deleteLinkedNotes: (taskId: string) => Promise<number>;
-  getDisplayNotesForTask: (taskId: string, date?: string) => Promise<Array<Note | MemoInstance>>;
+  getDisplayNotesForTask: (taskId: string, date?: string) => Promise<Array<Note | NoteInstance>>;
 
-  // 메모 인스턴스 관리
-  createNoteInstance: (input: CreateMemoInstanceInput) => Promise<MemoInstance>;
-  updateNoteInstance: (input: UpdateMemoInstanceInput) => Promise<MemoInstance>;
+  // 노트 인스턴스 관리
+  createNoteInstance: (input: CreateNoteInstanceInput) => Promise<NoteInstance>;
+  updateNoteInstance: (input: UpdateNoteInstanceInput) => Promise<NoteInstance>;
   deleteNoteInstance: (instanceId: string) => Promise<void>;
-  getMemoInstancesByMemoId: (memoId: string) => Promise<MemoInstance[]>;
-  getMemoInstancesByDate: (date: string) => Promise<MemoInstance[]>;
-  getMemoInstanceByDate: (memoId: string, date: string) => Promise<MemoInstance | null>;
-  getMemoInstancesByTaskId: (taskId: string) => Promise<MemoInstance[]>;
-  createRecurringMemoInstances: (memoId: string, dates: string[], taskId?: string) => Promise<MemoInstance[]>;
-  upsertMemoInstance: (memoId: string, date: string, content: string, taskId?: string | null) => Promise<MemoInstance | null>;
+  getMemoInstancesByMemoId: (memoId: string) => Promise<NoteInstance[]>;
+  getMemoInstancesByDate: (date: string) => Promise<NoteInstance[]>;
+  getMemoInstanceByDate: (memoId: string, date: string) => Promise<NoteInstance | null>;
+  getMemoInstancesByTaskId: (taskId: string) => Promise<NoteInstance[]>;
+  createRecurringMemoInstances: (memoId: string, dates: string[], taskId?: string) => Promise<NoteInstance[]>;
+  upsertMemoInstance: (memoId: string, date: string, content: string, taskId?: string | null) => Promise<NoteInstance | null>;
 
   // 필터링 및 정렬
   setFilter: (filter: Partial<NoteStoreState['filters']>) => void;
@@ -518,7 +518,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           try {
             // 기본 연결된 메모들 가져오기
             const linkedMemos = get().getLinkedNotesByTaskId(taskId);
-            const displayMemos: Array<Note | MemoInstance> = [];
+            const displayMemos: Array<Note | NoteInstance> = [];
 
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
             let userId: string | null = null;
@@ -836,8 +836,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           await get().initialize(userId);
         },
 
-        // 메모 인스턴스 관리 함수들
-        createNoteInstance: async (input: CreateMemoInstanceInput) => {
+        // 노트 인스턴스 관리 함수들
+        createNoteInstance: async (input: CreateNoteInstanceInput) => {
           console.log('📝 NoteStore.createNoteInstance:', input);
 
           try {
@@ -850,7 +850,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        updateNoteInstance: async (input: UpdateMemoInstanceInput) => {
+        updateNoteInstance: async (input: UpdateNoteInstanceInput) => {
           console.log('📝 NoteStore.updateNoteInstance:', input);
 
           try {

@@ -1279,79 +1279,79 @@ export async function fetchAllTodosWithJWT(
 }
 
 // =================================================================
-// 메모 인스턴스 관리 함수들
+// 노트 인스턴스 관리 함수들
 // =================================================================
 
 /**
- * JWT 방식으로 메모 인스턴스 생성
+ * JWT 방식으로 노트 인스턴스 생성
  */
 export async function createMemoInstanceWithJWT(instanceData: Record<string, any>): Promise<any> {
-  console.log('📝 JWT 방식으로 메모 인스턴스 생성:', { instanceData });
+  console.log('📝 JWT 방식으로 노트 인스턴스 생성:', { instanceData });
 
   try {
-    const result = await createWithJWT('memo_instances', instanceData);
-    console.log('✅ JWT 메모 인스턴스 생성 성공:', { result });
+    const result = await createWithJWT('note_instances', instanceData);
+    console.log('✅ JWT 노트 인스턴스 생성 성공:', { result });
     return result;
   } catch (error) {
-    console.error('❌ JWT 메모 인스턴스 생성 실패:', error);
+    console.error('❌ JWT 노트 인스턴스 생성 실패:', error);
     throw error;
   }
 }
 
 /**
- * JWT 방식으로 메모 인스턴스 업데이트
+ * JWT 방식으로 노트 인스턴스 업데이트
  */
 export async function updateMemoInstanceWithJWT(instanceId: string, instanceData: Record<string, any>): Promise<any> {
-  console.log('📝 JWT 방식으로 메모 인스턴스 업데이트:', { instanceId, instanceData });
+  console.log('📝 JWT 방식으로 노트 인스턴스 업데이트:', { instanceId, instanceData });
 
   try {
-    const result = await updateWithJWT('memo_instances', {
+    const result = await updateWithJWT('note_instances', {
       column: 'id',
       operator: 'eq',
       value: instanceId
     }, instanceData);
 
-    console.log('✅ JWT 메모 인스턴스 업데이트 성공:', { result });
+    console.log('✅ JWT 노트 인스턴스 업데이트 성공:', { result });
     return result;
   } catch (error) {
-    console.error('❌ JWT 메모 인스턴스 업데이트 실패:', error);
+    console.error('❌ JWT 노트 인스턴스 업데이트 실패:', error);
     throw error;
   }
 }
 
 /**
- * JWT 방식으로 메모 인스턴스 삭제
+ * JWT 방식으로 노트 인스턴스 삭제
  */
 export async function deleteMemoInstanceWithJWT(instanceId: string): Promise<any> {
-  console.log('📝 JWT 방식으로 메모 인스턴스 삭제:', { instanceId });
+  console.log('📝 JWT 방식으로 노트 인스턴스 삭제:', { instanceId });
 
   try {
-    const result = await deleteWithJWT('memo_instances', {
+    const result = await deleteWithJWT('note_instances', {
       column: 'id',
       operator: 'eq',
       value: instanceId
     });
 
-    console.log('✅ JWT 메모 인스턴스 삭제 성공:', { result });
+    console.log('✅ JWT 노트 인스턴스 삭제 성공:', { result });
     return result;
   } catch (error) {
-    console.error('❌ JWT 메모 인스턴스 삭제 실패:', error);
+    console.error('❌ JWT 노트 인스턴스 삭제 실패:', error);
     throw error;
   }
 }
 
 /**
- * JWT 방식으로 특정 메모의 인스턴스들 조회
+ * JWT 방식으로 특정 노트의 인스턴스들 조회
  */
 export async function fetchMemoInstancesByMemoIdWithJWT(
   userId: string,
   originalMemoId: string,
   options: QueryOptions = {}
 ): Promise<any[]> {
-  console.log('📝 JWT 방식으로 메모 인스턴스들 조회:', { userId, originalMemoId, options });
+  console.log('📝 JWT 방식으로 노트 인스턴스들 조회:', { userId, originalMemoId, options });
 
   try {
-    const instances = await queryRLSTableWithJWT('memo_instances', [
+    const instances = await queryRLSTableWithJWT('note_instances', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -1368,26 +1368,26 @@ export async function fetchMemoInstancesByMemoIdWithJWT(
       ...options
     });
 
-    console.log('✅ JWT 메모 인스턴스들 조회 성공:', { instancesCount: instances.length });
+    console.log('✅ JWT 노트 인스턴스들 조회 성공:', { instancesCount: instances.length });
     return instances || [];
   } catch (error) {
-    console.error('❌ JWT 메모 인스턴스들 조회 실패:', error);
+    console.error('❌ JWT 노트 인스턴스들 조회 실패:', error);
     return [];
   }
 }
 
 /**
- * JWT 방식으로 특정 날짜의 메모 인스턴스들 조회
+ * JWT 방식으로 특정 날짜의 노트 인스턴스들 조회
  */
 export async function fetchMemoInstancesByDateWithJWT(
   userId: string,
   instanceDate: string,
   options: QueryOptions = {}
 ): Promise<any[]> {
-  console.log('📝 JWT 방식으로 특정 날짜 메모 인스턴스들 조회:', { userId, instanceDate, options });
+  console.log('📝 JWT 방식으로 특정 날짜 노트 인스턴스들 조회:', { userId, instanceDate, options });
 
   try {
-    const instances = await queryRLSTableWithJWT('memo_instances', [
+    const instances = await queryRLSTableWithJWT('note_instances', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -1404,26 +1404,26 @@ export async function fetchMemoInstancesByDateWithJWT(
       ...options
     });
 
-    console.log('✅ JWT 특정 날짜 메모 인스턴스들 조회 성공:', { instancesCount: instances.length });
+    console.log('✅ JWT 특정 날짜 노트 인스턴스들 조회 성공:', { instancesCount: instances.length });
     return instances || [];
   } catch (error) {
-    console.error('❌ JWT 특정 날짜 메모 인스턴스들 조회 실패:', error);
+    console.error('❌ JWT 특정 날짜 노트 인스턴스들 조회 실패:', error);
     return [];
   }
 }
 
 /**
- * JWT 방식으로 특정 메모의 특정 날짜 인스턴스 조회
+ * JWT 방식으로 특정 노트의 특정 날짜 인스턴스 조회
  */
 export async function fetchMemoInstanceByDateWithJWT(
   userId: string,
   originalMemoId: string,
   instanceDate: string
 ): Promise<any | null> {
-  console.log('📝 JWT 방식으로 특정 메모의 특정 날짜 인스턴스 조회:', { userId, originalMemoId, instanceDate });
+  console.log('📝 JWT 방식으로 특정 노트의 특정 날짜 인스턴스 조회:', { userId, originalMemoId, instanceDate });
 
   try {
-    const instances = await queryRLSTableWithJWT('memo_instances', [
+    const instances = await queryRLSTableWithJWT('note_instances', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -1445,26 +1445,26 @@ export async function fetchMemoInstanceByDateWithJWT(
     });
 
     const instance = instances?.[0] || null;
-    console.log('✅ JWT 특정 메모의 특정 날짜 인스턴스 조회 성공:', { instance });
+    console.log('✅ JWT 특정 노트의 특정 날짜 인스턴스 조회 성공:', { instance });
     return instance;
   } catch (error) {
-    console.error('❌ JWT 특정 메모의 특정 날짜 인스턴스 조회 실패:', error);
+    console.error('❌ JWT 특정 노트의 특정 날짜 인스턴스 조회 실패:', error);
     return null;
   }
 }
 
 /**
- * JWT 방식으로 특정 할일과 연결된 메모 인스턴스들 조회
+ * JWT 방식으로 특정 할일과 연결된 노트 인스턴스들 조회
  */
 export async function fetchMemoInstancesByTaskIdWithJWT(
   userId: string,
   taskId: string,
   options: QueryOptions = {}
 ): Promise<any[]> {
-  console.log('📝 JWT 방식으로 특정 할일의 메모 인스턴스들 조회:', { userId, taskId, options });
+  console.log('📝 JWT 방식으로 특정 할일의 노트 인스턴스들 조회:', { userId, taskId, options });
 
   try {
-    const instances = await queryRLSTableWithJWT('memo_instances', [
+    const instances = await queryRLSTableWithJWT('note_instances', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -1481,10 +1481,10 @@ export async function fetchMemoInstancesByTaskIdWithJWT(
       ...options
     });
 
-    console.log('✅ JWT 특정 할일의 메모 인스턴스들 조회 성공:', { instancesCount: instances.length });
+    console.log('✅ JWT 특정 할일의 노트 인스턴스들 조회 성공:', { instancesCount: instances.length });
     return instances || [];
   } catch (error) {
-    console.error('❌ JWT 특정 할일의 메모 인스턴스들 조회 실패:', error);
+    console.error('❌ JWT 특정 할일의 노트 인스턴스들 조회 실패:', error);
     return [];
   }
 }

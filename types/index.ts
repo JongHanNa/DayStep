@@ -108,8 +108,8 @@ export interface Note {
   tags?: MemoTag[];
 }
 
-// Memo instance types (manually defined until Supabase types are updated)
-export interface MemoInstance {
+// Note instance types (manually defined until Supabase types are updated)
+export interface NoteInstance {
   id: string;
   original_memo_id: string;
   user_id: string;
@@ -139,8 +139,8 @@ export interface NoteInsert {
   recurrence_type?: 'single' | 'recurring';
 }
 
-// Memo instance insert types (manually defined until Supabase types are updated)
-export interface MemoInstanceInsert {
+// Note instance insert types (manually defined until Supabase types are updated)
+export interface NoteInstanceInsert {
   original_memo_id: string;
   user_id: string;
   instance_date: string;
@@ -159,8 +159,8 @@ export interface NoteUpdate extends Partial<NoteInsert> {
   id: string;
 }
 
-// Memo instance update types (manually defined until Supabase types are updated)
-export interface MemoInstanceUpdate extends Partial<MemoInstanceInsert> {
+// Note instance update types (manually defined until Supabase types are updated)
+export interface NoteInstanceUpdate extends Partial<NoteInstanceInsert> {
   id: string;
 }
 
@@ -293,8 +293,8 @@ export interface CreateTodoInput {
   parent_todo_id?: string;
 }
 
-// Memo instance types
-export interface CreateMemoInstanceInput {
+// Note instance types
+export interface CreateNoteInstanceInput {
   original_memo_id: string;
   user_id: string;
   instance_date: string; // YYYY-MM-DD format
@@ -303,7 +303,7 @@ export interface CreateMemoInstanceInput {
   related_task_id?: string | null;
 }
 
-export interface UpdateMemoInstanceInput extends Partial<CreateMemoInstanceInput> {
+export interface UpdateNoteInstanceInput extends Partial<CreateNoteInstanceInput> {
   id: string;
 }
 
@@ -324,11 +324,11 @@ export interface NoteWithInstances {
   updated_at: string;
   is_recurring?: boolean;
   recurrence_type?: 'single' | 'recurring';
-  memo_instances?: MemoInstance[];
+  note_instances?: NoteInstance[];
 }
 
-// Memo instance with original note information
-export interface MemoInstanceWithOriginal {
+// Note instance with original note information
+export interface NoteInstanceWithOriginal {
   id: string;
   original_memo_id: string;
   user_id: string;

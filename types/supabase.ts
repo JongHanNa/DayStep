@@ -66,7 +66,7 @@ export type Database = {
         }
         Relationships: []
       }
-      memo_instances: {
+      note_instances: {
         Row: {
           content: string
           created_at: string | null
@@ -102,14 +102,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "memo_instances_original_memo_id_fkey"
+            foreignKeyName: "note_instances_original_memo_id_fkey"
             columns: ["original_memo_id"]
             isOneToOne: false
             referencedRelation: "notes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "memo_instances_related_task_id_fkey"
+            foreignKeyName: "note_instances_related_task_id_fkey"
             columns: ["related_task_id"]
             isOneToOne: false
             referencedRelation: "todos"
