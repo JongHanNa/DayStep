@@ -1,6 +1,6 @@
 /**
  * Note Store - 노트 관리
- * PARA 구조로 분류되는 메모 시스템
+ * PARA 구조로 분류되는 노트 시스템
  */
 
 import { createStore } from '@/state/utils/storeUtils';

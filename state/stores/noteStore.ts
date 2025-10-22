@@ -31,8 +31,8 @@ export interface Note {
   position: number;
   created_at: string;
   updated_at: string;
-  is_recurring?: boolean; // 반복 메모 여부
-  recurrence_type?: 'single' | 'recurring' | 'instance'; // 메모 반복 타입
+  is_recurring?: boolean; // 반복 노트 여부
+  recurrence_type?: 'single' | 'recurring' | 'instance'; // 노트 반복 타입
 }
 
 // Note 생성 입력 타입
@@ -109,7 +109,7 @@ interface NoteStoreState {
  * Note 스토어 액션 타입 정의
  */
 interface NoteStoreActions {
-  // 메모 CRUD 작업
+  // 노트 CRUD 작업
   createNote: (input: CreateNoteInput) => Promise<Note>;
   updateNote: (input: UpdateNoteInput) => Promise<Note>;
   deleteNote: (noteId: string) => Promise<void>;
@@ -216,7 +216,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           floatingCardPosition: { x: 0, y: 0 },
         },
 
-        // 메모 CRUD 작업
+        // 노트 CRUD 작업
         createNote: async (input: CreateNoteInput) => {
           console.log('📝 NoteStore.createNote:', input);
 
@@ -455,11 +455,11 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             recurrence_type: options?.recurrenceType || 'single',
           };
 
-          // 메모 업데이트
+          // 노트 업데이트
           await get().updateNote({ id: memoId, ...updateData });
 
           // 반복 메모로 설정된 경우 인스턴스 생성 로직은 TaskLinkModal에서 처리
-          console.log('✅ 메모 할일 연결 완료:', updateData);
+          console.log('✅ 노트 할일 연결 완료:', updateData);
         },
 
         unlinkFromTask: async (memoId: string) => {
@@ -505,7 +505,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
 
           if (failedMemos.length > 0) {
-            console.warn(`일부 메모 삭제 실패: ${failedMemos.join(', ')}`);
+            console.warn(`일부 노트 삭제 실패: ${failedMemos.join(', ')}`);
           }
 
           return deletedCount;
@@ -546,7 +546,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               if (memo.recurrence_type === 'instance' && memo.linked_date && date) {
                 // linked_date와 현재 date가 일치하는 경우만 표시
                 if (memo.linked_date === date) {
-                  console.log('📅 특정 날짜 인스턴스 메모 표시:', memo.id, memo.linked_date, date);
+                  console.log('📅 특정 날짜 인스턴스 노트 표시:', memo.id, memo.linked_date, date);
                   displayMemos.push(memo);
                 }
                 continue;
@@ -557,32 +557,32 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
                 try {
                   const memoInstance = await fetchMemoInstanceByDateWithJWT(userId, memo.id, date);
                   if (memoInstance) {
-                    // 메모 인스턴스가 있으면 이를 우선 표시
-                    console.log('📅 메모 인스턴스 발견:', memoInstance.id, date);
+                    // 노트 인스턴스가 있으면 이를 우선 표시
+                    console.log('📅 노트 인스턴스 발견:', memoInstance.id, date);
                     displayMemos.push({
                       ...memoInstance,
-                      // 메모 인스턴스임을 표시하기 위한 추가 필드
+                      // 노트 인스턴스임을 표시하기 위한 추가 필드
                       _isInstance: true,
                       _originalMemo: memo
                     } as any);
                     continue;
                   }
                 } catch (error) {
-                  console.log('⚠️ 메모 인스턴스 조회 실패:', error);
+                  console.log('⚠️ 노트 인스턴스 조회 실패:', error);
                 }
               }
 
-              // 3. 일반 메모이거나 인스턴스가 없는 경우 원본 메모 표시
+              // 3. 일반 메모이거나 인스턴스가 없는 경우 원본 노트 표시
               // (단, instance 타입이 아닌 경우만)
               if (memo.recurrence_type !== 'instance') {
                 displayMemos.push(memo);
               }
             }
 
-            console.log('✅ 표시할 메모 목록:', displayMemos.length);
+            console.log('✅ 표시할 노트 목록:', displayMemos.length);
             return displayMemos;
           } catch (error) {
-            console.error('❌ 표시 메모 조회 실패:', error);
+            console.error('❌ 표시 노트 조회 실패:', error);
             // 에러 시 기본 연결된 메모들 반환
             return get().getLinkedNotesByTaskId(taskId);
           }
@@ -842,10 +842,10 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
           try {
             const result = await createMemoInstanceWithJWT(input);
-            console.log('✅ 메모 인스턴스 생성 성공:', result);
+            console.log('✅ 노트 인스턴스 생성 성공:', result);
             return result;
           } catch (error) {
-            console.error('❌ 메모 인스턴스 생성 실패:', error);
+            console.error('❌ 노트 인스턴스 생성 실패:', error);
             throw error;
           }
         },
@@ -855,10 +855,10 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
           try {
             const result = await updateMemoInstanceWithJWT(input.id, input);
-            console.log('✅ 메모 인스턴스 업데이트 성공:', result);
+            console.log('✅ 노트 인스턴스 업데이트 성공:', result);
             return result;
           } catch (error) {
-            console.error('❌ 메모 인스턴스 업데이트 실패:', error);
+            console.error('❌ 노트 인스턴스 업데이트 실패:', error);
             throw error;
           }
         },
@@ -868,9 +868,9 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
           try {
             await deleteMemoInstanceWithJWT(instanceId);
-            console.log('✅ 메모 인스턴스 삭제 성공');
+            console.log('✅ 노트 인스턴스 삭제 성공');
           } catch (error) {
-            console.error('❌ 메모 인스턴스 삭제 실패:', error);
+            console.error('❌ 노트 인스턴스 삭제 실패:', error);
             throw error;
           }
         },
@@ -911,10 +911,10 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             }
 
             const instances = await fetchMemoInstancesByMemoIdWithJWT(userId, memoId);
-            console.log('✅ 메모 인스턴스들 조회 성공:', instances.length);
+            console.log('✅ 노트 인스턴스들 조회 성공:', instances.length);
             return instances;
           } catch (error) {
-            console.error('❌ 메모 인스턴스들 조회 실패:', error);
+            console.error('❌ 노트 인스턴스들 조회 실패:', error);
             return [];
           }
         },
@@ -955,10 +955,10 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             }
 
             const instances = await fetchMemoInstancesByDateWithJWT(userId, date);
-            console.log('✅ 특정 날짜 메모 인스턴스들 조회 성공:', instances.length);
+            console.log('✅ 특정 날짜 노트 인스턴스들 조회 성공:', instances.length);
             return instances;
           } catch (error) {
-            console.error('❌ 특정 날짜 메모 인스턴스들 조회 실패:', error);
+            console.error('❌ 특정 날짜 노트 인스턴스들 조회 실패:', error);
             return [];
           }
         },
@@ -1043,10 +1043,10 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             }
 
             const instances = await fetchMemoInstancesByTaskIdWithJWT(userId, taskId);
-            console.log('✅ 특정 할일의 메모 인스턴스들 조회 성공:', instances.length);
+            console.log('✅ 특정 할일의 노트 인스턴스들 조회 성공:', instances.length);
             return instances;
           } catch (error) {
-            console.error('❌ 특정 할일의 메모 인스턴스들 조회 실패:', error);
+            console.error('❌ 특정 할일의 노트 인스턴스들 조회 실패:', error);
             return [];
           }
         },
@@ -1055,7 +1055,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.createRecurringMemoInstances:', { memoId, dates, taskId });
 
           try {
-            // 원본 메모 조회
+            // 원본 노트 조회
             const originalMemo = get().getNoteById(memoId);
             if (!originalMemo) {
               throw new Error('원본 메모를 찾을 수 없습니다');
@@ -1100,15 +1100,15 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               taskId || null
             );
 
-            console.log('✅ 반복 메모 인스턴스들 생성 성공:', instances.length);
+            console.log('✅ 반복 노트 인스턴스들 생성 성공:', instances.length);
             return instances;
           } catch (error) {
-            console.error('❌ 반복 메모 인스턴스들 생성 실패:', error);
+            console.error('❌ 반복 노트 인스턴스들 생성 실패:', error);
             throw error;
           }
         },
 
-        // 메모 인스턴스 생성 또는 업데이트 (upsert) - 스마트한 원본 비교 로직 포함
+        // 노트 인스턴스 생성 또는 업데이트 (upsert) - 스마트한 원본 비교 로직 포함
         upsertMemoInstance: async (memoId: string, date: string, content: string, taskId?: string | null) => {
           console.log('📝 NoteStore.upsertMemoInstance:', { memoId, date, content, taskId });
 
@@ -1138,7 +1138,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               throw new Error('사용자 인증이 필요합니다');
             }
 
-            // 원본 메모 조회
+            // 원본 노트 조회
             const originalMemo = get().getNoteById(memoId);
             if (!originalMemo) {
               throw new Error('원본 메모를 찾을 수 없습니다');
@@ -1190,7 +1190,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               }
             }
           } catch (error) {
-            console.error('❌ 메모 인스턴스 upsert 실패:', error);
+            console.error('❌ 노트 인스턴스 upsert 실패:', error);
             throw error;
           }
         },

@@ -109,7 +109,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3B82F6');
 
-  // 통합된 메모 편집 모달 상태
+  // 통합된 노트 편집 모달 상태
   const [memoEditorOpen, setMemoEditorOpen] = useState(false);
   const [memoEditorMode, setMemoEditorMode] = useState<'create' | 'edit'>('create');
   const [memoContent, setMemoContent] = useState('');
@@ -190,16 +190,16 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
           await updateMemoTagsWithTemplates(newMemo.id, selectedTags, selectedTemplates, userId);
         }
 
-        // 새 메모 생성 시 편집 모드로 전환
+        // 새 노트 생성 시 편집 모드로 전환
         setCurrentEditingMemo(newMemo);
         setMemoEditorMode('edit');
         setOriginalMemoContent(memoContent.trim());
       }
     },
     onDelete: async () => {
-      // 편집 모드에서만 삭제 (새 메모 생성 중에는 삭제하지 않음)
+      // 편집 모드에서만 삭제 (새 노트 생성 중에는 삭제하지 않음)
       if (memoEditorMode === 'edit' && currentEditingMemo) {
-        console.log('🗑️ [Note] 빈 메모 자동 삭제:', currentEditingMemo.id);
+        console.log('🗑️ [Note] 빈 노트 자동 삭제:', currentEditingMemo.id);
         await deleteNote(currentEditingMemo.id);
 
         // 삭제 완료 토스트 알림
@@ -208,7 +208,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
           description: '내용이 없는 메모가 자동으로 삭제되었습니다.',
         });
 
-        // 편집 상태 초기화 (모달은 닫지 않고 새 메모 모드로 전환)
+        // 편집 상태 초기화 (모달은 닫지 않고 새 노트 모드로 전환)
         setCurrentEditingMemo(null);
         setMemoEditorMode('create');
         setOriginalMemoContent('');
@@ -267,7 +267,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     }
   }, [filteredNotes, todos, fetchTodoById]);
 
-  // 메모 편집 시 기존 태그 로드 (사용자 태그와 템플릿 태그 분리)
+  // 노트 편집 시 기존 태그 로드 (사용자 태그와 템플릿 태그 분리)
   useEffect(() => {
     if (currentEditingMemo && user?.id) {
       const memoTags = getTagsForMemo(currentEditingMemo.id);
@@ -282,8 +282,8 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       // 템플릿 태그는 원본 template_id로 설정
       setSelectedTemplates(templateTags.map(tag => tag.template_id).filter(Boolean) as string[]);
     } else {
-      setSelectedTags([]); // 새 메모 생성 시 태그 초기화
-      setSelectedTemplates([]); // 새 메모 생성 시 템플릿 초기화
+      setSelectedTags([]); // 새 노트 생성 시 태그 초기화
+      setSelectedTemplates([]); // 새 노트 생성 시 템플릿 초기화
     }
   }, [currentEditingMemo, getTagsForMemo, user?.id]);
 
@@ -301,7 +301,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     if (open && isAuthenticated && user?.id) {
       console.log('🔄 템플릿 및 태그 링크 로딩 시작...');
       loadTemplates(); // 템플릿도 함께 로드
-      loadMemoTagLinks(user.id); // 메모 태그 링크도 함께 로드
+      loadMemoTagLinks(user.id); // 노트 태그 링크도 함께 로드
     }
   }, [open, isAuthenticated, user?.id, loadTemplates, loadMemoTagLinks]);
 
@@ -320,7 +320,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     }
   }, [selectedNoteForEdit, memoEditorOpen]);
 
-  // 통합된 메모 편집기 열기
+  // 통합된 노트 편집기 열기
   const openMemoEditor = (mode: 'create' | 'edit', memo?: Note) => {
     setMemoEditorMode(mode);
 
@@ -329,14 +329,14 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       setMemoContent(memo.content);
       setOriginalMemoContent(memo.content);
       setSelectedTaskId(memo.related_task_id || null);
-      // 기존 메모 편집 시에는 사용자 편집으로 간주하지 않음 (초기값 로딩이므로)
+      // 기존 노트 편집 시에는 사용자 편집으로 간주하지 않음 (초기값 로딩이므로)
       setHasUserEditedContent(false);
     } else {
       setCurrentEditingMemo(null);
       setMemoContent('');
       setOriginalMemoContent('');
       setSelectedTaskId(null);
-      // 새 메모 생성 시에도 사용자 편집으로 간주하지 않음 (초기 상태)
+      // 새 노트 생성 시에도 사용자 편집으로 간주하지 않음 (초기 상태)
       setHasUserEditedContent(false);
     }
 
@@ -344,7 +344,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     setShowExitConfirm(false);
   };
 
-  // 메모 편집기 닫기
+  // 노트 편집기 닫기
   const closeMemoEditor = () => {
     setMemoEditorOpen(false);
     setSelectedNoteForEdit(null);
@@ -360,7 +360,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   const hasChanges = memoContent !== originalMemoContent && autoSave.saveStatus === 'pending';
 
 
-  // 메모 편집 취소 시도
+  // 노트 편집 취소 시도
   const handleCancelMemoEdit = () => {
     if (hasChanges) {
       setShowExitConfirm(true);
@@ -388,7 +388,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     closeMemoEditor();
   };
 
-  // 메모 삭제
+  // 노트 삭제
   const handleDeleteMemo = async (memoId: string) => {
     try {
       await deleteNote(memoId);
@@ -405,7 +405,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     }
   };
 
-  // 메모 핀 토글
+  // 노트 핀 토글
   const handleTogglePin = async (memo: Note) => {
     try {
       if (memo.is_pinned) {
@@ -514,7 +514,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                 </div>
               </div>
 
-              {/* 메모 목록 영역 */}
+              {/* 노트 목록 영역 */}
               <div className="space-y-3">
                 {loading && (
                   <div className="text-center py-8 text-muted-foreground">
@@ -568,9 +568,9 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                           }}
                         />
 
-                        {/* 메모 콘텐츠 영역 */}
+                        {/* 노트 콘텐츠 영역 */}
                         <div className="flex-1 min-w-0">
-                          {/* 메모 헤더 */}
+                          {/* 노트 헤더 */}
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               {memo.is_pinned && (
@@ -584,7 +584,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                 </Badge>
                               )}
 
-                              {/* 메모 태그들 표시 - 타임라인과 동일한 배지 형태 */}
+                              {/* 노트 태그들 표시 - 타임라인과 동일한 배지 형태 */}
                               {(() => {
                                 const memoTags = getTagsForMemo(memo.id);
                                 if (memoTags.length === 0) return null;
@@ -676,7 +676,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                             </div>
                           </div>
 
-                          {/* 메모 내용 */}
+                          {/* 노트 내용 */}
                           <div className="space-y-2">
                             <div className="relative max-h-24 overflow-hidden">
                               <p className="text-sm text-foreground whitespace-pre-wrap">
@@ -781,7 +781,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                               </div>
                             )}
 
-                            {/* 메모 메타 정보 */}
+                            {/* 노트 메타 정보 */}
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>
                                 {format(new Date(memo.created_at), 'M월 d일 HH:mm', { locale: ko })}
@@ -806,7 +806,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       </dialog>
     )}
 
-    {/* 통합된 메모 편집기 모달 */}
+    {/* 통합된 노트 편집기 모달 */}
     {memoEditorOpen && (
       <dialog open className="modal modal-open">
         <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
@@ -1295,7 +1295,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                     )}
                   </div>
 
-                  {/* 메모 내용 입력 */}
+                  {/* 노트 내용 입력 */}
                   <MarkdownEditor
                     value={memoContent}
                     onChange={(value) => {
@@ -1368,7 +1368,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       open={taskLinkModalOpen}
       onOpenChange={(open) => {
         setTaskLinkModalOpen(open);
-        // 할일 연결 모달이 닫힐 때 새로운 연결 상태를 메모 편집기에 반영
+        // 할일 연결 모달이 닫힐 때 새로운 연결 상태를 노트 편집기에 반영
         if (!open && selectedMemoForLink?.id === 'new' && memoEditorOpen) {
           // TaskLinkModal에서 할일이 연결된 경우 selectedTaskId가 자동으로 업데이트됨
         }

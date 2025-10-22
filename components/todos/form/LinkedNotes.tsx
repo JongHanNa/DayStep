@@ -21,7 +21,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
     return null;
   }
 
-  // 연결된 메모 필터링
+  // 연결된 노트 필터링
   const linkedMemos = notes.filter(memo => 
     memo.related_task_id === taskId || 
     memo.linked_timeline_task_id === taskId
@@ -34,13 +34,13 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
     return null;
   }
 
-  // 메모 클릭 핸들러
+  // 노트 클릭 핸들러
   const handleMemoClick = (memo: any, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedNoteForEdit(memo);
   };
 
-  // 메모 내용 변경 핸들러
+  // 노트 내용 변경 핸들러
   const handleMemoContentChange = async (memo: any, newContent: string) => {
     try {
       const { updateNote } = useNoteStore.getState();
@@ -55,7 +55,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
 
   return (
     <div className="mx-4 my-2">
-      {/* 연결된 메모 헤더 */}
+      {/* 연결된 노트 헤더 */}
       <div className="flex items-center gap-2 mb-3">
         <button
           type="button"
@@ -78,7 +78,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
         </button>
       </div>
 
-      {/* 아코디언 형태로 연결된 메모 표시 */}
+      {/* 아코디언 형태로 연결된 노트 표시 */}
       <div
         className={cn(
           'overflow-hidden transition-all duration-200 ease-out',

@@ -11,7 +11,7 @@
 /* react-modal-sheet 스타일 */
 @import '../styles/bottom-sheet.css';
 
-/* 메모 마크다운 렌더링 스타일 */
+/* 노트 마크다운 렌더링 스타일 */
 @import '../styles/memo-markdown.css';
 
 /* 반복 할일 시간 변경 모달 z-index (react-modal-sheet보다 높게) */

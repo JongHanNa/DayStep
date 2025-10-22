@@ -622,7 +622,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) => {
           </div>
         )}
 
-        {/* 메모 */}
+        {/* 노트 */}
         {contact.notes && (
           <div className="mt-3 p-2 bg-muted/50 rounded text-sm">
             <div className="text-muted-foreground mb-1">메모:</div>

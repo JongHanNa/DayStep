@@ -39,7 +39,7 @@ export interface TodoFormStateValues {
   recurrenceEndType: 'never' | 'date' | 'count';
   selectedDaysOfWeek: number[];
   
-  // 메모 관련 상태
+  // 노트 관련 상태
   memos: MemoData[];
   
   // 연락처 관련 상태
@@ -117,7 +117,7 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   const [recurrenceEndType, setRecurrenceEndType] = useState<'never' | 'date' | 'count'>('never');
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([]);
   
-  // 메모 관련 상태
+  // 노트 관련 상태
   const [memos, setMemos] = useState<MemoData[]>([]);
   
   // 연락처 관련 상태
@@ -415,7 +415,7 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     setRecurrenceEndType('never');
     setSelectedDaysOfWeek([]);
 
-    // 메모 상태 초기화
+    // 노트 상태 초기화
     setMemos([]);
 
     // 연락처 상태 초기화

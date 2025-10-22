@@ -108,7 +108,7 @@ export const useAutoSave = (
     if (!content.trim()) {
       // 이전에 저장된 내용이 있었다면 (빈 메모가 아닌 기존 메모를 지운 경우)
       if (lastContentRef.current.trim() && onDelete) {
-        console.log('🗑️ [AutoSave] 빈 내용 감지, 메모 삭제 중...');
+        console.log('🗑️ [AutoSave] 빈 내용 감지, 노트 삭제 중...');
         
         // 상태를 삭제 중으로 설정 (saving 상태 재사용)
         setSaveStatus('saving');
@@ -135,13 +135,13 @@ export const useAutoSave = (
               if (isMountedRef.current) {
                 setSaveStatus('error');
                 setErrorMessage(error instanceof Error ? error.message : '삭제 중 오류가 발생했습니다');
-                console.error('❌ [AutoSave] 메모 삭제 실패:', error);
+                console.error('❌ [AutoSave] 노트 삭제 실패:', error);
               }
             }
           }
         }, debounceMs);
         
-        console.log(`⏱️ [AutoSave] ${debounceMs}ms 후 메모 삭제 예약`);
+        console.log(`⏱️ [AutoSave] ${debounceMs}ms 후 노트 삭제 예약`);
       }
       return;
     }

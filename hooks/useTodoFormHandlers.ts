@@ -495,7 +495,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
                 });
               } catch (memoError) {
                 console.error('메모 생성 실패:', memoError);
-                // 메모 생성 실패는 할일 생성을 방해하지 않음
+                // 노트 생성 실패는 할일 생성을 방해하지 않음
               }
             }
           }
@@ -521,7 +521,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       if (!isEditMode && values.memos.length > 0) {
         const validMemosCount = values.memos.filter(memo => memo.content.trim()).length;
         if (validMemosCount > 0) {
-          successMessage += `\n연결된 메모 ${validMemosCount}개도 함께 생성되었습니다.`;
+          successMessage += `\n연결된 노트 ${validMemosCount}개도 함께 생성되었습니다.`;
         }
       }
 
@@ -611,14 +611,14 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     try {
       let deletedMemoCount = 0;
       
-      // 연결된 메모 삭제 옵션이 선택된 경우
+      // 연결된 노트 삭제 옵션이 선택된 경우
       if (deleteLinkedMemosOption) {
         try {
           deletedMemoCount = await deleteLinkedNotes(editingTodo.id);
-          console.log(`✅ 연결된 메모 ${deletedMemoCount}개 삭제 완료`);
+          console.log(`✅ 연결된 노트 ${deletedMemoCount}개 삭제 완료`);
         } catch (memoError) {
-          console.error('⚠️ 연결된 메모 삭제 중 일부 실패:', memoError);
-          // 메모 삭제 실패는 할일 삭제를 중단시키지 않음
+          console.error('⚠️ 연결된 노트 삭제 중 일부 실패:', memoError);
+          // 노트 삭제 실패는 할일 삭제를 중단시키지 않음
         }
       }
       
@@ -626,7 +626,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       
       let successMessage = '할일이 삭제되었습니다.';
       if (deleteLinkedMemosOption && deletedMemoCount > 0) {
-        successMessage += `\n연결된 메모 ${deletedMemoCount}개도 함께 삭제되었습니다.`;
+        successMessage += `\n연결된 노트 ${deletedMemoCount}개도 함께 삭제되었습니다.`;
       }
       
       toast({
@@ -657,14 +657,14 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     try {
       let deletedMemoCount = 0;
       
-      // 연결된 메모 삭제 옵션이 선택된 경우
+      // 연결된 노트 삭제 옵션이 선택된 경우
       if (deleteLinkedMemosOption) {
         try {
           deletedMemoCount = await deleteLinkedNotes(editingTodo.id);
-          console.log(`✅ 반복 할일 연결된 메모 ${deletedMemoCount}개 삭제 완료`);
+          console.log(`✅ 반복 할일 연결된 노트 ${deletedMemoCount}개 삭제 완료`);
         } catch (memoError) {
-          console.error('⚠️ 반복 할일 연결된 메모 삭제 중 일부 실패:', memoError);
-          // 메모 삭제 실패는 할일 삭제를 중단시키지 않음
+          console.error('⚠️ 반복 할일 연결된 노트 삭제 중 일부 실패:', memoError);
+          // 노트 삭제 실패는 할일 삭제를 중단시키지 않음
         }
       }
       
@@ -697,7 +697,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       
       let successMessage = deleteMessages[deleteType];
       if (deleteLinkedMemosOption && deletedMemoCount > 0) {
-        successMessage += `\n연결된 메모 ${deletedMemoCount}개도 함께 삭제되었습니다.`;
+        successMessage += `\n연결된 노트 ${deletedMemoCount}개도 함께 삭제되었습니다.`;
       }
       
       toast({

@@ -54,7 +54,7 @@ DayStep/
 │   │   ├── TimeSlot.tsx         # 시간 슬롯
 │   │   └── ...
 │   ├── calendar/                # 캘린더 컴포넌트
-│   ├── memos/                   # 메모 컴포넌트
+│   ├── memos/                   # 노트 컴포넌트
 │   ├── layout/                  # 레이아웃 컴포넌트
 │   │   ├── Header.tsx           # 헤더
 │   │   ├── Navigation.tsx       # 네비게이션
@@ -71,7 +71,7 @@ DayStep/
 │   │   ├── authStore.ts         # 인증 상태
 │   │   ├── settingsStore.ts    # 앱 설정 (테마, 글꼴, 알림)
 │   │   ├── motivationStore.ts  # 동기부여 메시지
-│   │   ├── memoTagStore.ts     # 메모 태그
+│   │   ├── memoTagStore.ts     # 노트 태그
 │   │   ├── pomodoroStore.ts    # 포모도로 타이머
 │   │   └── ...
 │   ├── types/                   # 상태 타입 정의
@@ -103,7 +103,7 @@ DayStep/
 ├── types/                        # TypeScript 타입 정의
 │   ├── index.ts                 # 공통 타입 (Todo, User, Category 등)
 │   ├── todo.ts                  # 할일 관련 타입
-│   ├── memo.ts                  # 메모 관련 타입
+│   ├── memo.ts                  # 노트 관련 타입
 │   ├── motivation.ts            # 동기부여 관련 타입
 │   └── ...
 │

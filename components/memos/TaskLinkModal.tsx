@@ -413,26 +413,26 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
 
                   {/* 반복 할일 목록 */}
                   <TabsContent value="recurring" className="space-y-2">
-                    {/* 반복 메모 연결 방식 선택 */}
+                    {/* 반복 노트 연결 방식 선택 */}
                     <div className="mb-4 p-3 bg-muted/20 rounded-lg">
                       <h4 className="text-sm font-medium mb-2">메모 연결 방식</h4>
                       <RadioGroup value={recurrenceType} onValueChange={(value: 'single' | 'recurring' | 'instance') => setRecurrenceType(value)}>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="single" id="single" />
                           <Label htmlFor="single" className="text-sm">
-                            단일 연결 - 모든 반복 인스턴스에 동일한 메모 표시
+                            단일 연결 - 모든 반복 인스턴스에 동일한 노트 표시
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="recurring" id="recurring" />
                           <Label htmlFor="recurring" className="text-sm">
-                            반복 메모 - 각 반복 인스턴스마다 개별 메모 생성
+                            반복 노트 - 각 반복 인스턴스마다 개별 노트 생성
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="instance" id="instance" />
                           <Label htmlFor="instance" className="text-sm">
-                            특정 날짜 연결 - 선택한 반복 인스턴스에만 메모 연결
+                            특정 날짜 연결 - 선택한 반복 인스턴스에만 노트 연결
                           </Label>
                         </div>
                       </RadioGroup>

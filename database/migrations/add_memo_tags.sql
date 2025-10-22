@@ -2,7 +2,7 @@
 -- 퀵메모 태그 기능 테이블 추가
 -- ===================================================
 
--- 1. 메모 태그 테이블 (태그 정의)
+-- 1. 노트 태그 테이블 (태그 정의)
 CREATE TABLE memo_tags (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -96,7 +96,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 9. 메모 삭제 시 태그 링크도 자동 삭제 (CASCADE로 이미 처리되지만 명시적 확인)
+-- 9. 노트 삭제 시 태그 링크도 자동 삭제 (CASCADE로 이미 처리되지만 명시적 확인)
 -- quick_memos 테이블의 ON DELETE CASCADE가 note_tag_links에도 적용됨
 
 COMMENT ON TABLE memo_tags IS '퀵메모 태그 정의 테이블';

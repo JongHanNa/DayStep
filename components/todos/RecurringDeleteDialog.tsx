@@ -30,7 +30,7 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
   const [deleteLinkedMemos, setDeleteLinkedMemos] = useState(false);
   const { getLinkedNotesByTaskId } = useNoteStore();
   
-  // 연결된 메모 조회
+  // 연결된 노트 조회
   const linkedMemos = todo ? getLinkedNotesByTaskId(todo.id) : [];
   const hasLinkedMemos = linkedMemos.length > 0;
 
@@ -191,7 +191,7 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
                 </div>
               </div>
               
-              {/* 연결된 메모 미리보기 (최대 2개, 공간 절약) */}
+              {/* 연결된 노트 미리보기 (최대 2개, 공간 절약) */}
               <div className="space-y-1 mb-3">
                 {linkedMemos.slice(0, 2).map((memo) => (
                   <div key={memo.id} className="flex items-start gap-2 p-2 bg-white rounded border">

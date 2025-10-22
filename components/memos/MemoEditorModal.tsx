@@ -90,7 +90,7 @@ const MemoEditorModal: React.FC<MemoEditorModalProps> = ({
   // 변경사항 확인
   const hasChanges = content !== originalContent;
 
-  // 메모 편집 취소 시도
+  // 노트 편집 취소 시도
   const handleCancel = useCallback(() => {
     // 내용이 있으면 항상 확인 다이얼로그 표시
     if (content.trim()) {
@@ -171,7 +171,7 @@ const MemoEditorModal: React.FC<MemoEditorModalProps> = ({
 
   return (
     <>
-      {/* 메인 메모 편집 모달 */}
+      {/* 메인 노트 편집 모달 */}
       <Sheet
         isOpen={open}
         onClose={handleDragClose}
@@ -349,7 +349,7 @@ const MemoEditorModal: React.FC<MemoEditorModalProps> = ({
             <div className="px-4 pb-4">
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  작성 중인 메모 내용이 저장되지 않고 사라집니다.
+                  작성 중인 노트 내용이 저장되지 않고 사라집니다.
                 </p>
 
                 <div className="flex flex-col gap-2">

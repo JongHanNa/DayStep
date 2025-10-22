@@ -1,10 +1,10 @@
 // Memo Tag System Constants
-// 메모 태그 시스템 상수 정의
+// 노트 태그 시스템 상수 정의
 
 import { MemoTagCategory } from '@/types';
 
 /**
- * 메모 태그 카테고리 정의
+ * 노트 태그 카테고리 정의
  */
 export const MEMO_TAG_CATEGORIES: MemoTagCategory[] = [
   {
@@ -194,7 +194,7 @@ export const TAG_VALIDATION = {
  * UI 디스플레이 설정
  */
 export const TAG_DISPLAY_CONFIG = {
-  MAX_VISIBLE_TAGS: 3, // 메모 카드에서 보여줄 최대 태그 수
+  MAX_VISIBLE_TAGS: 3, // 노트 카드에서 보여줄 최대 태그 수
   TAG_TRUNCATE_LENGTH: 12, // 태그 이름 자르기 길이
   RECENT_TAGS_LIMIT: 10, // 최근 사용 태그 표시 개수
   POPULAR_TAGS_LIMIT: 15 // 인기 태그 표시 개수

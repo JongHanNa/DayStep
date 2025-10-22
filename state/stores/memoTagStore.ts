@@ -31,7 +31,7 @@ import type { MemoTag, MemoTagLink, MemoTagInsert, MemoTagUpdate, MemoTagLinkIns
 import { MEMO_TAG_CATEGORIES, RECOMMENDED_STARTER_TAGS } from '@/lib/memo-tag-constants';
 
 /**
- * 메모 태그 스토어 상태 타입 정의
+ * 노트 태그 스토어 상태 타입 정의
  */
 interface MemoTagStoreState {
   // 데이터 상태
@@ -62,14 +62,14 @@ interface MemoTagStoreState {
 }
 
 /**
- * 메모 태그 스토어 액션 타입 정의
+ * 노트 태그 스토어 액션 타입 정의
  */
 interface MemoTagStoreActions {
   // 데이터 로딩
   loadAllTags: (userId: string, forceRefresh?: boolean) => Promise<void>;
   loadTagsForMemo: (memoId: string, userId: string) => Promise<MemoTag[]>;
   loadTemplates: (forceRefresh?: boolean) => Promise<void>; // 템플릿 로딩
-  loadMemoTagLinks: (userId: string, forceRefresh?: boolean) => Promise<void>; // 메모 태그 링크 로딩
+  loadMemoTagLinks: (userId: string, forceRefresh?: boolean) => Promise<void>; // 노트 태그 링크 로딩
 
   // 템플릿 관련
   createTagFromTemplate: (templateData: CreateTagFromTemplateInput, userId: string) => Promise<MemoTag | null>;
@@ -136,7 +136,7 @@ const initialState: MemoTagStoreState = {
 };
 
 /**
- * 메모 태그 스토어 생성
+ * 노트 태그 스토어 생성
  */
 export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()(
   persist(
@@ -248,7 +248,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         }
       },
 
-      // 메모 태그 링크 로딩
+      // 노트 태그 링크 로딩
       loadMemoTagLinks: async (userId: string, forceRefresh = false) => {
         const state = get();
 
@@ -268,9 +268,9 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
             loading: false,
           });
 
-          console.log('✅ 메모 태그 링크 로딩 성공:', { linkCount: links.length });
+          console.log('✅ 노트 태그 링크 로딩 성공:', { linkCount: links.length });
         } catch (error) {
-          console.error('❌ 메모 태그 링크 로딩 실패:', error);
+          console.error('❌ 노트 태그 링크 로딩 실패:', error);
           set({
             loading: false,
             error: error instanceof Error ? error.message : '메모 태그 링크 로딩에 실패했습니다.'

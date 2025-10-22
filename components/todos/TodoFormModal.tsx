@@ -291,7 +291,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 <LinkedNotes taskId={editingTodo.id} />
               )}
 
-              {/* 메모 입력 (항상 표시) */}
+              {/* 노트 입력 (항상 표시) */}
               <MemoInput
                 memos={values.memos}
                 onMemosChange={actions.setMemos}

@@ -33,23 +33,23 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
   const [editingMemoIndex, setEditingMemoIndex] = useState<number | null>(null);
   const [isSavingMemo, setIsSavingMemo] = useState(false); // 중복 저장 방지
 
-  // 메모 추가 - 마크다운 에디터 열기
+  // 노트 추가 - 마크다운 에디터 열기
   const addMemo = () => {
-    setEditingMemoIndex(null); // 새 메모 추가
+    setEditingMemoIndex(null); // 새 노트 추가
     setMarkdownEditorOpen(true);
     setIsExpanded(true);
   };
 
-  // 기존 메모 편집
+  // 기존 노트 편집
   const editMemo = (index: number) => {
     setEditingMemoIndex(index);
     setMarkdownEditorOpen(true);
   };
 
-  // 마크다운 에디터에서 메모 저장
+  // 마크다운 에디터에서 노트 저장
   const handleMemoSave = (content: string) => {
     if (isSavingMemo) {
-      console.log('🚫 메모 저장 중복 방지: 이미 저장 중입니다.');
+      console.log('🚫 노트 저장 중복 방지: 이미 저장 중입니다.');
       return; // 이미 저장 중이면 중복 실행 방지
     }
 
@@ -57,28 +57,28 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
 
     try {
       if (editingMemoIndex !== null) {
-        // 기존 메모 수정
+        // 기존 노트 수정
         const updatedMemos = [...memos];
         updatedMemos[editingMemoIndex] = {
           ...updatedMemos[editingMemoIndex],
           content: content
         };
         onMemosChange(updatedMemos);
-        console.log('✅ 기존 메모 수정 완료:', editingMemoIndex);
+        console.log('✅ 기존 노트 수정 완료:', editingMemoIndex);
       } else {
-        // 새 메모 추가
+        // 새 노트 추가
         if (content.trim()) {
           const newMemo: MemoData = {
             id: `temp-memo-${Date.now()}-${Math.random()}`,
             content: content
           };
           onMemosChange([...memos, newMemo]);
-          console.log('✅ 새 메모 추가 완료:', newMemo.id);
+          console.log('✅ 새 노트 추가 완료:', newMemo.id);
         }
       }
 
       // 저장 완료 후 로그만 기록 (모달은 사용자가 수동으로 닫도록 함)
-      console.log('✅ 메모 저장 완료, 모달은 사용자가 직접 닫을 수 있습니다.');
+      console.log('✅ 노트 저장 완료, 모달은 사용자가 직접 닫을 수 있습니다.');
     } finally {
       // 저장 상태 초기화 (약간의 지연을 두어 완전히 처리되도록)
       setTimeout(() => {
@@ -87,7 +87,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
     }
   };
 
-  // 메모 내용 업데이트
+  // 노트 내용 업데이트
   const updateMemoContent = (memoId: string, content: string) => {
     const updatedMemos = memos.map(memo =>
       memo.id === memoId ? { ...memo, content } : memo
@@ -96,7 +96,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
   };
 
 
-  // 메모 삭제
+  // 노트 삭제
   const removeMemo = (memoId: string) => {
     const updatedMemos = memos.filter(memo => memo.id !== memoId);
     onMemosChange(updatedMemos);
@@ -121,7 +121,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
 
   return (
     <div className="mx-4 my-2">
-      {/* 메모 섹션 헤더 */}
+      {/* 노트 섹션 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <button
           type="button"
@@ -145,7 +145,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
           />
         </button>
 
-        {/* 메모 추가 버튼 */}
+        {/* 노트 추가 버튼 */}
         <Button
           type="button"
           variant="outline"
@@ -154,11 +154,11 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
           className="border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800/50 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
         >
           <StickyNote className="h-3 w-3 mr-1" />
-          메모 추가
+          노트 추가
         </Button>
       </div>
 
-      {/* 메모 입력 폼들 */}
+      {/* 노트 입력 폼들 */}
       <div
         className={cn(
           'overflow-hidden transition-all duration-200 ease-out',
@@ -175,11 +175,11 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
                 <div className="flex items-start gap-3">
                   <div className="w-1 h-4 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0 mt-1 group-hover:bg-gray-400 dark:group-hover:bg-gray-500 transition-colors" />
                   <div className="flex-1 min-w-0 space-y-2">
-                    {/* 메모 헤더 */}
+                    {/* 노트 헤더 */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          메모 {index + 1}
+                          노트 {index + 1}
                         </span>
                         <span className="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                           퀵메모
@@ -209,7 +209,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
                       </Button>
                     </div>
 
-                    {/* 메모 내용 미리보기 */}
+                    {/* 노트 내용 미리보기 */}
                     <div
                       className="w-full p-3 text-sm bg-gray-50 dark:bg-gray-800/20 border border-gray-200 dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/40 transition-colors"
                       onClick={() => editMemo(index)}
@@ -243,7 +243,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
         onOpenChange={setMarkdownEditorOpen}
         initialContent={editingMemoIndex !== null ? memos[editingMemoIndex]?.content || '' : ''}
         onSave={handleMemoSave}
-        title={editingMemoIndex !== null ? '메모 수정' : '새 메모 작성'}
+        title={editingMemoIndex !== null ? '메모 수정' : '새 노트 작성'}
         placeholder="메모 내용을 입력하세요..."
         mode="both"
       />

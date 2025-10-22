@@ -89,7 +89,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   
   const actualTaskId = extractTaskId(item.id);
 
-  // 메모 상태 관리
+  // 노트 상태 관리
   const [displayMemos, setDisplayMemos] = useState<Array<any>>([]);
   const [hasLinkedMemos, setHasLinkedMemos] = useState(false);
   const [memoTags, setMemoTags] = useState<Array<any>>([]);
@@ -97,15 +97,15 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 연결된 동기부여 메시지들 확인
   const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
 
-  // 메모 로딩 함수
+  // 노트 로딩 함수
   const loadDisplayMemos = async () => {
     try {
       let memosToDisplay: Array<any> = [];
 
-      // 반복 할일 인스턴스인 경우 날짜 정보 포함해서 메모 가져오기
+      // 반복 할일 인스턴스인 경우 날짜 정보 포함해서 노트 가져오기
       if (isRecurringTodo(item)) {
         const instanceDate = extractDateFromRecurringId(item.id);
-        console.log('🔄 반복 할일 메모 로딩:', { actualTaskId, instanceDate });
+        console.log('🔄 반복 할일 노트 로딩:', { actualTaskId, instanceDate });
 
         if (instanceDate) {
           memosToDisplay = await getDisplayNotesForTask(actualTaskId, instanceDate);
@@ -151,7 +151,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
     }
   };
 
-  // 메모 다시 로딩이 필요한 경우들
+  // 노트 다시 로딩이 필요한 경우들
   useEffect(() => {
     loadDisplayMemos();
   }, [actualTaskId, item.id, notes]);
@@ -260,10 +260,10 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   }, [finalIsCompleted, todoCompletion.behavior]);
   
   
-  // 연결된 메모 아코디언 상태 관리
+  // 연결된 노트 아코디언 상태 관리
   const [isMemosExpanded, setIsMemosExpanded] = useState(false);
   
-  // 메모 클릭 시 수정 모달 열기
+  // 노트 클릭 시 수정 모달 열기
   const handleMemoClick = (memo: any, e: React.MouseEvent) => {
     e.stopPropagation(); // 할일 클릭 이벤트 방지
     setSelectedNoteForEdit(memo);
@@ -281,14 +281,14 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
     return null;
   };
 
-  // 메모 내용 변경 핸들러
+  // 노트 내용 변경 핸들러
   const handleMemoContentChange = async (memo: any, newContent: string) => {
     try {
       const { updateNote, upsertMemoInstance } = useNoteStore.getState();
 
-      // 메모 인스턴스인 경우 (displayMemos에서 _isInstance 플래그 확인)
+      // 노트 인스턴스인 경우 (displayMemos에서 _isInstance 플래그 확인)
       if (memo._isInstance) {
-        console.log('🔄 메모 인스턴스 수정:', memo.original_memo_id);
+        console.log('🔄 노트 인스턴스 수정:', memo.original_memo_id);
 
         // 스마트한 인스턴스 관리를 위해 upsertMemoInstance 사용
         const result = await upsertMemoInstance(
@@ -302,7 +302,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
           console.log('✨ 인스턴스 정리됨');
         }
 
-        // 메모 목록 다시 로딩
+        // 노트 목록 다시 로딩
         await loadDisplayMemos();
         return;
       }
@@ -312,7 +312,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         const instanceDate = extractDateFromRecurringId(item.id);
 
         if (instanceDate) {
-          console.log('🔄 반복 메모 인스턴스:', memo.id);
+          console.log('🔄 반복 노트 인스턴스:', memo.id);
 
           // upsertMemoInstance 함수를 사용하여 스마트한 인스턴스 관리 (원본과 동일하면 자동 삭제)
           const result = await upsertMemoInstance(memo.id, instanceDate, newContent, memo.related_task_id);
@@ -321,19 +321,19 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
             console.log('✨ 인스턴스 정리됨');
           }
 
-          // 메모 목록 다시 로딩
+          // 노트 목록 다시 로딩
           await loadDisplayMemos();
           return;
         }
       }
 
-      // 일반 메모 또는 단일 연결 반복 메모인 경우 원본 수정
+      // 일반 노트 또는 단일 연결 반복 메모인 경우 원본 수정
       await updateNote({
         id: memo.id,
         content: newContent,
       });
 
-      // 메모 목록 다시 로딩
+      // 노트 목록 다시 로딩
       await loadDisplayMemos();
     } catch (error) {
       console.error('메모 내용 업데이트 실패:', error);
@@ -671,7 +671,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         )}
       </div>
 
-      {/* 메모 아코디언 토글 버튼 - 접혔을 때만 표시 */}
+      {/* 노트 아코디언 토글 버튼 - 접혔을 때만 표시 */}
       {hasLinkedMemos && !isMemosExpanded && (
         <div
           className={cn(
@@ -709,8 +709,8 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
               <TooltipContent>
                 <p>
                   {displayMemos.length === 1
-                    ? '연결된 메모 1개 (클릭하여 보기)'
-                    : `연결된 메모 ${displayMemos.length}개 (클릭하여 보기)`
+                    ? '연결된 노트 1개 (클릭하여 보기)'
+                    : `연결된 노트 ${displayMemos.length}개 (클릭하여 보기)`
                   }
                 </p>
               </TooltipContent>
@@ -719,7 +719,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         </div>
       )}
 
-      {/* 아코디언 형태로 연결된 메모 표시 - 전체 카드 너비 활용 */}
+      {/* 아코디언 형태로 연결된 노트 표시 - 전체 카드 너비 활용 */}
       {hasLinkedMemos && (
         <div
           className={cn(
@@ -727,7 +727,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
             isMemosExpanded ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'
           )}
         >
-          {/* 메모 태그들 표시 - 아코디언 내부 상단 */}
+          {/* 노트 태그들 표시 - 아코디언 내부 상단 */}
           {memoTags.length > 0 && isMemosExpanded && (
             <div className="mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-2 flex-wrap">
@@ -796,7 +796,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         </div>
       )}
 
-      {/* 메모 아코디언 토글 버튼 - 펼쳐졌을 때 하단에 표시 (overflow 밖에 배치) */}
+      {/* 노트 아코디언 토글 버튼 - 펼쳐졌을 때 하단에 표시 (overflow 밖에 배치) */}
       {hasLinkedMemos && isMemosExpanded && (
         <div
           className={cn(
@@ -834,8 +834,8 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
               <TooltipContent>
                 <p>
                   {displayMemos.length === 1
-                    ? '연결된 메모 1개 (클릭하여 접기)'
-                    : `연결된 메모 ${displayMemos.length}개 (클릭하여 접기)`
+                    ? '연결된 노트 1개 (클릭하여 접기)'
+                    : `연결된 노트 ${displayMemos.length}개 (클릭하여 접기)`
                   }
                 </p>
               </TooltipContent>

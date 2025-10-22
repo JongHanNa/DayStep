@@ -31,7 +31,7 @@ DayStep는 할일 목록과 템플릿 보관함을 한 곳에서 체계적으로
 - **Markdown 에디터**: 실시간 미리보기 지원
 - **고급 에디터**: CodeMirror 기반 syntax highlighting
 - **할일 연결**: 메모를 특정 할일과 연동
-- **플로팅 메모**: 빠른 메모 작성을 위한 플로팅 카드
+- **플로팅 메모**: 빠른 노트 작성을 위한 플로팅 카드
 - **자동 저장**: 입력 중 실시간 자동 저장
 
 ### 📞 연락처 통합
@@ -337,7 +337,7 @@ DayStep/
 │   ├── repository/       # 보관함 관련 컴포넌트
 │   ├── timeline/         # 타임라인 뷰 컴포넌트
 │   ├── pomodoro/         # 뽀모도로 타이머 컴포넌트
-│   ├── memos/            # 메모 에디터 컴포넌트
+│   ├── memos/            # 노트 에디터 컴포넌트
 │   ├── contacts/         # 연락처 관련 컴포넌트
 │   ├── notifications/    # 알림 컴포넌트
 │   ├── widgets/          # 위젯 컴포넌트
@@ -357,7 +357,7 @@ DayStep/
 │   │   ├── settingsStore.ts  # 앱 설정 상태
 │   │   ├── pomodoroStore.ts  # 뽀모도로 타이머 상태
 │   │   ├── contactsStore.ts  # 연락처 상태
-│   │   ├── quickMemoStore.ts # 메모 상태
+│   │   ├── quickMemoStore.ts # 노트 상태
 │   │   └── repositoryStore.ts # 보관함 상태
 │   └── utils/            # 스토어 유틸리티
 ├── types/                # TypeScript 타입 정의

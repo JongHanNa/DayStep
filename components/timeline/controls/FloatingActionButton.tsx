@@ -257,7 +257,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               </div>
               <div className="flex-1">
                 <div className="font-medium text-foreground">퀵메모</div>
-                <div className="text-xs text-muted-foreground">빠른 메모 작성</div>
+                <div className="text-xs text-muted-foreground">빠른 노트 작성</div>
               </div>
             </DropdownMenuItem>
 

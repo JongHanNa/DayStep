@@ -103,7 +103,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 동기부여 메시지
   const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
 
-  // 메모 확인
+  // 노트 확인
   const linkedMemos = item.type === 'todo'
     ? notes.filter(memo =>
         memo.related_task_id === actualTaskId ||
@@ -917,7 +917,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               </div>
             </div>
 
-            {/* 메모 드롭다운 */}
+            {/* 노트 드롭다운 */}
             {linkedMemos.length > 0 && (
               <div className="relative mt-1.5" onClick={(e) => e.stopPropagation()}>
                 <div className="dropdown dropdown-bottom">

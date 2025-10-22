@@ -697,7 +697,7 @@ const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
               )}
             </div>
 
-            {/* 메모 */}
+            {/* 노트 */}
             <div className="space-y-2">
               <Label htmlFor="notes">메모</Label>
               {isEditMode ? (

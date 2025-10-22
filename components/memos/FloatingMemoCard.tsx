@@ -265,7 +265,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
                 </div>
               )}
               
-              {/* 메모 메타 정보 */}
+              {/* 노트 메타 정보 */}
               <div className="text-xs text-muted-foreground">
                 {format(new Date(memo.created_at), 'M월 d일 HH:mm', { locale: ko })}
                 {memo.updated_at !== memo.created_at && (
