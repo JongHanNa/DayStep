@@ -9,7 +9,7 @@ import { getUnifiedIcon, UnifiedIconKey } from '@/lib/icon-collection';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import { useMemoTagStore } from '@/state/stores/memoTagStore';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { PomodoroTimer } from '@/components/ui/PomodoroTimer';
@@ -66,7 +66,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   const todoCompletion = useSettingsStore(state => state.todoCompletion);
   
   // 연결된 메모 확인
-  const { memos, setSelectedMemoForEdit, getDisplayMemosForTask } = useQuickMemoStore();
+  const { memos, setSelectedMemoForEdit, getDisplayMemosForTask } = useNoteStore();
 
   // 태그 정보 확인
   const { getTagsForMemo } = useMemoTagStore();
@@ -284,7 +284,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 메모 내용 변경 핸들러
   const handleMemoContentChange = async (memo: any, newContent: string) => {
     try {
-      const { updateMemo, upsertMemoInstance } = useQuickMemoStore.getState();
+      const { updateMemo, upsertMemoInstance } = useNoteStore.getState();
 
       // 메모 인스턴스인 경우 (displayMemos에서 _isInstance 플래그 확인)
       if (memo._isInstance) {

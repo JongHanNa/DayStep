@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import { fetchAllTodosWithJWT } from '@/lib/supabaseWebViewHelper';
 import { format, addDays, isBefore, startOfDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -57,7 +57,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<'single' | 'recurring' | 'instance'>('single');
   
-  const { linkToTask } = useQuickMemoStore();
+  const { linkToTask } = useNoteStore();
 
   // 현재 연결된 할일 찾기
   const linkedTodo = todos.find(todo => todo.id === currentLinkedTaskId);

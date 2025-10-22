@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import TaskLinkModal from './TaskLinkModal';
 import { cn } from '@/lib/utils';
-import { useQuickMemoStore, QuickMemo } from '@/state/stores/quickMemoStore';
+import { useNoteStore, Note } from '@/state/stores/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useMemoTagStore } from '@/state/stores/memoTagStore';
 import { useModalStore } from '@/state/stores/modalStore';
@@ -36,12 +36,12 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { TAG_COLOR_PALETTE } from '@/lib/memo-tag-constants';
 
-interface QuickMemoSheetProps {
+interface NoteSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) => {
+const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
@@ -73,7 +73,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     setSelectedMemoForEdit,
     initialize,
     ui: { selectedMemoForEdit },
-  } = useQuickMemoStore();
+  } = useNoteStore();
 
   // Todo Store (할일 연결용)
   const { todos, fetchTodoById } = useTodoStore();
@@ -102,7 +102,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   // 로컬 상태
   const [searchQuery, setSearchQuery] = useState(filters.searchQuery);
   const [taskLinkModalOpen, setTaskLinkModalOpen] = useState(false);
-  const [selectedMemoForLink, setSelectedMemoForLink] = useState<QuickMemo | null>(null);
+  const [selectedMemoForLink, setSelectedMemoForLink] = useState<Note | null>(null);
 
   // 새 태그 생성 모달 상태
   const [showCreateTagModal, setShowCreateTagModal] = useState(false);
@@ -116,7 +116,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   const [originalMemoContent, setOriginalMemoContent] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [currentEditingMemo, setCurrentEditingMemo] = useState<QuickMemo | null>(null);
+  const [currentEditingMemo, setCurrentEditingMemo] = useState<Note | null>(null);
   const [hasUserEditedContent, setHasUserEditedContent] = useState(false);
 
   // 태그 관련 상태
@@ -199,7 +199,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
     onDelete: async () => {
       // 편집 모드에서만 삭제 (새 메모 생성 중에는 삭제하지 않음)
       if (memoEditorMode === 'edit' && currentEditingMemo) {
-        console.log('🗑️ [QuickMemo] 빈 메모 자동 삭제:', currentEditingMemo.id);
+        console.log('🗑️ [Note] 빈 메모 자동 삭제:', currentEditingMemo.id);
         await deleteMemo(currentEditingMemo.id);
 
         // 삭제 완료 토스트 알림
@@ -321,7 +321,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   }, [selectedMemoForEdit, memoEditorOpen]);
 
   // 통합된 메모 편집기 열기
-  const openMemoEditor = (mode: 'create' | 'edit', memo?: QuickMemo) => {
+  const openMemoEditor = (mode: 'create' | 'edit', memo?: Note) => {
     setMemoEditorMode(mode);
 
     if (mode === 'edit' && memo) {
@@ -406,7 +406,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   };
 
   // 메모 핀 토글
-  const handleTogglePin = async (memo: QuickMemo) => {
+  const handleTogglePin = async (memo: Note) => {
     try {
       if (memo.is_pinned) {
         await unpinMemo(memo.id);
@@ -423,7 +423,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   };
 
   // 할일 연결/해제
-  const handleToggleTaskLink = async (memo: QuickMemo) => {
+  const handleToggleTaskLink = async (memo: Note) => {
     setSelectedMemoForLink(memo);
     setTaskLinkModalOpen(true);
   };
@@ -827,7 +827,7 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
                         id: 'new',
                         content: memoContent,
                         related_task_id: selectedTaskId,
-                      } as QuickMemo;
+                      } as Note;
                   setSelectedMemoForLink(memoForLink);
                   setTaskLinkModalOpen(true);
                 }}
@@ -1479,4 +1479,4 @@ const QuickMemoSheet: React.FC<QuickMemoSheetProps> = ({ open, onOpenChange }) =
   );
 };
 
-export default QuickMemoSheet;
+export default NoteSheet;

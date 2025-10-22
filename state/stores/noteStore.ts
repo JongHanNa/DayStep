@@ -18,8 +18,8 @@ import {
 import { supabase } from '@/lib/supabase';
 import type { MemoInstance, CreateMemoInstanceInput, UpdateMemoInstanceInput } from '@/types';
 
-// Quick Memo 타입 정의
-export interface QuickMemo {
+// Note 타입 정의
+export interface Note {
   id: string;
   user_id: string;
   content: string;
@@ -35,8 +35,8 @@ export interface QuickMemo {
   recurrence_type?: 'single' | 'recurring' | 'instance'; // 메모 반복 타입
 }
 
-// Quick Memo 생성 입력 타입
-export interface CreateQuickMemoInput {
+// Note 생성 입력 타입
+export interface CreateNoteInput {
   content: string;
   related_task_id?: string | null;
   linked_date?: string | null;
@@ -49,20 +49,20 @@ export interface CreateQuickMemoInput {
   recurrence_type?: 'single' | 'recurring' | 'instance';
 }
 
-// Quick Memo 업데이트 입력 타입
-export interface UpdateQuickMemoInput extends Partial<CreateQuickMemoInput> {
+// Note 업데이트 입력 타입
+export interface UpdateNoteInput extends Partial<CreateNoteInput> {
   id: string;
 }
 
 /**
- * Quick Memo 스토어 상태 타입 정의
+ * Note 스토어 상태 타입 정의
  */
-interface QuickMemoStoreState {
+interface NoteStoreState {
   // 데이터 상태
-  memos: QuickMemo[];
-  selectedMemo: QuickMemo | null;
-  pinnedMemos: QuickMemo[];
-  floatingMemos: QuickMemo[];
+  notes: Note[];
+  selectedNote: Note | null;
+  pinnedNotes: Note[];
+  floatingNotes: Note[];
 
   // API 상태
   loading: boolean;
@@ -99,28 +99,28 @@ interface QuickMemoStoreState {
   ui: {
     bottomSheetOpen: boolean;
     bottomSheetMode: 'compact' | 'expanded';
-    selectedMemoForEdit: QuickMemo | null;
+    selectedNoteForEdit: Note | null;
     isFloatingCardVisible: boolean;
     floatingCardPosition: { x: number; y: number };
   };
 }
 
 /**
- * Quick Memo 스토어 액션 타입 정의
+ * Note 스토어 액션 타입 정의
  */
-interface QuickMemoStoreActions {
+interface NoteStoreActions {
   // 메모 CRUD 작업
-  createMemo: (input: CreateQuickMemoInput) => Promise<QuickMemo>;
-  updateMemo: (input: UpdateQuickMemoInput) => Promise<QuickMemo>;
-  deleteMemo: (memoId: string) => Promise<void>;
-  getMemos: (userId: string) => Promise<QuickMemo[]>;
-  getMemoById: (memoId: string) => QuickMemo | null;
+  createNote: (input: CreateNoteInput) => Promise<Note>;
+  updateNote: (input: UpdateNoteInput) => Promise<Note>;
+  deleteNote: (noteId: string) => Promise<void>;
+  getNotes: (userId: string) => Promise<Note[]>;
+  getNoteById: (noteId: string) => Note | null;
 
   // 핀/플로팅 관리
-  pinMemo: (memoId: string) => Promise<void>;
-  unpinMemo: (memoId: string) => Promise<void>;
+  pinNote: (memoId: string) => Promise<void>;
+  unpinNote: (memoId: string) => Promise<void>;
   toggleFloating: (memoId: string) => Promise<void>;
-  updateMemoPosition: (memoId: string, position: number) => Promise<void>;
+  updateNotePosition: (memoId: string, position: number) => Promise<void>;
 
   // 할일 연결 관리
   linkToTask: (memoId: string, taskId: string | null, options?: {
@@ -129,15 +129,15 @@ interface QuickMemoStoreActions {
     recurrenceType?: 'single' | 'recurring' | 'instance';
   }) => Promise<void>;
   unlinkFromTask: (memoId: string) => Promise<void>;
-  getMemosByTaskId: (taskId: string) => QuickMemo[];
-  getLinkedMemosByTaskId: (taskId: string) => QuickMemo[];
-  deleteLinkedMemos: (taskId: string) => Promise<number>;
-  getDisplayMemosForTask: (taskId: string, date?: string) => Promise<Array<QuickMemo | MemoInstance>>;
+  getNotesByTaskId: (taskId: string) => Note[];
+  getLinkedNotesByTaskId: (taskId: string) => Note[];
+  deleteLinkedNotes: (taskId: string) => Promise<number>;
+  getDisplayNotesForTask: (taskId: string, date?: string) => Promise<Array<Note | MemoInstance>>;
 
   // 메모 인스턴스 관리
-  createMemoInstance: (input: CreateMemoInstanceInput) => Promise<MemoInstance>;
-  updateMemoInstance: (input: UpdateMemoInstanceInput) => Promise<MemoInstance>;
-  deleteMemoInstance: (instanceId: string) => Promise<void>;
+  createNoteInstance: (input: CreateMemoInstanceInput) => Promise<MemoInstance>;
+  updateNoteInstance: (input: UpdateMemoInstanceInput) => Promise<MemoInstance>;
+  deleteNoteInstance: (instanceId: string) => Promise<void>;
   getMemoInstancesByMemoId: (memoId: string) => Promise<MemoInstance[]>;
   getMemoInstancesByDate: (date: string) => Promise<MemoInstance[]>;
   getMemoInstanceByDate: (memoId: string, date: string) => Promise<MemoInstance | null>;
@@ -146,18 +146,18 @@ interface QuickMemoStoreActions {
   upsertMemoInstance: (memoId: string, date: string, content: string, taskId?: string | null) => Promise<MemoInstance | null>;
 
   // 필터링 및 정렬
-  setFilter: (filter: Partial<QuickMemoStoreState['filters']>) => void;
-  getFilteredMemos: () => QuickMemo[];
+  setFilter: (filter: Partial<NoteStoreState['filters']>) => void;
+  getFilteredMemos: () => Note[];
   clearFilters: () => void;
 
   // 실시간 구독 관리
-  subscribeToMemos: (userId: string) => Promise<void>;
-  unsubscribeFromMemos: () => void;
+  subscribeToNotes: (userId: string) => Promise<void>;
+  unsubscribeFromNotes: () => void;
 
   // UI 상태 관리
   setBottomSheetOpen: (open: boolean) => void;
   setBottomSheetMode: (mode: 'compact' | 'expanded') => void;
-  setSelectedMemoForEdit: (memo: QuickMemo | null) => void;
+  setSelectedNoteForEdit: (memo: Note | null) => void;
   setFloatingCardVisible: (visible: boolean) => void;
   setFloatingCardPosition: (position: { x: number; y: number }) => void;
 
@@ -173,15 +173,15 @@ interface QuickMemoStoreActions {
 /**
  * Quick Memo 스토어 생성
  */
-export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActions>()(
+export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
   persist(
     (set, get) => {
       return {
         // 초기 상태
-        memos: [],
-        selectedMemo: null,
-        pinnedMemos: [],
-        floatingMemos: [],
+        notes: [],
+        selectedNote: null,
+        pinnedNotes: [],
+        floatingNotes: [],
         loading: false,
         error: null,
         lastUpdated: null,
@@ -211,14 +211,14 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         ui: {
           bottomSheetOpen: false,
           bottomSheetMode: 'compact',
-          selectedMemoForEdit: null,
+          selectedNoteForEdit: null,
           isFloatingCardVisible: false,
           floatingCardPosition: { x: 0, y: 0 },
         },
 
         // 메모 CRUD 작업
-        createMemo: async (input: CreateQuickMemoInput) => {
-          console.log('📝 QuickMemoStore.createMemo:', input);
+        createNote: async (input: CreateNoteInput) => {
+          console.log('📝 NoteStore.createNote:', input);
 
           let userId: string | null = null;
           
@@ -252,7 +252,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
 
           // Optimistic update - 최상단에 추가하기 위해 정렬된 위치에 삽입
           const tempId = `temp-${Date.now()}`;
-          const tempMemo: QuickMemo = {
+          const tempMemo: Note = {
             id: tempId,
             ...memoData,
             created_at: new Date().toISOString(),
@@ -261,7 +261,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
 
           set(state => {
             // 새 메모를 최상단에 추가하고 정렬 순서 적용
-            const newMemos = [tempMemo, ...state.memos].sort((a, b) => {
+            const newMemos = [tempMemo, ...state.notes].sort((a, b) => {
               // 1. position 오름차순 (0이 최상단)
               if (a.position !== b.position) {
                 return a.position - b.position;
@@ -270,15 +270,15 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
               return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
             });
 
-            return { memos: newMemos };
+            return { notes: newMemos };
           });
 
           try {
-            const result = await createWithJWT('quick_memos', memoData);
+            const result = await createWithJWT('notes', memoData);
             
             set(state => {
               // 서버 응답으로 교체하고 다시 정렬
-              const updatedMemos = state.memos.map(memo => 
+              const updatedMemos = state.notes.map(memo => 
                 memo.id === tempId ? result : memo
               ).sort((a, b) => {
                 // 1. position 오름차순 (0이 최상단)
@@ -289,25 +289,25 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
                 return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
               });
 
-              return { memos: updatedMemos };
+              return { notes: updatedMemos };
             });
 
             get().updateStats();
             return result;
           } catch (error) {
             set(state => ({
-              memos: state.memos.filter(memo => memo.id !== tempId),
+              notes: state.notes.filter(memo => memo.id !== tempId),
               error: error instanceof Error ? error.message : '메모 생성 실패',
             }));
             throw error;
           }
         },
 
-        updateMemo: async (input: UpdateQuickMemoInput) => {
-          console.log('📝 QuickMemoStore.updateMemo:', input);
+        updateNote: async (input: UpdateNoteInput) => {
+          console.log('📝 NoteStore.updateNote:', input);
 
           const { id, ...updateData } = input;
-          const originalMemo = get().memos.find(memo => memo.id === id);
+          const originalMemo = get().notes.find(memo => memo.id === id);
           
           if (!originalMemo) {
             throw new Error('메모를 찾을 수 없습니다.');
@@ -317,13 +317,13 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           const updatedMemo = { ...originalMemo, ...updateData, updated_at: new Date().toISOString() };
 
           set(state => ({
-            memos: state.memos.map(memo => 
+            notes: state.notes.map(memo => 
               memo.id === id ? updatedMemo : memo
             ),
           }));
 
           try {
-            const result = await updateWithJWT('quick_memos', {
+            const result = await updateWithJWT('notes', {
               column: 'id',
               operator: 'eq',
               value: id
@@ -336,7 +336,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           } catch (error) {
             // Rollback optimistic update
             set(state => ({
-              memos: state.memos.map(memo => 
+              notes: state.notes.map(memo => 
                 memo.id === id ? originalMemo : memo
               ),
               error: error instanceof Error ? error.message : '메모 업데이트 실패',
@@ -345,10 +345,10 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           }
         },
 
-        deleteMemo: async (memoId: string) => {
-          console.log('📝 QuickMemoStore.deleteMemo:', memoId);
+        deleteNote: async (memoId: string) => {
+          console.log('📝 NoteStore.deleteNote:', memoId);
 
-          const originalMemo = get().memos.find(memo => memo.id === memoId);
+          const originalMemo = get().notes.find(memo => memo.id === memoId);
           
           if (!originalMemo) {
             throw new Error('메모를 찾을 수 없습니다.');
@@ -356,11 +356,11 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
 
           // Optimistic update
           set(state => ({
-            memos: state.memos.filter(memo => memo.id !== memoId),
+            notes: state.notes.filter(memo => memo.id !== memoId),
           }));
 
           try {
-            await deleteWithJWT('quick_memos', {
+            await deleteWithJWT('notes', {
               column: 'id',
               operator: 'eq',
               value: memoId
@@ -372,20 +372,20 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           } catch (error) {
             // Rollback optimistic update
             set(state => ({
-              memos: [...state.memos, originalMemo],
+              notes: [...state.notes, originalMemo],
               error: error instanceof Error ? error.message : '메모 삭제 실패',
             }));
             throw error;
           }
         },
 
-        getMemos: async (userId: string) => {
-          console.log('📋 QuickMemoStore.getMemos:', userId);
+        getNotes: async (userId: string) => {
+          console.log('📋 NoteStore.getNotes:', userId);
 
           try {
             set({ loading: true, error: null });
 
-            const memos = await queryRLSTableWithJWT('quick_memos', {
+            const notes = await queryRLSTableWithJWT('notes', {
               column: 'user_id',
               operator: 'eq',
               value: userId
@@ -394,7 +394,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
             });
 
             set({
-              memos: memos || [],
+              notes: notes || [],
               loading: false,
               lastUpdated: new Date(),
               loadState: {
@@ -405,7 +405,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
             });
 
             get().updateStats();
-            return memos || [];
+            return notes || [];
           } catch (error) {
             set({
               loading: false,
@@ -415,28 +415,28 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           }
         },
 
-        getMemoById: (memoId: string) => {
-          return get().memos.find(memo => memo.id === memoId) || null;
+        getNoteById: (memoId: string) => {
+          return get().notes.find(memo => memo.id === memoId) || null;
         },
 
         // 핀/플로팅 관리
-        pinMemo: async (memoId: string) => {
-          await get().updateMemo({ id: memoId, is_pinned: true });
+        pinNote: async (memoId: string) => {
+          await get().updateNote({ id: memoId, is_pinned: true });
         },
 
-        unpinMemo: async (memoId: string) => {
-          await get().updateMemo({ id: memoId, is_pinned: false });
+        unpinNote: async (memoId: string) => {
+          await get().updateNote({ id: memoId, is_pinned: false });
         },
 
         toggleFloating: async (memoId: string) => {
-          const memo = get().getMemoById(memoId);
+          const memo = get().getNoteById(memoId);
           if (memo) {
-            await get().updateMemo({ id: memoId, is_floating: !memo.is_floating });
+            await get().updateNote({ id: memoId, is_floating: !memo.is_floating });
           }
         },
 
-        updateMemoPosition: async (memoId: string, position: number) => {
-          await get().updateMemo({ id: memoId, position });
+        updateNotePosition: async (memoId: string, position: number) => {
+          await get().updateNote({ id: memoId, position });
         },
 
         // 할일 연결 관리 (향상된 버전)
@@ -445,9 +445,9 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           timelineTaskId?: string;
           recurrenceType?: 'single' | 'recurring' | 'instance';
         }) => {
-          console.log('🔗 QuickMemoStore.linkToTask:', { memoId, taskId, options });
+          console.log('🔗 NoteStore.linkToTask:', { memoId, taskId, options });
 
-          const updateData: Partial<QuickMemo> = {
+          const updateData: Partial<Note> = {
             related_task_id: taskId,
             linked_date: options?.linkDate || null,
             linked_timeline_task_id: options?.timelineTaskId || null,
@@ -456,14 +456,14 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           };
 
           // 메모 업데이트
-          await get().updateMemo({ id: memoId, ...updateData });
+          await get().updateNote({ id: memoId, ...updateData });
 
           // 반복 메모로 설정된 경우 인스턴스 생성 로직은 TaskLinkModal에서 처리
           console.log('✅ 메모 할일 연결 완료:', updateData);
         },
 
         unlinkFromTask: async (memoId: string) => {
-          await get().updateMemo({ 
+          await get().updateNote({ 
             id: memoId, 
             related_task_id: null,
             linked_date: null,
@@ -471,21 +471,21 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           });
         },
 
-        getMemosByTaskId: (taskId: string) => {
-          return get().memos.filter(memo => memo.related_task_id === taskId);
+        getNotesByTaskId: (taskId: string) => {
+          return get().notes.filter(memo => memo.related_task_id === taskId);
         },
 
-        getLinkedMemosByTaskId: (taskId: string) => {
-          return get().memos.filter(memo => 
+        getLinkedNotesByTaskId: (taskId: string) => {
+          return get().notes.filter(memo => 
             memo.related_task_id === taskId || 
             memo.linked_timeline_task_id === taskId
           );
         },
 
-        deleteLinkedMemos: async (taskId: string) => {
-          console.log('🗑️ QuickMemoStore.deleteLinkedMemos:', taskId);
+        deleteLinkedNotes: async (taskId: string) => {
+          console.log('🗑️ NoteStore.deleteLinkedNotes:', taskId);
           
-          const linkedMemos = get().getLinkedMemosByTaskId(taskId);
+          const linkedMemos = get().getLinkedNotesByTaskId(taskId);
           
           if (linkedMemos.length === 0) {
             return 0;
@@ -496,7 +496,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
 
           for (const memo of linkedMemos) {
             try {
-              await get().deleteMemo(memo.id);
+              await get().deleteNote(memo.id);
               deletedCount++;
             } catch (error) {
               console.error(`메모 ${memo.id} 삭제 실패:`, error);
@@ -512,13 +512,13 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         // 특정 할일에 연결된 메모들을 가져오되, 반복 메모의 경우 해당 날짜의 인스턴스를 우선 표시
-        getDisplayMemosForTask: async (taskId: string, date?: string) => {
-          console.log('📝 QuickMemoStore.getDisplayMemosForTask:', { taskId, date });
+        getDisplayNotesForTask: async (taskId: string, date?: string) => {
+          console.log('📝 NoteStore.getDisplayNotesForTask:', { taskId, date });
 
           try {
             // 기본 연결된 메모들 가져오기
-            const linkedMemos = get().getLinkedMemosByTaskId(taskId);
-            const displayMemos: Array<QuickMemo | MemoInstance> = [];
+            const linkedMemos = get().getLinkedNotesByTaskId(taskId);
+            const displayMemos: Array<Note | MemoInstance> = [];
 
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
             let userId: string | null = null;
@@ -584,21 +584,21 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           } catch (error) {
             console.error('❌ 표시 메모 조회 실패:', error);
             // 에러 시 기본 연결된 메모들 반환
-            return get().getLinkedMemosByTaskId(taskId);
+            return get().getLinkedNotesByTaskId(taskId);
           }
         },
 
         // 필터링 및 정렬
-        setFilter: (filter: Partial<QuickMemoStoreState['filters']>) => {
+        setFilter: (filter: Partial<NoteStoreState['filters']>) => {
           set(state => ({
             filters: { ...state.filters, ...filter }
           }));
         },
 
         getFilteredMemos: () => {
-          const { memos, filters } = get();
+          const { notes, filters } = get();
           
-          return memos.filter(memo => {
+          return notes.filter(memo => {
             // 검색 쿼리 필터
             if (filters.searchQuery) {
               const query = filters.searchQuery.toLowerCase();
@@ -632,37 +632,37 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         // 실시간 구독 관리
-        subscribeToMemos: async (userId: string) => {
+        subscribeToNotes: async (userId: string) => {
           if (get().isSubscribed) return;
 
           const channel = supabase
-            .channel('quick_memos_changes')
+            .channel('notes_changes')
             .on(
               'postgres_changes',
               {
                 event: '*',
                 schema: 'public',
-                table: 'quick_memos',
+                table: 'notes',
                 filter: `user_id=eq.${userId}`,
               },
               (payload) => {
-                console.log('📡 QuickMemoStore.realtimeUpdate:', payload);
+                console.log('📡 NoteStore.realtimeUpdate:', payload);
 
                 const { eventType, new: newRecord, old: oldRecord } = payload;
 
                 set(state => {
-                  let newMemos = [...state.memos];
+                  let newMemos = [...state.notes];
 
                   switch (eventType) {
                     case 'INSERT':
                       if (newRecord && !newMemos.find(m => m.id === newRecord.id)) {
-                        newMemos.push(newRecord as QuickMemo);
+                        newMemos.push(newRecord as Note);
                       }
                       break;
                     case 'UPDATE':
                       if (newRecord) {
                         newMemos = newMemos.map(memo =>
-                          memo.id === newRecord.id ? newRecord as QuickMemo : memo
+                          memo.id === newRecord.id ? newRecord as Note : memo
                         );
                       }
                       break;
@@ -684,7 +684,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
                   });
 
                   return {
-                    memos: newMemos,
+                    notes: newMemos,
                   };
                 });
 
@@ -699,7 +699,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           });
         },
 
-        unsubscribeFromMemos: () => {
+        unsubscribeFromNotes: () => {
           const { channel } = get();
           if (channel) {
             supabase.removeChannel(channel);
@@ -723,9 +723,9 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           }));
         },
 
-        setSelectedMemoForEdit: (memo: QuickMemo | null) => {
+        setSelectedNoteForEdit: (memo: Note | null) => {
           set(state => ({
-            ui: { ...state.ui, selectedMemoForEdit: memo }
+            ui: { ...state.ui, selectedNoteForEdit: memo }
           }));
         },
 
@@ -743,15 +743,15 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
 
         // 통계 업데이트
         updateStats: () => {
-          const { memos } = get();
+          const { notes } = get();
           const today = new Date();
           const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
           const stats = {
-            totalCount: memos.length,
-            pinnedCount: memos.filter(memo => memo.is_pinned).length,
-            floatingCount: memos.filter(memo => memo.is_floating).length,
-            todayCount: memos.filter(memo => {
+            totalCount: notes.length,
+            pinnedCount: notes.filter(memo => memo.is_pinned).length,
+            floatingCount: notes.filter(memo => memo.is_floating).length,
+            todayCount: notes.filter(memo => {
               const createdAt = new Date(memo.created_at);
               return createdAt >= todayStart;
             }).length,
@@ -759,14 +759,14 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
 
           set({ 
             stats,
-            pinnedMemos: memos.filter(memo => memo.is_pinned),
-            floatingMemos: memos.filter(memo => memo.is_floating),
+            pinnedNotes: notes.filter(memo => memo.is_pinned),
+            floatingNotes: notes.filter(memo => memo.is_floating),
           });
         },
 
         // 초기화 및 정리
         initialize: async (userId: string) => {
-          console.log('🚀 QuickMemoStore.initialize:', userId);
+          console.log('🚀 NoteStore.initialize:', userId);
 
           const state = get();
           const now = Date.now();
@@ -774,25 +774,25 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
             (now - state.loadState.lastFetchTime) < state.loadState.cacheValidityPeriod;
 
           if (cacheValid) {
-            console.log('💾 QuickMemo 캐시 유효, 스킵');
+            console.log('💾 Note 캐시 유효, 스킵');
             return;
           }
 
           try {
-            await get().getMemos(userId);
-            await get().subscribeToMemos(userId);
+            await get().getNotes(userId);
+            await get().subscribeToNotes(userId);
           } catch (error) {
-            console.error('❌ QuickMemo 스토어 초기화 실패:', error);
+            console.error('❌ Note 스토어 초기화 실패:', error);
           }
         },
 
         reset: () => {
-          get().unsubscribeFromMemos();
+          get().unsubscribeFromNotes();
           set({
-            memos: [],
-            selectedMemo: null,
-            pinnedMemos: [],
-            floatingMemos: [],
+            notes: [],
+            selectedNote: null,
+            pinnedNotes: [],
+            floatingNotes: [],
             loading: false,
             error: null,
             lastUpdated: null,
@@ -817,7 +817,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
             ui: {
               bottomSheetOpen: false,
               bottomSheetMode: 'compact',
-              selectedMemoForEdit: null,
+              selectedNoteForEdit: null,
               isFloatingCardVisible: false,
               floatingCardPosition: { x: 0, y: 0 },
             },
@@ -825,7 +825,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         refresh: async (userId: string) => {
-          console.log('🔄 QuickMemoStore.refresh:', userId);
+          console.log('🔄 NoteStore.refresh:', userId);
           set(state => ({
             loadState: {
               ...state.loadState,
@@ -837,11 +837,11 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         // 메모 인스턴스 관리 함수들
-        createMemoInstance: async (input: CreateMemoInstanceInput) => {
-          console.log('📝 QuickMemoStore.createMemoInstance:', input);
+        createNoteInstance: async (input: CreateMemoInstanceInput) => {
+          console.log('📝 NoteStore.createNoteInstance:', input);
 
           try {
-            const result = await createMemoInstanceWithJWT(input);
+            const result = await createNoteInstanceWithJWT(input);
             console.log('✅ 메모 인스턴스 생성 성공:', result);
             return result;
           } catch (error) {
@@ -850,11 +850,11 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           }
         },
 
-        updateMemoInstance: async (input: UpdateMemoInstanceInput) => {
-          console.log('📝 QuickMemoStore.updateMemoInstance:', input);
+        updateNoteInstance: async (input: UpdateMemoInstanceInput) => {
+          console.log('📝 NoteStore.updateNoteInstance:', input);
 
           try {
-            const result = await updateMemoInstanceWithJWT(input.id, input);
+            const result = await updateNoteInstanceWithJWT(input.id, input);
             console.log('✅ 메모 인스턴스 업데이트 성공:', result);
             return result;
           } catch (error) {
@@ -863,11 +863,11 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
           }
         },
 
-        deleteMemoInstance: async (instanceId: string) => {
-          console.log('📝 QuickMemoStore.deleteMemoInstance:', instanceId);
+        deleteNoteInstance: async (instanceId: string) => {
+          console.log('📝 NoteStore.deleteNoteInstance:', instanceId);
 
           try {
-            await deleteMemoInstanceWithJWT(instanceId);
+            await deleteNoteInstanceWithJWT(instanceId);
             console.log('✅ 메모 인스턴스 삭제 성공');
           } catch (error) {
             console.error('❌ 메모 인스턴스 삭제 실패:', error);
@@ -876,7 +876,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         getMemoInstancesByMemoId: async (memoId: string) => {
-          console.log('📝 QuickMemoStore.getMemoInstancesByMemoId:', memoId);
+          console.log('📝 NoteStore.getMemoInstancesByMemoId:', memoId);
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -920,7 +920,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         getMemoInstancesByDate: async (date: string) => {
-          console.log('📝 QuickMemoStore.getMemoInstancesByDate:', date);
+          console.log('📝 NoteStore.getMemoInstancesByDate:', date);
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -964,7 +964,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         getMemoInstanceByDate: async (memoId: string, date: string) => {
-          console.log('📝 QuickMemoStore.getMemoInstanceByDate:', { memoId, date });
+          console.log('📝 NoteStore.getMemoInstanceByDate:', { memoId, date });
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -1008,7 +1008,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         getMemoInstancesByTaskId: async (taskId: string) => {
-          console.log('📝 QuickMemoStore.getMemoInstancesByTaskId:', taskId);
+          console.log('📝 NoteStore.getMemoInstancesByTaskId:', taskId);
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -1052,11 +1052,11 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
         },
 
         createRecurringMemoInstances: async (memoId: string, dates: string[], taskId?: string) => {
-          console.log('📝 QuickMemoStore.createRecurringMemoInstances:', { memoId, dates, taskId });
+          console.log('📝 NoteStore.createRecurringMemoInstances:', { memoId, dates, taskId });
 
           try {
             // 원본 메모 조회
-            const originalMemo = get().getMemoById(memoId);
+            const originalMemo = get().getNoteById(memoId);
             if (!originalMemo) {
               throw new Error('원본 메모를 찾을 수 없습니다');
             }
@@ -1110,7 +1110,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
 
         // 메모 인스턴스 생성 또는 업데이트 (upsert) - 스마트한 원본 비교 로직 포함
         upsertMemoInstance: async (memoId: string, date: string, content: string, taskId?: string | null) => {
-          console.log('📝 QuickMemoStore.upsertMemoInstance:', { memoId, date, content, taskId });
+          console.log('📝 NoteStore.upsertMemoInstance:', { memoId, date, content, taskId });
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -1139,7 +1139,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
             }
 
             // 원본 메모 조회
-            const originalMemo = get().getMemoById(memoId);
+            const originalMemo = get().getNoteById(memoId);
             if (!originalMemo) {
               throw new Error('원본 메모를 찾을 수 없습니다');
             }
@@ -1158,7 +1158,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
               // 원본과 동일한 경우 - 인스턴스 정리
               if (existingInstance) {
                 console.log('🧹 원본과 동일하므로 인스턴스 정리:', existingInstance.id);
-                await deleteMemoInstanceWithJWT(existingInstance.id);
+                await deleteNoteInstanceWithJWT(existingInstance.id);
 
                 // null을 반환하여 인스턴스가 제거되었음을 표시
                 return null;
@@ -1170,7 +1170,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
               // 원본과 다른 경우 - 인스턴스 생성/업데이트
               if (existingInstance) {
                 // 기존 인스턴스 업데이트
-                const result = await updateMemoInstanceWithJWT(existingInstance.id, {
+                const result = await updateNoteInstanceWithJWT(existingInstance.id, {
                   content: modifiedContent,
                   is_modified: true,
                   related_task_id: taskId || existingInstance.related_task_id,
@@ -1178,7 +1178,7 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
                 return result;
               } else {
                 // 새 인스턴스 생성
-                const result = await createMemoInstanceWithJWT({
+                const result = await createNoteInstanceWithJWT({
                   original_memo_id: memoId,
                   user_id: userId,
                   instance_date: date,
@@ -1197,10 +1197,10 @@ export const useQuickMemoStore = create<QuickMemoStoreState & QuickMemoStoreActi
       };
     },
     {
-      name: 'quick-memo-store',
+      name: 'note-store',
       partialize: (state) => ({
         // UI 상태는 영구저장에서 제외
-        memos: state.memos,
+        notes: state.notes,
         filters: state.filters,
         loadState: state.loadState,
       }),

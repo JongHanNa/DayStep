@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { format, addMinutes } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/context/AuthContext';
@@ -62,9 +62,9 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
   const updateRecurringTodo = useTodoStore(state => state.updateRecurringTodo);
   const deleteTodo = useTodoStore(state => state.deleteTodo);
   const deleteRecurringTodo = useTodoStore(state => state.deleteRecurringTodo);
-  const createMemo = useQuickMemoStore(state => state.createMemo);
-  const deleteLinkedMemos = useQuickMemoStore(state => state.deleteLinkedMemos);
-  const getLinkedMemosByTaskId = useQuickMemoStore(state => state.getLinkedMemosByTaskId);
+  const createMemo = useNoteStore(state => state.createMemo);
+  const deleteLinkedMemos = useNoteStore(state => state.deleteLinkedMemos);
+  const getLinkedMemosByTaskId = useNoteStore(state => state.getLinkedMemosByTaskId);
   const linkMotivationToTodo = useMotivationStore(state => state.linkMotivationToTodo);
 
   const isEditMode = !!editingTodo;

@@ -90,8 +90,8 @@ export interface MemoTagLinkInsert {
   is_active?: boolean;
 }
 
-// Quick memo types (manually defined until Supabase types are updated)
-export interface QuickMemo {
+// Note types (manually defined until Supabase types are updated)
+export interface Note {
   id: string;
   user_id: string;
   content: string;
@@ -126,8 +126,8 @@ export type UserInsert = TablesInsert<"users">;
 export type TodoInsert = TablesInsert<"todos">;
 export type PomodoroSessionInsert = TablesInsert<"pomodoro_sessions">;
 
-// Quick memo insert types (manually defined until Supabase types are updated)
-export interface QuickMemoInsert {
+// Note insert types (manually defined until Supabase types are updated)
+export interface NoteInsert {
   user_id: string;
   content: string;
   related_task_id?: string | null;
@@ -154,8 +154,8 @@ export type UserUpdate = TablesUpdate<"users">;
 export type TodoUpdate = TablesUpdate<"todos">;
 export type PomodoroSessionUpdate = TablesUpdate<"pomodoro_sessions">;
 
-// Quick memo update types (manually defined until Supabase types are updated)
-export interface QuickMemoUpdate extends Partial<QuickMemoInsert> {
+// Note update types (manually defined until Supabase types are updated)
+export interface NoteUpdate extends Partial<NoteInsert> {
   id: string;
 }
 
@@ -173,8 +173,8 @@ export interface MemoTagLinkInsert {
   user_id: string;
 }
 
-// Extended memo types with tags
-export interface QuickMemoWithTags extends QuickMemo {
+// Extended note types with tags
+export interface NoteWithTags extends Note {
   tags: MemoTag[];
 }
 
@@ -310,8 +310,8 @@ export interface UpdateMemoInstanceInput extends Partial<CreateMemoInstanceInput
 // Memo recurrence types
 export type MemoRecurrenceType = 'single' | 'recurring';
 
-// Extended memo types with instance information
-export interface QuickMemoWithInstances {
+// Extended note types with instance information
+export interface NoteWithInstances {
   id: string;
   user_id: string;
   content: string;
@@ -327,7 +327,7 @@ export interface QuickMemoWithInstances {
   memo_instances?: MemoInstance[];
 }
 
-// Memo instance with original memo information
+// Memo instance with original note information
 export interface MemoInstanceWithOriginal {
   id: string;
   original_memo_id: string;
@@ -338,7 +338,7 @@ export interface MemoInstanceWithOriginal {
   related_task_id?: string | null;
   created_at: string;
   updated_at: string;
-  original_memo?: QuickMemo;
+  original_memo?: Note;
 }
 
 // Update Todo input - all fields optional except id

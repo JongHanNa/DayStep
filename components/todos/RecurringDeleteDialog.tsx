@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import type { Todo } from '@/types';
 
 interface RecurringDeleteDialogProps {
@@ -28,7 +28,7 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
 }) => {
   const [selectedDeleteType, setSelectedDeleteType] = useState<'this' | 'future' | 'all'>('this');
   const [deleteLinkedMemos, setDeleteLinkedMemos] = useState(false);
-  const { getLinkedMemosByTaskId } = useQuickMemoStore();
+  const { getLinkedMemosByTaskId } = useNoteStore();
   
   // 연결된 메모 조회
   const linkedMemos = todo ? getLinkedMemosByTaskId(todo.id) : [];

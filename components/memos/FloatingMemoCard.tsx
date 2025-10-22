@@ -22,14 +22,14 @@ import {
   Link,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuickMemoStore, QuickMemo } from '@/state/stores/quickMemoStore';
+import { useNoteStore, Note } from '@/state/stores/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 interface FloatingMemoCardProps {
-  memo: QuickMemo;
+  memo: Note;
   onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
@@ -45,7 +45,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   
   // Store hooks
-  const { updateMemo, unpinMemo } = useQuickMemoStore();
+  const { updateMemo, unpinMemo } = useNoteStore();
   const { todos } = useTodoStore();
 
   // 로컬 상태

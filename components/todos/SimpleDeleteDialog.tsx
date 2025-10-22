@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import type { Todo } from '@/types';
 
 interface SimpleDeleteDialogProps {
@@ -31,7 +31,7 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
   isDeleting = false
 }) => {
   const [deleteLinkedMemos, setDeleteLinkedMemos] = useState(false);
-  const { getLinkedMemosByTaskId } = useQuickMemoStore();
+  const { getLinkedMemosByTaskId } = useNoteStore();
   
   // 연결된 메모 조회
   const linkedMemos = todo ? getLinkedMemosByTaskId(todo.id) : [];

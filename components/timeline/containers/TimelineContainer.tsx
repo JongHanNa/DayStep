@@ -14,7 +14,7 @@ import { OptimisticIndicator } from '@/components/ui/optimistic-indicator';
 import { useToast } from '@/hooks/use-toast';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { FloatingActionButton } from '../controls';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import FloatingMemoCard from '@/components/memos/FloatingMemoCard';
 // 남은시간 위젯 비활성화
 // import { SimpleRemainingTime } from '../indicators';
@@ -103,7 +103,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   const { isAuthenticated, loading: authLoading, appUser } = useAuth();
 
   // Quick Memo Store hooks
-  const { pinnedMemos, initialize: initializeQuickMemo } = useQuickMemoStore();
+  const { pinnedMemos, initialize: initializeNote } = useNoteStore();
 
   // Capacitor/WebView 환경에서 스크롤 최적화 (스크롤 기능 유지)
   useEffect(() => {
@@ -217,9 +217,9 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
         currentDate: currentDate.toISOString().split('T')[0]
       });
 
-      // QuickMemoStore 초기화 (appUser 있을 때)
+      // NoteStore 초기화 (appUser 있을 때)
       if (appUser?.id) {
-        initializeQuickMemo(appUser.id);
+        initializeNote(appUser.id);
       }
       
       // 현재 날짜의 KST 범위를 UTC로 변환
@@ -245,7 +245,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
         });
       });
     }
-  }, [isAuthenticated, authLoading, currentDate, currentDateString, fetchTodosForDate, appUser?.id, initializeQuickMemo]);
+  }, [isAuthenticated, authLoading, currentDate, currentDateString, fetchTodosForDate, appUser?.id, initializeNote]);
 
   // 실제 데이터가 로드된 후에만 타임라인 아이템 생성
   useEffect(() => {

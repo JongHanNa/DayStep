@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { StickyNote, ChevronDown } from 'lucide-react';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import MarkdownViewer from '@/components/memos/MarkdownViewer';
 
 interface LinkedMemosProps {
@@ -14,7 +14,7 @@ interface LinkedMemosProps {
 
 const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
   const [isMemosExpanded, setIsMemosExpanded] = useState(false);
-  const { memos, setSelectedMemoForEdit } = useQuickMemoStore();
+  const { memos, setSelectedMemoForEdit } = useNoteStore();
 
   // taskId가 없으면 렌더링하지 않음
   if (!taskId) {
@@ -43,7 +43,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
   // 메모 내용 변경 핸들러
   const handleMemoContentChange = async (memo: any, newContent: string) => {
     try {
-      const { updateMemo } = useQuickMemoStore.getState();
+      const { updateMemo } = useNoteStore.getState();
       await updateMemo({
         id: memo.id,
         content: newContent,

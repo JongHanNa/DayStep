@@ -15,7 +15,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoFormModal from '@/components/todos/TodoFormModal';
-import QuickMemoSheet from '@/components/memos/QuickMemoSheet';
+import NoteSheet from '@/components/memos/NoteSheet';
 import ContactListSheet from '@/components/contacts/ContactListSheet';
 import ContactDetailModal from '@/components/contacts/ContactDetailModal';
 import MotivationSheet from '@/components/motivation/MotivationSheet';
@@ -30,7 +30,7 @@ interface FloatingActionButtonProps {
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [todoModalOpen, setTodoModalOpen] = useState(false);
-  const [quickMemoSheetOpen, setQuickMemoSheetOpen] = useState(false);
+  const [quickMemoSheetOpen, setNoteSheetOpen] = useState(false);
   const [contactListSheetOpen, setContactListSheetOpen] = useState(false);
   const [contactDetailOpen, setContactDetailOpen] = useState(false);
   const [motivationSheetOpen, setMotivationSheetOpen] = useState(false);
@@ -44,8 +44,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
     setIsOpen(false);
   };
 
-  const handleOpenQuickMemo = () => {
-    setQuickMemoSheetOpen(true);
+  const handleOpenNote = () => {
+    setNoteSheetOpen(true);
     setIsOpen(false);
   };
 
@@ -249,7 +249,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
             </DropdownMenuItem>
 
             <DropdownMenuItem
-              onClick={handleOpenQuickMemo}
+              onClick={handleOpenNote}
               className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
             >
               <div className="p-2 rounded-full bg-primary/10">
@@ -328,9 +328,9 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
       />
       
       {/* 퀵메모 시트 */}
-      <QuickMemoSheet
+      <NoteSheet
         open={quickMemoSheetOpen}
-        onOpenChange={setQuickMemoSheetOpen}
+        onOpenChange={setNoteSheetOpen}
       />
       
       {/* 연락처 목록 시트 */}

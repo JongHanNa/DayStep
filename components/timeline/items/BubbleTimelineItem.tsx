@@ -9,7 +9,7 @@ import { getUnifiedIcon, UnifiedIconKey } from '@/lib/icon-collection';
 import { Check } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useMotivationStore } from '@/state/stores/motivationStore';
-import { useQuickMemoStore } from '@/state/stores/quickMemoStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import MotivationBadge from '@/components/motivation/MotivationBadge';
 
@@ -86,7 +86,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 스토어 훅
   const { todos, todoCompletions } = useTodoStore();
   const { getMotivationsForTodo } = useMotivationStore();
-  const { memos } = useQuickMemoStore();
+  const { memos } = useNoteStore();
   const { bubbleShape } = useSettingsStore();
 
   // 타임라인 ID에서 실제 UUID 추출
