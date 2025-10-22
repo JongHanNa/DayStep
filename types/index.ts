@@ -18,7 +18,6 @@ export type RecurrencePattern =
 export type User = Tables<"users">;
 export type Todo = Tables<"todos">;
 export type PomodoroSession = Tables<"pomodoro_sessions">;
-export type TaskTemplate = Tables<"task_templates">;
 
 // Memo Tag types (manually defined until Supabase types are updated)
 export interface MemoTag {
@@ -126,7 +125,6 @@ export interface MemoInstance {
 export type UserInsert = TablesInsert<"users">;
 export type TodoInsert = TablesInsert<"todos">;
 export type PomodoroSessionInsert = TablesInsert<"pomodoro_sessions">;
-export type TaskTemplateInsert = TablesInsert<"task_templates">;
 
 // Quick memo insert types (manually defined until Supabase types are updated)
 export interface QuickMemoInsert {
@@ -155,7 +153,6 @@ export interface MemoInstanceInsert {
 export type UserUpdate = TablesUpdate<"users">;
 export type TodoUpdate = TablesUpdate<"todos">;
 export type PomodoroSessionUpdate = TablesUpdate<"pomodoro_sessions">;
-export type TaskTemplateUpdate = TablesUpdate<"task_templates">;
 
 // Quick memo update types (manually defined until Supabase types are updated)
 export interface QuickMemoUpdate extends Partial<QuickMemoInsert> {

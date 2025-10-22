@@ -1,3 +1,7 @@
+// 🔄 Auto-generated file - Do not edit manually
+// Run `npm run supabase:types` to regenerate this file after database schema changes
+// This file will be automatically updated to reflect the current database structure
+
 export type Json =
   | string
   | number
