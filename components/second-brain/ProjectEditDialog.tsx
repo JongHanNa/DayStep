@@ -393,15 +393,15 @@ export default function ProjectEditDialog({
           {/* 콘텐츠 영역 */}
           <div className="flex-1 overflow-y-auto">
             {/* 아이콘 및 제목 - TodoMetadata 스타일 적용 */}
-            <div className="my-2">
+            <div className="my-4">
               {/* 섹션 제목 */}
-              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                 <Tag className="h-5 w-5" style={{ color: editingProject.color }} />
                 프로젝트 아이콘 및 제목
               </label>
 
               {/* 아이콘 + 제목 입력 */}
-              <div className="p-2 rounded-lg bg-base-100">
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                 <div className="flex items-center gap-3">
                   {/* 아이콘 버튼 */}
                   <div className="relative">
@@ -457,15 +457,15 @@ export default function ProjectEditDialog({
             </div>
 
           {/* 목표 */}
-          <div className="my-2">
+          <div className="my-4">
             {/* 섹션 제목 */}
-            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
               <Target className="h-5 w-5" style={{ color: editingProject.color }} />
               목표
             </label>
 
             {/* 셀렉트 박스 */}
-            <div className="p-2 rounded-lg bg-base-100">
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
               <select
                 value={editingProject.goal_id || ''}
                 onChange={(e) => onProjectChange({ ...editingProject, goal_id: e.target.value })}
@@ -482,15 +482,15 @@ export default function ProjectEditDialog({
           </div>
 
           {/* 진행상황 */}
-          <div className="my-2">
+          <div className="my-4">
             {/* 섹션 제목 */}
-            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
               <Activity className="h-5 w-5" style={{ color: editingProject.color }} />
               진행상황
             </label>
 
             {/* 셀렉트 박스 */}
-            <div className="p-2 rounded-lg bg-base-100">
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
               <select
                 value={editingProject.status}
                 onChange={(e) =>
@@ -510,15 +510,15 @@ export default function ProjectEditDialog({
           </div>
 
           {/* 영역/자원 */}
-          <div className="my-2">
+          <div className="my-4">
             {/* 섹션 제목 */}
-            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
               <Layers className="h-5 w-5" style={{ color: editingProject.color }} />
               영역/자원 (선택)
             </label>
 
             {/* 셀렉트 박스 */}
-            <div className="p-2 rounded-lg bg-base-100">
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
               <select
                 value={editingProject.paraSelection}
                 onChange={(e) => onProjectChange({ ...editingProject, paraSelection: e.target.value })}
@@ -546,15 +546,15 @@ export default function ProjectEditDialog({
           {/* 시작일/종료일 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 시작일 */}
-            <div className="my-2">
+            <div className="my-4">
               {/* 섹션 제목 */}
-              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                 <Calendar className="h-5 w-5" style={{ color: editingProject.color }} />
                 시작일 (선택)
               </label>
 
               {/* 날짜 입력 */}
-              <div className="p-2 rounded-lg bg-base-100">
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                 <input
                   type="date"
                   value={editingProject.start_date || ''}
@@ -565,15 +565,15 @@ export default function ProjectEditDialog({
             </div>
 
             {/* 종료일 */}
-            <div className="my-2">
+            <div className="my-4">
               {/* 섹션 제목 */}
-              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                 <Calendar className="h-5 w-5" style={{ color: editingProject.color }} />
                 종료일 (선택)
               </label>
 
               {/* 날짜 입력 */}
-              <div className="p-2 rounded-lg bg-base-100">
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                 <input
                   type="date"
                   value={editingProject.target_end_date || ''}
