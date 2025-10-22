@@ -90,17 +90,17 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   const actualTaskId = extractTaskId(item.id);
 
   // 노트 상태 관리
-  const [displayMemos, setDisplayMemos] = useState<Array<any>>([]);
-  const [hasLinkedMemos, setHasLinkedMemos] = useState(false);
-  const [memoTags, setMemoTags] = useState<Array<any>>([]);
+  const [displayNotes, setDisplayNotes] = useState<Array<any>>([]);
+  const [hasLinkedNotes, setHasLinkedNotes] = useState(false);
+  const [noteTags, setNoteTags] = useState<Array<any>>([]);
 
   // 연결된 동기부여 메시지들 확인
   const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
 
   // 노트 로딩 함수
-  const loadDisplayMemos = async () => {
+  const loadDisplayNotes = async () => {
     try {
-      let memosToDisplay: Array<any> = [];
+      let notesToDisplay: Array<any> = [];
 
       // 반복 할일 인스턴스인 경우 날짜 정보 포함해서 노트 가져오기
       if (isRecurringTodo(item)) {
@@ -108,52 +108,52 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         console.log('🔄 반복 할일 노트 로딩:', { actualTaskId, instanceDate });
 
         if (instanceDate) {
-          memosToDisplay = await getDisplayNotesForTask(actualTaskId, instanceDate);
+          notesToDisplay = await getDisplayNotesForTask(actualTaskId, instanceDate);
         } else {
           // 날짜 추출 실패 시 기본 노트만 표시
-          memosToDisplay = notes.filter(memo =>
-            memo.related_task_id === actualTaskId ||
-            memo.linked_timeline_task_id === actualTaskId
+          notesToDisplay = notes.filter(note =>
+            note.related_task_id === actualTaskId ||
+            note.linked_timeline_task_id === actualTaskId
           );
         }
       } else {
         // 일반 할일인 경우 기본 필터링
-        memosToDisplay = notes.filter(memo =>
-          memo.related_task_id === actualTaskId ||
-          memo.linked_timeline_task_id === actualTaskId
+        notesToDisplay = notes.filter(note =>
+          note.related_task_id === actualTaskId ||
+          note.linked_timeline_task_id === actualTaskId
         );
       }
 
-      setDisplayMemos(memosToDisplay);
-      setHasLinkedMemos(memosToDisplay.length > 0);
+      setDisplayNotes(notesToDisplay);
+      setHasLinkedNotes(notesToDisplay.length > 0);
 
-      // 메모들의 태그도 수집
+      // 노트들의 태그도 수집
       const allTags = new Map();
-      memosToDisplay.forEach(memo => {
-        const memoId = memo._isInstance ? memo.original_memo_id : memo.id;
-        const tags = getTagsForMemo(memoId);
+      notesToDisplay.forEach(note => {
+        const noteId = note._isInstance ? note.original_memo_id : note.id;
+        const tags = getTagsForMemo(noteId);
         tags.forEach(tag => {
           allTags.set(tag.id, tag);
         });
       });
 
-      setMemoTags(Array.from(allTags.values()));
+      setNoteTags(Array.from(allTags.values()));
     } catch (error) {
       console.error('노트 로딩 실패:', error);
       // 에러 시 기본 필터링으로 폴백
-      const fallbackMemos = notes.filter(memo =>
-        memo.related_task_id === actualTaskId ||
-        memo.linked_timeline_task_id === actualTaskId
+      const fallbackNotes = notes.filter(note =>
+        note.related_task_id === actualTaskId ||
+        note.linked_timeline_task_id === actualTaskId
       );
-      setDisplayMemos(fallbackMemos);
-      setHasLinkedMemos(fallbackMemos.length > 0);
-      setMemoTags([]); // 에러 시 태그도 초기화
+      setDisplayNotes(fallbackNotes);
+      setHasLinkedNotes(fallbackNotes.length > 0);
+      setNoteTags([]); // 에러 시 태그도 초기화
     }
   };
 
   // 노트 다시 로딩이 필요한 경우들
   useEffect(() => {
-    loadDisplayMemos();
+    loadDisplayNotes();
   }, [actualTaskId, item.id, notes]);
   
 
@@ -261,12 +261,12 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   
   
   // 연결된 노트 아코디언 상태 관리
-  const [isMemosExpanded, setIsMemosExpanded] = useState(false);
-  
+  const [isNotesExpanded, setIsNotesExpanded] = useState(false);
+
   // 노트 클릭 시 수정 모달 열기
-  const handleMemoClick = (memo: any, e: React.MouseEvent) => {
+  const handleNoteClick = (note: any, e: React.MouseEvent) => {
     e.stopPropagation(); // 할일 클릭 이벤트 방지
-    setSelectedNoteForEdit(memo);
+    setSelectedNoteForEdit(note);
   };
 
   // 반복 할일 인스턴스에서 날짜 추출
@@ -282,20 +282,20 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   };
 
   // 노트 내용 변경 핸들러
-  const handleMemoContentChange = async (memo: any, newContent: string) => {
+  const handleNoteContentChange = async (note: any, newContent: string) => {
     try {
-      const { updateNote, upsertMemoInstance } = useNoteStore.getState();
+      const { updateNote, upsertNoteInstance } = useNoteStore.getState();
 
-      // 노트 인스턴스인 경우 (displayMemos에서 _isInstance 플래그 확인)
-      if (memo._isInstance) {
-        console.log('🔄 노트 인스턴스 수정:', memo.original_memo_id);
+      // 노트 인스턴스인 경우 (displayNotes에서 _isInstance 플래그 확인)
+      if (note._isInstance) {
+        console.log('🔄 노트 인스턴스 수정:', note.original_note_id);
 
-        // 스마트한 인스턴스 관리를 위해 upsertMemoInstance 사용
-        const result = await upsertMemoInstance(
-          memo.original_memo_id,
-          memo.instance_date,
+        // 스마트한 인스턴스 관리를 위해 upsertNoteInstance 사용
+        const result = await upsertNoteInstance(
+          note.original_note_id,
+          note.instance_date,
           newContent,
-          memo.related_task_id
+          note.related_task_id
         );
 
         if (result === null) {
@@ -303,38 +303,38 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         }
 
         // 노트 목록 다시 로딩
-        await loadDisplayMemos();
+        await loadDisplayNotes();
         return;
       }
 
-      // 반복 메모이고 현재 아이템이 반복 할일 인스턴스인 경우 (원본 메모를 인스턴스로 변환)
-      if (memo.is_recurring && memo.recurrence_type === 'recurring' && isRecurringTodo(item)) {
+      // 반복 노트이고 현재 아이템이 반복 할일 인스턴스인 경우 (원본 노트를 인스턴스로 변환)
+      if (note.is_recurring && note.recurrence_type === 'recurring' && isRecurringTodo(item)) {
         const instanceDate = extractDateFromRecurringId(item.id);
 
         if (instanceDate) {
-          console.log('🔄 반복 노트 인스턴스:', memo.id);
+          console.log('🔄 반복 노트 인스턴스:', note.id);
 
-          // upsertMemoInstance 함수를 사용하여 스마트한 인스턴스 관리 (원본과 동일하면 자동 삭제)
-          const result = await upsertMemoInstance(memo.id, instanceDate, newContent, memo.related_task_id);
+          // upsertNoteInstance 함수를 사용하여 스마트한 인스턴스 관리 (원본과 동일하면 자동 삭제)
+          const result = await upsertNoteInstance(note.id, instanceDate, newContent, note.related_task_id);
 
           if (result === null) {
             console.log('✨ 인스턴스 정리됨');
           }
 
           // 노트 목록 다시 로딩
-          await loadDisplayMemos();
+          await loadDisplayNotes();
           return;
         }
       }
 
-      // 일반 노트 또는 단일 연결 반복 메모인 경우 원본 수정
+      // 일반 노트 또는 단일 연결 반복 노트인 경우 원본 수정
       await updateNote({
-        id: memo.id,
+        id: note.id,
         content: newContent,
       });
 
       // 노트 목록 다시 로딩
-      await loadDisplayMemos();
+      await loadDisplayNotes();
     } catch (error) {
       console.error('노트 내용 업데이트 실패:', error);
     }
@@ -397,7 +397,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         // 드래그 중이 아닐 때만 호버 효과 적용
         !isDragging && 'hover:shadow-md',
         // 모든 할일 카드를 더 컴팩트하게, 아코디언 펼쳐졌을 때만 기본 크기
-        (hasLinkedMemos && isMemosExpanded) ? 'p-4' : 'p-3 py-2.5',
+        (hasLinkedNotes && isNotesExpanded) ? 'p-4' : 'p-3 py-2.5',
         'cursor-pointer select-none',
         // 완료 상태에 따른 스타일
         shouldShowStrikethrough && 'opacity-70 hover:opacity-90',
@@ -448,7 +448,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
           className={cn(
             "w-2 rounded-full flex-shrink-0 transition-all duration-200",
             // 모든 카드를 더 컴팩트하게, 아코디언 펼쳐졌을 때만 큰 크기
-            (hasLinkedMemos && isMemosExpanded) ? 'h-12' : 'h-8'
+            (hasLinkedNotes && isNotesExpanded) ? 'h-12' : 'h-8'
           )}
           style={{
             backgroundColor: item.type === 'todo' && todoColor
@@ -672,7 +672,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
       </div>
 
       {/* 노트 아코디언 토글 버튼 - 접혔을 때만 표시 */}
-      {hasLinkedMemos && !isMemosExpanded && (
+      {hasLinkedNotes && !isNotesExpanded && (
         <div
           className={cn(
             'mt-2 py-2 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-b-lg transition-all duration-200',
@@ -691,26 +691,26 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                   onClick={(e) => {
                     e.stopPropagation(); // 할일 클릭 이벤트 방지
                     e.preventDefault(); // 기본 동작 방지
-                    setIsMemosExpanded(!isMemosExpanded);
+                    setIsNotesExpanded(!isNotesExpanded);
                   }}
                   className="w-full flex items-center justify-between"
                 >
                   <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                    0/{displayMemos.length}
+                    0/{displayNotes.length}
                   </span>
                   <ChevronDown
                     className={cn(
                       'h-3.5 w-3.5 text-gray-400 dark:text-gray-500 transition-transform duration-200',
-                      isMemosExpanded && 'rotate-180'
+                      isNotesExpanded && 'rotate-180'
                     )}
                   />
                 </button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {displayMemos.length === 1
+                  {displayNotes.length === 1
                     ? '연결된 노트 1개 (클릭하여 보기)'
-                    : `연결된 노트 ${displayMemos.length}개 (클릭하여 보기)`
+                    : `연결된 노트 ${displayNotes.length}개 (클릭하여 보기)`
                   }
                 </p>
               </TooltipContent>
@@ -720,20 +720,20 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
       )}
 
       {/* 아코디언 형태로 연결된 노트 표시 - 전체 카드 너비 활용 */}
-      {hasLinkedMemos && (
+      {hasLinkedNotes && (
         <div
           className={cn(
             'overflow-hidden transition-all duration-200 ease-out',
-            isMemosExpanded ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'
+            isNotesExpanded ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'
           )}
         >
           {/* 노트 태그들 표시 - 아코디언 내부 상단 */}
-          {memoTags.length > 0 && isMemosExpanded && (
+          {noteTags.length > 0 && isNotesExpanded && (
             <div className="mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-2 flex-wrap">
                 <Tag className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                 <div className="flex flex-wrap gap-1.5">
-                  {memoTags.map((tag) => (
+                  {noteTags.map((tag) => (
                     <div
                       key={tag.id}
                       className={cn(
@@ -763,21 +763,21 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
           <div
             className="space-y-2 max-h-80 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
-            {displayMemos.map((memo) => (
+            {displayNotes.map((note) => (
               <div
-                key={memo.id}
+                key={note.id}
                 className="group py-2 px-1 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/20 rounded-md transition-all duration-200"
-                onClick={(e) => handleMemoClick(memo, e)}
+                onClick={(e) => handleNoteClick(note, e)}
               >
                 <div className="flex items-start gap-3">
                   <div className="w-1 h-4 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0 mt-1 group-hover:bg-gray-400 dark:group-hover:bg-gray-500 transition-colors" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       <MarkdownViewer
-                        content={memo.content}
+                        content={note.content}
                         className="note-markdown-content"
                         interactive={true}
-                        onContentChange={(newContent) => handleMemoContentChange(memo, newContent)}
+                        onContentChange={(newContent) => handleNoteContentChange(note, newContent)}
                       />
                     </div>
                     <div className="flex items-center justify-between mt-1">
@@ -785,7 +785,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                         노트
                       </span>
                       <span className="text-xs text-gray-400 dark:text-gray-500">
-                        {format(new Date(memo.created_at), 'M월 d일 HH:mm', { locale: ko })}
+                        {format(new Date(note.created_at), 'M월 d일 HH:mm', { locale: ko })}
                       </span>
                     </div>
                   </div>
@@ -797,7 +797,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
       )}
 
       {/* 노트 아코디언 토글 버튼 - 펼쳐졌을 때 하단에 표시 (overflow 밖에 배치) */}
-      {hasLinkedMemos && isMemosExpanded && (
+      {hasLinkedNotes && isNotesExpanded && (
         <div
           className={cn(
             'mt-2 py-2 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-b-lg transition-all duration-200',
@@ -816,26 +816,26 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                   onClick={(e) => {
                     e.stopPropagation(); // 할일 클릭 이벤트 방지
                     e.preventDefault(); // 기본 동작 방지
-                    setIsMemosExpanded(!isMemosExpanded);
+                    setIsNotesExpanded(!isNotesExpanded);
                   }}
                   className="w-full flex items-center justify-between"
                 >
                   <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                    0/{displayMemos.length}
+                    0/{displayNotes.length}
                   </span>
                   <ChevronDown
                     className={cn(
                       'h-3.5 w-3.5 text-gray-400 dark:text-gray-500 transition-transform duration-200',
-                      isMemosExpanded && 'rotate-180'
+                      isNotesExpanded && 'rotate-180'
                     )}
                   />
                 </button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {displayMemos.length === 1
+                  {displayNotes.length === 1
                     ? '연결된 노트 1개 (클릭하여 접기)'
-                    : `연결된 노트 ${displayMemos.length}개 (클릭하여 접기)`
+                    : `연결된 노트 ${displayNotes.length}개 (클릭하여 접기)`
                   }
                 </p>
               </TooltipContent>

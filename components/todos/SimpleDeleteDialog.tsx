@@ -18,7 +18,7 @@ import type { Todo } from '@/types';
 interface SimpleDeleteDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (deleteLinkedMemos?: boolean) => void;
+  onConfirm: (deleteLinkedNotes?: boolean) => void;
   todo: Todo;
   isDeleting?: boolean;
 }
@@ -30,22 +30,22 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
   todo,
   isDeleting = false
 }) => {
-  const [deleteLinkedMemos, setDeleteLinkedMemos] = useState(false);
+  const [deleteLinkedNotes, setDeleteLinkedNotes] = useState(false);
   const { getLinkedNotesByTaskId } = useNoteStore();
-  
+
   // 연결된 노트 조회
-  const linkedMemos = todo ? getLinkedNotesByTaskId(todo.id) : [];
-  const hasLinkedMemos = linkedMemos.length > 0;
+  const linkedNotes = todo ? getLinkedNotesByTaskId(todo.id) : [];
+  const hasLinkedNotes = linkedNotes.length > 0;
 
   // 모달이 열릴 때마다 체크박스 상태 초기화
   useEffect(() => {
     if (isOpen) {
-      setDeleteLinkedMemos(false);
+      setDeleteLinkedNotes(false);
     }
   }, [isOpen]);
 
   const handleConfirm = () => {
-    onConfirm(deleteLinkedMemos);
+    onConfirm(deleteLinkedNotes);
   };
   
   return (
@@ -79,33 +79,33 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
           </div>
 
           {/* 연결된 퀵노트 정보 및 삭제 옵션 */}
-          {hasLinkedMemos && (
+          {hasLinkedNotes && (
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start gap-3 mb-3">
                 <StickyNote className="h-4 w-4 text-blue-600 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-blue-800">
-                    연결된 퀵노트 {linkedMemos.length}개 발견
+                    연결된 퀵노트 {linkedNotes.length}개 발견
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
-                    이 할일에 연결된 메모들을 어떻게 처리할지 선택해주세요.
+                    이 할일에 연결된 노트들을 어떻게 처리할지 선택해주세요.
                   </p>
                 </div>
               </div>
-              
+
               {/* 연결된 노트 미리보기 (최대 3개) */}
               <div className="space-y-2 mb-3">
-                {linkedMemos.slice(0, 3).map((memo) => (
-                  <div key={memo.id} className="flex items-start gap-2 p-2 bg-white rounded border">
+                {linkedNotes.slice(0, 3).map((note) => (
+                  <div key={note.id} className="flex items-start gap-2 p-2 bg-white rounded border">
                     <StickyNote className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-gray-700 line-clamp-2">
-                      {memo.content}
+                      {note.content}
                     </p>
                   </div>
                 ))}
-                {linkedMemos.length > 3 && (
+                {linkedNotes.length > 3 && (
                   <p className="text-xs text-blue-600">
-                    +{linkedMemos.length - 3}개 더...
+                    +{linkedNotes.length - 3}개 더...
                   </p>
                 )}
               </div>
@@ -113,20 +113,20 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
               {/* 퀵노트 삭제 선택 체크박스 */}
               <div className="flex items-start space-x-2">
                 <Checkbox
-                  id="delete-linked-memos"
-                  checked={deleteLinkedMemos}
-                  onCheckedChange={(checked) => setDeleteLinkedMemos(checked === true)}
+                  id="delete-linked-notes"
+                  checked={deleteLinkedNotes}
+                  onCheckedChange={(checked) => setDeleteLinkedNotes(checked === true)}
                   disabled={isDeleting}
                 />
                 <div className="grid gap-1.5 leading-none">
                   <label
-                    htmlFor="delete-linked-memos"
+                    htmlFor="delete-linked-notes"
                     className="text-sm font-medium text-blue-800 cursor-pointer"
                   >
-                    연결된 퀵메모도 함께 삭제
+                    연결된 퀵노트도 함께 삭제
                   </label>
                   <p className="text-xs text-blue-600">
-                    체크하지 않으면 메모들은 남아있고, 할일과의 연결만 해제됩니다.
+                    체크하지 않으면 노트들은 남아있고, 할일과의 연결만 해제됩니다.
                   </p>
                 </div>
               </div>
