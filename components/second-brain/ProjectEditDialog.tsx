@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, Tag, Palette } from 'lucide-react';
+import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, Tag, Palette, Target, Activity, Layers } from 'lucide-react';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -393,7 +393,7 @@ export default function ProjectEditDialog({
           {/* 콘텐츠 영역 */}
           <div className="flex-1 overflow-y-auto">
             {/* 아이콘 및 제목 - TodoMetadata 스타일 적용 */}
-            <div className="mx-4 my-2">
+            <div className="my-2">
               {/* 섹션 제목 */}
               <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
                 <Tag className="h-5 w-5" style={{ color: editingProject.color }} />
@@ -457,98 +457,130 @@ export default function ProjectEditDialog({
             </div>
 
           {/* 목표 */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">목표</span>
+          <div className="my-2">
+            {/* 섹션 제목 */}
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+              <Target className="h-5 w-5" style={{ color: editingProject.color }} />
+              목표
             </label>
-            <select
-              value={editingProject.goal_id || ''}
-              onChange={(e) => onProjectChange({ ...editingProject, goal_id: e.target.value })}
-              className="select select-bordered"
-            >
-              <option value="">선택 안 함</option>
-              {goals.map((goal) => (
-                <option key={goal.id} value={goal.id}>
-                  {goal.title}
-                </option>
-              ))}
-            </select>
+
+            {/* 셀렉트 박스 */}
+            <div className="p-2 rounded-lg bg-base-100">
+              <select
+                value={editingProject.goal_id || ''}
+                onChange={(e) => onProjectChange({ ...editingProject, goal_id: e.target.value })}
+                className="select select-bordered w-full"
+              >
+                <option value="">선택 안 함</option>
+                {goals.map((goal) => (
+                  <option key={goal.id} value={goal.id}>
+                    {goal.title}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* 진행상황 */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">진행상황</span>
+          <div className="my-2">
+            {/* 섹션 제목 */}
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+              <Activity className="h-5 w-5" style={{ color: editingProject.color }} />
+              진행상황
             </label>
-            <select
-              value={editingProject.status}
-              onChange={(e) =>
-                onProjectChange({
-                  ...editingProject,
-                  status: e.target.value as 'not_started' | 'active' | 'on_hold' | 'completed',
-                })
-              }
-              className="select select-bordered"
-            >
-              <option value="not_started">시작 안함</option>
-              <option value="active">진행중</option>
-              <option value="on_hold">중단</option>
-              <option value="completed">완료</option>
-            </select>
+
+            {/* 셀렉트 박스 */}
+            <div className="p-2 rounded-lg bg-base-100">
+              <select
+                value={editingProject.status}
+                onChange={(e) =>
+                  onProjectChange({
+                    ...editingProject,
+                    status: e.target.value as 'not_started' | 'active' | 'on_hold' | 'completed',
+                  })
+                }
+                className="select select-bordered w-full"
+              >
+                <option value="not_started">시작 안함</option>
+                <option value="active">진행중</option>
+                <option value="on_hold">중단</option>
+                <option value="completed">완료</option>
+              </select>
+            </div>
           </div>
 
           {/* 영역/자원 */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">영역/자원 (선택)</span>
+          <div className="my-2">
+            {/* 섹션 제목 */}
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+              <Layers className="h-5 w-5" style={{ color: editingProject.color }} />
+              영역/자원 (선택)
             </label>
-            <select
-              value={editingProject.paraSelection}
-              onChange={(e) => onProjectChange({ ...editingProject, paraSelection: e.target.value })}
-              className="select select-bordered"
-            >
-              <option value="">선택 안 함</option>
-              <optgroup label="영역">
-                {areas.map((area) => (
-                  <option key={area.id} value={`area-${area.id}`}>
-                    {area.title}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="자원">
-                {resources.map((resource) => (
-                  <option key={resource.id} value={`resource-${resource.id}`}>
-                    {resource.title}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+
+            {/* 셀렉트 박스 */}
+            <div className="p-2 rounded-lg bg-base-100">
+              <select
+                value={editingProject.paraSelection}
+                onChange={(e) => onProjectChange({ ...editingProject, paraSelection: e.target.value })}
+                className="select select-bordered w-full"
+              >
+                <option value="">선택 안 함</option>
+                <optgroup label="영역">
+                  {areas.map((area) => (
+                    <option key={area.id} value={`area-${area.id}`}>
+                      {area.title}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="자원">
+                  {resources.map((resource) => (
+                    <option key={resource.id} value={`resource-${resource.id}`}>
+                      {resource.title}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
           </div>
 
           {/* 시작일/종료일 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">시작일 (선택)</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 시작일 */}
+            <div className="my-2">
+              {/* 섹션 제목 */}
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+                <Calendar className="h-5 w-5" style={{ color: editingProject.color }} />
+                시작일 (선택)
               </label>
-              <input
-                type="date"
-                value={editingProject.start_date || ''}
-                onChange={(e) => onProjectChange({ ...editingProject, start_date: e.target.value })}
-                className="input input-bordered"
-              />
+
+              {/* 날짜 입력 */}
+              <div className="p-2 rounded-lg bg-base-100">
+                <input
+                  type="date"
+                  value={editingProject.start_date || ''}
+                  onChange={(e) => onProjectChange({ ...editingProject, start_date: e.target.value })}
+                  className="input input-bordered w-full"
+                />
+              </div>
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">종료일 (선택)</span>
+            {/* 종료일 */}
+            <div className="my-2">
+              {/* 섹션 제목 */}
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+                <Calendar className="h-5 w-5" style={{ color: editingProject.color }} />
+                종료일 (선택)
               </label>
-              <input
-                type="date"
-                value={editingProject.target_end_date || ''}
-                onChange={(e) => onProjectChange({ ...editingProject, target_end_date: e.target.value })}
-                className="input input-bordered"
-              />
+
+              {/* 날짜 입력 */}
+              <div className="p-2 rounded-lg bg-base-100">
+                <input
+                  type="date"
+                  value={editingProject.target_end_date || ''}
+                  onChange={(e) => onProjectChange({ ...editingProject, target_end_date: e.target.value })}
+                  className="input input-bordered w-full"
+                />
+              </div>
             </div>
           </div>
 
