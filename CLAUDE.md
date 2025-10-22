@@ -27,40 +27,11 @@ npm run preview:web           # 웹 프로덕션 미리보기
 npm start                     # 프로덕션 서버
 ```
 
-### 테스트
-```bash
-npm run test                  # 단위 테스트
-npm run test:coverage         # 커버리지 포함 (목표: 80%)
-npm run test:e2e              # Playwright E2E 테스트
-npm run test:all              # 전체 테스트 (단위 + E2E)
-```
-
-### 모바일 개발
-```bash
-npm run mobile:ios            # Xcode 열기
-npm run mobile:android        # Android Studio 열기
-npm run mobile:sync           # 네이티브 동기화
-npm run mobile:clean          # 모바일 빌드 정리
-```
-
-### 분석 및 디버깅
-```bash
-npm run analyze:bundle        # 번들 사이즈 분석
-npm run debug:build           # 디버그 모드 빌드
-```
 
 ## 환경 설정
 
 `.env.example` → `.env.local`:
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-# Task Master AI (선택)
-ANTHROPIC_API_KEY=your_anthropic_key
-PERPLEXITY_API_KEY=your_perplexity_key
-```
 
 ## MCP 서버
 
