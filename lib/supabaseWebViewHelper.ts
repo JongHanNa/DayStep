@@ -2082,13 +2082,13 @@ export async function deleteCustomMotivationTagWithJWT(
 // ============================================================================
 
 /**
- * JWT 방식으로 사용자의 모든 메모 태그 조회
+ * JWT 방식으로 사용자의 모든 노트 태그 조회
  */
 export async function fetchAllMemoTagsWithJWT(userId: string): Promise<MemoTag[]> {
-  console.log('🏷️ JWT 방식으로 메모 태그 조회:', { userId });
+  console.log('🏷️ JWT 방식으로 노트 태그 조회:', { userId });
 
   try {
-    const tags = await queryRLSTableWithJWT('memo_tags', [
+    const tags = await queryRLSTableWithJWT('note_tags', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -2099,26 +2099,26 @@ export async function fetchAllMemoTagsWithJWT(userId: string): Promise<MemoTag[]
       order: 'name.asc'
     });
 
-    console.log('✅ JWT 메모 태그 조회 성공:', { tagsCount: tags.length });
+    console.log('✅ JWT 노트 태그 조회 성공:', { tagsCount: tags.length });
     return tags || [];
   } catch (error) {
-    console.error('❌ JWT 메모 태그 조회 실패:', error);
+    console.error('❌ JWT 노트 태그 조회 실패:', error);
     return [];
   }
 }
 
 /**
- * JWT 방식으로 메모 태그 생성
+ * JWT 방식으로 노트 태그 생성
  */
 export async function createMemoTagWithJWT(
   data: Omit<MemoTagInsert, 'user_id'>,
   userId: string
 ): Promise<MemoTag | null> {
-  console.log('✏️ JWT 방식으로 메모 태그 생성:', { data, userId });
+  console.log('✏️ JWT 방식으로 노트 태그 생성:', { data, userId });
 
   try {
     // 태그 이름 중복 검사
-    const existingTags = await queryRLSTableWithJWT('memo_tags', [
+    const existingTags = await queryRLSTableWithJWT('note_tags', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -2147,28 +2147,28 @@ export async function createMemoTagWithJWT(
       position: data.position || 0
     };
 
-    const result = await createWithJWT('memo_tags', tagData);
-    console.log('✅ JWT 메모 태그 생성 성공:', { id: result?.id });
+    const result = await createWithJWT('note_tags', tagData);
+    console.log('✅ JWT 노트 태그 생성 성공:', { id: result?.id });
     return result;
   } catch (error) {
-    console.error('❌ JWT 메모 태그 생성 실패:', error);
+    console.error('❌ JWT 노트 태그 생성 실패:', error);
     throw error;
   }
 }
 
 /**
- * JWT 방식으로 메모 태그 업데이트
+ * JWT 방식으로 노트 태그 업데이트
  */
 export async function updateMemoTagWithJWT(
   tagId: string,
   userId: string,
   updates: Partial<MemoTagInsert>
 ): Promise<MemoTag | null> {
-  console.log('🔄 JWT 방식으로 메모 태그 업데이트:', { tagId, userId, updates });
+  console.log('🔄 JWT 방식으로 노트 태그 업데이트:', { tagId, userId, updates });
 
   try {
     // 미리 정의된 태그는 수정 불가
-    const existingTag = await queryRLSTableWithJWT('memo_tags', [
+    const existingTag = await queryRLSTableWithJWT('note_tags', [
       { column: 'id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
@@ -2186,7 +2186,7 @@ export async function updateMemoTagWithJWT(
 
     // 이름 변경 시 중복 검사
     if (updates.name) {
-      const duplicateTags = await queryRLSTableWithJWT('memo_tags', [
+      const duplicateTags = await queryRLSTableWithJWT('note_tags', [
         {
           column: 'user_id',
           operator: 'eq',
@@ -2207,31 +2207,31 @@ export async function updateMemoTagWithJWT(
       }
     }
 
-    const result = await updateWithJWT('memo_tags', [
+    const result = await updateWithJWT('note_tags', [
       { column: 'id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], updates);
 
-    console.log('✅ JWT 메모 태그 업데이트 성공:', { tagId });
+    console.log('✅ JWT 노트 태그 업데이트 성공:', { tagId });
     return result?.[0] || null;
   } catch (error) {
-    console.error('❌ JWT 메모 태그 업데이트 실패:', error);
+    console.error('❌ JWT 노트 태그 업데이트 실패:', error);
     throw error;
   }
 }
 
 /**
- * JWT 방식으로 메모 태그 삭제
+ * JWT 방식으로 노트 태그 삭제
  */
 export async function deleteMemoTagWithJWT(
   tagId: string,
   userId: string
 ): Promise<boolean> {
-  console.log('🗑️ JWT 방식으로 메모 태그 삭제:', { tagId, userId });
+  console.log('🗑️ JWT 방식으로 노트 태그 삭제:', { tagId, userId });
 
   try {
     // 미리 정의된 태그는 삭제 불가
-    const existingTag = await queryRLSTableWithJWT('memo_tags', [
+    const existingTag = await queryRLSTableWithJWT('note_tags', [
       { column: 'id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
@@ -2268,15 +2268,15 @@ export async function deleteMemoTagWithJWT(
     }
 
     // 태그 삭제
-    await deleteWithJWT('memo_tags', [
+    await deleteWithJWT('note_tags', [
       { column: 'id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
 
-    console.log('✅ JWT 메모 태그 삭제 성공:', { tagId });
+    console.log('✅ JWT 노트 태그 삭제 성공:', { tagId });
     return true;
   } catch (error) {
-    console.error('❌ JWT 메모 태그 삭제 실패:', error);
+    console.error('❌ JWT 노트 태그 삭제 실패:', error);
     throw error;
   }
 }
@@ -2395,13 +2395,13 @@ export async function fetchTagsForMemoWithJWT(
   try {
     // 메모-태그 링크를 통해 태그 정보 조회 (JOIN 쿼리)
     const query = `
-      select memo_tags.*
-      from memo_tags
-      inner join memo_tag_links on memo_tags.id = memo_tag_links.tag_id
+      select note_tags.*
+      from note_tags
+      inner join memo_tag_links on note_tags.id = memo_tag_links.tag_id
       where memo_tag_links.memo_id = '${memoId}'
         and memo_tag_links.user_id = '${userId}'
-        and memo_tags.user_id = '${userId}'
-      order by memo_tags.name asc
+        and note_tags.user_id = '${userId}'
+      order by note_tags.name asc
     `;
 
     // 복잡한 JOIN 쿼리는 직접 SQL로 실행
@@ -2429,7 +2429,7 @@ export async function fetchTagsForMemoWithJWT(
       }
 
       const tagIds = links.map((link: any) => link.tag_id);
-      const tags = await queryRLSTableWithJWT('memo_tags', [
+      const tags = await queryRLSTableWithJWT('note_tags', [
         { column: 'id', operator: 'in', value: tagIds },
         { column: 'user_id', operator: 'eq', value: userId }
       ], {
@@ -2634,7 +2634,7 @@ export async function createTagFromTemplateWithJWT(
 
     if (result) {
       // 생성된 태그 정보 조회
-      const newTag = await queryRLSTableWithJWT('memo_tags', [
+      const newTag = await queryRLSTableWithJWT('note_tags', [
         {
           column: 'id',
           operator: 'eq',
@@ -2686,7 +2686,7 @@ export async function createDefaultTagsForUserWithJWT(userId: string): Promise<n
 /**
  * 메모에 태그 및 템플릿 태그 연결 (혼합 지원)
  * - userTagIds: 실제 사용자 태그 ID들
- * - templateTagIds: 템플릿 태그 ID들 (memo_tags 생성 없이 직접 연결)
+ * - templateTagIds: 템플릿 태그 ID들 (note_tags 생성 없이 직접 연결)
  */
 export async function updateMemoTagsWithTemplates(
   memoId: string,
@@ -2780,7 +2780,7 @@ export async function fetchUserTagsWithTemplatesWithJWT(userId: string): Promise
 
   try {
     // 사용자의 커스텀 태그만 조회 (템플릿 정보는 별도로 제공)
-    const userTags = await queryRLSTableWithJWT('memo_tags', [
+    const userTags = await queryRLSTableWithJWT('note_tags', [
       {
         column: 'user_id',
         operator: 'eq',
