@@ -65,8 +65,8 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 완료 동작 설정 가져오기
   const todoCompletion = useSettingsStore(state => state.todoCompletion);
   
-  // 연결된 메모 확인
-  const { memos, setSelectedMemoForEdit, getDisplayMemosForTask } = useNoteStore();
+  // 연결된 노트 확인
+  const { notes, setSelectedNoteForEdit, getDisplayNotesForTask } = useNoteStore();
 
   // 태그 정보 확인
   const { getTagsForMemo } = useMemoTagStore();
@@ -108,17 +108,17 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         console.log('🔄 반복 할일 메모 로딩:', { actualTaskId, instanceDate });
 
         if (instanceDate) {
-          memosToDisplay = await getDisplayMemosForTask(actualTaskId, instanceDate);
+          memosToDisplay = await getDisplayNotesForTask(actualTaskId, instanceDate);
         } else {
           // 날짜 추출 실패 시 기본 메모만 표시
-          memosToDisplay = memos.filter(memo =>
+          memosToDisplay = notes.filter(memo =>
             memo.related_task_id === actualTaskId ||
             memo.linked_timeline_task_id === actualTaskId
           );
         }
       } else {
         // 일반 할일인 경우 기본 필터링
-        memosToDisplay = memos.filter(memo =>
+        memosToDisplay = notes.filter(memo =>
           memo.related_task_id === actualTaskId ||
           memo.linked_timeline_task_id === actualTaskId
         );
@@ -141,7 +141,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
     } catch (error) {
       console.error('메모 로딩 실패:', error);
       // 에러 시 기본 필터링으로 폴백
-      const fallbackMemos = memos.filter(memo =>
+      const fallbackMemos = notes.filter(memo =>
         memo.related_task_id === actualTaskId ||
         memo.linked_timeline_task_id === actualTaskId
       );
@@ -154,7 +154,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 메모 다시 로딩이 필요한 경우들
   useEffect(() => {
     loadDisplayMemos();
-  }, [actualTaskId, item.id, memos]);
+  }, [actualTaskId, item.id, notes]);
   
 
   // 반복 할일인지 확인
@@ -266,7 +266,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 메모 클릭 시 수정 모달 열기
   const handleMemoClick = (memo: any, e: React.MouseEvent) => {
     e.stopPropagation(); // 할일 클릭 이벤트 방지
-    setSelectedMemoForEdit(memo);
+    setSelectedNoteForEdit(memo);
   };
 
   // 반복 할일 인스턴스에서 날짜 추출
@@ -284,7 +284,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 메모 내용 변경 핸들러
   const handleMemoContentChange = async (memo: any, newContent: string) => {
     try {
-      const { updateMemo, upsertMemoInstance } = useNoteStore.getState();
+      const { updateNote, upsertMemoInstance } = useNoteStore.getState();
 
       // 메모 인스턴스인 경우 (displayMemos에서 _isInstance 플래그 확인)
       if (memo._isInstance) {
@@ -328,7 +328,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
       }
 
       // 일반 메모 또는 단일 연결 반복 메모인 경우 원본 수정
-      await updateMemo({
+      await updateNote({
         id: memo.id,
         content: newContent,
       });

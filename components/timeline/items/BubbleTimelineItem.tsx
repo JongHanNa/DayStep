@@ -86,7 +86,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 스토어 훅
   const { todos, todoCompletions } = useTodoStore();
   const { getMotivationsForTodo } = useMotivationStore();
-  const { memos } = useNoteStore();
+  const { notes } = useNoteStore();
   const { bubbleShape } = useSettingsStore();
 
   // 타임라인 ID에서 실제 UUID 추출
@@ -105,7 +105,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   // 메모 확인
   const linkedMemos = item.type === 'todo'
-    ? memos.filter(memo =>
+    ? notes.filter(memo =>
         memo.related_task_id === actualTaskId ||
         memo.linked_timeline_task_id === actualTaskId
       )

@@ -16,7 +16,7 @@ import ScheduleSettings from './form/ScheduleSettings';
 import DepartureSettings from './form/DepartureSettings';
 import RecurrenceSettings from './form/RecurrenceSettings';
 import TodoMetadata from './form/TodoMetadata';
-import LinkedMemos from './form/LinkedMemos';
+import LinkedNotes from './form/LinkedNotes';
 import MemoInput from './form/MemoInput';
 import ContactsSection from './form/ContactsSection';
 import MotivationSelection from './form/MotivationSelection';
@@ -286,9 +286,9 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
               />
 
 
-              {/* 연결된 메모 표시 (수정 모드일 때만) */}
+              {/* 연결된 노트 표시 (수정 모드일 때만) */}
               {computed.isEditMode && editingTodo && (
-                <LinkedMemos taskId={editingTodo.id} />
+                <LinkedNotes taskId={editingTodo.id} />
               )}
 
               {/* 메모 입력 (항상 표시) */}

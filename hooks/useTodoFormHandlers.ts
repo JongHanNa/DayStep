@@ -62,9 +62,9 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
   const updateRecurringTodo = useTodoStore(state => state.updateRecurringTodo);
   const deleteTodo = useTodoStore(state => state.deleteTodo);
   const deleteRecurringTodo = useTodoStore(state => state.deleteRecurringTodo);
-  const createMemo = useNoteStore(state => state.createMemo);
-  const deleteLinkedMemos = useNoteStore(state => state.deleteLinkedMemos);
-  const getLinkedMemosByTaskId = useNoteStore(state => state.getLinkedMemosByTaskId);
+  const createNote = useNoteStore(state => state.createNote);
+  const deleteLinkedNotes = useNoteStore(state => state.deleteLinkedNotes);
+  const getLinkedNotesByTaskId = useNoteStore(state => state.getLinkedNotesByTaskId);
   const linkMotivationToTodo = useMotivationStore(state => state.linkMotivationToTodo);
 
   const isEditMode = !!editingTodo;
@@ -486,7 +486,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
           for (const memo of values.memos) {
             if (memo.content.trim()) {
               try {
-                await createMemo({
+                await createNote({
                   content: memo.content.trim(),
                   related_task_id: createdTodoId,
                   is_pinned: false,
@@ -614,7 +614,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       // 연결된 메모 삭제 옵션이 선택된 경우
       if (deleteLinkedMemosOption) {
         try {
-          deletedMemoCount = await deleteLinkedMemos(editingTodo.id);
+          deletedMemoCount = await deleteLinkedNotes(editingTodo.id);
           console.log(`✅ 연결된 메모 ${deletedMemoCount}개 삭제 완료`);
         } catch (memoError) {
           console.error('⚠️ 연결된 메모 삭제 중 일부 실패:', memoError);
@@ -647,7 +647,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     } finally {
       setIsDeleting(false);
     }
-  }, [editingTodo, deleteTodo, deleteLinkedMemos, toast, onOpenChange, setIsDeleting, setShowDeleteDialog]);
+  }, [editingTodo, deleteTodo, deleteLinkedNotes, toast, onOpenChange, setIsDeleting, setShowDeleteDialog]);
 
   // 반복 일정 삭제 확인
   const handleRecurringDelete = useCallback(async (deleteType: 'this' | 'future' | 'all', deleteLinkedMemosOption?: boolean) => {
@@ -660,7 +660,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       // 연결된 메모 삭제 옵션이 선택된 경우
       if (deleteLinkedMemosOption) {
         try {
-          deletedMemoCount = await deleteLinkedMemos(editingTodo.id);
+          deletedMemoCount = await deleteLinkedNotes(editingTodo.id);
           console.log(`✅ 반복 할일 연결된 메모 ${deletedMemoCount}개 삭제 완료`);
         } catch (memoError) {
           console.error('⚠️ 반복 할일 연결된 메모 삭제 중 일부 실패:', memoError);
@@ -718,7 +718,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     } finally {
       setIsDeleting(false);
     }
-  }, [editingTodo, deleteRecurringTodo, deleteLinkedMemos, toast, onOpenChange, setIsDeleting, setShowRecurringDeleteDialog]);
+  }, [editingTodo, deleteRecurringTodo, deleteLinkedNotes, toast, onOpenChange, setIsDeleting, setShowRecurringDeleteDialog]);
 
   // 반복 할일 시간 변경 핸들러
   const handleRecurringTimeUpdate = useCallback(async (choice: 'this-only' | 'from-now' | 'all') => {

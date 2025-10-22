@@ -45,7 +45,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   
   // Store hooks
-  const { updateMemo, unpinMemo } = useNoteStore();
+  const { updateNote, unpinNote } = useNoteStore();
   const { todos } = useTodoStore();
 
   // 로컬 상태
@@ -78,7 +78,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
     }
 
     try {
-      await updateMemo({
+      await updateNote({
         id: memo.id,
         content: editContent.trim(),
       });
@@ -106,7 +106,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
   // 핀 해제 (플로팅 카드 닫기)
   const handleUnpin = async () => {
     try {
-      await unpinMemo(memo.id);
+      await unpinNote(memo.id);
       onClose?.();
     } catch (error) {
       toast({

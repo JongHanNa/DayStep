@@ -58,21 +58,21 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     };
   }, [open, openModal, closeModal]);
 
-  // Quick Memo Store
+  // Note Store
   const {
     loading,
     error,
     filters,
-    createMemo,
-    updateMemo,
-    deleteMemo,
-    pinMemo,
-    unpinMemo,
+    createNote,
+    updateNote,
+    deleteNote,
+    pinNote,
+    unpinNote,
     setFilter,
-    getFilteredMemos,
-    setSelectedMemoForEdit,
+    getFilteredNotes,
+    setSelectedNoteForEdit,
     initialize,
-    ui: { selectedMemoForEdit },
+    ui: { selectedNoteForEdit },
   } = useNoteStore();
 
   // Todo Store (할일 연결용)
@@ -169,7 +169,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       }
 
       if (memoEditorMode === 'edit' && currentEditingMemo) {
-        await updateMemo({
+        await updateNote({
           id: currentEditingMemo.id,
           content: memoContent.trim(),
         });
@@ -179,7 +179,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
           await updateMemoTagsWithTemplates(currentEditingMemo.id, selectedTags, selectedTemplates, userId);
         }
       } else {
-        const newMemo = await createMemo({
+        const newMemo = await createNote({
           content: memoContent.trim(),
           related_task_id: selectedTaskId,
           user_id: userId,
@@ -200,7 +200,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       // 편집 모드에서만 삭제 (새 메모 생성 중에는 삭제하지 않음)
       if (memoEditorMode === 'edit' && currentEditingMemo) {
         console.log('🗑️ [Note] 빈 메모 자동 삭제:', currentEditingMemo.id);
-        await deleteMemo(currentEditingMemo.id);
+        await deleteNote(currentEditingMemo.id);
 
         // 삭제 완료 토스트 알림
         toast({
@@ -218,8 +218,8 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     enabled: memoEditorOpen && isAuthenticated && hasUserEditedContent
   });
 
-  // 필터링된 메모 목록
-  const filteredMemos = getFilteredMemos();
+  // 필터링된 노트 목록
+  const filteredNotes = getFilteredNotes();
 
   // 컴포넌트 마운트 시 초기화
   useEffect(() => {
@@ -235,7 +235,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       const newLinkedTodosMap = new Map(linkedTodosMap);
       let hasUpdates = false;
 
-      for (const memo of filteredMemos) {
+      for (const memo of filteredNotes) {
         if (memo.related_task_id && !linkedTodosMap.has(memo.related_task_id)) {
           // todos 배열에서 먼저 찾기
           const existingTodo = todos.find(t => t.id === memo.related_task_id);
@@ -262,10 +262,10 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       }
     };
 
-    if (filteredMemos.length > 0) {
+    if (filteredNotes.length > 0) {
       loadLinkedTodos();
     }
-  }, [filteredMemos, todos, fetchTodoById]);
+  }, [filteredNotes, todos, fetchTodoById]);
 
   // 메모 편집 시 기존 태그 로드 (사용자 태그와 템플릿 태그 분리)
   useEffect(() => {
@@ -315,10 +315,10 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
 
   // 수정 모달 모니터링
   useEffect(() => {
-    if (selectedMemoForEdit && !memoEditorOpen) {
-      openMemoEditor('edit', selectedMemoForEdit);
+    if (selectedNoteForEdit && !memoEditorOpen) {
+      openMemoEditor('edit', selectedNoteForEdit);
     }
-  }, [selectedMemoForEdit, memoEditorOpen]);
+  }, [selectedNoteForEdit, memoEditorOpen]);
 
   // 통합된 메모 편집기 열기
   const openMemoEditor = (mode: 'create' | 'edit', memo?: Note) => {
@@ -347,7 +347,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   // 메모 편집기 닫기
   const closeMemoEditor = () => {
     setMemoEditorOpen(false);
-    setSelectedMemoForEdit(null);
+    setSelectedNoteForEdit(null);
     setMemoContent('');
     setOriginalMemoContent('');
     setSelectedTaskId(null);
@@ -391,7 +391,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   // 메모 삭제
   const handleDeleteMemo = async (memoId: string) => {
     try {
-      await deleteMemo(memoId);
+      await deleteNote(memoId);
       toast({
         title: '메모가 삭제되었습니다',
         description: '선택한 메모가 삭제되었습니다.',
@@ -409,9 +409,9 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   const handleTogglePin = async (memo: Note) => {
     try {
       if (memo.is_pinned) {
-        await unpinMemo(memo.id);
+        await unpinNote(memo.id);
       } else {
-        await pinMemo(memo.id);
+        await pinNote(memo.id);
       }
     } catch (error) {
       toast({
@@ -489,7 +489,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
               <StickyNote className="h-5 w-5 text-primary" />
               <h3 className="font-bold text-lg">퀵메모</h3>
               <Badge variant="outline" className="text-xs">
-                {filteredMemos.length}개
+                {filteredNotes.length}개
               </Badge>
             </div>
             <button onClick={() => openMemoEditor('create')} className="btn btn-primary btn-sm rounded-full">
@@ -528,7 +528,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                   </div>
                 )}
 
-                {!loading && !error && filteredMemos.length === 0 && (
+                {!loading && !error && filteredNotes.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <StickyNote className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
                     <p className="text-sm">아직 메모가 없습니다</p>
@@ -536,7 +536,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                   </div>
                 )}
 
-                {filteredMemos.map((memo) => {
+                {filteredNotes.map((memo: Note) => {
                   // 연결된 할일 찾기: todos 배열 우선, 없으면 linkedTodosMap에서 찾기
                   const linkedTodo = memo.related_task_id
                     ? (todos.find(todo => todo.id === memo.related_task_id) || linkedTodosMap.get(memo.related_task_id))

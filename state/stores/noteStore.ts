@@ -147,7 +147,7 @@ interface NoteStoreActions {
 
   // 필터링 및 정렬
   setFilter: (filter: Partial<NoteStoreState['filters']>) => void;
-  getFilteredMemos: () => Note[];
+  getFilteredNotes: () => Note[];
   clearFilters: () => void;
 
   // 실시간 구독 관리
@@ -595,7 +595,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }));
         },
 
-        getFilteredMemos: () => {
+        getFilteredNotes: () => {
           const { notes, filters } = get();
           
           return notes.filter(memo => {
@@ -841,7 +841,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.createNoteInstance:', input);
 
           try {
-            const result = await createNoteInstanceWithJWT(input);
+            const result = await createMemoInstanceWithJWT(input);
             console.log('✅ 메모 인스턴스 생성 성공:', result);
             return result;
           } catch (error) {
@@ -854,7 +854,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.updateNoteInstance:', input);
 
           try {
-            const result = await updateNoteInstanceWithJWT(input.id, input);
+            const result = await updateMemoInstanceWithJWT(input.id, input);
             console.log('✅ 메모 인스턴스 업데이트 성공:', result);
             return result;
           } catch (error) {
@@ -867,7 +867,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.deleteNoteInstance:', instanceId);
 
           try {
-            await deleteNoteInstanceWithJWT(instanceId);
+            await deleteMemoInstanceWithJWT(instanceId);
             console.log('✅ 메모 인스턴스 삭제 성공');
           } catch (error) {
             console.error('❌ 메모 인스턴스 삭제 실패:', error);
@@ -1158,7 +1158,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               // 원본과 동일한 경우 - 인스턴스 정리
               if (existingInstance) {
                 console.log('🧹 원본과 동일하므로 인스턴스 정리:', existingInstance.id);
-                await deleteNoteInstanceWithJWT(existingInstance.id);
+                await deleteMemoInstanceWithJWT(existingInstance.id);
 
                 // null을 반환하여 인스턴스가 제거되었음을 표시
                 return null;
@@ -1170,7 +1170,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               // 원본과 다른 경우 - 인스턴스 생성/업데이트
               if (existingInstance) {
                 // 기존 인스턴스 업데이트
-                const result = await updateNoteInstanceWithJWT(existingInstance.id, {
+                const result = await updateMemoInstanceWithJWT(existingInstance.id, {
                   content: modifiedContent,
                   is_modified: true,
                   related_task_id: taskId || existingInstance.related_task_id,
@@ -1178,7 +1178,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
                 return result;
               } else {
                 // 새 인스턴스 생성
-                const result = await createNoteInstanceWithJWT({
+                const result = await createMemoInstanceWithJWT({
                   original_memo_id: memoId,
                   user_id: userId,
                   instance_date: date,

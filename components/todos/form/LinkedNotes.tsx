@@ -14,7 +14,7 @@ interface LinkedMemosProps {
 
 const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
   const [isMemosExpanded, setIsMemosExpanded] = useState(false);
-  const { memos, setSelectedMemoForEdit } = useNoteStore();
+  const { notes, setSelectedNoteForEdit } = useNoteStore();
 
   // taskId가 없으면 렌더링하지 않음
   if (!taskId) {
@@ -22,7 +22,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
   }
 
   // 연결된 메모 필터링
-  const linkedMemos = memos.filter(memo => 
+  const linkedMemos = notes.filter(memo => 
     memo.related_task_id === taskId || 
     memo.linked_timeline_task_id === taskId
   );
@@ -37,14 +37,14 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
   // 메모 클릭 핸들러
   const handleMemoClick = (memo: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedMemoForEdit(memo);
+    setSelectedNoteForEdit(memo);
   };
 
   // 메모 내용 변경 핸들러
   const handleMemoContentChange = async (memo: any, newContent: string) => {
     try {
-      const { updateMemo } = useNoteStore.getState();
-      await updateMemo({
+      const { updateNote } = useNoteStore.getState();
+      await updateNote({
         id: memo.id,
         content: newContent,
       });

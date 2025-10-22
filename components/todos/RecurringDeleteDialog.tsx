@@ -28,10 +28,10 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
 }) => {
   const [selectedDeleteType, setSelectedDeleteType] = useState<'this' | 'future' | 'all'>('this');
   const [deleteLinkedMemos, setDeleteLinkedMemos] = useState(false);
-  const { getLinkedMemosByTaskId } = useNoteStore();
+  const { getLinkedNotesByTaskId } = useNoteStore();
   
   // 연결된 메모 조회
-  const linkedMemos = todo ? getLinkedMemosByTaskId(todo.id) : [];
+  const linkedMemos = todo ? getLinkedNotesByTaskId(todo.id) : [];
   const hasLinkedMemos = linkedMemos.length > 0;
 
   // 모달이 열릴 때만 로그 출력 (무한 렌더링 방지)

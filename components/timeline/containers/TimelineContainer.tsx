@@ -102,8 +102,8 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   const pathname = usePathname();
   const { isAuthenticated, loading: authLoading, appUser } = useAuth();
 
-  // Quick Memo Store hooks
-  const { pinnedMemos, initialize: initializeNote } = useNoteStore();
+  // Note Store hooks
+  const { pinnedNotes, initialize: initializeNote } = useNoteStore();
 
   // Capacitor/WebView 환경에서 스크롤 최적화 (스크롤 기능 유지)
   useEffect(() => {
@@ -656,7 +656,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
           <FloatingActionButton />
           
           {/* Floating Memo Cards - 고정된 메모들 */}
-          {pinnedMemos.map((memo, index) => (
+          {pinnedNotes.map((memo, index) => (
             <FloatingMemoCard
               key={memo.id}
               memo={memo}
