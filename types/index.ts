@@ -39,8 +39,8 @@ export interface MemoTag {
   is_template?: boolean; // getTagsForMemo에서 템플릿을 태그로 변환할 때 사용
 }
 
-// Memo Tag Template types (predefined tags available to all users)
-export interface MemoTagTemplate {
+// Note Tag Template types (predefined tags available to all users)
+export interface NoteTagTemplate {
   id: string;
   name: string;
   color: string;
@@ -220,7 +220,7 @@ export interface TagWithSource extends MemoTag {
 
 export interface TagCategoryGroup {
   category: string;
-  templates: MemoTagTemplate[];
+  templates: NoteTagTemplate[];
   userTags: MemoTag[];
 }
 

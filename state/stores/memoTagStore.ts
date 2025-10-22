@@ -18,8 +18,8 @@ import {
   unlinkAllTagsFromMemoWithJWT,
   updateMemoTagsWithJWT,
   // 새로운 템플릿 관련 함수들
-  fetchMemoTagTemplatesWithJWT,
-  fetchMemoTagTemplatesByCategoryWithJWT,
+  fetchNoteTagTemplatesWithJWT,
+  fetchNoteTagTemplatesByCategoryWithJWT,
   createTagFromTemplateWithJWT,
   createDefaultTagsForUserWithJWT,
   fetchUserTagsWithTemplatesWithJWT,
@@ -27,7 +27,7 @@ import {
   fetchMemoTagLinksWithJWT,
 } from '@/lib/supabaseWebViewHelper';
 import { supabase } from '@/lib/supabase';
-import type { MemoTag, MemoTagLink, MemoTagInsert, MemoTagUpdate, MemoTagLinkInsert, MemoTagTemplate, CreateTagFromTemplateInput, TagCategoryGroup } from '@/types';
+import type { MemoTag, MemoTagLink, MemoTagInsert, MemoTagUpdate, MemoTagLinkInsert, NoteTagTemplate, CreateTagFromTemplateInput, TagCategoryGroup } from '@/types';
 import { MEMO_TAG_CATEGORIES, RECOMMENDED_STARTER_TAGS } from '@/lib/memo-tag-constants';
 
 /**
@@ -36,7 +36,7 @@ import { MEMO_TAG_CATEGORIES, RECOMMENDED_STARTER_TAGS } from '@/lib/memo-tag-co
 interface MemoTagStoreState {
   // 데이터 상태
   tags: MemoTag[];
-  templates: MemoTagTemplate[]; // 템플릿 태그들
+  templates: NoteTagTemplate[]; // 템플릿 태그들
   memoTagLinks: MemoTagLink[];
 
   // UI 상태
@@ -74,7 +74,7 @@ interface MemoTagStoreActions {
   // 템플릿 관련
   createTagFromTemplate: (templateData: CreateTagFromTemplateInput, userId: string) => Promise<MemoTag | null>;
   createDefaultTagsForUser: (userId: string) => Promise<number>;
-  getTemplatesByCategory: (category?: string) => MemoTagTemplate[];
+  getTemplatesByCategory: (category?: string) => NoteTagTemplate[];
   getCategorizedTags: () => TagCategoryGroup[];
 
   // 태그 CRUD
@@ -96,7 +96,7 @@ interface MemoTagStoreActions {
   setShowInactive: (show: boolean) => void;
   setSelectedCategory: (category: string | null) => void; // 카테고리 필터
   getFilteredTags: () => MemoTag[];
-  getFilteredTemplates: () => MemoTagTemplate[];
+  getFilteredTemplates: () => NoteTagTemplate[];
 
   // 유틸리티 함수들
   getTagById: (tagId: string) => MemoTag | undefined;
@@ -227,7 +227,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         set({ templatesLoading: true, error: null });
 
         try {
-          const templates = await fetchMemoTagTemplatesWithJWT();
+          const templates = await fetchNoteTagTemplatesWithJWT();
 
           set({
             templates,

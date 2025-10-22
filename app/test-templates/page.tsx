@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchMemoTagTemplatesWithJWT } from '@/lib/supabaseWebViewHelper';
+import { fetchNoteTagTemplatesWithJWT } from '@/lib/supabaseWebViewHelper';
 import { useMemoTagStore } from '@/state/stores/memoTagStore';
-import type { MemoTagTemplate } from '@/types';
+import type { NoteTagTemplate } from '@/types';
 
 export default function TestTemplatesPage() {
-  const [directApiResults, setDirectApiResults] = useState<MemoTagTemplate[]>([]);
+  const [directApiResults, setDirectApiResults] = useState<NoteTagTemplate[]>([]);
   const [directApiLoading, setDirectApiLoading] = useState(false);
   const [directApiError, setDirectApiError] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export default function TestTemplatesPage() {
     setDirectApiError(null);
     try {
       console.log('🧪 직접 API 호출 테스트 시작');
-      const results = await fetchMemoTagTemplatesWithJWT();
+      const results = await fetchNoteTagTemplatesWithJWT();
       console.log('🧪 직접 API 결과:', results);
       setDirectApiResults(results);
     } catch (error) {

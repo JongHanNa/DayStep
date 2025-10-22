@@ -11,6 +11,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
+  }
   public: {
     Tables: {
       contacts: {
@@ -100,7 +105,7 @@ export type Database = {
             foreignKeyName: "memo_instances_original_memo_id_fkey"
             columns: ["original_memo_id"]
             isOneToOne: false
-            referencedRelation: "quick_memos"
+            referencedRelation: "notes"
             referencedColumns: ["id"]
           },
           {
@@ -152,12 +157,75 @@ export type Database = {
             foreignKeyName: "memo_tag_links_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
-            referencedRelation: "memo_tag_templates"
+            referencedRelation: "note_tag_templates"
             referencedColumns: ["id"]
           },
         ]
       }
-      memo_tag_templates: {
+      motivation_tags: {
+        Row: {
+          color: string
+          created_at: string | null
+          icon: string
+          id: string
+          is_default: boolean | null
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          icon: string
+          id: string
+          is_default?: boolean | null
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          icon?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      motivation_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          difficulty: string | null
+          icon: string
+          id: string
+          image_url: string | null
+          tags: Json
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          difficulty?: string | null
+          icon: string
+          id: string
+          image_url?: string | null
+          tags?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          difficulty?: string | null
+          icon?: string
+          id?: string
+          image_url?: string | null
+          tags?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      note_tag_templates: {
         Row: {
           category: string
           color: string
@@ -241,122 +309,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "note_tags_template_id_fkey"
+            foreignKeyName: "memo_tags_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
-            referencedRelation: "memo_tag_templates"
+            referencedRelation: "note_tag_templates"
             referencedColumns: ["id"]
           },
         ]
       }
-      motivation_tags: {
-        Row: {
-          color: string
-          created_at: string | null
-          icon: string
-          id: string
-          is_default: boolean | null
-          name: string
-          user_id: string | null
-        }
-        Insert: {
-          color: string
-          created_at?: string | null
-          icon: string
-          id: string
-          is_default?: boolean | null
-          name: string
-          user_id?: string | null
-        }
-        Update: {
-          color?: string
-          created_at?: string | null
-          icon?: string
-          id?: string
-          is_default?: boolean | null
-          name?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      motivation_templates: {
-        Row: {
-          content: string
-          created_at: string | null
-          difficulty: string | null
-          icon: string
-          id: string
-          image_url: string | null
-          tags: Json
-          updated_at: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          difficulty?: string | null
-          icon: string
-          id: string
-          image_url?: string | null
-          tags?: Json
-          updated_at?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          difficulty?: string | null
-          icon?: string
-          id?: string
-          image_url?: string | null
-          tags?: Json
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      pomodoro_sessions: {
-        Row: {
-          break_duration: number | null
-          created_at: string
-          duration: number | null
-          end_time: string | null
-          id: string
-          is_completed: boolean | null
-          start_time: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          break_duration?: number | null
-          created_at?: string
-          duration?: number | null
-          end_time?: string | null
-          id?: string
-          is_completed?: boolean | null
-          start_time: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          break_duration?: number | null
-          created_at?: string
-          duration?: number | null
-          end_time?: string | null
-          id?: string
-          is_completed?: boolean | null
-          start_time?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pomodoro_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quick_memos: {
+      notes: {
         Row: {
           content: string
           created_at: string | null
@@ -401,7 +362,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "quick_memos_related_task_id_fkey"
+            foreignKeyName: "notes_related_task_id_fkey"
             columns: ["related_task_id"]
             isOneToOne: false
             referencedRelation: "todos"
@@ -409,43 +370,43 @@ export type Database = {
           },
         ]
       }
-      task_templates: {
+      pomodoro_sessions: {
         Row: {
-          category: string | null
+          break_duration: number | null
           created_at: string
-          description: string | null
-          estimated_duration: number | null
+          duration: number | null
+          end_time: string | null
           id: string
-          is_public: boolean | null
-          title: string
+          is_completed: boolean | null
+          start_time: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          category?: string | null
+          break_duration?: number | null
           created_at?: string
-          description?: string | null
-          estimated_duration?: number | null
+          duration?: number | null
+          end_time?: string | null
           id?: string
-          is_public?: boolean | null
-          title: string
+          is_completed?: boolean | null
+          start_time: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          category?: string | null
+          break_duration?: number | null
           created_at?: string
-          description?: string | null
-          estimated_duration?: number | null
+          duration?: number | null
+          end_time?: string | null
           id?: string
-          is_public?: boolean | null
-          title?: string
+          is_completed?: boolean | null
+          start_time?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "task_templates_user_id_fkey"
+            foreignKeyName: "pomodoro_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -870,27 +831,33 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[keyof Database]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -898,20 +865,24 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -919,20 +890,24 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -940,14 +915,44 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      recurrence_pattern_enum: ["none", "daily", "weekly", "monthly", "custom"],
+      schedule_type_enum: ["all_day", "timed", "anytime"],
+    },
+  },
+} as const

@@ -11,7 +11,7 @@ import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
 import type { Todo } from '@/types';
 import type { MotivationMessage, MotivationTemplate, MotivationTag, TodoMotivation } from '@/types/motivation';
-import type { MemoTag, MemoTagLink, MemoTagInsert, MemoTagUpdate, MemoTagLinkInsert, MemoTagTemplate, CreateTagFromTemplateInput } from '@/types';
+import type { MemoTag, MemoTagLink, MemoTagInsert, MemoTagUpdate, MemoTagLinkInsert, NoteTagTemplate, CreateTagFromTemplateInput } from '@/types';
 
 /**
  * Capacitor 환경 감지 유틸리티
@@ -2537,13 +2537,13 @@ export async function updateMemoTagsWithJWT(
 // ==============================
 
 /**
- * JWT 방식으로 모든 메모 태그 템플릿 조회 (전역 접근 가능)
+ * JWT 방식으로 모든 노트 태그 템플릿 조회 (전역 접근 가능)
  */
-export async function fetchMemoTagTemplatesWithJWT(): Promise<MemoTagTemplate[]> {
-  console.log('📋 메모 태그 템플릿 조회 시작 (공용 데이터)');
+export async function fetchNoteTagTemplatesWithJWT(): Promise<NoteTagTemplate[]> {
+  console.log('📋 노트 태그 템플릿 조회 시작 (공용 데이터)');
 
   try {
-    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/memo_tag_templates?is_active=eq.true&order=category.asc,sort_order.asc`;
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/note_tag_templates?is_active=eq.true&order=category.asc,sort_order.asc`;
     console.log('🔗 API URL:', url);
     console.log('🔑 API Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -2580,13 +2580,13 @@ export async function fetchMemoTagTemplatesWithJWT(): Promise<MemoTagTemplate[]>
 }
 
 /**
- * JWT 방식으로 카테고리별 메모 태그 템플릿 조회
+ * JWT 방식으로 카테고리별 노트 태그 템플릿 조회
  */
-export async function fetchMemoTagTemplatesByCategoryWithJWT(category?: string): Promise<MemoTagTemplate[]> {
-  console.log('📋 JWT 방식으로 카테고리별 메모 태그 템플릿 조회:', { category });
+export async function fetchNoteTagTemplatesByCategoryWithJWT(category?: string): Promise<NoteTagTemplate[]> {
+  console.log('📋 JWT 방식으로 카테고리별 노트 태그 템플릿 조회:', { category });
 
   try {
-    let path = '/rest/v1/memo_tag_templates?is_active=eq.true';
+    let path = '/rest/v1/note_tag_templates?is_active=eq.true';
     if (category) {
       path += `&category=eq.${category}`;
     }
