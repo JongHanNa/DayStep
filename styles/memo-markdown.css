@@ -1,5 +1,5 @@
 /* 노트 아코디언용 마크다운 스타일 */
-.memo-markdown-content {
+.note-markdown-content {
   /* 기본 텍스트 스타일 */
   line-height: 1.6;
   font-size: 14px;
@@ -9,7 +9,7 @@
 }
 
 /* 헤더 스타일 - CodeMirror와 일관성 유지하되 노트에 맞게 조정 */
-.memo-markdown-content h1 {
+.note-markdown-content h1 {
   font-size: 1.5em !important;
   font-weight: bold !important;
   line-height: 1.2 !important;
@@ -17,7 +17,7 @@
   color: hsl(var(--foreground)) !important;
 }
 
-.memo-markdown-content h2 {
+.note-markdown-content h2 {
   font-size: 1.3em !important;
   font-weight: bold !important;
   line-height: 1.3 !important;
@@ -25,7 +25,7 @@
   color: hsl(var(--foreground)) !important;
 }
 
-.memo-markdown-content h3 {
+.note-markdown-content h3 {
   font-size: 1.17em !important;
   font-weight: bold !important;
   line-height: 1.4 !important;
@@ -33,7 +33,7 @@
   color: hsl(var(--foreground)) !important;
 }
 
-.memo-markdown-content h4 {
+.note-markdown-content h4 {
   font-size: 1.1em !important;
   font-weight: bold !important;
   line-height: 1.4 !important;
@@ -41,8 +41,8 @@
   color: hsl(var(--foreground)) !important;
 }
 
-.memo-markdown-content h5,
-.memo-markdown-content h6 {
+.note-markdown-content h5,
+.note-markdown-content h6 {
   font-size: 1em !important;
   font-weight: bold !important;
   line-height: 1.5 !important;
@@ -51,27 +51,27 @@
 }
 
 /* 강조 텍스트 스타일 - CodeMirror 클래스 재사용 */
-.memo-markdown-content .cm-bold-content,
-.memo-markdown-content strong {
+.note-markdown-content .cm-bold-content,
+.note-markdown-content strong {
   font-weight: 800 !important;
   color: hsl(var(--foreground)) !important;
   text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor !important;
 }
 
-.memo-markdown-content .cm-italic-content,
-.memo-markdown-content em {
+.note-markdown-content .cm-italic-content,
+.note-markdown-content em {
   font-style: italic !important;
   color: hsl(var(--foreground)) !important;
 }
 
-.memo-markdown-content .cm-strikethrough-content {
+.note-markdown-content .cm-strikethrough-content {
   text-decoration: line-through !important;
   color: hsl(var(--muted-foreground)) !important;
 }
 
 /* 인라인 코드 스타일 */
-.memo-markdown-content .cm-code-content,
-.memo-markdown-content code {
+.note-markdown-content .cm-code-content,
+.note-markdown-content code {
   background-color: hsl(var(--muted)) !important;
   color: hsl(var(--foreground)) !important;
   padding: 2px 4px !important;
@@ -83,8 +83,8 @@
 }
 
 /* 하이라이트 스타일 */
-.memo-markdown-content .cm-highlight-content,
-.memo-markdown-content mark {
+.note-markdown-content .cm-highlight-content,
+.note-markdown-content mark {
   background-color: hsl(45, 100%, 80%) !important;
   color: hsl(var(--foreground)) !important;
   padding: 1px 2px !important;
@@ -92,7 +92,7 @@
 }
 
 /* 체크박스 스타일 */
-.memo-markdown-content .cm-checkbox-line {
+.note-markdown-content .cm-checkbox-line {
   display: flex !important;
   align-items: flex-start !important;
   gap: 6px !important;
@@ -100,7 +100,7 @@
   line-height: 1.4 !important;
 }
 
-.memo-markdown-content .cm-checkbox {
+.note-markdown-content .cm-checkbox {
   display: inline-block !important;
   color: hsl(var(--primary)) !important;
   font-size: 14px !important;
@@ -109,20 +109,20 @@
   margin-top: 2px !important;
 }
 
-.memo-markdown-content .cm-checkbox-content {
+.note-markdown-content .cm-checkbox-content {
   color: hsl(var(--foreground)) !important;
   flex: 1 !important;
 }
 
-.memo-markdown-content .cm-checkbox-checked-content {
+.note-markdown-content .cm-checkbox-checked-content {
   color: hsl(var(--muted-foreground)) !important;
   text-decoration: line-through !important;
   flex: 1 !important;
 }
 
 /* 인용구 스타일 */
-.memo-markdown-content .cm-quote-content,
-.memo-markdown-content blockquote {
+.note-markdown-content .cm-quote-content,
+.note-markdown-content blockquote {
   display: block !important;
   color: hsl(var(--muted-foreground)) !important;
   border-left: 4px solid hsl(var(--primary)) !important;
@@ -134,55 +134,55 @@
 }
 
 /* 링크 스타일 */
-.memo-markdown-content a {
+.note-markdown-content a {
   color: hsl(var(--primary)) !important;
   text-decoration: underline !important;
 }
 
-.memo-markdown-content a:hover {
+.note-markdown-content a:hover {
   color: hsl(var(--primary)) !important;
   opacity: 0.8 !important;
 }
 
 /* 줄바꿈 및 여백 조정 */
-.memo-markdown-content br {
+.note-markdown-content br {
   line-height: 1.2 !important;
 }
 
 /* 다크 모드 지원 */
-[data-theme="dark"] .memo-markdown-content h1,
-[data-theme="dark"] .memo-markdown-content h2,
-[data-theme="dark"] .memo-markdown-content h3,
-[data-theme="dark"] .memo-markdown-content h4 {
+[data-theme="dark"] .note-markdown-content h1,
+[data-theme="dark"] .note-markdown-content h2,
+[data-theme="dark"] .note-markdown-content h3,
+[data-theme="dark"] .note-markdown-content h4 {
   color: hsl(var(--foreground)) !important;
 }
 
-[data-theme="dark"] .memo-markdown-content h5,
-[data-theme="dark"] .memo-markdown-content h6 {
+[data-theme="dark"] .note-markdown-content h5,
+[data-theme="dark"] .note-markdown-content h6 {
   color: hsl(var(--muted-foreground)) !important;
 }
 
-[data-theme="dark"] .memo-markdown-content .cm-highlight-content,
-[data-theme="dark"] .memo-markdown-content mark {
+[data-theme="dark"] .note-markdown-content .cm-highlight-content,
+[data-theme="dark"] .note-markdown-content mark {
   background-color: hsl(45, 70%, 60%) !important;
   color: hsl(var(--background)) !important;
 }
 
 /* 모바일 최적화 */
 @media (max-width: 768px) {
-  .memo-markdown-content {
+  .note-markdown-content {
     font-size: 13px !important;
   }
   
-  .memo-markdown-content h1 {
+  .note-markdown-content h1 {
     font-size: 1.4em !important;
   }
   
-  .memo-markdown-content h2 {
+  .note-markdown-content h2 {
     font-size: 1.25em !important;
   }
   
-  .memo-markdown-content h3 {
+  .note-markdown-content h3 {
     font-size: 1.15em !important;
   }
 }

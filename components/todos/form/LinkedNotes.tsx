@@ -98,7 +98,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
                   <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                     <MarkdownViewer
                       content={memo.content}
-                      className="memo-markdown-content"
+                      className="note-markdown-content"
                       interactive={true}
                       onContentChange={(newContent) => handleMemoContentChange(memo, newContent)}
                     />
