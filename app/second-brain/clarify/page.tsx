@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -13,11 +14,13 @@ import NoteInboxList from '@/components/second-brain/clarify/NoteInboxList';
 import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
 import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProjectsSection';
 import GTDGuideSection from '@/components/second-brain/clarify/GTDGuideSection';
-import type { InboxItem } from '@/types/second-brain';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import type { InboxItem, Project, CreateProjectInput } from '@/types/second-brain';
 
 export default function ClarifyPage() {
-  const { inboxItems, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
-  const { projects } = useProjectStore();
+  const { inboxItems, fetchInboxItems, fetchInboxItemsByType, deleteInboxItem } = useInboxStore();
+  const { projects, createProject } = useProjectStore();
+  const { goals, fetchGoals } = useGoalStore();
   const { notes, fetchNotes } = useNoteStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
@@ -28,6 +31,10 @@ export default function ClarifyPage() {
   const [projectInbox, setProjectInbox] = useState<InboxItem[]>([]);
   const [goalInbox, setGoalInbox] = useState<InboxItem[]>([]);
 
+  // 프로젝트 편집 모달 상태
+  const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   useEffect(() => {
     loadInboxData();
   }, []);
@@ -37,6 +44,7 @@ export default function ClarifyPage() {
     await fetchAreas();
     await fetchResources();
     await fetchNotes();
+    await fetchGoals();
     const todos = await fetchInboxItemsByType('todo');
     const notes = await fetchInboxItemsByType('note');
     const projects = await fetchInboxItemsByType('project');
@@ -50,6 +58,87 @@ export default function ClarifyPage() {
 
   const handleRefresh = () => {
     loadInboxData();
+  };
+
+  // 프로젝트 클릭 핸들러 - InboxItem을 Project 형식으로 변환
+  const handleProjectClick = (inboxProject: InboxItem) => {
+    const projectData: Project & { isNew?: boolean; paraSelection?: string } = {
+      id: inboxProject.id,
+      user_id: inboxProject.user_id,
+      title: inboxProject.content,
+      description: '',
+      status: 'not_started',
+      icon: 'lucide-FolderOpen',
+      color: '#A8DADC',
+      order_index: 0,
+      total_todos: 0,
+      completed_todos: 0,
+      progress: 0,
+      created_at: inboxProject.created_at,
+      updated_at: inboxProject.updated_at,
+      isNew: false,
+      paraSelection: '',
+    };
+
+    setEditingProject(projectData);
+    setEditDialogOpen(true);
+  };
+
+  // 프로젝트 저장 핸들러
+  const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+    try {
+      // 1. InboxItem 삭제 (프로젝트 수집함에서 제거)
+      await deleteInboxItem(editingProject!.id);
+
+      // 2. 실제 Project로 생성
+      const createData: CreateProjectInput = {
+        title: projectData.title!,
+        description: projectData.description || '',
+        icon: projectData.icon || 'lucide-FolderOpen',
+        color: projectData.color || '#A8DADC',
+        status: projectData.status || 'not_started',
+        goal_id: projectData.goal_id,
+        area_id,
+        resource_id,
+        start_date: projectData.start_date,
+        target_end_date: projectData.target_end_date,
+        order_index: projects.length,
+      };
+
+      await createProject(createData);
+
+      // 3. 모달 닫기 및 새로고침
+      setEditDialogOpen(false);
+      setEditingProject(null);
+      await loadInboxData();
+
+      alert('프로젝트가 생성되었습니다.');
+    } catch (error) {
+      console.error('프로젝트 저장 실패:', error);
+      alert('프로젝트 저장에 실패했습니다.');
+    }
+  };
+
+  // 프로젝트 편집 취소
+  const handleCancelEdit = () => {
+    setEditDialogOpen(false);
+    setEditingProject(null);
+  };
+
+  // 프로젝트 삭제 핸들러
+  const handleDeleteProject = async (project: Project) => {
+    if (!confirm(`"${project.title}" 프로젝트를 삭제하시겠습니까?`)) return;
+
+    try {
+      await deleteInboxItem(project.id);
+      setEditDialogOpen(false);
+      setEditingProject(null);
+      await loadInboxData();
+      alert('프로젝트가 삭제되었습니다.');
+    } catch (error) {
+      console.error('프로젝트 삭제 실패:', error);
+      alert('프로젝트 삭제에 실패했습니다.');
+    }
   };
 
   return (
@@ -102,9 +191,7 @@ export default function ClarifyPage() {
             {activeTab === 'projects' && (
               <ProjectInboxList
                 projects={projectInbox}
-                onProjectClick={(project) => {
-                  alert(`프로젝트 편집 기능은 추후 구현됩니다:\n${project.content}`);
-                }}
+                onProjectClick={handleProjectClick}
               />
             )}
             {activeTab === 'goals' && (
@@ -146,6 +233,19 @@ export default function ClarifyPage() {
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />
+
+      {/* 프로젝트 편집 모달 */}
+      <ProjectEditDialog
+        open={editDialogOpen}
+        editingProject={editingProject}
+        goals={goals}
+        areas={areas}
+        resources={resources}
+        onSave={handleSaveProject}
+        onCancel={handleCancelEdit}
+        onDelete={handleDeleteProject}
+        onProjectChange={setEditingProject}
+      />
     </div>
   );
 }

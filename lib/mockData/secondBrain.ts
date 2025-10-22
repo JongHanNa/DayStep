@@ -316,6 +316,36 @@ export const mockInboxItems: InboxItem[] = [
     created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
   },
+  // ============================================
+  // 프로젝트 수집함 (영역, 자원, 할일, 종료일 미배정)
+  // ============================================
+  {
+    id: 'inbox-project-1',
+    user_id: MOCK_USER_ID,
+    content: '집 정리 프로젝트',
+    status: 'inbox',
+    item_type: 'project',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2일 전
+    updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'inbox-project-2',
+    user_id: MOCK_USER_ID,
+    content: '새로운 앱 아이디어',
+    status: 'inbox',
+    item_type: 'project',
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4일 전
+    updated_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'inbox-project-3',
+    user_id: MOCK_USER_ID,
+    content: '여름 휴가 준비',
+    status: 'inbox',
+    item_type: 'project',
+    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6일 전
+    updated_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+  },
 ];
 
 // ============================================
