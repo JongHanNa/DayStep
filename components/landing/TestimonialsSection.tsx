@@ -74,7 +74,7 @@ export default function TestimonialsSection() {
 
             {/* 리뷰 텍스트 */}
             <p className="text-lg md:text-xl text-base-content leading-relaxed mb-8">
-              "{currentTestimonial.text}"
+              &ldquo;{currentTestimonial.text}&rdquo;
             </p>
 
             {/* 작성자 정보 */}
