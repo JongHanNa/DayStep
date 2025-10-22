@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, GripVertical } from 'lucide-react';
+import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star } from 'lucide-react';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -501,10 +501,10 @@ export default function ProjectEditDialog({
                 <h2 className="text-lg font-semibold mb-4">할일 계획</h2>
                 <div className="flex items-start gap-2 p-3 bg-base-100 rounded-lg mb-4">
                   <div className="flex items-center justify-center w-6 h-6 rounded bg-base-200 flex-shrink-0">
-                    <GripVertical className="w-4 h-4 text-base-content/40" />
+                    <Calendar className="w-4 h-4 text-primary" />
                   </div>
                   <p className="text-sm text-base-content/70">
-                    <strong>드래그 방법:</strong> 위 할일의 왼쪽 핸들(<GripVertical className="w-3 h-3 inline" />)을 잡고 원하는 날짜로 드래그하세요.
+                    <strong>드래그 방법:</strong> 할일 카드를 꾹 누른 채 원하는 날짜로 드래그하세요.
                   </p>
                 </div>
 
@@ -634,21 +634,12 @@ function TodoDraggableItem({
     <div
       ref={setNodeRef}
       {...attributes}
+      {...listeners}
       onClick={() => onEdit(todo)}
       className={`flex items-start gap-2 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer ${
-        isDragging ? 'opacity-50' : ''
+        isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-pointer'
       }`}
     >
-      {/* 드래그 핸들 */}
-      <div
-        {...listeners}
-        onClick={(e) => e.stopPropagation()}
-        className="flex items-center justify-center w-6 h-6 mt-1 rounded cursor-grab active:cursor-grabbing hover:bg-base-300 transition-colors flex-shrink-0"
-        aria-label="드래그하여 날짜 지정"
-      >
-        <GripVertical className="w-4 h-4 text-base-content/40" />
-      </div>
-
       <input
         type="checkbox"
         checked={todo.completed}

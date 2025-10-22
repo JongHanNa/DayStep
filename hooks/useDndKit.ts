@@ -167,19 +167,20 @@ export function useDndKit<T = unknown>({
   const isCapacitor = isCapacitorEnvironment();
 
   // 센서 설정: 웹 브라우저 + Capacitor 모바일 호환
+  // 할일 카드 전체를 꾹 누르면 드래그 시작 (300ms 지연)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 5px 이동 후 드래그 시작 (마우스)
+        delay: 300,        // 300ms 꾹 누르기 후 드래그 시작
+        tolerance: 5,      // 5px 이하 움직임 허용 (마우스 떨림 방지)
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
         // Capacitor WebView에서는 터치 좌표 부정확도를 보완하기 위해
         // 거리 임계값과 지연 시간을 증가시킵니다
-        distance: isCapacitor ? 8 : 5, // WebView: 8px, 브라우저: 5px
-        delay: isCapacitor ? 100 : 0,  // WebView: 100ms 지연, 브라우저: 즉시
-        tolerance: isCapacitor ? 3 : 0, // WebView: 3px 허용 오차
+        delay: isCapacitor ? 400 : 300,  // WebView: 400ms, 브라우저: 300ms (꾹 누르기)
+        tolerance: isCapacitor ? 8 : 5,  // WebView: 8px, 브라우저: 5px 허용 오차
       },
     })
   );
