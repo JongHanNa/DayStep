@@ -84,6 +84,12 @@ export default function ClarifyPage() {
     setEditDialogOpen(true);
   };
 
+  // 진행중인 프로젝트 클릭 핸들러
+  const handleActiveProjectClick = (project: Project) => {
+    setEditingProject(project);
+    setEditDialogOpen(true);
+  };
+
   // 프로젝트 저장 핸들러
   const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
     try {
@@ -215,10 +221,8 @@ export default function ClarifyPage() {
         <section>
           <ActiveProjectsSection
             projects={projects}
-            goals={[]}
-            onProjectClick={(project) => {
-              alert(`프로젝트 상세 보기:\n${project.title}`);
-            }}
+            goals={goals}
+            onProjectClick={handleActiveProjectClick}
           />
         </section>
 
