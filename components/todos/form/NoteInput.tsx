@@ -68,12 +68,12 @@ const NoteInput: React.FC<NoteInputProps> = ({ memos, onMemosChange, selectedCol
       } else {
         // 새 노트 추가
         if (content.trim()) {
-          const newMemo: MemoData = {
-            id: `temp-memo-${Date.now()}-${Math.random()}`,
+          const newNote: MemoData = {
+            id: `temp-note-${Date.now()}-${Math.random()}`,
             content: content
           };
-          onMemosChange([...memos, newMemo]);
-          console.log('✅ 새 노트 추가 완료:', newMemo.id);
+          onMemosChange([...memos, newNote]);
+          console.log('✅ 새 노트 추가 완료:', newNote.id);
         }
       }
 
@@ -97,12 +97,12 @@ const NoteInput: React.FC<NoteInputProps> = ({ memos, onMemosChange, selectedCol
 
 
   // 노트 삭제
-  const removeMemo = (memoId: string) => {
-    const updatedMemos = memos.filter(memo => memo.id !== memoId);
-    onMemosChange(updatedMemos);
-    
+  const removeNote = (noteId: string) => {
+    const updatedNotes = memos.filter(note => note.id !== noteId);
+    onMemosChange(updatedNotes);
+
     // 모든 노트가 삭제되면 접기
-    if (updatedMemos.length === 0) {
+    if (updatedNotes.length === 0) {
       setIsExpanded(false);
     }
   };
@@ -202,7 +202,7 @@ const NoteInput: React.FC<NoteInputProps> = ({ memos, onMemosChange, selectedCol
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeMemo(memo.id)}
+                        onClick={() => removeNote(memo.id)}
                         className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="h-3 w-3" />

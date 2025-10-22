@@ -104,10 +104,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
 
   // 노트 확인
-  const linkedMemos = item.type === 'todo'
-    ? notes.filter(memo =>
-        memo.related_task_id === actualTaskId ||
-        memo.linked_timeline_task_id === actualTaskId
+  const linkedNotes = item.type === 'todo'
+    ? notes.filter(note =>
+        note.related_task_id === actualTaskId ||
+        note.linked_timeline_task_id === actualTaskId
       )
     : [];
 
@@ -918,7 +918,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
             </div>
 
             {/* 노트 드롭다운 */}
-            {linkedMemos.length > 0 && (
+            {linkedNotes.length > 0 && (
               <div className="relative mt-1.5" onClick={(e) => e.stopPropagation()}>
                 <div className="dropdown dropdown-bottom">
                   <div
@@ -926,7 +926,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     role="button"
                     className="btn btn-ghost btn-xs gap-1 h-auto min-h-0 px-2 py-1"
                   >
-                    <span className="text-xs">📝 {linkedMemos.length}</span>
+                    <span className="text-xs">📝 {linkedNotes.length}</span>
                     <svg
                       className="w-3 h-3"
                       fill="none"
@@ -941,21 +941,21 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     className="dropdown-content menu bg-base-100 rounded-box z-[1] w-72 p-3 shadow-lg border border-base-300 mt-1"
                   >
                     <div className="space-y-2">
-                      {linkedMemos.map((memo) => (
+                      {linkedNotes.map((note) => (
                         <div
-                          key={memo.id}
+                          key={note.id}
                           className={cn(
                             "p-2 rounded-md text-sm",
                             "bg-gray-50 dark:bg-gray-800",
-                            memo.is_pinned && "border-l-4 border-blue-500"
+                            note.is_pinned && "border-l-4 border-blue-500"
                           )}
                         >
                           <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                            {memo.content}
+                            {note.content}
                           </div>
-                          {memo.created_at && (
+                          {note.created_at && (
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {new Date(memo.created_at).toLocaleString('ko-KR', {
+                              {new Date(note.created_at).toLocaleString('ko-KR', {
                                 month: 'short',
                                 day: 'numeric',
                                 hour: '2-digit',

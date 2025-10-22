@@ -655,11 +655,11 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
           {/* Floating Action Button */}
           <FloatingActionButton />
           
-          {/* Floating Memo Cards - 고정된 메모들 */}
-          {pinnedNotes.map((memo, index) => (
+          {/* Floating Note Cards - 고정된 노트들 */}
+          {pinnedNotes.map((note, index) => (
             <FloatingNoteCard
-              key={memo.id}
-              memo={memo}
+              key={note.id}
+              note={note}
               className={`top-20 right-6`}
               style={{
                 transform: `translateY(${index * 180}px)`,
