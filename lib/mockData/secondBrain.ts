@@ -346,6 +346,48 @@ export const mockInboxItems: InboxItem[] = [
     created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), // 6일 전
     updated_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
   },
+  // ============================================
+  // 노트 수집함 (영역, 자원 미배정) - 테스트용
+  // ============================================
+  {
+    id: 'inbox-note-1',
+    user_id: MOCK_USER_ID,
+    content: 'React 19의 새로운 Hooks 정리',
+    status: 'inbox',
+    item_type: 'note',
+    note_title: 'React 19의 새로운 Hooks 정리',
+    note_content: 'use() Hook과 Actions에 대해 학습한 내용을 정리해야 함. 공식 문서와 예제 코드 참고.',
+    note_category: '중간 작업물',
+    is_pinned: false,
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1일 전
+    updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'inbox-note-2',
+    user_id: MOCK_USER_ID,
+    content: 'Next.js 15 서버 컴포넌트 예제',
+    status: 'inbox',
+    item_type: 'note',
+    note_title: 'Next.js 15 서버 컴포넌트 예제',
+    note_content: '서버 컴포넌트와 클라이언트 컴포넌트 차이점, 데이터 페칭 패턴, 스트리밍 등 핵심 개념 정리.',
+    note_category: '레퍼런스',
+    is_pinned: false,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3일 전
+    updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'inbox-note-3',
+    user_id: MOCK_USER_ID,
+    content: 'GTD 워크플로우 체크리스트',
+    status: 'inbox',
+    item_type: 'note',
+    note_title: 'GTD 워크플로우 체크리스트',
+    note_content: '주간 점검 시 확인할 항목: 수집함 비우기, 다음 행동 정리, 대기중 항목 확인, 프로젝트 진행 상태 점검.',
+    note_category: '나중에 보기',
+    is_pinned: true,
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5일 전
+    updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
 ];
 
 // ============================================

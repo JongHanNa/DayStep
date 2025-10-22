@@ -7,6 +7,7 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useTodoStore } from '@/state/stores/todoStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
 import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
@@ -24,6 +25,7 @@ export default function ClarifyPage() {
   const { notes, fetchNotes } = useNoteStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
+  const { todos } = useTodoStore();
 
   const [activeTab, setActiveTab] = useState<InboxTabType>('todos');
   const [todoInbox, setTodoInbox] = useState<InboxItem[]>([]);
@@ -45,15 +47,15 @@ export default function ClarifyPage() {
     await fetchResources();
     await fetchNotes();
     await fetchGoals();
-    const todos = await fetchInboxItemsByType('todo');
-    const notes = await fetchInboxItemsByType('note');
-    const projects = await fetchInboxItemsByType('project');
-    const goals = await fetchInboxItemsByType('goal');
+    const inboxTodos = await fetchInboxItemsByType('todo');
+    const inboxNotes = await fetchInboxItemsByType('note');
+    const inboxProjects = await fetchInboxItemsByType('project');
+    const inboxGoals = await fetchInboxItemsByType('goal');
 
-    setTodoInbox(todos);
-    setNoteInbox(notes);
-    setProjectInbox(projects);
-    setGoalInbox(goals);
+    setTodoInbox(inboxTodos);
+    setNoteInbox(inboxNotes);
+    setProjectInbox(inboxProjects);
+    setGoalInbox(inboxGoals);
   };
 
   const handleRefresh = () => {
@@ -191,6 +193,8 @@ export default function ClarifyPage() {
                 notes={noteInbox}
                 areas={areas}
                 resources={resources}
+                projects={projects}
+                todos={[]} // TODO: Todo 타입 정리 후 todos 전달
                 onRefresh={handleRefresh}
               />
             )}

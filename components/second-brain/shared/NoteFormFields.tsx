@@ -1,6 +1,7 @@
 'use client';
 
-import type { Area, Resource } from '@/types/second-brain';
+import type { Area, Resource, Project } from '@/types/second-brain';
+import type { Todo } from '@/types';
 
 /**
  * 노트 폼 필드 타입
@@ -12,6 +13,8 @@ export interface NoteFormData {
   category: '중간 작업물' | '나중에 보기' | '레퍼런스';
   linkedAreaOrResource?: string; // 'area-{id}' 또는 'resource-{id}'
   isPinned: boolean;
+  projectId?: string; // 프로젝트 연결 (선택)
+  todoId?: string; // 할일 연결 (선택)
 }
 
 interface NoteFormFieldsProps {
@@ -19,6 +22,8 @@ interface NoteFormFieldsProps {
   onChange: (updatedNote: NoteFormData) => void;
   areas: Area[];
   resources: Resource[];
+  projects?: Project[]; // 프로젝트 목록 (선택)
+  todos?: Todo[]; // 할일 목록 (선택)
   titlePlaceholder?: string;
   contentPlaceholder?: string;
 }
@@ -33,6 +38,8 @@ export default function NoteFormFields({
   onChange,
   areas,
   resources,
+  projects = [],
+  todos = [],
   titlePlaceholder = '예: 회의 내용',
   contentPlaceholder = '노트 내용을 입력하세요',
 }: NoteFormFieldsProps) {
@@ -112,6 +119,48 @@ export default function NoteFormFields({
           </optgroup>
         </select>
       </div>
+
+      {/* 프로젝트 (선택) */}
+      {projects.length > 0 && (
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text">프로젝트 (선택)</span>
+          </label>
+          <select
+            value={note.projectId || ''}
+            onChange={(e) => onChange({ ...note, projectId: e.target.value })}
+            className="select select-bordered"
+          >
+            <option value="">선택 안 함</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 할일 (선택) */}
+      {todos.length > 0 && (
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text">할일 (선택)</span>
+          </label>
+          <select
+            value={note.todoId || ''}
+            onChange={(e) => onChange({ ...note, todoId: e.target.value })}
+            className="select select-bordered"
+          >
+            <option value="">선택 안 함</option>
+            {todos.map((todo) => (
+              <option key={todo.id} value={todo.id}>
+                {todo.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* 고정하기 */}
       <div className="form-control mb-4">

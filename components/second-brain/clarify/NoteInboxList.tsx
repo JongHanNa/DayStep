@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Pin } from 'lucide-react';
-import type { InboxItem, Area, Resource } from '@/types/second-brain';
+import type { InboxItem, Area, Resource, Project } from '@/types/second-brain';
+import type { Todo } from '@/types';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useModalStore } from '@/state/stores/modalStore';
@@ -11,10 +12,12 @@ interface NoteInboxListProps {
   notes: InboxItem[];
   areas: Area[];
   resources: Resource[];
+  projects: Project[];
+  todos: Todo[];
   onRefresh: () => void;
 }
 
-export default function NoteInboxList({ notes, areas, resources, onRefresh }: NoteInboxListProps) {
+export default function NoteInboxList({ notes, areas, resources, projects, todos, onRefresh }: NoteInboxListProps) {
   const { updateInboxItem } = useInboxStore();
   const { openModal, closeModal } = useModalStore();
   const [editingNote, setEditingNote] = useState<InboxItem | null>(null);
@@ -38,6 +41,8 @@ export default function NoteInboxList({ notes, areas, resources, onRefresh }: No
       category: note.note_category || '중간 작업물',
       linkedAreaOrResource: note.linked_area_or_resource || '',
       isPinned: note.is_pinned || false,
+      projectId: note.project_id || '',
+      todoId: '', // TODO: note.todo_id 필드 추가 필요
     });
   };
 
@@ -46,6 +51,7 @@ export default function NoteInboxList({ notes, areas, resources, onRefresh }: No
 
     try {
       // GTD 로직: 영역/자원 연결 시 수집함에서 제거
+      // 프로젝트/할일은 연결만 하고 수집함에 유지
       let shouldRemoveFromInbox = false;
       let newStatus: typeof editingNote.status = 'inbox';
       let area_id: string | undefined;
@@ -72,6 +78,8 @@ export default function NoteInboxList({ notes, areas, resources, onRefresh }: No
         status: shouldRemoveFromInbox ? newStatus : 'inbox',
         area_id,
         resource_id,
+        project_id: noteForm.projectId || undefined,
+        // todo_id: noteForm.todoId || undefined, // TODO: InboxItem 타입에 todo_id 필드 추가 필요
       });
 
       setEditingNote(null);
@@ -166,6 +174,8 @@ export default function NoteInboxList({ notes, areas, resources, onRefresh }: No
                     onChange={setNoteForm}
                     areas={areas}
                     resources={resources}
+                    projects={projects}
+                    todos={todos}
                   />
                 )}
               </div>
