@@ -20,7 +20,6 @@ const TimelineFilters: React.FC = () => {
 
   const itemTypeLabels: Record<TimelineItemType, string> = {
     'todo': '할 일',
-    'timeline-task': '타임라인 작업',
     'calendar': '캘린더 이벤트',
     'gap': '빈 시간',
     'current-time': '현재 시간',
@@ -29,7 +28,6 @@ const TimelineFilters: React.FC = () => {
 
   const itemTypeColors: Record<TimelineItemType, string> = {
     'todo': 'bg-green-500',
-    'timeline-task': 'bg-orange-500',
     'calendar': 'bg-blue-500',
     'gap': 'bg-gray-500',
     'current-time': 'bg-red-500',

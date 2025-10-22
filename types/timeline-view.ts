@@ -1,12 +1,11 @@
 // Timeline View specific type definitions for main timeline component
-import { Todo, TimelineTask } from './index';
-import { TaskStatus, TaskPriority } from './timeline';
+import { Todo } from './index';
 
 // Timeline view modes
 export type TimelineViewMode = 'daily' | 'weekly' | 'monthly';
 
 // Timeline item types that can be displayed
-export type TimelineItemType = 'todo' | 'timeline-task' | 'calendar' | 'gap' | 'current-time' | 'remaining-time';
+export type TimelineItemType = 'todo' | 'calendar' | 'gap' | 'current-time' | 'remaining-time';
 
 // Base timeline item interface
 export interface BaseTimelineItem {
@@ -30,12 +29,12 @@ export interface TodoTimelineItem extends BaseTimelineItem {
   priority?: 'low' | 'medium' | 'high';
 }
 
-// Timeline task as timeline item
+// TimelineTaskItem retained for backward compatibility (now maps to Todo)
 export interface TimelineTaskItem extends BaseTimelineItem {
-  type: 'timeline-task';
-  data: TimelineTask;
-  status: TaskStatus;
-  priority: TaskPriority;
+  type: 'todo';
+  data: Todo;
+  status: 'planned' | 'in-progress' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high';
   plannedDuration?: number; // in minutes
 }
 

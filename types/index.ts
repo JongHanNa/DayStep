@@ -17,7 +17,6 @@ export type RecurrencePattern =
 // Application types based on database schema
 export type User = Tables<"users">;
 export type Todo = Tables<"todos">;
-export type TimelineTask = Tables<"timeline_tasks">;
 export type PomodoroSession = Tables<"pomodoro_sessions">;
 export type TaskTemplate = Tables<"task_templates">;
 
@@ -99,7 +98,6 @@ export interface QuickMemo {
   content: string;
   related_task_id?: string | null;
   linked_date?: string | null;
-  linked_timeline_task_id?: string | null;
   is_pinned: boolean;
   is_floating: boolean;
   position: number;
@@ -127,7 +125,6 @@ export interface MemoInstance {
 // Input types for forms
 export type UserInsert = TablesInsert<"users">;
 export type TodoInsert = TablesInsert<"todos">;
-export type TimelineTaskInsert = TablesInsert<"timeline_tasks">;
 export type PomodoroSessionInsert = TablesInsert<"pomodoro_sessions">;
 export type TaskTemplateInsert = TablesInsert<"task_templates">;
 
@@ -137,7 +134,6 @@ export interface QuickMemoInsert {
   content: string;
   related_task_id?: string | null;
   linked_date?: string | null;
-  linked_timeline_task_id?: string | null;
   is_pinned?: boolean;
   is_floating?: boolean;
   position?: number;
@@ -158,7 +154,6 @@ export interface MemoInstanceInsert {
 // Update types for forms
 export type UserUpdate = TablesUpdate<"users">;
 export type TodoUpdate = TablesUpdate<"todos">;
-export type TimelineTaskUpdate = TablesUpdate<"timeline_tasks">;
 export type PomodoroSessionUpdate = TablesUpdate<"pomodoro_sessions">;
 export type TaskTemplateUpdate = TablesUpdate<"task_templates">;
 
@@ -325,7 +320,6 @@ export interface QuickMemoWithInstances {
   content: string;
   related_task_id?: string | null;
   linked_date?: string | null;
-  linked_timeline_task_id?: string | null;
   is_pinned: boolean;
   is_floating: boolean;
   position: number;
@@ -354,26 +348,6 @@ export interface MemoInstanceWithOriginal {
 export interface UpdateTodoInput extends Partial<CreateTodoInput> {
   id: string;
 }
-
-// Timeline extended types (basic types are defined above)
-export type {
-  TaskStatus,
-  TaskPriority,
-  TimelineTaskWithSession,
-  PomodoroSessionWithTask,
-  TaskTemplateWithUsage,
-  TimelineDay,
-  TimelineWeek,
-  TimelineMonth,
-  PomodoroTimerState,
-  PomodoroSettings,
-  CalendarEvent,
-  ProductivityStats,
-  TimelineFilters,
-  TimelineSortOptions,
-  TimelineExportData,
-  TimelineImportResult,
-} from "./timeline";
 
 // Timeline view types
 export type {

@@ -475,44 +475,6 @@ export async function fetchTodosForDateRange(
 
 
 /**
- * 타임라인 태스크 조회
- */
-export async function fetchTimelineTasks(
-  userId: string, 
-  date?: string, 
-  options: QueryOptions = {}
-): Promise<any[]> {
-  console.log('📅 타임라인 태스크 조회:', { userId, date, options });
-
-  try {
-    const conditions: QueryCondition[] = [{
-      column: 'user_id',
-      operator: 'eq',
-      value: userId
-    }];
-
-    if (date) {
-      conditions.push({
-        column: 'date',
-        operator: 'eq',
-        value: date
-      });
-    }
-
-    const tasks = await queryRLSTableWithJWT('timeline_tasks', conditions, {
-      order: 'start_time.asc',
-      ...options
-    });
-
-    console.log('✅ 타임라인 태스크 조회 성공:', { count: tasks?.length || 0 });
-    return tasks || [];
-  } catch (error) {
-    console.error('❌ 타임라인 태스크 조회 실패:', error);
-    return [];
-  }
-}
-
-/**
  * 포모도로 세션 조회
  */
 export async function fetchPomodoroSessions(userId: string, options: QueryOptions = {}): Promise<any[]> {
@@ -833,22 +795,6 @@ export async function deleteTodoWithJWT(todoId: string): Promise<any> {
     return result;
   } catch (error) {
     console.error('❌ JWT 할일 삭제 실패:', error);
-    throw error;
-  }
-}
-
-/**
- * JWT 방식으로 타임라인 태스크 생성
- */
-export async function createTimelineTaskWithJWT(taskData: Record<string, any>): Promise<any> {
-  console.log('📅 JWT 방식으로 타임라인 태스크 생성:', { taskData });
-
-  try {
-    const result = await createWithJWT('timeline_tasks', taskData);
-    console.log('✅ JWT 타임라인 태스크 생성 성공:', { result });
-    return result;
-  } catch (error) {
-    console.error('❌ JWT 타임라인 태스크 생성 실패:', error);
     throw error;
   }
 }

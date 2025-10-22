@@ -164,50 +164,18 @@ export function setupRealtimeSync() {
       }
     });
 
-  // 타임라인 작업 실시간 구독
-  const timelineChannel = supabase
-    .channel('timeline-realtime-sync')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public', 
-      table: 'timeline_tasks'
-    }, (payload: any) => {
-      console.log('📡 타임라인 작업 변경 감지:', {
-        event: payload.eventType,
-        table: payload.table,
-        id: payload.new?.id || payload.old?.id
-      });
-      
-      setTimeout(() => {
-        // 타임라인 작업은 별도 테이블이므로 필요 시 추가 처리
-        console.log('타임라인 작업 변경됨');
-      }, 100);
-    })
-    .subscribe((status) => {
-      console.log('📡 타임라인 채널 상태:', status);
-      
-      // 타임라인 채널도 동일한 폴백 적용
-      if (status === 'SUBSCRIBED') {
-        deactivatePollingFallback(); // Realtime 성공 → 폴링 중지
-      } else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) {
-        activatePollingFallback(`Timeline-${status}`); // 실패 → 폴링 시작
-      }
-    });
-
-
   // 정리 함수 생성
   cleanup = () => {
     console.log('🛑 실시간 동기화 정리');
     isRealtimeActive = false;
     realtimeStatus = 'disconnected';
-    
+
     // 폴링도 함께 정리
     if (isPollingActive) {
       deactivatePollingFallback();
     }
-    
+
     supabase.removeChannel(todosChannel);
-    supabase.removeChannel(timelineChannel);
     cleanup = null;
   };
 

@@ -240,14 +240,14 @@ export function useTimelineWithCalendar(selectedDate: Date): TimelineWithCalenda
 
       // 타입 안전하게 priority 속성 접근
       const aPriority = (() => {
-        if (a.type === 'todo' || a.type === 'timeline-task' || a.type === 'calendar') {
+        if (a.type === 'todo' || a.type === 'calendar') {
           return priorityOrder[(a as any).priority as keyof typeof priorityOrder] || 2; // medium 기본값
         }
         return 2; // medium 기본값
       })();
 
       const bPriority = (() => {
-        if (b.type === 'todo' || b.type === 'timeline-task' || b.type === 'calendar') {
+        if (b.type === 'todo' || b.type === 'calendar') {
           return priorityOrder[(b as any).priority as keyof typeof priorityOrder] || 2; // medium 기본값
         }
         return 2; // medium 기본값
