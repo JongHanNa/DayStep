@@ -45,14 +45,12 @@ const ProjectGoalSection = memo(function ProjectGoalSection({
           {/* 아이콘 */}
           {!isNoGoalSection && goal && IconComponent && (
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
-                backgroundColor: goal.color + '30',
-                borderColor: goal.color,
-                borderWidth: '2px',
+                backgroundColor: goal.color,
               }}
             >
-              <IconComponent className="w-5 h-5" style={{ color: goal.color }} />
+              <IconComponent className="w-5 h-5 text-white" />
             </div>
           )}
 

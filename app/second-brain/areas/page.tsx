@@ -331,13 +331,13 @@ export default function AreasPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">영역 목록 ({areas.length}개)</h2>
             <div className="flex gap-2">
-              <button onClick={handleOpenPresetDialog} className="btn btn-ghost btn-sm">
+              <button onClick={handleOpenPresetDialog} className="btn btn-ghost btn-sm rounded-full">
                 <Lightbulb className="w-4 h-4" />
                 추천 항목 추가
               </button>
               <button
                 onClick={handleAddArea}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm rounded-full"
                 disabled={isCreatingArea}
               >
                 {isCreatingArea ? (
@@ -369,14 +369,12 @@ export default function AreasPage() {
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center"
+                        className="w-12 h-12 rounded-full flex items-center justify-center"
                         style={{
-                          backgroundColor: area.color + '30',
-                          borderColor: area.color,
-                          borderWidth: '2px',
+                          backgroundColor: area.color,
                         }}
                       >
-                        <IconComponent className="w-6 h-6" style={{ color: area.color }} />
+                        <IconComponent className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold">{area.title}</div>

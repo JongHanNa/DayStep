@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star } from 'lucide-react';
+import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, Tag, Palette } from 'lucide-react';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -392,41 +392,69 @@ export default function ProjectEditDialog({
 
           {/* 콘텐츠 영역 */}
           <div className="flex-1 overflow-y-auto">
-            {/* 아이콘 및 색상 */}
-            <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">아이콘 및 색상</span>
-            </label>
-            <button
-              type="button"
-              onClick={() => setIconBrowserOpen(true)}
-              className="btn btn-outline w-full justify-start"
-              style={{
-                backgroundColor: editingProject.color + '20',
-                borderColor: editingProject.color,
-              }}
-            >
-              {(() => {
-                const IconComponent = getUnifiedIcon(editingProject.icon as UnifiedIconKey).component;
-                return <IconComponent className="w-6 h-6 mr-2" />;
-              })()}
-              <span>변경하기</span>
-            </button>
-          </div>
+            {/* 아이콘 및 제목 - TodoMetadata 스타일 적용 */}
+            <div className="mx-4 my-2">
+              {/* 섹션 제목 */}
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+                <Tag className="h-5 w-5" style={{ color: editingProject.color }} />
+                프로젝트 아이콘 및 제목
+              </label>
 
-          {/* 제목 */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text">제목</span>
-            </label>
-            <input
-              type="text"
-              value={editingProject.title}
-              onChange={(e) => onProjectChange({ ...editingProject, title: e.target.value })}
-              className="input input-bordered"
-              placeholder="예: 웹사이트 리뉴얼"
-            />
-          </div>
+              {/* 아이콘 + 제목 입력 */}
+              <div className="p-2 rounded-lg bg-base-100">
+                <div className="flex items-center gap-3">
+                  {/* 아이콘 버튼 */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIconBrowserOpen(true)}
+                      className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
+                      style={{ backgroundColor: '#f3f4f6' }}
+                      title="아이콘 변경하기"
+                    >
+                      {(() => {
+                        const IconComponent = getUnifiedIcon(editingProject.icon as UnifiedIconKey).component;
+                        return <IconComponent
+                          className="group-hover:scale-110 transition-transform"
+                          style={{ color: editingProject.color }}
+                          size={24}
+                        />;
+                      })()}
+                    </button>
+
+                    {/* 색상 인디케이터 */}
+                    <div
+                      className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
+                      style={{
+                        backgroundColor: editingProject.color,
+                        border: '2px solid white'
+                      }}
+                    >
+                      <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
+                    </div>
+                  </div>
+
+                  {/* 제목 입력 */}
+                  <input
+                    type="text"
+                    value={editingProject.title}
+                    onChange={(e) => onProjectChange({ ...editingProject, title: e.target.value })}
+                    placeholder="프로젝트 제목을 입력하세요"
+                    className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
+                    style={{
+                      fontSize: '20px',
+                      color: '#333333',
+                      borderBottomColor: '#D1D5DB',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      fontWeight: '600',
+                      height: '44px',
+                    }}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
 
           {/* 목표 */}
           <div className="form-control mb-4">
@@ -529,7 +557,7 @@ export default function ProjectEditDialog({
             <div className="card-body p-3">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">노트</h2>
-                <button onClick={handleAddNote} className="btn btn-ghost btn-sm">
+                <button onClick={handleAddNote} className="btn btn-ghost btn-sm rounded-full">
                   <Plus className="w-4 h-4" />
                   추가
                 </button>
@@ -600,7 +628,7 @@ export default function ProjectEditDialog({
               <div className="card-body p-3">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">할일</h2>
-                  <button onClick={handleAddTodo} className="btn btn-ghost btn-sm">
+                  <button onClick={handleAddTodo} className="btn btn-ghost btn-sm rounded-full">
                     <Plus className="w-4 h-4" />
                     추가
                   </button>

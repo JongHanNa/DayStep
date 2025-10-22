@@ -370,7 +370,7 @@ export default function GoalsPage() {
             <h2 className="text-lg font-semibold">목표 목록 ({goals.length}개)</h2>
             <button
               onClick={handleAddGoal}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm rounded-full"
               disabled={isCreatingGoal}
             >
               {isCreatingGoal ? (
@@ -401,14 +401,12 @@ export default function GoalsPage() {
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center"
+                        className="w-12 h-12 rounded-full flex items-center justify-center"
                         style={{
-                          backgroundColor: goal.color + '30',
-                          borderColor: goal.color,
-                          borderWidth: '2px',
+                          backgroundColor: goal.color,
                         }}
                       >
-                        <IconComponent className="w-6 h-6" style={{ color: goal.color }} />
+                        <IconComponent className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold">{goal.title}</div>
@@ -669,14 +667,12 @@ export default function GoalsPage() {
                                     className="flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
                                   >
                                     <div
-                                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                                       style={{
-                                        backgroundColor: project.color + '30',
-                                        borderColor: project.color,
-                                        borderWidth: '2px',
+                                        backgroundColor: project.color,
                                       }}
                                     >
-                                      <ProjectIconComponent className="w-5 h-5" style={{ color: project.color }} />
+                                      <ProjectIconComponent className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="font-medium truncate">{project.title}</div>

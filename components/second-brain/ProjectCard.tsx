@@ -57,14 +57,12 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
       <div className="flex items-start gap-3 mb-3">
         {/* 아이콘 */}
         <div
-          className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
           style={{
-            backgroundColor: project.color + '30',
-            borderColor: project.color,
-            borderWidth: '2px',
+            backgroundColor: project.color,
           }}
         >
-          <IconComponent className="w-6 h-6" style={{ color: project.color }} />
+          <IconComponent className="w-6 h-6 text-white" />
         </div>
 
         {/* 제목 + 상태 */}

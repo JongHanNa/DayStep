@@ -174,19 +174,19 @@ export default function ActiveProjectsSection({ projects, goals, onProjectClick 
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('goals')}
-          className={`btn btn-sm ${activeTab === 'goals' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm rounded-full ${activeTab === 'goals' ? 'btn-primary' : 'btn-ghost'}`}
         >
           목표별
         </button>
         <button
           onClick={() => setActiveTab('monthly')}
-          className={`btn btn-sm ${activeTab === 'monthly' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm rounded-full ${activeTab === 'monthly' ? 'btn-primary' : 'btn-ghost'}`}
         >
           월별
         </button>
         <button
           onClick={() => setActiveTab('weekly')}
-          className={`btn btn-sm ${activeTab === 'weekly' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm rounded-full ${activeTab === 'weekly' ? 'btn-primary' : 'btn-ghost'}`}
         >
           주별
         </button>

@@ -206,7 +206,7 @@ export default function ProjectsPage() {
             </div>
             <button
               onClick={handleAddProject}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm rounded-full"
               disabled={isCreating}
             >
               {isCreating ? (
@@ -231,7 +231,7 @@ export default function ProjectsPage() {
               </p>
               <button
                 onClick={handleAddProject}
-                className="btn btn-primary btn-sm mt-4 mx-auto"
+                className="btn btn-primary btn-sm rounded-full mt-4 mx-auto"
                 disabled={isCreating}
               >
                 {isCreating ? (
@@ -328,10 +328,10 @@ export default function ProjectsPage() {
                 </span>
               </p>
               <div className="flex gap-3 justify-end">
-                <button onClick={handleCancelDelete} className="btn btn-ghost">
+                <button onClick={handleCancelDelete} className="btn btn-ghost rounded-full">
                   취소
                 </button>
-                <button onClick={handleConfirmDelete} className="btn btn-error">
+                <button onClick={handleConfirmDelete} className="btn btn-error rounded-full">
                   삭제
                 </button>
               </div>

@@ -270,7 +270,7 @@ export default function InboxPage() {
             </div>
             <button
               onClick={handleQuickAdd}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm rounded-full"
               disabled={isCreating}
             >
               {isCreating ? (
@@ -374,7 +374,7 @@ export default function InboxPage() {
                           e.stopPropagation();
                           handleClarify(item.id);
                         }}
-                        className="btn btn-ghost btn-sm btn-square"
+                        className="btn btn-ghost btn-sm btn-circle"
                         title="명료화"
                       >
                         <ArrowRight className="w-4 h-4" />
@@ -384,7 +384,7 @@ export default function InboxPage() {
                           e.stopPropagation();
                           handleDelete(item.id);
                         }}
-                        className="btn btn-ghost btn-sm btn-square text-error"
+                        className="btn btn-ghost btn-sm btn-circle text-error"
                         title="삭제"
                       >
                         <Trash2 className="w-4 h-4" />

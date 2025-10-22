@@ -330,13 +330,13 @@ export default function ResourcesPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">자원 목록 ({resources.length}개)</h2>
             <div className="flex gap-2">
-              <button onClick={handleOpenPresetDialog} className="btn btn-ghost btn-sm">
+              <button onClick={handleOpenPresetDialog} className="btn btn-ghost btn-sm rounded-full">
                 <Lightbulb className="w-4 h-4" />
                 추천 항목 추가
               </button>
               <button
                 onClick={handleAddResource}
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm rounded-full"
                 disabled={isCreatingResource}
               >
                 {isCreatingResource ? (
@@ -368,14 +368,12 @@ export default function ResourcesPage() {
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center"
+                        className="w-12 h-12 rounded-full flex items-center justify-center"
                         style={{
-                          backgroundColor: resource.color + '30',
-                          borderColor: resource.color,
-                          borderWidth: '2px',
+                          backgroundColor: resource.color,
                         }}
                       >
-                        <IconComponent className="w-6 h-6" style={{ color: resource.color }} />
+                        <IconComponent className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold">{resource.title}</div>
