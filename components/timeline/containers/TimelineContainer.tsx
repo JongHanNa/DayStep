@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { FloatingActionButton } from '../controls';
 import { useNoteStore } from '@/state/stores/noteStore';
-import FloatingMemoCard from '@/components/memos/FloatingMemoCard';
+import FloatingNoteCard from '@/components/notes/FloatingNoteCard';
 // 남은시간 위젯 비활성화
 // import { SimpleRemainingTime } from '../indicators';
 import { useSwipeGesture } from '@/hooks/use-swipe-gesture';
@@ -657,7 +657,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
           
           {/* Floating Memo Cards - 고정된 메모들 */}
           {pinnedNotes.map((memo, index) => (
-            <FloatingMemoCard
+            <FloatingNoteCard
               key={memo.id}
               memo={memo}
               className={`top-20 right-6`}

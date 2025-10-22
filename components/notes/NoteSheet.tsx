@@ -27,14 +27,14 @@ import TaskLinkModal from './TaskLinkModal';
 import { cn } from '@/lib/utils';
 import { useNoteStore, Note } from '@/state/stores/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useMemoTagStore } from '@/state/stores/memoTagStore';
+import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { TAG_COLOR_PALETTE } from '@/lib/memo-tag-constants';
+import { TAG_COLOR_PALETTE } from '@/lib/note-tag-constants';
 
 interface NoteSheetProps {
   open: boolean;
@@ -92,12 +92,12 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     updateMemoTagsWithTemplates,
     loadAllTags,
     loadTemplates,
-    loadMemoTagLinks,
+    loadNoteTagLinks,
     createTagFromTemplate,
     createDefaultTagsForUser,
     createTag,
     templatesLoading
-  } = useMemoTagStore();
+  } = useNoteTagStore();
 
   // 로컬 상태
   const [searchQuery, setSearchQuery] = useState(filters.searchQuery);
@@ -301,9 +301,9 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     if (open && isAuthenticated && user?.id) {
       console.log('🔄 템플릿 및 태그 링크 로딩 시작...');
       loadTemplates(); // 템플릿도 함께 로드
-      loadMemoTagLinks(user.id); // 노트 태그 링크도 함께 로드
+      loadNoteTagLinks(user.id); // 노트 태그 링크도 함께 로드
     }
-  }, [open, isAuthenticated, user?.id, loadTemplates, loadMemoTagLinks]);
+  }, [open, isAuthenticated, user?.id, loadTemplates, loadNoteTagLinks]);
 
   // 검색어 디바운싱
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchNoteTagTemplatesWithJWT } from '@/lib/supabaseWebViewHelper';
-import { useMemoTagStore } from '@/state/stores/memoTagStore';
+import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import type { NoteTagTemplate } from '@/types';
 
 export default function TestTemplatesPage() {
@@ -16,7 +16,7 @@ export default function TestTemplatesPage() {
     loadTemplates,
     getFilteredTemplates,
     loadState
-  } = useMemoTagStore();
+  } = useNoteTagStore();
 
   const testDirectApi = async () => {
     setDirectApiLoading(true);

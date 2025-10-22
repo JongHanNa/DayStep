@@ -24,20 +24,20 @@ import {
   createDefaultTagsForUserWithJWT,
   fetchUserTagsWithTemplatesWithJWT,
   updateMemoTagsWithTemplates,
-  fetchMemoTagLinksWithJWT,
+  fetchNoteTagLinksWithJWT,
 } from '@/lib/supabaseWebViewHelper';
 import { supabase } from '@/lib/supabase';
-import type { MemoTag, MemoTagLink, MemoTagInsert, MemoTagUpdate, MemoTagLinkInsert, NoteTagTemplate, CreateTagFromTemplateInput, TagCategoryGroup } from '@/types';
-import { MEMO_TAG_CATEGORIES, RECOMMENDED_STARTER_TAGS } from '@/lib/memo-tag-constants';
+import type { NoteTag, NoteTagLink, NoteTagInsert, NoteTagUpdate, NoteTagLinkInsert, NoteTagTemplate, CreateTagFromTemplateInput, TagCategoryGroup } from '@/types';
+import { NOTE_TAG_CATEGORIES, RECOMMENDED_STARTER_TAGS } from '@/lib/note-tag-constants';
 
 /**
  * 노트 태그 스토어 상태 타입 정의
  */
-interface MemoTagStoreState {
+interface NoteTagStoreState {
   // 데이터 상태
-  tags: MemoTag[];
+  tags: NoteTag[];
   templates: NoteTagTemplate[]; // 템플릿 태그들
-  memoTagLinks: MemoTagLink[];
+  memoTagLinks: NoteTagLink[];
 
   // UI 상태
   loading: boolean;
@@ -64,22 +64,22 @@ interface MemoTagStoreState {
 /**
  * 노트 태그 스토어 액션 타입 정의
  */
-interface MemoTagStoreActions {
+interface NoteTagStoreActions {
   // 데이터 로딩
   loadAllTags: (userId: string, forceRefresh?: boolean) => Promise<void>;
-  loadTagsForMemo: (memoId: string, userId: string) => Promise<MemoTag[]>;
+  loadTagsForMemo: (memoId: string, userId: string) => Promise<NoteTag[]>;
   loadTemplates: (forceRefresh?: boolean) => Promise<void>; // 템플릿 로딩
-  loadMemoTagLinks: (userId: string, forceRefresh?: boolean) => Promise<void>; // 노트 태그 링크 로딩
+  loadNoteTagLinks: (userId: string, forceRefresh?: boolean) => Promise<void>; // 노트 태그 링크 로딩
 
   // 템플릿 관련
-  createTagFromTemplate: (templateData: CreateTagFromTemplateInput, userId: string) => Promise<MemoTag | null>;
+  createTagFromTemplate: (templateData: CreateTagFromTemplateInput, userId: string) => Promise<NoteTag | null>;
   createDefaultTagsForUser: (userId: string) => Promise<number>;
   getTemplatesByCategory: (category?: string) => NoteTagTemplate[];
   getCategorizedTags: () => TagCategoryGroup[];
 
   // 태그 CRUD
-  createTag: (tagData: Omit<MemoTagInsert, 'user_id'>, userId: string) => Promise<MemoTag | null>;
-  updateTag: (tagId: string, updates: MemoTagUpdate, userId: string) => Promise<MemoTag | null>;
+  createTag: (tagData: Omit<NoteTagInsert, 'user_id'>, userId: string) => Promise<NoteTag | null>;
+  updateTag: (tagId: string, updates: NoteTagUpdate, userId: string) => Promise<NoteTag | null>;
   deleteTag: (tagId: string, userId: string) => Promise<boolean>;
 
   // 태그-노트 연결 관리
@@ -95,12 +95,12 @@ interface MemoTagStoreActions {
   setSearchQuery: (query: string) => void;
   setShowInactive: (show: boolean) => void;
   setSelectedCategory: (category: string | null) => void; // 카테고리 필터
-  getFilteredTags: () => MemoTag[];
+  getFilteredTags: () => NoteTag[];
   getFilteredTemplates: () => NoteTagTemplate[];
 
   // 유틸리티 함수들
-  getTagById: (tagId: string) => MemoTag | undefined;
-  getTagsForMemo: (memoId: string) => MemoTag[];
+  getTagById: (tagId: string) => NoteTag | undefined;
+  getTagsForMemo: (memoId: string) => NoteTag[];
   getMemosForTag: (tagId: string) => string[];
 
   // 초기화 및 정리
@@ -114,7 +114,7 @@ interface MemoTagStoreActions {
 /**
  * 기본 상태 정의
  */
-const initialState: MemoTagStoreState = {
+const initialState: NoteTagStoreState = {
   tags: [],
   templates: [],
   memoTagLinks: [],
@@ -138,7 +138,7 @@ const initialState: MemoTagStoreState = {
 /**
  * 노트 태그 스토어 생성
  */
-export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()(
+export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()(
   persist(
     (set, get) => ({
       ...initialState,
@@ -185,7 +185,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
           const tags = await fetchTagsForMemoWithJWT(memoId, userId);
 
           // 노트-태그 링크 정보도 업데이트
-          const links: MemoTagLink[] = tags.map(tag => ({
+          const links: NoteTagLink[] = tags.map(tag => ({
             id: `${memoId}-${tag.id}`,
             user_id: userId,
             memo_id: memoId,
@@ -249,10 +249,10 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
       },
 
       // 노트 태그 링크 로딩
-      loadMemoTagLinks: async (userId: string, forceRefresh = false) => {
+      loadNoteTagLinks: async (userId: string, forceRefresh = false) => {
         const state = get();
 
-        console.log('🔗 loadMemoTagLinks 호출:', {
+        console.log('🔗 loadNoteTagLinks 호출:', {
           forceRefresh,
           currentLinksCount: state.memoTagLinks.length,
           userId
@@ -261,7 +261,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         set({ loading: true, error: null });
 
         try {
-          const links = await fetchMemoTagLinksWithJWT(userId);
+          const links = await fetchNoteTagLinksWithJWT(userId);
 
           set({
             memoTagLinks: links,
@@ -340,7 +340,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         const { templates, tags } = get();
         const categoryGroups: TagCategoryGroup[] = [];
 
-        MEMO_TAG_CATEGORIES.forEach(category => {
+        NOTE_TAG_CATEGORIES.forEach(category => {
           const categoryTemplates = templates.filter(t => t.category === category.category);
           const categoryUserTags = tags.filter(t =>
             t.template_id &&
@@ -364,7 +364,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         set({ loading: true, error: null });
 
         try {
-          const newTagData: MemoTagInsert = {
+          const newTagData: NoteTagInsert = {
             ...tagData,
             user_id: userId,
             color: tagData.color || '#3B82F6',
@@ -373,7 +373,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
           const result = await createMemoTagWithJWT(tagData, userId);
 
           if (result) {
-            const newTag: MemoTag = {
+            const newTag: NoteTag = {
               ...result,
               color: result.color || '#3B82F6',
             };
@@ -462,7 +462,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
           const result = await linkMemoToTagWithJWT(memoId, tagId, userId);
 
           if (result) {
-            const newLink: MemoTagLink = {
+            const newLink: NoteTagLink = {
               id: `${memoId}-${tagId}`,
               user_id: userId,
               memo_id: memoId,
@@ -512,7 +512,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
 
           if (result && result.length >= 0) {
             // 기존 링크 제거 후 새 링크 추가
-            const newLinks: MemoTagLink[] = tagIds.map(tagId => ({
+            const newLinks: NoteTagLink[] = tagIds.map(tagId => ({
               id: `${memoId}-${tagId}`,
               user_id: userId,
               memo_id: memoId,
@@ -544,7 +544,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
           await updateMemoTagsWithTemplates(memoId, userTagIds, templateTagIds, userId);
 
           // 새로운 링크들을 로컬 상태에 반영
-          const newUserTagLinks: MemoTagLink[] = userTagIds.map(tagId => ({
+          const newUserTagLinks: NoteTagLink[] = userTagIds.map(tagId => ({
             id: `${memoId}-${tagId}`,
             user_id: userId,
             memo_id: memoId,
@@ -555,7 +555,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
           }));
 
           // 템플릿 태그 링크도 상태에 반영 (getTagsForMemo에서 조회하기 위해)
-          const newTemplateTagLinks: MemoTagLink[] = templateTagIds.map(templateId => ({
+          const newTemplateTagLinks: NoteTagLink[] = templateTagIds.map(templateId => ({
             id: `${memoId}-template-${templateId}`,
             user_id: userId,
             memo_id: memoId,
@@ -694,7 +694,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
 
       getTagsForMemo: (memoId) => {
         const state = get();
-        const results: MemoTag[] = [];
+        const results: NoteTag[] = [];
 
         // note_tag_links에서 해당 노트의 모든 활성 링크 조회
         const memoLinks = state.memoTagLinks.filter(
@@ -713,7 +713,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
             const template = state.templates.find(template => template.id === link.template_id);
             if (template) {
               // 템플릿을 MemoTag 형태로 변환
-              const templateAsTag: MemoTag = {
+              const templateAsTag: NoteTag = {
                 id: `template_${template.id}`, // 고유 ID 생성
                 name: template.name,
                 color: template.color || '#4a5568',
@@ -777,7 +777,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
       },
     }),
     {
-      name: 'memo-tag-store',
+      name: 'note-tag-store',
       partialize: (state) => ({
         tags: state.tags,
         templates: state.templates, // 템플릿도 캐시에 포함

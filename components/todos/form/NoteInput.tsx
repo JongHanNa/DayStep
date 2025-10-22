@@ -13,21 +13,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getColorById } from '@/lib/color-palette';
-import MemoEditorModal from '@/components/memos/MemoEditorModal';
-import MarkdownViewer from '@/components/memos/MarkdownViewer';
+import NoteEditorModal from '@/components/notes/NoteEditorModal';
+import MarkdownViewer from '@/components/notes/MarkdownViewer';
 
 export interface MemoData {
   id: string;
   content: string;
 }
 
-interface MemoInputProps {
+interface NoteInputProps {
   memos: MemoData[];
   onMemosChange: (memos: MemoData[]) => void;
   selectedColor?: string;
 }
 
-const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedColor }) => {
+const NoteInput: React.FC<NoteInputProps> = ({ memos, onMemosChange, selectedColor }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [markdownEditorOpen, setMarkdownEditorOpen] = useState(false);
   const [editingMemoIndex, setEditingMemoIndex] = useState<number | null>(null);
@@ -238,7 +238,7 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
       </div>
 
       {/* 마크다운 편집 모달 */}
-      <MemoEditorModal
+      <NoteEditorModal
         open={markdownEditorOpen}
         onOpenChange={setMarkdownEditorOpen}
         initialContent={editingMemoIndex !== null ? memos[editingMemoIndex]?.content || '' : ''}
@@ -251,4 +251,4 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
   );
 };
 
-export default MemoInput;
+export default NoteInput;

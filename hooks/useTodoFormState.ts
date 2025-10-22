@@ -3,7 +3,7 @@ import { format, addMinutes, addDays } from 'date-fns';
 import type { Todo, ScheduleType, RecurrencePattern } from '@/types';
 import { UnifiedIconKey } from '@/lib/icon-collection';
 import { DEFAULT_COLOR, getColorByHex, getColorById } from '@/lib/color-palette';
-import type { MemoData } from '@/components/todos/form/MemoInput';
+import type { MemoData } from '@/components/todos/form/NoteInput';
 import type { Contact } from '@/types/contacts';
 import type { MotivationMessage } from '@/types/motivation';
 

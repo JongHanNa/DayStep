@@ -20,7 +20,7 @@ export type Todo = Tables<"todos">;
 export type PomodoroSession = Tables<"pomodoro_sessions">;
 
 // Memo Tag types (manually defined until Supabase types are updated)
-export interface MemoTag {
+export interface NoteTag {
   id: string;
   user_id: string;
   name: string;
@@ -53,7 +53,7 @@ export interface NoteTagTemplate {
 }
 
 // Memo Tag Link types (many-to-many relationship)
-export interface MemoTagLink {
+export interface NoteTagLink {
   id: string;
   user_id: string;
   memo_id: string;
@@ -64,7 +64,7 @@ export interface MemoTagLink {
 }
 
 // Memo Tag 생성 입력 타입
-export interface MemoTagInsert {
+export interface NoteTagInsert {
   user_id: string;
   name: string;
   color: string; // 기본값이 있으므로 필수로 처리
@@ -74,7 +74,7 @@ export interface MemoTagInsert {
 }
 
 // Memo Tag 업데이트 입력 타입
-export interface MemoTagUpdate {
+export interface NoteTagUpdate {
   name?: string;
   color?: string;
   description?: string | null;
@@ -83,7 +83,7 @@ export interface MemoTagUpdate {
 }
 
 // Memo Tag Link 생성 입력 타입
-export interface MemoTagLinkInsert {
+export interface NoteTagLinkInsert {
   user_id: string;
   memo_id: string;
   tag_id: string;
@@ -105,7 +105,7 @@ export interface Note {
   is_recurring?: boolean;
   recurrence_type?: 'single' | 'recurring';
   // Tags are loaded separately for performance
-  tags?: MemoTag[];
+  tags?: NoteTag[];
 }
 
 // Note instance types (manually defined until Supabase types are updated)
@@ -164,10 +164,10 @@ export interface NoteInstanceUpdate extends Partial<NoteInstanceInsert> {
   id: string;
 }
 
-// 기존 MemoTagInsert와 MemoTagUpdate는 위쪽에 정의되어 있음
+// 기존 NoteTagInsert와 NoteTagUpdate는 위쪽에 정의되어 있음
 
 // Memo tag link input types
-export interface MemoTagLinkInsert {
+export interface NoteTagLinkInsert {
   memo_id: string;
   tag_id: string;
   user_id: string;
@@ -175,25 +175,25 @@ export interface MemoTagLinkInsert {
 
 // Extended note types with tags
 export interface NoteWithTags extends Note {
-  tags: MemoTag[];
+  tags: NoteTag[];
 }
 
 // Tag-related utility types
-export type MemoTagColor =
+export type NoteTagColor =
   | string // Hex color like #FF0000
   | 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple'
   | 'pink' | 'gray' | 'slate' | 'indigo' | 'cyan' | 'teal'
   | 'emerald' | 'lime' | 'amber' | 'rose';
 
-export interface CreateMemoTagInput {
+export interface CreateNoteTagInput {
   name: string;
-  color?: MemoTagColor;
+  color?: NoteTagColor;
   icon?: string;
   description?: string;
   template_id?: string; // 템플릿 기반 태그 생성 시
 }
 
-export interface UpdateMemoTagInput extends Partial<CreateMemoTagInput> {
+export interface UpdateNoteTagInput extends Partial<CreateNoteTagInput> {
   id: string;
 }
 
@@ -204,7 +204,7 @@ export interface CreateTagFromTemplateInput {
   custom_color?: string; // 사용자가 템플릿 색상을 커스터마이징
 }
 
-export interface MemoTagCategory {
+export interface NoteTagCategory {
   category: 'productivity' | 'personal' | 'priority' | 'type' | 'general';
   name: string;
   description: string;
@@ -212,7 +212,7 @@ export interface MemoTagCategory {
 }
 
 // Tag view interfaces (for UI display)
-export interface TagWithSource extends MemoTag {
+export interface TagWithSource extends NoteTag {
   tag_source: 'user' | 'template';
   template_name?: string;
   category?: string;
@@ -221,7 +221,7 @@ export interface TagWithSource extends MemoTag {
 export interface TagCategoryGroup {
   category: string;
   templates: NoteTagTemplate[];
-  userTags: MemoTag[];
+  userTags: NoteTag[];
 }
 
 // Auth types

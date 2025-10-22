@@ -10,11 +10,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useNoteStore } from '@/state/stores/noteStore';
-import { useMemoTagStore } from '@/state/stores/memoTagStore';
+import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { PomodoroTimer } from '@/components/ui/PomodoroTimer';
 import { getColorById, getColorByHex, DEFAULT_COLOR } from '@/lib/color-palette';
-import MarkdownViewer from '@/components/memos/MarkdownViewer';
+import MarkdownViewer from '@/components/notes/MarkdownViewer';
 import { isRecurringTodo } from '@/lib/utils/recurring';
 import { useMotivationStore } from '@/state/stores/motivationStore';
 import MotivationBadge from '@/components/motivation/MotivationBadge';
@@ -69,7 +69,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   const { notes, setSelectedNoteForEdit, getDisplayNotesForTask } = useNoteStore();
 
   // 태그 정보 확인
-  const { getTagsForMemo } = useMemoTagStore();
+  const { getTagsForMemo } = useNoteTagStore();
 
   // 동기부여 메시지 확인
   const { getMotivationForTodo, getMotivationsForTodo } = useMotivationStore();

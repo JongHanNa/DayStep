@@ -28,14 +28,14 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-interface FloatingMemoCardProps {
+interface FloatingNoteCardProps {
   memo: Note;
   onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
 
-const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({ 
+const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({ 
   memo, 
   onClose,
   className,
@@ -282,4 +282,4 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
   );
 };
 
-export default FloatingMemoCard;
+export default FloatingNoteCard;

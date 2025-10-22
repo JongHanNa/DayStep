@@ -1,12 +1,12 @@
-// Memo Tag System Constants
+// Note Tag System Constants
 // 노트 태그 시스템 상수 정의
 
-import { MemoTagCategory } from '@/types';
+import { NoteTagCategory } from '@/types';
 
 /**
  * 노트 태그 카테고리 정의
  */
-export const MEMO_TAG_CATEGORIES: MemoTagCategory[] = [
+export const NOTE_TAG_CATEGORIES: NoteTagCategory[] = [
   {
     category: 'productivity',
     name: '생산성',
@@ -186,7 +186,7 @@ export const RECOMMENDED_STARTER_TAGS = [
 export const TAG_VALIDATION = {
   NAME_MIN_LENGTH: 1,
   NAME_MAX_LENGTH: 50,
-  MAX_TAGS_PER_MEMO: 10,
+  MAX_TAGS_PER_NOTE: 10,
   MAX_USER_TAGS: 100
 } as const;
 

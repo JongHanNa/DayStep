@@ -17,7 +17,7 @@ import DepartureSettings from './form/DepartureSettings';
 import RecurrenceSettings from './form/RecurrenceSettings';
 import TodoMetadata from './form/TodoMetadata';
 import LinkedNotes from './form/LinkedNotes';
-import MemoInput from './form/MemoInput';
+import NoteInput from './form/NoteInput';
 import ContactsSection from './form/ContactsSection';
 import MotivationSelection from './form/MotivationSelection';
 import { useElasticScroll } from '@/hooks/useElasticScroll';
@@ -292,7 +292,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
               )}
 
               {/* 노트 입력 (항상 표시) */}
-              <MemoInput
+              <NoteInput
                 memos={values.memos}
                 onMemosChange={actions.setMemos}
                 selectedColor={values.selectedColor}

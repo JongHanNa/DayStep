@@ -11,7 +11,7 @@ import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
 import type { Todo } from '@/types';
 import type { MotivationMessage, MotivationTemplate, MotivationTag, TodoMotivation } from '@/types/motivation';
-import type { MemoTag, MemoTagLink, MemoTagInsert, MemoTagUpdate, MemoTagLinkInsert, NoteTagTemplate, CreateTagFromTemplateInput } from '@/types';
+import type { NoteTag, NoteTagLink, NoteTagInsert, NoteTagUpdate, NoteTagLinkInsert, NoteTagTemplate, CreateTagFromTemplateInput } from '@/types';
 
 /**
  * Capacitor 환경 감지 유틸리티
@@ -2084,7 +2084,7 @@ export async function deleteCustomMotivationTagWithJWT(
 /**
  * JWT 방식으로 사용자의 모든 노트 태그 조회
  */
-export async function fetchAllMemoTagsWithJWT(userId: string): Promise<MemoTag[]> {
+export async function fetchAllMemoTagsWithJWT(userId: string): Promise<NoteTag[]> {
   console.log('🏷️ JWT 방식으로 노트 태그 조회:', { userId });
 
   try {
@@ -2111,9 +2111,9 @@ export async function fetchAllMemoTagsWithJWT(userId: string): Promise<MemoTag[]
  * JWT 방식으로 노트 태그 생성
  */
 export async function createMemoTagWithJWT(
-  data: Omit<MemoTagInsert, 'user_id'>,
+  data: Omit<NoteTagInsert, 'user_id'>,
   userId: string
-): Promise<MemoTag | null> {
+): Promise<NoteTag | null> {
   console.log('✏️ JWT 방식으로 노트 태그 생성:', { data, userId });
 
   try {
@@ -2162,8 +2162,8 @@ export async function createMemoTagWithJWT(
 export async function updateMemoTagWithJWT(
   tagId: string,
   userId: string,
-  updates: Partial<MemoTagInsert>
-): Promise<MemoTag | null> {
+  updates: Partial<NoteTagInsert>
+): Promise<NoteTag | null> {
   console.log('🔄 JWT 방식으로 노트 태그 업데이트:', { tagId, userId, updates });
 
   try {
@@ -2288,7 +2288,7 @@ export async function linkMemoToTagWithJWT(
   memoId: string,
   tagId: string,
   userId: string
-): Promise<MemoTagLink | null> {
+): Promise<NoteTagLink | null> {
   console.log('🔗 JWT 방식으로 노트에 태그 연결:', { memoId, tagId, userId });
 
   try {
@@ -2389,7 +2389,7 @@ export async function unlinkAllTagsFromMemoWithJWT(
 export async function fetchTagsForMemoWithJWT(
   memoId: string,
   userId: string
-): Promise<MemoTag[]> {
+): Promise<NoteTag[]> {
   console.log('🔍 JWT 방식으로 노트에 연결된 태그들 조회:', { memoId, userId });
 
   try {
@@ -2479,11 +2479,11 @@ export async function linkMemoToMultipleTagsWithJWT(
   memoId: string,
   tagIds: string[],
   userId: string
-): Promise<MemoTagLink[]> {
+): Promise<NoteTagLink[]> {
   console.log('🔗 JWT 방식으로 노트에 다중 태그 연결:', { memoId, tagIds, userId });
 
   try {
-    const results: MemoTagLink[] = [];
+    const results: NoteTagLink[] = [];
 
     // 각 태그에 대해 개별적으로 연결 (배치 INSERT는 복잡하므로)
     for (const tagId of tagIds) {
@@ -2513,7 +2513,7 @@ export async function updateMemoTagsWithJWT(
   memoId: string,
   tagIds: string[],
   userId: string
-): Promise<MemoTagLink[]> {
+): Promise<NoteTagLink[]> {
   console.log('🔄 JWT 방식으로 노트 태그들 일괄 업데이트:', { memoId, tagIds, userId });
 
   try {
@@ -2613,7 +2613,7 @@ export async function fetchNoteTagTemplatesByCategoryWithJWT(category?: string):
 export async function createTagFromTemplateWithJWT(
   data: CreateTagFromTemplateInput,
   userId: string
-): Promise<MemoTag | null> {
+): Promise<NoteTag | null> {
   console.log('✨ JWT 방식으로 템플릿에서 태그 생성:', { ...data, userId });
 
   try {
@@ -2744,7 +2744,7 @@ export async function updateMemoTagsWithTemplates(
 /**
  * JWT 방식으로 사용자의 노트 태그 링크 조회
  */
-export async function fetchMemoTagLinksWithJWT(userId: string): Promise<MemoTagLink[]> {
+export async function fetchNoteTagLinksWithJWT(userId: string): Promise<NoteTagLink[]> {
   console.log('🔗 JWT 방식으로 노트 태그 링크 조회:', { userId });
 
   try {
@@ -2775,7 +2775,7 @@ export async function fetchMemoTagLinksWithJWT(userId: string): Promise<MemoTagL
 /**
  * JWT 방식으로 사용자의 전체 태그 (사용자 태그 + 템플릿) 조회
  */
-export async function fetchUserTagsWithTemplatesWithJWT(userId: string): Promise<MemoTag[]> {
+export async function fetchUserTagsWithTemplatesWithJWT(userId: string): Promise<NoteTag[]> {
   console.log('🏷️ JWT 방식으로 사용자 전체 태그 조회 (템플릿 포함):', { userId });
 
   try {

@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { StickyNote, ChevronDown } from 'lucide-react';
 import { useNoteStore } from '@/state/stores/noteStore';
-import MarkdownViewer from '@/components/memos/MarkdownViewer';
+import MarkdownViewer from '@/components/notes/MarkdownViewer';
 
 interface LinkedMemosProps {
   taskId: string | null;

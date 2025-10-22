@@ -15,7 +15,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoFormModal from '@/components/todos/TodoFormModal';
-import NoteSheet from '@/components/memos/NoteSheet';
+import NoteSheet from '@/components/notes/NoteSheet';
 import ContactListSheet from '@/components/contacts/ContactListSheet';
 import ContactDetailModal from '@/components/contacts/ContactDetailModal';
 import MotivationSheet from '@/components/motivation/MotivationSheet';
