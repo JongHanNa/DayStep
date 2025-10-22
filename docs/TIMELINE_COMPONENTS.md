@@ -317,7 +317,7 @@ interface TimelineItem {
   isCompleted: boolean;
   isAllDay: boolean;
   color?: string;
-  type: 'todo' | 'repository' | 'timeline-task';
+  type: 'todo' | 'repository' | 'calendar';
   priority?: 'low' | 'medium' | 'high';
   tags?: string[];
 }
