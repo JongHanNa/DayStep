@@ -481,20 +481,20 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
         const createdTodo = await createTodo(todoData);
         createdTodoId = createdTodo?.id || null;
         
-        // 할일 생성 후 연결된 메모들 자동 생성
+        // 할일 생성 후 연결된 노트들 자동 생성
         if (createdTodoId && values.memos.length > 0) {
-          for (const memo of values.memos) {
-            if (memo.content.trim()) {
+          for (const note of values.memos) {
+            if (note.content.trim()) {
               try {
                 await createNote({
-                  content: memo.content.trim(),
+                  content: note.content.trim(),
                   related_task_id: createdTodoId,
                   is_pinned: false,
                   is_floating: false,
                   user_id: user.id,
                 });
-              } catch (memoError) {
-                console.error('노트 생성 실패:', memoError);
+              } catch (noteError) {
+                console.error('노트 생성 실패:', noteError);
                 // 노트 생성 실패는 할일 생성을 방해하지 않음
               }
             }
@@ -516,12 +516,12 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
 
       // 성공 메시지 구성
       let successMessage = isEditMode ? '할일이 수정되었습니다' : '할일이 추가되었습니다';
-      
-      // 메모가 함께 생성된 경우 메시지에 추가
+
+      // 노트가 함께 생성된 경우 메시지에 추가
       if (!isEditMode && values.memos.length > 0) {
-        const validMemosCount = values.memos.filter(memo => memo.content.trim()).length;
-        if (validMemosCount > 0) {
-          successMessage += `\n연결된 노트 ${validMemosCount}개도 함께 생성되었습니다.`;
+        const validNotesCount = values.memos.filter(note => note.content.trim()).length;
+        if (validNotesCount > 0) {
+          successMessage += `\n연결된 노트 ${validNotesCount}개도 함께 생성되었습니다.`;
         }
       }
 

@@ -40,7 +40,7 @@ export default function TestTemplatesPage() {
   };
 
   const clearLocalStorage = () => {
-    localStorage.removeItem('memo-tag-store');
+    localStorage.removeItem('note-tag-store');
     console.log('🧹 로컬 스토리지 클리어 완료');
     window.location.reload();
   };

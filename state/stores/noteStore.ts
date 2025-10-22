@@ -117,18 +117,18 @@ interface NoteStoreActions {
   getNoteById: (noteId: string) => Note | null;
 
   // 핀/플로팅 관리
-  pinNote: (memoId: string) => Promise<void>;
-  unpinNote: (memoId: string) => Promise<void>;
-  toggleFloating: (memoId: string) => Promise<void>;
-  updateNotePosition: (memoId: string, position: number) => Promise<void>;
+  pinNote: (noteId: string) => Promise<void>;
+  unpinNote: (noteId: string) => Promise<void>;
+  toggleFloating: (noteId: string) => Promise<void>;
+  updateNotePosition: (noteId: string, position: number) => Promise<void>;
 
   // 할일 연결 관리
-  linkToTask: (memoId: string, taskId: string | null, options?: {
+  linkToTask: (noteId: string, taskId: string | null, options?: {
     linkDate?: string;
     timelineTaskId?: string;
     recurrenceType?: 'single' | 'recurring' | 'instance';
   }) => Promise<void>;
-  unlinkFromTask: (memoId: string) => Promise<void>;
+  unlinkFromTask: (noteId: string) => Promise<void>;
   getNotesByTaskId: (taskId: string) => Note[];
   getLinkedNotesByTaskId: (taskId: string) => Note[];
   deleteLinkedNotes: (taskId: string) => Promise<number>;
@@ -138,12 +138,12 @@ interface NoteStoreActions {
   createNoteInstance: (input: CreateNoteInstanceInput) => Promise<NoteInstance>;
   updateNoteInstance: (input: UpdateNoteInstanceInput) => Promise<NoteInstance>;
   deleteNoteInstance: (instanceId: string) => Promise<void>;
-  getMemoInstancesByMemoId: (memoId: string) => Promise<NoteInstance[]>;
-  getMemoInstancesByDate: (date: string) => Promise<NoteInstance[]>;
-  getMemoInstanceByDate: (memoId: string, date: string) => Promise<NoteInstance | null>;
-  getMemoInstancesByTaskId: (taskId: string) => Promise<NoteInstance[]>;
-  createRecurringMemoInstances: (memoId: string, dates: string[], taskId?: string) => Promise<NoteInstance[]>;
-  upsertMemoInstance: (memoId: string, date: string, content: string, taskId?: string | null) => Promise<NoteInstance | null>;
+  getNoteInstancesByNoteId: (noteId: string) => Promise<NoteInstance[]>;
+  getNoteInstancesByDate: (date: string) => Promise<NoteInstance[]>;
+  getNoteInstanceByDate: (noteId: string, date: string) => Promise<NoteInstance | null>;
+  getNoteInstancesByTaskId: (taskId: string) => Promise<NoteInstance[]>;
+  createRecurringNoteInstances: (noteId: string, dates: string[], taskId?: string) => Promise<NoteInstance[]>;
+  upsertNoteInstance: (noteId: string, date: string, content: string, taskId?: string | null) => Promise<NoteInstance | null>;
 
   // 필터링 및 정렬
   setFilter: (filter: Partial<NoteStoreState['filters']>) => void;
@@ -157,7 +157,7 @@ interface NoteStoreActions {
   // UI 상태 관리
   setBottomSheetOpen: (open: boolean) => void;
   setBottomSheetMode: (mode: 'compact' | 'expanded') => void;
-  setSelectedNoteForEdit: (memo: Note | null) => void;
+  setSelectedNoteForEdit: (note: Note | null) => void;
   setFloatingCardVisible: (visible: boolean) => void;
   setFloatingCardPosition: (position: { x: number; y: number }) => void;
 
@@ -242,7 +242,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             throw new Error('사용자 인증이 필요합니다.');
           }
 
-          const memoData = {
+          const noteData = {
             ...input,
             user_id: userId,
             is_pinned: input.is_pinned || false,
@@ -252,16 +252,16 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
           // Optimistic update - 최상단에 추가하기 위해 정렬된 위치에 삽입
           const tempId = `temp-${Date.now()}`;
-          const tempMemo: Note = {
+          const tempNote: Note = {
             id: tempId,
-            ...memoData,
+            ...noteData,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
 
           set(state => {
-            // 새 메모를 최상단에 추가하고 정렬 순서 적용
-            const newMemos = [tempMemo, ...state.notes].sort((a, b) => {
+            // 새 노트를 최상단에 추가하고 정렬 순서 적용
+            const newNotes = [tempNote, ...state.notes].sort((a, b) => {
               // 1. position 오름차순 (0이 최상단)
               if (a.position !== b.position) {
                 return a.position - b.position;
@@ -270,16 +270,16 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
             });
 
-            return { notes: newMemos };
+            return { notes: newNotes };
           });
 
           try {
-            const result = await createWithJWT('notes', memoData);
-            
+            const result = await createWithJWT('notes', noteData);
+
             set(state => {
               // 서버 응답으로 교체하고 다시 정렬
-              const updatedMemos = state.notes.map(memo => 
-                memo.id === tempId ? result : memo
+              const updatedNotes = state.notes.map(note =>
+                note.id === tempId ? result : note
               ).sort((a, b) => {
                 // 1. position 오름차순 (0이 최상단)
                 if (a.position !== b.position) {
@@ -289,14 +289,14 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
                 return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
               });
 
-              return { notes: updatedMemos };
+              return { notes: updatedNotes };
             });
 
             get().updateStats();
             return result;
           } catch (error) {
             set(state => ({
-              notes: state.notes.filter(memo => memo.id !== tempId),
+              notes: state.notes.filter(note => note.id !== tempId),
               error: error instanceof Error ? error.message : '노트 생성 실패',
             }));
             throw error;
@@ -307,18 +307,18 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.updateNote:', input);
 
           const { id, ...updateData } = input;
-          const originalMemo = get().notes.find(memo => memo.id === id);
-          
-          if (!originalMemo) {
-            throw new Error('메모를 찾을 수 없습니다.');
+          const originalNote = get().notes.find(note => note.id === id);
+
+          if (!originalNote) {
+            throw new Error('노트를 찾을 수 없습니다.');
           }
 
           // Optimistic update
-          const updatedMemo = { ...originalMemo, ...updateData, updated_at: new Date().toISOString() };
+          const updatedNote = { ...originalNote, ...updateData, updated_at: new Date().toISOString() };
 
           set(state => ({
-            notes: state.notes.map(memo => 
-              memo.id === id ? updatedMemo : memo
+            notes: state.notes.map(note =>
+              note.id === id ? updatedNote : note
             ),
           }));
 
@@ -336,8 +336,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           } catch (error) {
             // Rollback optimistic update
             set(state => ({
-              notes: state.notes.map(memo => 
-                memo.id === id ? originalMemo : memo
+              notes: state.notes.map(note =>
+                note.id === id ? originalNote : note
               ),
               error: error instanceof Error ? error.message : '노트 업데이트 실패',
             }));
@@ -345,25 +345,25 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        deleteNote: async (memoId: string) => {
-          console.log('📝 NoteStore.deleteNote:', memoId);
+        deleteNote: async (noteId: string) => {
+          console.log('📝 NoteStore.deleteNote:', noteId);
 
-          const originalMemo = get().notes.find(memo => memo.id === memoId);
-          
-          if (!originalMemo) {
-            throw new Error('메모를 찾을 수 없습니다.');
+          const originalNote = get().notes.find(note => note.id === noteId);
+
+          if (!originalNote) {
+            throw new Error('노트를 찾을 수 없습니다.');
           }
 
           // Optimistic update
           set(state => ({
-            notes: state.notes.filter(memo => memo.id !== memoId),
+            notes: state.notes.filter(note => note.id !== noteId),
           }));
 
           try {
             await deleteWithJWT('notes', {
               column: 'id',
               operator: 'eq',
-              value: memoId
+              value: noteId
             });
 
             // Delete successful
@@ -372,7 +372,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           } catch (error) {
             // Rollback optimistic update
             set(state => ({
-              notes: [...state.notes, originalMemo],
+              notes: [...state.notes, originalNote],
               error: error instanceof Error ? error.message : '노트 삭제 실패',
             }));
             throw error;
@@ -415,37 +415,37 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        getNoteById: (memoId: string) => {
-          return get().notes.find(memo => memo.id === memoId) || null;
+        getNoteById: (noteId: string) => {
+          return get().notes.find(note => note.id === noteId) || null;
         },
 
         // 핀/플로팅 관리
-        pinNote: async (memoId: string) => {
-          await get().updateNote({ id: memoId, is_pinned: true });
+        pinNote: async (noteId: string) => {
+          await get().updateNote({ id: noteId, is_pinned: true });
         },
 
-        unpinNote: async (memoId: string) => {
-          await get().updateNote({ id: memoId, is_pinned: false });
+        unpinNote: async (noteId: string) => {
+          await get().updateNote({ id: noteId, is_pinned: false });
         },
 
-        toggleFloating: async (memoId: string) => {
-          const memo = get().getNoteById(memoId);
-          if (memo) {
-            await get().updateNote({ id: memoId, is_floating: !memo.is_floating });
+        toggleFloating: async (noteId: string) => {
+          const note = get().getNoteById(noteId);
+          if (note) {
+            await get().updateNote({ id: noteId, is_floating: !note.is_floating });
           }
         },
 
-        updateNotePosition: async (memoId: string, position: number) => {
-          await get().updateNote({ id: memoId, position });
+        updateNotePosition: async (noteId: string, position: number) => {
+          await get().updateNote({ id: noteId, position });
         },
 
         // 할일 연결 관리 (향상된 버전)
-        linkToTask: async (memoId: string, taskId: string | null, options?: {
+        linkToTask: async (noteId: string, taskId: string | null, options?: {
           linkDate?: string;
           timelineTaskId?: string;
           recurrenceType?: 'single' | 'recurring' | 'instance';
         }) => {
-          console.log('🔗 NoteStore.linkToTask:', { memoId, taskId, options });
+          console.log('🔗 NoteStore.linkToTask:', { noteId, taskId, options });
 
           const updateData: Partial<Note> = {
             related_task_id: taskId,
@@ -456,15 +456,15 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           };
 
           // 노트 업데이트
-          await get().updateNote({ id: memoId, ...updateData });
+          await get().updateNote({ id: noteId, ...updateData });
 
-          // 반복 메모로 설정된 경우 인스턴스 생성 로직은 TaskLinkModal에서 처리
+          // 반복 노트로 설정된 경우 인스턴스 생성 로직은 TaskLinkModal에서 처리
           console.log('✅ 노트 할일 연결 완료:', updateData);
         },
 
-        unlinkFromTask: async (memoId: string) => {
-          await get().updateNote({ 
-            id: memoId, 
+        unlinkFromTask: async (noteId: string) => {
+          await get().updateNote({
+            id: noteId,
             related_task_id: null,
             linked_date: null,
             linked_timeline_task_id: null,
@@ -472,53 +472,53 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         getNotesByTaskId: (taskId: string) => {
-          return get().notes.filter(memo => memo.related_task_id === taskId);
+          return get().notes.filter(note => note.related_task_id === taskId);
         },
 
         getLinkedNotesByTaskId: (taskId: string) => {
-          return get().notes.filter(memo => 
-            memo.related_task_id === taskId || 
-            memo.linked_timeline_task_id === taskId
+          return get().notes.filter(note =>
+            note.related_task_id === taskId ||
+            note.linked_timeline_task_id === taskId
           );
         },
 
         deleteLinkedNotes: async (taskId: string) => {
           console.log('🗑️ NoteStore.deleteLinkedNotes:', taskId);
-          
-          const linkedMemos = get().getLinkedNotesByTaskId(taskId);
-          
-          if (linkedMemos.length === 0) {
+
+          const linkedNotes = get().getLinkedNotesByTaskId(taskId);
+
+          if (linkedNotes.length === 0) {
             return 0;
           }
 
           let deletedCount = 0;
-          const failedMemos: string[] = [];
+          const failedNotes: string[] = [];
 
-          for (const memo of linkedMemos) {
+          for (const note of linkedNotes) {
             try {
-              await get().deleteNote(memo.id);
+              await get().deleteNote(note.id);
               deletedCount++;
             } catch (error) {
-              console.error(`노트 ${memo.id} 삭제 실패:`, error);
-              failedMemos.push(memo.id);
+              console.error(`노트 ${note.id} 삭제 실패:`, error);
+              failedNotes.push(note.id);
             }
           }
 
-          if (failedMemos.length > 0) {
-            console.warn(`일부 노트 삭제 실패: ${failedMemos.join(', ')}`);
+          if (failedNotes.length > 0) {
+            console.warn(`일부 노트 삭제 실패: ${failedNotes.join(', ')}`);
           }
 
           return deletedCount;
         },
 
-        // 특정 할일에 연결된 메모들을 가져오되, 반복 메모의 경우 해당 날짜의 인스턴스를 우선 표시
+        // 특정 할일에 연결된 노트들을 가져오되, 반복 노트의 경우 해당 날짜의 인스턴스를 우선 표시
         getDisplayNotesForTask: async (taskId: string, date?: string) => {
           console.log('📝 NoteStore.getDisplayNotesForTask:', { taskId, date });
 
           try {
-            // 기본 연결된 메모들 가져오기
-            const linkedMemos = get().getLinkedNotesByTaskId(taskId);
-            const displayMemos: Array<Note | NoteInstance> = [];
+            // 기본 연결된 노트들 가져오기
+            const linkedNotes = get().getLinkedNotesByTaskId(taskId);
+            const displayNotes: Array<Note | NoteInstance> = [];
 
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
             let userId: string | null = null;
@@ -541,29 +541,29 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               }
             }
 
-            for (const memo of linkedMemos) {
-              // 1. 특정 날짜 인스턴스 메모인 경우 날짜 필터링
-              if (memo.recurrence_type === 'instance' && memo.linked_date && date) {
+            for (const note of linkedNotes) {
+              // 1. 특정 날짜 인스턴스 노트인 경우 날짜 필터링
+              if (note.recurrence_type === 'instance' && note.linked_date && date) {
                 // linked_date와 현재 date가 일치하는 경우만 표시
-                if (memo.linked_date === date) {
-                  console.log('📅 특정 날짜 인스턴스 노트 표시:', memo.id, memo.linked_date, date);
-                  displayMemos.push(memo);
+                if (note.linked_date === date) {
+                  console.log('📅 특정 날짜 인스턴스 노트 표시:', note.id, note.linked_date, date);
+                  displayNotes.push(note);
                 }
                 continue;
               }
 
-              // 2. 반복 메모이고 날짜가 제공된 경우, 해당 날짜의 인스턴스를 확인
-              if (memo.is_recurring && memo.recurrence_type === 'recurring' && date && userId) {
+              // 2. 반복 노트이고 날짜가 제공된 경우, 해당 날짜의 인스턴스를 확인
+              if (note.is_recurring && note.recurrence_type === 'recurring' && date && userId) {
                 try {
-                  const memoInstance = await fetchMemoInstanceByDateWithJWT(userId, memo.id, date);
-                  if (memoInstance) {
+                  const noteInstance = await fetchMemoInstanceByDateWithJWT(userId, note.id, date);
+                  if (noteInstance) {
                     // 노트 인스턴스가 있으면 이를 우선 표시
-                    console.log('📅 노트 인스턴스 발견:', memoInstance.id, date);
-                    displayMemos.push({
-                      ...memoInstance,
+                    console.log('📅 노트 인스턴스 발견:', noteInstance.id, date);
+                    displayNotes.push({
+                      ...noteInstance,
                       // 노트 인스턴스임을 표시하기 위한 추가 필드
                       _isInstance: true,
-                      _originalMemo: memo
+                      _originalNote: note
                     } as any);
                     continue;
                   }
@@ -572,18 +572,18 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
                 }
               }
 
-              // 3. 일반 메모이거나 인스턴스가 없는 경우 원본 노트 표시
+              // 3. 일반 노트이거나 인스턴스가 없는 경우 원본 노트 표시
               // (단, instance 타입이 아닌 경우만)
-              if (memo.recurrence_type !== 'instance') {
-                displayMemos.push(memo);
+              if (note.recurrence_type !== 'instance') {
+                displayNotes.push(note);
               }
             }
 
-            console.log('✅ 표시할 노트 목록:', displayMemos.length);
-            return displayMemos;
+            console.log('✅ 표시할 노트 목록:', displayNotes.length);
+            return displayNotes;
           } catch (error) {
             console.error('❌ 표시 노트 조회 실패:', error);
-            // 에러 시 기본 연결된 메모들 반환
+            // 에러 시 기본 연결된 노트들 반환
             return get().getLinkedNotesByTaskId(taskId);
           }
         },
@@ -597,23 +597,23 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
         getFilteredNotes: () => {
           const { notes, filters } = get();
-          
-          return notes.filter(memo => {
+
+          return notes.filter(note => {
             // 검색 쿼리 필터
             if (filters.searchQuery) {
               const query = filters.searchQuery.toLowerCase();
-              if (!memo.content.toLowerCase().includes(query)) {
+              if (!note.content.toLowerCase().includes(query)) {
                 return false;
               }
             }
 
             // 핀 상태 필터
-            if (!filters.showPinned && memo.is_pinned) {
+            if (!filters.showPinned && note.is_pinned) {
               return false;
             }
 
             // 플로팅 상태 필터
-            if (!filters.showFloating && memo.is_floating) {
+            if (!filters.showFloating && note.is_floating) {
               return false;
             }
 
@@ -651,30 +651,30 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
                 const { eventType, new: newRecord, old: oldRecord } = payload;
 
                 set(state => {
-                  let newMemos = [...state.notes];
+                  let newNotes = [...state.notes];
 
                   switch (eventType) {
                     case 'INSERT':
-                      if (newRecord && !newMemos.find(m => m.id === newRecord.id)) {
-                        newMemos.push(newRecord as Note);
+                      if (newRecord && !newNotes.find(m => m.id === newRecord.id)) {
+                        newNotes.push(newRecord as Note);
                       }
                       break;
                     case 'UPDATE':
                       if (newRecord) {
-                        newMemos = newMemos.map(memo =>
-                          memo.id === newRecord.id ? newRecord as Note : memo
+                        newNotes = newNotes.map(note =>
+                          note.id === newRecord.id ? newRecord as Note : note
                         );
                       }
                       break;
                     case 'DELETE':
                       if (oldRecord) {
-                        newMemos = newMemos.filter(memo => memo.id !== oldRecord.id);
+                        newNotes = newNotes.filter(note => note.id !== oldRecord.id);
                       }
                       break;
                   }
 
                   // 실시간 업데이트 후에도 정렬 순서 적용
-                  newMemos.sort((a, b) => {
+                  newNotes.sort((a, b) => {
                     // 1. position 오름차순 (0이 최상단)
                     if (a.position !== b.position) {
                       return a.position - b.position;
@@ -684,7 +684,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
                   });
 
                   return {
-                    notes: newMemos,
+                    notes: newNotes,
                   };
                 });
 
@@ -723,9 +723,9 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }));
         },
 
-        setSelectedNoteForEdit: (memo: Note | null) => {
+        setSelectedNoteForEdit: (note: Note | null) => {
           set(state => ({
-            ui: { ...state.ui, selectedNoteForEdit: memo }
+            ui: { ...state.ui, selectedNoteForEdit: note }
           }));
         },
 
@@ -749,18 +749,18 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
           const stats = {
             totalCount: notes.length,
-            pinnedCount: notes.filter(memo => memo.is_pinned).length,
-            floatingCount: notes.filter(memo => memo.is_floating).length,
-            todayCount: notes.filter(memo => {
-              const createdAt = new Date(memo.created_at);
+            pinnedCount: notes.filter(note => note.is_pinned).length,
+            floatingCount: notes.filter(note => note.is_floating).length,
+            todayCount: notes.filter(note => {
+              const createdAt = new Date(note.created_at);
               return createdAt >= todayStart;
             }).length,
           };
 
-          set({ 
+          set({
             stats,
-            pinnedNotes: notes.filter(memo => memo.is_pinned),
-            floatingNotes: notes.filter(memo => memo.is_floating),
+            pinnedNotes: notes.filter(note => note.is_pinned),
+            floatingNotes: notes.filter(note => note.is_floating),
           });
         },
 
@@ -875,8 +875,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        getMemoInstancesByMemoId: async (memoId: string) => {
-          console.log('📝 NoteStore.getMemoInstancesByMemoId:', memoId);
+        getNoteInstancesByNoteId: async (noteId: string) => {
+          console.log('📝 NoteStore.getNoteInstancesByNoteId:', noteId);
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -910,7 +910,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               throw new Error('사용자 ID를 확보할 수 없습니다');
             }
 
-            const instances = await fetchMemoInstancesByMemoIdWithJWT(userId, memoId);
+            const instances = await fetchMemoInstancesByMemoIdWithJWT(userId, noteId);
             console.log('✅ 노트 인스턴스들 조회 성공:', instances.length);
             return instances;
           } catch (error) {
@@ -919,8 +919,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        getMemoInstancesByDate: async (date: string) => {
-          console.log('📝 NoteStore.getMemoInstancesByDate:', date);
+        getNoteInstancesByDate: async (date: string) => {
+          console.log('📝 NoteStore.getNoteInstancesByDate:', date);
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -963,8 +963,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        getMemoInstanceByDate: async (memoId: string, date: string) => {
-          console.log('📝 NoteStore.getMemoInstanceByDate:', { memoId, date });
+        getNoteInstanceByDate: async (noteId: string, date: string) => {
+          console.log('📝 NoteStore.getNoteInstanceByDate:', { noteId, date });
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -998,17 +998,17 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               throw new Error('사용자 ID를 확보할 수 없습니다');
             }
 
-            const instance = await fetchMemoInstanceByDateWithJWT(userId, memoId, date);
-            console.log('✅ 특정 메모의 특정 날짜 인스턴스 조회 성공:', instance);
+            const instance = await fetchMemoInstanceByDateWithJWT(userId, noteId, date);
+            console.log('✅ 특정 노트의 특정 날짜 인스턴스 조회 성공:', instance);
             return instance;
           } catch (error) {
-            console.error('❌ 특정 메모의 특정 날짜 인스턴스 조회 실패:', error);
+            console.error('❌ 특정 노트의 특정 날짜 인스턴스 조회 실패:', error);
             return null;
           }
         },
 
-        getMemoInstancesByTaskId: async (taskId: string) => {
-          console.log('📝 NoteStore.getMemoInstancesByTaskId:', taskId);
+        getNoteInstancesByTaskId: async (taskId: string) => {
+          console.log('📝 NoteStore.getNoteInstancesByTaskId:', taskId);
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -1051,14 +1051,14 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        createRecurringMemoInstances: async (memoId: string, dates: string[], taskId?: string) => {
-          console.log('📝 NoteStore.createRecurringMemoInstances:', { memoId, dates, taskId });
+        createRecurringNoteInstances: async (noteId: string, dates: string[], taskId?: string) => {
+          console.log('📝 NoteStore.createRecurringNoteInstances:', { noteId, dates, taskId });
 
           try {
             // 원본 노트 조회
-            const originalMemo = get().getNoteById(memoId);
-            if (!originalMemo) {
-              throw new Error('원본 메모를 찾을 수 없습니다');
+            const originalNote = get().getNoteById(noteId);
+            if (!originalNote) {
+              throw new Error('원본 노트를 찾을 수 없습니다');
             }
 
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -1094,8 +1094,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
             const instances = await createMultipleMemoInstancesWithJWT(
               userId,
-              memoId,
-              originalMemo.content,
+              noteId,
+              originalNote.content,
               dates,
               taskId || null
             );
@@ -1109,8 +1109,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         // 노트 인스턴스 생성 또는 업데이트 (upsert) - 스마트한 원본 비교 로직 포함
-        upsertMemoInstance: async (memoId: string, date: string, content: string, taskId?: string | null) => {
-          console.log('📝 NoteStore.upsertMemoInstance:', { memoId, date, content, taskId });
+        upsertNoteInstance: async (noteId: string, date: string, content: string, taskId?: string | null) => {
+          console.log('📝 NoteStore.upsertNoteInstance:', { noteId, date, content, taskId });
 
           try {
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -1139,16 +1139,16 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             }
 
             // 원본 노트 조회
-            const originalMemo = get().getNoteById(memoId);
-            if (!originalMemo) {
-              throw new Error('원본 메모를 찾을 수 없습니다');
+            const originalNote = get().getNoteById(noteId);
+            if (!originalNote) {
+              throw new Error('원본 노트를 찾을 수 없습니다');
             }
 
             // 기존 인스턴스 확인
-            const existingInstance = await fetchMemoInstanceByDateWithJWT(userId, memoId, date);
+            const existingInstance = await fetchMemoInstanceByDateWithJWT(userId, noteId, date);
 
             // 📊 원본과 수정된 내용 비교 (정규화된 비교)
-            const originalContent = originalMemo.content.trim();
+            const originalContent = originalNote.content.trim();
             const modifiedContent = content.trim();
             const isContentSame = originalContent === modifiedContent;
 
@@ -1179,7 +1179,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               } else {
                 // 새 인스턴스 생성
                 const result = await createMemoInstanceWithJWT({
-                  original_memo_id: memoId,
+                  original_memo_id: noteId,
                   user_id: userId,
                   instance_date: date,
                   content: modifiedContent,
