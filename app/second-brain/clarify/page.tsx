@@ -13,15 +13,17 @@ import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/
 import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
 import NoteInboxList from '@/components/second-brain/clarify/NoteInboxList';
 import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
+import GoalInboxList from '@/components/second-brain/clarify/GoalInboxList';
 import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProjectsSection';
 import GTDGuideSection from '@/components/second-brain/clarify/GTDGuideSection';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
-import type { InboxItem, Project, CreateProjectInput } from '@/types/second-brain';
+import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
+import type { InboxItem, Project, CreateProjectInput, Goal, UpdateGoalInput } from '@/types/second-brain';
 
 export default function ClarifyPage() {
   const { inboxItems, fetchInboxItems, fetchInboxItemsByType, deleteInboxItem } = useInboxStore();
   const { projects, createProject } = useProjectStore();
-  const { goals, fetchGoals } = useGoalStore();
+  const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
   const { notes, fetchNotes } = useNoteStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
@@ -31,11 +33,15 @@ export default function ClarifyPage() {
   const [todoInbox, setTodoInbox] = useState<InboxItem[]>([]);
   const [noteInbox, setNoteInbox] = useState<InboxItem[]>([]);
   const [projectInbox, setProjectInbox] = useState<InboxItem[]>([]);
-  const [goalInbox, setGoalInbox] = useState<InboxItem[]>([]);
+  const [goalInbox, setGoalInbox] = useState<Goal[]>([]);
 
   // 프로젝트 편집 모달 상태
   const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // 목표 편집 모달 상태
+  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
 
   useEffect(() => {
     loadInboxData();
@@ -50,11 +56,15 @@ export default function ClarifyPage() {
     const inboxTodos = await fetchInboxItemsByType('todo');
     const inboxNotes = await fetchInboxItemsByType('note');
     const inboxProjects = await fetchInboxItemsByType('project');
-    const inboxGoals = await fetchInboxItemsByType('goal');
 
     setTodoInbox(inboxTodos);
     setNoteInbox(inboxNotes);
     setProjectInbox(inboxProjects);
+
+    // 목표 수집함: area_id, resource_id, target_date가 모두 없는 목표
+    const inboxGoals = goals.filter(
+      (goal) => !goal.area_id && !goal.resource_id && !goal.target_date
+    );
     setGoalInbox(inboxGoals);
   };
 
@@ -149,6 +159,81 @@ export default function ClarifyPage() {
     }
   };
 
+  // 목표 클릭 핸들러
+  const handleGoalClick = (goal: Goal) => {
+    // paraSelection 생성 (area_id 또는 resource_id에서)
+    let paraSelection = '';
+    if (goal.area_id) {
+      paraSelection = `area-${goal.area_id}`;
+    } else if (goal.resource_id) {
+      paraSelection = `resource-${goal.resource_id}`;
+    }
+
+    setEditingGoal({ ...goal, paraSelection, isNew: false });
+    setGoalDialogOpen(true);
+  };
+
+  // 목표 저장 핸들러
+  const handleSaveGoal = async (goalData: Partial<Goal>, area_id?: string, resource_id?: string) => {
+    try {
+      // 목표 업데이트
+      await updateGoal(editingGoal!.id, {
+        title: goalData.title!,
+        description: goalData.description || '',
+        icon: goalData.icon,
+        color: goalData.color!,
+        status: goalData.status!,
+        area_id,
+        resource_id,
+        start_date: goalData.start_date || undefined,
+        target_date: goalData.target_date || undefined,
+        timeframe: goalData.timeframe,
+        target_year: goalData.target_year || undefined,
+        target_quarter: goalData.target_quarter || undefined,
+      } as UpdateGoalInput);
+
+      // 모달 닫기 및 새로고침
+      setGoalDialogOpen(false);
+      setEditingGoal(null);
+      await loadInboxData();
+
+      // 수집함 조건 확인
+      const hasAreaOrResource = area_id || resource_id;
+      const hasTargetDate = goalData.target_date;
+
+      if (hasAreaOrResource || hasTargetDate) {
+        alert('목표가 수정되었습니다. 영역/자원 또는 종료일이 배정되어 수집함에서 제거되었습니다.');
+      } else {
+        alert('목표가 수정되었습니다.');
+      }
+    } catch (error) {
+      console.error('목표 저장 실패:', error);
+      alert('목표 저장에 실패했습니다.');
+    }
+  };
+
+  // 목표 편집 취소
+  const handleCancelGoalEdit = () => {
+    setGoalDialogOpen(false);
+    setEditingGoal(null);
+  };
+
+  // 목표 삭제 핸들러
+  const handleDeleteGoal = async (goal: Goal) => {
+    if (!confirm(`"${goal.title}" 목표를 삭제하시겠습니까?`)) return;
+
+    try {
+      await deleteGoal(goal.id);
+      setGoalDialogOpen(false);
+      setEditingGoal(null);
+      await loadInboxData();
+      alert('목표가 삭제되었습니다.');
+    } catch (error) {
+      console.error('목표 삭제 실패:', error);
+      alert('목표 삭제에 실패했습니다.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base-100 pb-20">
       {/* 헤더 */}
@@ -205,15 +290,10 @@ export default function ClarifyPage() {
               />
             )}
             {activeTab === 'goals' && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🎯</div>
-                <p className="text-lg font-semibold text-base-content/70 mb-2">
-                  목표 수집함
-                </p>
-                <p className="text-sm text-base-content/50">
-                  목표 수집 기능은 추후 구현 예정입니다
-                </p>
-              </div>
+              <GoalInboxList
+                goals={goalInbox}
+                onGoalClick={handleGoalClick}
+              />
             )}
           </div>
         </section>
@@ -253,6 +333,19 @@ export default function ClarifyPage() {
         onCancel={handleCancelEdit}
         onDelete={handleDeleteProject}
         onProjectChange={setEditingProject}
+      />
+
+      {/* 목표 편집 모달 */}
+      <GoalEditDialog
+        open={goalDialogOpen}
+        editingGoal={editingGoal}
+        areas={areas}
+        resources={resources}
+        projects={projects}
+        onSave={handleSaveGoal}
+        onCancel={handleCancelGoalEdit}
+        onDelete={handleDeleteGoal}
+        onGoalChange={setEditingGoal}
       />
     </div>
   );

@@ -122,7 +122,7 @@ export const mockResources: Resource[] = [
 ];
 
 // ============================================
-// 목표 (Goals) - 1개
+// 목표 (Goals) - 4개 (수집함 테스트용 3개 포함)
 // ============================================
 export const mockGoals: Goal[] = [
   {
@@ -140,6 +140,49 @@ export const mockGoals: Goal[] = [
     progress: 33,
     created_at: new Date('2025-01-01').toISOString(),
     updated_at: new Date('2025-10-10').toISOString(),
+  },
+  // 수집함 테스트용: 영역/자원, 종료일 미배정
+  {
+    id: 'goal-inbox-1',
+    user_id: MOCK_USER_ID,
+    title: '건강한 라이프스타일 만들기',
+    description: '꾸준한 운동과 식단 관리로 건강 개선',
+    // area_id, resource_id, target_date 없음 (수집함 조건)
+    timeframe: 'year',
+    icon: 'lucide-Heart',
+    color: '#6B9080',
+    status: 'not_started',
+    progress: 0,
+    created_at: new Date('2025-10-20').toISOString(),
+    updated_at: new Date('2025-10-20').toISOString(),
+  },
+  {
+    id: 'goal-inbox-2',
+    user_id: MOCK_USER_ID,
+    title: '새로운 기술 스택 마스터하기',
+    description: 'Next.js 15와 React 19 심화 학습',
+    // area_id, resource_id, target_date 없음 (수집함 조건)
+    timeframe: 'quarter',
+    target_quarter: 4,
+    icon: 'lucide-Code',
+    color: '#2A9D8F',
+    status: 'not_started',
+    progress: 0,
+    created_at: new Date('2025-10-21').toISOString(),
+    updated_at: new Date('2025-10-21').toISOString(),
+  },
+  {
+    id: 'goal-inbox-3',
+    user_id: MOCK_USER_ID,
+    title: '경제적 자유 달성',
+    description: '투자 포트폴리오 다각화 및 수익률 개선',
+    // area_id, resource_id, target_date 없음 (수집함 조건)
+    icon: 'lucide-TrendingUp',
+    color: '#F4A261',
+    status: 'not_started',
+    progress: 0,
+    created_at: new Date('2025-10-22').toISOString(),
+    updated_at: new Date('2025-10-22').toISOString(),
   },
 ];
 
