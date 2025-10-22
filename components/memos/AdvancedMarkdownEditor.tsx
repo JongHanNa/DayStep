@@ -38,7 +38,7 @@ interface AdvancedMarkdownEditorProps {
 const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps>(({
   value,
   onChange,
-  placeholder = '메모 내용을 입력하세요...',
+  placeholder = '노트 내용을 입력하세요...',
   className = '',
   minHeight = 400,
   onFocus,

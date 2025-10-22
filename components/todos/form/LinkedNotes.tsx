@@ -49,7 +49,7 @@ const LinkedMemos: React.FC<LinkedMemosProps> = ({ taskId }) => {
         content: newContent,
       });
     } catch (error) {
-      console.error('메모 내용 업데이트 실패:', error);
+      console.error('노트 내용 업데이트 실패:', error);
     }
   };
 

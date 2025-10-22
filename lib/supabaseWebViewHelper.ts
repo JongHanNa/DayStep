@@ -2737,7 +2737,7 @@ export async function updateMemoTagsWithTemplates(
     });
   } catch (error) {
     console.error('❌ 노트 태그 연결 실패:', error);
-    throw new Error('메모 태그 연결에 실패했습니다.');
+    throw new Error('노트 태그 연결에 실패했습니다.');
   }
 }
 
@@ -2768,7 +2768,7 @@ export async function fetchMemoTagLinksWithJWT(userId: string): Promise<MemoTagL
     return links || [];
   } catch (error) {
     console.error('❌ JWT 노트 태그 링크 조회 실패:', error);
-    throw new Error('메모 태그 링크 조회에 실패했습니다.');
+    throw new Error('노트 태그 링크 조회에 실패했습니다.');
   }
 }
 

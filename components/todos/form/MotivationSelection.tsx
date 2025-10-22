@@ -89,7 +89,7 @@ const MotivationSelection: React.FC<MotivationSelectionProps> = ({
   return (
     <>
       <div className={cn('mx-4 my-2', className)}>
-        {/* 퀵메모 스타일의 섹션 헤더 */}
+        {/* 퀵노트 스타일의 섹션 헤더 */}
         <div className="flex items-center justify-between mb-3">
           <button
             type="button"

@@ -415,7 +415,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
                   <TabsContent value="recurring" className="space-y-2">
                     {/* 반복 노트 연결 방식 선택 */}
                     <div className="mb-4 p-3 bg-muted/20 rounded-lg">
-                      <h4 className="text-sm font-medium mb-2">메모 연결 방식</h4>
+                      <h4 className="text-sm font-medium mb-2">노트 연결 방식</h4>
                       <RadioGroup value={recurrenceType} onValueChange={(value: 'single' | 'recurring' | 'instance') => setRecurrenceType(value)}>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="single" id="single" />

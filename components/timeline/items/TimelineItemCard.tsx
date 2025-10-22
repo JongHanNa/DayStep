@@ -139,7 +139,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
 
       setMemoTags(Array.from(allTags.values()));
     } catch (error) {
-      console.error('메모 로딩 실패:', error);
+      console.error('노트 로딩 실패:', error);
       // 에러 시 기본 필터링으로 폴백
       const fallbackMemos = notes.filter(memo =>
         memo.related_task_id === actualTaskId ||
@@ -336,7 +336,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
       // 노트 목록 다시 로딩
       await loadDisplayMemos();
     } catch (error) {
-      console.error('메모 내용 업데이트 실패:', error);
+      console.error('노트 내용 업데이트 실패:', error);
     }
   };
 

@@ -78,14 +78,14 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
             </div>
           </div>
 
-          {/* 연결된 퀵메모 정보 및 삭제 옵션 */}
+          {/* 연결된 퀵노트 정보 및 삭제 옵션 */}
           {hasLinkedMemos && (
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start gap-3 mb-3">
                 <StickyNote className="h-4 w-4 text-blue-600 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-blue-800">
-                    연결된 퀵메모 {linkedMemos.length}개 발견
+                    연결된 퀵노트 {linkedMemos.length}개 발견
                   </p>
                   <p className="text-xs text-blue-700 mt-1">
                     이 할일에 연결된 메모들을 어떻게 처리할지 선택해주세요.
@@ -110,7 +110,7 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
                 )}
               </div>
 
-              {/* 퀵메모 삭제 선택 체크박스 */}
+              {/* 퀵노트 삭제 선택 체크박스 */}
               <div className="flex items-start space-x-2">
                 <Checkbox
                   id="delete-linked-memos"

@@ -494,7 +494,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
                   user_id: user.id,
                 });
               } catch (memoError) {
-                console.error('메모 생성 실패:', memoError);
+                console.error('노트 생성 실패:', memoError);
                 // 노트 생성 실패는 할일 생성을 방해하지 않음
               }
             }

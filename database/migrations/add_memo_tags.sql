@@ -1,5 +1,5 @@
 -- ===================================================
--- 퀵메모 태그 기능 테이블 추가
+-- 퀵노트 태그 기능 테이블 추가
 -- ===================================================
 
 -- 1. 노트 태그 테이블 (태그 정의)
@@ -99,6 +99,6 @@ $$ LANGUAGE plpgsql;
 -- 9. 노트 삭제 시 태그 링크도 자동 삭제 (CASCADE로 이미 처리되지만 명시적 확인)
 -- quick_memos 테이블의 ON DELETE CASCADE가 note_tag_links에도 적용됨
 
-COMMENT ON TABLE memo_tags IS '퀵메모 태그 정의 테이블';
+COMMENT ON TABLE memo_tags IS '퀵노트 태그 정의 테이블';
 COMMENT ON TABLE note_tag_links IS '퀵메모와 태그의 Many-to-Many 연결 테이블';
 COMMENT ON FUNCTION create_default_memo_tags IS '새 사용자를 위한 기본 태그 생성 함수';

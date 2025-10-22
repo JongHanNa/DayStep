@@ -398,7 +398,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       });
     } catch (error) {
       toast({
-        title: '메모 삭제 실패',
+        title: '노트 삭제 실패',
         description: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
         variant: 'destructive',
       });
@@ -506,7 +506,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="메모 검색..."
+                    placeholder="노트 검색..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-md bg-background"
@@ -816,7 +816,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
               취소
             </button>
             <h3 className="font-bold text-lg">
-              {memoEditorMode === 'edit' ? '메모 수정' : '새 메모'}
+              {memoEditorMode === 'edit' ? '노트 수정' : '새 메모'}
             </h3>
             <div className="flex items-center gap-2">
               <button
@@ -1305,7 +1305,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                         setHasUserEditedContent(true);
                       }
                     }}
-                    placeholder="메모 내용을 입력하세요..."
+                    placeholder="노트 내용을 입력하세요..."
                     className="text-sm"
                     minHeight={600}
                   />

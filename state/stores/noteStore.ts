@@ -297,7 +297,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           } catch (error) {
             set(state => ({
               notes: state.notes.filter(memo => memo.id !== tempId),
-              error: error instanceof Error ? error.message : '메모 생성 실패',
+              error: error instanceof Error ? error.message : '노트 생성 실패',
             }));
             throw error;
           }
@@ -339,7 +339,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               notes: state.notes.map(memo => 
                 memo.id === id ? originalMemo : memo
               ),
-              error: error instanceof Error ? error.message : '메모 업데이트 실패',
+              error: error instanceof Error ? error.message : '노트 업데이트 실패',
             }));
             throw error;
           }
@@ -373,7 +373,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             // Rollback optimistic update
             set(state => ({
               notes: [...state.notes, originalMemo],
-              error: error instanceof Error ? error.message : '메모 삭제 실패',
+              error: error instanceof Error ? error.message : '노트 삭제 실패',
             }));
             throw error;
           }
@@ -409,7 +409,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           } catch (error) {
             set({
               loading: false,
-              error: error instanceof Error ? error.message : '메모 조회 실패',
+              error: error instanceof Error ? error.message : '노트 조회 실패',
             });
             throw error;
           }
@@ -499,7 +499,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               await get().deleteNote(memo.id);
               deletedCount++;
             } catch (error) {
-              console.error(`메모 ${memo.id} 삭제 실패:`, error);
+              console.error(`노트 ${memo.id} 삭제 실패:`, error);
               failedMemos.push(memo.id);
             }
           }

@@ -243,8 +243,8 @@ const MemoInput: React.FC<MemoInputProps> = ({ memos, onMemosChange, selectedCol
         onOpenChange={setMarkdownEditorOpen}
         initialContent={editingMemoIndex !== null ? memos[editingMemoIndex]?.content || '' : ''}
         onSave={handleMemoSave}
-        title={editingMemoIndex !== null ? '메모 수정' : '새 노트 작성'}
-        placeholder="메모 내용을 입력하세요..."
+        title={editingMemoIndex !== null ? '노트 수정' : '새 노트 작성'}
+        placeholder="노트 내용을 입력하세요..."
         mode="both"
       />
     </div>

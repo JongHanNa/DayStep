@@ -274,7 +274,7 @@ const EditableContent: React.FC<{
 const SlateTextEditor: React.FC<SlateTextEditorProps> = ({
   value,
   onChange,
-  placeholder = '메모 내용을 입력하세요...',
+  placeholder = '노트 내용을 입력하세요...',
   className,
   minHeight = 200,
   onFocus,

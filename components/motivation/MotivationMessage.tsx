@@ -175,7 +175,7 @@ const MotivationMessage: React.FC<MotivationMessageProps> = ({
   // Default variant
   return (
     <Card className={cn(baseClasses, 'p-4 border-0 shadow-sm bg-white dark:bg-gray-900')}>
-      {/* 연결 상태 표시 - 퀵메모 스타일 */}
+      {/* 연결 상태 표시 - 퀵노트 스타일 */}
       {showConnectionButton && isConnected && (
         <div className="flex items-center gap-1 text-xs text-blue-600 mb-2">
           <Link className="h-3 w-3" />
@@ -241,7 +241,7 @@ const MotivationMessage: React.FC<MotivationMessageProps> = ({
           )}
         </div>
 
-        {/* 연결 버튼 - 퀵메모 스타일 Link 아이콘 */}
+        {/* 연결 버튼 - 퀵노트 스타일 Link 아이콘 */}
         {showConnectionButton && (
           <div className="flex-shrink-0">
             <Button

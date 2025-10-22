@@ -35,7 +35,7 @@ export const MODAL_TYPE_GUIDE = {
   FULL_CONTENT: [
     '할일 추가/수정 모달',
     '연락처 상세 모달',
-    '메모 링크 모달',
+    '노트 링크 모달',
     '아이콘 브라우저 모달',
   ],
   BROWSE_CONTENT: [
@@ -44,8 +44,8 @@ export const MODAL_TYPE_GUIDE = {
   ],
   FULLSCREEN: [
     '연락처 목록 모달',
-    '퀵메모 시트',
-    '메모 에디터 모달',
+    '퀵노트 시트',
+    '노트 에디터 모달',
   ],
   COMPACT: [
     '달력 모달',

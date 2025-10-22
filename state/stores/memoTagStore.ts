@@ -82,7 +82,7 @@ interface MemoTagStoreActions {
   updateTag: (tagId: string, updates: MemoTagUpdate, userId: string) => Promise<MemoTag | null>;
   deleteTag: (tagId: string, userId: string) => Promise<boolean>;
 
-  // 태그-메모 연결 관리
+  // 태그-노트 연결 관리
   linkTagToMemo: (memoId: string, tagId: string, userId: string) => Promise<boolean>;
   unlinkTagFromMemo: (memoId: string, tagId: string, userId: string) => Promise<boolean>;
   updateMemoTags: (memoId: string, tagIds: string[], userId: string) => Promise<boolean>;
@@ -204,7 +204,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
 
           return tags;
         } catch (error) {
-          console.error('메모 태그 로딩 실패:', error);
+          console.error('노트 태그 로딩 실패:', error);
           return [];
         }
       },
@@ -273,7 +273,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
           console.error('❌ 노트 태그 링크 로딩 실패:', error);
           set({
             loading: false,
-            error: error instanceof Error ? error.message : '메모 태그 링크 로딩에 실패했습니다.'
+            error: error instanceof Error ? error.message : '노트 태그 링크 로딩에 실패했습니다.'
           });
         }
       },
@@ -456,7 +456,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
         }
       },
 
-      // 태그-메모 연결 관리
+      // 태그-노트 연결 관리
       linkTagToMemo: async (memoId, tagId, userId) => {
         try {
           const result = await linkMemoToTagWithJWT(memoId, tagId, userId);
@@ -533,7 +533,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
 
           return result && result.length >= 0;
         } catch (error) {
-          console.error('메모 태그 업데이트 실패:', error);
+          console.error('노트 태그 업데이트 실패:', error);
           return false;
         }
       },
@@ -576,7 +576,7 @@ export const useMemoTagStore = create<MemoTagStoreState & MemoTagStoreActions>()
 
           return true;
         } catch (error) {
-          console.error('메모 태그 (템플릿 포함) 업데이트 실패:', error);
+          console.error('노트 태그 (템플릿 포함) 업데이트 실패:', error);
           return false;
         }
       },

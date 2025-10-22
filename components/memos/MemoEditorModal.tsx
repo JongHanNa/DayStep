@@ -35,8 +35,8 @@ const MemoEditorModal: React.FC<MemoEditorModalProps> = ({
   initialContent = '',
   onSave,
   mode = 'both',
-  title = '메모 작성',
-  placeholder = '메모 내용을 입력하세요...'
+  title = '노트 작성',
+  placeholder = '노트 내용을 입력하세요...'
 }) => {
   // 로컬 상태
   const [content, setContent] = useState(initialContent);

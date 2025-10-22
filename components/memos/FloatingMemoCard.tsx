@@ -71,7 +71,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
     if (!editContent.trim()) {
       toast({
         title: '내용을 입력해주세요',
-        description: '메모 내용이 비어있습니다.',
+        description: '노트 내용이 비어있습니다.',
         variant: 'destructive',
       });
       return;
@@ -90,7 +90,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
       });
     } catch (error) {
       toast({
-        title: '메모 수정 실패',
+        title: '노트 수정 실패',
         description: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
         variant: 'destructive',
       });
@@ -211,7 +211,7 @@ const FloatingMemoCard: React.FC<FloatingMemoCardProps> = ({
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 className="min-h-[100px] resize-none text-sm"
-                placeholder="메모 내용을 입력하세요..."
+                placeholder="노트 내용을 입력하세요..."
                 autoFocus
               />
               
