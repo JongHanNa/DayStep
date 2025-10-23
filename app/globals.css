@@ -55,10 +55,13 @@
 
 [data-theme="light"] {
   /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
-  --color-primary: oklch(47% 10% 264deg); 
+  --color-primary: oklch(47% 10% 264deg);
   --color-primary-content: oklch(100% 0% 68deg);
   --color-base-200: oklch(96% 1% 289deg);
-  --color-base-300: oklch(100% 0% 68deg); 
+  --color-base-300: oklch(96% 1% 289deg);
+
+  /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
+  --primary-foreground: 0 0% 100%; /* 흰색 HSL */
 
   /* 🎨 타임라인 전용 색상 */
   --timeline-bg: 0 0% 97%; /* #f8f8f8 */
@@ -84,10 +87,13 @@
 
 [data-theme="dark"] {
   /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Dark 모드 (data-theme 필수) */
-  --color-primary: oklch(47% 10% 264deg); 
+  --color-primary: oklch(47% 10% 264deg);
   --color-primary-content: oklch(100% 0% 68deg);
   --color-base-200: oklch(96% 1% 289deg);
-  --color-base-300: oklch(100% 0% 68deg); 
+  --color-base-300: oklch(96% 1% 289deg);
+
+  /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
+  --primary-foreground: 0 0% 100%; /* 흰색 HSL */
 
   /* 🎨 타임라인 전용 색상 - 다크모드 */
   --timeline-bg: 217 33% 17%; /* #1e293b */

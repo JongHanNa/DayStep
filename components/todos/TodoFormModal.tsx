@@ -142,7 +142,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 type="button"
                 size="sm"
                 onClick={() => onOpenChange(false)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
+                className="bg-primary hover:bg-primary/90 text-primary-content font-medium px-4 py-2 rounded-full"
               >
                 취소
               </Button>
@@ -159,7 +159,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 size="sm"
                 onClick={handlers.handleSubmit}
                 disabled={uiState.isSubmitting || uiState.isDeleting || !values.content.trim()}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full disabled:bg-gray-400 disabled:opacity-60"
+                className="bg-primary hover:bg-primary/90 text-primary-content font-medium px-4 py-2 rounded-full disabled:bg-gray-400 disabled:opacity-60"
               >
                 {uiState.isSubmitting ? '수정 중...' : '완료'}
               </Button>
@@ -172,7 +172,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 type="button"
                 size="sm"
                 onClick={() => onOpenChange(false)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-full"
+                className="bg-primary hover:bg-primary/90 text-primary-content font-medium px-4 py-2 rounded-full"
               >
                 취소
               </Button>

@@ -220,7 +220,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               size="lg"
               className={cn(
                 'h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200',
-                'bg-primary hover:bg-primary/90 text-primary-foreground border-0',
+                'bg-primary hover:bg-primary/90 text-primary-content border-0',
                 'hover:scale-110 active:scale-95',
                 'flex items-center justify-center p-0',
                 isOpen && 'rotate-45'
@@ -233,7 +233,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
           <DropdownMenuContent
             align="end"
             sideOffset={8}
-            className="w-60 animate-in slide-in-from-bottom-2 shadow-md border border-border bg-card"
+            className="w-60 animate-in slide-in-from-bottom-2 shadow-md border border-border bg-base-100"
           >
             <DropdownMenuItem
               onClick={handleAddTodo}

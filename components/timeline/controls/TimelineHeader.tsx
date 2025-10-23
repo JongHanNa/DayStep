@@ -198,12 +198,12 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
                   <p className="text-lg font-black text-muted-foreground">
                     오늘
                   </p>
-                  <div className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md">
+                  <div className="bg-primary text-primary-content px-2 py-1 rounded-full text-xs font-medium shadow-md">
                     {currentDayOfWeek?.charAt(0)}
                   </div>
                   <button
                     onClick={handleScrollToCurrentTime}
-                    className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md hover:bg-primary/90 transition-colors cursor-pointer"
+                    className="bg-primary text-primary-content px-2 py-1 rounded-full text-xs font-medium shadow-md hover:bg-primary/90 transition-colors cursor-pointer"
                   >
                     {formatTime(currentTime, timeFormat)}
                   </button>
@@ -225,13 +225,13 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
                       {relativeDateText}
                     </p>
                   )}
-                  <div className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md">
+                  <div className="bg-primary text-primary-content px-2 py-1 rounded-full text-xs font-medium shadow-md">
                     {currentDayOfWeek?.charAt(0)}
                   </div>
                   {!isTodayVisible && (
                     <button
                       onClick={handleTodayClick}
-                      className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md flex items-center gap-1 hover:bg-primary/90 transition-colors"
+                      className="bg-primary text-primary-content px-2 py-1 rounded-full text-xs font-medium shadow-md flex items-center gap-1 hover:bg-primary/90 transition-colors"
                     >
                       <RotateCcw className="w-3 h-3" />
                       오늘

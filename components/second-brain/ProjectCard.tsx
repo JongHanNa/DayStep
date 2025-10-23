@@ -98,7 +98,7 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
             {project.completed_todos}/{project.total_todos} ({progress}%)
           </span>
         </div>
-        <div className="w-full bg-base-300 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-white rounded-full h-2 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-300"
             style={{
