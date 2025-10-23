@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Palette, Sun, Moon, Monitor } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, Monitor } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +8,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { useSettingsStore } from '@/state/stores/settingsStore';
-import { THEME_PALETTE_OPTIONS } from '@/types/settings';
 
 export default function ThemePage() {
   const { theme, setTheme, themes } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const { themePalette, setThemePalette } = useSettingsStore();
 
   // 하이드레이션 이슈 방지
   useEffect(() => {
@@ -67,62 +64,6 @@ export default function ThemePage() {
           <p className="text-muted-foreground">앱의 테마를 설정하세요</p>
         </div>
       </div>
-
-      {/* 테마 미리보기 카드 */}
-      <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white">
-        <div className="flex items-center gap-3 mb-4">
-          <Palette className="w-8 h-8" />
-          <div>
-            <h2 className="text-xl font-semibold">현재 설정</h2>
-            <p className="opacity-90">
-              {THEME_PALETTE_OPTIONS.find(p => p.value === themePalette)?.label} • {' '}
-              {theme === 'light' ? '라이트 모드' : theme === 'dark' ? '다크 모드' : '시스템 설정'}
-            </p>
-          </div>
-        </div>
-        <div className="text-sm opacity-90">
-          색상 팔레트와 테마 모드가 앱 전체에 즉시 적용됩니다
-        </div>
-      </div>
-
-      {/* 색상 팔레트 선택 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>색상 팔레트</CardTitle>
-          <CardDescription>
-            앱의 전체 색상 테마를 선택하세요. 라이트/다크 모드 모두에 적용됩니다.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup
-            value={themePalette}
-            onValueChange={setThemePalette}
-            className="space-y-4"
-          >
-            {THEME_PALETTE_OPTIONS.map((option) => (
-              <div key={option.value} className="flex items-center space-x-3">
-                <RadioGroupItem value={option.value} id={`palette-${option.value}`} />
-                <Label htmlFor={`palette-${option.value}`} className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-white"
-                      style={{ backgroundColor: option.previewColor }}
-                    >
-                      <Palette className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{option.label}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {option.description}
-                      </div>
-                    </div>
-                  </div>
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        </CardContent>
-      </Card>
 
       {/* 테마 모드 선택 */}
       <Card>
