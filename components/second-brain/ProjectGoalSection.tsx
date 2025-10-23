@@ -37,23 +37,11 @@ const ProjectGoalSection = memo(function ProjectGoalSection({
       {/* 섹션 헤더 */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-transparent hover:opacity-80 transition-opacity"
         aria-label={`${isNoGoalSection ? '목표없음' : goal?.title} 섹션 ${isExpanded ? '접기' : '펼치기'}`}
         aria-expanded={isExpanded}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {/* 아이콘 */}
-          {!isNoGoalSection && goal && IconComponent && (
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{
-                backgroundColor: goal.color,
-              }}
-            >
-              <IconComponent className="w-5 h-5 text-white" />
-            </div>
-          )}
-
           {/* 제목 */}
           <div className="flex-1 min-w-0 text-left">
             <h3 className="font-semibold text-lg truncate">
