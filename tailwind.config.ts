@@ -101,13 +101,7 @@ export default {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: [
-      {
-        light: {
-
-        }
-      }
-    ],
+    themes: true,
     base: true,
     styled: true,
     utils: true,
