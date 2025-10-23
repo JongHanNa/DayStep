@@ -5,7 +5,7 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { Plus, X, Pencil } from 'lucide-react';
+import { Plus, X, Pencil, Tag, Palette, Activity, FileText, Layers, Calendar, Clock, Target } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateGoalInput, Goal, Project } from '@/types/second-brain';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
@@ -439,7 +439,7 @@ export default function GoalsPage() {
       {/* 편집/추가 모달 - DaisyUI dialog */}
       {editDialogOpen && editingGoal && (
         <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+          <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
               <button onClick={handleCancelEdit} className="btn btn-primary btn-sm rounded-full">
                 취소
@@ -469,166 +469,234 @@ export default function GoalsPage() {
               <div className="p-4">
                 {editingGoal && (
                   <>
-                    {/* 아이콘 및 색상 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">아이콘 및 색상</span>
+                    {/* 아이콘 및 제목 - 통합 패턴 적용 */}
+                    <div className="my-4">
+                      {/* 섹션 제목 */}
+                      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                        <Tag className="h-5 w-5" style={{ color: editingGoal.color }} />
+                        목표 아이콘 및 제목
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => setIconBrowserOpen(true)}
-                        className="btn btn-outline w-full justify-start"
-                        style={{
-                          backgroundColor: editingGoal.color + '20',
-                          borderColor: editingGoal.color,
-                        }}
-                      >
-                        {(() => {
-                          const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey).component;
-                          return <IconComponent className="w-6 h-6 mr-2" />;
-                        })()}
-                        <span>변경하기</span>
-                      </button>
-                    </div>
 
-                    {/* 제목 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">제목</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={editingGoal.title}
-                        onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })}
-                        className="input input-bordered"
-                        placeholder="예: 건강한 생활 습관 형성"
-                      />
+                      {/* 아이콘 + 제목 입력 */}
+                      <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                        <div className="flex items-center gap-3">
+                          {/* 아이콘 버튼 */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setIconBrowserOpen(true)}
+                              className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
+                              style={{ backgroundColor: '#f3f4f6' }}
+                              title="아이콘 변경하기"
+                            >
+                              {(() => {
+                                const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey).component;
+                                return <IconComponent
+                                  className="group-hover:scale-110 transition-transform"
+                                  style={{ color: editingGoal.color }}
+                                  size={24}
+                                />;
+                              })()}
+                            </button>
+
+                            {/* 색상 인디케이터 */}
+                            <div
+                              className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
+                              style={{
+                                backgroundColor: editingGoal.color,
+                                border: '2px solid white'
+                              }}
+                            >
+                              <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
+                            </div>
+                          </div>
+
+                          {/* 제목 입력 */}
+                          <input
+                            type="text"
+                            value={editingGoal.title}
+                            onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })}
+                            placeholder="목표 제목을 입력하세요"
+                            className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
+                            style={{
+                              fontSize: '20px',
+                              color: '#333333',
+                              borderBottomColor: '#D1D5DB',
+                              outline: 'none',
+                              boxShadow: 'none',
+                              fontWeight: '600',
+                              height: '44px',
+                            }}
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* 상태 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">상태</span>
+                    <div className="my-4">
+                      {/* 섹션 제목 */}
+                      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                        <Activity className="h-5 w-5" style={{ color: editingGoal.color }} />
+                        상태
                       </label>
-                      <select
-                        value={editingGoal.status}
-                        onChange={(e) => setEditingGoal({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived' })}
-                        className="select select-bordered"
-                      >
-                        <option value="not_started">시작 안함</option>
-                        <option value="in_progress">진행중</option>
-                        <option value="completed">완료</option>
-                        <option value="suspended">중단</option>
-                      </select>
+
+                      {/* 셀렉트 박스 */}
+                      <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                        <select
+                          value={editingGoal.status}
+                          onChange={(e) => setEditingGoal({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived' })}
+                          className="select select-bordered w-full"
+                        >
+                          <option value="not_started">시작 안함</option>
+                          <option value="in_progress">진행중</option>
+                          <option value="completed">완료</option>
+                          <option value="suspended">중단</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* 영역/자원 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">영역/자원 (선택)</span>
+                    <div className="my-4">
+                      {/* 섹션 제목 */}
+                      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                        <Layers className="h-5 w-5" style={{ color: editingGoal.color }} />
+                        영역/자원 (선택)
                       </label>
-                      <select
-                        value={editingGoal.paraSelection}
-                        onChange={(e) => setEditingGoal({ ...editingGoal, paraSelection: e.target.value })}
-                        className="select select-bordered"
-                      >
-                        <option value="">선택 안 함</option>
-                        <optgroup label="영역">
-                          {areas.map((area) => (
-                            <option key={area.id} value={`area-${area.id}`}>
-                              {area.icon} {area.title}
-                            </option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="자원">
-                          {resources.map((resource) => (
-                            <option key={resource.id} value={`resource-${resource.id}`}>
-                              {resource.icon} {resource.title}
-                            </option>
-                          ))}
-                        </optgroup>
-                      </select>
+
+                      {/* 셀렉트 박스 */}
+                      <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                        <select
+                          value={editingGoal.paraSelection}
+                          onChange={(e) => setEditingGoal({ ...editingGoal, paraSelection: e.target.value })}
+                          className="select select-bordered w-full"
+                        >
+                          <option value="">선택 안 함</option>
+                          <optgroup label="영역">
+                            {areas.map((area) => (
+                              <option key={area.id} value={`area-${area.id}`}>
+                                {area.icon} {area.title}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="자원">
+                            {resources.map((resource) => (
+                              <option key={resource.id} value={`resource-${resource.id}`}>
+                                {resource.icon} {resource.title}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      </div>
                     </div>
 
                     {/* 시작일/종료일 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">시작일 (선택)</span>
-                        </label>
-                        <input
-                          type="date"
-                          value={editingGoal.start_date || ''}
-                          onChange={(e) => setEditingGoal({ ...editingGoal, start_date: e.target.value })}
-                          className="input input-bordered"
-                        />
-                      </div>
+                    <div className="my-4">
+                      {/* 섹션 제목 */}
+                      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                        <Calendar className="h-5 w-5" style={{ color: editingGoal.color }} />
+                        시작일/종료일 (선택)
+                      </label>
 
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">종료일 (선택)</span>
-                        </label>
-                        <input
-                          type="date"
-                          value={editingGoal.target_date || ''}
-                          onChange={(e) => setEditingGoal({ ...editingGoal, target_date: e.target.value })}
-                          className="input input-bordered"
-                        />
+                      {/* 날짜 입력 그리드 */}
+                      <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="form-control">
+                            <label className="label">
+                              <span className="label-text">시작일</span>
+                            </label>
+                            <input
+                              type="date"
+                              value={editingGoal.start_date || ''}
+                              onChange={(e) => setEditingGoal({ ...editingGoal, start_date: e.target.value })}
+                              className="input input-bordered w-full"
+                            />
+                          </div>
+
+                          <div className="form-control">
+                            <label className="label">
+                              <span className="label-text">종료일</span>
+                            </label>
+                            <input
+                              type="date"
+                              value={editingGoal.target_date || ''}
+                              onChange={(e) => setEditingGoal({ ...editingGoal, target_date: e.target.value })}
+                              className="input input-bordered w-full"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     {/* 기간 */}
-                    <div className="form-control mb-4">
-                      <label className="label">
-                        <span className="label-text">기간</span>
+                    <div className="my-4">
+                      {/* 섹션 제목 */}
+                      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                        <Clock className="h-5 w-5" style={{ color: editingGoal.color }} />
+                        기간
                       </label>
-                      <select
-                        value={editingGoal.timeframe}
-                        onChange={(e) => setEditingGoal({ ...editingGoal, timeframe: e.target.value as 'quarter' | 'year' | '5_years' })}
-                        className="select select-bordered"
-                      >
-                        <option value="quarter">분기 (3개월)</option>
-                        <option value="year">연간 (1년)</option>
-                        <option value="5_years">장기 (5년)</option>
-                      </select>
+
+                      {/* 셀렉트 박스 */}
+                      <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                        <select
+                          value={editingGoal.timeframe}
+                          onChange={(e) => setEditingGoal({ ...editingGoal, timeframe: e.target.value as 'quarter' | 'year' | '5_years' })}
+                          className="select select-bordered w-full"
+                        >
+                          <option value="quarter">분기 (3개월)</option>
+                          <option value="year">연간 (1년)</option>
+                          <option value="5_years">장기 (5년)</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* 연간목표/분기목표 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">연간목표 (선택)</span>
-                        </label>
-                        <select
-                          value={editingGoal.target_year || new Date().getFullYear()}
-                          onChange={(e) => setEditingGoal({ ...editingGoal, target_year: parseInt(e.target.value) })}
-                          className="select select-bordered"
-                        >
-                          {Array.from({ length: 6 }, (_, i) => {
-                            const year = new Date().getFullYear() + i;
-                            return (
-                              <option key={year} value={year}>
-                                {year}년
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
+                    <div className="my-4">
+                      {/* 섹션 제목 */}
+                      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                        <Target className="h-5 w-5" style={{ color: editingGoal.color }} />
+                        연간목표/분기목표 (선택)
+                      </label>
 
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">분기목표 (선택)</span>
-                        </label>
-                        <select
-                          value={editingGoal.target_quarter || 1}
-                          onChange={(e) => setEditingGoal({ ...editingGoal, target_quarter: parseInt(e.target.value) as 1 | 2 | 3 | 4 })}
-                          className="select select-bordered"
-                        >
-                          <option value={1}>1분기 (1~3월)</option>
-                          <option value={2}>2분기 (4~6월)</option>
-                          <option value={3}>3분기 (7~9월)</option>
-                          <option value={4}>4분기 (10~12월)</option>
-                        </select>
+                      {/* 입력 그리드 */}
+                      <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="form-control">
+                            <label className="label">
+                              <span className="label-text">연간목표</span>
+                            </label>
+                            <select
+                              value={editingGoal.target_year || new Date().getFullYear()}
+                              onChange={(e) => setEditingGoal({ ...editingGoal, target_year: parseInt(e.target.value) })}
+                              className="select select-bordered w-full"
+                            >
+                              {Array.from({ length: 6 }, (_, i) => {
+                                const year = new Date().getFullYear() + i;
+                                return (
+                                  <option key={year} value={year}>
+                                    {year}년
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </div>
+
+                          <div className="form-control">
+                            <label className="label">
+                              <span className="label-text">분기목표</span>
+                            </label>
+                            <select
+                              value={editingGoal.target_quarter || 1}
+                              onChange={(e) => setEditingGoal({ ...editingGoal, target_quarter: parseInt(e.target.value) as 1 | 2 | 3 | 4 })}
+                              className="select select-bordered w-full"
+                            >
+                              <option value={1}>1분기 (1~3월)</option>
+                              <option value={2}>2분기 (4~6월)</option>
+                              <option value={3}>3분기 (7~9월)</option>
+                              <option value={4}>4분기 (10~12월)</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     </div>
 

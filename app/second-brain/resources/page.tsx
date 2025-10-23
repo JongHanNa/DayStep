@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { Plus, X, Pencil, Lightbulb } from 'lucide-react';
+import { Plus, X, Pencil, Lightbulb, Tag, Palette, Activity, FileText } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateResourceInput, Resource, CreateAreaInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
@@ -409,7 +409,7 @@ export default function ResourcesPage() {
       {/* 편집/추가 다이얼로그 */}
       {editDialogOpen && editingResource && (
         <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+          <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 */}
             <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
               <button onClick={handleCancelEdit} className="btn btn-primary btn-sm rounded-full">
@@ -440,68 +440,108 @@ export default function ResourcesPage() {
             <div className="flex-1 overflow-y-auto">
               <div className="p-4">
                 {/* 상태 선택 */}
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text">상태</span>
+                <div className="my-4">
+                  {/* 섹션 제목 */}
+                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                    <Activity className="h-5 w-5" style={{ color: editingResource.color }} />
+                    상태
                   </label>
-                  <select
-                    value={itemType}
-                    onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
-                    className="select select-bordered"
-                  >
-                    <option value="area">책임 영역</option>
-                    <option value="resource">관심 자원</option>
-                    <option value="archive">아카이브</option>
-                  </select>
+
+                  {/* 셀렉트 박스 */}
+                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                    <select
+                      value={itemType}
+                      onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
+                      className="select select-bordered w-full"
+                    >
+                      <option value="area">책임 영역</option>
+                      <option value="resource">관심 자원</option>
+                      <option value="archive">아카이브</option>
+                    </select>
+                  </div>
                 </div>
 
-                {/* 아이콘 및 색상 */}
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text">아이콘 및 색상</span>
+                {/* 아이콘 및 제목 - 통합 패턴 적용 */}
+                <div className="my-4">
+                  {/* 섹션 제목 */}
+                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                    <Tag className="h-5 w-5" style={{ color: editingResource.color }} />
+                    자원 아이콘 및 제목
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setIconBrowserOpen(true)}
-                    className="btn btn-outline w-full justify-start"
-                    style={{
-                      backgroundColor: editingResource.color + '20',
-                      borderColor: editingResource.color,
-                    }}
-                  >
-                    {(() => {
-                      const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
-                      return <IconComponent className="w-6 h-6 mr-2" />;
-                    })()}
-                    <span>변경하기</span>
-                  </button>
-                </div>
 
-                {/* 제목 */}
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text">제목</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={editingResource.title}
-                    onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
-                    className="input input-bordered"
-                    placeholder="예: 프로그래밍"
-                  />
+                  {/* 아이콘 + 제목 입력 */}
+                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                    <div className="flex items-center gap-3">
+                      {/* 아이콘 버튼 */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setIconBrowserOpen(true)}
+                          className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
+                          style={{ backgroundColor: '#f3f4f6' }}
+                          title="아이콘 변경하기"
+                        >
+                          {(() => {
+                            const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
+                            return <IconComponent
+                              className="group-hover:scale-110 transition-transform"
+                              style={{ color: editingResource.color }}
+                              size={24}
+                            />;
+                          })()}
+                        </button>
+
+                        {/* 색상 인디케이터 */}
+                        <div
+                          className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
+                          style={{
+                            backgroundColor: editingResource.color,
+                            border: '2px solid white'
+                          }}
+                        >
+                          <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
+                        </div>
+                      </div>
+
+                      {/* 제목 입력 */}
+                      <input
+                        type="text"
+                        value={editingResource.title}
+                        onChange={(e) => setEditingResource({ ...editingResource, title: e.target.value })}
+                        placeholder="자원 제목을 입력하세요"
+                        className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
+                        style={{
+                          fontSize: '20px',
+                          color: '#333333',
+                          borderBottomColor: '#D1D5DB',
+                          outline: 'none',
+                          boxShadow: 'none',
+                          fontWeight: '600',
+                          height: '44px',
+                        }}
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* 설명 */}
-                <div className="form-control mb-6">
-                  <label className="label">
-                    <span className="label-text">설명</span>
+                <div className="my-4">
+                  {/* 섹션 제목 */}
+                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                    <FileText className="h-5 w-5" style={{ color: editingResource.color }} />
+                    설명
                   </label>
-                  <textarea
-                    value={editingResource.description || ''}
-                    onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
-                    className="textarea textarea-bordered h-20"
-                    placeholder="예: 개발 언어 및 프레임워크 학습"
-                  />
+
+                  {/* 텍스트 영역 */}
+                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                    <textarea
+                      value={editingResource.description || ''}
+                      onChange={(e) => setEditingResource({ ...editingResource, description: e.target.value })}
+                      className="textarea textarea-bordered w-full h-20"
+                      placeholder="예: 개발 언어 및 프레임워크 학습"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -548,7 +588,7 @@ export default function ResourcesPage() {
       {/* 추천 항목 추가 다이얼로그 */}
       {presetDialogOpen && (
         <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+          <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 */}
             <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
               <button onClick={handleCancelPresets} className="btn btn-primary btn-sm rounded-full">
