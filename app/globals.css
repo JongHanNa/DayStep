@@ -138,8 +138,10 @@
 
 /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
 [data-theme="light"] {
-  --color-primary: oklch(0.4671 0.039 264.71); /* primary: #4a5568 다크 회색 */
-  --color-primary-content: oklch(1.0000 0 0); /* primary-content: #ffffff 흰색 */
+  --color-primary: oklch(47% 10% 264deg); 
+  --color-primary-content: oklch(100% 0% 68deg);
+  --color-base-200: oklch(96% 1% 289deg);
+  --color-base-300: oklch(100% 0% 68deg); 
 }
 
 :root[data-palette="default"].dark,
