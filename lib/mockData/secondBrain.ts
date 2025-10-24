@@ -214,7 +214,7 @@ export const mockProjects: Project[] = [
     user_id: MOCK_USER_ID,
     title: '디자인',
     description: 'UI/UX 디자인 및 프로토타입 제작',
-    status: 'in_progress',
+    status: 'active',
     area_id: 'area-1',
     start_date: new Date('2025-10-01').toISOString(),
     target_end_date: new Date('2025-11-15').toISOString(),
