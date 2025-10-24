@@ -10,15 +10,7 @@ import UnscheduledTodosList from '@/components/second-brain/plan/UnscheduledTodo
 import DateAssignmentArea from '@/components/second-brain/plan/DateAssignmentArea';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
-
-// 목 프로젝트 데이터
-const MOCK_PROJECTS = [
-  { id: '1', title: '홈페이지 리뉴얼', status: 'active' as const, color: '#3B82F6', icon: 'lucide-Laptop' },
-  { id: '2', title: '운동 루틴', status: 'active' as const, color: '#10B981', icon: 'lucide-Dumbbell' },
-  { id: '3', title: '블로그 글쓰기', status: 'active' as const, color: '#8B5CF6', icon: 'lucide-FileText' },
-  { id: '4', title: '여행 계획', status: 'not_started' as const, color: '#F59E0B', icon: 'lucide-Plane' },
-  { id: '5', title: '독서 모임', status: 'not_started' as const, color: '#EC4899', icon: 'lucide-Book' },
-];
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 
 // 목 노트 데이터
 const MOCK_NOTES = [
@@ -65,8 +57,13 @@ const MOCK_TODOS = [
 ];
 
 export default function PlanPage() {
+  // 프로젝트 스토어에서 데이터 가져오기
+  const projects = useProjectStore(state => state.projects);
+  const createProject = useProjectStore(state => state.createProject);
+  const updateProject = useProjectStore(state => state.updateProject);
+  const deleteProject = useProjectStore(state => state.deleteProject);
+
   // 목데이터 상태
-  const [projects, setProjects] = useState(MOCK_PROJECTS);
   const [notes, setNotes] = useState(MOCK_NOTES);
   const [todos, setTodos] = useState(MOCK_TODOS);
 
@@ -124,25 +121,24 @@ export default function PlanPage() {
     setSelectedTodo(updatedTodo);
   };
 
-  // 프로젝트 CRUD 핸들러 (목데이터)
+  // 프로젝트 CRUD 핸들러
   const handleCreateProject = async (title: string) => {
-    const newProject = {
-      id: `project-${Date.now()}`,
+    const newProject = await createProject({
       title,
-      status: 'active' as const,
+      status: 'active',
       color: '#3B82F6',
-      icon: 'lucide-Folder' as const,
-    };
-    setProjects(prev => [...prev, newProject]);
+      icon: 'lucide-Folder',
+      order_index: projects.length, // 마지막 순서로 추가
+    });
     return newProject;
   };
 
   const handleUpdateProject = async (id: string, title: string) => {
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, title } : p));
+    await updateProject(id, { title });
   };
 
   const handleDeleteProject = async (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+    await deleteProject(id);
   };
 
   // 노트 CRUD 핸들러 (목데이터)
