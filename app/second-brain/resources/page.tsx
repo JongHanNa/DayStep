@@ -360,7 +360,7 @@ export default function ResourcesPage() {
           ) : (
             <div className="space-y-2">
               {resources.map((resource) => {
-                const IconComponent = getUnifiedIcon(resource.icon as UnifiedIconKey).component;
+                const IconComponent = getUnifiedIcon(resource.icon as UnifiedIconKey);
                 return (
                   <div
                     key={resource.id}
@@ -482,7 +482,7 @@ export default function ResourcesPage() {
                           title="아이콘 변경하기"
                         >
                           {(() => {
-                            const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey).component;
+                            const IconComponent = getUnifiedIcon(editingResource.icon as UnifiedIconKey);
                             return <IconComponent
                               className="group-hover:scale-110 transition-transform"
                               style={{ color: editingResource.color }}
@@ -615,7 +615,7 @@ export default function ResourcesPage() {
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   {RESOURCE_PRESETS.map((preset) => {
                     const isSelected = selectedPresets.some((p) => p.title === preset.title);
-                    const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey).component;
+                    const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey);
 
                     return (
                       <button

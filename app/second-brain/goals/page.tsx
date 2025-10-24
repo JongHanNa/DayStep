@@ -393,7 +393,7 @@ export default function GoalsPage() {
           ) : (
             <div className="space-y-2">
               {goals.map((goal) => {
-                const IconComponent = getUnifiedIcon(goal.icon as UnifiedIconKey).component;
+                const IconComponent = getUnifiedIcon(goal.icon as UnifiedIconKey);
                 return (
                   <div
                     key={goal.id}
@@ -490,7 +490,7 @@ export default function GoalsPage() {
                               title="아이콘 변경하기"
                             >
                               {(() => {
-                                const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey).component;
+                                const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey);
                                 return <IconComponent
                                   className="group-hover:scale-110 transition-transform"
                                   style={{ color: editingGoal.color }}
@@ -727,7 +727,7 @@ export default function GoalsPage() {
                           ) : (
                             <div className="space-y-2">
                               {filteredProjects.map((project) => {
-                                const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
+                                const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
                                 return (
                                   <div
                                     key={project.id}

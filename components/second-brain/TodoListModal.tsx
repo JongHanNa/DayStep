@@ -106,7 +106,7 @@ export default function TodoListModal({
                   <div className="flex items-center gap-1 mb-2">
                     <div className="text-xs bg-base-300 px-2 py-1 rounded-full flex items-center gap-1">
                       {project.icon && (() => {
-                        const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
+                        const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
                         return (
                           <div
                             className="w-4 h-4 rounded-full flex items-center justify-center"

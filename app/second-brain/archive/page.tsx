@@ -403,7 +403,7 @@ export default function ArchivePage() {
                 }}
               >
                 {(() => {
-                  const IconComponent = getUnifiedIcon(editingItem.icon as UnifiedIconKey).component;
+                  const IconComponent = getUnifiedIcon(editingItem.icon as UnifiedIconKey);
                   return <IconComponent className="w-6 h-6 mr-2" />;
                 })()}
                 <span>변경하기</span>

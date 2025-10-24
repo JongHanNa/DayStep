@@ -29,7 +29,7 @@ const ProjectGoalSection = memo(function ProjectGoalSection({
 
   // 아이콘 컴포넌트
   const IconComponent = goal
-    ? getUnifiedIcon(goal.icon as UnifiedIconKey).component
+    ? getUnifiedIcon(goal.icon as UnifiedIconKey)
     : null;
 
   return (

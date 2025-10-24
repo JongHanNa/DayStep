@@ -466,7 +466,7 @@ export default function ProjectEditDialog({
                       title="아이콘 변경하기"
                     >
                       {(() => {
-                        const IconComponent = getUnifiedIcon(editingProject.icon as UnifiedIconKey).component;
+                        const IconComponent = getUnifiedIcon(editingProject.icon as UnifiedIconKey);
                         return <IconComponent
                           className="group-hover:scale-110 transition-transform"
                           style={{ color: editingProject.color }}
@@ -1199,7 +1199,7 @@ function MonthTodoCard({
         <div className="flex items-center gap-0.5 mb-1">
           <div className="text-[10px] bg-base-300 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
             {project.icon && (() => {
-              const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
+              const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
               return <IconComponent className="w-2 h-2" />;
             })()}
             <span className="font-medium truncate max-w-[60px]">{project.title}</span>
@@ -1443,7 +1443,7 @@ function WeekTodoCard({
         <div className="flex items-center gap-1 mb-1">
           <div className="text-xs bg-base-300 px-2 py-0.5 rounded-full flex items-center gap-1">
             {project.icon && (() => {
-              const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
+              const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
               return <IconComponent className="w-3 h-3" />;
             })()}
             <span className="font-medium truncate max-w-[80px]">{project.title}</span>

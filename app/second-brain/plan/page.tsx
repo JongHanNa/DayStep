@@ -8,6 +8,8 @@ import { format, isBefore, startOfDay, addDays } from 'date-fns';
 import ProjectTabs from '@/components/second-brain/plan/ProjectTabs';
 import UnscheduledTodosList from '@/components/second-brain/plan/UnscheduledTodosList';
 import DateAssignmentArea from '@/components/second-brain/plan/DateAssignmentArea';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 
 // 목 프로젝트 데이터
 const MOCK_PROJECTS = [
@@ -16,6 +18,13 @@ const MOCK_PROJECTS = [
   { id: '3', title: '블로그 글쓰기', status: 'active' as const, color: '#8B5CF6', icon: 'lucide-FileText' },
   { id: '4', title: '여행 계획', status: 'not_started' as const, color: '#F59E0B', icon: 'lucide-Plane' },
   { id: '5', title: '독서 모임', status: 'not_started' as const, color: '#EC4899', icon: 'lucide-Book' },
+];
+
+// 목 노트 데이터
+const MOCK_NOTES = [
+  { id: '1', title: '프로젝트 아이디어', createdAt: new Date('2025-01-20') },
+  { id: '2', title: '회의록', createdAt: new Date('2025-01-22') },
+  { id: '3', title: '학습 자료', createdAt: new Date('2025-01-23') },
 ];
 
 // 목 할일 데이터
@@ -57,16 +66,102 @@ const MOCK_TODOS = [
 
 export default function PlanPage() {
   // 목데이터 상태
-  const [projects] = useState(MOCK_PROJECTS);
+  const [projects, setProjects] = useState(MOCK_PROJECTS);
+  const [notes, setNotes] = useState(MOCK_NOTES);
   const [todos, setTodos] = useState(MOCK_TODOS);
 
   // 선택된 프로젝트 상태
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectFilterType, setProjectFilterType] = useState<'active' | 'not_started'>('active');
 
+  // 편집 모달 상태
+  const [selectedTodo, setSelectedTodo] = useState<TodoFormData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // 로컬 할일 업데이트 함수
   const updateTodo = async (id: string, updates: any) => {
     setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  // 할일 클릭 핸들러
+  const handleTodoClick = (todo: any) => {
+    // any 타입 todo를 TodoFormData로 변환
+    const formData: TodoFormData = {
+      title: todo.title || '',
+      scheduledDate: todo.scheduledDate,
+      startTime: todo.startTime,
+      endTime: todo.endTime,
+      isHighlight: todo.isHighlight || false,
+      isAllDay: todo.isAllDay || false,
+      completed: todo.completed || false,
+      clarification: todo.clarification,
+      projectIds: todo.projectIds || [],
+      noteIds: todo.noteIds || [],
+      nextActionStatuses: todo.nextActionStatuses || [],
+    };
+    setSelectedTodo(formData);
+    setIsModalOpen(true);
+  };
+
+  // 모달 닫기 핸들러
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTodo(null);
+  };
+
+  // 할일 저장 핸들러
+  const handleSaveTodo = (updatedTodo: TodoFormData) => {
+    if (selectedTodo) {
+      // 현재는 목데이터이므로 업데이트는 생략
+      // 실제 구현에서는 updateTodo 호출
+      console.log('Updated todo:', updatedTodo);
+    }
+    handleCloseModal();
+  };
+
+  // 할일 변경 핸들러
+  const handleTodoChange = (updatedTodo: TodoFormData) => {
+    setSelectedTodo(updatedTodo);
+  };
+
+  // 프로젝트 CRUD 핸들러 (목데이터)
+  const handleCreateProject = async (title: string) => {
+    const newProject = {
+      id: `project-${Date.now()}`,
+      title,
+      status: 'active' as const,
+      color: '#3B82F6',
+      icon: 'lucide-Folder' as const,
+    };
+    setProjects(prev => [...prev, newProject]);
+    return newProject;
+  };
+
+  const handleUpdateProject = async (id: string, title: string) => {
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, title } : p));
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    setProjects(prev => prev.filter(p => p.id !== id));
+  };
+
+  // 노트 CRUD 핸들러 (목데이터)
+  const handleCreateNote = async (title: string) => {
+    const newNote = {
+      id: `note-${Date.now()}`,
+      title,
+      createdAt: new Date(),
+    };
+    setNotes(prev => [...prev, newNote]);
+    return newNote;
+  };
+
+  const handleUpdateNote = async (id: string, title: string) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, title } : n));
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    setNotes(prev => prev.filter(n => n.id !== id));
   };
 
   // 프로젝트 필터링
@@ -194,6 +289,7 @@ export default function PlanPage() {
               projectTodos={projectTodos}
               waitingTodos={waitingTodos}
               onResetOverdue={handleResetOverdueTodos}
+              onTodoClick={handleTodoClick}
             />
 
             {/* 우측: 날짜 영역 */}
@@ -208,6 +304,24 @@ export default function PlanPage() {
         {/* 하단 네비게이션 */}
         <SecondBrainBottomNav />
       </div>
+
+      {/* 할일 편집 모달 */}
+      <TodoEditModal
+        open={isModalOpen}
+        todo={selectedTodo}
+        onClose={handleCloseModal}
+        onSave={handleSaveTodo}
+        onChange={handleTodoChange}
+        projects={projects}
+        notes={notes}
+        onCreateProject={handleCreateProject}
+        onUpdateProject={handleUpdateProject}
+        onDeleteProject={handleDeleteProject}
+        onCreateNote={handleCreateNote}
+        onUpdateNote={handleUpdateNote}
+        onDeleteNote={handleDeleteNote}
+        titlePlaceholder="할일 제목을 입력하세요"
+      />
     </DndContext>
   );
 }

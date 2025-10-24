@@ -147,7 +147,7 @@ export default function GoalEditDialog({
                   }}
                 >
                   {(() => {
-                    const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey).component;
+                    const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey);
                     return <IconComponent className="w-6 h-6 mr-2" />;
                   })()}
                   <span>변경하기</span>

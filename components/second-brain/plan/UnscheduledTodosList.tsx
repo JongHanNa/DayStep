@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AlertCircle, ArrowRight, Pause, Briefcase, RotateCcw } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
+import { format } from 'date-fns';
 import type { Todo } from '@/entities/todo/Todo';
 
 interface UnscheduledTodosListProps {
@@ -11,6 +12,7 @@ interface UnscheduledTodosListProps {
   projectTodos: any[];
   waitingTodos: any[];
   onResetOverdue: () => void;
+  onTodoClick?: (todo: any) => void;
 }
 
 export default function UnscheduledTodosList({
@@ -19,6 +21,7 @@ export default function UnscheduledTodosList({
   projectTodos,
   waitingTodos,
   onResetOverdue,
+  onTodoClick,
 }: UnscheduledTodosListProps) {
   const [activeTab, setActiveTab] = useState<'overdue' | 'nextAction' | 'project' | 'waiting'>('overdue');
 
@@ -81,7 +84,7 @@ export default function UnscheduledTodosList({
             ) : (
               <div className="space-y-2">
                 {overdueTodos.map((todo) => (
-                  <DraggableTodoItem key={todo.id} todo={todo} />
+                  <DraggableTodoItem key={todo.id} todo={todo} showDate onTodoClick={onTodoClick} />
                 ))}
               </div>
             )}
@@ -98,7 +101,7 @@ export default function UnscheduledTodosList({
             ) : (
               <div className="space-y-2">
                 {nextActionTodos.map((todo) => (
-                  <DraggableTodoItem key={todo.id} todo={todo} showNextActionStatuses />
+                  <DraggableTodoItem key={todo.id} todo={todo} showNextActionStatuses onTodoClick={onTodoClick} />
                 ))}
               </div>
             )}
@@ -115,7 +118,7 @@ export default function UnscheduledTodosList({
             ) : (
               <div className="space-y-2">
                 {projectTodos.map((todo) => (
-                  <DraggableTodoItem key={todo.id} todo={todo} showClarification />
+                  <DraggableTodoItem key={todo.id} todo={todo} showClarification onTodoClick={onTodoClick} />
                 ))}
               </div>
             )}
@@ -132,7 +135,7 @@ export default function UnscheduledTodosList({
             ) : (
               <div className="space-y-2">
                 {waitingTodos.map((todo) => (
-                  <DraggableTodoItem key={todo.id} todo={todo} />
+                  <DraggableTodoItem key={todo.id} todo={todo} onTodoClick={onTodoClick} />
                 ))}
               </div>
             )}
@@ -148,9 +151,17 @@ interface DraggableTodoItemProps {
   todo: any;
   showNextActionStatuses?: boolean;
   showClarification?: boolean;
+  showDate?: boolean;
+  onTodoClick?: (todo: any) => void;
 }
 
-function DraggableTodoItem({ todo, showNextActionStatuses, showClarification }: DraggableTodoItemProps) {
+function DraggableTodoItem({
+  todo,
+  showNextActionStatuses,
+  showClarification,
+  showDate,
+  onTodoClick
+}: DraggableTodoItemProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: todo.id,
     data: todo,
@@ -163,18 +174,39 @@ function DraggableTodoItem({ todo, showNextActionStatuses, showClarification }: 
       }
     : undefined;
 
+  const handleClick = (e: React.MouseEvent) => {
+    // 드래그 중에는 클릭 이벤트 무시
+    if (!isDragging && onTodoClick) {
+      onTodoClick(todo);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
+      onClick={handleClick}
       className="bg-base-100 p-3 rounded-lg cursor-move hover:opacity-80 transition-opacity"
     >
       <div className="flex items-start gap-2">
         <input type="checkbox" checked={todo.completed} className="checkbox checkbox-sm mt-1" readOnly />
         <div className="flex-1">
           <p className="font-medium">{todo.title}</p>
+
+          {/* 날짜 표시 */}
+          {showDate && todo.scheduledDate && (
+            <p className="text-sm text-base-content/60 mt-1">
+              {format(
+                typeof todo.scheduledDate === 'string'
+                  ? new Date(todo.scheduledDate)
+                  : todo.scheduledDate,
+                'yyyy.MM.dd'
+              )}
+            </p>
+          )}
+
           {showNextActionStatuses && todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {todo.nextActionStatuses.map((status: string) => (

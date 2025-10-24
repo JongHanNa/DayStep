@@ -11,7 +11,7 @@ interface ProjectCardProps {
 }
 
 const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectCardProps) {
-  const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
+  const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
 
   // 진행률 계산
   const progress = project.progress || 0;

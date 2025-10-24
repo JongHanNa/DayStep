@@ -27,7 +27,7 @@ export default function GoalInboxList({ goals, onGoalClick }: GoalInboxListProps
   return (
     <div className="space-y-2">
       {goals.map((goal) => {
-        const IconComponent = getUnifiedIcon(goal.icon as UnifiedIconKey).component;
+        const IconComponent = getUnifiedIcon(goal.icon as UnifiedIconKey);
 
         // 미배정 상태 확인
         const hasNoAreaOrResource = !goal.area_id && !goal.resource_id;

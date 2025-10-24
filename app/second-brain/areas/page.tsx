@@ -361,7 +361,7 @@ export default function AreasPage() {
           ) : (
             <div className="space-y-2">
               {areas.map((area) => {
-                const IconComponent = getUnifiedIcon(area.icon as UnifiedIconKey).component;
+                const IconComponent = getUnifiedIcon(area.icon as UnifiedIconKey);
                 return (
                   <div
                     key={area.id}
