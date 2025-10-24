@@ -14,6 +14,8 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
+import TodoEditModal from './TodoEditModal';
+import TodoListModal from './TodoListModal';
 
 // 프론트엔드 전용 타입 (FormData 타입 + id 필드)
 interface TodoItem extends TodoFormData {
@@ -75,6 +77,15 @@ export default function ProjectEditDialog({
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarView, setCalendarView] = useState<'week' | 'month' | 'completed'>('week');
+
+  // 할일 목록 모달 상태
+  const [selectedDateTodos, setSelectedDateTodos] = useState<TodoItem[]>([]);
+  const [selectedDateForList, setSelectedDateForList] = useState<Date | null>(null);
+  const [showTodoListModal, setShowTodoListModal] = useState(false);
+
+  // 할일 편집 모달 상태 (TodoListModal에서 할일 클릭 시 사용)
+  const [todoFromList, setTodoFromList] = useState<TodoItem | null>(null);
+  const [showTodoEditFromList, setShowTodoEditFromList] = useState(false);
 
   // useDndKit Hook
   const { sensors, activeItem: activeTodo, handleDragStart, handleDragEnd: handleDndEnd, dndContextProps, dragOverlayProps } = useDndKit<TodoItem>({
@@ -356,6 +367,48 @@ export default function ProjectEditDialog({
   const handleCancelTodoEdit = () => {
     setShowTodoEditModal(false);
     setEditingTodo(null);
+  };
+
+  // 할일 목록 모달 열기
+  const handleOpenTodoListModal = (date: Date, todosForDate: TodoItem[]) => {
+    setSelectedDateForList(date);
+    setSelectedDateTodos(todosForDate);
+    setShowTodoListModal(true);
+  };
+
+  // 할일 목록 모달 닫기
+  const handleCloseTodoListModal = () => {
+    setShowTodoListModal(false);
+    setSelectedDateForList(null);
+    setSelectedDateTodos([]);
+  };
+
+  // 할일 목록 모달에서 할일 클릭 시 (TodoEditModal 열기)
+  const handleTodoClickFromList = (todo: TodoItem) => {
+    handleCloseTodoListModal();
+    setTodoFromList(todo);
+    setShowTodoEditFromList(true);
+  };
+
+  // TodoEditModal 닫기
+  const handleCloseTodoEditFromList = () => {
+    setShowTodoEditFromList(false);
+    setTodoFromList(null);
+  };
+
+  // TodoEditModal에서 저장
+  const handleSaveTodoFromList = (updatedTodo: TodoFormData) => {
+    if (!todoFromList) return;
+
+    // 기존 할일 업데이트
+    const updatedTodos = todos.map((t) =>
+      t.id === todoFromList.id
+        ? { ...t, ...updatedTodo }
+        : t
+    );
+    setTodos(updatedTodos);
+
+    handleCloseTodoEditFromList();
   };
 
   if (!open || !editingProject) return null;
@@ -729,6 +782,7 @@ export default function ProjectEditDialog({
                     todos={todos}
                     onToggleTodo={handleToggleTodo}
                     project={editingProject}
+                    onOpenTodoListModal={handleOpenTodoListModal}
                   />
                 )}
 
@@ -739,6 +793,7 @@ export default function ProjectEditDialog({
                     todos={todos}
                     onToggleTodo={handleToggleTodo}
                     project={editingProject}
+                    onOpenTodoListModal={handleOpenTodoListModal}
                   />
                 )}
 
@@ -844,6 +899,26 @@ export default function ProjectEditDialog({
           <div className="modal-backdrop" onClick={handleCancelTodoEdit} />
         </dialog>
       )}
+
+      {/* 할일 목록 모달 */}
+      <TodoListModal
+        open={showTodoListModal}
+        date={selectedDateForList}
+        todos={selectedDateTodos}
+        project={editingProject}
+        onClose={handleCloseTodoListModal}
+        onTodoClick={handleTodoClickFromList}
+        onToggleComplete={handleToggleTodo}
+      />
+
+      {/* TodoListModal에서 클릭한 할일 편집 모달 */}
+      <TodoEditModal
+        open={showTodoEditFromList}
+        todo={todoFromList}
+        onClose={handleCloseTodoEditFromList}
+        onSave={handleSaveTodoFromList}
+        onChange={(updated) => setTodoFromList(todoFromList ? { ...todoFromList, ...updated } : null)}
+      />
     </>
   );
 }
@@ -930,12 +1005,14 @@ function CalendarDropArea({
   todos,
   onToggleTodo,
   project,
+  onOpenTodoListModal,
 }: {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   todos: TodoItem[];
   onToggleTodo: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
+  onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
 }) {
   const monthStart = startOfMonth(selectedDate);
   const monthEnd = endOfMonth(monthStart);
@@ -1000,6 +1077,7 @@ function CalendarDropArea({
               todos={todosForDay}
               onToggleTodo={onToggleTodo}
               project={project}
+              onOpenTodoListModal={onOpenTodoListModal}
             />
           );
         })}
@@ -1016,6 +1094,7 @@ function CalendarDayCell({
   todos,
   onToggleTodo,
   project,
+  onOpenTodoListModal,
 }: {
   date: Date;
   isCurrentMonth: boolean;
@@ -1023,6 +1102,7 @@ function CalendarDayCell({
   todos: TodoItem[];
   onToggleTodo: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
+  onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
 
@@ -1031,31 +1111,53 @@ function CalendarDayCell({
     data: { date },
   });
 
+  const isMobile = process.env.BUILD_TARGET === 'mobile';
+
   return (
     <div
       ref={setNodeRef}
+      onClick={() => {
+        if (isMobile && todos.length > 0) {
+          onOpenTodoListModal(date, todos);
+        }
+      }}
       className={`
         min-h-[100px] p-2 border-2 rounded-lg transition-all duration-200
         ${isOver ? 'bg-primary/30 border-primary shadow-lg scale-105' : 'border-base-300'}
         ${!isCurrentMonth ? 'opacity-40' : ''}
         ${isToday ? 'bg-primary/10 border-primary' : 'bg-base-100'}
         hover:border-primary/50 hover:shadow-md
+        ${isMobile && todos.length > 0 ? 'cursor-pointer' : ''}
       `}
     >
       {/* 날짜 헤더 */}
       <div className="text-sm font-medium mb-2">{format(date, 'd')}</div>
 
-      {/* 할일 카드 영역 */}
-      <div className="space-y-1">
-        {todos.map((todo) => (
-          <MonthTodoCard
-            key={todo.id}
-            todo={todo}
-            onToggle={onToggleTodo}
-            project={project}
-          />
-        ))}
-      </div>
+      {/* 할일 표시 영역 */}
+      {isMobile ? (
+        // Capacitor 환경: 점 + 개수 표시
+        todos.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: project?.color || '#808080' }}
+            />
+            <span className="text-sm font-medium">{todos.length}</span>
+          </div>
+        )
+      ) : (
+        // 웹 환경: 기존 방식 유지
+        <div className="space-y-1">
+          {todos.map((todo) => (
+            <MonthTodoCard
+              key={todo.id}
+              todo={todo}
+              onToggle={onToggleTodo}
+              project={project}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1098,17 +1200,8 @@ function MonthTodoCard({
         ${isOver ? 'ring-2 ring-primary' : ''}
       `}
     >
-      {/* 체크박스 + 제목 */}
-      <div className="flex items-start gap-1.5 mb-1">
-        <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={(e) => {
-            e.stopPropagation();
-            onToggle(todo.id);
-          }}
-          className="checkbox checkbox-xs mt-0.5 flex-shrink-0"
-        />
+      {/* 제목 + 하이라이트 */}
+      <div className="flex items-center gap-1.5 mb-1">
         <p className={`flex-1 font-medium line-clamp-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
           {todo.title}
         </p>
@@ -1130,10 +1223,24 @@ function MonthTodoCard({
 
       {/* 명료화 (1줄 말줄임) */}
       {todo.clarification && (
-        <p className="text-[10px] text-base-content/60 line-clamp-1">
+        <p className="text-[10px] text-base-content/60 line-clamp-1 mb-1">
           {todo.clarification}
         </p>
       )}
+
+      {/* 완료 체크박스 (제일 하단, 왼쪽 정렬) */}
+      <div className="flex items-center justify-start gap-1.5 mt-1">
+        <input
+          type="checkbox"
+          checked={todo.completed}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggle(todo.id);
+          }}
+          className="checkbox checkbox-xs flex-shrink-0"
+        />
+        <span className="text-[10px] text-base-content/60">완료</span>
+      </div>
     </div>
   );
 }
@@ -1145,12 +1252,14 @@ function WeekView({
   todos,
   onToggleTodo,
   project,
+  onOpenTodoListModal,
 }: {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   todos: TodoItem[];
   onToggleTodo: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
+  onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
 }) {
   // 현재 주의 일요일~토요일 계산
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 }); // 일요일 시작
@@ -1198,6 +1307,7 @@ function WeekView({
               todos={dayTodos}
               onToggleTodo={onToggleTodo}
               project={project}
+              onOpenTodoListModal={onOpenTodoListModal}
             />
           );
         })}
@@ -1213,12 +1323,14 @@ function WeekDayColumn({
   todos,
   onToggleTodo,
   project,
+  onOpenTodoListModal,
 }: {
   date: Date;
   isToday: boolean;
   todos: TodoItem[];
   onToggleTodo: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
+  onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
   const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
@@ -1228,9 +1340,16 @@ function WeekDayColumn({
     data: { date, type: 'week-column' },
   });
 
+  const isMobile = process.env.BUILD_TARGET === 'mobile';
+
   return (
     <div
       ref={setNodeRef}
+      onClick={() => {
+        if (isMobile && todos.length > 0) {
+          onOpenTodoListModal(date, todos);
+        }
+      }}
       className={`
         flex flex-col
         min-h-[400px] p-2 rounded-lg border-2 transition-all
@@ -1241,6 +1360,7 @@ function WeekDayColumn({
             ? 'bg-primary/5 border-primary/50'
             : 'bg-base-100 border-base-300'
         }
+        ${isMobile && todos.length > 0 ? 'cursor-pointer' : ''}
       `}
     >
       {/* 날짜 헤더 */}
@@ -1251,22 +1371,42 @@ function WeekDayColumn({
         </div>
       </div>
 
-      {/* 할일 카드 영역 */}
-      <div className="flex-1 space-y-2 overflow-y-auto">
-        {todos.map((todo) => (
-          <WeekTodoCard
-            key={todo.id}
-            todo={todo}
-            onToggle={onToggleTodo}
-            project={project}
-          />
-        ))}
-        {todos.length === 0 && (
-          <div className="text-xs text-base-content/40 text-center py-4">
-            할일 없음
-          </div>
-        )}
-      </div>
+      {/* 할일 표시 영역 */}
+      {isMobile ? (
+        // Capacitor 환경: 점 + 개수 표시
+        <div className="flex-1 overflow-y-auto">
+          {todos.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: project?.color || '#808080' }}
+              />
+              <span className="text-sm font-medium">{todos.length}</span>
+            </div>
+          ) : (
+            <div className="text-xs text-base-content/40 text-center py-4">
+              할일 없음
+            </div>
+          )}
+        </div>
+      ) : (
+        // 웹 환경: 기존 방식 유지
+        <div className="flex-1 space-y-2 overflow-y-auto">
+          {todos.map((todo) => (
+            <WeekTodoCard
+              key={todo.id}
+              todo={todo}
+              onToggle={onToggleTodo}
+              project={project}
+            />
+          ))}
+          {todos.length === 0 && (
+            <div className="text-xs text-base-content/40 text-center py-4">
+              할일 없음
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1297,17 +1437,8 @@ function WeekTodoCard({
         ${isDragging ? 'opacity-50' : ''}
       `}
     >
-      {/* 체크박스 + 제목 */}
-      <div className="flex items-start gap-2 mb-1">
-        <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={(e) => {
-            e.stopPropagation();
-            onToggle(todo.id);
-          }}
-          className="checkbox checkbox-xs mt-0.5 flex-shrink-0"
-        />
+      {/* 제목 + 하이라이트 */}
+      <div className="flex items-center gap-2 mb-1">
         <p className={`text-xs font-medium flex-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
           {todo.title}
         </p>
@@ -1323,7 +1454,7 @@ function WeekTodoCard({
 
       {/* 프로젝트 배지 */}
       {project && (
-        <div className="flex items-center gap-1 mt-1">
+        <div className="flex items-center gap-1 mb-1">
           <div className="text-xs bg-base-300 px-2 py-0.5 rounded-full flex items-center gap-1">
             {project.icon && (() => {
               const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
@@ -1333,6 +1464,20 @@ function WeekTodoCard({
           </div>
         </div>
       )}
+
+      {/* 완료 체크박스 (제일 하단, 왼쪽 정렬) */}
+      <div className="flex items-center justify-start gap-2 mt-1">
+        <input
+          type="checkbox"
+          checked={todo.completed}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggle(todo.id);
+          }}
+          className="checkbox checkbox-xs flex-shrink-0"
+        />
+        <span className="text-xs text-base-content/60">완료</span>
+      </div>
     </div>
   );
 }

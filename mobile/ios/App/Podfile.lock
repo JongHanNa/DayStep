@@ -10,33 +10,33 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
-  - Capacitor (7.4.2):
+  - Capacitor (7.4.4):
     - CapacitorCordova
   - CapacitorCommunityContacts (7.0.0):
     - Capacitor
-  - CapacitorCordova (7.4.2)
-  - CapacitorLocalNotifications (7.0.2):
+  - CapacitorCordova (7.4.4)
+  - CapacitorLocalNotifications (7.0.3):
     - Capacitor
   - CapacitorPreferences (7.0.2):
     - Capacitor
-  - CapgoCapacitorSocialLogin (7.8.3):
+  - CapgoCapacitorSocialLogin (7.13.0):
     - Alamofire (~> 5.10.2)
     - Capacitor
-    - FBSDKCoreKit (= 17.4.0)
-    - FBSDKLoginKit (= 17.4.0)
+    - FBSDKCoreKit (= 18.0.0)
+    - FBSDKLoginKit (= 18.0.0)
     - GoogleSignIn (~> 9.0.0)
   - DaystepContactGroups (1.0.0):
     - Capacitor
   - DaystepWidgetBridge (1.0.0):
     - Capacitor
-  - FBAEMKit (17.4.0):
-    - FBSDKCoreKit_Basics (= 17.4.0)
-  - FBSDKCoreKit (17.4.0):
-    - FBAEMKit (= 17.4.0)
-    - FBSDKCoreKit_Basics (= 17.4.0)
-  - FBSDKCoreKit_Basics (17.4.0)
-  - FBSDKLoginKit (17.4.0):
-    - FBSDKCoreKit (= 17.4.0)
+  - FBAEMKit (18.0.0):
+    - FBSDKCoreKit_Basics (= 18.0.0)
+  - FBSDKCoreKit (18.0.0):
+    - FBAEMKit (= 18.0.0)
+    - FBSDKCoreKit_Basics (= 18.0.0)
+  - FBSDKCoreKit_Basics (18.0.0)
+  - FBSDKLoginKit (18.0.0):
+    - FBSDKCoreKit (= 18.0.0)
   - GoogleSignIn (9.0.0):
     - AppAuth (~> 2.0)
     - AppCheckCore (~> 11.0)
@@ -104,18 +104,18 @@ SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
-  Capacitor: 9d9e481b79ffaeacaf7a85d6a11adec32bd33b59
+  Capacitor: 358dd1c3fdd71d969547b17e159fd8a7736cb45f
   CapacitorCommunityContacts: aaa9f95f2da72b5de15d5fa935d736d07c644db2
-  CapacitorCordova: 5e58d04631bc5094894ac106e2bf1da18a9e6151
-  CapacitorLocalNotifications: 665188ae8accd40806129073896fb2b39322d858
+  CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
+  CapacitorLocalNotifications: 0811aef56ab2e5f7f9ae72f47d3473ab50c29038
   CapacitorPreferences: 65107ed7437d96ee72583df5763985e3c0ff2bc2
-  CapgoCapacitorSocialLogin: 6a933b802d4efe30b276633cd09e08f22b2845e0
+  CapgoCapacitorSocialLogin: 69da761a79fedeff6583fcf0bf7543e9c10ad622
   DaystepContactGroups: a011a2485160d95f6526be712f6105f463772a93
   DaystepWidgetBridge: aa48b1c8c994c9e9f210c8605a8228568b2b4c27
-  FBAEMKit: 58cb5f302cdd715a56d4c1d0dfdd2e423ac1421a
-  FBSDKCoreKit: 94d7461d0cecf441b1ba7c41acfff41daa8ccd41
-  FBSDKCoreKit_Basics: 151b43db8b834d3f0e02f95d36a44ffd36265e45
-  FBSDKLoginKit: 5c1cd53c91a2282b3a4fe6e6d3dcf2b8b0d33d55
+  FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
+  FBSDKCoreKit: d3f479a69127acebb1c6aad91c1a33907bcf6c2f
+  FBSDKCoreKit_Basics: 017b6dc2a1862024815a8229e75661e627ac1e29
+  FBSDKLoginKit: 5875762d1fe09ddcb05d03365d4f5dc34413843d
   GoogleSignIn: c7f09cfbc85a1abf69187be091997c317cc33b77
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
