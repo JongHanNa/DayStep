@@ -352,13 +352,13 @@ export default function ProjectEditDialog({
   };
 
   // 할일 편집 저장
-  const handleSaveTodoEdit = () => {
-    if (!editingTodo || !editingTodo.title.trim()) {
+  const handleSaveTodoEdit = (updatedTodo: TodoFormData) => {
+    if (!editingTodo || !updatedTodo.title.trim()) {
       alert('할일 제목을 입력해주세요.');
       return;
     }
 
-    setTodos(todos.map((todo) => (todo.id === editingTodo.id ? editingTodo : todo)));
+    setTodos(todos.map((todo) => (todo.id === editingTodo.id ? { ...editingTodo, ...updatedTodo } : todo)));
     setShowTodoEditModal(false);
     setEditingTodo(null);
   };
@@ -874,31 +874,17 @@ export default function ProjectEditDialog({
       )}
 
       {/* 할일 편집 모달 */}
-      {showTodoEditModal && editingTodo && (
-        <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-            {/* 헤더 (취소-제목-저장) */}
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-              <button onClick={handleCancelTodoEdit} className="btn btn-primary btn-sm rounded-full">
-                취소
-              </button>
-              <h3 className="font-bold text-lg">할일 편집</h3>
-              <button onClick={handleSaveTodoEdit} className="btn btn-primary btn-sm rounded-full">
-                저장
-              </button>
-            </div>
-
-            {/* 콘텐츠 영역 */}
-            <div className="flex-1 overflow-y-auto">
-              <TodoFormFields
-                todo={editingTodo}
-                onChange={(updatedTodo) => setEditingTodo({ ...editingTodo, ...updatedTodo })}
-              />
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelTodoEdit} />
-        </dialog>
-      )}
+      <TodoEditModal
+        open={showTodoEditModal}
+        todo={editingTodo}
+        onClose={handleCancelTodoEdit}
+        onSave={handleSaveTodoEdit}
+        onChange={(updatedTodo) => {
+          if (editingTodo) {
+            setEditingTodo({ ...editingTodo, ...updatedTodo });
+          }
+        }}
+      />
 
       {/* 할일 목록 모달 */}
       <TodoListModal

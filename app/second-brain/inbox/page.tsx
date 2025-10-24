@@ -11,8 +11,9 @@ import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { useModalStore } from '@/state/stores/modalStore';
 
@@ -58,15 +59,7 @@ export default function InboxPage() {
     fetchNotes();
   }, [fetchInboxItems, fetchAreas, fetchResources, fetchNotes]);
 
-  // 편집 모달 상태 관리 (하단 네비 숨김)
-  useEffect(() => {
-    if (editingItem) {
-      openModal();
-    }
-    return () => {
-      closeModal();
-    };
-  }, [editingItem, openModal, closeModal]);
+  // 편집 모달 상태 관리는 InboxTodoEditModal 컴포넌트 내부에서 처리
 
   const resetForms = () => {
     setTodoForm({
@@ -398,8 +391,26 @@ export default function InboxPage() {
         )}
       </div>
 
-      {/* 편집 모달 - DaisyUI dialog */}
-      {editingItem && (
+      {/* 할일 편집 모달 */}
+      <TodoEditModal
+        open={editingItem !== null && (!editingItem?.item_type || editingItem?.item_type === 'todo')}
+        todo={todoForm}
+        onClose={() => {
+          setEditingItem(null);
+          resetForms();
+        }}
+        onSave={handleUpdate}
+        onChange={setTodoForm}
+        projects={projects}
+        notes={notes}
+        onCreateProject={handleCreateProject}
+        onCreateNote={handleCreateNote}
+        titlePlaceholder="예: 슈퍼업 레퍼런스 정리"
+        clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
+      />
+
+      {/* 노트 편집 모달 - DaisyUI dialog */}
+      {editingItem && editingItem.item_type === 'note' && (
         <dialog open className="modal modal-open">
           <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
@@ -413,9 +424,7 @@ export default function InboxPage() {
                 취소
               </button>
 
-              <h3 className="text-lg font-semibold">
-                {(!editingItem.item_type || editingItem.item_type === 'todo') ? '할 일' : '노트'} 편집
-              </h3>
+              <h3 className="text-lg font-semibold">노트 편집</h3>
 
               <button
                 onClick={handleUpdate}
@@ -427,28 +436,14 @@ export default function InboxPage() {
 
             <div className="flex-1 overflow-y-auto">
               <div className="p-4">
-                {/* 폼 필드 */}
-                {editingItem && (!editingItem.item_type || editingItem.item_type === 'todo') ? (
-                  <TodoFormFields
-                    todo={todoForm}
-                    onChange={setTodoForm}
-                    titlePlaceholder="예: 슈퍼업 레퍼런스 정리"
-                    clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
-                    projects={projects}
-                    notes={notes}
-                    onCreateProject={handleCreateProject}
-                    onCreateNote={handleCreateNote}
-                  />
-                ) : (
-                  <NoteFormFields
-                    note={noteForm}
-                    onChange={setNoteForm}
-                    areas={areas}
-                    resources={resources}
-                    titlePlaceholder="예: 새로운 브랜딩 관점 변경된 분석틀"
-                    contentPlaceholder="세컨드 브레인에 관련된 노트들이 프로젝트에 연결되어 있지 않으면 일 때문에 하던 것들은 노트만 달랑 이 프로젝트에 연결하여라면 분류됩니다"
-                  />
-                )}
+                <NoteFormFields
+                  note={noteForm}
+                  onChange={setNoteForm}
+                  areas={areas}
+                  resources={resources}
+                  titlePlaceholder="예: 새로운 브랜딩 관점 변경된 분석틀"
+                  contentPlaceholder="세컨드 브레인에 관련된 노트들이 프로젝트에 연결되어 있지 않으면 일 때문에 하던 것들은 노트만 달랑 이 프로젝트에 연결하여라면 분류됩니다"
+                />
               </div>
             </div>
           </div>
