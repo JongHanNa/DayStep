@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Inbox, Search, CheckSquare, Target, Clock, Compass, FileText, Archive, BookOpen, FolderOpen, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,7 @@ const menuItems: Record<'routine' | 'productivity' | 'start', MenuItem[]> = {
 
 export default function GroupMenu({ groupType }: GroupMenuProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { clearSelectedGroup } = useNavigationStore();
   const items = menuItems[groupType];
 
@@ -110,6 +111,10 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
           <div className="flex justify-center overflow-x-auto scrollbar-hide gap-2 px-4 py-3">
             {items.map((item) => {
               const Icon = item.icon;
+              const normalizedPathname = pathname?.replace(/\/$/, '') || '';
+              const normalizedHref = item.href.replace(/\/$/, '');
+              const isActive = normalizedPathname === normalizedHref;
+
               return (
                 <button
                   key={item.id}
@@ -117,9 +122,11 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
                   className={cn(
                     'flex flex-col items-center justify-center flex-shrink-0',
                     'px-4 py-3 rounded-2xl min-w-[70px]',
-                    'bg-transparent hover:bg-primary hover:text-primary-content',
                     'transition-all duration-200',
-                    'active:scale-95'
+                    'active:scale-95',
+                    isActive
+                      ? 'bg-primary text-primary-content'
+                      : 'bg-transparent hover:bg-primary hover:text-primary-content'
                   )}
                 >
                   <Icon className="w-6 h-6 mb-1.5" />
