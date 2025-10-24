@@ -191,7 +191,6 @@ function DraggableTodoItem({
       className="bg-base-100 p-3 rounded-lg cursor-move hover:opacity-80 transition-opacity"
     >
       <div className="flex items-start gap-2">
-        <input type="checkbox" checked={todo.completed} className="checkbox checkbox-sm mt-1" readOnly />
         <div className="flex-1">
           <p className="font-medium">{todo.title}</p>
 

@@ -11,12 +11,14 @@ interface DateAssignmentAreaProps {
   todayTodos: any[];
   tomorrowTodos: any[];
   allTodos: any[];
+  onTodoClick?: (todo: any) => void;
 }
 
 export default function DateAssignmentArea({
   todayTodos,
   tomorrowTodos,
   allTodos,
+  onTodoClick,
 }: DateAssignmentAreaProps) {
   const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week'>('today');
 
@@ -56,6 +58,7 @@ export default function DateAssignmentArea({
             dateString={format(new Date(), 'yyyy-MM-dd')}
             todos={todayTodos}
             title="오늘"
+            onTodoClick={onTodoClick}
           />
         )}
 
@@ -64,11 +67,12 @@ export default function DateAssignmentArea({
             dateString={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
             todos={tomorrowTodos}
             title="내일"
+            onTodoClick={onTodoClick}
           />
         )}
 
         {activeTab === 'week' && (
-          <WeekCalendar todos={allTodos} />
+          <WeekCalendar todos={allTodos} onTodoClick={onTodoClick} />
         )}
       </div>
     </div>
@@ -80,9 +84,10 @@ interface DroppableDateListProps {
   dateString: string;
   todos: any[];
   title: string;
+  onTodoClick?: (todo: any) => void;
 }
 
-function DroppableDateList({ dateString, todos, title }: DroppableDateListProps) {
+function DroppableDateList({ dateString, todos, title, onTodoClick }: DroppableDateListProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: dateString,
   });
@@ -102,7 +107,7 @@ function DroppableDateList({ dateString, todos, title }: DroppableDateListProps)
       ) : (
         <div className="space-y-2">
           {todos.map((todo) => (
-            <TodoListItem key={todo.id} todo={todo} />
+            <TodoListItem key={todo.id} todo={todo} onTodoClick={onTodoClick} />
           ))}
         </div>
       )}
@@ -113,17 +118,24 @@ function DroppableDateList({ dateString, todos, title }: DroppableDateListProps)
 // 할일 리스트 아이템
 interface TodoListItemProps {
   todo: any;
+  onTodoClick?: (todo: any) => void;
 }
 
-function TodoListItem({ todo }: TodoListItemProps) {
+function TodoListItem({ todo, onTodoClick }: TodoListItemProps) {
   // 시간 지정 여부 확인
   const hasTime = todo.startTime || todo.endTime;
   const timeDisplay = hasTime
     ? `${todo.startTime || ''} ${todo.endTime ? '- ' + todo.endTime : ''}`
     : '계획되지 않음';
 
+  const handleClick = () => {
+    if (onTodoClick) {
+      onTodoClick(todo);
+    }
+  };
+
   return (
-    <div className="bg-base-100 p-3 rounded-lg">
+    <div className="bg-base-100 p-3 rounded-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleClick}>
       <div className="flex items-start gap-2">
         <input type="checkbox" checked={todo.completed} className="checkbox checkbox-sm mt-1" readOnly />
         <div className="flex-1">

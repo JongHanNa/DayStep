@@ -7,9 +7,10 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 
 interface WeekCalendarProps {
   todos: any[];
+  onTodoClick?: (todo: any) => void;
 }
 
-export default function WeekCalendar({ todos }: WeekCalendarProps) {
+export default function WeekCalendar({ todos, onTodoClick }: WeekCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // 현재 주의 일요일~토요일 계산
@@ -56,6 +57,7 @@ export default function WeekCalendar({ todos }: WeekCalendarProps) {
               date={day}
               isToday={isToday}
               todos={dayTodos}
+              onTodoClick={onTodoClick}
             />
           );
         })}
@@ -69,9 +71,10 @@ interface WeekDayColumnProps {
   date: Date;
   isToday: boolean;
   todos: any[];
+  onTodoClick?: (todo: any) => void;
 }
 
-function WeekDayColumn({ date, isToday, todos }: WeekDayColumnProps) {
+function WeekDayColumn({ date, isToday, todos, onTodoClick }: WeekDayColumnProps) {
   const dateString = format(date, 'yyyy-MM-dd');
   const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
 
@@ -105,7 +108,7 @@ function WeekDayColumn({ date, isToday, todos }: WeekDayColumnProps) {
       {/* 할일 표시 영역 */}
       <div className="flex-1 space-y-2 overflow-y-auto">
         {todos.map((todo) => (
-          <WeekTodoCard key={todo.id} todo={todo} />
+          <WeekTodoCard key={todo.id} todo={todo} onTodoClick={onTodoClick} />
         ))}
         {todos.length === 0 && (
           <div className="text-xs text-base-content/40 text-center py-4">
@@ -120,19 +123,28 @@ function WeekDayColumn({ date, isToday, todos }: WeekDayColumnProps) {
 // 주간 뷰 할일 카드 컴포넌트
 interface WeekTodoCardProps {
   todo: any;
+  onTodoClick?: (todo: any) => void;
 }
 
-function WeekTodoCard({ todo }: WeekTodoCardProps) {
+function WeekTodoCard({ todo, onTodoClick }: WeekTodoCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `week-todo-${todo.id}`,
     data: { todoId: todo.id },
   });
+
+  const handleClick = (e: React.MouseEvent) => {
+    // 드래그 중에는 클릭 이벤트 무시
+    if (!isDragging && onTodoClick) {
+      onTodoClick(todo);
+    }
+  };
 
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
+      onClick={handleClick}
       className={`
         p-2 rounded-lg bg-base-200 hover:bg-base-300 transition-colors
         cursor-move

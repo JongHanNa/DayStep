@@ -297,6 +297,7 @@ export default function PlanPage() {
               todayTodos={todayTodos}
               tomorrowTodos={tomorrowTodos}
               allTodos={todos}
+              onTodoClick={handleTodoClick}
             />
           </div>
         </div>
