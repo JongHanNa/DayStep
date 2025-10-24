@@ -1,0 +1,156 @@
+'use client';
+
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
+
+interface WeekCalendarProps {
+  todos: any[];
+}
+
+export default function WeekCalendar({ todos }: WeekCalendarProps) {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // 현재 주의 일요일~토요일 계산
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 }); // 일요일 시작
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  return (
+    <div className="w-full">
+      {/* 주간 헤더 */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => setSelectedDate(addDays(selectedDate, -7))}
+          className="btn btn-ghost btn-sm rounded-full"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <h3 className="text-lg font-semibold">
+          {format(weekStart, 'M월 d일')} - {format(addDays(weekStart, 6), 'M월 d일')}
+        </h3>
+        <button
+          onClick={() => setSelectedDate(addDays(selectedDate, 7))}
+          className="btn btn-ghost btn-sm rounded-full"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* 7일 컬럼 그리드 */}
+      <div className="grid grid-cols-7 gap-2">
+        {weekDays.map((day) => {
+          const dateString = format(day, 'yyyy-MM-dd');
+          const dayTodos = todos
+            .filter(
+              (todo) =>
+                todo.scheduledDate &&
+                format(typeof todo.scheduledDate === 'string' ? new Date(todo.scheduledDate) : todo.scheduledDate, 'yyyy-MM-dd') === dateString
+            )
+            .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          const isToday = isSameDay(day, new Date());
+
+          return (
+            <WeekDayColumn
+              key={dateString}
+              date={day}
+              isToday={isToday}
+              todos={dayTodos}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// 주간 뷰 날짜 컬럼 컴포넌트
+interface WeekDayColumnProps {
+  date: Date;
+  isToday: boolean;
+  todos: any[];
+}
+
+function WeekDayColumn({ date, isToday, todos }: WeekDayColumnProps) {
+  const dateString = format(date, 'yyyy-MM-dd');
+  const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+
+  const { setNodeRef, isOver } = useDroppable({
+    id: dateString,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`
+        flex flex-col
+        min-h-[400px] p-2 rounded-lg border-2 transition-all
+        ${
+          isOver
+            ? 'bg-primary/20 border-primary'
+            : isToday
+            ? 'bg-primary/5 border-primary/50'
+            : 'bg-base-100 border-base-300'
+        }
+      `}
+    >
+      {/* 날짜 헤더 */}
+      <div className="flex-shrink-0 mb-2 pb-2 border-b border-base-300">
+        <div className="text-sm font-bold text-center">{dayOfWeek}</div>
+        <div className={`text-lg font-bold text-center ${isToday ? 'text-primary' : ''}`}>
+          {format(date, 'd')}
+        </div>
+      </div>
+
+      {/* 할일 표시 영역 */}
+      <div className="flex-1 space-y-2 overflow-y-auto">
+        {todos.map((todo) => (
+          <WeekTodoCard key={todo.id} todo={todo} />
+        ))}
+        {todos.length === 0 && (
+          <div className="text-xs text-base-content/40 text-center py-4">
+            할일 없음
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 주간 뷰 할일 카드 컴포넌트
+interface WeekTodoCardProps {
+  todo: any;
+}
+
+function WeekTodoCard({ todo }: WeekTodoCardProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `week-todo-${todo.id}`,
+    data: { todoId: todo.id },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={`
+        p-2 rounded-lg bg-base-200 hover:bg-base-300 transition-colors
+        cursor-move
+        ${isDragging ? 'opacity-50' : ''}
+      `}
+    >
+      {/* 제목 + 하이라이트 */}
+      <div className="flex items-center gap-2 mb-1">
+        <p className={`text-xs font-medium flex-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
+          {todo.title}
+        </p>
+        {todo.isHighlight && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
+      </div>
+
+      {/* 명료화 표시 */}
+      {todo.clarification && (
+        <span className="badge badge-xs bg-base-300">{todo.clarification}</span>
+      )}
+    </div>
+  );
+}

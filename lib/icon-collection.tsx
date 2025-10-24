@@ -400,7 +400,8 @@ export const searchUnifiedIcons = (query: string, style?: IconStyle, category?: 
 
 // 아이콘 가져오기 헬퍼
 export const getUnifiedIcon = (iconKey: UnifiedIconKey = 'lucide-Home') => {
-  return unifiedIconsCollection[iconKey] || unifiedIconsCollection['lucide-Home'];
+  const iconData = unifiedIconsCollection[iconKey] || unifiedIconsCollection['lucide-Home'];
+  return iconData.component;
 };
 
 // 사용 가능한 스타일 목록
