@@ -316,7 +316,7 @@ export default function AreasPage() {
     <div className="min-h-screen bg-base-100 pb-20">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-        <div className="max-w-3xl mx-auto px-4 py-4">
+        <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
           <h1 className="text-2xl font-bold">책임 영역 (Areas)</h1>
           <p className="text-sm text-base-content/70 mt-1">
             지속적으로 관심을 가져야 하는 영역을 관리하세요
