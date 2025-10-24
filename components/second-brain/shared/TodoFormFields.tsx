@@ -183,41 +183,45 @@ export default function TodoFormFields({
         </label>
       </div>
 
-      {/* 프로젝트 추가 (다중 선택) */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text flex items-center gap-2">
-            <Folder className="w-4 h-4" />
-            프로젝트 추가
-          </span>
-        </label>
-        <ProjectSelector
-          selectedProjectIds={todo.projectIds || []}
-          projects={projects}
-          onProjectsChange={(projectIds) => onChange({ ...todo, projectIds })}
-          onCreateProject={onCreateProject}
-          onUpdateProject={onUpdateProject}
-          onDeleteProject={onDeleteProject}
-        />
-      </div>
+      {/* 프로젝트 추가 (다중 선택) - onCreateProject prop이 있을 때만 표시 */}
+      {onCreateProject && (
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text flex items-center gap-2">
+              <Folder className="w-4 h-4" />
+              프로젝트 추가
+            </span>
+          </label>
+          <ProjectSelector
+            selectedProjectIds={todo.projectIds || []}
+            projects={projects}
+            onProjectsChange={(projectIds) => onChange({ ...todo, projectIds })}
+            onCreateProject={onCreateProject}
+            onUpdateProject={onUpdateProject}
+            onDeleteProject={onDeleteProject}
+          />
+        </div>
+      )}
 
-      {/* 노트 추가 (다중 선택) */}
-      <div className="form-control mb-6">
-        <label className="label">
-          <span className="label-text flex items-center gap-2">
-            <StickyNote className="w-4 h-4" />
-            노트 추가
-          </span>
-        </label>
-        <NoteSelector
-          selectedNoteIds={todo.noteIds || []}
-          notes={notes}
-          onNotesChange={(noteIds) => onChange({ ...todo, noteIds })}
-          onCreateNote={onCreateNote}
-          onUpdateNote={onUpdateNote}
-          onDeleteNote={onDeleteNote}
-        />
-      </div>
+      {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
+      {onCreateNote && (
+        <div className="form-control mb-6">
+          <label className="label">
+            <span className="label-text flex items-center gap-2">
+              <StickyNote className="w-4 h-4" />
+              노트 추가
+            </span>
+          </label>
+          <NoteSelector
+            selectedNoteIds={todo.noteIds || []}
+            notes={notes}
+            onNotesChange={(noteIds) => onChange({ ...todo, noteIds })}
+            onCreateNote={onCreateNote}
+            onUpdateNote={onUpdateNote}
+            onDeleteNote={onDeleteNote}
+          />
+        </div>
+      )}
     </>
   );
 }

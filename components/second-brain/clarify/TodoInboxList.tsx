@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Calendar, Star, Plus } from 'lucide-react';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
-import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
-import { useModalStore } from '@/state/stores/modalStore';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -20,19 +20,8 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   const { updateInboxItem, convertTodoToProject } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
-  const { openModal, closeModal } = useModalStore();
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
   const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
-
-  // 편집 모달 상태 관리 (하단 네비 숨김)
-  useEffect(() => {
-    if (editingTodo) {
-      openModal();
-    }
-    return () => {
-      closeModal();
-    };
-  }, [editingTodo, openModal, closeModal]);
 
   const handleTodoClick = (todo: InboxItem) => {
     setEditingTodo(todo);
@@ -48,8 +37,8 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
     });
   };
 
-  const handleSave = async () => {
-    if (!editingTodo || !todoForm) return;
+  const handleSave = async (updatedTodo: TodoFormData) => {
+    if (!editingTodo) return;
 
     try {
       // GTD 로직: 수집함 제거 조건 체크
@@ -57,30 +46,30 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       let newStatus: typeof editingTodo.status = 'inbox';
 
       // 1. 대기중 선택 → 즉시 제거
-      if (todoForm.clarification === '대기중') {
+      if (updatedTodo.clarification === '대기중') {
         shouldRemoveFromInbox = true;
         newStatus = 'waiting';
       }
       // 2. 일정 선택 + 날짜 설정 → 제거
-      else if (todoForm.clarification === '일정' && todoForm.scheduledDate) {
+      else if (updatedTodo.clarification === '일정' && updatedTodo.scheduledDate) {
         shouldRemoveFromInbox = true;
         newStatus = 'scheduled';
       }
       // 3. 다음행동 선택 + 다음행동상황 1개 이상 → 제거
-      else if (todoForm.clarification === '다음행동' && todoForm.nextActionStatuses && todoForm.nextActionStatuses.length > 0) {
+      else if (updatedTodo.clarification === '다음행동' && updatedTodo.nextActionStatuses && updatedTodo.nextActionStatuses.length > 0) {
         shouldRemoveFromInbox = true;
         newStatus = 'next_action';
       }
 
       await updateInboxItem(editingTodo.id, {
-        content: todoForm.title,
+        content: updatedTodo.title,
         status: shouldRemoveFromInbox ? newStatus : 'inbox',
-        clarification: todoForm.clarification,
-        next_action_status: todoForm.nextActionStatuses?.join(', '),
-        scheduled_date: todoForm.scheduledDate ? todoForm.scheduledDate.toISOString() : undefined,
-        is_highlight: todoForm.isHighlight,
-        is_completed: todoForm.completed,
-        project_id: todoForm.projectIds?.[0], // 첫 번째 프로젝트만 저장 (기존 호환)
+        clarification: updatedTodo.clarification,
+        next_action_status: updatedTodo.nextActionStatuses?.join(', '),
+        scheduled_date: updatedTodo.scheduledDate ? updatedTodo.scheduledDate.toISOString() : undefined,
+        is_highlight: updatedTodo.isHighlight,
+        is_completed: updatedTodo.completed,
+        project_id: updatedTodo.projectIds?.[0], // 첫 번째 프로젝트만 저장 (기존 호환)
       });
 
       setEditingTodo(null);
@@ -196,65 +185,31 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
         ))}
       </div>
 
-      {/* 할일 편집 모달 - DaisyUI dialog */}
-      {editingTodo && todoForm && (
-        <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-              <button
-                onClick={() => {
-                  setEditingTodo(null);
-                  setTodoForm(null);
-                }}
-                className="btn btn-primary btn-sm rounded-full"
-              >
-                취소
-              </button>
-
-              <h3 className="text-lg font-semibold">할일 편집</h3>
-
-              <button
-                onClick={handleSave}
-                className="btn btn-primary btn-sm rounded-full"
-              >
-                저장
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4">
-                {todoForm && (
-                  <>
-                    <TodoFormFields
-                      todo={todoForm}
-                      onChange={setTodoForm}
-                      projects={projects}
-                      notes={notes}
-                      onCreateProject={handleCreateProject}
-                      onUpdateProject={handleUpdateProject}
-                      onDeleteProject={handleDeleteProject}
-                      onCreateNote={handleCreateNote}
-                      onUpdateNote={handleUpdateNote}
-                      onDeleteNote={handleDeleteNote}
-                    />
-
-                    <div className="mt-6">
-                      <button onClick={handleConvertToProject} className="btn btn-outline w-full">
-                        <Plus className="w-4 h-4" />
-                        프로젝트로 변환
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => {
-            setEditingTodo(null);
-            setTodoForm(null);
-          }} />
-        </dialog>
-      )}
+      {/* 할일 편집 모달 - TodoEditModal 컴포넌트 사용 */}
+      <TodoEditModal
+        open={editingTodo !== null && todoForm !== null}
+        todo={todoForm}
+        onClose={() => {
+          setEditingTodo(null);
+          setTodoForm(null);
+        }}
+        onSave={handleSave}
+        onChange={(updated) => setTodoForm(todoForm ? { ...todoForm, ...updated } : null)}
+        projects={projects}
+        notes={notes}
+        onCreateProject={handleCreateProject}
+        onUpdateProject={handleUpdateProject}
+        onDeleteProject={handleDeleteProject}
+        onCreateNote={handleCreateNote}
+        onUpdateNote={handleUpdateNote}
+        onDeleteNote={handleDeleteNote}
+        additionalContent={
+          <button onClick={handleConvertToProject} className="btn btn-outline w-full">
+            <Plus className="w-4 h-4" />
+            프로젝트로 변환
+          </button>
+        }
+      />
     </>
   );
 }
