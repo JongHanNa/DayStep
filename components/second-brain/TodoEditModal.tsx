@@ -27,6 +27,7 @@ interface TodoEditModalProps {
   // 섹션 표시 여부 제어
   showClarification?: boolean;
   showNextActionStatus?: boolean;
+  showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
   showProjects?: boolean;
@@ -51,6 +52,7 @@ export default function TodoEditModal({
   additionalContent,
   showClarification,
   showNextActionStatus,
+  showScheduledDate,
   showHighlight,
   showCompleted,
   showProjects,
@@ -100,6 +102,7 @@ export default function TodoEditModal({
             onDeleteNote={onDeleteNote}
             showClarification={showClarification}
             showNextActionStatus={showNextActionStatus}
+            showScheduledDate={showScheduledDate}
             showHighlight={showHighlight}
             showCompleted={showCompleted}
             showProjects={showProjects}

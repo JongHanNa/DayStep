@@ -39,6 +39,7 @@ interface TodoFormFieldsProps {
   // 섹션 표시 여부 제어 (기본값: true)
   showClarification?: boolean;
   showNextActionStatus?: boolean;
+  showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
   showProjects?: boolean;
@@ -78,6 +79,7 @@ export default function TodoFormFields({
   onDeleteNote,
   showClarification = true,
   showNextActionStatus = true,
+  showScheduledDate = true,
   showHighlight = true,
   showCompleted = true,
   showProjects = true,
@@ -152,22 +154,24 @@ export default function TodoFormFields({
       )}
 
       {/* 날짜 */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text">날짜</span>
-        </label>
-        <input
-          type="date"
-          value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
-          onChange={(e) =>
-            onChange({
-              ...todo,
-              scheduledDate: e.target.value ? new Date(e.target.value) : undefined,
-            })
-          }
-          className="input input-bordered"
-        />
-      </div>
+      {showScheduledDate && (
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text">날짜</span>
+          </label>
+          <input
+            type="date"
+            value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
+            onChange={(e) =>
+              onChange({
+                ...todo,
+                scheduledDate: e.target.value ? new Date(e.target.value) : undefined,
+              })
+            }
+            className="input input-bordered"
+          />
+        </div>
+      )}
 
       {/* 오늘의 하이라이트 */}
       {showHighlight && (

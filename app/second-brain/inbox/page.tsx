@@ -8,7 +8,7 @@ import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import { Plus, Trash2, ArrowRight } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
@@ -214,10 +214,6 @@ export default function InboxPage() {
     }
   };
 
-  const handleClarify = (id: string) => {
-    // 명료화 페이지로 이동
-    router.push('/second-brain/clarify');
-  };
 
   // 새 프로젝트 생성 핸들러
   const handleCreateProject = async (title: string): Promise<Project> => {
@@ -365,16 +361,6 @@ export default function InboxPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleClarify(item.id);
-                        }}
-                        className="btn btn-ghost btn-sm btn-circle"
-                        title="명료화"
-                      >
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
                           handleDelete(item.id);
                         }}
                         className="btn btn-ghost btn-sm btn-circle text-error"
@@ -409,6 +395,7 @@ export default function InboxPage() {
         clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
         showClarification={false}
         showNextActionStatus={false}
+        showScheduledDate={false}
         showHighlight={false}
         showCompleted={false}
         showProjects={false}
