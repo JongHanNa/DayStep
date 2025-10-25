@@ -77,8 +77,8 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
     (process.env.BUILD_TARGET === 'web' && isMobileScreen);
 
   const handleItemClick = (href: string) => {
-    clearSelectedGroup();
     router.push(href);
+    // clearSelectedGroup() 제거 - 메뉴는 조건부 렌더링으로 자동 처리됨
   };
 
   const handleBackdropClick = () => {

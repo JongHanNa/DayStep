@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Home, CheckSquare, Target, Settings, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,11 @@ export default function SecondBrainBottomNav() {
   const pathname = usePathname();
   const isModalOpen = useModalStore((state) => state.isModalOpen);
   const { selectedGroup, setSelectedGroup, clearSelectedGroup } = useNavigationStore();
+
+  // pathname이 변경되면 그룹 메뉴 자동 닫기
+  useEffect(() => {
+    clearSelectedGroup();
+  }, [pathname, clearSelectedGroup]);
 
   // 네비게이션을 숨길 페이지 목록
   const hiddenPaths = ['/', '/login'];
