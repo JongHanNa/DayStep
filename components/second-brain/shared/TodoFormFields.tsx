@@ -36,6 +36,12 @@ interface TodoFormFieldsProps {
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onUpdateNote?: (id: string, title: string) => Promise<void>; // 노트 수정
   onDeleteNote?: (id: string) => Promise<void>; // 노트 삭제
+  // 섹션 표시 여부 제어 (기본값: true)
+  showClarification?: boolean;
+  showNextActionStatus?: boolean;
+  showHighlight?: boolean;
+  showCompleted?: boolean;
+  showProjects?: boolean;
 }
 
 // 다음행동상황 옵션
@@ -70,6 +76,11 @@ export default function TodoFormFields({
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
+  showClarification = true,
+  showNextActionStatus = true,
+  showHighlight = true,
+  showCompleted = true,
+  showProjects = true,
 }: TodoFormFieldsProps) {
 
   const toggleNextActionStatus = (status: string) => {
@@ -97,44 +108,48 @@ export default function TodoFormFields({
       </div>
 
       {/* 명료화 */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text">명료화</span>
-        </label>
-        <select
-          value={todo.clarification || ''}
-          onChange={(e) => onChange({ ...todo, clarification: e.target.value })}
-          className="select select-bordered w-full"
-        >
-          <option value="">선택 안 함</option>
-          <option value="다시알림">다시알림</option>
-          <option value="언젠가">언젠가</option>
-          <option value="대기중">대기중</option>
-          <option value="다음행동">다음행동</option>
-          <option value="일정">일정</option>
-        </select>
-      </div>
+      {showClarification && (
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text">명료화</span>
+          </label>
+          <select
+            value={todo.clarification || ''}
+            onChange={(e) => onChange({ ...todo, clarification: e.target.value })}
+            className="select select-bordered w-full"
+          >
+            <option value="">선택 안 함</option>
+            <option value="다시알림">다시알림</option>
+            <option value="언젠가">언젠가</option>
+            <option value="대기중">대기중</option>
+            <option value="다음행동">다음행동</option>
+            <option value="일정">일정</option>
+          </select>
+        </div>
+      )}
 
       {/* 다음행동상황 (다중 선택) */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text">다음행동상황</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {NEXT_ACTION_OPTIONS.map((option) => {
-            const isSelected = todo.nextActionStatuses?.includes(option);
-            return (
-              <button
-                key={option}
-                onClick={() => toggleNextActionStatus(option)}
-                className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
-              >
-                {option}
-              </button>
-            );
-          })}
+      {showNextActionStatus && (
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text">다음행동상황</span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {NEXT_ACTION_OPTIONS.map((option) => {
+              const isSelected = todo.nextActionStatuses?.includes(option);
+              return (
+                <button
+                  key={option}
+                  onClick={() => toggleNextActionStatus(option)}
+                  className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 날짜 */}
       <div className="form-control mb-4">
@@ -155,36 +170,40 @@ export default function TodoFormFields({
       </div>
 
       {/* 오늘의 하이라이트 */}
-      <div className="form-control mb-4">
-        <label className="cursor-pointer flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={todo.isHighlight}
-            onChange={(e) => onChange({ ...todo, isHighlight: e.target.checked })}
-            className="checkbox"
-          />
-          <span className="label-text flex items-center gap-1">
-            <Star className="w-4 h-4" />
-            오늘의 하이라이트
-          </span>
-        </label>
-      </div>
+      {showHighlight && (
+        <div className="form-control mb-4">
+          <label className="cursor-pointer flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={todo.isHighlight}
+              onChange={(e) => onChange({ ...todo, isHighlight: e.target.checked })}
+              className="checkbox"
+            />
+            <span className="label-text flex items-center gap-1">
+              <Star className="w-4 h-4" />
+              오늘의 하이라이트
+            </span>
+          </label>
+        </div>
+      )}
 
       {/* 완료 여부 */}
-      <div className="form-control mb-6">
-        <label className="cursor-pointer flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={todo.completed}
-            onChange={(e) => onChange({ ...todo, completed: e.target.checked })}
-            className="checkbox"
-          />
-          <span className="label-text">완료됨</span>
-        </label>
-      </div>
+      {showCompleted && (
+        <div className="form-control mb-6">
+          <label className="cursor-pointer flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={todo.completed}
+              onChange={(e) => onChange({ ...todo, completed: e.target.checked })}
+              className="checkbox"
+            />
+            <span className="label-text">완료됨</span>
+          </label>
+        </div>
+      )}
 
-      {/* 프로젝트 추가 (다중 선택) - onCreateProject prop이 있을 때만 표시 */}
-      {onCreateProject && (
+      {/* 프로젝트 추가 (다중 선택) - onCreateProject prop이 있고 showProjects가 true일 때만 표시 */}
+      {onCreateProject && showProjects && (
         <div className="form-control mb-4">
           <label className="label">
             <span className="label-text flex items-center gap-2">

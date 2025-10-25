@@ -24,6 +24,12 @@ interface TodoEditModalProps {
   clarificationPlaceholder?: string;
   // 추가 콘텐츠 (명료화 페이지의 "프로젝트로 변환" 버튼 등)
   additionalContent?: React.ReactNode;
+  // 섹션 표시 여부 제어
+  showClarification?: boolean;
+  showNextActionStatus?: boolean;
+  showHighlight?: boolean;
+  showCompleted?: boolean;
+  showProjects?: boolean;
 }
 
 export default function TodoEditModal({
@@ -43,6 +49,11 @@ export default function TodoEditModal({
   titlePlaceholder,
   clarificationPlaceholder,
   additionalContent,
+  showClarification,
+  showNextActionStatus,
+  showHighlight,
+  showCompleted,
+  showProjects,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
 
@@ -87,6 +98,11 @@ export default function TodoEditModal({
             onCreateNote={onCreateNote}
             onUpdateNote={onUpdateNote}
             onDeleteNote={onDeleteNote}
+            showClarification={showClarification}
+            showNextActionStatus={showNextActionStatus}
+            showHighlight={showHighlight}
+            showCompleted={showCompleted}
+            showProjects={showProjects}
           />
 
           {/* 추가 콘텐츠 영역 (명료화 페이지의 "프로젝트로 변환" 버튼 등) */}

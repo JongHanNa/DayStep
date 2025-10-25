@@ -407,6 +407,11 @@ export default function InboxPage() {
         onCreateNote={handleCreateNote}
         titlePlaceholder="예: 슈퍼업 레퍼런스 정리"
         clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
+        showClarification={false}
+        showNextActionStatus={false}
+        showHighlight={false}
+        showCompleted={false}
+        showProjects={false}
       />
 
       {/* 노트 편집 모달 - DaisyUI dialog */}
