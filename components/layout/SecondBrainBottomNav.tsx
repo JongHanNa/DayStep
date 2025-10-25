@@ -110,11 +110,14 @@ export default function SecondBrainBottomNav() {
               const normalizedHref = tab.href.replace(/\/$/, '');
               isActive = normalizedPathname === normalizedHref;
             } else if (tab.groupType === 'start') {
-              isActive = isStartActive;
+              // 시작 메뉴창이 열려있으면 활성화, 닫혀있으면 경로 기반 활성화
+              isActive = selectedGroup === 'start' || (selectedGroup === null && isStartActive);
             } else if (tab.groupType === 'routine') {
-              isActive = isRoutineActive;
+              // 루틴 메뉴창이 열려있으면 활성화, 닫혀있으면 경로 기반 활성화
+              isActive = selectedGroup === 'routine' || (selectedGroup === null && isRoutineActive);
             } else if (tab.groupType === 'productivity') {
-              isActive = isProductivityActive;
+              // 생산성 메뉴창이 열려있으면 활성화, 닫혀있으면 경로 기반 활성화
+              isActive = selectedGroup === 'productivity' || (selectedGroup === null && isProductivityActive);
             }
 
             // 링크 또는 버튼
