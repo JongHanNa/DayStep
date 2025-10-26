@@ -10,7 +10,7 @@ import type {
   UpdateInboxItemInput,
   GTDStatus,
 } from '@/types/second-brain';
-import { mockInboxItems, saveMockDataToLocalStorage } from '@/lib/mockData/secondBrain';
+import { mockInboxItems } from '@/lib/mockData/secondBrain';
 
 interface InboxStoreState {
   inboxItems: InboxItem[];
@@ -39,7 +39,16 @@ export const useInboxStore = createStore<InboxStoreState>(
     fetchInboxItems: async () => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드 (삭제된 항목 제외)
+
+        // ✅ Zustand persist에서 복원된 데이터가 있으면 그대로 사용
+        // 사용자가 편집한 데이터를 보존하기 위함
+        const currentItems = get().inboxItems;
+        if (currentItems && currentItems.length > 0) {
+          set({ loading: false });
+          return;
+        }
+
+        // ✅ persist 데이터가 없을 때만 mock 데이터 로드 (최초 실행)
         const inboxItems = mockInboxItems.filter((item: InboxItem) => item.status !== 'deleted');
         set({ inboxItems, loading: false });
       } catch (error) {
@@ -98,8 +107,7 @@ export const useInboxStore = createStore<InboxStoreState>(
         const updatedInboxItems = [...get().inboxItems, newInboxItem];
         set({ inboxItems: updatedInboxItems, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // ✅ Zustand persist가 자동으로 저장하므로 saveMockDataToLocalStorage() 제거
 
         return newInboxItem;
       } catch (error) {
@@ -125,12 +133,12 @@ export const useInboxStore = createStore<InboxStoreState>(
             : item
         );
 
+        const updatedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
+
         set({ inboxItems: updatedInboxItems, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // ✅ Zustand persist가 자동으로 저장하므로 saveMockDataToLocalStorage() 제거
 
-        const updatedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!updatedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
 
         return updatedItem;
@@ -159,8 +167,7 @@ export const useInboxStore = createStore<InboxStoreState>(
 
         set({ inboxItems: updatedInboxItems.filter((item: InboxItem) => item.status !== 'deleted'), loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // ✅ Zustand persist가 자동으로 저장하므로 saveMockDataToLocalStorage() 제거
 
         return true;
       } catch (error) {
@@ -190,8 +197,7 @@ export const useInboxStore = createStore<InboxStoreState>(
 
         set({ inboxItems: updatedInboxItems, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // ✅ Zustand persist가 자동으로 저장하므로 saveMockDataToLocalStorage() 제거
 
         const clarifiedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!clarifiedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
@@ -222,8 +228,7 @@ export const useInboxStore = createStore<InboxStoreState>(
 
         set({ inboxItems: updatedInboxItems, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // ✅ Zustand persist가 자동으로 저장하므로 saveMockDataToLocalStorage() 제거
 
         const completedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!completedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
@@ -256,8 +261,7 @@ export const useInboxStore = createStore<InboxStoreState>(
 
         set({ inboxItems: updatedInboxItems, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // ✅ Zustand persist가 자동으로 저장하므로 saveMockDataToLocalStorage() 제거
 
         const delegatedItem = updatedInboxItems.find((i: InboxItem) => i.id === id);
         if (!delegatedItem) throw new Error('수집함 항목을 찾을 수 없습니다.');
@@ -305,8 +309,7 @@ export const useInboxStore = createStore<InboxStoreState>(
         const finalInboxItems = [...updatedInboxItems, newProjectInboxItem];
         set({ inboxItems: finalInboxItems, loading: false });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // ✅ Zustand persist가 자동으로 저장하므로 saveMockDataToLocalStorage() 제거
 
         return {
           deletedTodoId: todoId,

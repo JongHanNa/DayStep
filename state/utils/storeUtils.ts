@@ -61,10 +61,12 @@ export function createStore<T>(
 ) {
   let store = initializer;
 
-  // Immer 미들웨어 적용 (불변성 관리)
+  // ✅ 1. Immer 미들웨어를 먼저 적용 (가장 바깥쪽 레이어)
+  // draft state를 실제 state로 병합하는 역할
   store = immer(store) as any;
 
-  // 지속성 미들웨어 적용
+  // ✅ 2. 지속성 미들웨어를 두 번째로 적용 (중간 레이어)
+  // immer가 병합한 최신 state를 storage에 저장
   if (options.persist) {
     store = persist(
       store as any,
@@ -74,7 +76,7 @@ export function createStore<T>(
         storage: createJSONStorage(() => localStorage),
         partialize: (state: any) => {
           const { blacklist, whitelist } = options.persist!;
-          
+
           if (whitelist) {
             const result: any = {};
             whitelist.forEach(key => {
@@ -84,7 +86,7 @@ export function createStore<T>(
             });
             return result;
           }
-          
+
           if (blacklist) {
             const result = { ...state };
             blacklist.forEach(key => {
@@ -92,7 +94,7 @@ export function createStore<T>(
             });
             return result;
           }
-          
+
           return state;
         },
         migrate: options.persist.migrate,
@@ -100,7 +102,8 @@ export function createStore<T>(
     ) as any;
   }
 
-  // 개발 도구 미들웨어 적용
+  // ✅ 3. 개발 도구 미들웨어를 마지막에 적용 (가장 안쪽 레이어)
+  // 디버깅 정보를 기록
   if (options.devtools !== false && process.env.NODE_ENV === 'development') {
     store = devtools(store as any, { name: options.name }) as any;
   }

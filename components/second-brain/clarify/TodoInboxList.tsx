@@ -18,23 +18,26 @@ interface TodoInboxListProps {
 }
 
 export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh }: TodoInboxListProps) {
-  const { updateInboxItem, convertTodoToProject } = useInboxStore();
+  const { inboxItems, updateInboxItem, convertTodoToProject } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
-  const { todos: allTodos, updateTodo, createTodo } = useTodoStore();
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
   const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
 
   const handleTodoClick = (todo: InboxItem) => {
-    setEditingTodo(todo);
+    // ✅ InboxStore에서 최신 데이터 찾기
+    const latestTodo = inboxItems.find((item) => item.id === todo.id);
+    const todoToEdit = latestTodo || todo; // fallback to clicked todo
+
+    setEditingTodo(todoToEdit);
     setTodoForm({
-      title: todo.content,
-      clarification: todo.clarification,
-      nextActionStatuses: todo.next_action_status ? [todo.next_action_status] : [],
-      scheduledDate: todo.scheduled_date ? new Date(todo.scheduled_date) : undefined,
-      isHighlight: todo.is_highlight || false,
-      completed: todo.is_completed || false,
-      projectIds: todo.project_id ? [todo.project_id] : [], // 기존 단일 선택 호환
+      title: todoToEdit.content,
+      clarification: todoToEdit.clarification,
+      nextActionStatuses: todoToEdit.next_action_status ? [todoToEdit.next_action_status] : [],
+      scheduledDate: todoToEdit.scheduled_date ? new Date(todoToEdit.scheduled_date) : undefined,
+      isHighlight: todoToEdit.is_highlight || false,
+      completed: todoToEdit.is_completed || false,
+      projectIds: todoToEdit.project_id ? [todoToEdit.project_id] : [], // 기존 단일 선택 호환
       noteIds: [], // 새 필드
     });
   };
@@ -63,7 +66,7 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
         newStatus = 'next_action';
       }
 
-      // InboxItem 업데이트
+      // InboxItem 업데이트 (프론트엔드 전용 - 스토어만 반영)
       await updateInboxItem(editingTodo.id, {
         content: updatedTodo.title,
         status: shouldRemoveFromInbox ? newStatus : 'inbox',
@@ -75,73 +78,7 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
         project_id: updatedTodo.projectIds?.[0], // 첫 번째 프로젝트만 저장 (기존 호환)
       });
 
-      // TodoStore와 자동 동기화: InboxItem → Todo 생성/업데이트
-      const relatedTodo = allTodos.find(todo => todo.id === editingTodo.id);
-
-      // InboxItem → CreateTodoInput 변환 (시간 포함 여부에 따라 schedule_type 결정)
-      let schedule_type: 'anytime' | 'scheduled' | 'timed' = 'anytime';
-      let start_time: string | undefined;
-      let end_time: string | undefined;
-
-      if (updatedTodo.scheduledDate) {
-        if (updatedTodo.includeTime) {
-          // 시간 포함 ON → timed
-          schedule_type = 'timed';
-          const startTimeStr = updatedTodo.startTime || '09:00';
-          const [startHour, startMinute] = startTimeStr.split(':');
-          const startDateTime = new Date(updatedTodo.scheduledDate);
-          startDateTime.setHours(parseInt(startHour), parseInt(startMinute), 0, 0);
-          start_time = startDateTime.toISOString();
-
-          if (updatedTodo.includeEndDate && updatedTodo.endDate) {
-            // 종료일 ON → 종료 날짜 + 시간
-            const endTimeStr = updatedTodo.endTime || '18:00';
-            const [endHour, endMinute] = endTimeStr.split(':');
-            const endDateTime = new Date(updatedTodo.endDate);
-            endDateTime.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
-            end_time = endDateTime.toISOString();
-          } else {
-            // 종료일 OFF → 시작 날짜/시간과 동일
-            end_time = start_time;
-          }
-        } else {
-          // 시간 포함 OFF → scheduled (날짜만)
-          schedule_type = 'scheduled';
-          const dateOnly = new Date(updatedTodo.scheduledDate);
-          dateOnly.setHours(0, 0, 0, 0);
-          start_time = dateOnly.toISOString();
-
-          // 종료일이 있으면 end_time도 설정 (00:00:00)
-          if (updatedTodo.includeEndDate && updatedTodo.endDate) {
-            const endDateOnly = new Date(updatedTodo.endDate);
-            endDateOnly.setHours(0, 0, 0, 0);
-            end_time = endDateOnly.toISOString();
-          } else {
-            end_time = undefined;
-          }
-        }
-      }
-
-      const todoInput = {
-        title: updatedTodo.title,
-        completed: updatedTodo.completed || false,
-        schedule_type,
-        start_time,
-        end_time,
-        priority: updatedTodo.isHighlight ? ('high' as const) : ('medium' as const),
-      };
-
-      if (relatedTodo) {
-        // 기존 Todo 업데이트
-        console.log('🔄 [TodoInboxList] 관련 Todo 발견, 업데이트 중:', relatedTodo.id);
-        await updateTodo(relatedTodo.id, todoInput);
-        console.log('✅ [TodoInboxList] TodoStore 업데이트 완료');
-      } else {
-        // 새 Todo 생성
-        console.log('🆕 [TodoInboxList] 관련 Todo 없음, 새로 생성 중...');
-        await createTodo(todoInput);
-        console.log('✅ [TodoInboxList] 새 Todo 생성 완료');
-      }
+      // 💡 참고: TodoStore 동기화는 백엔드 연동 시 구현 예정
 
       setEditingTodo(null);
       setTodoForm(null);
