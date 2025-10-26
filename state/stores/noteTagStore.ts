@@ -188,7 +188,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
           const links: NoteTagLink[] = tags.map(tag => ({
             id: `${memoId}-${tag.id}`,
             user_id: userId,
-            memo_id: memoId,
+            note_id: memoId,
             tag_id: tag.id,
             assigned_at: new Date().toISOString(),
             is_active: true,
@@ -197,7 +197,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
           set((state) => ({
             ...state,
             memoTagLinks: [
-              ...state.memoTagLinks.filter(link => link.memo_id !== memoId),
+              ...state.memoTagLinks.filter(link => link.note_id !== memoId),
               ...links
             ]
           }));
@@ -465,7 +465,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
             const newLink: NoteTagLink = {
               id: `${memoId}-${tagId}`,
               user_id: userId,
-              memo_id: memoId,
+              note_id: memoId,
               tag_id: tagId,
               assigned_at: new Date().toISOString(),
               is_active: true,
@@ -493,7 +493,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
             set((state) => ({
               ...state,
               memoTagLinks: state.memoTagLinks.filter(
-                link => !(link.memo_id === memoId && link.tag_id === tagId)
+                link => !(link.note_id === memoId && link.tag_id === tagId)
               ),
               lastUpdated: new Date().toISOString(),
             }));
@@ -515,7 +515,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
             const newLinks: NoteTagLink[] = tagIds.map(tagId => ({
               id: `${memoId}-${tagId}`,
               user_id: userId,
-              memo_id: memoId,
+              note_id: memoId,
               tag_id: tagId,
               assigned_at: new Date().toISOString(),
               is_active: true,
@@ -524,7 +524,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
             set((state) => ({
               ...state,
               memoTagLinks: [
-                ...state.memoTagLinks.filter(link => link.memo_id !== memoId),
+                ...state.memoTagLinks.filter(link => link.note_id !== memoId),
                 ...newLinks
               ],
               lastUpdated: new Date().toISOString(),
@@ -547,7 +547,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
           const newUserTagLinks: NoteTagLink[] = userTagIds.map(tagId => ({
             id: `${memoId}-${tagId}`,
             user_id: userId,
-            memo_id: memoId,
+            note_id: memoId,
             tag_id: tagId,
             template_id: null,
             assigned_at: new Date().toISOString(),
@@ -558,7 +558,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
           const newTemplateTagLinks: NoteTagLink[] = templateTagIds.map(templateId => ({
             id: `${memoId}-template-${templateId}`,
             user_id: userId,
-            memo_id: memoId,
+            note_id: memoId,
             tag_id: null,
             template_id: templateId,
             assigned_at: new Date().toISOString(),
@@ -568,7 +568,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
           set((state) => ({
             ...state,
             memoTagLinks: [
-              ...state.memoTagLinks.filter(link => link.memo_id !== memoId),
+              ...state.memoTagLinks.filter(link => link.note_id !== memoId),
               ...newUserTagLinks,
               ...newTemplateTagLinks // 템플릿 링크도 포함
             ],
@@ -698,7 +698,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
 
         // note_tag_links에서 해당 노트의 모든 활성 링크 조회
         const memoLinks = state.memoTagLinks.filter(
-          link => link.memo_id === memoId && link.is_active
+          link => link.note_id === memoId && link.is_active
         );
 
         memoLinks.forEach(link => {
@@ -738,7 +738,7 @@ export const useNoteTagStore = create<NoteTagStoreState & NoteTagStoreActions>()
         const state = get();
         return state.memoTagLinks
           .filter(link => link.tag_id === tagId && link.is_active)
-          .map(link => link.memo_id);
+          .map(link => link.note_id);
       },
 
       // 초기화 및 정리

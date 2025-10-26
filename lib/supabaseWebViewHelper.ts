@@ -2294,7 +2294,7 @@ export async function linkMemoToTagWithJWT(
   try {
     // 이미 연결되어 있는지 확인
     const existingLinks = await queryRLSTableWithJWT('note_tag_links', [
-      { column: 'memo_id', operator: 'eq', value: memoId },
+      { column: 'note_id', operator: 'eq', value: memoId },
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
@@ -2309,7 +2309,7 @@ export async function linkMemoToTagWithJWT(
 
     // 노트당 태그 개수 제한 확인 (선택사항: 10개 제한)
     const currentTags = await queryRLSTableWithJWT('note_tag_links', [
-      { column: 'memo_id', operator: 'eq', value: memoId },
+      { column: 'note_id', operator: 'eq', value: memoId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
       select: 'id'
@@ -2321,7 +2321,7 @@ export async function linkMemoToTagWithJWT(
 
     // 새 링크 생성
     const linkData = {
-      memo_id: memoId,
+      note_id: memoId,
       tag_id: tagId,
       user_id: userId
     };
@@ -2347,7 +2347,7 @@ export async function unlinkMemoFromTagWithJWT(
 
   try {
     await deleteWithJWT('note_tag_links', [
-      { column: 'memo_id', operator: 'eq', value: memoId },
+      { column: 'note_id', operator: 'eq', value: memoId },
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
@@ -2371,7 +2371,7 @@ export async function unlinkAllTagsFromMemoWithJWT(
 
   try {
     await deleteWithJWT('note_tag_links', [
-      { column: 'memo_id', operator: 'eq', value: memoId },
+      { column: 'note_id', operator: 'eq', value: memoId },
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
 
@@ -2398,7 +2398,7 @@ export async function fetchTagsForMemoWithJWT(
       select note_tags.*
       from note_tags
       inner join note_tag_links on note_tags.id = note_tag_links.tag_id
-      where note_tag_links.memo_id = '${memoId}'
+      where note_tag_links.note_id = '${memoId}'
         and note_tag_links.user_id = '${userId}'
         and note_tags.user_id = '${userId}'
       order by note_tags.name asc
@@ -2418,7 +2418,7 @@ export async function fetchTagsForMemoWithJWT(
     // 폴백: 링크를 먼저 조회하고 태그를 개별적으로 가져오기
     try {
       const links = await queryRLSTableWithJWT('note_tag_links', [
-        { column: 'memo_id', operator: 'eq', value: memoId },
+        { column: 'note_id', operator: 'eq', value: memoId },
         { column: 'user_id', operator: 'eq', value: userId }
       ], {
         select: 'tag_id'
@@ -2459,11 +2459,11 @@ export async function fetchTagMemosWithJWT(
       { column: 'tag_id', operator: 'eq', value: tagId },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
-      select: 'memo_id',
+      select: 'note_id',
       order: 'created_at.desc'
     });
 
-    const memoIds = links?.map((link: any) => link.memo_id) || [];
+    const memoIds = links?.map((link: any) => link.note_id) || [];
     console.log('✅ JWT 태그에 연결된 노트들 조회 성공:', { tagId, count: memoIds.length });
     return memoIds;
   } catch (error) {
@@ -2704,7 +2704,7 @@ export async function updateMemoTagsWithTemplates(
   try {
     // 1. 기존 연결 모두 삭제
     await deleteWithJWT('note_tag_links', [
-      { column: 'memo_id', operator: 'eq', value: memoId },
+      { column: 'note_id', operator: 'eq', value: memoId },
       { column: 'user_id', operator: 'eq', value: userId }
     ]);
 
@@ -2712,7 +2712,7 @@ export async function updateMemoTagsWithTemplates(
     for (const tagId of userTagIds) {
       await createWithJWT('note_tag_links', {
         user_id: userId,
-        memo_id: memoId,
+        note_id: memoId,
         tag_id: tagId,
         template_id: null, // 사용자 태그이므로 template_id는 null
         is_active: true
@@ -2723,7 +2723,7 @@ export async function updateMemoTagsWithTemplates(
     for (const templateId of templateTagIds) {
       await createWithJWT('note_tag_links', {
         user_id: userId,
-        memo_id: memoId,
+        note_id: memoId,
         tag_id: null, // 템플릿 태그이므로 tag_id는 null
         template_id: templateId,
         is_active: true

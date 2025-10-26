@@ -56,7 +56,7 @@ export interface NoteTagTemplate {
 export interface NoteTagLink {
   id: string;
   user_id: string;
-  memo_id: string;
+  note_id: string;
   tag_id: string | null; // nullable로 변경 (템플릿 태그인 경우 null)
   template_id?: string | null; // 템플릿 태그 ID 추가
   assigned_at: string;
@@ -85,7 +85,7 @@ export interface NoteTagUpdate {
 // Memo Tag Link 생성 입력 타입
 export interface NoteTagLinkInsert {
   user_id: string;
-  memo_id: string;
+  note_id: string;
   tag_id: string;
   is_active?: boolean;
 }
@@ -168,7 +168,7 @@ export interface NoteInstanceUpdate extends Partial<NoteInstanceInsert> {
 
 // Memo tag link input types
 export interface NoteTagLinkInsert {
-  memo_id: string;
+  note_id: string;
   tag_id: string;
   user_id: string;
 }

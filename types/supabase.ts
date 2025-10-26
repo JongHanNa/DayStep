@@ -185,7 +185,7 @@ export type Database = {
           assigned_at: string
           id: string
           is_active: boolean
-          memo_id: string
+          note_id: string
           tag_id: string | null
           template_id: string | null
           user_id: string
@@ -194,7 +194,7 @@ export type Database = {
           assigned_at?: string
           id?: string
           is_active?: boolean
-          memo_id: string
+          note_id: string
           tag_id?: string | null
           template_id?: string | null
           user_id: string
@@ -203,7 +203,7 @@ export type Database = {
           assigned_at?: string
           id?: string
           is_active?: boolean
-          memo_id?: string
+          note_id?: string
           tag_id?: string | null
           template_id?: string | null
           user_id?: string
