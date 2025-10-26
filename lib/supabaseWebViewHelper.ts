@@ -1358,7 +1358,7 @@ export async function fetchMemoInstancesByMemoIdWithJWT(
         value: userId
       },
       {
-        column: 'original_memo_id',
+        column: 'original_note_id',
         operator: 'eq',
         value: originalMemoId
       }
@@ -1430,7 +1430,7 @@ export async function fetchMemoInstanceByDateWithJWT(
         value: userId
       },
       {
-        column: 'original_memo_id',
+        column: 'original_note_id',
         operator: 'eq',
         value: originalMemoId
       },
@@ -1512,7 +1512,7 @@ export async function createMultipleMemoInstancesWithJWT(
 
     for (const date of dates) {
       const instanceData = {
-        original_memo_id: originalMemoId,
+        original_note_id: originalMemoId,
         user_id: userId,
         instance_date: date,
         content: content,

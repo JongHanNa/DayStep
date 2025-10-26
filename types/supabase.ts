@@ -61,7 +61,7 @@ export type Database = {
           notes?: string | null
           relationship?: string | null
           tags?: string[] | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -136,7 +136,7 @@ export type Database = {
           id: string
           instance_date: string
           is_modified: boolean | null
-          original_memo_id: string | null
+          original_note_id: string | null
           related_task_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -147,7 +147,7 @@ export type Database = {
           id?: string
           instance_date: string
           is_modified?: boolean | null
-          original_memo_id?: string | null
+          original_note_id?: string | null
           related_task_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -158,7 +158,7 @@ export type Database = {
           id?: string
           instance_date?: string
           is_modified?: boolean | null
-          original_memo_id?: string | null
+          original_note_id?: string | null
           related_task_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -166,7 +166,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "note_instances_original_note_id_fkey"
-            columns: ["original_memo_id"]
+            columns: ["original_note_id"]
             isOneToOne: false
             referencedRelation: "notes"
             referencedColumns: ["id"]

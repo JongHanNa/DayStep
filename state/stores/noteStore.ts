@@ -1179,7 +1179,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               } else {
                 // 새 인스턴스 생성
                 const result = await createMemoInstanceWithJWT({
-                  original_memo_id: noteId,
+                  original_note_id: noteId,
                   user_id: userId,
                   instance_date: date,
                   content: modifiedContent,

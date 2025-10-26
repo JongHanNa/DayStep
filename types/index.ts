@@ -111,7 +111,7 @@ export interface Note {
 // Note instance types (manually defined until Supabase types are updated)
 export interface NoteInstance {
   id: string;
-  original_memo_id: string;
+  original_note_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -141,7 +141,7 @@ export interface NoteInsert {
 
 // Note instance insert types (manually defined until Supabase types are updated)
 export interface NoteInstanceInsert {
-  original_memo_id: string;
+  original_note_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -295,7 +295,7 @@ export interface CreateTodoInput {
 
 // Note instance types
 export interface CreateNoteInstanceInput {
-  original_memo_id: string;
+  original_note_id: string;
   user_id: string;
   instance_date: string; // YYYY-MM-DD format
   content: string;
@@ -330,7 +330,7 @@ export interface NoteWithInstances {
 // Note instance with original note information
 export interface NoteInstanceWithOriginal {
   id: string;
-  original_memo_id: string;
+  original_note_id: string;
   user_id: string;
   instance_date: string;
   content: string;

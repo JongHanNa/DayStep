@@ -130,7 +130,7 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
       // 노트들의 태그도 수집
       const allTags = new Map();
       notesToDisplay.forEach(note => {
-        const noteId = note._isInstance ? note.original_memo_id : note.id;
+        const noteId = note._isInstance ? note.original_note_id : note.id;
         const tags = getTagsForMemo(noteId);
         tags.forEach(tag => {
           allTags.set(tag.id, tag);
