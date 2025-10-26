@@ -4,15 +4,15 @@ import { useState } from 'react';
 import { AlertCircle, ArrowRight, Pause, Briefcase, RotateCcw } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
-import type { Todo } from '@/entities/todo/Todo';
+import type { InboxItem } from '@/types/second-brain';
 
 interface UnscheduledTodosListProps {
-  overdueTodos: any[];
-  nextActionTodos: any[];
-  projectTodos: any[];
-  waitingTodos: any[];
+  overdueTodos: InboxItem[];
+  nextActionTodos: InboxItem[];
+  projectTodos: InboxItem[];
+  waitingTodos: InboxItem[];
   onResetOverdue: () => void;
-  onTodoClick?: (todo: any) => void;
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 export default function UnscheduledTodosList({
@@ -148,11 +148,11 @@ export default function UnscheduledTodosList({
 
 // 드래그 가능한 할일 아이템
 interface DraggableTodoItemProps {
-  todo: any;
+  todo: InboxItem;
   showNextActionStatuses?: boolean;
   showClarification?: boolean;
   showDate?: boolean;
-  onTodoClick?: (todo: any) => void;
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 function DraggableTodoItem({
@@ -192,23 +192,18 @@ function DraggableTodoItem({
     >
       <div className="flex items-start gap-2">
         <div className="flex-1">
-          <p className="font-medium">{todo.title}</p>
+          <p className="font-medium">{todo.content}</p>
 
           {/* 날짜 표시 */}
-          {showDate && todo.scheduledDate && (
+          {showDate && todo.scheduled_date && (
             <p className="text-sm text-base-content/60 mt-1">
-              {format(
-                typeof todo.scheduledDate === 'string'
-                  ? new Date(todo.scheduledDate)
-                  : todo.scheduledDate,
-                'yyyy.MM.dd'
-              )}
+              {format(new Date(todo.scheduled_date), 'yyyy.MM.dd')}
             </p>
           )}
 
-          {showNextActionStatuses && todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
+          {showNextActionStatuses && todo.next_action_status && (
             <div className="flex flex-wrap gap-1 mt-1">
-              {todo.nextActionStatuses.map((status: string) => (
+              {todo.next_action_status.split(', ').map((status: string) => (
                 <span key={status} className="badge badge-sm bg-base-200">
                   {status}
                 </span>

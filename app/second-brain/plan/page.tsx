@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { DndContext } from '@dnd-kit/core';
 import { useDndKit } from '@/hooks/useDndKit';
@@ -11,7 +11,8 @@ import DateAssignmentArea from '@/components/second-brain/plan/DateAssignmentAre
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import type { Note } from '@/types/second-brain';
+import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
+import type { Note, InboxItem } from '@/types/second-brain';
 
 // 목 노트 데이터
 const MOCK_NOTES: Note[] = [
@@ -94,9 +95,18 @@ export default function PlanPage() {
   const updateProject = useProjectStore(state => state.updateProject);
   const deleteProject = useProjectStore(state => state.deleteProject);
 
+  // InboxStore에서 할일 데이터 가져오기
+  const inboxItems = useInboxStore(state => state.inboxItems);
+  const fetchInboxItems = useInboxStore(state => state.fetchInboxItems);
+  const updateInboxItem = useInboxStore(state => state.updateInboxItem);
+
   // 목데이터 상태
   const [notes, setNotes] = useState(MOCK_NOTES);
-  const [todos, setTodos] = useState(MOCK_TODOS);
+
+  // 초기 데이터 로드
+  useEffect(() => {
+    fetchInboxItems();
+  }, [fetchInboxItems]);
 
   // 선택된 프로젝트 상태
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -106,25 +116,20 @@ export default function PlanPage() {
   const [selectedTodo, setSelectedTodo] = useState<TodoFormData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 로컬 할일 업데이트 함수
-  const updateTodo = async (id: string, updates: any) => {
-    setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-  };
-
   // 할일 클릭 핸들러
-  const handleTodoClick = (todo: any) => {
-    // any 타입 todo를 TodoFormData로 변환
+  const handleTodoClick = (item: InboxItem) => {
+    // InboxItem을 TodoFormData로 변환
     const formData: TodoFormData = {
-      title: todo.title || '',
-      scheduledDate: todo.scheduledDate,
-      startTime: todo.startTime,
-      endTime: todo.endTime,
-      isHighlight: todo.isHighlight || false,
-      completed: todo.completed || false,
-      clarification: todo.clarification,
-      projectIds: todo.projectIds || [],
-      noteIds: todo.noteIds || [],
-      nextActionStatuses: todo.nextActionStatuses || [],
+      title: item.content || '',
+      scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
+      startTime: undefined, // InboxItem에는 없음
+      endTime: undefined,   // InboxItem에는 없음
+      isHighlight: item.is_highlight || false,
+      completed: item.is_completed || false,
+      clarification: item.clarification,
+      projectIds: item.project_id ? [item.project_id] : [],
+      noteIds: [], // InboxItem에는 없음
+      nextActionStatuses: item.next_action_status ? item.next_action_status.split(', ') : [],
     };
     setSelectedTodo(formData);
     setIsModalOpen(true);
@@ -137,13 +142,33 @@ export default function PlanPage() {
   };
 
   // 할일 저장 핸들러
-  const handleSaveTodo = (updatedTodo: TodoFormData) => {
-    if (selectedTodo) {
-      // 현재는 목데이터이므로 업데이트는 생략
-      // 실제 구현에서는 updateTodo 호출
-      console.log('Updated todo:', updatedTodo);
+  const handleSaveTodo = async (updatedTodo: TodoFormData) => {
+    // 현재 편집 중인 InboxItem 찾기
+    const currentItem = inboxItems.find(item => item.content === selectedTodo?.title);
+
+    if (!currentItem) {
+      console.error('편집 중인 할일을 찾을 수 없습니다.');
+      handleCloseModal();
+      return;
     }
-    handleCloseModal();
+
+    try {
+      // InboxStore 업데이트
+      await updateInboxItem(currentItem.id, {
+        content: updatedTodo.title,
+        scheduled_date: updatedTodo.scheduledDate ? updatedTodo.scheduledDate.toISOString() : undefined,
+        is_highlight: updatedTodo.isHighlight,
+        is_completed: updatedTodo.completed,
+        clarification: updatedTodo.clarification,
+        project_id: updatedTodo.projectIds?.[0],
+        next_action_status: updatedTodo.nextActionStatuses?.join(', '),
+      });
+
+      handleCloseModal();
+    } catch (error) {
+      console.error('할일 저장 실패:', error);
+      alert('할일 저장에 실패했습니다.');
+    }
   };
 
   // 할일 변경 핸들러
@@ -201,65 +226,65 @@ export default function PlanPage() {
     return projects.filter(p => p.status === projectFilterType);
   }, [projects, projectFilterType]);
 
-  // 할일 필터링
+  // 할일 필터링 (InboxItem 기반)
   const overdueTodos = useMemo(() => {
-    return todos.filter((t: any) => {
-      if (!t.scheduledDate || t.completed) {
+    return inboxItems.filter((item: InboxItem) => {
+      if (!item.scheduled_date || item.is_completed) {
         return false;
       }
-      const scheduleDate = typeof t.scheduledDate === 'string' ? new Date(t.scheduledDate) : t.scheduledDate;
+      const scheduleDate = new Date(item.scheduled_date);
       return isBefore(scheduleDate, startOfDay(new Date()));
     });
-  }, [todos]);
+  }, [inboxItems]);
 
   const nextActionTodos = useMemo(() => {
-    return todos.filter((t: any) => t.clarification === '다음행동' && !t.scheduledDate);
-  }, [todos]);
+    return inboxItems.filter((item: InboxItem) => item.clarification === '다음행동' && !item.scheduled_date);
+  }, [inboxItems]);
 
   const projectTodos = useMemo(() => {
-    return todos.filter((t: any) => {
-      if (t.scheduledDate) {
+    return inboxItems.filter((item: InboxItem) => {
+      if (item.scheduled_date) {
         return false;
       }
       if (!selectedProjectId) {
-        return !t.projectIds || t.projectIds.length === 0;
+        return !item.project_id;
       }
-      return t.projectIds?.includes(selectedProjectId);
+      return item.project_id === selectedProjectId;
     });
-  }, [todos, selectedProjectId]);
+  }, [inboxItems, selectedProjectId]);
 
   const waitingTodos = useMemo(() => {
-    return todos.filter((t: any) => t.clarification === '대기중' && !t.scheduledDate);
-  }, [todos]);
+    return inboxItems.filter((item: InboxItem) => item.clarification === '대기중' && !item.scheduled_date);
+  }, [inboxItems]);
 
   const todayTodos = useMemo(() => {
     const today = format(startOfDay(new Date()), 'yyyy-MM-dd');
-    return todos.filter((t: any) => {
-      if (!t.scheduledDate) {
+    return inboxItems.filter((item: InboxItem) => {
+      if (!item.scheduled_date) {
         return false;
       }
-      const scheduleDate = typeof t.scheduledDate === 'string' ? new Date(t.scheduledDate) : t.scheduledDate;
+      const scheduleDate = new Date(item.scheduled_date);
       return format(scheduleDate, 'yyyy-MM-dd') === today;
     });
-  }, [todos]);
+  }, [inboxItems]);
 
   const tomorrowTodos = useMemo(() => {
     const tomorrow = format(addDays(startOfDay(new Date()), 1), 'yyyy-MM-dd');
-    return todos.filter((t: any) => {
-      if (!t.scheduledDate) {
+    return inboxItems.filter((item: InboxItem) => {
+      if (!item.scheduled_date) {
         return false;
       }
-      const scheduleDate = typeof t.scheduledDate === 'string' ? new Date(t.scheduledDate) : t.scheduledDate;
+      const scheduleDate = new Date(item.scheduled_date);
       return format(scheduleDate, 'yyyy-MM-dd') === tomorrow;
     });
-  }, [todos]);
+  }, [inboxItems]);
 
   // 드래그 앤 드롭 핸들러
   const { sensors, handleDragStart, handleDragEnd: handleDndEnd, dndContextProps } = useDndKit({
     onDragEnd: async (active, over) => {
       if (!over || !over.id) return;
 
-      const todoId = active.id as string;
+      const itemId = active.id as string;
       const overIdString = over.id as string;
 
       // 날짜 형식: yyyy-MM-dd
@@ -269,8 +294,10 @@ export default function PlanPage() {
           return;
         }
 
-        // 할일의 날짜 업데이트
-        await updateTodo(todoId, { scheduledDate } as any);
+        // InboxItem의 날짜 업데이트
+        await updateInboxItem(itemId, {
+          scheduled_date: scheduledDate.toISOString(),
+        });
       }
     },
   });
@@ -281,11 +308,11 @@ export default function PlanPage() {
       return;
     }
 
-    for (const todo of overdueTodos) {
-      await updateTodo(todo.id, {
-        scheduledDate: undefined,
+    for (const item of overdueTodos) {
+      await updateInboxItem(item.id, {
+        scheduled_date: undefined,
         clarification: undefined,
-      } as any);
+      });
     }
   };
 
@@ -328,7 +355,7 @@ export default function PlanPage() {
             <DateAssignmentArea
               todayTodos={todayTodos}
               tomorrowTodos={tomorrowTodos}
-              allTodos={todos}
+              allTodos={inboxItems}
               onTodoClick={handleTodoClick}
             />
           </div>

@@ -6,12 +6,13 @@ import { useDroppable } from '@dnd-kit/core';
 import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import WeekCalendar from './WeekCalendar';
+import type { InboxItem } from '@/types/second-brain';
 
 interface DateAssignmentAreaProps {
-  todayTodos: any[];
-  tomorrowTodos: any[];
-  allTodos: any[];
-  onTodoClick?: (todo: any) => void;
+  todayTodos: InboxItem[];
+  tomorrowTodos: InboxItem[];
+  allTodos: InboxItem[];
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 export default function DateAssignmentArea({
@@ -82,9 +83,9 @@ export default function DateAssignmentArea({
 // 드롭 가능한 날짜별 할일 리스트
 interface DroppableDateListProps {
   dateString: string;
-  todos: any[];
+  todos: InboxItem[];
   title: string;
-  onTodoClick?: (todo: any) => void;
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 function DroppableDateList({ dateString, todos, title, onTodoClick }: DroppableDateListProps) {
@@ -117,17 +118,11 @@ function DroppableDateList({ dateString, todos, title, onTodoClick }: DroppableD
 
 // 할일 리스트 아이템
 interface TodoListItemProps {
-  todo: any;
-  onTodoClick?: (todo: any) => void;
+  todo: InboxItem;
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 function TodoListItem({ todo, onTodoClick }: TodoListItemProps) {
-  // 시간 지정 여부 확인
-  const hasTime = todo.startTime || todo.endTime;
-  const timeDisplay = hasTime
-    ? `${todo.startTime || ''} ${todo.endTime ? '- ' + todo.endTime : ''}`
-    : '계획되지 않음';
-
   const handleClick = () => {
     if (onTodoClick) {
       onTodoClick(todo);
@@ -137,17 +132,16 @@ function TodoListItem({ todo, onTodoClick }: TodoListItemProps) {
   return (
     <div className="bg-base-100 p-3 rounded-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleClick}>
       <div className="flex items-start gap-2">
-        <input type="checkbox" checked={todo.completed} className="checkbox checkbox-sm mt-1" readOnly />
+        <input type="checkbox" checked={todo.is_completed} className="checkbox checkbox-sm mt-1" readOnly />
         <div className="flex-1">
-          <p className="font-medium">{todo.title}</p>
+          <p className="font-medium">{todo.content}</p>
           <div className="flex flex-wrap gap-2 mt-1 text-sm text-base-content/70">
             {todo.clarification && (
               <span className="badge badge-sm bg-base-200">{todo.clarification}</span>
             )}
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {timeDisplay}
-            </span>
+            {todo.is_highlight && (
+              <span className="badge badge-sm badge-primary">중요</span>
+            )}
           </div>
         </div>
       </div>

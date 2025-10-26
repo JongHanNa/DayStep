@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
+import type { InboxItem } from '@/types/second-brain';
 
 interface WeekCalendarProps {
-  todos: any[];
-  onTodoClick?: (todo: any) => void;
+  todos: InboxItem[];
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 export default function WeekCalendar({ todos, onTodoClick }: WeekCalendarProps) {
@@ -42,13 +43,11 @@ export default function WeekCalendar({ todos, onTodoClick }: WeekCalendarProps) 
       <div className="grid grid-cols-7 gap-2">
         {weekDays.map((day) => {
           const dateString = format(day, 'yyyy-MM-dd');
-          const dayTodos = todos
-            .filter(
-              (todo) =>
-                todo.scheduledDate &&
-                format(typeof todo.scheduledDate === 'string' ? new Date(todo.scheduledDate) : todo.scheduledDate, 'yyyy-MM-dd') === dateString
-            )
-            .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          const dayTodos = todos.filter((item) => {
+            if (!item.scheduled_date) return false;
+            const scheduleDate = new Date(item.scheduled_date);
+            return format(scheduleDate, 'yyyy-MM-dd') === dateString;
+          });
           const isToday = isSameDay(day, new Date());
 
           return (
@@ -70,8 +69,8 @@ export default function WeekCalendar({ todos, onTodoClick }: WeekCalendarProps) 
 interface WeekDayColumnProps {
   date: Date;
   isToday: boolean;
-  todos: any[];
-  onTodoClick?: (todo: any) => void;
+  todos: InboxItem[];
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 function WeekDayColumn({ date, isToday, todos, onTodoClick }: WeekDayColumnProps) {
@@ -122,8 +121,8 @@ function WeekDayColumn({ date, isToday, todos, onTodoClick }: WeekDayColumnProps
 
 // 주간 뷰 할일 카드 컴포넌트
 interface WeekTodoCardProps {
-  todo: any;
-  onTodoClick?: (todo: any) => void;
+  todo: InboxItem;
+  onTodoClick?: (item: InboxItem) => void;
 }
 
 function WeekTodoCard({ todo, onTodoClick }: WeekTodoCardProps) {
@@ -153,10 +152,10 @@ function WeekTodoCard({ todo, onTodoClick }: WeekTodoCardProps) {
     >
       {/* 제목 + 하이라이트 */}
       <div className="flex items-center gap-2 mb-1">
-        <p className={`text-xs font-medium flex-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
-          {todo.title}
+        <p className={`text-xs font-medium flex-1 ${todo.is_completed ? 'line-through text-base-content/50' : ''}`}>
+          {todo.content}
         </p>
-        {todo.isHighlight && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
+        {todo.is_highlight && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
       </div>
 
       {/* 명료화 표시 */}
