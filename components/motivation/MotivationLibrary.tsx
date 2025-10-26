@@ -177,8 +177,7 @@ const MotivationLibrary: React.FC<MotivationLibraryProps> = ({
                   모든 태그
                 </DropdownMenuItem>
                 {allTags.map(tag => {
-                  const iconData = getUnifiedIcon(tag.icon as UnifiedIconKey);
-                  const IconComponent = iconData.component;
+                  const IconComponent = getUnifiedIcon(tag.icon as UnifiedIconKey);
                   return (
                     <DropdownMenuItem
                       key={tag.id}

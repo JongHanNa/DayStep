@@ -2,7 +2,7 @@
 
 import { Folder, FolderOpen } from 'lucide-react';
 import type { Project } from '@/types/second-brain';
-import { getUnifiedIcon } from '@/lib/icon-collection';
+import { getUnifiedIcon, type UnifiedIconKey } from '@/lib/icon-collection';
 
 interface ProjectTabsProps {
   projects: Project[];
@@ -50,7 +50,7 @@ export default function ProjectTabs({
               전체
             </button>
             {projects.map((project) => {
-              const IconComponent = project.icon ? getUnifiedIcon(project.icon) : Folder;
+              const IconComponent = project.icon ? getUnifiedIcon(project.icon as UnifiedIconKey) : Folder;
               return (
                 <button
                   key={project.id}

@@ -20,6 +20,13 @@ export interface TodoFormData {
   projectIds?: string[]; // 연결된 프로젝트 IDs (다중 선택)
   noteIds?: string[]; // 연결된 노트 IDs (다중 선택)
   displayOrder?: number; // 같은 날짜 내 표시 순서
+
+  // 시간 관련 필드
+  includeTime?: boolean; // 시간 포함 여부
+  includeEndDate?: boolean; // 종료일 포함 여부
+  startTime?: string; // 시작 시간 (HH:mm 형식)
+  endDate?: Date; // 종료 날짜
+  endTime?: string; // 종료 시간 (HH:mm 형식)
 }
 
 interface TodoFormFieldsProps {
@@ -155,21 +162,107 @@ export default function TodoFormFields({
 
       {/* 날짜 */}
       {showScheduledDate && (
-        <div className="form-control mb-4">
-          <label className="label">
-            <span className="label-text">날짜</span>
+        <div className="my-4">
+          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+            날짜 선택
           </label>
-          <input
-            type="date"
-            value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
-            onChange={(e) =>
-              onChange({
-                ...todo,
-                scheduledDate: e.target.value ? new Date(e.target.value) : undefined,
-              })
-            }
-            className="input input-bordered"
-          />
+          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+            {/* 시작 날짜 */}
+            <div className="form-control mb-3">
+              <label className="label">
+                <span className="label-text">시작 날짜</span>
+              </label>
+              <input
+                type="date"
+                value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
+                onChange={(e) =>
+                  onChange({
+                    ...todo,
+                    scheduledDate: e.target.value ? new Date(e.target.value) : undefined,
+                  })
+                }
+                className="input input-bordered w-full"
+              />
+            </div>
+
+            {/* 시작 시간 (시간 포함 ON일 때만) */}
+            {todo.includeTime && (
+              <div className="form-control mb-3">
+                <label className="label">
+                  <span className="label-text">시작 시간</span>
+                </label>
+                <input
+                  type="time"
+                  value={todo.startTime || '09:00'}
+                  onChange={(e) => onChange({ ...todo, startTime: e.target.value })}
+                  className="input input-bordered w-full"
+                />
+              </div>
+            )}
+
+            {/* 종료일 (종료일 토글 ON일 때만) */}
+            {todo.includeEndDate && (
+              <>
+                <div className="form-control mb-3">
+                  <label className="label">
+                    <span className="label-text">종료 날짜</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={todo.endDate ? format(todo.endDate, 'yyyy-MM-dd') : ''}
+                    onChange={(e) =>
+                      onChange({
+                        ...todo,
+                        endDate: e.target.value ? new Date(e.target.value) : undefined,
+                      })
+                    }
+                    className="input input-bordered w-full"
+                  />
+                </div>
+
+                {/* 종료 시간 (종료일 ON + 시간 포함 ON일 때만) */}
+                {todo.includeTime && (
+                  <div className="form-control mb-3">
+                    <label className="label">
+                      <span className="label-text">종료 시간</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={todo.endTime || '18:00'}
+                      onChange={(e) => onChange({ ...todo, endTime: e.target.value })}
+                      className="input input-bordered w-full"
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* 종료일 토글 */}
+            <div className="form-control mb-3">
+              <label className="cursor-pointer flex items-center justify-between">
+                <span className="label-text">종료일</span>
+                <input
+                  type="checkbox"
+                  checked={todo.includeEndDate || false}
+                  onChange={(e) => onChange({ ...todo, includeEndDate: e.target.checked })}
+                  className="toggle toggle-primary"
+                />
+              </label>
+            </div>
+
+            {/* 시간 포함 토글 */}
+            <div className="form-control">
+              <label className="cursor-pointer flex items-center justify-between">
+                <span className="label-text">시간 포함</span>
+                <input
+                  type="checkbox"
+                  checked={todo.includeTime || false}
+                  onChange={(e) => onChange({ ...todo, includeTime: e.target.checked })}
+                  className="toggle toggle-primary"
+                />
+              </label>
+            </div>
+          </div>
         </div>
       )}
 

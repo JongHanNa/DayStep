@@ -78,8 +78,7 @@ const TodoMetadata: React.FC<TodoMetadataProps> = ({
                 title="아이콘 변경하기"
               >
                 {(() => {
-                  const iconData = getUnifiedIcon(selectedIcon);
-                  const IconComponent = iconData.component;
+                  const IconComponent = getUnifiedIcon(selectedIcon);
                   return <IconComponent
                     className="group-hover:scale-110 transition-transform"
                     style={{ color: colorData?.hex || '#DBAC6C' }}

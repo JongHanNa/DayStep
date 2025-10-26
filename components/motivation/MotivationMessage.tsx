@@ -37,8 +37,7 @@ const MotivationMessage: React.FC<MotivationMessageProps> = ({
   const { getAllTags } = useMotivationStore();
   const allTags = getAllTags();
 
-  const iconData = showIcon && message.icon ? getUnifiedIcon(message.icon) : getUnifiedIcon('lucide-Heart');
-  const IconComponent = showIcon ? iconData.component : null;
+  const IconComponent = showIcon && message.icon ? getUnifiedIcon(message.icon) : showIcon ? getUnifiedIcon('lucide-Heart') : null;
 
   // content의 첫 줄을 제목으로, 나머지를 본문으로 분리
   const lines = message.content.split('\n');

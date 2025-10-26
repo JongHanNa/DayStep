@@ -11,12 +11,43 @@ import DateAssignmentArea from '@/components/second-brain/plan/DateAssignmentAre
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import type { Note } from '@/types/second-brain';
 
 // 목 노트 데이터
-const MOCK_NOTES = [
-  { id: '1', title: '프로젝트 아이디어', createdAt: new Date('2025-01-20') },
-  { id: '2', title: '회의록', createdAt: new Date('2025-01-22') },
-  { id: '3', title: '학습 자료', createdAt: new Date('2025-01-23') },
+const MOCK_NOTES: Note[] = [
+  {
+    id: '1',
+    user_id: 'mock-user',
+    title: '프로젝트 아이디어',
+    content: '',
+    memo_type: 'note',
+    tags: [],
+    is_pinned: false,
+    created_at: new Date('2025-01-20').toISOString(),
+    updated_at: new Date('2025-01-20').toISOString(),
+  },
+  {
+    id: '2',
+    user_id: 'mock-user',
+    title: '회의록',
+    content: '',
+    memo_type: 'note',
+    tags: [],
+    is_pinned: false,
+    created_at: new Date('2025-01-22').toISOString(),
+    updated_at: new Date('2025-01-22').toISOString(),
+  },
+  {
+    id: '3',
+    user_id: 'mock-user',
+    title: '학습 자료',
+    content: '',
+    memo_type: 'reference',
+    tags: [],
+    is_pinned: false,
+    created_at: new Date('2025-01-23').toISOString(),
+    updated_at: new Date('2025-01-23').toISOString(),
+  },
 ];
 
 // 목 할일 데이터
@@ -89,7 +120,6 @@ export default function PlanPage() {
       startTime: todo.startTime,
       endTime: todo.endTime,
       isHighlight: todo.isHighlight || false,
-      isAllDay: todo.isAllDay || false,
       completed: todo.completed || false,
       clarification: todo.clarification,
       projectIds: todo.projectIds || [],
@@ -143,10 +173,16 @@ export default function PlanPage() {
 
   // 노트 CRUD 핸들러 (목데이터)
   const handleCreateNote = async (title: string) => {
-    const newNote = {
+    const newNote: Note = {
       id: `note-${Date.now()}`,
+      user_id: 'mock-user',
       title,
-      createdAt: new Date(),
+      content: '',
+      memo_type: 'note',
+      tags: [],
+      is_pinned: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     setNotes(prev => [...prev, newNote]);
     return newNote;

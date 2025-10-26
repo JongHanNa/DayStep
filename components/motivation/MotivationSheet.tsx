@@ -364,8 +364,7 @@ const MotivationSheet: React.FC<MotivationSheetProps> = ({
                         <Label htmlFor="tags">태그</Label>
                         <div className="flex flex-wrap gap-2 mb-2">
                           {allTags.map(tag => {
-                            const iconData = getUnifiedIcon(tag.icon);
-                            const IconComponent = iconData.component;
+                            const IconComponent = getUnifiedIcon(tag.icon);
                             const isSelected = newMessage.tags.includes(tag.id);
 
                             return (
@@ -413,8 +412,7 @@ const MotivationSheet: React.FC<MotivationSheetProps> = ({
                             </SelectTrigger>
                             <SelectContent>
                               {allTags.map(tag => {
-                                const iconData = getUnifiedIcon(tag.icon);
-                                const IconComponent = iconData.component;
+                                const IconComponent = getUnifiedIcon(tag.icon);
                                 return (
                                   <SelectItem key={tag.icon} value={tag.icon}>
                                     <div className="flex items-center gap-2">

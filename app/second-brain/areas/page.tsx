@@ -483,7 +483,7 @@ export default function AreasPage() {
                           title="아이콘 변경하기"
                         >
                           {(() => {
-                            const IconComponent = getUnifiedIcon(editingArea.icon as UnifiedIconKey).component;
+                            const IconComponent = getUnifiedIcon(editingArea.icon as UnifiedIconKey);
                             return <IconComponent
                               className="group-hover:scale-110 transition-transform"
                               style={{ color: editingArea.color }}
@@ -616,7 +616,7 @@ export default function AreasPage() {
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   {AREA_PRESETS.map((preset) => {
                     const isSelected = selectedPresets.some((p) => p.title === preset.title);
-                    const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey).component;
+                    const IconComponent = getUnifiedIcon(preset.icon as UnifiedIconKey);
 
                     return (
                       <button

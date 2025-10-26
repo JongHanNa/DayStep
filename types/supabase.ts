@@ -66,102 +66,6 @@ export type Database = {
         }
         Relationships: []
       }
-      note_instances: {
-        Row: {
-          content: string
-          created_at: string | null
-          id: string
-          instance_date: string
-          is_modified: boolean | null
-          original_memo_id: string | null
-          related_task_id: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          id?: string
-          instance_date: string
-          is_modified?: boolean | null
-          original_memo_id?: string | null
-          related_task_id?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          id?: string
-          instance_date?: string
-          is_modified?: boolean | null
-          original_memo_id?: string | null
-          related_task_id?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "note_instances_original_memo_id_fkey"
-            columns: ["original_memo_id"]
-            isOneToOne: false
-            referencedRelation: "notes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "note_instances_related_task_id_fkey"
-            columns: ["related_task_id"]
-            isOneToOne: false
-            referencedRelation: "todos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      note_tag_links: {
-        Row: {
-          assigned_at: string
-          id: string
-          is_active: boolean
-          memo_id: string
-          tag_id: string | null
-          template_id: string | null
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string
-          id?: string
-          is_active?: boolean
-          memo_id: string
-          tag_id?: string | null
-          template_id?: string | null
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string
-          id?: string
-          is_active?: boolean
-          memo_id?: string
-          tag_id?: string | null
-          template_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "note_tag_links_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "note_tags"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "note_tag_links_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "note_tag_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       motivation_tags: {
         Row: {
           color: string
@@ -224,6 +128,102 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      note_instances: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          instance_date: string
+          is_modified: boolean | null
+          original_memo_id: string | null
+          related_task_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          instance_date: string
+          is_modified?: boolean | null
+          original_memo_id?: string | null
+          related_task_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          instance_date?: string
+          is_modified?: boolean | null
+          original_memo_id?: string | null
+          related_task_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_instances_original_note_id_fkey"
+            columns: ["original_memo_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_instances_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      note_tag_links: {
+        Row: {
+          assigned_at: string
+          id: string
+          is_active: boolean
+          memo_id: string
+          tag_id: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          id?: string
+          is_active?: boolean
+          memo_id: string
+          tag_id?: string | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          id?: string
+          is_active?: boolean
+          memo_id?: string
+          tag_id?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_tag_links_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "note_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_tag_links_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "note_tag_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       note_tag_templates: {
         Row: {
@@ -309,7 +309,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "memo_tags_template_id_fkey"
+            foreignKeyName: "note_tags_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "note_tag_templates"
@@ -823,7 +823,7 @@ export type Database = {
         | "weekly"
         | "monthly"
         | "custom"
-      schedule_type_enum: "all_day" | "timed" | "anytime"
+      schedule_type_enum: "all_day" | "timed" | "anytime" | "scheduled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -952,7 +952,7 @@ export const Constants = {
   public: {
     Enums: {
       recurrence_pattern_enum: ["none", "daily", "weekly", "monthly", "custom"],
-      schedule_type_enum: ["all_day", "timed", "anytime"],
+      schedule_type_enum: ["all_day", "timed", "anytime", "scheduled"],
     },
   },
 } as const

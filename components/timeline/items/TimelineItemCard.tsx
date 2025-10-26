@@ -538,9 +538,8 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                           return null;
                         }
 
-                        const iconData = getUnifiedIcon(iconKey as UnifiedIconKey);
-                        if (!iconData) return null;
-                        const IconComponent = iconData.component;
+                        const IconComponent = getUnifiedIcon(iconKey as UnifiedIconKey);
+                        if (!IconComponent) return null;
                         return <IconComponent size={20} className="text-black dark:text-white" />;
                       })()}
                     />
@@ -583,9 +582,8 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                           return null;
                         }
 
-                        const iconData = getUnifiedIcon(iconKey as UnifiedIconKey);
-                        if (!iconData) return null;
-                        const IconComponent = iconData.component;
+                        const IconComponent = getUnifiedIcon(iconKey as UnifiedIconKey);
+                        if (!IconComponent) return null;
                         return <IconComponent size={20} className="text-black dark:text-white" />;
                       })()}
                     />

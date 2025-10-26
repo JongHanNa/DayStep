@@ -26,8 +26,7 @@ const MotivationBadge: React.FC<MotivationBadgeProps> = ({
   disabled = false
 }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const iconData = message.icon ? getUnifiedIcon(message.icon) : getUnifiedIcon('lucide-Heart');
-  const IconComponent = iconData.component;
+  const IconComponent = message.icon ? getUnifiedIcon(message.icon) : getUnifiedIcon('lucide-Heart');
 
   // content에서 제목 추출
   const lines = message.content.split('\n');

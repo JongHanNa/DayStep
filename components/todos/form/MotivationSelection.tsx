@@ -136,8 +136,7 @@ const MotivationSelection: React.FC<MotivationSelectionProps> = ({
           {currentMotivations.length > 0 ? (
             <div className="space-y-2">
               {currentMotivations.map((motivation, index) => {
-                const iconData = getUnifiedIcon(motivation.icon as UnifiedIconKey);
-                const IconComponent = iconData.component;
+                const IconComponent = getUnifiedIcon(motivation.icon as UnifiedIconKey);
 
                 return (
                   <div

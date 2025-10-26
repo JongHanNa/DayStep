@@ -387,7 +387,7 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                       {icons.map(([key, iconData]) => {
                         const isSelected = selectedIcon === key;
                         const IconComponent = iconData.component;
-                        
+
                         return (
                           <Tooltip key={key} delayDuration={300}>
                             <TooltipTrigger asChild>
@@ -403,19 +403,19 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                                 )}
                               >
                                 <div className="flex items-center justify-center">
-                                  <IconComponent 
-                                    className="w-5 h-5 text-black dark:text-white" 
+                                  <IconComponent
+                                    className="w-5 h-5 text-black dark:text-white"
                                     size={20}
                                   />
                                 </div>
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent 
+                            <TooltipContent
                               side="top"
                               className="px-3 py-2 text-sm font-medium bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg"
                             >
                               <div className="text-center">
-                                <div className="font-semibold text-base">{iconData.label}</div>
+                                <div className="font-semibold text-base">{iconData?.label}</div>
                                 <div className="text-xs text-gray-300 dark:text-gray-600 mt-1">
                                   {key}
                                 </div>

@@ -336,7 +336,7 @@ export default function GoalEditDialog({
                     ) : (
                       <div className="space-y-2">
                         {filteredProjects.map((project) => {
-                          const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey).component;
+                          const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
                           return (
                             <div
                               key={project.id}

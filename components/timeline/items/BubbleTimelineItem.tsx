@@ -141,7 +141,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
     const iconData = getUnifiedIcon(iconKey as UnifiedIconKey);
     if (iconData) {
-      return iconData.component;
+      return iconData;
     }
 
     // 폴백: lucide-react 아이콘
