@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AlertCircle, ArrowRight, Pause, Briefcase, RotateCcw } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
@@ -27,21 +27,16 @@ export default function UnscheduledTodosList({
 }: UnscheduledTodosListProps) {
   const [activeTab, setActiveTab] = useState<'overdue' | 'nextAction' | 'project' | 'waiting'>('overdue');
 
-  // 프로젝트별 할일 그룹화
+  // 프로젝트가 할당된 할일 수 계산
+  const projectAssignedTodosCount = useMemo(() => {
+    return projectTodos.filter(todo => todo.project_id).length;
+  }, [projectTodos]);
+
+  // 프로젝트별 할일 그룹화 (프로젝트가 할당된 할일들만)
   const groupTodosByProject = (todos: InboxItem[]) => {
     const groups: { projectId: string | null; projectName: string; todos: InboxItem[] }[] = [];
 
-    // 프로젝트 없음 그룹 (project_id가 없는 할일들)
-    const noProjectTodos = todos.filter(todo => !todo.project_id);
-    if (noProjectTodos.length > 0) {
-      groups.push({
-        projectId: null,
-        projectName: '프로젝트 없음',
-        todos: noProjectTodos,
-      });
-    }
-
-    // 프로젝트별 그룹
+    // 프로젝트별 그룹 (project_id가 있는 할일들만)
     const projectIds = [...new Set(todos.filter(todo => todo.project_id).map(todo => todo.project_id))];
     projectIds.forEach(projectId => {
       const project = projects.find(p => p.id === projectId);
@@ -84,7 +79,7 @@ export default function UnscheduledTodosList({
           className={`btn btn-sm ${activeTab === 'project' ? 'bg-base-300' : 'btn-ghost'} rounded-full`}
         >
           <Briefcase className="w-4 h-4" />
-          진행중인 프로젝트별 할일 ({projectTodos.length})
+          진행중인 프로젝트별 할일 ({projectAssignedTodosCount})
         </button>
         <button
           onClick={() => setActiveTab('waiting')}
@@ -144,7 +139,6 @@ export default function UnscheduledTodosList({
 
         {activeTab === 'project' && (
           <div>
-            <p className="text-sm text-base-content/70 mb-3">프로젝트별로 그룹화된 할일들</p>
             {projectTodos.length === 0 ? (
               <div className="text-center py-12 text-base-content/50">
                 프로젝트 할일이 없습니다.
