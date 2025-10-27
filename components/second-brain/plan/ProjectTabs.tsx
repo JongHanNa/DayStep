@@ -5,61 +5,57 @@ import type { Project } from '@/types/second-brain';
 import { getUnifiedIcon, type UnifiedIconKey } from '@/lib/icon-collection';
 
 interface ProjectTabsProps {
-  projects: Project[];
-  selectedProjectId: string | null;
+  allProjects: Project[]; // 전체 프로젝트 (카운트 계산용)
+  projects: Project[]; // 필터링된 프로젝트 (표시용)
   projectFilterType: 'active' | 'not_started';
-  onProjectSelect: (projectId: string | null) => void;
   onProjectFilterChange: (type: 'active' | 'not_started') => void;
+  onProjectClick: (project: Project) => void;
 }
 
 export default function ProjectTabs({
+  allProjects,
   projects,
-  selectedProjectId,
   projectFilterType,
-  onProjectSelect,
   onProjectFilterChange,
+  onProjectClick,
 }: ProjectTabsProps) {
+  // 프로젝트 상태별 카운트 계산 (전체 프로젝트에서 계산)
+  const activeCount = allProjects.filter(p => p.status === 'active').length;
+  const notStartedCount = allProjects.filter(p => p.status === 'not_started').length;
+
   return (
     <div className="bg-base-200 border-b border-base-300">
       <div className="max-w-7xl mx-auto px-4 py-4">
-        {/* 프로젝트 상태 필터 탭 */}
+        {/* 프로젝트 상태 필터 탭 (클릭 가능) */}
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => onProjectFilterChange('active')}
             className={`btn btn-sm ${projectFilterType === 'active' ? 'bg-base-300' : 'btn-ghost'} rounded-full`}
           >
             <FolderOpen className="w-4 h-4" />
-            진행중인 프로젝트
+            <span className="text-sm">진행중인 프로젝트</span>
+            <span className="badge badge-sm bg-base-100">{activeCount}</span>
           </button>
           <button
             onClick={() => onProjectFilterChange('not_started')}
             className={`btn btn-sm ${projectFilterType === 'not_started' ? 'bg-base-300' : 'btn-ghost'} rounded-full`}
           >
             <Folder className="w-4 h-4" />
-            시작 안한 프로젝트
+            <span className="text-sm">시작 안한 프로젝트</span>
+            <span className="badge badge-sm bg-base-100">{notStartedCount}</span>
           </button>
         </div>
 
-        {/* 프로젝트 목록 */}
+        {/* 프로젝트 목록 ("전체" 버튼 제거) */}
         {projects.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => onProjectSelect(null)}
-              className={`btn btn-sm ${selectedProjectId === null ? 'bg-base-300' : 'btn-ghost'} rounded-full`}
-            >
-              전체
-            </button>
             {projects.map((project) => {
               const IconComponent = project.icon ? getUnifiedIcon(project.icon as UnifiedIconKey) : Folder;
               return (
                 <button
                   key={project.id}
-                  onClick={() => onProjectSelect(project.id)}
-                  className={`btn btn-sm ${selectedProjectId === project.id ? 'bg-base-300' : 'btn-ghost'} rounded-full`}
-                  style={{
-                    borderColor: selectedProjectId === project.id ? project.color : 'transparent',
-                    borderWidth: selectedProjectId === project.id ? '2px' : '0',
-                  }}
+                  onClick={() => onProjectClick(project)}
+                  className="btn btn-sm btn-ghost rounded-full hover:bg-base-300"
                 >
                   <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: project.color }}>
                     <IconComponent className="w-3 h-3 text-white" />
@@ -71,7 +67,7 @@ export default function ProjectTabs({
           </div>
         ) : (
           <div className="text-center py-6 text-base-content/60">
-            {projectFilterType === 'active' ? '진행중인 프로젝트가 없습니다.' : '시작 안한 프로젝트가 없습니다.'}
+            프로젝트가 없습니다.
           </div>
         )}
       </div>

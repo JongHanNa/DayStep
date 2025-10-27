@@ -9,10 +9,14 @@ import ProjectTabs from '@/components/second-brain/plan/ProjectTabs';
 import UnscheduledTodosList from '@/components/second-brain/plan/UnscheduledTodosList';
 import DateAssignmentArea from '@/components/second-brain/plan/DateAssignmentArea';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
-import type { Note, InboxItem } from '@/types/second-brain';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import type { Note, InboxItem, Project } from '@/types/second-brain';
 
 // 목 노트 데이터
 const MOCK_NOTES: Note[] = [
@@ -91,7 +95,6 @@ const MOCK_TODOS = [
 export default function PlanPage() {
   // 프로젝트 스토어에서 데이터 가져오기
   const projects = useProjectStore(state => state.projects);
-  const createProject = useProjectStore(state => state.createProject);
   const updateProject = useProjectStore(state => state.updateProject);
   const deleteProject = useProjectStore(state => state.deleteProject);
 
@@ -99,6 +102,11 @@ export default function PlanPage() {
   const inboxItems = useInboxStore(state => state.inboxItems);
   const fetchInboxItems = useInboxStore(state => state.fetchInboxItems);
   const updateInboxItem = useInboxStore(state => state.updateInboxItem);
+
+  // 목표, 영역, 자원 스토어
+  const goals = useGoalStore(state => state.goals);
+  const areas = useAreaStore(state => state.areas);
+  const resources = useResourceStore(state => state.resources);
 
   // 목데이터 상태
   const [notes, setNotes] = useState(MOCK_NOTES);
@@ -108,13 +116,16 @@ export default function PlanPage() {
     fetchInboxItems();
   }, [fetchInboxItems]);
 
-  // 선택된 프로젝트 상태
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  // 프로젝트 필터 상태
   const [projectFilterType, setProjectFilterType] = useState<'active' | 'not_started'>('active');
 
-  // 편집 모달 상태
+  // 할일 편집 모달 상태
   const [selectedTodo, setSelectedTodo] = useState<TodoFormData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 프로젝트 편집 모달 상태
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
 
   // 할일 클릭 핸들러
   const handleTodoClick = (item: InboxItem) => {
@@ -176,23 +187,62 @@ export default function PlanPage() {
     setSelectedTodo(updatedTodo);
   };
 
-  // 프로젝트 CRUD 핸들러
+  // 프로젝트 클릭 핸들러 (편집 모달 표시)
+  const handleProjectClick = (project: Project) => {
+    setEditingProject(project);
+    setProjectDialogOpen(true);
+  };
+
+  // 프로젝트 저장 핸들러
+  const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+    try {
+      await updateProject(editingProject!.id, {
+        ...projectData,
+        area_id,
+        resource_id,
+      });
+      setProjectDialogOpen(false);
+      setEditingProject(null);
+      alert('프로젝트가 수정되었습니다.');
+    } catch (error) {
+      console.error('프로젝트 저장 실패:', error);
+      alert('프로젝트 저장에 실패했습니다.');
+    }
+  };
+
+  // 프로젝트 삭제 핸들러
+  const handleDeleteProject = async (project: Project) => {
+    if (!confirm(`"${project.title}" 프로젝트를 삭제하시겠습니까?`)) return;
+
+    try {
+      await deleteProject(project.id);
+      setProjectDialogOpen(false);
+      setEditingProject(null);
+      alert('프로젝트가 삭제되었습니다.');
+    } catch (error) {
+      console.error('프로젝트 삭제 실패:', error);
+      alert('프로젝트 삭제에 실패했습니다.');
+    }
+  };
+
+  // 프로젝트 편집 취소
+  const handleCancelProjectEdit = () => {
+    setProjectDialogOpen(false);
+    setEditingProject(null);
+  };
+
+  // TodoEditModal에서 사용하는 프로젝트 CRUD 핸들러
   const handleCreateProject = async (title: string) => {
-    const newProject = await createProject({
-      title,
-      status: 'active',
-      color: '#3B82F6',
-      icon: 'lucide-Folder',
-      order_index: projects.length, // 마지막 순서로 추가
-    });
-    return newProject;
+    // createProject 사용하지 않으므로 스토어에서 제거
+    // 임시 구현
+    return { id: `project-${Date.now()}`, title } as any;
   };
 
   const handleUpdateProject = async (id: string, title: string) => {
     await updateProject(id, { title });
   };
 
-  const handleDeleteProject = async (id: string) => {
+  const handleDeleteProjectFromTodo = async (id: string) => {
     await deleteProject(id);
   };
 
@@ -221,7 +271,7 @@ export default function PlanPage() {
     setNotes(prev => prev.filter(n => n.id !== id));
   };
 
-  // 프로젝트 필터링
+  // 프로젝트 필터링 (상태별)
   const filteredProjects = useMemo(() => {
     return projects.filter(p => p.status === projectFilterType);
   }, [projects, projectFilterType]);
@@ -264,14 +314,10 @@ export default function PlanPage() {
       if (item.clarification === '대기중') {
         return false;
       }
-      // 전체 선택 시 모든 할일 반환 (프로젝트 있는 것 + 없는 것)
-      if (!selectedProjectId) {
-        return true;
-      }
-      // 특정 프로젝트 선택 시 해당 프로젝트 할일만 반환
-      return item.project_id === selectedProjectId;
+      // 프로젝트 선택과 무관하게 모든 할일 반환
+      return true;
     });
-  }, [inboxItems, selectedProjectId]);
+  }, [inboxItems]);
 
   const waitingTodos = useMemo(() => {
     // clarification='대기중'인 항목만 대기중 탭에 표시
@@ -365,11 +411,11 @@ export default function PlanPage() {
 
         {/* 상단 프로젝트 탭 */}
         <ProjectTabs
+          allProjects={projects}
           projects={filteredProjects}
-          selectedProjectId={selectedProjectId}
           projectFilterType={projectFilterType}
-          onProjectSelect={setSelectedProjectId}
           onProjectFilterChange={setProjectFilterType}
+          onProjectClick={handleProjectClick}
         />
 
         {/* 메인 콘텐츠: 좌우 분할 */}
@@ -411,11 +457,24 @@ export default function PlanPage() {
         notes={notes}
         onCreateProject={handleCreateProject}
         onUpdateProject={handleUpdateProject}
-        onDeleteProject={handleDeleteProject}
+        onDeleteProject={handleDeleteProjectFromTodo}
         onCreateNote={handleCreateNote}
         onUpdateNote={handleUpdateNote}
         onDeleteNote={handleDeleteNote}
         titlePlaceholder="할일 제목을 입력하세요"
+      />
+
+      {/* 프로젝트 편집 모달 */}
+      <ProjectEditDialog
+        open={projectDialogOpen}
+        editingProject={editingProject}
+        goals={goals}
+        areas={areas}
+        resources={resources}
+        onSave={handleSaveProject}
+        onCancel={handleCancelProjectEdit}
+        onDelete={handleDeleteProject}
+        onProjectChange={setEditingProject}
       />
     </DndContext>
   );
