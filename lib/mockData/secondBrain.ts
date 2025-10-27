@@ -248,6 +248,89 @@ export const mockProjects: Project[] = [
 ];
 
 // ============================================
+// 프로젝트 할일 (Project Todos) - 8개
+// ============================================
+export const mockProjectTodos = [
+  // 기획 프로젝트 할일 (3개, 모두 완료)
+  {
+    id: 'project-todo-1',
+    project_id: 'project-1',
+    title: '요구사항 분석',
+    completed: true,
+    scheduledDate: new Date('2025-01-03').toISOString(),
+    displayOrder: 0,
+    isHighlight: false,
+  },
+  {
+    id: 'project-todo-2',
+    project_id: 'project-1',
+    title: '사용자 스토리 작성',
+    completed: true,
+    scheduledDate: new Date('2025-01-07').toISOString(),
+    displayOrder: 1,
+    isHighlight: false,
+  },
+  {
+    id: 'project-todo-3',
+    project_id: 'project-1',
+    title: '기술 스택 선정',
+    completed: true,
+    scheduledDate: new Date('2025-01-12').toISOString(),
+    displayOrder: 2,
+    isHighlight: true,
+  },
+
+  // 디자인 프로젝트 할일 (5개, 3개 완료 + 2개 미완료)
+  {
+    id: 'project-todo-4',
+    project_id: 'project-2',
+    title: '와이어프레임 작성',
+    completed: true,
+    scheduledDate: new Date('2025-10-05').toISOString(),
+    displayOrder: 0,
+    isHighlight: false,
+  },
+  {
+    id: 'project-todo-5',
+    project_id: 'project-2',
+    title: '프로토타입 제작',
+    completed: true,
+    scheduledDate: new Date('2025-10-12').toISOString(),
+    displayOrder: 1,
+    isHighlight: true,
+  },
+  {
+    id: 'project-todo-6',
+    project_id: 'project-2',
+    title: '사용자 테스트',
+    completed: true,
+    scheduledDate: new Date('2025-10-18').toISOString(),
+    displayOrder: 2,
+    isHighlight: false,
+  },
+  {
+    id: 'project-todo-7',
+    project_id: 'project-2',
+    title: '디자인 시스템 구축',
+    completed: false,
+    scheduledDate: new Date('2025-10-29').toISOString(),
+    displayOrder: 3,
+    isHighlight: false,
+    clarification: '색상 팔레트, 타이포그래피, 컴포넌트 라이브러리 정의',
+  },
+  {
+    id: 'project-todo-8',
+    project_id: 'project-2',
+    title: '아이콘 디자인',
+    completed: false,
+    scheduledDate: new Date('2025-11-05').toISOString(),
+    displayOrder: 4,
+    isHighlight: false,
+    clarification: 'Lucide React 스타일로 커스텀 아이콘 제작',
+  },
+];
+
+// ============================================
 // Inbox 아이템 - 12개
 // ============================================
 export const mockInboxItems: InboxItem[] = [
@@ -613,6 +696,7 @@ export function getInitialMockData() {
     goals: mockGoals,
     inbox: mockInboxItems,
     notes: mockNotes,
+    projectTodos: mockProjectTodos,
     onboarding: mockOnboardingProgress,
     reviews: mockReviewSessions,
   };
@@ -622,7 +706,7 @@ export function getInitialMockData() {
  * Mock 데이터를 LocalStorage에 저장
  */
 export function saveMockDataToLocalStorage() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
 
   const data = getInitialMockData();
   localStorage.setItem('second-brain-mock-data', JSON.stringify(data));
@@ -632,7 +716,7 @@ export function saveMockDataToLocalStorage() {
  * LocalStorage에서 Mock 데이터 로드
  */
 export function loadMockDataFromLocalStorage() {
-  if (typeof window === 'undefined') return getInitialMockData();
+  if (typeof window === 'undefined') {return getInitialMockData();}
 
   const stored = localStorage.getItem('second-brain-mock-data');
   if (stored) {

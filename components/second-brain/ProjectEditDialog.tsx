@@ -74,6 +74,31 @@ export default function ProjectEditDialog({
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [showTodoEditModal, setShowTodoEditModal] = useState(false);
 
+  // 프로젝트 변경 시 해당 프로젝트의 할일 로드
+  useEffect(() => {
+    if (!editingProject || editingProject.isNew) {
+      setTodos([]);
+      return;
+    }
+
+    // Mock 데이터에서 프로젝트 할일 로드
+    import('@/lib/mockData/secondBrain').then(({ mockProjectTodos }) => {
+      const projectTodos = mockProjectTodos
+        .filter((todo: any) => todo.project_id === editingProject.id)
+        .map((todo: any) => ({
+          id: todo.id,
+          title: todo.title,
+          completed: todo.completed,
+          scheduledDate: todo.scheduledDate ? new Date(todo.scheduledDate) : undefined,
+          displayOrder: todo.displayOrder,
+          isHighlight: todo.isHighlight,
+          clarification: todo.clarification,
+        }));
+
+      setTodos(projectTodos);
+    });
+  }, [editingProject?.id, editingProject?.isNew]);
+
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarView, setCalendarView] = useState<'week' | 'month' | 'completed'>('week');
