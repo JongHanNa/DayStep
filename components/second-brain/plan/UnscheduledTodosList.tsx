@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { AlertCircle, ArrowRight, Pause, Briefcase, RotateCcw } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
-import type { InboxItem } from '@/types/second-brain';
+import type { InboxItem, Project } from '@/types/second-brain';
 
 interface UnscheduledTodosListProps {
   overdueTodos: InboxItem[];
   nextActionTodos: InboxItem[];
   projectTodos: InboxItem[];
   waitingTodos: InboxItem[];
+  projects: Project[];
   onResetOverdue: () => void;
   onTodoClick?: (item: InboxItem) => void;
 }
@@ -20,10 +21,43 @@ export default function UnscheduledTodosList({
   nextActionTodos,
   projectTodos,
   waitingTodos,
+  projects,
   onResetOverdue,
   onTodoClick,
 }: UnscheduledTodosListProps) {
   const [activeTab, setActiveTab] = useState<'overdue' | 'nextAction' | 'project' | 'waiting'>('overdue');
+
+  // 프로젝트별 할일 그룹화
+  const groupTodosByProject = (todos: InboxItem[]) => {
+    const groups: { projectId: string | null; projectName: string; todos: InboxItem[] }[] = [];
+
+    // 프로젝트 없음 그룹 (project_id가 없는 할일들)
+    const noProjectTodos = todos.filter(todo => !todo.project_id);
+    if (noProjectTodos.length > 0) {
+      groups.push({
+        projectId: null,
+        projectName: '프로젝트 없음',
+        todos: noProjectTodos,
+      });
+    }
+
+    // 프로젝트별 그룹
+    const projectIds = [...new Set(todos.filter(todo => todo.project_id).map(todo => todo.project_id))];
+    projectIds.forEach(projectId => {
+      const project = projects.find(p => p.id === projectId);
+      const projectTodosForGroup = todos.filter(todo => todo.project_id === projectId);
+
+      if (projectTodosForGroup.length > 0) {
+        groups.push({
+          projectId: projectId!,
+          projectName: project?.title || '알 수 없는 프로젝트',
+          todos: projectTodosForGroup,
+        });
+      }
+    });
+
+    return groups;
+  };
 
   return (
     <div className="bg-base-200 rounded-lg p-4">
@@ -116,9 +150,32 @@ export default function UnscheduledTodosList({
                 프로젝트 할일이 없습니다.
               </div>
             ) : (
-              <div className="space-y-2">
-                {projectTodos.map((todo) => (
-                  <DraggableTodoItem key={todo.id} todo={todo} showClarification onTodoClick={onTodoClick} />
+              <div className="space-y-4">
+                {groupTodosByProject(projectTodos).map((group) => (
+                  <div key={group.projectId || 'no-project'} className="space-y-2">
+                    {/* 그룹 헤더 */}
+                    <div className="flex items-center gap-2 sticky top-0 bg-base-200 py-2 -mx-4 px-4">
+                      <Briefcase className="w-4 h-4" style={{ color: '#808080' }} />
+                      <h3 className="font-semibold" style={{ color: '#808080' }}>
+                        {group.projectName}
+                      </h3>
+                      <span className="badge badge-sm bg-base-300" style={{ color: '#808080' }}>
+                        {group.todos.length}
+                      </span>
+                    </div>
+
+                    {/* 그룹 내 할일들 */}
+                    <div className="space-y-2">
+                      {group.todos.map((todo) => (
+                        <DraggableTodoItem
+                          key={todo.id}
+                          todo={todo}
+                          showClarification
+                          onTodoClick={onTodoClick}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

@@ -226,9 +226,13 @@ export default function PlanPage() {
     return projects.filter(p => p.status === projectFilterType);
   }, [projects, projectFilterType]);
 
-  // 할일 필터링 (InboxItem 기반)
+  // 할일 필터링 (InboxItem 기반) - item_type='todo'만 필터링
   const overdueTodos = useMemo(() => {
     return inboxItems.filter((item: InboxItem) => {
+      // item_type이 'todo'가 아니면 제외 (note, project, goal 제외)
+      if (item.item_type !== 'todo') {
+        return false;
+      }
       if (!item.scheduled_date || item.is_completed) {
         return false;
       }
@@ -240,17 +244,27 @@ export default function PlanPage() {
   const nextActionTodos = useMemo(() => {
     // status='next_action'인 항목만 다음행동 탭에 표시
     // 명료화에서 '다음행동' + 상황 선택 시 status='next_action'으로 변경됨
-    return inboxItems.filter((item: InboxItem) => item.status === 'next_action' && !item.scheduled_date);
+    return inboxItems.filter((item: InboxItem) =>
+      item.item_type === 'todo' &&  // 할일 타입만
+      item.status === 'next_action' &&
+      !item.scheduled_date
+    );
   }, [inboxItems]);
 
   const projectTodos = useMemo(() => {
     return inboxItems.filter((item: InboxItem) => {
+      // item_type이 'todo'가 아니면 제외 (note, project, goal 제외)
+      if (item.item_type !== 'todo') {
+        return false;
+      }
       if (item.scheduled_date) {
         return false;
       }
+      // 전체 선택 시 모든 할일 반환 (프로젝트 있는 것 + 없는 것)
       if (!selectedProjectId) {
-        return !item.project_id;
+        return true;
       }
+      // 특정 프로젝트 선택 시 해당 프로젝트 할일만 반환
       return item.project_id === selectedProjectId;
     });
   }, [inboxItems, selectedProjectId]);
@@ -258,12 +272,20 @@ export default function PlanPage() {
   const waitingTodos = useMemo(() => {
     // status='waiting'인 항목만 대기중 탭에 표시
     // 명료화에서 '대기중' 선택 시 status='waiting'으로 변경됨
-    return inboxItems.filter((item: InboxItem) => item.status === 'waiting' && !item.scheduled_date);
+    return inboxItems.filter((item: InboxItem) =>
+      item.item_type === 'todo' &&  // 할일 타입만
+      item.status === 'waiting' &&
+      !item.scheduled_date
+    );
   }, [inboxItems]);
 
   const todayTodos = useMemo(() => {
     const today = format(startOfDay(new Date()), 'yyyy-MM-dd');
     return inboxItems.filter((item: InboxItem) => {
+      // item_type이 'todo'가 아니면 제외 (note, project, goal 제외)
+      if (item.item_type !== 'todo') {
+        return false;
+      }
       if (!item.scheduled_date) {
         return false;
       }
@@ -275,6 +297,10 @@ export default function PlanPage() {
   const tomorrowTodos = useMemo(() => {
     const tomorrow = format(addDays(startOfDay(new Date()), 1), 'yyyy-MM-dd');
     return inboxItems.filter((item: InboxItem) => {
+      // item_type이 'todo'가 아니면 제외 (note, project, goal 제외)
+      if (item.item_type !== 'todo') {
+        return false;
+      }
       if (!item.scheduled_date) {
         return false;
       }
@@ -351,6 +377,7 @@ export default function PlanPage() {
               nextActionTodos={nextActionTodos}
               projectTodos={projectTodos}
               waitingTodos={waitingTodos}
+              projects={projects}
               onResetOverdue={handleResetOverdueTodos}
               onTodoClick={handleTodoClick}
             />
