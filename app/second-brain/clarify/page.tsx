@@ -18,11 +18,11 @@ import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProje
 import GTDGuideSection from '@/components/second-brain/clarify/GTDGuideSection';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
-import type { InboxItem, Project, CreateProjectInput, Goal, UpdateGoalInput } from '@/types/second-brain';
+import type { InboxItem, Project, UpdateProjectInput, Goal, UpdateGoalInput } from '@/types/second-brain';
 
 export default function ClarifyPage() {
-  const { inboxItems, fetchInboxItems, fetchInboxItemsByType, deleteInboxItem } = useInboxStore();
-  const { projects, createProject } = useProjectStore();
+  const { inboxItems, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
+  const { projects, updateProject, deleteProject } = useProjectStore();
   const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
   const { notes, fetchNotes } = useNoteStore();
   const { areas, fetchAreas } = useAreaStore();
@@ -32,7 +32,7 @@ export default function ClarifyPage() {
   const [activeTab, setActiveTab] = useState<InboxTabType>('todos');
   const [todoInbox, setTodoInbox] = useState<InboxItem[]>([]);
   const [noteInbox, setNoteInbox] = useState<InboxItem[]>([]);
-  const [projectInbox, setProjectInbox] = useState<InboxItem[]>([]);
+  const [projectInbox, setProjectInbox] = useState<Project[]>([]);
   const [goalInbox, setGoalInbox] = useState<Goal[]>([]);
 
   // 프로젝트 편집 모달 상태
@@ -55,10 +55,20 @@ export default function ClarifyPage() {
     await fetchGoals();
     const inboxTodos = await fetchInboxItemsByType('todo');
     const inboxNotes = await fetchInboxItemsByType('note');
-    const inboxProjects = await fetchInboxItemsByType('project');
 
     setTodoInbox(inboxTodos);
     setNoteInbox(inboxNotes);
+
+    // 프로젝트 수집함: projects 테이블에서 조건부 필터링
+    // 종료일, 영역/자원, 할일 중 하나라도 없으면 수집함에 표시
+    const inboxProjects = projects.filter((project) => {
+      const hasEndDate = !!project.target_end_date;
+      const hasAreaOrResource = !!(project.area_id || project.resource_id);
+      const hasTodos = (project.total_todos || 0) > 0;
+
+      // 셋 중 하나라도 없으면 수집함에 유지
+      return !(hasEndDate && hasAreaOrResource && hasTodos);
+    });
     setProjectInbox(inboxProjects);
 
     // 목표 수집함: area_id/resource_id AND target_date 둘 다 있어야 제거
@@ -75,27 +85,16 @@ export default function ClarifyPage() {
     loadInboxData();
   };
 
-  // 프로젝트 클릭 핸들러 - InboxItem을 Project 형식으로 변환
-  const handleProjectClick = (inboxProject: InboxItem) => {
-    const projectData: Project & { isNew?: boolean; paraSelection?: string } = {
-      id: inboxProject.id,
-      user_id: inboxProject.user_id,
-      title: inboxProject.content,
-      description: '',
-      status: 'not_started',
-      icon: 'lucide-FolderOpen',
-      color: '#A8DADC',
-      order_index: 0,
-      total_todos: 0,
-      completed_todos: 0,
-      progress: 0,
-      created_at: inboxProject.created_at,
-      updated_at: inboxProject.updated_at,
-      isNew: false,
-      paraSelection: '',
-    };
+  // 프로젝트 클릭 핸들러 - Project 그대로 전달
+  const handleProjectClick = (project: Project) => {
+    let paraSelection = '';
+    if (project.area_id) {
+      paraSelection = `area-${project.area_id}`;
+    } else if (project.resource_id) {
+      paraSelection = `resource-${project.resource_id}`;
+    }
 
-    setEditingProject(projectData);
+    setEditingProject({ ...project, paraSelection, isNew: false });
     setEditDialogOpen(true);
   };
 
@@ -115,43 +114,29 @@ export default function ClarifyPage() {
       const hasEndDate = !!projectData.target_end_date;
       const shouldRemoveFromInbox = hasAreaOrResource && hasTodos && hasEndDate;
 
+      // InboxItem 변환 없이 Project 업데이트만 수행
+      const updateData: UpdateProjectInput = {
+        title: projectData.title!,
+        description: projectData.description || '',
+        icon: projectData.icon!,
+        color: projectData.color!,
+        status: projectData.status!,
+        goal_id: projectData.goal_id || undefined,
+        area_id,
+        resource_id,
+        start_date: projectData.start_date || undefined,
+        target_end_date: projectData.target_end_date || undefined,
+      };
+
+      await updateProject(editingProject!.id, updateData);
+
+      setEditDialogOpen(false);
+      setEditingProject(null);
+      await loadInboxData();
+
       if (shouldRemoveFromInbox) {
-        // 조건 모두 충족 → InboxItem 삭제 + 실제 Project 생성
-        await deleteInboxItem(editingProject!.id);
-
-        const createData: CreateProjectInput = {
-          title: projectData.title!,
-          description: projectData.description || '',
-          icon: projectData.icon || 'lucide-FolderOpen',
-          color: projectData.color || '#A8DADC',
-          status: projectData.status || 'not_started',
-          goal_id: projectData.goal_id,
-          area_id,
-          resource_id,
-          start_date: projectData.start_date,
-          target_end_date: projectData.target_end_date,
-          order_index: projects.length,
-        };
-
-        await createProject(createData);
-
-        setEditDialogOpen(false);
-        setEditingProject(null);
-        await loadInboxData();
-
-        alert('프로젝트가 생성되었습니다.');
+        alert('프로젝트가 수정되었습니다. 모든 조건이 충족되어 수집함에서 제거되었습니다.');
       } else {
-        // 조건 미충족 → InboxItem 업데이트만
-        await updateInboxItem(editingProject!.id, {
-          content: projectData.title!,
-          area_id,
-          resource_id,
-        });
-
-        setEditDialogOpen(false);
-        setEditingProject(null);
-        await loadInboxData();
-
         const missing: string[] = [];
         if (!hasAreaOrResource) missing.push('영역/자원');
         if (!hasTodos) missing.push('할일');
@@ -176,7 +161,7 @@ export default function ClarifyPage() {
     if (!confirm(`"${project.title}" 프로젝트를 삭제하시겠습니까?`)) return;
 
     try {
-      await deleteInboxItem(project.id);
+      await deleteProject(project.id);
       setEditDialogOpen(false);
       setEditingProject(null);
       await loadInboxData();
