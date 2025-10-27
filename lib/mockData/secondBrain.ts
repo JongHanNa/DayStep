@@ -331,9 +331,115 @@ export const mockProjectTodos = [
 ];
 
 // ============================================
-// Inbox 아이템 - 12개
+// Inbox 아이템 - 20개 (기존 12개 + 프로젝트 할일 8개)
 // ============================================
 export const mockInboxItems: InboxItem[] = [
+  // ========== 프로젝트 할일 8개 (기획 프로젝트 3개 + 디자인 프로젝트 5개) ==========
+  // 기획 프로젝트 할일 (3개, 모두 완료)
+  {
+    id: 'project-todo-1',
+    user_id: MOCK_USER_ID,
+    content: '요구사항 분석',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-1',
+    is_completed: true,
+    scheduled_date: new Date('2025-01-03').toISOString(),
+    created_at: new Date('2025-01-01').toISOString(),
+    updated_at: new Date('2025-01-03').toISOString(),
+  },
+  {
+    id: 'project-todo-2',
+    user_id: MOCK_USER_ID,
+    content: '사용자 스토리 작성',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-1',
+    is_completed: true,
+    scheduled_date: new Date('2025-01-07').toISOString(),
+    created_at: new Date('2025-01-01').toISOString(),
+    updated_at: new Date('2025-01-07').toISOString(),
+  },
+  {
+    id: 'project-todo-3',
+    user_id: MOCK_USER_ID,
+    content: '기술 스택 선정',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-1',
+    is_completed: true,
+    is_highlight: true,
+    scheduled_date: new Date('2025-01-12').toISOString(),
+    created_at: new Date('2025-01-01').toISOString(),
+    updated_at: new Date('2025-01-12').toISOString(),
+  },
+
+  // 디자인 프로젝트 할일 (5개, 3개 완료 + 2개 미완료)
+  {
+    id: 'project-todo-4',
+    user_id: MOCK_USER_ID,
+    content: '와이어프레임 작성',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-2',
+    is_completed: true,
+    scheduled_date: new Date('2025-10-05').toISOString(),
+    created_at: new Date('2025-10-01').toISOString(),
+    updated_at: new Date('2025-10-05').toISOString(),
+  },
+  {
+    id: 'project-todo-5',
+    user_id: MOCK_USER_ID,
+    content: '프로토타입 제작',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-2',
+    is_completed: true,
+    is_highlight: true,
+    scheduled_date: new Date('2025-10-12').toISOString(),
+    created_at: new Date('2025-10-01').toISOString(),
+    updated_at: new Date('2025-10-12').toISOString(),
+  },
+  {
+    id: 'project-todo-6',
+    user_id: MOCK_USER_ID,
+    content: '사용자 테스트',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-2',
+    is_completed: true,
+    scheduled_date: new Date('2025-10-18').toISOString(),
+    created_at: new Date('2025-10-01').toISOString(),
+    updated_at: new Date('2025-10-18').toISOString(),
+  },
+  {
+    id: 'project-todo-7',
+    user_id: MOCK_USER_ID,
+    content: '디자인 시스템 구축',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-2',
+    is_completed: false,
+    scheduled_date: new Date('2025-10-29').toISOString(),
+    clarification: '색상 팔레트, 타이포그래피, 컴포넌트 라이브러리 정의',
+    created_at: new Date('2025-10-01').toISOString(),
+    updated_at: new Date('2025-10-25').toISOString(),
+  },
+  {
+    id: 'project-todo-8',
+    user_id: MOCK_USER_ID,
+    content: '아이콘 디자인',
+    status: 'scheduled',
+    item_type: 'todo',
+    project_id: 'project-2',
+    is_completed: false,
+    scheduled_date: new Date('2025-11-05').toISOString(),
+    clarification: 'Lucide React 스타일로 커스텀 아이콘 제작',
+    created_at: new Date('2025-10-01').toISOString(),
+    updated_at: new Date('2025-10-25').toISOString(),
+  },
+
+  // ========== 기존 Inbox 할일 12개 ==========
   {
     id: 'inbox-1',
     user_id: MOCK_USER_ID,

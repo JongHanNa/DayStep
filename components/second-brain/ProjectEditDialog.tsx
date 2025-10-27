@@ -14,6 +14,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
+import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import TodoEditModal from './TodoEditModal';
 import TodoListModal from './TodoListModal';
 
@@ -74,6 +75,10 @@ export default function ProjectEditDialog({
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [showTodoEditModal, setShowTodoEditModal] = useState(false);
 
+  // InboxStore에서 프로젝트 할일 로드 및 업데이트 함수
+  const inboxItems = useInboxStore(state => state.inboxItems);
+  const updateInboxItem = useInboxStore(state => state.updateInboxItem);
+
   // 프로젝트 변경 시 해당 프로젝트의 할일 로드
   useEffect(() => {
     if (!editingProject || editingProject.isNew) {
@@ -81,23 +86,25 @@ export default function ProjectEditDialog({
       return;
     }
 
-    // Mock 데이터에서 프로젝트 할일 로드
-    import('@/lib/mockData/secondBrain').then(({ mockProjectTodos }) => {
-      const projectTodos = mockProjectTodos
-        .filter((todo: any) => todo.project_id === editingProject.id)
-        .map((todo: any) => ({
-          id: todo.id,
-          title: todo.title,
-          completed: todo.completed,
-          scheduledDate: todo.scheduledDate ? new Date(todo.scheduledDate) : undefined,
-          displayOrder: todo.displayOrder,
-          isHighlight: todo.isHighlight,
-          clarification: todo.clarification,
-        }));
+    // InboxStore에서 프로젝트 할일 필터링 (item_type='todo' + project_id 일치)
+    const projectTodos = inboxItems
+      .filter((item: any) =>
+        item.item_type === 'todo' &&
+        item.project_id === editingProject.id
+      )
+      .map((item: any) => ({
+        id: item.id,
+        title: item.content,
+        completed: item.is_completed || false,
+        scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
+        displayOrder: item.display_order || 0,
+        isHighlight: item.is_highlight || false,
+        clarification: item.clarification,
+      }))
+      .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
-      setTodos(projectTodos);
-    });
-  }, [editingProject?.id, editingProject?.isNew]);
+    setTodos(projectTodos);
+  }, [editingProject?.id, editingProject?.isNew, inboxItems]);
 
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -114,7 +121,7 @@ export default function ProjectEditDialog({
 
   // useDndKit Hook
   const { sensors, activeItem: activeTodo, handleDragStart, handleDragEnd: handleDndEnd, dndContextProps, dragOverlayProps } = useDndKit<TodoItem>({
-    onDragEnd: (active, over) => {
+    onDragEnd: async (active, over) => {
       if (!over || !over.id) return;
 
       // 할일 ID 추출 (week-todo-, month-todo- 또는 직접 ID)
@@ -146,6 +153,7 @@ export default function ProjectEditDialog({
           ? Math.max(...sameDateTodos.map((t) => t.displayOrder || 0))
           : 0;
 
+        // 로컬 state 업데이트
         setTodos(
           todos.map((todo) =>
             todo.id === todoId
@@ -153,6 +161,12 @@ export default function ProjectEditDialog({
               : todo
           )
         );
+
+        // InboxStore 업데이트 (display_order는 로컬 state에서만 관리)
+        await updateInboxItem(todoId, {
+          scheduled_date: scheduledDate.toISOString(),
+        });
+
         return;
       }
 
@@ -243,6 +257,7 @@ export default function ProjectEditDialog({
           ? Math.max(...sameDateTodos.map((t) => t.displayOrder || 0))
           : 0;
 
+        // 로컬 state 업데이트
         setTodos(
           todos.map((todo) =>
             todo.id === todoId
@@ -250,6 +265,12 @@ export default function ProjectEditDialog({
               : todo
           )
         );
+
+        // InboxStore 업데이트 (display_order는 로컬 state에서만 관리)
+        await updateInboxItem(todoId, {
+          scheduled_date: scheduledDate.toISOString(),
+        });
+
         return;
       }
     },
@@ -357,12 +378,23 @@ export default function ProjectEditDialog({
   };
 
   // 할일 완료 토글
-  const handleToggleTodo = (todoId: string) => {
+  const handleToggleTodo = async (todoId: string) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo) return;
+
+    const newCompleted = !todo.completed;
+
+    // 로컬 state 업데이트
     setTodos(
-      todos.map((todo) =>
-        todo.id === todoId ? { ...todo, completed: !todo.completed } : todo
+      todos.map((t) =>
+        t.id === todoId ? { ...t, completed: newCompleted } : t
       )
     );
+
+    // InboxStore 업데이트
+    await updateInboxItem(todoId, {
+      is_completed: newCompleted,
+    });
   };
 
   // 할일 제거
