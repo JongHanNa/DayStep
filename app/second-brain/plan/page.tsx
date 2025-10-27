@@ -238,7 +238,9 @@ export default function PlanPage() {
   }, [inboxItems]);
 
   const nextActionTodos = useMemo(() => {
-    return inboxItems.filter((item: InboxItem) => item.clarification === '다음행동' && !item.scheduled_date);
+    // status='next_action'인 항목만 다음행동 탭에 표시
+    // 명료화에서 '다음행동' + 상황 선택 시 status='next_action'으로 변경됨
+    return inboxItems.filter((item: InboxItem) => item.status === 'next_action' && !item.scheduled_date);
   }, [inboxItems]);
 
   const projectTodos = useMemo(() => {
@@ -254,7 +256,9 @@ export default function PlanPage() {
   }, [inboxItems, selectedProjectId]);
 
   const waitingTodos = useMemo(() => {
-    return inboxItems.filter((item: InboxItem) => item.clarification === '대기중' && !item.scheduled_date);
+    // status='waiting'인 항목만 대기중 탭에 표시
+    // 명료화에서 '대기중' 선택 시 status='waiting'으로 변경됨
+    return inboxItems.filter((item: InboxItem) => item.status === 'waiting' && !item.scheduled_date);
   }, [inboxItems]);
 
   const todayTodos = useMemo(() => {

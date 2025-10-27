@@ -78,8 +78,9 @@ export const useInboxStore = createStore<InboxStoreState>(
       try {
         set({ loading: true, error: null });
         const filteredItems = get().inboxItems.filter((item: InboxItem) => {
-          // item_type이 일치하는 항목만 반환 (status 무관)
-          return item.item_type === type;
+          // item_type 일치 AND status='inbox'인 항목만 반환
+          // status가 'waiting', 'scheduled', 'next_action' 등으로 변경되면 수집함에서 제거됨
+          return item.item_type === type && item.status === 'inbox';
         });
         set({ loading: false });
         return filteredItems;

@@ -61,10 +61,13 @@ export default function ClarifyPage() {
     setNoteInbox(inboxNotes);
     setProjectInbox(inboxProjects);
 
-    // 목표 수집함: area_id, resource_id, target_date가 모두 없는 목표
-    const inboxGoals = goals.filter(
-      (goal) => !goal.area_id && !goal.resource_id && !goal.target_date
-    );
+    // 목표 수집함: area_id/resource_id AND target_date 둘 다 있어야 제거
+    // 즉, 둘 중 하나라도 없으면 수집함에 유지
+    const inboxGoals = goals.filter((goal) => {
+      const hasAreaOrResource = !!(goal.area_id || goal.resource_id);
+      const hasTargetDate = !!goal.target_date;
+      return !(hasAreaOrResource && hasTargetDate); // 둘 다 있으면 제거
+    });
     setGoalInbox(inboxGoals);
   };
 
@@ -105,32 +108,57 @@ export default function ClarifyPage() {
   // 프로젝트 저장 핸들러
   const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
     try {
-      // 1. InboxItem 삭제 (프로젝트 수집함에서 제거)
-      await deleteInboxItem(editingProject!.id);
+      // GTD 로직: 수집함 제거 조건 체크
+      // 영역/자원 AND 할일 1개 이상 AND 종료일 모두 있어야 제거
+      const hasAreaOrResource = !!(area_id || resource_id);
+      const hasTodos = (projectData.total_todos || 0) > 0;
+      const hasEndDate = !!projectData.target_end_date;
+      const shouldRemoveFromInbox = hasAreaOrResource && hasTodos && hasEndDate;
 
-      // 2. 실제 Project로 생성
-      const createData: CreateProjectInput = {
-        title: projectData.title!,
-        description: projectData.description || '',
-        icon: projectData.icon || 'lucide-FolderOpen',
-        color: projectData.color || '#A8DADC',
-        status: projectData.status || 'not_started',
-        goal_id: projectData.goal_id,
-        area_id,
-        resource_id,
-        start_date: projectData.start_date,
-        target_end_date: projectData.target_end_date,
-        order_index: projects.length,
-      };
+      if (shouldRemoveFromInbox) {
+        // 조건 모두 충족 → InboxItem 삭제 + 실제 Project 생성
+        await deleteInboxItem(editingProject!.id);
 
-      await createProject(createData);
+        const createData: CreateProjectInput = {
+          title: projectData.title!,
+          description: projectData.description || '',
+          icon: projectData.icon || 'lucide-FolderOpen',
+          color: projectData.color || '#A8DADC',
+          status: projectData.status || 'not_started',
+          goal_id: projectData.goal_id,
+          area_id,
+          resource_id,
+          start_date: projectData.start_date,
+          target_end_date: projectData.target_end_date,
+          order_index: projects.length,
+        };
 
-      // 3. 모달 닫기 및 새로고침
-      setEditDialogOpen(false);
-      setEditingProject(null);
-      await loadInboxData();
+        await createProject(createData);
 
-      alert('프로젝트가 생성되었습니다.');
+        setEditDialogOpen(false);
+        setEditingProject(null);
+        await loadInboxData();
+
+        alert('프로젝트가 생성되었습니다.');
+      } else {
+        // 조건 미충족 → InboxItem 업데이트만
+        await updateInboxItem(editingProject!.id, {
+          content: projectData.title!,
+          area_id,
+          resource_id,
+        });
+
+        setEditDialogOpen(false);
+        setEditingProject(null);
+        await loadInboxData();
+
+        const missing: string[] = [];
+        if (!hasAreaOrResource) missing.push('영역/자원');
+        if (!hasTodos) missing.push('할일');
+        if (!hasEndDate) missing.push('종료일');
+
+        alert(`프로젝트가 수정되었습니다.\n수집함에서 제거하려면 ${missing.join(', ')}을(를) 배정해야 합니다.`);
+      }
     } catch (error) {
       console.error('프로젝트 저장 실패:', error);
       alert('프로젝트 저장에 실패했습니다.');
@@ -197,14 +225,17 @@ export default function ClarifyPage() {
       setEditingGoal(null);
       await loadInboxData();
 
-      // 수집함 조건 확인
-      const hasAreaOrResource = area_id || resource_id;
-      const hasTargetDate = goalData.target_date;
+      // GTD 로직: 영역/자원 AND 종료일 둘 다 있어야 수집함에서 제거
+      const hasAreaOrResource = !!(area_id || resource_id);
+      const hasTargetDate = !!goalData.target_date;
 
-      if (hasAreaOrResource || hasTargetDate) {
-        alert('목표가 수정되었습니다. 영역/자원 또는 종료일이 배정되어 수집함에서 제거되었습니다.');
+      if (hasAreaOrResource && hasTargetDate) {
+        alert('목표가 수정되었습니다. 영역/자원과 종료일이 모두 배정되어 수집함에서 제거되었습니다.');
       } else {
-        alert('목표가 수정되었습니다.');
+        const missing: string[] = [];
+        if (!hasAreaOrResource) missing.push('영역/자원');
+        if (!hasTargetDate) missing.push('종료일');
+        alert(`목표가 수정되었습니다.\n수집함에서 제거하려면 ${missing.join('과 ')}을(를) 배정해야 합니다.`);
       }
     } catch (error) {
       console.error('목표 저장 실패:', error);
