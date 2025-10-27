@@ -267,6 +267,15 @@ export default function GoalsPage() {
 
   // 프로젝트 편집 핸들러
   const handleEditProject = (project: Project) => {
+    console.log('🔍 프로젝트 편집 시작:', {
+      id: project.id,
+      title: project.title,
+      start_date: project.start_date,
+      target_end_date: project.target_end_date,
+      start_date_type: typeof project.start_date,
+      target_end_date_type: typeof project.target_end_date
+    });
+
     let paraSelection = '';
     if (project.area_id) {
       paraSelection = `area-${project.area_id}`;
@@ -274,7 +283,24 @@ export default function GoalsPage() {
       paraSelection = `resource-${project.resource_id}`;
     }
 
-    setEditingProject({ ...project, paraSelection, isNew: false });
+    // 날짜 형식 변환: ISO datetime을 YYYY-MM-DD로 변환
+    const formatDateForInput = (dateString?: string) => {
+      if (!dateString) return '';
+      // ISO datetime 형식 (2025-01-15T00:00:00.000Z)을 date 형식 (2025-01-15)으로 변환
+      return dateString.split('T')[0];
+    };
+
+    const editData = {
+      ...project,
+      paraSelection,
+      isNew: false,
+      start_date: formatDateForInput(project.start_date),
+      target_end_date: formatDateForInput(project.target_end_date)
+    };
+
+    console.log('✅ 편집 데이터:', editData);
+
+    setEditingProject(editData);
     setProjectDialogOpen(true);
   };
 
