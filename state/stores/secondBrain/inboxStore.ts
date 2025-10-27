@@ -329,7 +329,7 @@ export const useInboxStore = createStore<InboxStoreState>(
     name: 'inbox-store',
     persist: {
       name: 'daystep-inbox',
-      version: 1,
+      version: 2,
     },
   }
 );
