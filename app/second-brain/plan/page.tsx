@@ -260,6 +260,10 @@ export default function PlanPage() {
       if (item.scheduled_date) {
         return false;
       }
+      // 대기중 상태 할일 제외 (대기중 탭에만 표시)
+      if (item.clarification === '대기중') {
+        return false;
+      }
       // 전체 선택 시 모든 할일 반환 (프로젝트 있는 것 + 없는 것)
       if (!selectedProjectId) {
         return true;
@@ -270,11 +274,11 @@ export default function PlanPage() {
   }, [inboxItems, selectedProjectId]);
 
   const waitingTodos = useMemo(() => {
-    // status='waiting'인 항목만 대기중 탭에 표시
-    // 명료화에서 '대기중' 선택 시 status='waiting'으로 변경됨
+    // clarification='대기중'인 항목만 대기중 탭에 표시
+    // 명료화에서 '대기중' 선택 시 clarification='대기중'으로 저장됨
     return inboxItems.filter((item: InboxItem) =>
       item.item_type === 'todo' &&  // 할일 타입만
-      item.status === 'waiting' &&
+      item.clarification === '대기중' &&
       !item.scheduled_date
     );
   }, [inboxItems]);
