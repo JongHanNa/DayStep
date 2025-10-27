@@ -509,6 +509,40 @@ export default function ProjectEditDialog({
               </div>
             </div>
 
+          {/* 영역/자원 */}
+          <div className="my-4">
+            {/* 섹션 제목 */}
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+              <Layers className="h-5 w-5" style={{ color: editingProject.color }} />
+              영역/자원
+            </label>
+
+            {/* 셀렉트 박스 */}
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+              <select
+                value={editingProject.paraSelection}
+                onChange={(e) => onProjectChange({ ...editingProject, paraSelection: e.target.value })}
+                className="select select-bordered w-full"
+              >
+                <option value="">선택 안 함</option>
+                <optgroup label="영역">
+                  {areas.map((area) => (
+                    <option key={area.id} value={`area-${area.id}`}>
+                      {area.title}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="자원">
+                  {resources.map((resource) => (
+                    <option key={resource.id} value={`resource-${resource.id}`}>
+                      {resource.title}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
           {/* 목표 */}
           <div className="my-4">
             {/* 섹션 제목 */}
@@ -562,40 +596,6 @@ export default function ProjectEditDialog({
             </div>
           </div>
 
-          {/* 영역/자원 */}
-          <div className="my-4">
-            {/* 섹션 제목 */}
-            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-              <Layers className="h-5 w-5" style={{ color: editingProject.color }} />
-              영역/자원 (선택)
-            </label>
-
-            {/* 셀렉트 박스 */}
-            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-              <select
-                value={editingProject.paraSelection}
-                onChange={(e) => onProjectChange({ ...editingProject, paraSelection: e.target.value })}
-                className="select select-bordered w-full"
-              >
-                <option value="">선택 안 함</option>
-                <optgroup label="영역">
-                  {areas.map((area) => (
-                    <option key={area.id} value={`area-${area.id}`}>
-                      {area.title}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="자원">
-                  {resources.map((resource) => (
-                    <option key={resource.id} value={`resource-${resource.id}`}>
-                      {resource.title}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
-          </div>
-
           {/* 시작일/종료일 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 시작일 */}
@@ -603,7 +603,7 @@ export default function ProjectEditDialog({
               {/* 섹션 제목 */}
               <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                 <Calendar className="h-5 w-5" style={{ color: editingProject.color }} />
-                시작일 (선택)
+                시작일
               </label>
 
               {/* 날짜 입력 */}
@@ -622,7 +622,7 @@ export default function ProjectEditDialog({
               {/* 섹션 제목 */}
               <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                 <Calendar className="h-5 w-5" style={{ color: editingProject.color }} />
-                종료일 (선택)
+                종료일
               </label>
 
               {/* 날짜 입력 */}
