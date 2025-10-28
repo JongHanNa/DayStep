@@ -1,11 +1,11 @@
 /**
  * DaisyUI Dialog Modal Pattern Example
  *
- * @deprecated 이 패턴은 웹/모바일 호환성 문제로 사용 중단되었습니다.
- * 대신 ReactModalSheet 패턴을 사용하세요.
- * @see ../ReactModalSheet/example.tsx
+ * @status 신규 모달에 권장되는 패턴입니다.
+ * @usage 새로운 모달 생성 시 이 패턴을 사용하세요.
+ * @migration 기존 react-modal-sheet는 점진적으로 이 패턴으로 마이그레이션 중입니다.
  *
- * 마지막 사용: components/second-brain/ProjectEditDialog.tsx
+ * @see CLAUDE.local.md - 모달 패턴 섹션
  */
 
 'use client';
