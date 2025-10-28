@@ -26,7 +26,7 @@ const menuItems: Record<'routine' | 'productivity' | 'start', MenuItem[]> = {
   ],
   productivity: [
     { id: 'timeline', label: '타임라인', icon: Clock, href: '/timeline' },
-    { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
+    { id: 'goal-compass', label: '목표 나침반', icon: Compass, href: '/second-brain/goal-compass' },
     { id: 'notes', label: '노트', icon: FileText, href: '/second-brain/notes' },
     { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },
   ],
