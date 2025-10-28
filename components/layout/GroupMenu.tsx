@@ -35,6 +35,7 @@ const menuItems: Record<'routine' | 'productivity' | 'start', MenuItem[]> = {
     { id: 'resources', label: '자원', icon: BookOpen, href: '/second-brain/resources' },
     { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
     { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/second-brain/projects' },
+    { id: 'routine', label: '루틴', icon: CheckSquare, href: '/routine' },
   ],
 };
 
@@ -96,7 +97,7 @@ export default function GroupMenu({ groupType }: GroupMenuProps) {
       {/* 말풍선 메뉴 컨테이너 - 하단 네비 위 */}
       <div className="absolute bottom-20 left-0 right-0 flex justify-center px-4 animate-slide-up-fade">
         {/* 말풍선 박스 */}
-        <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-300 max-w-xs">
+        <div className="relative bg-base-100 rounded-3xl shadow-2xl border border-base-300 min-w-[280px] max-w-[90vw]">
           {/* 하단 삼각형 꼬리 (클릭한 버튼 위치) - Capacitor 또는 웹 모바일 화면에서 표시 */}
           {shouldShowTail && (
             <div

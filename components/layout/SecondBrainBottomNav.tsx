@@ -20,7 +20,7 @@ interface MainTab {
 const mainTabs: MainTab[] = [
   { id: 'system-info', label: '시스템 설명', icon: BookOpen, href: '/second-brain/start' },
   { id: 'start', label: '시작', icon: Home, groupType: 'start' },
-  { id: 'routine', label: '루틴', icon: CheckSquare, groupType: 'routine' },
+  { id: 'routine', label: '워크플로우', icon: CheckSquare, groupType: 'routine' },
   { id: 'productivity', label: '생산성', icon: Target, groupType: 'productivity' },
   { id: 'settings', label: '설정', icon: Settings, href: '/settings' },
 ];
@@ -31,6 +31,7 @@ const startPaths = [
   '/second-brain/resources',
   '/second-brain/goals',
   '/second-brain/projects',
+  '/routine',
 ];
 
 // 루틴 그룹 경로
