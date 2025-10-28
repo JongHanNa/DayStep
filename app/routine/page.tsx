@@ -123,7 +123,7 @@ const mockData: Record<TabType, RoutineGroup[]> = {
 
 // 아코디언 그룹 컴포넌트
 function RoutineAccordionGroup({ group }: { group: RoutineGroup }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <div className="border-b border-base-300 last:border-b-0">
