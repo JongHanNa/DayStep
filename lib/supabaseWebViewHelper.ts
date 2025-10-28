@@ -2798,3 +2798,370 @@ export async function fetchUserTagsWithTemplatesWithJWT(userId: string): Promise
     return [];
   }
 }
+
+// ============================================================================
+// Second Brain System - 영역/자원 API Functions
+// ============================================================================
+
+/**
+ * JWT 방식으로 사용자의 모든 영역/자원 조회
+ */
+export async function fetchAreasResourcesWithJWT(userId: string): Promise<any[]> {
+  console.log('📂 JWT 방식으로 영역/자원 조회:', { userId });
+
+  try {
+    const areasResources = await queryRLSTableWithJWT('areas_resources', [
+      {
+        column: 'user_id',
+        operator: 'eq',
+        value: userId
+      }
+    ], {
+      select: '*',
+      order: 'order_index.asc'
+    });
+
+    console.log('✅ JWT 영역/자원 조회 성공:', { count: areasResources.length });
+    return areasResources || [];
+  } catch (error) {
+    console.error('❌ JWT 영역/자원 조회 실패:', error);
+    return [];
+  }
+}
+
+/**
+ * JWT 방식으로 영역/자원 생성
+ */
+export async function createAreaResourceWithJWT(data: any): Promise<any> {
+  console.log('✏️ JWT 방식으로 영역/자원 생성:', data);
+
+  try {
+    const result = await createWithJWT('areas_resources', data);
+    console.log('✅ JWT 영역/자원 생성 성공:', { id: result?.id });
+    return result;
+  } catch (error) {
+    console.error('❌ JWT 영역/자원 생성 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * JWT 방식으로 영역/자원 업데이트
+ */
+export async function updateAreaResourceWithJWT(
+  id: string,
+  userId: string,
+  updates: any
+): Promise<any> {
+  console.log('🔄 JWT 방식으로 영역/자원 업데이트:', { id, userId, updates });
+
+  try {
+    const result = await updateWithJWT('areas_resources', [
+      { column: 'id', operator: 'eq', value: id },
+      { column: 'user_id', operator: 'eq', value: userId }
+    ], {
+      ...updates,
+      updated_at: new Date().toISOString()
+    });
+
+    console.log('✅ JWT 영역/자원 업데이트 성공:', { id });
+    return result?.[0] || null;
+  } catch (error) {
+    console.error('❌ JWT 영역/자원 업데이트 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * JWT 방식으로 영역/자원 삭제
+ */
+export async function deleteAreaResourceWithJWT(
+  id: string,
+  userId: string
+): Promise<boolean> {
+  console.log('🗑️ JWT 방식으로 영역/자원 삭제:', { id, userId });
+
+  try {
+    await deleteWithJWT('areas_resources', [
+      { column: 'id', operator: 'eq', value: id },
+      { column: 'user_id', operator: 'eq', value: userId }
+    ]);
+
+    console.log('✅ JWT 영역/자원 삭제 성공:', { id });
+    return true;
+  } catch (error) {
+    console.error('❌ JWT 영역/자원 삭제 실패:', error);
+    return false;
+  }
+}
+
+// ============================================================================
+// Second Brain System - 목표 API Functions
+// ============================================================================
+
+/**
+ * JWT 방식으로 사용자의 모든 목표 조회 (관계 포함)
+ */
+export async function fetchGoalsWithJWT(userId: string): Promise<any[]> {
+  console.log('🎯 JWT 방식으로 목표 조회:', { userId });
+
+  try {
+    // 목표 조회 (관계 포함)
+    const goals = await fetchWithJWT(
+      `/rest/v1/goals?user_id=eq.${userId}&select=*,area_resource:areas_resources(*),projects(*)&order=order_index.asc`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ JWT 목표 조회 성공:', { count: goals?.length || 0 });
+    return goals || [];
+  } catch (error) {
+    console.error('❌ JWT 목표 조회 실패:', error);
+    return [];
+  }
+}
+
+/**
+ * JWT 방식으로 목표 생성
+ */
+export async function createGoalWithJWT(data: any): Promise<any> {
+  console.log('✏️ JWT 방식으로 목표 생성:', data);
+
+  try {
+    const result = await createWithJWT('goals', data);
+    console.log('✅ JWT 목표 생성 성공:', { id: result?.id });
+    return result;
+  } catch (error) {
+    console.error('❌ JWT 목표 생성 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * JWT 방식으로 목표 업데이트
+ */
+export async function updateGoalWithJWT(
+  id: string,
+  userId: string,
+  updates: any
+): Promise<any> {
+  console.log('🔄 JWT 방식으로 목표 업데이트:', { id, userId, updates });
+
+  try {
+    const result = await updateWithJWT('goals', [
+      { column: 'id', operator: 'eq', value: id },
+      { column: 'user_id', operator: 'eq', value: userId }
+    ], {
+      ...updates,
+      updated_at: new Date().toISOString()
+    });
+
+    console.log('✅ JWT 목표 업데이트 성공:', { id });
+    return result?.[0] || null;
+  } catch (error) {
+    console.error('❌ JWT 목표 업데이트 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * JWT 방식으로 목표 삭제
+ */
+export async function deleteGoalWithJWT(
+  id: string,
+  userId: string
+): Promise<boolean> {
+  console.log('🗑️ JWT 방식으로 목표 삭제:', { id, userId });
+
+  try {
+    await deleteWithJWT('goals', [
+      { column: 'id', operator: 'eq', value: id },
+      { column: 'user_id', operator: 'eq', value: userId }
+    ]);
+
+    console.log('✅ JWT 목표 삭제 성공:', { id });
+    return true;
+  } catch (error) {
+    console.error('❌ JWT 목표 삭제 실패:', error);
+    return false;
+  }
+}
+
+// ============================================================================
+// Second Brain System - 프로젝트 API Functions
+// ============================================================================
+
+/**
+ * JWT 방식으로 사용자의 모든 프로젝트 조회 (관계 포함)
+ */
+export async function fetchProjectsWithJWT(userId: string): Promise<any[]> {
+  console.log('📁 JWT 방식으로 프로젝트 조회:', { userId });
+
+  try {
+    // 프로젝트 조회 (관계 포함)
+    const projects = await fetchWithJWT(
+      `/rest/v1/projects?user_id=eq.${userId}&select=*,goal:goals(*),area_resource:areas_resources(*),todos(*),notes(*)&order=order_index.asc`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ JWT 프로젝트 조회 성공:', { count: projects?.length || 0 });
+    return projects || [];
+  } catch (error) {
+    console.error('❌ JWT 프로젝트 조회 실패:', error);
+    return [];
+  }
+}
+
+/**
+ * JWT 방식으로 프로젝트 생성
+ */
+export async function createProjectWithJWT(data: any): Promise<any> {
+  console.log('✏️ JWT 방식으로 프로젝트 생성:', data);
+
+  try {
+    const result = await createWithJWT('projects', data);
+    console.log('✅ JWT 프로젝트 생성 성공:', { id: result?.id });
+    return result;
+  } catch (error) {
+    console.error('❌ JWT 프로젝트 생성 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * JWT 방식으로 프로젝트 업데이트
+ */
+export async function updateProjectWithJWT(
+  id: string,
+  userId: string,
+  updates: any
+): Promise<any> {
+  console.log('🔄 JWT 방식으로 프로젝트 업데이트:', { id, userId, updates });
+
+  try {
+    const result = await updateWithJWT('projects', [
+      { column: 'id', operator: 'eq', value: id },
+      { column: 'user_id', operator: 'eq', value: userId }
+    ], {
+      ...updates,
+      updated_at: new Date().toISOString()
+    });
+
+    console.log('✅ JWT 프로젝트 업데이트 성공:', { id });
+    return result?.[0] || null;
+  } catch (error) {
+    console.error('❌ JWT 프로젝트 업데이트 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * JWT 방식으로 프로젝트 삭제
+ */
+export async function deleteProjectWithJWT(
+  id: string,
+  userId: string
+): Promise<boolean> {
+  console.log('🗑️ JWT 방식으로 프로젝트 삭제:', { id, userId });
+
+  try {
+    await deleteWithJWT('projects', [
+      { column: 'id', operator: 'eq', value: id },
+      { column: 'user_id', operator: 'eq', value: userId }
+    ]);
+
+    console.log('✅ JWT 프로젝트 삭제 성공:', { id });
+    return true;
+  } catch (error) {
+    console.error('❌ JWT 프로젝트 삭제 실패:', error);
+    return false;
+  }
+}
+
+// ============================================================================
+// Second Brain System - 통계 API Functions
+// ============================================================================
+
+/**
+ * JWT 방식으로 프로젝트별 할일 통계 조회
+ */
+export async function fetchProjectStatsWithJWT(projectId: string): Promise<any> {
+  console.log('📊 JWT 방식으로 프로젝트 통계 조회:', { projectId });
+
+  try {
+    const stats = await fetchWithJWT(
+      `/rest/v1/project_todo_stats?project_id=eq.${projectId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ JWT 프로젝트 통계 조회 성공:', stats?.[0]);
+    return stats?.[0] || null;
+  } catch (error) {
+    console.error('❌ JWT 프로젝트 통계 조회 실패:', error);
+    return null;
+  }
+}
+
+/**
+ * JWT 방식으로 목표별 프로젝트 통계 조회
+ */
+export async function fetchGoalStatsWithJWT(goalId: string): Promise<any> {
+  console.log('📊 JWT 방식으로 목표 통계 조회:', { goalId });
+
+  try {
+    const stats = await fetchWithJWT(
+      `/rest/v1/goal_project_stats?goal_id=eq.${goalId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ JWT 목표 통계 조회 성공:', stats?.[0]);
+    return stats?.[0] || null;
+  } catch (error) {
+    console.error('❌ JWT 목표 통계 조회 실패:', error);
+    return null;
+  }
+}
+
+/**
+ * JWT 방식으로 영역/자원별 노트 카운트 조회
+ */
+export async function fetchAreaResourceNoteCountsWithJWT(userId: string): Promise<any[]> {
+  console.log('📊 JWT 방식으로 영역/자원별 노트 카운트 조회:', { userId });
+
+  try {
+    const counts = await fetchWithJWT(
+      `/rest/v1/area_resource_note_counts?user_id=eq.${userId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ JWT 영역/자원별 노트 카운트 조회 성공:', { count: counts?.length || 0 });
+    return counts || [];
+  } catch (error) {
+    console.error('❌ JWT 영역/자원별 노트 카운트 조회 실패:', error);
+    return [];
+  }
+}

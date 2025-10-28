@@ -367,3 +367,169 @@ export type {
   TimelineItemDimensions,
   TimelineAnimationState,
 } from "./timeline-view";
+
+// ============================================
+// Second Brain System Types
+// ============================================
+
+// ENUM types from database
+export type AreaResourceStatus = 'area' | 'resource' | 'archived';
+export type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'paused';
+export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
+export type Clarification = 'none' | 'reminder' | 'someday' | 'waiting' | 'next_action' | 'scheduled';
+export type NextActionContext =
+  | 'creativity'
+  | 'simple_work'
+  | 'low_battery'
+  | 'smartphone'
+  | 'computer'
+  | 'home'
+  | 'outside'
+  | 'anywhere'
+  | 'office'
+  | 'read_later';
+export type NoteClassification = 'none' | 'work_in_progress' | 'read_later' | 'reference';
+
+// Area/Resource types
+export interface AreaResource {
+  id: string;
+  user_id: string;
+  title: string;
+  status: AreaResourceStatus;
+  is_pinned: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AreaResourceInsert {
+  user_id: string;
+  title: string;
+  status?: AreaResourceStatus;
+  is_pinned?: boolean;
+  order_index?: number;
+}
+
+export interface AreaResourceUpdate extends Partial<AreaResourceInsert> {
+  id: string;
+}
+
+// Goal types
+export interface Goal {
+  id: string;
+  user_id: string;
+  title: string;
+  status: ProgressStatus;
+  area_resource_id: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  year_goal: number | null;
+  quarter_goal: Quarter | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  area_resource?: AreaResource;
+  projects?: Project[];
+}
+
+export interface GoalInsert {
+  user_id: string;
+  title: string;
+  status?: ProgressStatus;
+  area_resource_id?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  year_goal?: number | null;
+  quarter_goal?: Quarter | null;
+  order_index?: number;
+}
+
+export interface GoalUpdate extends Partial<GoalInsert> {
+  id: string;
+}
+
+// Project types
+export interface Project {
+  id: string;
+  user_id: string;
+  title: string;
+  goal_id: string | null;
+  area_resource_id: string | null;
+  status: ProgressStatus;
+  is_completed: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  goal?: Goal;
+  area_resource?: AreaResource;
+  todos?: Todo[];
+  notes?: Note[];
+}
+
+export interface ProjectInsert {
+  user_id: string;
+  title: string;
+  goal_id?: string | null;
+  area_resource_id?: string | null;
+  status?: ProgressStatus;
+  is_completed?: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+  order_index?: number;
+}
+
+export interface ProjectUpdate extends Partial<ProjectInsert> {
+  id: string;
+}
+
+// Extended Todo type with new fields (기존 Todo 타입을 확장하지 않고 새 필드만 문서화)
+export interface TodoExtendedFields {
+  project_id: string | null;
+  clarification: Clarification;
+  next_action_contexts: NextActionContext[] | null;
+  is_today_highlight: boolean;
+  assigned_to: string | null;
+  assigned_date: string | null;
+}
+
+// Extended Note type with new fields (기존 Note 타입을 확장하지 않고 새 필드만 문서화)
+export interface NoteExtendedFields {
+  project_id: string | null;
+  area_resource_id: string | null;
+  classification: NoteClassification;
+}
+
+// Statistics types
+export interface ProjectTodoStats {
+  project_id: string;
+  user_id: string;
+  total_todos: number;
+  completed_todos: number;
+  remaining_todos: number;
+  completion_rate: number;
+}
+
+export interface GoalProjectStats {
+  goal_id: string;
+  user_id: string;
+  total_projects: number;
+  in_progress_projects: number;
+  not_started_projects: number;
+  completed_projects: number;
+  paused_projects: number;
+  completion_rate: number;
+}
+
+export interface AreaResourceNoteCount {
+  area_resource_id: string;
+  user_id: string;
+  title: string;
+  status: AreaResourceStatus;
+  note_count: number;
+}
