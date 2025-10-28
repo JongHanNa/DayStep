@@ -44,7 +44,7 @@ export default function GoalsPage() {
 
   useEffect(() => {
     if (appUser?.id) {
-      fetchGoals();
+      fetchGoals(appUser.id);
       fetchAreas(appUser.id);
       fetchResources(appUser.id);
     }
@@ -82,20 +82,18 @@ export default function GoalsPage() {
 
   // 새 목표 추가 핸들러 - 즉시 생성
   const handleAddGoal = async () => {
-    if (isCreatingGoal) return; // 중복 클릭 방지
+    if (isCreatingGoal || !appUser?.id) return; // 중복 클릭 방지 + appUser 체크
 
     setIsCreatingGoal(true);
     try {
       // 목표 즉시 생성
-      const createdGoal = await createGoal({
+      const createdGoal = await createGoal(appUser.id, {
         title: '새 목표',
-        description: '',
         icon: 'lucide-Target',
         color: '#A8DADC',
         status: 'not_started',
-        timeframe: 'year',
-        target_year: new Date().getFullYear(),
-        target_quarter: 1,
+        year_goal: new Date().getFullYear(),
+        quarter_goal: 'Q1',
       });
 
       console.log('새 목표 생성 완료:', createdGoal);
@@ -138,7 +136,7 @@ export default function GoalsPage() {
 
   // 저장 핸들러
   const handleSaveEdit = async () => {
-    if (!editingGoal || !editingGoal.title.trim()) {
+    if (!editingGoal || !editingGoal.title.trim() || !appUser?.id) {
       alert('제목을 입력해주세요.');
       return;
     }
@@ -160,7 +158,6 @@ export default function GoalsPage() {
         // 새 목표 생성
         const goalData: CreateGoalInput = {
           title: editingGoal.title,
-          description: editingGoal.description || '',
           icon: editingGoal.icon,
           color: editingGoal.color,
           status: editingGoal.status,
@@ -168,16 +165,14 @@ export default function GoalsPage() {
           resource_id,
           start_date: editingGoal.start_date || undefined,
           target_date: editingGoal.target_date || undefined,
-          timeframe: editingGoal.timeframe,
-          target_year: editingGoal.target_year || undefined,
-          target_quarter: editingGoal.target_quarter || undefined,
+          year_goal: editingGoal.year_goal || undefined,
+          quarter_goal: editingGoal.quarter_goal || undefined,
         };
-        await createGoal(goalData);
+        await createGoal(appUser.id, goalData);
       } else {
         // 기존 목표 수정
-        await updateGoal(editingGoal.id, {
+        await updateGoal(appUser.id, editingGoal.id, {
           title: editingGoal.title,
-          description: editingGoal.description || '',
           icon: editingGoal.icon,
           color: editingGoal.color,
           status: editingGoal.status,
@@ -185,15 +180,14 @@ export default function GoalsPage() {
           resource_id,
           start_date: editingGoal.start_date || undefined,
           target_date: editingGoal.target_date || undefined,
-          timeframe: editingGoal.timeframe,
-          target_year: editingGoal.target_year || undefined,
-          target_quarter: editingGoal.target_quarter || undefined,
+          year_goal: editingGoal.year_goal || undefined,
+          quarter_goal: editingGoal.quarter_goal || undefined,
         });
       }
 
       setEditDialogOpen(false);
       setEditingGoal(null);
-      await fetchGoals();
+      await fetchGoals(appUser.id);
     } catch (error) {
       console.error('목표 저장 실패:', error);
       alert('목표 저장에 실패했습니다.');
@@ -214,13 +208,13 @@ export default function GoalsPage() {
 
   // 삭제 실행
   const handleConfirmDelete = async () => {
-    if (!goalToDelete) return;
+    if (!goalToDelete || !appUser?.id) return;
 
     try {
-      await deleteGoal(goalToDelete.id);
+      await deleteGoal(appUser.id, goalToDelete.id);
       setDeleteConfirmOpen(false);
       setGoalToDelete(null);
-      await fetchGoals();
+      await fetchGoals(appUser.id);
     } catch (error) {
       console.error('목표 삭제 실패:', error);
       alert('목표 삭제에 실패했습니다.');
@@ -696,8 +690,8 @@ export default function GoalsPage() {
                               <span className="label-text">연간목표</span>
                             </label>
                             <select
-                              value={editingGoal.target_year || new Date().getFullYear()}
-                              onChange={(e) => setEditingGoal({ ...editingGoal, target_year: parseInt(e.target.value) })}
+                              value={editingGoal.year_goal || new Date().getFullYear()}
+                              onChange={(e) => setEditingGoal({ ...editingGoal, year_goal: parseInt(e.target.value) })}
                               className="select select-bordered w-full"
                             >
                               {Array.from({ length: 6 }, (_, i) => {
@@ -716,14 +710,14 @@ export default function GoalsPage() {
                               <span className="label-text">분기목표</span>
                             </label>
                             <select
-                              value={editingGoal.target_quarter || 1}
-                              onChange={(e) => setEditingGoal({ ...editingGoal, target_quarter: parseInt(e.target.value) as 1 | 2 | 3 | 4 })}
+                              value={editingGoal.quarter_goal || 'Q1'}
+                              onChange={(e) => setEditingGoal({ ...editingGoal, quarter_goal: e.target.value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
                               className="select select-bordered w-full"
                             >
-                              <option value={1}>1분기 (1~3월)</option>
-                              <option value={2}>2분기 (4~6월)</option>
-                              <option value={3}>3분기 (7~9월)</option>
-                              <option value={4}>4분기 (10~12월)</option>
+                              <option value="Q1">1분기 (1~3월)</option>
+                              <option value="Q2">2분기 (4~6월)</option>
+                              <option value="Q3">3분기 (7~9월)</option>
+                              <option value="Q4">4분기 (10~12월)</option>
                             </select>
                           </div>
                         </div>

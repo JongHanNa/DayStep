@@ -200,9 +200,8 @@ export default function ClarifyPage() {
         resource_id,
         start_date: goalData.start_date || undefined,
         target_date: goalData.target_date || undefined,
-        timeframe: goalData.timeframe,
-        target_year: goalData.target_year || undefined,
-        target_quarter: goalData.target_quarter || undefined,
+        year_goal: goalData.year_goal || undefined,
+        quarter_goal: goalData.quarter_goal || undefined,
       } as UpdateGoalInput);
 
       // 모달 닫기 및 새로고침

@@ -5,22 +5,23 @@
 
 import { createStore } from '@/state/utils/storeUtils';
 import type { Goal, CreateGoalInput, UpdateGoalInput } from '@/types/second-brain';
-import { mockGoals, saveMockDataToLocalStorage } from '@/lib/mockData/secondBrain';
+import {
+  fetchGoalsWithJWT,
+  createGoalWithJWT,
+  updateGoalWithJWT,
+  deleteGoalWithJWT,
+} from '@/lib/supabase/goals';
 
 interface GoalStoreState {
   goals: Goal[];
   loading: boolean;
   error: string | null;
 
-  // Actions
-  fetchGoals: () => Promise<void>;
-  createGoal: (data: CreateGoalInput) => Promise<Goal>;
-  updateGoal: (id: string, data: UpdateGoalInput) => Promise<Goal>;
-  deleteGoal: (id: string) => Promise<boolean>;
-  completeGoal: (id: string) => Promise<Goal>;
-  archiveGoal: (id: string) => Promise<Goal>;
-  unarchiveGoal: (id: string) => Promise<Goal>;
-  updateGoalProgress: (id: string, progress: number) => Promise<Goal>;
+  // Actions - userId 파라미터 추가 (areaStore 패턴)
+  fetchGoals: (userId: string) => Promise<void>;
+  createGoal: (userId: string, data: CreateGoalInput) => Promise<Goal>;
+  updateGoal: (userId: string, id: string, data: UpdateGoalInput) => Promise<Goal>;
+  deleteGoal: (userId: string, id: string) => Promise<boolean>;
 }
 
 export const useGoalStore = createStore<GoalStoreState>(
@@ -29,11 +30,11 @@ export const useGoalStore = createStore<GoalStoreState>(
     loading: false,
     error: null,
 
-    fetchGoals: async () => {
+    fetchGoals: async (userId: string) => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드 (아카이브 포함)
-        const goals = mockGoals;
+
+        const goals = await fetchGoalsWithJWT(userId);
         set({ goals, loading: false });
       } catch (error) {
         set({
@@ -43,40 +44,50 @@ export const useGoalStore = createStore<GoalStoreState>(
       }
     },
 
-    createGoal: async (data: CreateGoalInput) => {
+    createGoal: async (userId: string, data: CreateGoalInput) => {
       try {
-        set({ loading: true, error: null });
-
-        const newGoal: Goal = {
-          id: `goal-${Date.now()}`,
-          user_id: 'mock-user-123',
+        // Optimistic update
+        const tempId = `temp-${Date.now()}`;
+        const optimisticGoal: Goal = {
+          id: tempId,
+          user_id: userId,
           ...data,
           progress: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
-        const updatedGoals = [...get().goals, newGoal];
-        set({ goals: updatedGoals, loading: false });
+        set({ goals: [...get().goals, optimisticGoal] });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const newGoal = await createGoalWithJWT({
+          ...data,
+          user_id: userId,
+        });
+
+        // 실제 데이터로 교체
+        set({
+          goals: get().goals.map((goal) =>
+            goal.id === tempId ? newGoal : goal
+          ),
+        });
 
         return newGoal;
       } catch (error) {
+        // Rollback optimistic update
+        set({ goals: get().goals.filter((goal) => !goal.id.startsWith('temp-')) });
         set({
           error: error instanceof Error ? error.message : '목표 생성에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    updateGoal: async (id: string, data: UpdateGoalInput) => {
+    updateGoal: async (userId: string, id: string, data: UpdateGoalInput) => {
       try {
-        set({ loading: true, error: null });
-
-        const updatedGoals = get().goals.map((goal: Goal) =>
+        // Optimistic update
+        const previousGoals = get().goals;
+        const updatedGoals = get().goals.map((goal) =>
           goal.id === id
             ? {
                 ...goal,
@@ -86,180 +97,48 @@ export const useGoalStore = createStore<GoalStoreState>(
             : goal
         );
 
-        set({ goals: updatedGoals, loading: false });
+        set({ goals: updatedGoals });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const updatedGoal = await updateGoalWithJWT(id, userId, data);
+        if (!updatedGoal) throw new Error('목표 업데이트에 실패했습니다.');
 
-        const updatedGoal = updatedGoals.find((g: Goal) => g.id === id);
-        if (!updatedGoal) {
-          throw new Error('목표를 찾을 수 없습니다.');
-        }
+        // 실제 데이터로 교체
+        set({
+          goals: get().goals.map((goal) =>
+            goal.id === id ? updatedGoal : goal
+          ),
+        });
 
         return updatedGoal;
       } catch (error) {
+        // Rollback
+        set({ goals: get().goals });
         set({
           error: error instanceof Error ? error.message : '목표 수정에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    deleteGoal: async (id: string) => {
+    deleteGoal: async (userId: string, id: string) => {
       try {
-        set({ loading: true, error: null });
+        // Optimistic update
+        const previousGoals = get().goals;
+        set({ goals: get().goals.filter((goal) => goal.id !== id) });
 
-        const updatedGoals = get().goals.filter((goal: Goal) => goal.id !== id);
-        set({ goals: updatedGoals, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const success = await deleteGoalWithJWT(id, userId);
+        if (!success) {
+          throw new Error('목표 삭제에 실패했습니다.');
+        }
 
         return true;
       } catch (error) {
+        // Rollback
+        set({ goals: get().goals });
         set({
           error: error instanceof Error ? error.message : '목표 삭제에 실패했습니다.',
-          loading: false,
-        });
-        throw error;
-      }
-    },
-
-    completeGoal: async (id: string) => {
-      try {
-        set({ loading: true, error: null });
-
-        const updatedGoals = get().goals.map((goal: Goal) =>
-          goal.id === id
-            ? {
-                ...goal,
-                status: 'completed' as const,
-                progress: 100,
-                updated_at: new Date().toISOString(),
-              }
-            : goal
-        );
-
-        set({ goals: updatedGoals, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const completedGoal = updatedGoals.find((g: Goal) => g.id === id);
-        if (!completedGoal) {
-          throw new Error('목표를 찾을 수 없습니다.');
-        }
-
-        return completedGoal;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '목표 완료 처리에 실패했습니다.',
-          loading: false,
-        });
-        throw error;
-      }
-    },
-
-    archiveGoal: async (id: string) => {
-      try {
-        set({ loading: true, error: null });
-
-        const updatedGoals = get().goals.map((goal: Goal) =>
-          goal.id === id
-            ? {
-                ...goal,
-                status: 'archived' as const,
-                updated_at: new Date().toISOString(),
-              }
-            : goal
-        );
-
-        set({ goals: updatedGoals.filter((g: Goal) => g.status !== 'archived'), loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const archivedGoal = updatedGoals.find((g: Goal) => g.id === id);
-        if (!archivedGoal) {
-          throw new Error('목표를 찾을 수 없습니다.');
-        }
-
-        return archivedGoal;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '목표 아카이브에 실패했습니다.',
-          loading: false,
-        });
-        throw error;
-      }
-    },
-
-    unarchiveGoal: async (id: string) => {
-      try {
-        set({ loading: true, error: null });
-
-        // 아카이브된 목표 포함하여 로드
-        const allGoals = mockGoals;
-        const updatedGoals = allGoals.map((goal: Goal) =>
-          goal.id === id
-            ? {
-                ...goal,
-                status: 'in_progress' as const,
-                updated_at: new Date().toISOString(),
-              }
-            : goal
-        );
-
-        set({ goals: updatedGoals.filter((g: Goal) => g.status !== 'archived'), loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const unarchivedGoal = updatedGoals.find((g: Goal) => g.id === id);
-        if (!unarchivedGoal) {
-          throw new Error('목표를 찾을 수 없습니다.');
-        }
-
-        return unarchivedGoal;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '목표 복원에 실패했습니다.',
-          loading: false,
-        });
-        throw error;
-      }
-    },
-
-    updateGoalProgress: async (id: string, progress: number) => {
-      try {
-        set({ loading: true, error: null });
-
-        const updatedGoals = get().goals.map((goal: Goal) =>
-          goal.id === id
-            ? {
-                ...goal,
-                progress: Math.min(100, Math.max(0, progress)),
-                updated_at: new Date().toISOString(),
-              }
-            : goal
-        );
-
-        set({ goals: updatedGoals, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const updatedGoal = updatedGoals.find((g: Goal) => g.id === id);
-        if (!updatedGoal) {
-          throw new Error('목표를 찾을 수 없습니다.');
-        }
-
-        return updatedGoal;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '목표 진행도 업데이트에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
@@ -269,7 +148,7 @@ export const useGoalStore = createStore<GoalStoreState>(
     name: 'goal-store',
     persist: {
       name: 'daystep-goals',
-      version: 1,
+      version: 2, // 버전 업 (Mock → DB)
     },
   }
 );

@@ -131,9 +131,8 @@ export const mockGoals: Goal[] = [
     title: '앱 출시하기',
     description: 'DayStep 앱을 6개월 내 출시하여 월 500만원 부수입 달성',
     area_id: 'area-1',
-    timeframe: 'year',
     target_date: new Date('2025-12-31').toISOString(),
-    target_year: 2025,
+    year_goal: 2025,
     icon: '🚀',
     color: '#E07A5F',
     status: 'in_progress',
@@ -148,7 +147,6 @@ export const mockGoals: Goal[] = [
     title: '건강한 라이프스타일 만들기',
     description: '꾸준한 운동과 식단 관리로 건강 개선',
     // area_id, resource_id, target_date 없음 (수집함 조건)
-    timeframe: 'year',
     icon: 'lucide-Heart',
     color: '#6B9080',
     status: 'not_started',
@@ -162,8 +160,7 @@ export const mockGoals: Goal[] = [
     title: '새로운 기술 스택 마스터하기',
     description: 'Next.js 15와 React 19 심화 학습',
     // area_id, resource_id, target_date 없음 (수집함 조건)
-    timeframe: 'quarter',
-    target_quarter: 4,
+    quarter_goal: 'Q4',
     icon: 'lucide-Code',
     color: '#2A9D8F',
     status: 'not_started',

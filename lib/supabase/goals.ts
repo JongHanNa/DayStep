@@ -2,25 +2,27 @@
  * Goals - 목표 관리
  */
 
-import { createWithJWT, updateWithJWT, deleteWithJWT, fetchWithJWT } from './core';
+import { createWithJWT, updateWithJWT, deleteWithJWT, queryRLSTableWithJWT } from './core';
+import type { Goal, CreateGoalInput, UpdateGoalInput } from '@/types/second-brain';
 
 /**
  * JWT 방식으로 목표 조회
  */
-export async function fetchGoalsWithJWT(userId: string): Promise<any[]> {
+export async function fetchGoalsWithJWT(userId: string): Promise<Goal[]> {
   console.log('🎯 JWT 방식으로 목표 조회:', { userId });
 
   try {
-    // 목표 조회 (관계 포함)
-    const goals = await fetchWithJWT(
-      `/rest/v1/goals?user_id=eq.${userId}&select=*,area_resource:areas_resources(*),projects(*)&order=order_index.asc`,
+    // 목표 조회
+    const goals = await queryRLSTableWithJWT('goals', [
       {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
+        column: 'user_id',
+        operator: 'eq',
+        value: userId
       }
-    );
+    ], {
+      select: '*',
+      order: 'order_index.asc'
+    });
 
     console.log('✅ JWT 목표 조회 성공:', { count: goals?.length || 0 });
     return goals || [];
@@ -33,11 +35,14 @@ export async function fetchGoalsWithJWT(userId: string): Promise<any[]> {
 /**
  * JWT 방식으로 목표 생성
  */
-export async function createGoalWithJWT(data: any): Promise<any> {
+export async function createGoalWithJWT(data: CreateGoalInput & { user_id: string }): Promise<Goal> {
   console.log('✏️ JWT 방식으로 목표 생성:', data);
 
   try {
-    const result = await createWithJWT('goals', data);
+    const result = await createWithJWT('goals', {
+      ...data,
+      order_index: data.order_index || 0,
+    });
     console.log('✅ JWT 목표 생성 성공:', { id: result?.id });
     return result;
   } catch (error) {
@@ -52,8 +57,8 @@ export async function createGoalWithJWT(data: any): Promise<any> {
 export async function updateGoalWithJWT(
   id: string,
   userId: string,
-  updates: any
-): Promise<any> {
+  updates: UpdateGoalInput
+): Promise<Goal | null> {
   console.log('🔄 JWT 방식으로 목표 업데이트:', { id, userId, updates });
 
   try {
