@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { Plus, X, Pencil, Lightbulb } from 'lucide-react';
@@ -15,22 +16,22 @@ import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
 
 // 추천 영역 프리셋 (온보딩 step-1과 동일)
 const AREA_PRESETS = [
-  { title: '직장', icon: 'lucide-Briefcase', color: '#DBAC6C', description: '업무 프로젝트 및 커리어 개발' },
-  { title: '가족', icon: 'lucide-Users', color: '#FF6B6B', description: '가족 관계 및 행사' },
-  { title: '건강', icon: 'lucide-Heart', color: '#4ECDC4', description: '운동, 식습관, 건강관리' },
-  { title: '나', icon: 'lucide-Sparkles', color: '#C7B3E5', description: '나에 대한 생각, 발견, 성찰' },
-  { title: '자기개발', icon: 'lucide-Book', color: '#F38181', description: '학습, 성장, 스킬 향상' },
-  { title: '취미', icon: 'lucide-Palette', color: '#AA96DA', description: '여가 활동 및 관심사' },
+  { title: '직장', icon: 'lucide-Briefcase', color: '#DBAC6C' },
+  { title: '가족', icon: 'lucide-Users', color: '#FF6B6B' },
+  { title: '건강', icon: 'lucide-Heart', color: '#4ECDC4' },
+  { title: '나', icon: 'lucide-Sparkles', color: '#C7B3E5' },
+  { title: '자기개발', icon: 'lucide-Book', color: '#F38181' },
+  { title: '취미', icon: 'lucide-Palette', color: '#AA96DA' },
 ];
 
 type AreaPreset = {
   title: string;
   icon: string;
   color: string;
-  description: string;
 };
 
 export default function AreasPage() {
+  const { appUser } = useAuth();
   const { createArea, updateArea, deleteArea, areas, fetchAreas, archiveArea, unarchiveArea } = useAreaStore();
   const { createResource, deleteResource: deleteResourceFromStore } = useResourceStore();
   const { openModal, closeModal } = useModalStore();
@@ -50,8 +51,10 @@ export default function AreasPage() {
   const [selectedPresets, setSelectedPresets] = useState<AreaPreset[]>([]);
 
   useEffect(() => {
-    fetchAreas();
-  }, [fetchAreas]);
+    if (appUser?.id) {
+      fetchAreas(appUser.id);
+    }
+  }, [appUser?.id, fetchAreas]);
 
   // 편집 모달 상태 관리 (하단 네비 숨김)
   useEffect(() => {
@@ -75,18 +78,17 @@ export default function AreasPage() {
 
   // 새 영역 추가 핸들러 - 즉시 생성
   const handleAddArea = async () => {
-    if (isCreatingArea) return; // 중복 클릭 방지
+    if (isCreatingArea || !appUser?.id) return; // 중복 클릭 방지 + 인증 체크
 
     setIsCreatingArea(true);
     try {
       // 영역 즉시 생성
-      const createdArea = await createArea({
+      const createdArea = await createArea(appUser.id, {
         title: '새 영역',
-        description: '',
         icon: 'lucide-MapPin',
         color: '#A8DADC',
         order_index: areas.length,
-        is_archived: false,
+        is_pinned: false,
       });
 
       console.log('새 영역 생성 완료:', createdArea);
@@ -112,7 +114,7 @@ export default function AreasPage() {
 
   // 저장 핸들러
   const handleSaveEdit = async () => {
-    if (!editingArea || !editingArea.title.trim()) {
+    if (!editingArea || !editingArea.title.trim() || !appUser?.id) {
       alert('제목을 입력해주세요.');
       return;
     }
@@ -124,36 +126,33 @@ export default function AreasPage() {
           // 자원으로 생성
           const resourceData: CreateResourceInput = {
             title: editingArea.title,
-            description: editingArea.description || '',
             icon: editingArea.icon,
             color: editingArea.color,
             order_index: 0,
-            is_archived: false,
+            is_pinned: false,
           };
-          await createResource(resourceData);
+          await createResource(appUser.id, resourceData);
         } else if (itemType === 'area') {
           // 영역으로 생성
           const areaData: CreateAreaInput = {
             title: editingArea.title,
-            description: editingArea.description || '',
             icon: editingArea.icon,
             color: editingArea.color,
             order_index: areas.length,
-            is_archived: false,
+            is_pinned: false,
           };
-          await createArea(areaData);
+          await createArea(appUser.id, areaData);
         } else if (itemType === 'archive') {
           // 아카이브 상태로 생성
           const areaData: CreateAreaInput = {
             title: editingArea.title,
-            description: editingArea.description || '',
             icon: editingArea.icon,
             color: editingArea.color,
             order_index: areas.length,
-            is_archived: true,
+            is_pinned: false,
           };
-          const newArea = await createArea(areaData);
-          await archiveArea(newArea.id);
+          const newArea = await createArea(appUser.id, areaData);
+          await archiveArea(appUser.id, newArea.id);
         }
       } else {
         // 기존 항목 수정
@@ -161,50 +160,37 @@ export default function AreasPage() {
 
         if (originalType === itemType) {
           // 같은 타입 내에서 수정
-          if (itemType === 'archive') {
-            // 아카이브 상태 유지
-            await updateArea(editingArea.id, {
-              title: editingArea.title,
-              description: editingArea.description || '',
-              icon: editingArea.icon,
-              color: editingArea.color,
-            });
-          } else {
-            // 일반 영역 수정
-            await updateArea(editingArea.id, {
-              title: editingArea.title,
-              description: editingArea.description || '',
-              icon: editingArea.icon,
-              color: editingArea.color,
-            });
-          }
+          await updateArea(appUser.id, editingArea.id, {
+            title: editingArea.title,
+            icon: editingArea.icon,
+            color: editingArea.color,
+          });
         } else {
           // 타입 변경
           if (itemType === 'resource') {
             // Area → Resource 변환
             const resourceData: CreateResourceInput = {
               title: editingArea.title,
-              description: editingArea.description || '',
               icon: editingArea.icon,
               color: editingArea.color,
               order_index: 0,
-              is_archived: false,
+              is_pinned: false,
             };
-            await deleteArea(editingArea.id);
-            await createResource(resourceData);
+            await deleteArea(appUser.id, editingArea.id);
+            await createResource(appUser.id, resourceData);
           } else if (itemType === 'archive') {
             // Area → Archive
-            await archiveArea(editingArea.id);
+            await archiveArea(appUser.id, editingArea.id);
           } else if (itemType === 'area' && originalType === 'archive') {
             // Archive → Area
-            await unarchiveArea(editingArea.id);
+            await unarchiveArea(appUser.id, editingArea.id);
           }
         }
       }
 
       setEditDialogOpen(false);
       setEditingArea(null);
-      await fetchAreas();
+      await fetchAreas(appUser.id);
     } catch (error) {
       console.error('저장 실패:', error);
       alert('저장에 실패했습니다.');
@@ -234,13 +220,13 @@ export default function AreasPage() {
 
   // 삭제 실행
   const handleConfirmDelete = async () => {
-    if (!areaToDelete) return;
+    if (!areaToDelete || !appUser?.id) return;
 
     try {
-      await deleteArea(areaToDelete.id);
+      await deleteArea(appUser.id, areaToDelete.id);
       setDeleteConfirmOpen(false);
       setAreaToDelete(null);
-      await fetchAreas();
+      await fetchAreas(appUser.id);
     } catch (error) {
       console.error('영역 삭제 실패:', error);
       alert('영역 삭제에 실패했습니다.');
@@ -270,7 +256,7 @@ export default function AreasPage() {
 
   // 추천 항목 일괄 추가
   const handleAddPresets = async () => {
-    if (selectedPresets.length === 0) {
+    if (selectedPresets.length === 0 || !appUser?.id) {
       alert('최소 1개 이상의 영역을 선택해주세요.');
       return;
     }
@@ -280,18 +266,17 @@ export default function AreasPage() {
       for (const [index, preset] of selectedPresets.entries()) {
         const areaData: CreateAreaInput = {
           title: preset.title,
-          description: preset.description,
           icon: preset.icon,
           color: preset.color,
           order_index: areas.length + index,
-          is_archived: false,
+          is_pinned: false,
         };
-        await createArea(areaData);
+        await createArea(appUser.id, areaData);
       }
 
       setPresetDialogOpen(false);
       setSelectedPresets([]);
-      await fetchAreas();
+      await fetchAreas(appUser.id);
     } catch (error) {
       console.error('영역 추가 실패:', error);
       alert('영역 추가에 실패했습니다.');
@@ -370,9 +355,6 @@ export default function AreasPage() {
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold">{area.title}</div>
-                        {area.description && (
-                          <div className="text-sm text-base-content/60">{area.description}</div>
-                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -499,9 +481,6 @@ export default function AreasPage() {
                             )}
                           </div>
                           <h3 className="font-semibold mt-2">{preset.title}</h3>
-                          <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
-                            {preset.description}
-                          </p>
                         </div>
                       </button>
                     );

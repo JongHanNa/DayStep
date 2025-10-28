@@ -3,11 +3,12 @@
  */
 
 import { createWithJWT, updateWithJWT, deleteWithJWT, queryRLSTableWithJWT } from './core';
+import type { AreaResource } from '@/types/second-brain';
 
 /**
  * JWT 방식으로 영역/자원 조회
  */
-export async function fetchAreasResourcesWithJWT(userId: string): Promise<any[]> {
+export async function fetchAreasResourcesWithJWT(userId: string): Promise<AreaResource[]> {
   console.log('📂 JWT 방식으로 영역/자원 조회:', { userId });
 
   try {
@@ -33,7 +34,15 @@ export async function fetchAreasResourcesWithJWT(userId: string): Promise<any[]>
 /**
  * JWT 방식으로 영역/자원 생성
  */
-export async function createAreaResourceWithJWT(data: any): Promise<any> {
+export async function createAreaResourceWithJWT(data: {
+  title: string;
+  status: 'area' | 'resource' | 'archived';
+  user_id: string;
+  icon?: string;
+  color: string;
+  is_pinned?: boolean;
+  order_index?: number;
+}): Promise<AreaResource> {
   console.log('✏️ JWT 방식으로 영역/자원 생성:', data);
 
   try {
@@ -52,8 +61,15 @@ export async function createAreaResourceWithJWT(data: any): Promise<any> {
 export async function updateAreaResourceWithJWT(
   id: string,
   userId: string,
-  updates: any
-): Promise<any> {
+  updates: Partial<{
+    title: string;
+    status: 'area' | 'resource' | 'archived';
+    icon?: string;
+    color: string;
+    is_pinned: boolean;
+    order_index: number;
+  }>
+): Promise<AreaResource | null> {
   console.log('🔄 JWT 방식으로 영역/자원 업데이트:', { id, userId, updates });
 
   try {

@@ -10,26 +10,27 @@ import type { SecondBrainItemType } from '@/types/settings';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { useModalStore } from '@/state/stores/modalStore';
+import { useAuth } from '@/app/context/AuthContext';
 import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
 
 // 추천 자원 프리셋 (온보딩 step-2와 동일)
 const RESOURCE_PRESETS = [
-  { title: '독서', icon: 'lucide-Book', color: '#FF6B6B', description: '읽고 싶은 책, 독서 노트' },
-  { title: '프로그래밍', icon: 'lucide-Laptop', color: '#4ECDC4', description: '코딩, 개발 자료' },
-  { title: '영화', icon: 'lucide-Film', color: '#95E1D3', description: '영화 리뷰, 추천 목록' },
-  { title: '여행', icon: 'lucide-Plane', color: '#F38181', description: '여행지 정보, 계획' },
-  { title: '요리', icon: 'lucide-ChefHat', color: '#AA96DA', description: '레시피, 맛집 정보' },
-  { title: '음악', icon: 'lucide-Music', color: '#DBAC6C', description: '플레이리스트, 음악 감상' },
+  { title: '독서', icon: 'lucide-Book', color: '#FF6B6B' },
+  { title: '프로그래밍', icon: 'lucide-Laptop', color: '#4ECDC4' },
+  { title: '영화', icon: 'lucide-Film', color: '#95E1D3' },
+  { title: '여행', icon: 'lucide-Plane', color: '#F38181' },
+  { title: '요리', icon: 'lucide-ChefHat', color: '#AA96DA' },
+  { title: '음악', icon: 'lucide-Music', color: '#DBAC6C' },
 ];
 
 type ResourcePreset = {
   title: string;
   icon: string;
   color: string;
-  description: string;
 };
 
 export default function ResourcesPage() {
+  const { appUser } = useAuth();
   const { createResource, updateResource, deleteResource, resources, fetchResources, archiveResource, unarchiveResource } = useResourceStore();
   const { createArea, deleteArea: deleteAreaFromStore } = useAreaStore();
   const { openModal, closeModal } = useModalStore();
@@ -49,8 +50,10 @@ export default function ResourcesPage() {
   const [selectedPresets, setSelectedPresets] = useState<ResourcePreset[]>([]);
 
   useEffect(() => {
-    fetchResources();
-  }, [fetchResources]);
+    if (appUser?.id) {
+      fetchResources(appUser.id);
+    }
+  }, [appUser?.id, fetchResources]);
 
   // 편집 모달 상태 관리 (하단 네비 숨김)
   useEffect(() => {
@@ -74,18 +77,16 @@ export default function ResourcesPage() {
 
   // 새 자원 추가 핸들러 - 즉시 생성
   const handleAddResource = async () => {
-    if (isCreatingResource) return; // 중복 클릭 방지
+    if (isCreatingResource || !appUser?.id) return; // 중복 클릭 방지
 
     setIsCreatingResource(true);
     try {
       // 자원 즉시 생성
-      const createdResource = await createResource({
+      const createdResource = await createResource(appUser.id, {
         title: '새 자원',
-        description: '',
         icon: 'lucide-BookOpen',
         color: '#A8DADC',
         order_index: resources.length,
-        is_archived: false,
       });
 
       console.log('새 자원 생성 완료:', createdResource);
@@ -111,7 +112,7 @@ export default function ResourcesPage() {
 
   // 저장 핸들러
   const handleSaveEdit = async () => {
-    if (!editingResource || !editingResource.title.trim()) {
+    if (!editingResource || !editingResource.title.trim() || !appUser?.id) {
       alert('제목을 입력해주세요.');
       return;
     }
@@ -123,36 +124,30 @@ export default function ResourcesPage() {
           // 영역으로 생성
           const areaData: CreateAreaInput = {
             title: editingResource.title,
-            description: editingResource.description || '',
             icon: editingResource.icon,
             color: editingResource.color,
             order_index: 0,
-            is_archived: false,
           };
           await createArea(areaData);
         } else if (itemType === 'resource') {
           // 자원으로 생성
           const resourceData: CreateResourceInput = {
             title: editingResource.title,
-            description: editingResource.description || '',
             icon: editingResource.icon,
             color: editingResource.color,
             order_index: resources.length,
-            is_archived: false,
           };
-          await createResource(resourceData);
+          await createResource(appUser.id, resourceData);
         } else if (itemType === 'archive') {
           // 아카이브 상태로 생성
           const resourceData: CreateResourceInput = {
             title: editingResource.title,
-            description: editingResource.description || '',
             icon: editingResource.icon,
             color: editingResource.color,
             order_index: resources.length,
-            is_archived: true,
           };
-          const newResource = await createResource(resourceData);
-          await archiveResource(newResource.id);
+          const newResource = await createResource(appUser.id, resourceData);
+          await archiveResource(appUser.id, newResource.id);
         }
       } else {
         // 기존 항목 수정
@@ -162,17 +157,15 @@ export default function ResourcesPage() {
           // 같은 타입 내에서 수정
           if (itemType === 'archive') {
             // 아카이브 상태 유지
-            await updateResource(editingResource.id, {
+            await updateResource(appUser.id, editingResource.id, {
               title: editingResource.title,
-              description: editingResource.description || '',
               icon: editingResource.icon,
               color: editingResource.color,
             });
           } else {
             // 일반 자원 수정
-            await updateResource(editingResource.id, {
+            await updateResource(appUser.id, editingResource.id, {
               title: editingResource.title,
-              description: editingResource.description || '',
               icon: editingResource.icon,
               color: editingResource.color,
             });
@@ -183,27 +176,26 @@ export default function ResourcesPage() {
             // Resource → Area 변환
             const areaData: CreateAreaInput = {
               title: editingResource.title,
-              description: editingResource.description || '',
               icon: editingResource.icon,
               color: editingResource.color,
               order_index: 0,
               is_archived: false,
             };
-            await deleteResource(editingResource.id);
+            await deleteResource(appUser.id, editingResource.id);
             await createArea(areaData);
           } else if (itemType === 'archive') {
             // Resource → Archive
-            await archiveResource(editingResource.id);
+            await archiveResource(appUser.id, editingResource.id);
           } else if (itemType === 'resource' && originalType === 'archive') {
             // Archive → Resource
-            await unarchiveResource(editingResource.id);
+            await unarchiveResource(appUser.id, editingResource.id);
           }
         }
       }
 
       setEditDialogOpen(false);
       setEditingResource(null);
-      await fetchResources();
+      await fetchResources(appUser.id);
     } catch (error) {
       console.error('저장 실패:', error);
       alert('저장에 실패했습니다.');
@@ -233,13 +225,13 @@ export default function ResourcesPage() {
 
   // 삭제 실행
   const handleConfirmDelete = async () => {
-    if (!resourceToDelete) return;
+    if (!resourceToDelete || !appUser?.id) return;
 
     try {
-      await deleteResource(resourceToDelete.id);
+      await deleteResource(appUser.id, resourceToDelete.id);
       setDeleteConfirmOpen(false);
       setResourceToDelete(null);
-      await fetchResources();
+      await fetchResources(appUser.id);
     } catch (error) {
       console.error('자원 삭제 실패:', error);
       alert('자원 삭제에 실패했습니다.');
@@ -269,7 +261,7 @@ export default function ResourcesPage() {
 
   // 추천 항목 일괄 추가
   const handleAddPresets = async () => {
-    if (selectedPresets.length === 0) {
+    if (selectedPresets.length === 0 || !appUser?.id) {
       alert('최소 1개 이상의 자원을 선택해주세요.');
       return;
     }
@@ -279,18 +271,17 @@ export default function ResourcesPage() {
       for (const [index, preset] of selectedPresets.entries()) {
         const resourceData: CreateResourceInput = {
           title: preset.title,
-          description: preset.description,
           icon: preset.icon,
           color: preset.color,
           order_index: resources.length + index,
           is_archived: false,
         };
-        await createResource(resourceData);
+        await createResource(appUser.id, resourceData);
       }
 
       setPresetDialogOpen(false);
       setSelectedPresets([]);
-      await fetchResources();
+      await fetchResources(appUser.id);
     } catch (error) {
       console.error('자원 추가 실패:', error);
       alert('자원 추가에 실패했습니다.');
@@ -369,9 +360,6 @@ export default function ResourcesPage() {
                       </div>
                       <div className="flex-1">
                         <div className="font-semibold">{resource.title}</div>
-                        {resource.description && (
-                          <div className="text-sm text-base-content/60">{resource.description}</div>
-                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -498,9 +486,6 @@ export default function ResourcesPage() {
                             )}
                           </div>
                           <h3 className="font-semibold mt-2">{preset.title}</h3>
-                          <p className={`text-xs ${isSelected ? 'opacity-90' : 'text-base-content/60'}`}>
-                            {preset.description}
-                          </p>
                         </div>
                       </button>
                     );

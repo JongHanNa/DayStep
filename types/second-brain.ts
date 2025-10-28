@@ -15,17 +15,18 @@
 /**
  * 영역 (Area) - 지속적인 책임 영역
  * 예: 직장, 가족, 건강, 재테크
+ *
+ * @deprecated Use AreaResource with status='area' instead
  */
 export interface Area {
   id: string;
   user_id: string;
   title: string;
-  description?: string;
-  standard?: string; // 유지 기준
   icon?: string;
   color: string;
   order_index: number;
-  is_archived: boolean;
+  is_pinned: boolean;
+  status: 'area' | 'archived';
   created_at: string;
   updated_at: string;
 }
@@ -33,16 +34,35 @@ export interface Area {
 /**
  * 자원 (Resource) - 관심 주제 (책임 없음)
  * 예: 독서, 영화, 여행, 프로그래밍
+ *
+ * @deprecated Use AreaResource with status='resource' instead
  */
 export interface Resource {
   id: string;
   user_id: string;
   title: string;
-  description?: string;
   icon?: string;
   color: string;
   order_index: number;
-  is_archived: boolean;
+  is_pinned: boolean;
+  status: 'resource' | 'archived';
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * 영역/자원 통합 타입 (DB areas_resources 테이블)
+ * status로 영역(area)과 자원(resource)을 구분
+ */
+export interface AreaResource {
+  id: string;
+  user_id: string;
+  title: string;
+  status: 'area' | 'resource' | 'archived';
+  icon?: string;
+  color: string;
+  is_pinned: boolean;
+  order_index: number;
   created_at: string;
   updated_at: string;
 }
@@ -310,6 +330,10 @@ export type UpdateAreaInput = Partial<CreateAreaInput>;
 
 export type CreateResourceInput = Omit<Resource, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 export type UpdateResourceInput = Partial<CreateResourceInput>;
+
+// AreaResource 입력 타입
+export type CreateAreaResourceInput = Omit<AreaResource, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
+export type UpdateAreaResourceInput = Partial<CreateAreaResourceInput>;
 
 export type CreateProjectInput = Omit<Project, 'id' | 'user_id' | 'total_todos' | 'completed_todos' | 'progress' | 'created_at' | 'updated_at' | 'goal' | 'area' | 'resource' | 'parent_project'>;
 export type UpdateProjectInput = Partial<CreateProjectInput>;

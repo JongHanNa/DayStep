@@ -9,12 +9,13 @@ import {
   loadAppUser,
   loadAppUserFromSession
 } from '@/lib/auth/sessionUtils';
-import { 
-  handleGoogleSignIn, 
-  handleKakaoSignIn, 
-  clearOAuthSessions 
+import {
+  handleGoogleSignIn,
+  handleKakaoSignIn,
+  clearOAuthSessions
 } from '@/lib/auth/oauthHandlers';
 import { useCapacitorAutoTokenRefresh } from '@/lib/auth/useAutoTokenRefresh';
+import { useAuthStore } from '@/state/stores/authStore';
 
 // 환경 감지 (실제 Capacitor 환경에서만 모바일로 감지)
 const isMobileEnvironment = (() => {
@@ -231,9 +232,10 @@ export function AuthProvider({
           last_sign_in_at: new Date().toISOString(),
           role: 'authenticated'
         } as any;
-        
+
         setUser(tempUser);
-        console.log('✅ 서버 인증 정보로 임시 사용자 설정 완료');
+        useAuthStore.setState({ user: tempUser as any });
+        console.log('✅ 서버 인증 정보로 임시 사용자 설정 완료 (authStore 동기화)');
         
         // 비동기로 AppUser 로드
         setTimeout(async () => {
@@ -244,7 +246,8 @@ export function AuthProvider({
             if (actualSession?.user) {
               setSession(actualSession);
               setUser(actualSession.user);
-              
+              useAuthStore.setState({ user: actualSession.user as any });
+
               const appUser = await loadAppUser(actualSession.user);
               if (appUser) {
                 setAppUser(appUser);
@@ -531,6 +534,7 @@ export function AuthProvider({
     } finally {
       // 상태 초기화
       setUser(null);
+      useAuthStore.setState({ user: null });
       setAppUser(null);
       setSession(null);
       setLoading(false);

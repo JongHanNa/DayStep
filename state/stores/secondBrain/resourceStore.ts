@@ -4,22 +4,27 @@
  */
 
 import { createStore } from '@/state/utils/storeUtils';
-import type { Resource, CreateResourceInput, UpdateResourceInput } from '@/types/second-brain';
-import { mockResources, saveMockDataToLocalStorage } from '@/lib/mockData/secondBrain';
+import type { AreaResource } from '@/types/second-brain';
+import {
+  fetchAreasResourcesWithJWT,
+  createAreaResourceWithJWT,
+  updateAreaResourceWithJWT,
+  deleteAreaResourceWithJWT,
+} from '@/lib/supabase/areas-resources';
 
 interface ResourceStoreState {
-  resources: Resource[];
+  resources: AreaResource[];
   loading: boolean;
   error: string | null;
 
   // Actions
-  fetchResources: () => Promise<void>;
-  createResource: (data: CreateResourceInput) => Promise<Resource>;
-  updateResource: (id: string, data: UpdateResourceInput) => Promise<Resource>;
-  deleteResource: (id: string) => Promise<boolean>;
-  archiveResource: (id: string) => Promise<Resource>;
-  unarchiveResource: (id: string) => Promise<Resource>;
-  reorderResources: (resourceIds: string[]) => Promise<void>;
+  fetchResources: (userId: string) => Promise<void>;
+  createResource: (userId: string, data: Omit<AreaResource, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'>) => Promise<AreaResource>;
+  updateResource: (userId: string, id: string, data: Partial<Omit<AreaResource, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'>>) => Promise<AreaResource>;
+  deleteResource: (userId: string, id: string) => Promise<boolean>;
+  archiveResource: (userId: string, id: string) => Promise<AreaResource>;
+  unarchiveResource: (userId: string, id: string) => Promise<AreaResource>;
+  reorderResources: (userId: string, resourceIds: string[]) => Promise<void>;
 }
 
 export const useResourceStore = createStore<ResourceStoreState>(
@@ -28,11 +33,16 @@ export const useResourceStore = createStore<ResourceStoreState>(
     loading: false,
     error: null,
 
-    fetchResources: async () => {
+    fetchResources: async (userId: string) => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드 (아카이브 포함)
-        const resources = mockResources;
+
+
+        const allAreasResources = await fetchAreasResourcesWithJWT(userId);
+
+        // 자원만 필터링 (status === 'resource')
+        const resources = allAreasResources.filter((item) => item.status === 'resource');
+
         set({ resources, loading: false });
       } catch (error) {
         set({
@@ -42,39 +52,53 @@ export const useResourceStore = createStore<ResourceStoreState>(
       }
     },
 
-    createResource: async (data: CreateResourceInput) => {
+    createResource: async (userId: string, data) => {
       try {
-        set({ loading: true, error: null });
 
-        const newResource: Resource = {
-          id: `resource-${Date.now()}`,
-          user_id: 'mock-user-123',
+        // Optimistic update
+        const tempId = `temp-${Date.now()}`;
+        const optimisticResource: AreaResource = {
+          id: tempId,
+          user_id: userId,
+          status: 'resource',
           ...data,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
-        const updatedResources = [...get().resources, newResource];
-        set({ resources: updatedResources, loading: false });
+        set({ resources: [...get().resources, optimisticResource] });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const newResource = await createAreaResourceWithJWT({
+          status: 'resource',
+          user_id: userId,
+          ...data,
+        });
+
+        // 실제 데이터로 교체
+        set({
+          resources: get().resources.map((resource) =>
+            resource.id === tempId ? newResource : resource
+          ),
+        });
 
         return newResource;
       } catch (error) {
+        // Rollback optimistic update
+        set({ resources: get().resources.filter((resource) => !resource.id.startsWith('temp-')) });
         set({
           error: error instanceof Error ? error.message : '자원 생성에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    updateResource: async (id: string, data: UpdateResourceInput) => {
+    updateResource: async (userId: string, id, data) => {
       try {
-        set({ loading: true, error: null });
 
-        const updatedResources = get().resources.map((resource: Resource) =>
+        // Optimistic update
+        const previousResources = get().resources;
+        const updatedResources = get().resources.map((resource) =>
           resource.id === id
             ? {
                 ...resource,
@@ -84,134 +108,133 @@ export const useResourceStore = createStore<ResourceStoreState>(
             : resource
         );
 
-        set({ resources: updatedResources, loading: false });
+        set({ resources: updatedResources });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const updatedResource = await updateAreaResourceWithJWT(id, userId, data);
+        if (!updatedResource) throw new Error('자원 업데이트에 실패했습니다.');
 
-        const updatedResource = updatedResources.find((r: Resource) => r.id === id);
-        if (!updatedResource) throw new Error('자원을 찾을 수 없습니다.');
+        // 실제 데이터로 교체
+        set({
+          resources: get().resources.map((resource) =>
+            resource.id === id ? updatedResource : resource
+          ),
+        });
 
         return updatedResource;
       } catch (error) {
+        // Rollback
+        set({ resources: get().resources });
         set({
           error: error instanceof Error ? error.message : '자원 수정에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    deleteResource: async (id: string) => {
+    deleteResource: async (userId: string, id) => {
       try {
-        set({ loading: true, error: null });
 
-        const updatedResources = get().resources.filter((resource: Resource) => resource.id !== id);
-        set({ resources: updatedResources, loading: false });
+        // Optimistic update
+        const previousResources = get().resources;
+        set({ resources: get().resources.filter((resource) => resource.id !== id) });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const success = await deleteAreaResourceWithJWT(id, userId);
+        if (!success) {
+          throw new Error('자원 삭제에 실패했습니다.');
+        }
 
         return true;
       } catch (error) {
+        // Rollback
+        set({ resources: get().resources });
         set({
           error: error instanceof Error ? error.message : '자원 삭제에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    archiveResource: async (id: string) => {
+    archiveResource: async (userId: string, id) => {
       try {
-        set({ loading: true, error: null });
 
-        const updatedResources = get().resources.map((resource: Resource) =>
-          resource.id === id
-            ? {
-                ...resource,
-                is_archived: true,
-                updated_at: new Date().toISOString(),
-              }
-            : resource
-        );
+        // Optimistic update - UI에서 제거
+        const previousResources = get().resources;
+        set({ resources: get().resources.filter((resource) => resource.id !== id) });
 
-        set({ resources: updatedResources.filter((r: Resource) => !r.is_archived), loading: false });
+        // 실제 API 호출 - status를 'archived'로 변경
+        const archivedResource = await updateAreaResourceWithJWT(id, userId, {
+          status: 'archived',
+        });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const archivedResource = updatedResources.find((r: Resource) => r.id === id);
-        if (!archivedResource) throw new Error('자원을 찾을 수 없습니다.');
+        if (!archivedResource) {
+          throw new Error('자원 아카이브에 실패했습니다.');
+        }
 
         return archivedResource;
       } catch (error) {
+        // Rollback
+        set({ resources: previousResources });
         set({
           error: error instanceof Error ? error.message : '자원 아카이브에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    unarchiveResource: async (id: string) => {
+    unarchiveResource: async (userId: string, id) => {
       try {
-        set({ loading: true, error: null });
 
-        // 아카이브된 자원 포함하여 로드
-        const allResources = mockResources;
-        const updatedResources = allResources.map((resource: Resource) =>
-          resource.id === id
-            ? {
-                ...resource,
-                is_archived: false,
-                updated_at: new Date().toISOString(),
-              }
-            : resource
-        );
+        // 실제 API 호출 - status를 'resource'로 변경
+        const unarchivedResource = await updateAreaResourceWithJWT(id, userId, {
+          status: 'resource',
+        });
 
-        set({ resources: updatedResources.filter((r: Resource) => !r.is_archived), loading: false });
+        if (!unarchivedResource) {
+          throw new Error('자원 복원에 실패했습니다.');
+        }
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const unarchivedResource = updatedResources.find((r: Resource) => r.id === id);
-        if (!unarchivedResource) throw new Error('자원을 찾을 수 없습니다.');
+        // UI에 추가
+        set({ resources: [...get().resources, unarchivedResource] });
 
         return unarchivedResource;
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '자원 복원에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    reorderResources: async (resourceIds: string[]) => {
+    reorderResources: async (userId: string, resourceIds) => {
       try {
-        set({ loading: true, error: null });
 
-        const updatedResources = get().resources.map((resource: Resource) => {
+        // Optimistic update
+        const previousResources = get().resources;
+        const updatedResources = get().resources.map((resource) => {
           const newIndex = resourceIds.indexOf(resource.id);
           return {
             ...resource,
             order_index: newIndex >= 0 ? newIndex : resource.order_index,
-            updated_at: new Date().toISOString(),
           };
         });
 
         // order_index로 정렬
-        updatedResources.sort((a: Resource, b: Resource) => a.order_index - b.order_index);
+        updatedResources.sort((a, b) => a.order_index - b.order_index);
+        set({ resources: updatedResources });
 
-        set({ resources: updatedResources, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출 - 각 자원의 order_index 업데이트
+        await Promise.all(
+          resourceIds.map((id, index) =>
+            updateAreaResourceWithJWT(id, userId, { order_index: index })
+          )
+        );
       } catch (error) {
+        // Rollback
+        set({ resources: previousResources });
         set({
           error: error instanceof Error ? error.message : '자원 순서 변경에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }

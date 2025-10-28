@@ -4,22 +4,27 @@
  */
 
 import { createStore } from '@/state/utils/storeUtils';
-import type { Area, CreateAreaInput, UpdateAreaInput } from '@/types/second-brain';
-import { mockAreas, saveMockDataToLocalStorage } from '@/lib/mockData/secondBrain';
+import type { AreaResource } from '@/types/second-brain';
+import {
+  fetchAreasResourcesWithJWT,
+  createAreaResourceWithJWT,
+  updateAreaResourceWithJWT,
+  deleteAreaResourceWithJWT,
+} from '@/lib/supabase/areas-resources';
 
 interface AreaStoreState {
-  areas: Area[];
+  areas: AreaResource[];
   loading: boolean;
   error: string | null;
 
   // Actions
-  fetchAreas: () => Promise<void>;
-  createArea: (data: CreateAreaInput) => Promise<Area>;
-  updateArea: (id: string, data: UpdateAreaInput) => Promise<Area>;
-  deleteArea: (id: string) => Promise<boolean>;
-  archiveArea: (id: string) => Promise<Area>;
-  unarchiveArea: (id: string) => Promise<Area>;
-  reorderAreas: (areaIds: string[]) => Promise<void>;
+  fetchAreas: (userId: string) => Promise<void>;
+  createArea: (userId: string, data: Omit<AreaResource, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'>) => Promise<AreaResource>;
+  updateArea: (userId: string, id: string, data: Partial<Omit<AreaResource, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'>>) => Promise<AreaResource>;
+  deleteArea: (userId: string, id: string) => Promise<boolean>;
+  archiveArea: (userId: string, id: string) => Promise<AreaResource>;
+  unarchiveArea: (userId: string, id: string) => Promise<AreaResource>;
+  reorderAreas: (userId: string, areaIds: string[]) => Promise<void>;
 }
 
 export const useAreaStore = createStore<AreaStoreState>(
@@ -28,11 +33,15 @@ export const useAreaStore = createStore<AreaStoreState>(
     loading: false,
     error: null,
 
-    fetchAreas: async () => {
+    fetchAreas: async (userId: string) => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드 (아카이브 포함)
-        const areas = mockAreas;
+
+        const allAreasResources = await fetchAreasResourcesWithJWT(userId);
+
+        // 영역만 필터링 (status === 'area')
+        const areas = allAreasResources.filter((item) => item.status === 'area');
+
         set({ areas, loading: false });
       } catch (error) {
         set({
@@ -42,39 +51,51 @@ export const useAreaStore = createStore<AreaStoreState>(
       }
     },
 
-    createArea: async (data: CreateAreaInput) => {
+    createArea: async (userId: string, data) => {
       try {
-        set({ loading: true, error: null });
-
-        const newArea: Area = {
-          id: `area-${Date.now()}`,
-          user_id: 'mock-user-123',
+        // Optimistic update
+        const tempId = `temp-${Date.now()}`;
+        const optimisticArea: AreaResource = {
+          id: tempId,
+          user_id: userId,
+          status: 'area',
           ...data,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
-        const updatedAreas = [...get().areas, newArea];
-        set({ areas: updatedAreas, loading: false });
+        set({ areas: [...get().areas, optimisticArea] });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const newArea = await createAreaResourceWithJWT({
+          status: 'area',
+          user_id: userId,
+          ...data,
+        });
+
+        // 실제 데이터로 교체
+        set({
+          areas: get().areas.map((area) =>
+            area.id === tempId ? newArea : area
+          ),
+        });
 
         return newArea;
       } catch (error) {
+        // Rollback optimistic update
+        set({ areas: get().areas.filter((area) => !area.id.startsWith('temp-')) });
         set({
           error: error instanceof Error ? error.message : '영역 생성에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    updateArea: async (id: string, data: UpdateAreaInput) => {
+    updateArea: async (userId: string, id, data) => {
       try {
-        set({ loading: true, error: null });
-
-        const updatedAreas = get().areas.map((area: Area) =>
+        // Optimistic update
+        const previousAreas = get().areas;
+        const updatedAreas = get().areas.map((area) =>
           area.id === id
             ? {
                 ...area,
@@ -84,134 +105,129 @@ export const useAreaStore = createStore<AreaStoreState>(
             : area
         );
 
-        set({ areas: updatedAreas, loading: false });
+        set({ areas: updatedAreas });
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const updatedArea = await updateAreaResourceWithJWT(id, userId, data);
+        if (!updatedArea) throw new Error('영역 업데이트에 실패했습니다.');
 
-        const updatedArea = updatedAreas.find((a: Area) => a.id === id);
-        if (!updatedArea) throw new Error('영역을 찾을 수 없습니다.');
+        // 실제 데이터로 교체
+        set({
+          areas: get().areas.map((area) =>
+            area.id === id ? updatedArea : area
+          ),
+        });
 
         return updatedArea;
       } catch (error) {
+        // Rollback
+        set({ areas: get().areas });
         set({
           error: error instanceof Error ? error.message : '영역 수정에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    deleteArea: async (id: string) => {
+    deleteArea: async (userId: string, id) => {
       try {
-        set({ loading: true, error: null });
+        // Optimistic update
+        const previousAreas = get().areas;
+        set({ areas: get().areas.filter((area) => area.id !== id) });
 
-        const updatedAreas = get().areas.filter((area: Area) => area.id !== id);
-        set({ areas: updatedAreas, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출
+        const success = await deleteAreaResourceWithJWT(id, userId);
+        if (!success) {
+          throw new Error('영역 삭제에 실패했습니다.');
+        }
 
         return true;
       } catch (error) {
+        // Rollback
+        set({ areas: get().areas });
         set({
           error: error instanceof Error ? error.message : '영역 삭제에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    archiveArea: async (id: string) => {
+    archiveArea: async (userId: string, id) => {
       try {
-        set({ loading: true, error: null });
+        // Optimistic update - UI에서 제거
+        const previousAreas = get().areas;
+        set({ areas: get().areas.filter((area) => area.id !== id) });
 
-        const updatedAreas = get().areas.map((area: Area) =>
-          area.id === id
-            ? {
-                ...area,
-                is_archived: true,
-                updated_at: new Date().toISOString(),
-              }
-            : area
-        );
+        // 실제 API 호출 - status를 'archived'로 변경
+        const archivedArea = await updateAreaResourceWithJWT(id, userId, {
+          status: 'archived',
+        });
 
-        set({ areas: updatedAreas.filter((a: Area) => !a.is_archived), loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const archivedArea = updatedAreas.find((a: Area) => a.id === id);
-        if (!archivedArea) throw new Error('영역을 찾을 수 없습니다.');
+        if (!archivedArea) {
+          throw new Error('영역 아카이브에 실패했습니다.');
+        }
 
         return archivedArea;
       } catch (error) {
+        // Rollback
+        set({ areas: previousAreas });
         set({
           error: error instanceof Error ? error.message : '영역 아카이브에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    unarchiveArea: async (id: string) => {
+    unarchiveArea: async (userId: string, id) => {
       try {
-        set({ loading: true, error: null });
+        // 실제 API 호출 - status를 'area'로 변경
+        const unarchivedArea = await updateAreaResourceWithJWT(id, userId, {
+          status: 'area',
+        });
 
-        // 아카이브된 영역 포함하여 로드
-        const allAreas = mockAreas;
-        const updatedAreas = allAreas.map((area: Area) =>
-          area.id === id
-            ? {
-                ...area,
-                is_archived: false,
-                updated_at: new Date().toISOString(),
-              }
-            : area
-        );
+        if (!unarchivedArea) {
+          throw new Error('영역 복원에 실패했습니다.');
+        }
 
-        set({ areas: updatedAreas.filter((a: Area) => !a.is_archived), loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const unarchivedArea = updatedAreas.find((a: Area) => a.id === id);
-        if (!unarchivedArea) throw new Error('영역을 찾을 수 없습니다.');
+        // UI에 추가
+        set({ areas: [...get().areas, unarchivedArea] });
 
         return unarchivedArea;
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '영역 복원에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
     },
 
-    reorderAreas: async (areaIds: string[]) => {
+    reorderAreas: async (userId: string, areaIds) => {
+      const previousAreas = get().areas;
       try {
-        set({ loading: true, error: null });
-
-        const updatedAreas = get().areas.map((area: Area) => {
+        // Optimistic update
+        const updatedAreas = get().areas.map((area: AreaResource) => {
           const newIndex = areaIds.indexOf(area.id);
           return {
             ...area,
             order_index: newIndex >= 0 ? newIndex : area.order_index,
-            updated_at: new Date().toISOString(),
           };
         });
 
         // order_index로 정렬
-        updatedAreas.sort((a: Area, b: Area) => a.order_index - b.order_index);
+        updatedAreas.sort((a: AreaResource, b: AreaResource) => a.order_index - b.order_index);
+        set({ areas: updatedAreas });
 
-        set({ areas: updatedAreas, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        // 실제 API 호출 - 각 영역의 order_index 업데이트
+        await Promise.all(
+          areaIds.map((id, index) =>
+            updateAreaResourceWithJWT(id, userId, { order_index: index })
+          )
+        );
       } catch (error) {
+        // Rollback
+        set({ areas: previousAreas });
         set({
           error: error instanceof Error ? error.message : '영역 순서 변경에 실패했습니다.',
-          loading: false,
         });
         throw error;
       }
