@@ -1,11 +1,10 @@
 'use client';
 
 import { memo } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Project, Goal } from '@/types/second-brain';
 import ProjectCard from './ProjectCard';
-import { getUnifiedIcon } from '@/lib/icon-collection';
-import type { UnifiedIconKey } from '@/lib/icon-collection';
 
 interface ProjectGoalSectionProps {
   goalId: string | 'no-goal';
@@ -27,45 +26,43 @@ const ProjectGoalSection = memo(function ProjectGoalSection({
   // 목표없음 섹션인지 확인
   const isNoGoalSection = goalId === 'no-goal';
 
-  // 아이콘 컴포넌트
-  const IconComponent = goal
-    ? getUnifiedIcon(goal.icon as UnifiedIconKey)
-    : null;
+  // 목표 색상 (목표없음은 회색)
+  const goalColor = isNoGoalSection ? '#9ca3af' : (goal?.color || '#9ca3af');
 
   return (
-    <div className="space-y-3">
+    <div className="border-b border-base-300 last:border-b-0">
       {/* 섹션 헤더 */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 bg-transparent hover:opacity-80 transition-opacity"
+        className="w-full flex items-center justify-between px-4 py-3 bg-transparent hover:opacity-80 transition-opacity"
         aria-label={`${isNoGoalSection ? '목표없음' : goal?.title} 섹션 ${isExpanded ? '접기' : '펼치기'}`}
         aria-expanded={isExpanded}
       >
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {/* 제목 */}
-          <div className="flex-1 min-w-0 text-left">
-            <h3 className="font-semibold text-lg truncate">
-              {isNoGoalSection ? '목표없음' : goal?.title}
-            </h3>
-          </div>
-
-          {/* 프로젝트 개수 뱃지 */}
-          <span className="badge badge-lg bg-base-300 flex-shrink-0">
-            {projects.length}개
+        <div className="flex items-center gap-3">
+          {/* 색상 인디케이터 */}
+          <div
+            className="w-3 h-3 rounded-full flex-shrink-0"
+            style={{ backgroundColor: goalColor }}
+          />
+          {/* 그룹명 */}
+          <span className="font-semibold text-base">
+            {isNoGoalSection ? '목표없음' : goal?.title}
           </span>
-
-          {/* 접기/펼치기 아이콘 */}
-          {isExpanded ? (
-            <ChevronUp className="w-5 h-5 flex-shrink-0" />
-          ) : (
-            <ChevronDown className="w-5 h-5 flex-shrink-0" />
-          )}
+          {/* 프로젝트 개수 뱃지 */}
+          <span className="badge badge-sm">{projects.length}</span>
         </div>
+        {/* 펼치기 아이콘 */}
+        <ChevronDown
+          className={cn(
+            'w-5 h-5 transition-transform duration-200',
+            isExpanded && 'rotate-180'
+          )}
+        />
       </button>
 
       {/* 프로젝트 목록 */}
       {isExpanded && (
-        <div className="space-y-3 pl-4">
+        <div className="px-4 pb-3 space-y-3">
           {projects.length === 0 ? (
             <div className="card bg-base-200">
               <div className="card-body text-center py-8">
