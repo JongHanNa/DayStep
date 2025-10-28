@@ -94,6 +94,7 @@ export interface NoteTagLinkInsert {
 export interface Note {
   id: string;
   user_id: string;
+  title?: string;
   content: string;
   related_task_id?: string | null;
   linked_date?: string | null;
