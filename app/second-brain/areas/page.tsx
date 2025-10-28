@@ -4,15 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { Plus, X, Pencil, Lightbulb, Tag, Palette, Activity, FileText } from 'lucide-react';
+import { Plus, X, Pencil, Lightbulb } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateAreaInput, Area, CreateResourceInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
-import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
-import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { useModalStore } from '@/state/stores/modalStore';
+import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
 
 // 추천 영역 프리셋 (온보딩 step-1과 동일)
 const AREA_PRESETS = [
@@ -39,7 +38,6 @@ export default function AreasPage() {
   // 편집 관련 state
   const [editingArea, setEditingArea] = useState<(Area & { isNew?: boolean }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
   const [itemType, setItemType] = useState<SecondBrainItemType>('area');
   const [isCreatingArea, setIsCreatingArea] = useState(false);
 
@@ -105,21 +103,6 @@ export default function AreasPage() {
     setEditingArea({ ...area, isNew: false });
     setItemType(area.is_archived ? 'archive' : 'area');
     setEditDialogOpen(true);
-  };
-
-  // 아이콘 변경 핸들러
-  const handleIconChange = (iconKey: UnifiedIconKey) => {
-    if (editingArea) {
-      setEditingArea({ ...editingArea, icon: iconKey });
-    }
-  };
-
-  // 색상 변경 핸들러
-  const handleColorChange = (colorId: string) => {
-    if (editingArea) {
-      const color = getColorById(colorId).hex;
-      setEditingArea({ ...editingArea, color });
-    }
   };
 
   // 상태 변경 핸들러
@@ -234,7 +217,16 @@ export default function AreasPage() {
     setEditingArea(null);
   };
 
-  // 삭제 확인 다이얼로그 열기
+  // 삭제 핸들러 (모달에서 호출)
+  const handleDeleteFromModal = () => {
+    if (editingArea) {
+      setEditDialogOpen(false);
+      setAreaToDelete(editingArea);
+      setDeleteConfirmOpen(true);
+    }
+  };
+
+  // 삭제 확인 다이얼로그 열기 (리스트에서 직접 삭제)
   const handleDeleteClick = (area: Area) => {
     setAreaToDelete(area);
     setDeleteConfirmOpen(true);
@@ -408,148 +400,17 @@ export default function AreasPage() {
       </div>
 
       {/* 편집/추가 다이얼로그 */}
-      {editDialogOpen && editingArea && (
-        <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-            {/* 헤더 */}
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-              <button onClick={handleCancelEdit} className="btn btn-primary btn-sm rounded-full">
-                취소
-              </button>
-              <h3 className="font-bold text-lg">
-                {editingArea.isNew ? '새 항목 추가' : '항목 편집'}
-              </h3>
-              <div className="flex gap-2">
-                {!editingArea.isNew && (
-                  <button
-                    onClick={() => {
-                      setEditDialogOpen(false);
-                      handleDeleteClick(editingArea);
-                    }}
-                    className="btn btn-ghost btn-sm text-error rounded-full"
-                  >
-                    삭제
-                  </button>
-                )}
-                <button onClick={handleSaveEdit} className="btn btn-primary btn-sm rounded-full">
-                  저장
-                </button>
-              </div>
-            </div>
-
-            {/* 콘텐츠 영역 */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4">
-                {/* 상태 선택 */}
-                <div className="my-4">
-                  {/* 섹션 제목 */}
-                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                    <Activity className="h-5 w-5" style={{ color: editingArea.color }} />
-                    상태
-                  </label>
-
-                  {/* 셀렉트 박스 */}
-                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                    <select
-                      value={itemType}
-                      onChange={(e) => handleItemTypeChange(e.target.value as SecondBrainItemType)}
-                      className="select select-bordered w-full"
-                    >
-                      <option value="area">책임 영역</option>
-                      <option value="resource">관심 자원</option>
-                      <option value="archive">아카이브</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* 아이콘 및 제목 - TodoMetadata 스타일 적용 */}
-                <div className="my-4">
-                  {/* 섹션 제목 */}
-                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                    <Tag className="h-5 w-5" style={{ color: editingArea.color }} />
-                    책임 아이콘 및 제목
-                  </label>
-
-                  {/* 아이콘 + 제목 입력 */}
-                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                    <div className="flex items-center gap-3">
-                      {/* 아이콘 버튼 */}
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setIconBrowserOpen(true)}
-                          className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
-                          style={{ backgroundColor: '#f3f4f6' }}
-                          title="아이콘 변경하기"
-                        >
-                          {(() => {
-                            const IconComponent = getUnifiedIcon(editingArea.icon as UnifiedIconKey);
-                            return <IconComponent
-                              className="group-hover:scale-110 transition-transform"
-                              style={{ color: editingArea.color }}
-                              size={24}
-                            />;
-                          })()}
-                        </button>
-
-                        {/* 색상 인디케이터 */}
-                        <div
-                          className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
-                          style={{
-                            backgroundColor: editingArea.color,
-                            border: '2px solid white'
-                          }}
-                        >
-                          <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
-                        </div>
-                      </div>
-
-                      {/* 제목 입력 */}
-                      <input
-                        type="text"
-                        value={editingArea.title}
-                        onChange={(e) => setEditingArea({ ...editingArea, title: e.target.value })}
-                        placeholder="책임 제목을 입력하세요"
-                        className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
-                        style={{
-                          fontSize: '20px',
-                          color: '#333333',
-                          borderBottomColor: '#D1D5DB',
-                          outline: 'none',
-                          boxShadow: 'none',
-                          fontWeight: '600',
-                          height: '44px',
-                        }}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 설명 */}
-                <div className="my-4">
-                  {/* 섹션 제목 */}
-                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                    <FileText className="h-5 w-5" style={{ color: editingArea.color }} />
-                    설명
-                  </label>
-
-                  {/* 텍스트 영역 */}
-                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                    <textarea
-                      value={editingArea.description || ''}
-                      onChange={(e) => setEditingArea({ ...editingArea, description: e.target.value })}
-                      className="textarea textarea-bordered w-full h-20"
-                      placeholder="예: 업무 프로젝트 및 커리어 개발"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={handleCancelEdit} />
-        </dialog>
-      )}
+      <AreaResourceEditModal
+        open={editDialogOpen && !!editingArea}
+        editingItem={editingArea!}
+        itemType={itemType}
+        pageType="area"
+        onCancel={handleCancelEdit}
+        onSave={handleSaveEdit}
+        onDelete={handleDeleteFromModal}
+        onItemChange={setEditingArea}
+        onItemTypeChange={handleItemTypeChange}
+      />
 
       {/* 삭제 확인 다이얼로그 */}
       {deleteConfirmOpen && areaToDelete && (
@@ -575,16 +436,6 @@ export default function AreasPage() {
           <div className="modal-backdrop" onClick={handleCancelDelete} />
         </dialog>
       )}
-
-      {/* 아이콘 브라우저 모달 */}
-      <EnhancedIconBrowserModal
-        open={iconBrowserOpen}
-        onClose={() => setIconBrowserOpen(false)}
-        onIconSelect={handleIconChange}
-        selectedIcon={editingArea?.icon}
-        selectedColor={editingArea?.color}
-        onColorSelect={handleColorChange}
-      />
 
       {/* 추천 항목 추가 다이얼로그 */}
       {presetDialogOpen && (
