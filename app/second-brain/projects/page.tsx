@@ -230,7 +230,7 @@ export default function ProjectsPage() {
             <div className="flex-1">
               <h1 className="text-2xl font-bold">프로젝트 (Projects)</h1>
               <p className="text-sm text-base-content/70 mt-1">
-                진행 중인 프로젝트를 관리하세요
+              목표에 따라 그룹화된 프로젝트 목록
               </p>
             </div>
             <button
@@ -275,15 +275,6 @@ export default function ProjectsPage() {
         ) : (
           /* 목표별 프로젝트 그룹 */
           <div className="space-y-6">
-            {/* 목표별 프로젝트 그룹 헤더 */}
-            <div className="border-b border-base-300 pb-3">
-              <h2 className="text-xl font-bold text-base-content">
-                목표별 프로젝트
-              </h2>
-              <p className="text-sm text-base-content/60 mt-1">
-                목표에 따라 그룹화된 프로젝트 목록
-              </p>
-            </div>
 
             {/* 목표별 섹션들 */}
             <div className="space-y-4">
