@@ -316,7 +316,7 @@ export const mockProjectTodos = [
     scheduledDate: new Date('2025-10-29').toISOString(),
     displayOrder: 3,
     isHighlight: false,
-    clarification: '색상 팔레트, 타이포그래피, 컴포넌트 라이브러리 정의',
+    clarification: '일정',
   },
   {
     id: 'project-todo-8',
@@ -326,7 +326,7 @@ export const mockProjectTodos = [
     scheduledDate: new Date('2025-11-05').toISOString(),
     displayOrder: 4,
     isHighlight: false,
-    clarification: 'Lucide React 스타일로 커스텀 아이콘 제작',
+    clarification: '일정',
   },
 ];
 
@@ -421,7 +421,7 @@ export const mockInboxItems: InboxItem[] = [
     project_id: 'project-2',
     is_completed: false,
     scheduled_date: new Date('2025-10-29').toISOString(),
-    clarification: '색상 팔레트, 타이포그래피, 컴포넌트 라이브러리 정의',
+    clarification: '일정',
     created_at: new Date('2025-10-01').toISOString(),
     updated_at: new Date('2025-10-25').toISOString(),
   },
@@ -434,7 +434,7 @@ export const mockInboxItems: InboxItem[] = [
     project_id: 'project-2',
     is_completed: false,
     scheduled_date: new Date('2025-11-05').toISOString(),
-    clarification: 'Lucide React 스타일로 커스텀 아이콘 제작',
+    clarification: '일정',
     created_at: new Date('2025-10-01').toISOString(),
     updated_at: new Date('2025-10-25').toISOString(),
   },
