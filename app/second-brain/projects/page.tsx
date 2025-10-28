@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
@@ -15,6 +16,7 @@ import { Sheet } from 'react-modal-sheet';
 import { createModalConfig } from '@/lib/modal-config';
 
 export default function ProjectsPage() {
+  const { appUser } = useAuth();
   const { projects, createProject, updateProject, deleteProject } = useProjectStore();
   const { fetchInboxItems } = useInboxStore();
   const { goals, fetchGoals } = useGoalStore();
@@ -36,11 +38,13 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     // projects는 Zustand persist가 자동으로 localStorage에서 복원
-    fetchInboxItems();
-    fetchGoals();
-    fetchAreas();
-    fetchResources();
-  }, [fetchInboxItems, fetchGoals, fetchAreas, fetchResources]);
+    if (appUser?.id) {
+      fetchInboxItems(appUser.id);
+      fetchGoals(appUser.id);
+      fetchAreas(appUser.id);
+      fetchResources(appUser.id);
+    }
+  }, [appUser?.id, fetchInboxItems, fetchGoals, fetchAreas, fetchResources]);
 
   // 초기 로딩 시 모든 목표를 펼친 상태로 설정
   useEffect(() => {
