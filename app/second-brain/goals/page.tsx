@@ -14,8 +14,10 @@ import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { useModalStore } from '@/state/stores/modalStore';
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function GoalsPage() {
+  const { appUser } = useAuth();
   const { createGoal, updateGoal, deleteGoal, goals, fetchGoals } = useGoalStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
@@ -41,10 +43,12 @@ export default function GoalsPage() {
   const { openModal, closeModal } = useModalStore();
 
   useEffect(() => {
-    fetchGoals();
-    fetchAreas();
-    fetchResources();
-  }, [fetchGoals, fetchAreas, fetchResources]);
+    if (appUser?.id) {
+      fetchGoals();
+      fetchAreas(appUser.id);
+      fetchResources(appUser.id);
+    }
+  }, [appUser?.id, fetchGoals, fetchAreas, fetchResources]);
 
   // 편집 모달 상태 관리 (하단 네비 숨김)
   useEffect(() => {
