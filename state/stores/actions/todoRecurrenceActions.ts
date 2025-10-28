@@ -3,11 +3,11 @@ import { CreateTodoInput, UpdateTodoInput } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { TodoService } from "@/services/todo/TodoService";
 import { TodoCompletionsService } from "@/services/todo-completions.service";
-import { 
+import {
   applyCompletionStatusToInstances,
   isRecurrenceInstanceCompleted
 } from "@/lib/recurrence-utils";
-import { isCapacitorEnvironment } from "@/lib/supabaseWebViewHelper";
+import { isCapacitorEnvironment } from "@/lib/supabase/core";
 import {
   createAsyncAction,
   logStoreAction,

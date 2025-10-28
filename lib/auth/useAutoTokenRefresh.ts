@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../supabase';
-import { isCapacitorEnvironment } from '../supabaseWebViewHelper';
+import { isCapacitorEnvironment } from '../supabase/core';
 
 interface TokenRefreshConfig {
   // 토큰 만료 몇 초 전에 갱신할지 (기본: 60초)

@@ -5,7 +5,6 @@ import {
   updateWithJWT,
   deleteWithJWT,
   queryRLSTableWithJWT,
-  isCapacitorEnvironment,
   // 기존 태그 관련 함수들
   createMemoTagWithJWT,
   updateMemoTagWithJWT,

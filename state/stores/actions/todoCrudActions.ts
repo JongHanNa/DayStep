@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { TodoService } from "@/services/todo/TodoService";
 import { integratedNotificationService } from "@/services/integrated-notification.service";
 import { widgetSyncService } from "@/services/widget-sync.service";
-import { isCapacitorEnvironment } from "@/lib/supabaseWebViewHelper";
+import { isCapacitorEnvironment } from "@/lib/supabase/core";
 import {
   createAsyncAction,
   createRetryableAction,

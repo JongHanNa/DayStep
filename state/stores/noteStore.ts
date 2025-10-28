@@ -5,7 +5,6 @@ import {
   updateWithJWT,
   deleteWithJWT,
   queryRLSTableWithJWT,
-  isCapacitorEnvironment,
   createMemoInstanceWithJWT,
   updateMemoInstanceWithJWT,
   deleteMemoInstanceWithJWT,
@@ -15,6 +14,7 @@ import {
   fetchMemoInstancesByTaskIdWithJWT,
   createMultipleMemoInstancesWithJWT,
 } from '@/lib/supabaseWebViewHelper';
+import { isCapacitorEnvironment } from '@/lib/supabase/core';
 import { supabase } from '@/lib/supabase';
 import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } from '@/types';
 

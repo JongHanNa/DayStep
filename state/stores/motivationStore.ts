@@ -21,9 +21,9 @@ import {
   fetchTodoMotivationsWithJWT,
   fetchMotivationTodosWithJWT,
   fetchTodoMotivationWithJWT,
-  fetchAllTodoMotivationLinksWithJWT,
-  isCapacitorEnvironment
+  fetchAllTodoMotivationLinksWithJWT
 } from '@/lib/supabaseWebViewHelper';
+import { isCapacitorEnvironment } from '@/lib/supabase/core';
 
 /**
  * 현재 사용자 ID 가져오기 (Capacitor 백업 포함)

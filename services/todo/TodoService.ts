@@ -8,10 +8,10 @@ import { TodoInsert, TodoUpdate, CreateTodoInput, UpdateTodoInput, ScheduleType,
 import { BaseService, ServiceError } from '../base/BaseService';
 import { TodoRepository, TodoService as ITodoService } from './TodoRepository';
 import { reminderScheduler } from '@/features/reminder/reminder-scheduler';
-import { 
-  isCapacitorEnvironment, 
-  createTodoWithJWT, 
-  updateTodoWithJWT, 
+import { isCapacitorEnvironment } from '@/lib/supabase/core';
+import {
+  createTodoWithJWT,
+  updateTodoWithJWT,
   deleteTodoWithJWT,
   getMaxOrderIndexWithJWT,
   queryRLSTableWithJWT,
