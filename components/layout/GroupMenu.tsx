@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Inbox, Search, CheckSquare, Target, Clock, Compass, FileText, Archive, BookOpen, FolderOpen, LucideIcon } from 'lucide-react';
+import { Inbox, Search, CheckSquare, Target, Clock, Calendar, Compass, FileText, Archive, BookOpen, FolderOpen, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigationStore } from '@/state/stores/navigationStore';
 
@@ -26,6 +26,7 @@ const menuItems: Record<'routine' | 'productivity' | 'start', MenuItem[]> = {
   ],
   productivity: [
     { id: 'timeline', label: '타임라인', icon: Clock, href: '/timeline' },
+    { id: 'calendar', label: '달력', icon: Calendar, href: '/second-brain/calendar' },
     { id: 'goal-compass', label: '목표 나침반', icon: Compass, href: '/second-brain/goal-compass' },
     { id: 'notes', label: '노트', icon: FileText, href: '/second-brain/notes' },
     { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },

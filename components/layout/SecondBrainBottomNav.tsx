@@ -45,6 +45,7 @@ const routinePaths = [
 // 생산성 그룹 경로
 const productivityPaths = [
   '/timeline',
+  '/second-brain/calendar',
   '/second-brain/goal-compass',
   '/second-brain/notes',
   '/second-brain/archive',
