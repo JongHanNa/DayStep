@@ -76,7 +76,7 @@ export interface Project {
   user_id: string;
   title: string;
   description?: string;
-  status: 'not_started' | 'active' | 'on_hold' | 'completed' | 'archived';
+  status: 'not_started' | 'in_progress' | 'paused' | 'completed';
 
   // PARA 연결
   goal_id?: string;

@@ -17,7 +17,7 @@ import { createModalConfig } from '@/lib/modal-config';
 
 export default function ProjectsPage() {
   const { appUser } = useAuth();
-  const { projects, createProject, updateProject, deleteProject } = useProjectStore();
+  const { projects, fetchProjects, createProject, updateProject, deleteProject } = useProjectStore();
   const { fetchInboxItems } = useInboxStore();
   const { goals, fetchGoals } = useGoalStore();
   const { areas, fetchAreas } = useAreaStore();
@@ -37,14 +37,14 @@ export default function ProjectsPage() {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   useEffect(() => {
-    // projects는 Zustand persist가 자동으로 localStorage에서 복원
     if (appUser?.id) {
+      fetchProjects(appUser.id);
       fetchInboxItems(appUser.id);
       fetchGoals(appUser.id);
       fetchAreas(appUser.id);
       fetchResources(appUser.id);
     }
-  }, [appUser?.id, fetchInboxItems, fetchGoals, fetchAreas, fetchResources]);
+  }, [appUser?.id, fetchProjects, fetchInboxItems, fetchGoals, fetchAreas, fetchResources]);
 
   // 초기 로딩 시 모든 목표를 펼친 상태로 설정
   useEffect(() => {
@@ -89,12 +89,12 @@ export default function ProjectsPage() {
 
   // 새 프로젝트 추가 핸들러 - "새 프로젝트" 카드를 즉시 생성
   const handleAddProject = async () => {
-    if (isCreating) return; // 중복 클릭 방지
+    if (isCreating || !appUser?.id) return; // 중복 클릭 방지
 
     setIsCreating(true);
     try {
-      // 프로젝트 생성 - Zustand persist가 자동으로 localStorage에 저장하고 UI 즉시 업데이트
-      const createdProject = await createProject({
+      // 프로젝트 생성 - DB에 저장하고 UI 즉시 업데이트
+      const createdProject = await createProject(appUser.id, {
         title: '새 프로젝트',
         icon: 'lucide-FolderOpen',
         color: '#A8DADC',
@@ -152,6 +152,8 @@ export default function ProjectsPage() {
 
   // 프로젝트 저장 핸들러
   const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+    if (!appUser?.id) return;
+
     try {
       if ((projectData as any).isNew) {
         const createData: CreateProjectInput = {
@@ -167,7 +169,7 @@ export default function ProjectsPage() {
           target_end_date: projectData.target_end_date || undefined,
           order_index: projectData.order_index!,
         };
-        await createProject(createData);
+        await createProject(appUser.id, createData);
       } else {
         const updateData: UpdateProjectInput = {
           title: projectData.title!,
@@ -181,7 +183,7 @@ export default function ProjectsPage() {
           start_date: projectData.start_date || undefined,
           target_end_date: projectData.target_end_date || undefined,
         };
-        await updateProject(projectData.id!, updateData);
+        await updateProject(appUser.id, projectData.id!, updateData);
       }
 
       setEditDialogOpen(false);
@@ -206,13 +208,12 @@ export default function ProjectsPage() {
 
   // 삭제 실행
   const handleConfirmDelete = async () => {
-    if (!projectToDelete) return;
+    if (!projectToDelete || !appUser?.id) return;
 
     try {
-      await deleteProject(projectToDelete.id);
+      await deleteProject(appUser.id, projectToDelete.id);
       setDeleteConfirmOpen(false);
       setProjectToDelete(null);
-      // Zustand persist가 자동으로 localStorage에 저장하고 UI 업데이트
     } catch (error) {
       console.error('프로젝트 삭제 실패:', error);
       alert('프로젝트 삭제에 실패했습니다.');

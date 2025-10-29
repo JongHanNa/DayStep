@@ -117,7 +117,7 @@ export default function PlanPage() {
   }, [fetchInboxItems]);
 
   // 프로젝트 필터 상태
-  const [projectFilterType, setProjectFilterType] = useState<'active' | 'not_started'>('active');
+  const [projectFilterType, setProjectFilterType] = useState<'in_progress' | 'not_started'>('in_progress');
 
   // 할일 편집 모달 상태
   const [selectedTodo, setSelectedTodo] = useState<TodoFormData | null>(null);

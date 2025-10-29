@@ -19,19 +19,17 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
   // 상태 표시 텍스트
   const statusLabels = {
     not_started: '시작 안함',
-    active: '진행중',
-    on_hold: '중단',
+    in_progress: '진행중',
+    paused: '중단',
     completed: '완료',
-    archived: '보관됨',
   };
 
   // 상태별 색상
   const statusColors = {
     not_started: 'bg-base-content/10 text-base-content/70',
-    active: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    on_hold: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+    in_progress: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    paused: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
     completed: 'bg-green-500/10 text-green-600 dark:text-green-400',
-    archived: 'bg-base-content/10 text-base-content/50',
   };
 
   // 카드 클릭 시 편집 모달 열기

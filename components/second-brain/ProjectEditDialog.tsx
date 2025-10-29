@@ -640,14 +640,14 @@ export default function ProjectEditDialog({
                 onChange={(e) =>
                   onProjectChange({
                     ...editingProject,
-                    status: e.target.value as 'not_started' | 'active' | 'on_hold' | 'completed',
+                    status: e.target.value as 'not_started' | 'in_progress' | 'paused' | 'completed',
                   })
                 }
                 className="select select-bordered w-full"
               >
                 <option value="not_started">시작 안함</option>
-                <option value="active">진행중</option>
-                <option value="on_hold">중단</option>
+                <option value="in_progress">진행중</option>
+                <option value="paused">중단</option>
                 <option value="completed">완료</option>
               </select>
             </div>

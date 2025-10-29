@@ -7,8 +7,8 @@ import { getUnifiedIcon, type UnifiedIconKey } from '@/lib/icon-collection';
 interface ProjectTabsProps {
   allProjects: Project[]; // 전체 프로젝트 (카운트 계산용)
   projects: Project[]; // 필터링된 프로젝트 (표시용)
-  projectFilterType: 'active' | 'not_started';
-  onProjectFilterChange: (type: 'active' | 'not_started') => void;
+  projectFilterType: 'in_progress' | 'not_started';
+  onProjectFilterChange: (type: 'in_progress' | 'not_started') => void;
   onProjectClick: (project: Project) => void;
 }
 
@@ -20,7 +20,7 @@ export default function ProjectTabs({
   onProjectClick,
 }: ProjectTabsProps) {
   // 프로젝트 상태별 카운트 계산 (전체 프로젝트에서 계산)
-  const activeCount = allProjects.filter(p => p.status === 'active').length;
+  const activeCount = allProjects.filter(p => p.status === 'in_progress').length;
   const notStartedCount = allProjects.filter(p => p.status === 'not_started').length;
 
   return (
@@ -29,8 +29,8 @@ export default function ProjectTabs({
         {/* 프로젝트 상태 필터 탭 (클릭 가능) */}
         <div className="flex gap-2 mb-4">
           <button
-            onClick={() => onProjectFilterChange('active')}
-            className={`btn btn-sm ${projectFilterType === 'active' ? 'bg-base-300' : 'btn-ghost'} rounded-full`}
+            onClick={() => onProjectFilterChange('in_progress')}
+            className={`btn btn-sm ${projectFilterType === 'in_progress' ? 'bg-base-300' : 'btn-ghost'} rounded-full`}
           >
             <FolderOpen className="w-4 h-4" />
             <span className="text-sm">진행중인 프로젝트</span>

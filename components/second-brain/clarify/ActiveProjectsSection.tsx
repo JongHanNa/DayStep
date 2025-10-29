@@ -17,8 +17,8 @@ interface ActiveProjectsSectionProps {
 export default function ActiveProjectsSection({ projects, goals, onProjectClick }: ActiveProjectsSectionProps) {
   const [activeTab, setActiveTab] = useState<ProjectViewTab>('goals');
 
-  // active 상태인 프로젝트만 필터링
-  const activeProjects = projects.filter((p) => p.status === 'active');
+  // in_progress 상태인 프로젝트만 필터링
+  const activeProjects = projects.filter((p) => p.status === 'in_progress');
 
   // 목표별 그룹화
   const projectsByGoal = () => {

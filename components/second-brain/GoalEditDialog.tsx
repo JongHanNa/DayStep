@@ -357,8 +357,8 @@ export default function GoalEditDialog({
                                 <div className="font-medium truncate">{project.title}</div>
                                 <div className="text-sm text-base-content/60">
                                   {project.status === 'not_started' && '시작 안함'}
-                                  {project.status === 'active' && '진행중'}
-                                  {project.status === 'on_hold' && '중단'}
+                                  {project.status === 'in_progress' && '진행중'}
+                                  {project.status === 'paused' && '중단'}
                                   {project.status === 'completed' && '완료'}
                                 </div>
                               </div>
