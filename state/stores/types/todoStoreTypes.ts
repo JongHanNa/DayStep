@@ -79,6 +79,7 @@ export interface TodoStoreState extends BaseStoreState {
   // 액션들 (날짜 범위 기반으로 통일)
   fetchTodosForCurrentView: () => Promise<void>;
   fetchTodosForDate: (utcStart: Date, utcEnd: Date) => Promise<Todo[]>;
+  fetchTodosByProjectId: (projectId: string) => Promise<any[]>;
   fetchTodoById: (id: string) => Promise<Todo | null>;
   createTodo: (data: CreateTodoInput) => Promise<Todo | null>;
   createTodoWithRecurrence: (input: CreateTodoInput) => Promise<Todo[]>;

@@ -33,7 +33,13 @@ export class Todo {
 
     // 출발 정보 필드들
     public readonly departureLocation: string | null = null,
-    public readonly departureTime: Date | null = null
+    public readonly departureTime: Date | null = null,
+
+    // Second Brain 관계 필드들 (프로젝트/목표/영역/자원)
+    public readonly projectId: string | null = null,
+    public readonly goalId: string | null = null,
+    public readonly areaId: string | null = null,
+    public readonly resourceId: string | null = null
   ) {}
 
   /**
@@ -61,6 +67,12 @@ export class Todo {
     // 출발 정보 필드들
     const departureLocation = record.departureLocation ?? record.departure_location;
     const departureTime = record.departureTime ?? record.departure_time;
+
+    // Second Brain 관계 필드들
+    const projectId = record.projectId ?? record.project_id;
+    const goalId = record.goalId ?? record.goal_id;
+    const areaId = record.areaId ?? record.area_id;
+    const resourceId = record.resourceId ?? record.resource_id;
 
     // title 필드
     const title = data.title;
@@ -95,7 +107,13 @@ export class Todo {
 
       // 출발 정보 필드들
       departureLocation || null,
-      departureTime ? new Date(departureTime) : null
+      departureTime ? new Date(departureTime) : null,
+
+      // Second Brain 관계 필드들
+      projectId || null,
+      goalId || null,
+      areaId || null,
+      resourceId || null
     );
   }
 
@@ -390,7 +408,11 @@ export class Todo {
       this.recurrenceDayOfMonth,
       this.parentTodoId,
       this.departureLocation,
-      this.departureTime
+      this.departureTime,
+      this.projectId,
+      this.goalId,
+      this.areaId,
+      this.resourceId
     );
   }
 
@@ -433,7 +455,11 @@ export class Todo {
       this.recurrenceDayOfMonth,
       this.parentTodoId,
       this.departureLocation,
-      this.departureTime
+      this.departureTime,
+      this.projectId,
+      this.goalId,
+      this.areaId,
+      this.resourceId
     );
   }
 
@@ -469,10 +495,7 @@ export class Todo {
   /**
    * 데이터베이스 형식으로 변환
    */
-  toDatabase(): Omit<DatabaseTodo, 'created_at' | 'updated_at'> & {
-    created_at?: string;
-    updated_at?: string;
-  } {
+  toDatabase(): any {
     return {
       id: this.id,
       user_id: this.userId,
@@ -500,6 +523,9 @@ export class Todo {
       recurrence_days_of_week: this.recurrenceDaysOfWeek,
       recurrence_day_of_month: this.recurrenceDayOfMonth,
       parent_todo_id: this.parentTodoId,
+
+      // Second Brain 관계 필드들 (DB에는 project_id만 존재)
+      project_id: this.projectId,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),

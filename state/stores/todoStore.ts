@@ -228,6 +228,50 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
       },
 
+      // 프로젝트별 할일 조회 (날짜 범위 제한 없음)
+      fetchTodosByProjectId: async (projectId: string) => {
+        try {
+          // Capacitor 백업 인증 패턴
+          let userId: string | null = null;
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+              userId = session.user.id;
+            }
+          } catch {}
+
+          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
+            const { Preferences } = await import('@capacitor/preferences');
+            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
+            if (value) {
+              userId = JSON.parse(value).user?.id;
+            }
+          }
+
+          if (!userId) {
+            throw new Error("사용자 인증이 필요합니다.");
+          }
+
+          // fetchAllTodosWithJWT로 전체 할일 조회 후 프로젝트 필터링
+          const { fetchAllTodosWithJWT } = await import('@/lib/supabase/todos');
+          const allTodos = await fetchAllTodosWithJWT(userId);
+
+          // project_id로 필터링 (DB는 snake_case 사용)
+          const projectTodos = allTodos.filter((t: any) => t.project_id === projectId);
+
+          console.log("✅ fetchTodosByProjectId 완료:", {
+            projectId,
+            totalTodos: allTodos.length,
+            projectTodosCount: projectTodos.length,
+          });
+
+          return projectTodos;
+        } catch (error) {
+          console.error("❌ fetchTodosByProjectId 실패:", error);
+          throw error;
+        }
+      },
+
       fetchTodoById: async (id: string) => {
         return fetchTodoByIdAction(id);
       },

@@ -614,6 +614,9 @@ export type Database = {
       }
       todos: {
         Row: {
+          assigned_date: string | null
+          assigned_to: string | null
+          clarification: Database["public"]["Enums"]["clarification_enum"]
           color: string | null
           completed: boolean
           created_at: string
@@ -622,9 +625,12 @@ export type Database = {
           end_time: string | null
           icon: string | null
           id: string
+          is_today_highlight: boolean
+          next_action_contexts: string[] | null
           order_index: number
           parent_todo_id: string | null
           priority: string | null
+          project_id: string | null
           recurrence_count: number | null
           recurrence_day_of_month: number | null
           recurrence_days_of_week: Json | null
@@ -638,6 +644,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_date?: string | null
+          assigned_to?: string | null
+          clarification?: Database["public"]["Enums"]["clarification_enum"]
           color?: string | null
           completed?: boolean
           created_at?: string
@@ -646,9 +655,12 @@ export type Database = {
           end_time?: string | null
           icon?: string | null
           id?: string
+          is_today_highlight?: boolean
+          next_action_contexts?: string[] | null
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null
+          project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null
           recurrence_days_of_week?: Json | null
@@ -662,6 +674,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_date?: string | null
+          assigned_to?: string | null
+          clarification?: Database["public"]["Enums"]["clarification_enum"]
           color?: string | null
           completed?: boolean
           created_at?: string
@@ -670,9 +685,12 @@ export type Database = {
           end_time?: string | null
           icon?: string | null
           id?: string
+          is_today_highlight?: boolean
+          next_action_contexts?: string[] | null
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null
+          project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null
           recurrence_days_of_week?: Json | null

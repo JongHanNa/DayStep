@@ -14,7 +14,8 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
-import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
+import { useTodoStore } from '@/state/stores/todoStore';
+import { useAuth } from '@/app/context/AuthContext';
 import TodoEditModal from './TodoEditModal';
 import TodoListModal from './TodoListModal';
 
@@ -75,36 +76,41 @@ export default function ProjectEditDialog({
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [showTodoEditModal, setShowTodoEditModal] = useState(false);
 
-  // InboxStore에서 프로젝트 할일 로드 및 업데이트 함수
-  const inboxItems = useInboxStore(state => state.inboxItems);
-  const updateInboxItem = useInboxStore(state => state.updateInboxItem);
+  // todoStore에서 프로젝트 할일 로드 및 업데이트 함수
+  const { appUser } = useAuth();
+  const userId = appUser?.id;
+  const fetchTodosByProjectId = useTodoStore(state => state.fetchTodosByProjectId);
+  const updateTodo = useTodoStore(state => state.updateTodo);
 
   // 프로젝트 변경 시 해당 프로젝트의 할일 로드
   useEffect(() => {
-    if (!editingProject || editingProject.isNew) {
+    if (!editingProject || editingProject.isNew || !userId) {
       setTodos([]);
       return;
     }
 
-    // InboxStore에서 프로젝트 할일 필터링 (item_type='todo' + project_id 일치)
-    const projectTodos = inboxItems
-      .filter((item: any) =>
-        item.item_type === 'todo' &&
-        item.project_id === editingProject.id
-      )
-      .map((item: any) => ({
-        id: item.id,
-        title: item.content,
-        completed: item.is_completed || false,
-        scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
-        displayOrder: item.display_order || 0,
-        isHighlight: item.is_highlight || false,
-        clarification: item.clarification,
-      }))
-      .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    // fetchTodosByProjectId로 프로젝트 할일 직접 조회 (날짜 범위 제한 없음)
+    fetchTodosByProjectId(editingProject.id)
+      .then((projectTodos: any[]) => {
+        const mappedTodos = projectTodos
+          .map((todo: any) => ({
+            id: todo.id,
+            title: todo.title,
+            completed: todo.completed || false,
+            scheduledDate: todo.start_time ? new Date(todo.start_time) : undefined,
+            displayOrder: todo.order_index || 0,
+            isHighlight: todo.is_today_highlight || false,
+            clarification: todo.clarification,
+          }))
+          .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
-    setTodos(projectTodos);
-  }, [editingProject?.id, editingProject?.isNew, inboxItems]);
+        setTodos(mappedTodos);
+      })
+      .catch((error: any) => {
+        console.error('프로젝트 할일 로드 실패:', error);
+        setTodos([]);
+      });
+  }, [editingProject?.id, editingProject?.isNew, userId, fetchTodosByProjectId]);
 
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -162,10 +168,13 @@ export default function ProjectEditDialog({
           )
         );
 
-        // InboxStore 업데이트 (display_order는 로컬 state에서만 관리)
-        await updateInboxItem(todoId, {
-          scheduled_date: scheduledDate.toISOString(),
-        });
+        // todoStore 업데이트
+        if (userId) {
+          await updateTodo(todoId, {
+            start_time: scheduledDate.toISOString(),
+            order_index: maxOrder + 1,
+          });
+        }
 
         return;
       }
@@ -266,10 +275,13 @@ export default function ProjectEditDialog({
           )
         );
 
-        // InboxStore 업데이트 (display_order는 로컬 state에서만 관리)
-        await updateInboxItem(todoId, {
-          scheduled_date: scheduledDate.toISOString(),
-        });
+        // todoStore 업데이트
+        if (userId) {
+          await updateTodo(todoId, {
+            start_time: scheduledDate.toISOString(),
+            order_index: maxOrder + 1,
+          });
+        }
 
         return;
       }
@@ -391,15 +403,22 @@ export default function ProjectEditDialog({
       )
     );
 
-    // InboxStore 업데이트
-    await updateInboxItem(todoId, {
-      is_completed: newCompleted,
-    });
+    // todoStore 업데이트
+    if (userId) {
+      await updateTodo(todoId, {
+        completed: newCompleted,
+      });
+    }
   };
 
   // 할일 제거
-  const handleRemoveTodo = (todoId: string) => {
+  const deleteTodo = useTodoStore(state => state.deleteTodo);
+  const handleRemoveTodo = async (todoId: string) => {
+    // 로컬 state 업데이트
     setTodos(todos.filter((todo) => todo.id !== todoId));
+
+    // todoStore 삭제
+    await deleteTodo(todoId);
   };
 
   // 할일 편집 열기
