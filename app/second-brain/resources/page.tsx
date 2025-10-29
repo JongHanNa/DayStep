@@ -295,9 +295,9 @@ export default function ResourcesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
+    <div className="min-h-screen bg-base-200 pb-20">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+      <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
         <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
           <h1 className="text-2xl font-bold">관심 자원 (Resources)</h1>
           <p className="text-sm text-base-content/70 mt-1">
@@ -333,7 +333,7 @@ export default function ResourcesPage() {
           </div>
 
           {resources.length === 0 ? (
-            <div className="card bg-base-200">
+            <div className="card bg-base-100">
               <div className="card-body text-center py-12">
                 <p className="text-base-content/60">
                   아직 자원이 없습니다. 새 자원을 추가해보세요.
@@ -347,7 +347,7 @@ export default function ResourcesPage() {
                 return (
                   <div
                     key={resource.id}
-                    className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+                    className="flex items-center justify-between p-4 bg-base-100 rounded-lg transition-colors"
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
@@ -429,7 +429,7 @@ export default function ResourcesPage() {
         <dialog open className="modal modal-open">
           <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 */}
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-200 z-10`}>
               <button onClick={handleCancelPresets} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
@@ -463,7 +463,7 @@ export default function ResourcesPage() {
                         className={`card transition-all w-full ${
                           isSelected
                             ? 'bg-primary text-primary-content ring-2 ring-primary'
-                            : 'bg-base-200 hover:bg-base-300'
+                            : 'bg-base-100'
                         }`}
                       >
                         <div className="card-body p-4">

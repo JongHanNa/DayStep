@@ -375,9 +375,9 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
+    <div className="min-h-screen bg-base-200 pb-20">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+      <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
         <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
           <h1 className="text-2xl font-bold">목표 (Goals)</h1>
           <p className="text-sm text-base-content/70 mt-1">
@@ -407,7 +407,7 @@ export default function GoalsPage() {
           </div>
 
           {goals.length === 0 ? (
-            <div className="card bg-base-200">
+            <div className="card bg-base-100">
               <div className="card-body text-center py-12">
                 <p className="text-base-content/60">
                   아직 목표가 없습니다. 새 목표를 추가해보세요.
@@ -421,7 +421,7 @@ export default function GoalsPage() {
                 return (
                   <div
                     key={goal.id}
-                    className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+                    className="flex items-center justify-between p-4 bg-base-100 rounded-lg transition-colors"
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <div
@@ -756,7 +756,7 @@ export default function GoalsPage() {
                                   <div
                                     key={project.id}
                                     onClick={() => handleEditProject(project)}
-                                    className="flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
+                                    className="flex items-start gap-3 p-3 bg-base-100 rounded-lg transition-colors cursor-pointer"
                                   >
                                     <div
                                       className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
