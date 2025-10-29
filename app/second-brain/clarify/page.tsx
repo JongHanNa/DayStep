@@ -62,7 +62,7 @@ export default function ClarifyPage() {
     // 프로젝트 수집함: projects 테이블에서 조건부 필터링
     // 종료일, 영역/자원, 할일 중 하나라도 없으면 수집함에 표시
     const inboxProjects = projects.filter((project) => {
-      const hasEndDate = !!project.target_end_date;
+      const hasEndDate = !!project.end_date;
       const hasAreaOrResource = !!(project.area_id || project.resource_id);
       const hasTodos = (project.total_todos || 0) > 0;
 
@@ -111,7 +111,7 @@ export default function ClarifyPage() {
       // 영역/자원 AND 할일 1개 이상 AND 종료일 모두 있어야 제거
       const hasAreaOrResource = !!(area_id || resource_id);
       const hasTodos = (projectData.total_todos || 0) > 0;
-      const hasEndDate = !!projectData.target_end_date;
+      const hasEndDate = !!projectData.end_date;
       const shouldRemoveFromInbox = hasAreaOrResource && hasTodos && hasEndDate;
 
       // InboxItem 변환 없이 Project 업데이트만 수행
@@ -125,7 +125,7 @@ export default function ClarifyPage() {
         area_id,
         resource_id,
         start_date: projectData.start_date || undefined,
-        target_end_date: projectData.target_end_date || undefined,
+        end_date: projectData.end_date || undefined,
       };
 
       await updateProject(editingProject!.id, updateData);

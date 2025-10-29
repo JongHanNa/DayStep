@@ -108,14 +108,14 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
       </div>
 
       {/* 날짜 정보 (있을 경우) */}
-      {(project.start_date || project.target_end_date) && (
+      {(project.start_date || project.end_date) && (
         <div className="flex items-center gap-2 mt-3 text-xs text-base-content/60">
           {project.start_date && (
             <span>시작: {new Date(project.start_date).toLocaleDateString('ko-KR')}</span>
           )}
-          {project.start_date && project.target_end_date && <span>~</span>}
-          {project.target_end_date && (
-            <span>종료: {new Date(project.target_end_date).toLocaleDateString('ko-KR')}</span>
+          {project.start_date && project.end_date && <span>~</span>}
+          {project.end_date && (
+            <span>종료: {new Date(project.end_date).toLocaleDateString('ko-KR')}</span>
           )}
         </div>
       )}

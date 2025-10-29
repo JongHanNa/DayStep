@@ -117,9 +117,9 @@ export default function ProjectsPage() {
       id: project.id,
       title: project.title,
       start_date: project.start_date,
-      target_end_date: project.target_end_date,
+      end_date: project.end_date,
       start_date_type: typeof project.start_date,
-      target_end_date_type: typeof project.target_end_date
+      end_date_type: typeof project.end_date
     });
 
     let paraSelection = '';
@@ -141,7 +141,7 @@ export default function ProjectsPage() {
       paraSelection,
       isNew: false,
       start_date: formatDateForInput(project.start_date),
-      target_end_date: formatDateForInput(project.target_end_date)
+      end_date: formatDateForInput(project.end_date)
     };
 
     console.log('✅ 편집 데이터:', editData);
@@ -166,7 +166,7 @@ export default function ProjectsPage() {
           area_id,
           resource_id,
           start_date: projectData.start_date || undefined,
-          target_end_date: projectData.target_end_date || undefined,
+          end_date: projectData.end_date || undefined,
           order_index: projectData.order_index!,
         };
         await createProject(appUser.id, createData);
@@ -181,7 +181,7 @@ export default function ProjectsPage() {
           area_id,
           resource_id,
           start_date: projectData.start_date || undefined,
-          target_end_date: projectData.target_end_date || undefined,
+          end_date: projectData.end_date || undefined,
         };
         await updateProject(appUser.id, projectData.id!, updateData);
       }

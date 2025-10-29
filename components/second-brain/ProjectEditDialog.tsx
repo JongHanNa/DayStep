@@ -705,8 +705,8 @@ export default function ProjectEditDialog({
               <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                 <input
                   type="date"
-                  value={editingProject.target_end_date || ''}
-                  onChange={(e) => onProjectChange({ ...editingProject, target_end_date: e.target.value })}
+                  value={editingProject.end_date || ''}
+                  onChange={(e) => onProjectChange({ ...editingProject, end_date: e.target.value })}
                   className="input input-bordered w-full"
                 />
               </div>

@@ -40,8 +40,8 @@ export default function ActiveProjectsSection({ projects, goals, onProjectClick 
     const grouped: Record<string, Project[]> = {};
 
     activeProjects.forEach((project) => {
-      if (project.target_end_date) {
-        const monthKey = format(new Date(project.target_end_date), 'yyyy-MM');
+      if (project.end_date) {
+        const monthKey = format(new Date(project.end_date), 'yyyy-MM');
         if (!grouped[monthKey]) grouped[monthKey] = [];
         grouped[monthKey].push(project);
       }
@@ -55,8 +55,8 @@ export default function ActiveProjectsSection({ projects, goals, onProjectClick 
     const grouped: Record<string, Project[]> = {};
 
     activeProjects.forEach((project) => {
-      if (project.target_end_date) {
-        const date = new Date(project.target_end_date);
+      if (project.end_date) {
+        const date = new Date(project.end_date);
         const weekStart = startOfWeek(date, { weekStartsOn: 0 });
         const weekEnd = endOfWeek(date, { weekStartsOn: 0 });
         const weekKey = `${format(weekStart, 'MM/dd')} - ${format(weekEnd, 'MM/dd')}`;

@@ -90,7 +90,7 @@ export interface Project {
 
   // 날짜
   start_date?: string; // ISO date string
-  target_end_date?: string; // ISO date string
+  end_date?: string; // ISO date string (DB 컬럼명과 일치)
   completed_at?: string;
 
   // 메타데이터
