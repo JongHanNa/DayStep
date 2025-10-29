@@ -57,7 +57,7 @@
   /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
   --color-primary: oklch(47% 10% 264deg);
   --color-primary-content: oklch(100% 0% 68deg);
-  --color-base-200: oklch(96% 1% 289deg);
+  --color-base-200: #f8f8f8;
   --color-base-300: oklch(96% 1% 289deg);
 
   /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
@@ -89,7 +89,7 @@
   /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Dark 모드 (data-theme 필수) */
   --color-primary: oklch(47% 10% 264deg);
   --color-primary-content: oklch(100% 0% 68deg);
-  --color-base-200: oklch(96% 1% 289deg);
+  --color-base-200: #f8f8f8;
   --color-base-300: oklch(96% 1% 289deg);
 
   /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
