@@ -251,6 +251,10 @@ export default function InboxPage() {
     }
   });
 
+  // 탭별 개수 계산
+  const todoCount = inboxItems.filter(item => !item.item_type || item.item_type === 'todo').length;
+  const noteCount = inboxItems.filter(item => item.item_type === 'note').length;
+
   return (
     <div className="min-h-screen bg-base-100 pb-20">
       {/* 헤더 */}
@@ -278,18 +282,34 @@ export default function InboxPage() {
           </div>
 
           {/* 탭 */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 p-2 bg-base-200 rounded-full">
             <button
               onClick={() => setActiveTab('todo')}
-              className={`btn btn-sm flex-1 ${activeTab === 'todo' ? 'bg-base-300' : 'btn-ghost'}`}
+              className={`
+                flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
+                ${activeTab === 'todo' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-transparent hover:bg-base-300'}
+              `}
             >
-              할 일
+              <span>할 일</span>
+              {todoCount > 0 && (
+                <span className={`badge badge-sm ${activeTab === 'todo' ? 'badge-neutral' : 'badge-primary'}`}>
+                  {todoCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab('note')}
-              className={`btn btn-sm flex-1 ${activeTab === 'note' ? 'bg-base-300' : 'btn-ghost'}`}
+              className={`
+                flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
+                ${activeTab === 'note' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-transparent hover:bg-base-300'}
+              `}
             >
-              노트
+              <span>노트</span>
+              {noteCount > 0 && (
+                <span className={`badge badge-sm ${activeTab === 'note' ? 'badge-neutral' : 'badge-primary'}`}>
+                  {noteCount}
+                </span>
+              )}
             </button>
           </div>
         </div>

@@ -24,7 +24,7 @@ const TABS = [
 
 export default function InboxTabs({ activeTab, onTabChange, counts }: InboxTabsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+    <div className="flex gap-2 p-2 bg-base-200 rounded-full overflow-x-auto scrollbar-hide">
       {TABS.map((tab) => {
         const isActive = activeTab === tab.id;
         const Icon = tab.icon;
@@ -35,8 +35,8 @@ export default function InboxTabs({ activeTab, onTabChange, counts }: InboxTabsP
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors
-              ${isActive ? 'bg-primary text-primary-content' : 'bg-base-200 hover:bg-base-300'}
+              flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200
+              ${isActive ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-transparent hover:bg-base-300'}
             `}
           >
             <Icon className="w-4 h-4" />
