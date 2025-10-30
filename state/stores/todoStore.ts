@@ -259,6 +259,21 @@ export const useTodoStore = createStore<TodoStoreState>(
           // projectId로 필터링 (Todo.fromDatabase() 변환 후 camelCase 사용)
           const projectTodos = allTodos.filter((t: any) => t.projectId === projectId);
 
+          // ✅ todoStore.todos에 병합 (중복 방지)
+          set((state: TodoStoreState) => {
+            const existingIds = new Set(state.todos.map(t => t.id));
+            const newTodos = projectTodos.filter((t: any) => !existingIds.has(t.id));
+
+            if (newTodos.length > 0) {
+              state.todos = [...state.todos, ...newTodos];
+              console.log("✅ todoStore.todos에 프로젝트 할일 병합:", {
+                기존개수: state.todos.length - newTodos.length,
+                추가개수: newTodos.length,
+                최종개수: state.todos.length,
+              });
+            }
+          });
+
           console.log("✅ fetchTodosByProjectId 완료:", {
             projectId,
             totalTodos: allTodos.length,
