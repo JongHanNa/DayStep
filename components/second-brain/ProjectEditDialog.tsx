@@ -81,6 +81,7 @@ export default function ProjectEditDialog({
   const userId = appUser?.id;
   const fetchTodosByProjectId = useTodoStore(state => state.fetchTodosByProjectId);
   const updateTodo = useTodoStore(state => state.updateTodo);
+  const createTodo = useTodoStore(state => state.createTodo);
 
   // 프로젝트 변경 시 해당 프로젝트의 할일 로드
   useEffect(() => {
@@ -427,15 +428,46 @@ export default function ProjectEditDialog({
   };
 
   // 할일 추가
-  const handleAddTodo = () => {
-    const newTodo: TodoItem = {
-      id: `todo-${Date.now()}`,
-      title: '새 할일',
-      completed: false,
-      isHighlight: false,
-    };
+  const handleAddTodo = async () => {
+    if (!userId || !editingProject?.id) {
+      console.error('❌ userId 또는 projectId 없음');
+      alert('프로젝트 정보가 없습니다.');
+      return;
+    }
 
-    setTodos([...todos, newTodo]);
+    try {
+      // DB에 즉시 저장
+      const newTodo = await createTodo({
+        title: '새 할일',
+        completed: false,
+        user_id: userId,
+        project_id: editingProject.id,
+        schedule_type: 'anytime'
+      });
+
+      if (!newTodo) {
+        throw new Error('할일 생성 응답이 없습니다.');
+      }
+
+      // DB 저장 성공 후 로컬 상태 업데이트
+      const todoItem: TodoItem = {
+        id: newTodo.id,
+        title: newTodo.title,
+        completed: newTodo.completed,
+        isHighlight: false,
+        scheduledDate: newTodo.startTime ? new Date(newTodo.startTime) : undefined,
+        includeTime: false,
+        startTime: undefined,
+        includeEndDate: false,
+        endDate: undefined,
+        endTime: undefined,
+      };
+
+      setTodos([...todos, todoItem]);
+    } catch (error) {
+      console.error('❌ 할일 생성 실패:', error);
+      alert('할일 생성에 실패했습니다.');
+    }
   };
 
   // 할일 완료 토글

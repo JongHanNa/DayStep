@@ -292,6 +292,7 @@ export interface CreateTodoInput {
   completed?: boolean;
   order_index?: number;
   parent_todo_id?: string;
+  project_id?: string; // 프로젝트 ID
 }
 
 // Note instance types
