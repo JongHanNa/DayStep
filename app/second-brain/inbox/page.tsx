@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -19,6 +20,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 
 export default function InboxPage() {
   const router = useRouter();
+  const { appUser } = useAuth();
   const { inboxItems, fetchInboxItems, createInboxItem, updateInboxItem, deleteInboxItem } = useInboxStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
@@ -53,11 +55,13 @@ export default function InboxPage() {
   });
 
   useEffect(() => {
-    fetchInboxItems();
-    fetchAreas();
-    fetchResources();
-    fetchNotes();
-  }, [fetchInboxItems, fetchAreas, fetchResources, fetchNotes]);
+    if (appUser?.id) {
+      fetchInboxItems();
+      fetchAreas(appUser.id);
+      fetchResources(appUser.id);
+      fetchNotes();
+    }
+  }, [appUser?.id, fetchInboxItems, fetchAreas, fetchResources, fetchNotes]);
 
   // 편집 모달 상태 관리는 InboxTodoEditModal 컴포넌트 내부에서 처리
 
@@ -217,9 +221,11 @@ export default function InboxPage() {
 
   // 새 프로젝트 생성 핸들러
   const handleCreateProject = async (title: string): Promise<Project> => {
-    return await createProject({
+    if (!appUser?.id) throw new Error('User not authenticated');
+    return await createProject(appUser.id, {
       title,
-      status: 'active',
+      icon: 'lucide-FolderOpen',
+      status: 'in_progress',
       color: '#3B82F6',
       order_index: projects.length,
     });

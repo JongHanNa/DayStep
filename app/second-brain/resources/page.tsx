@@ -5,7 +5,7 @@ import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { Plus, X, Pencil, Lightbulb } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import type { CreateResourceInput, Resource, CreateAreaInput } from '@/types/second-brain';
+import type { CreateAreaResourceInput, AreaResource as Resource, CreateAreaInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -87,6 +87,7 @@ export default function ResourcesPage() {
         icon: 'lucide-BookOpen',
         color: '#A8DADC',
         order_index: resources.length,
+        is_pinned: false,
       });
 
       console.log('새 자원 생성 완료:', createdResource);
@@ -101,7 +102,7 @@ export default function ResourcesPage() {
   // 자원 편집 핸들러
   const handleEditResource = (resource: Resource) => {
     setEditingResource({ ...resource, isNew: false });
-    setItemType(resource.is_archived ? 'archive' : 'resource');
+    setItemType(resource.status === 'archived' ? 'archive' : 'resource');
     setEditDialogOpen(true);
   };
 
@@ -127,31 +128,37 @@ export default function ResourcesPage() {
             icon: editingResource.icon,
             color: editingResource.color,
             order_index: 0,
+            is_pinned: false,
+            status: 'area',
           };
-          await createArea(areaData);
+          await createArea(appUser.id, areaData);
         } else if (itemType === 'resource') {
           // 자원으로 생성
-          const resourceData: CreateResourceInput = {
+          const resourceData: CreateAreaResourceInput = {
             title: editingResource.title,
             icon: editingResource.icon,
             color: editingResource.color,
             order_index: resources.length,
+            is_pinned: false,
+            status: 'resource',
           };
           await createResource(appUser.id, resourceData);
         } else if (itemType === 'archive') {
           // 아카이브 상태로 생성
-          const resourceData: CreateResourceInput = {
+          const resourceData: CreateAreaResourceInput = {
             title: editingResource.title,
             icon: editingResource.icon,
             color: editingResource.color,
             order_index: resources.length,
+            is_pinned: false,
+            status: 'resource',
           };
           const newResource = await createResource(appUser.id, resourceData);
           await archiveResource(appUser.id, newResource.id);
         }
       } else {
         // 기존 항목 수정
-        const originalType: SecondBrainItemType = editingResource.is_archived ? 'archive' : 'resource';
+        const originalType: SecondBrainItemType = editingResource.status === 'archived' ? 'archive' : 'resource';
 
         if (originalType === itemType) {
           // 같은 타입 내에서 수정
@@ -179,10 +186,11 @@ export default function ResourcesPage() {
               icon: editingResource.icon,
               color: editingResource.color,
               order_index: 0,
-              is_archived: false,
+              is_pinned: false,
+              status: 'area',
             };
             await deleteResource(appUser.id, editingResource.id);
-            await createArea(areaData);
+            await createArea(appUser.id, areaData);
           } else if (itemType === 'archive') {
             // Resource → Archive
             await archiveResource(appUser.id, editingResource.id);
@@ -269,12 +277,13 @@ export default function ResourcesPage() {
     try {
       // 선택한 자원들을 생성
       for (const [index, preset] of selectedPresets.entries()) {
-        const resourceData: CreateResourceInput = {
+        const resourceData: CreateAreaResourceInput = {
           title: preset.title,
           icon: preset.icon,
           color: preset.color,
           order_index: resources.length + index,
-          is_archived: false,
+          is_pinned: false,
+          status: 'resource',
         };
         await createResource(appUser.id, resourceData);
       }

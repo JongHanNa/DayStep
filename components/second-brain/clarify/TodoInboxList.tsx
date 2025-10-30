@@ -9,6 +9,7 @@ import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useAuthStore } from '@/state/stores/authStore';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -18,6 +19,7 @@ interface TodoInboxListProps {
 }
 
 export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh }: TodoInboxListProps) {
+  const user = useAuthStore((state) => state.user);
   const { inboxItems, updateInboxItem, convertTodoToProject } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
@@ -110,21 +112,24 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
 
   // 프로젝트 관련 핸들러
   const handleCreateProject = async (title: string) => {
-    return await createProject({
+    if (!user?.id) throw new Error('User not authenticated');
+    return await createProject(user.id, {
       title,
       description: '',
-      status: 'active',
+      status: 'not_started',
       color: '#6366f1',
       order_index: projects.length,
     });
   };
 
   const handleUpdateProject = async (id: string, title: string) => {
-    await updateProject(id, { title });
+    if (!user?.id) throw new Error('User not authenticated');
+    await updateProject(user.id, id, { title });
   };
 
   const handleDeleteProject = async (id: string) => {
-    await deleteProject(id);
+    if (!user?.id) throw new Error('User not authenticated');
+    await deleteProject(user.id, id);
   };
 
   // 노트 관련 핸들러

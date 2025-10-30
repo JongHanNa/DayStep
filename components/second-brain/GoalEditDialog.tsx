@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
-import type { Goal, Area, Resource, Project } from '@/types/second-brain';
+import type { Goal, AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
@@ -168,8 +168,8 @@ export default function GoalEditDialog({
                 />
               </div>
 
-              {/* 설명 */}
-              <div className="form-control mb-4">
+              {/* 설명 - 현재 DB 스키마에 description 필드 없음. 추후 추가 예정 */}
+              {/* <div className="form-control mb-4">
                 <label className="label">
                   <span className="label-text">설명 (선택)</span>
                 </label>
@@ -180,7 +180,7 @@ export default function GoalEditDialog({
                   placeholder="목표에 대한 설명을 입력하세요"
                   rows={3}
                 />
-              </div>
+              </div> */}
 
               {/* 상태 */}
               <div className="form-control mb-4">
@@ -247,28 +247,15 @@ export default function GoalEditDialog({
                   </label>
                   <input
                     type="date"
-                    value={editingGoal.target_date || ''}
-                    onChange={(e) => onGoalChange({ ...editingGoal, target_date: e.target.value })}
+                    value={editingGoal.end_date || ''}
+                    onChange={(e) => onGoalChange({ ...editingGoal, end_date: e.target.value })}
                     className="input input-bordered"
                   />
                 </div>
               </div>
 
-              {/* 기간 */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">기간</span>
-                </label>
-                <select
-                  value={editingGoal.timeframe || 'year'}
-                  onChange={(e) => onGoalChange({ ...editingGoal, timeframe: e.target.value as 'quarter' | 'year' | '5_years' })}
-                  className="select select-bordered"
-                >
-                  <option value="quarter">분기 (3개월)</option>
-                  <option value="year">연간 (1년)</option>
-                  <option value="5_years">장기 (5년)</option>
-                </select>
-              </div>
+              {/* 기간 - DB 스키마에는 year_goal과 quarter_goal로 분리되어 있음 */}
+              {/* timeframe 필드는 제거되고 아래 연간목표/분기목표 선택으로 대체 */}
 
               {/* 연간목표/분기목표 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

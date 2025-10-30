@@ -18,6 +18,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      areas_resources: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_pinned: boolean
+          order_index: number
+          status: Database["public"]["Enums"]["area_resource_status_enum"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_pinned?: boolean
+          order_index?: number
+          status?: Database["public"]["Enums"]["area_resource_status_enum"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_pinned?: boolean
+          order_index?: number
+          status?: Database["public"]["Enums"]["area_resource_status_enum"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           avatar_url: string | null
@@ -61,10 +100,110 @@ export type Database = {
           notes?: string | null
           relationship?: string | null
           tags?: string[] | null
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      goals: {
+        Row: {
+          area_id: string | null
+          area_resource_id: string | null
+          color: string | null
+          created_at: string
+          end_date: string | null
+          icon: string | null
+          id: string
+          order_index: number
+          quarter_goal: Database["public"]["Enums"]["quarter_enum"] | null
+          resource_id: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["progress_status_enum"]
+          title: string
+          updated_at: string
+          user_id: string
+          year_goal: number | null
+        }
+        Insert: {
+          area_id?: string | null
+          area_resource_id?: string | null
+          color?: string | null
+          created_at?: string
+          end_date?: string | null
+          icon?: string | null
+          id?: string
+          order_index?: number
+          quarter_goal?: Database["public"]["Enums"]["quarter_enum"] | null
+          resource_id?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["progress_status_enum"]
+          title: string
+          updated_at?: string
+          user_id: string
+          year_goal?: number | null
+        }
+        Update: {
+          area_id?: string | null
+          area_resource_id?: string | null
+          color?: string | null
+          created_at?: string
+          end_date?: string | null
+          icon?: string | null
+          id?: string
+          order_index?: number
+          quarter_goal?: Database["public"]["Enums"]["quarter_enum"] | null
+          resource_id?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["progress_status_enum"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year_goal?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "area_resource_note_counts"
+            referencedColumns: ["area_resource_id"]
+          },
+          {
+            foreignKeyName: "goals_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_area_resource_id_fkey"
+            columns: ["area_resource_id"]
+            isOneToOne: false
+            referencedRelation: "area_resource_note_counts"
+            referencedColumns: ["area_resource_id"]
+          },
+          {
+            foreignKeyName: "goals_area_resource_id_fkey"
+            columns: ["area_resource_id"]
+            isOneToOne: false
+            referencedRelation: "areas_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "area_resource_note_counts"
+            referencedColumns: ["area_resource_id"]
+          },
+          {
+            foreignKeyName: "goals_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "areas_resources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       motivation_tags: {
         Row: {
@@ -319,6 +458,8 @@ export type Database = {
       }
       notes: {
         Row: {
+          area_resource_id: string | null
+          classification: Database["public"]["Enums"]["note_classification_enum"]
           content: string
           created_at: string | null
           id: string
@@ -327,12 +468,16 @@ export type Database = {
           is_recurring: boolean | null
           linked_date: string | null
           position: number | null
+          project_id: string | null
           recurrence_type: string | null
           related_task_id: string | null
+          title: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          area_resource_id?: string | null
+          classification?: Database["public"]["Enums"]["note_classification_enum"]
           content: string
           created_at?: string | null
           id?: string
@@ -341,12 +486,16 @@ export type Database = {
           is_recurring?: boolean | null
           linked_date?: string | null
           position?: number | null
+          project_id?: string | null
           recurrence_type?: string | null
           related_task_id?: string | null
+          title?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          area_resource_id?: string | null
+          classification?: Database["public"]["Enums"]["note_classification_enum"]
           content?: string
           created_at?: string | null
           id?: string
@@ -355,12 +504,42 @@ export type Database = {
           is_recurring?: boolean | null
           linked_date?: string | null
           position?: number | null
+          project_id?: string | null
           recurrence_type?: string | null
           related_task_id?: string | null
+          title?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notes_area_resource_id_fkey"
+            columns: ["area_resource_id"]
+            isOneToOne: false
+            referencedRelation: "area_resource_note_counts"
+            referencedColumns: ["area_resource_id"]
+          },
+          {
+            foreignKeyName: "notes_area_resource_id_fkey"
+            columns: ["area_resource_id"]
+            isOneToOne: false
+            referencedRelation: "areas_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_todo_stats"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notes_related_task_id_fkey"
             columns: ["related_task_id"]
@@ -410,6 +589,92 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          area_resource_id: string | null
+          color: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          goal_id: string | null
+          icon: string | null
+          id: string
+          is_completed: boolean
+          order_index: number
+          start_date: string | null
+          status: Database["public"]["Enums"]["progress_status_enum"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area_resource_id?: string | null
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          goal_id?: string | null
+          icon?: string | null
+          id?: string
+          is_completed?: boolean
+          order_index?: number
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["progress_status_enum"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area_resource_id?: string | null
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          goal_id?: string | null
+          icon?: string | null
+          id?: string
+          is_completed?: boolean
+          order_index?: number
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["progress_status_enum"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_area_resource_id_fkey"
+            columns: ["area_resource_id"]
+            isOneToOne: false
+            referencedRelation: "area_resource_note_counts"
+            referencedColumns: ["area_resource_id"]
+          },
+          {
+            foreignKeyName: "projects_area_resource_id_fkey"
+            columns: ["area_resource_id"]
+            isOneToOne: false
+            referencedRelation: "areas_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goal_project_stats"
+            referencedColumns: ["goal_id"]
+          },
+          {
+            foreignKeyName: "projects_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
             referencedColumns: ["id"]
           },
         ]
@@ -712,6 +977,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "todos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_todo_stats"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "todos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "todos_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -817,7 +1096,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      area_resource_note_counts: {
+        Row: {
+          area_resource_id: string | null
+          note_count: number | null
+          status:
+            | Database["public"]["Enums"]["area_resource_status_enum"]
+            | null
+          title: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      goal_project_stats: {
+        Row: {
+          completed_projects: number | null
+          completion_rate: number | null
+          goal_id: string | null
+          in_progress_projects: number | null
+          not_started_projects: number | null
+          paused_projects: number | null
+          total_projects: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      project_todo_stats: {
+        Row: {
+          completed_todos: number | null
+          completion_rate: number | null
+          project_id: string | null
+          remaining_todos: number | null
+          total_todos: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_default_tags_for_user: {
@@ -835,6 +1149,36 @@ export type Database = {
       }
     }
     Enums: {
+      area_resource_status_enum: "area" | "resource" | "archived"
+      clarification_enum:
+        | "none"
+        | "reminder"
+        | "someday"
+        | "waiting"
+        | "next_action"
+        | "scheduled"
+      next_action_context_enum:
+        | "creativity"
+        | "simple_work"
+        | "low_battery"
+        | "smartphone"
+        | "computer"
+        | "home"
+        | "outside"
+        | "anywhere"
+        | "office"
+        | "read_later"
+      note_classification_enum:
+        | "none"
+        | "work_in_progress"
+        | "read_later"
+        | "reference"
+      progress_status_enum:
+        | "not_started"
+        | "in_progress"
+        | "paused"
+        | "completed"
+      quarter_enum: "Q1" | "Q2" | "Q3" | "Q4"
       recurrence_pattern_enum:
         | "none"
         | "daily"
@@ -969,6 +1313,40 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      area_resource_status_enum: ["area", "resource", "archived"],
+      clarification_enum: [
+        "none",
+        "reminder",
+        "someday",
+        "waiting",
+        "next_action",
+        "scheduled",
+      ],
+      next_action_context_enum: [
+        "creativity",
+        "simple_work",
+        "low_battery",
+        "smartphone",
+        "computer",
+        "home",
+        "outside",
+        "anywhere",
+        "office",
+        "read_later",
+      ],
+      note_classification_enum: [
+        "none",
+        "work_in_progress",
+        "read_later",
+        "reference",
+      ],
+      progress_status_enum: [
+        "not_started",
+        "in_progress",
+        "paused",
+        "completed",
+      ],
+      quarter_enum: ["Q1", "Q2", "Q3", "Q4"],
       recurrence_pattern_enum: ["none", "daily", "weekly", "monthly", "custom"],
       schedule_type_enum: ["all_day", "timed", "anytime", "scheduled"],
     },

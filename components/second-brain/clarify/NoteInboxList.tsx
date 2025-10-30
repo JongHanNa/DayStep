@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Pin } from 'lucide-react';
-import type { InboxItem, Area, Resource, Project } from '@/types/second-brain';
+import type { InboxItem, AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
 import type { Todo } from '@/types';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';

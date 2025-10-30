@@ -31,7 +31,7 @@ export default function GoalInboxList({ goals, onGoalClick }: GoalInboxListProps
 
         // 미배정 상태 확인
         const hasNoAreaOrResource = !goal.area_id && !goal.resource_id;
-        const hasNoTargetDate = !goal.target_date;
+        const hasNoEndDate = !goal.end_date;
 
         return (
           <button
@@ -64,15 +64,14 @@ export default function GoalInboxList({ goals, onGoalClick }: GoalInboxListProps
                   {hasNoAreaOrResource && (
                     <span className="badge badge-sm badge-warning">영역/자원 미배정</span>
                   )}
-                  {hasNoTargetDate && (
+                  {hasNoEndDate && (
                     <span className="badge badge-sm badge-warning">종료일 미배정</span>
                   )}
-                  {goal.timeframe && (
-                    <span className="badge badge-sm">
-                      {goal.timeframe === 'quarter' && '분기'}
-                      {goal.timeframe === 'year' && '연간'}
-                      {goal.timeframe === '5_years' && '장기 (5년)'}
-                    </span>
+                  {goal.quarter_goal && (
+                    <span className="badge badge-sm">분기</span>
+                  )}
+                  {goal.year_goal && !goal.quarter_goal && (
+                    <span className="badge badge-sm">연간</span>
                   )}
                 </div>
               </div>

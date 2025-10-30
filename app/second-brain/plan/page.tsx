@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { DndContext } from '@dnd-kit/core';
 import { useDndKit } from '@/hooks/useDndKit';
@@ -93,6 +94,8 @@ const MOCK_TODOS = [
 ];
 
 export default function PlanPage() {
+  const { appUser } = useAuth();
+
   // 프로젝트 스토어에서 데이터 가져오기
   const projects = useProjectStore(state => state.projects);
   const updateProject = useProjectStore(state => state.updateProject);
@@ -195,8 +198,10 @@ export default function PlanPage() {
 
   // 프로젝트 저장 핸들러
   const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+    if (!appUser?.id) return;
+
     try {
-      await updateProject(editingProject!.id, {
+      await updateProject(appUser.id, editingProject!.id, {
         ...projectData,
         area_id,
         resource_id,
@@ -213,9 +218,10 @@ export default function PlanPage() {
   // 프로젝트 삭제 핸들러
   const handleDeleteProject = async (project: Project) => {
     if (!confirm(`"${project.title}" 프로젝트를 삭제하시겠습니까?`)) return;
+    if (!appUser?.id) return;
 
     try {
-      await deleteProject(project.id);
+      await deleteProject(appUser.id, project.id);
       setProjectDialogOpen(false);
       setEditingProject(null);
       alert('프로젝트가 삭제되었습니다.');
@@ -239,11 +245,13 @@ export default function PlanPage() {
   };
 
   const handleUpdateProject = async (id: string, title: string) => {
-    await updateProject(id, { title });
+    if (!appUser?.id) return;
+    await updateProject(appUser.id, id, { title });
   };
 
   const handleDeleteProjectFromTodo = async (id: string) => {
-    await deleteProject(id);
+    if (!appUser?.id) return;
+    await deleteProject(appUser.id, id);
   };
 
   // 노트 CRUD 핸들러 (목데이터)

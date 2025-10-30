@@ -7,7 +7,7 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { Plus, Lightbulb, Pencil } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import type { CreateAreaInput, Area, CreateResourceInput } from '@/types/second-brain';
+import type { CreateAreaInput, AreaResource as Area, CreateResourceInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -103,7 +103,7 @@ export default function AreasPage() {
   // 영역 편집 핸들러
   const handleEditArea = (area: Area) => {
     setEditingArea({ ...area, isNew: false });
-    setItemType(area.is_archived ? 'archive' : 'area');
+    setItemType(area.status === 'archived' ? 'archive' : 'area');
     setEditDialogOpen(true);
   };
 
@@ -130,6 +130,7 @@ export default function AreasPage() {
             color: editingArea.color,
             order_index: 0,
             is_pinned: false,
+            status: 'resource',
           };
           await createResource(appUser.id, resourceData);
         } else if (itemType === 'area') {
@@ -140,6 +141,7 @@ export default function AreasPage() {
             color: editingArea.color,
             order_index: areas.length,
             is_pinned: false,
+            status: 'area',
           };
           await createArea(appUser.id, areaData);
         } else if (itemType === 'archive') {
@@ -150,13 +152,14 @@ export default function AreasPage() {
             color: editingArea.color,
             order_index: areas.length,
             is_pinned: false,
+            status: 'area',
           };
           const newArea = await createArea(appUser.id, areaData);
           await archiveArea(appUser.id, newArea.id);
         }
       } else {
         // 기존 항목 수정
-        const originalType: SecondBrainItemType = editingArea.is_archived ? 'archive' : 'area';
+        const originalType: SecondBrainItemType = editingArea.status === 'archived' ? 'archive' : 'area';
 
         if (originalType === itemType) {
           // 같은 타입 내에서 수정
@@ -175,6 +178,7 @@ export default function AreasPage() {
               color: editingArea.color,
               order_index: 0,
               is_pinned: false,
+              status: 'resource',
             };
             await deleteArea(appUser.id, editingArea.id);
             await createResource(appUser.id, resourceData);
@@ -265,6 +269,7 @@ export default function AreasPage() {
           color: preset.color,
           order_index: areas.length + index,
           is_pinned: false,
+          status: 'area',
         };
         await createArea(appUser.id, areaData);
       }

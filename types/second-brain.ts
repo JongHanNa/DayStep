@@ -125,7 +125,7 @@ export interface Goal {
 
   // 날짜
   start_date?: string; // ISO date string (시작일)
-  target_date?: string; // ISO date string (종료일)
+  end_date?: string; // ISO date string (종료일)
 
   // 기간
   year_goal?: number; // 연간목표 (2025, 2026, 2027...)

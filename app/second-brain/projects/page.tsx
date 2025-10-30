@@ -39,7 +39,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     if (appUser?.id) {
       fetchProjects(appUser.id);
-      fetchInboxItems(appUser.id);
+      fetchInboxItems();
       fetchGoals(appUser.id);
       fetchAreas(appUser.id);
       fetchResources(appUser.id);

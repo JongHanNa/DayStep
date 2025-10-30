@@ -201,6 +201,19 @@ export function useModernDayViewHandlers({
                 try { return new Date(time).toISOString(); } catch { return null; }
               })(),
               parent_todo_id: originalTodo.parent_todo_id || originalTodo.parentTodoId || null,
+              // Second Brain 필드들 추가
+              project_id: originalTodo.project_id || null,
+              clarification: originalTodo.clarification || 'none',
+              next_action_contexts: originalTodo.next_action_contexts || null,
+              is_today_highlight: originalTodo.is_today_highlight || false,
+              assigned_to: originalTodo.assigned_to || null,
+              assigned_date: (() => {
+                const date = originalTodo.assigned_date;
+                if (!date) { return null; }
+                if (typeof date === 'string') { return date; }
+                if (date instanceof Date) { return date.toISOString(); }
+                try { return new Date(date).toISOString(); } catch { return null; }
+              })(),
               // 반복 인스턴스 정보 추가
               _instanceInfo: {
                 instanceId: timelineItem.id,
@@ -293,6 +306,13 @@ export function useModernDayViewHandlers({
               departure_location: todo.departureLocation,
               departure_time: todo.departureTime?.toISOString() || null,
               parent_todo_id: todo.parentTodoId,
+              // Second Brain 필드들 추가
+              project_id: todo.projectId || null,
+              clarification: todo.clarification || 'none',
+              next_action_contexts: todo.nextActionContexts || null,
+              is_today_highlight: todo.isTodayHighlight || false,
+              assigned_to: todo.assignedTo || null,
+              assigned_date: todo.assignedDate?.toISOString() || null,
             };
             
             setSelectedTodo(dbTodo);

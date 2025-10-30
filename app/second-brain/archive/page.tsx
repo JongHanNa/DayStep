@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
@@ -9,7 +10,7 @@ import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Archive, Target, Folder, MapPin, BookOpen, Trash2, Copy, RefreshCw, Pencil } from 'lucide-react';
 import { format, getYear } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import type { Goal, Project, Area, Resource, CreateAreaInput, CreateResourceInput } from '@/types/second-brain';
+import type { Goal, Project, AreaResource, CreateAreaInput, CreateResourceInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
@@ -20,10 +21,11 @@ type ArchiveType = 'all' | 'goals' | 'projects' | 'areas' | 'resources';
 
 interface GroupedItem {
   year: number;
-  items: (Goal | Project | Area | Resource)[];
+  items: (Goal | Project | AreaResource)[];
 }
 
 export default function ArchivePage() {
+  const { appUser } = useAuth();
   const { goals, fetchGoals } = useGoalStore();
   const { projects } = useProjectStore(); // Zustand persist가 자동으로 복원
   const {
@@ -45,26 +47,28 @@ export default function ArchivePage() {
   const [filterType, setFilterType] = useState<ArchiveType>('all');
 
   // 편집 모달 관련 state
-  const [editingItem, setEditingItem] = useState<((Area | Resource) & { originalType: 'area' | 'resource' }) | null>(null);
+  const [editingItem, setEditingItem] = useState<(AreaResource & { originalType: 'area' | 'resource' }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
   const [itemType, setItemType] = useState<SecondBrainItemType>('archive');
 
   useEffect(() => {
-    fetchGoals();
-    // projects는 Zustand persist가 자동으로 복원
-    fetchAreas();
-    fetchResources();
-  }, [fetchGoals, fetchAreas, fetchResources]);
+    if (appUser?.id) {
+      fetchGoals(appUser.id);
+      // projects는 Zustand persist가 자동으로 복원
+      fetchAreas(appUser.id);
+      fetchResources(appUser.id);
+    }
+  }, [appUser?.id, fetchGoals, fetchAreas, fetchResources]);
 
   // 아카이브된 항목만 필터링
   const archivedGoals = goals.filter((g) => g.status === 'archived' || g.status === 'completed');
-  const archivedProjects = projects.filter((p) => p.status === 'completed' || p.status === 'archived');
-  const archivedAreas = areas.filter((a) => a.is_archived);
-  const archivedResources = resources.filter((r) => r.is_archived);
+  const archivedProjects = projects.filter((p) => p.status === 'completed');
+  const archivedAreas = areas.filter((a) => a.status === 'archived');
+  const archivedResources = resources.filter((r) => r.status === 'archived');
 
   // 연도별로 그룹핑
-  const groupByYear = (items: (Goal | Project | Area | Resource)[]): GroupedItem[] => {
+  const groupByYear = (items: (Goal | Project | AreaResource)[]): GroupedItem[] => {
     const grouped = items.reduce((acc, item) => {
       const year = getYear(new Date(item.updated_at));
       if (!acc[year]) {
@@ -72,7 +76,7 @@ export default function ArchivePage() {
       }
       acc[year].push(item);
       return acc;
-    }, {} as Record<number, (Goal | Project | Area | Resource)[]>);
+    }, {} as Record<number, (Goal | Project | AreaResource)[]>);
 
     return Object.entries(grouped)
       .map(([year, items]) => ({ year: parseInt(year), items }))
@@ -80,7 +84,7 @@ export default function ArchivePage() {
   };
 
   // 현재 필터에 따라 항목 선택
-  const getFilteredItems = (): (Goal | Project | Area | Resource)[] => {
+  const getFilteredItems = (): (Goal | Project | AreaResource)[] => {
     switch (filterType) {
       case 'goals':
         return archivedGoals;
@@ -98,21 +102,23 @@ export default function ArchivePage() {
   const groupedItems = groupByYear(getFilteredItems());
 
   // 항목 타입 판별
-  const getItemType = (item: Goal | Project | Area | Resource): string => {
+  const getItemType = (item: Goal | Project | AreaResource): string => {
     if ('timeframe' in item) {
       return 'goal';
     }
     if ('status' in item && 'total_todos' in item) {
       return 'project';
     }
-    if ('standard' in item) {
-      return 'area';
+    // AreaResource의 경우 status로 판별
+    if ('status' in item && (item.status === 'area' || item.status === 'resource' || item.status === 'archived')) {
+      // archived면 원래 타입을 알 수 없으므로 'resource'로 가정 (또는 추가 로직 필요)
+      return item.status === 'area' ? 'area' : 'resource';
     }
     return 'resource';
   };
 
   // 편집 모달 핸들러
-  const handleEditClick = (item: Goal | Project | Area | Resource) => {
+  const handleEditClick = (item: Goal | Project | AreaResource) => {
     const itemType = getItemType(item);
 
     // Goal과 Project는 편집 불가
@@ -121,7 +127,7 @@ export default function ArchivePage() {
       return;
     }
 
-    const editableItem = item as Area | Resource;
+    const editableItem = item as AreaResource;
     setEditingItem({
       ...editableItem,
       originalType: itemType as 'area' | 'resource'
@@ -153,22 +159,25 @@ export default function ArchivePage() {
       return;
     }
 
+    if (!appUser?.id) {
+      alert('사용자 정보를 찾을 수 없습니다.');
+      return;
+    }
+
     try {
       const originalType = editingItem.originalType;
 
       if (itemType === 'archive') {
         // 아카이브 상태 유지 - 메타데이터만 수정
         if (originalType === 'area') {
-          await updateArea(editingItem.id, {
+          await updateArea(appUser.id, editingItem.id, {
             title: editingItem.title,
-            description: editingItem.description || '',
             icon: editingItem.icon,
             color: editingItem.color,
           });
         } else {
-          await updateResource(editingItem.id, {
+          await updateResource(appUser.id, editingItem.id, {
             title: editingItem.title,
-            description: editingItem.description || '',
             icon: editingItem.icon,
             color: editingItem.color,
           });
@@ -176,36 +185,36 @@ export default function ArchivePage() {
       } else if (itemType === 'area') {
         // Archive → Area
         if (originalType === 'area') {
-          await unarchiveArea(editingItem.id);
+          await unarchiveArea(appUser.id, editingItem.id);
         } else {
           // Resource → Area (변환)
           const areaData: CreateAreaInput = {
             title: editingItem.title,
-            description: editingItem.description || '',
             icon: editingItem.icon,
             color: editingItem.color,
             order_index: 0,
-            is_archived: false,
+            is_pinned: false,
+            status: 'area',
           };
-          await deleteResource(editingItem.id);
-          await createArea(areaData);
+          await deleteResource(appUser.id, editingItem.id);
+          await createArea(appUser.id, areaData);
         }
       } else if (itemType === 'resource') {
         // Archive → Resource
         if (originalType === 'resource') {
-          await unarchiveResource(editingItem.id);
+          await unarchiveResource(appUser.id, editingItem.id);
         } else {
           // Area → Resource (변환)
           const resourceData: CreateResourceInput = {
             title: editingItem.title,
-            description: editingItem.description || '',
             icon: editingItem.icon,
             color: editingItem.color,
             order_index: 0,
-            is_archived: false,
+            is_pinned: false,
+            status: 'resource',
           };
-          await deleteArea(editingItem.id);
-          await createResource(resourceData);
+          await deleteArea(appUser.id, editingItem.id);
+          await createResource(appUser.id, resourceData);
         }
       }
 
@@ -213,8 +222,10 @@ export default function ArchivePage() {
       setEditingItem(null);
 
       // 데이터 새로고침
-      await fetchAreas();
-      await fetchResources();
+      if (appUser?.id) {
+        await fetchAreas(appUser.id);
+        await fetchResources(appUser.id);
+      }
     } catch (error) {
       console.error('저장 실패:', error);
       alert('저장에 실패했습니다.');
@@ -227,7 +238,7 @@ export default function ArchivePage() {
   };
 
   // 항목 렌더링
-  const renderItem = (item: Goal | Project | Area | Resource) => {
+  const renderItem = (item: Goal | Project | AreaResource) => {
     const itemType = getItemType(item);
 
     return (
@@ -424,18 +435,6 @@ export default function ArchivePage() {
               />
             </div>
 
-            {/* 설명 */}
-            <div className="form-control mb-6">
-              <label className="label">
-                <span className="label-text">설명</span>
-              </label>
-              <textarea
-                value={editingItem.description || ''}
-                onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                className="textarea textarea-bordered h-20"
-                placeholder="설명을 입력하세요"
-              />
-            </div>
 
             {/* 버튼 */}
             <div className="modal-action">

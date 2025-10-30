@@ -1,6 +1,6 @@
 'use client';
 
-import type { Area, Resource, Project } from '@/types/second-brain';
+import type { AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
 /**

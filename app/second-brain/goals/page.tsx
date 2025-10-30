@@ -24,7 +24,7 @@ export default function GoalsPage() {
   const { projects, createProject, updateProject, deleteProject } = useProjectStore();
 
   // 편집 관련 state
-  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string; timeframe?: 'quarter' | 'year' | '5_years' }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
@@ -164,7 +164,7 @@ export default function GoalsPage() {
           area_id,
           resource_id,
           start_date: editingGoal.start_date || undefined,
-          target_date: editingGoal.target_date || undefined,
+          end_date: editingGoal.end_date || undefined,
           year_goal: editingGoal.year_goal || undefined,
           quarter_goal: editingGoal.quarter_goal || undefined,
         };
@@ -179,7 +179,7 @@ export default function GoalsPage() {
           area_id,
           resource_id,
           start_date: editingGoal.start_date || undefined,
-          target_date: editingGoal.target_date || undefined,
+          end_date: editingGoal.end_date || undefined,
           year_goal: editingGoal.year_goal || undefined,
           quarter_goal: editingGoal.quarter_goal || undefined,
         });
@@ -240,12 +240,12 @@ export default function GoalsPage() {
       return;
     }
 
-    if (isCreating) return; // 중복 클릭 방지
+    if (isCreating || !appUser?.id) return; // 중복 클릭 방지 + appUser 체크
 
     setIsCreating(true);
     try {
       // 프로젝트 즉시 생성
-      const createdProject = await createProject({
+      const createdProject = await createProject(appUser.id, {
         title: '새 프로젝트',
         icon: 'lucide-FolderOpen',
         color: '#A8DADC',
@@ -304,9 +304,11 @@ export default function GoalsPage() {
 
   // 프로젝트 저장 핸들러
   const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+    if (!appUser?.id) return;
+
     try {
       if ((projectData as any).isNew) {
-        await createProject({
+        await createProject(appUser.id, {
           title: projectData.title!,
           description: projectData.description || '',
           icon: projectData.icon!,
@@ -320,7 +322,8 @@ export default function GoalsPage() {
           order_index: projectData.order_index!,
         });
       } else {
-        await updateProject(projectData.id!, {
+        if (!appUser?.id) return;
+        await updateProject(appUser.id, projectData.id!, {
           title: projectData.title!,
           description: projectData.description || '',
           icon: projectData.icon!,
@@ -356,10 +359,10 @@ export default function GoalsPage() {
 
   // 프로젝트 삭제 실행
   const handleConfirmProjectDelete = async () => {
-    if (!projectToDelete) return;
+    if (!projectToDelete || !appUser?.id) return;
 
     try {
-      await deleteProject(projectToDelete.id);
+      await deleteProject(appUser.id, projectToDelete.id);
       setProjectDeleteConfirmOpen(false);
       setProjectToDelete(null);
     } catch (error) {
@@ -643,8 +646,8 @@ export default function GoalsPage() {
                             </label>
                             <input
                               type="date"
-                              value={editingGoal.target_date || ''}
-                              onChange={(e) => setEditingGoal({ ...editingGoal, target_date: e.target.value })}
+                              value={editingGoal.end_date || ''}
+                              onChange={(e) => setEditingGoal({ ...editingGoal, end_date: e.target.value })}
                               className="input input-bordered w-full"
                             />
                           </div>
@@ -770,8 +773,8 @@ export default function GoalsPage() {
                                       <div className="font-medium truncate">{project.title}</div>
                                       <div className="text-sm text-base-content/60">
                                         {project.status === 'not_started' && '시작 안함'}
-                                        {project.status === 'active' && '진행중'}
-                                        {project.status === 'on_hold' && '중단'}
+                                        {project.status === 'in_progress' && '진행중'}
+                                        {project.status === 'paused' && '중단'}
                                         {project.status === 'completed' && '완료'}
                                       </div>
                                     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
@@ -21,6 +22,7 @@ import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import type { InboxItem, Project, UpdateProjectInput, Goal, UpdateGoalInput } from '@/types/second-brain';
 
 export default function ClarifyPage() {
+  const { appUser } = useAuth();
   const { inboxItems, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
   const { projects, updateProject, deleteProject } = useProjectStore();
   const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
@@ -48,11 +50,13 @@ export default function ClarifyPage() {
   }, []);
 
   const loadInboxData = async () => {
+    if (!appUser?.id) return;
+
     await fetchInboxItems();
-    await fetchAreas();
-    await fetchResources();
+    await fetchAreas(appUser.id);
+    await fetchResources(appUser.id);
     await fetchNotes();
-    await fetchGoals();
+    await fetchGoals(appUser.id);
     const inboxTodos = await fetchInboxItemsByType('todo');
     const inboxNotes = await fetchInboxItemsByType('note');
 
@@ -71,12 +75,12 @@ export default function ClarifyPage() {
     });
     setProjectInbox(inboxProjects);
 
-    // 목표 수집함: area_id/resource_id AND target_date 둘 다 있어야 제거
+    // 목표 수집함: area_id/resource_id AND end_date 둘 다 있어야 제거
     // 즉, 둘 중 하나라도 없으면 수집함에 유지
     const inboxGoals = goals.filter((goal) => {
       const hasAreaOrResource = !!(goal.area_id || goal.resource_id);
-      const hasTargetDate = !!goal.target_date;
-      return !(hasAreaOrResource && hasTargetDate); // 둘 다 있으면 제거
+      const hasEndDate = !!goal.end_date;
+      return !(hasAreaOrResource && hasEndDate); // 둘 다 있으면 제거
     });
     setGoalInbox(inboxGoals);
   };
@@ -128,7 +132,8 @@ export default function ClarifyPage() {
         end_date: projectData.end_date || undefined,
       };
 
-      await updateProject(editingProject!.id, updateData);
+      if (!appUser?.id) return;
+      await updateProject(appUser.id, editingProject!.id, updateData);
 
       setEditDialogOpen(false);
       setEditingProject(null);
@@ -159,9 +164,10 @@ export default function ClarifyPage() {
   // 프로젝트 삭제 핸들러
   const handleDeleteProject = async (project: Project) => {
     if (!confirm(`"${project.title}" 프로젝트를 삭제하시겠습니까?`)) return;
+    if (!appUser?.id) return;
 
     try {
-      await deleteProject(project.id);
+      await deleteProject(appUser.id, project.id);
       setEditDialogOpen(false);
       setEditingProject(null);
       await loadInboxData();
@@ -188,9 +194,11 @@ export default function ClarifyPage() {
 
   // 목표 저장 핸들러
   const handleSaveGoal = async (goalData: Partial<Goal>, area_id?: string, resource_id?: string) => {
+    if (!appUser?.id) return;
+
     try {
       // 목표 업데이트
-      await updateGoal(editingGoal!.id, {
+      await updateGoal(appUser.id, editingGoal!.id, {
         title: goalData.title!,
         description: goalData.description || '',
         icon: goalData.icon,
@@ -199,7 +207,7 @@ export default function ClarifyPage() {
         area_id,
         resource_id,
         start_date: goalData.start_date || undefined,
-        target_date: goalData.target_date || undefined,
+        end_date: goalData.end_date || undefined,
         year_goal: goalData.year_goal || undefined,
         quarter_goal: goalData.quarter_goal || undefined,
       } as UpdateGoalInput);
@@ -211,14 +219,14 @@ export default function ClarifyPage() {
 
       // GTD 로직: 영역/자원 AND 종료일 둘 다 있어야 수집함에서 제거
       const hasAreaOrResource = !!(area_id || resource_id);
-      const hasTargetDate = !!goalData.target_date;
+      const hasEndDate = !!goalData.end_date;
 
-      if (hasAreaOrResource && hasTargetDate) {
+      if (hasAreaOrResource && hasEndDate) {
         alert('목표가 수정되었습니다. 영역/자원과 종료일이 모두 배정되어 수집함에서 제거되었습니다.');
       } else {
         const missing: string[] = [];
         if (!hasAreaOrResource) missing.push('영역/자원');
-        if (!hasTargetDate) missing.push('종료일');
+        if (!hasEndDate) missing.push('종료일');
         alert(`목표가 수정되었습니다.\n수집함에서 제거하려면 ${missing.join('과 ')}을(를) 배정해야 합니다.`);
       }
     } catch (error) {
@@ -236,9 +244,10 @@ export default function ClarifyPage() {
   // 목표 삭제 핸들러
   const handleDeleteGoal = async (goal: Goal) => {
     if (!confirm(`"${goal.title}" 목표를 삭제하시겠습니까?`)) return;
+    if (!appUser?.id) return;
 
     try {
-      await deleteGoal(goal.id);
+      await deleteGoal(appUser.id, goal.id);
       setGoalDialogOpen(false);
       setEditingGoal(null);
       await loadInboxData();

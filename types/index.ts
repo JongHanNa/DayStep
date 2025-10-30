@@ -396,6 +396,8 @@ export interface AreaResource {
   user_id: string;
   title: string;
   status: AreaResourceStatus;
+  icon: string | null;
+  color: string;
   is_pinned: boolean;
   order_index: number;
   created_at: string;
@@ -406,6 +408,8 @@ export interface AreaResourceInsert {
   user_id: string;
   title: string;
   status?: AreaResourceStatus;
+  icon?: string | null;
+  color?: string;
   is_pinned?: boolean;
   order_index?: number;
 }
@@ -414,13 +418,21 @@ export interface AreaResourceUpdate extends Partial<AreaResourceInsert> {
   id: string;
 }
 
+// Type aliases for Area and Resource (same as AreaResource, but semantically different)
+export type Area = AreaResource;
+export type Resource = AreaResource;
+
 // Goal types
 export interface Goal {
   id: string;
   user_id: string;
   title: string;
   status: ProgressStatus;
+  icon: string | null;
+  color: string | null;
+  area_id: string | null;
   area_resource_id: string | null;
+  resource_id: string | null;
   start_date: string | null;
   end_date: string | null;
   year_goal: number | null;
@@ -438,7 +450,11 @@ export interface GoalInsert {
   user_id: string;
   title: string;
   status?: ProgressStatus;
+  icon?: string | null;
+  color?: string | null;
+  area_id?: string | null;
   area_resource_id?: string | null;
+  resource_id?: string | null;
   start_date?: string | null;
   end_date?: string | null;
   year_goal?: number | null;
@@ -455,12 +471,16 @@ export interface Project {
   id: string;
   user_id: string;
   title: string;
+  description: string | null;
   goal_id: string | null;
   area_resource_id: string | null;
+  icon: string | null;
+  color: string | null;
   status: ProgressStatus;
   is_completed: boolean;
   start_date: string | null;
   end_date: string | null;
+  completed_at: string | null;
   order_index: number;
   created_at: string;
   updated_at: string;
@@ -475,12 +495,16 @@ export interface Project {
 export interface ProjectInsert {
   user_id: string;
   title: string;
+  description?: string | null;
   goal_id?: string | null;
   area_resource_id?: string | null;
+  icon?: string | null;
+  color?: string | null;
   status?: ProgressStatus;
   is_completed?: boolean;
   start_date?: string | null;
   end_date?: string | null;
+  completed_at?: string | null;
   order_index?: number;
 }
 

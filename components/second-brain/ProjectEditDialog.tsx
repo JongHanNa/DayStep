@@ -7,7 +7,7 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
-import type { Project, Goal, Area, Resource } from '@/types/second-brain';
+import type { Project, Goal, AreaResource as Area, AreaResource as Resource } from '@/types/second-brain';
 import { useDndKit } from '@/hooks/useDndKit';
 import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths } from 'date-fns';
