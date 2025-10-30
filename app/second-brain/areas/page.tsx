@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { Plus, X, Pencil, Lightbulb } from 'lucide-react';
+import { Plus, Lightbulb, Pencil } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateAreaInput, Area, CreateResourceInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
@@ -212,11 +212,6 @@ export default function AreasPage() {
     }
   };
 
-  // 삭제 확인 다이얼로그 열기 (리스트에서 직접 삭제)
-  const handleDeleteClick = (area: Area) => {
-    setAreaToDelete(area);
-    setDeleteConfirmOpen(true);
-  };
 
   // 삭제 실행
   const handleConfirmDelete = async () => {
@@ -336,41 +331,41 @@ export default function AreasPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {areas.map((area) => {
                 const IconComponent = getUnifiedIcon(area.icon as UnifiedIconKey);
                 return (
                   <div
                     key={area.id}
-                    className="flex items-center justify-between p-4 bg-base-100 rounded-lg transition-colors"
+                    onClick={() => handleEditArea(area)}
+                    className="flex flex-col p-3 sm:p-4 md:p-3 lg:p-2.5 bg-base-100 rounded-lg aspect-square transition-all cursor-pointer hover:shadow-md group"
                   >
-                    <div className="flex items-center gap-3 flex-1">
+                    {/* 상단: 제목 (더 크고 두꺼운 폰트) */}
+                    <div className="font-bold text-left text-xl sm:text-lg md:text-base lg:text-sm mb-5 sm:mb-4 md:mb-3 lg:mb-2 line-clamp-2">
+                      {area.title}
+                    </div>
+
+                    {/* 하단: 아이콘(왼쪽) + 버튼(오른쪽) - 남은 공간 채우기 */}
+                    <div className="flex items-end justify-between flex-1">
+                      {/* 왼쪽: 아이콘 (크기 약간 축소) */}
                       <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                        className="w-16 h-16 sm:w-18 sm:h-18 md:w-16 md:h-16 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-105"
                         style={{
                           backgroundColor: area.color,
                         }}
                       >
-                        <IconComponent className="w-6 h-6 text-white" />
+                        <IconComponent className="w-8 h-8 sm:w-9 sm:h-9 md:w-8 md:h-8 lg:w-7 lg:h-7 text-white" />
                       </div>
-                      <div className="flex-1">
-                        <div className="font-semibold">{area.title}</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
+
+                      {/* 오른쪽: 액션 버튼 */}
                       <button
-                        onClick={() => handleEditArea(area)}
-                        className="btn btn-ghost btn-sm btn-circle"
-                        aria-label="수정"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditArea(area);
+                        }}
+                        className="btn btn-md sm:btn-md md:btn-md lg:btn-sm btn-circle bg-black text-white hover:bg-black/80 border-none"
                       >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(area)}
-                        className="btn btn-ghost btn-sm btn-circle text-error"
-                        aria-label="삭제"
-                      >
-                        <X className="w-4 h-4" />
+                        <Pencil className="w-4.5 h-4.5 sm:w-4.5 sm:h-4.5 md:w-5 md:h-5 lg:w-4 lg:h-4" />
                       </button>
                     </div>
                   </div>
