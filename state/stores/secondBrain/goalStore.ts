@@ -67,7 +67,7 @@ export const useGoalStore = createStore<GoalStoreState>(
 
         // 실제 데이터로 교체
         set({
-          goals: get().goals.map((goal) =>
+          goals: get().goals.map((goal: Goal) =>
             goal.id === tempId ? newGoal : goal
           ),
         });
@@ -75,7 +75,7 @@ export const useGoalStore = createStore<GoalStoreState>(
         return newGoal;
       } catch (error) {
         // Rollback optimistic update
-        set({ goals: get().goals.filter((goal) => !goal.id.startsWith('temp-')) });
+        set({ goals: get().goals.filter((goal: Goal) => !goal.id.startsWith('temp-')) });
         set({
           error: error instanceof Error ? error.message : '목표 생성에 실패했습니다.',
         });
@@ -87,7 +87,7 @@ export const useGoalStore = createStore<GoalStoreState>(
       try {
         // Optimistic update
         const previousGoals = get().goals;
-        const updatedGoals = get().goals.map((goal) =>
+        const updatedGoals = get().goals.map((goal: Goal) =>
           goal.id === id
             ? {
                 ...goal,
@@ -105,7 +105,7 @@ export const useGoalStore = createStore<GoalStoreState>(
 
         // 실제 데이터로 교체
         set({
-          goals: get().goals.map((goal) =>
+          goals: get().goals.map((goal: Goal) =>
             goal.id === id ? updatedGoal : goal
           ),
         });
@@ -125,7 +125,7 @@ export const useGoalStore = createStore<GoalStoreState>(
       try {
         // Optimistic update
         const previousGoals = get().goals;
-        set({ goals: get().goals.filter((goal) => goal.id !== id) });
+        set({ goals: get().goals.filter((goal: Goal) => goal.id !== id) });
 
         // 실제 API 호출
         const success = await deleteGoalWithJWT(id, userId);

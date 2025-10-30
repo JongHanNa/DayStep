@@ -781,6 +781,19 @@ export const BubbleTimelineView: React.FC = () => {
                               }
                             })(),
                             parent_todo_id: originalTodo.parent_todo_id || originalTodo.parentTodoId || null,
+                            // Second Brain 필드들 추가
+                            project_id: originalTodo.project_id || null,
+                            clarification: originalTodo.clarification || 'none',
+                            next_action_contexts: originalTodo.next_action_contexts || null,
+                            is_today_highlight: originalTodo.is_today_highlight || false,
+                            assigned_to: originalTodo.assigned_to || null,
+                            assigned_date: (() => {
+                              const date = originalTodo.assigned_date;
+                              if (!date) { return null; }
+                              if (typeof date === 'string') { return date; }
+                              if (date instanceof Date) { return date.toISOString(); }
+                              try { return new Date(date).toISOString(); } catch { return null; }
+                            })(),
                             _instanceInfo: {
                               instanceId: timelineItem.id,
                               instanceDate: (timelineItem.data as any).recurrence_occurrence_date,

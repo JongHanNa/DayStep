@@ -91,7 +91,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         // 실제 데이터로 교체
         set({
-          projects: get().projects.map((project) =>
+          projects: get().projects.map((project: Project) =>
             project.id === tempId ? projectWithProgress : project
           ),
         });
@@ -99,7 +99,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         return projectWithProgress;
       } catch (error) {
         // Rollback optimistic update
-        set({ projects: get().projects.filter((project) => !project.id.startsWith('temp-')) });
+        set({ projects: get().projects.filter((project: Project) => !project.id.startsWith('temp-')) });
         set({
           error: error instanceof Error ? error.message : '프로젝트 생성에 실패했습니다.',
         });
@@ -111,7 +111,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       try {
         // Optimistic update
         const previousProjects = get().projects;
-        const updatedProjects = get().projects.map((project) =>
+        const updatedProjects = get().projects.map((project: Project) =>
           project.id === id
             ? {
                 ...project,
@@ -130,14 +130,14 @@ export const useProjectStore = createStore<ProjectStoreState>(
         // 진행도 필드 추가
         const projectWithProgress = {
           ...updatedProject,
-          total_todos: previousProjects.find((p) => p.id === id)?.total_todos || 0,
-          completed_todos: previousProjects.find((p) => p.id === id)?.completed_todos || 0,
-          progress: previousProjects.find((p) => p.id === id)?.progress || 0,
+          total_todos: previousProjects.find((p: Project) => p.id === id)?.total_todos || 0,
+          completed_todos: previousProjects.find((p: Project) => p.id === id)?.completed_todos || 0,
+          progress: previousProjects.find((p: Project) => p.id === id)?.progress || 0,
         };
 
         // 실제 데이터로 교체
         set({
-          projects: get().projects.map((project) =>
+          projects: get().projects.map((project: Project) =>
             project.id === id ? projectWithProgress : project
           ),
         });
@@ -157,7 +157,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       try {
         // Optimistic update
         const previousProjects = get().projects;
-        set({ projects: get().projects.filter((project) => project.id !== id) });
+        set({ projects: get().projects.filter((project: Project) => project.id !== id) });
 
         // 실제 API 호출
         const success = await deleteProjectWithJWT(id, userId);

@@ -5,6 +5,9 @@
 import { createWithJWT, updateWithJWT, deleteWithJWT, queryRLSTableWithJWT } from './core';
 import type { Goal, CreateGoalInput, UpdateGoalInput } from '@/types/second-brain';
 
+type GoalInsert = Omit<Goal, 'id' | 'created_at' | 'updated_at' | 'progress' | 'projects' | 'area' | 'resource'>;
+type GoalUpdate = Partial<GoalInsert>;
+
 /**
  * JWT 방식으로 목표 조회
  */
@@ -35,14 +38,11 @@ export async function fetchGoalsWithJWT(userId: string): Promise<Goal[]> {
 /**
  * JWT 방식으로 목표 생성
  */
-export async function createGoalWithJWT(data: CreateGoalInput & { user_id: string }): Promise<Goal> {
+export async function createGoalWithJWT(data: GoalInsert): Promise<Goal> {
   console.log('✏️ JWT 방식으로 목표 생성:', data);
 
   try {
-    const result = await createWithJWT('goals', {
-      ...data,
-      order_index: data.order_index || 0,
-    });
+    const result = await createWithJWT('goals', data);
     console.log('✅ JWT 목표 생성 성공:', { id: result?.id });
     return result;
   } catch (error) {
@@ -57,7 +57,7 @@ export async function createGoalWithJWT(data: CreateGoalInput & { user_id: strin
 export async function updateGoalWithJWT(
   id: string,
   userId: string,
-  updates: UpdateGoalInput
+  updates: GoalUpdate
 ): Promise<Goal | null> {
   console.log('🔄 JWT 방식으로 목표 업데이트:', { id, userId, updates });
 

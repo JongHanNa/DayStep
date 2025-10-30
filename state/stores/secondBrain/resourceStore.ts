@@ -41,7 +41,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
         const allAreasResources = await fetchAreasResourcesWithJWT(userId);
 
         // 자원만 필터링 (status === 'resource')
-        const resources = allAreasResources.filter((item) => item.status === 'resource');
+        const resources = allAreasResources.filter((item: AreaResource) => item.status === 'resource');
 
         set({ resources, loading: false });
       } catch (error) {
@@ -77,7 +77,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
 
         // 실제 데이터로 교체
         set({
-          resources: get().resources.map((resource) =>
+          resources: get().resources.map((resource: AreaResource) =>
             resource.id === tempId ? newResource : resource
           ),
         });
@@ -85,7 +85,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
         return newResource;
       } catch (error) {
         // Rollback optimistic update
-        set({ resources: get().resources.filter((resource) => !resource.id.startsWith('temp-')) });
+        set({ resources: get().resources.filter((resource: AreaResource) => !resource.id.startsWith('temp-')) });
         set({
           error: error instanceof Error ? error.message : '자원 생성에 실패했습니다.',
         });
@@ -98,7 +98,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
 
         // Optimistic update
         const previousResources = get().resources;
-        const updatedResources = get().resources.map((resource) =>
+        const updatedResources = get().resources.map((resource: AreaResource) =>
           resource.id === id
             ? {
                 ...resource,
@@ -116,7 +116,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
 
         // 실제 데이터로 교체
         set({
-          resources: get().resources.map((resource) =>
+          resources: get().resources.map((resource: AreaResource) =>
             resource.id === id ? updatedResource : resource
           ),
         });
@@ -137,7 +137,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
 
         // Optimistic update
         const previousResources = get().resources;
-        set({ resources: get().resources.filter((resource) => resource.id !== id) });
+        set({ resources: get().resources.filter((resource: AreaResource) => resource.id !== id) });
 
         // 실제 API 호출
         const success = await deleteAreaResourceWithJWT(id, userId);
@@ -157,11 +157,11 @@ export const useResourceStore = createStore<ResourceStoreState>(
     },
 
     archiveResource: async (userId: string, id) => {
+      const previousResources = get().resources;
       try {
 
         // Optimistic update - UI에서 제거
-        const previousResources = get().resources;
-        set({ resources: get().resources.filter((resource) => resource.id !== id) });
+        set({ resources: get().resources.filter((resource: AreaResource) => resource.id !== id) });
 
         // 실제 API 호출 - status를 'archived'로 변경
         const archivedResource = await updateAreaResourceWithJWT(id, userId, {
@@ -208,11 +208,11 @@ export const useResourceStore = createStore<ResourceStoreState>(
     },
 
     reorderResources: async (userId: string, resourceIds) => {
+      const previousResources = get().resources;
       try {
 
         // Optimistic update
-        const previousResources = get().resources;
-        const updatedResources = get().resources.map((resource) => {
+        const updatedResources = get().resources.map((resource: AreaResource) => {
           const newIndex = resourceIds.indexOf(resource.id);
           return {
             ...resource,
@@ -221,7 +221,7 @@ export const useResourceStore = createStore<ResourceStoreState>(
         });
 
         // order_index로 정렬
-        updatedResources.sort((a, b) => a.order_index - b.order_index);
+        updatedResources.sort((a: AreaResource, b: AreaResource) => a.order_index - b.order_index);
         set({ resources: updatedResources });
 
         // 실제 API 호출 - 각 자원의 order_index 업데이트

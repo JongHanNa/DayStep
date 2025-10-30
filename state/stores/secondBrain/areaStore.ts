@@ -4,7 +4,7 @@
  */
 
 import { createStore } from '@/state/utils/storeUtils';
-import type { AreaResource } from '@/types/second-brain';
+import type { AreaResource, Area } from '@/types/second-brain';
 import {
   fetchAreasResourcesWithJWT,
   createAreaResourceWithJWT,
@@ -75,7 +75,7 @@ export const useAreaStore = createStore<AreaStoreState>(
 
         // 실제 데이터로 교체
         set({
-          areas: get().areas.map((area) =>
+          areas: get().areas.map((area: Area) =>
             area.id === tempId ? newArea : area
           ),
         });
@@ -83,7 +83,7 @@ export const useAreaStore = createStore<AreaStoreState>(
         return newArea;
       } catch (error) {
         // Rollback optimistic update
-        set({ areas: get().areas.filter((area) => !area.id.startsWith('temp-')) });
+        set({ areas: get().areas.filter((area: Area) => !area.id.startsWith('temp-')) });
         set({
           error: error instanceof Error ? error.message : '영역 생성에 실패했습니다.',
         });
@@ -95,7 +95,7 @@ export const useAreaStore = createStore<AreaStoreState>(
       try {
         // Optimistic update
         const previousAreas = get().areas;
-        const updatedAreas = get().areas.map((area) =>
+        const updatedAreas = get().areas.map((area: Area) =>
           area.id === id
             ? {
                 ...area,
@@ -113,7 +113,7 @@ export const useAreaStore = createStore<AreaStoreState>(
 
         // 실제 데이터로 교체
         set({
-          areas: get().areas.map((area) =>
+          areas: get().areas.map((area: Area) =>
             area.id === id ? updatedArea : area
           ),
         });
@@ -133,7 +133,7 @@ export const useAreaStore = createStore<AreaStoreState>(
       try {
         // Optimistic update
         const previousAreas = get().areas;
-        set({ areas: get().areas.filter((area) => area.id !== id) });
+        set({ areas: get().areas.filter((area: Area) => area.id !== id) });
 
         // 실제 API 호출
         const success = await deleteAreaResourceWithJWT(id, userId);
@@ -153,10 +153,10 @@ export const useAreaStore = createStore<AreaStoreState>(
     },
 
     archiveArea: async (userId: string, id) => {
+      const previousAreas = get().areas;
       try {
         // Optimistic update - UI에서 제거
-        const previousAreas = get().areas;
-        set({ areas: get().areas.filter((area) => area.id !== id) });
+        set({ areas: get().areas.filter((area: Area) => area.id !== id) });
 
         // 실제 API 호출 - status를 'archived'로 변경
         const archivedArea = await updateAreaResourceWithJWT(id, userId, {
