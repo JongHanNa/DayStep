@@ -1319,7 +1319,7 @@ function CalendarDayCell({
         min-h-[100px] p-2 border-2 rounded-lg transition-all duration-200
         ${isOver ? 'bg-primary/30 border-primary shadow-lg scale-105' : 'border-base-300'}
         ${!isCurrentMonth ? 'opacity-40' : ''}
-        ${isToday ? 'bg-primary/10 border-primary' : 'bg-base-100'}
+        bg-base-100 ${isToday ? 'border-primary' : 'border-base-300'}
         hover:border-primary/50 hover:shadow-md
         ${isMobile && todos.length > 0 ? 'cursor-pointer' : ''}
       `}
@@ -1551,7 +1551,7 @@ function WeekDayColumn({
           isOver
             ? 'bg-primary/20 border-primary'
             : isToday
-            ? 'bg-primary/5 border-primary/50'
+            ? 'bg-base-100 border-primary'
             : 'bg-base-100 border-base-300'
         }
         ${isMobile && todos.length > 0 ? 'cursor-pointer' : ''}
