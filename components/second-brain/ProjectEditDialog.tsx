@@ -501,11 +501,12 @@ export default function ProjectEditDialog({
             ? (updatedTodo.includeTime && updatedTodo.startTime
                 ? new Date(updatedTodo.scheduledDate.toDateString() + ' ' + updatedTodo.startTime).toISOString()
                 : updatedTodo.scheduledDate.toISOString())
-            : undefined,
-          include_time: updatedTodo.includeTime,
-          include_end_date: updatedTodo.includeEndDate,
-          end_date: updatedTodo.endDate?.toISOString(),
-          end_time: updatedTodo.endTime,
+            : null,
+          end_time: updatedTodo.includeEndDate && updatedTodo.endDate
+            ? (updatedTodo.includeTime && updatedTodo.endTime
+                ? new Date(updatedTodo.endDate.toDateString() + ' ' + updatedTodo.endTime).toISOString()
+                : updatedTodo.endDate.toISOString())
+            : null,
           is_today_highlight: updatedTodo.isHighlight,
           completed: updatedTodo.completed,
           project_ids: updatedTodo.projectIds,
@@ -600,11 +601,12 @@ export default function ProjectEditDialog({
             ? (updatedTodo.includeTime && updatedTodo.startTime
                 ? new Date(updatedTodo.scheduledDate.toDateString() + ' ' + updatedTodo.startTime).toISOString()
                 : updatedTodo.scheduledDate.toISOString())
-            : undefined,
-          include_time: updatedTodo.includeTime,
-          include_end_date: updatedTodo.includeEndDate,
-          end_date: updatedTodo.endDate?.toISOString(),
-          end_time: updatedTodo.endTime,
+            : null,
+          end_time: updatedTodo.includeEndDate && updatedTodo.endDate
+            ? (updatedTodo.includeTime && updatedTodo.endTime
+                ? new Date(updatedTodo.endDate.toDateString() + ' ' + updatedTodo.endTime).toISOString()
+                : updatedTodo.endDate.toISOString())
+            : null,
           is_today_highlight: updatedTodo.isHighlight,
           completed: updatedTodo.completed,
           project_ids: updatedTodo.projectIds,
