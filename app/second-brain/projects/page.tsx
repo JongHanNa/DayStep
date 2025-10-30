@@ -119,7 +119,8 @@ export default function ProjectsPage() {
       start_date: project.start_date,
       end_date: project.end_date,
       start_date_type: typeof project.start_date,
-      end_date_type: typeof project.end_date
+      end_date_type: typeof project.end_date,
+      area_resource_id: project.area_resource_id
     });
 
     // 날짜 형식 변환: ISO datetime을 YYYY-MM-DD로 변환
@@ -129,9 +130,23 @@ export default function ProjectsPage() {
       return dateString.split('T')[0];
     };
 
+    // area_resource_id → paraSelection 변환
+    let paraSelection = '';
+    if (project.area_resource_id) {
+      // area인지 resource인지 구분하기 위해 areas와 resources 배열 체크
+      const isArea = areas.some(a => a.id === project.area_resource_id);
+      const isResource = resources.some(r => r.id === project.area_resource_id);
+
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else if (isResource) {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
+    }
+
     const editData = {
       ...project,
-      paraSelection: '',
+      paraSelection,
       isNew: false,
       start_date: formatDateForInput(project.start_date),
       end_date: formatDateForInput(project.end_date)
@@ -156,6 +171,7 @@ export default function ProjectsPage() {
           color: projectData.color!,
           status: projectData.status!,
           goal_id: projectData.goal_id || undefined,
+          area_resource_id: projectData.area_resource_id || undefined,
           start_date: projectData.start_date || undefined,
           end_date: projectData.end_date || undefined,
           order_index: projectData.order_index!,
@@ -169,6 +185,7 @@ export default function ProjectsPage() {
           color: projectData.color!,
           status: projectData.status!,
           goal_id: projectData.goal_id || undefined,
+          area_resource_id: projectData.area_resource_id || undefined,
           start_date: projectData.start_date || undefined,
           end_date: projectData.end_date || undefined,
         };

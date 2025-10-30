@@ -343,7 +343,21 @@ export default function ProjectEditDialog({
       return;
     }
 
-    await onSave(editingProject);
+    // paraSelection → area_resource_id 변환
+    let area_resource_id: string | undefined = undefined;
+
+    if (editingProject.paraSelection && editingProject.paraSelection !== '') {
+      if (editingProject.paraSelection.startsWith('area-')) {
+        area_resource_id = editingProject.paraSelection.replace('area-', '');
+      } else if (editingProject.paraSelection.startsWith('resource-')) {
+        area_resource_id = editingProject.paraSelection.replace('resource-', '');
+      }
+    }
+
+    await onSave({
+      ...editingProject,
+      area_resource_id
+    });
   };
 
   // 노트 추가
