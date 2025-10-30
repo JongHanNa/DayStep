@@ -32,7 +32,6 @@ npm start                     # 프로덕션 서버
 
 `.env.example` → `.env.local`:
 
-
 ## MCP 서버
 
 `.mcp.json` 참조:
@@ -53,10 +52,6 @@ npm start                     # 프로덕션 서버
 - **모바일**: Capacitor 플러그인 + JWT 토큰
 - **백업**: Capacitor Preferences (key: `supabase_auth_session`)
 
-### 데이터베이스 접근 (필수)
-- ✅ `lib/supabaseWebViewHelper.ts`의 JWT 방식 사용
-- ❌ `supabase.from()` 직접 호출 금지 (웹/모바일 호환성)
-- 모든 CRUD: Optimistic updates 적용
 
 ### 상태 관리 (Zustand)
 - `todoStore`: Todo CRUD, optimistic updates
