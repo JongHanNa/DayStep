@@ -557,12 +557,12 @@ export default function ProjectEditDialog({
             ? (updatedTodo.includeTime && updatedTodo.startTime
                 ? new Date(updatedTodo.scheduledDate.toDateString() + ' ' + updatedTodo.startTime).toISOString()
                 : updatedTodo.scheduledDate.toISOString())
-            : null,
+            : undefined,
           end_time: updatedTodo.includeEndDate && updatedTodo.endDate
             ? (updatedTodo.includeTime && updatedTodo.endTime
                 ? new Date(updatedTodo.endDate.toDateString() + ' ' + updatedTodo.endTime).toISOString()
                 : updatedTodo.endDate.toISOString())
-            : null,
+            : undefined,
           is_today_highlight: updatedTodo.isHighlight,
           completed: updatedTodo.completed,
           project_ids: updatedTodo.projectIds,
@@ -657,12 +657,12 @@ export default function ProjectEditDialog({
             ? (updatedTodo.includeTime && updatedTodo.startTime
                 ? new Date(updatedTodo.scheduledDate.toDateString() + ' ' + updatedTodo.startTime).toISOString()
                 : updatedTodo.scheduledDate.toISOString())
-            : null,
+            : undefined,
           end_time: updatedTodo.includeEndDate && updatedTodo.endDate
             ? (updatedTodo.includeTime && updatedTodo.endTime
                 ? new Date(updatedTodo.endDate.toDateString() + ' ' + updatedTodo.endTime).toISOString()
                 : updatedTodo.endDate.toISOString())
-            : null,
+            : undefined,
           is_today_highlight: updatedTodo.isHighlight,
           completed: updatedTodo.completed,
           project_ids: updatedTodo.projectIds,
@@ -1231,6 +1231,11 @@ function TodoDraggableItem({
               <p>
                 <Calendar className="w-3 h-3 inline mr-1" />
                 {format(todo.scheduledDate, 'yyyy-MM-dd')}
+                {todo.includeTime && todo.startTime && ` ${todo.startTime}`}
+                {todo.includeEndDate && todo.endDate && (
+                  <> ~ {format(todo.endDate, 'yyyy-MM-dd')}
+                  {todo.endTime && ` ${todo.endTime}`}</>
+                )}
               </p>
             )}
           </div>
@@ -1480,6 +1485,19 @@ function MonthTodoCard({
         </p>
       )}
 
+      {/* 날짜/시간 정보 */}
+      {todo.scheduledDate && (
+        <div className="text-[10px] text-base-content/60 mb-1">
+          <Calendar className="w-2.5 h-2.5 inline mr-0.5" />
+          {format(todo.scheduledDate, 'M/d')}
+          {todo.includeTime && todo.startTime && ` ${todo.startTime}`}
+          {todo.includeEndDate && todo.endDate && (
+            <> ~ {format(todo.endDate, 'M/d')}
+            {todo.endTime && ` ${todo.endTime}`}</>
+          )}
+        </div>
+      )}
+
       {/* 완료 체크박스 (제일 하단, 왼쪽 정렬) */}
       <div className="flex items-center justify-start gap-1.5 mt-1">
         <input
@@ -1702,6 +1720,19 @@ function WeekTodoCard({
         <p className="text-xs text-base-content/60 mb-1 line-clamp-2">
           {todo.clarification}
         </p>
+      )}
+
+      {/* 날짜/시간 정보 */}
+      {todo.scheduledDate && (
+        <div className="text-xs text-base-content/60 mb-1">
+          <Calendar className="w-3 h-3 inline mr-1" />
+          {format(todo.scheduledDate, 'M/d')}
+          {todo.includeTime && todo.startTime && ` ${todo.startTime}`}
+          {todo.includeEndDate && todo.endDate && (
+            <> ~ {format(todo.endDate, 'M/d')}
+            {todo.endTime && ` ${todo.endTime}`}</>
+          )}
+        </div>
       )}
 
       {/* 프로젝트 배지 */}
