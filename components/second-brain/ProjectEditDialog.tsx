@@ -111,11 +111,35 @@ export default function ProjectEditDialog({
               displayOrder: todo.displayOrder || todo.orderIndex || 0,
               clarification: todo.clarification,
               nextActionStatuses: todo.nextActionStatuses,
-              includeTime: todo.includeTime,
-              startTime: todo.startTime,
-              includeEndDate: todo.includeEndDate,
-              endDate: todo.endDate ? new Date(todo.endDate) : undefined,
-              endTime: todo.endTime,
+              // ✅ Fix: DB start_time에서 includeTime 계산 (시간 정보 있으면 true)
+              includeTime: todo.startTime
+                ? (() => {
+                    const st = new Date(todo.startTime);
+                    return st.getHours() !== 0 || st.getMinutes() !== 0;
+                  })()
+                : false,
+              // ✅ Fix: startTime을 HH:mm 문자열로 변환
+              startTime: todo.startTime
+                ? (() => {
+                    const st = new Date(todo.startTime);
+                    const hours = st.getHours().toString().padStart(2, '0');
+                    const minutes = st.getMinutes().toString().padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                  })()
+                : undefined,
+              // ✅ Fix: DB end_time 존재하면 includeEndDate true
+              includeEndDate: !!todo.endTime,
+              // ✅ Fix: endDate는 endTime에서 가져오기
+              endDate: todo.endTime ? new Date(todo.endTime) : undefined,
+              // ✅ Fix: endTime을 HH:mm 문자열로 변환
+              endTime: todo.endTime
+                ? (() => {
+                    const et = new Date(todo.endTime);
+                    const hours = et.getHours().toString().padStart(2, '0');
+                    const minutes = et.getMinutes().toString().padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                  })()
+                : undefined,
               projectIds: todo.projectIds,
               noteIds: todo.noteIds,
             };
