@@ -64,14 +64,13 @@ export default function ClarifyPage() {
     setNoteInbox(inboxNotes);
 
     // 프로젝트 수집함: projects 테이블에서 조건부 필터링
-    // 종료일, 영역/자원, 할일 중 하나라도 없으면 수집함에 표시
+    // 종료일, 할일 중 하나라도 없으면 수집함에 표시
     const inboxProjects = projects.filter((project) => {
       const hasEndDate = !!project.end_date;
-      const hasAreaOrResource = !!(project.area_id || project.resource_id);
       const hasTodos = (project.total_todos || 0) > 0;
 
-      // 셋 중 하나라도 없으면 수집함에 유지
-      return !(hasEndDate && hasAreaOrResource && hasTodos);
+      // 둘 중 하나라도 없으면 수집함에 유지
+      return !(hasEndDate && hasTodos);
     });
     setProjectInbox(inboxProjects);
 
@@ -91,14 +90,7 @@ export default function ClarifyPage() {
 
   // 프로젝트 클릭 핸들러 - Project 그대로 전달
   const handleProjectClick = (project: Project) => {
-    let paraSelection = '';
-    if (project.area_id) {
-      paraSelection = `area-${project.area_id}`;
-    } else if (project.resource_id) {
-      paraSelection = `resource-${project.resource_id}`;
-    }
-
-    setEditingProject({ ...project, paraSelection, isNew: false });
+    setEditingProject({ ...project, paraSelection: '', isNew: false });
     setEditDialogOpen(true);
   };
 
@@ -109,14 +101,13 @@ export default function ClarifyPage() {
   };
 
   // 프로젝트 저장 핸들러
-  const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+  const handleSaveProject = async (projectData: Partial<Project>) => {
     try {
       // GTD 로직: 수집함 제거 조건 체크
-      // 영역/자원 AND 할일 1개 이상 AND 종료일 모두 있어야 제거
-      const hasAreaOrResource = !!(area_id || resource_id);
+      // 할일 1개 이상 AND 종료일 모두 있어야 제거
       const hasTodos = (projectData.total_todos || 0) > 0;
       const hasEndDate = !!projectData.end_date;
-      const shouldRemoveFromInbox = hasAreaOrResource && hasTodos && hasEndDate;
+      const shouldRemoveFromInbox = hasTodos && hasEndDate;
 
       // InboxItem 변환 없이 Project 업데이트만 수행
       const updateData: UpdateProjectInput = {
@@ -126,8 +117,6 @@ export default function ClarifyPage() {
         color: projectData.color!,
         status: projectData.status!,
         goal_id: projectData.goal_id || undefined,
-        area_id,
-        resource_id,
         start_date: projectData.start_date || undefined,
         end_date: projectData.end_date || undefined,
       };
@@ -143,7 +132,6 @@ export default function ClarifyPage() {
         alert('프로젝트가 수정되었습니다. 모든 조건이 충족되어 수집함에서 제거되었습니다.');
       } else {
         const missing: string[] = [];
-        if (!hasAreaOrResource) missing.push('영역/자원');
         if (!hasTodos) missing.push('할일');
         if (!hasEndDate) missing.push('종료일');
 

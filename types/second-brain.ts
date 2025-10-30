@@ -81,10 +81,6 @@ export interface Project {
   // PARA 연결
   goal_id?: string;
   goal?: Goal; // 관계 데이터
-  area_id?: string;
-  area?: Area; // 관계 데이터
-  resource_id?: string;
-  resource?: Resource; // 관계 데이터
   parent_project_id?: string;
   parent_project?: Project; // 관계 데이터
 

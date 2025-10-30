@@ -122,13 +122,6 @@ export default function ProjectsPage() {
       end_date_type: typeof project.end_date
     });
 
-    let paraSelection = '';
-    if (project.area_id) {
-      paraSelection = `area-${project.area_id}`;
-    } else if (project.resource_id) {
-      paraSelection = `resource-${project.resource_id}`;
-    }
-
     // 날짜 형식 변환: ISO datetime을 YYYY-MM-DD로 변환
     const formatDateForInput = (dateString?: string) => {
       if (!dateString) return '';
@@ -138,7 +131,7 @@ export default function ProjectsPage() {
 
     const editData = {
       ...project,
-      paraSelection,
+      paraSelection: '',
       isNew: false,
       start_date: formatDateForInput(project.start_date),
       end_date: formatDateForInput(project.end_date)
@@ -151,7 +144,7 @@ export default function ProjectsPage() {
   };
 
   // 프로젝트 저장 핸들러
-  const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+  const handleSaveProject = async (projectData: Partial<Project>) => {
     if (!appUser?.id) return;
 
     try {
@@ -163,8 +156,6 @@ export default function ProjectsPage() {
           color: projectData.color!,
           status: projectData.status!,
           goal_id: projectData.goal_id || undefined,
-          area_id,
-          resource_id,
           start_date: projectData.start_date || undefined,
           end_date: projectData.end_date || undefined,
           order_index: projectData.order_index!,
@@ -178,8 +169,6 @@ export default function ProjectsPage() {
           color: projectData.color!,
           status: projectData.status!,
           goal_id: projectData.goal_id || undefined,
-          area_id,
-          resource_id,
           start_date: projectData.start_date || undefined,
           end_date: projectData.end_date || undefined,
         };

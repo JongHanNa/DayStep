@@ -197,15 +197,11 @@ export default function PlanPage() {
   };
 
   // 프로젝트 저장 핸들러
-  const handleSaveProject = async (projectData: Partial<Project>, area_id?: string, resource_id?: string) => {
+  const handleSaveProject = async (projectData: Partial<Project>) => {
     if (!appUser?.id) return;
 
     try {
-      await updateProject(appUser.id, editingProject!.id, {
-        ...projectData,
-        area_id,
-        resource_id,
-      });
+      await updateProject(appUser.id, editingProject!.id, projectData);
       setProjectDialogOpen(false);
       setEditingProject(null);
       alert('프로젝트가 수정되었습니다.');
