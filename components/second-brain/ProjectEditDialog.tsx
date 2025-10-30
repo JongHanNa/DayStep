@@ -93,16 +93,39 @@ export default function ProjectEditDialog({
     fetchTodosByProjectId(editingProject.id)
       .then((projectTodos: any[]) => {
         const mappedTodos = projectTodos
-          .map((todo: any) => ({
-            id: todo.id,
-            title: todo.title,
-            completed: todo.completed || false,
-            scheduledDate: todo.start_time ? new Date(todo.start_time) : undefined,
-            displayOrder: todo.order_index || 0,
-            isHighlight: todo.is_today_highlight || false,
-            clarification: todo.clarification,
-          }))
+          .map((todo: any) => {
+            console.log('📋 매핑 중인 할일:', {
+              id: todo.id,
+              title: todo.title,
+              hasId: !!todo.id
+            });
+
+            return {
+              id: todo.id,
+              title: todo.title,
+              completed: todo.completed || false,
+              isHighlight: todo.isHighlight || todo.isTodayHighlight || false,
+              scheduledDate: todo.scheduledDate || todo.startTime
+                ? new Date(todo.scheduledDate || todo.startTime)
+                : undefined,
+              displayOrder: todo.displayOrder || todo.orderIndex || 0,
+              clarification: todo.clarification,
+              nextActionStatuses: todo.nextActionStatuses,
+              includeTime: todo.includeTime,
+              startTime: todo.startTime,
+              includeEndDate: todo.includeEndDate,
+              endDate: todo.endDate ? new Date(todo.endDate) : undefined,
+              endTime: todo.endTime,
+              projectIds: todo.projectIds,
+              noteIds: todo.noteIds,
+            };
+          })
           .sort((a: any, b: any) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+        console.log('✅ 프로젝트 할일 매핑 완료:', {
+          count: mappedTodos.length,
+          sample: mappedTodos[0]
+        });
 
         setTodos(mappedTodos);
       })
@@ -428,13 +451,70 @@ export default function ProjectEditDialog({
   };
 
   // 할일 편집 저장
-  const handleSaveTodoEdit = (updatedTodo: TodoFormData) => {
+  const handleSaveTodoEdit = async (updatedTodo: TodoFormData) => {
     if (!editingTodo || !updatedTodo.title.trim()) {
       alert('할일 제목을 입력해주세요.');
       return;
     }
 
-    setTodos(todos.map((todo) => (todo.id === editingTodo.id ? { ...editingTodo, ...updatedTodo } : todo)));
+    // 로컬 state 업데이트
+    const updatedTodoData = { ...editingTodo, ...updatedTodo };
+    setTodos(todos.map((todo) => (todo.id === editingTodo.id ? updatedTodoData : todo)));
+
+    // DB 업데이트 추가
+    if (userId) {
+      try {
+        // 🔧 Fix: TodoStore에 할일이 없을 수 있으므로, 먼저 전역 상태에 추가
+        // updateTodo는 내부에서 get().todos.find()로 할일을 찾기 때문에
+        // 프로젝트 편집 모달의 로컬 상태에만 있는 할일은 찾지 못함
+        // 따라서 updateTodo 호출 전에 TodoStore에 할일을 임시로 추가
+        useTodoStore.setState((state) => {
+          const existingIndex = state.todos.findIndex((t) => t.id === editingTodo.id);
+          if (existingIndex === -1) {
+            // 할일이 TodoStore에 없으면 추가
+            return {
+              ...state,
+              todos: [
+                ...state.todos,
+                {
+                  ...editingTodo,
+                  userId: userId,
+                  scheduleType: editingTodo.scheduledDate ? 'timed' : 'anytime',
+                  startTime: updatedTodo.scheduledDate?.toISOString(),
+                  recurrencePattern: 'none',
+                } as any,
+              ],
+            };
+          }
+          return state;
+        });
+
+        await updateTodo(editingTodo.id, {
+          title: updatedTodo.title,
+          clarification: updatedTodo.clarification,
+          next_action_statuses: updatedTodo.nextActionStatuses,
+          // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
+          // start_time을 scheduledDate + startTime 조합으로 설정
+          start_time: updatedTodo.scheduledDate
+            ? (updatedTodo.includeTime && updatedTodo.startTime
+                ? new Date(updatedTodo.scheduledDate.toDateString() + ' ' + updatedTodo.startTime).toISOString()
+                : updatedTodo.scheduledDate.toISOString())
+            : undefined,
+          include_time: updatedTodo.includeTime,
+          include_end_date: updatedTodo.includeEndDate,
+          end_date: updatedTodo.endDate?.toISOString(),
+          end_time: updatedTodo.endTime,
+          is_today_highlight: updatedTodo.isHighlight,
+          completed: updatedTodo.completed,
+          project_ids: updatedTodo.projectIds,
+          note_ids: updatedTodo.noteIds,
+        });
+      } catch (error) {
+        console.error('할일 저장 실패:', error);
+        alert('할일 저장에 실패했습니다.');
+      }
+    }
+
     setShowTodoEditModal(false);
     setEditingTodo(null);
   };
@@ -473,16 +553,66 @@ export default function ProjectEditDialog({
   };
 
   // TodoEditModal에서 저장
-  const handleSaveTodoFromList = (updatedTodo: TodoFormData) => {
+  const handleSaveTodoFromList = async (updatedTodo: TodoFormData) => {
     if (!todoFromList) return;
 
-    // 기존 할일 업데이트
+    // 로컬 state 업데이트
+    const updatedTodoData = { ...todoFromList, ...updatedTodo };
     const updatedTodos = todos.map((t) =>
-      t.id === todoFromList.id
-        ? { ...t, ...updatedTodo }
-        : t
+      t.id === todoFromList.id ? updatedTodoData : t
     );
     setTodos(updatedTodos);
+
+    // DB 업데이트 추가
+    if (userId) {
+      try {
+        // 🔧 Fix: TodoStore에 할일이 없을 수 있으므로, 먼저 전역 상태에 추가
+        useTodoStore.setState((state) => {
+          const existingIndex = state.todos.findIndex((t) => t.id === todoFromList.id);
+          if (existingIndex === -1) {
+            // 할일이 TodoStore에 없으면 추가
+            return {
+              ...state,
+              todos: [
+                ...state.todos,
+                {
+                  ...todoFromList,
+                  userId: userId,
+                  scheduleType: todoFromList.scheduledDate ? 'timed' : 'anytime',
+                  startTime: updatedTodo.scheduledDate?.toISOString(),
+                  recurrencePattern: 'none',
+                } as any,
+              ],
+            };
+          }
+          return state;
+        });
+
+        await updateTodo(todoFromList.id, {
+          title: updatedTodo.title,
+          clarification: updatedTodo.clarification,
+          next_action_statuses: updatedTodo.nextActionStatuses,
+          // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
+          // start_time을 scheduledDate + startTime 조합으로 설정
+          start_time: updatedTodo.scheduledDate
+            ? (updatedTodo.includeTime && updatedTodo.startTime
+                ? new Date(updatedTodo.scheduledDate.toDateString() + ' ' + updatedTodo.startTime).toISOString()
+                : updatedTodo.scheduledDate.toISOString())
+            : undefined,
+          include_time: updatedTodo.includeTime,
+          include_end_date: updatedTodo.includeEndDate,
+          end_date: updatedTodo.endDate?.toISOString(),
+          end_time: updatedTodo.endTime,
+          is_today_highlight: updatedTodo.isHighlight,
+          completed: updatedTodo.completed,
+          project_ids: updatedTodo.projectIds,
+          note_ids: updatedTodo.noteIds,
+        });
+      } catch (error) {
+        console.error('할일 저장 실패:', error);
+        alert('할일 저장에 실패했습니다.');
+      }
+    }
 
     handleCloseTodoEditFromList();
   };

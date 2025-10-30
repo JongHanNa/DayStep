@@ -256,8 +256,8 @@ export const useTodoStore = createStore<TodoStoreState>(
           const { fetchAllTodosWithJWT } = await import('@/lib/supabase/todos');
           const allTodos = await fetchAllTodosWithJWT(userId);
 
-          // project_id로 필터링 (DB는 snake_case 사용)
-          const projectTodos = allTodos.filter((t: any) => t.project_id === projectId);
+          // projectId로 필터링 (Todo.fromDatabase() 변환 후 camelCase 사용)
+          const projectTodos = allTodos.filter((t: any) => t.projectId === projectId);
 
           console.log("✅ fetchTodosByProjectId 완료:", {
             projectId,

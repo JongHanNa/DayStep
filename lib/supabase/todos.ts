@@ -167,8 +167,18 @@ export async function fetchAllTodosWithJWT(
       ...options
     });
 
-    console.log('✅ JWT 모든 할일 조회 성공:', { todosCount: todos.length });
-    return todos || [];
+    // Todo.fromDatabase()로 camelCase 변환
+    const { Todo } = await import('../../entities/todo/Todo');
+    const transformedTodos = (todos || []).map((rawTodo: any) =>
+      Todo.fromDatabase(rawTodo)
+    );
+
+    console.log('✅ JWT 모든 할일 조회 성공:', {
+      todosCount: transformedTodos.length,
+      sample: transformedTodos[0]?.id ? { id: transformedTodos[0].id, title: transformedTodos[0].title } : null
+    });
+
+    return transformedTodos;
   } catch (error) {
     console.error('❌ JWT 모든 할일 조회 실패:', error);
     return [];

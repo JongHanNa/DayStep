@@ -170,7 +170,7 @@ export default function TodoFormFields({
             {/* 시작 날짜 */}
             <div className="form-control mb-3">
               <label className="label">
-                <span className="label-text">시작 날짜</span>
+                <span className="label-text">날짜</span>
               </label>
               <input
                 type="date"
