@@ -1323,6 +1323,9 @@ function CalendarDropArea({
     }
   >();
 
+  // 스패닝 카드가 지나가는 모든 인덱스 추적
+  const spanningRanges = new Set<number>();
+
   // 단일 날짜 카드 (index → TodoItem[])
   const singleDayCards = new Map<number, TodoItem[]>();
 
@@ -1389,6 +1392,11 @@ function CalendarDropArea({
               spanDays: segmentSpan,
               segmentPosition,
             });
+
+            // 이 세그먼트가 차지하는 모든 날짜 인덱스 추가
+            for (let i = segmentStart; i < segmentStart + segmentSpan; i++) {
+              spanningRanges.add(i);
+            }
           });
         } else {
           singleDayCards.get(startCol)?.push(todo);
@@ -1442,6 +1450,7 @@ function CalendarDropArea({
           const dateString = format(day, dateFormat);
           const todosForDay = singleDayCards.get(index) || [];
           const spanningCard = spanningStarts.get(index);
+          const hasSpanningCard = spanningRanges.has(index);
 
           // 모든 날짜 셀 렌더링 (스패닝 카드는 각 주의 시작 셀에 표시)
           return (
@@ -1457,6 +1466,7 @@ function CalendarDropArea({
               spanningCard={spanningCard?.todo}
               spanDays={spanningCard?.spanDays}
               segmentPosition={spanningCard?.segmentPosition}
+              hasSpanningCard={hasSpanningCard}
             />
           );
         })}
@@ -1477,6 +1487,7 @@ function CalendarDayCell({
   spanningCard,
   spanDays,
   segmentPosition,
+  hasSpanningCard = false,
 }: {
   date: Date;
   isCurrentMonth: boolean;
@@ -1488,6 +1499,7 @@ function CalendarDayCell({
   spanningCard?: TodoItem;
   spanDays?: number;
   segmentPosition?: 'single' | 'first' | 'middle' | 'last';
+  hasSpanningCard?: boolean;
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
 
@@ -1529,7 +1541,7 @@ function CalendarDayCell({
               : segmentPosition === 'last'
               ? `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem - 0.5rem)`
               : `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem)`,
-            zIndex: 10
+            zIndex: 1
           }}
         >
           <MonthTodoCard
@@ -1556,7 +1568,7 @@ function CalendarDayCell({
         )
       ) : (
         // 웹 환경: 단일 날짜 카드만 렌더링 (스패닝 카드는 overlay에서)
-        <div className="space-y-1">
+        <div className="space-y-1" style={{ marginTop: (spanningCard || hasSpanningCard) ? '48px' : '0' }}>
           {todos.map((todo) => (
             <MonthTodoCard
               key={todo.id}
