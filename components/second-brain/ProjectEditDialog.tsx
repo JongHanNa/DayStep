@@ -1313,8 +1313,15 @@ function CalendarDropArea({
     day = addDays(day, 1);
   }
 
-  // 스패닝 카드 시작 위치를 기록 (index → TodoItem)
-  const spanningStarts = new Map<number, { todo: TodoItem; spanDays: number }>();
+  // 스패닝 카드 시작 위치를 기록 (index → TodoItem + 세그먼트 정보)
+  const spanningStarts = new Map<
+    number,
+    {
+      todo: TodoItem;
+      spanDays: number;
+      segmentPosition: 'single' | 'first' | 'middle' | 'last';
+    }
+  >();
 
   // 단일 날짜 카드 (index → TodoItem[])
   const singleDayCards = new Map<number, TodoItem[]>();
@@ -1345,6 +1352,7 @@ function CalendarDropArea({
         if (spanDays > 1) {
           // 여러 주에 걸친 스패닝 카드를 주 단위로 분할
           let currentCol = startCol;
+          const segments: number[] = []; // 모든 세그먼트 시작 위치 기록
 
           while (currentCol <= endCol) {
             const colInWeek = currentCol % 7; // 현재 요일 위치
@@ -1352,12 +1360,36 @@ function CalendarDropArea({
             const daysLeftInSpan = endCol - currentCol + 1; // 전체에서 남은 일수
             const segmentSpan = Math.min(daysLeftInWeek, daysLeftInSpan); // 이번 세그먼트 길이
 
-            // 각 주의 시작 위치에 스패닝 카드 등록
-            spanningStarts.set(currentCol, { todo, spanDays: segmentSpan });
+            segments.push(currentCol);
 
             // 다음 주 일요일로 이동
             currentCol += segmentSpan;
           }
+
+          // 각 세그먼트에 위치 정보와 함께 등록
+          segments.forEach((segmentStart, index) => {
+            const colInWeek = segmentStart % 7;
+            const daysLeftInWeek = 7 - colInWeek;
+            const daysLeftInSpan = endCol - segmentStart + 1;
+            const segmentSpan = Math.min(daysLeftInWeek, daysLeftInSpan);
+
+            let segmentPosition: 'single' | 'first' | 'middle' | 'last';
+            if (segments.length === 1) {
+              segmentPosition = 'single';
+            } else if (index === 0) {
+              segmentPosition = 'first';
+            } else if (index === segments.length - 1) {
+              segmentPosition = 'last';
+            } else {
+              segmentPosition = 'middle';
+            }
+
+            spanningStarts.set(segmentStart, {
+              todo,
+              spanDays: segmentSpan,
+              segmentPosition,
+            });
+          });
         } else {
           singleDayCards.get(startCol)?.push(todo);
         }
@@ -1424,6 +1456,7 @@ function CalendarDropArea({
               onOpenTodoListModal={onOpenTodoListModal}
               spanningCard={spanningCard?.todo}
               spanDays={spanningCard?.spanDays}
+              segmentPosition={spanningCard?.segmentPosition}
             />
           );
         })}
@@ -1443,6 +1476,7 @@ function CalendarDayCell({
   onOpenTodoListModal,
   spanningCard,
   spanDays,
+  segmentPosition,
 }: {
   date: Date;
   isCurrentMonth: boolean;
@@ -1453,6 +1487,7 @@ function CalendarDayCell({
   onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
   spanningCard?: TodoItem;
   spanDays?: number;
+  segmentPosition?: 'single' | 'first' | 'middle' | 'last';
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
 
@@ -1497,6 +1532,7 @@ function CalendarDayCell({
             onToggle={onToggleTodo}
             project={project}
             isSpanning={true}
+            segmentPosition={segmentPosition}
           />
         </div>
       )}
@@ -1537,11 +1573,13 @@ function MonthTodoCard({
   onToggle,
   project,
   isSpanning = false,
+  segmentPosition = 'single',
 }: {
   todo: TodoItem;
   onToggle: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
   isSpanning?: boolean;
+  segmentPosition?: 'single' | 'first' | 'middle' | 'last';
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `month-todo-${todo.id}`,
@@ -1559,6 +1597,24 @@ function MonthTodoCard({
     setDropNodeRef(node);
   };
 
+  // 세그먼트 위치에 따른 border-radius 결정
+  const getBorderRadius = () => {
+    if (!isSpanning) return 'rounded';
+
+    switch (segmentPosition) {
+      case 'single':
+        return 'rounded-lg';
+      case 'first':
+        return 'rounded-l-lg rounded-r-none';
+      case 'middle':
+        return 'rounded-none';
+      case 'last':
+        return 'rounded-l-none rounded-r-lg';
+      default:
+        return 'rounded-lg';
+    }
+  };
+
   return (
     <div
       ref={setRefs}
@@ -1569,7 +1625,7 @@ function MonthTodoCard({
         ${isDragging ? 'opacity-50' : ''}
         ${isOver ? 'ring-2 ring-primary' : ''}
         ${isSpanning
-          ? 'bg-primary text-primary-content hover:bg-primary/90 border-2 border-primary rounded-lg'
+          ? `bg-primary text-primary-content hover:bg-primary/90 border-2 border-primary ${getBorderRadius()}`
           : 'bg-base-200 hover:bg-base-300 rounded'}
       `}
     >
