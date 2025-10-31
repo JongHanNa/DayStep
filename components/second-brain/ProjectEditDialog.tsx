@@ -1521,9 +1521,14 @@ function CalendarDayCell({
       {/* 스패닝 카드 (absolute positioning으로 여러 셀에 걸쳐 표시) */}
       {spanningCard && spanDays && (
         <div
-          className="absolute left-0 top-[36px] mb-2 px-2"
+          className="absolute top-[36px] mb-2"
           style={{
-            width: `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.25}rem)`,
+            left: segmentPosition === 'first' || segmentPosition === 'single' ? '0.5rem' : '0',
+            width: segmentPosition === 'first' || segmentPosition === 'single'
+              ? `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem - 0.5rem)`
+              : segmentPosition === 'last'
+              ? `calc(${spanDays * 100}% - 0.5rem)`
+              : `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem)`,
             zIndex: 10
           }}
         >
@@ -1621,12 +1626,15 @@ function MonthTodoCard({
       {...attributes}
       {...listeners}
       className={`
-        p-1.5 transition-colors cursor-pointer text-xs
+        transition-colors cursor-pointer text-xs
         ${isDragging ? 'opacity-50' : ''}
         ${isOver ? 'ring-2 ring-primary' : ''}
         ${isSpanning
-          ? `bg-primary text-primary-content hover:bg-primary/90 border-2 border-primary ${getBorderRadius()}`
-          : 'bg-base-200 hover:bg-base-300 rounded'}
+          ? `bg-primary text-primary-content hover:bg-primary/90 border-2 border-primary ${getBorderRadius()}
+             ${segmentPosition === 'first' || segmentPosition === 'single' ? 'pl-1.5' : 'pl-0'}
+             ${segmentPosition === 'last' || segmentPosition === 'single' ? 'pr-1.5' : 'pr-0'}
+             py-1.5`
+          : 'bg-base-200 hover:bg-base-300 rounded p-1.5'}
       `}
     >
       {/* 제목 + 하이라이트 */}
