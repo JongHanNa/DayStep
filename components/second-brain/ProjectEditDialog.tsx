@@ -10,7 +10,7 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 import type { Project, Goal, AreaResource as Area, AreaResource as Resource } from '@/types/second-brain';
 import { useDndKit } from '@/hooks/useDndKit';
 import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, differenceInCalendarDays, startOfDay } from 'date-fns';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
@@ -1285,6 +1285,56 @@ function CalendarDropArea({
     day = addDays(day, 1);
   }
 
+  // 스패닝 카드 시작 위치를 기록 (index → TodoItem)
+  const spanningStarts = new Map<number, { todo: TodoItem; spanDays: number }>();
+
+  // 단일 날짜 카드 (index → TodoItem[])
+  const singleDayCards = new Map<number, TodoItem[]>();
+
+  // 0-41 초기화 (6주 * 7일)
+  for (let i = 0; i < 42; i++) {
+    singleDayCards.set(i, []);
+  }
+
+  todos.forEach((todo) => {
+    if (!todo.scheduledDate) return;
+
+    if (todo.includeEndDate && todo.endDate) {
+      const start = todo.scheduledDate;
+      const end = todo.endDate;
+
+      // 현재 달력 범위와 교집합 확인
+      if (start <= endDate && end >= startDate) {
+        // 날짜 정규화
+        const clippedStart = startOfDay(start < startDate ? startDate : start);
+        const clippedEnd = startOfDay(end > endDate ? endDate : end);
+
+        // 그리드 위치 계산 (0-41)
+        const startCol = differenceInCalendarDays(clippedStart, startDate);
+        const endCol = differenceInCalendarDays(clippedEnd, startDate);
+        const spanDays = endCol - startCol + 1;
+
+        if (spanDays > 1) {
+          // 시작 날짜 index에만 기록
+          spanningStarts.set(startCol, { todo, spanDays });
+        } else {
+          singleDayCards.get(startCol)?.push(todo);
+        }
+      }
+    } else {
+      // 단일 날짜 할일
+      if (todo.scheduledDate >= startDate && todo.scheduledDate <= endDate) {
+        const colIndex = differenceInCalendarDays(todo.scheduledDate, startDate);
+        singleDayCards.get(colIndex)?.push(todo);
+      }
+    }
+  });
+
+  // 각 날짜의 카드 정렬
+  singleDayCards.forEach((cards) => {
+    cards.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  });
+
   return (
     <div className="w-full">
       {/* 달력 헤더 */}
@@ -1315,16 +1365,20 @@ function CalendarDropArea({
 
       {/* 날짜 그리드 */}
       <div className="grid grid-cols-7 gap-1">
-        {days.map((day) => {
+        {days.map((day, index) => {
           const dateString = format(day, dateFormat);
-          const todosForDay = todos
-            .filter(
-              (todo) =>
-                todo.scheduledDate &&
-                format(todo.scheduledDate, dateFormat) === dateString
-            )
-            .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+          const todosForDay = singleDayCards.get(index) || [];
+          const spanningCard = spanningStarts.get(index);
 
+          // 스패닝 카드 시작 셀이면 spanDays 계산
+          let actualSpan: number | undefined;
+          if (spanningCard) {
+            const colInWeek = index % 7;
+            const maxSpan = 7 - colInWeek; // 주의 남은 일수
+            actualSpan = Math.min(spanningCard.spanDays, maxSpan);
+          }
+
+          // 모든 날짜 셀 렌더링 (스패닝 카드는 시작 셀에만 표시)
           return (
             <CalendarDayCell
               key={dateString}
@@ -1335,6 +1389,8 @@ function CalendarDropArea({
               onToggleTodo={onToggleTodo}
               project={project}
               onOpenTodoListModal={onOpenTodoListModal}
+              spanningCard={spanningCard?.todo}
+              spanDays={actualSpan}
             />
           );
         })}
@@ -1352,6 +1408,8 @@ function CalendarDayCell({
   onToggleTodo,
   project,
   onOpenTodoListModal,
+  spanningCard,
+  spanDays,
 }: {
   date: Date;
   isCurrentMonth: boolean;
@@ -1360,6 +1418,8 @@ function CalendarDayCell({
   onToggleTodo: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
   onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
+  spanningCard?: TodoItem;
+  spanDays?: number;
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
 
@@ -1379,7 +1439,7 @@ function CalendarDayCell({
         }
       }}
       className={`
-        min-h-[100px] p-2 border-2 rounded-lg transition-all duration-200
+        relative min-h-[100px] p-2 border-2 rounded-lg transition-all duration-200
         ${isOver ? 'bg-primary/30 border-primary shadow-lg scale-105' : 'border-base-300'}
         ${!isCurrentMonth ? 'opacity-40' : ''}
         bg-base-100 ${isToday ? 'border-primary' : 'border-base-300'}
@@ -1389,6 +1449,24 @@ function CalendarDayCell({
     >
       {/* 날짜 헤더 */}
       <div className="text-sm font-medium mb-2">{format(date, 'd')}</div>
+
+      {/* 스패닝 카드 (absolute positioning으로 여러 셀에 걸쳐 표시) */}
+      {spanningCard && spanDays && (
+        <div
+          className="absolute left-0 top-[36px] mb-2 px-2"
+          style={{
+            width: `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.25}rem)`,
+            zIndex: 10
+          }}
+        >
+          <MonthTodoCard
+            todo={spanningCard}
+            onToggle={onToggleTodo}
+            project={project}
+            isSpanning={true}
+          />
+        </div>
+      )}
 
       {/* 할일 표시 영역 */}
       {isMobile ? (
@@ -1403,7 +1481,7 @@ function CalendarDayCell({
           </div>
         )
       ) : (
-        // 웹 환경: 기존 방식 유지
+        // 웹 환경: 단일 날짜 카드만 렌더링 (스패닝 카드는 overlay에서)
         <div className="space-y-1">
           {todos.map((todo) => (
             <MonthTodoCard
@@ -1411,6 +1489,7 @@ function CalendarDayCell({
               todo={todo}
               onToggle={onToggleTodo}
               project={project}
+              isSpanning={false}
             />
           ))}
         </div>
@@ -1424,10 +1503,12 @@ function MonthTodoCard({
   todo,
   onToggle,
   project,
+  isSpanning = false,
 }: {
   todo: TodoItem;
   onToggle: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
+  isSpanning?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `month-todo-${todo.id}`,
@@ -1451,10 +1532,12 @@ function MonthTodoCard({
       {...attributes}
       {...listeners}
       className={`
-        p-1.5 rounded bg-base-200 hover:bg-base-300 transition-colors
-        cursor-pointer text-xs
+        p-1.5 transition-colors cursor-pointer text-xs
         ${isDragging ? 'opacity-50' : ''}
         ${isOver ? 'ring-2 ring-primary' : ''}
+        ${isSpanning
+          ? 'bg-primary text-primary-content hover:bg-primary/90 border-2 border-primary rounded-lg'
+          : 'bg-base-200 hover:bg-base-300 rounded'}
       `}
     >
       {/* 제목 + 하이라이트 */}
@@ -1462,55 +1545,31 @@ function MonthTodoCard({
         <p className={`flex-1 font-medium line-clamp-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
           {todo.title}
         </p>
-        {todo.isHighlight && <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
+        {todo.highlight && (
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: project?.color || '#808080' }}
+          />
+        )}
       </div>
 
-      {/* 프로젝트 배지 */}
-      {project && (
-        <div className="flex items-center gap-0.5 mb-1">
-          <div className="text-[10px] bg-base-300 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-            {project.icon && (() => {
-              const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
-              return <IconComponent className="w-2 h-2" />;
-            })()}
-            <span className="font-medium truncate max-w-[60px]">{project.title}</span>
-          </div>
-        </div>
-      )}
-
-      {/* 명료화 (1줄 말줄임) */}
-      {todo.clarification && (
-        <p className="text-[10px] text-base-content/60 line-clamp-1 mb-1">
-          {todo.clarification}
-        </p>
-      )}
-
-      {/* 날짜/시간 정보 */}
-      {todo.scheduledDate && (
-        <div className="text-[10px] text-base-content/60 mb-1">
-          <Calendar className="w-2.5 h-2.5 inline mr-0.5" />
-          {format(todo.scheduledDate, 'M/d')}
-          {todo.includeTime && todo.startTime && ` ${todo.startTime}`}
-          {todo.includeEndDate && todo.endDate && (
-            <> ~ {format(todo.endDate, 'M/d')}
-            {todo.endTime && ` ${todo.endTime}`}</>
+      {/* 메타 정보 */}
+      {(todo.scheduledTime || todo.place) && (
+        <div className="flex items-center gap-2 text-[10px] text-base-content/60">
+          {todo.scheduledTime && (
+            <div className="flex items-center gap-0.5">
+              <Clock className="w-2.5 h-2.5" />
+              <span>{todo.scheduledTime}</span>
+            </div>
+          )}
+          {todo.place && (
+            <div className="flex items-center gap-0.5">
+              <MapPin className="w-2.5 h-2.5" />
+              <span className="line-clamp-1">{todo.place}</span>
+            </div>
           )}
         </div>
       )}
-
-      {/* 완료 체크박스 (제일 하단, 왼쪽 정렬) */}
-      <div className="flex items-center justify-start gap-1.5 mt-1">
-        <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={(e) => {
-            e.stopPropagation();
-            onToggle(todo.id);
-          }}
-          className="checkbox checkbox-xs flex-shrink-0"
-        />
-        <span className="text-[10px] text-base-content/60">완료</span>
-      </div>
     </div>
   );
 }
@@ -1533,7 +1592,72 @@ function WeekView({
 }) {
   // 현재 주의 일요일~토요일 계산
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 }); // 일요일 시작
+  const weekEnd = addDays(weekStart, 6); // 토요일
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  // 할일을 스패닝 카드와 일반 카드로 분리
+  interface SpanningCard {
+    todo: TodoItem;
+    startDay: number; // 0-6 (일~토)
+    spanDays: number; // 1-7
+    rowIndex: number;
+  }
+
+  const { spanningCards, singleDayCards } = (() => {
+    const spanning: SpanningCard[] = [];
+    const single: Map<number, TodoItem[]> = new Map();
+
+    // 각 날짜별 일반 카드 초기화
+    for (let i = 0; i < 7; i++) {
+      single.set(i, []);
+    }
+
+    todos.forEach((todo) => {
+      if (!todo.scheduledDate) return;
+
+      // 종료일이 있고 범위가 현재 주와 겹치는 경우
+      if (todo.includeEndDate && todo.endDate) {
+        const start = todo.scheduledDate;
+        const end = todo.endDate;
+
+        // 현재 주와 겹치는지 확인
+        if (start <= weekEnd && end >= weekStart) {
+          // 현재 주 범위 내로 클립
+          const clippedStart = start < weekStart ? weekStart : start;
+          const clippedEnd = end > weekEnd ? weekEnd : end;
+
+          const startDay = differenceInCalendarDays(clippedStart, weekStart);
+          const endDay = differenceInCalendarDays(clippedEnd, weekStart);
+          const spanDays = endDay - startDay + 1;
+
+          if (spanDays > 1) {
+            spanning.push({
+              todo,
+              startDay,
+              spanDays,
+              rowIndex: 0, // 나중에 행 배치 계산
+            });
+          } else {
+            // 1일짜리는 일반 카드로
+            single.get(startDay)?.push(todo);
+          }
+        }
+      } else {
+        // 종료일 없는 경우: 시작일이 현재 주에 있으면 표시
+        if (todo.scheduledDate >= weekStart && todo.scheduledDate <= weekEnd) {
+          const dayIndex = differenceInCalendarDays(todo.scheduledDate, weekStart);
+          single.get(dayIndex)?.push(todo);
+        }
+      }
+    });
+
+    // 각 날짜의 일반 카드 정렬
+    single.forEach((cards) => {
+      cards.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    });
+
+    return { spanningCards: spanning, singleDayCards: single };
+  })();
 
   return (
     <div className="w-full">
@@ -1556,31 +1680,59 @@ function WeekView({
         </button>
       </div>
 
-      {/* 7일 컬럼 그리드 */}
-      <div className="grid grid-cols-7 gap-2">
-        {weekDays.map((day) => {
-          const dateString = format(day, 'yyyy-MM-dd');
-          const dayTodos = todos
-            .filter(
-              (todo) =>
-                todo.scheduledDate &&
-                format(todo.scheduledDate, 'yyyy-MM-dd') === dateString
-            )
-            .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)); // displayOrder 기준 정렬
-          const isToday = isSameDay(day, new Date());
+      {/* 7일 컬럼 그리드 + 스패닝 카드 */}
+      <div className="relative">
+        <div className="grid grid-cols-7 gap-2">
+          {/* 날짜 헤더 + 일반 카드 */}
+          {weekDays.map((day, dayIndex) => {
+            const dateString = format(day, 'yyyy-MM-dd');
+            const dayTodos = singleDayCards.get(dayIndex) || [];
+            const isToday = isSameDay(day, new Date());
 
-          return (
-            <WeekDayColumn
-              key={dateString}
-              date={day}
-              isToday={isToday}
-              todos={dayTodos}
-              onToggleTodo={onToggleTodo}
-              project={project}
-              onOpenTodoListModal={onOpenTodoListModal}
-            />
-          );
-        })}
+            return (
+              <WeekDayColumn
+                key={dateString}
+                date={day}
+                isToday={isToday}
+                todos={dayTodos}
+                onToggleTodo={onToggleTodo}
+                project={project}
+                onOpenTodoListModal={onOpenTodoListModal}
+              />
+            );
+          })}
+        </div>
+
+        {/* 스패닝 카드 오버레이 (CSS Grid span 사용) */}
+        {spanningCards.length > 0 && (
+          <div className="grid grid-cols-7 gap-2 absolute top-0 left-0 right-0 pointer-events-none">
+            {/* 헤더 공간 확보 */}
+            {weekDays.map((_, i) => (
+              <div key={`header-space-${i}`} className="h-[60px]" />
+            ))}
+
+            {/* 스패닝 카드들 */}
+            {spanningCards.map((card) => (
+              <div
+                key={`spanning-${card.todo.id}`}
+                className="pointer-events-auto"
+                style={{
+                  gridColumn: `${card.startDay + 1} / span ${card.spanDays}`,
+                  gridRow: 2, // 헤더 아래 첫 번째 행
+                }}
+              >
+                <div className="px-1">
+                  <WeekTodoCard
+                    todo={card.todo}
+                    onToggle={onToggleTodo}
+                    project={project}
+                    isSpanning={true}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1686,10 +1838,12 @@ function WeekTodoCard({
   todo,
   onToggle,
   project,
+  isSpanning = false,
 }: {
   todo: TodoItem;
   onToggle: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
+  isSpanning?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `week-todo-${todo.id}`,
@@ -1702,9 +1856,9 @@ function WeekTodoCard({
       {...attributes}
       {...listeners}
       className={`
-        p-2 rounded-lg bg-base-200 hover:bg-base-300 transition-colors
-        cursor-pointer
+        p-2 rounded-lg transition-colors cursor-pointer
         ${isDragging ? 'opacity-50' : ''}
+        ${isSpanning ? 'bg-primary text-primary-content hover:bg-primary/90 border-2 border-primary' : 'bg-base-200 hover:bg-base-300'}
       `}
     >
       {/* 제목 + 하이라이트 */}
