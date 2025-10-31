@@ -1527,7 +1527,7 @@ function CalendarDayCell({
             width: segmentPosition === 'first' || segmentPosition === 'single'
               ? `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem - 0.5rem)`
               : segmentPosition === 'last'
-              ? `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem - 0.25rem)`
+              ? `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem - 0.5rem)`
               : `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.5}rem)`,
             zIndex: 10
           }}
