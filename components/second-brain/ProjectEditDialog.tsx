@@ -1642,11 +1642,11 @@ function MonthTodoCard({
         ${isDragging ? 'opacity-50' : ''}
         ${isOver ? 'ring-2 ring-primary' : ''}
         ${isSpanning
-          ? `bg-base-200 hover:bg-base-300 border-2 border-base-300 ${getBorderRadius()}
+          ? `bg-white hover:bg-gray-50 border-2 border-base-300 ${getBorderRadius()}
              ${segmentPosition === 'first' || segmentPosition === 'single' ? 'pl-1.5' : 'pl-0'}
              ${segmentPosition === 'last' || segmentPosition === 'single' ? 'pr-1.5' : 'pr-0'}
              py-1.5`
-          : 'bg-base-200 hover:bg-base-300 rounded p-1.5'}
+          : 'bg-white hover:bg-gray-50 border-2 border-base-300 rounded p-1.5'}
       `}
     >
       {/* 제목 + 하이라이트 */}
