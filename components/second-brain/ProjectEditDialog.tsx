@@ -197,6 +197,19 @@ export default function ProjectEditDialog({
         const scheduledDate = new Date(dateString);
         if (isNaN(scheduledDate.getTime())) return;
 
+        // 드래그된 할일 찾기
+        const draggedTodo = todos.find((t) => t.id === todoId);
+        if (!draggedTodo) return;
+
+        // 원래 시작일-종료일 간격 계산
+        let daysDiff = 0;
+        if (draggedTodo.includeEndDate && draggedTodo.endDate && draggedTodo.scheduledDate) {
+          daysDiff = differenceInCalendarDays(draggedTodo.endDate, draggedTodo.scheduledDate);
+        }
+
+        // 새 종료일 계산 (간격 유지)
+        const newEndDate = daysDiff > 0 ? addDays(scheduledDate, daysDiff) : draggedTodo.endDate;
+
         // 해당 날짜의 할일들 가져오기
         const sameDateTodos = todos.filter(
           (t) => t.scheduledDate && format(t.scheduledDate, 'yyyy-MM-dd') === dateString
@@ -211,7 +224,7 @@ export default function ProjectEditDialog({
         setTodos(
           todos.map((todo) =>
             todo.id === todoId
-              ? { ...todo, scheduledDate, displayOrder: maxOrder + 1 }
+              ? { ...todo, scheduledDate, endDate: newEndDate, displayOrder: maxOrder + 1 }
               : todo
           )
         );
@@ -220,6 +233,7 @@ export default function ProjectEditDialog({
         if (userId) {
           await updateTodo(todoId, {
             start_time: scheduledDate.toISOString(),
+            end_time: newEndDate ? newEndDate.toISOString() : null,
             order_index: maxOrder + 1,
           });
         }
@@ -304,6 +318,19 @@ export default function ProjectEditDialog({
         const scheduledDate = new Date(overIdString);
         if (isNaN(scheduledDate.getTime())) return;
 
+        // 드래그된 할일 찾기
+        const draggedTodo = todos.find((t) => t.id === todoId);
+        if (!draggedTodo) return;
+
+        // 원래 시작일-종료일 간격 계산
+        let daysDiff = 0;
+        if (draggedTodo.includeEndDate && draggedTodo.endDate && draggedTodo.scheduledDate) {
+          daysDiff = differenceInCalendarDays(draggedTodo.endDate, draggedTodo.scheduledDate);
+        }
+
+        // 새 종료일 계산 (간격 유지)
+        const newEndDate = daysDiff > 0 ? addDays(scheduledDate, daysDiff) : draggedTodo.endDate;
+
         // 해당 날짜의 할일들 가져오기
         const sameDateTodos = todos.filter(
           (t) => t.scheduledDate && format(t.scheduledDate, 'yyyy-MM-dd') === overIdString
@@ -318,7 +345,7 @@ export default function ProjectEditDialog({
         setTodos(
           todos.map((todo) =>
             todo.id === todoId
-              ? { ...todo, scheduledDate, displayOrder: maxOrder + 1 }
+              ? { ...todo, scheduledDate, endDate: newEndDate, displayOrder: maxOrder + 1 }
               : todo
           )
         );
@@ -327,6 +354,7 @@ export default function ProjectEditDialog({
         if (userId) {
           await updateTodo(todoId, {
             start_time: scheduledDate.toISOString(),
+            end_time: newEndDate ? newEndDate.toISOString() : null,
             order_index: maxOrder + 1,
           });
         }
