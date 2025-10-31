@@ -1343,8 +1343,21 @@ function CalendarDropArea({
         const spanDays = endCol - startCol + 1;
 
         if (spanDays > 1) {
-          // 시작 날짜 index에만 기록
-          spanningStarts.set(startCol, { todo, spanDays });
+          // 여러 주에 걸친 스패닝 카드를 주 단위로 분할
+          let currentCol = startCol;
+
+          while (currentCol <= endCol) {
+            const colInWeek = currentCol % 7; // 현재 요일 위치
+            const daysLeftInWeek = 7 - colInWeek; // 이번 주에 남은 일수
+            const daysLeftInSpan = endCol - currentCol + 1; // 전체에서 남은 일수
+            const segmentSpan = Math.min(daysLeftInWeek, daysLeftInSpan); // 이번 세그먼트 길이
+
+            // 각 주의 시작 위치에 스패닝 카드 등록
+            spanningStarts.set(currentCol, { todo, spanDays: segmentSpan });
+
+            // 다음 주 일요일로 이동
+            currentCol += segmentSpan;
+          }
         } else {
           singleDayCards.get(startCol)?.push(todo);
         }
@@ -1398,15 +1411,7 @@ function CalendarDropArea({
           const todosForDay = singleDayCards.get(index) || [];
           const spanningCard = spanningStarts.get(index);
 
-          // 스패닝 카드 시작 셀이면 spanDays 계산
-          let actualSpan: number | undefined;
-          if (spanningCard) {
-            const colInWeek = index % 7;
-            const maxSpan = 7 - colInWeek; // 주의 남은 일수
-            actualSpan = Math.min(spanningCard.spanDays, maxSpan);
-          }
-
-          // 모든 날짜 셀 렌더링 (스패닝 카드는 시작 셀에만 표시)
+          // 모든 날짜 셀 렌더링 (스패닝 카드는 각 주의 시작 셀에 표시)
           return (
             <CalendarDayCell
               key={dateString}
@@ -1418,7 +1423,7 @@ function CalendarDropArea({
               project={project}
               onOpenTodoListModal={onOpenTodoListModal}
               spanningCard={spanningCard?.todo}
-              spanDays={actualSpan}
+              spanDays={spanningCard?.spanDays}
             />
           );
         })}
