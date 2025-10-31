@@ -293,6 +293,18 @@ export interface CreateTodoInput {
   order_index?: number;
   parent_todo_id?: string;
   project_id?: string; // 프로젝트 ID
+
+  // Second Brain System fields
+  clarification?: Clarification;
+  next_action_contexts?: NextActionContext[];
+  next_action_statuses?: NextActionContext[]; // alias for next_action_contexts
+  is_today_highlight?: boolean;
+  assigned_to?: string | null;
+  assigned_date?: string | null;
+
+  // Relations
+  project_ids?: string[]; // 다중 프로젝트 연결
+  note_ids?: string[]; // 연결된 노트 ID들
 }
 
 // Note instance types

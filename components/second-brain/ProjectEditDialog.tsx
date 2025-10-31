@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, Tag, Palette, Target, Activity, Layers } from 'lucide-react';
+import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, Tag, Palette, Target, Activity, Layers, Clock } from 'lucide-react';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -233,7 +233,7 @@ export default function ProjectEditDialog({
         if (userId) {
           await updateTodo(todoId, {
             start_time: scheduledDate.toISOString(),
-            end_time: newEndDate ? newEndDate.toISOString() : null,
+            end_time: newEndDate ? newEndDate.toISOString() : undefined,
             order_index: maxOrder + 1,
           });
         }
@@ -354,7 +354,7 @@ export default function ProjectEditDialog({
         if (userId) {
           await updateTodo(todoId, {
             start_time: scheduledDate.toISOString(),
-            end_time: newEndDate ? newEndDate.toISOString() : null,
+            end_time: newEndDate ? newEndDate.toISOString() : undefined,
             order_index: maxOrder + 1,
           });
         }
@@ -577,8 +577,8 @@ export default function ProjectEditDialog({
 
         await updateTodo(editingTodo.id, {
           title: updatedTodo.title,
-          clarification: updatedTodo.clarification,
-          next_action_statuses: updatedTodo.nextActionStatuses,
+          clarification: updatedTodo.clarification as any,
+          next_action_statuses: updatedTodo.nextActionStatuses as any,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
           // start_time을 scheduledDate + startTime 조합으로 설정
           start_time: updatedTodo.scheduledDate
@@ -677,8 +677,8 @@ export default function ProjectEditDialog({
 
         await updateTodo(todoFromList.id, {
           title: updatedTodo.title,
-          clarification: updatedTodo.clarification,
-          next_action_statuses: updatedTodo.nextActionStatuses,
+          clarification: updatedTodo.clarification as any,
+          next_action_statuses: updatedTodo.nextActionStatuses as any,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
           // start_time을 scheduledDate + startTime 조합으로 설정
           start_time: updatedTodo.scheduledDate
@@ -1654,7 +1654,7 @@ function MonthTodoCard({
         <p className={`flex-1 font-medium line-clamp-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
           {todo.title}
         </p>
-        {todo.highlight && (
+        {todo.isHighlight && (
           <div
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: project?.color || '#808080' }}
@@ -1663,18 +1663,12 @@ function MonthTodoCard({
       </div>
 
       {/* 메타 정보 */}
-      {(todo.scheduledTime || todo.place) && (
+      {(todo.startTime) && (
         <div className="flex items-center gap-2 text-[10px] text-base-content/60">
-          {todo.scheduledTime && (
+          {todo.startTime && (
             <div className="flex items-center gap-0.5">
               <Clock className="w-2.5 h-2.5" />
-              <span>{todo.scheduledTime}</span>
-            </div>
-          )}
-          {todo.place && (
-            <div className="flex items-center gap-0.5">
-              <MapPin className="w-2.5 h-2.5" />
-              <span className="line-clamp-1">{todo.place}</span>
+              <span>{todo.startTime}</span>
             </div>
           )}
         </div>
