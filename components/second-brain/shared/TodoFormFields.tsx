@@ -1,10 +1,15 @@
 'use client';
 
-import { Star, Folder, StickyNote } from 'lucide-react';
+import { useState } from 'react';
+import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
 import ProjectSelector from './ProjectSelector';
 import NoteSelector from './NoteSelector';
+import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
+import { getUnifiedIcon } from '@/lib/icon-collection';
+import { getColorById } from '@/lib/color-palette';
+import type { UnifiedIconKey } from '@/lib/icon-collection';
 
 /**
  * 할일 폼 필드 타입
@@ -12,6 +17,8 @@ import NoteSelector from './NoteSelector';
  */
 export interface TodoFormData {
   title: string;
+  icon?: string; // 아이콘 키 (UnifiedIconKey)
+  color?: string; // 색상 hex 값
   clarification?: string;
   nextActionStatuses?: string[]; // 다중 선택
   scheduledDate?: Date;
@@ -91,6 +98,19 @@ export default function TodoFormFields({
   showCompleted = true,
   showProjects = true,
 }: TodoFormFieldsProps) {
+  // 아이콘 브라우저 모달
+  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
+
+  // 아이콘 변경
+  const handleIconChange = (iconKey: UnifiedIconKey) => {
+    onChange({ ...todo, icon: iconKey });
+  };
+
+  // 색상 변경
+  const handleColorChange = (colorId: string) => {
+    const color = getColorById(colorId).hex;
+    onChange({ ...todo, color });
+  };
 
   const toggleNextActionStatus = (status: string) => {
     const currentStatuses = todo.nextActionStatuses || [];
@@ -102,76 +122,109 @@ export default function TodoFormFields({
 
   return (
     <>
-      {/* 제목 */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text">제목</span>
+      {/* 아이콘 및 제목 - 통합 섹션 */}
+      <div className="my-4">
+        <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+          <Tag className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+          아이콘 및 제목
         </label>
-        <input
-          type="text"
-          value={todo.title}
-          onChange={(e) => onChange({ ...todo, title: e.target.value })}
-          className="input input-bordered"
-          placeholder={titlePlaceholder}
-        />
+
+        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+          {/* 아이콘 버튼 */}
+          <button
+            type="button"
+            onClick={() => setIconBrowserOpen(true)}
+            className="w-12 h-12 rounded-lg bg-[#f3f4f6] mb-3 flex items-center justify-center group relative"
+          >
+            {(() => {
+              const IconComponent = getUnifiedIcon((todo.icon || 'CheckSquare') as UnifiedIconKey);
+              return <IconComponent
+                className="group-hover:scale-110 transition-transform"
+                style={{ color: todo.color || '#808080' }}
+                size={24}
+              />;
+            })()}
+            {/* 색상 인디케이터 */}
+            <div
+              className="w-5 h-5 rounded-full absolute -bottom-1 -left-1 border-2 border-white"
+              style={{ backgroundColor: todo.color || '#808080' }}
+            />
+          </button>
+
+          {/* 제목 입력 */}
+          <input
+            type="text"
+            value={todo.title}
+            onChange={(e) => onChange({ ...todo, title: e.target.value })}
+            className="w-full border-0 border-b-2 border-base-300 bg-transparent px-0 py-2 text-[20px] font-semibold focus:outline-none focus:border-primary"
+            placeholder={titlePlaceholder}
+          />
+        </div>
       </div>
 
       {/* 명료화 */}
       {showClarification && (
-        <div className="form-control mb-4">
-          <label className="label">
-            <span className="label-text">명료화</span>
+        <div className="my-4">
+          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+            <Target className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+            명료화
           </label>
-          <select
-            value={todo.clarification || ''}
-            onChange={(e) => onChange({ ...todo, clarification: e.target.value })}
-            className="select select-bordered w-full"
-          >
-            <option value="">선택 안 함</option>
-            <option value="다시알림">다시알림</option>
-            <option value="언젠가">언젠가</option>
-            <option value="대기중">대기중</option>
-            <option value="다음행동">다음행동</option>
-            <option value="일정">일정</option>
-          </select>
+
+          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+            <select
+              value={todo.clarification || ''}
+              onChange={(e) => onChange({ ...todo, clarification: e.target.value })}
+              className="select select-bordered w-full"
+            >
+              <option value="">선택 안 함</option>
+              <option value="다시알림">다시알림</option>
+              <option value="언젠가">언젠가</option>
+              <option value="대기중">대기중</option>
+              <option value="다음행동">다음행동</option>
+              <option value="일정">일정</option>
+            </select>
+          </div>
         </div>
       )}
 
       {/* 다음행동상황 (다중 선택) */}
       {showNextActionStatus && (
-        <div className="form-control mb-4">
-          <label className="label">
-            <span className="label-text">다음행동상황</span>
+        <div className="my-4">
+          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+            <Sparkles className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+            다음행동상황
           </label>
-          <div className="flex flex-wrap gap-2">
-            {NEXT_ACTION_OPTIONS.map((option) => {
-              const isSelected = todo.nextActionStatuses?.includes(option);
-              return (
-                <button
-                  key={option}
-                  onClick={() => toggleNextActionStatus(option)}
-                  className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
-                >
-                  {option}
-                </button>
-              );
-            })}
+
+          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+            <div className="flex flex-wrap gap-2">
+              {NEXT_ACTION_OPTIONS.map((option) => {
+                const isSelected = todo.nextActionStatuses?.includes(option);
+                return (
+                  <button
+                    key={option}
+                    onClick={() => toggleNextActionStatus(option)}
+                    className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
       {/* 날짜 */}
       {showScheduledDate && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            날짜 선택
-          </label>
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-            {/* 시작 날짜 */}
-            <div className="form-control mb-3">
-              <label className="label">
-                <span className="label-text">날짜</span>
-              </label>
+        <>
+          {/* 시작 날짜 */}
+          <div className="my-4">
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+              <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+              날짜
+            </label>
+
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
               <input
                 type="date"
                 value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
@@ -184,13 +237,17 @@ export default function TodoFormFields({
                 className="input input-bordered w-full"
               />
             </div>
+          </div>
 
-            {/* 시작 시간 (시간 포함 ON일 때만) */}
-            {todo.includeTime && (
-              <div className="form-control mb-3">
-                <label className="label">
-                  <span className="label-text">시작 시간</span>
-                </label>
+          {/* 시작 시간 (시간 포함 ON일 때만) */}
+          {todo.includeTime && (
+            <div className="my-4">
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+                시작 시간
+              </label>
+
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                 <input
                   type="time"
                   value={todo.startTime || '09:00'}
@@ -198,15 +255,19 @@ export default function TodoFormFields({
                   className="input input-bordered w-full"
                 />
               </div>
-            )}
+            </div>
+          )}
 
-            {/* 종료일 (종료일 토글 ON일 때만) */}
-            {todo.includeEndDate && (
-              <>
-                <div className="form-control mb-3">
-                  <label className="label">
-                    <span className="label-text">종료 날짜</span>
-                  </label>
+          {/* 종료일 (종료일 토글 ON일 때만) */}
+          {todo.includeEndDate && (
+            <>
+              <div className="my-4">
+                <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                  <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+                  종료 날짜
+                </label>
+
+                <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                   <input
                     type="date"
                     value={todo.endDate ? format(todo.endDate, 'yyyy-MM-dd') : ''}
@@ -219,13 +280,17 @@ export default function TodoFormFields({
                     className="input input-bordered w-full"
                   />
                 </div>
+              </div>
 
-                {/* 종료 시간 (종료일 ON + 시간 포함 ON일 때만) */}
-                {todo.includeTime && (
-                  <div className="form-control mb-3">
-                    <label className="label">
-                      <span className="label-text">종료 시간</span>
-                    </label>
+              {/* 종료 시간 (종료일 ON + 시간 포함 ON일 때만) */}
+              {todo.includeTime && (
+                <div className="my-4">
+                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                    <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+                    종료 시간
+                  </label>
+
+                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                     <input
                       type="time"
                       value={todo.endTime || '18:00'}
@@ -233,12 +298,14 @@ export default function TodoFormFields({
                       className="input input-bordered w-full"
                     />
                   </div>
-                )}
-              </>
-            )}
+                </div>
+              )}
+            </>
+          )}
 
-            {/* 종료일 토글 */}
-            <div className="form-control mb-3">
+          {/* 종료일 토글 */}
+          <div className="my-4">
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
               <label className="cursor-pointer flex items-center justify-between">
                 <span className="label-text">종료일</span>
                 <input
@@ -249,9 +316,11 @@ export default function TodoFormFields({
                 />
               </label>
             </div>
+          </div>
 
-            {/* 시간 포함 토글 */}
-            <div className="form-control">
+          {/* 시간 포함 토글 */}
+          <div className="my-4">
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
               <label className="cursor-pointer flex items-center justify-between">
                 <span className="label-text">시간 포함</span>
                 <input
@@ -263,12 +332,12 @@ export default function TodoFormFields({
               </label>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* 오늘의 하이라이트 */}
       {showHighlight && (
-        <div className="form-control mb-4">
+        <div className="my-4">
           <label className="cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
@@ -286,7 +355,7 @@ export default function TodoFormFields({
 
       {/* 완료 여부 */}
       {showCompleted && (
-        <div className="form-control mb-6">
+        <div className="my-4">
           <label className="cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
@@ -294,50 +363,65 @@ export default function TodoFormFields({
               onChange={(e) => onChange({ ...todo, completed: e.target.checked })}
               className="checkbox"
             />
-            <span className="label-text">완료됨</span>
+            <span className="label-text flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4" />
+              완료됨
+            </span>
           </label>
         </div>
       )}
 
       {/* 프로젝트 추가 (다중 선택) - onCreateProject prop이 있고 showProjects가 true일 때만 표시 */}
       {onCreateProject && showProjects && (
-        <div className="form-control mb-4">
-          <label className="label">
-            <span className="label-text flex items-center gap-2">
-              <Folder className="w-4 h-4" />
-              프로젝트 추가
-            </span>
+        <div className="my-4">
+          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+            <Folder className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+            프로젝트 추가
           </label>
-          <ProjectSelector
-            selectedProjectIds={todo.projectIds || []}
-            projects={projects}
-            onProjectsChange={(projectIds) => onChange({ ...todo, projectIds })}
-            onCreateProject={onCreateProject}
-            onUpdateProject={onUpdateProject}
-            onDeleteProject={onDeleteProject}
-          />
+
+          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+            <ProjectSelector
+              selectedProjectIds={todo.projectIds || []}
+              projects={projects}
+              onProjectsChange={(projectIds) => onChange({ ...todo, projectIds })}
+              onCreateProject={onCreateProject}
+              onUpdateProject={onUpdateProject}
+              onDeleteProject={onDeleteProject}
+            />
+          </div>
         </div>
       )}
 
       {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (
-        <div className="form-control mb-6">
-          <label className="label">
-            <span className="label-text flex items-center gap-2">
-              <StickyNote className="w-4 h-4" />
-              노트 추가
-            </span>
+        <div className="my-4">
+          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+            <StickyNote className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+            노트 추가
           </label>
-          <NoteSelector
-            selectedNoteIds={todo.noteIds || []}
-            notes={notes}
-            onNotesChange={(noteIds) => onChange({ ...todo, noteIds })}
-            onCreateNote={onCreateNote}
-            onUpdateNote={onUpdateNote}
-            onDeleteNote={onDeleteNote}
-          />
+
+          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+            <NoteSelector
+              selectedNoteIds={todo.noteIds || []}
+              notes={notes}
+              onNotesChange={(noteIds) => onChange({ ...todo, noteIds })}
+              onCreateNote={onCreateNote}
+              onUpdateNote={onUpdateNote}
+              onDeleteNote={onDeleteNote}
+            />
+          </div>
         </div>
       )}
+
+      {/* 아이콘 브라우저 모달 */}
+      <EnhancedIconBrowserModal
+        open={iconBrowserOpen}
+        onClose={() => setIconBrowserOpen(false)}
+        onIconSelect={handleIconChange}
+        selectedIcon={todo.icon}
+        selectedColor={todo.color}
+        onColorSelect={handleColorChange}
+      />
     </>
   );
 }
