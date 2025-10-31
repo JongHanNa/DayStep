@@ -104,6 +104,8 @@ export default function ProjectEditDialog({
             return {
               id: todo.id,
               title: todo.title,
+              icon: todo.icon || 'CheckSquare',
+              color: todo.color || '#808080',
               completed: todo.completed || false,
               isHighlight: todo.isHighlight || todo.isTodayHighlight || false,
               scheduledDate: todo.scheduledDate || todo.startTime
@@ -577,6 +579,8 @@ export default function ProjectEditDialog({
 
         await updateTodo(editingTodo.id, {
           title: updatedTodo.title,
+          icon: updatedTodo.icon,
+          color: updatedTodo.color,
           clarification: updatedTodo.clarification as any,
           next_action_statuses: updatedTodo.nextActionStatuses as any,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
@@ -677,6 +681,8 @@ export default function ProjectEditDialog({
 
         await updateTodo(todoFromList.id, {
           title: updatedTodo.title,
+          icon: updatedTodo.icon,
+          color: updatedTodo.color,
           clarification: updatedTodo.clarification as any,
           next_action_statuses: updatedTodo.nextActionStatuses as any,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
@@ -1173,6 +1179,7 @@ export default function ProjectEditDialog({
         todo={editingTodo}
         onClose={handleCancelTodoEdit}
         onSave={handleSaveTodoEdit}
+        onDelete={editingTodo ? () => handleRemoveTodo(editingTodo.id) : undefined}
         onChange={(updatedTodo) => {
           if (editingTodo) {
             setEditingTodo({ ...editingTodo, ...updatedTodo });
@@ -1197,6 +1204,7 @@ export default function ProjectEditDialog({
         todo={todoFromList}
         onClose={handleCloseTodoEditFromList}
         onSave={handleSaveTodoFromList}
+        onDelete={todoFromList ? () => handleRemoveTodo(todoFromList.id) : undefined}
         onChange={(updated) => setTodoFromList(todoFromList ? { ...todoFromList, ...updated } : null)}
       />
     </>

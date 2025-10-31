@@ -11,6 +11,7 @@ interface TodoEditModalProps {
   onClose: () => void;
   onSave: (todo: TodoFormData) => void;
   onChange: (todo: TodoFormData) => void;
+  onDelete?: () => void; // 삭제 핸들러 추가
   // 선택적 props (수집 페이지 등에서 사용)
   projects?: Project[];
   notes?: Note[];
@@ -39,6 +40,7 @@ export default function TodoEditModal({
   onClose,
   onSave,
   onChange,
+  onDelete,
   projects,
   notes,
   onCreateProject,
@@ -74,15 +76,28 @@ export default function TodoEditModal({
   return (
     <dialog open className="modal modal-open">
       <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-        {/* 헤더 (취소-제목-저장) */}
+        {/* 헤더 (취소-제목-삭제-저장) */}
         <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
           <button onClick={onClose} className="btn btn-primary btn-sm rounded-full">
             취소
           </button>
-          <h3 className="font-bold text-lg">할일 편집</h3>
-          <button onClick={() => onSave(todo)} className="btn btn-primary btn-sm rounded-full">
-            저장
-          </button>
+          <h3 className="text-lg font-semibold">할일 편집</h3>
+          <div className="flex gap-2">
+            {onDelete && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onDelete();
+                }}
+                className="btn btn-ghost btn-sm text-error rounded-full"
+              >
+                삭제
+              </button>
+            )}
+            <button onClick={() => onSave(todo)} className="btn btn-primary btn-sm rounded-full">
+              저장
+            </button>
+          </div>
         </div>
 
         {/* 콘텐츠 영역 */}
