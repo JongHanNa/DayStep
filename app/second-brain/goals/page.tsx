@@ -21,7 +21,7 @@ export default function GoalsPage() {
   const { createGoal, updateGoal, deleteGoal, goals, fetchGoals } = useGoalStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
-  const { projects, createProject, updateProject, deleteProject } = useProjectStore();
+  const { projects, fetchProjects, createProject, updateProject, deleteProject } = useProjectStore();
 
   // 편집 관련 state
   const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string; timeframe?: 'quarter' | 'year' | '5_years' }) | null>(null);
@@ -47,8 +47,9 @@ export default function GoalsPage() {
       fetchGoals(appUser.id);
       fetchAreas(appUser.id);
       fetchResources(appUser.id);
+      fetchProjects(appUser.id);
     }
-  }, [appUser?.id, fetchGoals, fetchAreas, fetchResources]);
+  }, [appUser?.id, fetchGoals, fetchAreas, fetchResources, fetchProjects]);
 
   // 편집 모달 상태 관리 (하단 네비 숨김)
   useEffect(() => {
