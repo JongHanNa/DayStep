@@ -1541,7 +1541,7 @@ function CalendarDayCell({
       {/* 스패닝 카드 (absolute positioning으로 여러 셀에 걸쳐 표시) */}
       {spanningCard && spanDays && (
         <div
-          className="absolute top-[36px] mb-2"
+          className="absolute top-[36px] mb-2 max-h-[52px] overflow-hidden"
           style={{
             left: segmentPosition === 'first' || segmentPosition === 'single' ? '0.5rem' : '0',
             width: segmentPosition === 'first' || segmentPosition === 'single'
@@ -1576,7 +1576,7 @@ function CalendarDayCell({
         )
       ) : (
         // 웹 환경: 단일 날짜 카드만 렌더링 (스패닝 카드는 overlay에서)
-        <div className="space-y-1" style={{ marginTop: (spanningCard || hasSpanningCard) ? '48px' : '0' }}>
+        <div className="space-y-1" style={{ marginTop: (spanningCard || hasSpanningCard) ? '60px' : '0' }}>
           {todos.map((todo) => (
             <MonthTodoCard
               key={todo.id}
