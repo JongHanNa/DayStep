@@ -1924,7 +1924,7 @@ function WeekDayColumn({
         </div>
       ) : (
         // 웹 환경: 기존 방식 유지
-        <div className="flex-1 space-y-2 overflow-y-auto">
+        <div className="flex-1 space-y-2 overflow-y-auto" style={{ marginTop: '60px' }}>
           {todos.map((todo) => (
             <WeekTodoCard
               key={todo.id}
@@ -1969,7 +1969,7 @@ function WeekTodoCard({
       className={`
         p-2 rounded-lg transition-colors cursor-pointer
         ${isDragging ? 'opacity-50' : ''}
-        ${isSpanning ? 'bg-primary text-primary-content hover:bg-primary/90 border-2 border-primary' : 'bg-base-200 hover:bg-base-300'}
+        ${isSpanning ? 'bg-white hover:bg-gray-50 border-2 border-base-300 max-h-[52px] overflow-hidden' : 'bg-white hover:bg-gray-50 border-2 border-base-300'}
       `}
     >
       {/* 제목 + 하이라이트 */}
