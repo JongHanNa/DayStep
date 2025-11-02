@@ -1538,8 +1538,8 @@ function CalendarDayCell({
       {/* 날짜 헤더 */}
       <div className="text-sm font-medium mb-2">{format(date, 'd')}</div>
 
-      {/* 스패닝 카드 (absolute positioning으로 여러 셀에 걸쳐 표시) */}
-      {spanningCard && spanDays && (
+      {/* 스패닝 카드 (absolute positioning으로 여러 셀에 걸쳐 표시) - 웹 환경만 */}
+      {!isMobile && spanningCard && spanDays && (
         <div
           className="absolute top-[36px] mb-2 max-h-[52px] overflow-hidden"
           style={{
@@ -1564,14 +1564,14 @@ function CalendarDayCell({
 
       {/* 할일 표시 영역 */}
       {isMobile ? (
-        // Capacitor 환경: 점 + 개수 표시
-        todos.length > 0 && (
+        // Capacitor 환경: 점 + 개수 표시 (스패닝 카드 포함, 카드는 숨김)
+        (todos.length > 0 || spanningCard) && (
           <div className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: project?.color || '#808080' }}
             />
-            <span className="text-sm font-medium">{todos.length}</span>
+            <span className="text-sm font-medium">{todos.length + (spanningCard ? 1 : 0)}</span>
           </div>
         )
       ) : (
@@ -1706,6 +1706,8 @@ function WeekView({
   const weekEnd = addDays(weekStart, 6); // 토요일
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  const isMobile = process.env.BUILD_TARGET === 'mobile';
+
   // 할일을 스패닝 카드와 일반 카드로 분리
   interface SpanningCard {
     todo: TodoItem;
@@ -1800,6 +1802,13 @@ function WeekView({
             const dayTodos = singleDayCards.get(dayIndex) || [];
             const isToday = isSameDay(day, new Date());
 
+            // 해당 날짜에 걸쳐있는 스패닝 카드 개수 계산
+            const spanningCardCount = spanningCards.filter(card => {
+              const startDay = card.startDay;
+              const endDay = card.startDay + card.spanDays - 1;
+              return dayIndex >= startDay && dayIndex <= endDay;
+            }).length;
+
             return (
               <WeekDayColumn
                 key={dateString}
@@ -1809,13 +1818,14 @@ function WeekView({
                 onToggleTodo={onToggleTodo}
                 project={project}
                 onOpenTodoListModal={onOpenTodoListModal}
+                spanningCardCount={spanningCardCount}
               />
             );
           })}
         </div>
 
-        {/* 스패닝 카드 오버레이 (CSS Grid span 사용) */}
-        {spanningCards.length > 0 && (
+        {/* 스패닝 카드 오버레이 (CSS Grid span 사용) - 웹 환경만 */}
+        {!isMobile && spanningCards.length > 0 && (
           <div className="grid grid-cols-7 gap-2 absolute top-0 left-0 right-0 pointer-events-none">
             {/* 헤더 공간 확보 */}
             {weekDays.map((_, i) => (
@@ -1857,6 +1867,7 @@ function WeekDayColumn({
   onToggleTodo,
   project,
   onOpenTodoListModal,
+  spanningCardCount = 0,
 }: {
   date: Date;
   isToday: boolean;
@@ -1864,6 +1875,7 @@ function WeekDayColumn({
   onToggleTodo: (todoId: string) => void;
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
   onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
+  spanningCardCount?: number;
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
   const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
@@ -1906,15 +1918,15 @@ function WeekDayColumn({
 
       {/* 할일 표시 영역 */}
       {isMobile ? (
-        // Capacitor 환경: 점 + 개수 표시
+        // Capacitor 환경: 점 + 개수 표시 (스패닝 카드 포함)
         <div className="flex-1 overflow-y-auto">
-          {todos.length > 0 ? (
+          {(todos.length > 0 || spanningCardCount > 0) ? (
             <div className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: project?.color || '#808080' }}
               />
-              <span className="text-sm font-medium">{todos.length}</span>
+              <span className="text-sm font-medium">{todos.length + spanningCardCount}</span>
             </div>
           ) : (
             <div className="text-xs text-base-content/40 text-center py-4">
