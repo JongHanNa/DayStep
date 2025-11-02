@@ -1924,7 +1924,7 @@ function WeekDayColumn({
         </div>
       ) : (
         // 웹 환경: 기존 방식 유지
-        <div className="flex-1 space-y-2 overflow-y-auto" style={{ marginTop: '60px' }}>
+        <div className="flex-1 space-y-2 overflow-y-auto" style={{ marginTop: '45px' }}>
           {todos.map((todo) => (
             <WeekTodoCard
               key={todo.id}
