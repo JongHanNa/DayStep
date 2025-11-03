@@ -9,15 +9,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [환경 설정](#환경-설정)
 - [MCP 서버](#mcp-서버)
 - [핵심 아키텍처 패턴](#핵심-아키텍처-패턴)
-- [Task Master AI](#task-master-ai)
-- [Claude Code 개발 가이드](#claude-code-개발-가이드)
-  - [기본 규칙](#기본-규칙)
-  - [공통 패턴](#공통-패턴)
-  - [프론트엔드 개발 패턴](#프론트엔드-개발-패턴)
-  - [백엔드 개발 패턴](#백엔드-개발-패턴)
-  - [개발 워크플로우](#개발-워크플로우)
-  - [품질 관리](#품질-관리)
-  - [기타 가이드](#기타-가이드)
+- [기본 규칙](#기본-규칙)
+- [공통 패턴](#공통-패턴-절대-원칙)
+- [서브 에이전트 시스템](#서브-에이전트-시스템)
+- [품질 관리](#품질-관리)
 
 ---
 
@@ -46,7 +41,6 @@ npm run preview:web           # 웹 프로덕션 미리보기
 npm start                     # 프로덕션 서버
 ```
 
-
 ## 환경 설정
 
 `.env.example` → `.env.local`:
@@ -71,7 +65,6 @@ npm start                     # 프로덕션 서버
 - **모바일**: Capacitor 플러그인 + JWT 토큰
 - **백업**: Capacitor Preferences (key: `supabase_auth_session`)
 
-
 ### 상태 관리 (Zustand)
 - `todoStore`: Todo CRUD, optimistic updates
 - `timelineStore`: 타임라인 뷰 상태
@@ -85,15 +78,9 @@ npm start                     # 프로덕션 서버
 - **UI**: shadcn/ui + Tailwind + DaisyUI
 - **알림**: Capacitor Local Notifications
 
-## Task Master AI
-
-`.taskmaster/CLAUDE.md` 참조 - 작업 관리 워크플로우 및 명령어
-
 ---
 
-## Claude Code 개발 가이드
-
-### 기본 규칙
+## 기본 규칙
 
 - **한글로 대답하세요**
 - **커밋은 사용자에게 허락 확인 받고 하세요**
@@ -140,108 +127,54 @@ npm start                     # 프로덕션 서버
 
 ---
 
-## 🎨 프론트엔드 개발 패턴
+## 🤖 서브 에이전트 시스템
 
-### 스타일 규칙
+상세 개발 가이드는 전문 에이전트 파일을 참조하세요:
 
-| 항목 | 사용 ✅ | 금지 ❌ |
-|------|--------|---------|
-| 색상 | `bg-primary`, `bg-accent` | `bg-purple-500`, `bg-[#3B82F6]` |
-| 버튼 | `btn-ghost`, `btn-soft` | `btn-outline` |
-| 아이콘 | Lucide React | 이모지 |
-| 효과 | - | 그라디언트 |
+### 🎨 UI/디자인 작업
+📂 `.claude/agents/ui-agent.md`
+- DaisyUI + Tailwind CSS 스타일 가이드
+- 반응형 디자인 패턴 (Tailwind 우선)
+- 페이지 레이아웃 및 모달 패턴
+- 컴포넌트 패턴 및 디버깅
 
-### UI 컴포넌트 패턴
+### 🧪 테스트 및 검증
+📂 `.claude/agents/test-agent.md`
+- 웹/모바일 테스트 환경 설정
+- 테스트 시나리오 템플릿
+- 이슈 리포팅 및 품질 검증
+- 성능 테스트 및 디버깅 도구
 
-| 패턴 | 규칙 |
-|------|------|
-| 아이콘 컨테이너 | `rounded-full`, 테두리 없음, `text-white` |
-| 액션 버튼 | `rounded-full` (pill shape) |
-| 아이콘 전용 버튼 | `btn-circle` |
-| 아코디언 | `bg-transparent hover:opacity-80` |
+### 📝 문서화 및 작업 관리
+📂 `.claude/agents/docs-agent.md`
+- TASKS.md 워크플로우 및 관리
+- JSDoc/코드 주석 가이드 (한글)
+- API 문서화 및 작업 이력
+- 완료 체크리스트
 
-### 아이콘 + 제목 입력 (편집 모달)
-
-| 요소 | 스타일 |
-|------|--------|
-| 아이콘 버튼 | `w-12 h-12 rounded-lg bg-[#f3f4f6]` |
-| 색상 인디케이터 | `w-5 h-5 rounded-full absolute -bottom-1 -left-1` |
-| 입력 필드 | `border-0 border-b-2 text-[20px] font-semibold` |
-
-### 폼 섹션 (편집 모달)
-
-- 컨테이너: `my-4`
-- 제목: `flex items-center gap-3 text-lg font-semibold mb-3`
-- 래퍼: `p-3 rounded-lg bg-base-200 border border-base-300`
-
-### 모달 패턴
-
-**DaisyUI dialog 우선**:
-- 구조: `<dialog open>` + `modal-box` + `modal-backdrop`
-- 헤더: 취소(좌)-제목(중)-삭제-저장(우), 모두 `rounded-full`
-- 패딩: `pt-[30px] sm:pt-2` (헤더), `px-3` (양쪽)
-- Capacitor: `useModalStore`로 하단 네비 자동 숨김
-
-**기존 react-modal-sheet**: 점진적 마이그레이션 (14개 파일)
-
-### 즉시 생성 패턴
-
-- 추가 버튼 → DB 즉시 생성 + spinner
-
----
-
-## 🔧 백엔드 개발 패턴
-
-### 인증
-
-- `useAuth()` Hook → userId 파라미터 전달
-- Store에서 `getState().user?.id` 직접 호출 금지
-- Capacitor 백업: Preferences (`supabase_auth_session`)
-
-### DB 접근
-
-- `supabaseWebViewHelper.ts` JWT 방식만
-- `supabase.from()` 직접 호출 금지
-- DB 필터링: 서버에서만 (클라이언트 중복 금지)
-- 스키마 검증: Supabase MCP로 확인
-
-### 상태 관리
-
-- `Object.assign(state.optimisticState, {...})`
-- Optimistic updates 적용
-
----
-
-## 🔄 개발 워크플로우
-
-### 표준 5단계
-
-1. 요구사항 분석
-2. 라이브러리 탐색 (Perplexity MCP)
-3. 공식 문서 확인 (Context7 MCP)
-4. 기존 패턴 탐색 (`components/ui/`, DaisyUI)
-5. 구현 및 검증 (웹/모바일 테스트)
+### 📚 전체 시스템
+📂 `.claude/sub-agents.md`
+- 서브 에이전트 개요 및 협업 워크플로우
+- 에이전트별 역할 및 책임
+- 사용 가이드 및 예시
 
 ---
 
 ## ✅ 품질 관리
 
-### TASKS.md 워크플로우
+**상세 가이드**:
+- **TASKS.md 워크플로우**: `.claude/agents/docs-agent.md`
+- **테스트 전략**: `.claude/agents/test-agent.md`
 
-1. **작업 시작 전**: TASKS.md 확인 → 현재 작업 항목 파악
-2. **작업 진행 중**: 완료된 항목에 체크 표시 `- [x]`
-3. **작업 완료 후**: 상태 업데이트 및 다음 작업 확인
-4. **새 작업 추가 시**: TASKS.md에 새 항목 추가
+### 기본 체크리스트
 
-### 작업 완료 체크리스트
-
-1. [ ] TASKS.md 확인 및 현재 작업 파악
-2. [ ] 코드 작성 완료
-3. [ ] 기능 테스트 수행
-4. [ ] TASKS.md 업데이트 (완료 항목 체크)
-5. [ ] 사용자 검증 요청
-6. [ ] git commit
-7. [ ] 다음 작업 시작
+1. [ ] **TASKS.md 확인** - 현재 작업 파악
+2. [ ] **코드 작성 완료** - 기능 구현
+3. [ ] **기능 테스트** - 웹/모바일 환경
+4. [ ] **TASKS.md 업데이트** - 완료 항목 체크
+5. [ ] **사용자 검증 요청**
+6. [ ] **git commit**
+7. [ ] **다음 작업 시작**
 
 ### 2회 실패 시
 
@@ -257,10 +190,8 @@ npm start                     # 프로덕션 서버
 
 ---
 
-## 📚 기타 가이드
+## 📚 참고 문서
 
-### 쉬운 설명 규칙
-
-**트리거**: 기술 용어, 복잡한 개념 설명 시
-
-**형식**: 기술 설명 후 "쉽게 말하면:" + 실생활 비유
+- **Task Master AI**: `.taskmaster/CLAUDE.md`
+- **서브 에이전트 시스템**: `.claude/sub-agents.md`
+- **TASKS.md**: 현재 작업 계획 및 진행 상황
