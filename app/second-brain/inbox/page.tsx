@@ -36,6 +36,7 @@ export default function InboxPage() {
   // 편집 모드 상태
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
   // 스와이프된 카드 ID 추적
   const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
@@ -245,6 +246,44 @@ export default function InboxPage() {
     }
   };
 
+  /**
+   * Shift + 클릭 시 범위 선택 처리
+   */
+  const handleRangeSelection = (
+    currentIndex: number,
+    isChecked: boolean,
+    itemId: string
+  ) => {
+    if (lastSelectedIndex === null) {
+      // 첫 선택: 일반 체크/해제
+      const newSet = new Set(selectedIds);
+      if (isChecked) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      setSelectedIds(newSet);
+      setLastSelectedIndex(currentIndex);
+      return;
+    }
+
+    // 범위 선택: lastSelectedIndex와 currentIndex 사이의 모든 아이템
+    const start = Math.min(lastSelectedIndex, currentIndex);
+    const end = Math.max(lastSelectedIndex, currentIndex);
+
+    const newSet = new Set(selectedIds);
+    for (let i = start; i <= end; i++) {
+      if (isChecked) {
+        newSet.add(filteredItems[i].id);
+      } else {
+        newSet.delete(filteredItems[i].id);
+      }
+    }
+
+    setSelectedIds(newSet);
+    setLastSelectedIndex(currentIndex);
+  };
+
   // 드래그 시작 핸들러
   const handleDragStart = () => (
     event: MouseEvent | TouchEvent | PointerEvent,
@@ -362,6 +401,7 @@ export default function InboxPage() {
                   onClick={() => {
                     setIsEditMode(false);
                     setSelectedIds(new Set());
+                    setLastSelectedIndex(null);
                   }}
                   className="btn btn-ghost btn-sm rounded-full"
                 >
@@ -378,7 +418,10 @@ export default function InboxPage() {
               <button
                 onClick={() => {
                   setActiveTab('todo');
-                  if (isEditMode) setSelectedIds(new Set());
+                  if (isEditMode) {
+                    setSelectedIds(new Set());
+                    setLastSelectedIndex(null);
+                  }
                 }}
                 className={cn('tab', activeTab === 'todo' && 'tab-active')}
               >
@@ -392,7 +435,10 @@ export default function InboxPage() {
               <button
                 onClick={() => {
                   setActiveTab('note');
-                  if (isEditMode) setSelectedIds(new Set());
+                  if (isEditMode) {
+                    setSelectedIds(new Set());
+                    setLastSelectedIndex(null);
+                  }
                 }}
                 className={cn('tab', activeTab === 'note' && 'tab-active')}
               >
@@ -544,13 +590,22 @@ export default function InboxPage() {
                         checked={selectedIds.has(item.id)}
                         onChange={(e) => {
                           e.stopPropagation();
-                          const newSet = new Set(selectedIds);
-                          if (e.target.checked) {
-                            newSet.add(item.id);
+
+                          if ((e.nativeEvent as MouseEvent).shiftKey) {
+                            // Shift + 클릭: 범위 선택
+                            const currentIndex = filteredItems.findIndex(i => i.id === item.id);
+                            handleRangeSelection(currentIndex, e.target.checked, item.id);
                           } else {
-                            newSet.delete(item.id);
+                            // 일반 클릭: 단일 체크/해제
+                            const newSet = new Set(selectedIds);
+                            if (e.target.checked) {
+                              newSet.add(item.id);
+                            } else {
+                              newSet.delete(item.id);
+                            }
+                            setSelectedIds(newSet);
+                            setLastSelectedIndex(filteredItems.findIndex(i => i.id === item.id));
                           }
-                          setSelectedIds(newSet);
                         }}
                       />
                     )}
