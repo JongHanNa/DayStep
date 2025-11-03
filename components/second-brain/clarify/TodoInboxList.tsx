@@ -69,7 +69,9 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       }
 
       // InboxItem 업데이트 (프론트엔드 전용 - 스토어만 반영)
-      await updateInboxItem(editingTodo.id, {
+      if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+      await updateInboxItem(user.id, editingTodo.id, {
         content: updatedTodo.title,
         status: shouldRemoveFromInbox ? newStatus : 'inbox',
         clarification: updatedTodo.clarification,

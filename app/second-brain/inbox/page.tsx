@@ -56,7 +56,7 @@ export default function InboxPage() {
 
   useEffect(() => {
     if (appUser?.id) {
-      fetchInboxItems();
+      fetchInboxItems(appUser.id);
       fetchAreas(appUser.id);
       fetchResources(appUser.id);
       fetchNotes();
@@ -87,20 +87,20 @@ export default function InboxPage() {
 
   // 즉시 생성 패턴
   const handleQuickAdd = async () => {
-    if (isCreating) return; // 중복 생성 방지
+    if (isCreating || !appUser?.id) return; // 중복 생성 방지
 
     try {
       setIsCreating(true);
 
       if (activeTab === 'todo') {
-        await createInboxItem({
+        await createInboxItem(appUser.id, {
           content: '새 할일',
           status: 'inbox',
           item_type: 'todo',
           is_completed: false,
         });
       } else {
-        await createInboxItem({
+        await createInboxItem(appUser.id, {
           content: '새 노트',
           status: 'inbox',
           item_type: 'note',
@@ -157,7 +157,7 @@ export default function InboxPage() {
 
   // 항목 업데이트
   const handleUpdate = async () => {
-    if (!editingItem) return;
+    if (!editingItem || !appUser?.id) return;
 
     try {
       // 탭 필터링과 동일한 조건: item_type이 없으면 todo로 간주
@@ -168,7 +168,7 @@ export default function InboxPage() {
             ? JSON.stringify(todoForm.nextActionStatuses)
             : '';
 
-        await updateInboxItem(editingItem.id, {
+        await updateInboxItem(appUser.id, editingItem.id, {
           content: todoForm.title,
           clarification: todoForm.clarification,
           next_action_status: nextActionStatusJson,
@@ -190,7 +190,7 @@ export default function InboxPage() {
           }
         }
 
-        await updateInboxItem(editingItem.id, {
+        await updateInboxItem(appUser.id, editingItem.id, {
           content: noteForm.title,
           note_title: noteForm.title,
           note_content: noteForm.content,
@@ -210,9 +210,9 @@ export default function InboxPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!confirm('정말 삭제하시겠습니까?') || !appUser?.id) return;
     try {
-      await deleteInboxItem(id);
+      await deleteInboxItem(appUser.id, id);
     } catch (error) {
       console.error('항목 삭제 실패:', error);
     }

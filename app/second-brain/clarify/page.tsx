@@ -52,7 +52,7 @@ export default function ClarifyPage() {
   const loadInboxData = async () => {
     if (!appUser?.id) return;
 
-    await fetchInboxItems();
+    await fetchInboxItems(appUser.id);
     await fetchAreas(appUser.id);
     await fetchResources(appUser.id);
     await fetchNotes();

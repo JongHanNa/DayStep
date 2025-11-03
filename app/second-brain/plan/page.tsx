@@ -116,7 +116,7 @@ export default function PlanPage() {
 
   // 초기 데이터 로드
   useEffect(() => {
-    fetchInboxItems();
+    if (appUser?.id) fetchInboxItems(appUser.id);
   }, [fetchInboxItems]);
 
   // 프로젝트 필터 상태
@@ -167,8 +167,10 @@ export default function PlanPage() {
     }
 
     try {
+      if (!appUser?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
       // InboxStore 업데이트
-      await updateInboxItem(currentItem.id, {
+      await updateInboxItem(appUser.id, currentItem.id, {
         content: updatedTodo.title,
         scheduled_date: updatedTodo.scheduledDate ? updatedTodo.scheduledDate.toISOString() : undefined,
         is_highlight: updatedTodo.isHighlight,
@@ -378,8 +380,10 @@ export default function PlanPage() {
           return;
         }
 
+        if (!appUser?.id) return;
+
         // InboxItem의 날짜 업데이트
-        await updateInboxItem(itemId, {
+        await updateInboxItem(appUser.id, itemId, {
           scheduled_date: scheduledDate.toISOString(),
         });
       }
@@ -392,8 +396,10 @@ export default function PlanPage() {
       return;
     }
 
+    if (!appUser?.id) return;
+
     for (const item of overdueTodos) {
-      await updateInboxItem(item.id, {
+      await updateInboxItem(appUser.id, item.id, {
         scheduled_date: undefined,
         clarification: undefined,
       });

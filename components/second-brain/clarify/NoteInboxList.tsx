@@ -7,6 +7,7 @@ import type { Todo } from '@/types';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useModalStore } from '@/state/stores/modalStore';
+import { useAuthStore } from '@/state/stores/authStore';
 
 interface NoteInboxListProps {
   notes: InboxItem[];
@@ -18,6 +19,7 @@ interface NoteInboxListProps {
 }
 
 export default function NoteInboxList({ notes, areas, resources, projects, todos, onRefresh }: NoteInboxListProps) {
+  const user = useAuthStore((state) => state.user);
   const { updateInboxItem } = useInboxStore();
   const { openModal, closeModal } = useModalStore();
   const [editingNote, setEditingNote] = useState<InboxItem | null>(null);
@@ -68,7 +70,9 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
         }
       }
 
-      await updateInboxItem(editingNote.id, {
+      if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+      await updateInboxItem(user.id, editingNote.id, {
         content: noteForm.title,
         note_title: noteForm.title,
         note_content: noteForm.content,
