@@ -498,12 +498,15 @@ export default function InboxPage() {
           <div className="space-y-2">
             {filteredItems.map((item) => (
               <div key={item.id} className="relative overflow-hidden rounded-lg">
-                {/* 배경 레이어: 휴지통 버튼 */}
+                {/* 배경 레이어: 삭제 버튼 */}
                 {!isEditMode && (
-                  <div className="absolute inset-y-0 right-0 flex items-center justify-end bg-error pr-4">
+                  <div
+                    className="absolute inset-y-0 right-0 flex items-center justify-end bg-error"
+                    style={{ width: '85px' }}
+                  >
                     <button
                       onClick={(e) => handleDeleteClick(e, item.id)}
-                      className="btn btn-circle btn-ghost"
+                      className="btn btn-circle btn-ghost mr-2"
                       title="삭제"
                     >
                       <Trash2 className="w-5 h-5 text-white" />
@@ -511,16 +514,24 @@ export default function InboxPage() {
                   </div>
                 )}
 
-                {/* 전경 레이어: 카드 콘텐츠 */}
+                {/* 카드 레이어 */}
                 <motion.div
-                  className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer"
+                  className="relative bg-base-200 hover:bg-base-300 transition-colors cursor-pointer w-full"
+                  style={{
+                    borderTopLeftRadius: '0.5rem',
+                    borderBottomLeftRadius: '0.5rem',
+                  }}
                   // 일반 모드에서만 드래그 활성화
                   drag={!isEditMode ? "x" : false}
                   dragConstraints={{ left: -80, right: 0 }}
                   dragElastic={0.2}
                   onDragStart={!isEditMode ? handleDragStart() : undefined}
                   onDragEnd={!isEditMode ? handleSwipe(item) : undefined}
-                  animate={{ x: swipedItemId === item.id ? -80 : 0 }}
+                  animate={{
+                    x: swipedItemId === item.id ? -80 : 0,
+                    borderTopRightRadius: swipedItemId === item.id ? 0 : '0.5rem',
+                    borderBottomRightRadius: swipedItemId === item.id ? 0 : '0.5rem',
+                  }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   onClick={() => {
                     // 드래그 직후에는 클릭 무시
@@ -544,7 +555,7 @@ export default function InboxPage() {
                     }
                   }}
                 >
-                <div className="card-body p-4">
+                <div className="p-4">
                   <div className="flex items-start gap-3">
                     {/* 편집 모드 체크박스 */}
                     {isEditMode && (
