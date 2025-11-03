@@ -382,12 +382,12 @@ export default function InboxPage() {
               }}
               className={`
                 flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
-                ${activeTab === 'todo' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-transparent hover:bg-base-300'}
+                ${activeTab === 'todo' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-white hover:bg-base-100'}
               `}
             >
               <span>할 일</span>
               {todoCount > 0 && (
-                <span className={`badge badge-sm ${activeTab === 'todo' ? 'badge-neutral' : 'badge-primary'}`}>
+                <span className={`badge badge-sm ${activeTab === 'todo' ? 'bg-white text-base-content' : 'badge-primary'}`}>
                   {todoCount}
                 </span>
               )}
@@ -399,12 +399,12 @@ export default function InboxPage() {
               }}
               className={`
                 flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
-                ${activeTab === 'note' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-transparent hover:bg-base-300'}
+                ${activeTab === 'note' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-white hover:bg-base-100'}
               `}
             >
               <span>노트</span>
               {noteCount > 0 && (
-                <span className={`badge badge-sm ${activeTab === 'note' ? 'badge-neutral' : 'badge-primary'}`}>
+                <span className={`badge badge-sm ${activeTab === 'note' ? 'bg-white text-base-content' : 'badge-primary'}`}>
                   {noteCount}
                 </span>
               )}
