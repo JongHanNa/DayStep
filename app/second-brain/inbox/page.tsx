@@ -324,9 +324,9 @@ export default function InboxPage() {
   const noteCount = inboxItems.filter(item => item.item_type === 'note').length;
 
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
+    <div className="min-h-screen bg-base-200 pb-20">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+      <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
         <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -468,7 +468,7 @@ export default function InboxPage() {
 
       {/* 안내 메시지 */}
       <div className="max-w-3xl mx-auto px-4 py-4">
-        <div className="alert bg-base-200 border-none mb-4">
+        <div className="alert bg-base-300 border-none mb-4">
           <div className="flex items-start gap-2">
             <span className="text-2xl">💡</span>
             <div className="text-sm">
@@ -516,7 +516,7 @@ export default function InboxPage() {
 
                 {/* 카드 레이어 */}
                 <motion.div
-                  className="relative bg-base-200 hover:bg-base-300 transition-colors cursor-pointer w-full"
+                  className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full"
                   style={{
                     borderTopLeftRadius: '0.5rem',
                     borderBottomLeftRadius: '0.5rem',
@@ -643,7 +643,7 @@ export default function InboxPage() {
       {editingItem && editingItem.item_type === 'note' && (
         <dialog open className="modal modal-open">
           <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-200 z-10`}>
               <button
                 onClick={() => {
                   setEditingItem(null);
