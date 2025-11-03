@@ -1460,6 +1460,16 @@ function CalendarDropArea({
           const spanningCard = spanningStarts.get(index);
           const hasSpanningCard = spanningRanges.has(index);
 
+          // 해당 날짜에 걸쳐있는 모든 스패닝 카드 찾기
+          const spanningCardsForDay: TodoItem[] = [];
+          spanningStarts.forEach((value, startIndex) => {
+            const { todo, spanDays } = value;
+            // 이 스패닝 카드가 현재 날짜를 포함하는지 확인
+            if (index >= startIndex && index < startIndex + spanDays) {
+              spanningCardsForDay.push(todo);
+            }
+          });
+
           // 모든 날짜 셀 렌더링 (스패닝 카드는 각 주의 시작 셀에 표시)
           return (
             <CalendarDayCell
@@ -1475,6 +1485,7 @@ function CalendarDropArea({
               spanDays={spanningCard?.spanDays}
               segmentPosition={spanningCard?.segmentPosition}
               hasSpanningCard={hasSpanningCard}
+              spanningCardsForDay={spanningCardsForDay}
             />
           );
         })}
@@ -1496,6 +1507,7 @@ function CalendarDayCell({
   spanDays,
   segmentPosition,
   hasSpanningCard = false,
+  spanningCardsForDay = [],
 }: {
   date: Date;
   isCurrentMonth: boolean;
@@ -1508,6 +1520,7 @@ function CalendarDayCell({
   spanDays?: number;
   segmentPosition?: 'single' | 'first' | 'middle' | 'last';
   hasSpanningCard?: boolean;
+  spanningCardsForDay?: TodoItem[];
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
 
@@ -1522,8 +1535,13 @@ function CalendarDayCell({
     <div
       ref={setNodeRef}
       onClick={() => {
-        if (isMobile && todos.length > 0) {
-          onOpenTodoListModal(date, todos);
+        if (isMobile && (todos.length > 0 || spanningCardsForDay.length > 0)) {
+          // 일반 할일 + 스패닝 카드 병합 (중복 제거)
+          const allTodos = [...todos, ...spanningCardsForDay];
+          const uniqueTodos = Array.from(
+            new Map(allTodos.map(t => [t.id, t])).values()
+          );
+          onOpenTodoListModal(date, uniqueTodos);
         }
       }}
       className={`
@@ -1532,7 +1550,7 @@ function CalendarDayCell({
         ${!isCurrentMonth ? 'opacity-40' : ''}
         bg-base-100 ${isToday ? 'border-primary' : 'border-base-300'}
         hover:border-primary/50 hover:shadow-md
-        ${isMobile && todos.length > 0 ? 'cursor-pointer' : ''}
+        ${isMobile && (todos.length > 0 || spanningCardsForDay.length > 0) ? 'cursor-pointer' : ''}
       `}
     >
       {/* 날짜 헤더 */}
@@ -1802,12 +1820,12 @@ function WeekView({
             const dayTodos = singleDayCards.get(dayIndex) || [];
             const isToday = isSameDay(day, new Date());
 
-            // 해당 날짜에 걸쳐있는 스패닝 카드 개수 계산
-            const spanningCardCount = spanningCards.filter(card => {
+            // 해당 날짜에 걸쳐있는 스패닝 카드들
+            const spanningCardsForDay = spanningCards.filter(card => {
               const startDay = card.startDay;
               const endDay = card.startDay + card.spanDays - 1;
               return dayIndex >= startDay && dayIndex <= endDay;
-            }).length;
+            }).map(card => card.todo);
 
             return (
               <WeekDayColumn
@@ -1818,7 +1836,8 @@ function WeekView({
                 onToggleTodo={onToggleTodo}
                 project={project}
                 onOpenTodoListModal={onOpenTodoListModal}
-                spanningCardCount={spanningCardCount}
+                spanningCardCount={spanningCardsForDay.length}
+                spanningCardsForDay={spanningCardsForDay}
               />
             );
           })}
@@ -1868,6 +1887,7 @@ function WeekDayColumn({
   project,
   onOpenTodoListModal,
   spanningCardCount = 0,
+  spanningCardsForDay = [],
 }: {
   date: Date;
   isToday: boolean;
@@ -1876,6 +1896,7 @@ function WeekDayColumn({
   project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
   onOpenTodoListModal: (date: Date, todos: TodoItem[]) => void;
   spanningCardCount?: number;
+  spanningCardsForDay?: TodoItem[];
 }) {
   const dateString = format(date, 'yyyy-MM-dd');
   const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
@@ -1891,8 +1912,13 @@ function WeekDayColumn({
     <div
       ref={setNodeRef}
       onClick={() => {
-        if (isMobile && todos.length > 0) {
-          onOpenTodoListModal(date, todos);
+        if (isMobile && (todos.length > 0 || spanningCardsForDay.length > 0)) {
+          // 일반 할일 + 스패닝 카드 병합 (중복 제거)
+          const allTodos = [...todos, ...spanningCardsForDay];
+          const uniqueTodos = Array.from(
+            new Map(allTodos.map(t => [t.id, t])).values()
+          );
+          onOpenTodoListModal(date, uniqueTodos);
         }
       }}
       className={`
@@ -1905,7 +1931,7 @@ function WeekDayColumn({
             ? 'bg-base-100 border-primary'
             : 'bg-base-100 border-base-300'
         }
-        ${isMobile && todos.length > 0 ? 'cursor-pointer' : ''}
+        ${isMobile && (todos.length > 0 || spanningCardsForDay.length > 0) ? 'cursor-pointer' : ''}
       `}
     >
       {/* 날짜 헤더 */}
