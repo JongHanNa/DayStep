@@ -44,6 +44,7 @@ interface TodoFormFieldsProps {
   nextActionStatusPlaceholder?: string;
   projects?: Project[]; // 프로젝트 목록
   notes?: Note[]; // 노트 목록
+  onNoteClick?: (note: Note) => void; // 노트 클릭 핸들러 (편집 모달 열기)
   onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
   onUpdateProject?: (id: string, title: string) => Promise<void>; // 프로젝트 수정
   onDeleteProject?: (id: string) => Promise<void>; // 프로젝트 삭제
@@ -85,6 +86,7 @@ export default function TodoFormFields({
   clarificationPlaceholder = '할일에 대한 자세한 설명을 입력하세요',
   projects = [],
   notes = [],
+  onNoteClick,
   onCreateProject,
   onUpdateProject,
   onDeleteProject,
@@ -405,8 +407,8 @@ export default function TodoFormFields({
               selectedNoteIds={todo.noteIds || []}
               notes={notes}
               onNotesChange={(noteIds) => onChange({ ...todo, noteIds })}
+              onNoteClick={onNoteClick}
               onCreateNote={onCreateNote}
-              onUpdateNote={onUpdateNote}
               onDeleteNote={onDeleteNote}
             />
           </div>

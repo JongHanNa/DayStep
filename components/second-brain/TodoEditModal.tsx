@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { useModalStore } from '@/state/stores/modalStore';
-import type { Project, Note } from '@/types/second-brain';
+import type { Project, Note, AreaResource as Area, AreaResource as Resource } from '@/types/second-brain';
+import type { Todo } from '@/types';
 
 interface TodoEditModalProps {
   open: boolean;
@@ -15,6 +18,9 @@ interface TodoEditModalProps {
   // 선택적 props (수집 페이지 등에서 사용)
   projects?: Project[];
   notes?: Note[];
+  areas?: Area[]; // NoteEditModal을 위해 추가
+  resources?: Resource[]; // NoteEditModal을 위해 추가
+  todos?: Todo[]; // NoteEditModal을 위해 추가
   onCreateProject?: (title: string) => Promise<Project>;
   onUpdateProject?: (id: string, title: string) => Promise<void>;
   onDeleteProject?: (id: string) => Promise<void>;
@@ -43,6 +49,9 @@ export default function TodoEditModal({
   onDelete,
   projects,
   notes,
+  areas = [],
+  resources = [],
+  todos = [],
   onCreateProject,
   onUpdateProject,
   onDeleteProject,
@@ -61,6 +70,10 @@ export default function TodoEditModal({
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
 
+  // 노트 편집 모달 상태
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
+
   // 모달 열림/닫힘 상태 관리
   useEffect(() => {
     if (open) {
@@ -70,6 +83,32 @@ export default function TodoEditModal({
       closeModal();
     };
   }, [open, openModal, closeModal]);
+
+  // 노트 클릭 핸들러
+  const handleNoteClick = (note: Note) => {
+    setEditingNote(note);
+    setNoteForm({
+      title: note.title,
+      content: note.content,
+      classification: note.classification,
+      linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
+      isPinned: note.is_pinned,
+      projectId: note.project_id || '',
+      todoId: '', // Note 타입에 related_task_id 필드가 없으므로 빈 문자열
+    });
+  };
+
+  // 노트 저장 핸들러
+  const handleNoteSave = async () => {
+    if (!editingNote || !noteForm || !onUpdateNote) return;
+    try {
+      await onUpdateNote(editingNote.id, noteForm.title);
+      setEditingNote(null);
+      setNoteForm(null);
+    } catch (error) {
+      console.error('노트 저장 실패:', error);
+    }
+  };
 
   if (!open || !todo) return null;
 
@@ -109,6 +148,7 @@ export default function TodoEditModal({
             clarificationPlaceholder={clarificationPlaceholder}
             projects={projects}
             notes={notes}
+            onNoteClick={handleNoteClick}
             onCreateProject={onCreateProject}
             onUpdateProject={onUpdateProject}
             onDeleteProject={onDeleteProject}
@@ -132,6 +172,22 @@ export default function TodoEditModal({
         </div>
       </div>
       <div className="modal-backdrop" onClick={onClose} />
+
+      {/* 노트 편집 모달 */}
+      <NoteEditModal
+        open={editingNote !== null && noteForm !== null}
+        note={noteForm}
+        onClose={() => {
+          setEditingNote(null);
+          setNoteForm(null);
+        }}
+        onSave={handleNoteSave}
+        onChange={setNoteForm}
+        areas={areas}
+        resources={resources}
+        projects={projects}
+        todos={todos}
+      />
     </dialog>
   );
 }

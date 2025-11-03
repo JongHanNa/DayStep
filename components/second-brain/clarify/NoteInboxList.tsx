@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Pin } from 'lucide-react';
 import type { InboxItem, AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
 import type { Todo } from '@/types';
-import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
-import { useModalStore } from '@/state/stores/modalStore';
 import { useAuthStore } from '@/state/stores/authStore';
 
 interface NoteInboxListProps {
@@ -21,19 +21,8 @@ interface NoteInboxListProps {
 export default function NoteInboxList({ notes, areas, resources, projects, todos, onRefresh }: NoteInboxListProps) {
   const user = useAuthStore((state) => state.user);
   const { updateInboxItem } = useInboxStore();
-  const { openModal, closeModal } = useModalStore();
   const [editingNote, setEditingNote] = useState<InboxItem | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
-
-  // 편집 모달 상태 관리 (하단 네비 숨김)
-  useEffect(() => {
-    if (editingNote) {
-      openModal();
-    }
-    return () => {
-      closeModal();
-    };
-  }, [editingNote, openModal, closeModal]);
 
   const handleNoteClick = (note: InboxItem) => {
     // note_category를 classification으로 매핑
@@ -87,7 +76,7 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
       if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
       // classification을 note_category로 역매핑
-      const mapClassificationToCategory = (classification: NoteFormData['classification']): string => {
+      const mapClassificationToCategory = (classification: NoteFormData['classification']): '중간 작업물' | '나중에 보기' | '레퍼런스' | undefined => {
         switch (classification) {
           case 'work_in_progress':
             return '중간 작업물';
@@ -96,7 +85,7 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
           case 'reference':
             return '레퍼런스';
           case 'none':
-            return '';
+            return undefined;
           default:
             return '중간 작업물';
         }
@@ -175,52 +164,21 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
         ))}
       </div>
 
-      {/* 노트 편집 모달 - DaisyUI dialog */}
-      {editingNote && noteForm && (
-        <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
-              <button
-                onClick={() => {
-                  setEditingNote(null);
-                  setNoteForm(null);
-                }}
-                className="btn btn-primary btn-sm rounded-full"
-              >
-                취소
-              </button>
-
-              <h3 className="text-lg font-semibold">노트 편집</h3>
-
-              <button
-                onClick={handleSave}
-                className="btn btn-primary btn-sm rounded-full"
-              >
-                저장
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4">
-                {noteForm && (
-                  <NoteFormFields
-                    note={noteForm}
-                    onChange={setNoteForm}
-                    areas={areas}
-                    resources={resources}
-                    projects={projects}
-                    todos={todos}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => {
-            setEditingNote(null);
-            setNoteForm(null);
-          }} />
-        </dialog>
-      )}
+      {/* 노트 편집 모달 */}
+      <NoteEditModal
+        open={editingNote !== null && noteForm !== null}
+        note={noteForm}
+        onClose={() => {
+          setEditingNote(null);
+          setNoteForm(null);
+        }}
+        onSave={handleSave}
+        onChange={setNoteForm}
+        areas={areas}
+        resources={resources}
+        projects={projects}
+        todos={todos}
+      />
     </>
   );
 }

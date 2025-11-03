@@ -14,8 +14,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion, PanInfo } from 'framer-motion';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
-import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { useModalStore } from '@/state/stores/modalStore';
 import { cn } from '@/lib/utils';
@@ -233,7 +234,7 @@ export default function InboxPage() {
         }
 
         // classification을 note_category로 역매핑 (InboxItem 호환성)
-        const mapClassificationToCategory = (classification: NoteFormData['classification']): string => {
+        const mapClassificationToCategory = (classification: NoteFormData['classification']): '중간 작업물' | '나중에 보기' | '레퍼런스' | undefined => {
           switch (classification) {
             case 'work_in_progress':
               return '중간 작업물';
@@ -242,7 +243,7 @@ export default function InboxPage() {
             case 'reference':
               return '레퍼런스';
             case 'none':
-              return '';
+              return undefined;
             default:
               return '중간 작업물';
           }
@@ -703,50 +704,21 @@ export default function InboxPage() {
         showProjects={false}
       />
 
-      {/* 노트 편집 모달 - DaisyUI dialog */}
-      {editingItem && editingItem.item_type === 'note' && (
-        <dialog open className="modal modal-open">
-          <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-200 z-10`}>
-              <button
-                onClick={() => {
-                  setEditingItem(null);
-                  resetForms();
-                }}
-                className="btn btn-primary btn-sm rounded-full"
-              >
-                취소
-              </button>
-
-              <h3 className="text-lg font-semibold">노트 편집</h3>
-
-              <button
-                onClick={handleUpdate}
-                className="btn btn-primary btn-sm rounded-full"
-              >
-                저장
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4">
-                <NoteFormFields
-                  note={noteForm}
-                  onChange={setNoteForm}
-                  areas={areas}
-                  resources={resources}
-                  titlePlaceholder="예: 새로운 브랜딩 관점 변경된 분석틀"
-                  contentPlaceholder="세컨드 브레인에 관련된 노트들이 프로젝트에 연결되어 있지 않으면 일 때문에 하던 것들은 노트만 달랑 이 프로젝트에 연결하여라면 분류됩니다"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => {
-            setEditingItem(null);
-            resetForms();
-          }} />
-        </dialog>
-      )}
+      {/* 노트 편집 모달 */}
+      <NoteEditModal
+        open={editingItem !== null && editingItem?.item_type === 'note'}
+        note={noteForm}
+        onClose={() => {
+          setEditingItem(null);
+          resetForms();
+        }}
+        onSave={handleUpdate}
+        onChange={setNoteForm}
+        areas={areas}
+        resources={resources}
+        titlePlaceholder="예: 새로운 브랜딩 관점 변경된 분석틀"
+        contentPlaceholder="세컨드 브레인에 관련된 노트들이 프로젝트에 연결되어 있지 않으면 일 때문에 하던 것들은 노트만 달랑 이 프로젝트에 연결하여라면 분류됩니다"
+      />
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />

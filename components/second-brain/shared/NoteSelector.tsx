@@ -8,8 +8,8 @@ interface NoteSelectorProps {
   selectedNoteIds: string[];
   notes: Note[];
   onNotesChange: (noteIds: string[]) => void;
+  onNoteClick?: (note: Note) => void; // 노트 클릭 시 편집 모달 열기
   onCreateNote?: (title: string) => Promise<Note>;
-  onUpdateNote?: (id: string, title: string) => Promise<void>;
   onDeleteNote?: (id: string) => Promise<void>;
 }
 
@@ -17,12 +17,10 @@ export default function NoteSelector({
   selectedNoteIds,
   notes,
   onNotesChange,
+  onNoteClick,
   onCreateNote,
-  onUpdateNote,
   onDeleteNote,
 }: NoteSelectorProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -34,37 +32,13 @@ export default function NoteSelector({
     }
   };
 
-  const startEdit = (note: Note) => {
-    setEditingId(note.id);
-    setEditingTitle(note.title);
-    setMenuOpenId(null);
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditingTitle('');
-  };
-
-  const saveEdit = async () => {
-    if (!editingId || !editingTitle.trim() || !onUpdateNote) return;
-    try {
-      await onUpdateNote(editingId, editingTitle.trim());
-      setEditingId(null);
-      setEditingTitle('');
-    } catch (error) {
-      console.error('노트 수정 실패:', error);
-    }
-  };
-
   const handleCreate = async () => {
     if (!onCreateNote) return;
     try {
       setIsCreating(true);
-      const newNote = await onCreateNote('새노트');
-      // 새 노트 생성 후 자동 선택 및 편집 모드
+      const newNote = await onCreateNote('새 노트');
+      // 새 노트 생성 후 자동 선택
       onNotesChange([...selectedNoteIds, newNote.id]);
-      setEditingId(newNote.id);
-      setEditingTitle(newNote.title);
     } catch (error) {
       console.error('노트 생성 실패:', error);
     } finally {
@@ -117,7 +91,6 @@ export default function NoteSelector({
       <div className="space-y-1 max-h-60 overflow-y-auto">
         {notes.map((note) => {
           const isSelected = selectedNoteIds.includes(note.id);
-          const isEditing = editingId === note.id;
 
           return (
             <div
@@ -145,33 +118,18 @@ export default function NoteSelector({
               {/* 노트 아이콘 */}
               <StickyNote className="w-4 h-4 text-base-content/60 flex-shrink-0" />
 
-              {/* 제목 (편집 가능) */}
+              {/* 제목 (클릭 시 편집 모달) */}
               <div className="flex-1 min-w-0">
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onBlur={saveEdit}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveEdit();
-                      if (e.key === 'Escape') cancelEdit();
-                    }}
-                    className="input input-xs input-bordered w-full"
-                    autoFocus
-                  />
-                ) : (
-                  <button
-                    onClick={() => startEdit(note)}
-                    className="text-left text-sm truncate w-full hover:underline"
-                  >
-                    {note.title}
-                  </button>
-                )}
+                <button
+                  onClick={() => onNoteClick?.(note)}
+                  className="text-left text-sm truncate w-full hover:underline"
+                >
+                  {note.title}
+                </button>
               </div>
 
               {/* 메뉴 버튼 */}
-              {onDeleteNote && !isEditing && (
+              {onDeleteNote && (
                 <div className="relative">
                   <button
                     onClick={() =>
