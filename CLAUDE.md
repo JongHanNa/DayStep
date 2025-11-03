@@ -42,23 +42,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 작업 유형 | 서브 에이전트 | 트리거 키워드 | 호출 시점 |
 |----------|-------------|-------------|----------|
-| **UI 작업** | 🎨 ui-agent | UI, 디자인, 스타일, 컴포넌트, 페이지, 레이아웃, 반응형, 테마, 배경색, 버튼, 카드, 모달 | UI 수정/생성 요청 시 |
+| **UI 작업** | 🎨 frontend-architect | UI, 디자인, 스타일, 컴포넌트, 페이지, 레이아웃, 반응형, 테마, 배경색, 버튼, 카드, 모달 | UI 수정/생성 요청 시 |
+| **상태 관리** | 🗂️ zustand-architect | store, zustand, 상태, state, optimistic, 동기화, 캐싱, 롤백, getState | Store 설계/수정, 상태 관리 |
+| **백엔드** | 🔧 backend-architect | supabase, database, DB, 쿼리, query, RLS, 인증, auth, API, 백엔드 | DB 쿼리, 인증, RLS 정책 |
 | **테스트** | 🧪 test-agent | 테스트, 검증, 확인, 버그, 에러, 작동, 느림, 깨짐, iOS, Android, 모바일, 웹, 성능 | 기능 완료 후, 버그 리포트 |
 
 ### 호출 예시
 
 **사용자**: "수집 페이지 디자인 일관성 개선해줘"
-→ **메인 에이전트**: Task tool로 ui-agent 호출
+→ **메인 에이전트**: Task tool로 frontend-architect 호출
+
+**사용자**: "Todo store에 optimistic update 추가"
+→ **메인 에이전트**: Task tool로 zustand-architect 호출
+
+**사용자**: "Supabase RLS 정책 검증"
+→ **메인 에이전트**: Task tool로 backend-architect 호출
 
 **사용자**: "구현 완료, 테스트 필요"
 → **메인 에이전트**: Task tool로 test-agent 호출
 
 ### 📂 서브 에이전트 문서
 
-#### 🎨 ui-agent
-- **위치**: `.claude/agents/ui-agent.md`
+#### 🎨 frontend-architect
+- **위치**: `.claude/agents/frontend-architect.md`
 - **전문 분야**: DaisyUI + Tailwind CSS, 반응형 디자인, 테마 호환성
 - **주요 패턴**: 페이지 레이아웃, 모달, 카드, 버튼 스타일
+
+#### 🗂️ zustand-architect
+- **위치**: `.claude/agents/zustand-architect.md`
+- **전문 분야**: Zustand store 설계, Optimistic updates, 상태 동기화
+- **주요 패턴**: Store 구조, 낙관적 업데이트, 롤백 로직, 상태 지속성
+
+#### 🔧 backend-architect
+- **위치**: `.claude/agents/backend-architect.md`
+- **전문 분야**: Supabase DB 접근, 인증 시스템, RLS 정책
+- **주요 패턴**: DB 쿼리, supabaseWebViewHelper, userId 전달, 타입 안전성
 
 #### 🧪 test-agent
 - **위치**: `.claude/agents/test-agent.md`
