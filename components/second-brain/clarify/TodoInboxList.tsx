@@ -136,21 +136,25 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
 
   // 노트 관련 핸들러
   const handleCreateNote = async (title: string) => {
-    return await createNote({
+    if (!user?.id) throw new Error('User not found');
+    return await createNote(user.id, {
       title,
       content: '',
       memo_type: 'note',
+      note_category: 'work_in_progress', // 기본값
       tags: [],
       is_pinned: false,
     });
   };
 
   const handleUpdateNote = async (id: string, title: string) => {
-    await updateNote(id, { title });
+    if (!user?.id) throw new Error('User not found');
+    await updateNote(id, user.id, { title });
   };
 
   const handleDeleteNote = async (id: string) => {
-    await deleteNote(id);
+    if (!user?.id) throw new Error('User not found');
+    await deleteNote(id, user.id);
   };
 
   if (todos.length === 0) {

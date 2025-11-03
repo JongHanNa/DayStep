@@ -55,7 +55,7 @@ export default function ClarifyPage() {
     await fetchInboxItems(appUser.id);
     await fetchAreas(appUser.id);
     await fetchResources(appUser.id);
-    await fetchNotes();
+    await fetchNotes(appUser.id);
     await fetchGoals(appUser.id);
     const inboxTodos = await fetchInboxItemsByType('todo');
     const inboxNotes = await fetchInboxItemsByType('note');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Pin, FileText, Bookmark } from 'lucide-react';
@@ -14,12 +15,15 @@ const NOTE_TYPE_LABELS: Record<NoteType, string> = {
 };
 
 export default function NotesPage() {
+  const { appUser } = useAuth();
   const { notes, fetchNotes } = useNoteStore();
   const [filterType, setFilterType] = useState<NoteType | 'all'>('all');
 
   useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
+    if (appUser?.id) {
+      fetchNotes(appUser.id);
+    }
+  }, [appUser?.id, fetchNotes]);
 
   const filteredNotes = filterType === 'all'
     ? notes

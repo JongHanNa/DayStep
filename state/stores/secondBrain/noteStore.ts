@@ -111,7 +111,7 @@ export const useNoteStore = createStore<NoteStoreState>(
           throw new Error('노트를 찾을 수 없습니다.');
         }
 
-        const updatedNotes = get().notes.map((note) =>
+        const updatedNotes = get().notes.map((note: Note) =>
           note.id === id ? updatedNote : note
         );
 
@@ -133,7 +133,7 @@ export const useNoteStore = createStore<NoteStoreState>(
         const success = await deleteNoteWithJWT(id, userId);
 
         if (success) {
-          const updatedNotes = get().notes.filter((note) => note.id !== id);
+          const updatedNotes = get().notes.filter((note: Note) => note.id !== id);
           set({ notes: updatedNotes, loading: false });
         } else {
           set({ loading: false });
@@ -161,7 +161,7 @@ export const useNoteStore = createStore<NoteStoreState>(
           throw new Error('노트를 찾을 수 없습니다.');
         }
 
-        const updatedNotes = get().notes.map((note) =>
+        const updatedNotes = get().notes.map((note: Note) =>
           note.id === id ? updatedNote : note
         );
 
@@ -188,7 +188,7 @@ export const useNoteStore = createStore<NoteStoreState>(
           throw new Error('노트를 찾을 수 없습니다.');
         }
 
-        const updatedNotes = get().notes.map((note) =>
+        const updatedNotes = get().notes.map((note: Note) =>
           note.id === id ? updatedNote : note
         );
 
