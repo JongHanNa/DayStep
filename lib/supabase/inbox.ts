@@ -13,7 +13,7 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
   console.log('📥 수집함 할일 조회:', { userId });
 
   try {
-    const path = `/todos?user_id=eq.${userId}&clarification=eq.none&select=*&order=created_at.desc`;
+    const path = `/todos?user_id=eq.${userId}&clarification=eq.none&recurrence_pattern=eq.none&select=*&order=created_at.desc`;
     const todos = await fetchWithJWT(path);
 
     console.log('✅ 수집함 할일 조회 성공:', { count: todos?.length || 0 });

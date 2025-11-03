@@ -57,6 +57,7 @@ function todoToInboxItem(todo: any): InboxItem {
     is_completed: todo.completed || false,
     project_id: todo.project_id || undefined,
     next_action_status: todo.next_action_contexts ? JSON.stringify(todo.next_action_contexts) : '',
+    recurrence_pattern: todo.recurrence_pattern || 'none',
     created_at: todo.created_at,
     updated_at: todo.updated_at,
   };
