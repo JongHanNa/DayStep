@@ -46,6 +46,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **상태 관리** | 🗂️ zustand-architect | store, zustand, 상태, state, optimistic, 동기화, 캐싱, 롤백, getState | Store 설계/수정, 상태 관리 |
 | **백엔드** | 🔧 backend-architect | supabase, database, DB, 쿼리, query, RLS, 인증, auth, API, 백엔드 | DB 쿼리, 인증, RLS 정책 |
 | **테스트** | 🧪 test-agent | 테스트, 검증, 확인, 버그, 에러, 작동, 느림, 깨짐, iOS, Android, 모바일, 웹, 성능 | 기능 완료 후, 버그 리포트 |
+| **할일 정리** | 📋 task-planner | 할일, 작업, 계획, 체크리스트, TODO, 정리, 문서화, TASKS.md | 작업 계획 요청, 할일 정리 |
 
 ### 호출 예시
 
@@ -60,6 +61,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **사용자**: "구현 완료, 테스트 필요"
 → **메인 에이전트**: Task tool로 test-agent 호출
+
+**사용자**: "할일 정리해서 TASKS.md 만들어줘"
+→ **메인 에이전트**: Task tool로 task-planner 호출
 
 ### 📂 서브 에이전트 문서
 
@@ -82,6 +86,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **위치**: `.claude/agents/test-agent.md`
 - **전문 분야**: 웹/모바일 환경 테스트, 품질 검증, 성능 측정
 - **주요 역할**: 테스트 시나리오 작성, 이슈 리포팅, 회귀 테스트
+
+#### 📋 task-planner
+- **위치**: `.claude/agents/task-planner.md`
+- **전문 분야**: 할일 정리, 작업 계획 수립, TASKS.md 문서화
+- **주요 역할**: 요구사항 분석, 작업 분해, 체크리스트 생성, 진행 상황 추적
 
 ### 📚 시스템 개요
 - **전체 가이드**: `.claude/sub-agents.md`
