@@ -9,7 +9,7 @@ import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit3, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
@@ -30,6 +30,10 @@ export default function InboxPage() {
   const [activeTab, setActiveTab] = useState<'todo' | 'note'>('todo');
   const [isCreating, setIsCreating] = useState(false);
   const [editingItem, setEditingItem] = useState<InboxItem | null>(null);
+
+  // 편집 모드 상태
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { openModal, closeModal } = useModalStore();
 
@@ -267,24 +271,51 @@ export default function InboxPage() {
                 {filteredItems.length}개의 항목
               </p>
             </div>
-            <button
-              onClick={handleQuickAdd}
-              className="btn btn-primary btn-sm rounded-full"
-              disabled={isCreating}
-            >
-              {isCreating ? (
-                <span className="loading loading-spinner loading-xs" />
+            <div className="flex items-center gap-2">
+              {!isEditMode ? (
+                <>
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="btn btn-ghost btn-sm rounded-full"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    편집
+                  </button>
+                  <button
+                    onClick={handleQuickAdd}
+                    className="btn btn-primary btn-sm rounded-full"
+                    disabled={isCreating}
+                  >
+                    {isCreating ? (
+                      <span className="loading loading-spinner loading-xs" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    {isCreating ? '생성 중...' : '추가'}
+                  </button>
+                </>
               ) : (
-                <Plus className="w-4 h-4" />
+                <button
+                  onClick={() => {
+                    setIsEditMode(false);
+                    setSelectedIds(new Set());
+                  }}
+                  className="btn btn-ghost btn-sm rounded-full"
+                >
+                  <X className="w-4 h-4" />
+                  완료
+                </button>
               )}
-              {isCreating ? '생성 중...' : '추가'}
-            </button>
+            </div>
           </div>
 
           {/* 탭 */}
           <div className="flex gap-2 p-2 bg-base-200 rounded-full">
             <button
-              onClick={() => setActiveTab('todo')}
+              onClick={() => {
+                setActiveTab('todo');
+                if (isEditMode) setSelectedIds(new Set());
+              }}
               className={`
                 flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
                 ${activeTab === 'todo' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-transparent hover:bg-base-300'}
@@ -298,7 +329,10 @@ export default function InboxPage() {
               )}
             </button>
             <button
-              onClick={() => setActiveTab('note')}
+              onClick={() => {
+                setActiveTab('note');
+                if (isEditMode) setSelectedIds(new Set());
+              }}
               className={`
                 flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
                 ${activeTab === 'note' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-transparent hover:bg-base-300'}
@@ -312,6 +346,59 @@ export default function InboxPage() {
               )}
             </button>
           </div>
+
+          {/* 편집 모드 액션 바 */}
+          {isEditMode && (
+            <div className="mt-3 p-3 bg-base-200 rounded-lg flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm"
+                  checked={selectedIds.size === filteredItems.length && filteredItems.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(new Set(filteredItems.map(item => item.id)));
+                    } else {
+                      setSelectedIds(new Set());
+                    }
+                  }}
+                />
+                <span className="text-sm font-medium">전체 선택</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                {selectedIds.size > 0 && (
+                  <span className="badge badge-primary">
+                    {selectedIds.size}개 선택됨
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    if (!appUser?.id || selectedIds.size === 0) return;
+
+                    if (!confirm(`선택한 ${selectedIds.size}개 항목을 삭제하시겠습니까?`)) {
+                      return;
+                    }
+
+                    Promise.all(
+                      Array.from(selectedIds).map(id => deleteInboxItem(appUser.id!, id))
+                    ).then(() => {
+                      setSelectedIds(new Set());
+                      setIsEditMode(false);
+                    }).catch(error => {
+                      console.error('삭제 실패:', error);
+                      alert('일부 항목 삭제에 실패했습니다.');
+                    });
+                  }}
+                  className="btn btn-error btn-sm rounded-full"
+                  disabled={selectedIds.size === 0}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  삭제
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -349,10 +436,43 @@ export default function InboxPage() {
               <div
                 key={item.id}
                 className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer"
-                onClick={() => handleCardClick(item)}
+                onClick={() => {
+                  if (isEditMode) {
+                    // 편집 모드: 체크박스 토글
+                    const newSet = new Set(selectedIds);
+                    if (newSet.has(item.id)) {
+                      newSet.delete(item.id);
+                    } else {
+                      newSet.add(item.id);
+                    }
+                    setSelectedIds(newSet);
+                  } else {
+                    // 일반 모드: 편집 모달 열기
+                    handleCardClick(item);
+                  }
+                }}
               >
                 <div className="card-body p-4">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    {/* 편집 모드 체크박스 */}
+                    {isEditMode && (
+                      <input
+                        type="checkbox"
+                        className="checkbox mt-0.5"
+                        checked={selectedIds.has(item.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const newSet = new Set(selectedIds);
+                          if (e.target.checked) {
+                            newSet.add(item.id);
+                          } else {
+                            newSet.delete(item.id);
+                          }
+                          setSelectedIds(newSet);
+                        }}
+                      />
+                    )}
+
                     <div className="flex-1">
                       <p className="text-sm font-medium">{item.note_title || item.content}</p>
                       {item.note_content && (
@@ -383,18 +503,22 @@ export default function InboxPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(item.id);
-                        }}
-                        className="btn btn-ghost btn-sm btn-circle text-error"
-                        title="삭제"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+
+                    {/* 일반 모드 삭제 버튼 */}
+                    {!isEditMode && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(item.id);
+                          }}
+                          className="btn btn-ghost btn-sm btn-circle text-error"
+                          title="삭제"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
