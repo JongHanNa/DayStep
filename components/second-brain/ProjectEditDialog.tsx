@@ -1565,13 +1565,13 @@ function CalendarDayCell({
       {/* 할일 표시 영역 */}
       {isMobile ? (
         // Capacitor 환경: 점 + 개수 표시 (스패닝 카드 포함, 카드는 숨김)
-        (todos.length > 0 || spanningCard) && (
+        (todos.length > 0 || hasSpanningCard) && (
           <div className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: project?.color || '#808080' }}
             />
-            <span className="text-sm font-medium">{todos.length + (spanningCard ? 1 : 0)}</span>
+            <span className="text-sm font-medium">{todos.length + (hasSpanningCard ? 1 : 0)}</span>
           </div>
         )
       ) : (
