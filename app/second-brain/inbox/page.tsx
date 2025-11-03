@@ -716,8 +716,8 @@ export default function InboxPage() {
         onChange={setNoteForm}
         areas={areas}
         resources={resources}
-        titlePlaceholder="예: 새로운 브랜딩 관점 변경된 분석틀"
-        contentPlaceholder="세컨드 브레인에 관련된 노트들이 프로젝트에 연결되어 있지 않으면 일 때문에 하던 것들은 노트만 달랑 이 프로젝트에 연결하여라면 분류됩니다"
+        titlePlaceholder=""
+        contentPlaceholder=""
       />
 
       {/* 하단 네비게이션 */}
