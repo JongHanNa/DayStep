@@ -338,13 +338,6 @@ export default function InboxPage() {
               {!isEditMode ? (
                 <>
                   <button
-                    onClick={() => setIsEditMode(true)}
-                    className="btn btn-ghost btn-sm rounded-full"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    편집
-                  </button>
-                  <button
                     onClick={handleQuickAdd}
                     className="btn btn-primary btn-sm rounded-full"
                     disabled={isCreating}
@@ -355,6 +348,13 @@ export default function InboxPage() {
                       <Plus className="w-4 h-4" />
                     )}
                     {isCreating ? '생성 중...' : '추가'}
+                  </button>
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="btn btn-ghost btn-sm rounded-full"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    편집
                   </button>
                 </>
               ) : (
