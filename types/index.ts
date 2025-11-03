@@ -401,7 +401,7 @@ export type NextActionContext =
   | 'anywhere'
   | 'office'
   | 'read_later';
-export type NoteClassification = 'none' | 'work_in_progress' | 'read_later' | 'reference';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference';
 
 // Area/Resource types
 export interface AreaResource {
@@ -539,7 +539,7 @@ export interface TodoExtendedFields {
 export interface NoteExtendedFields {
   project_id: string | null;
   area_resource_id: string | null;
-  classification: NoteClassification;
+  note_category: NoteCategory;
 }
 
 // Statistics types

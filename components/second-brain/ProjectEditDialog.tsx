@@ -421,7 +421,7 @@ export default function ProjectEditDialog({
       id: `note-${Date.now()}`,
       title: '새 노트',
       content: '',
-      category: '중간 작업물',
+      note_category: 'work_in_progress',
       isPinned: false,
     };
 
@@ -982,7 +982,11 @@ export default function ProjectEditDialog({
                             <div className="flex items-center gap-2 mb-1">
                               {note.isPinned && <Pin className="w-4 h-4 text-primary" />}
                               <p className="font-medium truncate">{note.title}</p>
-                              <span className="badge badge-sm">{note.category}</span>
+                              <span className="badge badge-sm">
+                                {note.note_category === 'work_in_progress' ? '중간 작업물' :
+                                 note.note_category === 'read_later' ? '나중에 보기' :
+                                 note.note_category === 'reference' ? '레퍼런스' : ''}
+                              </span>
                             </div>
                             <p className="text-sm text-base-content/60 truncate mb-1">{note.content}</p>
                             {linkedName && (

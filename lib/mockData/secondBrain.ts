@@ -636,6 +636,7 @@ export const mockNotes: Note[] = [
 - Resources (자원): 관심 주제
 - Archive (아카이브): 완료된 항목`,
     memo_type: 'work_in_progress',
+    note_category: 'work_in_progress',
     project_id: 'project-1',
     tags: ['블로그', '생산성'],
     is_pinned: true,
@@ -657,6 +658,7 @@ export const mockNotes: Note[] = [
 - Error: #ef4444
 - Warning: #f97316`,
     memo_type: 'reference',
+    note_category: 'reference',
     project_id: 'project-2',
     tags: ['디자인', '색상'],
     is_pinned: false,
@@ -679,6 +681,7 @@ export const mockNotes: Note[] = [
 ## 2분 규칙
 2분 이내 할 수 있으면 즉시 실행`,
     memo_type: 'reference',
+    note_category: 'reference',
     resource_id: 'resource-1',
     tags: ['생산성', 'GTD'],
     is_pinned: false,
@@ -698,6 +701,7 @@ export const mockNotes: Note[] = [
 
 참고: https://react.dev/blog/2025/01/01/react-19`,
     memo_type: 'read_later',
+    note_category: 'read_later',
     resource_id: 'resource-2',
     tags: ['React', '프로그래밍'],
     is_pinned: false,
@@ -722,6 +726,7 @@ export const mockNotes: Note[] = [
 - 베타 테스트
 - 마케팅 준비`,
     memo_type: 'work_in_progress',
+    note_category: 'work_in_progress',
     area_id: 'area-1',
     tags: ['마일스톤', '계획'],
     is_pinned: true,
@@ -735,6 +740,7 @@ export const mockNotes: Note[] = [
     title: `노트 ${i + 6}`,
     content: `샘플 노트 내용 ${i + 6}`,
     memo_type: 'note' as const,
+    note_category: 'none' as const,
     tags: [],
     is_pinned: false,
     created_at: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString(),

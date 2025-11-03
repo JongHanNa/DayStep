@@ -75,10 +75,10 @@ function noteToInboxItem(note: any): InboxItem {
     item_type: 'note',
     note_title: note.title || '',
     note_content: note.content || '',
-    note_category: note.classification === 'none' ? '중간 작업물' :
-                   note.classification === 'work_in_progress' ? '중간 작업물' :
-                   note.classification === 'read_later' ? '나중에 보기' :
-                   note.classification === 'reference' ? '레퍼런스' : '중간 작업물',
+    note_category: note.note_category === 'none' ? '중간 작업물' :
+                   note.note_category === 'work_in_progress' ? '중간 작업물' :
+                   note.note_category === 'read_later' ? '나중에 보기' :
+                   note.note_category === 'reference' ? '레퍼런스' : '중간 작업물',
     is_pinned: note.is_pinned || false,
     linked_area_or_resource: note.area_resource_id ? `area-${note.area_resource_id}` :
                              note.project_id ? `project-${note.project_id}` : '',
@@ -164,7 +164,7 @@ export const useInboxStore = createStore<InboxStoreState>(
           const noteData = {
             title: data.note_title || data.content,
             content: data.note_content || '',
-            classification: (data.note_category === '중간 작업물' ? 'work_in_progress' :
+            note_category: (data.note_category === '중간 작업물' ? 'work_in_progress' :
                            data.note_category === '나중에 보기' ? 'read_later' :
                            data.note_category === '레퍼런스' ? 'reference' : 'none') as 'none' | 'work_in_progress' | 'read_later' | 'reference',
             is_pinned: data.is_pinned || false,
@@ -216,7 +216,7 @@ export const useInboxStore = createStore<InboxStoreState>(
           if (data.note_title !== undefined) noteData.title = data.note_title;
           if (data.note_content !== undefined) noteData.content = data.note_content;
           if (data.note_category !== undefined) {
-            noteData.classification = data.note_category === '중간 작업물' ? 'work_in_progress' :
+            noteData.note_category = data.note_category === '중간 작업물' ? 'work_in_progress' :
                                       data.note_category === '나중에 보기' ? 'read_later' :
                                       data.note_category === '레퍼런스' ? 'reference' : 'none';
           }

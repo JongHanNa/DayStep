@@ -41,7 +41,7 @@ export async function createNoteWithJWT(data: CreateNoteInput & { user_id: strin
     const result = await createWithJWT('notes', {
       ...data,
       title: data.title || '새 노트', // 기본값 추가
-      classification: data.classification || 'none', // 기본값
+      note_category: data.note_category || 'none', // 기본값
       is_pinned: data.is_pinned || false,
       tags: data.tags || [],
     });

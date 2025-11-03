@@ -1,6 +1,6 @@
 'use client';
 
-import type { AreaResource as Area, AreaResource as Resource, Project, NoteClassification } from '@/types/second-brain';
+import type { AreaResource as Area, AreaResource as Resource, Project, NoteCategory } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
 /**
@@ -10,7 +10,7 @@ import type { Todo } from '@/types';
 export interface NoteFormData {
   title: string;
   content: string;
-  classification: NoteClassification; // DB classification 컬럼과 일치
+  note_category: NoteCategory; // DB note_category 컬럼과 일치
   linkedAreaOrResource?: string; // 'area-{id}' 또는 'resource-{id}'
   isPinned: boolean;
   projectId?: string; // 프로젝트 연결 (선택)
@@ -65,8 +65,8 @@ export default function NoteFormFields({
           <span className="label-text">분류</span>
         </label>
         <select
-          value={note.classification}
-          onChange={(e) => onChange({ ...note, classification: e.target.value as NoteClassification })}
+          value={note.note_category}
+          onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
           className="select select-bordered"
         >
           <option value="none">선택 안함</option>

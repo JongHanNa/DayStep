@@ -25,13 +25,13 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
 }
 
 /**
- * 수집함 노트 목록 조회 (classification = 'none'인 notes)
+ * 수집함 노트 목록 조회 (note_category = 'none'인 notes)
  */
 export async function fetchInboxNotes(userId: string): Promise<any[]> {
   console.log('📥 수집함 노트 조회:', { userId });
 
   try {
-    const path = `/notes?user_id=eq.${userId}&classification=eq.none&select=*&order=created_at.desc`;
+    const path = `/notes?user_id=eq.${userId}&note_category=eq.none&select=*&order=created_at.desc`;
     const notes = await fetchWithJWT(path);
 
     console.log('✅ 수집함 노트 조회 성공:', { count: notes?.length || 0 });
@@ -87,7 +87,7 @@ export async function createInboxTodo(userId: string, data: {
 export async function createInboxNote(userId: string, data: {
   title: string;
   content: string;
-  classification?: 'none' | 'work_in_progress' | 'read_later' | 'reference';
+  note_category?: 'none' | 'work_in_progress' | 'read_later' | 'reference';
   is_pinned?: boolean;
   area_resource_id?: string;
   project_id?: string;
@@ -99,7 +99,7 @@ export async function createInboxNote(userId: string, data: {
       user_id: userId,
       title: data.title || '새 노트',
       content: data.content,
-      classification: data.classification || 'none',
+      note_category: data.note_category || 'none',
       is_pinned: data.is_pinned || false,
       area_resource_id: data.area_resource_id,
       project_id: data.project_id,
@@ -162,7 +162,7 @@ export async function updateInboxNote(
   data: {
     title?: string;
     content?: string;
-    classification?: 'none' | 'work_in_progress' | 'read_later' | 'reference';
+    note_category?: 'none' | 'work_in_progress' | 'read_later' | 'reference';
     is_pinned?: boolean;
     area_resource_id?: string;
     project_id?: string;
@@ -175,7 +175,7 @@ export async function updateInboxNote(
 
     if (data.title !== undefined) updateData.title = data.title;
     if (data.content !== undefined) updateData.content = data.content;
-    if (data.classification !== undefined) updateData.classification = data.classification;
+    if (data.note_category !== undefined) updateData.note_category = data.note_category;
     if (data.is_pinned !== undefined) updateData.is_pinned = data.is_pinned;
     if (data.area_resource_id !== undefined) updateData.area_resource_id = data.area_resource_id;
     if (data.project_id !== undefined) updateData.project_id = data.project_id;

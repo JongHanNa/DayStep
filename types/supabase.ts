@@ -459,7 +459,7 @@ export type Database = {
       notes: {
         Row: {
           area_resource_id: string | null
-          classification: Database["public"]["Enums"]["note_classification_enum"]
+          note_category: Database["public"]["Enums"]["note_category_enum"]
           content: string
           created_at: string | null
           id: string
@@ -477,7 +477,7 @@ export type Database = {
         }
         Insert: {
           area_resource_id?: string | null
-          classification?: Database["public"]["Enums"]["note_classification_enum"]
+          note_category?: Database["public"]["Enums"]["note_category_enum"]
           content: string
           created_at?: string | null
           id?: string
@@ -495,7 +495,7 @@ export type Database = {
         }
         Update: {
           area_resource_id?: string | null
-          classification?: Database["public"]["Enums"]["note_classification_enum"]
+          note_category?: Database["public"]["Enums"]["note_category_enum"]
           content?: string
           created_at?: string | null
           id?: string
@@ -1168,7 +1168,7 @@ export type Database = {
         | "anywhere"
         | "office"
         | "read_later"
-      note_classification_enum:
+      note_category_enum:
         | "none"
         | "work_in_progress"
         | "read_later"
@@ -1334,7 +1334,7 @@ export const Constants = {
         "office",
         "read_later",
       ],
-      note_classification_enum: [
+      note_category_enum: [
         "none",
         "work_in_progress",
         "read_later",

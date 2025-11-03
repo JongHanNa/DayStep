@@ -25,8 +25,8 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
 
   const handleNoteClick = (note: InboxItem) => {
-    // note_category를 classification으로 매핑
-    const mapCategoryToClassification = (category?: string): NoteFormData['classification'] => {
+    // note_category를 NoteCategory enum으로 매핑
+    const mapCategoryToNoteCategory = (category?: string): NoteFormData['note_category'] => {
       switch (category) {
         case '중간 작업물':
           return 'work_in_progress';
@@ -43,7 +43,7 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
     setNoteForm({
       title: note.note_title || note.content,
       content: note.note_content || '',
-      classification: mapCategoryToClassification(note.note_category),
+      note_category: mapCategoryToNoteCategory(note.note_category),
       linkedAreaOrResource: note.linked_area_or_resource || '',
       isPinned: note.is_pinned || false,
       projectId: note.project_id || '',
@@ -75,9 +75,9 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
 
       if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
-      // classification을 note_category로 역매핑
-      const mapClassificationToCategory = (classification: NoteFormData['classification']): '중간 작업물' | '나중에 보기' | '레퍼런스' | undefined => {
-        switch (classification) {
+      // NoteCategory enum을 한글 note_category로 역매핑
+      const mapNoteCategoryToKorean = (note_category: NoteFormData['note_category']): '중간 작업물' | '나중에 보기' | '레퍼런스' | undefined => {
+        switch (note_category) {
           case 'work_in_progress':
             return '중간 작업물';
           case 'read_later':
@@ -95,7 +95,7 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
         content: noteForm.title,
         note_title: noteForm.title,
         note_content: noteForm.content,
-        note_category: mapClassificationToCategory(noteForm.classification),
+        note_category: mapNoteCategoryToKorean(noteForm.note_category),
         linked_area_or_resource: noteForm.linkedAreaOrResource,
         is_pinned: noteForm.isPinned,
         status: shouldRemoveFromInbox ? newStatus : 'inbox',

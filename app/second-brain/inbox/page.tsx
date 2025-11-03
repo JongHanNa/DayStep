@@ -64,7 +64,7 @@ export default function InboxPage() {
   const [noteForm, setNoteForm] = useState<NoteFormData>({
     title: '',
     content: '',
-    classification: 'work_in_progress', // DB classification 사용
+    note_category: 'work_in_progress', // DB note_category 사용
     linkedAreaOrResource: '',
     isPinned: false,
   });
@@ -108,7 +108,7 @@ export default function InboxPage() {
     setNoteForm({
       title: '',
       content: '',
-      classification: 'work_in_progress', // DB classification 사용
+      note_category: 'work_in_progress', // DB note_category 사용
       linkedAreaOrResource: '',
       isPinned: false,
     });
@@ -174,8 +174,8 @@ export default function InboxPage() {
         noteIds: [], // inbox item에는 noteId 연결 필드 없음 (추후 필요시 추가)
       });
     } else {
-      // note_category를 classification으로 매핑
-      const mapCategoryToClassification = (category?: string): NoteFormData['classification'] => {
+      // note_category를 NoteCategory enum으로 매핑
+      const mapCategoryToNoteCategory = (category?: string): NoteFormData['note_category'] => {
         switch (category) {
           case '중간 작업물':
             return 'work_in_progress';
@@ -191,7 +191,7 @@ export default function InboxPage() {
       setNoteForm({
         title: item.note_title || item.content,
         content: item.note_content || '',
-        classification: mapCategoryToClassification(item.note_category),
+        note_category: mapCategoryToNoteCategory(item.note_category),
         linkedAreaOrResource: item.linked_area_or_resource || '',
         isPinned: item.is_pinned || false,
       });
@@ -233,9 +233,9 @@ export default function InboxPage() {
           }
         }
 
-        // classification을 note_category로 역매핑 (InboxItem 호환성)
-        const mapClassificationToCategory = (classification: NoteFormData['classification']): '중간 작업물' | '나중에 보기' | '레퍼런스' | undefined => {
-          switch (classification) {
+        // NoteCategory enum을 한글 note_category로 역매핑 (InboxItem 호환성)
+        const mapNoteCategoryToKorean = (note_category: NoteFormData['note_category']): '중간 작업물' | '나중에 보기' | '레퍼런스' | undefined => {
+          switch (note_category) {
             case 'work_in_progress':
               return '중간 작업물';
             case 'read_later':
@@ -253,7 +253,7 @@ export default function InboxPage() {
           content: noteForm.title,
           note_title: noteForm.title,
           note_content: noteForm.content,
-          note_category: mapClassificationToCategory(noteForm.classification),
+          note_category: mapNoteCategoryToKorean(noteForm.note_category),
           is_pinned: noteForm.isPinned,
           linked_area_or_resource: noteForm.linkedAreaOrResource,
           area_id,
@@ -380,7 +380,7 @@ export default function InboxPage() {
       title,
       content: '',
       memo_type: 'note',
-      classification: 'work_in_progress', // 기본값
+      note_category: 'work_in_progress', // 기본값
       tags: [],
       is_pinned: false,
     });

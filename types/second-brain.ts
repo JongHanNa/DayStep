@@ -151,9 +151,9 @@ export interface Goal {
 export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 
 /**
- * 노트 분류 (DB classification 컬럼과 일치)
+ * 노트 카테고리 (DB note_category 컬럼과 일치)
  */
-export type NoteClassification = 'none' | 'work_in_progress' | 'read_later' | 'reference';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference';
 
 /**
  * 노트 (Note) - PARA 구조로 분류되는 노트
@@ -164,7 +164,7 @@ export interface Note {
   title: string;
   content: string;
   memo_type: NoteType;
-  classification: NoteClassification; // 노트 분류
+  note_category: NoteCategory; // 노트 카테고리
 
   // PARA 연결
   project_id?: string;
