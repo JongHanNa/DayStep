@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
@@ -12,6 +12,7 @@ import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, Edit3, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { motion, PanInfo } from 'framer-motion';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
@@ -34,6 +35,13 @@ export default function InboxPage() {
   // 편집 모드 상태
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // 스와이프된 카드 ID 추적
+  const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
+
+  // 드래그/클릭 구분을 위한 ref
+  const dragStartX = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
 
   const { openModal, closeModal } = useModalStore();
 
@@ -66,6 +74,20 @@ export default function InboxPage() {
       fetchNotes();
     }
   }, [appUser?.id, fetchInboxItems, fetchAreas, fetchResources, fetchNotes]);
+
+  // 외부 클릭 시 스와이프된 카드 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (swipedItemId) {
+        setSwipedItemId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [swipedItemId]);
 
   // 편집 모달 상태 관리는 InboxTodoEditModal 컴포넌트 내부에서 처리
 
@@ -219,6 +241,48 @@ export default function InboxPage() {
       await deleteInboxItem(appUser.id, id);
     } catch (error) {
       console.error('항목 삭제 실패:', error);
+    }
+  };
+
+  // 드래그 시작 핸들러
+  const handleDragStart = () => (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    dragStartX.current = info.point.x;
+    isDragging.current = true;
+  };
+
+  // 스와이프 핸들러 (카드 열기/닫기)
+  const handleSwipe = (item: InboxItem) => (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    const dragDistance = Math.abs(info.point.x - dragStartX.current);
+
+    if (dragDistance > 5) {
+      // 5px 이상 드래그 → 실제 스와이프로 판단
+      const threshold = -40; // 40px 이상 왼쪽으로 드래그 시 버튼 노출
+
+      if (info.offset.x < threshold) {
+        // 카드 열기 (휴지통 버튼 노출)
+        setSwipedItemId(item.id);
+      } else {
+        // 카드 닫기
+        setSwipedItemId(null);
+      }
+    } else {
+      // 5px 미만 드래그 → 클릭으로 간주 (onClick에서 처리)
+      isDragging.current = false;
+    }
+  };
+
+  // 삭제 버튼 클릭 핸들러
+  const handleDeleteClick = (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    if (confirm('정말 삭제하시겠습니까?')) {
+      handleDelete(itemId);
+      setSwipedItemId(null);
     }
   };
 
@@ -433,25 +497,53 @@ export default function InboxPage() {
         ) : (
           <div className="space-y-2">
             {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer"
-                onClick={() => {
-                  if (isEditMode) {
-                    // 편집 모드: 체크박스 토글
-                    const newSet = new Set(selectedIds);
-                    if (newSet.has(item.id)) {
-                      newSet.delete(item.id);
-                    } else {
-                      newSet.add(item.id);
+              <div key={item.id} className="relative overflow-hidden rounded-lg">
+                {/* 배경 레이어: 휴지통 버튼 */}
+                {!isEditMode && (
+                  <div className="absolute inset-y-0 right-0 flex items-center justify-end bg-error pr-4">
+                    <button
+                      onClick={(e) => handleDeleteClick(e, item.id)}
+                      className="btn btn-circle btn-ghost"
+                      title="삭제"
+                    >
+                      <Trash2 className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                )}
+
+                {/* 전경 레이어: 카드 콘텐츠 */}
+                <motion.div
+                  className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer"
+                  // 일반 모드에서만 드래그 활성화
+                  drag={!isEditMode ? "x" : false}
+                  dragConstraints={{ left: -80, right: 0 }}
+                  dragElastic={0.2}
+                  onDragStart={!isEditMode ? handleDragStart() : undefined}
+                  onDragEnd={!isEditMode ? handleSwipe(item) : undefined}
+                  animate={{ x: swipedItemId === item.id ? -80 : 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  onClick={() => {
+                    // 드래그 직후에는 클릭 무시
+                    if (isDragging.current) {
+                      isDragging.current = false;
+                      return;
                     }
-                    setSelectedIds(newSet);
-                  } else {
-                    // 일반 모드: 편집 모달 열기
-                    handleCardClick(item);
-                  }
-                }}
-              >
+
+                    if (isEditMode) {
+                      // 편집 모드: 체크박스 토글
+                      const newSet = new Set(selectedIds);
+                      if (newSet.has(item.id)) {
+                        newSet.delete(item.id);
+                      } else {
+                        newSet.add(item.id);
+                      }
+                      setSelectedIds(newSet);
+                    } else {
+                      // 일반 모드: 편집 모달 열기
+                      handleCardClick(item);
+                    }
+                  }}
+                >
                 <div className="card-body p-4">
                   <div className="flex items-start gap-3">
                     {/* 편집 모드 체크박스 */}
@@ -503,24 +595,9 @@ export default function InboxPage() {
                         )}
                       </div>
                     </div>
-
-                    {/* 일반 모드 삭제 버튼 */}
-                    {!isEditMode && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(item.id);
-                          }}
-                          className="btn btn-ghost btn-sm btn-circle text-error"
-                          title="삭제"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
+                </motion.div>
               </div>
             ))}
           </div>
