@@ -36,11 +36,25 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
   }, [editingNote, openModal, closeModal]);
 
   const handleNoteClick = (note: InboxItem) => {
+    // note_category를 classification으로 매핑
+    const mapCategoryToClassification = (category?: string): NoteFormData['classification'] => {
+      switch (category) {
+        case '중간 작업물':
+          return 'work_in_progress';
+        case '나중에 보기':
+          return 'read_later';
+        case '레퍼런스':
+          return 'reference';
+        default:
+          return 'work_in_progress';
+      }
+    };
+
     setEditingNote(note);
     setNoteForm({
       title: note.note_title || note.content,
       content: note.note_content || '',
-      category: note.note_category || '중간 작업물',
+      classification: mapCategoryToClassification(note.note_category),
       linkedAreaOrResource: note.linked_area_or_resource || '',
       isPinned: note.is_pinned || false,
       projectId: note.project_id || '',
@@ -72,11 +86,27 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
 
       if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
+      // classification을 note_category로 역매핑
+      const mapClassificationToCategory = (classification: NoteFormData['classification']): string => {
+        switch (classification) {
+          case 'work_in_progress':
+            return '중간 작업물';
+          case 'read_later':
+            return '나중에 보기';
+          case 'reference':
+            return '레퍼런스';
+          case 'none':
+            return '';
+          default:
+            return '중간 작업물';
+        }
+      };
+
       await updateInboxItem(user.id, editingNote.id, {
         content: noteForm.title,
         note_title: noteForm.title,
         note_content: noteForm.content,
-        note_category: noteForm.category,
+        note_category: mapClassificationToCategory(noteForm.classification),
         linked_area_or_resource: noteForm.linkedAreaOrResource,
         is_pinned: noteForm.isPinned,
         status: shouldRemoveFromInbox ? newStatus : 'inbox',

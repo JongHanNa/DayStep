@@ -63,7 +63,7 @@ export default function InboxPage() {
   const [noteForm, setNoteForm] = useState<NoteFormData>({
     title: '',
     content: '',
-    category: '중간 작업물',
+    classification: 'work_in_progress', // DB classification 사용
     linkedAreaOrResource: '',
     isPinned: false,
   });
@@ -73,7 +73,7 @@ export default function InboxPage() {
       fetchInboxItems(appUser.id);
       fetchAreas(appUser.id);
       fetchResources(appUser.id);
-      fetchNotes();
+      fetchNotes(appUser.id);
     }
   }, [appUser?.id, fetchInboxItems, fetchAreas, fetchResources, fetchNotes]);
 
@@ -107,7 +107,7 @@ export default function InboxPage() {
     setNoteForm({
       title: '',
       content: '',
-      category: '중간 작업물',
+      classification: 'work_in_progress', // DB classification 사용
       linkedAreaOrResource: '',
       isPinned: false,
     });
@@ -173,10 +173,24 @@ export default function InboxPage() {
         noteIds: [], // inbox item에는 noteId 연결 필드 없음 (추후 필요시 추가)
       });
     } else {
+      // note_category를 classification으로 매핑
+      const mapCategoryToClassification = (category?: string): NoteFormData['classification'] => {
+        switch (category) {
+          case '중간 작업물':
+            return 'work_in_progress';
+          case '나중에 보기':
+            return 'read_later';
+          case '레퍼런스':
+            return 'reference';
+          default:
+            return 'work_in_progress';
+        }
+      };
+
       setNoteForm({
         title: item.note_title || item.content,
         content: item.note_content || '',
-        category: item.note_category || '중간 작업물',
+        classification: mapCategoryToClassification(item.note_category),
         linkedAreaOrResource: item.linked_area_or_resource || '',
         isPinned: item.is_pinned || false,
       });
@@ -218,11 +232,27 @@ export default function InboxPage() {
           }
         }
 
+        // classification을 note_category로 역매핑 (InboxItem 호환성)
+        const mapClassificationToCategory = (classification: NoteFormData['classification']): string => {
+          switch (classification) {
+            case 'work_in_progress':
+              return '중간 작업물';
+            case 'read_later':
+              return '나중에 보기';
+            case 'reference':
+              return '레퍼런스';
+            case 'none':
+              return '';
+            default:
+              return '중간 작업물';
+          }
+        };
+
         await updateInboxItem(appUser.id, editingItem.id, {
           content: noteForm.title,
           note_title: noteForm.title,
           note_content: noteForm.content,
-          note_category: noteForm.category,
+          note_category: mapClassificationToCategory(noteForm.classification),
           is_pinned: noteForm.isPinned,
           linked_area_or_resource: noteForm.linkedAreaOrResource,
           area_id,
@@ -341,10 +371,15 @@ export default function InboxPage() {
 
   // 새 노트 생성 핸들러
   const handleCreateNote = async (title: string): Promise<Note> => {
-    return await createNote({
+    if (!appUser?.id) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+
+    return await createNote(appUser.id, {
       title,
       content: '',
       memo_type: 'note',
+      classification: 'work_in_progress', // 기본값
       tags: [],
       is_pinned: false,
     });

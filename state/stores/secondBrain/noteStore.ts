@@ -1,11 +1,18 @@
 /**
  * Note Store - 노트 관리
- * PARA 구조로 분류되는 노트 시스템
+ * PARA 구조로 분류되는 노트 시스템 (Supabase 연동)
  */
 
 import { createStore } from '@/state/utils/storeUtils';
-import type { Note, CreateNoteInput, UpdateNoteInput, NoteType } from '@/types/second-brain';
-import { mockNotes, saveMockDataToLocalStorage } from '@/lib/mockData/secondBrain';
+import type { Note, CreateNoteInput, UpdateNoteInput } from '@/types/second-brain';
+import {
+  fetchNotesWithJWT,
+  createNoteWithJWT,
+  updateNoteWithJWT,
+  deleteNoteWithJWT,
+  fetchNotesByTodoWithJWT,
+  fetchNotesByProjectWithJWT,
+} from '@/lib/supabase/notes';
 
 interface NoteStoreState {
   notes: Note[];
@@ -13,18 +20,14 @@ interface NoteStoreState {
   error: string | null;
 
   // Actions
-  fetchNotes: () => Promise<void>;
-  fetchNotesByType: (type: NoteType) => Promise<Note[]>;
-  fetchNotesByProject: (projectId: string) => Promise<Note[]>;
-  fetchNotesByArea: (areaId: string) => Promise<Note[]>;
-  fetchNotesByResource: (resourceId: string) => Promise<Note[]>;
-  createNote: (data: CreateNoteInput) => Promise<Note>;
-  updateNote: (id: string, data: UpdateNoteInput) => Promise<Note>;
-  deleteNote: (id: string) => Promise<boolean>;
-  pinNote: (id: string) => Promise<Note>;
-  unpinNote: (id: string) => Promise<Note>;
-  searchNotes: (query: string) => Promise<Note[]>;
-  searchNotesByTags: (tags: string[]) => Promise<Note[]>;
+  fetchNotes: (userId: string) => Promise<void>;
+  fetchNotesByTodo: (todoId: string, userId: string) => Promise<Note[]>;
+  fetchNotesByProject: (projectId: string, userId: string) => Promise<Note[]>;
+  createNote: (userId: string, data: CreateNoteInput) => Promise<Note>;
+  updateNote: (id: string, userId: string, data: UpdateNoteInput) => Promise<Note>;
+  deleteNote: (id: string, userId: string) => Promise<boolean>;
+  pinNote: (id: string, userId: string) => Promise<Note>;
+  unpinNote: (id: string, userId: string) => Promise<Note>;
 }
 
 export const useNoteStore = createStore<NoteStoreState>(
@@ -33,11 +36,10 @@ export const useNoteStore = createStore<NoteStoreState>(
     loading: false,
     error: null,
 
-    fetchNotes: async () => {
+    fetchNotes: async (userId: string) => {
       try {
         set({ loading: true, error: null });
-        // Mock 데이터 로드
-        const notes = mockNotes;
+        const notes = await fetchNotesWithJWT(userId);
         set({ notes, loading: false });
       } catch (error) {
         set({
@@ -47,12 +49,12 @@ export const useNoteStore = createStore<NoteStoreState>(
       }
     },
 
-    fetchNotesByType: async (type: NoteType) => {
+    fetchNotesByTodo: async (todoId: string, userId: string) => {
       try {
         set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note: Note) => note.memo_type === type);
+        const notes = await fetchNotesByTodoWithJWT(todoId, userId);
         set({ loading: false });
-        return filteredNotes;
+        return notes;
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
@@ -62,12 +64,12 @@ export const useNoteStore = createStore<NoteStoreState>(
       }
     },
 
-    fetchNotesByProject: async (projectId: string) => {
+    fetchNotesByProject: async (projectId: string, userId: string) => {
       try {
         set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note: Note) => note.project_id === projectId);
+        const notes = await fetchNotesByProjectWithJWT(projectId, userId);
         set({ loading: false });
-        return filteredNotes;
+        return notes;
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
@@ -77,53 +79,17 @@ export const useNoteStore = createStore<NoteStoreState>(
       }
     },
 
-    fetchNotesByArea: async (areaId: string) => {
-      try {
-        set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note: Note) => note.area_id === areaId);
-        set({ loading: false });
-        return filteredNotes;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
-          loading: false,
-        });
-        return [];
-      }
-    },
-
-    fetchNotesByResource: async (resourceId: string) => {
-      try {
-        set({ loading: true, error: null });
-        const filteredNotes = get().notes.filter((note: Note) => note.resource_id === resourceId);
-        set({ loading: false });
-        return filteredNotes;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
-          loading: false,
-        });
-        return [];
-      }
-    },
-
-    createNote: async (data: CreateNoteInput) => {
+    createNote: async (userId: string, data: CreateNoteInput) => {
       try {
         set({ loading: true, error: null });
 
-        const newNote: Note = {
-          id: `note-${Date.now()}`,
-          user_id: 'mock-user-123',
+        const newNote = await createNoteWithJWT({
           ...data,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+          user_id: userId,
+        });
 
         const updatedNotes = [...get().notes, newNote];
         set({ notes: updatedNotes, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
 
         return newNote;
       } catch (error) {
@@ -135,28 +101,21 @@ export const useNoteStore = createStore<NoteStoreState>(
       }
     },
 
-    updateNote: async (id: string, data: UpdateNoteInput) => {
+    updateNote: async (id: string, userId: string, data: UpdateNoteInput) => {
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.map((note: Note) =>
-          note.id === id
-            ? {
-                ...note,
-                ...data,
-                updated_at: new Date().toISOString(),
-              }
-            : note
+        const updatedNote = await updateNoteWithJWT(id, userId, data);
+
+        if (!updatedNote) {
+          throw new Error('노트를 찾을 수 없습니다.');
+        }
+
+        const updatedNotes = get().notes.map((note) =>
+          note.id === id ? updatedNote : note
         );
 
         set({ notes: updatedNotes, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const updatedNote = updatedNotes.find((n: Note) => n.id === id);
-        if (!updatedNote) throw new Error('노트를 찾을 수 없습니다.');
-
         return updatedNote;
       } catch (error) {
         set({
@@ -167,17 +126,20 @@ export const useNoteStore = createStore<NoteStoreState>(
       }
     },
 
-    deleteNote: async (id: string) => {
+    deleteNote: async (id: string, userId: string) => {
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.filter((note: Note) => note.id !== id);
-        set({ notes: updatedNotes, loading: false });
+        const success = await deleteNoteWithJWT(id, userId);
 
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
+        if (success) {
+          const updatedNotes = get().notes.filter((note) => note.id !== id);
+          set({ notes: updatedNotes, loading: false });
+        } else {
+          set({ loading: false });
+        }
 
-        return true;
+        return success;
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '노트 삭제에 실패했습니다.',
@@ -187,29 +149,24 @@ export const useNoteStore = createStore<NoteStoreState>(
       }
     },
 
-    pinNote: async (id: string) => {
+    pinNote: async (id: string, userId: string) => {
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.map((note: Note) =>
-          note.id === id
-            ? {
-                ...note,
-                is_pinned: true,
-                updated_at: new Date().toISOString(),
-              }
-            : note
+        const updatedNote = await updateNoteWithJWT(id, userId, {
+          is_pinned: true,
+        });
+
+        if (!updatedNote) {
+          throw new Error('노트를 찾을 수 없습니다.');
+        }
+
+        const updatedNotes = get().notes.map((note) =>
+          note.id === id ? updatedNote : note
         );
 
         set({ notes: updatedNotes, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const pinnedNote = updatedNotes.find((n: Note) => n.id === id);
-        if (!pinnedNote) throw new Error('노트를 찾을 수 없습니다.');
-
-        return pinnedNote;
+        return updatedNote;
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '노트 고정에 실패했습니다.',
@@ -219,29 +176,24 @@ export const useNoteStore = createStore<NoteStoreState>(
       }
     },
 
-    unpinNote: async (id: string) => {
+    unpinNote: async (id: string, userId: string) => {
       try {
         set({ loading: true, error: null });
 
-        const updatedNotes = get().notes.map((note: Note) =>
-          note.id === id
-            ? {
-                ...note,
-                is_pinned: false,
-                updated_at: new Date().toISOString(),
-              }
-            : note
+        const updatedNote = await updateNoteWithJWT(id, userId, {
+          is_pinned: false,
+        });
+
+        if (!updatedNote) {
+          throw new Error('노트를 찾을 수 없습니다.');
+        }
+
+        const updatedNotes = get().notes.map((note) =>
+          note.id === id ? updatedNote : note
         );
 
         set({ notes: updatedNotes, loading: false });
-
-        // LocalStorage 저장
-        saveMockDataToLocalStorage();
-
-        const unpinnedNote = updatedNotes.find((n: Note) => n.id === id);
-        if (!unpinnedNote) throw new Error('노트를 찾을 수 없습니다.');
-
-        return unpinnedNote;
+        return updatedNote;
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '노트 고정 해제에 실패했습니다.',
@@ -250,54 +202,12 @@ export const useNoteStore = createStore<NoteStoreState>(
         throw error;
       }
     },
-
-    searchNotes: async (query: string) => {
-      try {
-        set({ loading: true, error: null });
-
-        const lowerQuery = query.toLowerCase();
-        const filteredNotes = get().notes.filter(
-          (note: Note) =>
-            note.title.toLowerCase().includes(lowerQuery) ||
-            note.content.toLowerCase().includes(lowerQuery) ||
-            note.tags.some((tag: string) => tag.toLowerCase().includes(lowerQuery))
-        );
-
-        set({ loading: false });
-        return filteredNotes;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '노트 검색에 실패했습니다.',
-          loading: false,
-        });
-        return [];
-      }
-    },
-
-    searchNotesByTags: async (tags: string[]) => {
-      try {
-        set({ loading: true, error: null });
-
-        const filteredNotes = get().notes.filter((note: Note) =>
-          tags.some((tag) => note.tags.includes(tag))
-        );
-
-        set({ loading: false });
-        return filteredNotes;
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '노트 검색에 실패했습니다.',
-          loading: false,
-        });
-        return [];
-      }
-    },
   }),
   {
     name: 'note-store',
     persist: {
       name: 'daystep-notes',
-      version: 1,
+      version: 2, // 버전 업데이트 (Supabase 연동)
     },
   }
 );

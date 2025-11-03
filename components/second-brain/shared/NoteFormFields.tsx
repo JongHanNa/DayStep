@@ -1,6 +1,6 @@
 'use client';
 
-import type { AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
+import type { AreaResource as Area, AreaResource as Resource, Project, NoteClassification } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
 /**
@@ -10,7 +10,7 @@ import type { Todo } from '@/types';
 export interface NoteFormData {
   title: string;
   content: string;
-  category: '중간 작업물' | '나중에 보기' | '레퍼런스';
+  classification: NoteClassification; // DB classification 컬럼과 일치
   linkedAreaOrResource?: string; // 'area-{id}' 또는 'resource-{id}'
   isPinned: boolean;
   projectId?: string; // 프로젝트 연결 (선택)
@@ -64,32 +64,16 @@ export default function NoteFormFields({
         <label className="label">
           <span className="label-text">분류</span>
         </label>
-        <div className="flex gap-2">
-          <button
-            onClick={() => onChange({ ...note, category: '중간 작업물' })}
-            className={`btn btn-sm flex-1 ${
-              note.category === '중간 작업물' ? 'bg-base-300' : ''
-            }`}
-          >
-            중간 작업물
-          </button>
-          <button
-            onClick={() => onChange({ ...note, category: '나중에 보기' })}
-            className={`btn btn-sm flex-1 ${
-              note.category === '나중에 보기' ? 'bg-base-300' : ''
-            }`}
-          >
-            나중에 보기
-          </button>
-          <button
-            onClick={() => onChange({ ...note, category: '레퍼런스' })}
-            className={`btn btn-sm flex-1 ${
-              note.category === '레퍼런스' ? 'bg-base-300' : ''
-            }`}
-          >
-            레퍼런스
-          </button>
-        </div>
+        <select
+          value={note.classification}
+          onChange={(e) => onChange({ ...note, classification: e.target.value as NoteClassification })}
+          className="select select-bordered"
+        >
+          <option value="none">선택 안함</option>
+          <option value="work_in_progress">중간 작업물</option>
+          <option value="read_later">나중에 보기</option>
+          <option value="reference">레퍼런스</option>
+        </select>
       </div>
 
       {/* 영역/자원 */}
