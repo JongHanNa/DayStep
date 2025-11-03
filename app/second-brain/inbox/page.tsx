@@ -332,9 +332,7 @@ export default function InboxPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold">수집</h1>
-              <p className="text-sm text-base-content/70">
-                {filteredItems.length}개의 항목
-              </p>
+              <p className="mt-2 text-sm font-medium text-base-content/70">빠른 수집을 위한 페이지입니다</p>
             </div>
             <div className="flex items-center gap-2">
               {!isEditMode ? (
@@ -368,7 +366,7 @@ export default function InboxPage() {
                   className="btn btn-ghost btn-sm rounded-full"
                 >
                   <X className="w-4 h-4" />
-                  완료
+                  취소
                 </button>
               )}
             </div>
@@ -460,22 +458,6 @@ export default function InboxPage() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* 안내 메시지 */}
-      <div className="max-w-3xl mx-auto px-4 py-4">
-        <div className="alert bg-base-300 border-none mb-4">
-          <div className="flex items-start gap-2">
-            <span className="text-2xl">💡</span>
-            <div className="text-sm">
-              <p className="font-medium mb-1">빠른 수집을 위한 페이지입니다</p>
-              <p className="text-base-content/70">
-                스크린샷, 노트, 머릿속 아이디어 등을 고민 없이 바로 수집하세요.
-                어느 것에 속하는지는 다음 명료화 단계에서 정리할 수 있습니다.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
