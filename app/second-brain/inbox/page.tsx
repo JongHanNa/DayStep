@@ -236,7 +236,7 @@ export default function InboxPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?') || !appUser?.id) return;
+    if (!appUser?.id) return;
     try {
       await deleteInboxItem(appUser.id, id);
     } catch (error) {
