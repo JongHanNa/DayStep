@@ -562,11 +562,6 @@ export default function InboxPage() {
                           {item.note_content}
                         </p>
                       )}
-                      {item.clarification && (
-                        <p className="text-xs text-base-content/60 mt-1 line-clamp-2">
-                          {item.clarification}
-                        </p>
-                      )}
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-base-content/50">
                           {formatDistanceToNow(new Date(item.created_at), {
