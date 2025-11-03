@@ -18,6 +18,7 @@ import NoteFormFields, { type NoteFormData } from '@/components/second-brain/sha
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { useModalStore } from '@/state/stores/modalStore';
+import { cn } from '@/lib/utils';
 
 export default function InboxPage() {
   const router = useRouter();
@@ -374,41 +375,37 @@ export default function InboxPage() {
           </div>
 
           {/* 탭 */}
-          <div className="flex gap-2 p-2 bg-base-200 rounded-full">
-            <button
-              onClick={() => {
-                setActiveTab('todo');
-                if (isEditMode) setSelectedIds(new Set());
-              }}
-              className={`
-                flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
-                ${activeTab === 'todo' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-white hover:bg-base-100'}
-              `}
-            >
-              <span>할 일</span>
-              {todoCount > 0 && (
-                <span className={`badge badge-sm ${activeTab === 'todo' ? 'bg-white text-base-content' : 'badge-primary'}`}>
-                  {todoCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('note');
-                if (isEditMode) setSelectedIds(new Set());
-              }}
-              className={`
-                flex items-center justify-center gap-2 px-4 py-2 rounded-full flex-1 whitespace-nowrap transition-all duration-200
-                ${activeTab === 'note' ? 'bg-primary text-primary-content scale-105 shadow-lg' : 'bg-white hover:bg-base-100'}
-              `}
-            >
-              <span>노트</span>
-              {noteCount > 0 && (
-                <span className={`badge badge-sm ${activeTab === 'note' ? 'bg-white text-base-content' : 'badge-primary'}`}>
-                  {noteCount}
-                </span>
-              )}
-            </button>
+          <div className="overflow-x-auto">
+            <div className="tabs tabs-boxed inline-flex">
+              <button
+                onClick={() => {
+                  setActiveTab('todo');
+                  if (isEditMode) setSelectedIds(new Set());
+                }}
+                className={cn('tab', activeTab === 'todo' && 'tab-active')}
+              >
+                할 일
+                {todoCount > 0 && (
+                  <span className="ml-1 badge badge-sm">
+                    {todoCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('note');
+                  if (isEditMode) setSelectedIds(new Set());
+                }}
+                className={cn('tab', activeTab === 'note' && 'tab-active')}
+              >
+                노트
+                {noteCount > 0 && (
+                  <span className="ml-1 badge badge-sm">
+                    {noteCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* 편집 모드 액션 바 */}
