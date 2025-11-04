@@ -49,26 +49,28 @@ export default function ClarifyPage() {
     loadInboxData();
   }, []);
 
+  // inboxItems가 로드되면 필터링 (Zustand 상태 변경 감지)
+  useEffect(() => {
+    if (inboxItems.length > 0) {
+      const inboxTodos = inboxItems.filter((item) => item.item_type === 'todo' && item.status === 'inbox');
+      const inboxNotes = inboxItems.filter((item) => item.item_type === 'note' && item.status === 'inbox');
+
+      setTodoInbox(inboxTodos);
+      setNoteInbox(inboxNotes);
+    }
+  }, [inboxItems]);
+
   const loadInboxData = async () => {
     if (!appUser?.id) return;
 
-    // 1. 먼저 inbox items를 완전히 로드
-    await fetchInboxItems(appUser.id);
-
-    // 2. 다른 데이터는 병렬로 로드
+    // 데이터 병렬 로드
     await Promise.all([
+      fetchInboxItems(appUser.id),
       fetchAreas(appUser.id),
       fetchResources(appUser.id),
       fetchNotes(appUser.id),
       fetchGoals(appUser.id),
     ]);
-
-    // 3. 이제 inboxItems가 채워진 상태에서 필터링
-    const inboxTodos = await fetchInboxItemsByType('todo');
-    const inboxNotes = await fetchInboxItemsByType('note');
-
-    setTodoInbox(inboxTodos);
-    setNoteInbox(inboxNotes);
 
     // 프로젝트 수집함: projects 테이블에서 조건부 필터링
     // 종료일, 할일 중 하나라도 없으면 수집함에 표시
