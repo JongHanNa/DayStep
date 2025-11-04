@@ -52,11 +52,18 @@ export default function ClarifyPage() {
   const loadInboxData = async () => {
     if (!appUser?.id) return;
 
+    // 1. 먼저 inbox items를 완전히 로드
     await fetchInboxItems(appUser.id);
-    await fetchAreas(appUser.id);
-    await fetchResources(appUser.id);
-    await fetchNotes(appUser.id);
-    await fetchGoals(appUser.id);
+
+    // 2. 다른 데이터는 병렬로 로드
+    await Promise.all([
+      fetchAreas(appUser.id),
+      fetchResources(appUser.id),
+      fetchNotes(appUser.id),
+      fetchGoals(appUser.id),
+    ]);
+
+    // 3. 이제 inboxItems가 채워진 상태에서 필터링
     const inboxTodos = await fetchInboxItemsByType('todo');
     const inboxNotes = await fetchInboxItemsByType('note');
 
