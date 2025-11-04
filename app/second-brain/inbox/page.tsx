@@ -21,6 +21,13 @@ import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { useModalStore } from '@/state/stores/modalStore';
 import { cn } from '@/lib/utils';
 
+// 날짜 유효성 검증 헬퍼 함수
+const isValidDate = (date: string | Date | undefined | null): boolean => {
+  if (!date) return false;
+  const d = new Date(date);
+  return d instanceof Date && !isNaN(d.getTime());
+};
+
 export default function InboxPage() {
   const router = useRouter();
   const { appUser } = useAuth();
@@ -655,10 +662,14 @@ export default function InboxPage() {
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-base-content/50">
-                          {formatDistanceToNow(new Date(item.created_at), {
-                            addSuffix: true,
-                            locale: ko
-                          })}
+                          {isValidDate(item.created_at) ? (
+                            formatDistanceToNow(new Date(item.created_at), {
+                              addSuffix: true,
+                              locale: ko
+                            })
+                          ) : (
+                            '날짜 정보 없음'
+                          )}
                         </span>
                         {item.note_category && (
                           <span className="badge badge-xs badge-ghost">{item.note_category}</span>
