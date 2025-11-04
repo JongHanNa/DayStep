@@ -1,32 +1,67 @@
+# DayStep 프로젝트 작업 관리 규칙
+
+## 스키마 검증: Supabase MCP로 확인
+## 절대 원칙
+1. **화면/페이지/프론트엔드/백엔드 개발, 문제 해결, 수정, 바꾸기, 할일/작업 목록/계획 생성 및 오류 메시지 해결 및 모든 작업은 시 task-planner 서브 에이전트 사용 해서 TASKS.md 생성 필수**
+2. 작업 시작 전 TASKS.md 반드시 확인
+3. 할당된 서브 에이전트 사용 (TASKS.md "Assigned" 확인)
+4. 작업 진행/완료 시 즉시 TASKS.md 업데이트
+5. Phase 순서 및 의존성 준수
+6.모든 작업은 TASKS.md 파일을 중심으로 진행합니다.
+7.작업은 한국어로 진행하세요. 커밋 메시지도 한국어로 생성하세요.
+8.커밋하기 전에 사용자에게 커밋 할지 확인 질문 하세요.
+
+---
+
+## 작업 진행 프로토콜
+
+### 작업 시작 전
+1. TASKS.md 읽기
+2. 우선순위 및 의존성 파악
+3. 할당된 서브 에이전트 확인 (TASKS.md의 "Assigned" 참조)
+
+### 새로운 작업 목록 생성 시
+- **새로운 주제의 작업 목록화 요청 시**, 기존 TASKS.md 파일 처리 방법을 사용자에게 확인:
+  1. "기존 TASKS.md 파일이 있습니다. 어떻게 처리하시겠습니까?"
+  2. 선택지 제공:
+     - **새로 생성**: 기존 내용 삭제하고 새로운 작업 목록 생성
+     - **추가**: 기존 작업 목록에 새로운 작업 추가
+     - **유지**: 기존 작업 완료 후 새로운 작업 시작
+  3. 사용자 응답에 따라 처리
+
+### 작업 진행 중
+- **작업 시작 시**: 체크박스 `[ ]` → `[-]` 변경 (진행 중 표시)
+- **작업 완료 시**:
+  - 체크박스 `[-]` → `[x]` 변경
+  - 완료 날짜 추가: `(담당: 에이전트명) - YYYY-MM-DD`
+  - 필요한 경우 추가 정보 기록 (선택사항):
+    - 수정 파일 경로
+    - 주요 변경 사항
+
+**작업 상태 표시**:
+- `[ ]` - 계획된 작업 (아직 시작 안함)
+- `[-]` - 진행 중인 작업
+- `[x]` - 완료된 작업
+
+### Phase 순서 준수
+- Phase 순차 진행 (N → N+1)
+- Dependencies 확인 필수
+- 우선순위: 높음 > 중간 > 낮음
+
+**참고**: TASKS.md 파일 구조 및 섹션 구성은 `.claude/agents/task-planner.md`에 정의되어 있습니다.
+
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 
 ## 프로젝트 정보
 
 **저장소**: DayStep - 할일 관리 및 템플릿 기반 생산성 앱
 **기술 스택**: Next.js 15, React 19, TypeScript, Supabase, Capacitor 7
 **배포**: 웹 (Vercel) + iOS/Android 네이티브 앱
-
-## 개발 명령어
-
-### 일반 개발
-```bash
-npm install                    # 의존성 설치
-npm run dev:web               # 웹 개발 서버 (BUILD_TARGET=web, 2초 시작)
-npm run dev:mobile            # 모바일 개발 + Capacitor 동기화
-npm run lint                  # ESLint 검사
-npx tsc --noEmit             # 타입 체크
-```
-
-### 빌드 및 배포
-```bash
-npm run build                 # 웹 프로덕션 빌드 (BUILD_TARGET=web)
-npm run build:mobile          # 모바일 빌드 + Capacitor 동기화
-npm run preview:web           # 웹 프로덕션 미리보기
-npm start                     # 프로덕션 서버
-```
-
 
 ## 환경 설정
 
