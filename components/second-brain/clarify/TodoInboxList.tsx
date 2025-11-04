@@ -18,6 +18,21 @@ interface TodoInboxListProps {
   onRefresh: () => void;
 }
 
+// 명료화 enum 값을 한글로 변환
+const getClarificationLabel = (clarification?: string): string => {
+  if (!clarification || clarification === 'none') return '';
+
+  const labelMap: Record<string, string> = {
+    'reminder': '다시알림',
+    'someday': '언젠가',
+    'waiting': '대기중',
+    'next_action': '다음행동',
+    'scheduled': '일정',
+  };
+
+  return labelMap[clarification] || clarification;
+};
+
 export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh }: TodoInboxListProps) {
   const user = useAuthStore((state) => state.user);
   const { inboxItems, updateInboxItem, convertTodoToProject } = useInboxStore();
@@ -185,8 +200,8 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium mb-1">{todo.content}</p>
-                    {todo.clarification && (
-                      <span className="badge badge-sm badge-primary">{todo.clarification}</span>
+                    {todo.clarification && getClarificationLabel(todo.clarification) !== '' && (
+                      <span className="badge badge-sm badge-primary">{getClarificationLabel(todo.clarification)}</span>
                     )}
                     {todo.next_action_status && (
                       <span className="badge badge-sm badge-secondary ml-2">{todo.next_action_status}</span>
