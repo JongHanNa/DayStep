@@ -59,27 +59,10 @@ export default function NoteFormFields({
         />
       </div>
 
-      {/* 분류 */}
-      <div className="form-control mb-4">
-        <label className="label">
-          <span className="label-text">분류</span>
-        </label>
-        <select
-          value={note.note_category}
-          onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
-          className="select select-bordered"
-        >
-          <option value="none">선택 안함</option>
-          <option value="work_in_progress">중간 작업물</option>
-          <option value="read_later">나중에 보기</option>
-          <option value="reference">레퍼런스</option>
-        </select>
-      </div>
-
       {/* 영역/자원 */}
       <div className="form-control mb-4">
         <label className="label">
-          <span className="label-text">영역/자원 (선택)</span>
+          <span className="label-text">영역/자원</span>
         </label>
         <select
           value={note.linkedAreaOrResource || ''}
@@ -104,11 +87,28 @@ export default function NoteFormFields({
         </select>
       </div>
 
-      {/* 프로젝트 (선택) */}
+      {/* 분류 */}
+      <div className="form-control mb-4">
+        <label className="label">
+          <span className="label-text">분류</span>
+        </label>
+        <select
+          value={note.note_category}
+          onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
+          className="select select-bordered"
+        >
+          <option value="none">선택 안함</option>
+          <option value="work_in_progress">중간 작업물</option>
+          <option value="read_later">나중에 보기</option>
+          <option value="reference">레퍼런스</option>
+        </select>
+      </div>
+
+      {/* 프로젝트 */}
       {projects.length > 0 && (
         <div className="form-control mb-4">
           <label className="label">
-            <span className="label-text">프로젝트 (선택)</span>
+            <span className="label-text">프로젝트</span>
           </label>
           <select
             value={note.projectId || ''}
@@ -125,11 +125,11 @@ export default function NoteFormFields({
         </div>
       )}
 
-      {/* 할일 (선택) */}
+      {/* 할일 */}
       {todos.length > 0 && (
         <div className="form-control mb-4">
           <label className="label">
-            <span className="label-text">할일 (선택)</span>
+            <span className="label-text">할일</span>
           </label>
           <select
             value={note.todoId || ''}
