@@ -56,7 +56,7 @@ function todoToInboxItem(todo: any): InboxItem {
     is_highlight: todo.is_today_highlight || false,
     is_completed: todo.completed || false,
     project_id: todo.project_id || undefined,
-    next_action_status: todo.next_action_contexts ? JSON.stringify(todo.next_action_contexts) : '',
+    next_action_status: todo.next_action_contexts?.length > 0 ? JSON.stringify(todo.next_action_contexts) : '',
     recurrence_pattern: todo.recurrence_pattern || 'none',
     created_at: todo.created_at,
     updated_at: todo.updated_at,
@@ -114,6 +114,7 @@ export const useInboxStore = createStore<InboxStoreState>(
 
         set({ inboxItems: allItems, loading: false });
       } catch (error) {
+        console.error('❌ [inboxStore] fetchInboxItems 오류:', error);
         set({
           error: error instanceof Error ? error.message : '수집함 항목을 불러오는데 실패했습니다.',
           loading: false,

@@ -23,7 +23,7 @@ import type { InboxItem, Project, UpdateProjectInput, Goal, UpdateGoalInput } fr
 
 export default function ClarifyPage() {
   const { appUser } = useAuth();
-  const { inboxItems, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
+  const { inboxItems, loading, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
   const { projects, updateProject, deleteProject } = useProjectStore();
   const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
   const { notes, fetchNotes } = useNoteStore();
@@ -54,14 +54,15 @@ export default function ClarifyPage() {
 
   // inboxItems가 로드되면 필터링 (Zustand 상태 변경 감지)
   useEffect(() => {
-    if (inboxItems.length > 0) {
-      const inboxTodos = inboxItems.filter((item) => item.item_type === 'todo' && item.status === 'inbox');
-      const inboxNotes = inboxItems.filter((item) => item.item_type === 'note' && item.status === 'inbox');
+    // ✅ loading 중이거나 데이터가 없으면 스킵
+    if (loading || inboxItems.length === 0) return;
 
-      setTodoInbox(inboxTodos);
-      setNoteInbox(inboxNotes);
-    }
-  }, [inboxItems]);
+    const inboxTodos = inboxItems.filter((item) => item.item_type === 'todo' && item.status === 'inbox');
+    const inboxNotes = inboxItems.filter((item) => item.item_type === 'note' && item.status === 'inbox');
+
+    setTodoInbox(inboxTodos);
+    setNoteInbox(inboxNotes);
+  }, [inboxItems, loading]);
 
   // 🔒 인증 상태 체크 - appUser 로딩 중이면 로딩 UI 표시
   if (!appUser) {
@@ -75,6 +76,8 @@ export default function ClarifyPage() {
   const loadInboxData = async () => {
     if (!appUser?.id) return;
 
+    console.log('🚀 [ClarifyPage] loadInboxData 시작');
+
     // 데이터 병렬 로드
     await Promise.all([
       fetchInboxItems(appUser.id),
@@ -83,6 +86,8 @@ export default function ClarifyPage() {
       fetchNotes(appUser.id),
       fetchGoals(appUser.id),
     ]);
+
+    console.log('✅ [ClarifyPage] loadInboxData 완료');
 
     // 프로젝트 수집함: projects 테이블에서 조건부 필터링
     // 종료일, 할일 중 하나라도 없으면 수집함에 표시

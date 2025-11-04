@@ -9,6 +9,7 @@ import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { updateInboxTodo } from '@/lib/supabase/inbox';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -34,7 +35,7 @@ const getClarificationLabel = (clarification?: string): string => {
 };
 
 export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh, userId }: TodoInboxListProps) {
-  const { inboxItems, updateInboxItem, convertTodoToProject } = useInboxStore();
+  const { inboxItems, convertTodoToProject, fetchInboxItems } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
@@ -62,51 +63,29 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
     if (!editingTodo) return;
 
     try {
-      // GTD 로직: 수집함 제거 조건 체크
-      let shouldRemoveFromInbox = false;
-      let newStatus: typeof editingTodo.status = 'inbox';
-
-      // 1. 대기중 선택 → 즉시 제거
-      if (updatedTodo.clarification === '대기중') {
-        shouldRemoveFromInbox = true;
-        newStatus = 'waiting';
-      }
-      // 2. 일정 선택 + 날짜 설정 → 제거
-      else if (updatedTodo.clarification === '일정' && updatedTodo.scheduledDate) {
-        shouldRemoveFromInbox = true;
-        newStatus = 'scheduled';
-      }
-      // 3. 다음행동 선택 + 다음행동상황 1개 이상 → 제거
-      else if (updatedTodo.clarification === '다음행동' && updatedTodo.nextActionStatuses && updatedTodo.nextActionStatuses.length > 0) {
-        shouldRemoveFromInbox = true;
-        newStatus = 'next_action';
-      }
-
-      // InboxItem 업데이트 (프론트엔드 전용 - 스토어만 반영)
+      // ✅ DB 직접 업데이트 (로컬 상태 건드리지 않음)
       if (!userId) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
-      await updateInboxItem(userId, editingTodo.id, {
-        content: updatedTodo.title,
-        status: shouldRemoveFromInbox ? newStatus : 'inbox',
+      await updateInboxTodo(userId, editingTodo.id, {
+        title: updatedTodo.title,
         clarification: updatedTodo.clarification,
-        next_action_status: updatedTodo.nextActionStatuses?.join(', '),
+        next_action_contexts: updatedTodo.nextActionStatuses ? updatedTodo.nextActionStatuses : undefined,
         scheduled_date: updatedTodo.scheduledDate ? updatedTodo.scheduledDate.toISOString() : undefined,
-        is_highlight: updatedTodo.isHighlight,
-        is_completed: updatedTodo.completed,
+        is_today_highlight: updatedTodo.isHighlight,
+        completed: updatedTodo.completed,
         project_id: updatedTodo.projectIds?.[0], // 첫 번째 프로젝트만 저장 (기존 호환)
       });
 
+      // ✅ DB에서 최신 데이터 가져오기 (UI 동기화)
+      await fetchInboxItems(userId);
+
       // 💡 참고: TodoStore 동기화는 백엔드 연동 시 구현 예정
 
-      // 모달을 먼저 닫고, 다음 이벤트 루프에서 새로고침
+      // 모달 닫기
       setEditingTodo(null);
       setTodoForm(null);
-
-      setTimeout(() => {
-        onRefresh();
-      }, 0);
     } catch (error) {
-      console.error('할일 저장 실패:', error);
+      console.error('❌ [TodoInboxList] 할일 저장 실패:', error);
       alert('할일 저장에 실패했습니다.');
     }
   };
@@ -192,13 +171,7 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   return (
     <>
       <div className="space-y-2">
-        {todos
-          .filter((todo) => {
-            // 방어적 렌더링: undefined 객체 필터링
-            // onRefresh() 중 비동기 상태 업데이트로 인한 일시적 undefined 방지
-            return todo && todo.id && todo.content;
-          })
-          .map((todo) => (
+        {todos.map((todo) => (
             <div key={todo.id} className="relative overflow-hidden rounded-lg">
               {/* 카드 레이어 */}
               <button
@@ -209,7 +182,7 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium mb-1">{todo.content}</p>
-                      {todo.clarification && getClarificationLabel(todo.clarification) !== '' && (
+                      {todo.clarification && todo.clarification !== 'none' && (
                         <span key={`clarification-${todo.id}`} className="badge badge-sm badge-primary">
                           {getClarificationLabel(todo.clarification)}
                         </span>
@@ -233,7 +206,7 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
               </div>
             </button>
           </div>
-          ))}
+        ))}
       </div>
 
       {/* 할일 편집 모달 - TodoEditModal 컴포넌트 사용 */}
