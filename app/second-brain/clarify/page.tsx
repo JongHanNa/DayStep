@@ -292,6 +292,7 @@ export default function ClarifyPage() {
                 projects={projects}
                 notes={notes}
                 onRefresh={handleRefresh}
+                userId={appUser!.id}
               />
             )}
             {activeTab === 'notes' && (

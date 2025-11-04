@@ -9,13 +9,13 @@ import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useAuthStore } from '@/state/stores/authStore';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
   projects?: Project[];
   notes?: Note[];
   onRefresh: () => void;
+  userId: string;
 }
 
 // 명료화 enum 값을 한글로 변환
@@ -33,8 +33,7 @@ const getClarificationLabel = (clarification?: string): string => {
   return labelMap[clarification] || clarification;
 };
 
-export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh }: TodoInboxListProps) {
-  const user = useAuthStore((state) => state.user);
+export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh, userId }: TodoInboxListProps) {
   const { inboxItems, updateInboxItem, convertTodoToProject } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
@@ -84,9 +83,9 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       }
 
       // InboxItem 업데이트 (프론트엔드 전용 - 스토어만 반영)
-      if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
+      if (!userId) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
-      await updateInboxItem(user.id, editingTodo.id, {
+      await updateInboxItem(userId, editingTodo.id, {
         content: updatedTodo.title,
         status: shouldRemoveFromInbox ? newStatus : 'inbox',
         clarification: updatedTodo.clarification,
@@ -129,8 +128,8 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
 
   // 프로젝트 관련 핸들러
   const handleCreateProject = async (title: string) => {
-    if (!user?.id) throw new Error('User not authenticated');
-    return await createProject(user.id, {
+    if (!userId) throw new Error('User not authenticated');
+    return await createProject(userId, {
       title,
       description: '',
       status: 'not_started',
@@ -140,19 +139,19 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   };
 
   const handleUpdateProject = async (id: string, title: string) => {
-    if (!user?.id) throw new Error('User not authenticated');
-    await updateProject(user.id, id, { title });
+    if (!userId) throw new Error('User not authenticated');
+    await updateProject(userId, id, { title });
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (!user?.id) throw new Error('User not authenticated');
-    await deleteProject(user.id, id);
+    if (!userId) throw new Error('User not authenticated');
+    await deleteProject(userId, id);
   };
 
   // 노트 관련 핸들러
   const handleCreateNote = async (title: string) => {
-    if (!user?.id) throw new Error('User not found');
-    return await createNote(user.id, {
+    if (!userId) throw new Error('User not found');
+    return await createNote(userId, {
       title,
       content: '',
       memo_type: 'note',
@@ -163,13 +162,13 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   };
 
   const handleUpdateNote = async (id: string, title: string) => {
-    if (!user?.id) throw new Error('User not found');
-    await updateNote(id, user.id, { title });
+    if (!userId) throw new Error('User not found');
+    await updateNote(id, userId, { title });
   };
 
   const handleDeleteNote = async (id: string) => {
-    if (!user?.id) throw new Error('User not found');
-    await deleteNote(id, user.id);
+    if (!userId) throw new Error('User not found');
+    await deleteNote(id, userId);
   };
 
   if (todos.length === 0) {
