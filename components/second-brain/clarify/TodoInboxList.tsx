@@ -98,9 +98,13 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
 
       // 💡 참고: TodoStore 동기화는 백엔드 연동 시 구현 예정
 
+      // 모달을 먼저 닫고, 다음 이벤트 루프에서 새로고침
       setEditingTodo(null);
       setTodoForm(null);
-      onRefresh();
+
+      setTimeout(() => {
+        onRefresh();
+      }, 0);
     } catch (error) {
       console.error('할일 저장 실패:', error);
       alert('할일 저장에 실패했습니다.');
@@ -188,28 +192,38 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   return (
     <>
       <div className="space-y-2">
-        {todos.map((todo) => (
-          <div key={todo.id} className="relative overflow-hidden rounded-lg">
-            {/* 카드 레이어 */}
-            <button
-              onClick={() => handleTodoClick(todo)}
-              className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full text-left"
-            >
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium mb-1">{todo.content}</p>
-                    {todo.clarification && getClarificationLabel(todo.clarification) !== '' && (
-                      <span className="badge badge-sm badge-primary">{getClarificationLabel(todo.clarification)}</span>
-                    )}
-                    {todo.next_action_status && (
-                      <span className="badge badge-sm badge-secondary ml-2">{todo.next_action_status}</span>
+        {todos
+          .filter((todo) => {
+            // 방어적 렌더링: undefined 객체 필터링
+            // onRefresh() 중 비동기 상태 업데이트로 인한 일시적 undefined 방지
+            return todo && todo.id && todo.content;
+          })
+          .map((todo) => (
+            <div key={todo.id} className="relative overflow-hidden rounded-lg">
+              {/* 카드 레이어 */}
+              <button
+                onClick={() => handleTodoClick(todo)}
+                className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full text-left"
+              >
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium mb-1">{todo.content}</p>
+                      {todo.clarification && getClarificationLabel(todo.clarification) !== '' && (
+                        <span key={`clarification-${todo.id}`} className="badge badge-sm badge-primary">
+                          {getClarificationLabel(todo.clarification)}
+                        </span>
+                      )}
+                      {todo.next_action_status && (
+                        <span key={`next-action-${todo.id}`} className="badge badge-sm badge-secondary ml-2">
+                          {todo.next_action_status}
+                        </span>
+                      )}
+                    </div>
+                    {todo.is_highlight && (
+                      <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                     )}
                   </div>
-                  {todo.is_highlight && (
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-                  )}
-                </div>
                 {todo.scheduled_date && (
                   <div className="flex items-center gap-1 mt-2 text-xs text-base-content/60">
                     <Calendar className="w-3 h-3" />
@@ -219,7 +233,7 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
               </div>
             </button>
           </div>
-        ))}
+          ))}
       </div>
 
       {/* 할일 편집 모달 - TodoEditModal 컴포넌트 사용 */}
