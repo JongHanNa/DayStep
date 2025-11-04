@@ -74,15 +74,17 @@ export default function GTDGuideSection() {
         <h2 className="text-xl font-bold">GTD 알고리즘</h2>
       </div>
 
-      <div className="card bg-warning/10 border border-warning/30">
-        <div className="card-body py-4">
-          <h3 className="font-semibold text-sm flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            수집함이 비워지는 조건
-          </h3>
-          <p className="text-sm text-base-content/70">
-            각 수집함 탭에 있는 항목들을 아래 조건에 따라 처리하면 자동으로 수집함에서 제거됩니다.
-          </p>
+      <div className="relative overflow-hidden rounded-lg">
+        <div className="relative bg-white hover:bg-base-100 transition-colors">
+          <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              수집함이 비워지는 조건
+            </h3>
+            <p className="text-sm text-base-content/70 mt-2">
+              각 수집함 탭에 있는 항목들을 아래 조건에 따라 처리하면 자동으로 수집함에서 제거됩니다.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -90,28 +92,30 @@ export default function GTDGuideSection() {
         {sections.map((section) => {
           const isExpanded = expandedSection === section.id;
           return (
-            <div key={section.id} className="card bg-base-200">
-              <div className="card-body p-4">
-                <button
-                  onClick={() => toggleSection(section.id)}
-                  className="flex items-center justify-between w-full text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{section.icon}</span>
-                    <h3 className="font-semibold">{section.title}</h3>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-base-content/50" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-base-content/50" />
-                  )}
-                </button>
+            <div key={section.id} className="relative overflow-hidden rounded-lg">
+              <div className="relative bg-white hover:bg-base-100 transition-colors">
+                <div className="p-4">
+                  <button
+                    onClick={() => toggleSection(section.id)}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{section.icon}</span>
+                      <h3 className="font-semibold">{section.title}</h3>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-base-content/50" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-base-content/50" />
+                    )}
+                  </button>
 
-                {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-base-300">
-                    {section.content}
-                  </div>
-                )}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-base-300">
+                      {section.content}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );

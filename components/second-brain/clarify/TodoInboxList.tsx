@@ -175,32 +175,36 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
     <>
       <div className="space-y-2">
         {todos.map((todo) => (
-          <button
-            key={todo.id}
-            onClick={() => handleTodoClick(todo)}
-            className="w-full text-left p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium mb-1">{todo.content}</p>
-                {todo.clarification && (
-                  <span className="badge badge-sm badge-primary">{todo.clarification}</span>
-                )}
-                {todo.next_action_status && (
-                  <span className="badge badge-sm badge-secondary ml-2">{todo.next_action_status}</span>
+          <div key={todo.id} className="relative overflow-hidden rounded-lg">
+            {/* 카드 레이어 */}
+            <button
+              onClick={() => handleTodoClick(todo)}
+              className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full text-left"
+            >
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium mb-1">{todo.content}</p>
+                    {todo.clarification && (
+                      <span className="badge badge-sm badge-primary">{todo.clarification}</span>
+                    )}
+                    {todo.next_action_status && (
+                      <span className="badge badge-sm badge-secondary ml-2">{todo.next_action_status}</span>
+                    )}
+                  </div>
+                  {todo.is_highlight && (
+                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                  )}
+                </div>
+                {todo.scheduled_date && (
+                  <div className="flex items-center gap-1 mt-2 text-xs text-base-content/60">
+                    <Calendar className="w-3 h-3" />
+                    {new Date(todo.scheduled_date).toLocaleDateString('ko-KR')}
+                  </div>
                 )}
               </div>
-              {todo.is_highlight && (
-                <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-              )}
-            </div>
-            {todo.scheduled_date && (
-              <div className="flex items-center gap-1 mt-2 text-xs text-base-content/60">
-                <Calendar className="w-3 h-3" />
-                {new Date(todo.scheduled_date).toLocaleDateString('ko-KR')}
-              </div>
-            )}
-          </button>
+            </button>
+          </div>
         ))}
       </div>
 

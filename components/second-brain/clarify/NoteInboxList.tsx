@@ -132,35 +132,39 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
     <>
       <div className="space-y-2">
         {notes.map((note) => (
-          <button
-            key={note.id}
-            onClick={() => handleNoteClick(note)}
-            className="w-full text-left p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium mb-1">{note.note_title || note.content}</p>
-                {note.note_content && (
-                  <p className="text-sm text-base-content/60 line-clamp-2 mt-1">
-                    {note.note_content}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  {note.note_category && (
-                    <span className="badge badge-sm badge-ghost">{note.note_category}</span>
-                  )}
-                  {note.linked_area_or_resource && (
-                    <span className="badge badge-sm badge-primary">
-                      {note.linked_area_or_resource.startsWith('area-') ? '영역 연결됨' : '자원 연결됨'}
-                    </span>
+          <div key={note.id} className="relative overflow-hidden rounded-lg">
+            {/* 카드 레이어 */}
+            <button
+              onClick={() => handleNoteClick(note)}
+              className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full text-left"
+            >
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium mb-1">{note.note_title || note.content}</p>
+                    {note.note_content && (
+                      <p className="text-sm text-base-content/60 line-clamp-2 mt-1">
+                        {note.note_content}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2">
+                      {note.note_category && (
+                        <span className="badge badge-sm badge-ghost">{note.note_category}</span>
+                      )}
+                      {note.linked_area_or_resource && (
+                        <span className="badge badge-sm badge-primary">
+                          {note.linked_area_or_resource.startsWith('area-') ? '영역 연결됨' : '자원 연결됨'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {note.is_pinned && (
+                    <Pin className="w-5 h-5 text-primary fill-primary flex-shrink-0" />
                   )}
                 </div>
               </div>
-              {note.is_pinned && (
-                <Pin className="w-5 h-5 text-primary fill-primary flex-shrink-0" />
-              )}
-            </div>
-          </button>
+            </button>
+          </div>
         ))}
       </div>
 

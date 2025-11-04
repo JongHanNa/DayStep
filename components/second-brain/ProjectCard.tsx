@@ -38,19 +38,20 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
   };
 
   return (
-    <div
-      onClick={handleClick}
-      className="flex flex-col p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors cursor-pointer group"
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      aria-label={`${project.title} 프로젝트 상세 보기`}
-    >
+    <div className="relative overflow-hidden rounded-lg">
+      <div
+        onClick={handleClick}
+        className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer group"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        aria-label={`${project.title} 프로젝트 상세 보기`}
+      >
       {/* 상단: 아이콘 + 제목 + 상태 뱃지 */}
       <div className="flex items-start gap-3 mb-3">
         {/* 아이콘 */}
@@ -119,6 +120,7 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
           )}
         </div>
       )}
+      </div>
     </div>
   );
 });
