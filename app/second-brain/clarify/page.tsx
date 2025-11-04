@@ -31,6 +31,7 @@ export default function ClarifyPage() {
   const { resources, fetchResources } = useResourceStore();
   const { todos } = useTodoStore();
 
+  // ✅ 모든 useState를 조건문 위로 이동 (React Hooks 규칙 준수)
   const [activeTab, setActiveTab] = useState<InboxTabType>('todos');
   const [todoInbox, setTodoInbox] = useState<InboxItem[]>([]);
   const [noteInbox, setNoteInbox] = useState<InboxItem[]>([]);
@@ -45,9 +46,11 @@ export default function ClarifyPage() {
   const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
 
+  // ✅ 모든 useEffect를 조건문 위로 이동 (React Hooks 규칙 준수)
   useEffect(() => {
+    if (!appUser?.id) return;  // ✅ 내부에서 appUser 체크
     loadInboxData();
-  }, []);
+  }, [appUser?.id]);  // ✅ 의존성 추가
 
   // inboxItems가 로드되면 필터링 (Zustand 상태 변경 감지)
   useEffect(() => {
@@ -59,6 +62,15 @@ export default function ClarifyPage() {
       setNoteInbox(inboxNotes);
     }
   }, [inboxItems]);
+
+  // 🔒 인증 상태 체크 - appUser 로딩 중이면 로딩 UI 표시
+  if (!appUser) {
+    return (
+      <div className="min-h-screen bg-base-200 flex items-center justify-center">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
 
   const loadInboxData = async () => {
     if (!appUser?.id) return;
@@ -292,7 +304,7 @@ export default function ClarifyPage() {
                 projects={projects}
                 notes={notes}
                 onRefresh={handleRefresh}
-                userId={appUser!.id}
+                userId={appUser.id}
               />
             )}
             {activeTab === 'notes' && (
