@@ -1,6 +1,6 @@
 'use client';
 
-import { Zap, FileText, Folder, Target, Info } from 'lucide-react';
+import { Zap, FileText, Folder, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type InboxTabType = 'todos' | 'notes' | 'projects' | 'goals';
@@ -8,7 +8,6 @@ export type InboxTabType = 'todos' | 'notes' | 'projects' | 'goals';
 interface InboxTabsProps {
   activeTab: InboxTabType;
   onTabChange: (tab: InboxTabType) => void;
-  onGuideClick: (tab: InboxTabType) => void;
   counts: {
     todos: number;
     notes: number;
@@ -24,7 +23,7 @@ const TABS = [
   { id: 'goals' as InboxTabType, label: '목표 수집함', icon: Target },
 ];
 
-export default function InboxTabs({ activeTab, onTabChange, onGuideClick, counts }: InboxTabsProps) {
+export default function InboxTabs({ activeTab, onTabChange, counts }: InboxTabsProps) {
   return (
     <div className="overflow-x-auto">
       <div className="tabs tabs-boxed inline-flex">
@@ -33,31 +32,19 @@ export default function InboxTabs({ activeTab, onTabChange, onGuideClick, counts
           const count = counts[tab.id];
 
           return (
-            <div key={tab.id} className="relative flex items-center">
-              <button
-                onClick={() => onTabChange(tab.id)}
-                className={cn('tab', activeTab === tab.id && 'tab-active')}
-              >
-                <Icon className="w-4 h-4 mr-2" />
-                {tab.label}
-                {count > 0 && (
-                  <span className="ml-1 badge badge-sm">
-                    {count}
-                  </span>
-                )}
-              </button>
-              {/* 정보 아이콘 */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGuideClick(tab.id);
-                }}
-                className="ml-1 p-1 hover:bg-base-300/50 rounded-full transition-colors"
-                aria-label={`${tab.label} 가이드 보기`}
-              >
-                <Info className="w-4 h-4 text-base-content/50" />
-              </button>
-            </div>
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={cn('tab', activeTab === tab.id && 'tab-active')}
+            >
+              <Icon className="w-4 h-4 mr-2" />
+              {tab.label}
+              {count > 0 && (
+                <span className="ml-1 badge badge-sm">
+                  {count}
+                </span>
+              )}
+            </button>
           );
         })}
       </div>

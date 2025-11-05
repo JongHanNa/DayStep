@@ -1,12 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { useState } from 'react';
+import { Info } from 'lucide-react';
 import type { InboxTabType } from './InboxTabs';
 
-interface InboxGuideModalProps {
-  open: boolean;
-  onClose: () => void;
-  tabType: InboxTabType;
+interface InboxGuidePopoverProps {
+  activeTab: InboxTabType;
 }
 
 // GTDGuideSection에서 추출한 가이드 데이터
@@ -21,7 +20,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
     content: (
       <ul className="space-y-2 text-sm">
         <li>• <strong>프로젝트에 해당하는 할일</strong>이면 프로젝트 배정을 먼저 해주세요.</li>
-        <li>• <strong>명료화 간을 채워주세요:</strong>
+        <li>• <strong>명료화 유형을 선택해주세요:</strong>
           <ul className="ml-6 mt-1 space-y-1">
             <li>- <strong>다시알림:</strong> 특정 시간에 알림</li>
             <li>- <strong>언젠가:</strong> 당장은 실행할 수 없음</li>
@@ -67,54 +66,43 @@ const GUIDE_CONTENT: Record<InboxTabType, {
   },
 };
 
-export default function InboxGuideModal({ open, onClose, tabType }: InboxGuideModalProps) {
-  const guide = GUIDE_CONTENT[tabType];
-
-  if (!open) {
-    return null;
-  }
+export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const guide = GUIDE_CONTENT[activeTab];
 
   return (
-    <>
-      {/* 모달 배경 */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40"
-        onClick={onClose}
-      />
+    <div
+      className="relative inline-block mb-3"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      {/* 가이드 버튼 */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-base-content/70 hover:text-base-content hover:bg-base-300/50 rounded-lg transition-colors"
+        aria-label="가이드 보기"
+      >
+        <Info className="w-4 h-4" />
+        <span>가이드</span>
+      </button>
 
-      {/* 모달 콘텐츠 */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden">
+      {/* 팝오버 */}
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-base-300 z-50 w-[90vw] max-w-[500px] max-sm:w-[90vw] md:w-[500px]">
           {/* 헤더 */}
-          <div className="flex items-center justify-between p-4 border-b border-base-300">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{guide.icon}</span>
-              <h3 className="font-bold text-lg">{guide.title}</h3>
-            </div>
-            <button
-              onClick={onClose}
-              className="btn btn-sm btn-circle btn-ghost"
-              aria-label="닫기"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          <div className="flex items-center gap-2 p-4 border-b border-base-300">
+            <span className="text-2xl">{guide.icon}</span>
+            <h3 className="font-bold text-lg">{guide.title}</h3>
           </div>
 
           {/* 내용 */}
-          <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+          <div className="p-4 max-h-[60vh] overflow-y-auto">
             <div className="prose prose-sm max-w-none">
               {guide.content}
             </div>
           </div>
-
-          {/* 푸터 */}
-          <div className="flex justify-end p-4 border-t border-base-300">
-            <button onClick={onClose} className="btn btn-primary btn-sm">
-              확인
-            </button>
-          </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
