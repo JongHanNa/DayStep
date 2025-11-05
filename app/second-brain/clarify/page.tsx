@@ -9,6 +9,7 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { fetchInboxProjects, fetchInboxGoals } from '@/lib/supabase/inbox';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
 import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
@@ -70,7 +71,7 @@ export default function ClarifyPage() {
 
     console.log('🚀 [ClarifyPage] loadInboxData 시작');
 
-    // 데이터 병렬 로드
+    // 기존 데이터 로드 (Store 업데이트)
     await Promise.all([
       fetchProjects(appUser.id),
       fetchInboxItems(appUser.id),
@@ -80,26 +81,17 @@ export default function ClarifyPage() {
       fetchGoals(appUser.id),
     ]);
 
+    // 수집함 데이터 로드 (DB View: 필터링된 데이터만 조회)
+    const [inboxProjects, inboxGoals] = await Promise.all([
+      fetchInboxProjects(appUser.id), // DB View: 필터링된 프로젝트만 조회
+      fetchInboxGoals(appUser.id),    // DB View: 필터링된 목표만 조회
+    ]);
+
     console.log('✅ [ClarifyPage] loadInboxData 완료');
 
-    // 프로젝트 수집함: projects 테이블에서 조건부 필터링
-    // 종료일, 할일 중 하나라도 없으면 수집함에 표시
-    const inboxProjects = projects.filter((project) => {
-      const hasEndDate = !!project.end_date;
-      const hasTodos = (project.total_todos || 0) > 0;
-
-      // 둘 중 하나라도 없으면 수집함에 유지
-      return !(hasEndDate && hasTodos);
-    });
+    // DB View에서 필터링된 데이터를 직접 사용
+    // 클라이언트 필터링 불필요 (DB 레벨에서 이미 처리됨)
     setProjectInbox(inboxProjects);
-
-    // 목표 수집함: area_id/resource_id AND end_date 둘 다 있어야 제거
-    // 즉, 둘 중 하나라도 없으면 수집함에 유지
-    const inboxGoals = goals.filter((goal) => {
-      const hasAreaOrResource = !!(goal.area_id || goal.resource_id);
-      const hasEndDate = !!goal.end_date;
-      return !(hasAreaOrResource && hasEndDate); // 둘 다 있으면 제거
-    });
     setGoalInbox(inboxGoals);
   };
 

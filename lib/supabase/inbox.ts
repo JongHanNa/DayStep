@@ -7,13 +7,19 @@
 import { fetchWithJWT, createWithJWT, updateWithJWT, deleteWithJWT } from './core';
 
 /**
- * 수집함 할일 목록 조회 (status = 'inbox'인 todos)
+ * 수집함 할일 목록 조회 (inbox_todos Materialized View)
+ *
+ * DB 레벨 필터링 조건:
+ *   - recurrence_pattern = 'none' (반복 할일 제외)
+ *   - clarification != 'waiting' (대기중: 무조건 제외)
+ *   - NOT (clarification = 'scheduled' AND start_time IS NOT NULL) (일정+날짜: 제외)
+ *   - NOT (clarification = 'next_action' AND next_action_contexts.length > 0) (다음행동+상황: 제외)
  */
 export async function fetchInboxTodos(userId: string): Promise<any[]> {
   console.log('📥 수집함 할일 조회:', { userId });
 
   try {
-    const path = `/todos?user_id=eq.${userId}&clarification=eq.none&recurrence_pattern=eq.none&select=*&order=created_at.desc`;
+    const path = `/inbox_todos?user_id=eq.${userId}&select=*&order=created_at.desc`;
     const todos = await fetchWithJWT(path);
 
     console.log('✅ 수집함 할일 조회 성공:', { count: todos?.length || 0 });
@@ -218,5 +224,49 @@ export async function deleteInboxNote(userId: string, noteId: string): Promise<b
   } catch (error) {
     console.error('❌ 수집함 노트 삭제 실패:', error);
     throw error;
+  }
+}
+
+/**
+ * 수집함 프로젝트 목록 조회 (inbox_projects Materialized View)
+ *
+ * DB 레벨 필터링 조건:
+ *   - NOT (end_date IS NOT NULL AND total_todos > 0)
+ *   - 종료일과 할일이 모두 있는 프로젝트는 제외
+ */
+export async function fetchInboxProjects(userId: string): Promise<any[]> {
+  console.log('📥 수집함 프로젝트 조회:', { userId });
+
+  try {
+    const path = `/inbox_projects?user_id=eq.${userId}&select=*&order=created_at.desc`;
+    const projects = await fetchWithJWT(path);
+
+    console.log('✅ 수집함 프로젝트 조회 성공:', { count: projects?.length || 0 });
+    return projects || [];
+  } catch (error) {
+    console.error('❌ 수집함 프로젝트 조회 실패:', error);
+    return [];
+  }
+}
+
+/**
+ * 수집함 목표 목록 조회 (inbox_goals Materialized View)
+ *
+ * DB 레벨 필터링 조건:
+ *   - NOT ((area_id IS NOT NULL OR resource_id IS NOT NULL) AND end_date IS NOT NULL)
+ *   - 영역/자원과 종료일이 모두 있는 목표는 제외
+ */
+export async function fetchInboxGoals(userId: string): Promise<any[]> {
+  console.log('📥 수집함 목표 조회:', { userId });
+
+  try {
+    const path = `/inbox_goals?user_id=eq.${userId}&select=*&order=created_at.desc`;
+    const goals = await fetchWithJWT(path);
+
+    console.log('✅ 수집함 목표 조회 성공:', { count: goals?.length || 0 });
+    return goals || [];
+  } catch (error) {
+    console.error('❌ 수집함 목표 조회 실패:', error);
+    return [];
   }
 }
