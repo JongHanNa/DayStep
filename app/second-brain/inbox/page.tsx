@@ -9,6 +9,7 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { updateInboxTodo, updateInboxNote } from '@/lib/supabase/inbox';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, Edit3, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -213,66 +214,42 @@ export default function InboxPage() {
     try {
       // 탭 필터링과 동일한 조건: item_type이 없으면 todo로 간주
       if (!editingItem.item_type || editingItem.item_type === 'todo') {
-        // nextActionStatuses 배열을 JSON 문자열로 변환
-        const nextActionStatusJson =
-          todoForm.nextActionStatuses && todoForm.nextActionStatuses.length > 0
-            ? JSON.stringify(todoForm.nextActionStatuses)
-            : '';
-
-        await updateInboxItem(appUser.id, editingItem.id, {
-          content: todoForm.title,
+        // DB 직접 업데이트 (로컬 상태 업데이트 제거)
+        await updateInboxTodo(appUser.id, editingItem.id, {
+          title: todoForm.title,
           clarification: todoForm.clarification,
-          next_action_status: nextActionStatusJson,
+          next_action_contexts: todoForm.nextActionStatuses,
           scheduled_date: todoForm.scheduledDate?.toISOString(),
-          is_highlight: todoForm.isHighlight,
-          is_completed: todoForm.completed,
-          project_id: todoForm.projectIds?.[0] || undefined, // 첫 번째 프로젝트 ID만 저장
+          is_today_highlight: todoForm.isHighlight,
+          completed: todoForm.completed,
+          project_id: todoForm.projectIds?.[0] || undefined,
         });
       } else {
-        // linkedAreaOrResource에서 area_id 또는 resource_id 추출
-        let area_id: string | undefined;
-        let resource_id: string | undefined;
-
+        // linkedAreaOrResource를 area_resource_id로 변환
+        // 'area-xxx' → 'xxx', 'resource-xxx' → 'xxx'
+        let area_resource_id: string | undefined;
         if (noteForm.linkedAreaOrResource) {
-          if (noteForm.linkedAreaOrResource.startsWith('area-')) {
-            area_id = noteForm.linkedAreaOrResource.replace('area-', '');
-          } else if (noteForm.linkedAreaOrResource.startsWith('resource-')) {
-            resource_id = noteForm.linkedAreaOrResource.replace('resource-', '');
-          }
+          area_resource_id = noteForm.linkedAreaOrResource.replace(/^(area|resource)-/, '');
         }
 
-        // NoteCategory enum을 한글 note_category로 역매핑 (InboxItem 호환성)
-        const mapNoteCategoryToKorean = (note_category: NoteFormData['note_category']): '중간 작업물' | '나중에 보기' | '레퍼런스' | undefined => {
-          switch (note_category) {
-            case 'work_in_progress':
-              return '중간 작업물';
-            case 'read_later':
-              return '나중에 보기';
-            case 'reference':
-              return '레퍼런스';
-            case 'none':
-              return undefined;
-            default:
-              return '중간 작업물';
-          }
-        };
-
-        await updateInboxItem(appUser.id, editingItem.id, {
-          content: noteForm.title,
-          note_title: noteForm.title,
-          note_content: noteForm.content,
-          note_category: mapNoteCategoryToKorean(noteForm.note_category),
+        // DB 직접 업데이트 (로컬 상태 업데이트 제거)
+        await updateInboxNote(appUser.id, editingItem.id, {
+          title: noteForm.title,
+          content: noteForm.content,
+          note_category: noteForm.note_category,
           is_pinned: noteForm.isPinned,
-          linked_area_or_resource: noteForm.linkedAreaOrResource,
-          area_id,
-          resource_id,
+          area_resource_id,
         });
       }
+
+      // 전체 데이터 재조회로 UI 동기화 (데이터 일관성 보장)
+      await fetchInboxItems(appUser.id);
 
       setEditingItem(null);
       resetForms();
     } catch (error) {
-      console.error('항목 수정 실패:', error);
+      console.error('❌ [InboxPage] 항목 수정 실패:', error);
+      alert('항목 수정에 실패했습니다.');
     }
   };
 
