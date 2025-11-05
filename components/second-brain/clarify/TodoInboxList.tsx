@@ -10,6 +10,7 @@ import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { updateInboxTodo } from '@/lib/supabase/inbox';
+import { getInboxRemovalMessage } from '@/lib/utils/inboxMessages';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -192,6 +193,15 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
                           {todo.next_action_status}
                         </span>
                       )}
+                      {/* 동적 안내 메시지 */}
+                      {(() => {
+                        const message = getInboxRemovalMessage(todo);
+                        return message ? (
+                          <p className="text-xs text-base-content/60 mt-1">
+                            {message}
+                          </p>
+                        ) : null;
+                      })()}
                     </div>
                     {todo.is_highlight && (
                       <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
