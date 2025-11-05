@@ -201,11 +201,11 @@ export default function TodoFormFields({
               className="select select-bordered w-full"
             >
               <option value="">선택 안 함</option>
-              <option value="다시알림">다시알림</option>
-              <option value="언젠가">언젠가</option>
-              <option value="대기중">대기중</option>
-              <option value="다음행동">다음행동</option>
-              <option value="일정">일정</option>
+              <option value="reminder">다시알림</option>
+              <option value="someday">언젠가</option>
+              <option value="waiting">대기중</option>
+              <option value="next_action">다음행동</option>
+              <option value="scheduled">일정</option>
             </select>
           </div>
         </div>

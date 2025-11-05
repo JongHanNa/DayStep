@@ -332,10 +332,10 @@ export default function PlanPage() {
 
   const waitingTodos = useMemo(() => {
     // clarification='대기중'인 항목만 대기중 탭에 표시
-    // 명료화에서 '대기중' 선택 시 clarification='대기중'으로 저장됨
+    // 명료화에서 '대기중' 선택 시 clarification='waiting'으로 저장됨
     return inboxItems.filter((item: InboxItem) =>
       item.item_type === 'todo' &&  // 할일 타입만
-      item.clarification === '대기중' &&
+      item.clarification === 'waiting' &&
       !item.scheduled_date
     );
   }, [inboxItems]);
