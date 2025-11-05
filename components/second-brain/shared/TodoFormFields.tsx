@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target } from 'lucide-react';
+import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
 import ProjectSelector from './ProjectSelector';
@@ -132,35 +132,57 @@ export default function TodoFormFields({
         </label>
 
         <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-          {/* 아이콘 버튼 */}
-          <button
-            type="button"
-            onClick={() => setIconBrowserOpen(true)}
-            className="w-12 h-12 rounded-lg bg-[#f3f4f6] mb-3 flex items-center justify-center group relative"
-          >
-            {(() => {
-              const IconComponent = getUnifiedIcon((todo.icon || 'CheckSquare') as UnifiedIconKey);
-              return <IconComponent
-                className="group-hover:scale-110 transition-transform"
-                style={{ color: todo.color || '#808080' }}
-                size={24}
-              />;
-            })()}
-            {/* 색상 인디케이터 */}
-            <div
-              className="w-5 h-5 rounded-full absolute -bottom-1 -left-1 border-2 border-white"
-              style={{ backgroundColor: todo.color || '#808080' }}
-            />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* 아이콘 버튼 */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIconBrowserOpen(true)}
+                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
+                style={{ backgroundColor: '#f3f4f6' }}
+                title="아이콘 변경하기"
+              >
+                {(() => {
+                  const IconComponent = getUnifiedIcon((todo.icon || 'CheckSquare') as UnifiedIconKey);
+                  return <IconComponent
+                    className="group-hover:scale-110 transition-transform"
+                    style={{ color: todo.color || '#808080' }}
+                    size={24}
+                  />;
+                })()}
+              </button>
 
-          {/* 제목 입력 */}
-          <input
-            type="text"
-            value={todo.title}
-            onChange={(e) => onChange({ ...todo, title: e.target.value })}
-            className="w-full border-0 border-b-2 border-base-300 bg-transparent px-0 py-2 text-[20px] font-semibold focus:outline-none focus:border-primary"
-            placeholder={titlePlaceholder}
-          />
+              {/* 색상 인디케이터 */}
+              <div
+                className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
+                style={{
+                  backgroundColor: todo.color || '#808080',
+                  border: '2px solid white'
+                }}
+              >
+                <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
+              </div>
+            </div>
+
+            {/* 제목 입력 */}
+            <input
+              type="text"
+              value={todo.title}
+              onChange={(e) => onChange({ ...todo, title: e.target.value })}
+              placeholder={titlePlaceholder}
+              className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
+              style={{
+                fontSize: '20px',
+                color: '#333333',
+                borderBottomColor: '#D1D5DB',
+                outline: 'none',
+                boxShadow: 'none',
+                fontWeight: '600',
+                height: '44px',
+              }}
+              required
+            />
+          </div>
         </div>
       </div>
 
