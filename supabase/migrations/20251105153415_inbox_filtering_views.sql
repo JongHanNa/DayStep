@@ -18,8 +18,10 @@ SELECT t.*
 FROM todos t
 WHERE t.recurrence_pattern = 'none'
   AND t.clarification != 'waiting'
+  AND t.clarification != 'someday'
+  AND NOT (t.clarification = 'reminder' AND t.start_time IS NOT NULL)
   AND NOT (t.clarification = 'scheduled' AND t.start_time IS NOT NULL)
-  AND NOT (t.clarification = 'next_action' AND array_length(t.next_action_contexts, 1) > 0);
+  AND NOT (t.clarification = 'next_action' AND COALESCE(array_length(t.next_action_contexts, 1), 0) > 0);
 
 COMMENT ON MATERIALIZED VIEW inbox_todos IS '할일 수집함: 명료화가 필요한 할일 목록';
 
