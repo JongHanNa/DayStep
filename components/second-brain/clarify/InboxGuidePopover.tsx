@@ -66,13 +66,21 @@ const GUIDE_CONTENT: Record<InboxTabType, {
   },
 };
 
+// 활성 탭에 따른 가이드 버튼 라벨
+const GUIDE_LABELS: Record<InboxTabType, string> = {
+  todos: '할일 비우기 가이드',
+  notes: '노트 비우기 가이드',
+  projects: '프로젝트 비우기 가이드',
+  goals: '목표 비우기 가이드',
+};
+
 export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const guide = GUIDE_CONTENT[activeTab];
 
   return (
     <div
-      className="relative inline-block mb-3"
+      className="relative inline-block my-3"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
@@ -83,7 +91,7 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
         aria-label="가이드 보기"
       >
         <Info className="w-4 h-4" />
-        <span>가이드</span>
+        <span>{GUIDE_LABELS[activeTab]}</span>
       </button>
 
       {/* 팝오버 */}

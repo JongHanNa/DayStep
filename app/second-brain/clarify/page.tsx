@@ -275,9 +275,6 @@ export default function ClarifyPage() {
         <section>
           <h2 className="text-xl font-bold mb-4">수집함 비우기</h2>
 
-          {/* 가이드 팝오버 */}
-          <InboxGuidePopover activeTab={activeTab} />
-
           {/* 수집함 탭 */}
           <InboxTabs
             activeTab={activeTab}
@@ -289,6 +286,9 @@ export default function ClarifyPage() {
               goals: goalInbox.length,
             }}
           />
+
+          {/* 가이드 팝오버 */}
+          <InboxGuidePopover activeTab={activeTab} />
 
           {/* 수집함 리스트 */}
           <div className="mt-4">
