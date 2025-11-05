@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Info, Lock, Unlock } from 'lucide-react';
 import type { InboxTabType } from './InboxTabs';
+
+const STORAGE_KEY = 'daystep_inbox_guide_hover_enabled';
 
 interface InboxGuidePopoverProps {
   activeTab: InboxTabType;
@@ -76,40 +78,105 @@ const GUIDE_LABELS: Record<InboxTabType, string> = {
 
 export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [enableHoverOpen, setEnableHoverOpen] = useState(true);
   const guide = GUIDE_CONTENT[activeTab];
 
+  // localStorage에서 호버 설정 불러오기
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored !== null) {
+      setEnableHoverOpen(stored === 'true');
+    }
+  }, []);
+
+  // 호버 설정 변경 시 localStorage에 저장
+  const toggleHoverOpen = () => {
+    const newValue = !enableHoverOpen;
+    setEnableHoverOpen(newValue);
+    localStorage.setItem(STORAGE_KEY, String(newValue));
+  };
+
+  // ESC 키로 닫기
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
   return (
-    <div
-      className="relative inline-block my-3"
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-    >
-      {/* 가이드 버튼 */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-base-content/70 hover:text-base-content hover:bg-base-300/50 rounded-lg transition-colors"
-        aria-label="가이드 보기"
-      >
-        <Info className="w-4 h-4" />
-        <span>{GUIDE_LABELS[activeTab]}</span>
-      </button>
+    <div className="relative inline-block my-3">
+      <div className="flex items-center gap-2">
+        {/* 가이드 버튼 */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          onMouseEnter={() => enableHoverOpen && setIsOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-base-content/70 hover:text-base-content hover:bg-base-300/50 rounded-lg transition-colors"
+          aria-label="가이드 보기"
+          aria-expanded={isOpen}
+        >
+          <Info className="w-4 h-4" />
+          <span>{GUIDE_LABELS[activeTab]}</span>
+        </button>
+
+        {/* 호버 토글 버튼 */}
+        <button
+          onClick={toggleHoverOpen}
+          className="flex items-center gap-1.5 px-2 py-2 text-xs text-base-content/60 hover:text-base-content hover:bg-base-300/50 rounded-lg transition-colors"
+          aria-label={enableHoverOpen ? '호버 열림 끄기' : '호버 열림 켜기'}
+          title={enableHoverOpen ? '호버 열림 끄기' : '호버 열림 켜기'}
+        >
+          {enableHoverOpen ? (
+            <>
+              <Unlock className="w-4 h-4" />
+              <span>호버 열기 ON</span>
+            </>
+          ) : (
+            <>
+              <Lock className="w-4 h-4" />
+              <span>호버 열기 OFF</span>
+            </>
+          )}
+        </button>
+      </div>
 
       {/* 팝오버 */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-base-300 z-50 w-[90vw] max-w-[500px] max-sm:w-[90vw] md:w-[500px]">
-          {/* 헤더 */}
-          <div className="flex items-center gap-2 p-4 border-b border-base-300">
-            <span className="text-2xl">{guide.icon}</span>
-            <h3 className="font-bold text-lg">{guide.title}</h3>
-          </div>
+        <>
+          {/* 배경 오버레이 - 클릭 시 닫기 */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
 
-          {/* 내용 */}
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
-            <div className="prose prose-sm max-w-none">
-              {guide.content}
+          {/* 팝오버 콘텐츠 */}
+          <div
+            className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-base-300 z-50 w-[90vw] max-w-[500px] max-sm:w-[90vw] md:w-[500px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guide-title"
+          >
+            {/* 헤더 */}
+            <div className="flex items-center gap-2 p-4 border-b border-base-300">
+              <span className="text-2xl">{guide.icon}</span>
+              <h3 id="guide-title" className="font-bold text-lg">{guide.title}</h3>
+            </div>
+
+            {/* 내용 */}
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <div className="prose prose-sm max-w-none">
+                {guide.content}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
