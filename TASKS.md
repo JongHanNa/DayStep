@@ -1,199 +1,166 @@
-# TASKS.md - DayStep 작업 관리
-
-## 📋 수집 페이지(inbox) - 할일 편집 모달 저장 오류 수정
-
-### 오류 요약
-**증상**: 수집 페이지에서 할일 편집 모달의 저장 버튼 클릭 시 `RangeError: Invalid time value` 발생
-**원인**: `formatDistanceToNow` 함수가 유효하지 않은 날짜 값(`item.created_at`)을 받아 처리
-**위치**: `app/second-brain/inbox/page.tsx:658`
-**발생 시점**: 할일 항목 업데이트 후 목록 렌더링 시
+## 📋 Second Brain 페이지 인증 보호 추가
 
 ### 🤖 서브 에이전트 시스템
 
 **1. daystep-frontend-dev** 🎨
 - **담당 작업**: UI/UX 구현, 컴포넌트 개발, 스타일링, 반응형 디자인, 클라이언트 상태 관리
-- **기술 스택**: React 19, TypeScript, Tailwind CSS, DaisyUI, date-fns
-- **특화 영역**: 날짜 처리, 에러 핸들링, 사용자 입력 검증
+- **기술 스택**: React/TypeScript, Tailwind CSS, DaisyUI, Framer Motion, Zustand
+- **특화 영역**: 접근성 (WCAG 준수), 브라우저 스토리지, 프론트엔드 최적화
+- **병렬 사용**: UI 페이지/컴포넌트 개발 시 `#1`, `#2`, `#3`, `#4`... 번호 부여
 
-**2. daystep-qa-validator** ✅
-- **담당 작업**: 테스트 작성, 빌드 검증, 버그 수정, 타입 검증
-- **기술 스택**: TypeScript, ESLint, 타입 체크
-- **특화 영역**: 타입 안전성, 회귀 테스트, 배포 전 검증
+**2. daystep-backend-dev** ⚙️
+- **담당 작업**: API 개발, 데이터베이스 작업, 인증/권한, 서버 비즈니스 로직
+- **기술 스택**: Supabase, PostgreSQL, Edge Functions
+- **특화 영역**: CRUD, RLS 정책, 마이그레이션, 데이터 검증, 에러 처리
 
-**3. debug-logger** 🔍
+**3. mobile-developer** 📱
+- **담당 작업**: 네이티브 통합, 플랫폼 최적화, 모바일 빌드
+- **기술 스택**: Capacitor, iOS/Android SDK
+- **특화 영역**: 로컬 알림, 생체 인증, WebView 최적화, 앱 배포
+
+**4. daystep-qa-validator** ✅
+- **담당 작업**: 테스트 작성, 빌드 검증, 버그 수정, 성능 테스트
+- **기술 스택**: TypeScript, ESLint, Jest, Playwright
+- **특화 영역**: 타입 체크, 회귀 테스트, 배포 전 검증
+- **필수 원칙**: 모든 코드 변경 후 QA 검증 필수 (긴급 버그 수정, 간단한 변경 포함)
+
+**5. debug-logger** 🔍
 - **담당 작업**: 디버깅 로그 추가, 복잡한 버그 추적, 실행 흐름 모니터링
-- **기술 스택**: Console API, Browser DevTools
-- **특화 영역**: 상태 변화 추적, API 경계 모니터링, 에러 추적
+- **기술 스택**: Console API, Browser DevTools, 성능 프로파일링
+- **특화 영역**: 전략적 로그 배치, 상태 변화 추적, API 경계 모니터링, 에러 추적
+- **사용 시점**: 복잡한 상태 변화를 포함한 로직 구현 후, API 호출 및 사용자 상호작용이 있는 기능 후
+
+**에이전트 배정 원칙:**
+- 작업 영역과 에이전트 전문성 매칭
+- 병렬 작업 시 동일 에이전트 타입에 `#1`, `#2`, `#3`... 번호 부여
+- 크로스 기능 작업에는 여러 에이전트 협업
+- **모든 코드 변경 후 QA 검증 필수**
 
 ---
-
-## Phase 1: 문제 분석 및 원인 파악 (완료)
 
 ### 📌 계획된 작업
 
-- [x] 오류 발생 지점 확인 (담당: daystep-frontend-dev) - 2025-01-04
-  - `page.tsx:658` - `formatDistanceToNow(new Date(item.created_at))` 호출 시점
-  - 할일 업데이트 후 `inboxItems` 배열 렌더링 시 발생
-
-- [x] InboxItem 타입 정의 확인 (담당: daystep-frontend-dev) - 2025-01-04
-  - `types/second-brain.ts` 파일 확인 필요
-  - `created_at` 필드 타입 및 필수 여부 검증
-
-- [x] inboxStore 업데이트 로직 확인 (담당: daystep-frontend-dev) - 2025-01-04
-  - `state/stores/secondBrain/inboxStore.ts` 파일 확인 필요
-  - `updateInboxItem` 함수에서 `created_at` 필드 처리 방식 검증
+**작업 상태 표시:**
+- `[ ]` - 계획된 작업 (아직 시작 안함)
+- `[-]` - 진행 중인 작업
+- `[x]` - 완료된 작업 (담당: 에이전트명) - YYYY-MM-DD
 
 ---
 
-## Phase 2: 코드 수정 (계획됨)
+### Phase 1: 페이지별 AuthGuard 적용 (병렬 처리)
 
-### 📌 계획된 작업
+**⚡ 병렬 작업 그룹 - 14개 Second Brain 페이지에 AuthGuard 동시 적용**
 
-**우선순위: 높음**
+각 페이지에서 다음 작업 수행:
+1. `'use client'` 지시어 확인 (없으면 추가)
+2. `AuthGuard` import 추가: `import { AuthGuard } from '@/components/auth/AuthGuard';`
+3. 페이지 컴포넌트를 `<AuthGuard requireAuth={true}>` 래퍼로 감싸기
+4. 타임라인 페이지 패턴 참조 (app/timeline/page.tsx)
 
-- [x] 날짜 유효성 검증 추가 (담당: daystep-frontend-dev) - 2025-01-04
-  - 의존성: Phase 1 완료
-  - `page.tsx:658` 라인에 날짜 유효성 검사 추가
-  - 유효하지 않은 날짜 시 기본값 표시 또는 에러 처리
-  - 수정 완료:
-    - `isValidDate` 헬퍼 함수 추가 (24-29번째 줄)
-    - 665-672번째 줄에 날짜 유효성 검사 적용
-    - 유효하지 않은 날짜 시 "날짜 정보 없음" 표시
+**참고 구현 예시:**
+```typescript
+'use client';
 
-- [x] updateInboxItem 함수 수정 (담당: daystep-frontend-dev) - 2025-01-04
-  - 의존성: Phase 1 완료
-  - `inboxStore.ts`에서 `updated_at` 필드만 업데이트하고 `created_at` 보존
-  - DB 스키마 확인: `created_at` 필드가 자동 생성되는지 검증
-  - 검증 완료:
-    - `updateInboxTodo`와 `updateInboxNote` 함수가 명시적으로 제공된 필드만 업데이트
-    - `updateWithJWT` 함수가 PATCH 메소드로 전달된 필드만 업데이트
-    - `created_at` 필드를 업데이트 payload에 포함하지 않으므로 DB에서 보존됨
-    - 코드 레벨에서는 문제 없음
+import { AuthGuard } from '@/components/auth/AuthGuard';
+import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
+// ... 기타 imports
 
-- [x] handleUpdate 함수 검토 (담당: daystep-frontend-dev) - 2025-01-04
-  - 의존성: Phase 1 완료
-  - `page.tsx:208-276` 라인의 `handleUpdate` 함수 검토
-  - 검증 완료:
-    - 할일 업데이트 payload(221-229번째 줄): `created_at` 필드 포함하지 않음
-    - 노트 업데이트 payload(259-268번째 줄): `created_at` 필드 포함하지 않음
-    - 불필요한 필드 없음, 코드 올바르게 작성됨
+export default function PageName() {
+  return (
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-base-200 pb-20">
+        {/* 기존 페이지 콘텐츠 */}
+      </div>
+      <SecondBrainBottomNav />
+    </AuthGuard>
+  );
+}
+```
 
----
+**병렬 작업 목록:**
 
-## Phase 3: 타입 안전성 강화 (계획됨)
+- [x] 시스템 설명 페이지 (app/second-brain/start/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #1) - 2025-01-05
+- [x] 책임 영역 페이지 (app/second-brain/areas/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #2) - 2025-01-05
+- [x] 자원 페이지 (app/second-brain/resources/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #3) - 2025-01-05
+- [x] 목표 페이지 (app/second-brain/goals/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #4) - 2025-01-05
+- [x] 프로젝트 페이지 (app/second-brain/projects/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #5) - 2025-01-05
+- [x] 수집 페이지 (app/second-brain/inbox/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #6) - 2025-01-05
+- [x] 명료화 페이지 (app/second-brain/clarify/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #7) - 2025-01-05
+- [x] 계획 페이지 (app/second-brain/plan/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #8) - 2025-01-05
+- [x] 점검 페이지 (app/second-brain/review/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #9) - 2025-01-05
+- [x] 달력 페이지 (app/second-brain/calendar/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #10) - 2025-01-05
+- [x] 목표 나침반 페이지 (app/second-brain/goal-compass/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #11) - 2025-01-05
+- [x] 노트 페이지 (app/second-brain/notes/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #12) - 2025-01-05
+- [x] 아카이브 페이지 (app/second-brain/archive/page.tsx) AuthGuard 적용 (담당: daystep-frontend-dev #13) - 2025-01-05
 
-### 📌 계획된 작업
+**→ 예상 처리 시간: 순차 대비 92% 단축 (13배 빠름)**
 
-**우선순위: 중간**
-
-- [ ] InboxItem 타입 개선 (담당: daystep-frontend-dev)
-  - 의존성: Phase 2 완료
-  - `created_at` 필드를 필수(`required`)로 설정
-  - 타입 정의에 날짜 형식 명시 (`string | Date`)
-  - 업데이트 payload 타입과 생성 payload 타입 분리
-
-- [ ] 날짜 처리 유틸리티 함수 생성 (담당: daystep-frontend-dev)
-  - 의존성: Phase 2 완료
-  - `lib/utils.ts` 또는 새 파일에 날짜 유틸리티 추가
-  - `formatSafeDate`, `isValidDate` 등 재사용 가능한 함수 작성
-  - 다른 페이지에서도 사용 가능하도록 공통 모듈화
-
----
-
-## Phase 4: 테스트 및 검증 (계획됨)
-
-### 📌 계획된 작업
-
-**우선순위: 높음**
-
-- [x] 타입 체크 실행 (담당: daystep-qa-validator) - 2025-01-04
-  - 의존성: Phase 2, Phase 3 완료
-  - `npx tsc --noEmit` 실행하여 타입 오류 확인
-  - ✅ 타입 체크 통과 - 타입 오류 없음
-
-- [x] Lint 검사 실행 (담당: daystep-qa-validator) - 2025-01-04
-  - 의존성: Phase 2, Phase 3 완료
-  - `npm run lint` 실행하여 코드 품질 확인
-  - ✅ Lint 검사 통과 - 오류 없음 (경고는 프로젝트 전체 스타일 관련)
-
-- [ ] 웹 빌드 검증 (담당: daystep-qa-validator)
-  - 의존성: 타입 체크, Lint 검사 완료
-  - `BUILD_TARGET=web npm run build` 실행
-  - 빌드 오류 없이 완료되는지 확인
-
-- [ ] 모바일 빌드 검증 (담당: daystep-qa-validator)
-  - 의존성: 웹 빌드 검증 완료
-  - `BUILD_TARGET=mobile npm run build` 실행
-  - 빌드 오류 없이 완료되는지 확인
+**병렬 처리 효과:**
+- 총 작업 수: 13개 페이지
+- 병렬 실행: 13개 동시
+- 순차 실행 시간: 약 65분 (페이지당 5분)
+- 병렬 실행 시간: 약 5분 (가장 느린 작업 기준)
+- 시간 절감: 60분 (92% 단축)
 
 ---
 
-## Phase 5: 기능 테스트 (계획됨)
+### Phase 2: 통합 검증 (순차 작업)
 
-### 📌 계획된 작업
+**순차 작업 (Phase 1 완료 후 수행):**
 
-**우선순위: 높음**
+- [x] 전체 페이지 인증 플로우 통합 테스트 (담당: daystep-qa-validator) - 2025-01-05
+  - 의존성: Phase 1의 모든 작업 완료 ✅
+  - 테스트 항목:
+    1. ✅ 로그아웃 상태에서 각 페이지 접근 시 로그인 페이지로 리다이렉트 확인
+    2. ✅ 로그인 후 정상 페이지 접근 확인
+    3. ✅ AuthGuard 로딩 상태 표시 확인
+    4. ✅ 타입 체크: `npx tsc --noEmit` (통과)
+    5. ✅ Lint 검사: `npm run lint` (Warning만 있음, Error 없음)
+    6. ✅ 웹 빌드 검증: `BUILD_TARGET=web npm run build` (성공)
+    7. ⏭️  모바일 빌드 검증 (스킵 - 웹 환경만 적용)
+    8. ✅ 기능 회귀 테스트 (기존 기능 정상 작동 확인)
 
-- [ ] 할일 생성 테스트 (담당: daystep-qa-validator)
-  - 의존성: Phase 4 완료
-  - 새 할일 생성 시 `created_at` 필드가 자동 생성되는지 확인
-  - 생성된 할일이 목록에 정상적으로 표시되는지 확인
-  - 날짜 표시가 올바른지 확인 (예: "방금 전")
+  - 추가 수정 사항:
+    - plan/page.tsx: JSX 닫기 태그 오류 수정
+    - clarify/page.tsx: SSR 중 appUser null 처리 (`appUser?.id` 조건 추가)
 
-- [ ] 할일 수정 테스트 (담당: daystep-qa-validator)
-  - 의존성: 할일 생성 테스트 완료
-  - 기존 할일 수정 시 `created_at` 필드가 유지되는지 확인
-  - 수정 후 목록 렌더링 시 날짜 오류가 발생하지 않는지 확인
-  - 수정된 내용이 정상적으로 저장되는지 확인
-
-- [ ] 엣지 케이스 테스트 (담당: daystep-qa-validator)
-  - 의존성: 할일 수정 테스트 완료
-  - `created_at`이 null인 경우 처리 확인
-  - `created_at`이 undefined인 경우 처리 확인
-  - `created_at`이 유효하지 않은 문자열인 경우 처리 확인
-  - 각 케이스에서 UI가 깨지지 않고 적절한 fallback 표시 확인
-
-- [ ] 회귀 테스트 (담당: daystep-qa-validator)
-  - 의존성: 엣지 케이스 테스트 완료
-  - 노트 생성/수정 기능이 정상 작동하는지 확인
-  - 편집 모드 기능이 정상 작동하는지 확인
-  - 스와이프 삭제 기능이 정상 작동하는지 확인
-  - 탭 전환 기능이 정상 작동하는지 확인
+- [ ] 인증 에러 처리 개선 (담당: debug-logger)
+  - 의존성: QA 검증 완료 ✅
+  - AuthGuard에서 발견된 에러 시나리오에 대한 디버깅 로그 추가
+  - 에러 추적 및 모니터링 강화
+  - **상태: 선택적 작업 - 필요시 진행**
 
 ---
 
-## Phase 6: 디버깅 로그 추가 (선택 사항)
+### 작업 진행 가이드라인
 
-### 📌 계획된 작업
+**작업 시작 전:**
+1. TASKS.md 확인
+2. 할당된 페이지 확인
+3. 타임라인 페이지 참고 구현 검토
 
-**우선순위: 낮음**
+**작업 진행 중:**
+- 작업 시작 시: `[ ]` → `[-]` 변경
+- 작업 완료 시: `[-]` → `[x]` 변경 + 날짜 기록
 
-- [ ] 전략적 로그 배치 (담당: debug-logger)
-  - 의존성: Phase 5 완료
-  - `updateInboxItem` 함수에 로그 추가 (업데이트 전/후 상태)
-  - `handleUpdate` 함수에 로그 추가 (payload 확인)
-  - 날짜 파싱 시점에 로그 추가 (유효성 검증 결과)
-  - 프로덕션 환경에서는 로그 제거 또는 조건부 활성화
+**작업 완료 후:**
+- QA 검증 필수
+- 다른 병렬 작업과의 충돌 확인
+- Phase 2 통합 테스트 대기
+
+**주의사항:**
+- 각 페이지의 기존 구조를 최대한 유지
+- 'use client' 지시어는 파일 맨 위에 위치
+- AuthGuard는 페이지 콘텐츠 전체를 감싸야 함
+- 로딩 상태는 AuthGuard가 자동 처리
 
 ---
 
-## 작업 진행 상황 요약
+### 예상 일정
 
-- **완료**: Phase 1 (문제 분석), Phase 2 (코드 수정), Phase 4 (일부 - 타입 체크, Lint 검사)
-- **진행 중**: 없음
-- **대기 중**: Phase 4 (웹/모바일 빌드), Phase 5 (기능 테스트) - 사용자 확인 필요
-- **차단됨**: 없음
+- **Phase 1 (병렬 처리)**: 약 5분
+- **Phase 2 (통합 검증)**: 약 10분
+- **총 예상 시간**: 약 15분
 
----
-
-## 다음 단계
-
-1. Phase 4 시작: 테스트 및 검증 (daystep-qa-validator)
-2. 우선순위: 타입 체크 → Lint 검사 → 웹 빌드 → 모바일 빌드
-3. 각 작업 완료 시 TASKS.md 업데이트 필수
-
-**Phase 2 완료 요약**:
-- ✅ 날짜 유효성 검증 헬퍼 함수 추가
-- ✅ `formatDistanceToNow` 호출 전 유효성 검사 적용
-- ✅ `updateInboxItem` 및 `handleUpdate` 함수 검증 완료
-- 💡 코드 레벨 수정 완료 - 이제 테스트 단계로 진행
+**순차 처리 시 예상 시간**: 약 75분 (페이지당 5분 × 13개 + 검증 10분)
+**병렬 처리 시간 절감**: 60분 (80% 단축)
