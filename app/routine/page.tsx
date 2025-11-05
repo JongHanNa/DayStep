@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, Target, Layers, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 // 탭 타입
 type TabType = 'responsibility' | 'resource' | 'goal';
@@ -182,55 +183,57 @@ export default function RoutinePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-        <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-          <h1 className="text-2xl font-bold">루틴</h1>
-          <p className="text-sm text-base-content/70 mt-1">
-            일상적으로 반복하는 할일 관리
-          </p>
-        </div>
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-base-100 pb-20">
+        {/* 헤더 */}
+        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+            <h1 className="text-2xl font-bold">루틴</h1>
+            <p className="text-sm text-base-content/70 mt-1">
+              일상적으로 반복하는 할일 관리
+            </p>
+          </div>
 
-        {/* 탭 */}
-        <div className="max-w-3xl mx-auto px-4 py-2">
-          <div className="flex gap-2">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = selectedTab === tab.id;
+          {/* 탭 */}
+          <div className="max-w-3xl mx-auto px-4 py-2">
+            <div className="flex gap-2">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = selectedTab === tab.id;
 
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedTab(tab.id)}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-2 rounded-full transition-all',
-                    isActive
-                      ? 'bg-primary text-primary-content'
-                      : 'bg-base-200 hover:opacity-80'
-                  )}
-                >
-                  <Icon className="w-4 h-4" style={{ color: isActive ? undefined : tab.color }} />
-                  <span className="text-sm font-medium">{tab.label}</span>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedTab(tab.id)}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-full transition-all',
+                      isActive
+                        ? 'bg-primary text-primary-content'
+                        : 'bg-base-200 hover:opacity-80'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" style={{ color: isActive ? undefined : tab.color }} />
+                    <span className="text-sm font-medium">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 콘텐츠 */}
-      <div className="max-w-3xl mx-auto">
-        {/* 아코디언 리스트 */}
-        <div className="bg-base-100">
-          {mockData[selectedTab].map((group) => (
-            <RoutineAccordionGroup key={group.id} group={group} />
-          ))}
+        {/* 콘텐츠 */}
+        <div className="max-w-3xl mx-auto">
+          {/* 아코디언 리스트 */}
+          <div className="bg-base-100">
+            {mockData[selectedTab].map((group) => (
+              <RoutineAccordionGroup key={group.id} group={group} />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* 하단 네비게이션 */}
-      <SecondBrainBottomNav />
-    </div>
+        {/* 하단 네비게이션 */}
+        <SecondBrainBottomNav />
+      </div>
+    </AuthGuard>
   );
 }

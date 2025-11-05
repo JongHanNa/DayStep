@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -407,7 +408,8 @@ export default function InboxPage() {
   const noteCount = inboxItems.filter(item => item.item_type === 'note').length;
 
   return (
-    <div className="min-h-screen bg-base-200 pb-20">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-base-200 pb-20">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
         <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
@@ -733,6 +735,7 @@ export default function InboxPage() {
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

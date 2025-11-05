@@ -1,10 +1,12 @@
 'use client';
 
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export default function GoalCompassPage() {
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-base-100 pb-20">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
@@ -24,6 +26,7 @@ export default function GoalCompassPage() {
 
       {/* 하단 네비게이션 */}
       <SecondBrainBottomNav />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

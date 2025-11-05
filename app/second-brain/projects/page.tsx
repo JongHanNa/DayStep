@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
@@ -233,45 +234,21 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 pb-20">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-        <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold">프로젝트 (Projects)</h1>
-              <p className="text-sm text-base-content/70 mt-1">
-              목표에 따라 그룹화된 프로젝트 목록
-              </p>
-            </div>
-            <button
-              onClick={handleAddProject}
-              className="btn btn-primary btn-sm rounded-full"
-              disabled={isCreating}
-            >
-              {isCreating ? (
-                <span className="loading loading-spinner loading-xs"></span>
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              {isCreating ? '생성 중...' : '추가'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        {/* 프로젝트 목록이 없을 때 */}
-        {projects.length === 0 ? (
-          <div className="card bg-base-200">
-            <div className="card-body text-center py-12">
-              <p className="text-base-content/60">
-                아직 프로젝트가 없습니다. 새 프로젝트를 추가해보세요.
-              </p>
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-base-100 pb-20">
+        {/* 헤더 */}
+        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold">프로젝트 (Projects)</h1>
+                <p className="text-sm text-base-content/70 mt-1">
+                목표에 따라 그룹화된 프로젝트 목록
+                </p>
+              </div>
               <button
                 onClick={handleAddProject}
-                className="btn btn-primary btn-sm rounded-full mt-4 mx-auto"
+                className="btn btn-primary btn-sm rounded-full"
                 disabled={isCreating}
               >
                 {isCreating ? (
@@ -279,100 +256,126 @@ export default function ProjectsPage() {
                 ) : (
                   <Plus className="w-4 h-4" />
                 )}
-                {isCreating ? '생성 중...' : '새 프로젝트 추가'}
+                {isCreating ? '생성 중...' : '추가'}
               </button>
             </div>
           </div>
-        ) : (
-          /* 목표별 프로젝트 그룹 */
-          <div className="space-y-6">
+        </div>
 
-            {/* 목표별 섹션들 */}
-            <div className="space-y-4">
-              {/* 목표없음 섹션 (항상 먼저 표시) */}
-              {projectsByGoal['no-goal'] && projectsByGoal['no-goal'].length > 0 && (
-                <ProjectGoalSection
-                  goalId="no-goal"
-                  projects={projectsByGoal['no-goal']}
-                  isExpanded={expandedGoals.has('no-goal')}
-                  onToggle={() => toggleGoalSection('no-goal')}
-                  onEditProject={handleEditProject}
-                />
-              )}
-
-              {/* 각 목표별 섹션 */}
-              {goals.map((goal) => {
-                const goalProjects = projectsByGoal[goal.id] || [];
-                // 프로젝트가 없는 목표는 표시하지 않음
-                if (goalProjects.length === 0) return null;
-
-                return (
-                  <ProjectGoalSection
-                    key={goal.id}
-                    goalId={goal.id}
-                    goal={goal}
-                    projects={goalProjects}
-                    isExpanded={expandedGoals.has(goal.id)}
-                    onToggle={() => toggleGoalSection(goal.id)}
-                    onEditProject={handleEditProject}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 프로젝트 편집 다이얼로그 */}
-      <ProjectEditDialog
-        open={editDialogOpen}
-        editingProject={editingProject}
-        goals={goals}
-        areas={areas}
-        resources={resources}
-        onSave={handleSaveProject}
-        onCancel={handleCancelEdit}
-        onDelete={handleDeleteClick}
-        onProjectChange={setEditingProject}
-      />
-
-      {/* 삭제 확인 다이얼로그 */}
-      <Sheet
-        isOpen={deleteConfirmOpen && !!projectToDelete}
-        onClose={handleCancelDelete}
-        detent="content-height"
-      >
-        <Sheet.Container className="bg-background">
-          <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
-            <div className="px-4 py-3">
-              <h3 className="font-bold text-lg">프로젝트 삭제</h3>
-            </div>
-          </Sheet.Header>
-
-          <Sheet.Content>
-            <div className="px-4 py-6">
-              <p className="mb-6">
-                <strong>{projectToDelete?.title}</strong> 프로젝트를 삭제하시겠습니까?
-                <br />
-                <span className="text-sm text-base-content/60">
-                  이 작업은 되돌릴 수 없습니다.
-                </span>
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button onClick={handleCancelDelete} className="btn btn-ghost rounded-full">
-                  취소
-                </button>
-                <button onClick={handleConfirmDelete} className="btn btn-error rounded-full">
-                  삭제
+        {/* 메인 콘텐츠 */}
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          {/* 프로젝트 목록이 없을 때 */}
+          {projects.length === 0 ? (
+            <div className="card bg-base-200">
+              <div className="card-body text-center py-12">
+                <p className="text-base-content/60">
+                  아직 프로젝트가 없습니다. 새 프로젝트를 추가해보세요.
+                </p>
+                <button
+                  onClick={handleAddProject}
+                  className="btn btn-primary btn-sm rounded-full mt-4 mx-auto"
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  {isCreating ? '생성 중...' : '새 프로젝트 추가'}
                 </button>
               </div>
             </div>
-          </Sheet.Content>
-        </Sheet.Container>
-      </Sheet>
+          ) : (
+            /* 목표별 프로젝트 그룹 */
+            <div className="space-y-6">
 
-      {/* 하단 네비게이션 */}
-      <SecondBrainBottomNav />
-    </div>
+              {/* 목표별 섹션들 */}
+              <div className="space-y-4">
+                {/* 목표없음 섹션 (항상 먼저 표시) */}
+                {projectsByGoal['no-goal'] && projectsByGoal['no-goal'].length > 0 && (
+                  <ProjectGoalSection
+                    goalId="no-goal"
+                    projects={projectsByGoal['no-goal']}
+                    isExpanded={expandedGoals.has('no-goal')}
+                    onToggle={() => toggleGoalSection('no-goal')}
+                    onEditProject={handleEditProject}
+                  />
+                )}
+
+                {/* 각 목표별 섹션 */}
+                {goals.map((goal) => {
+                  const goalProjects = projectsByGoal[goal.id] || [];
+                  // 프로젝트가 없는 목표는 표시하지 않음
+                  if (goalProjects.length === 0) return null;
+
+                  return (
+                    <ProjectGoalSection
+                      key={goal.id}
+                      goalId={goal.id}
+                      goal={goal}
+                      projects={goalProjects}
+                      isExpanded={expandedGoals.has(goal.id)}
+                      onToggle={() => toggleGoalSection(goal.id)}
+                      onEditProject={handleEditProject}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 프로젝트 편집 다이얼로그 */}
+        <ProjectEditDialog
+          open={editDialogOpen}
+          editingProject={editingProject}
+          goals={goals}
+          areas={areas}
+          resources={resources}
+          onSave={handleSaveProject}
+          onCancel={handleCancelEdit}
+          onDelete={handleDeleteClick}
+          onProjectChange={setEditingProject}
+        />
+
+        {/* 삭제 확인 다이얼로그 */}
+        <Sheet
+          isOpen={deleteConfirmOpen && !!projectToDelete}
+          onClose={handleCancelDelete}
+          detent="content-height"
+        >
+          <Sheet.Container className="bg-background">
+            <Sheet.Header className="border-b border-border" style={{ backgroundColor: '#f8f8f8' }}>
+              <div className="px-4 py-3">
+                <h3 className="font-bold text-lg">프로젝트 삭제</h3>
+              </div>
+            </Sheet.Header>
+
+            <Sheet.Content>
+              <div className="px-4 py-6">
+                <p className="mb-6">
+                  <strong>{projectToDelete?.title}</strong> 프로젝트를 삭제하시겠습니까?
+                  <br />
+                  <span className="text-sm text-base-content/60">
+                    이 작업은 되돌릴 수 없습니다.
+                  </span>
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button onClick={handleCancelDelete} className="btn btn-ghost rounded-full">
+                    취소
+                  </button>
+                  <button onClick={handleConfirmDelete} className="btn btn-error rounded-full">
+                    삭제
+                  </button>
+                </div>
+              </div>
+            </Sheet.Content>
+          </Sheet.Container>
+        </Sheet>
+
+        {/* 하단 네비게이션 */}
+        <SecondBrainBottomNav />
+      </div>
+    </AuthGuard>
   );
 }

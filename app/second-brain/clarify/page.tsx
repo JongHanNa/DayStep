@@ -19,6 +19,7 @@ import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProje
 import GTDGuideSection from '@/components/second-brain/clarify/GTDGuideSection';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import type { InboxItem, Project, UpdateProjectInput, Goal, UpdateGoalInput } from '@/types/second-brain';
 
 export default function ClarifyPage() {
@@ -63,15 +64,6 @@ export default function ClarifyPage() {
     setTodoInbox(inboxTodos);
     setNoteInbox(inboxNotes);
   }, [inboxItems, loading]);
-
-  // 🔒 인증 상태 체크 - appUser 로딩 중이면 로딩 UI 표시
-  if (!appUser) {
-    return (
-      <div className="min-h-screen bg-base-200 flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
-  }
 
   const loadInboxData = async () => {
     if (!appUser?.id) return;
@@ -273,16 +265,17 @@ export default function ClarifyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 pb-20">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
-        <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-          <h1 className="text-2xl font-bold mb-1">명료화</h1>
-          <p className="text-sm text-base-content/70">
-            수집한 항목을 분류하고 처리하세요
-          </p>
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-base-200 pb-20">
+        {/* 헤더 */}
+        <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+            <h1 className="text-2xl font-bold mb-1">명료화</h1>
+            <p className="text-sm text-base-content/70">
+              수집한 항목을 분류하고 처리하세요
+            </p>
+          </div>
         </div>
-      </div>
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
         {/* 수집함 영역 */}
@@ -309,7 +302,7 @@ export default function ClarifyPage() {
                 projects={projects}
                 notes={notes}
                 onRefresh={handleRefresh}
-                userId={appUser.id}
+                userId={appUser?.id || ''}
               />
             )}
             {activeTab === 'notes' && (
@@ -386,6 +379,7 @@ export default function ClarifyPage() {
         onDelete={handleDeleteGoal}
         onGoalChange={setEditingGoal}
       />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

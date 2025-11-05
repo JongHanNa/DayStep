@@ -12,6 +12,7 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 // 추천 자원 프리셋 (온보딩 step-2와 동일)
 const RESOURCE_PRESETS = [
@@ -304,16 +305,17 @@ export default function ResourcesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 pb-20">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
-        <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-          <h1 className="text-2xl font-bold">관심 자원 (Resources)</h1>
-          <p className="text-sm text-base-content/70 mt-1">
-            관심 있는 주제와 자료를 관리하세요
-          </p>
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-base-200 pb-20">
+        {/* 헤더 */}
+        <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+            <h1 className="text-2xl font-bold">관심 자원 (Resources)</h1>
+            <p className="text-sm text-base-content/70 mt-1">
+              관심 있는 주제와 자료를 관리하세요
+            </p>
+          </div>
         </div>
-      </div>
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-3xl mx-auto px-4 py-6">
@@ -519,8 +521,9 @@ export default function ResourcesPage() {
         </dialog>
       )}
 
-      {/* 하단 네비게이션 */}
-      <SecondBrainBottomNav />
-    </div>
+        {/* 하단 네비게이션 */}
+        <SecondBrainBottomNav />
+      </div>
+    </AuthGuard>
   );
 }

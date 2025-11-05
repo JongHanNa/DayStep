@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { DndContext } from '@dnd-kit/core';
 import { useDndKit } from '@/hooks/useDndKit';
@@ -411,85 +412,87 @@ export default function PlanPage() {
   };
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDndEnd} {...dndContextProps}>
-      <div className="min-h-screen bg-base-100 pb-20">
-        {/* 헤더 */}
-        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-          <div className={`mx-auto px-6 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-            <h1 className="text-2xl font-bold">계획</h1>
-            <p className="text-sm text-base-content/70">
-              날짜가 없는 할일들에게 날짜를 배정하세요
-            </p>
+    <AuthGuard requireAuth={true}>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDndEnd} {...dndContextProps}>
+        <div className="min-h-screen bg-base-100 pb-20">
+          {/* 헤더 */}
+          <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+            <div className={`mx-auto px-6 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+              <h1 className="text-2xl font-bold">계획</h1>
+              <p className="text-sm text-base-content/70">
+                날짜가 없는 할일들에게 날짜를 배정하세요
+              </p>
+            </div>
           </div>
+
+          {/* 상단 프로젝트 탭 */}
+          <ProjectTabs
+            allProjects={projects}
+            projects={filteredProjects}
+            projectFilterType={projectFilterType}
+            onProjectFilterChange={setProjectFilterType}
+            onProjectClick={handleProjectClick}
+          />
+
+          {/* 메인 콘텐츠: 좌우 분할 */}
+          <div className="mx-auto px-6 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
+              {/* 좌측: 날짜 설정 필요 */}
+              <UnscheduledTodosList
+                overdueTodos={overdueTodos}
+                nextActionTodos={nextActionTodos}
+                projectTodos={projectTodos}
+                waitingTodos={waitingTodos}
+                projects={projects}
+                onResetOverdue={handleResetOverdueTodos}
+                onTodoClick={handleTodoClick}
+              />
+
+              {/* 우측: 날짜 영역 */}
+              <DateAssignmentArea
+                todayTodos={todayTodos}
+                tomorrowTodos={tomorrowTodos}
+                allTodos={inboxItems}
+                onTodoClick={handleTodoClick}
+              />
+            </div>
+          </div>
+
+          {/* 하단 네비게이션 */}
+          <SecondBrainBottomNav />
         </div>
 
-        {/* 상단 프로젝트 탭 */}
-        <ProjectTabs
-          allProjects={projects}
-          projects={filteredProjects}
-          projectFilterType={projectFilterType}
-          onProjectFilterChange={setProjectFilterType}
-          onProjectClick={handleProjectClick}
+        {/* 할일 편집 모달 */}
+        <TodoEditModal
+          open={isModalOpen}
+          todo={selectedTodo}
+          onClose={handleCloseModal}
+          onSave={handleSaveTodo}
+          onChange={handleTodoChange}
+          projects={projects}
+          notes={notes}
+          onCreateProject={handleCreateProject}
+          onUpdateProject={handleUpdateProject}
+          onDeleteProject={handleDeleteProjectFromTodo}
+          onCreateNote={handleCreateNote}
+          onUpdateNote={handleUpdateNote}
+          onDeleteNote={handleDeleteNote}
+          titlePlaceholder="할일 제목을 입력하세요"
         />
 
-        {/* 메인 콘텐츠: 좌우 분할 */}
-        <div className="mx-auto px-6 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
-            {/* 좌측: 날짜 설정 필요 */}
-            <UnscheduledTodosList
-              overdueTodos={overdueTodos}
-              nextActionTodos={nextActionTodos}
-              projectTodos={projectTodos}
-              waitingTodos={waitingTodos}
-              projects={projects}
-              onResetOverdue={handleResetOverdueTodos}
-              onTodoClick={handleTodoClick}
-            />
-
-            {/* 우측: 날짜 영역 */}
-            <DateAssignmentArea
-              todayTodos={todayTodos}
-              tomorrowTodos={tomorrowTodos}
-              allTodos={inboxItems}
-              onTodoClick={handleTodoClick}
-            />
-          </div>
-        </div>
-
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
-      </div>
-
-      {/* 할일 편집 모달 */}
-      <TodoEditModal
-        open={isModalOpen}
-        todo={selectedTodo}
-        onClose={handleCloseModal}
-        onSave={handleSaveTodo}
-        onChange={handleTodoChange}
-        projects={projects}
-        notes={notes}
-        onCreateProject={handleCreateProject}
-        onUpdateProject={handleUpdateProject}
-        onDeleteProject={handleDeleteProjectFromTodo}
-        onCreateNote={handleCreateNote}
-        onUpdateNote={handleUpdateNote}
-        onDeleteNote={handleDeleteNote}
-        titlePlaceholder="할일 제목을 입력하세요"
-      />
-
-      {/* 프로젝트 편집 모달 */}
-      <ProjectEditDialog
-        open={projectDialogOpen}
-        editingProject={editingProject}
-        goals={goals}
-        areas={areas}
-        resources={resources}
-        onSave={handleSaveProject}
-        onCancel={handleCancelProjectEdit}
-        onDelete={handleDeleteProject}
-        onProjectChange={setEditingProject}
-      />
-    </DndContext>
+        {/* 프로젝트 편집 모달 */}
+        <ProjectEditDialog
+          open={projectDialogOpen}
+          editingProject={editingProject}
+          goals={goals}
+          areas={areas}
+          resources={resources}
+          onSave={handleSaveProject}
+          onCancel={handleCancelProjectEdit}
+          onDelete={handleDeleteProject}
+          onProjectChange={setEditingProject}
+        />
+      </DndContext>
+    </AuthGuard>
   );
 }
