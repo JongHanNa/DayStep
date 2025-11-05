@@ -25,7 +25,7 @@ import type { InboxItem, Project, UpdateProjectInput, Goal, UpdateGoalInput } fr
 export default function ClarifyPage() {
   const { appUser } = useAuth();
   const { inboxItems, loading, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
-  const { projects, updateProject, deleteProject } = useProjectStore();
+  const { projects, fetchProjects, updateProject, deleteProject } = useProjectStore();
   const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
   const { notes, fetchNotes } = useNoteStore();
   const { areas, fetchAreas } = useAreaStore();
@@ -72,6 +72,7 @@ export default function ClarifyPage() {
 
     // 데이터 병렬 로드
     await Promise.all([
+      fetchProjects(appUser.id),
       fetchInboxItems(appUser.id),
       fetchAreas(appUser.id),
       fetchResources(appUser.id),

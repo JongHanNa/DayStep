@@ -335,5 +335,9 @@ export const useProjectStore = createStore<ProjectStoreState>(
   }),
   {
     name: 'project-store',
+    persist: {
+      name: 'daystep-projects',
+      version: 1,
+    },
   }
 );
