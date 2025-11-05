@@ -17,7 +17,7 @@ import NoteInboxList from '@/components/second-brain/clarify/NoteInboxList';
 import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
 import GoalInboxList from '@/components/second-brain/clarify/GoalInboxList';
 import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProjectsSection';
-import GTDGuideSection from '@/components/second-brain/clarify/GTDGuideSection';
+import InboxGuideModal from '@/components/second-brain/clarify/InboxGuideModal';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import { AuthGuard } from '@/components/auth/AuthGuard';
@@ -47,6 +47,10 @@ export default function ClarifyPage() {
   // 목표 편집 모달 상태
   const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+
+  // 가이드 모달 상태
+  const [guideModalOpen, setGuideModalOpen] = useState(false);
+  const [guideTabType, setGuideTabType] = useState<InboxTabType>('todos');
 
   // ✅ 모든 useEffect를 조건문 위로 이동 (React Hooks 규칙 준수)
   useEffect(() => {
@@ -279,6 +283,10 @@ export default function ClarifyPage() {
           <InboxTabs
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            onGuideClick={(tabType) => {
+              setGuideTabType(tabType);
+              setGuideModalOpen(true);
+            }}
             counts={{
               todos: todoInbox.length,
               notes: noteInbox.length,
@@ -335,13 +343,6 @@ export default function ClarifyPage() {
           />
         </section>
 
-        {/* 구분선 */}
-        <div className="divider"></div>
-
-        {/* GTD 알고리즘 설명 영역 */}
-        <section>
-          <GTDGuideSection />
-        </section>
       </div>
 
       {/* 하단 네비게이션 */}
@@ -371,6 +372,13 @@ export default function ClarifyPage() {
         onCancel={handleCancelGoalEdit}
         onDelete={handleDeleteGoal}
         onGoalChange={setEditingGoal}
+      />
+
+      {/* 가이드 모달 */}
+      <InboxGuideModal
+        open={guideModalOpen}
+        onClose={() => setGuideModalOpen(false)}
+        tabType={guideTabType}
       />
       </div>
     </AuthGuard>
