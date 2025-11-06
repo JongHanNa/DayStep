@@ -60,6 +60,8 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       completed: todoToEdit.is_completed || false,
       projectIds: todoToEdit.project_id ? [todoToEdit.project_id] : [], // 기존 단일 선택 호환
       noteIds: [], // 새 필드
+      icon: todoToEdit.icon, // 아이콘 전달
+      color: todoToEdit.color || '#DBAC6C', // 색상 전달 (기본값: 골든)
     });
   };
 

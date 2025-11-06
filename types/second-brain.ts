@@ -253,6 +253,8 @@ export interface InboxItem {
   is_highlight?: boolean; // 오늘의 하이라이트
   is_completed?: boolean; // 완료 여부
   recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'; // 반복 패턴
+  icon?: string; // 아이콘
+  color?: string; // 색상
 
   // 노트 타입 전용 필드
   note_title?: string; // 노트 제목
