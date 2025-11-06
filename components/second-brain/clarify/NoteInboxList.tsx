@@ -8,6 +8,7 @@ import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFiel
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useAuthStore } from '@/state/stores/authStore';
+import { updateProjectNotes } from '@/lib/supabase/project-notes';
 
 interface NoteInboxListProps {
   notes: InboxItem[];
@@ -91,6 +92,7 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
         }
       };
 
+      // InboxItem 업데이트 (project_id는 더이상 사용하지 않음)
       await updateInboxItem(user.id, editingNote.id, {
         content: noteForm.title,
         note_title: noteForm.title,
@@ -101,9 +103,12 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
         status: shouldRemoveFromInbox ? newStatus : 'inbox',
         area_id,
         resource_id,
-        project_id: noteForm.projectId || undefined,
+        // project_id는 제거됨 - junction table 사용
         // todo_id: noteForm.todoId || undefined, // TODO: InboxItem 타입에 todo_id 필드 추가 필요
       });
+
+      // ⚠️ 주의: InboxItem은 아직 실제 Note가 아니므로 junction table 연결은 하지 않음
+      // 실제 Note로 변환될 때 연결 처리 필요
 
       setEditingNote(null);
       setNoteForm(null);

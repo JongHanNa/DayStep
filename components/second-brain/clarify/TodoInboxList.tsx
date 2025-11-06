@@ -13,6 +13,7 @@ import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { getInboxRemovalMessage } from '@/lib/utils/inboxMessages';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
+import { linkProjectNote } from '@/lib/supabase/project-notes';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -137,7 +138,9 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   // 노트 관련 핸들러
   const handleCreateNote = async (title: string) => {
     if (!userId) throw new Error('User not found');
-    return await createNote(userId, {
+
+    // 1. 노트 생성
+    const newNote = await createNote(userId, {
       title,
       content: '',
       memo_type: 'note',
@@ -145,6 +148,23 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
       tags: [],
       is_pinned: false,
     });
+
+    // 2. InboxItem에 project_id가 있으면 junction table로 연결
+    if (editingTodo?.project_id && newNote.id) {
+      try {
+        await linkProjectNote(editingTodo.project_id, newNote.id);
+        console.log('✅ 노트-프로젝트 연결 성공:', {
+          projectId: editingTodo.project_id,
+          noteId: newNote.id
+        });
+      } catch (error) {
+        console.error('❌ 노트-프로젝트 연결 실패:', error);
+        // 노트는 생성되었으므로 에러를 던지지 않고 경고만 표시
+        console.warn('노트가 생성되었으나 프로젝트 연결에 실패했습니다.');
+      }
+    }
+
+    return newNote;
   };
 
   const handleUpdateNote = async (id: string) => {

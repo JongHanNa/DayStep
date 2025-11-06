@@ -100,6 +100,9 @@ export interface Project {
   completed_todos: number;
   progress: number; // 0-100 (%)
 
+  // 연결된 노트 (파생 데이터, project_notes junction table을 통해 로드)
+  notes?: Note[];
+
   created_at: string;
   updated_at: string;
 }
@@ -167,7 +170,7 @@ export interface Note {
   note_category: NoteCategory; // 노트 카테고리
 
   // PARA 연결
-  project?: Project; // 관계 데이터 (junction table을 통해 로드)
+  projects?: Project[]; // 여러 프로젝트 연결 (N:N, project_notes junction table을 통해 로드)
   area_id?: string;
   area?: Area; // 관계 데이터
   resource_id?: string;

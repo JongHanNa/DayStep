@@ -119,31 +119,14 @@ export async function fetchNotesByTodoWithJWT(todoId: string, userId: string): P
 
 /**
  * JWT 방식으로 프로젝트에 연결된 노트 조회
+ * @deprecated 이 함수는 더 이상 사용되지 않습니다. getProjectNotes() junction table API를 사용하세요.
+ * import { getProjectNotes } from '@/lib/supabase/project-notes';
  */
 export async function fetchNotesByProjectWithJWT(projectId: string, userId: string): Promise<Note[]> {
-  console.log('📝 JWT 방식으로 프로젝트 연결 노트 조회:', { projectId, userId });
+  console.warn('⚠️  fetchNotesByProjectWithJWT는 deprecated되었습니다. getProjectNotes()를 사용하세요.');
+  console.log('📝 JWT 방식으로 프로젝트 연결 노트 조회 (deprecated):', { projectId, userId });
 
-  try {
-    const notes = await queryRLSTableWithJWT('notes', [
-      {
-        column: 'user_id',
-        operator: 'eq',
-        value: userId
-      },
-      {
-        column: 'project_id',
-        operator: 'eq',
-        value: projectId
-      }
-    ], {
-      select: '*',
-      order: 'created_at.desc'
-    });
-
-    console.log('✅ JWT 프로젝트 연결 노트 조회 성공:', { count: notes?.length || 0 });
-    return notes || [];
-  } catch (error) {
-    console.error('❌ JWT 프로젝트 연결 노트 조회 실패:', error);
-    return [];
-  }
+  // 더 이상 project_id 컬럼이 없으므로 빈 배열 반환
+  // junction table을 사용하려면 getProjectNotes(projectId)를 호출하세요
+  return [];
 }

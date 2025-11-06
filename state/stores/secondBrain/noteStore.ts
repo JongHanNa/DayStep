@@ -11,8 +11,9 @@ import {
   updateNoteWithJWT,
   deleteNoteWithJWT,
   fetchNotesByTodoWithJWT,
-  fetchNotesByProjectWithJWT,
 } from '@/lib/supabase/notes';
+import { getProjectNotes } from '@/lib/supabase/project-notes';
+import { queryRLSTableWithJWT } from '@/lib/supabase/core';
 
 interface NoteStoreState {
   notes: Note[];
@@ -67,9 +68,28 @@ export const useNoteStore = createStore<NoteStoreState>(
     fetchNotesByProject: async (projectId: string, userId: string) => {
       try {
         set({ loading: true, error: null });
-        const notes = await fetchNotesByProjectWithJWT(projectId, userId);
+
+        // 1. Junction table에서 노트 ID 목록 가져오기 (JWT 자동 인증)
+        const noteIds = await getProjectNotes(projectId);
+
+        // 2. 노트 ID가 없으면 빈 배열 반환
+        if (noteIds.length === 0) {
+          set({ loading: false });
+          return [];
+        }
+
+        // 3. 노트 ID 목록으로 실제 노트 데이터 조회
+        const notes = await queryRLSTableWithJWT('notes', {
+          column: 'id',
+          operator: 'in',
+          value: noteIds,
+        }, {
+          select: '*',
+          order: 'created_at.desc'
+        });
+
         set({ loading: false });
-        return notes;
+        return notes || [];
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
