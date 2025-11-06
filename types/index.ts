@@ -96,7 +96,6 @@ export interface Note {
   user_id: string;
   title?: string;
   content: string;
-  related_task_id?: string | null;
   linked_date?: string | null;
   is_pinned: boolean;
   is_floating: boolean;
@@ -117,7 +116,6 @@ export interface NoteInstance {
   instance_date: string;
   content: string;
   is_modified: boolean;
-  related_task_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -131,7 +129,6 @@ export type PomodoroSessionInsert = TablesInsert<"pomodoro_sessions">;
 export interface NoteInsert {
   user_id: string;
   content: string;
-  related_task_id?: string | null;
   linked_date?: string | null;
   is_pinned?: boolean;
   is_floating?: boolean;
@@ -147,7 +144,6 @@ export interface NoteInstanceInsert {
   instance_date: string;
   content: string;
   is_modified?: boolean;
-  related_task_id?: string | null;
 }
 
 // Update types for forms
@@ -292,7 +288,6 @@ export interface CreateTodoInput {
   completed?: boolean;
   order_index?: number;
   parent_todo_id?: string;
-  project_id?: string; // 프로젝트 ID
 
   // Second Brain System fields
   clarification?: Clarification;
@@ -314,7 +309,6 @@ export interface CreateNoteInstanceInput {
   instance_date: string; // YYYY-MM-DD format
   content: string;
   is_modified?: boolean;
-  related_task_id?: string | null;
 }
 
 export interface UpdateNoteInstanceInput extends Partial<CreateNoteInstanceInput> {
@@ -329,7 +323,6 @@ export interface NoteWithInstances {
   id: string;
   user_id: string;
   content: string;
-  related_task_id?: string | null;
   linked_date?: string | null;
   is_pinned: boolean;
   is_floating: boolean;
@@ -349,7 +342,6 @@ export interface NoteInstanceWithOriginal {
   instance_date: string;
   content: string;
   is_modified: boolean;
-  related_task_id?: string | null;
   created_at: string;
   updated_at: string;
   original_memo?: Note;
@@ -527,7 +519,6 @@ export interface ProjectUpdate extends Partial<ProjectInsert> {
 
 // Extended Todo type with new fields (기존 Todo 타입을 확장하지 않고 새 필드만 문서화)
 export interface TodoExtendedFields {
-  project_id: string | null;
   clarification: Clarification;
   next_action_contexts: NextActionContext[] | null;
   is_today_highlight: boolean;
@@ -537,7 +528,6 @@ export interface TodoExtendedFields {
 
 // Extended Note type with new fields (기존 Note 타입을 확장하지 않고 새 필드만 문서화)
 export interface NoteExtendedFields {
-  project_id: string | null;
   area_resource_id: string | null;
   note_category: NoteCategory;
 }

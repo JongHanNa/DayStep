@@ -72,6 +72,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     getFilteredNotes,
     setSelectedNoteForEdit,
     initialize,
+    getNotesByTaskId,
     ui: { selectedNoteForEdit },
   } = useNoteStore();
 
@@ -80,6 +81,9 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
 
   // 노트에 연결된 할일을 별도로 관리 (현재 뷰에 없는 할일도 표시하기 위함)
   const [linkedTodosMap, setLinkedTodosMap] = useState<Map<string, any>>(new Map());
+
+  // 할일별 연결된 노트 ID 목록 (junction table 기반)
+  const [todoNotesMap, setTodoNotesMap] = useState<Map<string, string[]>>(new Map());
 
   // Memo Tag Store (태그 관리용)
   const {
@@ -181,13 +185,18 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
       } else {
         const newNote = await createNote({
           content: noteContent.trim(),
-          related_task_id: selectedTaskId,
           user_id: userId,
         });
 
         // 새 노트에 태그 연결 (사용자 태그 + 템플릿 태그 직접 연결)
         if ((selectedTags.length > 0 || selectedTemplates.length > 0) && newNote) {
           await updateMemoTagsWithTemplates(newNote.id, selectedTags, selectedTemplates, userId);
+        }
+
+        // 할일 연결이 설정되어 있으면 junction table에 연결
+        if (selectedTaskId && newNote) {
+          const { linkToTask } = useNoteStore.getState();
+          await linkToTask(newNote.id, selectedTaskId);
         }
 
         // 새 노트 생성 시 편집 모드로 전환
@@ -229,43 +238,60 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
     }
   }, [open, isAuthenticated, user?.id, initialize, loadAllTags]);
 
-  // 노트에 연결된 할일 로드 (현재 뷰에 없는 할일도 가져오기)
+  // 노트에 연결된 할일 로드 (junction table 기반)
   useEffect(() => {
     const loadLinkedTodos = async () => {
       const newLinkedTodosMap = new Map(linkedTodosMap);
+      const newTodoNotesMap = new Map(todoNotesMap);
       let hasUpdates = false;
 
+      // 모든 필터링된 노트의 연결 정보를 확인
       for (const note of filteredNotes) {
-        if (note.related_task_id && !linkedTodosMap.has(note.related_task_id)) {
-          // todos 배열에서 먼저 찾기
-          const existingTodo = todos.find(t => t.id === note.related_task_id);
-          if (existingTodo) {
-            newLinkedTodosMap.set(note.related_task_id, existingTodo);
-            hasUpdates = true;
-          } else {
-            // todos 배열에 없으면 DB에서 직접 가져오기
-            try {
-              const linkedTodo = await fetchTodoById(note.related_task_id);
-              if (linkedTodo) {
-                newLinkedTodosMap.set(note.related_task_id, linkedTodo);
-                hasUpdates = true;
+        // junction table에서 노트에 연결된 할일 목록 가져오기
+        try {
+          const noteLinkedTodos = await getNotesByTaskId(note.id);
+
+          for (const linkedTodo of noteLinkedTodos) {
+            // 할일 정보 캐시
+            if (!linkedTodosMap.has(linkedTodo.id)) {
+              const existingTodo = todos.find(t => t.id === linkedTodo.id);
+              if (existingTodo) {
+                newLinkedTodosMap.set(linkedTodo.id, existingTodo);
+              } else {
+                try {
+                  const fetchedTodo = await fetchTodoById(linkedTodo.id);
+                  if (fetchedTodo) {
+                    newLinkedTodosMap.set(linkedTodo.id, fetchedTodo);
+                  }
+                } catch (error) {
+                  console.warn(`연결된 할일 로드 실패 (${linkedTodo.id}):`, error);
+                }
               }
-            } catch (error) {
-              console.warn(`연결된 할일 로드 실패 (${note.related_task_id}):`, error);
+              hasUpdates = true;
+            }
+
+            // 할일별 노트 ID 목록 업데이트
+            const currentNotes = newTodoNotesMap.get(linkedTodo.id) || [];
+            if (!currentNotes.includes(note.id)) {
+              newTodoNotesMap.set(linkedTodo.id, [...currentNotes, note.id]);
+              hasUpdates = true;
             }
           }
+        } catch (error) {
+          console.warn(`노트 ${note.id}의 연결 정보 로드 실패:`, error);
         }
       }
 
       if (hasUpdates) {
         setLinkedTodosMap(newLinkedTodosMap);
+        setTodoNotesMap(newTodoNotesMap);
       }
     };
 
     if (filteredNotes.length > 0) {
       loadLinkedTodos();
     }
-  }, [filteredNotes, todos, fetchTodoById]);
+  }, [filteredNotes, todos, fetchTodoById, getNotesByTaskId]);
 
   // 노트 편집 시 기존 태그 로드 (사용자 태그와 템플릿 태그 분리)
   useEffect(() => {
@@ -321,14 +347,27 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   }, [selectedNoteForEdit, noteEditorOpen]);
 
   // 통합된 노트 편집기 열기
-  const openNoteEditor = (mode: 'create' | 'edit', note?: Note) => {
+  const openNoteEditor = async (mode: 'create' | 'edit', note?: Note) => {
     setNoteEditorMode(mode);
 
     if (mode === 'edit' && note) {
       setCurrentEditingNote(note);
       setNoteContent(note.content);
       setOriginalNoteContent(note.content);
-      setSelectedTaskId(note.related_task_id || null);
+
+      // junction table에서 연결된 할일 가져오기
+      try {
+        const linkedNotes = await getNotesByTaskId(note.id);
+        if (linkedNotes.length > 0) {
+          setSelectedTaskId(linkedNotes[0].id); // 첫 번째 연결된 할일 사용
+        } else {
+          setSelectedTaskId(null);
+        }
+      } catch (error) {
+        console.warn('연결된 할일 로드 실패:', error);
+        setSelectedTaskId(null);
+      }
+
       // 기존 노트 편집 시에는 사용자 편집으로 간주하지 않음 (초기값 로딩이므로)
       setHasUserEditedContent(false);
     } else {
@@ -537,13 +576,17 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                 )}
 
                 {filteredNotes.map((note: Note) => {
-                  // 연결된 할일 찾기: todos 배열 우선, 없으면 linkedTodosMap에서 찾기
-                  const linkedTodo = note.related_task_id
-                    ? (todos.find(todo => todo.id === note.related_task_id) || linkedTodosMap.get(note.related_task_id))
+                  // junction table에서 연결된 할일 찾기
+                  const linkedTodoIds = Array.from(todoNotesMap.entries())
+                    .filter(([_, noteIds]) => noteIds.includes(note.id))
+                    .map(([todoId, _]) => todoId);
+
+                  const linkedTodo = linkedTodoIds.length > 0
+                    ? (todos.find(todo => todo.id === linkedTodoIds[0]) || linkedTodosMap.get(linkedTodoIds[0]))
                     : null;
 
-                  // related_task_id가 있으면 연결됨으로 표시 (todos 스토어에 없어도)
-                  const isLinked = note.related_task_id || note.linked_timeline_task_id;
+                  // junction table에 연결이 있으면 연결됨으로 표시
+                  const isLinked = linkedTodoIds.length > 0 || note.linked_timeline_task_id;
 
                   return (
                     <div
@@ -643,7 +686,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                                 }}
                                 className="h-7 w-7 p-0"
                               >
-                                {note.related_task_id ? (
+                                {linkedTodoIds.length > 0 ? (
                                   <X className="h-3 w-3" />
                                 ) : (
                                   <Link className="h-3 w-3" />
@@ -826,7 +869,6 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                     : {
                         id: 'new',
                         content: noteContent,
-                        related_task_id: selectedTaskId,
                       } as Note;
                   setSelectedNoteForLink(noteForLink);
                   setTaskLinkModalOpen(true);
@@ -1374,7 +1416,7 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
         }
       }}
       memoId={selectedNoteForLink?.id || ''}
-      currentLinkedTaskId={selectedNoteForLink?.related_task_id || null}
+      currentLinkedTaskId={selectedTaskId}
       currentLinkedDate={selectedNoteForLink?.linked_date || null}
       currentTimelineTaskId={selectedNoteForLink?.linked_timeline_task_id || null}
     />

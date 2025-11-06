@@ -167,8 +167,7 @@ export interface Note {
   note_category: NoteCategory; // 노트 카테고리
 
   // PARA 연결
-  project_id?: string;
-  project?: Project; // 관계 데이터
+  project?: Project; // 관계 데이터 (junction table을 통해 로드)
   area_id?: string;
   area?: Area; // 관계 데이터
   resource_id?: string;

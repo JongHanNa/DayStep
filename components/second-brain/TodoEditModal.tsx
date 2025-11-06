@@ -102,8 +102,7 @@ export default function TodoEditModal({
       note_category: note.note_category,
       linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
       isPinned: note.is_pinned,
-      projectId: note.project_id || '',
-      todoId: '', // Note 타입에 related_task_id 필드가 없으므로 빈 문자열
+      todoId: '', // 할일 연결은 junction table을 통해 관리
     });
   };
 

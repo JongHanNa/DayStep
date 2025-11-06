@@ -17,13 +17,13 @@ import {
 import { isCapacitorEnvironment } from '@/lib/supabase/core';
 import { supabase } from '@/lib/supabase';
 import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } from '@/types';
+import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 
 // Note 타입 정의
 export interface Note {
   id: string;
   user_id: string;
   content: string;
-  related_task_id?: string | null;
   linked_date?: string | null; // 반복 할일의 특정 날짜
   linked_timeline_task_id?: string | null; // 타임라인 작업 직접 연결
   is_pinned: boolean;
@@ -38,7 +38,6 @@ export interface Note {
 // Note 생성 입력 타입
 export interface CreateNoteInput {
   content: string;
-  related_task_id?: string | null;
   linked_date?: string | null;
   linked_timeline_task_id?: string | null;
   is_pinned?: boolean;
@@ -122,15 +121,15 @@ interface NoteStoreActions {
   toggleFloating: (noteId: string) => Promise<void>;
   updateNotePosition: (noteId: string, position: number) => Promise<void>;
 
-  // 할일 연결 관리
+  // 할일 연결 관리 (junction table 사용)
   linkToTask: (noteId: string, taskId: string | null, options?: {
     linkDate?: string;
     timelineTaskId?: string;
     recurrenceType?: 'single' | 'recurring' | 'instance';
   }) => Promise<void>;
-  unlinkFromTask: (noteId: string) => Promise<void>;
-  getNotesByTaskId: (taskId: string) => Note[];
-  getLinkedNotesByTaskId: (taskId: string) => Note[];
+  unlinkFromTask: (noteId: string, taskId: string) => Promise<void>;
+  getNotesByTaskId: (taskId: string) => Promise<Note[]>;
+  getLinkedNotesByTaskId: (taskId: string) => Promise<Note[]>;
   deleteLinkedNotes: (taskId: string) => Promise<number>;
   getDisplayNotesForTask: (taskId: string, date?: string) => Promise<Array<Note | NoteInstance>>;
 
@@ -439,7 +438,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           await get().updateNote({ id: noteId, position });
         },
 
-        // 할일 연결 관리 (향상된 버전)
+        // 할일 연결 관리 (junction table 사용)
         linkToTask: async (noteId: string, taskId: string | null, options?: {
           linkDate?: string;
           timelineTaskId?: string;
@@ -447,45 +446,84 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         }) => {
           console.log('🔗 NoteStore.linkToTask:', { noteId, taskId, options });
 
+          if (!taskId) {
+            console.log('❌ taskId가 없어 연결 취소');
+            return;
+          }
+
+          // 사용자 ID 가져오기
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            console.error('❌ 사용자 인증 실패');
+            return;
+          }
+
+          // junction table에 연결 추가
+          await addTodoNote(taskId, noteId, user.id);
+
+          // 메타데이터 업데이트 (linked_date, is_recurring 등)
           const updateData: Partial<Note> = {
-            related_task_id: taskId,
             linked_date: options?.linkDate || null,
             linked_timeline_task_id: options?.timelineTaskId || null,
             is_recurring: options?.recurrenceType === 'recurring',
             recurrence_type: options?.recurrenceType || 'single',
           };
 
-          // 노트 업데이트
           await get().updateNote({ id: noteId, ...updateData });
 
           // 반복 노트로 설정된 경우 인스턴스 생성 로직은 TaskLinkModal에서 처리
-          console.log('✅ 노트 할일 연결 완료:', updateData);
+          console.log('✅ 노트 할일 연결 완료 (junction table):', { taskId, noteId });
         },
 
-        unlinkFromTask: async (noteId: string) => {
+        unlinkFromTask: async (noteId: string, taskId: string) => {
+          console.log('🔗 NoteStore.unlinkFromTask:', { noteId, taskId });
+
+          // junction table에서 연결 제거
+          await removeTodoNote(taskId, noteId);
+
+          // 메타데이터 초기화
           await get().updateNote({
             id: noteId,
-            related_task_id: null,
             linked_date: null,
             linked_timeline_task_id: null,
           });
+
+          console.log('✅ 노트 할일 연결 해제 완료 (junction table)');
         },
 
-        getNotesByTaskId: (taskId: string) => {
-          return get().notes.filter(note => note.related_task_id === taskId);
+        getNotesByTaskId: async (taskId: string) => {
+          console.log('📝 NoteStore.getNotesByTaskId:', taskId);
+
+          // junction table에서 노트 ID 목록 조회
+          const noteIds = await getTodoNotes(taskId);
+
+          // 스토어에서 해당 노트들 필터링
+          const notes = get().notes.filter(note => noteIds.includes(note.id));
+
+          console.log('✅ 할일 연결 노트 조회 완료:', notes.length);
+          return notes;
         },
 
-        getLinkedNotesByTaskId: (taskId: string) => {
-          return get().notes.filter(note =>
-            note.related_task_id === taskId ||
+        getLinkedNotesByTaskId: async (taskId: string) => {
+          console.log('📝 NoteStore.getLinkedNotesByTaskId:', taskId);
+
+          // junction table에서 노트 ID 목록 조회
+          const noteIds = await getTodoNotes(taskId);
+
+          // 스토어에서 해당 노트들 또는 타임라인 연결 노트 필터링
+          const notes = get().notes.filter(note =>
+            noteIds.includes(note.id) ||
             note.linked_timeline_task_id === taskId
           );
+
+          console.log('✅ 할일 관련 노트 조회 완료:', notes.length);
+          return notes;
         },
 
         deleteLinkedNotes: async (taskId: string) => {
           console.log('🗑️ NoteStore.deleteLinkedNotes:', taskId);
 
-          const linkedNotes = get().getLinkedNotesByTaskId(taskId);
+          const linkedNotes = await get().getLinkedNotesByTaskId(taskId);
 
           if (linkedNotes.length === 0) {
             return 0;
@@ -516,8 +554,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.getDisplayNotesForTask:', { taskId, date });
 
           try {
-            // 기본 연결된 노트들 가져오기
-            const linkedNotes = get().getLinkedNotesByTaskId(taskId);
+            // 기본 연결된 노트들 가져오기 (junction table 사용)
+            const linkedNotes = await get().getLinkedNotesByTaskId(taskId);
             const displayNotes: Array<Note | NoteInstance> = [];
 
             // Capacitor 백업 인증 패턴으로 사용자 ID 확보
@@ -584,7 +622,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           } catch (error) {
             console.error('❌ 표시 노트 조회 실패:', error);
             // 에러 시 기본 연결된 노트들 반환
-            return get().getLinkedNotesByTaskId(taskId);
+            return await get().getLinkedNotesByTaskId(taskId);
           }
         },
 

@@ -105,33 +105,16 @@ export async function deleteNoteWithJWT(
 
 /**
  * JWT 방식으로 할일에 연결된 노트 조회
+ * @deprecated 이 함수는 더 이상 사용되지 않습니다. getTodoNotes() junction table API를 사용하세요.
+ * import { getTodoNotes } from '@/lib/supabase/todo-notes';
  */
 export async function fetchNotesByTodoWithJWT(todoId: string, userId: string): Promise<Note[]> {
-  console.log('📝 JWT 방식으로 할일 연결 노트 조회:', { todoId, userId });
+  console.warn('⚠️  fetchNotesByTodoWithJWT는 deprecated되었습니다. getTodoNotes()를 사용하세요.');
+  console.log('📝 JWT 방식으로 할일 연결 노트 조회 (deprecated):', { todoId, userId });
 
-  try {
-    const notes = await queryRLSTableWithJWT('notes', [
-      {
-        column: 'user_id',
-        operator: 'eq',
-        value: userId
-      },
-      {
-        column: 'related_task_id',
-        operator: 'eq',
-        value: todoId
-      }
-    ], {
-      select: '*',
-      order: 'created_at.desc'
-    });
-
-    console.log('✅ JWT 할일 연결 노트 조회 성공:', { count: notes?.length || 0 });
-    return notes || [];
-  } catch (error) {
-    console.error('❌ JWT 할일 연결 노트 조회 실패:', error);
-    return [];
-  }
+  // 더 이상 related_task_id 컬럼이 없으므로 빈 배열 반환
+  // junction table을 사용하려면 getTodoNotes(todoId)를 호출하세요
+  return [];
 }
 
 /**

@@ -31,18 +31,25 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
   isDeleting = false
 }) => {
   const [deleteLinkedNotes, setDeleteLinkedNotes] = useState(false);
+  const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
   const { getLinkedNotesByTaskId } = useNoteStore();
 
-  // 연결된 노트 조회
-  const linkedNotes = todo ? getLinkedNotesByTaskId(todo.id) : [];
   const hasLinkedNotes = linkedNotes.length > 0;
 
-  // 모달이 열릴 때마다 체크박스 상태 초기화
+  // 연결된 노트 비동기 조회 및 체크박스 상태 초기화
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && todo?.id) {
       setDeleteLinkedNotes(false);
+      getLinkedNotesByTaskId(todo.id).then(notes => {
+        setLinkedNotes(notes);
+      }).catch(error => {
+        console.error('연결된 노트 조회 실패:', error);
+        setLinkedNotes([]);
+      });
+    } else {
+      setLinkedNotes([]);
     }
-  }, [isOpen]);
+  }, [isOpen, todo?.id, getLinkedNotesByTaskId]);
 
   const handleConfirm = () => {
     onConfirm(deleteLinkedNotes);

@@ -486,15 +486,20 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
           for (const note of values.memos) {
             if (note.content.trim()) {
               try {
-                await createNote({
+                const createdNote = await createNote({
                   content: note.content.trim(),
-                  related_task_id: createdTodoId,
                   is_pinned: false,
                   is_floating: false,
                   user_id: user.id,
                 });
+
+                // junction table을 사용해 할일과 노트 연결
+                if (createdNote) {
+                  const { linkToTask } = useNoteStore.getState();
+                  await linkToTask(createdNote.id, createdTodoId);
+                }
               } catch (noteError) {
-                console.error('노트 생성 실패:', noteError);
+                console.error('노트 생성 또는 연결 실패:', noteError);
                 // 노트 생성 실패는 할일 생성을 방해하지 않음
               }
             }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { TimelineItem } from '@/types/timeline-view';
 import { cn } from '@/lib/utils';
@@ -103,13 +103,28 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 동기부여 메시지
   const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
 
-  // 노트 확인
-  const linkedNotes = item.type === 'todo'
-    ? notes.filter(note =>
-        note.related_task_id === actualTaskId ||
-        note.linked_timeline_task_id === actualTaskId
-      )
-    : [];
+  // 노트 확인 (junction table API 사용)
+  const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (item.type !== 'todo') {
+      setLinkedNotes([]);
+      return;
+    }
+
+    const loadLinkedNotes = async () => {
+      try {
+        const { getNotesByTaskId } = useNoteStore.getState();
+        const notes = await getNotesByTaskId(actualTaskId);
+        setLinkedNotes(notes);
+      } catch (error) {
+        console.error('연결된 노트 조회 실패:', error);
+        setLinkedNotes([]);
+      }
+    };
+
+    loadLinkedNotes();
+  }, [item.type, actualTaskId]);
 
   // 완료 상태 계산
   const isCompleted = useMemo(() => {

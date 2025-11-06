@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -16,21 +16,44 @@ const LinkedNotes: React.FC<LinkedNotesProps> = ({ taskId }) => {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
   const { notes, setSelectedNoteForEdit } = useNoteStore();
 
+  // 연결된 노트 상태 관리
+  const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // taskId가 없으면 렌더링하지 않음
   if (!taskId) {
     return null;
   }
 
-  // 연결된 노트 필터링
-  const linkedNotes = notes.filter(note =>
-    note.related_task_id === taskId ||
-    note.linked_timeline_task_id === taskId
-  );
+  // 연결된 노트 로드 (junction table API 사용)
+  useEffect(() => {
+    const loadLinkedNotes = async () => {
+      if (!taskId) {
+        setLinkedNotes([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const { getNotesByTaskId } = useNoteStore.getState();
+        const notes = await getNotesByTaskId(taskId);
+        setLinkedNotes(notes);
+      } catch (error) {
+        console.error('연결된 노트 조회 실패:', error);
+        setLinkedNotes([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadLinkedNotes();
+  }, [taskId]);
 
   const hasLinkedNotes = linkedNotes.length > 0;
 
-  // 연결된 노트가 없으면 렌더링하지 않음
-  if (!hasLinkedNotes) {
+  // 로딩 중이거나 연결된 노트가 없으면 렌더링하지 않음
+  if (isLoading || !hasLinkedNotes) {
     return null;
   }
 

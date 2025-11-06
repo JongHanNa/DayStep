@@ -468,12 +468,12 @@ export default function ProjectEditDialog({
     }
 
     try {
-      // DB에 즉시 저장
+      // DB에 즉시 저장 (N:N 관계)
       const newTodo = await createTodo({
         title: '새 할일',
         completed: false,
         user_id: userId,
-        project_id: editingProject.id,
+        project_ids: [editingProject.id], // N:N 관계로 변경
         schedule_type: 'anytime'
       });
 

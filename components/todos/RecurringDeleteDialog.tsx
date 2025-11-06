@@ -28,11 +28,24 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
 }) => {
   const [selectedDeleteType, setSelectedDeleteType] = useState<'this' | 'future' | 'all'>('this');
   const [deleteLinkedNotes, setDeleteLinkedNotes] = useState(false);
+  const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
   const { getLinkedNotesByTaskId } = useNoteStore();
 
-  // 연결된 노트 조회
-  const linkedNotes = todo ? getLinkedNotesByTaskId(todo.id) : [];
   const hasLinkedNotes = linkedNotes.length > 0;
+
+  // 연결된 노트 비동기 조회
+  useEffect(() => {
+    if (isOpen && todo?.id) {
+      getLinkedNotesByTaskId(todo.id).then(notes => {
+        setLinkedNotes(notes);
+      }).catch(error => {
+        console.error('연결된 노트 조회 실패:', error);
+        setLinkedNotes([]);
+      });
+    } else {
+      setLinkedNotes([]);
+    }
+  }, [isOpen, todo?.id, getLinkedNotesByTaskId]);
 
   // 모달이 열릴 때만 로그 출력 (무한 렌더링 방지)
   React.useEffect(() => {

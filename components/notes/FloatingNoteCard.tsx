@@ -56,9 +56,8 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   // 연결된 할일 찾기
-  const linkedTodo = note.related_task_id
-    ? todos.find(todo => todo.id === note.related_task_id)
-    : null;
+  // TODO: 노트→할일 방향 junction table API 추가 필요 (getTasksByNoteId)
+  const linkedTodo = null;
 
   // 편집 모드 시작
   const startEditing = () => {
@@ -255,15 +254,8 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
                 </Button>
               </div>
 
-              {/* 연결된 할일 정보 */}
-              {linkedTodo && (
-                <div className="flex items-center gap-2 p-2 rounded bg-muted/50">
-                  <Link className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {linkedTodo.title}
-                  </span>
-                </div>
-              )}
+              {/* 연결된 할일 정보 - junction table 사용으로 변경 필요 */}
+              {/* TODO: getTodoNotes() junction table API로 변경 */}
 
               {/* 노트 메타 정보 */}
               <div className="text-xs text-muted-foreground">

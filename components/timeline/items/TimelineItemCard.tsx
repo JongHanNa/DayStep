@@ -110,18 +110,14 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
         if (instanceDate) {
           notesToDisplay = await getDisplayNotesForTask(actualTaskId, instanceDate);
         } else {
-          // 날짜 추출 실패 시 기본 노트만 표시
-          notesToDisplay = notes.filter(note =>
-            note.related_task_id === actualTaskId ||
-            note.linked_timeline_task_id === actualTaskId
-          );
+          // 날짜 추출 실패 시 junction table API로 기본 노트 조회
+          const { getNotesByTaskId } = useNoteStore.getState();
+          notesToDisplay = await getNotesByTaskId(actualTaskId);
         }
       } else {
-        // 일반 할일인 경우 기본 필터링
-        notesToDisplay = notes.filter(note =>
-          note.related_task_id === actualTaskId ||
-          note.linked_timeline_task_id === actualTaskId
-        );
+        // 일반 할일인 경우 junction table API로 노트 조회
+        const { getNotesByTaskId } = useNoteStore.getState();
+        notesToDisplay = await getNotesByTaskId(actualTaskId);
       }
 
       setDisplayNotes(notesToDisplay);
@@ -140,14 +136,10 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
       setNoteTags(Array.from(allTags.values()));
     } catch (error) {
       console.error('노트 로딩 실패:', error);
-      // 에러 시 기본 필터링으로 폴백
-      const fallbackNotes = notes.filter(note =>
-        note.related_task_id === actualTaskId ||
-        note.linked_timeline_task_id === actualTaskId
-      );
-      setDisplayNotes(fallbackNotes);
-      setHasLinkedNotes(fallbackNotes.length > 0);
-      setNoteTags([]); // 에러 시 태그도 초기화
+      // 에러 시 빈 배열로 설정 (추가 API 호출 없이 안전하게 처리)
+      setDisplayNotes([]);
+      setHasLinkedNotes(false);
+      setNoteTags([]);
     }
   };
 

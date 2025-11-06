@@ -55,7 +55,6 @@ function todoToInboxItem(todo: any): InboxItem {
     scheduled_date: todo.start_time || undefined,
     is_highlight: todo.is_today_highlight || false,
     is_completed: todo.completed || false,
-    project_id: todo.project_id || undefined,
     next_action_status: todo.next_action_contexts?.length > 0 ? JSON.stringify(todo.next_action_contexts) : '',
     recurrence_pattern: todo.recurrence_pattern || 'none',
     created_at: todo.created_at,
@@ -80,8 +79,7 @@ function noteToInboxItem(note: any): InboxItem {
                    note.note_category === 'read_later' ? '나중에 보기' :
                    note.note_category === 'reference' ? '레퍼런스' : '중간 작업물',
     is_pinned: note.is_pinned || false,
-    linked_area_or_resource: note.area_resource_id ? `area-${note.area_resource_id}` :
-                             note.project_id ? `project-${note.project_id}` : '',
+    linked_area_or_resource: note.area_resource_id ? `area-${note.area_resource_id}` : '',
     created_at: note.created_at,
     updated_at: note.updated_at,
   };
@@ -181,7 +179,6 @@ export const useInboxStore = createStore<InboxStoreState>(
             scheduled_date: data.scheduled_date,
             is_today_highlight: data.is_highlight,
             completed: data.is_completed,
-            project_id: data.project_id,
             next_action_contexts: data.next_action_status ? JSON.parse(data.next_action_status) : undefined,
           };
 
@@ -233,7 +230,6 @@ export const useInboxStore = createStore<InboxStoreState>(
           if (data.scheduled_date !== undefined) todoData.scheduled_date = data.scheduled_date;
           if (data.is_highlight !== undefined) todoData.is_today_highlight = data.is_highlight;
           if (data.is_completed !== undefined) todoData.completed = data.is_completed;
-          if (data.project_id !== undefined) todoData.project_id = data.project_id;
           if (data.next_action_status !== undefined) {
             todoData.next_action_contexts = data.next_action_status ? JSON.parse(data.next_action_status) : null;
           }
