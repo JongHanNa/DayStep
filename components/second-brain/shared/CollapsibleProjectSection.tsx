@@ -146,7 +146,7 @@ export default function CollapsibleProjectSection({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/50" />
             <input
               type="text"
-              placeholder="페이지 연결 또는 생성"
+              placeholder="프로젝트 연결 또는 생성"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input input-bordered w-full pl-10"
