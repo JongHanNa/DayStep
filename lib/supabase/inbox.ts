@@ -260,15 +260,15 @@ export async function fetchInboxProjects(userId: string): Promise<any[]> {
     const path = `/projects?user_id=eq.${userId}&select=*&order=created_at.desc`;
     const projects = await fetchWithJWT(path);
 
-    // todos 카운트 조회 (프로젝트별 할일 개수)
-    const todoCountsPath = `/todos?project_id=in.(${projects?.map((p: any) => p.id).join(',') || 'null'})?select=project_id`;
-    const todos = await fetchWithJWT(todoCountsPath);
+    // todos 카운트 조회 (todo_projects 연결 테이블 사용)
+    const todoCountsPath = `/todo_projects?project_id=in.(${projects?.map((p: any) => p.id).join(',') || 'null'})&select=project_id`;
+    const todosProjects = await fetchWithJWT(todoCountsPath);
 
     // 프로젝트별 todo 카운트 맵 생성
     const todoCountMap = new Map<string, number>();
-    todos?.forEach((todo: any) => {
-      const count = todoCountMap.get(todo.project_id) || 0;
-      todoCountMap.set(todo.project_id, count + 1);
+    todosProjects?.forEach((tp: any) => {
+      const count = todoCountMap.get(tp.project_id) || 0;
+      todoCountMap.set(tp.project_id, count + 1);
     });
 
     // 클라이언트 필터링: area_resource_id + end_date + todo_count > 0 제외
