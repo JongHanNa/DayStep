@@ -132,6 +132,14 @@ export default function ClarifyPage() {
     // 클라이언트 필터링 불필요 (DB 레벨에서 이미 처리됨)
     setProjectInbox(inboxProjects);
     setGoalInbox(inboxGoals);
+
+    // ✅ todoInbox와 noteInbox도 명시적으로 업데이트
+    const currentInboxItems = useInboxStore.getState().inboxItems;
+    const inboxTodos = currentInboxItems.filter((item) => item.item_type === 'todo' && item.status === 'inbox');
+    const inboxNotes = currentInboxItems.filter((item) => item.item_type === 'note' && item.status === 'inbox');
+
+    setTodoInbox(inboxTodos);
+    setNoteInbox(inboxNotes);
   };
 
   const handleRefresh = () => {
@@ -147,32 +155,34 @@ export default function ClarifyPage() {
     }
 
     try {
+      const deleteIds = Array.from(selectedIds);
+
       // 탭별 삭제 API 호출
       if (activeTab === 'todos' || activeTab === 'notes') {
         // InboxItem 삭제
         await Promise.all(
-          Array.from(selectedIds).map(id => deleteInboxItem(appUser.id!, id))
+          deleteIds.map(id => deleteInboxItem(appUser.id!, id))
         );
       } else if (activeTab === 'projects') {
         // Project 삭제
         await Promise.all(
-          Array.from(selectedIds).map(id => deleteProject(appUser.id!, id))
+          deleteIds.map(id => deleteProject(appUser.id!, id))
         );
       } else if (activeTab === 'goals') {
         // Goal 삭제
         await Promise.all(
-          Array.from(selectedIds).map(id => deleteGoal(appUser.id!, id))
+          deleteIds.map(id => deleteGoal(appUser.id!, id))
         );
       }
+
+      // 데이터 재조회
+      await loadInboxData();
 
       // 상태 초기화
       setSelectedIds(new Set());
       setIsEditMode(false);
-
-      // 데이터 재조회
-      await loadInboxData();
     } catch (error) {
-      console.error('일괄 삭제 실패:', error);
+      console.error('❌ 일괄 삭제 실패:', error);
       alert('일부 항목 삭제에 실패했습니다.');
     }
   };
@@ -250,8 +260,8 @@ export default function ClarifyPage() {
   const handleSelectionChange = (
     itemId: string,
     isChecked: boolean,
-    index: number,
-    shiftKey: boolean
+    shiftKey: boolean,
+    index: number
   ) => {
     if (shiftKey) {
       handleRangeSelection(index, isChecked, itemId);

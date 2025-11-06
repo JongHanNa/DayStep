@@ -141,6 +141,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - DB 필터링: 서버에서만 (클라이언트 중복 금지)
 - 스키마 검증: Supabase MCP로 확인
 
+**Materialized View 사용 금지:**
+- `inbox_todos`, `inbox_projects`, `inbox_goals` Materialized View 조회 금지
+- 캐시된 스냅샷 반환 → DELETE/UPDATE 후 자동 갱신 안됨
+- 새로고침해도 삭제된 데이터가 계속 보이는 문제 발생
+- **필수**: `todos`, `projects`, `goals` 테이블 직접 조회 + 클라이언트 필터링
+
 ### 상태 관리
 
 - `Object.assign(state.optimisticState, {...})`
