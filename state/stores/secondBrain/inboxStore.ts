@@ -38,7 +38,6 @@ interface InboxStoreState {
   clarifyInboxItem: (userId: string, id: string, status: GTDStatus, clarifyData?: Partial<InboxItem>) => Promise<InboxItem>;
   completeInboxItem: (userId: string, id: string) => Promise<InboxItem>;
   delegateInboxItem: (userId: string, id: string, delegatedTo: string) => Promise<InboxItem>;
-  convertTodoToProject: (userId: string, todoId: string, projectTitle?: string) => Promise<{ deletedTodoId: string; newProjectId: string }>;
 }
 
 /**
@@ -341,36 +340,6 @@ export const useInboxStore = createStore<InboxStoreState>(
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '위임 처리에 실패했습니다.',
-          loading: false,
-        });
-        throw error;
-      }
-    },
-
-    convertTodoToProject: async (userId: string, todoId: string, projectTitle?: string) => {
-      try {
-        set({ loading: true, error: null });
-
-        // 할일 찾기
-        const todo = get().inboxItems.find((item: InboxItem) => item.id === todoId);
-        if (!todo) throw new Error('할일을 찾을 수 없습니다.');
-
-        // 할일 삭제
-        await get().deleteInboxItem(userId, todoId);
-
-        // 프로젝트는 별도 테이블(projects)에 생성해야 함
-        // 여기서는 간단히 ID만 반환
-        const newProjectId = `project-${Date.now()}`;
-
-        set({ loading: false });
-
-        return {
-          deletedTodoId: todoId,
-          newProjectId,
-        };
-      } catch (error) {
-        set({
-          error: error instanceof Error ? error.message : '프로젝트 변환에 실패했습니다.',
           loading: false,
         });
         throw error;

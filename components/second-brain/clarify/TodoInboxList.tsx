@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Calendar, Star, Plus } from 'lucide-react';
+import { Calendar, Star } from 'lucide-react';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
@@ -39,7 +39,7 @@ const getClarificationLabel = (clarification?: string): string => {
 };
 
 export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh, userId }: TodoInboxListProps) {
-  const { inboxItems, convertTodoToProject, fetchInboxItems } = useInboxStore();
+  const { inboxItems, fetchInboxItems } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
@@ -91,25 +91,6 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
     } catch (error) {
       console.error('❌ [TodoInboxList] 할일 저장 실패:', error);
       alert('할일 저장에 실패했습니다.');
-    }
-  };
-
-  const handleConvertToProject = async () => {
-    if (!editingTodo) return;
-
-    if (!confirm('이 할일을 프로젝트로 변환하시겠습니까?\n\n할일은 삭제되고 프로젝트 수집함에 추가됩니다.')) {
-      return;
-    }
-
-    try {
-      await convertTodoToProject(editingTodo.id, editingTodo.content);
-      setEditingTodo(null);
-      setTodoForm(null);
-      onRefresh();
-      alert('프로젝트로 변환되었습니다. 프로젝트 수집함 탭에서 확인하세요.');
-    } catch (error) {
-      console.error('프로젝트 변환 실패:', error);
-      alert('프로젝트 변환에 실패했습니다.');
     }
   };
 
@@ -288,12 +269,6 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
         userId={userId}
         onProjectImmediateSave={handleProjectImmediateSave}
         onNoteImmediateSave={handleNoteImmediateSave}
-        additionalContent={
-          <button onClick={handleConvertToProject} className="btn btn-outline w-full">
-            <Plus className="w-4 h-4" />
-            프로젝트로 변환
-          </button>
-        }
       />
     </>
   );

@@ -29,7 +29,6 @@ interface TodoEditModalProps {
   onDeleteNote?: (id: string) => Promise<void>;
   titlePlaceholder?: string;
   clarificationPlaceholder?: string;
-  // 추가 콘텐츠 (명료화 페이지의 "프로젝트로 변환" 버튼 등)
   additionalContent?: React.ReactNode;
   // 섹션 표시 여부 제어
   showClarification?: boolean;
@@ -178,7 +177,7 @@ export default function TodoEditModal({
             showProjects={showProjects}
           />
 
-          {/* 추가 콘텐츠 영역 (명료화 페이지의 "프로젝트로 변환" 버튼 등) */}
+          {/* 추가 콘텐츠 영역 */}
           {additionalContent && (
             <div className="mt-6 px-4 pb-4">
               {additionalContent}
