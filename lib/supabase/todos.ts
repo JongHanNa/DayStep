@@ -3,7 +3,7 @@
  */
 
 import { fetchWithJWT, queryRLSTableWithJWT, createWithJWT, updateWithJWT, deleteWithJWT, getMaxOrderIndexWithJWT, QueryOptions } from './core';
-import { updateTodoProjects } from './todo-projects';
+import { updateTodoProjects, getTodoProjects } from './todo-projects';
 import { updateTodoNotes } from './todo-notes';
 
 /**
@@ -198,15 +198,26 @@ export async function fetchAllTodosWithJWT(
       ...options
     });
 
+    // 각 할일에 대해 연결된 프로젝트 ID 목록 조회
+    const todosWithProjects = await Promise.all(
+      (todos || []).map(async (rawTodo: any) => {
+        const projectIds = await getTodoProjects(rawTodo.id);
+        return {
+          ...rawTodo,
+          project_ids: projectIds
+        };
+      })
+    );
+
     // Todo.fromDatabase()로 camelCase 변환
     const { Todo } = await import('../../entities/todo/Todo');
-    const transformedTodos = (todos || []).map((rawTodo: any) =>
+    const transformedTodos = todosWithProjects.map((rawTodo: any) =>
       Todo.fromDatabase(rawTodo)
     );
 
     console.log('✅ JWT 모든 할일 조회 성공:', {
       todosCount: transformedTodos.length,
-      sample: transformedTodos[0]?.id ? { id: transformedTodos[0].id, title: transformedTodos[0].title } : null
+      sample: transformedTodos[0]?.id ? { id: transformedTodos[0].id, title: transformedTodos[0].title, projectId: transformedTodos[0].projectId } : null
     });
 
     return transformedTodos;

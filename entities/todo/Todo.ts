@@ -69,7 +69,9 @@ export class Todo {
     const departureTime = record.departureTime ?? record.departure_time;
 
     // Second Brain 관계 필드들
-    const projectId = record.projectId ?? record.project_id;
+    // project_ids 배열을 projectId (첫 번째 프로젝트)로 변환
+    const projectIds = record.projectIds ?? record.project_ids ?? [];
+    const projectId = Array.isArray(projectIds) && projectIds.length > 0 ? projectIds[0] : (record.projectId ?? record.project_id ?? null);
     const goalId = record.goalId ?? record.goal_id;
     const areaId = record.areaId ?? record.area_id;
     const resourceId = record.resourceId ?? record.resource_id;
