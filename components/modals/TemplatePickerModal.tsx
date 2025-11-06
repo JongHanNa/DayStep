@@ -1,10 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Sheet } from 'react-modal-sheet';
-import { animated } from '@react-spring/web';
-import { useElasticScroll } from '@/hooks/useElasticScroll';
-import { createModalConfig } from '@/lib/modal-config';
+import { useEffect } from 'react';
+import { useModalStore } from '@/state/stores/modalStore';
 import {
   Heart,
   FolderOpen,
@@ -50,29 +47,17 @@ interface TemplatePickerModalProps {
 }
 
 export default function TemplatePickerModal({ isOpen, onClose, onTemplateSelect }: TemplatePickerModalProps) {
-  const [dragDisabled, setDragDisabled] = useState(false);
+  const { openModal, closeModal } = useModalStore();
 
-  // 탄성 스크롤 효과
-  const { containerRef, springs } = useElasticScroll({
-    bounceDistance: 80,
-    bounceStrength: 1.0,
-    bounceDuration: 400,
-    desktopOnly: false,
-    enabled: isOpen
-  });
-
-  // 터치 핸들러
-  const handleTouchStart = useCallback((_e: React.TouchEvent) => {
-    setDragDisabled(true);
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation();
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    setTimeout(() => setDragDisabled(false), 100);
-  }, []);
+  // 모달 열림/닫힘 상태 관리
+  useEffect(() => {
+    if (isOpen) {
+      openModal();
+    }
+    return () => {
+      closeModal();
+    };
+  }, [isOpen, openModal, closeModal]);
 
   // 작업 카테고리 mock 데이터
   const categories: TaskCategory[] = [
@@ -175,57 +160,22 @@ export default function TemplatePickerModal({ isOpen, onClose, onTemplateSelect 
     onTemplateSelect(task);
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Sheet
-      isOpen={isOpen}
-      onClose={onClose}
-      {...createModalConfig('FULLSCREEN', {
-        initialSnap: 1,
-        dragCloseThreshold: 0.3,
-        disableDrag: dragDisabled,
-      })}
-    >
-      <Sheet.Container className="bg-gray-50 dark:bg-gray-900">
-        <Sheet.Header className="bg-gray-50 dark:bg-gray-900">
-          {/* 드래그 핸들 영역 */}
-          <div className="w-full flex justify-center py-3">
-            <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
-          </div>
+    <dialog open className="modal modal-open">
+      <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+        {/* 헤더 (취소-제목) */}
+        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+          <button onClick={onClose} className="btn btn-primary btn-sm rounded-full">
+            취소
+          </button>
+          <h3 className="text-lg font-semibold">템플릿 선택</h3>
+          <div className="w-[60px]" /> {/* 오른쪽 공간 확보 */}
+        </div>
 
-          {/* 헤더 텍스트 */}
-          <div className="px-6 pb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              할 일 템플릿
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              미리 준비된 작업에서 골라보세요
-            </p>
-          </div>
-        </Sheet.Header>
-
-        {/* 🎯 react-spring 기반 탄성 스크롤 컨테이너 */}
-        <animated.div
-          ref={containerRef}
-          className="scrollable-container scrollbar-hide px-6 pb-6 bg-gray-50 dark:bg-gray-900"
-          style={{
-            // 기본 스크롤 설정
-            height: '80vh',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'none',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            touchAction: 'pan-y',
-            background: 'var(--background)',
-            position: 'relative',
-            transform: springs.y.to(y => `translateY(${y}px)`),
-            paddingBottom: '60vh',
-          }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
+        {/* 콘텐츠 영역 */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
           {/* 카테고리 그리드 */}
           <div className="grid grid-cols-4 gap-3 mb-8">
             {categories.map((category) => {
@@ -816,8 +766,9 @@ export default function TemplatePickerModal({ isOpen, onClose, onTemplateSelect 
 
           {/* 하단 여백을 위한 빈 공간 */}
           <div style={{ height: 'calc(2rem + env(safe-area-inset-bottom, 20px))' }} />
-        </animated.div>
-      </Sheet.Container>
-    </Sheet>
+        </div>
+      </div>
+      <div className="modal-backdrop" onClick={onClose} />
+    </dialog>
   );
 }
