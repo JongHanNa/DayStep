@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette } from 'lucide-react';
+import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, X } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
 import CollapsibleProjectSection from './CollapsibleProjectSection';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
+import CollapsibleNextActionSection from './CollapsibleNextActionSection';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
@@ -222,28 +223,31 @@ export default function TodoFormFields({
 
       {/* 다음행동상황 (다중 선택) */}
       {showNextActionStatus && todo.clarification === 'next_action' && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <Sparkles className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-            다음행동상황
-          </label>
-
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-            <div className="flex flex-wrap gap-2">
-              {NEXT_ACTION_OPTIONS.map((option) => {
-                const isSelected = todo.nextActionStatuses?.includes(option);
-                return (
+        <div>
+          {/* 선택된 항목 뱃지 표시 */}
+          {todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {todo.nextActionStatuses.map(status => (
+                <div key={status} className="badge badge-secondary gap-2">
+                  {status}
                   <button
-                    key={option}
-                    onClick={() => toggleNextActionStatus(option)}
-                    className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
+                    type="button"
+                    onClick={() => toggleNextActionStatus(status)}
+                    className="hover:bg-base-300 rounded-full p-0.5 transition-colors"
                   >
-                    {option}
+                    <X className="w-3 h-3" />
                   </button>
-                );
-              })}
+                </div>
+              ))}
             </div>
-          </div>
+          )}
+
+          {/* CollapsibleNextActionSection 컴포넌트 */}
+          <CollapsibleNextActionSection
+            selectedStatuses={todo.nextActionStatuses || []}
+            onChange={(statuses) => onChange({ ...todo, nextActionStatuses: statuses })}
+            options={NEXT_ACTION_OPTIONS}
+          />
         </div>
       )}
 
