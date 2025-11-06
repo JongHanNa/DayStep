@@ -11,6 +11,8 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { getInboxRemovalMessage } from '@/lib/utils/inboxMessages';
+import { updateTodoProjects } from '@/lib/supabase/todo-projects';
+import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -145,14 +147,39 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
     });
   };
 
-  const handleUpdateNote = async (id: string, title: string) => {
-    if (!userId) throw new Error('User not found');
-    await updateNote(id, userId, { title });
+  const handleUpdateNote = async (id: string) => {
+    // Note 업데이트는 NoteEdit 모달에서 처리
   };
 
   const handleDeleteNote = async (id: string) => {
     if (!userId) throw new Error('User not found');
     await deleteNote(id, userId);
+  };
+
+  // 프로젝트 즉시 저장 핸들러
+  const handleProjectImmediateSave = async (projectIds: string[]) => {
+    if (!editingTodo?.id || !userId) return;
+
+    try {
+      await updateTodoProjects(editingTodo.id, projectIds, userId);
+      await fetchInboxItems(userId);
+    } catch (error) {
+      console.error('프로젝트 연결 저장 실패:', error);
+      throw error;
+    }
+  };
+
+  // 노트 즉시 저장 핸들러
+  const handleNoteImmediateSave = async (noteIds: string[]) => {
+    if (!editingTodo?.id || !userId) return;
+
+    try {
+      await updateTodoNotes(editingTodo.id, noteIds, userId);
+      await fetchInboxItems(userId);
+    } catch (error) {
+      console.error('노트 연결 저장 실패:', error);
+      throw error;
+    }
   };
 
   if (todos.length === 0) {
@@ -237,6 +264,10 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
         onCreateNote={handleCreateNote}
         onUpdateNote={handleUpdateNote}
         onDeleteNote={handleDeleteNote}
+        todoId={editingTodo?.id}
+        userId={userId}
+        onProjectImmediateSave={handleProjectImmediateSave}
+        onNoteImmediateSave={handleNoteImmediateSave}
         additionalContent={
           <button onClick={handleConvertToProject} className="btn btn-outline w-full">
             <Plus className="w-4 h-4" />

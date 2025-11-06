@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Folder, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Folder, Search, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Project } from '@/types/second-brain';
 
 interface CollapsibleProjectSectionProps {
@@ -10,6 +10,10 @@ interface CollapsibleProjectSectionProps {
   onChange: (projectIds: string[]) => void;
   onCreateProject?: (title: string) => Promise<Project>;
   todoColor?: string;
+  // 즉시 DB 저장을 위한 props
+  todoId?: string;
+  userId?: string;
+  onImmediateSave?: (projectIds: string[]) => Promise<void>;
 }
 
 export default function CollapsibleProjectSection({
@@ -18,6 +22,9 @@ export default function CollapsibleProjectSection({
   onChange,
   onCreateProject,
   todoColor = '#808080',
+  todoId,
+  userId,
+  onImmediateSave,
 }: CollapsibleProjectSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,11 +52,24 @@ export default function CollapsibleProjectSection({
   );
 
   // 프로젝트 선택/해제 토글
-  const toggleProject = (projectId: string) => {
+  const toggleProject = async (projectId: string) => {
     const newIds = selectedProjectIds.includes(projectId)
       ? selectedProjectIds.filter(id => id !== projectId)
       : [...selectedProjectIds, projectId];
+
+    // 로컬 상태 즉시 업데이트
     onChange(newIds);
+
+    // DB에 즉시 저장 (선택적)
+    if (onImmediateSave) {
+      try {
+        await onImmediateSave(newIds);
+      } catch (error) {
+        console.error('프로젝트 연결 저장 실패:', error);
+        // 실패 시 원래 상태로 되돌리기
+        onChange(selectedProjectIds);
+      }
+    }
   };
 
   // 프로젝트 생성 및 자동 연결
@@ -58,8 +78,16 @@ export default function CollapsibleProjectSection({
 
     try {
       const newProject = await onCreateProject(searchQuery.trim());
-      // 생성된 프로젝트를 자동으로 선택에 추가
-      onChange([...selectedProjectIds, newProject.id]);
+      const newIds = [...selectedProjectIds, newProject.id];
+
+      // 로컬 상태 즉시 업데이트
+      onChange(newIds);
+
+      // DB에 즉시 저장 (선택적)
+      if (onImmediateSave) {
+        await onImmediateSave(newIds);
+      }
+
       // 검색어 초기화
       setSearchQuery('');
     } catch (error) {
@@ -152,11 +180,11 @@ export default function CollapsibleProjectSection({
           </div>
         )}
 
-        {/* 다른 페이지들 */}
+        {/* 다른 프로젝트들 */}
         {otherProjects.length > 0 && (
           <div className="p-3">
             <div className="text-sm text-base-content/70 mb-2">
-              다른 페이지들
+              다른 프로젝트들
             </div>
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {otherProjects.map(project => (
@@ -193,6 +221,7 @@ export default function CollapsibleProjectSection({
               onClick={handleCreateProject}
               className="w-full flex items-center gap-2 p-3 rounded-lg hover:bg-base-200 transition-colors text-left"
             >
+              <Plus className="h-5 w-5 text-base-content/70" />
               <Folder className="h-5 w-5 text-base-content/70" />
               <span className="text-sm">
                 프로젝트에서 새로운 <strong>{searchQuery}</strong> 페이지 생성

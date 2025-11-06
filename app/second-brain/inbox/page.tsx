@@ -10,6 +10,8 @@ import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { updateInboxTodo, updateInboxNote } from '@/lib/supabase/inbox';
+import { updateTodoProjects } from '@/lib/supabase/todo-projects';
+import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, Edit3, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -250,6 +252,34 @@ export default function InboxPage() {
     } catch (error) {
       console.error('❌ [InboxPage] 항목 수정 실패:', error);
       alert('항목 수정에 실패했습니다.');
+    }
+  };
+
+  // 프로젝트 즉시 저장 핸들러
+  const handleProjectImmediateSave = async (projectIds: string[]) => {
+    if (!editingItem?.id || !appUser?.id) return;
+
+    try {
+      await updateTodoProjects(editingItem.id, projectIds, appUser.id);
+      // UI 동기화를 위해 재조회
+      await fetchInboxItems(appUser.id);
+    } catch (error) {
+      console.error('프로젝트 연결 저장 실패:', error);
+      throw error;
+    }
+  };
+
+  // 노트 즉시 저장 핸들러
+  const handleNoteImmediateSave = async (noteIds: string[]) => {
+    if (!editingItem?.id || !appUser?.id) return;
+
+    try {
+      await updateTodoNotes(editingItem.id, noteIds, appUser.id);
+      // UI 동기화를 위해 재조회
+      await fetchInboxItems(appUser.id);
+    } catch (error) {
+      console.error('노트 연결 저장 실패:', error);
+      throw error;
     }
   };
 
@@ -687,6 +717,10 @@ export default function InboxPage() {
         titlePlaceholder="예: 슈퍼업 레퍼런스 정리"
         clarificationPlaceholder="수집 과정에서는 어느 것에 속하는지 크게 고민하지 않아도 됩니다"
         showClarification={false}
+        todoId={editingItem?.id}
+        userId={appUser?.id}
+        onProjectImmediateSave={handleProjectImmediateSave}
+        onNoteImmediateSave={handleNoteImmediateSave}
         showNextActionStatus={false}
         showScheduledDate={false}
         showHighlight={false}

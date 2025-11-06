@@ -18,6 +18,8 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoEditModal from './TodoEditModal';
 import TodoListModal from './TodoListModal';
+import { updateTodoProjects } from '@/lib/supabase/todo-projects';
+import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 
 // 프론트엔드 전용 타입 (FormData 타입 + id 필드)
 interface TodoItem extends TodoFormData {
@@ -616,6 +618,66 @@ export default function ProjectEditDialog({
     setEditingTodo(null);
   };
 
+  // 프로젝트 즉시 저장 핸들러 (editingTodo용)
+  const handleProjectImmediateSave = async (projectIds: string[]) => {
+    if (!editingTodo?.id || !userId) return;
+
+    try {
+      await updateTodoProjects(editingTodo.id, projectIds, userId);
+      // 로컬 상태도 업데이트
+      setEditingTodo({ ...editingTodo, projectIds });
+      setTodos(todos.map(t => t.id === editingTodo.id ? { ...t, projectIds } : t));
+    } catch (error) {
+      console.error('프로젝트 연결 저장 실패:', error);
+      throw error; // Collapsible 컴포넌트에서 롤백하도록
+    }
+  };
+
+  // 노트 즉시 저장 핸들러 (editingTodo용)
+  const handleNoteImmediateSave = async (noteIds: string[]) => {
+    if (!editingTodo?.id || !userId) return;
+
+    try {
+      await updateTodoNotes(editingTodo.id, noteIds, userId);
+      // 로컬 상태도 업데이트
+      setEditingTodo({ ...editingTodo, noteIds });
+      setTodos(todos.map(t => t.id === editingTodo.id ? { ...t, noteIds } : t));
+    } catch (error) {
+      console.error('노트 연결 저장 실패:', error);
+      throw error; // Collapsible 컴포넌트에서 롤백하도록
+    }
+  };
+
+  // 프로젝트 즉시 저장 핸들러 (todoFromList용)
+  const handleProjectImmediateSaveFromList = async (projectIds: string[]) => {
+    if (!todoFromList?.id || !userId) return;
+
+    try {
+      await updateTodoProjects(todoFromList.id, projectIds, userId);
+      // 로컬 상태도 업데이트
+      setTodoFromList({ ...todoFromList, projectIds });
+      setTodos(todos.map(t => t.id === todoFromList.id ? { ...t, projectIds } : t));
+    } catch (error) {
+      console.error('프로젝트 연결 저장 실패:', error);
+      throw error;
+    }
+  };
+
+  // 노트 즉시 저장 핸들러 (todoFromList용)
+  const handleNoteImmediateSaveFromList = async (noteIds: string[]) => {
+    if (!todoFromList?.id || !userId) return;
+
+    try {
+      await updateTodoNotes(todoFromList.id, noteIds, userId);
+      // 로컬 상태도 업데이트
+      setTodoFromList({ ...todoFromList, noteIds });
+      setTodos(todos.map(t => t.id === todoFromList.id ? { ...t, noteIds } : t));
+    } catch (error) {
+      console.error('노트 연결 저장 실패:', error);
+      throw error;
+    }
+  };
+
   // 할일 목록 모달 열기
   const handleOpenTodoListModal = (date: Date, todosForDate: TodoItem[]) => {
     setSelectedDateForList(date);
@@ -1189,6 +1251,9 @@ export default function ProjectEditDialog({
             setEditingTodo({ ...editingTodo, ...updatedTodo });
           }
         }}
+        todoId={editingTodo?.id}
+        onProjectImmediateSave={handleProjectImmediateSave}
+        onNoteImmediateSave={handleNoteImmediateSave}
       />
 
       {/* 할일 목록 모달 */}
@@ -1210,6 +1275,9 @@ export default function ProjectEditDialog({
         onSave={handleSaveTodoFromList}
         onDelete={todoFromList ? () => handleRemoveTodo(todoFromList.id) : undefined}
         onChange={(updated) => setTodoFromList(todoFromList ? { ...todoFromList, ...updated } : null)}
+        todoId={todoFromList?.id}
+        onProjectImmediateSave={handleProjectImmediateSaveFromList}
+        onNoteImmediateSave={handleNoteImmediateSaveFromList}
       />
     </>
   );

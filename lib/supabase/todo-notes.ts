@@ -1,12 +1,12 @@
 import { fetchWithJWT, QueryOptions } from './core';
 
 /**
- * Get all notes connected to a todo
+ * Get all notes connected to a todo (다대다 관계)
  */
 export async function getTodoNotes(todoId: string): Promise<string[]> {
   try {
     const result = await fetchWithJWT(
-      `/rest/v1/todo_notes?todo_id=eq.${todoId}&select=note_id`,
+      `/todo_notes?todo_id=eq.${todoId}&select=note_id`,
       { method: 'GET' }
     );
 
@@ -24,11 +24,15 @@ export async function getTodoNotes(todoId: string): Promise<string[]> {
 /**
  * Add a note connection to a todo
  */
-export async function addTodoNote(todoId: string, noteId: string): Promise<boolean> {
+export async function addTodoNote(todoId: string, noteId: string, userId: string): Promise<boolean> {
   try {
-    await fetchWithJWT('/rest/v1/todo_notes', {
+    await fetchWithJWT('/todo_notes', {
       method: 'POST',
-      body: JSON.stringify({ todo_id: todoId, note_id: noteId }),
+      body: JSON.stringify({
+        todo_id: todoId,
+        note_id: noteId,
+        user_id: userId,
+      }),
     });
     return true;
   } catch (error) {
@@ -43,7 +47,7 @@ export async function addTodoNote(todoId: string, noteId: string): Promise<boole
 export async function removeTodoNote(todoId: string, noteId: string): Promise<boolean> {
   try {
     await fetchWithJWT(
-      `/rest/v1/todo_notes?todo_id=eq.${todoId}&note_id=eq.${noteId}`,
+      `/todo_notes?todo_id=eq.${todoId}&note_id=eq.${noteId}`,
       { method: 'DELETE' }
     );
     return true;
@@ -54,26 +58,30 @@ export async function removeTodoNote(todoId: string, noteId: string): Promise<bo
 }
 
 /**
- * Update all note connections for a todo (replaces existing connections)
+ * Update all note connections for a todo (다대다 관계)
+ * @param todoId - Todo ID
+ * @param noteIds - 연결할 노트 ID 배열 (여러 개 가능)
+ * @param userId - User ID (RLS 정책 필수)
  */
-export async function updateTodoNotes(todoId: string, noteIds: string[]): Promise<boolean> {
+export async function updateTodoNotes(todoId: string, noteIds: string[], userId: string): Promise<boolean> {
   try {
-    // Delete all existing connections
-    await fetchWithJWT(
-      `/rest/v1/todo_notes?todo_id=eq.${todoId}`,
-      { method: 'DELETE' }
-    );
+    // 1. 기존 연결 모두 삭제
+    await fetchWithJWT(`/todo_notes?todo_id=eq.${todoId}`, {
+      method: 'DELETE',
+    });
 
-    // Insert new connections if any
+    // 2. 새로운 연결 생성
     if (noteIds.length > 0) {
-      const items = noteIds.map(noteId => ({
+      // 배치 삽입을 위한 데이터 준비 (user_id 포함)
+      const insertData = noteIds.map((noteId) => ({
         todo_id: todoId,
-        note_id: noteId
+        note_id: noteId,
+        user_id: userId,
       }));
 
-      await fetchWithJWT('/rest/v1/todo_notes', {
+      await fetchWithJWT('/todo_notes', {
         method: 'POST',
-        body: JSON.stringify(items),
+        body: JSON.stringify(insertData),
       });
     }
 
@@ -85,12 +93,12 @@ export async function updateTodoNotes(todoId: string, noteIds: string[]): Promis
 }
 
 /**
- * Get all todos connected to a note
+ * Get all todos connected to a note (다대다 관계)
  */
 export async function getNoteTodos(noteId: string): Promise<string[]> {
   try {
     const result = await fetchWithJWT(
-      `/rest/v1/todo_notes?note_id=eq.${noteId}&select=todo_id`,
+      `/todo_notes?note_id=eq.${noteId}&select=todo_id`,
       { method: 'GET' }
     );
 

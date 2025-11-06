@@ -58,6 +58,11 @@ interface TodoFormFieldsProps {
   showHighlight?: boolean;
   showCompleted?: boolean;
   showProjects?: boolean;
+  // 즉시 DB 저장을 위한 props
+  todoId?: string;
+  userId?: string;
+  onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
+  onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
 // 다음행동상황 옵션
@@ -99,6 +104,10 @@ export default function TodoFormFields({
   showHighlight = true,
   showCompleted = true,
   showProjects = true,
+  todoId,
+  userId,
+  onProjectImmediateSave,
+  onNoteImmediateSave,
 }: TodoFormFieldsProps) {
   // 아이콘 브라우저 모달
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
@@ -403,6 +412,9 @@ export default function TodoFormFields({
           onChange={(projectIds) => onChange({ ...todo, projectIds })}
           onCreateProject={onCreateProject}
           todoColor={todo.color}
+          todoId={todoId}
+          userId={userId}
+          onImmediateSave={onProjectImmediateSave}
         />
       )}
 
@@ -415,6 +427,9 @@ export default function TodoFormFields({
           onCreateNote={onCreateNote}
           onNoteClick={onNoteClick}
           todoColor={todo.color}
+          todoId={todoId}
+          userId={userId}
+          onImmediateSave={onNoteImmediateSave}
         />
       )}
 

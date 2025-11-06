@@ -25,7 +25,7 @@ interface TodoEditModalProps {
   onUpdateProject?: (id: string, title: string) => Promise<void>;
   onDeleteProject?: (id: string) => Promise<void>;
   onCreateNote?: (title: string) => Promise<Note>;
-  onUpdateNote?: (id: string, title: string) => Promise<void>;
+  onUpdateNote?: (id: string) => Promise<void>;
   onDeleteNote?: (id: string) => Promise<void>;
   titlePlaceholder?: string;
   clarificationPlaceholder?: string;
@@ -38,6 +38,11 @@ interface TodoEditModalProps {
   showHighlight?: boolean;
   showCompleted?: boolean;
   showProjects?: boolean;
+  // 즉시 DB 저장을 위한 props
+  todoId?: string;
+  userId?: string;
+  onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
+  onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
 export default function TodoEditModal({
@@ -67,6 +72,10 @@ export default function TodoEditModal({
   showHighlight,
   showCompleted,
   showProjects,
+  todoId,
+  userId,
+  onProjectImmediateSave,
+  onNoteImmediateSave,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
 
@@ -102,7 +111,7 @@ export default function TodoEditModal({
   const handleNoteSave = async () => {
     if (!editingNote || !noteForm || !onUpdateNote) return;
     try {
-      await onUpdateNote(editingNote.id, noteForm.title);
+      await onUpdateNote(editingNote.id);
       setEditingNote(null);
       setNoteForm(null);
     } catch (error) {
@@ -157,6 +166,10 @@ export default function TodoEditModal({
             onDeleteNote={onDeleteNote}
             showClarification={showClarification}
             showNextActionStatus={showNextActionStatus}
+            todoId={todoId}
+            userId={userId}
+            onProjectImmediateSave={onProjectImmediateSave}
+            onNoteImmediateSave={onNoteImmediateSave}
             showScheduledDate={showScheduledDate}
             showHighlight={showHighlight}
             showCompleted={showCompleted}

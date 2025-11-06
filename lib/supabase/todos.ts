@@ -93,7 +93,7 @@ export async function fetchTodosForDateRange(
 /**
  * JWT 방식으로 할일 생성
  */
-export async function createTodoWithJWT(todoData: Record<string, any>): Promise<any> {
+export async function createTodoWithJWT(todoData: Record<string, any>, userId?: string): Promise<any> {
   console.log('📋 JWT 방식으로 할일 생성:', { todoData });
 
   try {
@@ -105,12 +105,12 @@ export async function createTodoWithJWT(todoData: Record<string, any>): Promise<
     console.log('✅ JWT 할일 생성 성공:', { result });
 
     // 할일 ID가 있으면 프로젝트/노트 관계 저장
-    if (result && result.id) {
+    if (result && result.id && userId) {
       if (projectIds && Array.isArray(projectIds)) {
-        await updateTodoProjects(result.id, projectIds);
+        await updateTodoProjects(result.id, projectIds, userId);
       }
       if (noteIds && Array.isArray(noteIds)) {
-        await updateTodoNotes(result.id, noteIds);
+        await updateTodoNotes(result.id, noteIds, userId);
       }
     }
 
@@ -124,7 +124,7 @@ export async function createTodoWithJWT(todoData: Record<string, any>): Promise<
 /**
  * JWT 방식으로 할일 업데이트
  */
-export async function updateTodoWithJWT(todoId: string, todoData: Record<string, any>): Promise<any> {
+export async function updateTodoWithJWT(todoId: string, todoData: Record<string, any>, userId?: string): Promise<any> {
   console.log('📋 JWT 방식으로 할일 업데이트:', { todoId, todoData });
 
   try {
@@ -139,11 +139,13 @@ export async function updateTodoWithJWT(todoId: string, todoData: Record<string,
     }, todoDataWithoutRelations);
 
     // 프로젝트/노트 관계 업데이트
-    if (projectIds !== undefined && Array.isArray(projectIds)) {
-      await updateTodoProjects(todoId, projectIds);
-    }
-    if (noteIds !== undefined && Array.isArray(noteIds)) {
-      await updateTodoNotes(todoId, noteIds);
+    if (userId) {
+      if (projectIds !== undefined && Array.isArray(projectIds)) {
+        await updateTodoProjects(todoId, projectIds, userId);
+      }
+      if (noteIds !== undefined && Array.isArray(noteIds)) {
+        await updateTodoNotes(todoId, noteIds, userId);
+      }
     }
 
     console.log('✅ JWT 할일 업데이트 성공:', { result });

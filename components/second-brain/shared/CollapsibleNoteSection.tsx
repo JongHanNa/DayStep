@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { FileText, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Search, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Note } from '@/types/second-brain';
 
 interface CollapsibleNoteSectionProps {
@@ -11,6 +11,10 @@ interface CollapsibleNoteSectionProps {
   onCreateNote?: (title: string) => Promise<Note>;
   onNoteClick?: (note: Note) => void;
   todoColor?: string;
+  // 즉시 DB 저장을 위한 props
+  todoId?: string;
+  userId?: string;
+  onImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
 export default function CollapsibleNoteSection({
@@ -20,6 +24,9 @@ export default function CollapsibleNoteSection({
   onCreateNote,
   onNoteClick,
   todoColor = '#808080',
+  todoId,
+  userId,
+  onImmediateSave,
 }: CollapsibleNoteSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,11 +54,24 @@ export default function CollapsibleNoteSection({
   );
 
   // 노트 선택/해제 토글
-  const toggleNote = (noteId: string) => {
+  const toggleNote = async (noteId: string) => {
     const newIds = selectedNoteIds.includes(noteId)
       ? selectedNoteIds.filter(id => id !== noteId)
       : [...selectedNoteIds, noteId];
+
+    // 로컬 상태 즉시 업데이트
     onChange(newIds);
+
+    // DB에 즉시 저장 (선택적)
+    if (onImmediateSave) {
+      try {
+        await onImmediateSave(newIds);
+      } catch (error) {
+        console.error('노트 연결 저장 실패:', error);
+        // 실패 시 원래 상태로 되돌리기
+        onChange(selectedNoteIds);
+      }
+    }
   };
 
   // 노트 생성 및 자동 연결
@@ -60,8 +80,16 @@ export default function CollapsibleNoteSection({
 
     try {
       const newNote = await onCreateNote(searchQuery.trim());
-      // 생성된 노트를 자동으로 선택에 추가
-      onChange([...selectedNoteIds, newNote.id]);
+      const newIds = [...selectedNoteIds, newNote.id];
+
+      // 로컬 상태 즉시 업데이트
+      onChange(newIds);
+
+      // DB에 즉시 저장 (선택적)
+      if (onImmediateSave) {
+        await onImmediateSave(newIds);
+      }
+
       // 검색어 초기화
       setSearchQuery('');
     } catch (error) {
@@ -215,6 +243,7 @@ export default function CollapsibleNoteSection({
               onClick={handleCreateNote}
               className="w-full flex items-center gap-2 p-3 rounded-lg hover:bg-base-200 transition-colors text-left"
             >
+              <Plus className="h-5 w-5 text-base-content/70" />
               <FileText className="h-5 w-5 text-base-content/70" />
               <span className="text-sm">
                 노트에서 새로운 <strong>{searchQuery}</strong> 페이지 생성

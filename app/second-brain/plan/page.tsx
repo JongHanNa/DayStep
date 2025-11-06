@@ -12,6 +12,8 @@ import UnscheduledTodosList from '@/components/second-brain/plan/UnscheduledTodo
 import DateAssignmentArea from '@/components/second-brain/plan/DateAssignmentArea';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import { updateTodoProjects } from '@/lib/supabase/todo-projects';
+import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
@@ -274,8 +276,8 @@ export default function PlanPage() {
     return newNote;
   };
 
-  const handleUpdateNote = async (id: string, title: string) => {
-    setNotes(prev => prev.map(n => n.id === id ? { ...n, title } : n));
+  const handleUpdateNote = async (id: string) => {
+    // Note 업데이트는 NoteEdit 모달에서 처리
   };
 
   const handleDeleteNote = async (id: string) => {
