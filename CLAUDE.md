@@ -126,6 +126,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **UI**: shadcn/ui + Tailwind + DaisyUI
 - **알림**: Capacitor Local Notifications
 
+## 🔧 백엔드 개발 패턴
+
+### 인증
+
+- `useAuth()` Hook → userId 파라미터 전달
+- Store에서 `getState().user?.id` 직접 호출 금지
+- Capacitor 백업: Preferences (`supabase_auth_session`)
+
+### DB 접근
+
+- `supabaseWebViewHelper.ts` JWT 방식만
+- `supabase.from()` 직접 호출 금지
+- DB 필터링: 서버에서만 (클라이언트 중복 금지)
+- 스키마 검증: Supabase MCP로 확인
+
+### 상태 관리
+
+- `Object.assign(state.optimisticState, {...})`
+- Optimistic updates 적용
+
 ## Task Master AI
 
 `.taskmaster/CLAUDE.md` 참조 - 작업 관리 워크플로우 및 명령어
