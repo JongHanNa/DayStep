@@ -121,9 +121,9 @@ export default function NoteFormFields({
           className="select select-bordered"
         >
           <option value="none">선택 안함</option>
-          <option value="work_in_progress">중간 작업물</option>
-          <option value="read_later">나중에 보기</option>
-          <option value="reference">레퍼런스</option>
+          <option value="read_later">나중에 보기 - 시간이 붕뜨는데 뭘 해야할지 모를 때</option>
+          <option value="work_in_progress">중간 작업물 - 내가 작성하던 중간 작업물, 최근에 작업했던 노트</option>
+          <option value="reference">레퍼런스 - 자주 찾아보는 정보나 나중에 참고할 자료나 링크</option>
         </select>
       </div>
 
