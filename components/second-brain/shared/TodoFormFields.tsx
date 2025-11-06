@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
-import ProjectSelector from './ProjectSelector';
-import NoteSelector from './NoteSelector';
+import CollapsibleProjectSection from './CollapsibleProjectSection';
+import CollapsibleNoteSection from './CollapsibleNoteSection';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
@@ -397,44 +397,25 @@ export default function TodoFormFields({
 
       {/* 프로젝트 추가 (다중 선택) - onCreateProject prop이 있고 showProjects가 true일 때만 표시 */}
       {onCreateProject && showProjects && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <Folder className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-            프로젝트 추가
-          </label>
-
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-            <ProjectSelector
-              selectedProjectIds={todo.projectIds || []}
-              projects={projects}
-              onProjectsChange={(projectIds) => onChange({ ...todo, projectIds })}
-              onCreateProject={onCreateProject}
-              onUpdateProject={onUpdateProject}
-              onDeleteProject={onDeleteProject}
-            />
-          </div>
-        </div>
+        <CollapsibleProjectSection
+          selectedProjectIds={todo.projectIds || []}
+          allProjects={projects}
+          onChange={(projectIds) => onChange({ ...todo, projectIds })}
+          onCreateProject={onCreateProject}
+          todoColor={todo.color}
+        />
       )}
 
       {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <StickyNote className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-            노트 추가
-          </label>
-
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-            <NoteSelector
-              selectedNoteIds={todo.noteIds || []}
-              notes={notes}
-              onNotesChange={(noteIds) => onChange({ ...todo, noteIds })}
-              onNoteClick={onNoteClick}
-              onCreateNote={onCreateNote}
-              onDeleteNote={onDeleteNote}
-            />
-          </div>
-        </div>
+        <CollapsibleNoteSection
+          selectedNoteIds={todo.noteIds || []}
+          allNotes={notes}
+          onChange={(noteIds) => onChange({ ...todo, noteIds })}
+          onCreateNote={onCreateNote}
+          onNoteClick={onNoteClick}
+          todoColor={todo.color}
+        />
       )}
 
       {/* 아이콘 브라우저 모달 */}

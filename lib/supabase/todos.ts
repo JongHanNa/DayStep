@@ -3,6 +3,8 @@
  */
 
 import { fetchWithJWT, queryRLSTableWithJWT, createWithJWT, updateWithJWT, deleteWithJWT, getMaxOrderIndexWithJWT, QueryOptions } from './core';
+import { updateTodoProjects } from './todo-projects';
+import { updateTodoNotes } from './todo-notes';
 
 /**
  * 특정 날짜 범위의 할일 목록 조회 (성능 최적화)
@@ -95,8 +97,23 @@ export async function createTodoWithJWT(todoData: Record<string, any>): Promise<
   console.log('📋 JWT 방식으로 할일 생성:', { todoData });
 
   try {
-    const result = await createWithJWT('todos', todoData);
+    // projectIds, noteIds는 별도로 처리하기 위해 분리
+    const { projectIds, noteIds, ...todoDataWithoutRelations } = todoData;
+
+    // 할일 생성
+    const result = await createWithJWT('todos', todoDataWithoutRelations);
     console.log('✅ JWT 할일 생성 성공:', { result });
+
+    // 할일 ID가 있으면 프로젝트/노트 관계 저장
+    if (result && result.id) {
+      if (projectIds && Array.isArray(projectIds)) {
+        await updateTodoProjects(result.id, projectIds);
+      }
+      if (noteIds && Array.isArray(noteIds)) {
+        await updateTodoNotes(result.id, noteIds);
+      }
+    }
+
     return result;
   } catch (error) {
     console.error('❌ JWT 할일 생성 실패:', error);
@@ -111,11 +128,23 @@ export async function updateTodoWithJWT(todoId: string, todoData: Record<string,
   console.log('📋 JWT 방식으로 할일 업데이트:', { todoId, todoData });
 
   try {
+    // projectIds, noteIds는 별도로 처리하기 위해 분리
+    const { projectIds, noteIds, ...todoDataWithoutRelations } = todoData;
+
+    // 할일 업데이트
     const result = await updateWithJWT('todos', {
       column: 'id',
       operator: 'eq',
       value: todoId
-    }, todoData);
+    }, todoDataWithoutRelations);
+
+    // 프로젝트/노트 관계 업데이트
+    if (projectIds !== undefined && Array.isArray(projectIds)) {
+      await updateTodoProjects(todoId, projectIds);
+    }
+    if (noteIds !== undefined && Array.isArray(noteIds)) {
+      await updateTodoNotes(todoId, noteIds);
+    }
 
     console.log('✅ JWT 할일 업데이트 성공:', { result });
     return result;
