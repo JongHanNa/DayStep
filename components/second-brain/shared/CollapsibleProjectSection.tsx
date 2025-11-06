@@ -224,7 +224,7 @@ export default function CollapsibleProjectSection({
               <Plus className="h-5 w-5 text-base-content/70" />
               <Folder className="h-5 w-5 text-base-content/70" />
               <span className="text-sm">
-                프로젝트에서 새로운 <strong>{searchQuery}</strong> 페이지 생성
+                새로운 <strong>{searchQuery}</strong> 프로젝트 생성
               </span>
             </button>
           </div>

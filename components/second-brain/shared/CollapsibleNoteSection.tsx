@@ -246,7 +246,7 @@ export default function CollapsibleNoteSection({
               <Plus className="h-5 w-5 text-base-content/70" />
               <FileText className="h-5 w-5 text-base-content/70" />
               <span className="text-sm">
-                노트에서 새로운 <strong>{searchQuery}</strong> 페이지 생성
+                새로운 <strong>{searchQuery}</strong> 노트 생성
               </span>
             </button>
           </div>
