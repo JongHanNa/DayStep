@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Calendar, Star } from 'lucide-react';
+import { Calendar, Star, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
@@ -21,6 +22,14 @@ interface TodoInboxListProps {
   notes?: Note[];
   onRefresh: () => void;
   userId: string;
+  isEditMode: boolean;
+  selectedIds: Set<string>;
+  swipedItemId: string | null;
+  onSelectionChange: (id: string, isChecked: boolean, shiftKey: boolean, index: number) => void;
+  onSwipe: (itemId: string | null) => void;
+  onDeleteClick: (e: React.MouseEvent, itemId: string) => void;
+  dragStartX: React.MutableRefObject<number>;
+  isDragging: React.MutableRefObject<boolean>;
 }
 
 // 명료화 enum 값을 한글로 변환
@@ -38,7 +47,21 @@ const getClarificationLabel = (clarification?: string): string => {
   return labelMap[clarification] || clarification;
 };
 
-export default function TodoInboxList({ todos, projects = [], notes = [], onRefresh, userId }: TodoInboxListProps) {
+export default function TodoInboxList({
+  todos,
+  projects = [],
+  notes = [],
+  onRefresh,
+  userId,
+  isEditMode,
+  selectedIds,
+  swipedItemId,
+  onSelectionChange,
+  onSwipe,
+  onDeleteClick,
+  dragStartX,
+  isDragging
+}: TodoInboxListProps) {
   const { inboxItems, fetchInboxItems } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
@@ -202,49 +225,126 @@ export default function TodoInboxList({ todos, projects = [], notes = [], onRefr
   return (
     <>
       <div className="space-y-2">
-        {todos.map((todo) => (
-            <div key={todo.id} className="relative overflow-hidden rounded-lg">
-              {/* 카드 레이어 */}
-              <button
-                onClick={() => handleTodoClick(todo)}
-                className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full text-left"
+        {todos.map((todo, index) => (
+          <div key={todo.id} className="relative overflow-hidden rounded-lg">
+            {/* 배경 레이어: 삭제 버튼 */}
+            {!isEditMode && (
+              <div
+                className="absolute inset-y-0 right-0 flex items-center justify-end bg-error"
+                style={{ width: '85px' }}
               >
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium mb-1">{todo.content}</p>
-                      {todo.clarification && todo.clarification !== 'none' && (
-                        <span key={`clarification-${todo.id}`} className="badge badge-sm badge-primary">
-                          {getClarificationLabel(todo.clarification)}
-                        </span>
+                <button
+                  onClick={(e) => onDeleteClick(e, todo.id)}
+                  className="btn btn-circle btn-ghost mr-2"
+                >
+                  <Trash2 className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            )}
+
+            {/* 카드 레이어 (framer-motion) */}
+            <motion.div
+              className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full"
+              drag={!isEditMode ? "x" : false}
+              dragConstraints={{ left: -80, right: 0 }}
+              dragElastic={0.2}
+              onDragStart={!isEditMode ? (() => {
+                return (event: any, info: any) => {
+                  dragStartX.current = info.point.x;
+                  isDragging.current = true;
+                };
+              })() : undefined}
+              onDragEnd={!isEditMode ? (() => {
+                return (event: any, info: any) => {
+                  const dragDistance = Math.abs(info.point.x - dragStartX.current);
+                  if (dragDistance > 5) {
+                    const threshold = -40;
+                    if (info.offset.x < threshold) {
+                      onSwipe(todo.id);
+                    } else {
+                      onSwipe(null);
+                    }
+                  }
+                };
+              })() : undefined}
+              animate={{
+                x: swipedItemId === todo.id ? -80 : 0,
+                borderTopRightRadius: swipedItemId === todo.id ? 0 : '0.5rem',
+                borderBottomRightRadius: swipedItemId === todo.id ? 0 : '0.5rem',
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onClick={() => {
+                if (isDragging.current) {
+                  isDragging.current = false;
+                  return;
+                }
+
+                if (isEditMode) {
+                  const newChecked = !selectedIds.has(todo.id);
+                  onSelectionChange(todo.id, newChecked, false, index);
+                } else {
+                  handleTodoClick(todo);
+                }
+              }}
+            >
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  {/* 편집 모드 체크박스 */}
+                  {isEditMode && (
+                    <input
+                      type="checkbox"
+                      className="checkbox mt-0.5"
+                      checked={selectedIds.has(todo.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        onSelectionChange(
+                          todo.id,
+                          e.target.checked,
+                          e.nativeEvent.shiftKey,
+                          index
+                        );
+                      }}
+                    />
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium mb-1">{todo.content}</p>
+                        {todo.clarification && todo.clarification !== 'none' && (
+                          <span key={`clarification-${todo.id}`} className="badge badge-sm badge-primary">
+                            {getClarificationLabel(todo.clarification)}
+                          </span>
+                        )}
+                        {todo.next_action_status && (
+                          <span key={`next-action-${todo.id}`} className="badge badge-sm badge-secondary ml-2">
+                            {todo.next_action_status}
+                          </span>
+                        )}
+                        {/* 동적 안내 메시지 */}
+                        {(() => {
+                          const message = getInboxRemovalMessage(todo);
+                          return message ? (
+                            <p className="text-xs text-base-content/60 mt-1">
+                              {message}
+                            </p>
+                          ) : null;
+                        })()}
+                      </div>
+                      {todo.is_highlight && (
+                        <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                       )}
-                      {todo.next_action_status && (
-                        <span key={`next-action-${todo.id}`} className="badge badge-sm badge-secondary ml-2">
-                          {todo.next_action_status}
-                        </span>
-                      )}
-                      {/* 동적 안내 메시지 */}
-                      {(() => {
-                        const message = getInboxRemovalMessage(todo);
-                        return message ? (
-                          <p className="text-xs text-base-content/60 mt-1">
-                            {message}
-                          </p>
-                        ) : null;
-                      })()}
                     </div>
-                    {todo.is_highlight && (
-                      <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                    {todo.scheduled_date && (
+                      <div className="flex items-center gap-1 mt-2 text-xs text-base-content/60">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(todo.scheduled_date).toLocaleDateString('ko-KR')}
+                      </div>
                     )}
                   </div>
-                {todo.scheduled_date && (
-                  <div className="flex items-center gap-1 mt-2 text-xs text-base-content/60">
-                    <Calendar className="w-3 h-3" />
-                    {new Date(todo.scheduled_date).toLocaleDateString('ko-KR')}
-                  </div>
-                )}
+                </div>
               </div>
-            </button>
+            </motion.div>
           </div>
         ))}
       </div>

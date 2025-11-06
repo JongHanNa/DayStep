@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
@@ -22,10 +22,12 @@ import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import type { InboxItem, Project, UpdateProjectInput, Goal, UpdateGoalInput } from '@/types/second-brain';
+import { motion, PanInfo } from 'framer-motion';
+import { Trash2, Edit3, X } from 'lucide-react';
 
 export default function ClarifyPage() {
   const { appUser } = useAuth();
-  const { inboxItems, loading, fetchInboxItems, fetchInboxItemsByType } = useInboxStore();
+  const { inboxItems, loading, fetchInboxItems, fetchInboxItemsByType, deleteInboxItem } = useInboxStore();
   const { projects, fetchProjects, updateProject, deleteProject } = useProjectStore();
   const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
   const { notes, fetchNotes } = useNoteStore();
@@ -48,6 +50,18 @@ export default function ClarifyPage() {
   const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
 
+  // 편집 모드 상태
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+
+  // 스와이프 상태
+  const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
+
+  // 드래그/클릭 구분
+  const dragStartX = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
+
   // ✅ 모든 useEffect를 조건문 위로 이동 (React Hooks 규칙 준수)
   useEffect(() => {
     if (!appUser?.id) return;  // ✅ 내부에서 appUser 체크
@@ -65,6 +79,31 @@ export default function ClarifyPage() {
     setTodoInbox(inboxTodos);
     setNoteInbox(inboxNotes);
   }, [inboxItems, loading]);
+
+  // 외부 클릭 시 스와이프된 카드 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (swipedItemId) {
+        setSwipedItemId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [swipedItemId]);
+
+  // 현재 활성화된 탭의 항목 배열 반환
+  const getCurrentTabItems = (): Array<InboxItem | Project | Goal> => {
+    switch (activeTab) {
+      case 'todos': return todoInbox;
+      case 'notes': return noteInbox;
+      case 'projects': return projectInbox;
+      case 'goals': return goalInbox;
+      default: return [];
+    }
+  };
 
   const loadInboxData = async () => {
     if (!appUser?.id) return;
@@ -97,6 +136,135 @@ export default function ClarifyPage() {
 
   const handleRefresh = () => {
     loadInboxData();
+  };
+
+  // 일괄 삭제 핸들러
+  const handleBulkDelete = async () => {
+    if (!appUser?.id || selectedIds.size === 0) return;
+
+    if (!confirm(`선택한 ${selectedIds.size}개 항목을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      // 탭별 삭제 API 호출
+      if (activeTab === 'todos' || activeTab === 'notes') {
+        // InboxItem 삭제
+        await Promise.all(
+          Array.from(selectedIds).map(id => deleteInboxItem(appUser.id!, id))
+        );
+      } else if (activeTab === 'projects') {
+        // Project 삭제
+        await Promise.all(
+          Array.from(selectedIds).map(id => deleteProject(appUser.id!, id))
+        );
+      } else if (activeTab === 'goals') {
+        // Goal 삭제
+        await Promise.all(
+          Array.from(selectedIds).map(id => deleteGoal(appUser.id!, id))
+        );
+      }
+
+      // 상태 초기화
+      setSelectedIds(new Set());
+      setIsEditMode(false);
+
+      // 데이터 재조회
+      await loadInboxData();
+    } catch (error) {
+      console.error('일괄 삭제 실패:', error);
+      alert('일부 항목 삭제에 실패했습니다.');
+    }
+  };
+
+  // 단일 삭제 핸들러
+  const handleSingleDelete = async (itemId: string) => {
+    if (!appUser?.id) return;
+
+    try {
+      // 탭별 삭제 API 호출
+      if (activeTab === 'todos' || activeTab === 'notes') {
+        await deleteInboxItem(appUser.id, itemId);
+      } else if (activeTab === 'projects') {
+        await deleteProject(appUser.id, itemId);
+      } else if (activeTab === 'goals') {
+        await deleteGoal(appUser.id, itemId);
+      }
+
+      // 데이터 재조회
+      await loadInboxData();
+    } catch (error) {
+      console.error('삭제 실패:', error);
+      throw error;
+    }
+  };
+
+  // 스와이프 삭제 버튼 클릭 핸들러
+  const handleDeleteClick = (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    if (confirm('정말 삭제하시겠습니까?')) {
+      handleSingleDelete(itemId);
+      setSwipedItemId(null);
+    }
+  };
+
+  // Shift + 클릭 범위 선택 처리
+  const handleRangeSelection = (
+    currentIndex: number,
+    isChecked: boolean,
+    itemId: string
+  ) => {
+    const currentItems = getCurrentTabItems();
+
+    if (lastSelectedIndex === null) {
+      // 첫 선택: 일반 체크/해제
+      const newSet = new Set(selectedIds);
+      if (isChecked) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      setSelectedIds(newSet);
+      setLastSelectedIndex(currentIndex);
+      return;
+    }
+
+    // 범위 선택: lastSelectedIndex와 currentIndex 사이의 모든 아이템
+    const start = Math.min(lastSelectedIndex, currentIndex);
+    const end = Math.max(lastSelectedIndex, currentIndex);
+
+    const newSet = new Set(selectedIds);
+    for (let i = start; i <= end; i++) {
+      if (isChecked) {
+        newSet.add(currentItems[i].id);
+      } else {
+        newSet.delete(currentItems[i].id);
+      }
+    }
+
+    setSelectedIds(newSet);
+    setLastSelectedIndex(currentIndex);
+  };
+
+  // 통합 선택 핸들러
+  const handleSelectionChange = (
+    itemId: string,
+    isChecked: boolean,
+    index: number,
+    shiftKey: boolean
+  ) => {
+    if (shiftKey) {
+      handleRangeSelection(index, isChecked, itemId);
+    } else {
+      const newSet = new Set(selectedIds);
+      if (isChecked) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      setSelectedIds(newSet);
+      setLastSelectedIndex(index);
+    }
   };
 
   // 프로젝트 클릭 핸들러 - Project 그대로 전달
@@ -263,10 +431,37 @@ export default function ClarifyPage() {
         {/* 헤더 */}
         <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
           <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-            <h1 className="text-2xl font-bold mb-1">명료화</h1>
-            <p className="text-sm text-base-content/70">
-              수집한 항목을 분류하고 처리하세요
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-2xl font-bold">명료화</h1>
+                <p className="text-sm text-base-content/70">
+                  수집한 항목을 분류하고 처리하세요
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {!isEditMode ? (
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="btn btn-ghost btn-sm rounded-full"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    편집
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setSelectedIds(new Set());
+                      setLastSelectedIndex(null);
+                    }}
+                    className="btn btn-ghost btn-sm rounded-full"
+                  >
+                    <X className="w-4 h-4" />
+                    취소
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -278,7 +473,13 @@ export default function ClarifyPage() {
           {/* 수집함 탭 */}
           <InboxTabs
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={(newTab) => {
+              setActiveTab(newTab);
+              if (isEditMode) {
+                setSelectedIds(new Set());
+                setLastSelectedIndex(null);
+              }
+            }}
             counts={{
               todos: todoInbox.length,
               notes: noteInbox.length,
@@ -286,6 +487,43 @@ export default function ClarifyPage() {
               goals: goalInbox.length,
             }}
           />
+
+          {/* 편집 모드 액션 바 */}
+          {isEditMode && (
+            <div className="mt-3 p-3 bg-base-100 rounded-lg flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm"
+                  checked={selectedIds.size === getCurrentTabItems().length && getCurrentTabItems().length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(new Set(getCurrentTabItems().map(item => item.id)));
+                    } else {
+                      setSelectedIds(new Set());
+                    }
+                  }}
+                />
+                <span className="text-sm font-medium">전체 선택</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                {selectedIds.size > 0 && (
+                  <span className="badge badge-primary">
+                    {selectedIds.size}개 선택됨
+                  </span>
+                )}
+                <button
+                  onClick={handleBulkDelete}
+                  className="btn btn-error btn-sm rounded-full"
+                  disabled={selectedIds.size === 0}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  삭제
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* 가이드 팝오버 */}
           <InboxGuidePopover activeTab={activeTab} />
@@ -299,6 +537,14 @@ export default function ClarifyPage() {
                 notes={notes}
                 onRefresh={handleRefresh}
                 userId={appUser?.id || ''}
+                isEditMode={isEditMode}
+                selectedIds={selectedIds}
+                swipedItemId={swipedItemId}
+                onSelectionChange={handleSelectionChange}
+                onSwipe={setSwipedItemId}
+                onDeleteClick={handleDeleteClick}
+                dragStartX={dragStartX}
+                isDragging={isDragging}
               />
             )}
             {activeTab === 'notes' && (
@@ -310,18 +556,42 @@ export default function ClarifyPage() {
                 todos={[]} // TODO: Todo 타입 정리 후 todos 전달
                 allNotes={notes}  // 노트-노트 연결을 위한 전체 노트 목록
                 onRefresh={handleRefresh}
+                isEditMode={isEditMode}
+                selectedIds={selectedIds}
+                swipedItemId={swipedItemId}
+                onSelectionChange={handleSelectionChange}
+                onSwipe={setSwipedItemId}
+                onDeleteClick={handleDeleteClick}
+                dragStartX={dragStartX}
+                isDragging={isDragging}
               />
             )}
             {activeTab === 'projects' && (
               <ProjectInboxList
                 projects={projectInbox}
                 onProjectClick={handleProjectClick}
+                isEditMode={isEditMode}
+                selectedIds={selectedIds}
+                swipedItemId={swipedItemId}
+                onSelectionChange={handleSelectionChange}
+                onSwipe={setSwipedItemId}
+                onDeleteClick={handleDeleteClick}
+                dragStartX={dragStartX}
+                isDragging={isDragging}
               />
             )}
             {activeTab === 'goals' && (
               <GoalInboxList
                 goals={goalInbox}
                 onGoalClick={handleGoalClick}
+                isEditMode={isEditMode}
+                selectedIds={selectedIds}
+                swipedItemId={swipedItemId}
+                onSelectionChange={handleSelectionChange}
+                onSwipe={setSwipedItemId}
+                onDeleteClick={handleDeleteClick}
+                dragStartX={dragStartX}
+                isDragging={isDragging}
               />
             )}
           </div>
