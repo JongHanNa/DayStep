@@ -106,7 +106,7 @@ export default function GoalInboxList({
                     onSelectionChange(
                       goal.id,
                       !selectedIds.has(goal.id),
-                      e.shiftKey,
+                      e.nativeEvent.shiftKey,
                       index
                     );
                   } else {
@@ -127,7 +127,7 @@ export default function GoalInboxList({
                           onSelectionChange(
                             goal.id,
                             e.target.checked,
-                            e.shiftKey,
+                            e.nativeEvent.shiftKey,
                             index
                           );
                         }}

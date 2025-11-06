@@ -255,7 +255,7 @@ export default function NoteInboxList({
                 borderBottomRightRadius: swipedItemId === note.id ? 0 : '0.5rem',
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              onClick={() => {
+              onClick={(e) => {
                 // 드래그 직후에는 클릭 무시
                 if (isDragging.current) {
                   isDragging.current = false;
@@ -265,7 +265,7 @@ export default function NoteInboxList({
                 if (isEditMode) {
                   // 편집 모드: 체크박스 토글
                   const newChecked = !selectedIds.has(note.id);
-                  onSelectionChange(note.id, newChecked, false, index);
+                  onSelectionChange(note.id, newChecked, e.nativeEvent.shiftKey, index);
                 } else {
                   // 일반 모드: 편집 모달 열기
                   handleNoteClick(note);
