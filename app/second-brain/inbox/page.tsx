@@ -13,7 +13,7 @@ import { updateInboxTodo, updateInboxNote } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import { Plus, Trash2, Edit3, X } from 'lucide-react';
+import { Plus, Trash2, Edit3, X, Boxes } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion, PanInfo } from 'framer-motion';
@@ -24,6 +24,7 @@ import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { useModalStore } from '@/state/stores/modalStore';
 import { cn } from '@/lib/utils';
+import TemplatePickerModal, { type PresetTask } from '@/components/modals/TemplatePickerModal';
 
 // 날짜 유효성 검증 헬퍼 함수
 const isValidDate = (date: string | Date | undefined | null): boolean => {
@@ -49,6 +50,9 @@ export default function InboxPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+
+  // 템플릿 모달 상태
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
   // 스와이프된 카드 ID 추적
   const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
@@ -154,6 +158,26 @@ export default function InboxPage() {
       console.error('항목 생성 실패:', error);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  // 템플릿 선택 핸들러
+  const handleTemplateSelect = async (task: PresetTask) => {
+    if (!appUser?.id) return;
+
+    try {
+      // 템플릿 제목으로 할일 생성
+      await createInboxItem(appUser.id, {
+        content: task.title,
+        status: 'inbox',
+        item_type: 'todo',
+        is_completed: false,
+      });
+
+      // 모달 닫기
+      setIsTemplateModalOpen(false);
+    } catch (error) {
+      console.error('템플릿 항목 생성 실패:', error);
     }
   };
 
@@ -428,6 +452,13 @@ export default function InboxPage() {
             <div className="flex items-center gap-2">
               {!isEditMode ? (
                 <>
+                  <button
+                    onClick={() => setIsTemplateModalOpen(true)}
+                    className="btn btn-ghost btn-sm rounded-full"
+                  >
+                    <Boxes className="w-4 h-4" />
+                    템플릿
+                  </button>
                   <button
                     onClick={handleQuickAdd}
                     className="btn btn-primary btn-sm rounded-full"
@@ -742,6 +773,13 @@ export default function InboxPage() {
         resources={resources}
         titlePlaceholder=""
         contentPlaceholder=""
+      />
+
+      {/* 템플릿 선택 모달 */}
+      <TemplatePickerModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onTemplateSelect={handleTemplateSelect}
       />
 
       {/* 하단 네비게이션 */}

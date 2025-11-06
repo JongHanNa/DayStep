@@ -13,7 +13,6 @@ import { FontProvider } from "@/components/providers/FontProvider";
 // 성능 모니터링 비활성화
 // import { PerformanceProvider } from "@/components/providers/PerformanceProvider";
 // import { PerformanceMonitorProvider } from "@/components/dev/PerformanceMonitor";
-import TodoPickerPanel from "@/components/layout/TodoPickerPanel";
 import { Toaster } from "sonner";
 import { RealtimeSyncProvider } from "@/components/providers/RealtimeSyncProvider";
 import { ReminderProvider } from "@/components/providers/ReminderProvider";
@@ -61,7 +60,6 @@ export default function RootLayout({
                       {children}
                     </main>
                     <SecondBrainBottomNav />
-                    <TodoPickerPanel />
                     <Toaster
                   position="top-right"
                   richColors
