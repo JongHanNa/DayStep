@@ -228,12 +228,20 @@ export default function TodoFormFields({
           {todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
               {todo.nextActionStatuses.map(status => (
-                <div key={status} className="badge badge-secondary gap-2">
+                <div
+                  key={status}
+                  className="badge gap-2"
+                  style={{
+                    backgroundColor: todo.color || '#808080',
+                    color: '#ffffff',
+                    border: 'none'
+                  }}
+                >
                   {status}
                   <button
                     type="button"
                     onClick={() => toggleNextActionStatus(status)}
-                    className="hover:bg-base-300 rounded-full p-0.5 transition-colors"
+                    className="hover:opacity-70 rounded-full p-0.5 transition-opacity"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -247,6 +255,7 @@ export default function TodoFormFields({
             selectedStatuses={todo.nextActionStatuses || []}
             onChange={(statuses) => onChange({ ...todo, nextActionStatuses: statuses })}
             options={NEXT_ACTION_OPTIONS}
+            todoColor={todo.color || '#808080'}
           />
         </div>
       )}

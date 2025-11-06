@@ -7,12 +7,14 @@ interface CollapsibleNextActionSectionProps {
   selectedStatuses: string[];
   onChange: (statuses: string[]) => void;
   options: string[];
+  todoColor?: string;
 }
 
 export default function CollapsibleNextActionSection({
   selectedStatuses = [],
   onChange,
   options = [],
+  todoColor = '#808080',
 }: CollapsibleNextActionSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,7 +60,7 @@ export default function CollapsibleNextActionSection({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Zap className="h-5 w-5 text-secondary" />
+              <Zap className="h-5 w-5" style={{ color: todoColor }} />
               <span className="text-lg font-semibold" style={{ color: '#666666' }}>
                 다음행동상황 {selectedStatuses.length}개
               </span>
@@ -81,7 +83,7 @@ export default function CollapsibleNextActionSection({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Zap className="h-5 w-5 text-secondary" />
+            <Zap className="h-5 w-5" style={{ color: todoColor }} />
             <span className="text-lg font-semibold" style={{ color: '#666666' }}>
               다음행동상황 {selectedStatuses.length}개
             </span>
@@ -122,9 +124,13 @@ export default function CollapsibleNextActionSection({
                     type="checkbox"
                     checked={true}
                     onChange={() => toggleStatus(status)}
-                    className="checkbox checkbox-sm checkbox-secondary"
+                    className="checkbox checkbox-sm"
+                    style={{
+                      borderColor: todoColor,
+                      backgroundColor: todoColor,
+                    }}
                   />
-                  <Zap className="h-4 w-4 text-secondary" />
+                  <Zap className="h-4 w-4" style={{ color: todoColor }} />
                   <span className="text-sm flex-1">{status}</span>
                 </label>
               ))}
@@ -149,8 +155,11 @@ export default function CollapsibleNextActionSection({
                     checked={false}
                     onChange={() => toggleStatus(status)}
                     className="checkbox checkbox-sm"
+                    style={{
+                      borderColor: todoColor,
+                    }}
                   />
-                  <Zap className="h-4 w-4 text-base-content/50" />
+                  <Zap className="h-4 w-4" style={{ color: todoColor, opacity: 0.5 }} />
                   <span className="text-sm flex-1">{status}</span>
                 </label>
               ))}
