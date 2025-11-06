@@ -212,7 +212,7 @@ export default function TodoFormFields({
       )}
 
       {/* 다음행동상황 (다중 선택) */}
-      {showNextActionStatus && (
+      {showNextActionStatus && todo.clarification === 'next_action' && (
         <div className="my-4">
           <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
             <Sparkles className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
@@ -239,7 +239,7 @@ export default function TodoFormFields({
       )}
 
       {/* 날짜 */}
-      {showScheduledDate && (
+      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'scheduled') && (
         <>
           {/* 시작 날짜 */}
           <div className="my-4">
