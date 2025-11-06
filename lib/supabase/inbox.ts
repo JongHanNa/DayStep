@@ -241,21 +241,49 @@ export async function deleteInboxNote(userId: string, noteId: string): Promise<b
 }
 
 /**
- * 수집함 프로젝트 목록 조회 (inbox_projects Materialized View)
+ * 수집함 프로젝트 목록 조회 (projects 테이블 직접 조회)
  *
  * DB 레벨 필터링 조건:
- *   - NOT (end_date IS NOT NULL AND total_todos > 0)
- *   - 종료일과 할일이 모두 있는 프로젝트는 제외
+ *   - user_id 일치
+ *
+ * 클라이언트 필터링 조건:
+ *   - NOT (area_resource_id IS NOT NULL AND end_date IS NOT NULL AND todo_count > 0)
+ *   - 영역/자원과 종료일, 할일이 모두 있는 프로젝트는 제외
+ *
+ * ✅ 변경 사항: Materialized View 대신 projects 테이블 직접 조회 (실시간 데이터)
  */
 export async function fetchInboxProjects(userId: string): Promise<any[]> {
   console.log('📥 수집함 프로젝트 조회:', { userId });
 
   try {
-    const path = `/inbox_projects?user_id=eq.${userId}&select=*&order=created_at.desc`;
+    // ✅ projects 테이블 직접 조회 (Materialized View 대신)
+    const path = `/projects?user_id=eq.${userId}&select=*&order=created_at.desc`;
     const projects = await fetchWithJWT(path);
 
-    console.log('✅ 수집함 프로젝트 조회 성공:', { count: projects?.length || 0 });
-    return projects || [];
+    // todos 카운트 조회 (프로젝트별 할일 개수)
+    const todoCountsPath = `/todos?project_id=in.(${projects?.map((p: any) => p.id).join(',') || 'null'})?select=project_id`;
+    const todos = await fetchWithJWT(todoCountsPath);
+
+    // 프로젝트별 todo 카운트 맵 생성
+    const todoCountMap = new Map<string, number>();
+    todos?.forEach((todo: any) => {
+      const count = todoCountMap.get(todo.project_id) || 0;
+      todoCountMap.set(todo.project_id, count + 1);
+    });
+
+    // 클라이언트 필터링: area_resource_id + end_date + todo_count > 0 제외
+    const filteredProjects = projects?.filter((project: any) => {
+      const hasAreaResource = project.area_resource_id != null;
+      const hasEndDate = project.end_date != null;
+      const todoCount = todoCountMap.get(project.id) || 0;
+
+      // area_resource_id + end_date + todo_count > 0 모두 충족 시 제외
+      if (hasAreaResource && hasEndDate && todoCount > 0) return false;
+      return true;
+    }) || [];
+
+    console.log('✅ 수집함 프로젝트 조회 성공:', { count: filteredProjects.length });
+    return filteredProjects;
   } catch (error) {
     console.error('❌ 수집함 프로젝트 조회 실패:', error);
     return [];
@@ -263,21 +291,37 @@ export async function fetchInboxProjects(userId: string): Promise<any[]> {
 }
 
 /**
- * 수집함 목표 목록 조회 (inbox_goals Materialized View)
+ * 수집함 목표 목록 조회 (goals 테이블 직접 조회)
  *
  * DB 레벨 필터링 조건:
+ *   - user_id 일치
+ *
+ * 클라이언트 필터링 조건:
  *   - NOT ((area_id IS NOT NULL OR resource_id IS NOT NULL) AND end_date IS NOT NULL)
  *   - 영역/자원과 종료일이 모두 있는 목표는 제외
+ *
+ * ✅ 변경 사항: Materialized View 대신 goals 테이블 직접 조회 (실시간 데이터)
  */
 export async function fetchInboxGoals(userId: string): Promise<any[]> {
   console.log('📥 수집함 목표 조회:', { userId });
 
   try {
-    const path = `/inbox_goals?user_id=eq.${userId}&select=*&order=created_at.desc`;
+    // ✅ goals 테이블 직접 조회 (Materialized View 대신)
+    const path = `/goals?user_id=eq.${userId}&select=*&order=created_at.desc`;
     const goals = await fetchWithJWT(path);
 
-    console.log('✅ 수집함 목표 조회 성공:', { count: goals?.length || 0 });
-    return goals || [];
+    // 클라이언트 필터링: (area_id OR resource_id) + end_date 제외
+    const filteredGoals = goals?.filter((goal: any) => {
+      const hasAreaOrResource = goal.area_id != null || goal.resource_id != null;
+      const hasEndDate = goal.end_date != null;
+
+      // (area_id OR resource_id) + end_date 모두 충족 시 제외
+      if (hasAreaOrResource && hasEndDate) return false;
+      return true;
+    }) || [];
+
+    console.log('✅ 수집함 목표 조회 성공:', { count: filteredGoals.length });
+    return filteredGoals;
   } catch (error) {
     console.error('❌ 수집함 목표 조회 실패:', error);
     return [];
