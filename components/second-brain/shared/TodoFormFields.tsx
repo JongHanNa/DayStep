@@ -211,11 +211,11 @@ export default function TodoFormFields({
               className="select select-bordered w-full"
             >
               <option value="">선택 안 함</option>
-              <option value="reminder">다시알림</option>
-              <option value="someday">언젠가</option>
-              <option value="waiting">대기중</option>
-              <option value="next_action">다음행동</option>
-              <option value="scheduled">일정</option>
+              <option value="reminder">⏰ 다시알림 · 특정 날짜 또는 시간에 알림 (시간 설정 시 수집함에서 사라짐)</option>
+              <option value="someday">⏳ 언젠가 · 당장은 실행할 수 없음 (즉시 수집함에서 사라짐)</option>
+              <option value="waiting">⏸️ 대기중 · 타인에게 위임, 응답 대기 중 (즉시 수집함에서 사라짐)</option>
+              <option value="next_action">⚡ 다음행동 · 최대한 빨리 할 일 (다음행동상황 선택 시 수집함에서 사라짐)</option>
+              <option value="scheduled">📅 일정 · 특정 날짜가 있는 할일 (날짜 설정 시 수집함에서 사라짐)</option>
             </select>
           </div>
         </div>
