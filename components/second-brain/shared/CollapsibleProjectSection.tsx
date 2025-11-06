@@ -52,6 +52,21 @@ export default function CollapsibleProjectSection({
     onChange(newIds);
   };
 
+  // 프로젝트 생성 및 자동 연결
+  const handleCreateProject = async () => {
+    if (!onCreateProject || !searchQuery.trim()) return;
+
+    try {
+      const newProject = await onCreateProject(searchQuery.trim());
+      // 생성된 프로젝트를 자동으로 선택에 추가
+      onChange([...selectedProjectIds, newProject.id]);
+      // 검색어 초기화
+      setSearchQuery('');
+    } catch (error) {
+      console.error('프로젝트 생성 실패:', error);
+    }
+  };
+
   // 축약 상태 렌더링
   if (!isExpanded) {
     return (
@@ -111,11 +126,11 @@ export default function CollapsibleProjectSection({
           </div>
         </div>
 
-        {/* 연결된 페이지 */}
+        {/* 연결된 프로젝트 */}
         {connectedProjects.length > 0 && (
           <div className="p-3 border-b border-base-300">
             <div className="text-sm text-base-content/70 mb-2">
-              연결된 페이지 {connectedProjects.length}개
+              연결된 프로젝트 {connectedProjects.length}개
             </div>
             <div className="space-y-1">
               {connectedProjects.map(project => (
@@ -163,19 +178,26 @@ export default function CollapsibleProjectSection({
           </div>
         )}
 
-        {/* 프로젝트가 없을 때 */}
-        {filteredProjects.length === 0 && (
+        {/* 프로젝트가 없을 때 (검색어 없을 때만) */}
+        {filteredProjects.length === 0 && !searchQuery && (
           <div className="p-8 text-center text-base-content/50">
-            {searchQuery ? '검색 결과가 없습니다' : '프로젝트가 없습니다'}
-            {onCreateProject && (
-              <button
-                type="button"
-                onClick={() => onCreateProject('새 프로젝트')}
-                className="btn btn-sm btn-primary mt-3"
-              >
-                프로젝트 만들기
-              </button>
-            )}
+            프로젝트가 없습니다
+          </div>
+        )}
+
+        {/* 검색어가 있을 때 항상 생성 버튼 표시 */}
+        {onCreateProject && searchQuery.trim() && (
+          <div className="p-3 border-t border-base-300">
+            <button
+              type="button"
+              onClick={handleCreateProject}
+              className="w-full flex items-center gap-2 p-3 rounded-lg hover:bg-base-200 transition-colors text-left"
+            >
+              <Folder className="h-5 w-5 text-base-content/70" />
+              <span className="text-sm">
+                프로젝트에서 새로운 <strong>{searchQuery}</strong> 페이지 생성
+              </span>
+            </button>
           </div>
         )}
       </div>

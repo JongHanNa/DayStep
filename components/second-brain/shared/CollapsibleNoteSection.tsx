@@ -54,6 +54,21 @@ export default function CollapsibleNoteSection({
     onChange(newIds);
   };
 
+  // 노트 생성 및 자동 연결
+  const handleCreateNote = async () => {
+    if (!onCreateNote || !searchQuery.trim()) return;
+
+    try {
+      const newNote = await onCreateNote(searchQuery.trim());
+      // 생성된 노트를 자동으로 선택에 추가
+      onChange([...selectedNoteIds, newNote.id]);
+      // 검색어 초기화
+      setSearchQuery('');
+    } catch (error) {
+      console.error('노트 생성 실패:', error);
+    }
+  };
+
   // 축약 상태 렌더링
   if (!isExpanded) {
     return (
@@ -185,19 +200,26 @@ export default function CollapsibleNoteSection({
           </div>
         )}
 
-        {/* 노트가 없을 때 */}
-        {filteredNotes.length === 0 && (
+        {/* 노트가 없을 때 (검색어 없을 때만) */}
+        {filteredNotes.length === 0 && !searchQuery && (
           <div className="p-8 text-center text-base-content/50">
-            {searchQuery ? '검색 결과가 없습니다' : '노트가 없습니다'}
-            {onCreateNote && (
-              <button
-                type="button"
-                onClick={() => onCreateNote('새 노트')}
-                className="btn btn-sm btn-primary mt-3"
-              >
-                노트 만들기
-              </button>
-            )}
+            노트가 없습니다
+          </div>
+        )}
+
+        {/* 검색어가 있을 때 항상 생성 버튼 표시 */}
+        {onCreateNote && searchQuery.trim() && (
+          <div className="p-3 border-t border-base-300">
+            <button
+              type="button"
+              onClick={handleCreateNote}
+              className="w-full flex items-center gap-2 p-3 rounded-lg hover:bg-base-200 transition-colors text-left"
+            >
+              <FileText className="h-5 w-5 text-base-content/70" />
+              <span className="text-sm">
+                노트에서 새로운 <strong>{searchQuery}</strong> 페이지 생성
+              </span>
+            </button>
           </div>
         )}
       </div>
