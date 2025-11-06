@@ -183,13 +183,13 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         if (isCapacitorEnvironment()) {
           console.log('🔑 [TodoService] Capacitor 환경 감지 - JWT 방식 사용');
 
+          // 🔑 Capacitor 백업 세션 패턴으로 사용자 ID 획득
+          let userId: string | undefined = undefined;
+
           try {
             // 순서 인덱스 자동 설정
             if (input.order_index === undefined) {
               console.log('📊 [TodoService] order_index 자동 설정 시작');
-              
-              // 🔑 Capacitor 백업 세션 패턴으로 사용자 ID 획득
-              let userId: string | null = null;
               
               try {
                 const { data: { session } } = await supabase.auth.getSession();
@@ -226,13 +226,13 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             }
 
             console.log('🔥 [TodoService] JWT 할일 생성 시작:', { finalInput: input });
-            
-            // 부모 할일 생성
+
+            // 부모 할일 생성 (userId 전달하여 project_ids 처리 보장)
             const parentTodo = await createTodoWithJWT({
               ...input,
               recurrence_pattern: input.recurrence_pattern || 'none',
               recurrence_interval: input.recurrence_interval || 1
-            });
+            }, userId);
             
             const todos = [Todo.fromDatabase(parentTodo)];
             
@@ -330,49 +330,20 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           });
         }
 
-        const insertData = {
+        // ✅ JWT 방식 사용 (Capacitor 환경과 동일)
+        console.log('🔥 [TodoService] 웹 환경 JWT 할일 생성 시작:', { finalInput: input });
+
+        const parentTodo = await createTodoWithJWT({
           ...input,
-          user_id: userId, // RLS 정책을 위한 user_id 추가
-          completed: input.completed || false, // NOT NULL 제약 조건을 위한 기본값
           recurrence_pattern: input.recurrence_pattern || 'none',
-          recurrence_interval: input.recurrence_interval || 1,
-          // 출발 정보 필드 추가 (undefined 체크로 변경)
-          departure_location: input.departure_location !== undefined ? input.departure_location : null,
-          departure_time: input.departure_time !== undefined ? input.departure_time : null
-        };
+          recurrence_interval: input.recurrence_interval || 1
+        }, userId);
 
-        console.log('🔥🔥🔥 [DEBUG] input.departure_location 값:', {
-          value: input.departure_location,
-          type: typeof input.departure_location,
-          undefined_check: input.departure_location !== undefined,
-          is_truthy: !!input.departure_location
-        });
-        console.log('🔥🔥🔥 [DEBUG] input.departure_time 값:', {
-          value: input.departure_time,
-          type: typeof input.departure_time,
-          undefined_check: input.departure_time !== undefined,
-          is_truthy: !!input.departure_time
-        });
+        if (!parentTodo) {
+          throw new ServiceError('Failed to create parent todo', 'CREATE_FAILED');
+        }
 
-        console.log('📝 [TodoService] 웹 환경 insertData 확인:', {
-          order_index: insertData.order_index,
-          user_id: insertData.user_id,
-          title: insertData.title,
-          schedule_type: insertData.schedule_type,
-          departure_location: insertData.departure_location,
-          departure_time: insertData.departure_time
-        });
-
-        const parentData = await this.executeQuery(
-          this.client
-            .from('todos')
-            .insert([insertData])
-            .select()
-            .single(),
-          { input }
-        );
-
-        const todos = [Todo.fromDatabase(parentData as any)];
+        const todos = [Todo.fromDatabase(parentTodo)];
 
         // ✅ 반복 일정 인스턴스는 DB에 저장하지 않음 (클라이언트에서 가상 생성)
         // recurrence-utils.ts의 generateRecurrenceInstances()가 메모리에서 인스턴스 생성
@@ -415,7 +386,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             }
 
             console.log('🔥 [TodoService] JWT 할일 생성 시작:', { finalTodoData: todoData });
-            const data = await createTodoWithJWT(todoData);
+            const data = await createTodoWithJWT(todoData, todoData.user_id);
             const todo = Todo.fromDatabase(data);
             
             console.log('ℹ️ [TodoService] 단일 할일 생성 완료 - 리마인더는 앱 시작 시 일괄 스케줄링됨');
@@ -479,7 +450,10 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           parent_todo_id: (todoData as any).parent_todo_id,
           // 출발 정보 필드 추가
           departure_location: (todoData as any).departure_location,
-          departure_time: (todoData as any).departure_time
+          departure_time: (todoData as any).departure_time,
+          // ✅ 프로젝트/노트 연결 필드 추가
+          project_ids: (todoData as any).project_ids,
+          note_ids: (todoData as any).note_ids
         };
 
         // 새로운 생성 메서드 사용 (첫 번째 할일만 반환)

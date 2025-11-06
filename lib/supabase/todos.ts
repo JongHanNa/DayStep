@@ -94,23 +94,34 @@ export async function fetchTodosForDateRange(
  * JWT 방식으로 할일 생성
  */
 export async function createTodoWithJWT(todoData: Record<string, any>, userId?: string): Promise<any> {
-  console.log('📋 JWT 방식으로 할일 생성:', { todoData });
+  console.log('📋 JWT 방식으로 할일 생성:', { todoData, userId });
 
   try {
-    // projectIds, noteIds는 별도로 처리하기 위해 분리
-    const { projectIds, noteIds, ...todoDataWithoutRelations } = todoData;
+    // projectIds/project_ids, noteIds/note_ids는 별도로 처리하기 위해 분리
+    const { projectIds, project_ids, noteIds, note_ids, ...todoDataWithoutRelations } = todoData;
+
+    // camelCase/snake_case 모두 지원
+    const finalProjectIds = projectIds || project_ids;
+    const finalNoteIds = noteIds || note_ids;
+
+    // ✅ RLS 정책 통과를 위해 user_id 추가
+    const dataWithUserId = {
+      ...todoDataWithoutRelations,
+      user_id: userId
+    };
 
     // 할일 생성
-    const result = await createWithJWT('todos', todoDataWithoutRelations);
+    const result = await createWithJWT('todos', dataWithUserId);
     console.log('✅ JWT 할일 생성 성공:', { result });
 
     // 할일 ID가 있으면 프로젝트/노트 관계 저장
     if (result && result.id && userId) {
-      if (projectIds && Array.isArray(projectIds)) {
-        await updateTodoProjects(result.id, projectIds, userId);
+      if (finalProjectIds && Array.isArray(finalProjectIds)) {
+        console.log('🔗 프로젝트 연결 저장:', { todoId: result.id, projectIds: finalProjectIds });
+        await updateTodoProjects(result.id, finalProjectIds, userId);
       }
-      if (noteIds && Array.isArray(noteIds)) {
-        await updateTodoNotes(result.id, noteIds, userId);
+      if (finalNoteIds && Array.isArray(finalNoteIds)) {
+        await updateTodoNotes(result.id, finalNoteIds, userId);
       }
     }
 
