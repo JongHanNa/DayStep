@@ -474,7 +474,7 @@ export default function ProjectEditDialog({
         completed: false,
         user_id: userId,
         project_ids: [editingProject.id], // N:N 관계로 변경
-        schedule_type: 'anytime'
+        schedule_type: 'none'
       });
 
       if (!newTodo) {

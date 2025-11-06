@@ -72,7 +72,7 @@ export async function createInboxTodo(userId: string, data: {
       completed: data.completed || false,
       project_id: data.project_id,
       next_action_contexts: data.next_action_contexts || null,
-      schedule_type: 'anytime', // 기본값: 언제든지
+      schedule_type: 'none', // 기본값: 선택안함
       recurrence_pattern: 'none',
       icon: null,
       color: '#DBAC6C',
