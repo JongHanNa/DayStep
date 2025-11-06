@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
-import type { AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
+import type { AreaResource as Area, AreaResource as Resource, Project, Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
 interface NoteEditModalProps {
@@ -17,6 +17,9 @@ interface NoteEditModalProps {
   resources: Resource[];
   projects?: Project[];
   todos?: Todo[];
+  notes?: Note[]; // 선택 가능한 노트 목록
+  onNoteClick?: (note: Note) => void; // 노트 클릭 시 콜백
+  onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   titlePlaceholder?: string;
   contentPlaceholder?: string;
 }
@@ -32,6 +35,9 @@ export default function NoteEditModal({
   resources,
   projects = [],
   todos = [],
+  notes = [],
+  onNoteClick,
+  onCreateNote,
   titlePlaceholder = '',
   contentPlaceholder = '',
 }: NoteEditModalProps) {
@@ -93,6 +99,10 @@ export default function NoteEditModal({
                 resources={resources}
                 projects={projects}
                 todos={todos}
+                notes={notes}
+                currentNoteId={note.id}
+                onNoteClick={onNoteClick}
+                onCreateNote={onCreateNote}
                 titlePlaceholder={titlePlaceholder}
                 contentPlaceholder={contentPlaceholder}
               />

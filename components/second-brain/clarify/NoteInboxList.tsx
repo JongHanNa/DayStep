@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { Pin } from 'lucide-react';
-import type { InboxItem, AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
+import type { InboxItem, AreaResource as Area, AreaResource as Resource, Project, Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useAuthStore } from '@/state/stores/authStore';
 import { updateProjectNotes } from '@/lib/supabase/project-notes';
+import { createNoteWithJWT } from '@/lib/supabase/notes';
 
 interface NoteInboxListProps {
   notes: InboxItem[];
@@ -16,14 +17,16 @@ interface NoteInboxListProps {
   resources: Resource[];
   projects: Project[];
   todos: Todo[];
+  allNotes?: Note[];  // 노트-노트 연결을 위한 전체 노트 목록
   onRefresh: () => void;
 }
 
-export default function NoteInboxList({ notes, areas, resources, projects, todos, onRefresh }: NoteInboxListProps) {
+export default function NoteInboxList({ notes, areas, resources, projects, todos, allNotes, onRefresh }: NoteInboxListProps) {
   const user = useAuthStore((state) => state.user);
   const { updateInboxItem } = useInboxStore();
   const [editingNote, setEditingNote] = useState<InboxItem | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
+  const [clickedNote, setClickedNote] = useState<Note | null>(null);
 
   const handleNoteClick = (note: InboxItem) => {
     // note_category를 NoteCategory enum으로 매핑
@@ -47,8 +50,9 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
       note_category: mapCategoryToNoteCategory(note.note_category),
       linkedAreaOrResource: note.linked_area_or_resource || '',
       isPinned: note.is_pinned || false,
-      projectId: note.project_id || '',
-      todoId: '', // TODO: note.todo_id 필드 추가 필요
+      projectIds: [], // N:N 관계로 변경됨
+      todoIds: [], // N:N 관계로 변경됨
+      noteIds: [], // 연결된 노트
     });
   };
 
@@ -119,6 +123,35 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
     }
   };
 
+  // 새 노트 생성 핸들러
+  const handleCreateNote = async (title: string): Promise<Note> => {
+    if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+    const newNote = await createNoteWithJWT({
+      user_id: user.id,
+      title: title,
+      content: '',
+      memo_type: 'note', // 기본값: 일반 노트
+      note_category: 'none',
+      tags: [],
+      is_pinned: false,
+    });
+
+    if (!newNote) {
+      throw new Error('노트 생성에 실패했습니다.');
+    }
+
+    onRefresh(); // 노트 목록 새로고침
+    return newNote;
+  };
+
+  // 연결된 노트 클릭 핸들러 (해당 노트의 편집 모달 열기)
+  const handleConnectedNoteClick = (note: Note) => {
+    setClickedNote(note);
+    // TODO: 중첩 모달 또는 모달 전환 구현
+    console.log('연결된 노트 클릭:', note);
+  };
+
   if (notes.length === 0) {
     return (
       <div className="text-center py-12">
@@ -187,6 +220,9 @@ export default function NoteInboxList({ notes, areas, resources, projects, todos
         resources={resources}
         projects={projects}
         todos={todos}
+        notes={allNotes}
+        onNoteClick={handleConnectedNoteClick}
+        onCreateNote={handleCreateNote}
       />
     </>
   );

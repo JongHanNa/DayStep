@@ -308,6 +308,7 @@ export default function ClarifyPage() {
                 resources={resources}
                 projects={projects}
                 todos={[]} // TODO: Todo 타입 정리 후 todos 전달
+                allNotes={notes}  // 노트-노트 연결을 위한 전체 노트 목록
                 onRefresh={handleRefresh}
               />
             )}

@@ -13,6 +13,7 @@ import {
   fetchNotesByTodoWithJWT,
 } from '@/lib/supabase/notes';
 import { getProjectNotes } from '@/lib/supabase/project-notes';
+import { getNoteNotes } from '@/lib/supabase/note-notes';
 import { queryRLSTableWithJWT } from '@/lib/supabase/core';
 
 interface NoteStoreState {
@@ -24,6 +25,7 @@ interface NoteStoreState {
   fetchNotes: (userId: string) => Promise<void>;
   fetchNotesByTodo: (todoId: string, userId: string) => Promise<Note[]>;
   fetchNotesByProject: (projectId: string, userId: string) => Promise<Note[]>;
+  fetchNotesByNote: (noteId: string, userId: string) => Promise<Note[]>;
   createNote: (userId: string, data: CreateNoteInput) => Promise<Note>;
   updateNote: (id: string, userId: string, data: UpdateNoteInput) => Promise<Note>;
   deleteNote: (id: string, userId: string) => Promise<boolean>;
@@ -71,6 +73,40 @@ export const useNoteStore = createStore<NoteStoreState>(
 
         // 1. Junction table에서 노트 ID 목록 가져오기 (JWT 자동 인증)
         const noteIds = await getProjectNotes(projectId);
+
+        // 2. 노트 ID가 없으면 빈 배열 반환
+        if (noteIds.length === 0) {
+          set({ loading: false });
+          return [];
+        }
+
+        // 3. 노트 ID 목록으로 실제 노트 데이터 조회
+        const notes = await queryRLSTableWithJWT('notes', {
+          column: 'id',
+          operator: 'in',
+          value: noteIds,
+        }, {
+          select: '*',
+          order: 'created_at.desc'
+        });
+
+        set({ loading: false });
+        return notes || [];
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '노트를 불러오는데 실패했습니다.',
+          loading: false,
+        });
+        return [];
+      }
+    },
+
+    fetchNotesByNote: async (noteId: string, userId: string) => {
+      try {
+        set({ loading: true, error: null });
+
+        // 1. Junction table에서 연결된 노트 ID 목록 가져오기 (양방향 조회)
+        const noteIds = await getNoteNotes(noteId);
 
         // 2. 노트 ID가 없으면 빈 배열 반환
         if (noteIds.length === 0) {

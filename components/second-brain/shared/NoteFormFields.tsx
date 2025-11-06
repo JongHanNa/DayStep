@@ -1,20 +1,23 @@
 'use client';
 
-import type { AreaResource as Area, AreaResource as Resource, Project, NoteCategory } from '@/types/second-brain';
+import type { AreaResource as Area, AreaResource as Resource, Project, NoteCategory, Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
+import CollapsibleNoteSection from './CollapsibleNoteSection';
 
 /**
  * 노트 폼 필드 타입
  * ProjectEditDialog와 InboxPage에서 공통 사용
  */
 export interface NoteFormData {
+  id?: string; // 노트 ID (편집 모드에서 사용)
   title: string;
   content: string;
   note_category: NoteCategory; // DB note_category 컬럼과 일치
   linkedAreaOrResource?: string; // 'area-{id}' 또는 'resource-{id}'
   isPinned: boolean;
-  projectId?: string; // 프로젝트 연결 (선택)
-  todoId?: string; // 할일 연결 (선택)
+  projectIds?: string[]; // 여러 프로젝트 연결 (N:N)
+  todoIds?: string[]; // 여러 할일 연결 (N:N)
+  noteIds?: string[]; // 여러 노트 연결 (N:N)
 }
 
 interface NoteFormFieldsProps {
@@ -24,8 +27,16 @@ interface NoteFormFieldsProps {
   resources: Resource[];
   projects?: Project[]; // 프로젝트 목록 (선택)
   todos?: Todo[]; // 할일 목록 (선택)
+  notes?: Note[]; // 선택 가능한 노트 목록
+  currentNoteId?: string; // 순환 참조 방지용 (현재 편집 중인 노트)
+  onNoteClick?: (note: Note) => void; // 노트 클릭 시 모달 열기
+  onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   titlePlaceholder?: string;
   contentPlaceholder?: string;
+  // 즉시 DB 저장을 위한 props
+  noteId?: string;
+  userId?: string;
+  onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
 /**
@@ -40,9 +51,21 @@ export default function NoteFormFields({
   resources,
   projects = [],
   todos = [],
+  notes = [],
+  currentNoteId,
+  onNoteClick,
+  onCreateNote,
   titlePlaceholder = '예: 회의 내용',
   contentPlaceholder = '노트 내용을 입력하세요',
+  noteId,
+  userId,
+  onNoteImmediateSave,
 }: NoteFormFieldsProps) {
+  // 순환 참조 방지: 현재 편집 중인 노트 제외
+  const availableNotes = currentNoteId
+    ? notes.filter(n => n.id !== currentNoteId)
+    : notes;
+
   return (
     <>
       {/* 제목 */}
@@ -104,46 +127,79 @@ export default function NoteFormFields({
         </select>
       </div>
 
-      {/* 프로젝트 */}
+      {/* 프로젝트 (다중 선택) */}
       {projects.length > 0 && (
         <div className="form-control mb-4">
           <label className="label">
             <span className="label-text">프로젝트</span>
           </label>
-          <select
-            value={note.projectId || ''}
-            onChange={(e) => onChange({ ...note, projectId: e.target.value })}
-            className="select select-bordered"
-          >
-            <option value="">선택 안 함</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-wrap gap-2">
+            {projects.map((project) => {
+              const isSelected = note.projectIds?.includes(project.id);
+              return (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() => {
+                    const currentIds = note.projectIds || [];
+                    const newIds = isSelected
+                      ? currentIds.filter(id => id !== project.id)
+                      : [...currentIds, project.id];
+                    onChange({ ...note, projectIds: newIds });
+                  }}
+                  className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
+                >
+                  {project.title}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* 할일 */}
+      {/* 할일 (다중 선택) */}
       {todos.length > 0 && (
         <div className="form-control mb-4">
           <label className="label">
             <span className="label-text">할일</span>
           </label>
-          <select
-            value={note.todoId || ''}
-            onChange={(e) => onChange({ ...note, todoId: e.target.value })}
-            className="select select-bordered"
-          >
-            <option value="">선택 안 함</option>
-            {todos.map((todo) => (
-              <option key={todo.id} value={todo.id}>
-                {todo.title}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-wrap gap-2">
+            {todos.map((todo) => {
+              const isSelected = note.todoIds?.includes(todo.id);
+              return (
+                <button
+                  key={todo.id}
+                  type="button"
+                  onClick={() => {
+                    const currentIds = note.todoIds || [];
+                    const newIds = isSelected
+                      ? currentIds.filter(id => id !== todo.id)
+                      : [...currentIds, todo.id];
+                    onChange({ ...note, todoIds: newIds });
+                  }}
+                  className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
+                >
+                  {todo.title}
+                </button>
+              );
+            })}
+          </div>
         </div>
+      )}
+
+      {/* 연결된 노트 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
+      {onCreateNote && (
+        <CollapsibleNoteSection
+          selectedNoteIds={note.noteIds || []}
+          allNotes={availableNotes}
+          onChange={(noteIds) => onChange({ ...note, noteIds })}
+          onCreateNote={onCreateNote}
+          onNoteClick={onNoteClick}
+          todoColor="#808080"
+          todoId={noteId}
+          userId={userId}
+          onImmediateSave={onNoteImmediateSave}
+        />
       )}
 
       {/* 고정하기 */}

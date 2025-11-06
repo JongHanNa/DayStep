@@ -176,6 +176,9 @@ export interface Note {
   resource_id?: string;
   resource?: Resource; // 관계 데이터
 
+  // 노트 간 연결 (N:N, note_connections junction table을 통해 로드)
+  connectedNotes?: Note[];
+
   // 메타데이터
   tags: string[];
   is_pinned: boolean;

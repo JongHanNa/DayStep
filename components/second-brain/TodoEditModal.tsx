@@ -97,12 +97,15 @@ export default function TodoEditModal({
   const handleNoteClick = (note: Note) => {
     setEditingNote(note);
     setNoteForm({
+      id: note.id,
       title: note.title,
       content: note.content,
       note_category: note.note_category,
       linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
       isPinned: note.is_pinned,
-      todoId: '', // 할일 연결은 junction table을 통해 관리
+      projectIds: [], // N:N 관계로 변경됨
+      todoIds: [], // N:N 관계로 변경됨
+      noteIds: [], // 연결된 노트
     });
   };
 
