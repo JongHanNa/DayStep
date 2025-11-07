@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { RecurrencePattern } from '@/types';
-import { getColorById } from '@/lib/color-palette';
+import { PASTEL_COLORS } from '@/lib/color-palette';
 
 export interface RecurrenceSettingsProps {
   showRecurrenceSettings: boolean;
@@ -79,11 +79,13 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
     onRecurrenceCountChange(parseInt(e.target.value) || undefined);
   }, [onRecurrenceCountChange]);
 
-  // 선택된 색상 정보 가져오기
-  const colorData = selectedColor ? getColorById(selectedColor) : null;
+  // 선택된 색상 정보 가져오기 - PASTEL_COLORS에서 직접 찾아서 DEFAULT_COLOR fallback 방지
+  const colorData = selectedColor
+    ? PASTEL_COLORS.find(color => color.id === selectedColor) || null
+    : null;
 
   return (
-    <div className="mx-4 my-2">
+    <div className="my-2">
       <Label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
         <Repeat className="w-5 h-5" style={{ color: colorData?.hex || '#DBAC6C' }} />
         반복 설정
