@@ -283,7 +283,7 @@ export default function TodoFormFields({
               }}
               className="select select-bordered w-full"
             >
-              <option value="anytime">⏰ 언제든지 · 타임라인에서 바로 시작하거나 계획 페이지에서 시간 지정 가능</option>
+              <option value="anytime">⏰ 언제든지 · 특정 날짜에 타임라인에서 언제든지 바로 시작하거나 추후 계획 페이지에서 시간 지정해서 사용 가능(이때 시간 지정하면 일정유형이 시간지정으로 변경됨)</option>
               <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
               <option value="all_day">📅 종일 · 하루 종일</option>
             </select>
