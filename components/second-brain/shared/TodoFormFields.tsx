@@ -13,7 +13,7 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
-import { ScrollTimePicker } from '@/components/ui/scroll-time-picker';
+import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 
 /**
  * 할일 폼 필드 타입
@@ -479,21 +479,13 @@ export default function TodoFormFields({
               </label>
 
               <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                <ScrollTimePicker
-                  selectedTime={(() => {
-                    const totalMinutes = todo.anytimeDuration ?? 30;
-                    const hours = Math.floor(totalMinutes / 60);
-                    const mins = totalMinutes % 60;
-                    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-                  })()}
-                  onTimeChange={(timeString) => {
-                    const [hours, mins] = timeString.split(':').map(Number);
-                    const totalMinutes = hours * 60 + mins;
-                    onChange({ ...todo, anytimeDuration: totalMinutes });
+                <ScrollDurationPicker
+                  selectedHours={Math.floor((todo.anytimeDuration ?? 30) / 60)}
+                  selectedMinutes={(todo.anytimeDuration ?? 30) % 60}
+                  onDurationChange={(hours, minutes) => {
+                    onChange({ ...todo, anytimeDuration: hours * 60 + minutes });
                   }}
                   accentColor={todo.color}
-                  durationMinutes={0}
-                  maxEndTime="23:59"
                   className="py-2"
                 />
               </div>
