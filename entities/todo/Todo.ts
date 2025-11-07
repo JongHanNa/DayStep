@@ -1,4 +1,4 @@
-import { Todo as DatabaseTodo, ScheduleType, RecurrencePattern } from '@/types';
+import { Todo as DatabaseTodo, ScheduleType, RecurrencePattern, Clarification } from '@/types';
 
 /**
  * Todo Domain Entity
@@ -39,7 +39,10 @@ export class Todo {
     public readonly projectId: string | null = null,
     public readonly goalId: string | null = null,
     public readonly areaId: string | null = null,
-    public readonly resourceId: string | null = null
+    public readonly resourceId: string | null = null,
+
+    // 명료화 필드
+    public readonly clarification: Clarification = 'none'
   ) {}
 
   /**
@@ -75,6 +78,9 @@ export class Todo {
     const goalId = record.goalId ?? record.goal_id;
     const areaId = record.areaId ?? record.area_id;
     const resourceId = record.resourceId ?? record.resource_id;
+
+    // 명료화 필드
+    const clarification = record.clarification ?? 'none';
 
     // title 필드
     const title = data.title;
@@ -115,7 +121,10 @@ export class Todo {
       projectId || null,
       goalId || null,
       areaId || null,
-      resourceId || null
+      resourceId || null,
+
+      // 명료화 필드
+      clarification as Clarification
     );
   }
 

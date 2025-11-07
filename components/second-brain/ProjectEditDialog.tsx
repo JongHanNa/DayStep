@@ -30,6 +30,21 @@ interface NoteItem extends NoteFormData {
   id: string;
 }
 
+// 명료화 레이블 변환 헬퍼 함수
+function getClarificationLabel(clarification?: string): string {
+  if (!clarification || clarification === 'none') return '선택 안함';
+
+  const labelMap: Record<string, string> = {
+    'reminder': '다시알림',
+    'someday': '언젠가',
+    'waiting': '대기중',
+    'next_action': '다음행동',
+    'schedule_clear': '일정',
+  };
+
+  return labelMap[clarification] || clarification;
+}
+
 interface ProjectEditDialogProps {
   open: boolean;
   editingProject: (Project & { isNew?: boolean; paraSelection?: string }) | null;
@@ -1330,7 +1345,7 @@ function TodoDraggableItem({
         {(todo.clarification || (todo.nextActionStatuses && todo.nextActionStatuses.length > 0) || todo.scheduledDate) && (
           <div className="space-y-1 text-xs text-base-content/60">
             {todo.clarification && (
-              <p className="line-clamp-2">{todo.clarification}</p>
+              <p className="line-clamp-2">{getClarificationLabel(todo.clarification)}</p>
             )}
             {todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
               <p>다음행동: {todo.nextActionStatuses.join(', ')}</p>
@@ -2093,7 +2108,7 @@ function WeekTodoCard({
       {/* 명료화 */}
       {todo.clarification && (
         <p className="text-xs text-base-content/60 mb-1 line-clamp-2">
-          {todo.clarification}
+          {getClarificationLabel(todo.clarification)}
         </p>
       )}
 
@@ -2180,7 +2195,7 @@ function CompletedView({
                 </p>
                 {todo.clarification && (
                   <p className="text-sm text-base-content/60 mt-1">
-                    {todo.clarification}
+                    {getClarificationLabel(todo.clarification)}
                   </p>
                 )}
                 {todo.scheduledDate && (
