@@ -319,6 +319,42 @@ export type Database = {
           },
         ]
       }
+      note_notes: {
+        Row: {
+          created_at: string
+          id: string
+          source_note_id: string
+          target_note_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source_note_id: string
+          target_note_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source_note_id?: string
+          target_note_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_notes_source_note_id_fkey"
+            columns: ["source_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_notes_target_note_id_fkey"
+            columns: ["target_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_tag_links: {
         Row: {
           assigned_at: string
@@ -459,7 +495,6 @@ export type Database = {
       notes: {
         Row: {
           area_resource_id: string | null
-          note_category: Database["public"]["Enums"]["note_category_enum"]
           content: string
           created_at: string | null
           id: string
@@ -467,17 +502,15 @@ export type Database = {
           is_pinned: boolean | null
           is_recurring: boolean | null
           linked_date: string | null
+          note_category: Database["public"]["Enums"]["note_category_enum"]
           position: number | null
-          project_id: string | null
           recurrence_type: string | null
-          related_task_id: string | null
           title: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           area_resource_id?: string | null
-          note_category?: Database["public"]["Enums"]["note_category_enum"]
           content: string
           created_at?: string | null
           id?: string
@@ -485,17 +518,15 @@ export type Database = {
           is_pinned?: boolean | null
           is_recurring?: boolean | null
           linked_date?: string | null
+          note_category?: Database["public"]["Enums"]["note_category_enum"]
           position?: number | null
-          project_id?: string | null
           recurrence_type?: string | null
-          related_task_id?: string | null
           title?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           area_resource_id?: string | null
-          note_category?: Database["public"]["Enums"]["note_category_enum"]
           content?: string
           created_at?: string | null
           id?: string
@@ -503,10 +534,9 @@ export type Database = {
           is_pinned?: boolean | null
           is_recurring?: boolean | null
           linked_date?: string | null
+          note_category?: Database["public"]["Enums"]["note_category_enum"]
           position?: number | null
-          project_id?: string | null
           recurrence_type?: string | null
-          related_task_id?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string
@@ -524,27 +554,6 @@ export type Database = {
             columns: ["area_resource_id"]
             isOneToOne: false
             referencedRelation: "areas_resources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_todo_stats"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "notes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_related_task_id_fkey"
-            columns: ["related_task_id"]
-            isOneToOne: false
-            referencedRelation: "todos"
             referencedColumns: ["id"]
           },
         ]
@@ -589,6 +598,49 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_notes: {
+        Row: {
+          created_at: string
+          id: string
+          note_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_notes_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_todo_stats"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -836,6 +888,91 @@ export type Database = {
           },
         ]
       }
+      todo_notes: {
+        Row: {
+          created_at: string
+          id: string
+          note_id: string
+          todo_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note_id: string
+          todo_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note_id?: string
+          todo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_notes_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_notes_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      todo_projects: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          todo_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          todo_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          todo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_todo_stats"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "todo_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_projects_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todo_time_overrides: {
         Row: {
           created_at: string | null
@@ -879,6 +1016,7 @@ export type Database = {
       }
       todos: {
         Row: {
+          anytime_duration: number | null
           assigned_date: string | null
           assigned_to: string | null
           clarification: Database["public"]["Enums"]["clarification_enum"]
@@ -895,7 +1033,6 @@ export type Database = {
           order_index: number
           parent_todo_id: string | null
           priority: string | null
-          project_id: string | null
           recurrence_count: number | null
           recurrence_day_of_month: number | null
           recurrence_days_of_week: Json | null
@@ -909,6 +1046,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          anytime_duration?: number | null
           assigned_date?: string | null
           assigned_to?: string | null
           clarification?: Database["public"]["Enums"]["clarification_enum"]
@@ -925,7 +1063,6 @@ export type Database = {
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null
-          project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null
           recurrence_days_of_week?: Json | null
@@ -939,6 +1076,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          anytime_duration?: number | null
           assigned_date?: string | null
           assigned_to?: string | null
           clarification?: Database["public"]["Enums"]["clarification_enum"]
@@ -955,7 +1093,6 @@ export type Database = {
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null
-          project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null
           recurrence_days_of_week?: Json | null
@@ -974,20 +1111,6 @@ export type Database = {
             columns: ["parent_todo_id"]
             isOneToOne: false
             referencedRelation: "todos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "todos_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_todo_stats"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "todos_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -1185,7 +1308,7 @@ export type Database = {
         | "weekly"
         | "monthly"
         | "custom"
-      schedule_type_enum: "all_day" | "timed" | "anytime" | "scheduled" | "none"
+      schedule_type_enum: "all_day" | "timed" | "anytime" | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1348,7 +1471,7 @@ export const Constants = {
       ],
       quarter_enum: ["Q1", "Q2", "Q3", "Q4"],
       recurrence_pattern_enum: ["none", "daily", "weekly", "monthly", "custom"],
-      schedule_type_enum: ["all_day", "timed", "anytime", "scheduled", "none"],
+      schedule_type_enum: ["all_day", "timed", "anytime", "none"],
     },
   },
 } as const

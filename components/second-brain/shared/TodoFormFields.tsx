@@ -35,6 +35,17 @@ export interface TodoFormData {
   startTime?: string; // 시작 시간 (HH:mm 형식)
   endDate?: Date; // 종료 날짜
   endTime?: string; // 종료 시간 (HH:mm 형식)
+
+  // 일정 유형 관련
+  scheduleType?: 'anytime' | 'timed' | 'all_day';
+  anytimeDuration?: number; // 예상 소요 시간 (분 단위)
+
+  // 반복 설정 관련
+  recurrencePattern?: string; // 반복 패턴
+  recurrenceInterval?: number; // 반복 간격
+  recurrenceEndType?: 'never' | 'date' | 'count'; // 반복 종료 유형
+  recurrenceEndDate?: Date; // 반복 종료 날짜
+  recurrenceCount?: number; // 반복 횟수
 }
 
 interface TodoFormFieldsProps {
@@ -221,6 +232,45 @@ export default function TodoFormFields({
         </div>
       )}
 
+      {/* 일정 유형 */}
+      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'scheduled') && (
+        <div className="my-4">
+          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+            <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+            일정 유형
+          </label>
+
+          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+            <select
+              value={todo.scheduleType || 'anytime'}
+              onChange={(e) => {
+                const scheduleType = e.target.value as 'anytime' | 'timed' | 'all_day';
+                const updates: any = { scheduleType };
+
+                // 자동 세팅
+                if (scheduleType === 'anytime' || scheduleType === 'all_day') {
+                  updates.scheduledDate = new Date(); // 오늘
+                  updates.includeEndDate = false;
+                  updates.includeTime = false;
+                } else if (scheduleType === 'timed') {
+                  updates.scheduledDate = new Date(); // 오늘
+                  updates.includeTime = true;
+                  const now = new Date();
+                  updates.startTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                }
+
+                onChange({ ...todo, ...updates });
+              }}
+              className="select select-bordered w-full"
+            >
+              <option value="anytime">⏰ 언제든지 · 하루 중 언제든 시작 가능</option>
+              <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
+              <option value="all_day">📅 종일 · 하루 종일</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       {/* 다음행동상황 (다중 선택) */}
       {showNextActionStatus && todo.clarification === 'next_action' && (
         <div>
@@ -349,34 +399,175 @@ export default function TodoFormFields({
             </>
           )}
 
-          {/* 종료일 토글 */}
-          <div className="my-4">
-            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-              <label className="cursor-pointer flex items-center justify-between">
-                <span className="label-text">종료일</span>
-                <input
-                  type="checkbox"
-                  checked={todo.includeEndDate || false}
-                  onChange={(e) => onChange({ ...todo, includeEndDate: e.target.checked })}
-                  className="toggle toggle-primary"
-                />
-              </label>
+          {/* 종료일 토글 - 언제든지/종일일 때 숨김 */}
+          {todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
+            <div className="my-4">
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                <label className="cursor-pointer flex items-center justify-between">
+                  <span className="label-text">종료일</span>
+                  <input
+                    type="checkbox"
+                    checked={todo.includeEndDate || false}
+                    onChange={(e) => onChange({ ...todo, includeEndDate: e.target.checked })}
+                    className="toggle toggle-primary"
+                  />
+                </label>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 시간 포함 토글 */}
-          <div className="my-4">
-            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-              <label className="cursor-pointer flex items-center justify-between">
-                <span className="label-text">시간 포함</span>
-                <input
-                  type="checkbox"
-                  checked={todo.includeTime || false}
-                  onChange={(e) => onChange({ ...todo, includeTime: e.target.checked })}
-                  className="toggle toggle-primary"
-                />
-              </label>
+          {todo.scheduleType === 'timed' ? (
+            // 시간지정일 때는 강제 활성화 (비활성화 불가)
+            <div className="my-4">
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300 opacity-50">
+                <label className="cursor-not-allowed flex items-center justify-between">
+                  <span className="label-text">시간 포함 (자동)</span>
+                  <input
+                    type="checkbox"
+                    checked={true}
+                    disabled
+                    className="toggle toggle-primary"
+                  />
+                </label>
+              </div>
             </div>
+          ) : todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
+            // 언제든지/종일이 아닐 때만 표시
+            <div className="my-4">
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                <label className="cursor-pointer flex items-center justify-between">
+                  <span className="label-text">시간 포함</span>
+                  <input
+                    type="checkbox"
+                    checked={todo.includeTime || false}
+                    onChange={(e) => onChange({ ...todo, includeTime: e.target.checked })}
+                    className="toggle toggle-primary"
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* 예상 소요 시간 (언제든지일 때만) */}
+          {todo.scheduleType === 'anytime' && (
+            <div className="my-4">
+              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+                예상 소요 시간
+              </label>
+
+              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                <select
+                  value={todo.anytimeDuration || 0}
+                  onChange={(e) => onChange({ ...todo, anytimeDuration: parseInt(e.target.value) })}
+                  className="select select-bordered w-full"
+                >
+                  <option value="0">즉시</option>
+                  <option value="30">30분</option>
+                  <option value="60">1시간</option>
+                  <option value="120">2시간</option>
+                  <option value="240">4시간</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* 반복 설정 */}
+          <div className="my-4">
+            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+              <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+              반복 설정
+            </label>
+
+            {/* 반복 패턴 */}
+            <div className="p-3 rounded-lg bg-base-200 border border-base-300 mb-3">
+              <label className="label-text mb-2 block">반복 패턴</label>
+              <select
+                value={todo.recurrencePattern || 'none'}
+                onChange={(e) => onChange({ ...todo, recurrencePattern: e.target.value })}
+                className="select select-bordered w-full"
+              >
+                <option value="none">반복 안 함</option>
+                <option value="daily">매일</option>
+                <option value="weekly">매주</option>
+                <option value="monthly">매월</option>
+              </select>
+            </div>
+
+            {/* 반복 간격 및 종료 설정 (반복 패턴이 none이 아닐 때만) */}
+            {todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
+              <>
+                {/* 반복 간격 */}
+                <div className="p-3 rounded-lg bg-base-200 border border-base-300 mb-3">
+                  <label className="label-text mb-2 block">반복 간격</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={todo.recurrenceInterval || 1}
+                      onChange={(e) => onChange({ ...todo, recurrenceInterval: parseInt(e.target.value) || 1 })}
+                      placeholder="1"
+                      className="input input-bordered w-20"
+                    />
+                    <span className="text-sm text-gray-600">
+                      {(() => {
+                        const interval = todo.recurrenceInterval || 1;
+                        switch (todo.recurrencePattern) {
+                          case 'daily': return interval === 1 ? '일마다' : `${interval}일마다`;
+                          case 'weekly': return interval === 1 ? '주마다' : `${interval}주마다`;
+                          case 'monthly': return interval === 1 ? '달마다' : `${interval}달마다`;
+                          default: return '';
+                        }
+                      })()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 반복 종료 */}
+                <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                  <label className="label-text mb-2 block">반복 종료</label>
+
+                  {/* 반복 종료 유형 선택 */}
+                  <select
+                    value={todo.recurrenceEndType || 'never'}
+                    onChange={(e) => onChange({ ...todo, recurrenceEndType: e.target.value as 'never' | 'date' | 'count' })}
+                    className="select select-bordered w-full mb-3"
+                  >
+                    <option value="never">종료 없음</option>
+                    <option value="date">날짜 지정</option>
+                    <option value="count">횟수 지정</option>
+                  </select>
+
+                  {/* 날짜 지정 옵션 */}
+                  {todo.recurrenceEndType === 'date' && (
+                    <div className="mt-3">
+                      <input
+                        type="date"
+                        value={todo.recurrenceEndDate ? format(todo.recurrenceEndDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => onChange({ ...todo, recurrenceEndDate: e.target.value ? new Date(e.target.value) : undefined })}
+                        className="input input-bordered w-full"
+                      />
+                    </div>
+                  )}
+
+                  {/* 횟수 지정 옵션 */}
+                  {todo.recurrenceEndType === 'count' && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        value={todo.recurrenceCount || ''}
+                        onChange={(e) => onChange({ ...todo, recurrenceCount: parseInt(e.target.value) || undefined })}
+                        placeholder="1"
+                        className="input input-bordered w-20"
+                      />
+                      <span className="text-sm text-gray-600">회</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </>
       )}
