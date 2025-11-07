@@ -1,90 +1,32 @@
-# DayStep 프로젝트 작업 관리 규칙
-
-## Task Tool 사용 원칙
-
-### 1. Plan Mode 워크플로우
-사용자 요청을 받으면:
-1. **Task tool의 Plan 에이전트로 조사**
-2. **ExitPlanMode로 계획 제시** (아래 포맷 사용)
-3. **사용자 승인 후 작업 실행**
-4. **TodoWrite로 진행 상황 추적**
-
-#### 계획 수립 포맷
-ExitPlanMode로 계획 제시 시 각 Phase에 담당 에이전트 명시:
-
-```markdown
-## 실행 계획
-
-### Phase 1: 조사 및 분석
-- **담당**: Explore 에이전트
-- **작업**: 코드베이스에서 관련 파일 탐색 및 현황 파악
-
-### Phase 2: 코드 수정 (병렬 실행)
-- **담당**: daystep-frontend-dev #1, #2, #3 (병렬)
-- **작업**:
-  - #1: ComponentA.tsx 수정 - UI 로직 개선
-  - #2: ComponentB.tsx 수정 - 상태 관리 추가
-  - #3: styles.css 수정 - 반응형 스타일
-
-
-**핵심 요소**:
-- 각 Phase마다 담당 에이전트 명시
-- 병렬 실행 가능 시 #1, #2, #3 표기
-- 구체적인 작업 내용과 파일명
-- Phase 간 의존성 순서 명확히
-
-### 2. 서브 에이전트 자동 선택
-Plan 에이전트가 작업 내용을 분석하여 적절한 서브 에이전트 자동 선택:
-
-- **프론트엔드 작업**: `daystep-frontend-dev`
-  - UI 컴포넌트, React/Next.js 코드, 스타일링
-
-- **백엔드 작업**: `daystep-backend-dev`
-  - API, 데이터베이스, Supabase 연동, 서버 로직
-
-
-### 3. 병렬 서브 에이전트 실행 (중요!)
-
-**병렬 실행 시점**:
-- 여러 파일을 독립적으로 수정해야 할 때
-- 순차 의존성이 없는 여러 작업이 있을 때
-
-**병렬 실행 방법**:
-```typescript
-// ❌ 잘못된 방법 (순차 실행)
-Edit tool로 파일1 수정
-Edit tool로 파일2 수정
-Edit tool로 파일3 수정
-
-// ✅ 올바른 방법 (병렬 실행)
-단일 메시지에 여러 Task tool 호출:
-- Task(daystep-frontend-dev, "파일1 수정")
-- Task(daystep-frontend-dev, "파일2 수정")
-- Task(daystep-frontend-dev, "파일3 수정")
-```
-
-**주의사항**:
-- 파일 간 의존성이 있으면 순차 실행
-- 각 서브 에이전트에 명확한 작업 범위 지정
-- 모든 병렬 작업 완료 후 다음 단계 진행
-
-### 4. 기본 규칙
-- **한국어 사용**: 모든 대화, 커밋 메시지 한국어로 작성
-- **커밋 전 확인**: 사용자에게 커밋 여부 확인
-- **Plan Mode 준수**: 항상 계획 제시 후 승인받고 실행
-
----
-
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 
 ## 프로젝트 정보
 
 **저장소**: DayStep - 할일 관리 및 템플릿 기반 생산성 앱
 **기술 스택**: Next.js 15, React 19, TypeScript, Supabase, Capacitor 7
 **배포**: 웹 (Vercel) + iOS/Android 네이티브 앱
+
+## 개발 명령어
+
+### 일반 개발
+```bash
+npm install                    # 의존성 설치
+npm run dev:web               # 웹 개발 서버 (BUILD_TARGET=web, 2초 시작)
+npm run dev:mobile            # 모바일 개발 + Capacitor 동기화
+npm run lint                  # ESLint 검사
+npx tsc --noEmit             # 타입 체크
+```
+
+### 빌드 및 배포
+```bash
+npm run build                 # 웹 프로덕션 빌드 (BUILD_TARGET=web)
+npm run build:mobile          # 모바일 빌드 + Capacitor 동기화
+npm run preview:web           # 웹 프로덕션 미리보기
+npm start                     # 프로덕션 서버
+```
+
 
 ## 환경 설정
 
@@ -124,6 +66,110 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **UI**: shadcn/ui + Tailwind + DaisyUI
 - **알림**: Capacitor Local Notifications
 
+## Task Master AI
+
+`.taskmaster/CLAUDE.md` 참조 - 작업 관리 워크플로우 및 명령어
+
+---
+
+## Claude Code 개발 가이드
+
+### 기본 규칙
+
+- **한글로 대답하세요**
+- **커밋은 사용자에게 허락 확인 받고 하세요**
+
+---
+
+## 🚨 공통 패턴 (절대 원칙)
+
+### 1. 🌐 환경별 개발 가이드
+
+**절대 금지**:
+- ❌ 한 환경의 빌드 오류로 다른 환경 코드 삭제/수정
+- ❌ 모바일 오류 → 웹 코드 수정 | 웹 오류 → 모바일 코드 수정
+
+**반응형 우선 (Tailwind) - 권장**:
+- ✅ UI 크기/간격/폰트 → `className="w-20 sm:w-16"` (DevTools 테스트 가능)
+- ✅ Breakpoint: `max-sm:` (< 640px), `sm:` (≥ 640px), `md:` (≥ 768px), `lg:` (≥ 1024px)
+
+**BUILD_TARGET - 제한적**:
+- ⚠️ Capacitor 전용, SSR 분기만 → `{process.env.BUILD_TARGET === 'mobile' && ...}`
+- ⚠️ DevTools 불가, 실제 빌드 필요
+
+| 요구사항 | 사용 패턴 |
+|---------|---------|
+| 화면 크기별 UI | Tailwind Responsive |
+| Capacitor 네이티브 | BUILD_TARGET |
+
+### 2. 📚 외부 리소스 활용
+
+**MCP 선택**: 라이브러리 명시? → Context7만 | 미정 → Perplexity → Context7
+
+**예외 조건** (모두 만족 시만 커스텀):
+- [ ] MCP로 적합한 라이브러리 없음
+- [ ] 환경 호환성 문제 확인
+- [ ] 요구사항 매우 특수
+- [ ] 성능상 커스텀 필수
+
+### 3. ♻️ 코드 재사용 우선
+
+- 중복 150줄+ → 컴포넌트 추출
+- 유사 로직 2곳+ → 공통 함수/Hook
+- 새 기능 전 유사 코드 탐색
+
+---
+
+## 🎨 프론트엔드 개발 패턴
+
+### 스타일 규칙
+
+| 항목 | 사용 ✅ | 금지 ❌ |
+|------|--------|---------|
+| 색상 | `bg-primary`, `bg-accent` | `bg-purple-500`, `bg-[#3B82F6]` |
+| 버튼 | `btn-ghost`, `btn-soft` | `btn-outline` |
+| 아이콘 | Lucide React | 이모지 |
+| 효과 | - | 그라디언트 |
+
+### UI 컴포넌트 패턴
+
+| 패턴 | 규칙 |
+|------|------|
+| 아이콘 컨테이너 | `rounded-full`, 테두리 없음, `text-white` |
+| 액션 버튼 | `rounded-full` (pill shape) |
+| 아이콘 전용 버튼 | `btn-circle` |
+| 아코디언 | `bg-transparent hover:opacity-80` |
+
+### 아이콘 + 제목 입력 (편집 모달)
+
+| 요소 | 스타일 |
+|------|--------|
+| 아이콘 버튼 | `w-12 h-12 rounded-lg bg-[#f3f4f6]` |
+| 색상 인디케이터 | `w-5 h-5 rounded-full absolute -bottom-1 -left-1` |
+| 입력 필드 | `border-0 border-b-2 text-[20px] font-semibold` |
+
+### 폼 섹션 (편집 모달)
+
+- 컨테이너: `my-4`
+- 제목: `flex items-center gap-3 text-lg font-semibold mb-3`
+- 래퍼: `p-3 rounded-lg bg-base-200 border border-base-300`
+
+### 모달 패턴
+
+**DaisyUI dialog 우선**:
+- 구조: `<dialog open>` + `modal-box` + `modal-backdrop`
+- 헤더: 취소(좌)-제목(중)-삭제-저장(우), 모두 `rounded-full`
+- 패딩: `pt-[30px] sm:pt-2` (헤더), `px-3` (양쪽)
+- Capacitor: `useModalStore`로 하단 네비 자동 숨김
+
+**기존 react-modal-sheet**: 점진적 마이그레이션 (14개 파일)
+
+### 즉시 생성 패턴
+
+- 추가 버튼 → DB 즉시 생성 + spinner
+
+---
+
 ## 🔧 백엔드 개발 패턴
 
 ### 인증
@@ -139,12 +185,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - DB 필터링: 서버에서만 (클라이언트 중복 금지)
 - 스키마 검증: Supabase MCP로 확인
 
-**Materialized View 사용 금지:**
-- `inbox_todos`, `inbox_projects`, `inbox_goals` Materialized View 조회 금지
-- 캐시된 스냅샷 반환 → DELETE/UPDATE 후 자동 갱신 안됨
-- 새로고침해도 삭제된 데이터가 계속 보이는 문제 발생
-- **필수**: `todos`, `projects`, `goals` 테이블 직접 조회 + 클라이언트 필터링
-
 ### 상태 관리
 
 - `Object.assign(state.optimisticState, {...})`
@@ -152,33 +192,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Claude Code 개발 가이드
+## 🔄 개발 워크플로우
 
-### 기본 규칙
+### 표준 5단계
 
-- **한글로 대답하세요**
-- **커밋은 사용자에게 허락 확인 받고 하세요**
+1. 요구사항 분석
+2. 라이브러리 탐색 (Perplexity MCP)
+3. 공식 문서 확인 (Context7 MCP)
+4. 기존 패턴 탐색 (`components/ui/`, DaisyUI)
+5. 구현 및 검증 (웹/모바일 테스트)
 
 ---
 
-## 📝 문서 작업 원칙
+## ✅ 품질 관리
 
-### 모든 문서 추가/개선/업데이트 시
-- **핵심만 간결하게**: 불필요한 예제 코드나 장황한 설명 지양
-- **실용적 정보 우선**: 실제 개발에 필요한 핵심 내용만 포함
-- **중복 제거**: 이미 다른 문서에 있는 내용은 참조만 표시
-- **간결한 포맷**: 리스트, 짧은 문장, 핵심 키워드 중심
+### 작업 완료 체크리스트
 
-### 체크리스트
-- [ ] 예제 코드가 반드시 필요한가? → 필요하지 않으면 제거
-- [ ] 한 문장으로 표현 가능한가? → 가능하면 간결하게
-- [ ] 다른 문서에 상세 내용이 있는가? → 참조 링크만 남기기
-- [ ] 실제 개발에 도움이 되는가? → 이론적 내용은 최소화
+1. [ ] 코드 작성 완료
+2. [ ] 기능 테스트 수행
+3. [ ] 사용자 검증 요청
+4. [ ] git commit
+5. [ ] 다음 작업 시작
+
+### 2회 실패 시
+
+→ Perplexity/Context7 MCP 사용 (근본 원인 분석, deprecated 확인)
+
+### 자동 경고 트리거
+
+| 트리거 | 조치 |
+|--------|------|
+| 구버전 패턴 | Context7 최신 패턴 확인 |
+| 신규 라이브러리 | 호환성 확인 (React 19, Next.js 15) |
+| 위험 컴포넌트 | 테스트 필수 (전역 상태, 인증, 네이티브 브리지 등) |
 
 ---
 
 ## 📚 기타 가이드
 
 ### 쉬운 설명 규칙
+
 **트리거**: 기술 용어, 복잡한 개념 설명 시
+
 **형식**: 기술 설명 후 "쉽게 말하면:" + 실생활 비유
