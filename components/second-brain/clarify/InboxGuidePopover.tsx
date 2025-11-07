@@ -48,6 +48,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <strong className="text-sm">명료화 유형 선택</strong>
           </div>
           <div className="ml-7 space-y-2">
+            {/* 임시 숨김: 다시알림 가이드
             <div className="flex items-start gap-2">
               <span className="text-xs">⏰</span>
               <div className="flex-1">
@@ -55,6 +56,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
                 <p className="text-xs text-gray-600 dark:text-gray-400">특정 시간에 알림</p>
               </div>
             </div>
+            */}
             <div className="flex items-start gap-2">
               <span className="text-xs">⏳</span>
               <div className="flex-1">

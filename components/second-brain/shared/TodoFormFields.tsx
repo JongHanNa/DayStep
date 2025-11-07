@@ -222,7 +222,9 @@ export default function TodoFormFields({
               className="select select-bordered w-full"
             >
               <option value="">선택 안 함</option>
+              {/* 임시 숨김: 다시알림 옵션
               <option value="reminder">⏰ 다시알림 · 특정 날짜 또는 시간에 알림 (시간 설정 시 수집함에서 사라짐)</option>
+              */}
               <option value="someday">⏳ 언젠가 · 당장은 실행할 수 없음 (즉시 수집함에서 사라짐)</option>
               <option value="waiting">⏸️ 대기중 · 타인에게 위임, 응답 대기 중 (즉시 수집함에서 사라짐)</option>
               <option value="next_action">⚡ 다음행동 · 최대한 빨리 할 일 (다음행동상황 선택 시 수집함에서 사라짐)</option>

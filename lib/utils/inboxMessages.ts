@@ -41,10 +41,12 @@ export function getInboxRemovalMessage(todo: InboxItem): string | null {
     return '명료화를 완료하면 수집함에서 사라집니다';
   }
 
+  /* 임시 숨김: 다시알림 조건
   // reminder: 날짜 미선택 시에만 메시지
   if (clarification === 'reminder' && !startTime) {
     return '다시알림 날짜를 선택하면 수집함에서 사라집니다';
   }
+  */
 
   // scheduled: 날짜 미선택 시에만 메시지
   if (clarification === 'scheduled' && !startTime) {
