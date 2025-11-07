@@ -92,7 +92,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
               <span className="text-green-600 dark:text-green-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300 space-y-1">
                 <div><strong>사용 방법:</strong> 할일 카드 클릭 → "명료화 유형" 드롭다운에서 선택</div>
-                <div className="text-xs">• <strong>다시알림/일정</strong> 선택 시 → 시간/날짜 설정 화면 표시</div>
+                <div className="text-xs">• <strong>일정</strong> 선택 시 → 시간/날짜 설정 화면 표시</div>
                 <div className="text-xs">• <strong>다음행동</strong> 선택 시 → 3단계 다음행동상황 선택 필요</div>
               </div>
             </div>
