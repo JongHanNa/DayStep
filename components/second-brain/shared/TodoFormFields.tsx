@@ -48,6 +48,7 @@ export interface TodoFormData {
   recurrenceEndType?: 'never' | 'date' | 'count'; // 반복 종료 유형
   recurrenceEndDate?: Date; // 반복 종료 날짜
   recurrenceCount?: number; // 반복 횟수
+  selectedDaysOfWeek?: number[]; // 반복 요일 선택 (0=일요일, 6=토요일)
 }
 
 interface TodoFormFieldsProps {
@@ -500,14 +501,21 @@ export default function TodoFormFields({
             recurrenceEndDate={todo.recurrenceEndDate ? format(todo.recurrenceEndDate, 'yyyy-MM-dd') : ''}
             recurrenceCount={todo.recurrenceCount}
             recurrenceEndType={todo.recurrenceEndType || 'never'}
-            selectedDaysOfWeek={[]}
+            selectedDaysOfWeek={todo.selectedDaysOfWeek || []}
             onRecurrencePatternChange={(pattern) => onChange({ ...todo, recurrencePattern: pattern })}
             onRecurrenceIntervalChange={(interval) => onChange({ ...todo, recurrenceInterval: interval })}
             onRecurrenceEndDateChange={(date) => onChange({ ...todo, recurrenceEndDate: date ? new Date(date) : undefined })}
             onRecurrenceCountChange={(count) => onChange({ ...todo, recurrenceCount: count })}
             onRecurrenceEndTypeChange={(type) => onChange({ ...todo, recurrenceEndType: type })}
             onDayOfWeekToggle={(day) => {
-              // 주간 반복 요일 토글 (향후 확장 가능)
+              const currentDays = todo.selectedDaysOfWeek || [];
+              if (currentDays.includes(day)) {
+                // 이미 선택된 요일이면 제거
+                onChange({ ...todo, selectedDaysOfWeek: currentDays.filter(d => d !== day) });
+              } else {
+                // 선택되지 않은 요일이면 추가하고 정렬
+                onChange({ ...todo, selectedDaysOfWeek: [...currentDays, day].sort() });
+              }
             }}
             selectedColor={todo.color}
           />
