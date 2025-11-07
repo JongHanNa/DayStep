@@ -239,7 +239,7 @@ export default function TodoFormFields({
               }}
               className="select select-bordered w-full"
             >
-              <option value="">선택 안 함</option>
+              <option value="">선택 안 함(수집함으로 이동됨)</option>
               {/* 임시 숨김: 다시알림 옵션
               <option value="reminder">⏰ 다시알림 · 특정 날짜 또는 시간에 알림 (시간 설정 시 수집함에서 사라짐)</option>
               */}
