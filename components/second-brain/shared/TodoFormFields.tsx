@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, X } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
+import type { RecurrencePattern } from '@/types';
 import CollapsibleProjectSection from './CollapsibleProjectSection';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
 import CollapsibleNextActionSection from './CollapsibleNextActionSection';
+import RecurrenceSettings from '@/components/todos/form/RecurrenceSettings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
@@ -491,101 +493,24 @@ export default function TodoFormFields({
           )}
 
           {/* 반복 설정 */}
-          <div className="my-4">
-            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-              <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-              반복 설정
-            </label>
-
-            {/* 반복 패턴 */}
-            <div className="p-3 rounded-lg bg-base-200 border border-base-300 mb-3">
-              <label className="label-text mb-2 block">반복 패턴</label>
-              <select
-                value={todo.recurrencePattern || 'none'}
-                onChange={(e) => onChange({ ...todo, recurrencePattern: e.target.value })}
-                className="select select-bordered w-full"
-              >
-                <option value="none">반복 안 함</option>
-                <option value="daily">매일</option>
-                <option value="weekly">매주</option>
-                <option value="monthly">매월</option>
-              </select>
-            </div>
-
-            {/* 반복 간격 및 종료 설정 (반복 패턴이 none이 아닐 때만) */}
-            {todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
-              <>
-                {/* 반복 간격 */}
-                <div className="p-3 rounded-lg bg-base-200 border border-base-300 mb-3">
-                  <label className="label-text mb-2 block">반복 간격</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      value={todo.recurrenceInterval || 1}
-                      onChange={(e) => onChange({ ...todo, recurrenceInterval: parseInt(e.target.value) || 1 })}
-                      placeholder="1"
-                      className="input input-bordered w-20"
-                    />
-                    <span className="text-sm text-gray-600">
-                      {(() => {
-                        const interval = todo.recurrenceInterval || 1;
-                        switch (todo.recurrencePattern) {
-                          case 'daily': return interval === 1 ? '일마다' : `${interval}일마다`;
-                          case 'weekly': return interval === 1 ? '주마다' : `${interval}주마다`;
-                          case 'monthly': return interval === 1 ? '달마다' : `${interval}달마다`;
-                          default: return '';
-                        }
-                      })()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 반복 종료 */}
-                <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                  <label className="label-text mb-2 block">반복 종료</label>
-
-                  {/* 반복 종료 유형 선택 */}
-                  <select
-                    value={todo.recurrenceEndType || 'never'}
-                    onChange={(e) => onChange({ ...todo, recurrenceEndType: e.target.value as 'never' | 'date' | 'count' })}
-                    className="select select-bordered w-full mb-3"
-                  >
-                    <option value="never">종료 없음</option>
-                    <option value="date">날짜 지정</option>
-                    <option value="count">횟수 지정</option>
-                  </select>
-
-                  {/* 날짜 지정 옵션 */}
-                  {todo.recurrenceEndType === 'date' && (
-                    <div className="mt-3">
-                      <input
-                        type="date"
-                        value={todo.recurrenceEndDate ? format(todo.recurrenceEndDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => onChange({ ...todo, recurrenceEndDate: e.target.value ? new Date(e.target.value) : undefined })}
-                        className="input input-bordered w-full"
-                      />
-                    </div>
-                  )}
-
-                  {/* 횟수 지정 옵션 */}
-                  {todo.recurrenceEndType === 'count' && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="1"
-                        value={todo.recurrenceCount || ''}
-                        onChange={(e) => onChange({ ...todo, recurrenceCount: parseInt(e.target.value) || undefined })}
-                        placeholder="1"
-                        className="input input-bordered w-20"
-                      />
-                      <span className="text-sm text-gray-600">회</span>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+          <RecurrenceSettings
+            showRecurrenceSettings={true}
+            recurrencePattern={(todo.recurrencePattern as RecurrencePattern) || 'none'}
+            recurrenceInterval={todo.recurrenceInterval || 1}
+            recurrenceEndDate={todo.recurrenceEndDate ? format(todo.recurrenceEndDate, 'yyyy-MM-dd') : ''}
+            recurrenceCount={todo.recurrenceCount}
+            recurrenceEndType={todo.recurrenceEndType || 'never'}
+            selectedDaysOfWeek={[]}
+            onRecurrencePatternChange={(pattern) => onChange({ ...todo, recurrencePattern: pattern })}
+            onRecurrenceIntervalChange={(interval) => onChange({ ...todo, recurrenceInterval: interval })}
+            onRecurrenceEndDateChange={(date) => onChange({ ...todo, recurrenceEndDate: date ? new Date(date) : undefined })}
+            onRecurrenceCountChange={(count) => onChange({ ...todo, recurrenceCount: count })}
+            onRecurrenceEndTypeChange={(type) => onChange({ ...todo, recurrenceEndType: type })}
+            onDayOfWeekToggle={(day) => {
+              // 주간 반복 요일 토글 (향후 확장 가능)
+            }}
+            selectedColor={todo.color}
+          />
         </>
       )}
 
