@@ -48,8 +48,8 @@ export function getInboxRemovalMessage(todo: InboxItem): string | null {
   }
   */
 
-  // scheduled: 날짜 미선택 시에만 메시지
-  if (clarification === 'scheduled' && !startTime) {
+  // schedule_clear: 날짜 미선택 시에만 메시지
+  if (clarification === 'schedule_clear' && !startTime) {
     return '일정 날짜를 선택하면 수집함에서 사라집니다';
   }
 

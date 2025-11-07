@@ -198,7 +198,7 @@ export type GTDStatus =
   | 'inbox'           // 📥 수집함
   | 'next_action'     // ✅ 다음 행동
   | 'waiting'         // 👤 대기중 (위임)
-  | 'scheduled'       // 📅 일정
+  | 'schedule_clear'  // 📅 일정
   | 'someday'         // ⏰ 언젠가
   | 'completed'       // ✅ 완료
   | 'deleted';        // 🗑️ 삭제

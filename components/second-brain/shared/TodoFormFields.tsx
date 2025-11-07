@@ -226,7 +226,7 @@ export default function TodoFormFields({
                 const updates: any = { clarification };
 
                 // 일정으로 선택 시 scheduleType 자동 초기화
-                if (clarification === 'scheduled') {
+                if (clarification === 'schedule_clear') {
                   if (!todo.scheduleType) {
                     updates.scheduleType = 'anytime';
                     updates.scheduledDate = new Date(); // 오늘 날짜
@@ -244,16 +244,16 @@ export default function TodoFormFields({
               <option value="reminder">⏰ 다시알림 · 특정 날짜 또는 시간에 알림 (시간 설정 시 수집함에서 사라짐)</option>
               */}
               <option value="someday">⏳ 언젠가 · 당장은 실행할 수 없음 (즉시 수집함에서 사라짐)</option>
-              <option value="waiting">⏸️ 대기중 · 타인에게 위임, 응답 대기 중 (즉시 수집함에서 사라짐)</option>
-              <option value="next_action">⚡ 다음행동 · 최대한 빨리 할 일 (다음행동상황 선택 시 수집함에서 사라짐)</option>
-              <option value="scheduled">📅 일정 · 특정 날짜가 있는 할일 (날짜 설정 시 수집함에서 사라짐)</option>
+              <option value="waiting">⏸️ 대기중 · 타인에게 위임, 응답 대기 중. 당장은 날짜나 시간을 넣기에 불명확하지만 나중에 계획 페이지에서 날짜를 지정해줄 수 있음 (즉시 수집함에서 사라짐)</option>
+              <option value="next_action">⚡ 다음행동 · 특정 행동상황이 되면 할 일. 당장은 날짜나 시간을 넣기에 불명확하지만 나중에 계획 페이지에서 날짜를 지정해줄 수 있음 (다음행동상황 선택 시 수집함에서 사라짐)</option>
+              <option value="schedule_clear">📅 일정 · 당장 날짜나 시간을 넣기에 명확한 할일 (날짜 설정 시 수집함에서 사라짐)</option>
             </select>
           </div>
         </div>
       )}
 
       {/* 일정 유형 */}
-      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'scheduled') && (
+      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'schedule_clear') && (
         <div className="my-4">
           <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
             <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
@@ -331,7 +331,7 @@ export default function TodoFormFields({
       )}
 
       {/* 날짜 */}
-      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'scheduled') && (
+      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'schedule_clear') && (
         <>
           {/* 시작 날짜 */}
           <div className="my-4">

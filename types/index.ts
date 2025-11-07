@@ -381,7 +381,7 @@ export type {
 export type AreaResourceStatus = 'area' | 'resource' | 'archived';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'paused';
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
-export type Clarification = 'none' | 'reminder' | 'someday' | 'waiting' | 'next_action' | 'scheduled';
+export type Clarification = 'none' | 'reminder' | 'someday' | 'waiting' | 'next_action' | 'schedule_clear';
 export type NextActionContext =
   | 'creativity'
   | 'simple_work'

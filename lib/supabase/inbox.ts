@@ -13,7 +13,7 @@ import { fetchWithJWT, createWithJWT, updateWithJWT, deleteWithJWT } from './cor
  *   - recurrence_pattern = 'none' (반복 할일 제외)
  *   - clarification != 'waiting' (대기중: 무조건 제외)
  *   - clarification != 'someday' (언젠가: 무조건 제외)
- *   - NOT (clarification = 'scheduled' AND start_time IS NOT NULL) (일정+날짜: 제외)
+ *   - NOT (clarification = 'schedule_clear' AND start_time IS NOT NULL) (일정+날짜: 제외)
  *   - NOT (clarification = 'next_action' AND next_action_contexts.length > 0) (다음행동+상황: 제외)
  *
  * ✅ 변경 사항: Materialized View 대신 todos 테이블 직접 조회 (실시간 데이터)
@@ -28,8 +28,8 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
 
     // 클라이언트 필터링: scheduled + 날짜, next_action + 상황 제외
     const filteredTodos = todos?.filter((todo: any) => {
-      // scheduled + start_time 있으면 제외
-      if (todo.clarification === 'scheduled' && todo.start_time) return false;
+      // schedule_clear + start_time 있으면 제외
+      if (todo.clarification === 'schedule_clear' && todo.start_time) return false;
       // next_action + contexts 있으면 제외
       if (todo.clarification === 'next_action' && todo.next_action_contexts?.length > 0) return false;
       return true;

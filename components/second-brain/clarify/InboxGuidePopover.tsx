@@ -68,21 +68,21 @@ const GUIDE_CONTENT: Record<InboxTabType, {
               <span className="text-xs">⏸️</span>
               <div className="flex-1">
                 <strong className="text-xs">대기중</strong>
-                <p className="text-xs text-gray-600 dark:text-gray-400">위임, 즉시 수집함에서 사라짐</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">타인에게 위임, 응답 대기 중. 당장은 날짜나 시간을 넣기에 불명확하지만 나중에 계획 페이지에서 날짜를 지정해줄 수 있음 (즉시 수집함에서 사라짐)</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-xs">⚡</span>
               <div className="flex-1">
                 <strong className="text-xs">다음행동</strong>
-                <p className="text-xs text-gray-600 dark:text-gray-400">최대한 빨리 할 일 + 다음행동상황 1개 이상 필수</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">특정 상황이 되면 할 일. 당장은 날짜나 시간을 넣기에 불명확하지만 나중에 계획 페이지에서 날짜를 지정해줄 수 있음 (다음행동상황 1개 이상 선택 시 수집함에서 사라짐)</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-xs">📅</span>
               <div className="flex-1">
                 <strong className="text-xs">일정</strong>
-                <p className="text-xs text-gray-600 dark:text-gray-400">특정 날짜가 있는 할일 + 날짜 설정 필수</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">당장 날짜나 시간을 넣기에 명확한 할일 (날짜 설정 시 수집함에서 사라짐)</p>
               </div>
             </div>
           </div>

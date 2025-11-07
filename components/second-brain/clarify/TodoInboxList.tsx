@@ -41,7 +41,7 @@ const getClarificationLabel = (clarification?: string): string => {
     'someday': '언젠가',
     'waiting': '대기중',
     'next_action': '다음행동',
-    'scheduled': '일정',
+    'schedule_clear': '일정',
   };
 
   return labelMap[clarification] || clarification;

@@ -1279,7 +1279,7 @@ export type Database = {
         | "someday"
         | "waiting"
         | "next_action"
-        | "scheduled"
+        | "schedule_clear"
       next_action_context_enum:
         | "creativity"
         | "simple_work"
@@ -1448,7 +1448,7 @@ export const Constants = {
         "someday",
         "waiting",
         "next_action",
-        "scheduled",
+        "schedule_clear",
       ],
       next_action_context_enum: [
         "creativity",
