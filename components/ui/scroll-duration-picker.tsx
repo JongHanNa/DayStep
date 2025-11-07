@@ -230,8 +230,8 @@ export function ScrollDurationPicker({
     <div className={cn("relative flex flex-col items-center", className)}>
       {/* 레이블 헤더 */}
       <div className="flex justify-center gap-4 mb-2 w-full">
-        <span className="label-text text-sm font-medium w-[100px] text-center">시간</span>
-        <span className="label-text text-sm font-medium w-[100px] text-center">분</span>
+        <span className="label-text text-sm font-medium w-[80px] text-center">시간</span>
+        <span className="label-text text-sm font-medium w-[80px] text-center">분</span>
       </div>
 
       {/* 스크롤 영역 */}
@@ -249,7 +249,7 @@ export function ScrollDurationPicker({
         </div>
 
         {/* 시간 선택 휠 */}
-        <div className="relative" style={{ width: '100px' }}>
+        <div className="relative" style={{ width: '80px' }}>
           <div
             ref={hourRef}
             className="h-32 overflow-y-scroll scrollbar-hide scroll-smooth relative"
@@ -300,7 +300,7 @@ export function ScrollDurationPicker({
         <div className="w-px h-20 bg-gray-300 mx-2" />
 
         {/* 분 선택 휠 */}
-        <div className="relative" style={{ width: '100px' }}>
+        <div className="relative" style={{ width: '80px' }}>
           <div
             ref={minuteRef}
             className="h-32 overflow-y-scroll scrollbar-hide scroll-smooth relative"
