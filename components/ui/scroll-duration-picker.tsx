@@ -41,8 +41,8 @@ export function ScrollDurationPicker({
 
   // 스크롤 위치 계산 및 설정
   const scrollToSelected = useCallback((container: HTMLDivElement, index: number, itemHeight: number) => {
-    const paddingTop = 48; // 상단 패딩 (h-12 = 3rem = 48px)
-    const containerCenter = container.clientHeight / 2; // 64px (h-32 / 2)
+    const paddingTop = 60; // 상단 패딩 (h-[60px])
+    const containerCenter = container.clientHeight / 2; // 80px (h-40 / 2)
 
     // 아이템의 중앙 위치 = 패딩 + (인덱스 * 아이템높이) + (아이템높이 / 2)
     const itemCenterY = paddingTop + (index * itemHeight) + (itemHeight / 2);
@@ -56,7 +56,7 @@ export function ScrollDurationPicker({
   // 초기 스크롤 위치 설정
   useEffect(() => {
     if (hourRef.current && minuteRef.current) {
-      const itemHeight = 40; // 각 아이템의 높이
+      const itemHeight = 50; // 각 아이템의 높이
       setTimeout(() => {
         if (hourRef.current) {
           scrollToSelected(hourRef.current, selectedHours, itemHeight);
@@ -75,9 +75,9 @@ export function ScrollDurationPicker({
 
   // 중앙에 있는 아이템 계산 함수
   const calculateCenterIndex = useCallback((container: HTMLDivElement) => {
-    const itemHeight = 40;
+    const itemHeight = 50;
     const scrollTop = container.scrollTop;
-    const paddingTop = 48;
+    const paddingTop = 60;
     const containerCenter = container.clientHeight / 2;
     const centerY = scrollTop + containerCenter;
     const rawIndex = (centerY - paddingTop - itemHeight / 2) / itemHeight;
@@ -87,7 +87,7 @@ export function ScrollDurationPicker({
   // 스크롤 끝났을 때 자동 스냅 함수
   const snapToNearestItem = useCallback((container: HTMLDivElement, type: 'hour' | 'minute') => {
     const centerIndex = calculateCenterIndex(container);
-    const itemHeight = 40;
+    const itemHeight = 50;
 
     let finalIndex: number;
     let maxIndex: number;
@@ -230,18 +230,18 @@ export function ScrollDurationPicker({
     <div className={cn("relative flex flex-col items-center", className)}>
       {/* 레이블 헤더 */}
       <div className="flex justify-center gap-4 mb-2 w-full">
-        <span className="label-text text-sm font-medium w-[80px] text-center">시간</span>
-        <span className="label-text text-sm font-medium w-[80px] text-center">분</span>
+        <span className="label-text text-sm font-medium w-[100px] text-center">시간</span>
+        <span className="label-text text-sm font-medium w-[100px] text-center">분</span>
       </div>
 
       {/* 스크롤 영역 */}
       <div className="relative flex items-center justify-center w-full">
         {/* 중앙 선택 강조 표시 */}
         <div
-          className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 h-10 rounded-lg flex items-center justify-center px-4 pointer-events-none font-bold text-white text-xl z-20"
+          className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 h-[50px] rounded-lg flex items-center justify-center px-4 pointer-events-none font-bold text-white text-xl z-20"
           style={{
             backgroundColor: accentColor,
-            width: '220px',
+            width: '275px',
             marginTop: '-2px'
           }}
         >
@@ -249,10 +249,10 @@ export function ScrollDurationPicker({
         </div>
 
         {/* 시간 선택 휠 */}
-        <div className="relative" style={{ width: '80px' }}>
+        <div className="relative" style={{ width: '100px' }}>
           <div
             ref={hourRef}
-            className="h-32 overflow-y-scroll scrollbar-hide scroll-smooth relative"
+            className="h-40 overflow-y-scroll scrollbar-hide scroll-smooth relative"
             onScroll={(e) => handleScroll('hour', e)}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -265,7 +265,7 @@ export function ScrollDurationPicker({
             }}
           >
             {/* 상단 패딩 */}
-            <div className="h-12" />
+            <div className="h-[60px]" />
 
             {/* 시간 옵션들 */}
             {hours.map((hour) => {
@@ -274,7 +274,7 @@ export function ScrollDurationPicker({
                 <div
                   key={hour}
                   className={cn(
-                    "h-10 w-full flex items-center justify-center transition-all duration-200",
+                    "h-[50px] w-full flex items-center justify-center transition-all duration-200",
                     isSelected ? "opacity-100 scale-110" : "opacity-40 scale-100"
                   )}
                 >
@@ -289,7 +289,7 @@ export function ScrollDurationPicker({
             })}
 
             {/* 하단 패딩 */}
-            <div className="h-12" />
+            <div className="h-[60px]" />
           </div>
 
           <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
@@ -297,10 +297,10 @@ export function ScrollDurationPicker({
         </div>
 
         {/* 분 선택 휠 */}
-        <div className="relative" style={{ width: '80px' }}>
+        <div className="relative" style={{ width: '100px' }}>
           <div
             ref={minuteRef}
-            className="h-32 overflow-y-scroll scrollbar-hide scroll-smooth relative"
+            className="h-40 overflow-y-scroll scrollbar-hide scroll-smooth relative"
             onScroll={(e) => handleScroll('minute', e)}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -313,7 +313,7 @@ export function ScrollDurationPicker({
             }}
           >
             {/* 상단 패딩 */}
-            <div className="h-12" />
+            <div className="h-[60px]" />
 
             {/* 분 옵션들 */}
             {minutes.map((minute) => {
@@ -322,7 +322,7 @@ export function ScrollDurationPicker({
                 <div
                   key={minute}
                   className={cn(
-                    "h-10 w-full flex items-center justify-center transition-all duration-200",
+                    "h-[50px] w-full flex items-center justify-center transition-all duration-200",
                     isSelected ? "opacity-100 scale-110" : "opacity-40 scale-100"
                   )}
                 >
@@ -337,7 +337,7 @@ export function ScrollDurationPicker({
             })}
 
             {/* 하단 패딩 */}
-            <div className="h-12" />
+            <div className="h-[60px]" />
           </div>
 
           <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
