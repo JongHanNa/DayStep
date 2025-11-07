@@ -107,9 +107,9 @@ export default function PlanPage() {
   const updateProject = useProjectStore(state => state.updateProject);
   const deleteProject = useProjectStore(state => state.deleteProject);
 
-  // InboxStore에서 할일 데이터 가져오기
+  // InboxStore에서 할일 데이터 가져오기 (Plan 페이지용 fetchPlanItems 사용)
   const inboxItems = useInboxStore(state => state.inboxItems);
-  const fetchInboxItems = useInboxStore(state => state.fetchInboxItems);
+  const fetchPlanItems = useInboxStore(state => state.fetchPlanItems);
   const updateInboxItem = useInboxStore(state => state.updateInboxItem);
 
   // 목표, 영역, 자원 스토어
@@ -122,8 +122,8 @@ export default function PlanPage() {
 
   // 초기 데이터 로드
   useEffect(() => {
-    if (appUser?.id) fetchInboxItems(appUser.id);
-  }, [fetchInboxItems]);
+    if (appUser?.id) fetchPlanItems(appUser.id);
+  }, [fetchPlanItems]);
 
   // 프로젝트 필터 상태
   const [projectFilterType, setProjectFilterType] = useState<'in_progress' | 'not_started'>('in_progress');
@@ -352,6 +352,10 @@ export default function PlanPage() {
       if (!item.scheduled_date) {
         return false;
       }
+      // 언젠가(someday) 명료화 속성은 제외
+      if (item.clarification === 'someday') {
+        return false;
+      }
       const scheduleDate = new Date(item.scheduled_date);
       return format(scheduleDate, 'yyyy-MM-dd') === today;
     });
@@ -365,6 +369,10 @@ export default function PlanPage() {
         return false;
       }
       if (!item.scheduled_date) {
+        return false;
+      }
+      // 언젠가(someday) 명료화 속성은 제외
+      if (item.clarification === 'someday') {
         return false;
       }
       const scheduleDate = new Date(item.scheduled_date);

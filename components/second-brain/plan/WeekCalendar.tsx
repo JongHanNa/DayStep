@@ -45,6 +45,8 @@ export default function WeekCalendar({ todos, onTodoClick }: WeekCalendarProps) 
           const dateString = format(day, 'yyyy-MM-dd');
           const dayTodos = todos.filter((item) => {
             if (!item.scheduled_date) return false;
+            // 언젠가(someday) 명료화 속성은 제외
+            if (item.clarification === 'someday') return false;
             const scheduleDate = new Date(item.scheduled_date);
             return format(scheduleDate, 'yyyy-MM-dd') === dateString;
           });

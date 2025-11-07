@@ -44,6 +44,43 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
 }
 
 /**
+ * 계획 페이지 할일 목록 조회 (todos 테이블 직접 조회)
+ *
+ * DB 레벨 필터링 조건:
+ *   - recurrence_pattern = 'none' (반복 할일 제외)
+ *   - clarification != 'waiting' (대기중: 무조건 제외)
+ *   - clarification != 'someday' (언젠가: 무조건 제외)
+ *
+ * 클라이언트 필터링 조건:
+ *   - NOT (clarification = 'next_action' AND next_action_contexts.length > 0) (다음행동+상황: 제외)
+ *
+ * ✅ fetchInboxTodos와의 차이점:
+ *   - schedule_clear + start_time 필터 제거 (계획 페이지에 표시)
+ */
+export async function fetchPlanTodos(userId: string): Promise<any[]> {
+  console.log('📅 계획 페이지 할일 조회:', { userId });
+
+  try {
+    // ✅ todos 테이블 직접 조회
+    const path = `/todos?user_id=eq.${userId}&recurrence_pattern=eq.none&clarification=neq.waiting&clarification=neq.someday&select=*&order=created_at.desc`;
+    const todos = await fetchWithJWT(path);
+
+    // 클라이언트 필터링: next_action + contexts 있으면 제외
+    const filteredTodos = todos?.filter((todo: any) => {
+      // next_action + contexts 있으면 제외
+      if (todo.clarification === 'next_action' && todo.next_action_contexts?.length > 0) return false;
+      return true;
+    }) || [];
+
+    console.log('✅ 계획 페이지 할일 조회 성공:', { count: filteredTodos.length });
+    return filteredTodos;
+  } catch (error) {
+    console.error('❌ 계획 페이지 할일 조회 실패:', error);
+    return [];
+  }
+}
+
+/**
  * 수집함 노트 목록 조회 (note_category = 'none'인 notes)
  */
 export async function fetchInboxNotes(userId: string): Promise<any[]> {

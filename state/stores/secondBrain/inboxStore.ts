@@ -14,6 +14,7 @@ import type {
 } from '@/types/second-brain';
 import {
   fetchInboxTodos,
+  fetchPlanTodos,
   fetchInboxNotes,
   createInboxTodo,
   createInboxNote,
@@ -30,6 +31,7 @@ interface InboxStoreState {
 
   // Actions
   fetchInboxItems: (userId: string) => Promise<void>;
+  fetchPlanItems: (userId: string) => Promise<void>;
   fetchInboxItemsByStatus: (status: GTDStatus) => Promise<InboxItem[]>;
   fetchInboxItemsByType: (type: 'todo' | 'note' | 'project' | 'goal') => Promise<InboxItem[]>;
   createInboxItem: (userId: string, data: CreateInboxItemInput) => Promise<InboxItem>;
@@ -114,6 +116,35 @@ export const useInboxStore = createStore<InboxStoreState>(
         console.error('❌ [inboxStore] fetchInboxItems 오류:', error);
         set({
           error: error instanceof Error ? error.message : '수집함 항목을 불러오는데 실패했습니다.',
+          loading: false,
+        });
+      }
+    },
+
+    fetchPlanItems: async (userId: string) => {
+      try {
+        set({ loading: true, error: null });
+
+        // 병렬로 todos와 notes 조회 (Plan 페이지용 fetchPlanTodos 사용)
+        const [todos, notes] = await Promise.all([
+          fetchPlanTodos(userId),
+          fetchInboxNotes(userId),
+        ]);
+
+        // InboxItem 형식으로 변환
+        const todoItems = todos.map(todoToInboxItem);
+        const noteItems = notes.map(noteToInboxItem);
+
+        // 합쳐서 최신순 정렬
+        const allItems = [...todoItems, ...noteItems].sort((a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        set({ inboxItems: allItems, loading: false });
+      } catch (error) {
+        console.error('❌ [inboxStore] fetchPlanItems 오류:', error);
+        set({
+          error: error instanceof Error ? error.message : '계획 페이지 항목을 불러오는데 실패했습니다.',
           loading: false,
         });
       }
