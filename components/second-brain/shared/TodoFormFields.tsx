@@ -39,7 +39,7 @@ export interface TodoFormData {
   endTime?: string; // 종료 시간 (HH:mm 형식)
 
   // 일정 유형 관련
-  scheduleType?: 'anytime' | 'timed' | 'all_day';
+  scheduleType?: 'all_day' | 'anytime' | 'timed';
   anytimeDuration?: number; // 예상 소요 시간 (분 단위)
 
   // 반복 설정 관련
@@ -283,7 +283,7 @@ export default function TodoFormFields({
               }}
               className="select select-bordered w-full"
             >
-              <option value="anytime">⏰ 언제든지 · 하루 중 언제든 시작 가능</option>
+              <option value="anytime">⏰ 언제든지 · 타임라인에서 바로 시작하거나 계획 페이지에서 시간 지정 가능</option>
               <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
               <option value="all_day">📅 종일 · 하루 종일</option>
             </select>

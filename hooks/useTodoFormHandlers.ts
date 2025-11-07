@@ -426,10 +426,10 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       } else if (values.scheduleType === 'timed') {
         // 한국시간(KST)으로 명시적 지정
         const startDateTime = new Date(`${values.startDate}T${values.startTime}+09:00`);
-        const endDateTime = values.endDate && values.endTime 
-          ? new Date(`${values.endDate}T${values.endTime}+09:00`) 
+        const endDateTime = values.endDate && values.endTime
+          ? new Date(`${values.endDate}T${values.endTime}+09:00`)
           : addMinutes(startDateTime, 60);
-        
+
         todoData.start_time = startDateTime.toISOString();
         todoData.end_time = endDateTime.toISOString();
       }

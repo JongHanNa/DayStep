@@ -174,6 +174,7 @@ export class Todo {
       throw new Error('시간 지정 일정은 시작 시간이 필요합니다.');
     }
 
+
     // 종료 시간이 시작 시간보다 빠르면 에러
     if (options.startTime && options.endTime && options.endTime <= options.startTime) {
       throw new Error('종료 시간은 시작 시간보다 늦어야 합니다.');
@@ -224,6 +225,7 @@ export class Todo {
   isAnytime(): boolean {
     return this.scheduleType === 'anytime';
   }
+
 
   // ========== 반복 일정 체크 메서드들 ==========
   

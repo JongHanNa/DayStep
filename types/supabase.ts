@@ -1308,7 +1308,12 @@ export type Database = {
         | "weekly"
         | "monthly"
         | "custom"
-      schedule_type_enum: "all_day" | "timed" | "anytime" | "none"
+      schedule_type_enum:
+        | "all_day"
+        | "timed"
+        | "anytime"
+        | "none"
+        | "time_unscheduled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1471,7 +1476,13 @@ export const Constants = {
       ],
       quarter_enum: ["Q1", "Q2", "Q3", "Q4"],
       recurrence_pattern_enum: ["none", "daily", "weekly", "monthly", "custom"],
-      schedule_type_enum: ["all_day", "timed", "anytime", "none"],
+      schedule_type_enum: [
+        "all_day",
+        "timed",
+        "anytime",
+        "none",
+        "time_unscheduled",
+      ],
     },
   },
 } as const
