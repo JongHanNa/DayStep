@@ -296,9 +296,6 @@ export function ScrollDurationPicker({
           <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
         </div>
 
-        {/* 구분선 */}
-        <div className="w-px h-20 bg-gray-300 mx-2" />
-
         {/* 분 선택 휠 */}
         <div className="relative" style={{ width: '80px' }}>
           <div
