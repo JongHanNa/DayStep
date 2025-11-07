@@ -26,10 +26,6 @@ ExitPlanMode로 계획 제시 시 각 Phase에 담당 에이전트 명시:
   - #2: ComponentB.tsx 수정 - 상태 관리 추가
   - #3: styles.css 수정 - 반응형 스타일
 
-### Phase 3: QA 검증
-- **담당**: daystep-qa-validator
-- **작업**: 타입 체크, 린트, 빌드 검증, 테스트 실행
-
 
 **핵심 요소**:
 - 각 Phase마다 담당 에이전트 명시
@@ -46,11 +42,6 @@ Plan 에이전트가 작업 내용을 분석하여 적절한 서브 에이전트
 - **백엔드 작업**: `daystep-backend-dev`
   - API, 데이터베이스, Supabase 연동, 서버 로직
 
-- **QA 검증**: `daystep-qa-validator`
-  - 타입 체크, 린트, 빌드 검증, 테스트
-
-- **탐색/조사**: `Explore`
-  - 코드베이스 구조 파악, 파일 검색, 패턴 분석
 
 ### 3. 병렬 서브 에이전트 실행 (중요!)
 
