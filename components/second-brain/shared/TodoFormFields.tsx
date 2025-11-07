@@ -218,7 +218,22 @@ export default function TodoFormFields({
           <div className="p-3 rounded-lg bg-base-200 border border-base-300">
             <select
               value={todo.clarification || ''}
-              onChange={(e) => onChange({ ...todo, clarification: e.target.value })}
+              onChange={(e) => {
+                const clarification = e.target.value;
+                const updates: any = { clarification };
+
+                // 일정으로 선택 시 scheduleType 자동 초기화
+                if (clarification === 'scheduled') {
+                  if (!todo.scheduleType) {
+                    updates.scheduleType = 'anytime';
+                    updates.scheduledDate = new Date(); // 오늘 날짜
+                    updates.includeEndDate = false;
+                    updates.includeTime = false;
+                  }
+                }
+
+                onChange({ ...todo, ...updates });
+              }}
               className="select select-bordered w-full"
             >
               <option value="">선택 안 함</option>
@@ -402,7 +417,7 @@ export default function TodoFormFields({
           )}
 
           {/* 종료일 토글 - 언제든지/종일일 때 숨김 */}
-          {todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
+          {todo.scheduleType && todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
             <div className="my-4">
               <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                 <label className="cursor-pointer flex items-center justify-between">
@@ -434,7 +449,7 @@ export default function TodoFormFields({
                 </label>
               </div>
             </div>
-          ) : todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
+          ) : todo.scheduleType && todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
             // 언제든지/종일이 아닐 때만 표시
             <div className="my-4">
               <div className="p-3 rounded-lg bg-base-200 border border-base-300">
@@ -452,7 +467,7 @@ export default function TodoFormFields({
           )}
 
           {/* 예상 소요 시간 (언제든지일 때만) */}
-          {todo.scheduleType === 'anytime' && (
+          {(!todo.scheduleType || todo.scheduleType === 'anytime') && (
             <div className="my-4">
               <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                 <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
