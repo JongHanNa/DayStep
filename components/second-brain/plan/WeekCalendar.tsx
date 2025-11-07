@@ -11,6 +11,21 @@ interface WeekCalendarProps {
   onTodoClick?: (item: InboxItem) => void;
 }
 
+// 명료화 상태를 한글 라벨로 변환
+function getClarificationLabel(clarification?: string): string {
+  if (!clarification || clarification === 'none') return '선택 안함';
+
+  const labelMap: Record<string, string> = {
+    'reminder': '다시알림',
+    'someday': '언젠가',
+    'waiting': '대기중',
+    'next_action': '다음행동',
+    'schedule_clear': '일정',
+  };
+
+  return labelMap[clarification] || clarification;
+}
+
 export default function WeekCalendar({ todos, onTodoClick }: WeekCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -162,7 +177,7 @@ function WeekTodoCard({ todo, onTodoClick }: WeekTodoCardProps) {
 
       {/* 명료화 표시 */}
       {todo.clarification && (
-        <span className="badge badge-xs bg-base-300">{todo.clarification}</span>
+        <span className="badge badge-xs bg-base-300">{getClarificationLabel(todo.clarification)}</span>
       )}
     </div>
   );

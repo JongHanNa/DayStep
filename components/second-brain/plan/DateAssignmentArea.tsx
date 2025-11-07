@@ -15,6 +15,21 @@ interface DateAssignmentAreaProps {
   onTodoClick?: (item: InboxItem) => void;
 }
 
+// 명료화 상태를 한글 라벨로 변환
+function getClarificationLabel(clarification?: string): string {
+  if (!clarification || clarification === 'none') return '선택 안함';
+
+  const labelMap: Record<string, string> = {
+    'reminder': '다시알림',
+    'someday': '언젠가',
+    'waiting': '대기중',
+    'next_action': '다음행동',
+    'schedule_clear': '일정',
+  };
+
+  return labelMap[clarification] || clarification;
+}
+
 export default function DateAssignmentArea({
   todayTodos,
   tomorrowTodos,
@@ -137,7 +152,7 @@ function TodoListItem({ todo, onTodoClick }: TodoListItemProps) {
           <p className="font-medium">{todo.content}</p>
           <div className="flex flex-wrap gap-2 mt-1 text-sm text-base-content/70">
             {todo.clarification && (
-              <span className="badge badge-sm bg-base-200">{todo.clarification}</span>
+              <span className="badge badge-sm bg-base-200">{getClarificationLabel(todo.clarification)}</span>
             )}
             {todo.is_highlight && (
               <span className="badge badge-sm badge-primary">중요</span>

@@ -16,6 +16,21 @@ interface UnscheduledTodosListProps {
   onTodoClick?: (item: InboxItem) => void;
 }
 
+// 명료화 상태를 한글 라벨로 변환
+function getClarificationLabel(clarification?: string): string {
+  if (!clarification || clarification === 'none') return '선택 안함';
+
+  const labelMap: Record<string, string> = {
+    'reminder': '다시알림',
+    'someday': '언젠가',
+    'waiting': '대기중',
+    'next_action': '다음행동',
+    'schedule_clear': '일정',
+  };
+
+  return labelMap[clarification] || clarification;
+}
+
 export default function UnscheduledTodosList({
   overdueTodos,
   nextActionTodos,
@@ -262,7 +277,7 @@ function DraggableTodoItem({
             </div>
           )}
           {showClarification && todo.clarification && (
-            <span className="badge badge-sm bg-base-200 mt-1">{todo.clarification}</span>
+            <span className="badge badge-sm bg-base-200 mt-1">{getClarificationLabel(todo.clarification)}</span>
           )}
         </div>
       </div>

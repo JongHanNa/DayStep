@@ -401,6 +401,9 @@ export default function PlanPage() {
         await updateInboxItem(appUser.id, itemId, {
           scheduled_date: scheduledDate.toISOString(),
         });
+
+        // 즉시 UI 반영을 위해 데이터 재조회
+        await fetchPlanItems(appUser.id);
       }
     },
   });
