@@ -186,6 +186,9 @@ export default function PlanPage() {
         next_action_status: updatedTodo.nextActionStatuses?.join(', '),
       });
 
+      // 즉시 UI 반영을 위해 데이터 재조회
+      await fetchPlanItems(appUser.id);
+
       handleCloseModal();
     } catch (error) {
       console.error('할일 저장 실패:', error);
