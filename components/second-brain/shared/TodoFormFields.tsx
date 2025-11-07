@@ -13,6 +13,7 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
+import { ScrollTimePicker } from '@/components/ui/scroll-time-picker';
 
 /**
  * 할일 폼 필드 타입
@@ -478,17 +479,23 @@ export default function TodoFormFields({
               </label>
 
               <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                <select
-                  value={todo.anytimeDuration || 0}
-                  onChange={(e) => onChange({ ...todo, anytimeDuration: parseInt(e.target.value) })}
-                  className="select select-bordered w-full"
-                >
-                  <option value="0">즉시</option>
-                  <option value="30">30분</option>
-                  <option value="60">1시간</option>
-                  <option value="120">2시간</option>
-                  <option value="240">4시간</option>
-                </select>
+                <ScrollTimePicker
+                  selectedTime={(() => {
+                    const totalMinutes = todo.anytimeDuration ?? 30;
+                    const hours = Math.floor(totalMinutes / 60);
+                    const mins = totalMinutes % 60;
+                    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+                  })()}
+                  onTimeChange={(timeString) => {
+                    const [hours, mins] = timeString.split(':').map(Number);
+                    const totalMinutes = hours * 60 + mins;
+                    onChange({ ...todo, anytimeDuration: totalMinutes });
+                  }}
+                  accentColor={todo.color}
+                  durationMinutes={0}
+                  maxEndTime="23:59"
+                  className="py-2"
+                />
               </div>
             </div>
           )}
