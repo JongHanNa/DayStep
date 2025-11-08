@@ -127,7 +127,7 @@ export default function GoalInboxList({
                           onSelectionChange(
                             goal.id,
                             e.target.checked,
-                            e.nativeEvent.shiftKey,
+                            (e.nativeEvent as MouseEvent).shiftKey,
                             index
                           );
                         }}

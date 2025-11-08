@@ -308,7 +308,7 @@ export default function TodoInboxList({
                         onSelectionChange(
                           todo.id,
                           e.target.checked,
-                          e.nativeEvent.shiftKey,
+                          (e.nativeEvent as MouseEvent).shiftKey,
                           index
                         );
                       }}
