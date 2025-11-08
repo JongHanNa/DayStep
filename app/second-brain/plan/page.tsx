@@ -103,9 +103,7 @@ export default function PlanPage() {
   const { appUser } = useAuth();
 
   // 프로젝트 스토어에서 데이터 가져오기
-  const projects = useProjectStore(state => state.projects);
-  const updateProject = useProjectStore(state => state.updateProject);
-  const deleteProject = useProjectStore(state => state.deleteProject);
+  const { projects, fetchProjects, updateProject, deleteProject } = useProjectStore();
 
   // InboxStore에서 할일 데이터 가져오기 (Plan 페이지용 fetchPlanItems 사용)
   const inboxItems = useInboxStore(state => state.inboxItems);
@@ -122,8 +120,11 @@ export default function PlanPage() {
 
   // 초기 데이터 로드
   useEffect(() => {
-    if (appUser?.id) fetchPlanItems(appUser.id);
-  }, [fetchPlanItems]);
+    if (appUser?.id) {
+      fetchProjects(appUser.id);
+      fetchPlanItems(appUser.id);
+    }
+  }, [appUser?.id, fetchProjects, fetchPlanItems]);
 
   // 프로젝트 필터 상태
   const [projectFilterType, setProjectFilterType] = useState<'in_progress' | 'not_started'>('in_progress');
