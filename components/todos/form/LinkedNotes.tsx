@@ -20,11 +20,6 @@ const LinkedNotes: React.FC<LinkedNotesProps> = ({ taskId }) => {
   const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // taskId가 없으면 렌더링하지 않음
-  if (!taskId) {
-    return null;
-  }
-
   // 연결된 노트 로드 (junction table API 사용)
   useEffect(() => {
     const loadLinkedNotes = async () => {
@@ -52,8 +47,8 @@ const LinkedNotes: React.FC<LinkedNotesProps> = ({ taskId }) => {
 
   const hasLinkedNotes = linkedNotes.length > 0;
 
-  // 로딩 중이거나 연결된 노트가 없으면 렌더링하지 않음
-  if (isLoading || !hasLinkedNotes) {
+  // taskId가 없거나, 로딩 중이거나, 연결된 노트가 없으면 렌더링하지 않음
+  if (!taskId || isLoading || !hasLinkedNotes) {
     return null;
   }
 

@@ -35,7 +35,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-blue-600 dark:text-blue-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                <strong>사용 방법:</strong> 할일 카드 클릭 → "프로젝트" 드롭다운에서 선택
+                <strong>사용 방법:</strong> 할일 카드 클릭 → &quot;프로젝트&quot; 드롭다운에서 선택
               </div>
             </div>
           </div>
@@ -91,7 +91,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-green-600 dark:text-green-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300 space-y-1">
-                <div><strong>사용 방법:</strong> 할일 카드 클릭 → "명료화 유형" 드롭다운에서 선택</div>
+                <div><strong>사용 방법:</strong> 할일 카드 클릭 → &quot;명료화 유형&quot; 드롭다운에서 선택</div>
                 <div className="text-xs">• <strong>일정</strong> 선택 시 → 시간/날짜 설정 화면 표시</div>
                 <div className="text-xs">• <strong>다음행동</strong> 선택 시 → 3단계 다음행동상황 선택 필요</div>
               </div>
@@ -113,7 +113,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-amber-600 dark:text-amber-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                <strong>사용 방법:</strong> 할일 편집 화면 하단에 "다음행동상황" 체크박스 표시 → 1개 이상 선택 후 저장
+                <strong>사용 방법:</strong> 할일 편집 화면 하단에 &quot;다음행동상황&quot; 체크박스 표시 → 1개 이상 선택 후 저장
               </div>
             </div>
           </div>
@@ -144,7 +144,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-purple-600 dark:text-purple-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                <strong>사용 방법:</strong> 노트 카드 클릭 → "영역" 또는 "자원" 드롭다운에서 선택 후 저장
+                <strong>사용 방법:</strong> 노트 카드 클릭 → &quot;영역&quot; 또는 &quot;자원&quot; 드롭다운에서 선택 후 저장
               </div>
             </div>
           </div>
@@ -171,7 +171,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-rose-600 dark:text-rose-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                프로젝트 카드 클릭 → "종료일" 날짜 선택
+                프로젝트 카드 클릭 → &quot;종료일&quot; 날짜 선택
               </div>
             </div>
           </div>
@@ -187,7 +187,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-indigo-600 dark:text-indigo-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                프로젝트 카드 클릭 → "영역" 또는 "자원" 드롭다운에서 선택
+                프로젝트 카드 클릭 → &quot;영역&quot; 또는 &quot;자원&quot; 드롭다운에서 선택
               </div>
             </div>
           </div>
@@ -203,7 +203,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-teal-600 dark:text-teal-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                프로젝트 카드 클릭 → "할일 추가" 버튼 클릭 → 할일 입력 후 저장
+                프로젝트 카드 클릭 → &quot;할일 추가&quot; 버튼 클릭 → 할일 입력 후 저장
               </div>
             </div>
           </div>
@@ -235,7 +235,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-cyan-600 dark:text-cyan-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                목표 카드 클릭 → "영역" 드롭다운에서 선택
+                목표 카드 클릭 → &quot;영역&quot; 드롭다운에서 선택
               </div>
             </div>
           </div>
@@ -251,7 +251,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-violet-600 dark:text-violet-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                목표 카드 클릭 → "자원" 드롭다운에서 선택
+                목표 카드 클릭 → &quot;자원&quot; 드롭다운에서 선택
               </div>
             </div>
           </div>
@@ -267,7 +267,7 @@ const GUIDE_CONTENT: Record<InboxTabType, {
             <div className="flex items-start gap-1.5 text-xs">
               <span className="text-pink-600 dark:text-pink-400">💡</span>
               <div className="flex-1 text-gray-700 dark:text-gray-300">
-                목표 카드 클릭 → "종료일" 날짜 선택
+                목표 카드 클릭 → &quot;종료일&quot; 날짜 선택
               </div>
             </div>
           </div>

@@ -170,7 +170,7 @@ export default function CollapsibleNextActionSection({
         {/* 검색 결과가 없을 때 */}
         {filteredOptions.length === 0 && searchQuery && (
           <div className="p-8 text-center text-base-content/50">
-            "{searchQuery}"에 대한 검색 결과가 없습니다
+            &quot;{searchQuery}&quot;에 대한 검색 결과가 없습니다
           </div>
         )}
 
