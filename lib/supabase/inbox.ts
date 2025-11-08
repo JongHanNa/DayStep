@@ -185,6 +185,7 @@ export async function updateInboxTodo(
     completed?: boolean;
     project_id?: string;
     next_action_contexts?: string[];
+    schedule_type?: string; // ✅ 일정 유형 필드 추가
   }
 ): Promise<any> {
   console.log('✏️ 수집함 할일 수정:', { userId, todoId, data });
@@ -199,6 +200,7 @@ export async function updateInboxTodo(
     if (data.completed !== undefined) updateData.completed = data.completed;
     if (data.project_id !== undefined) updateData.project_id = data.project_id;
     if (data.next_action_contexts !== undefined) updateData.next_action_contexts = data.next_action_contexts;
+    if (data.schedule_type !== undefined) updateData.schedule_type = data.schedule_type; // ✅ 일정 유형 매핑
 
     const result = await updateWithJWT('todos', { column: 'id', operator: 'eq', value: todoId }, updateData);
     console.log('✅ 수집함 할일 수정 성공:', { result });

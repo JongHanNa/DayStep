@@ -103,6 +103,7 @@ export default function TodoInboxList({
         is_today_highlight: updatedTodo.isHighlight,
         completed: updatedTodo.completed,
         project_id: updatedTodo.projectIds?.[0], // 첫 번째 프로젝트만 저장 (기존 호환)
+        schedule_type: updatedTodo.scheduleType, // ✅ 일정 유형 저장
       });
 
       // ✅ DB에서 최신 데이터 가져오기 (UI 동기화)
