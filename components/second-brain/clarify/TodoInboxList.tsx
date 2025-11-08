@@ -99,7 +99,14 @@ export default function TodoInboxList({
         title: updatedTodo.title,
         clarification: updatedTodo.clarification,
         next_action_contexts: updatedTodo.nextActionStatuses ? updatedTodo.nextActionStatuses : undefined,
-        scheduled_date: updatedTodo.scheduledDate ? updatedTodo.scheduledDate.toISOString() : undefined,
+        scheduled_date: updatedTodo.scheduledDate
+          ? (() => {
+              // Date 객체를 YYYY-MM-DD 문자열로 변환
+              const dateStr = updatedTodo.scheduledDate.toISOString().split('T')[0];
+              // 한국시간 자정(00:00:00+09:00)으로 설정 후 ISO 변환
+              return new Date(`${dateStr}T00:00:00+09:00`).toISOString();
+            })()
+          : undefined,
         is_today_highlight: updatedTodo.isHighlight,
         completed: updatedTodo.completed,
         project_id: updatedTodo.projectIds?.[0], // 첫 번째 프로젝트만 저장 (기존 호환)
