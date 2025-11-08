@@ -131,6 +131,8 @@ export default function ProjectEditDialog({
               displayOrder: todo.displayOrder || todo.orderIndex || 0,
               clarification: todo.clarification,
               nextActionStatuses: todo.nextActionStatuses,
+              // ✅ Fix: scheduleType 필드 매핑 추가
+              scheduleType: todo.scheduleType,
               // ✅ Fix: DB start_time에서 includeTime 계산 (시간 정보 있으면 true)
               includeTime: todo.startTime
                 ? (() => {

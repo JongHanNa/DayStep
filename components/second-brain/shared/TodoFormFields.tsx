@@ -40,7 +40,7 @@ export interface TodoFormData {
   endTime?: string; // 종료 시간 (HH:mm 형식)
 
   // 일정 유형 관련
-  scheduleType?: 'all_day' | 'anytime' | 'timed';
+  scheduleType?: 'all_day' | 'anytime' | 'timed' | 'none';
   anytimeDuration?: number; // 예상 소요 시간 (분 단위)
 
   // 반복 설정 관련
@@ -265,7 +265,7 @@ export default function TodoFormFields({
             <select
               value={todo.scheduleType || 'anytime'}
               onChange={(e) => {
-                const scheduleType = e.target.value as 'anytime' | 'timed' | 'all_day';
+                const scheduleType = e.target.value as 'anytime' | 'timed' | 'all_day' | 'none';
                 const updates: any = { scheduleType };
 
                 // 자동 세팅
@@ -278,12 +278,21 @@ export default function TodoFormFields({
                   updates.includeTime = true;
                   const now = new Date();
                   updates.startTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                } else if (scheduleType === 'none') {
+                  // 선택 안함: 날짜/시간 정보 초기화
+                  updates.scheduledDate = undefined;
+                  updates.includeEndDate = false;
+                  updates.includeTime = false;
+                  updates.startTime = undefined;
+                  updates.endDate = undefined;
+                  updates.endTime = undefined;
                 }
 
                 onChange({ ...todo, ...updates });
               }}
               className="select select-bordered w-full"
             >
+              <option value="none">📝 선택 안함 · 일정 없음</option>
               <option value="anytime">⏰ 언제든지 · 특정 날짜에 타임라인에서 언제든지 바로 시작하거나 추후 계획 페이지에서 시간 지정해서 사용 가능(이때 시간 지정하면 일정유형이 시간지정으로 변경됨)</option>
               <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
               <option value="all_day">📅 종일 · 하루 종일</option>
@@ -332,7 +341,7 @@ export default function TodoFormFields({
       )}
 
       {/* 날짜 */}
-      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'schedule_clear') && (
+      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'schedule_clear') && todo.scheduleType !== 'none' && (
         <>
           {/* 시작 날짜 */}
           <div className="my-4">
