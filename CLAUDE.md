@@ -190,6 +190,19 @@ npm start                     # 프로덕션 서버
 - `Object.assign(state.optimisticState, {...})`
 - Optimistic updates 적용
 
+### 날짜/시간 저장 패턴
+
+**timestamptz 날짜 전용 저장**:
+- 날짜만 저장: `new Date('YYYY-MM-DDT00:00:00+09:00').toISOString()`
+- DB 저장: 한국시간 자정 → UTC 변환 (예: 2025-11-08 00:00 KST → 2025-11-07 15:00 UTC)
+
+**schedule_type 필드로 구분**:
+- `anytime`: 날짜만 (start_time은 자정)
+- `timed`: 날짜+시간
+- `all_day`: 종일
+
+**중요**: DB의 start_time만으로는 날짜/시간 구분 불가. schedule_type 필드 필수.
+
 ---
 
 ## 🔄 개발 워크플로우
