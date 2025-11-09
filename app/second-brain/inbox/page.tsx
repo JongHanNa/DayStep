@@ -253,38 +253,11 @@ export default function InboxPage() {
         // 시간지정일 때 날짜와 시간 결합
         let finalDateTime: Date | undefined = todoForm.scheduledDate;
 
-        // 🔍 디버깅 로그 1: 초기 상태
-        console.log('===== 저장 디버깅 시작 =====');
-        console.log('1. todoForm.scheduleType:', todoForm.scheduleType);
-        console.log('2. todoForm.startTime:', todoForm.startTime);
-        console.log('3. todoForm.scheduledDate:', todoForm.scheduledDate);
-        console.log('4. todoForm.includeTime:', (todoForm as any).includeTime);
-        console.log('5. finalDateTime (초기):', finalDateTime);
-
         if (todoForm.scheduleType === 'timed' && todoForm.startTime && finalDateTime) {
-          // 🔍 디버깅 로그 2: 조건 통과
-          console.log('6. ✅ 시간 결합 조건 통과!');
-
           const [hours, minutes] = todoForm.startTime.split(':');
-          console.log('7. 추출한 시간:', { hours, minutes });
-
           finalDateTime = new Date(finalDateTime);
-          console.log('8. Date 객체 복사 후:', finalDateTime);
-
           finalDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-          console.log('9. setHours 후:', finalDateTime);
-        } else {
-          // 🔍 디버깅 로그 3: 조건 실패
-          console.log('6. ❌ 시간 결합 조건 실패');
-          console.log('   - scheduleType === "timed"?', todoForm.scheduleType === 'timed');
-          console.log('   - startTime 존재?', !!todoForm.startTime);
-          console.log('   - finalDateTime 존재?', !!finalDateTime);
         }
-
-        // 🔍 디버깅 로그 4: 최종 값
-        console.log('10. finalDateTime.toISOString():', finalDateTime?.toISOString());
-        console.log('11. schedule_type 전송값:', todoForm.scheduleType);
-        console.log('===== 저장 디버깅 끝 =====');
 
         // DB 직접 업데이트 (로컬 상태 업데이트 제거)
         await updateInboxTodo(appUser.id, editingItem.id, {
