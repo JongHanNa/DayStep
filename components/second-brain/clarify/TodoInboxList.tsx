@@ -103,7 +103,13 @@ export default function TodoInboxList({
           ? (() => {
               // Date 객체를 YYYY-MM-DD 문자열로 변환
               const dateStr = updatedTodo.scheduledDate.toISOString().split('T')[0];
-              // 한국시간 자정(00:00:00+09:00)으로 설정 후 ISO 변환
+
+              // 시간지정(timed)일 때: 날짜 + 시간 결합
+              if (updatedTodo.scheduleType === 'timed' && updatedTodo.startTime) {
+                return new Date(`${dateStr}T${updatedTodo.startTime}:00+09:00`).toISOString();
+              }
+
+              // 언제든지/종일: 한국시간 자정(00:00:00+09:00)으로 설정 후 ISO 변환
               return new Date(`${dateStr}T00:00:00+09:00`).toISOString();
             })()
           : undefined,

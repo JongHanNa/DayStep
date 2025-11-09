@@ -359,7 +359,7 @@ export default function TodoFormFields({
                 onChange={(e) =>
                   onChange({
                     ...todo,
-                    scheduledDate: e.target.value ? new Date(e.target.value) : undefined,
+                    scheduledDate: e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined,
                   })
                 }
                 className="input input-bordered w-full"

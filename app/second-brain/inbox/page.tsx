@@ -198,11 +198,21 @@ export default function InboxPage() {
         }
       }
 
+      // start_time에서 HH:mm 포맷 추출 (시간지정일 때만)
+      let startTime: string | undefined;
+      if (item.schedule_type === 'timed' && item.scheduled_date) {
+        const date = new Date(item.scheduled_date);
+        startTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      }
+
       setTodoForm({
         title: item.content,
         clarification: item.clarification || '',
         nextActionStatuses,
         scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
+        scheduleType: item.schedule_type || 'none',
+        startTime,
+        includeTime: item.schedule_type === 'timed',
         isHighlight: item.is_highlight || false,
         completed: item.is_completed || false,
         projectIds: item.project_id ? [item.project_id] : [],
@@ -240,12 +250,49 @@ export default function InboxPage() {
     try {
       // 탭 필터링과 동일한 조건: item_type이 없으면 todo로 간주
       if (!editingItem.item_type || editingItem.item_type === 'todo') {
+        // 시간지정일 때 날짜와 시간 결합
+        let finalDateTime: Date | undefined = todoForm.scheduledDate;
+
+        // 🔍 디버깅 로그 1: 초기 상태
+        console.log('===== 저장 디버깅 시작 =====');
+        console.log('1. todoForm.scheduleType:', todoForm.scheduleType);
+        console.log('2. todoForm.startTime:', todoForm.startTime);
+        console.log('3. todoForm.scheduledDate:', todoForm.scheduledDate);
+        console.log('4. todoForm.includeTime:', (todoForm as any).includeTime);
+        console.log('5. finalDateTime (초기):', finalDateTime);
+
+        if (todoForm.scheduleType === 'timed' && todoForm.startTime && finalDateTime) {
+          // 🔍 디버깅 로그 2: 조건 통과
+          console.log('6. ✅ 시간 결합 조건 통과!');
+
+          const [hours, minutes] = todoForm.startTime.split(':');
+          console.log('7. 추출한 시간:', { hours, minutes });
+
+          finalDateTime = new Date(finalDateTime);
+          console.log('8. Date 객체 복사 후:', finalDateTime);
+
+          finalDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          console.log('9. setHours 후:', finalDateTime);
+        } else {
+          // 🔍 디버깅 로그 3: 조건 실패
+          console.log('6. ❌ 시간 결합 조건 실패');
+          console.log('   - scheduleType === "timed"?', todoForm.scheduleType === 'timed');
+          console.log('   - startTime 존재?', !!todoForm.startTime);
+          console.log('   - finalDateTime 존재?', !!finalDateTime);
+        }
+
+        // 🔍 디버깅 로그 4: 최종 값
+        console.log('10. finalDateTime.toISOString():', finalDateTime?.toISOString());
+        console.log('11. schedule_type 전송값:', todoForm.scheduleType);
+        console.log('===== 저장 디버깅 끝 =====');
+
         // DB 직접 업데이트 (로컬 상태 업데이트 제거)
         await updateInboxTodo(appUser.id, editingItem.id, {
           title: todoForm.title,
           clarification: todoForm.clarification,
           next_action_contexts: todoForm.nextActionStatuses,
-          scheduled_date: todoForm.scheduledDate?.toISOString(),
+          scheduled_date: finalDateTime?.toISOString(),
+          schedule_type: todoForm.scheduleType,
           is_today_highlight: todoForm.isHighlight,
           completed: todoForm.completed,
           project_id: todoForm.projectIds?.[0] || undefined,
@@ -753,7 +800,7 @@ export default function InboxPage() {
         onProjectImmediateSave={handleProjectImmediateSave}
         onNoteImmediateSave={handleNoteImmediateSave}
         showNextActionStatus={false}
-        showScheduledDate={false}
+        showScheduledDate={true}
         showHighlight={false}
         showCompleted={false}
         showProjects={false}

@@ -250,6 +250,7 @@ export interface InboxItem {
   clarification?: string; // 명료화
   next_action_status?: string; // 다음행동상황
   scheduled_date?: string; // 예정 날짜 (ISO date string)
+  schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none'; // 일정 유형
   is_highlight?: boolean; // 오늘의 하이라이트
   is_completed?: boolean; // 완료 여부
   recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'; // 반복 패턴

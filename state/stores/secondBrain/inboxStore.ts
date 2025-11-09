@@ -54,6 +54,7 @@ function todoToInboxItem(todo: any): InboxItem {
     item_type: 'todo',
     clarification: todo.clarification || '',
     scheduled_date: todo.start_time || undefined,
+    schedule_type: todo.schedule_type || 'none',
     is_highlight: todo.is_today_highlight || false,
     is_completed: todo.completed || false,
     next_action_status: todo.next_action_contexts?.length > 0 ? JSON.stringify(todo.next_action_contexts) : '',
