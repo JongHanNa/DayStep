@@ -60,6 +60,7 @@ function todoToInboxItem(todo: any): InboxItem {
     is_completed: todo.completed || false,
     next_action_status: todo.next_action_contexts?.length > 0 ? JSON.stringify(nextActionToKorean(todo.next_action_contexts)) : '',
     recurrence_pattern: todo.recurrence_pattern || 'none',
+    project_id: todo.todo_projects?.[0]?.project_id || undefined, // ✅ todo_projects JOIN 데이터에서 project_id 추출
     created_at: todo.created_at,
     updated_at: todo.updated_at,
   };

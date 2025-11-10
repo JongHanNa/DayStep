@@ -309,11 +309,12 @@ export default function PlanPage() {
   }, [inboxItems]);
 
   const nextActionTodos = useMemo(() => {
-    // status='next_action'인 항목만 다음행동 탭에 표시
-    // 명료화에서 '다음행동' + 상황 선택 시 status='next_action'으로 변경됨
+    // clarification='next_action' + schedule_type='none'인 항목만 다음행동 탭에 표시
+    // 명료화에서 '다음행동' + 상황 선택 시 clarification='next_action'으로 저장됨
     return inboxItems.filter((item: InboxItem) =>
       item.item_type === 'todo' &&  // 할일 타입만
-      item.status === 'next_action' &&
+      item.clarification === 'next_action' &&
+      item.schedule_type === 'none' &&  // schedule_type='none'만 표시
       !item.scheduled_date
     );
   }, [inboxItems]);
@@ -324,24 +325,29 @@ export default function PlanPage() {
       if (item.item_type !== 'todo') {
         return false;
       }
+      // 날짜가 있는 할일 제외
       if (item.scheduled_date) {
         return false;
       }
       // 대기중 상태 할일 제외 (대기중 탭에만 표시)
-      if (item.clarification === '대기중') {
+      if (item.clarification === 'waiting') {
         return false;
       }
-      // 프로젝트 선택과 무관하게 모든 할일 반환
+      // 프로젝트 연결된 할일만 표시 (project_id가 있어야 함)
+      if (!item.project_id) {
+        return false;
+      }
       return true;
     });
   }, [inboxItems]);
 
   const waitingTodos = useMemo(() => {
-    // clarification='대기중'인 항목만 대기중 탭에 표시
+    // clarification='waiting' + schedule_type='none'인 항목만 대기중 탭에 표시
     // 명료화에서 '대기중' 선택 시 clarification='waiting'으로 저장됨
     return inboxItems.filter((item: InboxItem) =>
       item.item_type === 'todo' &&  // 할일 타입만
       item.clarification === 'waiting' &&
+      item.schedule_type === 'none' &&  // schedule_type='none'만 표시
       !item.scheduled_date
     );
   }, [inboxItems]);
