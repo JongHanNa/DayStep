@@ -23,6 +23,7 @@ import {
   deleteInboxTodo,
   deleteInboxNote,
 } from '@/lib/supabase/inbox';
+import { nextActionToKorean } from '@/lib/utils/nextActionMapping';
 
 interface InboxStoreState {
   inboxItems: InboxItem[];
@@ -57,7 +58,7 @@ function todoToInboxItem(todo: any): InboxItem {
     schedule_type: todo.schedule_type || 'none',
     is_highlight: todo.is_today_highlight || false,
     is_completed: todo.completed || false,
-    next_action_status: todo.next_action_contexts?.length > 0 ? JSON.stringify(todo.next_action_contexts) : '',
+    next_action_status: todo.next_action_contexts?.length > 0 ? JSON.stringify(nextActionToKorean(todo.next_action_contexts)) : '',
     recurrence_pattern: todo.recurrence_pattern || 'none',
     created_at: todo.created_at,
     updated_at: todo.updated_at,
