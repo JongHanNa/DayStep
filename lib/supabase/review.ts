@@ -1,22 +1,10 @@
-import { supabase } from '@/lib/supabase';
-
-// Helper for executing raw SQL queries - TEMPORARY IMPLEMENTATION
-// TODO: Refactor to use queryRLSTableWithJWT, createWithJWT, updateWithJWT, deleteWithJWT from core.ts
-async function executeQuery<T = any>(query: string): Promise<{ data: T[] | null; error: any }> {
-  try {
-    // Using supabase client directly for now - needs RPC function implementation in DB
-    const { data, error } = await (supabase as any).rpc('execute_sql', { sql: query });
-    return { data: (data as T[]) || null, error };
-  } catch (error) {
-    console.error('executeQuery error:', error);
-    return { data: null, error };
-  }
-}
-
-// Helper wrapper for backward compatibility
-const supabaseWebViewHelper = {
-  executeQuery
-};
+import {
+  queryRLSTableWithJWT,
+  createWithJWT,
+  updateWithJWT,
+  deleteWithJWT,
+  type QueryCondition,
+} from '@/lib/supabase/core';
 
 /**
  * 점검 체크리스트 항목 타입
@@ -82,19 +70,14 @@ export async function fetchReviewChecklists(
   section: 'empty' | 'refresh'
 ): Promise<ReviewChecklistItem[]> {
   try {
-    const query = `
-      SELECT *
-      FROM review_checklist_items
-      WHERE user_id = '${userId}' AND section = '${section}'
-      ORDER BY display_order ASC, created_at ASC
-    `;
+    const conditions: QueryCondition[] = [
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'section', operator: 'eq', value: section },
+    ];
 
-    const { data, error } = await supabaseWebViewHelper.executeQuery<ReviewChecklistItem>(query);
-
-    if (error) {
-      console.error('fetchReviewChecklists error:', error);
-      throw error;
-    }
+    const data = await queryRLSTableWithJWT('review_checklist_items', conditions, {
+      order: 'display_order.asc,created_at.asc',
+    });
 
     // 데이터가 없으면 기본 체크리스트 생성
     if (!data || data.length === 0) {
@@ -118,21 +101,18 @@ async function initializeDefaultChecklist(
   try {
     const defaultItems = section === 'empty' ? DEFAULT_EMPTY_SOURCES : DEFAULT_REFRESH_CHECKLIST;
 
-    const insertPromises = defaultItems.map((label, index) => {
-      const query = `
-        INSERT INTO review_checklist_items (user_id, section, label, is_default, display_order)
-        VALUES ('${userId}', '${section}', '${label}', true, ${index})
-        RETURNING *
-      `;
-      return supabaseWebViewHelper.executeQuery<ReviewChecklistItem>(query);
-    });
+    const insertPromises = defaultItems.map((label, index) =>
+      createWithJWT('review_checklist_items', {
+        user_id: userId,
+        section,
+        label,
+        is_default: true,
+        display_order: index,
+      })
+    );
 
     const results = await Promise.all(insertPromises);
-
-    // 생성된 항목 반환
-    return results
-      .filter((result: any) => result.data && result.data.length > 0)
-      .map((result: any) => result.data![0]);
+    return results.filter((item) => item != null);
   } catch (error) {
     console.error('initializeDefaultChecklist failed:', error);
     throw error;
@@ -149,31 +129,29 @@ export async function createChecklistItem(
 ): Promise<ReviewChecklistItem> {
   try {
     // 현재 최대 display_order 조회
-    const maxOrderQuery = `
-      SELECT COALESCE(MAX(display_order), -1) as max_order
-      FROM review_checklist_items
-      WHERE user_id = '${userId}' AND section = '${section}'
-    `;
+    const conditions: QueryCondition[] = [
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'section', operator: 'eq', value: section },
+    ];
 
-    const { data: maxData } = await supabaseWebViewHelper.executeQuery<{ max_order: number }>(
-      maxOrderQuery
-    );
-    const nextOrder = (maxData?.[0]?.max_order || 0) + 1;
+    const existingItems = await queryRLSTableWithJWT('review_checklist_items', conditions, {
+      select: 'display_order',
+      order: 'display_order.desc',
+      limit: 1,
+    });
 
-    const query = `
-      INSERT INTO review_checklist_items (user_id, section, label, is_default, display_order)
-      VALUES ('${userId}', '${section}', '${label.replace(/'/g, "''")}', false, ${nextOrder})
-      RETURNING *
-    `;
+    const maxOrder = existingItems && existingItems.length > 0 ? existingItems[0].display_order : -1;
+    const nextOrder = maxOrder + 1;
 
-    const { data, error } = await supabaseWebViewHelper.executeQuery<ReviewChecklistItem>(query);
+    const newItem = await createWithJWT('review_checklist_items', {
+      user_id: userId,
+      section,
+      label,
+      is_default: false,
+      display_order: nextOrder,
+    });
 
-    if (error) {
-      console.error('createChecklistItem error:', error);
-      throw error;
-    }
-
-    return data![0];
+    return newItem;
   } catch (error) {
     console.error('createChecklistItem failed:', error);
     throw error;
@@ -185,17 +163,13 @@ export async function createChecklistItem(
  */
 export async function deleteChecklistItem(userId: string, itemId: string): Promise<void> {
   try {
-    const query = `
-      DELETE FROM review_checklist_items
-      WHERE id = '${itemId}' AND user_id = '${userId}' AND is_default = false
-    `;
+    const conditions: QueryCondition[] = [
+      { column: 'id', operator: 'eq', value: itemId },
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'is_default', operator: 'eq', value: false },
+    ];
 
-    const { error } = await supabaseWebViewHelper.executeQuery(query);
-
-    if (error) {
-      console.error('deleteChecklistItem error:', error);
-      throw error;
-    }
+    await deleteWithJWT('review_checklist_items', conditions);
   } catch (error) {
     console.error('deleteChecklistItem failed:', error);
     throw error;
@@ -207,19 +181,13 @@ export async function deleteChecklistItem(userId: string, itemId: string): Promi
  */
 export async function fetchChecklistStates(userId: string): Promise<ReviewChecklistState[]> {
   try {
-    const query = `
-      SELECT *
-      FROM review_checklist_state
-      WHERE user_id = '${userId}'
-    `;
+    const conditions: QueryCondition = {
+      column: 'user_id',
+      operator: 'eq',
+      value: userId,
+    };
 
-    const { data, error } = await supabaseWebViewHelper.executeQuery<ReviewChecklistState>(query);
-
-    if (error) {
-      console.error('fetchChecklistStates error:', error);
-      throw error;
-    }
-
+    const data = await queryRLSTableWithJWT('review_checklist_state', conditions);
     return data || [];
   } catch (error) {
     console.error('fetchChecklistStates failed:', error);
@@ -229,6 +197,7 @@ export async function fetchChecklistStates(userId: string): Promise<ReviewCheckl
 
 /**
  * 체크리스트 상태 업데이트 (체크/언체크)
+ * Supabase UPSERT: Prefer: resolution=merge-duplicates 헤더 사용
  */
 export async function updateChecklistState(
   userId: string,
@@ -236,24 +205,37 @@ export async function updateChecklistState(
   isChecked: boolean
 ): Promise<void> {
   try {
-    const checkedAt = isChecked ? `'${new Date().toISOString()}'` : 'NULL';
+    const checkedAt = isChecked ? new Date().toISOString() : null;
 
-    // UPSERT (ON CONFLICT UPDATE)
-    const query = `
-      INSERT INTO review_checklist_state (user_id, checklist_item_id, is_checked, checked_at)
-      VALUES ('${userId}', '${checklistItemId}', ${isChecked}, ${checkedAt})
-      ON CONFLICT (user_id, checklist_item_id)
-      DO UPDATE SET
-        is_checked = ${isChecked},
-        checked_at = ${checkedAt},
-        updated_at = NOW()
-    `;
+    // UPSERT를 위해 createWithJWT에 특별 헤더 추가
+    // Supabase REST API는 POST + Prefer: resolution=merge-duplicates로 UPSERT 구현
+    const data = {
+      user_id: userId,
+      checklist_item_id: checklistItemId,
+      is_checked: isChecked,
+      checked_at: checkedAt,
+    };
 
-    const { error } = await supabaseWebViewHelper.executeQuery(query);
+    // 기존 상태 확인
+    const existingConditions: QueryCondition[] = [
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'checklist_item_id', operator: 'eq', value: checklistItemId },
+    ];
 
-    if (error) {
-      console.error('updateChecklistState error:', error);
-      throw error;
+    const existing = await queryRLSTableWithJWT('review_checklist_state', existingConditions, {
+      limit: 1,
+      single: true,
+    });
+
+    if (existing) {
+      // UPDATE
+      await updateWithJWT('review_checklist_state', existingConditions, {
+        is_checked: isChecked,
+        checked_at: checkedAt,
+      });
+    } else {
+      // INSERT
+      await createWithJWT('review_checklist_state', data);
     }
   } catch (error) {
     console.error('updateChecklistState failed:', error);
@@ -266,18 +248,17 @@ export async function updateChecklistState(
  */
 export async function resetChecklist(userId: string): Promise<void> {
   try {
-    const query = `
-      UPDATE review_checklist_state
-      SET is_checked = false, checked_at = NULL, reset_at = NOW(), updated_at = NOW()
-      WHERE user_id = '${userId}'
-    `;
+    const conditions: QueryCondition = {
+      column: 'user_id',
+      operator: 'eq',
+      value: userId,
+    };
 
-    const { error } = await supabaseWebViewHelper.executeQuery(query);
-
-    if (error) {
-      console.error('resetChecklist error:', error);
-      throw error;
-    }
+    await updateWithJWT('review_checklist_state', conditions, {
+      is_checked: false,
+      checked_at: null,
+      reset_at: new Date().toISOString(),
+    });
   } catch (error) {
     console.error('resetChecklist failed:', error);
     throw error;
@@ -292,26 +273,18 @@ export async function fetchReviewTodos(
   clarifyType?: string
 ): Promise<any[]> {
   try {
-    let clarificationFilter = '';
+    const conditions: QueryCondition[] = [
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'item_type', operator: 'eq', value: 'todo' },
+    ];
+
     if (clarifyType) {
-      clarificationFilter = `AND clarification = '${clarifyType}'`;
+      conditions.push({ column: 'clarification', operator: 'eq', value: clarifyType });
     }
 
-    const query = `
-      SELECT *
-      FROM inbox_items
-      WHERE user_id = '${userId}'
-        AND item_type = 'todo'
-        ${clarificationFilter}
-      ORDER BY created_at DESC
-    `;
-
-    const { data, error } = await supabaseWebViewHelper.executeQuery(query);
-
-    if (error) {
-      console.error('fetchReviewTodos error:', error);
-      throw error;
-    }
+    const data = await queryRLSTableWithJWT('inbox_items', conditions, {
+      order: 'created_at.desc',
+    });
 
     return data || [];
   } catch (error) {
