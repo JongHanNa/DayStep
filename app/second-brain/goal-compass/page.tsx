@@ -19,6 +19,15 @@ import {
 } from '@/lib/date-utils';
 import type { Goal, Project } from '@/types/second-brain';
 
+// hex 색상을 rgba로 변환하는 헬퍼 함수
+function hexToRgba(hex: string, alpha: number): string {
+  // #RRGGBB 형식에서 RGB 추출
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // 아코디언 섹션 컴포넌트
 interface AccordionSectionProps {
   title: string;
@@ -111,7 +120,10 @@ function GoalCard({ goal }: GoalCardProps) {
         </div>
       </div>
       {/* 진행률 바 */}
-      <div className="w-full bg-base-200 rounded-full h-2">
+      <div
+        className="w-full rounded-full h-2"
+        style={{ backgroundColor: hexToRgba(goal.color, 0.2) }}
+      >
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${goal.progress}%`, backgroundColor: goal.color }}
@@ -168,7 +180,10 @@ function ProjectCard({ project, showGoalName = false, goals = [] }: ProjectCardP
         </div>
       </div>
       {/* 진행률 바 */}
-      <div className="w-full bg-base-200 rounded-full h-2">
+      <div
+        className="w-full rounded-full h-2"
+        style={{ backgroundColor: hexToRgba(project.color, 0.2) }}
+      >
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${project.progress}%`, backgroundColor: project.color }}
@@ -435,9 +450,9 @@ export default function GoalCompassPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-base-100 pb-20">
+      <div className="min-h-screen bg-base-200 pb-20">
         {/* 헤더 */}
-        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+        <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
           <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
             <h1 className="text-2xl font-bold">목표 나침반</h1>
             <p className="text-sm text-base-content/70">
