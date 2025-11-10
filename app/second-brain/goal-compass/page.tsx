@@ -1,31 +1,680 @@
 'use client';
 
+import { useState, useMemo, useEffect } from 'react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useAuth } from '@/app/context/AuthContext';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { ChevronDown, Target, FolderKanban, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  calculateDaysUntil,
+  formatDaysRemaining,
+  getQuarterInfo,
+  getWeekRange,
+  getMonthKey,
+  getYear,
+  safeParseDate
+} from '@/lib/date-utils';
+import type { Goal, Project } from '@/types/second-brain';
+
+// 아코디언 섹션 컴포넌트
+interface AccordionSectionProps {
+  title: string;
+  count: number;
+  icon: React.ReactNode;
+  defaultExpanded?: boolean;
+  children: React.ReactNode;
+}
+
+function AccordionSection({ title, count, icon, defaultExpanded = true, children }: AccordionSectionProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  return (
+    <div className="border-b border-base-300">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-transparent hover:opacity-80 transition-opacity"
+      >
+        <div className="flex items-center gap-3">
+          {icon}
+          <span className="font-semibold text-base">{title}</span>
+          <span className="badge badge-sm">{count}</span>
+        </div>
+        <ChevronDown
+          className={cn('w-5 h-5 transition-transform', isExpanded && 'rotate-180')}
+        />
+      </button>
+      {isExpanded && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+// 탭 컴포넌트
+interface TabButtonProps {
+  label: string;
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+function TabButton({ label, count, isActive, onClick }: TabButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn('tab', isActive && 'tab-active')}
+    >
+      {label}
+      <span className="ml-1 badge badge-sm">{count}</span>
+    </button>
+  );
+}
+
+// 목표 카드 컴포넌트
+interface GoalCardProps {
+  goal: Goal;
+}
+
+function GoalCard({ goal }: GoalCardProps) {
+  const daysUntil = goal.end_date ? calculateDaysUntil(goal.end_date) : null;
+  const daysLabel = daysUntil !== null ? formatDaysRemaining(daysUntil) : '';
+  const isDanger = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
+  const isWarning = daysUntil !== null && daysUntil > 7 && daysUntil <= 30;
+
+  return (
+    <div className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3">
+      <div className="flex items-start gap-3 mb-3">
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: goal.color }}
+        >
+          <Target className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-base truncate">{goal.title}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-base-content/60">진행도: {goal.progress}%</span>
+            {daysLabel && (
+              <span
+                className={cn(
+                  'text-sm font-medium',
+                  isDanger && 'text-error',
+                  isWarning && 'text-warning',
+                  !isDanger && !isWarning && 'text-base-content/60'
+                )}
+              >
+                {daysLabel}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* 진행률 바 */}
+      <div className="w-full bg-base-200 rounded-full h-2">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${goal.progress}%`, backgroundColor: goal.color }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// 프로젝트 카드 컴포넌트
+interface ProjectCardProps {
+  project: Project;
+  showGoalName?: boolean;
+  goals?: Goal[];
+}
+
+function ProjectCard({ project, showGoalName = false, goals = [] }: ProjectCardProps) {
+  const daysUntil = project.end_date ? calculateDaysUntil(project.end_date) : null;
+  const daysLabel = daysUntil !== null ? formatDaysRemaining(daysUntil) : '';
+  const isDanger = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
+  const isWarning = daysUntil !== null && daysUntil > 7 && daysUntil <= 30;
+
+  const goalName = showGoalName && project.goal_id
+    ? goals.find(g => g.id === project.goal_id)?.title
+    : null;
+
+  return (
+    <div className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3">
+      <div className="flex items-start gap-3 mb-3">
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: project.color }}
+        >
+          <FolderKanban className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-base truncate">{project.title}</h3>
+          {goalName && <p className="text-xs text-base-content/50 truncate">{goalName}</p>}
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-base-content/60">달성률: {project.progress}%</span>
+            {daysLabel && (
+              <span
+                className={cn(
+                  'text-sm font-medium',
+                  isDanger && 'text-error',
+                  isWarning && 'text-warning',
+                  !isDanger && !isWarning && 'text-base-content/60'
+                )}
+              >
+                {daysLabel}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* 진행률 바 */}
+      <div className="w-full bg-base-200 rounded-full h-2">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${project.progress}%`, backgroundColor: project.color }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// 빈 상태 컴포넌트
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="text-center py-8">
+      <p className="text-base-content/50">{message}</p>
+    </div>
+  );
+}
 
 export default function GoalCompassPage() {
+  const { user } = useAuth();
+  const { goals, fetchGoals } = useGoalStore();
+  const { projects, fetchProjects } = useProjectStore();
+
+  // 탭 상태
+  const [ongoingGoalsTab, setOngoingGoalsTab] = useState<'quarter' | 'year'>('quarter');
+  const [ongoingProjectsTab, setOngoingProjectsTab] = useState<'goal' | 'month' | 'week'>('goal');
+  const [completedGoalsTab, setCompletedGoalsTab] = useState('month');
+  const [completedProjectsTab, setCompletedProjectsTab] = useState<'goal' | 'month'>('goal');
+
+  // 데이터 페칭
+  useEffect(() => {
+    if (user?.id) {
+      fetchGoals(user.id);
+      fetchProjects(user.id);
+    }
+  }, [user?.id, fetchGoals, fetchProjects]);
+
+  // 1. 진행 중인 목표
+  const ongoingGoals = useMemo(() => {
+    return goals.filter(
+      (goal) => goal.status !== 'completed' && goal.status !== 'archived'
+    );
+  }, [goals]);
+
+  // 진행 중인 목표 - 분기별 그룹화
+  const ongoingGoalsByQuarter = useMemo(() => {
+    const grouped: Record<string, Goal[]> = {};
+
+    ongoingGoals.forEach((goal) => {
+      if (goal.year_goal && goal.quarter_goal) {
+        const key = `${goal.year_goal}년 ${goal.quarter_goal.replace('Q', '')}분기`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(goal);
+      }
+    });
+
+    // 각 그룹 내에서 디데이 오름차순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const daysA = a.end_date ? calculateDaysUntil(a.end_date) : Infinity;
+        const daysB = b.end_date ? calculateDaysUntil(b.end_date) : Infinity;
+        return daysA - daysB;
+      });
+    });
+
+    return grouped;
+  }, [ongoingGoals]);
+
+  // 진행 중인 목표 - 연간 그룹화
+  const ongoingGoalsByYear = useMemo(() => {
+    const grouped: Record<string, Goal[]> = {};
+
+    ongoingGoals.forEach((goal) => {
+      if (goal.year_goal) {
+        const key = `${goal.year_goal}년`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(goal);
+      }
+    });
+
+    // 각 그룹 내에서 디데이 오름차순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const daysA = a.end_date ? calculateDaysUntil(a.end_date) : Infinity;
+        const daysB = b.end_date ? calculateDaysUntil(b.end_date) : Infinity;
+        return daysA - daysB;
+      });
+    });
+
+    return grouped;
+  }, [ongoingGoals]);
+
+  // 2. 진행 중인 프로젝트 (종료일이 설정된 것만)
+  const ongoingProjects = useMemo(() => {
+    return projects.filter(
+      (project) => project.end_date && project.status !== 'completed'
+    );
+  }, [projects]);
+
+  // 진행 중인 프로젝트 - 목표별 그룹화
+  const ongoingProjectsByGoal = useMemo(() => {
+    const grouped: Record<string, Project[]> = {};
+
+    ongoingProjects.forEach((project) => {
+      const goalId = project.goal_id || 'no_goal';
+      const key = goalId === 'no_goal'
+        ? '목표 없음'
+        : goals.find(g => g.id === goalId)?.title || '목표 없음';
+
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(project);
+    });
+
+    // 각 그룹 내에서 디데이 오름차순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const daysA = a.end_date ? calculateDaysUntil(a.end_date) : Infinity;
+        const daysB = b.end_date ? calculateDaysUntil(b.end_date) : Infinity;
+        return daysA - daysB;
+      });
+    });
+
+    return grouped;
+  }, [ongoingProjects, goals]);
+
+  // 진행 중인 프로젝트 - 월별 그룹화
+  const ongoingProjectsByMonth = useMemo(() => {
+    const grouped: Record<string, Project[]> = {};
+
+    ongoingProjects.forEach((project) => {
+      if (project.end_date) {
+        const key = getMonthKey(project.end_date);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(project);
+      }
+    });
+
+    // 각 그룹 내에서 디데이 오름차순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const daysA = a.end_date ? calculateDaysUntil(a.end_date) : Infinity;
+        const daysB = b.end_date ? calculateDaysUntil(b.end_date) : Infinity;
+        return daysA - daysB;
+      });
+    });
+
+    return grouped;
+  }, [ongoingProjects]);
+
+  // 진행 중인 프로젝트 - 주별 그룹화
+  const ongoingProjectsByWeek = useMemo(() => {
+    const grouped: Record<string, Project[]> = {};
+
+    ongoingProjects.forEach((project) => {
+      if (project.end_date) {
+        const key = getWeekRange(project.end_date);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(project);
+      }
+    });
+
+    // 각 그룹 내에서 디데이 오름차순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const daysA = a.end_date ? calculateDaysUntil(a.end_date) : Infinity;
+        const daysB = b.end_date ? calculateDaysUntil(b.end_date) : Infinity;
+        return daysA - daysB;
+      });
+    });
+
+    return grouped;
+  }, [ongoingProjects]);
+
+  // 3. 완료된 목표
+  const completedGoals = useMemo(() => {
+    return goals.filter((goal) => goal.status === 'completed');
+  }, [goals]);
+
+  // 완료된 목표 - 월별 그룹화
+  const completedGoalsByMonth = useMemo(() => {
+    const grouped: Record<string, Goal[]> = {};
+
+    completedGoals.forEach((goal) => {
+      const key = getMonthKey(goal.updated_at);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(goal);
+    });
+
+    // 각 그룹 내에서 최신순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const dateA = safeParseDate(a.updated_at).getTime();
+        const dateB = safeParseDate(b.updated_at).getTime();
+        return dateB - dateA;
+      });
+    });
+
+    return grouped;
+  }, [completedGoals]);
+
+  // 4. 완료된 프로젝트 (종료일이 설정된 것만)
+  const completedProjects = useMemo(() => {
+    return projects.filter(
+      (project) => project.end_date && project.status === 'completed'
+    );
+  }, [projects]);
+
+  // 완료된 프로젝트 - 목표별 그룹화
+  const completedProjectsByGoal = useMemo(() => {
+    const grouped: Record<string, Project[]> = {};
+
+    completedProjects.forEach((project) => {
+      const goalId = project.goal_id || 'no_goal';
+      const key = goalId === 'no_goal'
+        ? '목표 없음'
+        : goals.find(g => g.id === goalId)?.title || '목표 없음';
+
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(project);
+    });
+
+    // 각 그룹 내에서 최신순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const dateA = a.completed_at
+          ? safeParseDate(a.completed_at).getTime()
+          : safeParseDate(a.updated_at).getTime();
+        const dateB = b.completed_at
+          ? safeParseDate(b.completed_at).getTime()
+          : safeParseDate(b.updated_at).getTime();
+        return dateB - dateA;
+      });
+    });
+
+    return grouped;
+  }, [completedProjects, goals]);
+
+  // 완료된 프로젝트 - 월별 그룹화
+  const completedProjectsByMonth = useMemo(() => {
+    const grouped: Record<string, Project[]> = {};
+
+    completedProjects.forEach((project) => {
+      const dateToUse = project.completed_at || project.updated_at;
+      const key = getMonthKey(dateToUse);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(project);
+    });
+
+    // 각 그룹 내에서 최신순 정렬
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const dateA = a.completed_at
+          ? safeParseDate(a.completed_at).getTime()
+          : safeParseDate(a.updated_at).getTime();
+        const dateB = b.completed_at
+          ? safeParseDate(b.completed_at).getTime()
+          : safeParseDate(b.updated_at).getTime();
+        return dateB - dateA;
+      });
+    });
+
+    return grouped;
+  }, [completedProjects]);
+
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-base-100 pb-20">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-        <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-          <h1 className="text-2xl font-bold">목표 나침반</h1>
-          <p className="text-sm text-base-content/70">
-            목표 달성을 위한 가이드를 제공합니다
-          </p>
+        {/* 헤더 */}
+        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+            <h1 className="text-2xl font-bold">목표 나침반</h1>
+            <p className="text-sm text-base-content/70">
+              목표와 프로젝트의 진행 상황을 한눈에 확인하세요
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <div className="text-center py-12">
-          <p className="text-base-content/50">목표 나침반 페이지 (추후 구현)</p>
+        {/* 메인 콘텐츠 */}
+        <div className="max-w-3xl mx-auto">
+          {/* 1. 진행 중인 목표 */}
+          <AccordionSection
+            title="진행 중인 목표"
+            count={ongoingGoals.length}
+            icon={<Target className="w-5 h-5 text-primary" />}
+            defaultExpanded={true}
+          >
+            <div className="tabs tabs-boxed inline-flex mb-4">
+              <TabButton
+                label="분기별"
+                count={Object.keys(ongoingGoalsByQuarter).length}
+                isActive={ongoingGoalsTab === 'quarter'}
+                onClick={() => setOngoingGoalsTab('quarter')}
+              />
+              <TabButton
+                label="연간"
+                count={Object.keys(ongoingGoalsByYear).length}
+                isActive={ongoingGoalsTab === 'year'}
+                onClick={() => setOngoingGoalsTab('year')}
+              />
+            </div>
+
+            {ongoingGoalsTab === 'quarter' && (
+              <>
+                {Object.keys(ongoingGoalsByQuarter).length === 0 ? (
+                  <EmptyState message="진행 중인 분기 목표가 없습니다" />
+                ) : (
+                  Object.entries(ongoingGoalsByQuarter).map(([quarter, goalList]) => (
+                    <div key={quarter} className="mb-6">
+                      <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{quarter}</h3>
+                      {goalList.map((goal) => (
+                        <GoalCard key={goal.id} goal={goal} />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+
+            {ongoingGoalsTab === 'year' && (
+              <>
+                {Object.keys(ongoingGoalsByYear).length === 0 ? (
+                  <EmptyState message="진행 중인 연간 목표가 없습니다" />
+                ) : (
+                  Object.entries(ongoingGoalsByYear).map(([year, goalList]) => (
+                    <div key={year} className="mb-6">
+                      <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{year}</h3>
+                      {goalList.map((goal) => (
+                        <GoalCard key={goal.id} goal={goal} />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </AccordionSection>
+
+          {/* 2. 진행 중인 프로젝트 */}
+          <AccordionSection
+            title="진행 중인 프로젝트"
+            count={ongoingProjects.length}
+            icon={<FolderKanban className="w-5 h-5 text-secondary" />}
+            defaultExpanded={true}
+          >
+            <div className="tabs tabs-boxed inline-flex mb-4">
+              <TabButton
+                label="목표별"
+                count={Object.keys(ongoingProjectsByGoal).length}
+                isActive={ongoingProjectsTab === 'goal'}
+                onClick={() => setOngoingProjectsTab('goal')}
+              />
+              <TabButton
+                label="월별"
+                count={Object.keys(ongoingProjectsByMonth).length}
+                isActive={ongoingProjectsTab === 'month'}
+                onClick={() => setOngoingProjectsTab('month')}
+              />
+              <TabButton
+                label="주별"
+                count={Object.keys(ongoingProjectsByWeek).length}
+                isActive={ongoingProjectsTab === 'week'}
+                onClick={() => setOngoingProjectsTab('week')}
+              />
+            </div>
+
+            {ongoingProjectsTab === 'goal' && (
+              <>
+                {Object.keys(ongoingProjectsByGoal).length === 0 ? (
+                  <EmptyState message="진행 중인 프로젝트가 없습니다" />
+                ) : (
+                  Object.entries(ongoingProjectsByGoal).map(([goalName, projectList]) => (
+                    <div key={goalName} className="mb-6">
+                      <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{goalName}</h3>
+                      {projectList.map((project) => (
+                        <ProjectCard key={project.id} project={project} goals={goals} />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+
+            {ongoingProjectsTab === 'month' && (
+              <>
+                {Object.keys(ongoingProjectsByMonth).length === 0 ? (
+                  <EmptyState message="진행 중인 프로젝트가 없습니다" />
+                ) : (
+                  Object.entries(ongoingProjectsByMonth).map(([month, projectList]) => (
+                    <div key={month} className="mb-6">
+                      <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{month}</h3>
+                      {projectList.map((project) => (
+                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+
+            {ongoingProjectsTab === 'week' && (
+              <>
+                {Object.keys(ongoingProjectsByWeek).length === 0 ? (
+                  <EmptyState message="진행 중인 프로젝트가 없습니다" />
+                ) : (
+                  Object.entries(ongoingProjectsByWeek).map(([week, projectList]) => (
+                    <div key={week} className="mb-6">
+                      <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{week}</h3>
+                      {projectList.map((project) => (
+                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </AccordionSection>
+
+          {/* 3. 완료된 목표 */}
+          <AccordionSection
+            title="완료된 목표"
+            count={completedGoals.length}
+            icon={<CheckCircle2 className="w-5 h-5 text-success" />}
+            defaultExpanded={true}
+          >
+            <div className="tabs tabs-boxed inline-flex mb-4">
+              <TabButton
+                label="월별"
+                count={Object.keys(completedGoalsByMonth).length}
+                isActive={true}
+                onClick={() => {}}
+              />
+            </div>
+
+            {Object.keys(completedGoalsByMonth).length === 0 ? (
+              <EmptyState message="완료된 목표가 없습니다" />
+            ) : (
+              Object.entries(completedGoalsByMonth).map(([month, goalList]) => (
+                <div key={month} className="mb-6">
+                  <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{month}</h3>
+                  {goalList.map((goal) => (
+                    <GoalCard key={goal.id} goal={goal} />
+                  ))}
+                </div>
+              ))
+            )}
+          </AccordionSection>
+
+          {/* 4. 완료된 프로젝트 */}
+          <AccordionSection
+            title="완료된 프로젝트"
+            count={completedProjects.length}
+            icon={<CheckCircle2 className="w-5 h-5 text-info" />}
+            defaultExpanded={true}
+          >
+            <div className="tabs tabs-boxed inline-flex mb-4">
+              <TabButton
+                label="목표별"
+                count={Object.keys(completedProjectsByGoal).length}
+                isActive={completedProjectsTab === 'goal'}
+                onClick={() => setCompletedProjectsTab('goal')}
+              />
+              <TabButton
+                label="월별"
+                count={Object.keys(completedProjectsByMonth).length}
+                isActive={completedProjectsTab === 'month'}
+                onClick={() => setCompletedProjectsTab('month')}
+              />
+            </div>
+
+            {completedProjectsTab === 'goal' && (
+              <>
+                {Object.keys(completedProjectsByGoal).length === 0 ? (
+                  <EmptyState message="완료된 프로젝트가 없습니다" />
+                ) : (
+                  Object.entries(completedProjectsByGoal).map(([goalName, projectList]) => (
+                    <div key={goalName} className="mb-6">
+                      <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{goalName}</h3>
+                      {projectList.map((project) => (
+                        <ProjectCard key={project.id} project={project} goals={goals} />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+
+            {completedProjectsTab === 'month' && (
+              <>
+                {Object.keys(completedProjectsByMonth).length === 0 ? (
+                  <EmptyState message="완료된 프로젝트가 없습니다" />
+                ) : (
+                  Object.entries(completedProjectsByMonth).map(([month, projectList]) => (
+                    <div key={month} className="mb-6">
+                      <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{month}</h3>
+                      {projectList.map((project) => (
+                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </AccordionSection>
         </div>
-      </div>
 
-      {/* 하단 네비게이션 */}
-      <SecondBrainBottomNav />
+        {/* 하단 네비게이션 */}
+        <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

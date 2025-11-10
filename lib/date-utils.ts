@@ -503,3 +503,85 @@ export function adjustDateForViewMode(
   
   return currentDate;
 }
+
+/**
+ * 목표 나침반 페이지용 유틸리티 함수들
+ */
+
+/**
+ * 디데이 계산 (종료일까지 남은 일수)
+ */
+export function calculateDaysUntil(endDate: string | Date): number {
+  const today = typeof window !== 'undefined' ? getKSTCurrentDate() : new Date();
+  const target = safeParseDate(endDate);
+
+  return differenceInDays(startOfDay(target), startOfDay(today));
+}
+
+/**
+ * 디데이 포맷팅 (D-7, D-day, D+3 형식)
+ */
+export function formatDaysRemaining(days: number): string {
+  if (days === 0) return 'D-day';
+  if (days > 0) return `D-${days}`;
+  return `D+${Math.abs(days)}`;
+}
+
+/**
+ * 분기 정보 가져오기 (2024년 2분기)
+ */
+export function getQuarterInfo(date: Date | string): {
+  year: number;
+  quarter: number;
+  label: string;
+} {
+  const d = safeParseDate(date);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1; // 1-12
+  const quarter = Math.ceil(month / 3);
+
+  return {
+    year,
+    quarter,
+    label: `${year}년 ${quarter}분기`
+  };
+}
+
+/**
+ * 주차 범위 포맷팅 (2024년 4월 1~7일)
+ */
+export function getWeekRange(date: Date | string): string {
+  const d = safeParseDate(date);
+  const weekStart = startOfWeek(d, { weekStartsOn: 0, locale: DEFAULT_LOCALE });
+  const weekEnd = endOfWeek(d, { weekStartsOn: 0, locale: DEFAULT_LOCALE });
+
+  const year = weekStart.getFullYear();
+  const month = weekStart.getMonth() + 1;
+  const startDay = weekStart.getDate();
+  const endDay = weekEnd.getDate();
+
+  // 같은 달인 경우
+  if (weekStart.getMonth() === weekEnd.getMonth()) {
+    return `${year}년 ${month}월 ${startDay}~${endDay}일`;
+  }
+
+  // 다른 달인 경우
+  const endMonth = weekEnd.getMonth() + 1;
+  return `${year}년 ${month}월 ${startDay}일~${endMonth}월 ${endDay}일`;
+}
+
+/**
+ * 월별 그룹화 키 생성 (2024년 4월)
+ */
+export function getMonthKey(date: Date | string): string {
+  const d = safeParseDate(date);
+  return format(d, 'yyyy년 M월', { locale: DEFAULT_LOCALE });
+}
+
+/**
+ * 년도 추출
+ */
+export function getYear(date: Date | string): number {
+  const d = safeParseDate(date);
+  return d.getFullYear();
+}
