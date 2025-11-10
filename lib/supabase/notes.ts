@@ -12,19 +12,34 @@ export async function fetchNotesWithJWT(userId: string): Promise<Note[]> {
   console.log('📝 JWT 방식으로 노트 조회:', { userId });
 
   try {
-    const notes = await queryRLSTableWithJWT('notes', [
+    // tags를 JOIN으로 가져오기 위한 select 쿼리
+    const rawNotes = await queryRLSTableWithJWT('notes', [
       {
         column: 'user_id',
         operator: 'eq',
         value: userId
       }
     ], {
-      select: '*',
+      select: '*,note_tag_links(tag_id,note_tags(id,name,color,icon))',
       order: 'created_at.desc'
     });
 
+    // note_tag_links를 tags 배열로 변환
+    const notes = (rawNotes || []).map((note: any) => {
+      const tags = (note.note_tag_links || [])
+        .map((link: any) => link.note_tags)
+        .filter(Boolean);
+
+      // note_tag_links 제거하고 tags 추가
+      const { note_tag_links, ...rest } = note;
+      return {
+        ...rest,
+        tags
+      };
+    });
+
     console.log('✅ JWT 노트 조회 성공:', { count: notes?.length || 0 });
-    return notes || [];
+    return notes;
   } catch (error) {
     console.error('❌ JWT 노트 조회 실패:', error);
     return [];
@@ -38,15 +53,24 @@ export async function createNoteWithJWT(data: CreateNoteInput & { user_id: strin
   console.log('✏️ JWT 방식으로 노트 생성:', data);
 
   try {
+    // tags는 DB에 저장하지 않음 (note_tag_links 테이블로 별도 관리)
+    const { tags, ...noteData } = data;
+
     const result = await createWithJWT('notes', {
-      ...data,
-      title: data.title || '새 노트', // 기본값 추가
-      note_category: data.note_category || 'none', // 기본값
-      is_pinned: data.is_pinned || false,
-      tags: data.tags || [],
+      ...noteData,
+      title: noteData.title || '새 노트', // 기본값 추가
+      note_category: noteData.note_category || 'none', // 기본값
+      is_pinned: noteData.is_pinned || false,
     });
+
+    // 결과에 빈 tags 배열 추가 (타입 일치를 위해)
+    const noteWithTags: Note = {
+      ...result,
+      tags: []
+    };
+
     console.log('✅ JWT 노트 생성 성공:', { id: result?.id });
-    return result;
+    return noteWithTags;
   } catch (error) {
     console.error('❌ JWT 노트 생성 실패:', error);
     throw error;

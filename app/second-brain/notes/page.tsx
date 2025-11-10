@@ -107,8 +107,12 @@ export default function NotesPage() {
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
                                 <span className="badge badge-xs">{NOTE_TYPE_LABELS[note.memo_type]}</span>
                                 {note.tags.slice(0, 3).map((tag) => (
-                                  <span key={tag} className="badge badge-xs badge-ghost">
-                                    {tag}
+                                  <span
+                                    key={tag.id}
+                                    className="badge badge-xs badge-ghost"
+                                    style={tag.color ? { backgroundColor: tag.color + '20', color: tag.color } : undefined}
+                                  >
+                                    {tag.name}
                                   </span>
                                 ))}
                               </div>
@@ -139,14 +143,18 @@ export default function NotesPage() {
                           </p>
                           <div className="flex items-center gap-2 mt-2 flex-wrap">
                             <span className="badge badge-xs">{NOTE_TYPE_LABELS[note.memo_type]}</span>
-                            {note.tags.slice(0, 3).map((tag) => (
-                              <span key={tag} className="badge badge-xs badge-ghost">
-                                {tag}
+                            {(note.tags || []).slice(0, 3).map((tag) => (
+                              <span
+                                key={tag.id}
+                                className="badge badge-xs badge-ghost"
+                                style={tag.color ? { backgroundColor: tag.color + '20', color: tag.color } : undefined}
+                              >
+                                {tag.name}
                               </span>
                             ))}
-                            {note.tags.length > 3 && (
+                            {(note.tags || []).length > 3 && (
                               <span className="badge badge-xs badge-ghost">
-                                +{note.tags.length - 3}
+                                +{(note.tags || []).length - 3}
                               </span>
                             )}
                           </div>

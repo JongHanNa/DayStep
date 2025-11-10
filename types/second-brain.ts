@@ -159,6 +159,16 @@ export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference';
 
 /**
+ * 노트 태그
+ */
+export interface NoteTag {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+}
+
+/**
  * 노트 (Note) - PARA 구조로 분류되는 노트
  */
 export interface Note {
@@ -180,7 +190,7 @@ export interface Note {
   connectedNotes?: Note[];
 
   // 메타데이터
-  tags: string[];
+  tags: NoteTag[];
   is_pinned: boolean;
 
   created_at: string;

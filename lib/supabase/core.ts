@@ -292,10 +292,8 @@ export async function queryRLSTableWithJWT(
     }
   });
 
-  // select 추가
-  if (select !== '*') {
-    queryParams.push(`select=${select}`);
-  }
+  // select 추가 (항상 추가, URL 인코딩 포함)
+  queryParams.push(`select=${encodeURIComponent(select)}`);
 
   // order 추가
   if (order) {
@@ -310,6 +308,11 @@ export async function queryRLSTableWithJWT(
   if (queryParams.length > 0) {
     path += '?' + queryParams.join('&');
   }
+
+  // 🔍 디버깅: 실제 API 경로 확인
+  console.log('🔍 [JWT API] 생성된 경로:', path);
+  console.log('🔍 [JWT API] select 파라미터:', select);
+  console.log('🔍 [JWT API] queryParams:', queryParams);
 
   const data = await fetchWithJWT(path);
   return single ? data[0] : data;
