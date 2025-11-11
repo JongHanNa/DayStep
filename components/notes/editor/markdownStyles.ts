@@ -215,12 +215,18 @@ export const webFocusTheme = EditorView.theme({
   '&.cm-focused .cm-scroller': {
     outline: 'none',
   },
-  // 비포커스 상태: 커서 및 selection 배경 숨김
+  // 비포커스 상태: 커서 및 selection 완전 숨김
   '&:not(.cm-focused) .cm-cursor, &:not(.cm-focused) .cm-cursor-primary': {
     visibility: 'hidden !important',
     opacity: '0 !important',
   },
-  '&:not(.cm-focused) .cm-selectionBackground': {
+  '&:not(.cm-focused) .cm-selectionLayer': {
+    display: 'none !important',
+    visibility: 'hidden !important',
+  },
+  '&:not(.cm-focused) .cm-selectionLayer *': {
+    display: 'none !important',
+    visibility: 'hidden !important',
     backgroundColor: 'transparent !important',
   },
   // 포커스 상태: 커서 표시 + 깜빡임
@@ -370,9 +376,15 @@ export const globalMarkdownStyles = `
   }
   
   /* 커서 스타일은 웹/모바일 테마에서 관리 */
-  
-  .advanced-markdown-editor-container .cm-selectionBackground {
+
+  /* 포커스 상태에서만 selection 배경 표시 */
+  .advanced-markdown-editor-container .cm-editor.cm-focused .cm-selectionBackground {
     background-color: hsl(var(--accent)) !important;
+  }
+
+  /* 비포커스 상태에서는 완전 숨김 */
+  .advanced-markdown-editor-container .cm-editor:not(.cm-focused) .cm-selectionLayer {
+    display: none !important;
   }
   
   /* 마크다운 시각적 효과 글로벌 스타일 */
