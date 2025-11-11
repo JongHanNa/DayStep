@@ -39,7 +39,7 @@ export default function ContentEditorModal({
     <dialog open className="modal modal-open">
       <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
         {/* 헤더 */}
-        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-200 z-10`}>
+        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1 border-b border-base-300 sticky top-0 bg-base-200 z-10`}>
           <button
             onClick={onClose}
             className="btn btn-primary btn-sm rounded-full"
@@ -58,13 +58,13 @@ export default function ContentEditorModal({
         </div>
 
         {/* 마크다운 에디터 */}
-        <div className="flex-1 overflow-hidden px-4">
-          <div className="h-full pt-4 pb-8">
+        <div className="flex-1 overflow-y-auto px-4">
+          <div className="pt-0 pb-8">
             <AdvancedMarkdownEditor
               value={content}
               onChange={onChange}
               placeholder={placeholder}
-              minHeight={800}
+              minHeight={740}
             />
           </div>
         </div>
