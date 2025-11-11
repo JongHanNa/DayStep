@@ -81,7 +81,7 @@ const ArchiveCard = memo(function ArchiveCard({
     <div className="relative overflow-hidden rounded-lg">
       <div
         onClick={handleClick}
-        className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer group"
+        className="flex flex-col p-4 bg-base-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
