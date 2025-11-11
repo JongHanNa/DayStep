@@ -47,7 +47,7 @@ export default function NotesPage() {
         // 나중에 보기: note_category가 'read_later'
         return notes.filter((note) => note.note_category === 'read_later');
       case 'draft':
-        // 월고: note_category가 'work_in_progress'
+        // 원고: note_category가 'work_in_progress'
         return notes.filter((note) => note.note_category === 'work_in_progress');
       case 'area_resource':
         // 영역·자원: area_id 또는 resource_id가 있는 노트

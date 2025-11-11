@@ -19,7 +19,7 @@ interface NoteTabsProps {
 const TABS = [
   { id: 'inbox' as NoteTabType, label: '수집함', icon: Inbox },
   { id: 'read_later' as NoteTabType, label: '나중에 보기', icon: BookmarkCheck },
-  { id: 'draft' as NoteTabType, label: '월고', icon: FileText },
+  { id: 'draft' as NoteTabType, label: '원고', icon: FileText },
   { id: 'area_resource' as NoteTabType, label: '영역·자원', icon: FolderOpen },
 ];
 
