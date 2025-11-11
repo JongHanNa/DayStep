@@ -7,7 +7,9 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
 import AreaResourceSubTabs, { type SubTabType } from '@/components/second-brain/notes/AreaResourceSubTabs';
-import { Plus, Pin, Edit3, Inbox, BookmarkCheck, FileText, FolderOpen } from 'lucide-react';
+import NoteEditModal from '@/components/second-brain/NoteEditModal';
+import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import { Plus, Pin, Inbox, BookmarkCheck, FileText, FolderOpen } from 'lucide-react';
 import type { Note, NoteType, NoteCategory } from '@/types/second-brain';
 
 const NOTE_TYPE_LABELS: Record<NoteType, string> = {
@@ -27,9 +29,11 @@ const TAB_ICONS: Record<NoteTabType, any> = {
 
 export default function NotesPage() {
   const { appUser } = useAuth();
-  const { notes, fetchNotes } = useNoteStore();
+  const { notes, fetchNotes, updateNote } = useNoteStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
 
   useEffect(() => {
     if (appUser?.id) {
@@ -79,6 +83,55 @@ export default function NotesPage() {
   const subTabCounts = {
     areas: notes.filter((n) => n.area_id).length,
     resources: notes.filter((n) => n.resource_id).length,
+  };
+
+  // 노트 클릭 핸들러
+  const handleNoteClick = (note: Note) => {
+    setEditingNote(note);
+    setNoteForm({
+      title: note.title,
+      content: note.content,
+      note_category: note.note_category,
+      linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
+      isPinned: note.is_pinned,
+      projectIds: note.projects?.map((p) => p.id) || [],
+      todoIds: [],
+      noteIds: note.connectedNotes?.map((n) => n.id) || [],
+    });
+  };
+
+  // 노트 저장 핸들러
+  const handleSave = async () => {
+    if (!editingNote || !noteForm || !appUser?.id) return;
+
+    try {
+      let area_id: string | undefined;
+      let resource_id: string | undefined;
+
+      if (noteForm.linkedAreaOrResource) {
+        if (noteForm.linkedAreaOrResource.startsWith('area-')) {
+          area_id = noteForm.linkedAreaOrResource.replace('area-', '');
+        } else if (noteForm.linkedAreaOrResource.startsWith('resource-')) {
+          resource_id = noteForm.linkedAreaOrResource.replace('resource-', '');
+        }
+      }
+
+      await updateNote(appUser.id, editingNote.id, {
+        title: noteForm.title,
+        content: noteForm.content,
+        note_category: noteForm.note_category,
+        is_pinned: noteForm.isPinned,
+        area_id,
+        resource_id,
+      });
+
+      setEditingNote(null);
+      setNoteForm(null);
+      fetchNotes(appUser.id);
+    } catch (error) {
+      console.error('노트 저장 실패:', error);
+      alert('노트 저장에 실패했습니다.');
+    }
   };
 
   return (
@@ -142,7 +195,11 @@ export default function NotesPage() {
                   </h2>
                   <div className="space-y-2">
                     {pinnedNotes.map((note) => (
-                      <div key={note.id} className="card bg-base-100 shadow-sm relative">
+                      <div
+                        key={note.id}
+                        className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => handleNoteClick(note)}
+                      >
                         <div className="card-body p-4">
                           <div className="flex items-start gap-3">
                             {/* 카테고리 아이콘 */}
@@ -159,7 +216,7 @@ export default function NotesPage() {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate pr-8">{note.title}</h3>
+                              <h3 className="font-semibold truncate">{note.title}</h3>
                               <p className="text-sm text-base-content/70 line-clamp-2 mt-1">
                                 {note.content.replace(/[#*`]/g, '').substring(0, 100)}...
                               </p>
@@ -187,11 +244,6 @@ export default function NotesPage() {
                                 )}
                               </div>
                             </div>
-
-                            {/* 편집 버튼 */}
-                            <button className="btn btn-circle btn-sm bg-black text-white absolute top-3 right-3">
-                              <Edit3 className="w-4 h-4" />
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -210,7 +262,11 @@ export default function NotesPage() {
                   )}
                   <div className="space-y-2">
                     {regularNotes.map((note) => (
-                      <div key={note.id} className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow relative">
+                      <div
+                        key={note.id}
+                        className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => handleNoteClick(note)}
+                      >
                         <div className="card-body p-4">
                           <div className="flex items-start gap-3">
                             {/* 카테고리 아이콘 */}
@@ -227,7 +283,7 @@ export default function NotesPage() {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold truncate pr-8">{note.title}</h3>
+                              <h3 className="font-semibold truncate">{note.title}</h3>
                               <p className="text-sm text-base-content/70 line-clamp-2 mt-1">
                                 {note.content.replace(/[#*`]/g, '').substring(0, 100)}...
                               </p>
@@ -260,11 +316,6 @@ export default function NotesPage() {
                                 )}
                               </div>
                             </div>
-
-                            {/* 편집 버튼 */}
-                            <button className="btn btn-circle btn-sm bg-black text-white absolute top-3 right-3">
-                              <Edit3 className="w-4 h-4" />
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -278,6 +329,25 @@ export default function NotesPage() {
 
         {/* 하단 네비게이션 */}
         <SecondBrainBottomNav />
+
+        {/* 노트 편집 모달 */}
+        {editingNote && noteForm && (
+          <NoteEditModal
+            open={!!editingNote}
+            note={noteForm}
+            onClose={() => {
+              setEditingNote(null);
+              setNoteForm(null);
+            }}
+            onChange={setNoteForm}
+            onSave={handleSave}
+            areas={[]}
+            resources={[]}
+            projects={[]}
+            todos={[]}
+            notes={notes}
+          />
+        )}
       </div>
     </AuthGuard>
   );
