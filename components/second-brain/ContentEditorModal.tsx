@@ -58,13 +58,13 @@ export default function ContentEditorModal({
         </div>
 
         {/* 마크다운 에디터 */}
-        <div className="flex-1 overflow-y-auto px-4">
-          <div className="pt-0 pb-8">
+        <div className="flex-1 overflow-y-auto px-0">
+          <div className="pt-0 pb-0">
             <AdvancedMarkdownEditor
               value={content}
               onChange={onChange}
               placeholder={placeholder}
-              minHeight={740}
+              minHeight={770}
             />
           </div>
         </div>
