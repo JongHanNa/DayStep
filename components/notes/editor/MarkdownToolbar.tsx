@@ -80,7 +80,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert }) => {
   ];
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 bg-background border-b border-border">
+    <div className="flex flex-wrap gap-1 p-2 bg-background">
       {tools.map((tool) => (
         <Button
           key={tool.label}

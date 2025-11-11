@@ -332,7 +332,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
       <MarkdownToolbar onInsert={handleToolbarInsert} />
       
       <div
-        className="border-x border-b border-border rounded-b-lg overflow-hidden editor-touch-wrapper"
+        className="rounded-b-lg overflow-hidden editor-touch-wrapper"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchPositioning}
