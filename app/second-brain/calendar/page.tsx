@@ -310,25 +310,7 @@ export default function CalendarPage() {
 
         {/* 메인 콘텐츠 */}
         <div className="max-w-7xl mx-auto px-4 py-6">
-          {filteredTodos.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 mx-auto mb-4 text-base-content/20" />
-              <p className="text-base-content/50 mb-4">
-                {selectedTab.includes('schedule')
-                  ? '일정으로 명료화된 할일이 없습니다'
-                  : '일정이 있는 할일이 없습니다'}
-              </p>
-              <button
-                onClick={handleCreateTodo}
-                className="btn btn-primary rounded-full gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                할일 추가하기
-              </button>
-            </div>
-          ) : (
-            renderCalendar()
-          )}
+          {renderCalendar()}
         </div>
 
         {/* 하단 네비게이션 */}
