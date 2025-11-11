@@ -625,6 +625,13 @@ export function createEditorTheme(minHeight: number) {
     '.cm-editor': {
       backgroundColor: 'transparent',
     },
+    '.cm-scroller': {
+      scrollbarWidth: 'none',
+      msOverflowStyle: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+    },
     '.cm-content': {
       padding: '16px',
       paddingBottom: '200px', // 하단 추가 여백 (스크롤 시 마지막 줄 편안하게 보기)

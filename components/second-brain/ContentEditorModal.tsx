@@ -58,7 +58,19 @@ export default function ContentEditorModal({
         </div>
 
         {/* 마크다운 에디터 */}
-        <div className="flex-1 overflow-y-auto px-0">
+        <div
+          className="flex-1 overflow-y-auto px-0"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
           <div className="pt-0 pb-0">
             <AdvancedMarkdownEditor
               value={content}
