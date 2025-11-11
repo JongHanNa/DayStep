@@ -89,8 +89,8 @@ export default function NotesPage() {
   const handleNoteClick = (note: Note) => {
     setEditingNote(note);
     setNoteForm({
-      title: note.title,
-      content: note.content,
+      title: note.title || '',
+      content: note.content || '',
       note_category: note.note_category,
       linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
       isPinned: note.is_pinned,
