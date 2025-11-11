@@ -331,7 +331,7 @@ function WeekTodoCard({
     }
   };
 
-  const handleToggle = (e: React.MouseEvent) => {
+  const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
     if (onToggle) {
       onToggle(todoId);
@@ -363,7 +363,7 @@ function WeekTodoCard({
           <input
             type="checkbox"
             checked={isCompleted}
-            onClick={handleToggle}
+            onChange={handleToggle}
             className="checkbox checkbox-sm"
           />
         )}
