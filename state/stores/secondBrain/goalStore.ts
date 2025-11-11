@@ -19,6 +19,7 @@ interface GoalStoreState {
 
   // Actions - userId 파라미터 추가 (areaStore 패턴)
   fetchGoals: (userId: string) => Promise<void>;
+  fetchArchivedGoals: (userId: string) => Promise<Goal[]>;
   createGoal: (userId: string, data: CreateGoalInput) => Promise<Goal>;
   updateGoal: (userId: string, id: string, data: UpdateGoalInput) => Promise<Goal>;
   deleteGoal: (userId: string, id: string) => Promise<boolean>;
@@ -41,6 +42,22 @@ export const useGoalStore = createStore<GoalStoreState>(
           error: error instanceof Error ? error.message : '목표를 불러오는데 실패했습니다.',
           loading: false,
         });
+      }
+    },
+
+    fetchArchivedGoals: async (userId: string) => {
+      try {
+        const allGoals = await fetchGoalsWithJWT(userId);
+        // status가 'suspended' 또는 'completed'인 목표만 필터링
+        const archivedGoals = allGoals.filter(
+          (goal: Goal) => goal.status === 'suspended' || goal.status === 'completed'
+        );
+        return archivedGoals;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '아카이브된 목표를 불러오는데 실패했습니다.',
+        });
+        return [];
       }
     },
 

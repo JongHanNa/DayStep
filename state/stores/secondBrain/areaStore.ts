@@ -19,6 +19,8 @@ interface AreaStoreState {
 
   // Actions
   fetchAreas: (userId: string) => Promise<void>;
+  fetchArchivedAreas: (userId: string) => Promise<AreaResource[]>;
+  fetchArchivedAreasResources: (userId: string) => Promise<AreaResource[]>;
   createArea: (userId: string, data: Omit<AreaResource, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'>) => Promise<AreaResource>;
   updateArea: (userId: string, id: string, data: Partial<Omit<AreaResource, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status'>>) => Promise<AreaResource>;
   deleteArea: (userId: string, id: string) => Promise<boolean>;
@@ -48,6 +50,34 @@ export const useAreaStore = createStore<AreaStoreState>(
           error: error instanceof Error ? error.message : '영역을 불러오는데 실패했습니다.',
           loading: false,
         });
+      }
+    },
+
+    fetchArchivedAreas: async (userId: string) => {
+      try {
+        const allAreasResources = await fetchAreasResourcesWithJWT(userId);
+        // status가 'archived'인 영역만 필터링
+        const archivedAreas = allAreasResources.filter((item) => item.status === 'archived');
+        return archivedAreas;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '아카이브된 영역을 불러오는데 실패했습니다.',
+        });
+        return [];
+      }
+    },
+
+    fetchArchivedAreasResources: async (userId: string) => {
+      try {
+        const allAreasResources = await fetchAreasResourcesWithJWT(userId);
+        // status가 'archived'인 모든 항목 필터링 (영역 + 자원)
+        const archivedItems = allAreasResources.filter((item: AreaResource) => item.status === 'archived');
+        return archivedItems;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '아카이브된 영역/자원을 불러오는데 실패했습니다.',
+        });
+        return [];
       }
     },
 

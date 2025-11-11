@@ -19,6 +19,7 @@ interface ProjectStoreState {
 
   // Actions - userId 파라미터 추가 (goalStore 패턴)
   fetchProjects: (userId: string) => Promise<void>;
+  fetchArchivedProjects: (userId: string) => Promise<Project[]>;
   createProject: (userId: string, data: CreateProjectInput) => Promise<Project>;
   updateProject: (userId: string, id: string, data: UpdateProjectInput) => Promise<Project>;
   deleteProject: (userId: string, id: string) => Promise<boolean>;
@@ -55,6 +56,27 @@ export const useProjectStore = createStore<ProjectStoreState>(
           error: error instanceof Error ? error.message : '프로젝트를 불러오는데 실패했습니다.',
           loading: false,
         });
+      }
+    },
+
+    fetchArchivedProjects: async (userId: string) => {
+      try {
+        const allProjects = await fetchProjectsWithJWT(userId);
+        // status가 'paused' 또는 'completed'인 프로젝트만 필터링
+        const archivedProjects = allProjects
+          .filter((project: Project) => project.status === 'paused' || project.status === 'completed')
+          .map((p) => ({
+            ...p,
+            total_todos: 0,
+            completed_todos: 0,
+            progress: 0,
+          }));
+        return archivedProjects;
+      } catch (error) {
+        set({
+          error: error instanceof Error ? error.message : '아카이브된 프로젝트를 불러오는데 실패했습니다.',
+        });
+        return [];
       }
     },
 
