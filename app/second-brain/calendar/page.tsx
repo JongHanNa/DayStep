@@ -13,18 +13,42 @@ import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { updateInboxTodo } from '@/lib/supabase/inbox';
+import { fetchScheduledTodos } from '@/lib/supabase/calendar';
 import type { InboxItem } from '@/types/second-brain';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 
 type CalendarTab = 'week-schedule' | 'week-plan' | 'month-schedule' | 'month-plan';
+
+// todos 테이블 데이터를 InboxItem으로 변환
+function todoToInboxItem(todo: any): InboxItem {
+  return {
+    id: todo.id,
+    user_id: todo.user_id,
+    content: todo.title,
+    item_type: 'todo',
+    status: todo.clarification || 'none',
+    created_at: todo.created_at,
+    updated_at: todo.updated_at,
+    scheduled_date: todo.start_time || undefined,
+    schedule_type: todo.schedule_type || 'none',
+    clarification: todo.clarification || 'none',
+    is_completed: todo.completed || false,
+    is_highlight: todo.is_today_highlight || false,
+    next_action_status: todo.next_action_contexts ? JSON.stringify(todo.next_action_contexts) : undefined,
+    project_id: todo.project_id,
+    icon: todo.icon,
+    color: todo.color,
+  };
+}
 
 export default function CalendarPage() {
   const { appUser } = useAuth();
   const [selectedTab, setSelectedTab] = useState<CalendarTab>('week-schedule');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingItem, setEditingItem] = useState<InboxItem | null>(null);
+  const [scheduledTodos, setScheduledTodos] = useState<InboxItem[]>([]);
 
-  const { inboxItems, fetchInboxItems, updateInboxItem } = useInboxStore();
+  const { updateInboxItem } = useInboxStore();
   const { projects, fetchProjects, createProject } = useProjectStore();
   const { notes, fetchNotes, createNote } = useNoteStore();
   const { openModal, closeModal } = useModalStore();
@@ -43,18 +67,30 @@ export default function CalendarPage() {
 
   // 데이터 로드
   useEffect(() => {
-    if (appUser?.id) {
-      fetchInboxItems(appUser.id);
-      fetchProjects(appUser.id);
-      fetchNotes(appUser.id);
-    }
-  }, [appUser?.id, fetchInboxItems, fetchProjects, fetchNotes]);
+    const loadData = async () => {
+      if (!appUser?.id) return;
+
+      try {
+        // 날짜가 설정된 모든 할일 조회
+        const todos = await fetchScheduledTodos(appUser.id);
+        const todoItems = todos.map(todoToInboxItem);
+        setScheduledTodos(todoItems);
+
+        // 프로젝트, 노트 정보는 기존 store 사용
+        await fetchProjects(appUser.id);
+        await fetchNotes(appUser.id);
+      } catch (error) {
+        console.error('❌ 달력 데이터 로드 실패:', error);
+      }
+    };
+
+    loadData();
+  }, [appUser?.id, fetchProjects, fetchNotes]);
 
   // 탭별 필터링된 할일 목록
   const filteredTodos = useMemo(() => {
-    const scheduledItems = inboxItems.filter((item: InboxItem) =>
-      item.scheduled_date && (!item.item_type || item.item_type === 'todo')
-    );
+    // scheduledTodos는 이미 날짜가 있는 할일만 포함
+    const scheduledItems = scheduledTodos;
 
     switch (selectedTab) {
       case 'week-schedule':
@@ -62,21 +98,25 @@ export default function CalendarPage() {
         return scheduledItems.filter((item: InboxItem) => item.clarification === 'schedule_clear');
 
       case 'week-plan':
-        // 주간 계획: "일정" + 기타 (언젠가 제외)
-        return scheduledItems.filter((item: InboxItem) => item.clarification !== 'someday');
+        // 주간 계획: "일정" + 기타 (none, 언젠가 제외)
+        return scheduledItems.filter((item: InboxItem) =>
+          item.clarification !== 'someday' && item.clarification !== 'none'
+        );
 
       case 'month-schedule':
         // 월간 일정: 명료화 = "일정"만
         return scheduledItems.filter((item: InboxItem) => item.clarification === 'schedule_clear');
 
       case 'month-plan':
-        // 월간 계획: "일정" + 기타 (언젠가 제외)
-        return scheduledItems.filter((item: InboxItem) => item.clarification !== 'someday');
+        // 월간 계획: "일정" + 기타 (none, 언젠가 제외)
+        return scheduledItems.filter((item: InboxItem) =>
+          item.clarification !== 'someday' && item.clarification !== 'none'
+        );
 
       default:
         return scheduledItems;
     }
-  }, [inboxItems, selectedTab]);
+  }, [scheduledTodos, selectedTab]);
 
   // 할일 클릭 핸들러
   const handleTodoClick = (item: InboxItem) => {
@@ -118,11 +158,16 @@ export default function CalendarPage() {
 
   // 할일 완료 토글
   const handleToggleTodo = async (todoId: string) => {
-    const todo = inboxItems.find((item: InboxItem) => item.id === todoId);
+    const todo = scheduledTodos.find((item: InboxItem) => item.id === todoId);
     if (todo && appUser?.id) {
       await updateInboxItem(appUser.id, todoId, {
         is_completed: !todo.is_completed,
       });
+
+      // 달력 목록 새로고침
+      const todos = await fetchScheduledTodos(appUser.id);
+      const todoItems = todos.map(todoToInboxItem);
+      setScheduledTodos(todoItems);
     }
   };
 
@@ -152,8 +197,10 @@ export default function CalendarPage() {
         project_id: todoForm.projectIds?.[0] || undefined,
       });
 
-      // 스토어 상태 새로고침
-      await fetchInboxItems(appUser.id);
+      // 달력 목록 새로고침
+      const todos = await fetchScheduledTodos(appUser.id);
+      const todoItems = todos.map(todoToInboxItem);
+      setScheduledTodos(todoItems);
 
       // 모달 닫기
       closeModal();
@@ -197,8 +244,10 @@ export default function CalendarPage() {
         status: 'schedule_clear',
       });
 
-      // 목록 새로고침
-      await fetchInboxItems(appUser.id);
+      // 달력 목록 새로고침
+      const todos = await fetchScheduledTodos(appUser.id);
+      const todoItems = todos.map(todoToInboxItem);
+      setScheduledTodos(todoItems);
     } catch (error) {
       console.error('할일 생성 실패:', error);
     }
