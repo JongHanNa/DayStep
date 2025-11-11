@@ -53,13 +53,17 @@ export function getCurrentEditorView() {
 function buildMarkdownDecorations(state: EditorState): DecorationSet {
   const decorations: Range<Decoration>[] = [];
   const currentLineNum = state.doc.lineAt(state.selection.main.head).number;
-  
+
+  // 에디터 포커스 상태 확인
+  const view = getCurrentEditorView();
+  const isFocused = view?.hasFocus ?? false;
+
   for (let lineNum = 1; lineNum <= state.doc.lines; lineNum++) {
     const line = state.doc.line(lineNum);
     const lineText = line.text;
-    
-    // 현재 편집 중인 라인이 아닌 경우에만 마크다운 문법 숨기기
-    if (lineNum !== currentLineNum) {
+
+    // 비포커스 상태이거나, 포커스 상태에서 현재 라인이 아닌 경우 마크다운 문법 숨기기
+    if (!isFocused || lineNum !== currentLineNum) {
       
       // 1. 헤더 문법 (# ## ### 등)
       const headerMatch = lineText.match(/^(#{1,6})\s/);

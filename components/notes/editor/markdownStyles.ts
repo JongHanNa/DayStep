@@ -215,10 +215,13 @@ export const webFocusTheme = EditorView.theme({
   '&.cm-focused .cm-scroller': {
     outline: 'none',
   },
-  // 비포커스 상태: 커서 숨김 (모달 첫 로드 시 정적 커서 제거)
+  // 비포커스 상태: 커서 및 selection 배경 숨김
   '&:not(.cm-focused) .cm-cursor, &:not(.cm-focused) .cm-cursor-primary': {
     visibility: 'hidden !important',
     opacity: '0 !important',
+  },
+  '&:not(.cm-focused) .cm-selectionBackground': {
+    backgroundColor: 'transparent !important',
   },
   // 포커스 상태: 커서 표시 + 깜빡임
   '&.cm-focused .cm-cursor, &.cm-focused .cm-cursor-primary': {
