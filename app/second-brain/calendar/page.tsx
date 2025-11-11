@@ -98,20 +98,16 @@ export default function CalendarPage() {
         return scheduledItems.filter((item: InboxItem) => item.clarification === 'schedule_clear');
 
       case 'week-plan':
-        // 주간 계획: "일정" + 기타 (none, 언젠가 제외)
-        return scheduledItems.filter((item: InboxItem) =>
-          item.clarification !== 'someday' && item.clarification !== 'none'
-        );
+        // 주간 계획: "일정" + 기타 (언젠가만 제외)
+        return scheduledItems.filter((item: InboxItem) => item.clarification !== 'someday');
 
       case 'month-schedule':
         // 월간 일정: 명료화 = "일정"만
         return scheduledItems.filter((item: InboxItem) => item.clarification === 'schedule_clear');
 
       case 'month-plan':
-        // 월간 계획: "일정" + 기타 (none, 언젠가 제외)
-        return scheduledItems.filter((item: InboxItem) =>
-          item.clarification !== 'someday' && item.clarification !== 'none'
-        );
+        // 월간 계획: "일정" + 기타 (언젠가만 제외)
+        return scheduledItems.filter((item: InboxItem) => item.clarification !== 'someday');
 
       default:
         return scheduledItems;
