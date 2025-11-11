@@ -215,6 +215,17 @@ export const webFocusTheme = EditorView.theme({
   '&.cm-focused .cm-scroller': {
     outline: 'none',
   },
+  // 비포커스 상태: 커서 숨김 (모달 첫 로드 시 정적 커서 제거)
+  '&:not(.cm-focused) .cm-cursor, &:not(.cm-focused) .cm-cursor-primary': {
+    visibility: 'hidden !important',
+    opacity: '0 !important',
+  },
+  // 포커스 상태: 커서 표시 + 깜빡임
+  '&.cm-focused .cm-cursor, &.cm-focused .cm-cursor-primary': {
+    visibility: 'visible !important',
+    opacity: '1 !important',
+    animation: 'cm-blink 1.2s infinite !important',
+  },
   // 웹 환경 커서 스타일 (정확한 위치 표시와 시각적 명확성)
   '.cm-cursor': {
     borderLeft: '2px solid hsl(var(--primary)) !important',
