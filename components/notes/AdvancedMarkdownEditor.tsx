@@ -12,6 +12,7 @@ import { livePreviewField, markdownHideDecorations, hideMarkdownExtension, setCu
 import { checkboxClickExtension } from './editor/checkboxFeature';
 import { markdownKeymap } from './editor/markdownKeymap';
 import { headerDecorationExtension } from './editor/markdownHeaderDecorations';
+import { dynamicCursorPlugin } from './editor/markdownCursorPlugin';
 import MarkdownToolbar from './editor/MarkdownToolbar';
 
 interface AdvancedMarkdownEditorProps {
@@ -98,6 +99,8 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     checkboxClickExtension,
     // 헤더 크기 데코레이션 (직접 스타일 적용)
     headerDecorationExtension,
+    // 동적 커서 크기 조정 플러그인
+    dynamicCursorPlugin,
     livePreviewTheme,
     // 플랫폼별 포커스 테마 적용 (CodeMirror 6 공식 방법)
     platform === 'web' ? webFocusTheme : mobileFocusTheme,
