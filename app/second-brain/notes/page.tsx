@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
 import AreaResourceSubTabs, { type SubTabType } from '@/components/second-brain/notes/AreaResourceSubTabs';
@@ -30,6 +31,7 @@ const TAB_ICONS: Record<NoteTabType, any> = {
 export default function NotesPage() {
   const { appUser } = useAuth();
   const { notes, fetchNotes, updateNote } = useNoteStore();
+  const { tags, loadAllTags } = useNoteTagStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -38,8 +40,9 @@ export default function NotesPage() {
   useEffect(() => {
     if (appUser?.id) {
       fetchNotes(appUser.id);
+      loadAllTags(appUser.id);
     }
-  }, [appUser?.id, fetchNotes]);
+  }, [appUser?.id, fetchNotes, loadAllTags]);
 
   // 탭별 노트 필터링
   const getFilteredNotes = (): Note[] => {
@@ -346,6 +349,7 @@ export default function NotesPage() {
             projects={[]}
             todos={[]}
             notes={notes}
+            allTags={tags}
           />
         )}
       </div>
