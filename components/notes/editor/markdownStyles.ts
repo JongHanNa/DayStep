@@ -220,8 +220,9 @@ export const webFocusTheme = EditorView.theme({
     visibility: 'hidden !important',
     opacity: '0 !important',
   },
-  // 비포커스 상태: selection background 투명 처리 (CodeMirror 6 공식 방법)
+  // 비포커스 상태: selection 완전 숨김 (drawSelection 활성화 후)
   '&:not(.cm-focused) .cm-selectionBackground': {
+    opacity: '0 !important',
     background: 'transparent !important',
   },
   // 포커스 상태: 커서 표시 + 깜빡임
@@ -377,8 +378,9 @@ export const globalMarkdownStyles = `
     background-color: hsl(var(--accent)) !important;
   }
 
-  /* 비포커스 상태: selection background 투명 처리 (CodeMirror 6 공식 방법) */
+  /* 비포커스 상태: selection 완전 숨김 (drawSelection 활성화 후) */
   .advanced-markdown-editor-container .cm-editor:not(.cm-focused) .cm-selectionBackground {
+    opacity: 0 !important;
     background: transparent !important;
   }
   

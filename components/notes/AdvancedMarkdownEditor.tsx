@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
-import { EditorView } from '@codemirror/view';
+import { EditorView, drawSelection } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';
 
@@ -101,6 +101,8 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     headerDecorationExtension,
     // 동적 커서 크기 조정 플러그인
     dynamicCursorPlugin,
+    // drawSelection() 추가 - .cm-selectionBackground 활성화 (필수)
+    drawSelection(),
     livePreviewTheme,
     // 플랫폼별 포커스 테마 적용 (CodeMirror 6 공식 방법)
     platform === 'web' ? webFocusTheme : mobileFocusTheme,
