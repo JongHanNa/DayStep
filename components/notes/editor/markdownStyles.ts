@@ -225,6 +225,11 @@ export const webFocusTheme = EditorView.theme({
     opacity: '0 !important',
     background: 'transparent !important',
   },
+  // 비포커스 상태: active line 배경 완전 숨김
+  '&:not(.cm-focused) .cm-activeLine': {
+    background: 'transparent !important',
+    backgroundColor: 'transparent !important',
+  },
   // 포커스 상태: 커서 표시 + 깜빡임
   '&.cm-focused .cm-cursor, &.cm-focused .cm-cursor-primary': {
     visibility: 'visible !important',
@@ -383,7 +388,13 @@ export const globalMarkdownStyles = `
     opacity: 0 !important;
     background: transparent !important;
   }
-  
+
+  /* 비포커스 상태: active line 배경 완전 숨김 */
+  .advanced-markdown-editor-container .cm-editor:not(.cm-focused) .cm-activeLine {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
   /* 마크다운 시각적 효과 글로벌 스타일 */
   .advanced-markdown-editor-container .cm-bold-content,
   .advanced-markdown-editor-container strong,
