@@ -101,6 +101,7 @@ export async function createInboxTodo(userId: string, data: {
   title: string;
   clarification?: string;
   scheduled_date?: string;
+  schedule_type?: string;
   is_today_highlight?: boolean;
   completed?: boolean;
   project_id?: string;
@@ -118,7 +119,7 @@ export async function createInboxTodo(userId: string, data: {
       completed: data.completed || false,
       project_id: data.project_id,
       next_action_contexts: data.next_action_contexts || null,
-      schedule_type: 'none', // 기본값: 선택안함
+      schedule_type: data.schedule_type || 'none', // 전달받은 값 사용, 없으면 기본값 'none'
       recurrence_pattern: 'none',
       icon: null,
       color: '#DBAC6C',

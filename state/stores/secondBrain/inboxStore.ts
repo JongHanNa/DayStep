@@ -210,6 +210,7 @@ export const useInboxStore = createStore<InboxStoreState>(
             title: data.content,
             clarification: data.clarification,
             scheduled_date: data.scheduled_date,
+            schedule_type: data.schedule_type,
             is_today_highlight: data.is_highlight,
             completed: data.is_completed,
             next_action_contexts: data.next_action_status ? JSON.parse(data.next_action_status) : undefined,
