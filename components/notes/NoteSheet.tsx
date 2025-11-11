@@ -32,6 +32,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { TAG_COLOR_PALETTE } from '@/lib/note-tag-constants';
@@ -879,38 +880,11 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                 연결
               </button>
               {/* 자동 저장 상태 표시 */}
-              <div className="flex items-center gap-2">
-                {autoSave.saveStatus === 'pending' && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3 animate-pulse" />
-                    <span>저장 대기중...</span>
-                  </div>
-                )}
-
-                {autoSave.saveStatus === 'saving' && (
-                  <div className="flex items-center gap-1 text-xs text-brand">
-                    <Save className="h-3 w-3 animate-spin" />
-                    <span>{!noteContent.trim() && currentEditingNote ? '삭제 중...' : '저장 중...'}</span>
-                  </div>
-                )}
-
-                {autoSave.saveStatus === 'saved' && (
-                  <div className="flex items-center gap-1 text-xs text-green-600">
-                    <Check className="h-3 w-3" />
-                    <span>{!noteContent.trim() && currentEditingNote ? '삭제됨' : '저장됨'}</span>
-                  </div>
-                )}
-
-                {autoSave.saveStatus === 'error' && (
-                  <button
-                    onClick={autoSave.triggerSave}
-                    className="btn btn-ghost btn-sm text-error"
-                  >
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    재시도
-                  </button>
-                )}
-              </div>
+              <AutoSaveStatus
+                status={autoSave.saveStatus}
+                onRetry={autoSave.triggerSave}
+                showDeletingState={!noteContent.trim() && !!currentEditingNote}
+              />
             </div>
           </div>
 

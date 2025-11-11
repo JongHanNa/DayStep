@@ -92,6 +92,7 @@ export default function NotesPage() {
   const handleNoteClick = (note: Note) => {
     setEditingNote(note);
     setNoteForm({
+      id: note.id, // 노트 ID 추가 (자동 저장을 위해 필수)
       title: note.title || '',
       content: note.content || '',
       note_category: note.note_category,

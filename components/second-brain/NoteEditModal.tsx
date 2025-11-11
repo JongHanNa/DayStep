@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import ContentEditorModal from './ContentEditorModal';
 import { useModalStore } from '@/state/stores/modalStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useAuth } from '@/app/context/AuthContext';
 import type { AreaResource as Area, AreaResource as Resource, Project, Note, NoteTag } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
@@ -45,6 +47,8 @@ export default function NoteEditModal({
   contentPlaceholder = '',
 }: NoteEditModalProps) {
   const { openModal, closeModal } = useModalStore();
+  const { updateNote } = useNoteStore();
+  const { user } = useAuth();
   const [isContentEditorOpen, setIsContentEditorOpen] = useState(false);
 
   // 모달 열림/닫힘 상태 관리 (하단 네비 숨김)
@@ -65,6 +69,18 @@ export default function NoteEditModal({
   // 내용 저장 핸들러
   const handleContentSave = () => {
     setIsContentEditorOpen(false);
+  };
+
+  // 자동저장 핸들러
+  const handleAutoSave = async (content: string) => {
+    if (!note?.id || !user?.id) {
+      throw new Error('노트 ID 또는 사용자 정보가 없습니다.');
+    }
+
+    await updateNote(note.id, user.id, { content });
+
+    // onChange도 호출하여 상위 컴포넌트 상태 동기화
+    onChange({ ...note, content });
   };
 
   if (!open || !note) return null;
@@ -136,6 +152,8 @@ export default function NoteEditModal({
         onSave={handleContentSave}
         onChange={(content) => onChange({ ...note!, content })}
         placeholder={contentPlaceholder}
+        enableAutoSave={true}
+        onAutoSave={handleAutoSave}
       />
     </dialog>
   );
