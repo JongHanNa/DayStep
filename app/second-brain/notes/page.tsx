@@ -83,9 +83,9 @@ export default function NotesPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-base-100 pb-20">
+      <div className="min-h-screen bg-base-200 pb-20">
         {/* 헤더 */}
-        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+        <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
           <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-3' : 'py-4'}`}>
             {/* 상단: 제목 + 버튼 */}
             <div className="flex items-center justify-between mb-3">
@@ -142,11 +142,11 @@ export default function NotesPage() {
                   </h2>
                   <div className="space-y-2">
                     {pinnedNotes.map((note) => (
-                      <div key={note.id} className="card bg-primary/10 border border-primary/20 relative">
+                      <div key={note.id} className="card bg-base-100 shadow-sm relative">
                         <div className="card-body p-4">
                           <div className="flex items-start gap-3">
                             {/* 카테고리 아이콘 */}
-                            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                               {(() => {
                                 const IconComponent = TAB_ICONS[
                                   note.note_category === 'read_later' ? 'read_later' :
@@ -210,11 +210,11 @@ export default function NotesPage() {
                   )}
                   <div className="space-y-2">
                     {regularNotes.map((note) => (
-                      <div key={note.id} className="card bg-base-200 hover:bg-base-300 transition-colors relative">
+                      <div key={note.id} className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow relative">
                         <div className="card-body p-4">
                           <div className="flex items-start gap-3">
                             {/* 카테고리 아이콘 */}
-                            <div className="w-10 h-10 rounded-lg bg-base-300 flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center flex-shrink-0">
                               {(() => {
                                 const IconComponent = TAB_ICONS[
                                   note.note_category === 'read_later' ? 'read_later' :
