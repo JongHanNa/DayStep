@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Plus } from 'lucide-react';
 import {
   format,
   startOfMonth,
@@ -22,6 +22,7 @@ interface MonthlyCalendarProps {
   onToggleTodo?: (todoId: string) => void;
   showClarification?: boolean; // 명료화 라벨 표시 여부
   compact?: boolean; // 컴팩트 모드 (높이 줄임)
+  onCreateTodo?: (date: Date) => Promise<void>; // 즉시 할일 생성
 }
 
 // 명료화 상태를 한글 라벨로 변환
@@ -59,6 +60,7 @@ export default function MonthlyCalendar({
   onToggleTodo,
   showClarification = false,
   compact = false,
+  onCreateTodo,
 }: MonthlyCalendarProps) {
   // 제어/비제어 컴포넌트 패턴 지원
   const [internalDate, setInternalDate] = React.useState<Date>(new Date());
@@ -166,6 +168,7 @@ export default function MonthlyCalendar({
                   onToggleTodo={onToggleTodo}
                   showClarification={showClarification}
                   compact={compact}
+                  onCreateTodo={onCreateTodo}
                 />
               );
             })}
@@ -187,6 +190,7 @@ interface MonthDayCellProps {
   onToggleTodo?: (todoId: string) => void;
   showClarification?: boolean;
   compact?: boolean;
+  onCreateTodo?: (date: Date) => Promise<void>;
 }
 
 function MonthDayCell({
@@ -199,12 +203,14 @@ function MonthDayCell({
   onToggleTodo,
   showClarification,
   compact,
+  onCreateTodo,
 }: MonthDayCellProps) {
   const minHeight = compact ? 'min-h-[80px]' : 'min-h-[120px]';
 
   return (
     <div
       className={`
+        group relative
         ${minHeight} p-1 sm:p-2 rounded-lg border transition-all
         ${
           isToday
@@ -216,7 +222,7 @@ function MonthDayCell({
       `}
     >
       {/* 날짜 헤더 */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-1 relative">
         <div
           className={`
             text-xs sm:text-sm font-bold
@@ -226,11 +232,23 @@ function MonthDayCell({
         >
           {format(date, 'd')}
         </div>
-        {todos.length > 0 && (
-          <div className="badge badge-xs bg-primary text-primary-content">
-            {todos.length}
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {todos.length > 0 && (
+            <div className="badge badge-xs bg-primary text-primary-content">
+              {todos.length}
+            </div>
+          )}
+          {/* + 버튼 (hover 시 표시) */}
+          {onCreateTodo && isCurrentMonth && (
+            <button
+              onClick={() => onCreateTodo(date)}
+              className="btn btn-circle btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity"
+              title="새 할일 추가"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 할일 목록 */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Plus } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, differenceInCalendarDays } from 'date-fns';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { InboxItem, Project } from '@/types/second-brain';
@@ -20,6 +20,7 @@ interface WeeklyCalendarProps {
   enableSpanning?: boolean; // 스패닝 카드 지원 여부 (기본: false)
   enableDragDrop?: boolean; // 드래그앤드롭 활성화 여부 (기본: true)
   compact?: boolean; // 컴팩트 모드 (높이 줄임)
+  onCreateTodo?: (date: Date) => Promise<void>; // 즉시 할일 생성
 }
 
 // 명료화 상태를 한글 라벨로 변환
@@ -62,6 +63,7 @@ export default function WeeklyCalendar({
   enableSpanning = false,
   enableDragDrop = true,
   compact = false,
+  onCreateTodo,
 }: WeeklyCalendarProps) {
   // 제어/비제어 컴포넌트 패턴 지원
   const [internalDate, setInternalDate] = React.useState<Date>(new Date());
@@ -166,6 +168,7 @@ export default function WeeklyCalendar({
                 compact={compact}
                 spanningCardCount={spanningCardsForDay.length}
                 spanningCardsForDay={spanningCardsForDay}
+                onCreateTodo={onCreateTodo}
               />
             );
           })}
@@ -223,6 +226,7 @@ interface WeekDayColumnProps {
   compact?: boolean;
   spanningCardCount?: number;
   spanningCardsForDay?: UnifiedTodoItem[];
+  onCreateTodo?: (date: Date) => Promise<void>;
 }
 
 function WeekDayColumn({
@@ -238,6 +242,7 @@ function WeekDayColumn({
   compact,
   spanningCardCount = 0,
   spanningCardsForDay = [],
+  onCreateTodo,
 }: WeekDayColumnProps) {
   const dateString = format(date, 'yyyy-MM-dd');
   const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
@@ -253,6 +258,7 @@ function WeekDayColumn({
     <div
       ref={enableDragDrop ? setNodeRef : undefined}
       className={`
+        group relative
         flex flex-col
         ${minHeight} p-2 rounded-lg border-2 transition-all
         ${
@@ -265,11 +271,21 @@ function WeekDayColumn({
       `}
     >
       {/* 날짜 헤더 */}
-      <div className="flex-shrink-0 mb-2 pb-2 border-b border-base-300">
+      <div className="flex-shrink-0 mb-2 pb-2 border-b border-base-300 relative">
         <div className="text-sm font-bold text-center">{dayOfWeek}</div>
         <div className={`text-lg font-bold text-center ${isToday ? 'text-primary' : ''}`}>
           {format(date, 'd')}
         </div>
+        {/* + 버튼 (hover 시 표시) */}
+        {onCreateTodo && (
+          <button
+            onClick={() => onCreateTodo(date)}
+            className="absolute top-1 right-1 btn btn-circle btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity"
+            title="새 할일 추가"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* 할일 표시 영역 */}

@@ -178,20 +178,30 @@ export default function CalendarPage() {
     }
   };
 
-  // 새 할일 추가
-  const handleCreateTodo = () => {
-    setEditingItem(null);
-    setTodoForm({
-      title: '',
-      clarification: '',
-      nextActionStatuses: [],
-      scheduledDate: selectedDate,
-      isHighlight: false,
-      completed: false,
-      projectIds: [],
-      noteIds: [],
-    });
-    openModal();
+  // 즉시 할일 생성 (달력 날짜 칸에서 + 버튼 클릭)
+  const handleQuickCreateTodo = async (date: Date) => {
+    if (!appUser?.id) return;
+
+    try {
+      const { createInboxItem } = useInboxStore.getState();
+
+      // 한국시간 자정으로 설정
+      const koreaDate = new Date(date);
+      koreaDate.setHours(0, 0, 0, 0);
+
+      await createInboxItem(appUser.id, {
+        content: '새 할일',
+        clarification: 'schedule_clear',
+        schedule_type: 'anytime',
+        scheduled_date: koreaDate.toISOString(),
+        status: 'schedule_clear',
+      });
+
+      // 목록 새로고침
+      await fetchInboxItems(appUser.id);
+    } catch (error) {
+      console.error('할일 생성 실패:', error);
+    }
   };
 
   // 모달 닫기
@@ -242,6 +252,7 @@ export default function CalendarPage() {
           showClarification={showClarification}
           enableSpanning={false}
           enableDragDrop={false}
+          onCreateTodo={handleQuickCreateTodo}
         />
       );
     } else {
@@ -253,6 +264,7 @@ export default function CalendarPage() {
           onTodoClick={handleTodoClick}
           onToggleTodo={handleToggleTodo}
           showClarification={showClarification}
+          onCreateTodo={handleQuickCreateTodo}
         />
       );
     }
@@ -264,18 +276,9 @@ export default function CalendarPage() {
         {/* 헤더 */}
         <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
           <div className={`max-w-7xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-6 h-6" />
-                <h1 className="text-2xl font-bold">달력</h1>
-              </div>
-              <button
-                onClick={handleCreateTodo}
-                className="btn btn-primary btn-sm rounded-full gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                새로 만들기
-              </button>
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className="w-6 h-6" />
+              <h1 className="text-2xl font-bold">달력</h1>
             </div>
 
             {/* 탭 네비게이션 */}
