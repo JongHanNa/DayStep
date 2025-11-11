@@ -4,7 +4,7 @@ import type { AreaResource as Area, AreaResource as Resource, Project, NoteCateg
 import type { Todo } from '@/types';
 import { Tag, FileText, FolderTree, StickyNote, Star } from 'lucide-react';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
-import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
+import MarkdownViewer from '@/components/notes/MarkdownViewer';
 
 /**
  * 노트 폼 필드 타입
@@ -37,6 +37,7 @@ interface NoteFormFieldsProps {
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   titlePlaceholder?: string;
   contentPlaceholder?: string;
+  onContentClick?: () => void; // 내용 클릭 시 편집 모달 열기
   // 즉시 DB 저장을 위한 props
   noteId?: string;
   userId?: string;
@@ -62,6 +63,7 @@ export default function NoteFormFields({
   onCreateNote,
   titlePlaceholder = '예: 회의 내용',
   contentPlaceholder = '노트 내용을 입력하세요...',
+  onContentClick,
   noteId,
   userId,
   onNoteImmediateSave,
@@ -276,20 +278,22 @@ export default function NoteFormFields({
         </div>
       )}
 
-      {/* 내용 (마크다운 에디터) */}
+      {/* 내용 (프리뷰 - 클릭 시 편집 모달) */}
       <div className="my-4">
         <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
           <FileText className="h-5 w-5" style={{ color: '#808080' }} />
           내용
         </label>
 
-        <div className="rounded-lg bg-base-200 border border-base-300 overflow-hidden">
-          <AdvancedMarkdownEditor
-            value={note.content}
-            onChange={(value) => onChange({ ...note, content: value })}
-            placeholder={contentPlaceholder}
-            minHeight={200}
-          />
+        <div
+          className="p-3 rounded-lg bg-base-200 border border-base-300 cursor-pointer hover:bg-base-300 transition-colors min-h-[100px]"
+          onClick={onContentClick}
+        >
+          {note.content ? (
+            <MarkdownViewer content={note.content} className="prose prose-sm max-w-none" />
+          ) : (
+            <p className="text-gray-400">내용 추가..</p>
+          )}
         </div>
       </div>
 

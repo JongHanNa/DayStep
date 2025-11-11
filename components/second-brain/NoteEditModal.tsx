@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import ContentEditorModal from './ContentEditorModal';
 import { useModalStore } from '@/state/stores/modalStore';
 import type { AreaResource as Area, AreaResource as Resource, Project, Note, NoteTag } from '@/types/second-brain';
 import type { Todo } from '@/types';
@@ -44,6 +45,7 @@ export default function NoteEditModal({
   contentPlaceholder = '',
 }: NoteEditModalProps) {
   const { openModal, closeModal } = useModalStore();
+  const [isContentEditorOpen, setIsContentEditorOpen] = useState(false);
 
   // 모달 열림/닫힘 상태 관리 (하단 네비 숨김)
   useEffect(() => {
@@ -54,6 +56,16 @@ export default function NoteEditModal({
       closeModal();
     };
   }, [open, openModal, closeModal]);
+
+  // 내용 클릭 핸들러
+  const handleContentClick = () => {
+    setIsContentEditorOpen(true);
+  };
+
+  // 내용 저장 핸들러
+  const handleContentSave = () => {
+    setIsContentEditorOpen(false);
+  };
 
   if (!open || !note) return null;
 
@@ -91,8 +103,8 @@ export default function NoteEditModal({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
+        <div className="flex-1 overflow-y-auto px-4">
+          <div className="py-4">
             {note && (
               <NoteFormFields
                 note={note}
@@ -108,12 +120,23 @@ export default function NoteEditModal({
                 onCreateNote={onCreateNote}
                 titlePlaceholder={titlePlaceholder}
                 contentPlaceholder={contentPlaceholder}
+                onContentClick={handleContentClick}
               />
             )}
           </div>
         </div>
       </div>
       <div className="modal-backdrop" onClick={onClose} />
+
+      {/* 내용 편집 모달 (중첩) */}
+      <ContentEditorModal
+        open={isContentEditorOpen}
+        content={note?.content || ''}
+        onClose={() => setIsContentEditorOpen(false)}
+        onSave={handleContentSave}
+        onChange={(content) => onChange({ ...note!, content })}
+        placeholder={contentPlaceholder}
+      />
     </dialog>
   );
 }

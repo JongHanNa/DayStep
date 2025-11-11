@@ -627,6 +627,7 @@ export function createEditorTheme(minHeight: number) {
     },
     '.cm-content': {
       padding: '16px',
+      paddingBottom: '200px', // 하단 추가 여백 (스크롤 시 마지막 줄 편안하게 보기)
       minHeight: `${minHeight - 32}px`,
     },
     // 모바일 환경에서만 포커스 제거
