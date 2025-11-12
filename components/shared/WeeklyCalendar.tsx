@@ -325,9 +325,9 @@ function WeekDayColumn({
 
       {/* 할일 표시 영역 */}
       <div
-        className="flex-1 space-y-2 overflow-y-auto"
+        className="flex-1 space-y-1 overflow-y-auto"
         style={{
-          marginTop: spanningCardCount > 0 ? '48px' : '0'
+          marginTop: spanningCardCount > 0 ? '43px' : '0'
         }}
       >
         {todos.map((todo) => {
