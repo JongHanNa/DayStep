@@ -383,7 +383,7 @@ function MonthDayCell({
       )}
 
       {/* 할일 목록 */}
-      <div className="space-y-1 max-h-[calc(100%-24px)] overflow-y-auto" style={{ marginTop: (spanningCard || hasSpanningCard) ? '52px' : '0' }}>
+      <div className="space-y-1 max-h-[calc(100%-24px)] overflow-y-auto" style={{ marginTop: (spanningCard || hasSpanningCard) ? '48px' : '0' }}>
         {todos.map((todo) => {
           // InboxItem을 CalendarTodoCard가 필요로 하는 형식으로 변환
           const cardTodo = {
