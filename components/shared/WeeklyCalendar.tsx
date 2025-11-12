@@ -7,8 +7,13 @@ import type { InboxItem, Project } from '@/types/second-brain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import { useAuth } from '@/app/context/AuthContext';
 
-// 통합 할일 타입 (InboxItem만 지원)
-type UnifiedTodoItem = InboxItem;
+// end_date를 포함할 수 있는 확장 InboxItem 타입
+type InboxItemWithEndDate = InboxItem & {
+  end_date?: string | null;
+};
+
+// 통합 할일 타입 (InboxItem + end_date 지원)
+type UnifiedTodoItem = InboxItemWithEndDate;
 
 interface WeeklyCalendarProps {
   todos: UnifiedTodoItem[];
@@ -85,11 +90,39 @@ export default function WeeklyCalendar({
 
       const scheduledDate = new Date(todo.scheduled_date);
 
-      // InboxItem은 스패닝 지원 안 함 (end_date, includeEndDate 필드 없음)
-      // 일반 카드만 표시: 시작일이 현재 주에 있으면 표시
-      if (scheduledDate && scheduledDate >= weekStart && scheduledDate <= weekEnd) {
-        const dayIndex = differenceInCalendarDays(scheduledDate, weekStart);
-        single.get(dayIndex)?.push(todo);
+      // end_date가 있고 스패닝이 활성화된 경우
+      if (enableSpanning && todo.end_date) {
+        const endDate = new Date(todo.end_date);
+
+        // 현재 주와 겹치는지 확인
+        if (scheduledDate <= weekEnd && endDate >= weekStart) {
+          // 현재 주 범위 내로 클립
+          const clippedStart = scheduledDate < weekStart ? weekStart : scheduledDate;
+          const clippedEnd = endDate > weekEnd ? weekEnd : endDate;
+
+          const startDay = differenceInCalendarDays(clippedStart, weekStart);
+          const endDay = differenceInCalendarDays(clippedEnd, weekStart);
+          const spanDays = endDay - startDay + 1;
+
+          if (spanDays > 1) {
+            // 스패닝 카드로 등록
+            spanning.push({
+              todo,
+              startDay,
+              spanDays,
+              rowIndex: 0, // 나중에 행 배치 계산
+            });
+          } else {
+            // 1일짜리는 일반 카드로
+            single.get(startDay)?.push(todo);
+          }
+        }
+      } else {
+        // 종료일 없는 경우: 시작일이 현재 주에 있으면 표시
+        if (scheduledDate && scheduledDate >= weekStart && scheduledDate <= weekEnd) {
+          const dayIndex = differenceInCalendarDays(scheduledDate, weekStart);
+          single.get(dayIndex)?.push(todo);
+        }
       }
     });
 

@@ -377,7 +377,7 @@ export default function ArchivePage() {
             <div className="modal-box">
               <h3 className="font-bold text-lg">삭제 확인</h3>
               <p className="py-4">
-                "{itemToDelete.title}"을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                &quot;{itemToDelete.title}&quot;을(를) 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
               </p>
               <div className="modal-action">
                 <button

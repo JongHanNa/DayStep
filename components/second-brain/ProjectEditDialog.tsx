@@ -49,8 +49,13 @@ function getClarificationLabel(clarification?: string): string {
   return labelMap[clarification] || clarification;
 }
 
-// TodoItem을 InboxItem으로 변환하는 헬퍼 함수
-function convertTodoItemToInboxItem(todoItem: TodoItem): any {
+// InboxItem 확장 타입 (end_date 필드 추가)
+type InboxItemWithEndDate = any & {
+  end_date?: string | null;
+};
+
+// TodoItem을 InboxItemWithEndDate로 변환하는 헬퍼 함수
+function convertTodoItemToInboxItem(todoItem: TodoItem): InboxItemWithEndDate {
   return {
     id: todoItem.id,
     content: todoItem.title,
@@ -65,6 +70,10 @@ function convertTodoItemToInboxItem(todoItem: TodoItem): any {
     updated_at: new Date().toISOString(),
     user_id: '',
     status: 'inbox' as const,
+    // 종료일 정보 추가 (스패닝 카드용)
+    end_date: todoItem.includeEndDate && todoItem.endDate
+      ? todoItem.endDate.toISOString()
+      : null,
   };
 }
 
