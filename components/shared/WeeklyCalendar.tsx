@@ -2,11 +2,10 @@
 
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, differenceInCalendarDays } from 'date-fns';
-import { DndContext, DragOverlay, useDroppable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import type { InboxItem, Project } from '@/types/second-brain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import { useAuth } from '@/app/context/AuthContext';
-import { useDndKit } from '@/hooks/useDndKit';
 
 // 통합 할일 타입 (InboxItem만 지원)
 type UnifiedTodoItem = InboxItem;
@@ -61,29 +60,6 @@ export default function WeeklyCalendar({
   const selectedDate = controlledDate || internalDate;
   const handleDateChange = onDateChange || setInternalDate;
 
-  const { appUser } = useAuth();
-  const userId = appUser?.id;
-
-  // 드래그앤드롭 핸들러
-  const { sensors, activeItem, handleDragStart, handleDragEnd, dragOverlayProps } = useDndKit<UnifiedTodoItem>({
-    onDragEnd: async (active, over) => {
-      if (!over || !userId || !onTodoDateChange) return;
-
-      const todoId = active.id.toString().replace('week-todo-', '');
-
-      // 주간 컬럼에 드롭한 경우
-      if (over.id.toString().startsWith('week-')) {
-        const dateString = over.id.toString().replace('week-', '');
-        const newDate = new Date(dateString);
-        await onTodoDateChange(todoId, newDate);
-      }
-    },
-    getActiveItem: (id) => {
-      const todoId = id.toString().replace('week-todo-', '');
-      return todos.find(todo => todo.id === todoId);
-    }
-  });
-
   // 현재 주의 일요일~토요일 계산
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 }); // 일요일 시작
   const weekEnd = addDays(weekStart, 6); // 토요일
@@ -131,8 +107,7 @@ export default function WeeklyCalendar({
   })();
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="w-full">
+    <div className="w-full">
         {/* 주간 헤더 */}
         <div className="flex items-center justify-between mb-4">
           <button
@@ -234,28 +209,7 @@ export default function WeeklyCalendar({
         )}
       </div>
 
-      {/* 드래그 프리뷰 오버레이 */}
-      <DragOverlay {...dragOverlayProps}>
-        {activeItem && (
-          <CalendarTodoCard
-            todo={{
-              id: activeItem.id,
-              title: activeItem.content,
-              completed: activeItem.is_completed || false,
-              isHighlight: activeItem.is_highlight || false,
-              startTime: activeItem.schedule_type === 'timed' && activeItem.scheduled_date
-                ? format(new Date(activeItem.scheduled_date), 'HH:mm')
-                : undefined,
-              color: activeItem.color,
-            }}
-            showCheckbox={false}
-            enableDragDrop={false}
-            projectColor={project?.color || activeItem.color}
-          />
-        )}
-      </DragOverlay>
     </div>
-    </DndContext>
   );
 }
 

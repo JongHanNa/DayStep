@@ -12,11 +12,9 @@ import {
   isSameMonth,
   addMonths
 } from 'date-fns';
-import { DndContext, DragOverlay, useDroppable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import type { InboxItem, Project } from '@/types/second-brain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
-import { useAuth } from '@/app/context/AuthContext';
-import { useDndKit } from '@/hooks/useDndKit';
 
 interface MonthlyCalendarProps {
   todos: InboxItem[];
@@ -46,28 +44,6 @@ export default function MonthlyCalendar({
   const [internalDate, setInternalDate] = React.useState<Date>(new Date());
   const selectedDate = controlledDate || internalDate;
   const handleDateChange = onDateChange || setInternalDate;
-
-  const { appUser } = useAuth();
-  const userId = appUser?.id;
-
-  // 드래그앤드롭 핸들러
-  const { sensors, activeItem, handleDragStart, handleDragEnd, dragOverlayProps } = useDndKit<InboxItem>({
-    onDragEnd: async (active, over) => {
-      if (!over || !userId || !onTodoDateChange) return;
-
-      const todoId = active.id.toString().replace('month-todo-', '');
-
-      // 날짜 셀에 드롭한 경우
-      if (over.id.toString().match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const newDate = new Date(over.id.toString());
-        await onTodoDateChange(todoId, newDate);
-      }
-    },
-    getActiveItem: (id) => {
-      const todoId = id.toString().replace('month-todo-', '');
-      return todos.find(todo => todo.id === todoId);
-    }
-  });
 
   // 월의 시작과 끝 날짜
   const monthStart = startOfMonth(selectedDate);
@@ -113,8 +89,7 @@ export default function MonthlyCalendar({
   });
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="w-full">
+    <div className="w-full">
         {/* 월 헤더 */}
         <div className="flex items-center justify-between mb-4">
           <button
@@ -179,28 +154,7 @@ export default function MonthlyCalendar({
         ))}
       </div>
 
-      {/* 드래그 프리뷰 오버레이 */}
-      <DragOverlay {...dragOverlayProps}>
-        {activeItem && (
-          <CalendarTodoCard
-            todo={{
-              id: activeItem.id,
-              title: activeItem.content,
-              completed: activeItem.is_completed || false,
-              isHighlight: activeItem.is_highlight || false,
-              startTime: activeItem.schedule_type === 'timed' && activeItem.scheduled_date
-                ? format(new Date(activeItem.scheduled_date), 'HH:mm')
-                : undefined,
-              color: activeItem.color,
-            }}
-            showCheckbox={false}
-            enableDragDrop={false}
-            projectColor={activeItem.color}
-          />
-        )}
-      </DragOverlay>
     </div>
-    </DndContext>
   );
 }
 
