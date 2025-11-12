@@ -20,9 +20,15 @@ import { fetchScheduledTodos } from '@/lib/supabase/calendar';
 import type { InboxItem } from '@/types/second-brain';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useDndKit } from '@/hooks/useDndKit';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import {
+  generateAllRecurrenceInstances,
+  isRecurringTodo,
+  applyCompletionStatusToInstances
+} from '@/lib/recurrence-utils';
+import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
 
-type CalendarTab = 'week-schedule' | 'week-plan' | 'month-schedule' | 'month-plan';
+type CalendarTab = 'week-schedule' | 'week-plan' | 'week-routine' | 'month-schedule' | 'month-plan' | 'month-routine';
 
 // todos 테이블 데이터를 InboxItem으로 변환
 function todoToInboxItem(todo: any): InboxItem {
@@ -43,7 +49,26 @@ function todoToInboxItem(todo: any): InboxItem {
     project_id: todo.project_id,
     icon: todo.icon,
     color: todo.color,
+    // 반복 인스턴스 관련 필드
+    is_recurrence_instance: todo.is_recurrence_instance || false,
+    recurrence_source_id: todo.recurrence_source_id,
+    recurrence_occurrence_date: todo.recurrence_occurrence_date,
   };
+}
+
+// 날짜 범위 계산 헬퍼 함수
+function getDateRangeForTab(tab: CalendarTab, selectedDate: Date): { start: Date; end: Date } {
+  const isWeekly = tab.startsWith('week-');
+
+  if (isWeekly) {
+    const start = startOfWeek(selectedDate, { weekStartsOn: 0 }); // 일요일 시작
+    const end = endOfWeek(selectedDate, { weekStartsOn: 0 });
+    return { start, end };
+  } else {
+    const start = startOfMonth(selectedDate);
+    const end = endOfMonth(selectedDate);
+    return { start, end };
+  }
 }
 
 export default function CalendarPage() {
@@ -76,10 +101,40 @@ export default function CalendarPage() {
       if (!appUser?.id) return;
 
       try {
-        // 날짜가 설정된 모든 할일 조회
+        // 1. 날짜가 설정된 모든 할일 조회
         const todos = await fetchScheduledTodos(appUser.id);
-        const todoItems = todos.map(todoToInboxItem);
-        setScheduledTodos(todoItems);
+
+        // 2. 일반 할일과 반복 할일 분리
+        const regularTodos = todos.filter(t => !isRecurringTodo(t));
+        const recurringTodos = todos.filter(t => isRecurringTodo(t));
+
+        // 3. 현재 보는 달/주의 날짜 범위 계산
+        const { start, end } = getDateRangeForTab(selectedTab, selectedDate);
+
+        // 4. 반복 할일 인스턴스 생성
+        const recurrenceInstances = await generateAllRecurrenceInstances(
+          recurringTodos,
+          start,
+          end,
+          appUser.id
+        );
+
+        // 5. 완료 상태 로드 (todo_completions 테이블)
+        const completions = await loadCompletionsForDateRange(start, end, appUser.id);
+
+        // 6. 인스턴스에 완료 상태 적용
+        const instancesWithCompletion = applyCompletionStatusToInstances(
+          recurrenceInstances,
+          completions
+        );
+
+        // 7. 일반 할일 + 반복 인스턴스 합치기
+        const allTodos = [
+          ...regularTodos.map(todoToInboxItem),
+          ...instancesWithCompletion.map(inst => todoToInboxItem(inst.data))
+        ];
+
+        setScheduledTodos(allTodos);
 
         // 프로젝트, 노트 정보는 기존 store 사용
         await fetchProjects(appUser.id);
@@ -90,7 +145,7 @@ export default function CalendarPage() {
     };
 
     loadData();
-  }, [appUser?.id, fetchProjects, fetchNotes]);
+  }, [appUser?.id, selectedTab, selectedDate, fetchProjects, fetchNotes]);
 
   // 탭별 필터링된 할일 목록
   const filteredTodos = useMemo(() => {
@@ -99,20 +154,40 @@ export default function CalendarPage() {
 
     switch (selectedTab) {
       case 'week-schedule':
-        // 주간 일정: 명료화 = "일정"만
-        return scheduledItems.filter((item: InboxItem) => item.clarification === 'schedule_clear');
+        // 주간 일정: 명료화 = "일정"만 (반복 인스턴스 제외)
+        return scheduledItems.filter((item: InboxItem) =>
+          item.clarification === 'schedule_clear' && !item.is_recurrence_instance
+        );
 
       case 'week-plan':
-        // 주간 계획: "일정" + 기타 (언젠가만 제외)
-        return scheduledItems.filter((item: InboxItem) => item.clarification !== 'someday');
+        // 주간 계획: "일정" + 기타 (언젠가만 제외, 반복 인스턴스 제외)
+        return scheduledItems.filter((item: InboxItem) =>
+          item.clarification !== 'someday' && !item.is_recurrence_instance
+        );
+
+      case 'week-routine':
+        // 주간 루틴: 반복 할일 인스턴스만
+        return scheduledItems.filter((item: InboxItem) =>
+          item.is_recurrence_instance === true
+        );
 
       case 'month-schedule':
-        // 월간 일정: 명료화 = "일정"만
-        return scheduledItems.filter((item: InboxItem) => item.clarification === 'schedule_clear');
+        // 월간 일정: 명료화 = "일정"만 (반복 인스턴스 제외)
+        return scheduledItems.filter((item: InboxItem) =>
+          item.clarification === 'schedule_clear' && !item.is_recurrence_instance
+        );
 
       case 'month-plan':
-        // 월간 계획: "일정" + 기타 (언젠가만 제외)
-        return scheduledItems.filter((item: InboxItem) => item.clarification !== 'someday');
+        // 월간 계획: "일정" + 기타 (언젠가만 제외, 반복 인스턴스 제외)
+        return scheduledItems.filter((item: InboxItem) =>
+          item.clarification !== 'someday' && !item.is_recurrence_instance
+        );
+
+      case 'month-routine':
+        // 월간 루틴: 반복 할일 인스턴스만
+        return scheduledItems.filter((item: InboxItem) =>
+          item.is_recurrence_instance === true
+        );
 
       default:
         return scheduledItems;
@@ -160,15 +235,45 @@ export default function CalendarPage() {
   // 할일 완료 토글
   const handleToggleTodo = async (todoId: string) => {
     const todo = scheduledTodos.find((item: InboxItem) => item.id === todoId);
-    if (todo && appUser?.id) {
-      await updateInboxItem(appUser.id, todoId, {
-        is_completed: !todo.is_completed,
-      });
+    if (!todo || !appUser?.id) return;
+
+    try {
+      // 반복 인스턴스인 경우
+      if (todo.is_recurrence_instance && todo.recurrence_source_id && todo.recurrence_occurrence_date) {
+        const { useTodoStore } = await import('@/state/stores/todoStore');
+        const { toggleRecurrenceCompletion } = useTodoStore.getState();
+        const targetDate = new Date(todo.recurrence_occurrence_date);
+        await toggleRecurrenceCompletion(todo.recurrence_source_id, targetDate);
+      } else {
+        // 일반 할일
+        await updateInboxItem(appUser.id, todoId, {
+          is_completed: !todo.is_completed,
+        });
+      }
 
       // 달력 목록 새로고침
       const todos = await fetchScheduledTodos(appUser.id);
-      const todoItems = todos.map(todoToInboxItem);
-      setScheduledTodos(todoItems);
+      const regularTodos = todos.filter(t => !isRecurringTodo(t));
+      const recurringTodos = todos.filter(t => isRecurringTodo(t));
+      const { start, end } = getDateRangeForTab(selectedTab, selectedDate);
+      const recurrenceInstances = await generateAllRecurrenceInstances(
+        recurringTodos,
+        start,
+        end,
+        appUser.id
+      );
+      const completions = await loadCompletionsForDateRange(start, end, appUser.id);
+      const instancesWithCompletion = applyCompletionStatusToInstances(
+        recurrenceInstances,
+        completions
+      );
+      const allTodos = [
+        ...regularTodos.map(todoToInboxItem),
+        ...instancesWithCompletion.map(inst => todoToInboxItem(inst.data))
+      ];
+      setScheduledTodos(allTodos);
+    } catch (error) {
+      console.error('할일 완료 토글 실패:', error);
     }
   };
 
@@ -230,6 +335,15 @@ export default function CalendarPage() {
   const handleTodoDateChange = async (todoId: string, newDate: Date) => {
     if (!appUser?.id) return;
 
+    const todo = scheduledTodos.find(item => item.id === todoId);
+    if (!todo) return;
+
+    // 반복 인스턴스는 드래그앤드롭으로 날짜 변경 불가
+    if (todo.is_recurrence_instance) {
+      console.warn('⚠️ 반복 할일 인스턴스는 드래그앤드롭으로 날짜를 변경할 수 없습니다.');
+      return;
+    }
+
     try {
       // 한국시간 자정으로 설정
       const koreaDate = new Date(newDate);
@@ -251,16 +365,50 @@ export default function CalendarPage() {
 
       // 3단계: DB와 동기화 (최종 상태 보장)
       const todos = await fetchScheduledTodos(appUser.id);
-      const todoItems = todos.map(todoToInboxItem);
-      setScheduledTodos(todoItems);
+      const regularTodos = todos.filter(t => !isRecurringTodo(t));
+      const recurringTodos = todos.filter(t => isRecurringTodo(t));
+      const { start, end } = getDateRangeForTab(selectedTab, selectedDate);
+      const recurrenceInstances = await generateAllRecurrenceInstances(
+        recurringTodos,
+        start,
+        end,
+        appUser.id
+      );
+      const completions = await loadCompletionsForDateRange(start, end, appUser.id);
+      const instancesWithCompletion = applyCompletionStatusToInstances(
+        recurrenceInstances,
+        completions
+      );
+      const allTodos = [
+        ...regularTodos.map(todoToInboxItem),
+        ...instancesWithCompletion.map(inst => todoToInboxItem(inst.data))
+      ];
+      setScheduledTodos(allTodos);
     } catch (error) {
       console.error('할일 날짜 변경 실패:', error);
 
       // 에러 발생 시 DB에서 다시 가져와 롤백
       try {
         const todos = await fetchScheduledTodos(appUser.id);
-        const todoItems = todos.map(todoToInboxItem);
-        setScheduledTodos(todoItems);
+        const regularTodos = todos.filter(t => !isRecurringTodo(t));
+        const recurringTodos = todos.filter(t => isRecurringTodo(t));
+        const { start, end } = getDateRangeForTab(selectedTab, selectedDate);
+        const recurrenceInstances = await generateAllRecurrenceInstances(
+          recurringTodos,
+          start,
+          end,
+          appUser.id
+        );
+        const completions = await loadCompletionsForDateRange(start, end, appUser.id);
+        const instancesWithCompletion = applyCompletionStatusToInstances(
+          recurrenceInstances,
+          completions
+        );
+        const allTodos = [
+          ...regularTodos.map(todoToInboxItem),
+          ...instancesWithCompletion.map(inst => todoToInboxItem(inst.data))
+        ];
+        setScheduledTodos(allTodos);
       } catch (rollbackError) {
         console.error('롤백 실패:', rollbackError);
       }
@@ -444,6 +592,12 @@ export default function CalendarPage() {
                   주간 계획
                 </button>
                 <button
+                  className={`tab ${selectedTab === 'week-routine' ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedTab('week-routine')}
+                >
+                  주간 루틴
+                </button>
+                <button
                   className={`tab ${selectedTab === 'month-schedule' ? 'tab-active' : ''}`}
                   onClick={() => setSelectedTab('month-schedule')}
                 >
@@ -454,6 +608,12 @@ export default function CalendarPage() {
                   onClick={() => setSelectedTab('month-plan')}
                 >
                   월간 계획
+                </button>
+                <button
+                  className={`tab ${selectedTab === 'month-routine' ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedTab('month-routine')}
+                >
+                  월간 루틴
                 </button>
               </div>
             </div>

@@ -267,6 +267,11 @@ export interface InboxItem {
   icon?: string; // 아이콘
   color?: string; // 색상
 
+  // 반복 인스턴스 관련 필드
+  is_recurrence_instance?: boolean; // 반복 인스턴스 여부
+  recurrence_source_id?: string; // 원본 할일 ID
+  recurrence_occurrence_date?: string; // 인스턴스 발생 날짜
+
   // 노트 타입 전용 필드
   note_title?: string; // 노트 제목
   note_content?: string; // 노트 내용
