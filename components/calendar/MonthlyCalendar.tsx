@@ -351,11 +351,7 @@ function MonthDayCell({
           className="absolute top-[36px] mb-2 max-h-[52px] overflow-hidden"
           style={{
             left: segmentPosition === 'first' || segmentPosition === 'single' ? '0.5rem' : '0',
-            width: segmentPosition === 'first' || segmentPosition === 'single'
-              ? `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.25}rem - 0.5rem)`
-              : segmentPosition === 'last'
-              ? `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.25}rem - 0.5rem)`
-              : `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.25}rem)`,
+            width: `calc(${spanDays * 100}% + ${(spanDays - 1) * 0.25}rem)`,
             zIndex: 1
           }}
         >
