@@ -235,16 +235,35 @@ export default function CalendarPage() {
       const koreaDate = new Date(newDate);
       koreaDate.setHours(0, 0, 0, 0);
 
+      // 1단계: 로컬 상태를 즉시 업데이트 (Optimistic Update)
+      setScheduledTodos(prevTodos =>
+        prevTodos.map(todo =>
+          todo.id === todoId
+            ? { ...todo, scheduled_date: koreaDate.toISOString() }
+            : todo
+        )
+      );
+
+      // 2단계: DB 업데이트 (백그라운드)
       await updateInboxTodo(appUser.id, todoId, {
         scheduled_date: koreaDate.toISOString(),
       });
 
-      // 달력 목록 새로고침
+      // 3단계: DB와 동기화 (최종 상태 보장)
       const todos = await fetchScheduledTodos(appUser.id);
       const todoItems = todos.map(todoToInboxItem);
       setScheduledTodos(todoItems);
     } catch (error) {
       console.error('할일 날짜 변경 실패:', error);
+
+      // 에러 발생 시 DB에서 다시 가져와 롤백
+      try {
+        const todos = await fetchScheduledTodos(appUser.id);
+        const todoItems = todos.map(todoToInboxItem);
+        setScheduledTodos(todoItems);
+      } catch (rollbackError) {
+        console.error('롤백 실패:', rollbackError);
+      }
     }
   };
 
