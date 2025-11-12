@@ -77,6 +77,7 @@ npm start                     # 프로덕션 서버
 
 - **한글로 대답하세요**
 - **커밋은 사용자에게 허락 확인 받고 하세요**
+- **CLAUDE.md 업데이트 시 핵심만 작성, 예제 코드는 최소화하세요**
 
 ---
 
@@ -216,8 +217,15 @@ npm start                     # 프로덕션 서버
 
 ### 상태 관리
 
-- `Object.assign(state.optimisticState, {...})`
-- Optimistic updates 적용
+**Optimistic Update 패턴 (필수)**:
+- UI 즉시 업데이트 → DB 업데이트 → 동기화 순서
+- 에러 시 롤백으로 일관성 보장
+- 드래그앤드롭, 편집 등 모든 상태 변경에 적용
+
+**적용 원칙**:
+- `setState` 먼저 → `await DB.update()` → `fetch & setState` (동기화)
+- try-catch로 에러 시 DB에서 재조회하여 롤백
+- Zustand: `Object.assign(state.optimisticState, {...})` 사용
 
 ### 날짜/시간 저장 패턴
 
