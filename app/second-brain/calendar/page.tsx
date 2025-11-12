@@ -14,6 +14,7 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import TodoDragPreview from '@/components/shared/TodoDragPreview';
 import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { fetchScheduledTodos } from '@/lib/supabase/calendar';
 import type { InboxItem } from '@/types/second-brain';
@@ -472,20 +473,11 @@ export default function CalendarPage() {
         {typeof window !== 'undefined' && createPortal(
           <DragOverlay {...dragOverlayProps}>
             {activeItem && (
-              <div className="bg-base-100 border-2 border-primary rounded-lg p-3 shadow-2xl max-w-xs opacity-90">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-sm">{activeItem.content}</p>
-                  {activeItem.is_highlight && (
-                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  )}
-                </div>
-                {activeItem.scheduled_date && (
-                  <p className="text-xs text-base-content/60 mt-1">
-                    <Calendar className="w-3 h-3 inline mr-1" />
-                    {format(new Date(activeItem.scheduled_date), 'M/d')}
-                  </p>
-                )}
-              </div>
+              <TodoDragPreview
+                title={activeItem.content}
+                isHighlight={activeItem.is_highlight}
+                scheduledDate={activeItem.scheduled_date}
+              />
             )}
           </DragOverlay>,
           document.body
