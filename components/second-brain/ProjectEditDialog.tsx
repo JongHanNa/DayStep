@@ -1227,6 +1227,7 @@ export default function ProjectEditDialog({
                     showClarification={false}
                     enableDragDrop={true}
                     compact={false}
+                    enableSpanning={true}
                   />
                 )}
 

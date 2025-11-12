@@ -202,7 +202,7 @@ export default function WeeklyCalendar({
           <div className="grid grid-cols-7 gap-2 absolute top-0 left-0 right-0 pointer-events-none">
             {/* 헤더 공간 확보 */}
             {weekDays.map((_, i) => (
-              <div key={`header-space-${i}`} className={compact ? 'h-[50px]' : 'h-[60px]'} />
+              <div key={`header-space-${i}`} className={compact ? 'h-[60px]' : 'h-[70px]'} />
             ))}
 
             {/* 스패닝 카드들 */}
@@ -213,9 +213,10 @@ export default function WeeklyCalendar({
                 style={{
                   gridColumn: `${card.startDay + 1} / span ${card.spanDays}`,
                   gridRow: 2, // 헤더 아래 첫 번째 행
+                  zIndex: 1, // 레이어 분리
                 }}
               >
-                <div className="px-1">
+                <div className="px-1 mb-2">
                   <CalendarTodoCard
                     todo={{
                       id: card.todo.id,
@@ -323,7 +324,12 @@ function WeekDayColumn({
       </div>
 
       {/* 할일 표시 영역 */}
-      <div className="flex-1 space-y-2 overflow-y-auto">
+      <div
+        className="flex-1 space-y-2 overflow-y-auto"
+        style={{
+          marginTop: spanningCardCount > 0 ? '56px' : '0'
+        }}
+      >
         {todos.map((todo) => {
           // InboxItem을 CalendarTodoCard가 필요로 하는 형식으로 변환
           const cardTodo = {
