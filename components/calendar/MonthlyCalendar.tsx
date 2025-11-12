@@ -348,7 +348,7 @@ function MonthDayCell({
       {/* 스패닝 카드 (absolute positioning으로 여러 셀에 걸쳐 표시) - 웹 환경만 */}
       {!isMobile && spanningCard && spanDays && (
         <div
-          className="absolute top-[36px] mb-2 max-h-[52px] overflow-hidden"
+          className="absolute top-[36px] mb-0 max-h-[52px] overflow-hidden"
           style={{
             left: segmentPosition === 'first' || segmentPosition === 'single' ? '0.5rem' : '-0.1rem',
             width: segmentPosition === 'first' || segmentPosition === 'single'
@@ -383,7 +383,7 @@ function MonthDayCell({
       )}
 
       {/* 할일 목록 */}
-      <div className="space-y-1 max-h-[calc(100%-24px)] overflow-y-auto" style={{ marginTop: (spanningCard || hasSpanningCard) ? '56px' : '0' }}>
+      <div className="space-y-1 max-h-[calc(100%-24px)] overflow-y-auto" style={{ marginTop: (spanningCard || hasSpanningCard) ? '52px' : '0' }}>
         {todos.map((todo) => {
           // InboxItem을 CalendarTodoCard가 필요로 하는 형식으로 변환
           const cardTodo = {

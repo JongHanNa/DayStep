@@ -216,7 +216,7 @@ export default function WeeklyCalendar({
                   zIndex: 1, // 레이어 분리
                 }}
               >
-                <div className="px-1 mb-2">
+                <div className="px-1 mb-0">
                   <CalendarTodoCard
                     todo={{
                       id: card.todo.id,
@@ -327,7 +327,7 @@ function WeekDayColumn({
       <div
         className="flex-1 space-y-2 overflow-y-auto"
         style={{
-          marginTop: spanningCardCount > 0 ? '56px' : '0'
+          marginTop: spanningCardCount > 0 ? '52px' : '0'
         }}
       >
         {todos.map((todo) => {
