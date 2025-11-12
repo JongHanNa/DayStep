@@ -2,10 +2,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { Calendar, Plus } from 'lucide-react';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import WeeklyCalendar from '@/components/shared/WeeklyCalendar';
 import MonthlyCalendar from '@/components/calendar/MonthlyCalendar';
+import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
@@ -16,6 +18,8 @@ import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { fetchScheduledTodos } from '@/lib/supabase/calendar';
 import type { InboxItem } from '@/types/second-brain';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import { useDndKit } from '@/hooks/useDndKit';
+import { format } from 'date-fns';
 
 type CalendarTab = 'week-schedule' | 'week-plan' | 'month-schedule' | 'month-plan';
 
@@ -271,6 +275,55 @@ export default function CalendarPage() {
     }
   };
 
+  // DnD Kit 설정
+  const {
+    sensors,
+    activeItem,
+    handleDragStart,
+    handleDragEnd,
+    dndContextProps,
+    dragOverlayProps
+  } = useDndKit<InboxItem>({
+    onDragEnd: async (active, over) => {
+      if (!over || !appUser?.id) return;
+
+      // ID에서 todo ID 추출
+      const activeIdString = active.id as string;
+      let todoId = activeIdString;
+      if (activeIdString.startsWith('week-todo-')) {
+        todoId = activeIdString.replace('week-todo-', '');
+      } else if (activeIdString.startsWith('month-todo-')) {
+        todoId = activeIdString.replace('month-todo-', '');
+      }
+
+      const overIdString = over.id as string;
+
+      // 주간 달력 drop 처리: week-yyyy-MM-dd 형식
+      if (overIdString.startsWith('week-')) {
+        const dateString = overIdString.replace('week-', '');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return;
+        const newDate = new Date(dateString);
+        await handleTodoDateChange(todoId, newDate);
+      }
+
+      // 월간 달력 drop 처리: yyyy-MM-dd 형식
+      if (/^\d{4}-\d{2}-\d{2}$/.test(overIdString)) {
+        const newDate = new Date(overIdString);
+        await handleTodoDateChange(todoId, newDate);
+      }
+    },
+    getActiveItem: (id) => {
+      const idString = id as string;
+      let todoId = idString;
+      if (idString.startsWith('week-todo-')) {
+        todoId = idString.replace('week-todo-', '');
+      } else if (idString.startsWith('month-todo-')) {
+        todoId = idString.replace('month-todo-', '');
+      }
+      return scheduledTodos.find(todo => todo.id === todoId);
+    },
+  });
+
   // 모달 닫기
   const handleCloseModal = () => {
     closeModal();
@@ -341,73 +394,101 @@ export default function CalendarPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-base-100 pb-20">
-        {/* 헤더 */}
-        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-          <div className={`max-w-7xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <Calendar className="w-6 h-6" />
-              <h1 className="text-2xl font-bold">달력</h1>
-            </div>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        {...dndContextProps}
+      >
+        <div className="min-h-screen bg-base-100 pb-20">
+          {/* 헤더 */}
+          <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+            <div className={`max-w-7xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <Calendar className="w-6 h-6" />
+                <h1 className="text-2xl font-bold">달력</h1>
+              </div>
 
-            {/* 탭 네비게이션 */}
-            <div className="tabs tabs-boxed bg-base-200 p-1">
-              <button
-                className={`tab ${selectedTab === 'week-schedule' ? 'tab-active' : ''}`}
-                onClick={() => setSelectedTab('week-schedule')}
-              >
-                주간 일정
-              </button>
-              <button
-                className={`tab ${selectedTab === 'week-plan' ? 'tab-active' : ''}`}
-                onClick={() => setSelectedTab('week-plan')}
-              >
-                주간 계획
-              </button>
-              <button
-                className={`tab ${selectedTab === 'month-schedule' ? 'tab-active' : ''}`}
-                onClick={() => setSelectedTab('month-schedule')}
-              >
-                월간 일정
-              </button>
-              <button
-                className={`tab ${selectedTab === 'month-plan' ? 'tab-active' : ''}`}
-                onClick={() => setSelectedTab('month-plan')}
-              >
-                월간 계획
-              </button>
+              {/* 탭 네비게이션 */}
+              <div className="tabs tabs-boxed bg-base-200 p-1">
+                <button
+                  className={`tab ${selectedTab === 'week-schedule' ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedTab('week-schedule')}
+                >
+                  주간 일정
+                </button>
+                <button
+                  className={`tab ${selectedTab === 'week-plan' ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedTab('week-plan')}
+                >
+                  주간 계획
+                </button>
+                <button
+                  className={`tab ${selectedTab === 'month-schedule' ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedTab('month-schedule')}
+                >
+                  월간 일정
+                </button>
+                <button
+                  className={`tab ${selectedTab === 'month-plan' ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedTab('month-plan')}
+                >
+                  월간 계획
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* 메인 콘텐츠 */}
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            {renderCalendar()}
+          </div>
+
+          {/* 하단 네비게이션 */}
+          <SecondBrainBottomNav />
+
+          {/* 할일 편집 모달 */}
+          <TodoEditModal
+            open={editingItem !== null}
+            todo={todoForm}
+            onClose={handleCloseModal}
+            onSave={handleSaveTodo}
+            onChange={setTodoForm}
+            onDelete={handleDeleteTodo}
+            projects={projects}
+            notes={notes}
+            onCreateProject={handleCreateProject}
+            onCreateNote={handleCreateNote}
+            showClarification={true}
+            showNextActionStatus={true}
+            showScheduledDate={true}
+            showHighlight={true}
+            showCompleted={true}
+            showProjects={true}
+          />
         </div>
 
-        {/* 메인 콘텐츠 */}
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          {renderCalendar()}
-        </div>
-
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
-
-        {/* 할일 편집 모달 */}
-        <TodoEditModal
-          open={editingItem !== null}
-          todo={todoForm}
-          onClose={handleCloseModal}
-          onSave={handleSaveTodo}
-          onChange={setTodoForm}
-          onDelete={handleDeleteTodo}
-          projects={projects}
-          notes={notes}
-          onCreateProject={handleCreateProject}
-          onCreateNote={handleCreateNote}
-          showClarification={true}
-          showNextActionStatus={true}
-          showScheduledDate={true}
-          showHighlight={true}
-          showCompleted={true}
-          showProjects={true}
-        />
-      </div>
+        {/* 드래그 미리보기 오버레이 */}
+        <DragOverlay {...dragOverlayProps}>
+          {activeItem && (
+            <CalendarTodoCard
+              todo={{
+                id: activeItem.id,
+                title: activeItem.content,
+                completed: activeItem.is_completed || false,
+                isHighlight: activeItem.is_highlight || false,
+                startTime: activeItem.schedule_type === 'timed' && activeItem.scheduled_date
+                  ? format(new Date(activeItem.scheduled_date), 'HH:mm')
+                  : undefined,
+                color: activeItem.color,
+              }}
+              showCheckbox={false}
+              enableDragDrop={false}
+              projectColor={activeItem.color}
+            />
+          )}
+        </DragOverlay>
+      </DndContext>
     </AuthGuard>
   );
 }
