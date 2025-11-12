@@ -19,7 +19,10 @@ export default function TodoDragPreview({
   scheduledDate
 }: TodoDragPreviewProps) {
   return (
-    <div className="bg-base-100 border-2 border-primary rounded-lg p-3 shadow-2xl max-w-xs opacity-90">
+    <div
+      className="bg-base-100 border-2 border-primary rounded-lg p-3 shadow-2xl max-w-xs opacity-90"
+      style={{ pointerEvents: 'none' }}
+    >
       <div className="flex items-center gap-2">
         <p className="font-medium text-sm">{title}</p>
         {isHighlight && (

@@ -377,7 +377,6 @@ function MonthDayCell({
             isSpanning={true}
             segmentPosition={segmentPosition}
             dragId={`month-todo-${spanningCard.id}`}
-            dropId={`month-todo-${spanningCard.id}`}
           />
         </div>
       )}
@@ -406,7 +405,6 @@ function MonthDayCell({
               enableDragDrop={true}
               projectColor={todo.color}
               dragId={`month-todo-${todo.id}`}
-              dropId={`month-todo-${todo.id}`}
             />
           );
         })}

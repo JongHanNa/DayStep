@@ -51,7 +51,7 @@ export default function CalendarTodoCard({
   const { setNodeRef: setDropNodeRef, isOver } = useDroppable({
     id: dropId || `todo-${todo.id}`,
     data: { todoId: todo.id, type: 'todo' },
-    disabled: !enableDragDrop,
+    disabled: !enableDragDrop || !dropId,
   });
 
   // 두 개의 ref를 결합
