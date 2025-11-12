@@ -526,7 +526,7 @@ export default function CalendarPage() {
 
   // 달력 컴포넌트 렌더링
   const renderCalendar = () => {
-    const isWeekly = selectedTab === 'week-schedule' || selectedTab === 'week-plan';
+    const isWeekly = selectedTab === 'week-schedule' || selectedTab === 'week-plan' || selectedTab === 'week-routine';
     const showClarification = selectedTab === 'week-plan' || selectedTab === 'month-plan';
 
     if (isWeekly) {
