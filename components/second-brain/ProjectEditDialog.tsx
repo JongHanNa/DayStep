@@ -563,6 +563,32 @@ export default function ProjectEditDialog({
     }
   };
 
+  // 할일 날짜 변경 (드래그앤드롭)
+  const handleTodoDateChange = async (todoId: string, newDate: Date) => {
+    if (!userId) return;
+
+    try {
+      // 한국시간 자정으로 설정
+      const koreaDate = new Date(newDate);
+      koreaDate.setHours(0, 0, 0, 0);
+
+      // 로컬 상태 업데이트
+      setTodos(todos.map(todo =>
+        todo.id === todoId
+          ? { ...todo, scheduledDate: koreaDate, scheduleType: 'anytime' }
+          : todo
+      ));
+
+      // DB 업데이트
+      await updateTodo(todoId, {
+        start_time: koreaDate.toISOString(),
+        schedule_type: 'anytime',
+      });
+    } catch (error) {
+      console.error('할일 날짜 변경 실패:', error);
+    }
+  };
+
   // 할일 제거
   const deleteTodo = useTodoStore(state => state.deleteTodo);
   const handleRemoveTodo = async (todoId: string) => {
@@ -1186,6 +1212,7 @@ export default function ProjectEditDialog({
                     selectedDate={selectedDate}
                     onDateChange={setSelectedDate}
                     onTodoClick={(todo) => handleToggleTodo(todo.id)}
+                    onTodoDateChange={handleTodoDateChange}
                     project={editingProject}
                     showClarification={false}
                     enableDragDrop={true}
@@ -1199,6 +1226,7 @@ export default function ProjectEditDialog({
                     selectedDate={selectedDate}
                     onDateChange={setSelectedDate}
                     onTodoClick={(todo) => handleToggleTodo(todo.id)}
+                    onTodoDateChange={handleTodoDateChange}
                     showClarification={false}
                     compact={false}
                   />

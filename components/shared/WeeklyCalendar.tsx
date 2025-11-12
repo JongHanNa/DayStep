@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, differenceInCalendarDays } from 'date-fns';
-import { DndContext, useDroppable } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDroppable } from '@dnd-kit/core';
 import type { InboxItem, Project } from '@/types/second-brain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import { useAuth } from '@/app/context/AuthContext';
@@ -65,7 +65,7 @@ export default function WeeklyCalendar({
   const userId = appUser?.id;
 
   // 드래그앤드롭 핸들러
-  const { sensors, handleDragStart, handleDragEnd } = useDndKit({
+  const { sensors, activeItem, handleDragStart, handleDragEnd, dragOverlayProps } = useDndKit<UnifiedTodoItem>({
     onDragEnd: async (active, over) => {
       if (!over || !userId || !onTodoDateChange) return;
 
@@ -77,6 +77,10 @@ export default function WeeklyCalendar({
         const newDate = new Date(dateString);
         await onTodoDateChange(todoId, newDate);
       }
+    },
+    getActiveItem: (id) => {
+      const todoId = id.toString().replace('week-todo-', '');
+      return todos.find(todo => todo.id === todoId);
     }
   });
 
@@ -229,6 +233,27 @@ export default function WeeklyCalendar({
           </div>
         )}
       </div>
+
+      {/* 드래그 프리뷰 오버레이 */}
+      <DragOverlay {...dragOverlayProps}>
+        {activeItem && (
+          <CalendarTodoCard
+            todo={{
+              id: activeItem.id,
+              title: activeItem.content,
+              completed: activeItem.is_completed || false,
+              isHighlight: activeItem.is_highlight || false,
+              startTime: activeItem.schedule_type === 'timed' && activeItem.scheduled_date
+                ? format(new Date(activeItem.scheduled_date), 'HH:mm')
+                : undefined,
+              color: activeItem.color,
+            }}
+            showCheckbox={false}
+            enableDragDrop={false}
+            projectColor={project?.color || activeItem.color}
+          />
+        )}
+      </DragOverlay>
     </div>
     </DndContext>
   );

@@ -221,6 +221,28 @@ export default function CalendarPage() {
     }
   };
 
+  // 할일 날짜 변경 (드래그앤드롭)
+  const handleTodoDateChange = async (todoId: string, newDate: Date) => {
+    if (!appUser?.id) return;
+
+    try {
+      // 한국시간 자정으로 설정
+      const koreaDate = new Date(newDate);
+      koreaDate.setHours(0, 0, 0, 0);
+
+      await updateInboxTodo(appUser.id, todoId, {
+        scheduled_date: koreaDate.toISOString(),
+      });
+
+      // 달력 목록 새로고침
+      const todos = await fetchScheduledTodos(appUser.id);
+      const todoItems = todos.map(todoToInboxItem);
+      setScheduledTodos(todoItems);
+    } catch (error) {
+      console.error('할일 날짜 변경 실패:', error);
+    }
+  };
+
   // 즉시 할일 생성 (달력 날짜 칸에서 + 버튼 클릭)
   const handleQuickCreateTodo = async (date: Date) => {
     if (!appUser?.id) return;
@@ -294,9 +316,10 @@ export default function CalendarPage() {
           onDateChange={setSelectedDate}
           onTodoClick={handleTodoClick}
           onToggleTodo={handleToggleTodo}
+          onTodoDateChange={handleTodoDateChange}
           showClarification={showClarification}
           enableSpanning={false}
-          enableDragDrop={false}
+          enableDragDrop={true}
           onCreateTodo={handleQuickCreateTodo}
         />
       );
@@ -308,6 +331,7 @@ export default function CalendarPage() {
           onDateChange={setSelectedDate}
           onTodoClick={handleTodoClick}
           onToggleTodo={handleToggleTodo}
+          onTodoDateChange={handleTodoDateChange}
           showClarification={showClarification}
           onCreateTodo={handleQuickCreateTodo}
         />
