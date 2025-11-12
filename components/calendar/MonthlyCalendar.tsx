@@ -12,8 +12,11 @@ import {
   isSameMonth,
   addMonths
 } from 'date-fns';
+import { DndContext, useDroppable } from '@dnd-kit/core';
 import type { InboxItem, Project } from '@/types/second-brain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
+import { useAuth } from '@/app/context/AuthContext';
+import { useDndKit } from '@/hooks/useDndKit';
 
 interface MonthlyCalendarProps {
   todos: InboxItem[];
@@ -21,6 +24,7 @@ interface MonthlyCalendarProps {
   onDateChange?: (date: Date) => void;
   onTodoClick?: (item: InboxItem) => void;
   onToggleTodo?: (todoId: string) => void;
+  onTodoDateChange?: (todoId: string, newDate: Date) => Promise<void>; // 드래그로 날짜 변경
   showClarification?: boolean; // 명료화 라벨 표시 여부
   compact?: boolean; // 컴팩트 모드 (높이 줄임)
   onCreateTodo?: (date: Date) => Promise<void>; // 즉시 할일 생성
@@ -33,6 +37,7 @@ export default function MonthlyCalendar({
   onDateChange,
   onTodoClick,
   onToggleTodo,
+  onTodoDateChange,
   showClarification = false,
   compact = false,
   onCreateTodo,
@@ -41,6 +46,24 @@ export default function MonthlyCalendar({
   const [internalDate, setInternalDate] = React.useState<Date>(new Date());
   const selectedDate = controlledDate || internalDate;
   const handleDateChange = onDateChange || setInternalDate;
+
+  const { appUser } = useAuth();
+  const userId = appUser?.id;
+
+  // 드래그앤드롭 핸들러
+  const { sensors, handleDragStart, handleDragEnd } = useDndKit({
+    onDragEnd: async (active, over) => {
+      if (!over || !userId || !onTodoDateChange) return;
+
+      const todoId = active.id.toString().replace('month-todo-', '');
+
+      // 날짜 셀에 드롭한 경우
+      if (over.id.toString().match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const newDate = new Date(over.id.toString());
+        await onTodoDateChange(todoId, newDate);
+      }
+    }
+  });
 
   // 월의 시작과 끝 날짜
   const monthStart = startOfMonth(selectedDate);
@@ -86,25 +109,26 @@ export default function MonthlyCalendar({
   });
 
   return (
-    <div className="w-full">
-      {/* 월 헤더 */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={() => handleDateChange(addMonths(selectedDate, -1))}
-          className="btn btn-ghost btn-sm rounded-full"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <h3 className="text-lg font-semibold">
-          {format(selectedDate, 'yyyy년 M월')}
-        </h3>
-        <button
-          onClick={() => handleDateChange(addMonths(selectedDate, 1))}
-          className="btn btn-ghost btn-sm rounded-full"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="w-full">
+        {/* 월 헤더 */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => handleDateChange(addMonths(selectedDate, -1))}
+            className="btn btn-ghost btn-sm rounded-full"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <h3 className="text-lg font-semibold">
+            {format(selectedDate, 'yyyy년 M월')}
+          </h3>
+          <button
+            onClick={() => handleDateChange(addMonths(selectedDate, 1))}
+            className="btn btn-ghost btn-sm rounded-full"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
 
       {/* 요일 헤더 */}
       <div className="grid grid-cols-7 gap-1 mb-2">
@@ -151,6 +175,7 @@ export default function MonthlyCalendar({
         ))}
       </div>
     </div>
+    </DndContext>
   );
 }
 
@@ -181,14 +206,23 @@ function MonthDayCell({
   onCreateTodo,
 }: MonthDayCellProps) {
   const minHeight = compact ? 'min-h-[80px]' : 'min-h-[120px]';
+  const dateString = format(date, 'yyyy-MM-dd');
+
+  const { setNodeRef, isOver } = useDroppable({
+    id: dateString,
+    data: { date }
+  });
 
   return (
     <div
+      ref={setNodeRef}
       className={`
         group relative
         ${minHeight} p-1 sm:p-2 rounded-lg border transition-all
         ${
-          isToday
+          isOver
+            ? 'bg-primary/20 border-primary'
+            : isToday
             ? 'bg-primary/10 border-primary'
             : isCurrentMonth
             ? 'bg-base-100 border-base-300'
@@ -247,8 +281,10 @@ function MonthDayCell({
               todo={cardTodo}
               onClick={() => onTodoClick?.(todo)}
               showCheckbox={false}
-              enableDragDrop={false}
+              enableDragDrop={true}
               projectColor={todo.color}
+              dragId={`month-todo-${todo.id}`}
+              dropId={`month-todo-${todo.id}`}
             />
           );
         })}

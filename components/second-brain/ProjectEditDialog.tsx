@@ -1713,9 +1713,11 @@ function CalendarDayCell({
                 todo={cardTodo}
                 onClick={() => onToggleTodo(todo.id)}
                 showCheckbox={false}
-                enableDragDrop={false}
+                enableDragDrop={true}
                 projectColor={project?.color}
                 isSpanning={false}
+                dragId={`month-todo-${todo.id}`}
+                dropId={`month-todo-${todo.id}`}
               />
             );
           })}

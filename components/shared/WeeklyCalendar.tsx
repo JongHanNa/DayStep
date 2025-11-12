@@ -2,9 +2,11 @@
 
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, differenceInCalendarDays } from 'date-fns';
-import { useDroppable } from '@dnd-kit/core';
+import { DndContext, useDroppable } from '@dnd-kit/core';
 import type { InboxItem, Project } from '@/types/second-brain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
+import { useAuth } from '@/app/context/AuthContext';
+import { useDndKit } from '@/hooks/useDndKit';
 
 // 통합 할일 타입 (InboxItem만 지원)
 type UnifiedTodoItem = InboxItem;
@@ -15,6 +17,7 @@ interface WeeklyCalendarProps {
   onDateChange?: (date: Date) => void;
   onTodoClick?: (item: UnifiedTodoItem) => void;
   onToggleTodo?: (todoId: string) => void;
+  onTodoDateChange?: (todoId: string, newDate: Date) => Promise<void>; // 드래그로 날짜 변경
   onOpenTodoListModal?: (date: Date, todos: UnifiedTodoItem[]) => void;
   project?: (Project & { isNew?: boolean; paraSelection?: string }) | null;
   showClarification?: boolean; // 명료화 라벨 표시 여부
@@ -44,6 +47,7 @@ export default function WeeklyCalendar({
   onDateChange,
   onTodoClick,
   onToggleTodo,
+  onTodoDateChange,
   onOpenTodoListModal,
   project,
   showClarification = false,
@@ -56,6 +60,25 @@ export default function WeeklyCalendar({
   const [internalDate, setInternalDate] = React.useState<Date>(new Date());
   const selectedDate = controlledDate || internalDate;
   const handleDateChange = onDateChange || setInternalDate;
+
+  const { appUser } = useAuth();
+  const userId = appUser?.id;
+
+  // 드래그앤드롭 핸들러
+  const { sensors, handleDragStart, handleDragEnd } = useDndKit({
+    onDragEnd: async (active, over) => {
+      if (!over || !userId || !onTodoDateChange) return;
+
+      const todoId = active.id.toString().replace('week-todo-', '');
+
+      // 주간 컬럼에 드롭한 경우
+      if (over.id.toString().startsWith('week-')) {
+        const dateString = over.id.toString().replace('week-', '');
+        const newDate = new Date(dateString);
+        await onTodoDateChange(todoId, newDate);
+      }
+    }
+  });
 
   // 현재 주의 일요일~토요일 계산
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 }); // 일요일 시작
@@ -104,25 +127,26 @@ export default function WeeklyCalendar({
   })();
 
   return (
-    <div className="w-full">
-      {/* 주간 헤더 */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={() => handleDateChange(addDays(selectedDate, -7))}
-          className="btn btn-ghost btn-sm rounded-full"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <h3 className="text-lg font-semibold">
-          {format(weekStart, 'M월 d일')} - {format(addDays(weekStart, 6), 'M월 d일')}
-        </h3>
-        <button
-          onClick={() => handleDateChange(addDays(selectedDate, 7))}
-          className="btn btn-ghost btn-sm rounded-full"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="w-full">
+        {/* 주간 헤더 */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => handleDateChange(addDays(selectedDate, -7))}
+            className="btn btn-ghost btn-sm rounded-full"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <h3 className="text-lg font-semibold">
+            {format(weekStart, 'M월 d일')} - {format(addDays(weekStart, 6), 'M월 d일')}
+          </h3>
+          <button
+            onClick={() => handleDateChange(addDays(selectedDate, 7))}
+            className="btn btn-ghost btn-sm rounded-full"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
 
       {/* 7일 컬럼 그리드 + 스패닝 카드 */}
       <div className="relative">
@@ -206,6 +230,7 @@ export default function WeeklyCalendar({
         )}
       </div>
     </div>
+    </DndContext>
   );
 }
 
