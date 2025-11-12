@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Calendar, Plus } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Calendar, Plus, Star } from 'lucide-react';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import WeeklyCalendar from '@/components/shared/WeeklyCalendar';
 import MonthlyCalendar from '@/components/calendar/MonthlyCalendar';
-import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
@@ -469,25 +469,27 @@ export default function CalendarPage() {
         </div>
 
         {/* 드래그 미리보기 오버레이 */}
-        <DragOverlay {...dragOverlayProps}>
-          {activeItem && (
-            <CalendarTodoCard
-              todo={{
-                id: activeItem.id,
-                title: activeItem.content,
-                completed: activeItem.is_completed || false,
-                isHighlight: activeItem.is_highlight || false,
-                startTime: activeItem.schedule_type === 'timed' && activeItem.scheduled_date
-                  ? format(new Date(activeItem.scheduled_date), 'HH:mm')
-                  : undefined,
-                color: activeItem.color,
-              }}
-              showCheckbox={false}
-              enableDragDrop={false}
-              projectColor={activeItem.color}
-            />
-          )}
-        </DragOverlay>
+        {typeof window !== 'undefined' && createPortal(
+          <DragOverlay {...dragOverlayProps}>
+            {activeItem && (
+              <div className="bg-base-100 border-2 border-primary rounded-lg p-3 shadow-2xl max-w-xs opacity-90">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-sm">{activeItem.content}</p>
+                  {activeItem.is_highlight && (
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                  )}
+                </div>
+                {activeItem.scheduled_date && (
+                  <p className="text-xs text-base-content/60 mt-1">
+                    <Calendar className="w-3 h-3 inline mr-1" />
+                    {format(new Date(activeItem.scheduled_date), 'M/d')}
+                  </p>
+                )}
+              </div>
+            )}
+          </DragOverlay>,
+          document.body
+        )}
       </DndContext>
     </AuthGuard>
   );
