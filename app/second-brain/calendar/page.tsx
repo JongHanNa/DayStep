@@ -53,6 +53,8 @@ function todoToInboxItem(todo: any): InboxItem {
     is_recurrence_instance: todo.is_recurrence_instance || false,
     recurrence_source_id: todo.recurrence_source_id,
     recurrence_occurrence_date: todo.recurrence_occurrence_date,
+    // spanning card 지원을 위한 end_date 필드
+    end_date: todo.end_time || null,
   };
 }
 
@@ -539,7 +541,7 @@ export default function CalendarPage() {
           onToggleTodo={handleToggleTodo}
           onTodoDateChange={handleTodoDateChange}
           showClarification={showClarification}
-          enableSpanning={false}
+          enableSpanning={true}
           enableDragDrop={true}
           onCreateTodo={handleQuickCreateTodo}
         />
@@ -554,6 +556,7 @@ export default function CalendarPage() {
           onToggleTodo={handleToggleTodo}
           onTodoDateChange={handleTodoDateChange}
           showClarification={showClarification}
+          enableSpanning={true}
           onCreateTodo={handleQuickCreateTodo}
         />
       );

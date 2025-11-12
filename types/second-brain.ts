@@ -266,6 +266,7 @@ export interface InboxItem {
   recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom'; // 반복 패턴
   icon?: string; // 아이콘
   color?: string; // 색상
+  end_date?: string | null; // 종료일 (spanning card 지원용)
 
   // 반복 인스턴스 관련 필드
   is_recurrence_instance?: boolean; // 반복 인스턴스 여부
