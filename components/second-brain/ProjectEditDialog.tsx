@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, Tag, Palette, Target, Activity, Layers, Clock } from 'lucide-react';
+import { Plus, X, Trash2, Calendar, ChevronLeft, ChevronRight, Pin, Star, Tag, Palette, Target, Activity, Layers } from 'lucide-react';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -20,6 +20,7 @@ import TodoEditModal from './TodoEditModal';
 import TodoListModal from './TodoListModal';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
+import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 
 // 프론트엔드 전용 타입 (FormData 타입 + id 필드)
 interface TodoItem extends TodoFormData {
@@ -1659,12 +1660,23 @@ function CalendarDayCell({
             zIndex: 1
           }}
         >
-          <MonthTodoCard
-            todo={spanningCard}
-            onToggle={onToggleTodo}
-            project={project}
+          <CalendarTodoCard
+            todo={{
+              id: spanningCard.id,
+              title: spanningCard.title,
+              completed: spanningCard.completed,
+              isHighlight: spanningCard.isHighlight,
+              startTime: spanningCard.startTime,
+              color: spanningCard.color,
+            }}
+            onClick={() => onToggleTodo(spanningCard.id)}
+            showCheckbox={false}
+            enableDragDrop={true}
+            projectColor={project?.color}
             isSpanning={true}
             segmentPosition={segmentPosition}
+            dragId={`month-todo-${spanningCard.id}`}
+            dropId={`month-todo-${spanningCard.id}`}
           />
         </div>
       )}
@@ -1684,15 +1696,29 @@ function CalendarDayCell({
       ) : (
         // 웹 환경: 단일 날짜 카드만 렌더링 (스패닝 카드는 overlay에서)
         <div className="space-y-1" style={{ marginTop: (spanningCard || hasSpanningCard) ? '60px' : '0' }}>
-          {todos.map((todo) => (
-            <MonthTodoCard
-              key={todo.id}
-              todo={todo}
-              onToggle={onToggleTodo}
-              project={project}
-              isSpanning={false}
-            />
-          ))}
+          {todos.map((todo) => {
+            // TodoItem을 CalendarTodoCard가 필요로 하는 형식으로 변환
+            const cardTodo = {
+              id: todo.id,
+              title: todo.title,
+              completed: todo.completed,
+              isHighlight: todo.isHighlight,
+              startTime: todo.startTime,
+              color: todo.color,
+            };
+
+            return (
+              <CalendarTodoCard
+                key={todo.id}
+                todo={cardTodo}
+                onClick={() => onToggleTodo(todo.id)}
+                showCheckbox={false}
+                enableDragDrop={false}
+                projectColor={project?.color}
+                isSpanning={false}
+              />
+            );
+          })}
         </div>
       )}
     </div>
@@ -1700,97 +1726,6 @@ function CalendarDayCell({
 }
 
 // ========== 월간 뷰 할일 카드 컴포넌트 ==========
-function MonthTodoCard({
-  todo,
-  onToggle,
-  project,
-  isSpanning = false,
-  segmentPosition = 'single',
-}: {
-  todo: TodoItem;
-  onToggle: (todoId: string) => void;
-  project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
-  isSpanning?: boolean;
-  segmentPosition?: 'single' | 'first' | 'middle' | 'last';
-}) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `month-todo-${todo.id}`,
-    data: { todoId: todo.id, type: 'month-todo' },
-  });
-
-  const { setNodeRef: setDropNodeRef, isOver } = useDroppable({
-    id: `month-todo-${todo.id}`,
-    data: { todoId: todo.id, type: 'month-todo' },
-  });
-
-  // 두 개의 ref를 결합
-  const setRefs = (node: HTMLDivElement | null) => {
-    setNodeRef(node);
-    setDropNodeRef(node);
-  };
-
-  // 세그먼트 위치에 따른 border-radius 결정
-  const getBorderRadius = () => {
-    if (!isSpanning) return 'rounded';
-
-    switch (segmentPosition) {
-      case 'single':
-        return 'rounded-lg';
-      case 'first':
-        return 'rounded-l-lg rounded-r-none';
-      case 'middle':
-        return 'rounded-none';
-      case 'last':
-        return 'rounded-l-none rounded-r-lg';
-      default:
-        return 'rounded-lg';
-    }
-  };
-
-  return (
-    <div
-      ref={setRefs}
-      {...attributes}
-      {...listeners}
-      className={`
-        transition-colors cursor-pointer text-xs
-        ${isDragging ? 'opacity-50' : ''}
-        ${isOver ? 'ring-2 ring-primary' : ''}
-        ${isSpanning
-          ? `bg-white hover:bg-gray-50 border-2 border-base-300 ${getBorderRadius()}
-             ${segmentPosition === 'first' || segmentPosition === 'single' ? 'pl-1.5' : 'pl-0'}
-             ${segmentPosition === 'last' || segmentPosition === 'single' ? 'pr-1.5' : 'pr-0'}
-             py-1.5`
-          : 'bg-white hover:bg-gray-50 border-2 border-base-300 rounded p-1.5'}
-      `}
-    >
-      {/* 제목 + 하이라이트 */}
-      <div className="flex items-center gap-1.5 mb-1">
-        <p className={`flex-1 font-medium line-clamp-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
-          {todo.title}
-        </p>
-        {todo.isHighlight && (
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: project?.color || '#808080' }}
-          />
-        )}
-      </div>
-
-      {/* 메타 정보 */}
-      {(todo.startTime) && (
-        <div className="flex items-center gap-2 text-[10px] text-base-content/60">
-          {todo.startTime && (
-            <div className="flex items-center gap-0.5">
-              <Clock className="w-2.5 h-2.5" />
-              <span>{todo.startTime}</span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ========== 주간 뷰 컴포넌트 ==========
 function WeekView({
@@ -1951,11 +1886,22 @@ function WeekView({
                 }}
               >
                 <div className="px-1">
-                  <WeekTodoCard
-                    todo={card.todo}
-                    onToggle={onToggleTodo}
-                    project={project}
+                  <CalendarTodoCard
+                    todo={{
+                      id: card.todo.id,
+                      title: card.todo.title,
+                      completed: card.todo.completed,
+                      isHighlight: card.todo.isHighlight,
+                      startTime: card.todo.startTime,
+                      color: card.todo.color,
+                    }}
+                    onClick={() => onToggleTodo(card.todo.id)}
+                    showCheckbox={false}
+                    enableDragDrop={true}
+                    projectColor={project?.color}
                     isSpanning={true}
+                    dragId={`week-todo-${card.todo.id}`}
+                    dropId={`week-todo-${card.todo.id}`}
                   />
                 </div>
               </div>
@@ -2052,14 +1998,30 @@ function WeekDayColumn({
       ) : (
         // 웹 환경: 기존 방식 유지
         <div className="flex-1 space-y-2 overflow-y-auto" style={{ marginTop: '45px' }}>
-          {todos.map((todo) => (
-            <WeekTodoCard
-              key={todo.id}
-              todo={todo}
-              onToggle={onToggleTodo}
-              project={project}
-            />
-          ))}
+          {todos.map((todo) => {
+            // TodoItem을 CalendarTodoCard가 필요로 하는 형식으로 변환
+            const cardTodo = {
+              id: todo.id,
+              title: todo.title,
+              completed: todo.completed,
+              isHighlight: todo.isHighlight,
+              startTime: todo.startTime,
+              color: todo.color,
+            };
+
+            return (
+              <CalendarTodoCard
+                key={todo.id}
+                todo={cardTodo}
+                onClick={() => onToggleTodo(todo.id)}
+                showCheckbox={false}
+                enableDragDrop={true}
+                projectColor={project?.color}
+                dragId={`week-todo-${todo.id}`}
+                dropId={`week-todo-${todo.id}`}
+              />
+            );
+          })}
           {todos.length === 0 && (
             <div className="text-xs text-base-content/40 text-center py-4">
               할일 없음
@@ -2071,91 +2033,6 @@ function WeekDayColumn({
   );
 }
 
-// ========== 주간 뷰 할일 카드 컴포넌트 ==========
-function WeekTodoCard({
-  todo,
-  onToggle,
-  project,
-  isSpanning = false,
-}: {
-  todo: TodoItem;
-  onToggle: (todoId: string) => void;
-  project: (Project & { isNew?: boolean; paraSelection?: string }) | null;
-  isSpanning?: boolean;
-}) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `week-todo-${todo.id}`,
-    data: { todoId: todo.id, type: 'week-todo' },
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={`
-        p-2 rounded-lg transition-colors cursor-pointer
-        ${isDragging ? 'opacity-50' : ''}
-        ${isSpanning ? 'bg-white hover:bg-gray-50 border-2 border-base-300 max-h-[52px] overflow-hidden' : 'bg-white hover:bg-gray-50 border-2 border-base-300'}
-      `}
-    >
-      {/* 제목 + 하이라이트 */}
-      <div className="flex items-center gap-2 mb-1">
-        <p className={`text-xs font-medium flex-1 ${todo.completed ? 'line-through text-base-content/50' : ''}`}>
-          {todo.title}
-        </p>
-        {todo.isHighlight && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
-      </div>
-
-      {/* 명료화 */}
-      {todo.clarification && (
-        <p className="text-xs text-base-content/60 mb-1 line-clamp-2">
-          {getClarificationLabel(todo.clarification)}
-        </p>
-      )}
-
-      {/* 날짜/시간 정보 */}
-      {todo.scheduledDate && (
-        <div className="text-xs text-base-content/60 mb-1">
-          <Calendar className="w-3 h-3 inline mr-1" />
-          {format(todo.scheduledDate, 'M/d')}
-          {todo.includeTime && todo.startTime && ` ${todo.startTime}`}
-          {todo.includeEndDate && todo.endDate && (
-            <> ~ {format(todo.endDate, 'M/d')}
-            {todo.endTime && ` ${todo.endTime}`}</>
-          )}
-        </div>
-      )}
-
-      {/* 프로젝트 배지 */}
-      {project && (
-        <div className="flex items-center gap-1 mb-1">
-          <div className="text-xs bg-base-300 px-2 py-0.5 rounded-full flex items-center gap-1">
-            {project.icon && (() => {
-              const IconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
-              return <IconComponent className="w-3 h-3" />;
-            })()}
-            <span className="font-medium truncate max-w-[80px]">{project.title}</span>
-          </div>
-        </div>
-      )}
-
-      {/* 완료 체크박스 (제일 하단, 왼쪽 정렬) */}
-      <div className="flex items-center justify-start gap-2 mt-1">
-        <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={(e) => {
-            e.stopPropagation();
-            onToggle(todo.id);
-          }}
-          className="checkbox checkbox-xs flex-shrink-0"
-        />
-        <span className="text-xs text-base-content/60">완료</span>
-      </div>
-    </div>
-  );
-}
 
 // ========== 완료 타임라인 뷰 컴포넌트 ==========
 function CompletedView({

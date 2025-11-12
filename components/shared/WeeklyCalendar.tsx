@@ -1,9 +1,10 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Star, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, differenceInCalendarDays } from 'date-fns';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import type { InboxItem, Project } from '@/types/second-brain';
+import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 
 // 통합 할일 타입 (InboxItem만 지원)
 type UnifiedTodoItem = InboxItem;
@@ -23,20 +24,6 @@ interface WeeklyCalendarProps {
   onCreateTodo?: (date: Date) => Promise<void>; // 즉시 할일 생성
 }
 
-// 명료화 상태를 한글 라벨로 변환
-function getClarificationLabel(clarification?: string): string {
-  if (!clarification || clarification === 'none') return '선택 안함';
-
-  const labelMap: Record<string, string> = {
-    'reminder': '다시알림',
-    'someday': '언젠가',
-    'waiting': '대기중',
-    'next_action': '다음행동',
-    'schedule_clear': '일정',
-  };
-
-  return labelMap[clarification] || clarification;
-}
 
 // InboxItem인지 TodoItem인지 구분
 function isInboxItem(item: UnifiedTodoItem): item is InboxItem {
@@ -193,14 +180,24 @@ export default function WeeklyCalendar({
                 }}
               >
                 <div className="px-1">
-                  <WeekTodoCard
-                    todo={card.todo}
-                    onToggle={onToggleTodo}
-                    onTodoClick={onTodoClick}
-                    project={project}
-                    showClarification={showClarification}
+                  <CalendarTodoCard
+                    todo={{
+                      id: card.todo.id,
+                      title: card.todo.content,
+                      completed: card.todo.is_completed || false,
+                      isHighlight: card.todo.is_highlight || false,
+                      startTime: card.todo.schedule_type === 'timed' && card.todo.scheduled_date
+                        ? format(new Date(card.todo.scheduled_date), 'HH:mm')
+                        : undefined,
+                      color: card.todo.color,
+                    }}
+                    onClick={() => onTodoClick?.(card.todo)}
+                    showCheckbox={false}
                     enableDragDrop={enableDragDrop}
+                    projectColor={project?.color || card.todo.color}
                     isSpanning={true}
+                    dragId={`week-todo-spanning-${card.todo.id}`}
+                    dropId={`week-todo-spanning-${card.todo.id}`}
                   />
                 </div>
               </div>
@@ -290,18 +287,32 @@ function WeekDayColumn({
 
       {/* 할일 표시 영역 */}
       <div className="flex-1 space-y-2 overflow-y-auto">
-        {todos.map((todo) => (
-          <WeekTodoCard
-            key={todo.id}
-            todo={todo}
-            onTodoClick={onTodoClick}
-            onToggle={onToggleTodo}
-            project={project}
-            showClarification={showClarification}
-            enableDragDrop={enableDragDrop}
-            isSpanning={false}
-          />
-        ))}
+        {todos.map((todo) => {
+          // InboxItem을 CalendarTodoCard가 필요로 하는 형식으로 변환
+          const cardTodo = {
+            id: todo.id,
+            title: todo.content,
+            completed: todo.is_completed || false,
+            isHighlight: todo.is_highlight || false,
+            startTime: todo.schedule_type === 'timed' && todo.scheduled_date
+              ? format(new Date(todo.scheduled_date), 'HH:mm')
+              : undefined,
+            color: todo.color,
+          };
+
+          return (
+            <CalendarTodoCard
+              key={todo.id}
+              todo={cardTodo}
+              onClick={() => onTodoClick?.(todo)}
+              showCheckbox={false}
+              enableDragDrop={enableDragDrop}
+              projectColor={project?.color || todo.color}
+              dragId={`week-todo-${todo.id}`}
+              dropId={`week-todo-${todo.id}`}
+            />
+          );
+        })}
         {todos.length === 0 && spanningCardCount === 0 && (
           <div className="text-xs text-base-content/40 text-center py-4">
             할일 없음
@@ -312,90 +323,6 @@ function WeekDayColumn({
   );
 }
 
-// 주간 뷰 할일 카드 컴포넌트
-interface WeekTodoCardProps {
-  todo: UnifiedTodoItem;
-  onTodoClick?: (item: UnifiedTodoItem) => void;
-  onToggle?: (todoId: string) => void;
-  project?: (Project & { isNew?: boolean; paraSelection?: string }) | null;
-  showClarification?: boolean;
-  enableDragDrop?: boolean;
-  isSpanning?: boolean;
-}
-
-function WeekTodoCard({
-  todo,
-  onTodoClick,
-  onToggle,
-  project,
-  showClarification,
-  enableDragDrop,
-  isSpanning,
-}: WeekTodoCardProps) {
-  const todoId = todo.id;
-
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `week-todo-${todoId}`,
-    data: { todoId, type: 'week-todo' },
-    disabled: !enableDragDrop,
-  });
-
-  const handleClick = (e: React.MouseEvent) => {
-    // 드래그 중에는 클릭 이벤트 무시
-    if (!isDragging && onTodoClick) {
-      onTodoClick(todo);
-    }
-  };
-
-  const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    if (onToggle) {
-      onToggle(todoId);
-    }
-  };
-
-  // InboxItem 속성 추출
-  const content = todo.content;
-  const isCompleted = todo.is_completed;
-  const isHighlight = todo.is_highlight;
-  const clarification = todo.clarification;
-
-  return (
-    <div
-      ref={enableDragDrop ? setNodeRef : undefined}
-      {...(enableDragDrop ? attributes : {})}
-      {...(enableDragDrop ? listeners : {})}
-      onClick={handleClick}
-      className={`
-        p-2 rounded-lg bg-base-200 hover:bg-base-300 transition-colors
-        ${enableDragDrop ? 'cursor-move' : 'cursor-pointer'}
-        ${isDragging ? 'opacity-50' : ''}
-        ${isSpanning ? 'border-l-4 border-primary' : ''}
-      `}
-    >
-      {/* 제목 + 하이라이트 */}
-      <div className="flex items-center gap-2 mb-1">
-        {onToggle && (
-          <input
-            type="checkbox"
-            checked={isCompleted}
-            onChange={handleToggle}
-            className="checkbox checkbox-sm"
-          />
-        )}
-        <p className={`text-xs font-medium flex-1 ${isCompleted ? 'line-through text-base-content/50' : ''}`}>
-          {content}
-        </p>
-        {isHighlight && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
-      </div>
-
-      {/* 명료화 표시 */}
-      {showClarification && clarification && (
-        <span className="badge badge-xs bg-base-300">{getClarificationLabel(clarification)}</span>
-      )}
-    </div>
-  );
-}
 
 // React import 추가
 import React from 'react';

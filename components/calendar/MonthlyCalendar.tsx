@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Star, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import {
   format,
   startOfMonth,
@@ -13,6 +13,7 @@ import {
   addMonths
 } from 'date-fns';
 import type { InboxItem, Project } from '@/types/second-brain';
+import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 
 interface MonthlyCalendarProps {
   todos: InboxItem[];
@@ -25,32 +26,6 @@ interface MonthlyCalendarProps {
   onCreateTodo?: (date: Date) => Promise<void>; // 즉시 할일 생성
 }
 
-// 명료화 상태를 한글 라벨로 변환
-function getClarificationLabel(clarification?: string): string {
-  if (!clarification || clarification === 'none') return '선택 안함';
-
-  const labelMap: Record<string, string> = {
-    'reminder': '다시알림',
-    'someday': '언젠가',
-    'waiting': '대기중',
-    'next_action': '다음행동',
-    'schedule_clear': '일정',
-  };
-
-  return labelMap[clarification] || clarification;
-}
-
-// 명료화 색상 매핑
-function getClarificationColor(clarification?: string): string {
-  const colorMap: Record<string, string> = {
-    'next_action': 'bg-blue-500/80',
-    'schedule_clear': 'bg-orange-500/80',
-    'reminder': 'bg-purple-500/80',
-    'waiting': 'bg-gray-500/80',
-  };
-
-  return colorMap[clarification || ''] || 'bg-gray-500/80';
-}
 
 export default function MonthlyCalendar({
   todos,
@@ -253,124 +228,34 @@ function MonthDayCell({
 
       {/* 할일 목록 */}
       <div className="space-y-1 max-h-[calc(100%-24px)] overflow-y-auto">
-        {todos.map((todo) => (
-          <MonthTodoCard
-            key={todo.id}
-            todo={todo}
-            onTodoClick={onTodoClick}
-            onToggleTodo={onToggleTodo}
-            showClarification={showClarification}
-            compact={compact}
-          />
-        ))}
+        {todos.map((todo) => {
+          // InboxItem을 CalendarTodoCard가 필요로 하는 형식으로 변환
+          const cardTodo = {
+            id: todo.id,
+            title: todo.content,
+            completed: todo.is_completed || false,
+            isHighlight: todo.is_highlight || false,
+            startTime: todo.schedule_type === 'timed' && todo.scheduled_date
+              ? format(new Date(todo.scheduled_date), 'HH:mm')
+              : undefined,
+            color: todo.color,
+          };
+
+          return (
+            <CalendarTodoCard
+              key={todo.id}
+              todo={cardTodo}
+              onClick={() => onTodoClick?.(todo)}
+              showCheckbox={false}
+              enableDragDrop={false}
+              projectColor={todo.color}
+            />
+          );
+        })}
         {todos.length === 0 && isCurrentMonth && (
           <div className="text-[10px] text-base-content/20 text-center py-2 hidden sm:block">
 
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// 월간 뷰 할일 카드 컴포넌트
-interface MonthTodoCardProps {
-  todo: InboxItem;
-  onTodoClick?: (item: InboxItem) => void;
-  onToggleTodo?: (todoId: string) => void;
-  showClarification?: boolean;
-  compact?: boolean;
-}
-
-function MonthTodoCard({
-  todo,
-  onTodoClick,
-  onToggleTodo,
-  showClarification,
-  compact,
-}: MonthTodoCardProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    if (onTodoClick) {
-      onTodoClick(todo);
-    }
-  };
-
-  const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    if (onToggleTodo) {
-      onToggleTodo(todo.id);
-    }
-  };
-
-  const content = todo.content;
-  const isCompleted = todo.is_completed;
-  const isHighlight = todo.is_highlight;
-  const clarification = todo.clarification;
-  const icon = todo.icon;
-  const color = todo.color;
-
-  // 시간 표시 (schedule_type이 timed인 경우에만)
-  const showTime = todo.schedule_type === 'timed' && todo.scheduled_date;
-  const timeText = showTime ? format(new Date(todo.scheduled_date!), 'HH:mm') : null;
-
-  return (
-    <div
-      onClick={handleClick}
-      className={`
-        p-1.5 rounded-lg cursor-pointer transition-all
-        ${isCompleted ? 'bg-base-200/50' : 'bg-base-200 hover:bg-base-300'}
-        ${compact ? 'text-[10px]' : 'text-xs'}
-      `}
-      style={{
-        borderLeft: color ? `3px solid ${color}` : undefined,
-      }}
-    >
-      {/* 제목 행 */}
-      <div className="flex items-start gap-1 mb-0.5">
-        {onToggleTodo && (
-          <input
-            type="checkbox"
-            checked={isCompleted}
-            onChange={handleToggle}
-            className="checkbox checkbox-xs mt-0.5 flex-shrink-0"
-          />
-        )}
-
-        {icon && (
-          <span className="flex-shrink-0 text-sm">{icon}</span>
-        )}
-
-        <p
-          className={`
-            flex-1 font-medium line-clamp-2
-            ${isCompleted ? 'line-through text-base-content/50' : ''}
-          `}
-        >
-          {content}
-        </p>
-
-        {isHighlight && (
-          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-        )}
-      </div>
-
-      {/* 시간 + 명료화 라벨 */}
-      <div className="flex items-center gap-1 flex-wrap">
-        {timeText && (
-          <span className="text-[10px] text-base-content/60">
-            {timeText}
-          </span>
-        )}
-
-        {showClarification && clarification && clarification !== 'none' && (
-          <span
-            className={`
-              text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium
-              ${getClarificationColor(clarification)}
-            `}
-          >
-            {getClarificationLabel(clarification)}
-          </span>
         )}
       </div>
     </div>
