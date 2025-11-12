@@ -530,6 +530,7 @@ export default function CalendarPage() {
   const renderCalendar = () => {
     const isWeekly = selectedTab === 'week-schedule' || selectedTab === 'week-plan' || selectedTab === 'week-routine';
     const showClarification = selectedTab === 'week-plan' || selectedTab === 'month-plan';
+    const isRoutineTab = selectedTab === 'week-routine' || selectedTab === 'month-routine';
 
     if (isWeekly) {
       return (
@@ -541,7 +542,7 @@ export default function CalendarPage() {
           onToggleTodo={handleToggleTodo}
           onTodoDateChange={handleTodoDateChange}
           showClarification={showClarification}
-          enableSpanning={true}
+          enableSpanning={!isRoutineTab}
           enableDragDrop={true}
           onCreateTodo={handleQuickCreateTodo}
         />
@@ -556,7 +557,7 @@ export default function CalendarPage() {
           onToggleTodo={handleToggleTodo}
           onTodoDateChange={handleTodoDateChange}
           showClarification={showClarification}
-          enableSpanning={true}
+          enableSpanning={!isRoutineTab}
           onCreateTodo={handleQuickCreateTodo}
         />
       );
