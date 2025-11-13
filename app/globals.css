@@ -129,10 +129,10 @@
 }
 
 html, body {
-  /* 스크롤바 숨김을 위해 body 자체 스크롤 비활성화 */
-  overflow: hidden;
-  height: 100%;
-  min-height: 100vh;
+  /* 랜딩 페이지 window 스크롤을 위해 overflow 허용 */
+  overflow-x: hidden;  /* 가로 스크롤만 막기 */
+  overflow-y: auto;    /* 세로 스크롤 허용 */
+  /* height와 min-height 제거 - Framer Motion useScroll() 감지를 위해 */
 }
 
 body {

@@ -99,7 +99,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 overflow-y-auto scrollbar-hide">
+    <div className="min-h-screen bg-base-100">
       {/* 상단 네비게이션 */}
       <LandingNav />
 

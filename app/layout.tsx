@@ -50,12 +50,7 @@ export default function RootLayout({
                     <ReminderProvider>
                     {/* <Navigation /> */}
                     <main
-                      className={`h-screen overflow-y-auto scrollbar-hide ${safeAreaBackground} ${darkSafeArea} pb-16`}
-                      style={{
-                        WebkitOverflowScrolling: 'touch',
-                        overscrollBehavior: 'auto',
-                        overscrollBehaviorY: 'auto'
-                      }}
+                      className={`scrollbar-hide ${safeAreaBackground} ${darkSafeArea} pb-16`}
                     >
                       {children}
                     </main>

@@ -1,8 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useInView, useScroll, useMotionValueEvent, useAnimation } from 'framer-motion';
 import { Calendar, Brain, Target, CheckCircle2, Sparkles, Clock } from 'lucide-react';
 import { getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 /**
  * 스크롤 진행률 기반 이미지 태그 애니메이션 섹션
@@ -10,6 +11,32 @@ import { getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimatio
  */
 export default function ScrollProgressSection() {
   const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { amount: 0.3, once: false });
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down');
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const prevScrollY = useRef(0);
+  const { scrollY } = useScroll();  // window 스크롤 추적
+  const controls = useAnimation();
+
+  // 스크롤 방향 감지 (Framer Motion best practice)
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const prev = prevScrollY.current;
+    const diff = latest - prev;
+
+    // 최소 이동 거리 설정 (너무 작은 변화 무시)
+    if (Math.abs(diff) > 1) {
+      const newDirection = diff > 0 ? 'down' : 'up';
+      console.log('🔄 Scroll Direction:', newDirection, 'Y:', Math.round(latest), 'Diff:', Math.round(diff));
+
+      // 방향이 실제로 변경되었을 때만 상태 업데이트
+      if (newDirection !== scrollDirection) {
+        console.log('🔀 Direction CHANGED:', scrollDirection, '→', newDirection);
+        setScrollDirection(newDirection);
+      }
+    }
+    prevScrollY.current = latest;
+  });
 
   // 이미지 태그 데이터
   const featureTags = [
@@ -22,7 +49,7 @@ export default function ScrollProgressSection() {
   ];
 
   // 2행 3열 그리드 위치 계산 (각 태그의 최종 위치)
-  const getGridPosition = (index: number) => {
+  const getGridPosition = useCallback((index: number) => {
     const cols = 3;
     const row = Math.floor(index / cols);
     const col = index % cols;
@@ -39,10 +66,10 @@ export default function ScrollProgressSection() {
       x: col * gapX + offsetX,
       y: row * gapY + offsetY,
     };
-  };
+  }, []);
 
   // 원형 경로에서 출발 위치 계산
-  const getCircularStartPosition = (index: number, total: number) => {
+  const getCircularStartPosition = useCallback((index: number, total: number) => {
     const angle = (360 / total) * index;
     const radius = 300;
 
@@ -51,10 +78,97 @@ export default function ScrollProgressSection() {
       y: Math.sin((angle * Math.PI) / 180) * radius,
       rotate: angle,
     };
-  };
+  }, []);
+
+  // 초기화: 섹션이 처음 나타날 때 스크롤 방향에 따라 초기 상태 설정
+  useEffect(() => {
+    console.log('🚀 Init Check:', { isInView, hasInitialized, scrollDirection });
+
+    if (isInView && !hasInitialized) {
+      console.log('✅ Initializing with direction:', scrollDirection);
+      setHasInitialized(true);
+
+      if (scrollDirection === 'up') {
+        console.log('⬆️ Setting GRID (up scroll init) - opacity: 1');
+        // 아래에서 위로 올라올 때: 그리드 상태로 즉시 설정 (애니메이션 없이)
+        controls.set((i) => {
+          const endPos = getGridPosition(i);
+          return {
+            opacity: 1,
+            x: endPos.x,
+            y: endPos.y,
+            rotate: 0,
+            scale: 1,
+          };
+        });
+      } else {
+        console.log('⬇️ Setting CIRCULAR (down scroll init) - opacity: 0');
+        // 위에서 아래로 올라올 때: 원형 상태로 즉시 설정 (애니메이션 없이)
+        controls.set((i) => {
+          const startPos = getCircularStartPosition(i, featureTags.length);
+          return {
+            opacity: 0,
+            x: startPos.x,
+            y: startPos.y,
+            rotate: startPos.rotate,
+            scale: 0.5,
+          };
+        });
+      }
+    }
+  }, [isInView, hasInitialized, scrollDirection, controls, getGridPosition, getCircularStartPosition, featureTags.length]);
+
+  // 명령형 애니메이션 제어 - 아래 스크롤 (Framer Motion best practice)
+  useEffect(() => {
+    console.log('⬇️ Down Animation Check:', { scrollDirection, isInView, hasInitialized });
+
+    if (scrollDirection === 'down' && isInView && hasInitialized) {
+      console.log('✨ Starting DOWN animation (converge to grid) - opacity: 1');
+      // 아래 스크롤: 그리드로 모이기
+      controls.start((i) => {
+        const endPos = getGridPosition(i);
+        return {
+          opacity: 1,
+          x: endPos.x,
+          y: endPos.y,
+          rotate: 0,
+          scale: 1,
+          transition: {
+            duration: 1,
+            delay: (i / featureTags.length) * 0.3,
+            ease: [0.215, 0.61, 0.355, 1],
+          },
+        };
+      });
+    }
+  }, [scrollDirection, isInView, hasInitialized, controls, featureTags.length, getGridPosition]);
+
+  // 명령형 애니메이션 제어 - 위로 스크롤 (Framer Motion best practice)
+  useEffect(() => {
+    console.log('⬆️ Up Animation Check:', { scrollDirection, hasInitialized });
+
+    if (scrollDirection === 'up' && hasInitialized) {
+      console.log('💫 Starting UP animation (scatter to circular) - opacity: 0');
+      // 위로 스크롤: 원형으로 흩어지기
+      controls.start((i) => {
+        const startPos = getCircularStartPosition(i, featureTags.length);
+        return {
+          opacity: 0,
+          x: startPos.x,
+          y: startPos.y,
+          rotate: startPos.rotate,
+          scale: 0.5,
+          transition: {
+            duration: 1,
+            ease: [0.215, 0.61, 0.355, 1],
+          },
+        };
+      });
+    }
+  }, [scrollDirection, hasInitialized, controls, featureTags.length, getCircularStartPosition]);
 
   return (
-    <section className="relative py-32 px-4 bg-gradient-to-b from-base-100 via-base-200 to-base-100 overflow-hidden">
+    <section ref={sectionRef} className="relative py-32 px-4 bg-gradient-to-b from-base-100 via-base-200 to-base-100 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* 중앙 제목 */}
         <motion.div
@@ -83,30 +197,10 @@ export default function ScrollProgressSection() {
             return (
               <motion.div
                 key={index}
+                custom={index}
                 className="absolute"
-                initial={{
-                  opacity: 0,
-                  x: startPos.x,
-                  y: startPos.y,
-                  rotate: startPos.rotate,
-                  scale: 0.5,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  x: endPos.x,
-                  y: endPos.y,
-                  rotate: 0,
-                  scale: 1,
-                  transition: {
-                    duration: 1,
-                    delay,
-                    ease: [0.215, 0.61, 0.355, 1] as [number, number, number, number],
-                  },
-                }}
-                viewport={{
-                  once: false,
-                  amount: 0.3,
-                }}
+                initial={false}
+                animate={controls}
               >
                 <div className={`${tag.color} text-white rounded-2xl px-6 py-4 shadow-xl backdrop-blur-sm border border-white/20 flex items-center gap-3 hover:scale-110 transition-transform cursor-pointer whitespace-nowrap`}>
                   <Icon className="w-6 h-6" />
