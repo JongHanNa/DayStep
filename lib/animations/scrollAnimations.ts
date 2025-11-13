@@ -155,7 +155,7 @@ export const typeWriterVariants = (speed = 0.05, delay = 0.5) => ({
 /**
  * Viewport options for scroll-triggered animations
  *
- * @param once - 한 번만 트리거할지 여부
+ * @param once - 한 번만 트리거할지 여부 (false면 양방향 애니메이션)
  * @param amount - 요소가 얼마나 보여야 트리거될지 (0-1)
  * @returns Framer Motion viewport object
  */
@@ -163,4 +163,17 @@ export const getViewportOptions = (once = true, amount: number | 'some' | 'all' 
   once,
   amount,
   margin: '0px 0px -100px 0px', // 요소가 뷰포트에 진입하기 전에 트리거
+});
+
+/**
+ * 양방향 스크롤 애니메이션용 Viewport 옵션
+ * 스크롤 업/다운 시 모두 애니메이션 트리거
+ *
+ * @param amount - 요소가 얼마나 보여야 트리거될지 (0-1)
+ * @returns Framer Motion viewport object
+ */
+export const getBidirectionalViewportOptions = (amount: number | 'some' | 'all' = 0.3) => ({
+  once: false, // 양방향 애니메이션을 위해 반복 트리거
+  amount,
+  margin: '0px 0px -100px 0px',
 });

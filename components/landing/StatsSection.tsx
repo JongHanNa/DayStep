@@ -4,7 +4,7 @@ import { Users, CheckCircle, Star, Calendar } from 'lucide-react';
 import { useRef } from 'react';
 import { motion, useMotionValue, useTransform, animate, useInView } from 'framer-motion';
 import { useEffect } from 'react';
-import { staggerFadeInUpVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
+import { staggerFadeInUpVariants, getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
 
 const stats = [
   {
@@ -41,7 +41,7 @@ function CountUpNumber({ value, decimals, suffix }: { value: number; decimals: n
   const count = useMotionValue(0);
   const rounded = useTransform(count, (latest) => latest.toFixed(decimals) + suffix);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.5 });
+  const isInView = useInView(ref, { once: false, amount: 0.5 });
 
   useEffect(() => {
     if (isInView) {
@@ -66,7 +66,7 @@ function CountUpNumber({ value, decimals, suffix }: { value: number; decimals: n
 
 export default function StatsSection() {
   const containerVariants = staggerFadeInUpVariants(60, 0.1);
-  const viewportOptions = getViewportOptions(true, 0.3);
+  const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
 
   return (
     <section className="py-16 px-4 bg-base-200">
@@ -76,7 +76,7 @@ export default function StatsSection() {
           className="text-center mb-12"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={viewportOptions}
+          viewport={bidirectionalViewportOptions}
           transition={{ duration: 0.8 }}
         >
           <h2 className="text-3xl sm:text-4xl font-bold text-base-content mb-4">
@@ -93,7 +93,7 @@ export default function StatsSection() {
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOptions}
+          viewport={bidirectionalViewportOptions}
         >
           {stats.map((stat, index) => {
             const Icon = stat.icon;

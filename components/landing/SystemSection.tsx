@@ -6,11 +6,11 @@ import {
   Smartphone, Puzzle, RefreshCw, Clock, FileText
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { fadeInUpVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
+import { fadeInUpVariants, getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
 
 export default function SystemSection() {
   const fadeInVariants = fadeInUpVariants(80);
-  const viewportOptions = getViewportOptions(true, 0.3);
+  const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
 
   return (
     <motion.section
@@ -19,7 +19,7 @@ export default function SystemSection() {
       variants={fadeInVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={viewportOptions}
+      viewport={bidirectionalViewportOptions}
     >
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}

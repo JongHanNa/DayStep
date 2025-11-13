@@ -13,7 +13,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { staggerFadeInUpVariants, scaleFadeInVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
+import { staggerFadeInUpVariants, scaleFadeInVariants, getViewportOptions, getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
 import LandingNav from '@/components/layout/LandingNav';
 import StatsSection from '@/components/landing/StatsSection';
 import SystemSection from '@/components/landing/SystemSection';
@@ -28,6 +28,7 @@ export default function LandingPage() {
   const featureContainerVariants = staggerFadeInUpVariants(60, 0.15);
   const ctaVariants = scaleFadeInVariants(0.9);
   const viewportOptions = getViewportOptions(true, 0.3);
+  const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
 
   // 캐퍼시터 환경에서는 랜딩페이지 건너뛰기
   useEffect(() => {
@@ -175,7 +176,7 @@ export default function LandingPage() {
             className="text-center mb-16"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={viewportOptions}
+            viewport={bidirectionalViewportOptions}
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-4xl font-bold text-base-content mb-4">
@@ -191,7 +192,7 @@ export default function LandingPage() {
             variants={featureContainerVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={viewportOptions}
+            viewport={bidirectionalViewportOptions}
           >
             {/* Feature 1 */}
             <motion.div
@@ -307,7 +308,7 @@ export default function LandingPage() {
         variants={ctaVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={viewportOptions}
+        viewport={bidirectionalViewportOptions}
       >
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <h2 className="text-4xl font-bold text-base-content">
