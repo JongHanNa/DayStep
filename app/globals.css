@@ -133,6 +133,44 @@ html, body {
   overflow-x: hidden;  /* 가로 스크롤만 막기 */
   overflow-y: auto;    /* 세로 스크롤 허용 */
   /* height와 min-height 제거 - Framer Motion useScroll() 감지를 위해 */
+
+  /* 기본적으로 모든 페이지에서 스크롤바 숨김 */
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  /* IE/Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;  /* Chrome/Safari/Opera */
+}
+
+/* 랜딩 페이지만 스크롤바 표시 */
+.show-scrollbar,
+.show-scrollbar body {
+  scrollbar-width: auto !important;  /* Firefox */
+  -ms-overflow-style: auto !important;  /* IE/Edge */
+}
+
+.show-scrollbar::-webkit-scrollbar,
+.show-scrollbar body::-webkit-scrollbar {
+  display: block !important;  /* Chrome/Safari/Opera */
+  width: 8px;  /* 스크롤바 너비 */
+}
+
+.show-scrollbar::-webkit-scrollbar-track,
+.show-scrollbar body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.show-scrollbar::-webkit-scrollbar-thumb,
+.show-scrollbar body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.show-scrollbar::-webkit-scrollbar-thumb:hover,
+.show-scrollbar body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 body {

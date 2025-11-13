@@ -99,7 +99,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100">
+    <div className="min-h-screen bg-base-100 show-scrollbar">
       {/* 상단 네비게이션 */}
       <LandingNav />
 
