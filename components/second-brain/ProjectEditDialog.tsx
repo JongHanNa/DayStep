@@ -11,6 +11,7 @@ import type { Project, Goal, AreaResource as Area, AreaResource as Resource } fr
 import { useDndKit } from '@/hooks/useDndKit';
 import { DndContext, useDraggable, useDroppable, DragOverlay } from '@dnd-kit/core';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, differenceInCalendarDays, startOfDay } from 'date-fns';
+import { convertKstDateToUtcRange } from '@/lib/date-utils';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
@@ -247,8 +248,12 @@ export default function ProjectEditDialog({
       if (overIdString.startsWith('week-')) {
         const dateString = overIdString.replace('week-', '');
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return;
-        const scheduledDate = new Date(dateString);
-        if (isNaN(scheduledDate.getTime())) return;
+
+        // KST 날짜를 UTC로 변환
+        const kstDate = new Date(dateString + 'T00:00:00');
+        if (isNaN(kstDate.getTime())) return;
+        const { utcStart } = convertKstDateToUtcRange(kstDate);
+        const scheduledDate = new Date(dateString + 'T00:00:00');
 
         // 드래그된 할일 찾기
         const draggedTodo = todos.find((t) => t.id === todoId);
@@ -262,6 +267,7 @@ export default function ProjectEditDialog({
 
         // 새 종료일 계산 (간격 유지)
         const newEndDate = daysDiff > 0 ? addDays(scheduledDate, daysDiff) : draggedTodo.endDate;
+        const utcEndDate = newEndDate ? convertKstDateToUtcRange(newEndDate).utcStart : undefined;
 
         // 해당 날짜의 할일들 가져오기
         const sameDateTodos = todos.filter(
@@ -273,22 +279,42 @@ export default function ProjectEditDialog({
           ? Math.max(...sameDateTodos.map((t) => t.displayOrder || 0))
           : 0;
 
+        // clarification, schedule_type 자동 설정 로직
+        const shouldUpdateClarification = draggedTodo.clarification === 'none' && draggedTodo.scheduleType === 'none';
+        const updatedClarification = shouldUpdateClarification ? 'schedule_clear' : draggedTodo.clarification;
+        const updatedScheduleType = shouldUpdateClarification ? 'anytime' : draggedTodo.scheduleType;
+
         // 로컬 state 업데이트
         setTodos(
           todos.map((todo) =>
             todo.id === todoId
-              ? { ...todo, scheduledDate, endDate: newEndDate, displayOrder: maxOrder + 1 }
+              ? {
+                  ...todo,
+                  scheduledDate,
+                  endDate: newEndDate,
+                  displayOrder: maxOrder + 1,
+                  clarification: updatedClarification,
+                  scheduleType: updatedScheduleType,
+                }
               : todo
           )
         );
 
         // todoStore 업데이트
         if (userId) {
-          await updateTodo(todoId, {
-            start_time: scheduledDate.toISOString(),
-            end_time: newEndDate ? newEndDate.toISOString() : undefined,
+          const updateFields: any = {
+            start_time: utcStart.toISOString(),
+            end_time: utcEndDate ? utcEndDate.toISOString() : undefined,
             order_index: maxOrder + 1,
-          });
+          };
+
+          // none + none 조건일 때만 clarification, schedule_type 업데이트
+          if (shouldUpdateClarification) {
+            updateFields.clarification = 'schedule_clear';
+            updateFields.schedule_type = 'anytime';
+          }
+
+          await updateTodo(todoId, updateFields);
         }
 
         return;
@@ -368,8 +394,11 @@ export default function ProjectEditDialog({
 
       // 월간 뷰 셀 드롭: yyyy-MM-dd 형식
       if (/^\d{4}-\d{2}-\d{2}$/.test(overIdString)) {
-        const scheduledDate = new Date(overIdString);
-        if (isNaN(scheduledDate.getTime())) return;
+        // KST 날짜를 UTC로 변환
+        const kstDate = new Date(overIdString + 'T00:00:00');
+        if (isNaN(kstDate.getTime())) return;
+        const { utcStart } = convertKstDateToUtcRange(kstDate);
+        const scheduledDate = new Date(overIdString + 'T00:00:00');
 
         // 드래그된 할일 찾기
         const draggedTodo = todos.find((t) => t.id === todoId);
@@ -383,6 +412,7 @@ export default function ProjectEditDialog({
 
         // 새 종료일 계산 (간격 유지)
         const newEndDate = daysDiff > 0 ? addDays(scheduledDate, daysDiff) : draggedTodo.endDate;
+        const utcEndDate = newEndDate ? convertKstDateToUtcRange(newEndDate).utcStart : undefined;
 
         // 해당 날짜의 할일들 가져오기
         const sameDateTodos = todos.filter(
@@ -394,22 +424,42 @@ export default function ProjectEditDialog({
           ? Math.max(...sameDateTodos.map((t) => t.displayOrder || 0))
           : 0;
 
+        // clarification, schedule_type 자동 설정 로직
+        const shouldUpdateClarification = draggedTodo.clarification === 'none' && draggedTodo.scheduleType === 'none';
+        const updatedClarification = shouldUpdateClarification ? 'schedule_clear' : draggedTodo.clarification;
+        const updatedScheduleType = shouldUpdateClarification ? 'anytime' : draggedTodo.scheduleType;
+
         // 로컬 state 업데이트
         setTodos(
           todos.map((todo) =>
             todo.id === todoId
-              ? { ...todo, scheduledDate, endDate: newEndDate, displayOrder: maxOrder + 1 }
+              ? {
+                  ...todo,
+                  scheduledDate,
+                  endDate: newEndDate,
+                  displayOrder: maxOrder + 1,
+                  clarification: updatedClarification,
+                  scheduleType: updatedScheduleType,
+                }
               : todo
           )
         );
 
         // todoStore 업데이트
         if (userId) {
-          await updateTodo(todoId, {
-            start_time: scheduledDate.toISOString(),
-            end_time: newEndDate ? newEndDate.toISOString() : undefined,
+          const updateFields: any = {
+            start_time: utcStart.toISOString(),
+            end_time: utcEndDate ? utcEndDate.toISOString() : undefined,
             order_index: maxOrder + 1,
-          });
+          };
+
+          // none + none 조건일 때만 clarification, schedule_type 업데이트
+          if (shouldUpdateClarification) {
+            updateFields.clarification = 'schedule_clear';
+            updateFields.schedule_type = 'anytime';
+          }
+
+          await updateTodo(todoId, updateFields);
         }
 
         return;
