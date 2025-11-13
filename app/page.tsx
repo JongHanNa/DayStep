@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CheckCircle2,
   Calendar,
@@ -12,23 +12,43 @@ import {
   ArrowRight,
   Smartphone
 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { staggerFadeInUpVariants, scaleFadeInVariants, getViewportOptions, getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
+import { motion, AnimatePresence } from 'framer-motion';
+import { staggerFadeInUpVariants, scaleFadeInVariants, getViewportOptions, getBidirectionalViewportOptions, rotatingTextVariants } from '@/lib/animations/scrollAnimations';
+import dynamic from 'next/dynamic';
 import LandingNav from '@/components/layout/LandingNav';
 import StatsSection from '@/components/landing/StatsSection';
 import SystemSection from '@/components/landing/SystemSection';
 import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
 
+// Hydration 오류 방지를 위해 ScrollProgressSection을 클라이언트 전용 렌더링
+const ScrollProgressSection = dynamic(
+  () => import('@/components/landing/ScrollProgressSection'),
+  { ssr: false }
+);
+
 export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+
+  // 회전하는 기능 텍스트 상태
+  const features = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
+  const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
 
   // Framer Motion variants
   const featureContainerVariants = staggerFadeInUpVariants(60, 0.15);
   const ctaVariants = scaleFadeInVariants(0.9);
   const viewportOptions = getViewportOptions(true, 0.3);
   const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
+
+  // 3초마다 기능 텍스트 회전
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFeatureIndex((prev) => (prev + 1) % features.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [features.length]);
 
   // 캐퍼시터 환경에서는 랜딩페이지 건너뛰기
   useEffect(() => {
@@ -96,9 +116,23 @@ export default function LandingPage() {
             <h1 className="text-6xl sm:text-7xl font-bold text-primary">
               DayStep
             </h1>
-            <p className="text-2xl sm:text-3xl font-semibold text-base-content min-h-[3rem]">
-              하루를 체계적으로 관리하는 가장 쉬운 방법
-            </p>
+            <div className="text-2xl sm:text-3xl font-semibold text-base-content flex flex-col items-center">
+              <span className="mb-2">하루를 체계적으로 관리하는</span>
+              <div className="relative min-h-[4.5rem] w-full flex items-center justify-center overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={currentFeatureIndex}
+                    variants={rotatingTextVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="text-primary"
+                  >
+                    {features[currentFeatureIndex]}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+            </div>
           </motion.div>
 
           {/* Description */}
@@ -168,6 +202,9 @@ export default function LandingPage() {
 
       {/* Stats Section */}
       <StatsSection />
+
+      {/* Scroll Progress Section - 이미지 태그 모이는 효과 */}
+      <ScrollProgressSection />
 
       {/* Features Section */}
       <section id="features" className="py-20 px-4 bg-base-100">
