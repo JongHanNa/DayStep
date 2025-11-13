@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { fadeInUpVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
 
 const faqs = [
   {
@@ -29,13 +31,22 @@ const faqs = [
 
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const fadeInVariants = fadeInUpVariants(80);
+  const viewportOptions = getViewportOptions(true, 0.3);
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
   return (
-    <section id="faq" className="py-20 px-4 bg-base-200">
+    <motion.section
+      id="faq"
+      className="py-20 px-4 bg-base-200"
+      variants={fadeInVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOptions}
+    >
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold text-base-content mb-4">
@@ -85,6 +96,6 @@ export default function FAQSection() {
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

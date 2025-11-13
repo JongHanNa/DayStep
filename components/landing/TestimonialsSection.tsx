@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { fadeInUpVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
 
 const testimonials = [
   {
@@ -30,14 +32,16 @@ const testimonials = [
   },
   {
     rating: 5,
-    text: '반복 일정 기능으로 매일 아침 루틴을 자동으로 생성할 수 있어요. 더 이상 매번 일정을 만들 필요가 없어서 너무 편해요.',
-    author: '정수진',
-    role: '요가 강사',
+    text: '모바일과 웹에서 동기화가 완벽해요. 어디서든 일정을 확인하고 수정할 수 있어서 정말 편리합니다.',
+    author: '정수빈',
+    role: '회사원',
   },
 ];
 
 export default function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const fadeInVariants = fadeInUpVariants(80);
+  const viewportOptions = getViewportOptions(true, 0.3);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
@@ -50,76 +54,86 @@ export default function TestimonialsSection() {
   const currentTestimonial = testimonials[currentIndex];
 
   return (
-    <section className="py-20 px-4 bg-base-100">
+    <motion.section
+      id="testimonials"
+      className="py-20 px-4 bg-base-100"
+      variants={fadeInVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOptions}
+    >
       <div className="max-w-4xl mx-auto">
+        {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold text-base-content mb-4">
-            사용자들의 이야기
+            사용자 후기
           </h2>
           <p className="text-lg text-base-content/70">
-            실제 사용자들이 DayStep으로 변화를 경험했습니다
+            실제 사용자들의 생생한 이야기
           </p>
         </div>
 
-        {/* 슬라이더 */}
+        {/* Testimonial Slider */}
         <div className="relative">
-          {/* 메인 카드 */}
-          <div className="bg-base-200 rounded-3xl p-8 md:p-12 min-h-[280px] flex flex-col justify-between">
-            {/* 별점 */}
-            <div className="flex gap-1 mb-6">
-              {[...Array(currentTestimonial.rating)].map((_, i) => (
-                <Star key={i} className="w-5 h-5 fill-warning text-warning" />
+          <div className="bg-base-200 rounded-2xl p-8 sm:p-12 shadow-lg">
+            {/* Stars */}
+            <div className="flex justify-center gap-1 mb-6">
+              {Array.from({ length: currentTestimonial.rating }).map((_, i) => (
+                <Star key={i} className="w-6 h-6 fill-warning text-warning" />
               ))}
             </div>
 
-            {/* 리뷰 텍스트 */}
-            <p className="text-lg md:text-xl text-base-content leading-relaxed mb-8">
-              &ldquo;{currentTestimonial.text}&rdquo;
+            {/* Quote */}
+            <p className="text-lg sm:text-xl text-base-content text-center mb-8 leading-relaxed">
+              "{currentTestimonial.text}"
             </p>
 
-            {/* 작성자 정보 */}
-            <div>
-              <p className="font-semibold text-base-content">{currentTestimonial.author}</p>
-              <p className="text-sm text-base-content/60">{currentTestimonial.role}</p>
+            {/* Author */}
+            <div className="text-center">
+              <p className="font-semibold text-base-content">
+                {currentTestimonial.author}
+              </p>
+              <p className="text-sm text-base-content/60">
+                {currentTestimonial.role}
+              </p>
             </div>
           </div>
 
-          {/* 네비게이션 버튼 */}
-          <div className="flex items-center justify-center gap-4 mt-8">
+          {/* Navigation Buttons */}
+          <div className="flex justify-center gap-4 mt-8">
             <button
               onClick={prevSlide}
-              className="btn btn-circle btn-ghost"
-              aria-label="이전 후기"
+              className="btn btn-circle btn-outline"
+              aria-label="Previous testimonial"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-
-            {/* 인디케이터 */}
-            <div className="flex gap-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`h-2 rounded-full transition-all ${
-                    index === currentIndex
-                      ? 'w-8 bg-primary'
-                      : 'w-2 bg-base-content/20'
-                  }`}
-                  aria-label={`${index + 1}번째 후기로 이동`}
-                />
-              ))}
-            </div>
-
             <button
               onClick={nextSlide}
-              className="btn btn-circle btn-ghost"
-              aria-label="다음 후기"
+              className="btn btn-circle btn-outline"
+              aria-label="Next testimonial"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-5 h-5" />
             </button>
+          </div>
+
+          {/* Dots */}
+          <div className="flex justify-center gap-2 mt-6">
+            {testimonials.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentIndex
+                    ? 'bg-primary w-8'
+                    : 'bg-base-content/30'
+                }`}
+                aria-label={`Go to testimonial ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

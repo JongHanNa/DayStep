@@ -229,6 +229,29 @@ body {
     text-wrap: balance;
   }
 
+  /* 타이핑 커서 애니메이션 */
+  .typing-cursor {
+    font-weight: 400;
+    color: currentColor;
+    opacity: 1;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% {
+      opacity: 1;
+    }
+    51%, 100% {
+      opacity: 0;
+    }
+  }
+
+  /* 🎬 스크롤 애니메이션 최적화 */
+  /* Framer Motion이 애니메이션을 관리하므로 GPU 가속만 설정 */
+  [data-motion-id] {
+    will-change: opacity, transform;
+  }
+
   /* 스크롤바 숨김 - 스크롤 기능은 유지 (캐퍼시터 환경 최적화) */
   .scrollbar-hide {
     scrollbar-width: none !important; /* Firefox */

@@ -5,10 +5,22 @@ import {
   FolderOpen, Target, BookOpen, Archive,
   Smartphone, Puzzle, RefreshCw, Clock, FileText
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { fadeInUpVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
 
 export default function SystemSection() {
+  const fadeInVariants = fadeInUpVariants(80);
+  const viewportOptions = getViewportOptions(true, 0.3);
+
   return (
-    <section id="system" className="py-20 px-4 bg-base-200">
+    <motion.section
+      id="system"
+      className="py-20 px-4 bg-base-200"
+      variants={fadeInVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOptions}
+    >
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -277,6 +289,6 @@ export default function SystemSection() {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

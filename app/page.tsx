@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   CheckCircle2,
   Calendar,
@@ -12,6 +12,8 @@ import {
   ArrowRight,
   Smartphone
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { staggerFadeInUpVariants, scaleFadeInVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
 import LandingNav from '@/components/layout/LandingNav';
 import StatsSection from '@/components/landing/StatsSection';
 import SystemSection from '@/components/landing/SystemSection';
@@ -21,6 +23,11 @@ import FAQSection from '@/components/landing/FAQSection';
 export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+
+  // Framer Motion variants
+  const featureContainerVariants = staggerFadeInUpVariants(60, 0.15);
+  const ctaVariants = scaleFadeInVariants(0.9);
+  const viewportOptions = getViewportOptions(true, 0.3);
 
   // 캐퍼시터 환경에서는 랜딩페이지 건너뛰기
   useEffect(() => {
@@ -79,23 +86,38 @@ export default function LandingPage() {
       <section id="hero" className="relative min-h-screen flex items-center justify-center px-4 py-20 pt-32">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           {/* Logo/Title */}
-          <div className="space-y-4">
+          <motion.div
+            className="space-y-4"
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
             <h1 className="text-6xl sm:text-7xl font-bold text-primary">
               DayStep
             </h1>
-            <p className="text-2xl sm:text-3xl font-semibold text-base-content">
+            <p className="text-2xl sm:text-3xl font-semibold text-base-content min-h-[3rem]">
               하루를 체계적으로 관리하는 가장 쉬운 방법
             </p>
-          </div>
+          </motion.div>
 
           {/* Description */}
-          <p className="text-lg sm:text-xl text-base-content/70 max-w-2xl mx-auto leading-relaxed">
+          <motion.p
+            className="text-lg sm:text-xl text-base-content/70 max-w-2xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
             타임라인으로 하루를 시각화하고, Second Brain으로 생각을 정리하며,
             목표를 향해 한 걸음씩 나아가세요.
-          </p>
+          </motion.p>
 
           {/* Dual CTA Buttons */}
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <motion.div
+            className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
             <button
               onClick={handleGetStarted}
               className="btn btn-primary btn-lg gap-2 px-8 w-full sm:w-auto"
@@ -110,11 +132,23 @@ export default function LandingPage() {
               모바일 앱 다운로드
               <Smartphone className="w-5 h-5" />
             </button>
-          </div>
-          <p className="text-sm text-base-content/50">iOS, Android 지원</p>
+          </motion.div>
+          <motion.p
+            className="text-sm text-base-content/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            iOS, Android 지원
+          </motion.p>
 
           {/* Quick Stats */}
-          <div className="pt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto">
+          <motion.div
+            className="pt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1 }}
+          >
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">간편</div>
               <p className="text-sm text-base-content/60">직관적인 인터페이스</p>
@@ -127,7 +161,7 @@ export default function LandingPage() {
               <div className="text-3xl font-bold text-primary">효율적</div>
               <p className="text-sm text-base-content/60">타임라인 뷰</p>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -137,18 +171,33 @@ export default function LandingPage() {
       {/* Features Section */}
       <section id="features" className="py-20 px-4 bg-base-100">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={viewportOptions}
+            transition={{ duration: 0.8 }}
+          >
             <h2 className="text-4xl font-bold text-base-content mb-4">
               주요 기능
             </h2>
             <p className="text-lg text-base-content/70">
               생산성을 높이는 강력한 도구들
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={featureContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOptions}
+          >
             {/* Feature 1 */}
-            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={featureContainerVariants.item}
+              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+            >
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-primary" />
               </div>
@@ -158,10 +207,13 @@ export default function LandingPage() {
               <p className="text-base-content/70">
                 하루 일정을 시각적으로 관리하고 시간대별로 할일을 배치하세요.
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature 2 */}
-            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={featureContainerVariants.item}
+              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+            >
               <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
                 <Brain className="w-6 h-6 text-accent" />
               </div>
@@ -171,10 +223,13 @@ export default function LandingPage() {
               <p className="text-base-content/70">
                 생각을 수집하고, 명료화하며, 체계적으로 정리하는 시스템.
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature 3 */}
-            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={featureContainerVariants.item}
+              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+            >
               <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
                 <Target className="w-6 h-6 text-secondary" />
               </div>
@@ -184,10 +239,13 @@ export default function LandingPage() {
               <p className="text-base-content/70">
                 장기 목표를 설정하고 단계별로 달성해 나가세요.
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature 4 */}
-            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={featureContainerVariants.item}
+              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+            >
               <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-info" />
               </div>
@@ -197,10 +255,13 @@ export default function LandingPage() {
               <p className="text-base-content/70">
                 프로젝트별로 할일을 정리하고 우선순위를 관리하세요.
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature 5 */}
-            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={featureContainerVariants.item}
+              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+            >
               <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-success" />
               </div>
@@ -210,10 +271,13 @@ export default function LandingPage() {
               <p className="text-base-content/70">
                 상황에 맞는 동기부여 문구와 추천 할일을 제공합니다.
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature 6 */}
-            <div className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={featureContainerVariants.item}
+              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+            >
               <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-warning" />
               </div>
@@ -223,8 +287,8 @@ export default function LandingPage() {
               <p className="text-base-content/70">
                 매일, 매주, 매월 반복되는 일정을 자동으로 생성하세요.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -238,7 +302,13 @@ export default function LandingPage() {
       <FAQSection />
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-base-100">
+      <motion.section
+        className="py-20 px-4 bg-base-100"
+        variants={ctaVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportOptions}
+      >
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <h2 className="text-4xl font-bold text-base-content">
             지금 바로 시작하세요
@@ -254,7 +324,7 @@ export default function LandingPage() {
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
       <footer className="py-12 px-4 bg-base-200 border-t border-base-300">
