@@ -228,7 +228,7 @@ export default function TodoFormFields({
 
                 // 일정으로 선택 시 scheduleType 자동 초기화
                 if (clarification === 'schedule_clear') {
-                  if (!todo.scheduleType) {
+                  if (!todo.scheduleType || todo.scheduleType === 'none') {
                     updates.scheduleType = 'anytime';
                     updates.scheduledDate = new Date(); // 오늘 날짜
                     updates.includeEndDate = false;
