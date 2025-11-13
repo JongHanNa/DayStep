@@ -125,6 +125,84 @@ export const PASTEL_COLORS: ColorOption[] = [
     hex: '#E8A39C',
     description: '부드러운 로즈 핑크'
   },
+
+  // 네 번째 행 - 추가 색상
+  {
+    id: 'lavender',
+    name: '라벤더',
+    hex: '#B5A4C7',
+    description: '우아한 라벤더 퍼플'
+  },
+  {
+    id: 'terracotta',
+    name: '테라코타',
+    hex: '#C17A6F',
+    description: '따뜻한 테라코타'
+  },
+  {
+    id: 'olive',
+    name: '올리브',
+    hex: '#8B9168',
+    description: '자연스러운 올리브 그린'
+  },
+  {
+    id: 'dusty-rose',
+    name: '더스티로즈',
+    hex: '#D5A5A0',
+    description: '차분한 더스티 로즈'
+  },
+
+  // 다섯 번째 행
+  {
+    id: 'steel',
+    name: '스틸',
+    hex: '#7A8B99',
+    description: '세련된 스틸 그레이'
+  },
+  {
+    id: 'mauve',
+    name: '모브',
+    hex: '#B88BAC',
+    description: '부드러운 모브 퍼플'
+  },
+  {
+    id: 'teal',
+    name: '틸',
+    hex: '#5E9B9B',
+    description: '차분한 틸 블루'
+  },
+  {
+    id: 'copper',
+    name: '코퍼',
+    hex: '#C89B7B',
+    description: '따뜻한 코퍼 브라운'
+  },
+
+  // 여섯 번째 행
+  {
+    id: 'plum',
+    name: '플럼',
+    hex: '#8B6F8E',
+    description: '깊이 있는 플럼 퍼플'
+  },
+  {
+    id: 'moss',
+    name: '모스',
+    hex: '#7A9A72',
+    description: '자연스러운 모스 그린'
+  },
+  {
+    id: 'taupe',
+    name: '토프',
+    hex: '#A89084',
+    description: '모던한 토프 베이지'
+  },
+  {
+    id: 'slate-gray',
+    name: '슬레이트그레이',
+    hex: '#7C8487',
+    description: '중성적인 슬레이트 그레이'
+  },
 ];
 
 /**
