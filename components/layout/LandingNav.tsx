@@ -24,14 +24,14 @@ export default function LandingNav() {
 
   const navLinks = [
     { label: '기능 소개', href: '/#features' },
-    { label: '회사 소개', href: '/about' },
+    { label: '시스템 소개', href: '/#system' },
     { label: '블로그', href: '/blog' },
     { label: 'FAQ', href: '/#faq' },
   ];
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      router.push('/second-brain/start');
+      router.push('/second-brain/areas');
     } else {
       router.push('/login');
     }
@@ -83,7 +83,7 @@ export default function LandingNav() {
                     </button>
                   </>
                 ) : (
-                  <Link href="/second-brain/start" className="btn btn-primary btn-sm">
+                  <Link href="/second-brain/areas" className="btn btn-primary btn-sm">
                     대시보드
                   </Link>
                 )}
@@ -142,7 +142,7 @@ export default function LandingNav() {
                   </>
                 ) : (
                   <Link
-                    href="/second-brain/start"
+                    href="/second-brain/areas"
                     className="block w-full btn btn-primary"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

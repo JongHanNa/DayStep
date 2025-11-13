@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { Home, CheckSquare, Target, Settings, BookOpen } from 'lucide-react';
+import { Home, CheckSquare, Target, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useNavigationStore } from '@/state/stores/navigationStore';
@@ -18,7 +18,6 @@ interface MainTab {
 }
 
 const mainTabs: MainTab[] = [
-  { id: 'system-info', label: '시스템 설명', icon: BookOpen, href: '/second-brain/start' },
   { id: 'start', label: '시작', icon: Home, groupType: 'start' },
   { id: 'routine', label: '워크플로우', icon: CheckSquare, groupType: 'routine' },
   { id: 'productivity', label: '생산성', icon: Target, groupType: 'productivity' },

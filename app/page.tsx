@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import LandingNav from '@/components/layout/LandingNav';
 import StatsSection from '@/components/landing/StatsSection';
+import SystemSection from '@/components/landing/SystemSection';
 import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
 
@@ -33,8 +34,8 @@ export default function LandingPage() {
       console.log('📱 Capacitor 환경 감지 - 랜딩페이지 건너뛰기');
 
       if (isAuthenticated) {
-        console.log('✅ 인증됨 - 시작 페이지로 이동');
-        router.push('/second-brain/start');
+        console.log('✅ 인증됨 - 책임 페이지로 이동');
+        router.push('/second-brain/areas');
       } else {
         console.log('❌ 비인증 - 로그인 페이지로 이동');
         router.push('/login');
@@ -45,7 +46,7 @@ export default function LandingPage() {
   // "데스크톱에서 시작하기" 버튼 클릭 핸들러
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      router.push('/second-brain/start');
+      router.push('/second-brain/areas');
     } else {
       router.push('/login');
     }
@@ -226,6 +227,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* System Section */}
+      <SystemSection />
 
       {/* Testimonials Section */}
       <TestimonialsSection />
