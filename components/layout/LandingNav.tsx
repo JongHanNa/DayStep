@@ -25,7 +25,6 @@ export default function LandingNav() {
   const navLinks = [
     { label: '기능 소개', href: '/#features' },
     { label: '시스템 소개', href: '/#system' },
-    { label: '블로그', href: '/blog' },
     { label: 'FAQ', href: '/#faq' },
   ];
 
