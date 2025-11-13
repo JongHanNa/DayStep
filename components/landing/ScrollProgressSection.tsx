@@ -27,11 +27,9 @@ export default function ScrollProgressSection() {
     // 최소 이동 거리 설정 (너무 작은 변화 무시)
     if (Math.abs(diff) > 1) {
       const newDirection = diff > 0 ? 'down' : 'up';
-      console.log('🔄 Scroll Direction:', newDirection, 'Y:', Math.round(latest), 'Diff:', Math.round(diff));
 
       // 방향이 실제로 변경되었을 때만 상태 업데이트
       if (newDirection !== scrollDirection) {
-        console.log('🔀 Direction CHANGED:', scrollDirection, '→', newDirection);
         setScrollDirection(newDirection);
       }
     }
@@ -82,14 +80,10 @@ export default function ScrollProgressSection() {
 
   // 초기화: 섹션이 처음 나타날 때 스크롤 방향에 따라 초기 상태 설정
   useEffect(() => {
-    console.log('🚀 Init Check:', { isInView, hasInitialized, scrollDirection });
-
     if (isInView && !hasInitialized) {
-      console.log('✅ Initializing with direction:', scrollDirection);
       setHasInitialized(true);
 
       if (scrollDirection === 'up') {
-        console.log('⬆️ Setting GRID (up scroll init) - opacity: 1');
         // 아래에서 위로 올라올 때: 그리드 상태로 즉시 설정 (애니메이션 없이)
         controls.set((i) => {
           const endPos = getGridPosition(i);
@@ -102,7 +96,6 @@ export default function ScrollProgressSection() {
           };
         });
       } else {
-        console.log('⬇️ Setting CIRCULAR (down scroll init) - opacity: 0');
         // 위에서 아래로 올라올 때: 원형 상태로 즉시 설정 (애니메이션 없이)
         controls.set((i) => {
           const startPos = getCircularStartPosition(i, featureTags.length);
@@ -120,10 +113,7 @@ export default function ScrollProgressSection() {
 
   // 명령형 애니메이션 제어 - 아래 스크롤 (Framer Motion best practice)
   useEffect(() => {
-    console.log('⬇️ Down Animation Check:', { scrollDirection, isInView, hasInitialized });
-
     if (scrollDirection === 'down' && isInView && hasInitialized) {
-      console.log('✨ Starting DOWN animation (converge to grid) - opacity: 1');
       // 아래 스크롤: 그리드로 모이기
       controls.start((i) => {
         const endPos = getGridPosition(i);
@@ -145,10 +135,7 @@ export default function ScrollProgressSection() {
 
   // 명령형 애니메이션 제어 - 위로 스크롤 (Framer Motion best practice)
   useEffect(() => {
-    console.log('⬆️ Up Animation Check:', { scrollDirection, hasInitialized });
-
     if (scrollDirection === 'up' && hasInitialized) {
-      console.log('💫 Starting UP animation (scatter to circular) - opacity: 0');
       // 위로 스크롤: 원형으로 흩어지기
       controls.start((i) => {
         const startPos = getCircularStartPosition(i, featureTags.length);
