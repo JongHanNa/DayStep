@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { fadeInUpVariants, getViewportOptions } from '@/lib/animations/scrollAnimations';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fadeInUpVariants, getViewportOptions, tiltVariants, getMagneticProps } from '@/lib/animations/scrollAnimations';
 
 const testimonials = [
   {
@@ -74,47 +74,67 @@ export default function TestimonialsSection() {
         </div>
 
         {/* Testimonial Slider */}
-        <div className="relative">
-          <div className="bg-base-200 rounded-2xl p-8 sm:p-12 shadow-lg">
-            {/* Stars */}
-            <div className="flex justify-center gap-1 mb-6">
-              {Array.from({ length: currentTestimonial.rating }).map((_, i) => (
-                <Star key={i} className="w-6 h-6 fill-warning text-warning" />
-              ))}
-            </div>
+        <div className="relative min-h-[300px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              variants={tiltVariants}
+              initial={{ opacity: 0, x: 100, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -100, scale: 0.95 }}
+              transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
+              whileHover="hover"
+              className="bg-base-200 rounded-2xl p-8 sm:p-12 shadow-lg"
+            >
+              {/* Stars */}
+              <div className="flex justify-center gap-1 mb-6">
+                {Array.from({ length: currentTestimonial.rating }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: i * 0.1 }}
+                  >
+                    <Star className="w-6 h-6 fill-warning text-warning" />
+                  </motion.div>
+                ))}
+              </div>
 
-            {/* Quote */}
-            <p className="text-lg sm:text-xl text-base-content text-center mb-8 leading-relaxed">
-              {`"${currentTestimonial.text}"`}
-            </p>
+              {/* Quote */}
+              <p className="text-lg sm:text-xl text-base-content text-center mb-8 leading-relaxed">
+                {`"${currentTestimonial.text}"`}
+              </p>
 
-            {/* Author */}
-            <div className="text-center">
-              <p className="font-semibold text-base-content">
-                {currentTestimonial.author}
-              </p>
-              <p className="text-sm text-base-content/60">
-                {currentTestimonial.role}
-              </p>
-            </div>
-          </div>
+              {/* Author */}
+              <div className="text-center">
+                <p className="font-semibold text-base-content">
+                  {currentTestimonial.author}
+                </p>
+                <p className="text-sm text-base-content/60">
+                  {currentTestimonial.role}
+                </p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
           {/* Navigation Buttons */}
           <div className="flex justify-center gap-4 mt-8">
-            <button
+            <motion.button
+              {...getMagneticProps()}
               onClick={prevSlide}
               className="btn btn-circle btn-outline"
               aria-label="Previous testimonial"
             >
               <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              {...getMagneticProps()}
               onClick={nextSlide}
               className="btn btn-circle btn-outline"
               aria-label="Next testimonial"
             >
               <ChevronRight className="w-5 h-5" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Dots */}

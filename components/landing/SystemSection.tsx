@@ -6,11 +6,12 @@ import {
   Smartphone, Puzzle, RefreshCw, Clock, FileText
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { fadeInUpVariants, getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
+import { fadeInUpVariants, getBidirectionalViewportOptions, staggerFadeInUpVariants, getMagneticProps } from '@/lib/animations/scrollAnimations';
 
 export default function SystemSection() {
   const fadeInVariants = fadeInUpVariants(80);
   const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
+  const staggerVariants = staggerFadeInUpVariants(60, 0.1);
 
   return (
     <motion.section
@@ -45,47 +46,73 @@ export default function SystemSection() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-5 gap-4"
+            variants={staggerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={bidirectionalViewportOptions}
+          >
+            <motion.div
+              variants={staggerVariants.item}
+              {...getMagneticProps()}
+              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+            >
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Inbox className="w-8 h-8 text-primary" />
               </div>
               <h4 className="font-semibold text-base-content mb-1">수집</h4>
               <p className="text-xs text-base-content/60">Inbox</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={staggerVariants.item}
+              {...getMagneticProps()}
+              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+            >
               <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-secondary" />
               </div>
               <h4 className="font-semibold text-base-content mb-1">명료화</h4>
               <p className="text-xs text-base-content/60">Clarify</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={staggerVariants.item}
+              {...getMagneticProps()}
+              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+            >
               <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8 text-accent" />
               </div>
               <h4 className="font-semibold text-base-content mb-1">계획</h4>
               <p className="text-xs text-base-content/60">Plan</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={staggerVariants.item}
+              {...getMagneticProps()}
+              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+            >
               <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Zap className="w-8 h-8 text-success" />
               </div>
               <h4 className="font-semibold text-base-content mb-1">실행</h4>
               <p className="text-xs text-base-content/60">Do</p>
-            </div>
+            </motion.div>
 
-            <div className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+            <motion.div
+              variants={staggerVariants.item}
+              {...getMagneticProps()}
+              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+            >
               <div className="w-16 h-16 bg-info/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-info" />
               </div>
               <h4 className="font-semibold text-base-content mb-1">점검</h4>
               <p className="text-xs text-base-content/60">Review</p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* PARA System */}

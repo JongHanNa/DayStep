@@ -177,3 +177,203 @@ export const getBidirectionalViewportOptions = (amount: number | 'some' | 'all' 
   amount,
   margin: '0px 0px -100px 0px',
 });
+
+/**
+ * 패럴랙스 효과 variants
+ * 스크롤 시 요소가 다른 속도로 움직임
+ *
+ * @param speed - 패럴랙스 속도 (0.5 = 느림, 2 = 빠름)
+ * @returns Framer Motion variants object
+ */
+export const parallaxVariants = (speed = 0.5) => ({
+  initial: {
+    y: 0,
+  },
+  animate: {
+    y: [0, -100 * speed, 0],
+    transition: {
+      duration: 20,
+      repeat: Infinity,
+      ease: 'linear',
+    },
+  },
+});
+
+/**
+ * 텍스트 단어 단위 reveal 애니메이션
+ * Structured.app 스타일의 단어별 나타나기 효과
+ *
+ * @param stagger - 각 단어 간 딜레이 (초)
+ * @returns Framer Motion variants object
+ */
+export const textRevealVariants = (stagger = 0.03) => ({
+  hidden: {
+    opacity: 0,
+  },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: stagger,
+    },
+  },
+  word: {
+    hidden: {
+      opacity: 0,
+      y: 20,
+      filter: 'blur(4px)',
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: {
+        duration: 0.5,
+        ease: [0.215, 0.61, 0.355, 1] as [number, number, number, number],
+      },
+    },
+  },
+});
+
+/**
+ * 회전하는 텍스트 효과 variants
+ * 히어로 섹션의 기능 리스트용
+ */
+export const rotatingTextVariants = {
+  enter: {
+    y: 20,
+    opacity: 0,
+    filter: 'blur(4px)',
+  },
+  center: {
+    y: 0,
+    opacity: 1,
+    filter: 'blur(0px)',
+    transition: {
+      duration: 0.5,
+      ease: [0.215, 0.61, 0.355, 1] as [number, number, number, number],
+    },
+  },
+  exit: {
+    y: -20,
+    opacity: 0,
+    filter: 'blur(4px)',
+    transition: {
+      duration: 0.3,
+      ease: [0.215, 0.61, 0.355, 1] as [number, number, number, number],
+    },
+  },
+};
+
+/**
+ * 마그네틱 효과 (마우스 추적 버튼/카드)
+ * 마우스 위치에 따라 요소가 미묘하게 움직임
+ *
+ * @param strength - 효과 강도 (0-1)
+ * @returns Framer Motion props
+ */
+export const getMagneticProps = (strength = 0.3) => ({
+  whileHover: {
+    scale: 1.05,
+    transition: {
+      duration: 0.3,
+      ease: [0.215, 0.61, 0.355, 1] as [number, number, number, number],
+    },
+  },
+  whileTap: {
+    scale: 0.95,
+  },
+});
+
+/**
+ * 3D 틸트 효과 variants
+ * 카드 hover 시 3D 회전 효과
+ */
+export const tiltVariants = {
+  rest: {
+    rotateX: 0,
+    rotateY: 0,
+    scale: 1,
+  },
+  hover: {
+    scale: 1.05,
+    transition: {
+      duration: 0.3,
+      ease: [0.215, 0.61, 0.355, 1] as [number, number, number, number],
+    },
+  },
+};
+
+/**
+ * 무한 스크롤 애니메이션 (가로)
+ *
+ * @param duration - 한 사이클 완료 시간 (초)
+ * @param direction - 스크롤 방향 ('left' | 'right')
+ * @returns Framer Motion animate props
+ */
+export const getInfiniteScrollProps = (duration = 20, direction: 'left' | 'right' = 'left') => ({
+  animate: {
+    x: direction === 'left' ? [0, -1000] : [-1000, 0],
+    transition: {
+      x: {
+        repeat: Infinity,
+        repeatType: 'loop' as const,
+        duration,
+        ease: 'linear' as const,
+      },
+    },
+  },
+});
+
+/**
+ * 스크롤 진행률 기반 transform 유틸리티
+ * useScroll과 useTransform을 함께 사용
+ *
+ * 사용 예시:
+ * ```tsx
+ * const { scrollYProgress } = useScroll();
+ * const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
+ * ```
+ */
+export const getScrollTransformConfig = (start: number[], end: number[]) => ({
+  inputRange: [0, 1],
+  outputRange: [start, end],
+});
+
+/**
+ * 이미지 태그 움직임 효과 (Structured.app 스타일)
+ * 스크롤 진행률에 따라 여러 이미지 태그가 모여서 섹션 완성
+ *
+ * @param index - 태그 인덱스
+ * @param total - 전체 태그 수
+ * @returns Framer Motion props
+ */
+export const getImageTagAnimationProps = (index: number, total: number) => {
+  const delay = (index / total) * 0.5;
+  const angle = (360 / total) * index;
+
+  return {
+    initial: {
+      opacity: 0,
+      x: Math.cos((angle * Math.PI) / 180) * 200,
+      y: Math.sin((angle * Math.PI) / 180) * 200,
+      rotate: angle,
+      scale: 0.5,
+    },
+    whileInView: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      rotate: 0,
+      scale: 1,
+      transition: {
+        duration: 1,
+        delay,
+        ease: [0.215, 0.61, 0.355, 1] as [number, number, number, number],
+      },
+    },
+    viewport: {
+      once: false,
+      amount: 0.3,
+    },
+  };
+};

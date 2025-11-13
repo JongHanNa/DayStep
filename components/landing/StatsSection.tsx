@@ -4,7 +4,8 @@ import { Users, CheckCircle, Star, Calendar } from 'lucide-react';
 import { useRef } from 'react';
 import { motion, useMotionValue, useTransform, animate, useInView } from 'framer-motion';
 import { useEffect } from 'react';
-import { staggerFadeInUpVariants, getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
+import { getBidirectionalViewportOptions, tiltVariants, getMagneticProps } from '@/lib/animations/scrollAnimations';
+import InfiniteSlider from './InfiniteSlider';
 
 const stats = [
   {
@@ -65,11 +66,37 @@ function CountUpNumber({ value, decimals, suffix }: { value: number; decimals: n
 }
 
 export default function StatsSection() {
-  const containerVariants = staggerFadeInUpVariants(60, 0.1);
   const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
 
+  // 통계 카드 컴포넌트
+  const StatCard = ({ stat, index }: { stat: typeof stats[0]; index: number }) => {
+    const Icon = stat.icon;
+
+    return (
+      <motion.div
+        {...getMagneticProps()}
+        variants={tiltVariants}
+        initial="rest"
+        whileHover="hover"
+        className="flex flex-col items-center justify-center p-8 bg-base-100 rounded-2xl shadow-md border border-base-300 min-w-[200px]"
+      >
+        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <Icon className="w-7 h-7 text-primary" />
+        </div>
+        <CountUpNumber
+          value={stat.value}
+          decimals={stat.decimals}
+          suffix={stat.suffix}
+        />
+        <p className="text-sm text-base-content/70 text-center font-medium">
+          {stat.label}
+        </p>
+      </motion.div>
+    );
+  };
+
   return (
-    <section className="py-16 px-4 bg-base-200">
+    <section className="py-16 px-4 bg-base-200 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* 헤더 */}
         <motion.div
@@ -87,37 +114,12 @@ export default function StatsSection() {
           </p>
         </motion.div>
 
-        {/* Stats Grid */}
-        <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 gap-8"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={bidirectionalViewportOptions}
-        >
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={index}
-                variants={containerVariants.item}
-                className="flex flex-col items-center justify-center p-6 bg-base-100 rounded-2xl hover:shadow-lg transition-shadow"
-              >
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <Icon className="w-6 h-6 text-primary" />
-                </div>
-                <CountUpNumber
-                  value={stat.value}
-                  decimals={stat.decimals}
-                  suffix={stat.suffix}
-                />
-                <p className="text-sm text-base-content/70 text-center">
-                  {stat.label}
-                </p>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+        {/* 무한 스크롤 Stats */}
+        <InfiniteSlider duration={25} direction="left" gap="gap-6">
+          {stats.map((stat, index) => (
+            <StatCard key={index} stat={stat} index={index} />
+          ))}
+        </InfiniteSlider>
       </div>
     </section>
   );
