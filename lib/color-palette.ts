@@ -11,95 +11,89 @@ export interface ColorOption {
 }
 
 export const PASTEL_COLORS: ColorOption[] = [
-  // 첫 번째 행 - 따뜻한 톤
+  // 첫 번째 행
   {
-    id: 'lavender',
-    name: '라벤더',
-    hex: '#B794C4',
-    description: '우아한 라벤더 퍼플'
+    id: 'sky-blue',
+    name: '스카이블루',
+    hex: '#A7C5E4',
+    description: '맑은 파스텔 블루'
   },
   {
-    id: 'yellow',
-    name: '옐로우',
-    hex: '#F5D567',
-    description: '밝은 파스텔 옐로우'
+    id: 'purple',
+    name: '퍼플',
+    hex: '#9061C5',
+    description: '우아한 퍼플'
+  },
+  {
+    id: 'sunshine',
+    name: '선샤인',
+    hex: '#F0CC49',
+    description: '밝은 골든 옐로우'
+  },
+  {
+    id: 'black',
+    name: '블랙',
+    hex: '#000000',
+    description: '클래식 블랙'
+  },
+
+  // 두 번째 행
+  {
+    id: 'navy',
+    name: '네이비',
+    hex: '#344F70',
+    description: '깊이 있는 네이비 블루'
+  },
+  {
+    id: 'rose-purple',
+    name: '로즈퍼플',
+    hex: '#8D4B66',
+    description: '세련된 로즈 퍼플'
+  },
+  {
+    id: 'sage',
+    name: '세이지',
+    hex: '#428366',
+    description: '차분한 세이지 그린'
+  },
+  {
+    id: 'slate-blue',
+    name: '슬레이트블루',
+    hex: '#6984A5',
+    description: '모던한 슬레이트 블루'
+  },
+
+  // 세 번째 행
+  {
+    id: 'meadow',
+    name: '메도우',
+    hex: '#9ABE75',
+    description: '자연스러운 라이트 그린'
   },
   {
     id: 'golden',
     name: '골든',
-    hex: '#DBAC6C',
-    description: '따뜻한 골든 베이지'
+    hex: '#E0AD3B',
+    description: '따뜻한 골든'
   },
-  { 
-    id: 'charcoal', 
-    name: '차콜', 
-    hex: '#2C2C2C', 
-    description: '세련된 차콜 그레이' 
+  {
+    id: 'peach',
+    name: '피치',
+    hex: '#F1A37C',
+    description: '부드러운 피치 코랄'
   },
-  { 
-    id: 'pink', 
-    name: '핑크', 
-    hex: '#F4A7B0', 
-    description: '부드러운 파스텔 핑크' 
-  },
-
-  // 두 번째 행 - 자연 톤
-  { 
-    id: 'amber', 
-    name: '앰버', 
-    hex: '#E1B564', 
-    description: '따뜻한 앰버 골드' 
-  },
-  { 
-    id: 'sage', 
-    name: '세이지', 
-    hex: '#8FBC8F', 
-    description: '차분한 세이지 그린' 
-  },
-  { 
-    id: 'slate', 
-    name: '슬레이트', 
-    hex: '#708090', 
-    description: '모던한 슬레이트 블루' 
-  },
-  { 
-    id: 'forest', 
-    name: '포레스트', 
-    hex: '#50A569', 
-    description: '자연스러운 포레스트 그린' 
-  },
-
-  // 세 번째 행 - 시원한 톤
-  { 
-    id: 'navy', 
-    name: '네이비', 
-    hex: '#4B6584', 
-    description: '깊이 있는 네이비 블루' 
-  },
-  { 
-    id: 'sky', 
-    name: '스카이', 
-    hex: '#87CEEB', 
-    description: '맑은 스카이 블루' 
-  },
-  { 
-    id: 'violet', 
-    name: '바이올렛', 
-    hex: '#DA70D6', 
-    description: '생기 있는 바이올렛' 
-  },
-  { 
-    id: 'coral', 
-    name: '코랄', 
-    hex: '#FA8072', 
-    description: '활기찬 코랄 레드' 
+  {
+    id: 'pink',
+    name: '핑크',
+    hex: '#E8A39C',
+    description: '부드러운 로즈 핑크'
   },
 ];
 
 /**
  * 기본 색상 (신규 할일 생성시 사용)
  */
-export const DEFAULT_COLOR = PASTEL_COLORS[0]; // 라벤더
+export const DEFAULT_COLOR = PASTEL_COLORS[0]; // 스카이블루
 
 /**
  * 색상 ID로 색상 정보를 찾는 헬퍼 함수
@@ -120,8 +114,10 @@ export function getColorByHex(hex: string): ColorOption {
  */
 export function isColorDark(hex: string): boolean {
   const rgb = hexToRgb(hex);
-  if (!rgb) return false;
-  
+  if (!rgb) {
+    return false;
+  }
+
   // 밝기 계산 (0-255)
   const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
   return brightness < 128;
@@ -144,7 +140,9 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
  */
 export function getColorWithOpacity(hex: string, opacity: number): string {
   const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  
+  if (!rgb) {
+    return hex;
+  }
+
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
 }
