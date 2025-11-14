@@ -16,7 +16,7 @@ export default function SystemSection() {
   return (
     <motion.section
       id="system"
-      className="py-20 px-4 bg-base-200"
+      className="py-20 px-4"
       variants={fadeInVariants}
       initial="hidden"
       whileInView="visible"
@@ -56,7 +56,7 @@ export default function SystemSection() {
             <motion.div
               variants={staggerVariants.item}
               {...getMagneticProps()}
-              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
             >
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Inbox className="w-8 h-8 text-primary" />
@@ -68,7 +68,7 @@ export default function SystemSection() {
             <motion.div
               variants={staggerVariants.item}
               {...getMagneticProps()}
-              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
             >
               <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-secondary" />
@@ -80,7 +80,7 @@ export default function SystemSection() {
             <motion.div
               variants={staggerVariants.item}
               {...getMagneticProps()}
-              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
             >
               <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8 text-accent" />
@@ -92,7 +92,7 @@ export default function SystemSection() {
             <motion.div
               variants={staggerVariants.item}
               {...getMagneticProps()}
-              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
             >
               <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Zap className="w-8 h-8 text-success" />
@@ -104,7 +104,7 @@ export default function SystemSection() {
             <motion.div
               variants={staggerVariants.item}
               {...getMagneticProps()}
-              className="bg-base-100 rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
             >
               <div className="w-16 h-16 bg-info/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-info" />
@@ -127,7 +127,7 @@ export default function SystemSection() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-base-100 rounded-2xl p-6 hover:shadow-lg transition-shadow">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <FolderOpen className="w-6 h-6 text-primary" />
               </div>
@@ -139,7 +139,7 @@ export default function SystemSection() {
               </p>
             </div>
 
-            <div className="bg-base-100 rounded-2xl p-6 hover:shadow-lg transition-shadow">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mb-4">
                 <Target className="w-6 h-6 text-secondary" />
               </div>
@@ -151,7 +151,7 @@ export default function SystemSection() {
               </p>
             </div>
 
-            <div className="bg-base-100 rounded-2xl p-6 hover:shadow-lg transition-shadow">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-accent" />
               </div>
@@ -163,7 +163,7 @@ export default function SystemSection() {
               </p>
             </div>
 
-            <div className="bg-base-100 rounded-2xl p-6 hover:shadow-lg transition-shadow">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center mb-4">
                 <Archive className="w-6 h-6 text-info" />
               </div>
@@ -189,7 +189,7 @@ export default function SystemSection() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-base-100 rounded-2xl p-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Smartphone className="w-6 h-6 text-primary" />
@@ -205,7 +205,7 @@ export default function SystemSection() {
               </div>
             </div>
 
-            <div className="bg-base-100 rounded-2xl p-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Zap className="w-6 h-6 text-secondary" />
@@ -221,7 +221,7 @@ export default function SystemSection() {
               </div>
             </div>
 
-            <div className="bg-base-100 rounded-2xl p-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Puzzle className="w-6 h-6 text-accent" />
@@ -237,7 +237,7 @@ export default function SystemSection() {
               </div>
             </div>
 
-            <div className="bg-base-100 rounded-2xl p-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center flex-shrink-0">
                   <RefreshCw className="w-6 h-6 text-info" />

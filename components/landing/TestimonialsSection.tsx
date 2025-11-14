@@ -56,7 +56,7 @@ export default function TestimonialsSection() {
   return (
     <motion.section
       id="testimonials"
-      className="py-20 px-4 bg-base-100"
+      className="py-20 px-4"
       variants={fadeInVariants}
       initial="hidden"
       whileInView="visible"
@@ -84,7 +84,7 @@ export default function TestimonialsSection() {
               exit={{ opacity: 0, x: -100, scale: 0.95 }}
               transition={{ duration: 0.5, ease: [0.215, 0.61, 0.355, 1] }}
               whileHover="hover"
-              className="bg-base-200 rounded-2xl p-8 sm:p-12 shadow-lg"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 sm:p-12 shadow-lg"
             >
               {/* Stars */}
               <div className="flex justify-center gap-1 mb-6">

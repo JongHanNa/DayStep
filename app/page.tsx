@@ -20,6 +20,7 @@ import StatsSection from '@/components/landing/StatsSection';
 import SystemSection from '@/components/landing/SystemSection';
 import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
+import ScrollColorTransition from '@/components/landing/ScrollColorTransition';
 
 // Hydration 오류 방지를 위해 ScrollProgressSection을 클라이언트 전용 렌더링
 const ScrollProgressSection = dynamic(
@@ -99,7 +100,10 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 show-scrollbar">
+    <div className="min-h-screen show-scrollbar">
+      {/* 스크롤 기반 배경색 전환 */}
+      <ScrollColorTransition />
+
       {/* 상단 네비게이션 */}
       <LandingNav />
 
@@ -204,7 +208,7 @@ export default function LandingPage() {
       <ScrollProgressSection />
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-base-100">
+      <section id="features" className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div
             className="text-center mb-16"
@@ -231,7 +235,7 @@ export default function LandingPage() {
             {/* Feature 1 */}
             <motion.div
               variants={featureContainerVariants.item}
-              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-primary" />
@@ -247,7 +251,7 @@ export default function LandingPage() {
             {/* Feature 2 */}
             <motion.div
               variants={featureContainerVariants.item}
-              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
                 <Brain className="w-6 h-6 text-accent" />
@@ -263,7 +267,7 @@ export default function LandingPage() {
             {/* Feature 3 */}
             <motion.div
               variants={featureContainerVariants.item}
-              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
                 <Target className="w-6 h-6 text-secondary" />
@@ -279,7 +283,7 @@ export default function LandingPage() {
             {/* Feature 4 */}
             <motion.div
               variants={featureContainerVariants.item}
-              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-info" />
@@ -295,7 +299,7 @@ export default function LandingPage() {
             {/* Feature 5 */}
             <motion.div
               variants={featureContainerVariants.item}
-              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-success" />
@@ -311,7 +315,7 @@ export default function LandingPage() {
             {/* Feature 6 */}
             <motion.div
               variants={featureContainerVariants.item}
-              className="bg-base-100 rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-warning" />
@@ -338,7 +342,7 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <motion.section
-        className="py-20 px-4 bg-base-100"
+        className="py-20 px-4"
         variants={ctaVariants}
         initial="hidden"
         whileInView="visible"
@@ -362,7 +366,7 @@ export default function LandingPage() {
       </motion.section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 bg-base-200 border-t border-base-300">
+      <footer className="py-12 px-4 border-t border-base-300/30">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* About */}

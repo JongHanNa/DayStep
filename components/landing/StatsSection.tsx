@@ -78,7 +78,7 @@ export default function StatsSection() {
         variants={tiltVariants}
         initial="rest"
         whileHover="hover"
-        className="flex flex-col items-center justify-center p-8 bg-base-100 rounded-2xl shadow-md border border-base-300 min-w-[200px] flex-shrink-0"
+        className="flex flex-col items-center justify-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-base-300 min-w-[200px] flex-shrink-0"
       >
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <Icon className="w-7 h-7 text-primary" />
@@ -96,7 +96,7 @@ export default function StatsSection() {
   };
 
   return (
-    <section className="py-16 px-4 bg-base-200 overflow-hidden">
+    <section className="py-16 px-4 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* 헤더 */}
         <motion.div

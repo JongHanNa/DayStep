@@ -41,7 +41,7 @@ export default function FAQSection() {
   return (
     <motion.section
       id="faq"
-      className="py-20 px-4 bg-base-200"
+      className="py-20 px-4"
       variants={fadeInVariants}
       initial="hidden"
       whileInView="visible"
@@ -61,11 +61,11 @@ export default function FAQSection() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="bg-base-100 rounded-2xl overflow-hidden"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden"
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-base-200 transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/50 transition-colors"
               >
                 <span className="font-semibold text-base-content pr-4">
                   {faq.question}

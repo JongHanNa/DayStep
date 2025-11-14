@@ -62,7 +62,7 @@ export default function ScrollProgressSection() {
   };
 
   return (
-    <section ref={sectionRef} className="relative py-32 px-4 bg-gradient-to-b from-base-100 via-base-200 to-base-100 overflow-hidden">
+    <section ref={sectionRef} className="relative py-32 px-4 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* 중앙 제목 */}
         <motion.div
@@ -143,7 +143,7 @@ export default function ScrollProgressSection() {
             {['직관적', '체계적', '효율적'].map((keyword, index) => (
               <motion.span
                 key={index}
-                className="px-6 py-2 bg-base-100 rounded-full text-base-content font-medium border border-base-300"
+                className="px-6 py-2 bg-white/80 backdrop-blur-sm rounded-full text-base-content font-medium border border-base-300"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={bidirectionalViewportOptions}
