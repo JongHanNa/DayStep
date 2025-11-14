@@ -9,6 +9,8 @@ import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 
 export default function LandingNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
@@ -19,6 +21,29 @@ export default function LandingNav() {
     damping: 30,
     restDelta: 0.001
   });
+
+  // 스크롤 방향 감지
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // 스크롤이 최상단에 있으면 항상 표시
+      if (currentScrollY < 10) {
+        setIsVisible(true);
+      } else if (currentScrollY < lastScrollY) {
+        // 위로 스크롤 시 표시
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // 아래로 스크롤 시 숨김 (100px 이상일 때만)
+        setIsVisible(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const colors = [
     { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
@@ -57,8 +82,11 @@ export default function LandingNav() {
 
   return (
     <motion.nav
-      className="fixed top-0 left-0 right-0 z-50"
+      className="fixed top-0 left-0 right-0 z-50 transition-transform duration-300"
       style={{ backgroundColor }}
+      initial={{ y: 0 }}
+      animate={{ y: isVisible ? 0 : '-100%' }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -101,7 +129,7 @@ export default function LandingNav() {
                   </>
                 ) : (
                   <Link href="/second-brain/areas" className="btn btn-primary btn-sm rounded-full">
-                    대시보드
+                    무료로 시작하기
                   </Link>
                 )}
               </>
@@ -166,7 +194,7 @@ export default function LandingNav() {
                     className="block w-full btn btn-primary"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    대시보드
+                    무료로 시작하기
                   </Link>
                 )}
               </div>
