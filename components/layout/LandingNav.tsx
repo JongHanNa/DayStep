@@ -5,22 +5,41 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { Menu, X } from 'lucide-react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 
 export default function LandingNav() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
-  // 스크롤 감지
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+  // 페이지 배경색과 동일한 색상 계산
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const colors = [
+    { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
+    { r: 52, g: 79, b: 112 },   // #344F70 - 네이비
+    { r: 66, g: 131, b: 102 },  // #428366 - 세이지
+    { r: 232, g: 228, b: 217 }  // #E8E4D9 - 아이보리
+  ];
+
+  const r = useTransform(smoothProgress, [0, 0.33, 0.66, 1],
+    [colors[0].r, colors[1].r, colors[2].r, colors[3].r]);
+  const g = useTransform(smoothProgress, [0, 0.33, 0.66, 1],
+    [colors[0].g, colors[1].g, colors[2].g, colors[3].g]);
+  const b = useTransform(smoothProgress, [0, 0.33, 0.66, 1],
+    [colors[0].b, colors[1].b, colors[2].b, colors[3].b]);
+
+  const backgroundColor = useTransform(
+    [r, g, b],
+    ([rValue, gValue, bValue]: number[]) => {
+      return `rgb(${Math.round(rValue)}, ${Math.round(gValue)}, ${Math.round(bValue)})`;
+    }
+  );
 
   const navLinks = [
     { label: '기능 소개', href: '/#features' },
@@ -37,10 +56,9 @@ export default function LandingNav() {
   };
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white/10 backdrop-blur-md shadow-lg' : 'bg-transparent'
-      }`}
+    <motion.nav
+      className="fixed top-0 left-0 right-0 z-50"
+      style={{ backgroundColor }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -106,7 +124,10 @@ export default function LandingNav() {
 
       {/* 모바일 메뉴 */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white/10 backdrop-blur-md border-t border-white/20">
+        <motion.div
+          className="md:hidden"
+          style={{ backgroundColor }}
+        >
           <div className="px-4 py-4 space-y-4">
             {navLinks.map((link) => (
               <Link
@@ -119,7 +140,7 @@ export default function LandingNav() {
               </Link>
             ))}
             {!loading && (
-              <div className="pt-4 border-t border-white/20 space-y-2">
+              <div className="pt-4 space-y-2">
                 {!isAuthenticated ? (
                   <>
                     <Link
@@ -151,8 +172,8 @@ export default function LandingNav() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
-    </nav>
+    </motion.nav>
   );
 }
