@@ -14,6 +14,8 @@ const stats = [
     suffix: '+',
     decimals: 0,
     label: '활성 사용자',
+    iconBgColor: 'bg-blue-500/20',
+    iconColor: 'text-blue-400',
   },
   {
     icon: CheckCircle,
@@ -21,6 +23,8 @@ const stats = [
     suffix: '+',
     decimals: 0,
     label: '완료된 할일',
+    iconBgColor: 'bg-green-500/20',
+    iconColor: 'text-green-400',
   },
   {
     icon: Star,
@@ -28,6 +32,8 @@ const stats = [
     suffix: '',
     decimals: 1,
     label: '평균 평점',
+    iconBgColor: 'bg-yellow-500/20',
+    iconColor: 'text-yellow-400',
   },
   {
     icon: Calendar,
@@ -35,6 +41,8 @@ const stats = [
     suffix: '+',
     decimals: 0,
     label: '생성된 일정',
+    iconBgColor: 'bg-orange-500/20',
+    iconColor: 'text-orange-400',
   },
 ];
 
@@ -59,7 +67,7 @@ function CountUpNumber({ value, decimals, suffix }: { value: number; decimals: n
   }, [isInView, count, value]);
 
   return (
-    <motion.div ref={ref} className="text-3xl font-bold text-primary mb-2">
+    <motion.div ref={ref} className="text-3xl font-bold text-white mb-2">
       {rounded}
     </motion.div>
   );
@@ -80,15 +88,15 @@ export default function StatsSection() {
         whileHover="hover"
         className="flex flex-col items-center justify-center p-8 bg-transparent rounded-2xl min-w-[200px] flex-shrink-0"
       >
-        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <Icon className="w-7 h-7 text-primary" />
+        <div className={`w-24 h-24 ${stat.iconBgColor} rounded-full flex items-center justify-center mb-4`}>
+          <Icon className={`w-12 h-12 ${stat.iconColor}`} />
         </div>
         <CountUpNumber
           value={stat.value}
           decimals={stat.decimals}
           suffix={stat.suffix}
         />
-        <p className="text-sm text-base-content/70 text-center font-medium">
+        <p className="text-lg text-white/90 text-center font-medium">
           {stat.label}
         </p>
       </motion.div>
