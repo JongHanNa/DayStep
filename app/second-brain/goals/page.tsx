@@ -5,7 +5,7 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { Plus, Pencil, Tag, Palette, Activity, FileText, Layers, Calendar, Clock, Target, X } from 'lucide-react';
+import { Plus, Pencil, Tag, Palette, Activity, FileText, Layers, Calendar, Target, X } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateGoalInput, Goal, Project } from '@/types/second-brain';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
@@ -25,7 +25,7 @@ export default function GoalsPage() {
   const { projects, fetchProjects, createProject, updateProject, deleteProject } = useProjectStore();
 
   // 편집 관련 state
-  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string; timeframe?: 'quarter' | 'year' | '5_years' }) | null>(null);
+  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
@@ -580,7 +580,7 @@ export default function GoalsPage() {
                       {/* 섹션 제목 */}
                       <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                         <Layers className="h-5 w-5" style={{ color: editingGoal.color }} />
-                        영역/자원 (선택)
+                        영역/자원
                       </label>
 
                       {/* 셀렉트 박스 */}
@@ -614,7 +614,7 @@ export default function GoalsPage() {
                       {/* 섹션 제목 */}
                       <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                         <Calendar className="h-5 w-5" style={{ color: editingGoal.color }} />
-                        시작일/종료일 (선택)
+                        시작일/종료일
                       </label>
 
                       {/* 날짜 입력 그리드 */}
@@ -647,34 +647,12 @@ export default function GoalsPage() {
                       </div>
                     </div>
 
-                    {/* 기간 */}
-                    <div className="my-4">
-                      {/* 섹션 제목 */}
-                      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                        <Clock className="h-5 w-5" style={{ color: editingGoal.color }} />
-                        기간
-                      </label>
-
-                      {/* 셀렉트 박스 */}
-                      <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                        <select
-                          value={editingGoal.timeframe}
-                          onChange={(e) => setEditingGoal({ ...editingGoal, timeframe: e.target.value as 'quarter' | 'year' | '5_years' })}
-                          className="select select-bordered w-full"
-                        >
-                          <option value="quarter">분기 (3개월)</option>
-                          <option value="year">연간 (1년)</option>
-                          <option value="5_years">장기 (5년)</option>
-                        </select>
-                      </div>
-                    </div>
-
                     {/* 연간목표/분기목표 */}
                     <div className="my-4">
                       {/* 섹션 제목 */}
                       <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                         <Target className="h-5 w-5" style={{ color: editingGoal.color }} />
-                        연간목표/분기목표 (선택)
+                        연간목표/분기목표
                       </label>
 
                       {/* 입력 그리드 */}
