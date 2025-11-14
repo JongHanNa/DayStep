@@ -117,7 +117,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="text-6xl sm:text-7xl font-semibold text-base-content flex flex-col items-center">
+            <div className="text-6xl sm:text-7xl font-semibold text-white flex flex-col items-center">
               <span className="mb-2">하루를 체계적으로 관리하는</span>
               <div className="relative min-h-[6rem] sm:min-h-[7.5rem] w-full flex items-center justify-center overflow-hidden">
                 <AnimatePresence mode="wait">
@@ -138,7 +138,7 @@ export default function LandingPage() {
 
           {/* Description */}
           <motion.p
-            className="text-lg sm:text-xl text-base-content/70 max-w-2xl mx-auto leading-relaxed"
+            className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -170,7 +170,7 @@ export default function LandingPage() {
             </button>
           </motion.div>
           <motion.p
-            className="text-sm text-base-content/50"
+            className="text-sm text-white/70"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
@@ -187,15 +187,15 @@ export default function LandingPage() {
           >
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">간편</div>
-              <p className="text-sm text-base-content/60">직관적인 인터페이스</p>
+              <p className="text-sm text-white/80">직관적인 인터페이스</p>
             </div>
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">체계적</div>
-              <p className="text-sm text-base-content/60">Second Brain 시스템</p>
+              <p className="text-sm text-white/80">Second Brain 시스템</p>
             </div>
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">효율적</div>
-              <p className="text-sm text-base-content/60">타임라인 뷰</p>
+              <p className="text-sm text-white/80">타임라인 뷰</p>
             </div>
           </motion.div>
         </div>
@@ -217,10 +217,10 @@ export default function LandingPage() {
             viewport={bidirectionalViewportOptions}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-4xl font-bold text-base-content mb-4">
+            <h2 className="text-4xl font-bold text-white mb-4">
               주요 기능
             </h2>
-            <p className="text-lg text-base-content/70">
+            <p className="text-lg text-white/90">
               생산성을 높이는 강력한 도구들
             </p>
           </motion.div>
@@ -349,10 +349,10 @@ export default function LandingPage() {
         viewport={bidirectionalViewportOptions}
       >
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h2 className="text-4xl font-bold text-base-content">
+          <h2 className="text-4xl font-bold text-white">
             지금 바로 시작하세요
           </h2>
-          <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+          <p className="text-lg text-white/90 max-w-2xl mx-auto">
             무료로 시작하고, 생산성을 높이는 첫 걸음을 내딛으세요.
           </p>
           <button
@@ -371,23 +371,23 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* About */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-base-content">DayStep</h3>
-              <p className="text-sm text-base-content/60">
+              <h3 className="text-lg font-semibold text-white">DayStep</h3>
+              <p className="text-sm text-white/80">
                 하루를 체계적으로 관리하는 생산성 앱
               </p>
             </div>
 
             {/* Links */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-base-content">링크</h3>
-              <ul className="space-y-2 text-sm text-base-content/60">
+              <h3 className="text-lg font-semibold text-white">링크</h3>
+              <ul className="space-y-2 text-sm text-white/80">
                 <li>
-                  <a href="/terms" className="hover:text-base-content transition-colors">
+                  <a href="/terms" className="hover:text-white transition-colors">
                     이용약관
                   </a>
                 </li>
                 <li>
-                  <a href="/privacy" className="hover:text-base-content transition-colors">
+                  <a href="/privacy" className="hover:text-white transition-colors">
                     개인정보처리방침
                   </a>
                 </li>
@@ -396,14 +396,14 @@ export default function LandingPage() {
 
             {/* Contact */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-base-content">문의</h3>
-              <p className="text-sm text-base-content/60">
+              <h3 className="text-lg font-semibold text-white">문의</h3>
+              <p className="text-sm text-white/80">
                 support@daystep.app
               </p>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-base-300 text-center text-sm text-base-content/60">
+          <div className="pt-8 border-t border-base-300 text-center text-sm text-white/80">
             © 2024 DayStep. All rights reserved.
           </div>
         </div>

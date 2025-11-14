@@ -72,10 +72,10 @@ export default function ScrollProgressSection() {
           viewport={bidirectionalViewportOptions}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-4xl sm:text-5xl font-bold text-base-content mb-6">
+          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
             모든 기능이 하나로
           </h2>
-          <p className="text-xl text-base-content/70 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 max-w-2xl mx-auto">
             DayStep은 생산성 향상에 필요한 모든 도구를 하나의 앱에 담았습니다
           </p>
         </motion.div>
@@ -134,7 +134,7 @@ export default function ScrollProgressSection() {
           viewport={bidirectionalViewportOptions}
           transition={{ duration: 0.8, delay: 0.8 }}
         >
-          <p className="text-lg text-base-content/80 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg text-white/90 max-w-3xl mx-auto leading-relaxed">
             <strong className="text-primary">타임라인 뷰</strong>로 하루를 시각화하고,{' '}
             <strong className="text-accent">Second Brain</strong>으로 생각을 정리하며,{' '}
             <strong className="text-secondary">목표 관리</strong>로 꿈을 실현하세요.

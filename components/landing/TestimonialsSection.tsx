@@ -65,10 +65,10 @@ export default function TestimonialsSection() {
       <div className="max-w-4xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-base-content mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             사용자 후기
           </h2>
-          <p className="text-lg text-base-content/70">
+          <p className="text-lg text-white/90">
             실제 사용자들의 생생한 이야기
           </p>
         </div>

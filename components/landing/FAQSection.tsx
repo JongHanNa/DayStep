@@ -49,10 +49,10 @@ export default function FAQSection() {
     >
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-base-content mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             자주 묻는 질문
           </h2>
-          <p className="text-lg text-base-content/70">
+          <p className="text-lg text-white/90">
             DayStep에 대해 궁금한 점이 있으신가요?
           </p>
         </div>

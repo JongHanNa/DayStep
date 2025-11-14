@@ -25,10 +25,10 @@ export default function SystemSection() {
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-base-content mb-4">
+          <h2 className="text-4xl font-bold text-white mb-4">
             Second Brain 시스템
           </h2>
-          <p className="text-lg text-base-content/70 max-w-3xl mx-auto">
+          <p className="text-lg text-white/90 max-w-3xl mx-auto">
             GTD + PARA 방법론 기반의 체계적인 생산성 시스템으로
             <br className="hidden sm:block" />
             생각을 정리하고 목표를 달성하세요
@@ -38,10 +38,10 @@ export default function SystemSection() {
         {/* GTD Process */}
         <div className="mb-16">
           <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold text-base-content mb-2">
+            <h3 className="text-2xl font-bold text-white mb-2">
               GTD (Getting Things Done)
             </h3>
-            <p className="text-base-content/70">
+            <p className="text-white/90">
               생각을 비우고 명확하게 실행하는 5단계 프로세스
             </p>
           </div>
@@ -118,10 +118,10 @@ export default function SystemSection() {
         {/* PARA System */}
         <div className="mb-16">
           <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold text-base-content mb-2">
+            <h3 className="text-2xl font-bold text-white mb-2">
               PARA 정보 분류 체계
             </h3>
-            <p className="text-base-content/70">
+            <p className="text-white/90">
               목표와 정보를 체계적으로 정리하는 4가지 영역
             </p>
           </div>
@@ -180,10 +180,10 @@ export default function SystemSection() {
         {/* ADHD Friendly Design */}
         <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl p-8 md:p-12">
           <div className="text-center mb-10">
-            <h3 className="text-2xl font-bold text-base-content mb-2">
+            <h3 className="text-2xl font-bold text-white mb-2">
               ADHD 친화적 설계
             </h3>
-            <p className="text-base-content/70">
+            <p className="text-white/90">
               집중력과 생산성을 높이는 특별한 설계
             </p>
           </div>
@@ -260,10 +260,10 @@ export default function SystemSection() {
           {/* GTD Daily */}
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 border-l-4 border-primary">
             <div className="flex items-center gap-3 mb-4">
-              <h4 className="text-xl font-bold text-base-content">GTD 루틴</h4>
+              <h4 className="text-xl font-bold text-white">GTD 루틴</h4>
               <span className="badge badge-primary badge-sm">매일 반복</span>
             </div>
-            <p className="text-sm text-base-content/70 mb-6">
+            <p className="text-sm text-white/90 mb-6">
               생각을 비우고 명확하게 실행하는 일상 워크플로우
             </p>
             <div className="space-y-3">
@@ -289,10 +289,10 @@ export default function SystemSection() {
           {/* PARA Long-term */}
           <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-2xl p-8 border-l-4 border-secondary">
             <div className="flex items-center gap-3 mb-4">
-              <h4 className="text-xl font-bold text-base-content">PARA 생산성</h4>
+              <h4 className="text-xl font-bold text-white">PARA 생산성</h4>
               <span className="badge badge-secondary badge-sm">장기 관리</span>
             </div>
-            <p className="text-sm text-base-content/70 mb-6">
+            <p className="text-sm text-white/90 mb-6">
               목표와 정보를 체계적으로 정리하는 생산성 도구
             </p>
             <div className="space-y-3">
