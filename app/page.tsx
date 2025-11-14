@@ -113,12 +113,9 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h1 className="text-6xl sm:text-7xl font-bold text-primary">
-              DayStep
-            </h1>
-            <div className="text-2xl sm:text-3xl font-semibold text-base-content flex flex-col items-center">
+            <div className="text-6xl sm:text-7xl font-semibold text-base-content flex flex-col items-center">
               <span className="mb-2">하루를 체계적으로 관리하는</span>
-              <div className="relative min-h-[4.5rem] w-full flex items-center justify-center overflow-hidden">
+              <div className="relative min-h-[6rem] sm:min-h-[7.5rem] w-full flex items-center justify-center overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={currentFeatureIndex}
@@ -126,7 +123,7 @@ export default function LandingPage() {
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="text-primary"
+                    className="text-primary text-6xl sm:text-7xl"
                   >
                     {features[currentFeatureIndex]}
                   </motion.span>
@@ -155,14 +152,14 @@ export default function LandingPage() {
           >
             <button
               onClick={handleGetStarted}
-              className="btn btn-primary btn-lg gap-2 px-8 w-full sm:w-auto"
+              className="btn btn-primary btn-lg gap-2 px-8 w-full sm:w-auto rounded-full"
             >
               데스크톱에서 시작하기
               <ArrowRight className="w-5 h-5" />
             </button>
             <button
               onClick={handleMobileDownload}
-              className="btn btn-soft btn-lg gap-2 px-8 w-full sm:w-auto"
+              className="btn btn-soft btn-lg gap-2 px-8 w-full sm:w-auto rounded-full"
             >
               모바일 앱 다운로드
               <Smartphone className="w-5 h-5" />
@@ -356,7 +353,7 @@ export default function LandingPage() {
           </p>
           <button
             onClick={handleGetStarted}
-            className="btn btn-primary btn-lg gap-2 px-8"
+            className="btn btn-primary btn-lg gap-2 px-8 rounded-full"
           >
             시작하기
             <ArrowRight className="w-5 h-5" />

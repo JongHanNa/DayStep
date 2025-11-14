@@ -76,13 +76,13 @@ export default function LandingNav() {
                     </Link>
                     <button
                       onClick={handleGetStarted}
-                      className="btn btn-primary btn-sm"
+                      className="btn btn-primary btn-sm rounded-full"
                     >
                       시작하기
                     </button>
                   </>
                 ) : (
-                  <Link href="/second-brain/areas" className="btn btn-primary btn-sm">
+                  <Link href="/second-brain/areas" className="btn btn-primary btn-sm rounded-full">
                     대시보드
                   </Link>
                 )}
