@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import React, { ReactNode, useRef, useState } from 'react';
+import { motion, useAnimationControls } from 'framer-motion';
+import React, { ReactNode, useRef, useState, useEffect } from 'react';
 
 interface InfiniteSliderProps {
   /**
@@ -63,6 +63,7 @@ export default function InfiniteSlider({
 }: InfiniteSliderProps) {
   const [isHovered, setIsHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimationControls();
 
   // 무한 스크롤을 위해 개별 항목 복제
   const childrenArray = React.Children.toArray(children);
@@ -70,6 +71,23 @@ export default function InfiniteSlider({
 
   // 슬라이더 너비 계산 (복제된 항목들의 절반)
   const targetX = direction === 'left' ? '-50%' : '50%';
+
+  // 호버 상태 변경 시 애니메이션 제어
+  useEffect(() => {
+    if (isHovered) {
+      controls.stop(); // 현재 위치에서 즉시 정지
+    } else {
+      controls.start({
+        x: targetX,
+        transition: {
+          repeat: Infinity,
+          repeatType: 'loop' as const,
+          duration,
+          ease: 'linear' as const,
+        },
+      });
+    }
+  }, [isHovered, controls, targetX, duration]);
 
   return (
     <div
@@ -81,19 +99,7 @@ export default function InfiniteSlider({
       <motion.div
         className={`flex ${gap}`}
         initial={{ x: 0 }}
-        animate={
-          isHovered
-            ? undefined // 호버 시 현재 위치에서 정지
-            : {
-                x: targetX,
-                transition: {
-                  repeat: Infinity,
-                  repeatType: 'loop' as const,
-                  duration,
-                  ease: 'linear' as const,
-                },
-              }
-        }
+        animate={controls}
         style={{
           width: 'max-content',
         }}
