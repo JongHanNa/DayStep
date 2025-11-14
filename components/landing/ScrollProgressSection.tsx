@@ -1,9 +1,94 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { Calendar, Brain, Target, CheckCircle2, Sparkles, Clock } from 'lucide-react';
+import { motion, useScroll, useTransform, MotionValue } from 'framer-motion';
+import { Calendar, Brain, Target, CheckCircle2, Sparkles, Clock, LucideIcon } from 'lucide-react';
 import { getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
 import { useRef } from 'react';
+
+// 이미지 태그 타입 정의
+interface FeatureTag {
+  icon: LucideIcon;
+  label: string;
+  color: string;
+}
+
+// FeatureTag 컴포넌트 Props 타입
+interface FeatureTagProps {
+  tag: FeatureTag;
+  index: number;
+  scrollYProgress: MotionValue<number>;
+  totalTags: number;
+}
+
+// 2행 3열 그리드 위치 계산 (각 태그의 최종 위치)
+const getGridPosition = (index: number) => {
+  const cols = 3;
+  const row = Math.floor(index / cols);
+  const col = index % cols;
+
+  // 그리드 간격
+  const gapX = 280; // 카드 너비 + 간격
+  const gapY = 100; // 행 간격
+
+  // 중앙 정렬을 위한 오프셋
+  const offsetX = -((cols - 1) * gapX) / 2;
+  const offsetY = -gapY / 2;
+
+  return {
+    x: col * gapX + offsetX,
+    y: row * gapY + offsetY,
+  };
+};
+
+// 원형 경로에서 출발 위치 계산
+const getCircularStartPosition = (index: number, total: number) => {
+  const angle = (360 / total) * index;
+  const radius = 300;
+
+  return {
+    x: Math.cos((angle * Math.PI) / 180) * radius,
+    y: Math.sin((angle * Math.PI) / 180) * radius,
+    rotate: angle,
+  };
+};
+
+/**
+ * 개별 Feature 태그 컴포넌트
+ * React Hooks 규칙 준수를 위해 컴포넌트 최상위에서 useTransform 호출
+ */
+function FeatureTagItem({ tag, index, scrollYProgress, totalTags }: FeatureTagProps) {
+  const Icon = tag.icon;
+  const startPos = getCircularStartPosition(index, totalTags);
+  const endPos = getGridPosition(index);
+
+  // ✅ 컴포넌트 최상위 레벨에서 Hook 호출
+  // 스크롤 진행률 0~1을 각 애니메이션 값으로 변환
+  // 0.2~0.6: 원형 → 그리드 (하단 스크롤)
+  // 0.6~0.2: 그리드 → 원형 (상단 스크롤, 자동 역재생)
+  const x = useTransform(scrollYProgress, [0.2, 0.6], [startPos.x, endPos.x]);
+  const y = useTransform(scrollYProgress, [0.2, 0.6], [startPos.y, endPos.y]);
+  const opacity = useTransform(scrollYProgress, [0.15, 0.3, 0.7, 0.85], [0, 1, 1, 0]);
+  const rotate = useTransform(scrollYProgress, [0.2, 0.6], [startPos.rotate, 0]);
+  const scale = useTransform(scrollYProgress, [0.2, 0.6], [0.5, 1]);
+
+  return (
+    <motion.div
+      className="absolute"
+      style={{
+        x,
+        y,
+        opacity,
+        rotate,
+        scale,
+      }}
+    >
+      <div className={`${tag.color} text-white rounded-2xl px-6 py-4 shadow-xl backdrop-blur-sm border border-white/20 flex items-center gap-3 hover:scale-110 transition-transform cursor-pointer whitespace-nowrap`}>
+        <Icon className="w-6 h-6" />
+        <span className="font-semibold text-lg">{tag.label}</span>
+      </div>
+    </motion.div>
+  );
+}
 
 /**
  * 스크롤 진행률 기반 이미지 태그 애니메이션 섹션
@@ -20,7 +105,7 @@ export default function ScrollProgressSection() {
   });
 
   // 이미지 태그 데이터
-  const featureTags = [
+  const featureTags: FeatureTag[] = [
     { icon: Calendar, label: '타임라인', color: 'bg-primary' },
     { icon: Brain, label: 'Second Brain', color: 'bg-accent' },
     { icon: Target, label: '목표', color: 'bg-secondary' },
@@ -28,38 +113,6 @@ export default function ScrollProgressSection() {
     { icon: Sparkles, label: 'AI', color: 'bg-success' },
     { icon: Clock, label: '루틴', color: 'bg-warning' },
   ];
-
-  // 2행 3열 그리드 위치 계산 (각 태그의 최종 위치)
-  const getGridPosition = (index: number) => {
-    const cols = 3;
-    const row = Math.floor(index / cols);
-    const col = index % cols;
-
-    // 그리드 간격
-    const gapX = 280; // 카드 너비 + 간격
-    const gapY = 100; // 행 간격
-
-    // 중앙 정렬을 위한 오프셋
-    const offsetX = -((cols - 1) * gapX) / 2;
-    const offsetY = -gapY / 2;
-
-    return {
-      x: col * gapX + offsetX,
-      y: row * gapY + offsetY,
-    };
-  };
-
-  // 원형 경로에서 출발 위치 계산
-  const getCircularStartPosition = (index: number, total: number) => {
-    const angle = (360 / total) * index;
-    const radius = 300;
-
-    return {
-      x: Math.cos((angle * Math.PI) / 180) * radius,
-      y: Math.sin((angle * Math.PI) / 180) * radius,
-      rotate: angle,
-    };
-  };
 
   return (
     <section ref={sectionRef} className="relative py-32 px-4 overflow-hidden">
@@ -82,39 +135,15 @@ export default function ScrollProgressSection() {
 
         {/* 이미지 태그 애니메이션 - 스크롤 진행률 기반 */}
         <div className="relative min-h-[400px] flex items-center justify-center">
-          {featureTags.map((tag, index) => {
-            const Icon = tag.icon;
-            const startPos = getCircularStartPosition(index, featureTags.length);
-            const endPos = getGridPosition(index);
-
-            // 스크롤 진행률 0~1을 각 애니메이션 값으로 변환
-            // 0.2~0.6: 원형 → 그리드 (하단 스크롤)
-            // 0.6~0.2: 그리드 → 원형 (상단 스크롤, 자동 역재생)
-            const x = useTransform(scrollYProgress, [0.2, 0.6], [startPos.x, endPos.x]);
-            const y = useTransform(scrollYProgress, [0.2, 0.6], [startPos.y, endPos.y]);
-            const opacity = useTransform(scrollYProgress, [0.15, 0.3, 0.7, 0.85], [0, 1, 1, 0]);
-            const rotate = useTransform(scrollYProgress, [0.2, 0.6], [startPos.rotate, 0]);
-            const scale = useTransform(scrollYProgress, [0.2, 0.6], [0.5, 1]);
-
-            return (
-              <motion.div
-                key={index}
-                className="absolute"
-                style={{
-                  x,
-                  y,
-                  opacity,
-                  rotate,
-                  scale,
-                }}
-              >
-                <div className={`${tag.color} text-white rounded-2xl px-6 py-4 shadow-xl backdrop-blur-sm border border-white/20 flex items-center gap-3 hover:scale-110 transition-transform cursor-pointer whitespace-nowrap`}>
-                  <Icon className="w-6 h-6" />
-                  <span className="font-semibold text-lg">{tag.label}</span>
-                </div>
-              </motion.div>
-            );
-          })}
+          {featureTags.map((tag, index) => (
+            <FeatureTagItem
+              key={index}
+              tag={tag}
+              index={index}
+              scrollYProgress={scrollYProgress}
+              totalTags={featureTags.length}
+            />
+          ))}
 
           {/* 중앙 원형 배경 */}
           <motion.div
