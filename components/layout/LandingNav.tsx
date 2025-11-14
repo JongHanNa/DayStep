@@ -39,14 +39,14 @@ export default function LandingNav() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-base-100 shadow-md' : 'bg-transparent'
+        isScrolled ? 'bg-white/10 backdrop-blur-md shadow-lg' : 'bg-transparent'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* 로고 */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-primary">DayStep</span>
+            <span className="text-2xl font-bold text-white">DayStep</span>
           </Link>
 
           {/* 데스크톱 메뉴 */}
@@ -55,7 +55,7 @@ export default function LandingNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-base-content/70 hover:text-base-content transition-colors"
+                className="text-white/90 hover:text-white transition-colors"
               >
                 {link.label}
               </Link>
@@ -70,7 +70,7 @@ export default function LandingNav() {
                   <>
                     <Link
                       href="/login"
-                      className="text-base-content/70 hover:text-base-content transition-colors"
+                      className="text-white/90 hover:text-white transition-colors"
                     >
                       로그인
                     </Link>
@@ -96,9 +96,9 @@ export default function LandingNav() {
             className="md:hidden p-2"
           >
             {isMobileMenuOpen ? (
-              <X className="w-6 h-6 text-base-content" />
+              <X className="w-6 h-6 text-white" />
             ) : (
-              <Menu className="w-6 h-6 text-base-content" />
+              <Menu className="w-6 h-6 text-white" />
             )}
           </button>
         </div>
@@ -106,25 +106,25 @@ export default function LandingNav() {
 
       {/* 모바일 메뉴 */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-base-100 border-t border-base-300">
+        <div className="md:hidden bg-white/10 backdrop-blur-md border-t border-white/20">
           <div className="px-4 py-4 space-y-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block text-base-content/70 hover:text-base-content transition-colors"
+                className="block text-white/90 hover:text-white transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
             {!loading && (
-              <div className="pt-4 border-t border-base-300 space-y-2">
+              <div className="pt-4 border-t border-white/20 space-y-2">
                 {!isAuthenticated ? (
                   <>
                     <Link
                       href="/login"
-                      className="block w-full btn btn-ghost"
+                      className="block w-full btn btn-ghost text-white/90 hover:text-white"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       로그인
