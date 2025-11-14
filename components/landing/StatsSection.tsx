@@ -114,10 +114,10 @@ export default function StatsSection() {
           viewport={bidirectionalViewportOptions}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">
             많은 사람들이 선택한 플래너
           </h2>
-          <p className="text-lg text-white/90">
+          <p className="text-xl sm:text-2xl text-white/90">
             DayStep과 함께 생산성을 높이고 있습니다
           </p>
         </motion.div>
