@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ReactNode, useRef, useState } from 'react';
+import React, { ReactNode, useRef, useState } from 'react';
 
 interface InfiniteSliderProps {
   /**
@@ -35,7 +35,7 @@ interface InfiniteSliderProps {
 
   /**
    * 복제 횟수 (매끄러운 무한 스크롤을 위해 항목을 몇 번 복제할지)
-   * @default 4
+   * @default 6
    */
   duplicateCount?: number;
 }
@@ -59,13 +59,14 @@ export default function InfiniteSlider({
   direction = 'left',
   pauseOnHover = true,
   gap = 'gap-8',
-  duplicateCount = 4,
+  duplicateCount = 6,
 }: InfiniteSliderProps) {
   const [isHovered, setIsHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 무한 스크롤을 위해 항목 복제
-  const items = Array(duplicateCount).fill(children);
+  // 무한 스크롤을 위해 개별 항목 복제
+  const childrenArray = React.Children.toArray(children);
+  const items = Array(duplicateCount).fill(childrenArray).flat();
 
   // 슬라이더 너비 계산 (복제된 항목들의 절반)
   const baseX = direction === 'left' ? 0 : 0;
@@ -83,16 +84,14 @@ export default function InfiniteSlider({
         initial={{ x: baseX }}
         animate={
           isHovered
-            ? {} // 호버 시 현재 위치 유지 (애니메이션 정지)
+            ? { x: undefined } // 호버 시 현재 위치에서 일시정지
             : {
-                x: targetX,
+                x: targetX, // 무한 루프: 계속 왼쪽으로 이동
                 transition: {
-                  x: {
-                    repeat: Infinity,
-                    repeatType: 'loop' as const,
-                    duration,
-                    ease: 'linear' as const,
-                  },
+                  repeat: Infinity,
+                  repeatType: 'loop' as const,
+                  duration,
+                  ease: 'linear' as const,
                 },
               }
         }
@@ -101,15 +100,15 @@ export default function InfiniteSlider({
         }}
       >
         {items.map((item, index) => (
-          <div key={index} className="flex-shrink-0">
+          <React.Fragment key={index}>
             {item}
-          </div>
+          </React.Fragment>
         ))}
       </motion.div>
 
       {/* 페이드 그라디언트 (양쪽 끝) */}
-      <div className="absolute top-0 left-0 bottom-0 w-20 bg-gradient-to-r from-base-100 to-transparent pointer-events-none z-10" />
-      <div className="absolute top-0 right-0 bottom-0 w-20 bg-gradient-to-l from-base-100 to-transparent pointer-events-none z-10" />
+      <div className="absolute top-0 left-0 bottom-0 w-20 bg-gradient-to-r from-base-200 to-transparent pointer-events-none z-10" />
+      <div className="absolute top-0 right-0 bottom-0 w-20 bg-gradient-to-l from-base-200 to-transparent pointer-events-none z-10" />
     </div>
   );
 }

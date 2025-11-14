@@ -78,7 +78,7 @@ export default function StatsSection() {
         variants={tiltVariants}
         initial="rest"
         whileHover="hover"
-        className="flex flex-col items-center justify-center p-8 bg-base-100 rounded-2xl shadow-md border border-base-300 min-w-[200px]"
+        className="flex flex-col items-center justify-center p-8 bg-base-100 rounded-2xl shadow-md border border-base-300 min-w-[200px] flex-shrink-0"
       >
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <Icon className="w-7 h-7 text-primary" />
@@ -115,7 +115,7 @@ export default function StatsSection() {
         </motion.div>
 
         {/* 무한 스크롤 Stats */}
-        <InfiniteSlider duration={25} direction="left" gap="gap-6">
+        <InfiniteSlider duration={30} direction="left" gap="gap-6">
           {stats.map((stat, index) => (
             <StatCard key={index} stat={stat} index={index} />
           ))}
