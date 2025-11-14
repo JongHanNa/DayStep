@@ -124,6 +124,13 @@ export default function GoalsPage() {
     if (!appUser?.id) return;
 
     try {
+      console.log('🔍 저장 데이터 확인:', {
+        year_goal: goalData.year_goal,
+        quarter_goal: goalData.quarter_goal,
+        year_goal_type: typeof goalData.year_goal,
+        quarter_goal_type: typeof goalData.quarter_goal
+      });
+
       if ((goalData as any).isNew) {
         // 새 목표 생성
         const createData: CreateGoalInput = {
@@ -135,13 +142,14 @@ export default function GoalsPage() {
           resource_id,
           start_date: goalData.start_date || undefined,
           end_date: goalData.end_date || undefined,
-          year_goal: goalData.year_goal || undefined,
-          quarter_goal: goalData.quarter_goal || undefined,
+          year_goal: goalData.year_goal ?? null,
+          quarter_goal: goalData.quarter_goal ?? null,
         };
+        console.log('📝 생성 데이터:', createData);
         await createGoal(appUser.id, createData);
       } else {
         // 기존 목표 수정
-        await updateGoal(appUser.id, goalData.id!, {
+        const updateData = {
           title: goalData.title!,
           icon: goalData.icon!,
           color: goalData.color!,
@@ -150,9 +158,11 @@ export default function GoalsPage() {
           resource_id,
           start_date: goalData.start_date || undefined,
           end_date: goalData.end_date || undefined,
-          year_goal: goalData.year_goal || undefined,
-          quarter_goal: goalData.quarter_goal || undefined,
-        });
+          year_goal: goalData.year_goal ?? null,
+          quarter_goal: goalData.quarter_goal ?? null,
+        };
+        console.log('✏️ 수정 데이터:', updateData);
+        await updateGoal(appUser.id, goalData.id!, updateData);
       }
 
       setEditDialogOpen(false);

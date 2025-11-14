@@ -128,8 +128,8 @@ export interface Goal {
   end_date?: string; // ISO date string (종료일)
 
   // 기간
-  year_goal?: number; // 연간목표 (2025, 2026, 2027...)
-  quarter_goal?: 'Q1' | 'Q2' | 'Q3' | 'Q4'; // 분기목표 (Q1~Q4)
+  year_goal?: number | null; // 연간목표 (2025, 2026, 2027...)
+  quarter_goal?: 'Q1' | 'Q2' | 'Q3' | 'Q4' | null; // 분기목표 (Q1~Q4)
 
   // 메타데이터
   icon?: string;

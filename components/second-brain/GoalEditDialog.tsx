@@ -307,10 +307,11 @@ export default function GoalEditDialog({
                             <span className="label-text">연간목표</span>
                           </label>
                           <select
-                            value={editingGoal.year_goal || new Date().getFullYear()}
-                            onChange={(e) => onGoalChange({ ...editingGoal, year_goal: parseInt(e.target.value) })}
+                            value={editingGoal.year_goal ?? ''}
+                            onChange={(e) => onGoalChange({ ...editingGoal, year_goal: e.target.value ? parseInt(e.target.value) : undefined })}
                             className="select select-bordered w-full"
                           >
+                            <option value="">선택 안 함</option>
                             {Array.from({ length: 6 }, (_, i) => {
                               const year = new Date().getFullYear() + i;
                               return (
@@ -327,10 +328,11 @@ export default function GoalEditDialog({
                             <span className="label-text">분기목표</span>
                           </label>
                           <select
-                            value={editingGoal.quarter_goal || 'Q1'}
-                            onChange={(e) => onGoalChange({ ...editingGoal, quarter_goal: e.target.value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
+                            value={editingGoal.quarter_goal ?? ''}
+                            onChange={(e) => onGoalChange({ ...editingGoal, quarter_goal: e.target.value ? e.target.value as 'Q1' | 'Q2' | 'Q3' | 'Q4' : undefined })}
                             className="select select-bordered w-full"
                           >
+                            <option value="">선택 안 함</option>
                             <option value="Q1">1분기 (1~3월)</option>
                             <option value="Q2">2분기 (4~6월)</option>
                             <option value="Q3">3분기 (7~9월)</option>
