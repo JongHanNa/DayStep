@@ -96,8 +96,8 @@ export default function StatsSection() {
   };
 
   return (
-    <section className="py-16 px-4 overflow-hidden">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-16 overflow-hidden">
+      <div className="w-full">
         {/* 헤더 */}
         <motion.div
           className="text-center mb-12"

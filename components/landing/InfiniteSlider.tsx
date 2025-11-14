@@ -93,6 +93,10 @@ export default function InfiniteSlider({
     <div
       ref={containerRef}
       className="relative w-full overflow-hidden"
+      style={{
+        maskImage: 'linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 12.5%, rgb(0, 0, 0) 87.5%, rgba(0, 0, 0, 0) 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 12.5%, rgb(0, 0, 0) 87.5%, rgba(0, 0, 0, 0) 100%)',
+      }}
       onMouseEnter={() => pauseOnHover && setIsHovered(true)}
       onMouseLeave={() => pauseOnHover && setIsHovered(false)}
     >
@@ -110,10 +114,6 @@ export default function InfiniteSlider({
           </React.Fragment>
         ))}
       </motion.div>
-
-      {/* 페이드 그라디언트 (양쪽 끝) */}
-      <div className="absolute top-0 left-0 bottom-0 w-20 bg-gradient-to-r from-base-200 to-transparent pointer-events-none z-10" />
-      <div className="absolute top-0 right-0 bottom-0 w-20 bg-gradient-to-l from-base-200 to-transparent pointer-events-none z-10" />
     </div>
   );
 }
