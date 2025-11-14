@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Tag, Palette, Activity, Layers, Calendar, Target } from 'lucide-react';
 import type { Goal, AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -102,8 +102,7 @@ export default function GoalEditDialog({
   return (
     <>
       <dialog open className="modal modal-open">
-        <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-          {/* 헤더 (취소-제목-삭제-저장) */}
+        <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
             <button onClick={onCancel} className="btn btn-primary btn-sm rounded-full">
               취소
@@ -129,243 +128,289 @@ export default function GoalEditDialog({
             </div>
           </div>
 
-          {/* 콘텐츠 영역 */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4">
-              {/* 아이콘 및 색상 */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">아이콘 및 색상</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIconBrowserOpen(true)}
-                  className="btn btn-outline w-full justify-start"
-                  style={{
-                    backgroundColor: editingGoal.color + '20',
-                    borderColor: editingGoal.color,
-                  }}
-                >
-                  {(() => {
-                    const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey);
-                    return <IconComponent className="w-6 h-6 mr-2" />;
-                  })()}
-                  <span>변경하기</span>
-                </button>
-              </div>
+              {editingGoal && (
+                <>
+                  {/* 아이콘 및 제목 - 통합 패턴 적용 */}
+                  <div className="my-4">
+                    {/* 섹션 제목 */}
+                    <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                      <Tag className="h-5 w-5" style={{ color: editingGoal.color }} />
+                      목표 아이콘 및 제목
+                    </label>
 
-              {/* 제목 */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">제목</span>
-                </label>
-                <input
-                  type="text"
-                  value={editingGoal.title}
-                  onChange={(e) => onGoalChange({ ...editingGoal, title: e.target.value })}
-                  className="input input-bordered"
-                  placeholder="예: 건강한 생활 습관 형성"
-                />
-              </div>
+                    {/* 아이콘 + 제목 입력 */}
+                    <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                      <div className="flex items-center gap-3">
+                        {/* 아이콘 버튼 */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setIconBrowserOpen(true)}
+                            className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
+                            style={{ backgroundColor: '#f3f4f6' }}
+                            title="아이콘 변경하기"
+                          >
+                            {(() => {
+                              const IconComponent = getUnifiedIcon(editingGoal.icon as UnifiedIconKey);
+                              return <IconComponent
+                                className="group-hover:scale-110 transition-transform"
+                                style={{ color: editingGoal.color }}
+                                size={24}
+                              />;
+                            })()}
+                          </button>
 
-              {/* 설명 - 현재 DB 스키마에 description 필드 없음. 추후 추가 예정 */}
-              {/* <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">설명 (선택)</span>
-                </label>
-                <textarea
-                  value={editingGoal.description || ''}
-                  onChange={(e) => onGoalChange({ ...editingGoal, description: e.target.value })}
-                  className="textarea textarea-bordered"
-                  placeholder="목표에 대한 설명을 입력하세요"
-                  rows={3}
-                />
-              </div> */}
+                          {/* 색상 인디케이터 */}
+                          <div
+                            className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
+                            style={{
+                              backgroundColor: editingGoal.color,
+                              border: '2px solid white'
+                            }}
+                          >
+                            <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
+                          </div>
+                        </div>
 
-              {/* 상태 */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">상태</span>
-                </label>
-                <select
-                  value={editingGoal.status}
-                  onChange={(e) => onGoalChange({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived' })}
-                  className="select select-bordered"
-                >
-                  <option value="not_started">시작 안함</option>
-                  <option value="in_progress">진행중</option>
-                  <option value="completed">완료</option>
-                  <option value="suspended">중단</option>
-                </select>
-              </div>
-
-              {/* 영역/자원 */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text">영역/자원 (선택)</span>
-                </label>
-                <select
-                  value={editingGoal.paraSelection || ''}
-                  onChange={(e) => onGoalChange({ ...editingGoal, paraSelection: e.target.value })}
-                  className="select select-bordered"
-                >
-                  <option value="">선택 안 함</option>
-                  <optgroup label="영역">
-                    {areas.map((area) => (
-                      <option key={area.id} value={`area-${area.id}`}>
-                        {area.icon} {area.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="자원">
-                    {resources.map((resource) => (
-                      <option key={resource.id} value={`resource-${resource.id}`}>
-                        {resource.icon} {resource.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
-
-              {/* 시작일/종료일 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">시작일 (선택)</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={editingGoal.start_date || ''}
-                    onChange={(e) => onGoalChange({ ...editingGoal, start_date: e.target.value })}
-                    className="input input-bordered"
-                  />
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">종료일 (선택)</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={editingGoal.end_date || ''}
-                    onChange={(e) => onGoalChange({ ...editingGoal, end_date: e.target.value })}
-                    className="input input-bordered"
-                  />
-                </div>
-              </div>
-
-              {/* 기간 - DB 스키마에는 year_goal과 quarter_goal로 분리되어 있음 */}
-              {/* timeframe 필드는 제거되고 아래 연간목표/분기목표 선택으로 대체 */}
-
-              {/* 연간목표/분기목표 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">연간목표 (선택)</span>
-                  </label>
-                  <select
-                    value={editingGoal.year_goal || new Date().getFullYear()}
-                    onChange={(e) => onGoalChange({ ...editingGoal, year_goal: parseInt(e.target.value) })}
-                    className="select select-bordered"
-                  >
-                    {Array.from({ length: 6 }, (_, i) => {
-                      const year = new Date().getFullYear() + i;
-                      return (
-                        <option key={year} value={year}>
-                          {year}년
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">분기목표 (선택)</span>
-                  </label>
-                  <select
-                    value={editingGoal.quarter_goal || 'Q1'}
-                    onChange={(e) => onGoalChange({ ...editingGoal, quarter_goal: e.target.value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
-                    className="select select-bordered"
-                  >
-                    <option value="Q1">1분기 (1~3월)</option>
-                    <option value="Q2">2분기 (4~6월)</option>
-                    <option value="Q3">3분기 (7~9월)</option>
-                    <option value="Q4">4분기 (10~12월)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* 프로젝트 영역 */}
-              {!editingGoal.isNew && onAddProject && onEditProject && onDeleteProject && (
-                <div className="card bg-base-200 mb-4">
-                  <div className="card-body">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold">연결된 프로젝트</h2>
-                      <button
-                        onClick={onAddProject}
-                        className="btn btn-ghost btn-sm"
-                        disabled={isCreatingProject}
-                      >
-                        {isCreatingProject ? (
-                          <span className="loading loading-spinner loading-xs" />
-                        ) : (
-                          <Plus className="w-4 h-4" />
-                        )}
-                        {isCreatingProject ? '생성 중...' : '추가'}
-                      </button>
+                        {/* 제목 입력 */}
+                        <input
+                          type="text"
+                          value={editingGoal.title}
+                          onChange={(e) => onGoalChange({ ...editingGoal, title: e.target.value })}
+                          placeholder="목표 제목을 입력하세요"
+                          className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
+                          style={{
+                            fontSize: '20px',
+                            color: '#333333',
+                            borderBottomColor: '#D1D5DB',
+                            outline: 'none',
+                            boxShadow: 'none',
+                            fontWeight: '600',
+                            height: '44px',
+                          }}
+                          required
+                        />
+                      </div>
                     </div>
-
-                    {filteredProjects.length === 0 ? (
-                      <div className="text-center py-8 text-base-content/60">
-                        연결된 프로젝트가 없습니다.
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {filteredProjects.map((project) => {
-                          const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
-                          return (
-                            <div
-                              key={project.id}
-                              onClick={() => onEditProject(project)}
-                              className="flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
-                            >
-                              <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                style={{
-                                  backgroundColor: project.color + '30',
-                                  borderColor: project.color,
-                                  borderWidth: '2px',
-                                }}
-                              >
-                                <ProjectIconComponent className="w-5 h-5" style={{ color: project.color }} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium truncate">{project.title}</div>
-                                <div className="text-sm text-base-content/60">
-                                  {project.status === 'not_started' && '시작 안함'}
-                                  {project.status === 'in_progress' && '진행중'}
-                                  {project.status === 'paused' && '중단'}
-                                  {project.status === 'completed' && '완료'}
-                                </div>
-                              </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteProject(project);
-                                }}
-                                className="btn btn-ghost btn-sm btn-circle flex-shrink-0"
-                                aria-label="프로젝트 제거"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
-                </div>
+
+                  {/* 상태 */}
+                  <div className="my-4">
+                    {/* 섹션 제목 */}
+                    <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                      <Activity className="h-5 w-5" style={{ color: editingGoal.color }} />
+                      상태
+                    </label>
+
+                    {/* 셀렉트 박스 */}
+                    <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                      <select
+                        value={editingGoal.status}
+                        onChange={(e) => onGoalChange({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived' })}
+                        className="select select-bordered w-full"
+                      >
+                        <option value="not_started">시작 안함</option>
+                        <option value="in_progress">진행중</option>
+                        <option value="completed">완료</option>
+                        <option value="suspended">중단</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 영역/자원 */}
+                  <div className="my-4">
+                    {/* 섹션 제목 */}
+                    <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                      <Layers className="h-5 w-5" style={{ color: editingGoal.color }} />
+                      영역/자원
+                    </label>
+
+                    {/* 셀렉트 박스 */}
+                    <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                      <select
+                        value={editingGoal.paraSelection}
+                        onChange={(e) => onGoalChange({ ...editingGoal, paraSelection: e.target.value })}
+                        className="select select-bordered w-full"
+                      >
+                        <option value="">선택 안 함</option>
+                        <optgroup label="영역">
+                          {areas.map((area) => (
+                            <option key={area.id} value={`area-${area.id}`}>
+                              {area.icon} {area.title}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="자원">
+                          {resources.map((resource) => (
+                            <option key={resource.id} value={`resource-${resource.id}`}>
+                              {resource.icon} {resource.title}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 시작일/종료일 */}
+                  <div className="my-4">
+                    {/* 섹션 제목 */}
+                    <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                      <Calendar className="h-5 w-5" style={{ color: editingGoal.color }} />
+                      시작일/종료일
+                    </label>
+
+                    {/* 날짜 입력 그리드 */}
+                    <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">시작일</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={editingGoal.start_date || ''}
+                            onChange={(e) => onGoalChange({ ...editingGoal, start_date: e.target.value })}
+                            className="input input-bordered w-full"
+                          />
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">종료일</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={editingGoal.end_date || ''}
+                            onChange={(e) => onGoalChange({ ...editingGoal, end_date: e.target.value })}
+                            className="input input-bordered w-full"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 연간목표/분기목표 */}
+                  <div className="my-4">
+                    {/* 섹션 제목 */}
+                    <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
+                      <Target className="h-5 w-5" style={{ color: editingGoal.color }} />
+                      연간목표/분기목표
+                    </label>
+
+                    {/* 입력 그리드 */}
+                    <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">연간목표</span>
+                          </label>
+                          <select
+                            value={editingGoal.year_goal || new Date().getFullYear()}
+                            onChange={(e) => onGoalChange({ ...editingGoal, year_goal: parseInt(e.target.value) })}
+                            className="select select-bordered w-full"
+                          >
+                            {Array.from({ length: 6 }, (_, i) => {
+                              const year = new Date().getFullYear() + i;
+                              return (
+                                <option key={year} value={year}>
+                                  {year}년
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label">
+                            <span className="label-text">분기목표</span>
+                          </label>
+                          <select
+                            value={editingGoal.quarter_goal || 'Q1'}
+                            onChange={(e) => onGoalChange({ ...editingGoal, quarter_goal: e.target.value as 'Q1' | 'Q2' | 'Q3' | 'Q4' })}
+                            className="select select-bordered w-full"
+                          >
+                            <option value="Q1">1분기 (1~3월)</option>
+                            <option value="Q2">2분기 (4~6월)</option>
+                            <option value="Q3">3분기 (7~9월)</option>
+                            <option value="Q4">4분기 (10~12월)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 프로젝트 영역 */}
+                  {!editingGoal.isNew && onAddProject && onEditProject && onDeleteProject && (
+                    <div className="card bg-base-200 mb-4">
+                      <div className="card-body">
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-lg font-semibold">연결된 프로젝트</h2>
+                          <button
+                            onClick={onAddProject}
+                            className="btn btn-ghost btn-sm"
+                            disabled={isCreatingProject}
+                          >
+                            {isCreatingProject ? (
+                              <span className="loading loading-spinner loading-xs" />
+                            ) : (
+                              <Plus className="w-4 h-4" />
+                            )}
+                            {isCreatingProject ? '생성 중...' : '추가'}
+                          </button>
+                        </div>
+
+                        {filteredProjects.length === 0 ? (
+                          <div className="text-center py-8 text-base-content/60">
+                            연결된 프로젝트가 없습니다.
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {filteredProjects.map((project) => {
+                              const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
+                              return (
+                                <div
+                                  key={project.id}
+                                  onClick={() => onEditProject(project)}
+                                  className="flex items-start gap-3 p-3 bg-base-100 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <div
+                                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                                    style={{
+                                      backgroundColor: project.color,
+                                    }}
+                                  >
+                                    <ProjectIconComponent className="w-5 h-5 text-white" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium truncate">{project.title}</div>
+                                    <div className="text-sm text-base-content/60">
+                                      {project.status === 'not_started' && '시작 안함'}
+                                      {project.status === 'in_progress' && '진행중'}
+                                      {project.status === 'paused' && '중단'}
+                                      {project.status === 'completed' && '완료'}
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteProject(project);
+                                    }}
+                                    className="btn btn-ghost btn-sm btn-circle flex-shrink-0"
+                                    aria-label="프로젝트 제거"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
