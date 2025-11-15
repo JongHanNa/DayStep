@@ -575,7 +575,7 @@ export default function CalendarPage() {
         <div className="min-h-screen bg-base-100 pb-20">
           {/* 헤더 */}
           <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-            <div className={`max-w-7xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+            <div className={`max-w-7xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
 
               {/* 탭 네비게이션 */}
               <div className="tabs tabs-boxed bg-base-200 p-1">

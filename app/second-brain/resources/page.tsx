@@ -309,7 +309,7 @@ export default function ResourcesPage() {
       <div className="min-h-screen bg-base-200 pb-20">
         {/* 헤더 */}
         <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
-          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
             <p className="text-sm text-base-content/70 mt-1">
               관심 있는 주제와 자료를 관리하세요
             </p>

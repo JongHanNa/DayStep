@@ -440,7 +440,7 @@ export default function PlanPage() {
         <div className="min-h-screen bg-base-100 pb-20">
           {/* 헤더 */}
           <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-            <div className={`mx-auto px-6 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+            <div className={`mx-auto px-6 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
               <p className="text-sm text-base-content/70">
                 날짜가 없는 할일들에게 날짜를 배정하세요
               </p>

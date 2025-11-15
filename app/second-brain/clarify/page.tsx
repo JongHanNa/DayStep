@@ -440,7 +440,7 @@ export default function ClarifyPage() {
       <div className="min-h-screen bg-base-200 pb-20">
         {/* 헤더 */}
         <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
-          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm text-base-content/70">

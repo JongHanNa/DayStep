@@ -453,7 +453,7 @@ export default function GoalCompassPage() {
       <div className="min-h-screen bg-base-200 pb-20">
         {/* 헤더 */}
         <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
-          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
             <p className="text-sm text-base-content/70">
               목표와 프로젝트의 진행 상황을 한눈에 확인하세요
             </p>

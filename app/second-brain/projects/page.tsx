@@ -238,7 +238,7 @@ export default function ProjectsPage() {
       <div className="min-h-screen bg-base-100 pb-20">
         {/* 헤더 */}
         <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
+          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-sm text-base-content/70 mt-1">
