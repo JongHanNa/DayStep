@@ -10,7 +10,7 @@ import { fadeInUpVariants, getBidirectionalViewportOptions, staggerFadeInUpVaria
 
 export default function SystemSection() {
   const fadeInVariants = fadeInUpVariants(80);
-  const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
+  const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.1);
   const staggerVariants = staggerFadeInUpVariants(60, 0.1);
 
   return (
@@ -47,7 +47,7 @@ export default function SystemSection() {
           </div>
 
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-5 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4"
             variants={staggerVariants}
             initial="hidden"
             whileInView="visible"
@@ -126,7 +126,7 @@ export default function SystemSection() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                 <FolderOpen className="w-6 h-6 text-primary" />
@@ -188,7 +188,7 @@ export default function SystemSection() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -256,7 +256,7 @@ export default function SystemSection() {
         </div>
 
         {/* Daily Workflow Preview */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* GTD Daily */}
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 border-l-4 border-primary">
             <div className="flex items-center gap-3 mb-4">
