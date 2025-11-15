@@ -8,6 +8,7 @@ import { generateSEO } from "@/lib/seo";
 import { AuthProvider, AuthState } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import SecondBrainBottomNav from "@/components/layout/SecondBrainBottomNav";
+import TopNavWrapper from "@/components/layout/TopNavWrapper";
 import { openDyslexic } from "@/lib/fonts";
 import { FontProvider } from "@/components/providers/FontProvider";
 // 성능 모니터링 비활성화
@@ -49,6 +50,7 @@ export default function RootLayout({
                   <RealtimeSyncProvider>
                     <ReminderProvider>
                     {/* <Navigation /> */}
+                    <TopNavWrapper />
                     <main
                       className={`scrollbar-hide ${safeAreaBackground} ${darkSafeArea} pb-16`}
                     >

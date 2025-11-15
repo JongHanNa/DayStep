@@ -1,10 +1,11 @@
 import { create } from 'zustand';
+import { NavigationGroupType } from '@/config/navigation';
 
-type GroupType = 'routine' | 'productivity' | 'start' | null;
+type GroupType = NavigationGroupType | null;
 
 interface NavigationStore {
   selectedGroup: GroupType;
-  setSelectedGroup: (group: GroupType) => void;
+  setSelectedGroup: (group: NavigationGroupType) => void;
   clearSelectedGroup: () => void;
 }
 
