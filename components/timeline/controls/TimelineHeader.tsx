@@ -159,9 +159,9 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
   return (
     <>
       {/* 헤더 영역 */}
-      <div className={cn('text-center mb-0 relative px-6', getTailwindClasses().timelineHeader, className)}>
+      <div className={cn('text-center mb-0 relative px-4', getTailwindClasses().timelineHeader, className)}>
         {/* 이전 날짜 버튼 */}
-        <div className="absolute left-6 top-1/2 -translate-y-1/2">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2">
           <Button
             variant="ghost"
             size="sm"
@@ -175,18 +175,18 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
         {/* 중앙 날짜 클릭 영역 - 클릭 영역을 좁게 제한 */}
         <div className="flex flex-col items-center">
           <div
-            className="cursor-pointer select-none touch-manipulation hover:bg-accent/50 rounded-lg px-4 py-2 transition-colors"
+            className="cursor-pointer select-none touch-manipulation hover:bg-accent/50 rounded-lg px-4 transition-colors"
             onClick={openCalendar}
           >
-            <div className="text-xs text-transparent mb-1 text-center">클릭해서 달력 열기</div>
+            <div className="text-xs text-transparent text-center">클릭해서 달력 열기</div>
             {/* 첫 번째 줄: 연도와 날짜 표시 */}
-            <h1 className="text-3xl font-bold text-foreground mb-1 text-center">
+            <h1 className="text-3xl font-bold text-foreground text-center">
               {format(currentDate, 'yyyy년 M월 d일', { locale: ko })}
             </h1>
           </div>
 
           {/* 두 번째 줄: 현재 날짜 요일 표시와 오늘 버튼 */}
-          <div className="flex justify-between items-center h-8">
+          <div className="flex justify-between items-center h-7">
             {isTodayDate ? (
               /* 오늘인 경우: "오늘", 요일, 시간 전체를 가운데 정렬 */
               <>
@@ -247,7 +247,7 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
         </div>
         
         {/* 뷰 스타일 전환 버튼 */}
-        <div className="absolute right-16 top-1/2 -translate-y-1/2">
+        <div className="absolute right-14 top-1/2 -translate-y-1/2">
           <Button
             variant="ghost"
             size="sm"
@@ -264,7 +264,7 @@ const TimelineHeader: React.FC<TimelineHeaderProps> = ({ className }) => {
         </div>
 
         {/* 다음 날짜 버튼 */}
-        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
           <Button
             variant="ghost"
             size="sm"
