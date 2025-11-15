@@ -10,7 +10,7 @@ interface NavigationStore {
 }
 
 export const useNavigationStore = create<NavigationStore>((set) => ({
-  selectedGroup: null,
+  selectedGroup: 'start', // 기본값 설정 - sticky 탭바 렌더링 보장
   setSelectedGroup: (group) => set({ selectedGroup: group }),
   clearSelectedGroup: () => set({ selectedGroup: null }),
 }));

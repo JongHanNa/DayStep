@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useRef, useLayoutEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
@@ -16,21 +16,13 @@ interface DynamicTopTabsProps {
 export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isVisible, setIsVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const group = NAVIGATION_GROUPS[groupType];
   const activeItem = getActiveItemFromPath(pathname, groupType);
 
-  // Fade-in 애니메이션 (그룹 변경 시에만)
-  useEffect(() => {
-    setIsVisible(false);
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
-  }, [groupType]);
-
-  // 높이 측정 및 CSS 변수 설정
-  useEffect(() => {
+  // 높이 측정 및 CSS 변수 설정 - useLayoutEffect로 브라우저 페인트 전 실행
+  useLayoutEffect(() => {
     const updateHeight = () => {
       if (containerRef.current) {
         const height = containerRef.current.offsetHeight;
@@ -38,12 +30,12 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
       }
     };
 
-    updateHeight();
+    updateHeight(); // DOM 업데이트 전 실행
 
     // 리사이즈 시에도 업데이트
     window.addEventListener('resize', updateHeight);
     return () => window.removeEventListener('resize', updateHeight);
-  }, [groupType, isVisible]); // 그룹 변경이나 visibility 변경 시에도 재측정
+  }, [groupType]);
 
   const handleTabClick = (href: string) => {
     router.push(href);
@@ -52,11 +44,8 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   return (
     <div
       ref={containerRef}
-      className={cn(
-        'sticky top-0 z-[60] h-auto bg-base-100 border-b border-base-300',
-        'transition-opacity duration-300',
-        isVisible ? 'opacity-100' : 'opacity-0'
-      )}
+      className="fixed top-0 left-0 right-0 z-[60] h-auto bg-base-100 border-b border-base-300"
+      style={{ willChange: 'position' }} // GPU 가속으로 fixed 최적화
     >
       {/* 스크롤 가능한 탭 컨테이너 */}
       <div className="overflow-x-auto scrollbar-hide">

@@ -13,9 +13,14 @@ export default function TopNavWrapper() {
   const pathname = usePathname();
   const selectedGroup = useNavigationStore((state) => state.selectedGroup);
 
+  // pathname이 없으면 렌더링하지 않음 (초기 로딩 중 - SSR/CSR hydration 대기)
+  if (!pathname) {
+    return null;
+  }
+
   // 1. 사용자가 하단 그룹을 선택한 경우 → 선택된 그룹 표시
   // 2. 선택하지 않은 경우 → 현재 경로에서 그룹 자동 감지
-  const activeGroup = selectedGroup || getActiveGroupFromPath(pathname || '');
+  const activeGroup = selectedGroup || getActiveGroupFromPath(pathname);
 
   // 어떤 그룹에도 속하지 않거나, 그룹에 탭이 없으면 상단 탭 숨김
   if (!activeGroup) {

@@ -129,9 +129,10 @@
 }
 
 html, body {
-  /* 랜딩 페이지 window 스크롤을 위해 overflow 허용 */
-  overflow-x: hidden;  /* 가로 스크롤만 막기 */
-  overflow-y: auto;    /* 세로 스크롤 허용 */
+  /* 가로 스크롤만 막기 */
+  overflow-x: hidden;
+  /* overflow-y: auto 제거 - position: sticky 작동을 위해 */
+  /* 랜딩 페이지 스크롤이 필요한 경우 개별 페이지에서 클래스 추가 */
   /* height와 min-height 제거 - Framer Motion useScroll() 감지를 위해 */
 
   /* 기본적으로 모든 페이지에서 스크롤바 숨김 */
