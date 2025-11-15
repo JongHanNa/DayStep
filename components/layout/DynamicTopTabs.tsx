@@ -35,14 +35,14 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   return (
     <div
       className={cn(
-        'sticky top-0 z-[60] h-16 bg-base-100 border-b border-base-300',
+        'sticky top-0 z-[60] h-auto bg-base-100 border-b border-base-300',
         'transition-opacity duration-300',
         isVisible ? 'opacity-100' : 'opacity-0'
       )}
     >
       {/* 스크롤 가능한 탭 컨테이너 */}
       <div className="overflow-x-auto scrollbar-hide">
-        <nav className="flex gap-2 px-4 py-3 min-w-max">
+        <nav className="flex gap-2 px-4 pt-3 pb-3 max-sm:pt-10 min-w-max">
           {group.items.map((item) => {
             const Icon = item.icon;
             const isActive = activeItem?.id === item.id;
