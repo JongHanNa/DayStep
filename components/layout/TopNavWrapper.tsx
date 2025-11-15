@@ -17,17 +17,8 @@ export default function TopNavWrapper() {
   // 2. 선택하지 않은 경우 → 현재 경로에서 그룹 자동 감지
   const activeGroup = selectedGroup || getActiveGroupFromPath(pathname || '');
 
-  // 디버깅 로그
-  console.log('TopNavWrapper Debug:', {
-    pathname,
-    selectedGroup,
-    activeGroupFromPath: getActiveGroupFromPath(pathname || ''),
-    finalActiveGroup: activeGroup
-  });
-
   // 어떤 그룹에도 속하지 않으면 상단 탭 숨김
   if (!activeGroup) {
-    console.log('TopNavWrapper: No active group, hiding tabs');
     return null;
   }
 

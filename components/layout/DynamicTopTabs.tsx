@@ -21,15 +21,6 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   const group = NAVIGATION_GROUPS[groupType];
   const activeItem = getActiveItemFromPath(pathname, groupType);
 
-  // 디버깅 로그
-  console.log('DynamicTopTabs Debug:', {
-    groupType,
-    pathname,
-    groupItemsCount: group.items.length,
-    activeItem: activeItem?.id,
-    isVisible
-  });
-
   // Fade-in 애니메이션 (그룹 변경 시에만)
   useEffect(() => {
     setIsVisible(false);
