@@ -53,6 +53,7 @@ export default function RootLayout({
                     <TopNavWrapper />
                     <main
                       className={`scrollbar-hide ${safeAreaBackground} ${darkSafeArea} pb-16`}
+                      style={{ paddingTop: 'var(--top-tabs-height, 0px)' }}
                     >
                       {children}
                     </main>
