@@ -43,13 +43,19 @@ export default function SecondBrainBottomNav() {
     if (selectedGroup === groupType) {
       clearSelectedGroup();
     } else {
-      // 다른 그룹이면 해당 그룹의 첫 번째 탭으로 이동
-      const group = NAVIGATION_GROUPS[groupType];
-      const firstItem = group.items[0];
-
-      if (firstItem) {
+      // settings 그룹은 메인 페이지로 직접 이동
+      if (groupType === 'settings') {
         setSelectedGroup(groupType);
-        router.push(firstItem.href);
+        router.push('/settings');
+      } else {
+        // 다른 그룹이면 해당 그룹의 첫 번째 탭으로 이동
+        const group = NAVIGATION_GROUPS[groupType];
+        const firstItem = group.items[0];
+
+        if (firstItem) {
+          setSelectedGroup(groupType);
+          router.push(firstItem.href);
+        }
       }
     }
   };

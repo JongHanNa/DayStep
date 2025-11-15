@@ -79,12 +79,7 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
     id: 'settings',
     label: '설정',
     icon: Settings,
-    items: [
-      { id: 'profile', label: '프로필', icon: User, href: '/settings/profile' },
-      { id: 'notifications', label: '알림', icon: Bell, href: '/settings/notifications' },
-      { id: 'appearance', label: '외관', icon: Palette, href: '/settings/appearance' },
-      { id: 'privacy', label: '개인정보', icon: Shield, href: '/settings/privacy' },
-    ]
+    items: [] // 설정은 메인 페이지(/settings)만 사용, 상단 탭 없음
   }
 } as const;
 

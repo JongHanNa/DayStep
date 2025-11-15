@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useNavigationStore } from '@/state/stores/navigationStore';
-import { getActiveGroupFromPath } from '@/config/navigation';
+import { getActiveGroupFromPath, NAVIGATION_GROUPS } from '@/config/navigation';
 import DynamicTopTabs from './DynamicTopTabs';
 
 /**
@@ -17,8 +17,13 @@ export default function TopNavWrapper() {
   // 2. 선택하지 않은 경우 → 현재 경로에서 그룹 자동 감지
   const activeGroup = selectedGroup || getActiveGroupFromPath(pathname || '');
 
-  // 어떤 그룹에도 속하지 않으면 상단 탭 숨김
+  // 어떤 그룹에도 속하지 않거나, 그룹에 탭이 없으면 상단 탭 숨김
   if (!activeGroup) {
+    return null;
+  }
+
+  const group = NAVIGATION_GROUPS[activeGroup];
+  if (!group.items || group.items.length === 0) {
     return null;
   }
 
