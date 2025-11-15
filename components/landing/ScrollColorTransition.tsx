@@ -10,8 +10,8 @@ import { useEffect, useState } from 'react';
  * 색상 구성:
  * - 섹션 1: 스카이블루 (#A7C5E4) - 밝음
  * - 섹션 2: 네이비 (#344F70) - 어두움
- * - 섹션 3: 세이지 (#428366) - 중간
- * - 섹션 4: 다크 네이비 (#2D3748) - 어두움
+ * - 섹션 3: 스카이블루 (#A7C5E4) - 밝음
+ * - 섹션 4: 네이비 (#344F70) - 어두움
  */
 export default function ScrollColorTransition() {
   const [isMounted, setIsMounted] = useState(false);
@@ -35,8 +35,8 @@ export default function ScrollColorTransition() {
   const colors = [
     { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
     { r: 52, g: 79, b: 112 },   // #344F70 - 네이비
-    { r: 66, g: 131, b: 102 },  // #428366 - 세이지
-    { r: 45, g: 55, b: 72 }     // #2D3748 - 다크 네이비
+    { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
+    { r: 52, g: 79, b: 112 }    // #344F70 - 네이비
   ];
 
   // 스크롤 진행률에 따라 RGB 각 채널 보간
