@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, MotionValue } from 'framer-motion';
 import { Calendar, Brain, Target, CheckCircle2, Sparkles, Clock, LucideIcon } from 'lucide-react';
 import { getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
 import { useRef } from 'react';
+import { useWindowSize } from '@/hooks/useWindowSize';
 
 // 이미지 태그 타입 정의
 interface FeatureTag {
@@ -18,21 +19,39 @@ interface FeatureTagProps {
   index: number;
   scrollYProgress: MotionValue<number>;
   totalTags: number;
+  windowWidth: number;
 }
 
-// 2행 3열 그리드 위치 계산 (각 태그의 최종 위치)
-const getGridPosition = (index: number) => {
-  const cols = 3;
+// 반응형 그리드 위치 계산 (각 태그의 최종 위치)
+const getGridPosition = (index: number, windowWidth: number) => {
+  // 화면 크기에 따른 그리드 설정
+  let cols: number;
+  let gapX: number;
+  let gapY: number;
+
+  if (windowWidth < 640) {
+    // 모바일: 2열 그리드
+    cols = 2;
+    gapX = 200;
+    gapY = 80;
+  } else if (windowWidth < 1024) {
+    // 태블릿: 3열 그리드 (축소)
+    cols = 3;
+    gapX = 180;
+    gapY = 90;
+  } else {
+    // 데스크톱: 3열 그리드 (원본)
+    cols = 3;
+    gapX = 280;
+    gapY = 100;
+  }
+
   const row = Math.floor(index / cols);
   const col = index % cols;
 
-  // 그리드 간격
-  const gapX = 280; // 카드 너비 + 간격
-  const gapY = 100; // 행 간격
-
   // 중앙 정렬을 위한 오프셋
   const offsetX = -((cols - 1) * gapX) / 2;
-  const offsetY = -gapY / 2;
+  const offsetY = windowWidth < 640 ? -gapY : -gapY / 2; // 모바일은 3행이므로 조정
 
   return {
     x: col * gapX + offsetX,
@@ -40,10 +59,19 @@ const getGridPosition = (index: number) => {
   };
 };
 
-// 원형 경로에서 출발 위치 계산
-const getCircularStartPosition = (index: number, total: number) => {
+// 반응형 원형 경로 출발 위치 계산
+const getCircularStartPosition = (index: number, total: number, windowWidth: number) => {
   const angle = (360 / total) * index;
-  const radius = 300;
+
+  // 화면 크기에 따른 반경 조정
+  let radius: number;
+  if (windowWidth < 640) {
+    radius = 150; // 모바일: 작은 반경
+  } else if (windowWidth < 1024) {
+    radius = 220; // 태블릿: 중간 반경
+  } else {
+    radius = 300; // 데스크톱: 큰 반경
+  }
 
   return {
     x: Math.cos((angle * Math.PI) / 180) * radius,
@@ -56,10 +84,10 @@ const getCircularStartPosition = (index: number, total: number) => {
  * 개별 Feature 태그 컴포넌트
  * React Hooks 규칙 준수를 위해 컴포넌트 최상위에서 useTransform 호출
  */
-function FeatureTagItem({ tag, index, scrollYProgress, totalTags }: FeatureTagProps) {
+function FeatureTagItem({ tag, index, scrollYProgress, totalTags, windowWidth }: FeatureTagProps) {
   const Icon = tag.icon;
-  const startPos = getCircularStartPosition(index, totalTags);
-  const endPos = getGridPosition(index);
+  const startPos = getCircularStartPosition(index, totalTags, windowWidth);
+  const endPos = getGridPosition(index, windowWidth);
 
   // ✅ 컴포넌트 최상위 레벨에서 Hook 호출
   // 스크롤 진행률 0~1을 각 애니메이션 값으로 변환
@@ -82,9 +110,9 @@ function FeatureTagItem({ tag, index, scrollYProgress, totalTags }: FeatureTagPr
         scale,
       }}
     >
-      <div className={`${tag.color} text-white rounded-2xl px-6 py-4 shadow-xl backdrop-blur-sm border border-white/20 flex items-center gap-3 hover:scale-110 transition-transform cursor-pointer whitespace-nowrap`}>
-        <Icon className="w-6 h-6" />
-        <span className="font-semibold text-lg">{tag.label}</span>
+      <div className={`${tag.color} text-white rounded-2xl px-4 py-2.5 sm:px-6 sm:py-4 shadow-xl backdrop-blur-sm border border-white/20 flex items-center gap-2.5 sm:gap-3 hover:scale-110 transition-transform cursor-pointer whitespace-nowrap`}>
+        <Icon className="w-5.5 h-5.5 sm:w-6 sm:h-6" />
+        <span className="font-semibold text-[15px] sm:text-lg">{tag.label}</span>
       </div>
     </motion.div>
   );
@@ -97,6 +125,7 @@ function FeatureTagItem({ tag, index, scrollYProgress, totalTags }: FeatureTagPr
 export default function ScrollProgressSection() {
   const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const { width: windowWidth } = useWindowSize();
 
   // 섹션 기준 스크롤 진행률 추적 (0~1)
   const { scrollYProgress } = useScroll({
@@ -134,7 +163,7 @@ export default function ScrollProgressSection() {
         </motion.div>
 
         {/* 이미지 태그 애니메이션 - 스크롤 진행률 기반 */}
-        <div className="relative min-h-[400px] flex items-center justify-center">
+        <div className="relative min-h-[300px] sm:min-h-[400px] flex items-center justify-center">
           {featureTags.map((tag, index) => (
             <FeatureTagItem
               key={index}
@@ -142,6 +171,7 @@ export default function ScrollProgressSection() {
               index={index}
               scrollYProgress={scrollYProgress}
               totalTags={featureTags.length}
+              windowWidth={windowWidth}
             />
           ))}
 
