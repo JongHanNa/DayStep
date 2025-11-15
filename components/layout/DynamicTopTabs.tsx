@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
@@ -17,6 +17,7 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const group = NAVIGATION_GROUPS[groupType];
   const activeItem = getActiveItemFromPath(pathname, groupType);
@@ -28,12 +29,29 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
     return () => clearTimeout(timer);
   }, [groupType]);
 
+  // 높이 측정 및 CSS 변수 설정
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current) {
+        const height = containerRef.current.offsetHeight;
+        document.documentElement.style.setProperty('--top-tabs-height', `${height}px`);
+      }
+    };
+
+    updateHeight();
+
+    // 리사이즈 시에도 업데이트
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, [groupType, isVisible]); // 그룹 변경이나 visibility 변경 시에도 재측정
+
   const handleTabClick = (href: string) => {
     router.push(href);
   };
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         'sticky top-0 z-[60] h-auto bg-base-100 border-b border-base-300',
         'transition-opacity duration-300',
