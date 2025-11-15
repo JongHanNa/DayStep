@@ -8,10 +8,10 @@ import { useEffect, useState } from 'react';
  * Structured.app 스타일의 부드러운 색상 전환 효과
  *
  * 색상 구성:
- * - 섹션 1: 스카이블루 (#A7C5E4) - 밝음
- * - 섹션 2: 네이비 (#344F70) - 어두움
- * - 섹션 3: 스카이블루 (#A7C5E4) - 밝음
- * - 섹션 4: 네이비 (#344F70) - 어두움
+ * - 섹션 1: 소프트 블루 (#93C5FD) - 밝고 친근함
+ * - 섹션 2: 틸/청록 (#14B8A6) - 활기차고 상쾌함
+ * - 섹션 3: 딥 블루 (#3B82F6) - 신뢰감 있는 깊은 파랑
+ * - 섹션 4: 라이트 슬레이트 (#94A3B8) - 밝고 부드러운 블루 그레이
  */
 export default function ScrollColorTransition() {
   const [isMounted, setIsMounted] = useState(false);
@@ -33,10 +33,10 @@ export default function ScrollColorTransition() {
 
   // 4개 색상의 RGB 값 정의
   const colors = [
-    { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
-    { r: 52, g: 79, b: 112 },   // #344F70 - 네이비
-    { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
-    { r: 52, g: 79, b: 112 }    // #344F70 - 네이비
+    { r: 147, g: 197, b: 253 }, // #93C5FD - 소프트 블루
+    { r: 20, g: 184, b: 166 },  // #14B8A6 - 틸/청록
+    { r: 59, g: 130, b: 246 },  // #3B82F6 - 딥 블루
+    { r: 148, g: 163, b: 184 }  // #94A3B8 - 라이트 슬레이트
   ];
 
   // 스크롤 진행률에 따라 RGB 각 채널 보간

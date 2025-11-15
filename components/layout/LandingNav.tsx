@@ -46,10 +46,10 @@ export default function LandingNav() {
   }, [lastScrollY]);
 
   const colors = [
-    { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
-    { r: 52, g: 79, b: 112 },   // #344F70 - 네이비
-    { r: 167, g: 197, b: 228 }, // #A7C5E4 - 스카이블루
-    { r: 52, g: 79, b: 112 }    // #344F70 - 네이비
+    { r: 147, g: 197, b: 253 }, // #93C5FD - 소프트 블루
+    { r: 20, g: 184, b: 166 },  // #14B8A6 - 틸/청록
+    { r: 59, g: 130, b: 246 },  // #3B82F6 - 딥 블루
+    { r: 148, g: 163, b: 184 }  // #94A3B8 - 라이트 슬레이트
   ];
 
   const r = useTransform(smoothProgress, [0, 0.33, 0.66, 1],

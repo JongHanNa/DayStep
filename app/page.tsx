@@ -127,7 +127,7 @@ export default function LandingPage() {
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="text-primary text-6xl sm:text-7xl"
+                    className="text-white text-6xl sm:text-7xl"
                   >
                     {features[currentFeatureIndex]}
                   </motion.span>
@@ -186,15 +186,15 @@ export default function LandingPage() {
             transition={{ duration: 1, delay: 1 }}
           >
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">간편</div>
+              <div className="text-3xl font-bold text-white">간편</div>
               <p className="text-sm text-white/80">직관적인 인터페이스</p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">체계적</div>
+              <div className="text-3xl font-bold text-white">체계적</div>
               <p className="text-sm text-white/80">Second Brain 시스템</p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">효율적</div>
+              <div className="text-3xl font-bold text-white">효율적</div>
               <p className="text-sm text-white/80">타임라인 뷰</p>
             </div>
           </motion.div>
