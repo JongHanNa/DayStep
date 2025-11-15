@@ -443,7 +443,6 @@ export default function ClarifyPage() {
           <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-bold">명료화</h1>
                 <p className="text-sm text-base-content/70">
                   수집한 항목을 분류하고 처리하세요
                 </p>

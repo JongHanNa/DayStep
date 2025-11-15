@@ -147,7 +147,6 @@ export default function NotesPage() {
             {/* 상단: 제목 + 버튼 */}
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h1 className="text-xl font-bold">노트</h1>
                 <p className="text-sm text-base-content/70">
                   {filteredNotes.length}개
                 </p>

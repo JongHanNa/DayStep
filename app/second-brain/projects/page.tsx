@@ -241,7 +241,6 @@ export default function ProjectsPage() {
           <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h1 className="text-2xl font-bold">프로젝트 (Projects)</h1>
                 <p className="text-sm text-base-content/70 mt-1">
                 목표에 따라 그룹화된 프로젝트 목록
                 </p>

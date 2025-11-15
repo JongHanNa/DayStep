@@ -466,7 +466,6 @@ export default function InboxPage() {
         <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold">수집</h1>
               <p className="mt-2 text-sm font-medium text-base-content/70">빠른 수집을 위한 페이지입니다</p>
             </div>
             <div className="flex items-center gap-2">

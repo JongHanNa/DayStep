@@ -58,7 +58,6 @@ export default function ReviewPage() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">점검</h1>
                 <p className="text-sm text-base-content/70">주간/월간 점검을 진행하세요</p>
               </div>
               <button

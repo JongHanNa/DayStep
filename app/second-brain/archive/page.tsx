@@ -254,12 +254,10 @@ export default function ArchivePage() {
           <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-10 pb-2' : 'py-4'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">아카이브</h1>
                 <p className="text-sm text-base-content/60 mt-1">
                   완료되거나 중단된 항목들
                 </p>
               </div>
-              <Archive className="w-6 h-6 text-base-content/50" />
             </div>
           </div>
         </div>
