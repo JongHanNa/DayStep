@@ -256,60 +256,76 @@ export default function SystemSection() {
         </div>
 
         {/* Daily Workflow Preview */}
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-8">
           {/* GTD Daily */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 border-l-4 border-primary">
-            <div className="flex items-center gap-3 mb-4">
-              <h4 className="text-xl font-bold text-white">GTD 루틴</h4>
-              <span className="badge badge-primary badge-sm">매일 반복</span>
+          <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border-2 border-white/40 shadow-2xl hover:shadow-white/20 hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-3 mb-6">
+              <h4 className="text-2xl font-bold text-white drop-shadow-lg">GTD 루틴</h4>
+              <span className="px-4 py-1.5 bg-white/90 rounded-full text-sm font-bold text-blue-600 shadow-md">매일 반복</span>
             </div>
-            <p className="text-sm text-white/90 mb-6">
+            <p className="text-base text-white font-medium mb-8 leading-relaxed">
               생각을 비우고 명확하게 실행하는 일상 워크플로우
             </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm">
-                <Inbox className="w-5 h-5 text-primary" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Inbox className="w-5 h-5 text-white" />
+                </div>
                 <span>수집 → Inbox로 모든 생각 비우기</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Search className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Search className="w-5 h-5 text-white" />
+                </div>
                 <span>명료화 → 구체적 행동으로 전환</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Calendar className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-5 h-5 text-white" />
+                </div>
                 <span>계획 → 타임라인에 배치</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <CheckCircle className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
                 <span>점검 → 완료 항목 검토</span>
               </div>
             </div>
           </div>
 
           {/* PARA Long-term */}
-          <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 rounded-2xl p-8 border-l-4 border-secondary">
-            <div className="flex items-center gap-3 mb-4">
-              <h4 className="text-xl font-bold text-white">PARA 생산성</h4>
-              <span className="badge badge-secondary badge-sm">장기 관리</span>
+          <div className="bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md rounded-3xl p-8 border-2 border-white/40 shadow-2xl hover:shadow-white/20 hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-3 mb-6">
+              <h4 className="text-2xl font-bold text-white drop-shadow-lg">PARA 생산성</h4>
+              <span className="px-4 py-1.5 bg-white/90 rounded-full text-sm font-bold text-teal-600 shadow-md">장기 관리</span>
             </div>
-            <p className="text-sm text-white/90 mb-6">
+            <p className="text-base text-white font-medium mb-8 leading-relaxed">
               목표와 정보를 체계적으로 정리하는 생산성 도구
             </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm">
-                <Clock className="w-5 h-5 text-secondary" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
                 <span>타임라인 → 일정과 할일 관리</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Target className="w-5 h-5 text-secondary" />
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Target className="w-5 h-5 text-white" />
+                </div>
                 <span>목표 → 장기 목표 설정</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <FileText className="w-5 h-5 text-secondary" />
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
                 <span>노트 → 지식 정리 및 보관</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Archive className="w-5 h-5 text-secondary" />
+              <div className="flex items-center gap-4 text-base text-white font-medium">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Archive className="w-5 h-5 text-white" />
+                </div>
                 <span>아카이브 → 완료 항목 보관</span>
               </div>
             </div>
