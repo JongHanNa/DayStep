@@ -35,7 +35,7 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   return (
     <div
       className={cn(
-        'sticky top-0 z-[60] bg-base-100 border-b border-base-300',
+        'sticky top-0 z-[60] h-16 bg-base-100 border-b border-base-300',
         'transition-opacity duration-300',
         isVisible ? 'opacity-100' : 'opacity-0'
       )}
