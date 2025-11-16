@@ -71,7 +71,7 @@ export function UnauthenticatedOnly({ children }: UnauthenticatedOnlyProps) {
     }
 
     if (isAuthenticated) {
-      router.push('/timeline'); // 이미 로그인된 사용자는 타임라인 페이지로 리다이렉트
+      router.push('/second-brain/areas'); // 이미 로그인된 사용자는 책임 페이지로 리다이렉트
     }
   }, [isAuthenticated, loading, isHydrated, router]);
 
