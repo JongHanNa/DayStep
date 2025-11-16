@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -31,6 +31,7 @@ const ScrollProgressSection = dynamic(
 export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   // 회전하는 기능 텍스트 상태
   const features = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
@@ -62,6 +63,18 @@ export default function LandingPage() {
     if (isCapacitor) {
       console.log('📱 Capacitor 환경 감지 - 랜딩페이지 건너뛰기');
 
+      // 이미 앱 내부 페이지에 있으면 리다이렉트하지 않음
+      const isInApp = pathname.startsWith('/second-brain') ||
+                      pathname.startsWith('/timeline') ||
+                      pathname.startsWith('/routine') ||
+                      pathname.startsWith('/settings');
+
+      if (isInApp) {
+        console.log('✅ 이미 앱 내부 페이지 - 리다이렉트 스킵:', pathname);
+        return;
+      }
+
+      // 랜딩 페이지(/)나 로그인 페이지에서만 리다이렉트 실행
       if (isAuthenticated) {
         console.log('✅ 인증됨 - 책임 페이지로 이동');
         router.push('/second-brain/areas');
@@ -70,7 +83,7 @@ export default function LandingPage() {
         router.push('/login');
       }
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, router, pathname]);
 
   // "데스크톱에서 시작하기" 버튼 클릭 핸들러
   const handleGetStarted = () => {
