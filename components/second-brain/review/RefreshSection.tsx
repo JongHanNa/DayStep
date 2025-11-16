@@ -158,7 +158,6 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     const newNote = await createNote(user.id, {
       title,
       content: '',
-      memo_type: 'note',
       note_category: 'work_in_progress',
       tags: [],
       is_pinned: false,

@@ -519,7 +519,6 @@ export default function CalendarPage() {
     return await createNote(appUser.id, {
       title,
       content: '',
-      memo_type: 'note' as const,
       note_category: 'work_in_progress' as const,
       tags: [],
       is_pinned: false,

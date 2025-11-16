@@ -176,7 +176,6 @@ export interface Note {
   user_id: string;
   title: string;
   content: string;
-  memo_type: NoteType;
   note_category: NoteCategory; // 노트 카테고리
 
   // PARA 연결

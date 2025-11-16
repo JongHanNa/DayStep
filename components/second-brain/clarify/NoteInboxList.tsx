@@ -157,7 +157,6 @@ export default function NoteInboxList({
       user_id: user.id,
       title: title,
       content: '',
-      memo_type: 'note', // 기본값: 일반 노트
       note_category: 'none',
       tags: [],
       is_pinned: false,

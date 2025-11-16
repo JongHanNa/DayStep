@@ -29,10 +29,10 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
   server: {
     androidScheme: "capacitor",
     iosScheme: "capacitor",
-    allowNavigation: ["localhost", "*.supabase.co", "https://*.supabase.co", "192.168.219.101:3000"],
+    allowNavigation: ["localhost", "*.supabase.co", "https://*.supabase.co", "192.168.1.100:3000"],
     cleartext: true, // HTTP 허용 (개발 전용)
     // url 주석 처리 - 정적 빌드 파일 사용 (독립 실행)
-    // url: "http://192.168.219.101:3000",
+    // url: "http://192.168.1.100:3000",
   },
   plugins: {
     // 🎹 키보드 플러그인 설정 - 수동 조정 모드 (iOS 시뮬레이터 호환성)

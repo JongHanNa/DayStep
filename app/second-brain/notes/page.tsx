@@ -30,12 +30,13 @@ const TAB_ICONS: Record<NoteTabType, any> = {
 
 export default function NotesPage() {
   const { appUser } = useAuth();
-  const { notes, fetchNotes, updateNote } = useNoteStore();
+  const { notes, fetchNotes, updateNote, createNote } = useNoteStore();
   const { tags, loadAllTags } = useNoteTagStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (appUser?.id) {
@@ -138,6 +139,38 @@ export default function NotesPage() {
     }
   };
 
+  // 노트 즉시 생성 핸들러
+  const handleQuickAdd = async () => {
+    if (isCreating || !appUser?.id) return;
+
+    try {
+      setIsCreating(true);
+
+      // 활성 탭에 따라 note_category 자동 설정
+      const noteCategory: NoteCategory =
+        activeTab === 'read_later' ? 'read_later' :
+        activeTab === 'draft' ? 'work_in_progress' :
+        'none';
+
+      // DB에 즉시 생성
+      await createNote(appUser.id, {
+        title: '새노트',
+        content: '',
+        note_category: noteCategory,
+        tags: [],
+        is_pinned: false,
+      });
+
+      // 목록 새로고침
+      await fetchNotes(appUser.id);
+    } catch (error) {
+      console.error('노트 생성 실패:', error);
+      alert('노트 생성에 실패했습니다.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-base-200 pb-20">
@@ -151,9 +184,17 @@ export default function NotesPage() {
                   {filteredNotes.length}개
                 </p>
               </div>
-              <button className="btn btn-primary btn-sm rounded-full">
-                <Plus className="w-4 h-4" />
-                새로 만들기
+              <button
+                onClick={handleQuickAdd}
+                className="btn btn-primary btn-sm rounded-full"
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                {isCreating ? '생성 중...' : '새로 만들기'}
               </button>
             </div>
 

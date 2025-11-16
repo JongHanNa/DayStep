@@ -164,7 +164,6 @@ export default function TodoInboxList({
     const newNote = await createNote(userId, {
       title,
       content: '',
-      memo_type: 'note',
       note_category: 'work_in_progress', // 기본값
       tags: [],
       is_pinned: false,

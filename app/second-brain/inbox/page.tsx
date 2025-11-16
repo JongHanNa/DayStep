@@ -438,7 +438,6 @@ export default function InboxPage() {
     return await createNote(appUser.id, {
       title,
       content: '',
-      memo_type: 'note',
       note_category: 'work_in_progress', // 기본값
       tags: [],
       is_pinned: false,
