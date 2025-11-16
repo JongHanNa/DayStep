@@ -120,7 +120,7 @@ export default function NotesPage() {
         }
       }
 
-      await updateNote(appUser.id, editingNote.id, {
+      await updateNote(editingNote.id, appUser.id, {
         title: noteForm.title,
         content: noteForm.content,
         note_category: noteForm.note_category,
