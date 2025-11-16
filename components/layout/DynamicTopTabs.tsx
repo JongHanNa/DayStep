@@ -3,6 +3,7 @@
 import { useRef, useLayoutEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useModalStore } from '@/state/stores/modalStore';
 import {
   NAVIGATION_GROUPS,
   NavigationGroupType,
@@ -17,6 +18,7 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  const isModalOpen = useModalStore((state) => state.isModalOpen);
 
   const group = NAVIGATION_GROUPS[groupType];
   const activeItem = getActiveItemFromPath(pathname, groupType);
@@ -40,6 +42,11 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
   const handleTabClick = (href: string) => {
     router.push(href);
   };
+
+  // 모달이 열려있으면 상단 탭 숨기기 (SecondBrainBottomNav와 동일한 패턴)
+  if (isModalOpen) {
+    return null;
+  }
 
   return (
     <div
