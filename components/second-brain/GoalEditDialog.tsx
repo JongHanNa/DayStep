@@ -238,14 +238,14 @@ export default function GoalEditDialog({
                         <optgroup label="영역">
                           {areas.map((area) => (
                             <option key={area.id} value={`area-${area.id}`}>
-                              {area.icon} {area.title}
+                              {area.title}
                             </option>
                           ))}
                         </optgroup>
                         <optgroup label="자원">
                           {resources.map((resource) => (
                             <option key={resource.id} value={`resource-${resource.id}`}>
-                              {resource.icon} {resource.title}
+                              {resource.title}
                             </option>
                           ))}
                         </optgroup>
