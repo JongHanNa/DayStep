@@ -10,26 +10,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 개발 명령어
 
-### 일반 개발
+### 일반 개발 (개발 DB 사용)
 ```bash
 npm install                    # 의존성 설치
-npm run dev:web               # 웹 개발 서버 (BUILD_TARGET=web, 2초 시작)
-npm run dev:mobile            # 모바일 개발 + Capacitor 동기화
+npm run dev:web               # 웹 개발 서버 (개발 DB)
+npm run dev:mobile            # 모바일 개발 (개발 DB) + Capacitor 동기화
 npm run lint                  # ESLint 검사
 npx tsc --noEmit             # 타입 체크
 ```
 
 ### 빌드 및 배포
+
+**웹**:
 ```bash
-npm run build                 # 웹 프로덕션 빌드 (BUILD_TARGET=web)
-npm run build:mobile          # 모바일 빌드 + Capacitor 동기화
+npm run build                 # 웹 프로덕션 빌드 (프로덕션 DB)
 npm run preview:web           # 웹 프로덕션 미리보기
-npm start                     # 프로덕션 서버
+```
+
+**모바일**:
+```bash
+npm run build:mobile          # TestFlight 배포용 (개발 DB)
+npm run build:mobile:prod     # App Store 배포용 (프로덕션 DB)
 ```
 
 ## 환경 설정
 
-`.env.example` → `.env.local`:
+**환경 파일 분리**:
+- `.env.development` → 개발 DB (DayStep)
+- `.env.production` → 프로덕션 DB (DayStep Production)
+- `env-cmd`를 통한 자동 환경 전환
 
 ## MCP 서버
 
@@ -37,7 +46,8 @@ npm start                     # 프로덕션 서버
 - **taskmaster-ai**: 작업 관리 자동화
 - **perplexity-ask**, **context7**: 코드 리서치, 문서 검색
 - **playwright**: 브라우저 자동화, UI 테스트
-- **supabase**: 데이터베이스 관리
+- **supabase_dev**: 개발 DB 관리 (DayStep)
+- **supabase_production**: 프로덕션 DB 관리 (DayStep Production)
 
 ## 핵심 아키텍처 패턴
 
