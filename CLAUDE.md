@@ -48,7 +48,7 @@ npm run build:mobile:prod     # App Store 배포용 (프로덕션 DB)
 - **perplexity-ask**, **context7**: 코드 리서치, 문서 검색
 - **playwright**: 브라우저 자동화, UI 테스트
 - **supabase_dev**: 개발 DB 관리 (DayStep)
-- **supabase_production**: 프로덕션 DB 관리 (DayStep Production)
+- **supabase_prod**: 프로덕션 DB 관리 (DayStep Production)
 
 ## 핵심 아키텍처 패턴
 
