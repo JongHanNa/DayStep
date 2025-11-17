@@ -19,6 +19,7 @@ import { RealtimeSyncProvider } from "@/components/providers/RealtimeSyncProvide
 import { ReminderProvider } from "@/components/providers/ReminderProvider";
 import { MotivationProvider } from "@/components/providers/MotivationProvider";
 import { NoteTagProvider } from "@/components/providers/NoteTagProvider";
+import { AppLifecycleHandler } from "@/components/providers/AppLifecycleHandler";
 import { STYLING, UI_LAYOUT } from "@/lib/constants";
 import { getTailwindClasses } from "@/lib/theme-colors";
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default function RootLayout({
         <ThemeProvider>
           <FontProvider>
             <AuthProvider initialAuth={initialAuth}>
+              <AppLifecycleHandler />
               <MotivationProvider>
                 <NoteTagProvider>
                   <RealtimeSyncProvider>
