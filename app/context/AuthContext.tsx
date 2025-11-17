@@ -126,10 +126,90 @@ export function AuthProvider({
       }
     };
 
+    // 🔧 Capacitor 세션 복원 헬퍼 함수
+    const attemptCapacitorSessionRestore = async (): Promise<boolean> => {
+      // 🔒 모바일 환경 확인
+      if (typeof window === 'undefined' ||
+          !window.location.protocol.startsWith('capacitor:')) {
+        return false;
+      }
+
+      try {
+        const { Preferences } = await import('@capacitor/preferences');
+        const { value } = await Preferences.get({ key: 'supabase_auth_session' });
+
+        if (!value) {
+          return false;
+        }
+
+        const storedSession = JSON.parse(value);
+        const expiresAt = storedSession.expires_at ? new Date(storedSession.expires_at * 1000) : null;
+        const now = new Date();
+
+        if (expiresAt && now < expiresAt) {
+          console.log('✅ Capacitor 백업 세션 유효 - 복원 시작');
+
+          // 세션 상태 복원
+          setSession(storedSession);
+          setUser(storedSession.user);
+
+          // AppUser 로드
+          try {
+            const appUser = await loadAppUser(storedSession.user);
+            if (appUser) {
+              setAppUser(appUser);
+              console.log('✅ AppUser 로드 완료:', appUser.name);
+            }
+          } catch (error) {
+            console.warn('AppUser 로드 실패:', error);
+          }
+
+          return true;
+        } else {
+          console.log('❌ Capacitor 백업 세션 만료됨');
+          return false;
+        }
+      } catch (error) {
+        console.warn('Capacitor 세션 복원 실패:', error);
+        return false;
+      }
+    };
+
     // 🎯 모바일 환경 초기 세션 처리 (네이티브 SDK 방식)
     const handleMobileInitialSession = async () => {
+      // WebView 재로드 감지 (iOS 메모리 압박 대응)
+      const isWebViewReload = (() => {
+        try {
+          // Performance API로 재로드 감지
+          // type: 0=navigate, 1=reload, 2=back_forward, 255=reserved
+          const navigationType = (performance as any).navigation?.type ?? (performance as any).getEntriesByType?.('navigation')?.[0]?.type;
+
+          // 페이지 로드 시간이 매우 짧으면 재로드 가능성 높음 (< 100ms)
+          const loadTime = performance.now();
+          const isQuickLoad = loadTime < 100;
+
+          console.log(`📊 WebView 로드 분석 - type: ${navigationType}, loadTime: ${loadTime.toFixed(2)}ms`);
+
+          return navigationType === 1 || (navigationType === 'reload') || isQuickLoad;
+        } catch (e) {
+          return false;
+        }
+      })();
+
+      if (isWebViewReload) {
+        console.log('🔄 WebView 재로드 감지됨 - Capacitor Preferences 우선 확인');
+
+        // WebView 재로드 시 Capacitor Preferences 우선 확인
+        const capacitorSession = await attemptCapacitorSessionRestore();
+        if (capacitorSession) {
+          console.log('✅ WebView 재로드 시 Capacitor 백업 세션 복원 성공');
+          return; // 복원 성공 시 종료
+        }
+        console.log('⚠️ WebView 재로드 시 Capacitor 백업 세션 없음 - 일반 세션 확인 진행');
+      }
+
       // 모바일 네이티브 SDK 세션 확인
-      
+
       // 1차: Supabase 클라이언트 세션 확인
       const { data: { session }, error } = await supabase.auth.getSession();
       
@@ -151,9 +231,9 @@ export function AuthProvider({
       } else {
         // 2차: Capacitor 저장소에서 백업 세션 확인 (모바일 전용)
         // Supabase 세션 없음 - Capacitor 저장소 확인
-        
+
         // 🔒 모바일 환경 재확인 - 웹에서는 절대 실행되지 않도록
-        if (typeof window === 'undefined' || 
+        if (typeof window === 'undefined' ||
             !window.location.protocol.startsWith('capacitor:')) {
           console.log('❌ 웹 환경에서 Capacitor 저장소 접근 시도 차단');
           setSession(null);
@@ -161,51 +241,81 @@ export function AuthProvider({
           setAppUser(null);
           return;
         }
-        
-        try {
-          // 🎯 모바일 환경에서만 Capacitor 모듈 동적 임포트
-          const { Preferences } = await import('@capacitor/preferences');
-          const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-          
-          if (value) {
-            const storedSession = JSON.parse(value);
-            console.log('🔑 Capacitor 저장소에서 백업 세션 발견:', storedSession.user?.id);
-            
-            // 토큰 만료 확인
-            const expiresAt = storedSession.expires_at ? new Date(storedSession.expires_at * 1000) : null;
-            const now = new Date();
-            
-            if (expiresAt && now < expiresAt) {
-              console.log('✅ 백업 세션이 유효함 - 세션 복원');
-              
-              // 세션 상태 복원
-              setSession(storedSession);
-              setUser(storedSession.user);
-              
-              // AppUser 로드
-              try {
-                const appUser = await loadAppUser(storedSession.user);
-                if (appUser) {
-                  setAppUser(appUser);
-                  console.log('✅ 모바일 백업 세션으로 AppUser 로드 완료:', appUser.name);
+
+        // 🔄 세션 복원 재시도 메커니즘 (지수 백오프)
+        const maxRetries = 3;
+        let restoreSuccess = false;
+
+        for (let attempt = 1; attempt <= maxRetries && !restoreSuccess; attempt++) {
+          try {
+            console.log(`🔄 세션 복원 시도 ${attempt}/${maxRetries}...`);
+
+            // 🎯 모바일 환경에서만 Capacitor 모듈 동적 임포트
+            const { Preferences } = await import('@capacitor/preferences');
+            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
+
+            if (value) {
+              const storedSession = JSON.parse(value);
+              console.log('🔑 Capacitor 저장소에서 백업 세션 발견:', storedSession.user?.id);
+
+              // 토큰 만료 확인
+              const expiresAt = storedSession.expires_at ? new Date(storedSession.expires_at * 1000) : null;
+              const now = new Date();
+
+              if (expiresAt && now < expiresAt) {
+                console.log('✅ 백업 세션이 유효함 - 세션 복원');
+
+                // 세션 상태 복원
+                setSession(storedSession);
+                setUser(storedSession.user);
+
+                // AppUser 로드 (재시도 포함)
+                let appUserLoadSuccess = false;
+                for (let loadAttempt = 1; loadAttempt <= 2 && !appUserLoadSuccess; loadAttempt++) {
+                  try {
+                    console.log(`🔄 AppUser 로드 시도 ${loadAttempt}/2...`);
+                    const appUser = await loadAppUser(storedSession.user);
+                    if (appUser) {
+                      setAppUser(appUser);
+                      console.log('✅ 모바일 백업 세션으로 AppUser 로드 완료:', appUser.name);
+                      appUserLoadSuccess = true;
+                    }
+                  } catch (appUserError) {
+                    console.warn(`❌ AppUser 로드 실패 (시도 ${loadAttempt}/2):`, appUserError);
+                    if (loadAttempt < 2) {
+                      await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+                    }
+                  }
                 }
-              } catch (appUserError) {
-                console.warn('모바일 백업 AppUser 로드 실패:', appUserError);
+
+                restoreSuccess = true;
+                return; // 성공적으로 복원됨
+              } else {
+                console.log('❌ 백업 세션 만료됨');
+                break; // 만료된 세션은 재시도 불필요
               }
-              
-              return; // 성공적으로 복원됨
             } else {
-              console.log('❌ 백업 세션 만료됨');
+              console.log('⚠️ Capacitor 저장소에 백업 세션 없음');
+              break; // 세션이 없으면 재시도 불필요
+            }
+          } catch (capacitorError) {
+            console.warn(`❌ Capacitor 저장소 접근 실패 (시도 ${attempt}/${maxRetries}):`, capacitorError);
+
+            // 재시도 전 대기 (지수 백오프: 1s, 2s, 4s)
+            if (attempt < maxRetries) {
+              const waitTime = Math.pow(2, attempt - 1) * 1000;
+              console.log(`⏳ ${waitTime}ms 후 재시도...`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
             }
           }
-        } catch (capacitorError) {
-          console.warn('모바일 Capacitor 저장소 접근 실패:', capacitorError);
         }
-        
-        console.log('❌ 모바일 모든 세션 확인 실패 - 비인증 상태');
-        setSession(null);
-        setUser(null);
-        setAppUser(null);
+
+        if (!restoreSuccess) {
+          console.log('❌ 모든 세션 복원 시도 실패 - 비인증 상태');
+          setSession(null);
+          setUser(null);
+          setAppUser(null);
+        }
       }
     };
 

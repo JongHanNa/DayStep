@@ -21,6 +21,7 @@ import SystemSection from '@/components/landing/SystemSection';
 import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
 import ScrollColorTransition from '@/components/landing/ScrollColorTransition';
+import { useToast } from '@/hooks/use-toast';
 
 // Hydration 오류 방지를 위해 ScrollProgressSection을 클라이언트 전용 렌더링
 const ScrollProgressSection = dynamic(
@@ -32,10 +33,18 @@ export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
+
+  // 🎯 Capacitor 환경에서는 즉시 리다이렉트 (랜딩 페이지 렌더링 차단)
+  const isCapacitor = typeof window !== 'undefined' && window.location.protocol === 'capacitor:';
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   // 회전하는 기능 텍스트 상태
   const features = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
+
+  // 세션 만료 감지를 위한 이전 인증 상태 추적
+  const prevAuthenticatedRef = useRef<boolean | null>(null);
 
   // Framer Motion variants
   const featureContainerVariants = staggerFadeInUpVariants(60, 0.15);
@@ -52,38 +61,65 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [features.length]);
 
-  // 캐퍼시터 환경에서는 랜딩페이지 건너뛰기
+  // 🚨 Capacitor 환경: 즉시 리다이렉트 (로딩 완료 대기하지 않음)
   useEffect(() => {
-    // 로딩 중이거나 브라우저 환경이 아니면 대기
-    if (loading || typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !isCapacitor) return;
 
-    // Capacitor 환경 감지
-    const isCapacitor = window.location.protocol === 'capacitor:';
+    // 이미 리다이렉트했으면 중복 실행 방지
+    if (hasRedirected) return;
 
-    if (isCapacitor) {
-      console.log('📱 Capacitor 환경 감지 - 랜딩페이지 건너뛰기');
+    console.log('📱 Capacitor 환경 감지 - 랜딩 페이지 렌더링 차단');
 
-      // 이미 앱 내부 페이지에 있으면 리다이렉트하지 않음
-      const isInApp = pathname.startsWith('/second-brain') ||
-                      pathname.startsWith('/timeline') ||
-                      pathname.startsWith('/routine') ||
-                      pathname.startsWith('/settings');
+    // 이미 앱 내부 페이지에 있으면 리다이렉트하지 않음
+    const isInApp = pathname.startsWith('/second-brain') ||
+                    pathname.startsWith('/timeline') ||
+                    pathname.startsWith('/routine') ||
+                    pathname.startsWith('/settings') ||
+                    pathname.startsWith('/login');
 
-      if (isInApp) {
-        console.log('✅ 이미 앱 내부 페이지 - 리다이렉트 스킵:', pathname);
-        return;
-      }
+    if (isInApp) {
+      console.log('✅ 이미 앱 내부 페이지 - 리다이렉트 스킵:', pathname);
+      setHasRedirected(true);
+      return;
+    }
 
-      // 랜딩 페이지(/)나 로그인 페이지에서만 리다이렉트 실행
+    // 🔄 세션 만료 감지 (이전에 인증되었다가 비인증 상태로 변경)
+    const wasAuthenticated = prevAuthenticatedRef.current === true;
+    const isNowUnauthenticated = !loading && !isAuthenticated;
+
+    if (wasAuthenticated && isNowUnauthenticated) {
+      console.log('⚠️ 세션 만료 감지됨 - 로그인 페이지로 즉시 이동');
+      setHasRedirected(true);
+
+      // 토스트 메시지 표시
+      toast({
+        title: '세션이 만료되었습니다',
+        description: '보안을 위해 다시 로그인해주세요.',
+        variant: 'destructive',
+        duration: 3000,
+      });
+
+      // 즉시 로그인 페이지로 이동
+      router.replace('/login');
+      return;
+    }
+
+    // 이전 인증 상태 업데이트
+    prevAuthenticatedRef.current = isAuthenticated;
+
+    // 로딩 완료 후 리다이렉트
+    if (!loading) {
+      setHasRedirected(true);
+
       if (isAuthenticated) {
-        console.log('✅ 인증됨 - 책임 페이지로 이동');
-        router.push('/second-brain/areas');
+        console.log('✅ 인증됨 - Areas 페이지로 즉시 이동');
+        router.replace('/second-brain/areas');
       } else {
-        console.log('❌ 비인증 - 로그인 페이지로 이동');
-        router.push('/login');
+        console.log('❌ 비인증 - 로그인 페이지로 즉시 이동');
+        router.replace('/login');
       }
     }
-  }, [isAuthenticated, loading, router, pathname]);
+  }, [isAuthenticated, loading, router, pathname, toast, isCapacitor, hasRedirected]);
 
   // "데스크톱에서 시작하기" 버튼 클릭 핸들러
   const handleGetStarted = () => {
@@ -100,7 +136,19 @@ export default function LandingPage() {
     alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
   };
 
-  // 로딩 중이면 로딩 화면 표시
+  // 🚨 Capacitor 환경: 랜딩 페이지 렌더링 차단 (빈 화면 또는 로딩만)
+  if (isCapacitor) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-base-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
+          <p className="text-lg text-base-content/70 font-medium">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 웹 환경: 로딩 중이면 로딩 화면 표시
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
