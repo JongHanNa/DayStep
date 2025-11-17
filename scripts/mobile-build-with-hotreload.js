@@ -77,6 +77,7 @@ function runMobileBuild() {
       'node scripts/build-mobile-routes.js backup && node scripts/build-mobile-routes.js mobile',
 
       // 개발 친화적 고성능 빌드 (디버깅 정보 보존)
+      // Note: NODE_ENV=production 유지 (export 모드 필수), 개발 DB는 .env.development.local에서 로드
       'NODE_OPTIONS="--max-old-space-size=4096" BUILD_TARGET=mobile npx next build --no-lint',
 
       // Capacitor 동기화 (sync 사용 - 디버깅에 필요한 설정들 포함)
