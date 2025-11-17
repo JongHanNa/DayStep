@@ -30,7 +30,7 @@
     "build:mobile:no-pods": "node scripts/setup-dev-ip.js && node scripts/build-mobile-routes.js backup && node scripts/build-mobile-routes.js mobile && cross-env NODE_ENV=development BUILD_TARGET=mobile npx next build && npm run mobile:copy && node scripts/build-mobile-routes.js restore",
     "build:web": "cross-env NODE_ENV=production BUILD_TARGET=web next build",
     "dev:web": "node scripts/setup-dev-ip.js && pkill -f \"next dev\" || true && cross-env NODE_ENV=development BUILD_TARGET=web npm run dev",
-    "preview:web": "node scripts/setup-dev-ip.js && cross-env NODE_ENV=production BUILD_TARGET=web NEXT_PUBLIC_SITE_URL=http://localhost:3000 npm run build && npm start",
+    "preview:web": "node scripts/setup-dev-ip.js && cross-env NODE_ENV=production PREVIEW_MODE=true BUILD_TARGET=web NEXT_PUBLIC_SITE_URL=http://localhost:3000 npm run build && npm start",
     "mobile:copy": "cd mobile && npx cap copy",
     "mobile:build": "npm run build:mobile",
     "mobile:sync": "cd mobile && npx cap sync",

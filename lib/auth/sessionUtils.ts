@@ -601,18 +601,21 @@ export const loadAppUser = async (
       }
     }
 
-    // 웹 환경에서는 일반적인 Supabase 클라이언트 사용
-    console.log('🌐 웹 환경 - Supabase 클라이언트로 사용자 정보 조회');
-    
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
+    // 웹 환경에서도 Defensive Programming 적용
+    console.log('🌐 웹 환경 - ensureUserExists로 사용자 정보 조회/생성');
 
-    if (userError) {
-      console.error('❌ 사용자 정보 조회 실패:', userError);
-      
+    // 🔥 Defensive Programming: ensureUserExists 사용
+    const { ensureUserExists } = await import('@/lib/supabase/users');
+
+    const userData = await ensureUserExists(
+      authUser.id,
+      authUser.email,
+      authUser.user_metadata?.name || authUser.user_metadata?.full_name
+    );
+
+    if (!userData) {
+      console.error('❌ 사용자 정보 조회/생성 실패');
+
       if (retryCount < maxRetries) {
         console.log(`🔄 재시도 중... (${retryCount + 1}/${maxRetries})`);
         return await loadAppUser(authUser, retryCount + 1);
@@ -885,18 +888,21 @@ export const loadAppUserFromSession = async (
       }
     }
 
-    // 공통: 사용자 정보 조회 및 AppUser 생성
+    // 공통: 사용자 정보 조회 및 AppUser 생성 (Defensive Programming 적용)
     try {
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
+      // 🔥 Defensive Programming: ensureUserExists 사용
+      const { ensureUserExists } = await import('@/lib/supabase/users');
 
-      if (userError) {
-        console.error('❌ TOKEN_REFRESHED에서 사용자 정보 조회 실패:', userError);
-        
-        // 사용자 정보 조회 실패 시 기본 AppUser 생성
+      const userData = await ensureUserExists(
+        authUser.id,
+        authUser.email,
+        authUser.user_metadata?.name || authUser.user_metadata?.full_name
+      );
+
+      if (!userData) {
+        console.error('❌ TOKEN_REFRESHED에서 사용자 정보 조회/생성 실패');
+
+        // 사용자 정보 조회/생성 실패 시 기본 AppUser 생성
         const fallbackAppUser = AppUser.fromDatabase({
           id: authUser.id,
           email: authUser.email,
@@ -904,7 +910,7 @@ export const loadAppUserFromSession = async (
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         } as any);
-        
+
         console.log('⚠️ TOKEN_REFRESHED에서 fallback AppUser 생성:', fallbackAppUser.name);
         return fallbackAppUser;
       }

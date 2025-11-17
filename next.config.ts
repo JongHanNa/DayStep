@@ -49,7 +49,8 @@ const nextConfig: NextConfig = {
   compiler: {
     // 프로덕션에서 console 자동 제거 (보안 및 성능 최적화)
     // 개발 환경에서는 모든 console 보존 (디버깅 필수)
-    removeConsole: process.env.NODE_ENV === 'production' ? {
+    // PREVIEW_MODE에서는 디버깅을 위해 모든 console 보존
+    removeConsole: (process.env.NODE_ENV === 'production' && !process.env.PREVIEW_MODE) ? {
       exclude: ['error', 'warn'],  // error/warn만 남기고 나머지 제거 (에러 추적용)
     } : false,
     // 모바일에서도 디버깅 정보 보존을 위한 설정
