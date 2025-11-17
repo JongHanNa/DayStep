@@ -38,7 +38,8 @@ npm run build:mobile:prod     # App Store 배포용 (프로덕션 DB)
 **환경 파일 분리**:
 - `.env.development` → 개발 DB (DayStep)
 - `.env.production` → 프로덕션 DB (DayStep Production)
-- `env-cmd`를 통한 자동 환경 전환
+- Next.js 자동 환경 로딩: `NODE_ENV`에 따라 자동 전환
+- `cross-env`로 환경 변수 설정 (크로스 플랫폼 호환)
 
 ## MCP 서버
 
