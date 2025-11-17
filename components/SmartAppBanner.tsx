@@ -9,7 +9,7 @@ interface SmartAppBannerProps {
 export const SmartAppBanner: React.FC<SmartAppBannerProps> = ({
   iosAppId = process.env.NEXT_PUBLIC_IOS_APP_ID,
   androidPackageName = process.env.NEXT_PUBLIC_ANDROID_PACKAGE_NAME,
-  siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daystep.app",
+  siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daystep.vercel.app",
 }) => {
   return (
     <>

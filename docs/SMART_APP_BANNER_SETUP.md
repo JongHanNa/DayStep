@@ -89,12 +89,12 @@ keytool -list -v -keystore release.keystore
 
 ### 1. Smart App Banner (iOS Safari)
 
-- iOS Safari에서 https://daystep.app 접속
+- iOS Safari에서 https://daystep.vercel.app 접속
 - 상단에 앱 배너가 표시되는지 확인
 
 ### 2. App Links 테스트
 
-- 앱이 설치된 상태에서 https://daystep.app/todos 링크 클릭
+- 앱이 설치된 상태에서 https://daystep.vercel.app/todos 링크 클릭
 - 앱이 자동으로 열리는지 확인
 
 ### 3. SmartCTA 컴포넌트 테스트
