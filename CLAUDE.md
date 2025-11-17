@@ -41,6 +41,13 @@ npm run build:mobile:prod     # App Store 배포용 (프로덕션 DB)
 - Next.js 자동 환경 로딩: `NODE_ENV`에 따라 자동 전환
 - `cross-env`로 환경 변수 설정 (크로스 플랫폼 호환)
 
+**Vercel 배포**:
+- ⚠️ Vercel은 `.env.production` 파일을 사용하지 않음
+- ✅ Vercel Dashboard → Settings → Environment Variables에서 설정
+- **Production**: main 브랜치 → 프로덕션 DB → `daystep.vercel.app`
+- **Preview**: develop/feature 브랜치 → 개발 DB → 자동 생성 URL
+- 📖 상세 가이드: `docs/VERCEL_DEPLOYMENT.md` 참조
+
 ## MCP 서버
 
 `.mcp.json` 참조:
