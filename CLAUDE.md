@@ -213,7 +213,7 @@ npm start                     # 프로덕션 서버
 - `supabaseWebViewHelper.ts` JWT 방식만
 - `supabase.from()` 직접 호출 금지
 - DB 필터링: 서버에서만 (클라이언트 중복 금지)
-- 스키마 검증: Supabase MCP로 확인
+- 스키마 검증: supabase dev mcp(개발 DB), supabase prod MCP(운영 DB)로 확인
 
 ### 상태 관리
 
