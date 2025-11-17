@@ -569,11 +569,17 @@ export const loadAppUser = async (
       }
       
       console.log('✅ 유효한 토큰 발견 - JWT 사용자 조회 진행');
-      
-      // JWT 토큰으로 사용자 조회 시도
-      const { valid, userData } = await testUserJWTAccess(authUser.id);
-      
-      if (valid && userData) {
+
+      // 🔥 Defensive Programming: ensureUserExists 사용
+      const { ensureUserExists } = await import('@/lib/supabase/users');
+
+      const userData = await ensureUserExists(
+        authUser.id,
+        authUser.email,
+        authUser.user_metadata?.name || authUser.user_metadata?.full_name
+      );
+
+      if (userData) {
         const appUser = AppUser.fromDatabase(userData);
         console.log('✅ JWT 방식으로 사용자 정보 로드 완료:', {
           appUserId: appUser.id,

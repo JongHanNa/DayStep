@@ -291,53 +291,26 @@ export const useAuthStore = createStore<AuthStoreState>(
     },
 
     /**
-     * 앱 사용자 정보 로드
+     * 앱 사용자 정보 로드 (Defensive Programming 적용)
      */
     loadAppUser: async (authUser: User) => {
       try {
-        // 데이터베이스에서 사용자 정보 조회
-        const { data: userData, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
+        // 🔥 Defensive Programming: ensureUserExists 사용
+        const { ensureUserExists } = await import('@/lib/supabase/users');
 
-        if (error && error.code !== "PGRST116") {
-          // PGRST116: 결과 없음
-          throw error;
-        }
+        const userData = await ensureUserExists(
+          authUser.id,
+          authUser.email,
+          authUser.user_metadata?.name || authUser.user_metadata?.full_name
+        );
 
         if (userData) {
-          // 기존 사용자
           const appUserEntity = AppUser.fromDatabase(userData);
           set((state: AuthStoreState) => {
             state.appUser = appUserEntity;
           });
         } else {
-          // 신규 사용자 생성
-          const newUserData = {
-            id: authUser.id,
-            email: authUser.email || "",
-            name:
-              authUser.user_metadata?.name ||
-              authUser.user_metadata?.full_name ||
-              null,
-          };
-
-          const { data: createdUser, error: createError } = await supabase
-            .from("users")
-            .insert([newUserData])
-            .select()
-            .single();
-
-          if (createError) {
-            throw createError;
-          }
-
-          const appUserEntity = AppUser.fromDatabase(createdUser);
-          set((state: AuthStoreState) => {
-            state.appUser = appUserEntity;
-          });
+          console.error('⚠️ 사용자 생성 실패 - fallback AppUser 미생성');
         }
       } catch (error) {
         console.error("앱 사용자 로드 오류:", error);
