@@ -14,6 +14,7 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 import { useModalStore } from '@/state/stores/modalStore';
 import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 // 추천 영역 프리셋 (온보딩 step-1과 동일)
 const AREA_PRESETS = [
@@ -50,6 +51,11 @@ export default function AreasPage() {
   // 추천 항목 추가 다이얼로그
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
   const [selectedPresets, setSelectedPresets] = useState<AreaPreset[]>([]);
+
+  // 📍 Capacitor: 마지막 방문 페이지 저장
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/areas');
+  }, []);
 
   useEffect(() => {
     if (appUser?.id) {

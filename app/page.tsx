@@ -22,6 +22,7 @@ import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
 import ScrollColorTransition from '@/components/landing/ScrollColorTransition';
 import { useToast } from '@/hooks/use-toast';
+import { getLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 // Hydration 오류 방지를 위해 ScrollProgressSection을 클라이언트 전용 렌더링
 const ScrollProgressSection = dynamic(
@@ -112,14 +113,59 @@ export default function LandingPage() {
       setHasRedirected(true);
 
       if (isAuthenticated) {
-        console.log('✅ 인증됨 - Areas 페이지로 즉시 이동');
-        router.replace('/second-brain/areas');
+        console.log('✅ 인증됨 - 마지막 방문 페이지 복원 시도');
+
+        // 🔄 마지막 방문 페이지 복원
+        getLastVisitedRoute()
+          .then((lastRoute) => {
+            if (lastRoute && lastRoute !== '/') {
+              console.log(`📍 마지막 방문 페이지로 복원: ${lastRoute}`);
+              router.replace(lastRoute);
+            } else {
+              console.log('📍 저장된 경로 없음 - 기본 Areas 페이지로 이동');
+              router.replace('/second-brain/areas');
+            }
+          })
+          .catch((error) => {
+            console.error('❌ 마지막 방문 페이지 복원 실패:', error);
+            // Fallback: 기본 페이지로 이동
+            router.replace('/second-brain/areas');
+          });
       } else {
         console.log('❌ 비인증 - 로그인 페이지로 즉시 이동');
         router.replace('/login');
       }
     }
   }, [isAuthenticated, loading, router, pathname, toast, isCapacitor, hasRedirected]);
+
+  // ⏱️ 15초 타임아웃 fallback (세션 복원 실패 대비)
+  useEffect(() => {
+    if (!isCapacitor) {
+      return;
+    }
+    if (hasRedirected) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      if (!hasRedirected && loading) {
+        console.warn('⚠️ 15초 타임아웃 - 세션 복원 실패로 추정, 강제 리다이렉트');
+        setHasRedirected(true);
+
+        toast({
+          title: '세션 복원 실패',
+          description: '기본 페이지로 이동합니다.',
+          variant: 'destructive',
+          duration: 3000,
+        });
+
+        // 강제로 기본 페이지로 이동
+        router.replace('/second-brain/areas');
+      }
+    }, 15000); // 15초
+
+    return () => clearTimeout(timeoutId);
+  }, [isCapacitor, hasRedirected, loading, router, toast]);
 
   // "데스크톱에서 시작하기" 버튼 클릭 핸들러
   const handleGetStarted = () => {

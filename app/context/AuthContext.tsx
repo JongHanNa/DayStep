@@ -16,6 +16,7 @@ import {
 } from '@/lib/auth/oauthHandlers';
 import { useCapacitorAutoTokenRefresh } from '@/lib/auth/useAutoTokenRefresh';
 import { useAuthStore } from '@/state/stores/authStore';
+import { clearLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 // 환경 감지 (실제 Capacitor 환경에서만 모바일로 감지)
 const isMobileEnvironment = (() => {
@@ -611,7 +612,7 @@ export function AuthProvider({
 
       // OAuth 세션 정리
       await clearOAuthSessions();
-      
+
       // localStorage 정리
       console.log('[Auth] Clearing localStorage...');
       const localStorageKeys = [
@@ -620,7 +621,7 @@ export function AuthProvider({
         'supabase.auth.token',
         'sb-simbmdvtiukdbjxeepic-auth-token'
       ];
-      
+
       localStorageKeys.forEach(key => {
         try {
           localStorage.removeItem(key);
@@ -629,7 +630,7 @@ export function AuthProvider({
           console.warn(`[Auth] Failed to remove localStorage key: ${key}`, e);
         }
       });
-      
+
       // 쿠키 정리
       try {
         document.cookie = 'kakao_temp_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
@@ -638,6 +639,9 @@ export function AuthProvider({
       } catch (cookieError) {
         console.warn('[Auth] Cookie clearing failed:', cookieError);
       }
+
+      // 📍 Capacitor: 마지막 방문 페이지 정보 삭제
+      await clearLastVisitedRoute();
 
     } catch (globalError) {
       console.error('[Auth] Sign out error:', globalError);

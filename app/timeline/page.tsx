@@ -10,10 +10,16 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { themeColors } from '@/lib/theme-colors';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 function TimelinePageContent() {
 
   const { isAuthenticated, loading, appUser } = useAuth();
+
+  // 📍 Capacitor: 마지막 방문 페이지 저장
+  useEffect(() => {
+    saveLastVisitedRoute('/timeline');
+  }, []);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isProcessingOAuth, setIsProcessingOAuth] = useState(false);
