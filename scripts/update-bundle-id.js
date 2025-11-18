@@ -27,11 +27,21 @@ function updateBundleId(bundleId) {
 
   // 모든 Build Configuration의 Bundle ID 수정
   let updateCount = 0;
+  let widgetCount = 0;
   Object.values(project.pbxXCBuildConfigurationSection())
     .filter(item => typeof item === 'object' && item.buildSettings)
     .forEach(item => {
       if (item.buildSettings.PRODUCT_BUNDLE_IDENTIFIER) {
-        item.buildSettings.PRODUCT_BUNDLE_IDENTIFIER = `"${bundleId}"`;
+        const productName = item.buildSettings.PRODUCT_NAME;
+
+        // Widget Extension은 접미사 추가
+        if (productName && productName.replace(/['"]/g, '').includes('Widget')) {
+          item.buildSettings.PRODUCT_BUNDLE_IDENTIFIER = `"${bundleId}.DayStepWidgetExtension"`;
+          widgetCount++;
+        } else {
+          // App Target은 기본 Bundle ID
+          item.buildSettings.PRODUCT_BUNDLE_IDENTIFIER = `"${bundleId}"`;
+        }
         updateCount++;
       }
     });
@@ -40,7 +50,10 @@ function updateBundleId(bundleId) {
   fs.writeFileSync(projectPath, project.writeSync());
 
   console.log(`✅ Bundle ID 업데이트 완료 (${updateCount}개 Configuration 수정)`);
-  console.log(`   → Bundle ID: ${bundleId}`);
+  console.log(`   → App Bundle ID: ${bundleId}`);
+  if (widgetCount > 0) {
+    console.log(`   → Widget Bundle ID: ${bundleId}.DayStepWidgetExtension (${widgetCount}개 Configuration)`);
+  }
 }
 
 // 스크립트 직접 실행 시
