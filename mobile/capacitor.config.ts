@@ -3,9 +3,15 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 import { KeyboardResize, KeyboardStyle } from '@capacitor/keyboard';
 
+// 빌드 환경에 따라 Bundle ID 자동 설정
+// CAPACITOR_ENV: build-mobile-dev.js → 'development', build-mobile-prod.js → 'production'
+const isDevelopment = process.env.CAPACITOR_ENV === 'development';
+const appId = isDevelopment ? "com.daystep.app.dev" : "com.daystep.app";
+const appName = isDevelopment ? "DevDayStep" : "DayStep";
+
 const config: CapacitorConfig & { packageClassList?: string[] } = {
-  appId: "com.daystep.app",
-  appName: "DayStep",
+  appId,
+  appName,
   webDir: "../out",
   // 🔇 로그 레벨 조정 (디버그 로그 간소화)
   loggingBehavior: "debug", // "debug" | "production" | "none"

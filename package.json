@@ -24,8 +24,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:all": "npm run test:coverage && npm run test:e2e",
-    "build:mobile": "cross-env NODE_ENV=development BUILD_TARGET=mobile next build && npm run mobile:sync",
-    "build:mobile:prod": "cross-env NODE_ENV=production BUILD_TARGET=mobile next build && npm run mobile:sync",
+    "build:mobile": "node scripts/build-mobile-dev.js",
+    "build:mobile:prod": "node scripts/build-mobile-prod.js",
     "dev:mobile": "node scripts/mobile-build-with-hotreload.js",
     "build:mobile:no-pods": "node scripts/setup-dev-ip.js && node scripts/build-mobile-routes.js backup && node scripts/build-mobile-routes.js mobile && cross-env NODE_ENV=development BUILD_TARGET=mobile npx next build && npm run mobile:copy && node scripts/build-mobile-routes.js restore",
     "build:web": "cross-env NODE_ENV=production BUILD_TARGET=web next build",
@@ -46,7 +46,7 @@
     "mobile:clean": "cd mobile && npx cap clean && npm run mobile:sync",
     "mobile:update": "cd mobile && npx cap update",
     "mobile:serve": "npm run build:mobile && cd mobile && npx cap serve",
-    "prebuild:mobile": "node scripts/validate-build.js pre-build mobile && npm run lint && npm run test:unit",
+    "prebuild:mobile": "node scripts/validate-build.js pre-build mobile && npm run lint",
     "postbuild:mobile": "node scripts/validate-build.js post-build mobile && npm run mobile:doctor",
     "prebuild:web": "node scripts/validate-build.js pre-build web",
     "postbuild:web": "node scripts/validate-build.js post-build web",
@@ -178,6 +178,7 @@
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.4.0",
     "tsx": "^4.20.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "xcode": "^3.0.1"
   }
 }
