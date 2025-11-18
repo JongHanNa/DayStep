@@ -489,9 +489,8 @@ body {
     }
     
     .safe-area-top {
-      padding-top: env(safe-area-inset-top);
-      /* iOS 상태바 기본 높이도 고려 */
-      padding-top: max(20px, env(safe-area-inset-top));
+      /* iOS 상태바(47px) + 안전 여백(5px) = 52px */
+      padding-top: max(52px, env(safe-area-inset-top));
     }
     
     .safe-area-bottom {

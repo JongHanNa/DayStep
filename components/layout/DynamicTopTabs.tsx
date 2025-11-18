@@ -56,7 +56,7 @@ export default function DynamicTopTabs({ groupType }: DynamicTopTabsProps) {
     >
       {/* 스크롤 가능한 탭 컨테이너 */}
       <div className="overflow-x-auto scrollbar-hide">
-        <nav className="flex gap-2 px-4 pt-3 pb-3 max-sm:pt-10 min-w-max">
+        <nav className="flex gap-2 px-4 pt-3 pb-3 max-sm:pt-[52px] min-w-max">
           {group.items.map((item) => {
             const Icon = item.icon;
             const isActive = activeItem?.id === item.id;
