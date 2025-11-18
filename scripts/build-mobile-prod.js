@@ -47,10 +47,10 @@ async function buildMobileProd() {
 
     console.log('\n✅ Capacitor sync 완료!');
 
-    // 4. Bundle Identifier 변경 (프로덕션용)
-    console.log('\n📝 Bundle Identifier 업데이트 중...\n');
+    // 4. Bundle Identifier 및 Display Name 변경 (프로덕션용)
+    console.log('\n📝 Bundle Identifier 및 Display Name 업데이트 중...\n');
     const { updateBundleId } = require('./update-bundle-id.js');
-    updateBundleId('com.daystep.app');
+    updateBundleId('com.daystep.app', 'DayStep');
 
   } catch (error) {
     console.error('\n❌ 빌드 실패:', error.message);
