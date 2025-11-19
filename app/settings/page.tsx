@@ -20,6 +20,7 @@ import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { SyncStatusIndicator } from '@/components/ui/pull-to-refresh';
 import { useContacts } from '@/lib/contacts/useContacts';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 function SettingsPageContent() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -27,6 +28,11 @@ function SettingsPageContent() {
   const { showDayStartGap, showPastGaps } = useTimelineViewStore();
   const { contacts, isAvailable } = useContacts();
   const router = useRouter();
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/settings');
+  }, []);
 
   // 클라이언트 사이드에서 인증 확인 (AuthGuard 대신)
   useEffect(() => {

@@ -95,7 +95,9 @@
     <array>
       <string>group.com.daystep.app</string>
     </array>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>CFBundleDisplayName</key>
-    <string>DayStep</string>
+    <string>DevDayStep</string>
   </dict>
 </plist>

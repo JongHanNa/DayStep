@@ -12,6 +12,7 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { updateInboxTodo, updateInboxNote } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, Edit3, X, Boxes } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -83,6 +84,11 @@ export default function InboxPage() {
     linkedAreaOrResource: '',
     isPinned: false,
   });
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/inbox');
+  }, []);
 
   useEffect(() => {
     if (appUser?.id) {

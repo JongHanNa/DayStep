@@ -23,6 +23,7 @@ import FAQSection from '@/components/landing/FAQSection';
 import ScrollColorTransition from '@/components/landing/ScrollColorTransition';
 import { useToast } from '@/hooks/use-toast';
 import { getLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
+import { useNavigationStore } from '@/state/stores/navigationStore';
 
 // Hydration 오류 방지를 위해 ScrollProgressSection을 클라이언트 전용 렌더링
 const ScrollProgressSection = dynamic(
@@ -35,6 +36,7 @@ export default function LandingPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
+  const { clearSelectedGroup } = useNavigationStore();
 
   // 🎯 Capacitor 환경에서는 즉시 리다이렉트 (랜딩 페이지 렌더링 차단)
   const isCapacitor = typeof window !== 'undefined' && window.location.protocol === 'capacitor:';
@@ -112,6 +114,9 @@ export default function LandingPage() {
     if (!loading) {
       setHasRedirected(true);
 
+      // 🔄 네비게이션 상태 초기화 (페이지 이동 전)
+      clearSelectedGroup();
+
       if (isAuthenticated) {
         console.log('✅ 인증됨 - 마지막 방문 페이지 복원 시도');
 
@@ -136,7 +141,7 @@ export default function LandingPage() {
         router.replace('/login');
       }
     }
-  }, [isAuthenticated, loading, router, pathname, toast, isCapacitor, hasRedirected]);
+  }, [isAuthenticated, loading, router, pathname, toast, isCapacitor, hasRedirected, clearSelectedGroup]);
 
   // ⏱️ 15초 타임아웃 fallback (세션 복원 실패 대비)
   useEffect(() => {

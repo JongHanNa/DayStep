@@ -426,12 +426,12 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev";
 				PRODUCT_NAME = "DayStep";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				INFOPLIST_KEY_CFBundleDisplayName = "DayStep";
+				INFOPLIST_KEY_CFBundleDisplayName = "DevDayStep";
 			};
 			name = Debug;
 		};
@@ -479,13 +479,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev";
 				PRODUCT_NAME = "DayStep";
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "DayStep";
+				INFOPLIST_KEY_CFBundleDisplayName = "DevDayStep";
 			};
 			name = Release;
 		};
@@ -500,7 +500,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				INFOPLIST_FILE = App/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "DayStep";
+				INFOPLIST_KEY_CFBundleDisplayName = "DevDayStep";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -508,7 +508,7 @@
 				);
 				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev";
 				PRODUCT_NAME = "DayStep";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OBJC_BRIDGING_HEADER = "App/App-Bridging-Header.h";
@@ -529,14 +529,14 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				INFOPLIST_FILE = App/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "DayStep";
+				INFOPLIST_KEY_CFBundleDisplayName = "DevDayStep";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev";
 				PRODUCT_NAME = "DayStep";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "App/App-Bridging-Header.h";
@@ -576,7 +576,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.DayStepWidgetExtension";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev.DayStepWidgetExtension";
 				PRODUCT_NAME = "DayStepWidget";
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
@@ -616,7 +616,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.DayStepWidgetExtension";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev.DayStepWidgetExtension";
 				PRODUCT_NAME = "DayStepWidget";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
