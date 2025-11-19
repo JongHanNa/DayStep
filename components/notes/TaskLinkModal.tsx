@@ -241,13 +241,21 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
     let currentDate = new Date(startDate);
 
     while (isBefore(currentDate, endDate) && instances.length < 60) { // 최대 60개 인스턴스
-      const dayOfWeek = currentDate.getDay();
-      // recurrence_days_of_week는 JSON 형태로 저장되어 있을 수 있음
-      const recurringDays = Array.isArray(todo.recurrence_days_of_week)
-        ? todo.recurrence_days_of_week as number[]
-        : [];
+      let shouldInclude = false;
 
-      if (recurringDays.includes(dayOfWeek)) {
+      if (todo.recurrence_pattern === 'daily') {
+        // daily 패턴은 모든 날짜 포함
+        shouldInclude = true;
+      } else {
+        // weekly 등 다른 패턴은 recurrence_days_of_week 확인
+        const dayOfWeek = currentDate.getDay();
+        const recurringDays = Array.isArray(todo.recurrence_days_of_week)
+          ? todo.recurrence_days_of_week as number[]
+          : [];
+        shouldInclude = recurringDays.includes(dayOfWeek);
+      }
+
+      if (shouldInclude) {
         instances.push(format(currentDate, 'yyyy-MM-dd'));
       }
 
