@@ -22,15 +22,11 @@ import {
   Hash,
   Repeat,
   Calendar,
-  ChevronDown,
-  ChevronUp,
-  CheckSquare,
 } from 'lucide-react';
 import TaskLinkModal from './TaskLinkModal';
 import { cn } from '@/lib/utils';
 import { useNoteStore, Note } from '@/state/stores/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { addTodoNote, removeTodoNote, getNoteTodos } from '@/lib/supabase/todo-notes';
 import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
@@ -136,11 +132,6 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
   const [showTemplateCreation, setShowTemplateCreation] = useState(false);
   const [processingTemplates, setProcessingTemplates] = useState<Set<string>>(new Set()); // 처리 중인 템플릿 ID들
   const [addedTemplates, setAddedTemplates] = useState<Set<string>>(new Set()); // 방금 추가된 템플릿 ID들
-
-  // 할일 연결 섹션 상태
-  const [isTodoSectionExpanded, setIsTodoSectionExpanded] = useState(false);
-  const [todoSearchQuery, setTodoSearchQuery] = useState('');
-  const [todoActiveTab, setTodoActiveTab] = useState<'normal' | 'recurring'>('normal');
 
 
   // 자동 저장 기능
@@ -367,9 +358,9 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
 
       // junction table에서 연결된 할일 가져오기
       try {
-        const linkedTodoIds = await getNoteTodos(note.id);
-        if (linkedTodoIds.length > 0) {
-          setSelectedTaskId(linkedTodoIds[0]); // 첫 번째 연결된 할일 사용
+        const linkedNotes = await getNotesByTaskId(note.id);
+        if (linkedNotes.length > 0) {
+          setSelectedTaskId(linkedNotes[0].id); // 첫 번째 연결된 할일 사용
         } else {
           setSelectedTaskId(null);
         }
@@ -1334,214 +1325,6 @@ const NoteSheet: React.FC<NoteSheetProps> = ({ open, onOpenChange }) => {
                     className="text-sm"
                     minHeight={600}
                   />
-
-                  {/* 할일 연결 섹션 */}
-                  {(() => {
-                    // 할일 목록 필터링
-                    const filteredTodos = todos.filter((todo) => {
-                      // 탭 필터링
-                      const isRecurring = todo.recurrencePattern && todo.recurrencePattern !== 'none';
-                      if (todoActiveTab === 'normal' && isRecurring) return false;
-                      if (todoActiveTab === 'recurring' && !isRecurring) return false;
-
-                      // 검색 필터링
-                      if (todoSearchQuery.trim()) {
-                        const query = todoSearchQuery.toLowerCase();
-                        return todo.title?.toLowerCase().includes(query);
-                      }
-
-                      return true;
-                    });
-
-                    // 할일 연결/해제 핸들러
-                    const handleToggleTodo = async (todoId: string) => {
-                      if (!currentEditingNote || !user?.id) return;
-
-                      try {
-                        if (selectedTaskId === todoId) {
-                          // 연결 해제
-                          const success = await removeTodoNote(todoId, currentEditingNote.id);
-                          if (success) {
-                            setSelectedTaskId(null);
-                            toast({
-                              title: '연결 해제 완료',
-                              description: '할일 연결이 해제되었습니다.',
-                            });
-                          } else {
-                            throw new Error('연결 해제 실패');
-                          }
-                        } else {
-                          // 기존 연결이 있으면 먼저 해제
-                          if (selectedTaskId) {
-                            await removeTodoNote(selectedTaskId, currentEditingNote.id);
-                          }
-
-                          // 새로운 할일 연결
-                          const success = await addTodoNote(todoId, currentEditingNote.id, user.id);
-                          if (success) {
-                            setSelectedTaskId(todoId);
-                            toast({
-                              title: '연결 완료',
-                              description: '할일이 연결되었습니다.',
-                            });
-                          } else {
-                            throw new Error('연결 실패');
-                          }
-                        }
-                      } catch (error) {
-                        console.error('할일 연결 변경 실패:', error);
-                        toast({
-                          title: '연결 실패',
-                          description: '할일 연결 변경에 실패했습니다.',
-                          variant: 'destructive',
-                        });
-                      }
-                    };
-
-                    // 축약 상태 렌더링
-                    if (!isTodoSectionExpanded) {
-                      return (
-                        <div className="my-4">
-                          <button
-                            type="button"
-                            onClick={() => setIsTodoSectionExpanded(true)}
-                            className="w-full p-3 rounded-lg bg-base-200 border border-base-300 hover:bg-base-300 transition-colors"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <CheckSquare className="h-5 w-5 text-blue-500" />
-                                <span className="text-lg font-semibold" style={{ color: '#666666' }}>
-                                  할일 {selectedTaskId ? '1' : '0'}개
-                                </span>
-                              </div>
-                              <ChevronDown className="h-5 w-5 text-base-content/50" />
-                            </div>
-                          </button>
-                        </div>
-                      );
-                    }
-
-                    // 확장 상태 렌더링
-                    return (
-                      <div className="my-4">
-                        {/* 헤더 */}
-                        <button
-                          type="button"
-                          onClick={() => setIsTodoSectionExpanded(false)}
-                          className="w-full p-3 rounded-t-lg bg-base-200 border border-base-300 hover:bg-base-300 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <CheckSquare className="h-5 w-5 text-blue-500" />
-                              <span className="text-lg font-semibold" style={{ color: '#666666' }}>
-                                할일 {selectedTaskId ? '1' : '0'}개
-                              </span>
-                            </div>
-                            <ChevronUp className="h-5 w-5 text-base-content/50" />
-                          </div>
-                        </button>
-
-                        {/* 확장된 내용 */}
-                        <div className="border border-t-0 border-base-300 rounded-b-lg bg-base-100">
-                          {/* 검색 입력창 */}
-                          <div className="p-3 border-b border-base-300">
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/50" />
-                              <input
-                                type="text"
-                                placeholder="할일 연결 또는 생성"
-                                value={todoSearchQuery}
-                                onChange={(e) => setTodoSearchQuery(e.target.value)}
-                                className="input input-bordered w-full pl-10"
-                              />
-                            </div>
-                          </div>
-
-                          {/* 탭 (일반 할일 / 반복 할일) */}
-                          <div className="flex border-b border-base-300">
-                            <button
-                              type="button"
-                              onClick={() => setTodoActiveTab('normal')}
-                              className={cn(
-                                'flex-1 py-3 text-sm font-medium transition-colors',
-                                todoActiveTab === 'normal'
-                                  ? 'text-primary border-b-2 border-primary'
-                                  : 'text-base-content/60 hover:text-base-content'
-                              )}
-                            >
-                              일반 할일
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setTodoActiveTab('recurring')}
-                              className={cn(
-                                'flex-1 py-3 text-sm font-medium transition-colors',
-                                todoActiveTab === 'recurring'
-                                  ? 'text-primary border-b-2 border-primary'
-                                  : 'text-base-content/60 hover:text-base-content'
-                              )}
-                            >
-                              반복 할일
-                            </button>
-                          </div>
-
-                          {/* 할일 목록 */}
-                          {filteredTodos.length > 0 ? (
-                            <div className="p-3 space-y-1 max-h-64 overflow-y-auto">
-                              {filteredTodos.map((todo) => {
-                                const isSelected = selectedTaskId === todo.id;
-                                const isRecurring = todo.recurrencePattern && todo.recurrencePattern !== 'none';
-
-                                return (
-                                  <label
-                                    key={todo.id}
-                                    className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
-                                  >
-                                    <input
-                                      type="radio"
-                                      name="todo-connection"
-                                      checked={isSelected}
-                                      onChange={() => handleToggleTodo(todo.id)}
-                                      className="radio radio-sm radio-primary"
-                                    />
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium">{todo.title}</span>
-                                        {isRecurring && (
-                                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                                            <Repeat className="h-3 w-3 mr-0.5" />
-                                            반복
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      {todo.startTime && (
-                                        <div className="flex items-center gap-1 mt-0.5 text-xs text-base-content/60">
-                                          <Clock className="h-3 w-3" />
-                                          {todo.scheduleType === 'anytime' && '날짜 미정'}
-                                          {todo.scheduleType === 'timed' &&
-                                            format(new Date(todo.startTime), 'M월 d일 HH:mm', { locale: ko })}
-                                          {todo.scheduleType === 'all_day' &&
-                                            format(new Date(todo.startTime), 'M월 d일', { locale: ko })}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="p-8 text-center text-base-content/50">
-                              {todoSearchQuery
-                                ? '검색 결과가 없습니다'
-                                : todoActiveTab === 'normal'
-                                ? '일반 할일이 없습니다'
-                                : '반복 할일이 없습니다'}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
                 </div>
           </div>
         </div>
