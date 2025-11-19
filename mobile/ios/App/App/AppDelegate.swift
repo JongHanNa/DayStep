@@ -12,6 +12,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // 알림 센터 델리게이트 설정
         UNUserNotificationCenter.current().delegate = self
 
+        // 🆕 Capacitor Console API 활성화 (WKWebView → Xcode 콘솔)
+        #if DEBUG
+        CAPLog.enableLogging = true
+        #endif
 
         return true
     }
