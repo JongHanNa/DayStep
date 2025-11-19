@@ -29,9 +29,22 @@ npm run preview:web           # 웹 프로덕션 미리보기
 
 **모바일**:
 ```bash
-npm run build:mobile          # TestFlight 배포용 (개발 DB)
-npm run build:mobile:prod     # App Store 배포용 (프로덕션 DB)
+npm run build:mobile          # TestFlight 내부 테스트용 (개발 DB)
+npm run build:mobile:prod     # App Store 배포용 또는 최종 TestFlight (프로덕션 DB)
 ```
+
+**Bundle Identifier 자동 설정**:
+- `mobile/capacitor.config.ts`에서 `NODE_ENV`에 따라 자동 분기
+- Development: `com.daystep.app.dev` (DevDayStep)
+- Production: `com.daystep.app` (DayStep)
+- 두 앱을 동시에 설치하여 비교 테스트 가능
+
+**TestFlight 배포 프로세스**:
+1. 빌드 실행: `npm run build:mobile` 또는 `npm run build:mobile:prod`
+2. Xcode 열기: `npx cap open ios`
+3. Archive 생성: Product → Archive (Any iOS Device 선택)
+4. App Store Connect 업로드: Distribute App → Upload
+5. TestFlight 설정: App Store Connect에서 테스터 추가
 
 ## 환경 설정
 
@@ -40,6 +53,13 @@ npm run build:mobile:prod     # App Store 배포용 (프로덕션 DB)
 - `.env.production` → 프로덕션 DB (DayStep Production)
 - Next.js 자동 환경 로딩: `NODE_ENV`에 따라 자동 전환
 - `cross-env`로 환경 변수 설정 (크로스 플랫폼 호환)
+
+**Vercel 배포**:
+- ⚠️ Vercel은 `.env.production` 파일을 사용하지 않음
+- ✅ Vercel Dashboard → Settings → Environment Variables에서 설정
+- **Production**: main 브랜치 → 프로덕션 DB → `daystep.vercel.app`
+- **Preview**: develop/feature 브랜치 → 개발 DB → 자동 생성 URL
+- 📖 상세 가이드: `docs/VERCEL_DEPLOYMENT.md` 참조
 
 ## MCP 서버
 

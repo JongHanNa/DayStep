@@ -13,6 +13,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 // 추천 자원 프리셋 (온보딩 step-2와 동일)
 const RESOURCE_PRESETS = [
@@ -49,6 +50,11 @@ export default function ResourcesPage() {
   // 추천 항목 추가 다이얼로그
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
   const [selectedPresets, setSelectedPresets] = useState<ResourcePreset[]>([]);
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/resources');
+  }, []);
 
   useEffect(() => {
     if (appUser?.id) {

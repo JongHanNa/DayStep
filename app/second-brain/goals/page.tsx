@@ -15,6 +15,7 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 export default function GoalsPage() {
   const { appUser } = useAuth();
@@ -40,6 +41,11 @@ export default function GoalsPage() {
   const [isCreatingGoal, setIsCreatingGoal] = useState(false);
 
   const { openModal, closeModal } = useModalStore();
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/goals');
+  }, []);
 
   useEffect(() => {
     if (appUser?.id) {

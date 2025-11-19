@@ -1,5 +1,5 @@
 import React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 // 모바일 빌드 호환성을 위해 layout에서는 force-dynamic 제거
@@ -24,6 +24,12 @@ import { STYLING, UI_LAYOUT } from "@/lib/constants";
 import { getTailwindClasses } from "@/lib/theme-colors";
 export const metadata: Metadata = {
   ...generateSEO({}),
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover', // iOS Safe Area 지원
 };
 
 // 쿠키 문제 해결을 위해 클라이언트 전용 인증으로 변경

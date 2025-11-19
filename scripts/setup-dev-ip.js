@@ -85,17 +85,17 @@ async function updateCapacitorConfigIP(currentIP) {
 }
 
 /**
- * .env.local 파일에 IP 주소 설정
+ * .env.development 파일에 IP 주소 설정
  */
 async function updateEnvFile(currentIP) {
   try {
-    const envPath = path.join(__dirname, '..', '.env.local');
-    
+    const envPath = path.join(__dirname, '..', '.env.development');
+
     try {
-      // 기존 .env.local 읽기
+      // 기존 .env.development 읽기
       const existingEnv = await fs.readFile(envPath, 'utf-8');
       const lines = existingEnv.split('\n');
-      
+
       // NEXT_PUBLIC_LOCAL_IP 라인 찾아서 교체
       let found = false;
       const updatedLines = lines.map(line => {
@@ -105,22 +105,28 @@ async function updateEnvFile(currentIP) {
         }
         return line;
       });
-      
-      // 없으면 추가
+
+      // 없으면 추가 (파일 끝에)
       if (!found) {
+        // 빈 줄이 있으면 그 위에, 없으면 마지막에 추가
+        const lastLine = updatedLines[updatedLines.length - 1];
+        if (lastLine !== '') {
+          updatedLines.push('');
+        }
+        updatedLines.push(`# 자동 생성된 로컬 IP 설정 (${new Date().toISOString()})`);
         updatedLines.push(`NEXT_PUBLIC_LOCAL_IP=${currentIP}`);
       }
-      
+
       await fs.writeFile(envPath, updatedLines.join('\n'));
-      
+
     } catch (error) {
-      // .env.local 파일이 없으면 새로 생성
-      const envContent = `# 자동 생성된 로컬 IP 설정 (${new Date().toISOString()})\nNEXT_PUBLIC_LOCAL_IP=${currentIP}\n`;
-      await fs.writeFile(envPath, envContent);
+      // .env.development 파일이 없으면 에러 (파일은 이미 존재해야 함)
+      console.error('🌐 .env.development 파일을 찾을 수 없습니다:', error);
+      throw new Error('.env.development 파일이 존재하지 않습니다. 프로젝트 설정을 확인하세요.');
     }
-    
-    console.log(`🌐 환경 변수 설정: NEXT_PUBLIC_LOCAL_IP=${currentIP}`);
-    
+
+    console.log(`🌐 환경 변수 설정: NEXT_PUBLIC_LOCAL_IP=${currentIP} (.env.development)`);
+
   } catch (error) {
     console.error('🌐 환경 변수 설정 오류:', error);
     throw error;

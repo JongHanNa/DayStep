@@ -15,6 +15,7 @@ import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { CreateProjectInput, UpdateProjectInput, Project } from '@/types/second-brain';
 import { Sheet } from 'react-modal-sheet';
 import { createModalConfig } from '@/lib/modal-config';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 export default function ProjectsPage() {
   const { appUser } = useAuth();
@@ -36,6 +37,11 @@ export default function ProjectsPage() {
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/projects');
+  }, []);
 
   useEffect(() => {
     if (appUser?.id) {

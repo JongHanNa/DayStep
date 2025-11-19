@@ -44,26 +44,26 @@ export function useAutoTokenRefresh(config: TokenRefreshConfig = {}) {
       refreshBeforeExpirySeconds
     });
 
-    // 토큰 갱신 함수 (effect 내부 정의)
-    const performTokenRefresh = async (): Promise<boolean> => {
+    // 토큰 갱신 함수 (effect 내부 정의) - 재시도 포함
+    const performTokenRefresh = async (retryCount = 0, maxRetries = 3): Promise<boolean> => {
       if (isRefreshingRef.current) {
         log('토큰 갱신이 이미 진행 중 - 중복 호출 무시');
         return false;
       }
 
       isRefreshingRef.current = true;
-      
+
       try {
-        log('토큰 갱신 시작');
-        
+        log(`토큰 갱신 시작 (시도 ${retryCount + 1}/${maxRetries + 1})`);
+
         // Capacitor 환경에서는 refreshSession 대신 저장된 refresh_token 사용
         let refreshResult;
-        
+
         if (isCapacitorEnvironment()) {
           try {
             const { Preferences } = await import('@capacitor/preferences');
             const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            
+
             if (value) {
               const storedSession = JSON.parse(value);
               if (storedSession.refresh_token) {
@@ -73,23 +73,45 @@ export function useAutoTokenRefresh(config: TokenRefreshConfig = {}) {
                 });
               } else {
                 log('토큰 갱신 실패 - Capacitor에 refresh_token 없음');
+                isRefreshingRef.current = false;
                 return false;
               }
             } else {
               log('토큰 갱신 실패 - Capacitor에 저장된 세션 없음');
+              isRefreshingRef.current = false;
               return false;
             }
           } catch (capacitorError) {
             log('Capacitor 세션 읽기 실패', capacitorError);
+            isRefreshingRef.current = false;
+
+            // 재시도 가능한 오류인 경우 재시도
+            if (retryCount < maxRetries) {
+              const waitTime = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+              log(`${waitTime}ms 후 재시도...`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+              isRefreshingRef.current = false; // 재시도 전 플래그 해제
+              return performTokenRefresh(retryCount + 1, maxRetries);
+            }
             return false;
           }
         } else {
           // 웹 환경에서는 기본 방식 사용
           refreshResult = await supabase.auth.refreshSession();
         }
-        
+
         if (refreshResult.error) {
           log('토큰 갱신 실패', { error: refreshResult.error.message });
+          isRefreshingRef.current = false;
+
+          // 네트워크 오류 등 재시도 가능한 오류인 경우 재시도
+          if (retryCount < maxRetries && isNetworkError(refreshResult.error)) {
+            const waitTime = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+            log(`네트워크 오류 감지 - ${waitTime}ms 후 재시도...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            isRefreshingRef.current = false; // 재시도 전 플래그 해제
+            return performTokenRefresh(retryCount + 1, maxRetries);
+          }
           return false;
         }
 
@@ -128,11 +150,30 @@ export function useAutoTokenRefresh(config: TokenRefreshConfig = {}) {
         }
       } catch (error) {
         log('토큰 갱신 중 예외 발생', error);
+        isRefreshingRef.current = false;
+
+        // 예외 발생 시에도 재시도
+        if (retryCount < maxRetries) {
+          const waitTime = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+          log(`예외 발생 - ${waitTime}ms 후 재시도...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          isRefreshingRef.current = false; // 재시도 전 플래그 해제
+          return performTokenRefresh(retryCount + 1, maxRetries);
+        }
       } finally {
         isRefreshingRef.current = false;
       }
 
       return false;
+    };
+
+    // 네트워크 오류인지 확인하는 헬퍼 함수
+    const isNetworkError = (error: any): boolean => {
+      const message = error?.message?.toLowerCase() || '';
+      return message.includes('network') ||
+             message.includes('fetch') ||
+             message.includes('timeout') ||
+             message.includes('connection');
     };
 
     // 토큰 만료 시점 기반 갱신 스케줄링 함수 (effect 내부 정의)

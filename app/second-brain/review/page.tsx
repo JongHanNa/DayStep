@@ -7,6 +7,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useReviewStore } from '@/lib/stores/reviewStore';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import EmptySection from '@/components/second-brain/review/EmptySection';
 import RefreshSection from '@/components/second-brain/review/RefreshSection';
 import AddSection from '@/components/second-brain/review/AddSection';
@@ -19,6 +20,11 @@ export default function ReviewPage() {
   const [expandedSection, setExpandedSection] = useState<'empty' | 'refresh' | 'add' | null>(
     'empty'
   );
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/review');
+  }, []);
 
   // 데이터 로드
   useEffect(() => {

@@ -6,6 +6,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
 import AreaResourceSubTabs, { type SubTabType } from '@/components/second-brain/notes/AreaResourceSubTabs';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
@@ -37,6 +38,11 @@ export default function NotesPage() {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/notes');
+  }, []);
 
   useEffect(() => {
     if (appUser?.id) {

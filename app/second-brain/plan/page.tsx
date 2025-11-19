@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { DndContext } from '@dnd-kit/core';
 import { useDndKit } from '@/hooks/useDndKit';
 import { format, isBefore, startOfDay, addDays } from 'date-fns';
@@ -114,6 +115,11 @@ export default function PlanPage() {
 
   // 목데이터 상태
   const [notes, setNotes] = useState(MOCK_NOTES);
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/plan');
+  }, []);
 
   // 초기 데이터 로드
   useEffect(() => {

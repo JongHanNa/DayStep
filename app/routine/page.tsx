@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, Target, Layers, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 // 탭 타입
 type TabType = 'responsibility' | 'resource' | 'goal';
@@ -181,6 +182,11 @@ export default function RoutinePage() {
     { id: 'resource', label: '자원', icon: Layers, color: '#3b82f6' },
     { id: 'goal', label: '목표', icon: Compass, color: '#22c55e' },
   ];
+
+  // 📍 Capacitor: 마지막 방문 페이지 저장
+  useEffect(() => {
+    saveLastVisitedRoute('/routine');
+  }, []);
 
   return (
     <AuthGuard requireAuth={true}>

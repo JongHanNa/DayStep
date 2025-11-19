@@ -47,12 +47,25 @@ const nextConfig: NextConfig = {
   
   // 성능 최적화 설정
   compiler: {
-    // 프로덕션에서 console 자동 제거 (보안 및 성능 최적화)
-    // 개발 환경에서는 모든 console 보존 (디버깅 필수)
-    // PREVIEW_MODE에서는 디버깅을 위해 모든 console 보존
-    removeConsole: (process.env.NODE_ENV === 'production' && !process.env.PREVIEW_MODE) ? {
-      exclude: ['error', 'warn'],  // error/warn만 남기고 나머지 제거 (에러 추적용)
-    } : false,
+    // 환경별 console 제어 전략
+    // - 개발 환경/프리뷰: 모든 console 보존 (디버깅 필수)
+    // - 웹 프로덕션: console.log 제거 (브라우저 콘솔 정리)
+    // - 모바일 프로덕션: 모든 console 보존 (Xcode/Android Studio 디버깅)
+    removeConsole: (() => {
+      // 개발 환경 또는 프리뷰 모드: 모든 console 보존
+      if (isDevelopment || process.env.PREVIEW_MODE) {
+        return false;
+      }
+
+      // 프로덕션 환경 분기
+      if (isMobileBuild) {
+        // 모바일 프로덕션: Xcode/Android Studio 디버깅을 위해 모든 console 보존
+        return false;
+      } else {
+        // 웹 프로덕션: error/warn만 남기고 나머지 제거 (console.log 포함)
+        return { exclude: ['error', 'warn'] };
+      }
+    })(),
     // 모바일에서도 디버깅 정보 보존을 위한 설정
     ...(isMobileBuild && {
       emotion: false, // 불필요한 CSS-in-JS 최적화 비활성화

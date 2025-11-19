@@ -49,7 +49,7 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
       { id: 'resources', label: '자원', icon: BookOpen, href: '/second-brain/resources' },
       { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
       { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/second-brain/projects' },
-      { id: 'routine', label: '루틴', icon: CheckSquare, href: '/routine' },
+      // { id: 'routine', label: '루틴', icon: CheckSquare, href: '/routine' }, // 임시로 숨김 (워크플로우 탭에서 접근 가능)
     ]
   },
   routine: {

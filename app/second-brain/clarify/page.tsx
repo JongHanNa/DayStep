@@ -10,6 +10,7 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { fetchInboxProjects, fetchInboxGoals } from '@/lib/supabase/inbox';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
 import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
@@ -63,6 +64,12 @@ export default function ClarifyPage() {
   const isDragging = useRef<boolean>(false);
 
   // ✅ 모든 useEffect를 조건문 위로 이동 (React Hooks 규칙 준수)
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/clarify');
+  }, []);
+
   useEffect(() => {
     if (!appUser?.id) return;  // ✅ 내부에서 appUser 체크
     loadInboxData();

@@ -8,6 +8,7 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { ChevronDown, Target, FolderKanban, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import {
   calculateDaysUntil,
   formatDaysRemaining,
@@ -206,6 +207,11 @@ export default function GoalCompassPage() {
   const { user } = useAuth();
   const { goals, fetchGoals } = useGoalStore();
   const { projects, fetchProjects } = useProjectStore();
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/goal-compass');
+  }, []);
 
   // 탭 상태
   const [ongoingGoalsTab, setOngoingGoalsTab] = useState<'quarter' | 'year'>('quarter');

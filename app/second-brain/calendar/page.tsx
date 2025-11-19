@@ -6,6 +6,7 @@ import { Calendar, Plus, Star } from 'lucide-react';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import WeeklyCalendar from '@/components/shared/WeeklyCalendar';
 import MonthlyCalendar from '@/components/calendar/MonthlyCalendar';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
@@ -96,6 +97,11 @@ export default function CalendarPage() {
     projectIds: [],
     noteIds: [],
   });
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/calendar');
+  }, []);
 
   // 데이터 로드
   useEffect(() => {

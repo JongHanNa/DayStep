@@ -12,6 +12,7 @@ import { Archive } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import ArchiveSection from '@/components/second-brain/ArchiveSection';
 import type { Goal, Project, AreaResource } from '@/types/second-brain';
+import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 export default function ArchivePage() {
   const { appUser } = useAuth();
@@ -20,6 +21,11 @@ export default function ArchivePage() {
   const { fetchArchivedAreasResources, updateArea, deleteArea } = useAreaStore();
   const { updateResource, deleteResource } = useResourceStore();
   const { fetchInboxItems, inboxItems } = useInboxStore();
+
+  // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
+  useEffect(() => {
+    saveLastVisitedRoute('/second-brain/archive');
+  }, []);
 
   // 아카이브 데이터
   const [pausedGoals, setPausedGoals] = useState<Goal[]>([]);
