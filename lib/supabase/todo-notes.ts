@@ -112,3 +112,38 @@ export async function getNoteTodos(noteId: string): Promise<string[]> {
     return [];
   }
 }
+
+/**
+ * Update all todo connections for a note (다대다 관계)
+ * @param noteId - Note ID
+ * @param todoIds - 연결할 할일 ID 배열 (여러 개 가능)
+ * @param userId - User ID (RLS 정책 필수)
+ */
+export async function updateNoteTodos(noteId: string, todoIds: string[], userId: string): Promise<boolean> {
+  try {
+    // 1. 기존 연결 모두 삭제
+    await fetchWithJWT(`/todo_notes?note_id=eq.${noteId}`, {
+      method: 'DELETE',
+    });
+
+    // 2. 새로운 연결 생성
+    if (todoIds.length > 0) {
+      // 배치 삽입을 위한 데이터 준비 (user_id 포함)
+      const insertData = todoIds.map((todoId) => ({
+        todo_id: todoId,
+        note_id: noteId,
+        user_id: userId,
+      }));
+
+      await fetchWithJWT('/todo_notes', {
+        method: 'POST',
+        body: JSON.stringify(insertData),
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating note todos:', error);
+    return false;
+  }
+}
