@@ -248,35 +248,16 @@ export default function CollapsibleTodoSection({
                 />
                 <span className="text-sm">반복 연결 - 각 반복 인스턴스마다 개별 노트 생성</span>
               </label>
-              <label className="flex items-start gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="recurrenceType"
                   value="instance"
                   checked={recurrenceType === 'instance'}
                   onChange={(e) => setRecurrenceType(e.target.value as 'instance')}
-                  className="radio radio-sm radio-primary mt-1"
+                  className="radio radio-sm radio-primary"
                 />
-                <div className="flex-1">
-                  <span className="text-sm block mb-2">특정 날짜 연결 - 선택한 반복 인스턴스에만 노트 연결</span>
-                  {recurrenceType === 'instance' && (
-                    <div className="relative">
-                      <DatePicker
-                        selected={selectedDate}
-                        onChange={(date) => setSelectedDate(date)}
-                        dateFormat="yyyy-MM-dd"
-                        placeholderText={selectedRecurringTodo ? "날짜 선택" : "먼저 반복 할일을 선택하세요"}
-                        className="input input-bordered input-sm w-full"
-                        locale={ko}
-                        includeDates={dateInstances.map(date => new Date(date))}
-                        minDate={dateInstances.length > 0 ? new Date(dateInstances[0]) : undefined}
-                        maxDate={dateInstances.length > 0 ? new Date(dateInstances[dateInstances.length - 1]) : undefined}
-                        disabled={!selectedRecurringTodo}
-                      />
-                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/50 pointer-events-none" />
-                    </div>
-                  )}
-                </div>
+                <span className="text-sm">특정 날짜 연결 - 선택한 반복 인스턴스에만 노트 연결</span>
               </label>
             </div>
           </div>
@@ -293,38 +274,71 @@ export default function CollapsibleTodoSection({
                 const isRecurring = todo.recurrence_pattern && todo.recurrence_pattern !== 'none';
 
                 return (
-                  <label
-                    key={todo.id}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={true}
-                      onChange={() => toggleTodo(todo.id, todo)}
-                      className="checkbox checkbox-sm"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{todo.title}</span>
-                        {isRecurring && (
-                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                            <Repeat className="h-3 w-3 mr-0.5" />
-                            반복
-                          </Badge>
+                  <div key={todo.id}>
+                    <label
+                      className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        onChange={() => toggleTodo(todo.id, todo)}
+                        className="checkbox checkbox-sm"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{todo.title}</span>
+                          {isRecurring && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                              <Repeat className="h-3 w-3 mr-0.5" />
+                              반복
+                            </Badge>
+                          )}
+                        </div>
+                        {todo.start_time && (
+                          <div className="flex items-center gap-1 mt-0.5 text-xs text-base-content/60">
+                            <Clock className="h-3 w-3" />
+                            {todo.schedule_type === 'anytime' && '날짜 미정'}
+                            {todo.schedule_type === 'timed' &&
+                              format(new Date(todo.start_time), 'M월 d일 HH:mm', { locale: ko })}
+                            {todo.schedule_type === 'all_day' &&
+                              format(new Date(todo.start_time), 'M월 d일', { locale: ko })}
+                          </div>
                         )}
                       </div>
-                      {todo.start_time && (
-                        <div className="flex items-center gap-1 mt-0.5 text-xs text-base-content/60">
-                          <Clock className="h-3 w-3" />
-                          {todo.schedule_type === 'anytime' && '날짜 미정'}
-                          {todo.schedule_type === 'timed' &&
-                            format(new Date(todo.start_time), 'M월 d일 HH:mm', { locale: ko })}
-                          {todo.schedule_type === 'all_day' &&
-                            format(new Date(todo.start_time), 'M월 d일', { locale: ko })}
+                    </label>
+
+                    {/* 특정 날짜 연결 선택 시 DatePicker 표시 */}
+                    {selectedRecurringTodo?.id === todo.id &&
+                     recurrenceType === 'instance' &&
+                     dateInstances.length > 0 && (
+                      <div className="px-2 pb-2 border-t border-base-300 mt-2">
+                        <div className="flex items-center gap-2 mb-3 mt-2">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          <p className="text-sm font-medium">연결할 날짜를 선택하세요</p>
                         </div>
-                      )}
-                    </div>
-                  </label>
+
+                        <DatePicker
+                          selected={selectedDate}
+                          onChange={(date) => setSelectedDate(date)}
+                          locale={ko}
+                          inline
+                          dateFormat="yyyy년 MM월 dd일"
+                          includeDates={dateInstances.map(d => new Date(d))}
+                          className="w-full"
+                        />
+
+                        {selectedDate && (
+                          <div className="mt-3 p-2 bg-primary/10 rounded-lg">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="text-primary">
+                                선택: {format(selectedDate, 'yyyy년 M월 d일 (E)', { locale: ko })}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -342,38 +356,71 @@ export default function CollapsibleTodoSection({
                 const isRecurring = todo.recurrence_pattern && todo.recurrence_pattern !== 'none';
 
                 return (
-                  <label
-                    key={todo.id}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={false}
-                      onChange={() => toggleTodo(todo.id, todo)}
-                      className="checkbox checkbox-sm"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{todo.title}</span>
-                        {isRecurring && (
-                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                            <Repeat className="h-3 w-3 mr-0.5" />
-                            반복
-                          </Badge>
+                  <div key={todo.id}>
+                    <label
+                      className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onChange={() => toggleTodo(todo.id, todo)}
+                        className="checkbox checkbox-sm"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{todo.title}</span>
+                          {isRecurring && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                              <Repeat className="h-3 w-3 mr-0.5" />
+                              반복
+                            </Badge>
+                          )}
+                        </div>
+                        {todo.start_time && (
+                          <div className="flex items-center gap-1 mt-0.5 text-xs text-base-content/60">
+                            <Clock className="h-3 w-3" />
+                            {todo.schedule_type === 'anytime' && '날짜 미정'}
+                            {todo.schedule_type === 'timed' &&
+                              format(new Date(todo.start_time), 'M월 d일 HH:mm', { locale: ko })}
+                            {todo.schedule_type === 'all_day' &&
+                              format(new Date(todo.start_time), 'M월 d일', { locale: ko })}
+                          </div>
                         )}
                       </div>
-                      {todo.start_time && (
-                        <div className="flex items-center gap-1 mt-0.5 text-xs text-base-content/60">
-                          <Clock className="h-3 w-3" />
-                          {todo.schedule_type === 'anytime' && '날짜 미정'}
-                          {todo.schedule_type === 'timed' &&
-                            format(new Date(todo.start_time), 'M월 d일 HH:mm', { locale: ko })}
-                          {todo.schedule_type === 'all_day' &&
-                            format(new Date(todo.start_time), 'M월 d일', { locale: ko })}
+                    </label>
+
+                    {/* 특정 날짜 연결 선택 시 DatePicker 표시 */}
+                    {selectedRecurringTodo?.id === todo.id &&
+                     recurrenceType === 'instance' &&
+                     dateInstances.length > 0 && (
+                      <div className="px-2 pb-2 border-t border-base-300 mt-2">
+                        <div className="flex items-center gap-2 mb-3 mt-2">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          <p className="text-sm font-medium">연결할 날짜를 선택하세요</p>
                         </div>
-                      )}
-                    </div>
-                  </label>
+
+                        <DatePicker
+                          selected={selectedDate}
+                          onChange={(date) => setSelectedDate(date)}
+                          locale={ko}
+                          inline
+                          dateFormat="yyyy년 MM월 dd일"
+                          includeDates={dateInstances.map(d => new Date(d))}
+                          className="w-full"
+                        />
+
+                        {selectedDate && (
+                          <div className="mt-3 p-2 bg-primary/10 rounded-lg">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="text-primary">
+                                선택: {format(selectedDate, 'yyyy년 M월 d일 (E)', { locale: ko })}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
