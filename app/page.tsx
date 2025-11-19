@@ -193,7 +193,7 @@ export default function LandingPage() {
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
-          <p className="text-lg text-base-content/70 font-medium">Capacitor 환경 로딩 중...</p>
+          <p className="text-lg text-base-content/70 font-medium">로딩 중...</p>
         </div>
       </div>
     );
@@ -205,7 +205,7 @@ export default function LandingPage() {
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
-          <p className="text-lg text-base-content/70 font-medium">웹 환경 로딩 중...</p>
+          <p className="text-lg text-base-content/70 font-medium">로딩 중...</p>
         </div>
       </div>
     );

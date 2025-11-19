@@ -38,7 +38,7 @@ export function LoadingSpinner({
       role="status"
       aria-label="로딩 중"
     >
-      <span className="sr-only">LoadingSpinner 로딩 중...</span>
+      <span className="sr-only">로딩 중...</span>
     </div>
   );
 }

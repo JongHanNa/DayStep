@@ -35,7 +35,7 @@ export function LoadingSkeleton({
       role="status"
       aria-label="콘텐츠 로딩 중"
     >
-      <span className="sr-only">LoadingSkeleton 로딩 중...</span>
+      <span className="sr-only">로딩 중...</span>
     </div>
   );
 }
