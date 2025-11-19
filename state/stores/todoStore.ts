@@ -287,6 +287,72 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
       },
 
+      // 전체 할일 조회 (날짜 범위 제한 없음) - notes 페이지용
+      fetchAllTodos: async () => {
+        set((state: TodoStoreState) => {
+          state.loading = true;
+          state.error = null;
+        });
+
+        try {
+          // Capacitor 백업 인증 패턴
+          let userId: string | null = null;
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+              userId = session.user.id;
+            }
+          } catch {}
+
+          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
+            const { Preferences } = await import('@capacitor/preferences');
+            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
+            if (value) {
+              userId = JSON.parse(value).user?.id;
+            }
+          }
+
+          if (!userId) {
+            throw new Error("사용자 인증이 필요합니다.");
+          }
+
+          // fetchAllTodosWithJWT로 전체 할일 조회 (날짜 필터링 없음)
+          const { fetchAllTodosWithJWT } = await import('@/lib/supabase/todos');
+          const todos = await fetchAllTodosWithJWT(userId);
+
+          set((state: TodoStoreState) => {
+            state.todos = todos;
+            state.loading = false;
+
+            // 반복 할일 그룹 재구성
+            const groups = new Map<string, Todo[]>();
+            todos.forEach((todo: Todo) => {
+              if (todo.parentTodoId) {
+                const existing = groups.get(todo.parentTodoId) || [];
+                existing.push(todo);
+                groups.set(todo.parentTodoId, existing);
+              }
+            });
+            state.recurringGroups = groups;
+
+            state.refreshStats();
+            updateLoadStateOnSuccess(set);
+
+            console.log("✅ fetchAllTodos 완료:", {
+              todosCount: todos.length,
+              recurringGroupsCount: groups.size,
+            });
+          });
+        } catch (error) {
+          set((state: TodoStoreState) => {
+            state.loading = false;
+            state.error = `전체 할일 조회에 실패했습니다: ${(error as Error).message}`;
+          });
+
+          throw error;
+        }
+      },
+
       fetchTodoById: async (id: string) => {
         return fetchTodoByIdAction(id);
       },

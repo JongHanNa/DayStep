@@ -5,6 +5,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useNoteTagStore } from '@/state/stores/noteTagStore';
+import { useTodoStore } from '@/state/stores/todoStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
@@ -33,11 +34,15 @@ export default function NotesPage() {
   const { appUser } = useAuth();
   const { notes, fetchNotes, updateNote, createNote } = useNoteStore();
   const { tags, loadAllTags } = useNoteTagStore();
+  const { todos: entityTodos, fetchAllTodos } = useTodoStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  // Entity Todo를 database Todo 형식으로 변환
+  const todos = entityTodos.map(todo => todo.toDatabase() as any);
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
   useEffect(() => {
@@ -48,8 +53,9 @@ export default function NotesPage() {
     if (appUser?.id) {
       fetchNotes(appUser.id);
       loadAllTags(appUser.id);
+      fetchAllTodos();
     }
-  }, [appUser?.id, fetchNotes, loadAllTags]);
+  }, [appUser?.id, fetchNotes, loadAllTags, fetchAllTodos]);
 
   // 탭별 노트 필터링
   const getFilteredNotes = (): Note[] => {
@@ -394,7 +400,7 @@ export default function NotesPage() {
             areas={[]}
             resources={[]}
             projects={[]}
-            todos={[]}
+            todos={todos}
             notes={notes}
             allTags={tags}
           />

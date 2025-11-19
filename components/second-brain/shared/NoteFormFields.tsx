@@ -4,6 +4,7 @@ import type { AreaResource as Area, AreaResource as Resource, Project, NoteCateg
 import type { Todo } from '@/types';
 import { Tag, FileText, FolderTree, StickyNote, Star } from 'lucide-react';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
+import CollapsibleTodoSection from './CollapsibleTodoSection';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
 
 /**
@@ -189,40 +190,6 @@ export default function NoteFormFields({
         </div>
       )}
 
-      {/* 할일 (다중 선택) */}
-      {todos.length > 0 && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <FileText className="h-5 w-5" style={{ color: '#808080' }} />
-            할일
-          </label>
-
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-            <div className="flex flex-wrap gap-2">
-              {todos.map((todo) => {
-                const isSelected = note.todoIds?.includes(todo.id);
-                return (
-                  <button
-                    key={todo.id}
-                    type="button"
-                    onClick={() => {
-                      const currentIds = note.todoIds || [];
-                      const newIds = isSelected
-                        ? currentIds.filter(id => id !== todo.id)
-                        : [...currentIds, todo.id];
-                      onChange({ ...note, todoIds: newIds });
-                    }}
-                    className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
-                  >
-                    {todo.title}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 연결된 노트 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (
         <CollapsibleNoteSection
@@ -296,6 +263,16 @@ export default function NoteFormFields({
           )}
         </div>
       </div>
+
+      {/* 할일 (다중 선택) */}
+      <CollapsibleTodoSection
+        selectedTodoIds={note.todoIds || []}
+        allTodos={todos}
+        onChange={(todoIds) => onChange({ ...note, todoIds })}
+        noteColor="#808080"
+        noteId={noteId}
+        userId={userId}
+      />
 
       {/* 고정하기 */}
       <div className="my-4">

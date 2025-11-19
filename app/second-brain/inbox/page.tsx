@@ -9,6 +9,7 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useTodoStore } from '@/state/stores/todoStore';
 import { updateInboxTodo, updateInboxNote } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
@@ -42,6 +43,10 @@ export default function InboxPage() {
   const { resources, fetchResources } = useResourceStore();
   const { projects, createProject } = useProjectStore();
   const { notes, fetchNotes, createNote } = useNoteStore();
+  const { todos: entityTodos, fetchTodosForCurrentView } = useTodoStore();
+
+  // Entity Todo를 database Todo 형식으로 변환
+  const todos = entityTodos.map(todo => todo.toDatabase() as any);
 
   const [activeTab, setActiveTab] = useState<'todo' | 'note'>('todo');
   const [isCreating, setIsCreating] = useState(false);
@@ -96,8 +101,9 @@ export default function InboxPage() {
       fetchAreas(appUser.id);
       fetchResources(appUser.id);
       fetchNotes(appUser.id);
+      fetchTodosForCurrentView();
     }
-  }, [appUser?.id, fetchInboxItems, fetchAreas, fetchResources, fetchNotes]);
+  }, [appUser?.id, fetchInboxItems, fetchAreas, fetchResources, fetchNotes, fetchTodosForCurrentView]);
 
   // 외부 클릭 시 스와이프된 카드 닫기
   useEffect(() => {
@@ -795,6 +801,7 @@ export default function InboxPage() {
         onChange={setNoteForm}
         areas={areas}
         resources={resources}
+        todos={todos}
         titlePlaceholder=""
         contentPlaceholder=""
       />
