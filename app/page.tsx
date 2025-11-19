@@ -73,7 +73,7 @@ export default function LandingPage() {
 
     console.log('📱 Capacitor 환경 감지 - 랜딩 페이지 렌더링 차단');
 
-    // 이미 앱 내부 페이지에 있으면 리다이렉트하지 않음
+    // 이미 앱 내부 페이지에 있으면 해당 페이지로 강제 리다이렉트
     const isInApp = pathname.startsWith('/second-brain') ||
                     pathname.startsWith('/timeline') ||
                     pathname.startsWith('/routine') ||
@@ -81,8 +81,9 @@ export default function LandingPage() {
                     pathname.startsWith('/login');
 
     if (isInApp) {
-      console.log('✅ 이미 앱 내부 페이지 - 리다이렉트 스킵:', pathname);
+      console.log('✅ 이미 앱 내부 페이지 - 강제 리다이렉트:', pathname);
       setHasRedirected(true);
+      router.replace(pathname); // 현재 pathname으로 강제 리다이렉트
       return;
     }
 
