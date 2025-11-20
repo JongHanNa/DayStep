@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { Edit, Trash2, X, Clock, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,10 +11,7 @@ import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import RecurringDeleteDialog from './RecurringDeleteDialog';
 import RecurringUpdateDialog from './RecurringUpdateDialog';
 import SimpleDeleteDialog from './SimpleDeleteDialog';
-import TodoBasicFields from './form/TodoBasicFields';
-import ScheduleSettings from './form/ScheduleSettings';
-import RecurrenceSettings from './form/RecurrenceSettings';
-import TodoMetadata from './form/TodoMetadata';
+import TodoFormContent from '@/components/todos/TodoFormContent';
 import { useElasticScroll } from '@/hooks/useElasticScroll';
 import { useTodoFormState } from '@/hooks/useTodoFormState';
 import { useTodoFormHandlers } from '@/hooks/useTodoFormHandlers';
@@ -22,6 +19,8 @@ import type { TodoFormModalProps } from '@/types/todoFormTypes';
 import { getColorById, isColorDark } from '@/lib/color-palette';
 import { isCapacitorEnvironment } from '@/lib/utils';
 import { createModalConfig } from '@/lib/modal-config';
+import { convertToTodoFormData, getTodoFormDataChanges } from '@/lib/todo-form-adapter';
+import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 
 const TodoFormModal: React.FC<TodoFormModalProps> = ({
   open,
@@ -92,6 +91,22 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
     }
     return undefined;
   }, [open, containerRef]);
+
+  // TodoFormData 변환 (useTodoFormState → TodoFormData)
+  const todoFormData = useMemo<TodoFormData>(() => convertToTodoFormData(values), [values]);
+
+  // TodoFormData 변경 핸들러 (TodoFormData → useTodoFormState actions)
+  const handleTodoFormChange = useCallback((updated: TodoFormData) => {
+    const changes = getTodoFormDataChanges(updated);
+
+    // 변경사항을 개별 상태로 업데이트
+    Object.entries(changes).forEach(([key, value]) => {
+      const setter = actions[`set${key.charAt(0).toUpperCase()}${key.slice(1)}` as keyof typeof actions];
+      if (setter && typeof setter === 'function') {
+        (setter as any)(value);
+      }
+    });
+  }, [actions]);
 
   // 터치 핸들러
   const handleTouchStart = useCallback((_e: React.TouchEvent) => {
@@ -217,67 +232,20 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
               onSubmit={handlers.handleSubmit}
               className="bg-white todo-form"
             >
-              {/* 아이콘 및 내용 입력 */}
-              <TodoMetadata
-                selectedIcon={values.selectedIcon}
-                content={values.content}
-                onIconSelectClick={() => uiState.setIconBrowserOpen(true)}
-                onContentChange={actions.setContent}
-                selectedColor={values.selectedColor}
-              />
-
-              {/* 기본 할일 필드 - 할일 내용은 TodoMetadata로 이동됨 */}
-              {/* <TodoBasicFields
-                content={values.content}
-                priority={values.priority}
-                onContentChange={actions.setContent}
-                onPriorityChange={actions.setPriority}
-              /> */}
-
-              {/* 스케줄 설정 - 아이콘/내용 영역 바로 아래로 이동 */}
-              <ScheduleSettings
-                scheduleType={values.scheduleType}
-                startDate={values.startDate}
-                startTime={values.startTime}
-                endDate={values.endDate}
-                endTime={values.endTime}
-                durationHours={values.durationHours}
-                durationMins={values.durationMins}
-                onScheduleTypeChange={handlers.handleScheduleTypeChange}
-                onStartDateChange={handlers.handleStartDateChange}
-                onStartTimeChange={handlers.handleStartTimeChange}
-                onDurationHoursChange={handlers.handleDurationHoursChange}
-                onDurationMinsChange={handlers.handleDurationMinsChange}
-                selectedColor={values.selectedColor}
-              />
-
-              {/* 출발 정보 설정 - 임시로 숨김 처리 */}
-              {/* <DepartureSettings
-                departureLocation={values.departureLocation}
-                departureDate={values.departureDate}
-                departureTime={values.departureTime}
-                onLocationChange={actions.setDepartureLocation}
-                onDateChange={actions.setDepartureDate}
-                onTimeChange={actions.setDepartureTime}
-                selectedColor={values.selectedColor}
-              /> */}
-
-              {/* 반복 설정 - 스케줄 설정 바로 아래 */}
-              <RecurrenceSettings
-                showRecurrenceSettings={values.showRecurrenceSettings}
-                recurrencePattern={values.recurrencePattern}
-                recurrenceInterval={values.recurrenceInterval}
-                recurrenceEndDate={values.recurrenceEndDate}
-                recurrenceCount={values.recurrenceCount}
-                recurrenceEndType={values.recurrenceEndType}
-                selectedDaysOfWeek={values.selectedDaysOfWeek}
-                onRecurrencePatternChange={handlers.handleRecurrencePatternChange}
-                onRecurrenceIntervalChange={actions.setRecurrenceInterval}
-                onRecurrenceEndDateChange={actions.setRecurrenceEndDate}
-                onRecurrenceCountChange={actions.setRecurrenceCount}
-                onRecurrenceEndTypeChange={actions.setRecurrenceEndType}
-                onDayOfWeekToggle={handlers.handleDayOfWeekToggle}
-                selectedColor={values.selectedColor}
+              {/* 공통 폼 콘텐츠 컴포넌트 사용 */}
+              <TodoFormContent
+                formData={todoFormData}
+                onChange={handleTodoFormChange}
+                // 타임라인에서는 명료화 표시
+                showClarification={true}
+                showNextActionStatus={false}
+                // 타임라인에서는 프로젝트/노트 연결 사용 안 함
+                showProjects={false}
+                // 타임라인에서는 하이라이트/완료 사용 안 함
+                showHighlight={false}
+                showCompleted={false}
+                // 일정 관련 필드는 모두 표시
+                showScheduledDate={true}
               />
 
               {/* 하단 여백을 위한 빈 공간 */}
@@ -366,15 +334,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
       />
     )}
 
-    {/* 아이콘 브라우저 모달 - Sheet 외부에 위치 */}
-    <EnhancedIconBrowserModal
-      open={uiState.iconBrowserOpen}
-      onClose={() => uiState.setIconBrowserOpen(false)}
-      onIconSelect={actions.setSelectedIcon}
-      selectedIcon={values.selectedIcon}
-      selectedColor={values.selectedColor}
-      onColorSelect={actions.setSelectedColor}
-    />
+    {/* 아이콘 브라우저 모달은 TodoFormContent 내부에서 처리됨 */}
     </>
   );
 };

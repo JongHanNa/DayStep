@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import TodoFormContent from '@/components/todos/TodoFormContent';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { useModalStore } from '@/state/stores/modalStore';
@@ -151,8 +152,8 @@ export default function TodoEditModal({
 
         {/* 콘텐츠 영역 */}
         <div className="flex-1 overflow-y-auto">
-          <TodoFormFields
-            todo={todo}
+          <TodoFormContent
+            formData={todo}
             onChange={onChange}
             titlePlaceholder={titlePlaceholder}
             clarificationPlaceholder={clarificationPlaceholder}
