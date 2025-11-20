@@ -235,7 +235,7 @@ export default function TodoFormFields({
             명료화
           </label>
 
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+          <div className="p-2 rounded-lg bg-white">
             <select
               value={todo.clarification || ''}
               onChange={(e) => {
@@ -277,7 +277,7 @@ export default function TodoFormFields({
             일정 유형
           </label>
 
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+          <div className="p-2 rounded-lg bg-white">
             <select
               value={todo.scheduleType || 'anytime'}
               onChange={(e) => {
@@ -368,7 +368,7 @@ export default function TodoFormFields({
               날짜
             </label>
 
-            <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+            <div className="p-2 rounded-lg bg-white">
               <input
                 type="date"
                 value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
@@ -391,7 +391,7 @@ export default function TodoFormFields({
                 시작 시간
               </label>
 
-              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+              <div className="p-2 rounded-lg bg-white">
                 <input
                   type="time"
                   value={todo.startTime || '09:00'}
@@ -411,7 +411,7 @@ export default function TodoFormFields({
                   종료 날짜
                 </label>
 
-                <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                <div className="p-2 rounded-lg bg-white">
                   <input
                     type="date"
                     value={todo.endDate ? format(todo.endDate, 'yyyy-MM-dd') : ''}
@@ -434,7 +434,7 @@ export default function TodoFormFields({
                     종료 시간
                   </label>
 
-                  <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                  <div className="p-2 rounded-lg bg-white">
                     <input
                       type="time"
                       value={todo.endTime || '18:00'}
