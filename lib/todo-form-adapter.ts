@@ -8,12 +8,23 @@
 
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import type { TodoFormStateValues } from '@/hooks/useTodoFormState';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 
 /**
  * TodoFormStateValues → TodoFormData 변환
  */
 export function convertToTodoFormData(values: TodoFormStateValues): TodoFormData {
+  // 날짜 변환 (시간대 안전)
+  const scheduledDate = values.startDate ? new Date(`${values.startDate}T00:00:00`) : undefined;
+  const endDate = values.endDate ? new Date(`${values.endDate}T00:00:00`) : undefined;
+  const recurrenceEndDate = values.recurrenceEndDate ? new Date(`${values.recurrenceEndDate}T00:00:00`) : undefined;
+
+  console.log('🔍 [ADAPTER] endDate 변환:', {
+    input: values.endDate,
+    parsed: endDate,
+    output: endDate ? format(endDate, 'yyyy-MM-dd') : undefined
+  });
+
   return {
     title: values.content,
     icon: values.selectedIcon,
@@ -25,10 +36,10 @@ export function convertToTodoFormData(values: TodoFormStateValues): TodoFormData
 
     // 스케줄 관련 (time_unscheduled는 timed로 변환)
     scheduleType: values.scheduleType === 'time_unscheduled' ? 'timed' : values.scheduleType,
-    scheduledDate: values.startDate ? parse(values.startDate, 'yyyy-MM-dd', new Date()) : undefined,
+    scheduledDate,
     includeTime: values.scheduleType === 'timed',
     startTime: values.startTime || undefined,
-    endDate: values.endDate ? parse(values.endDate, 'yyyy-MM-dd', new Date()) : undefined,
+    endDate,
     endTime: values.endTime || undefined,
     includeEndDate: !!values.endDate,
 
@@ -39,7 +50,7 @@ export function convertToTodoFormData(values: TodoFormStateValues): TodoFormData
     recurrencePattern: values.recurrencePattern,
     recurrenceInterval: values.recurrenceInterval,
     recurrenceEndType: values.recurrenceEndType,
-    recurrenceEndDate: values.recurrenceEndDate ? parse(values.recurrenceEndDate, 'yyyy-MM-dd', new Date()) : undefined,
+    recurrenceEndDate,
     recurrenceCount: values.recurrenceCount,
     selectedDaysOfWeek: values.selectedDaysOfWeek,
 

@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { format, addMinutes, addDays } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import type { Todo, ScheduleType, RecurrencePattern } from '@/types';
 import { UnifiedIconKey } from '@/lib/icon-collection';
 import { DEFAULT_COLOR, getColorByHex, getColorById } from '@/lib/color-palette';
@@ -208,24 +209,37 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     
     // 시간 설정
     if (todo.start_time) {
-      const startTime = new Date(todo.start_time);
-      setStartDate(format(startTime, 'yyyy-MM-dd'));
-      
+      // UTC → 한국시간 변환
+      const startTimeUTC = new Date(todo.start_time);
+      const startTimeKST = toZonedTime(startTimeUTC, 'Asia/Seoul');
+      setStartDate(format(startTimeKST, 'yyyy-MM-dd'));
+
       // 시간 정보가 있으면 timed 모드로 처리
       if (hasTimeInfo) {
-        const formattedStartTime = validateAndFormatTime(format(startTime, 'HH:mm'));
+        const formattedStartTime = validateAndFormatTime(format(startTimeKST, 'HH:mm'));
         setStartTime(formattedStartTime);
       }
-      
+
       if (todo.end_time) {
-        const endTime = new Date(todo.end_time);
-        setEndDate(format(endTime, 'yyyy-MM-dd'));
+        // UTC → 한국시간 변환
+        const endTimeUTC = new Date(todo.end_time);
+        const endTimeKST = toZonedTime(endTimeUTC, 'Asia/Seoul');
+        const formattedEndDate = format(endTimeKST, 'yyyy-MM-dd');
+        setEndDate(formattedEndDate);
+
+        console.log('🔍 [DEBUG] endDate 설정:', {
+          db_end_time: todo.end_time,
+          kst_date: formattedEndDate,
+          kst_time: format(endTimeKST, 'HH:mm'),
+          endDate_state: formattedEndDate
+        });
+
         if (hasTimeInfo) {
-          const formattedEndTime = validateAndFormatTime(format(endTime, 'HH:mm'));
+          const formattedEndTime = validateAndFormatTime(format(endTimeKST, 'HH:mm'));
           setEndTime(formattedEndTime);
-          
+
           // 시간 간격(duration) 계산
-          const durationMs = endTime.getTime() - startTime.getTime();
+          const durationMs = endTimeKST.getTime() - startTimeKST.getTime();
           const durationMinutes = Math.round(durationMs / (1000 * 60)); // 밀리초를 분으로 변환
           const hours = Math.floor(durationMinutes / 60);
           const mins = durationMinutes % 60;
@@ -265,10 +279,12 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     setDepartureLocation(todo.departure_location || '');
     if (todo.departure_time) {
       try {
-        const departureTime = new Date(todo.departure_time);
-        if (!isNaN(departureTime.getTime())) {
-          const formattedDate = format(departureTime, 'yyyy-MM-dd');
-          const formattedTime = validateAndFormatTime(format(departureTime, 'HH:mm'));
+        // UTC → 한국시간 변환
+        const departureTimeUTC = new Date(todo.departure_time);
+        if (!isNaN(departureTimeUTC.getTime())) {
+          const departureTimeKST = toZonedTime(departureTimeUTC, 'Asia/Seoul');
+          const formattedDate = format(departureTimeKST, 'yyyy-MM-dd');
+          const formattedTime = validateAndFormatTime(format(departureTimeKST, 'HH:mm'));
 
           console.log('🔥🔥🔥 [DEBUG] 출발 정보 설정 완료:', {
             원본시간: todo.departure_time,

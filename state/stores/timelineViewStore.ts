@@ -794,9 +794,19 @@ export const useTimelineViewStore = create<TimelineViewState>()(
                 
               const safeEndTime = endTime ? (endTime instanceof Date ? endTime : new Date(endTime)) : undefined;
               const finalEndTime = (safeEndTime && !isRecurrenceInstance && isUtcFormat(todo.end_time || ''))
-                ? convertUtcToKst(safeEndTime) 
+                ? convertUtcToKst(safeEndTime)
                 : safeEndTime;
-              
+
+              console.log('🔍 [TIMELINE-STORE] 할일 로드:', {
+                id: todo.id,
+                title: todo.title,
+                isRecurrenceInstance,
+                db_start_time: todo.start_time,
+                db_end_time: todo.end_time,
+                finalStartTime: finalStartTime.toISOString(),
+                finalEndTime: finalEndTime?.toISOString()
+              });
+
               // 타임라인 아이템 생성
               const timelineItem: TimelineItem = {
                 id: `todo-${todo.id}`,
