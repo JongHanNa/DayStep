@@ -73,20 +73,6 @@ export default function LandingPage() {
 
     console.log('📱 Capacitor 환경 감지 - 랜딩 페이지 렌더링 차단');
 
-    // 이미 앱 내부 페이지에 있으면 해당 페이지로 강제 리다이렉트
-    const isInApp = pathname.startsWith('/second-brain') ||
-                    pathname.startsWith('/timeline') ||
-                    pathname.startsWith('/routine') ||
-                    pathname.startsWith('/settings') ||
-                    pathname.startsWith('/login');
-
-    if (isInApp) {
-      console.log('✅ 이미 앱 내부 페이지 - 강제 리다이렉트:', pathname);
-      setHasRedirected(true);
-      router.replace(pathname); // 현재 pathname으로 강제 리다이렉트
-      return;
-    }
-
     // 🔄 세션 만료 감지 (이전에 인증되었다가 비인증 상태로 변경)
     const wasAuthenticated = prevAuthenticatedRef.current === true;
     const isNowUnauthenticated = !loading && !isAuthenticated;
@@ -188,8 +174,30 @@ export default function LandingPage() {
     alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
   };
 
-  // 🚨 Capacitor 환경: 랜딩 페이지 렌더링 차단 (빈 화면 또는 로딩만)
+  // 🚨 Capacitor 환경: 마지막 방문 페이지 복원 시도 → 실패 시 책임 페이지로
   if (isCapacitor) {
+    if (!hasRedirected) {
+      setHasRedirected(true);
+
+      // 마지막 방문 페이지 복원 시도
+      getLastVisitedRoute()
+        .then((lastRoute) => {
+          if (lastRoute && lastRoute !== '/') {
+            console.log(`📍 마지막 방문 페이지로 복원: ${lastRoute}`);
+            router.replace(lastRoute);
+          } else {
+            console.log('📍 저장된 경로 없음 - 책임 페이지로 이동');
+            router.replace('/second-brain/areas');
+          }
+        })
+        .catch((error) => {
+          console.error('❌ 마지막 방문 페이지 복원 실패:', error);
+          // Fallback: 책임 페이지로 이동
+          router.replace('/second-brain/areas');
+        });
+    }
+
+    // 리다이렉트 완료될 때까지 로딩 화면 표시
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
