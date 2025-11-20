@@ -17,7 +17,6 @@ import { FontProvider } from "@/components/providers/FontProvider";
 import { Toaster } from "sonner";
 import { RealtimeSyncProvider } from "@/components/providers/RealtimeSyncProvider";
 import { ReminderProvider } from "@/components/providers/ReminderProvider";
-import { MotivationProvider } from "@/components/providers/MotivationProvider";
 import { NoteTagProvider } from "@/components/providers/NoteTagProvider";
 import { AppLifecycleHandler } from "@/components/providers/AppLifecycleHandler";
 import { STYLING, UI_LAYOUT } from "@/lib/constants";
@@ -53,38 +52,36 @@ export default function RootLayout({
           <FontProvider>
             <AuthProvider initialAuth={initialAuth}>
               <AppLifecycleHandler />
-              <MotivationProvider>
-                <NoteTagProvider>
-                  <RealtimeSyncProvider>
-                    <ReminderProvider>
-                    {/* <Navigation /> */}
-                    <TopNavWrapper />
-                    <main
-                      className={`scrollbar-hide ${safeAreaBackground} ${darkSafeArea} pb-16`}
-                      style={{ paddingTop: 'var(--top-tabs-height, 0px)' }}
-                    >
-                      {children}
-                    </main>
-                    <SecondBrainBottomNav />
-                    <Toaster
-                  position="top-right"
-                  richColors
-                  offset={UI_LAYOUT.TOAST_OFFSET}
-                  toastOptions={{
-                    style: {
-                      fontSize: STYLING.TOAST_FONT_SIZE,
-                      padding: STYLING.TOAST_PADDING,
-                      minHeight: `${STYLING.TOAST_MIN_HEIGHT}px`,
-                      borderRadius: `${STYLING.TOAST_BORDER_RADIUS}px`,
-                      boxShadow: STYLING.TOAST_BOX_SHADOW,
-                    },
-                    className: STYLING.MOBILE_TOAST_CLASS,
-                  }}
-                    />
-                    </ReminderProvider>
-                  </RealtimeSyncProvider>
-                </NoteTagProvider>
-              </MotivationProvider>
+              <NoteTagProvider>
+                <RealtimeSyncProvider>
+                  <ReminderProvider>
+                  {/* <Navigation /> */}
+                  <TopNavWrapper />
+                  <main
+                    className={`scrollbar-hide ${safeAreaBackground} ${darkSafeArea} pb-16`}
+                    style={{ paddingTop: 'var(--top-tabs-height, 0px)' }}
+                  >
+                    {children}
+                  </main>
+                  <SecondBrainBottomNav />
+                  <Toaster
+                position="top-right"
+                richColors
+                offset={UI_LAYOUT.TOAST_OFFSET}
+                toastOptions={{
+                  style: {
+                    fontSize: STYLING.TOAST_FONT_SIZE,
+                    padding: STYLING.TOAST_PADDING,
+                    minHeight: `${STYLING.TOAST_MIN_HEIGHT}px`,
+                    borderRadius: `${STYLING.TOAST_BORDER_RADIUS}px`,
+                    boxShadow: STYLING.TOAST_BOX_SHADOW,
+                  },
+                  className: STYLING.MOBILE_TOAST_CLASS,
+                }}
+                  />
+                  </ReminderProvider>
+                </RealtimeSyncProvider>
+              </NoteTagProvider>
               </AuthProvider>
             </FontProvider>
           </ThemeProvider>

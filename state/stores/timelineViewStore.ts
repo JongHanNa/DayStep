@@ -77,9 +77,6 @@ interface TimelineViewState {
   currentDate: Date;
   selectedDate: Date | null;
 
-  // View style - 타임라인 비주얼 스타일
-  viewStyle: 'modern' | 'bubble'; // modern: 기존 스타일, bubble: 버블 스타일
-
   // Data
   items: TimelineItem[];
   isLoading: boolean;
@@ -111,8 +108,6 @@ interface TimelineViewState {
   // Actions
   setViewMode: (mode: TimelineViewMode) => void;
   setCurrentDate: (date: Date) => void;
-  setViewStyle: (style: 'modern' | 'bubble') => void; // 뷰 스타일 전환
-  toggleViewStyle: () => void; // 뷰 스타일 토글
   navigateNext: () => void;
   navigatePrevious: () => void;
   navigateToToday: () => void;
@@ -203,7 +198,6 @@ export const useTimelineViewStore = create<TimelineViewState>()(
         viewMode: 'daily',
         currentDate: getKSTCurrentDate(), // KST 기준 현재 날짜
         selectedDate: null,
-        viewStyle: 'bubble', // 기본값: 버블 스타일
         items: [],
         isLoading: false,
         error: null,
@@ -247,14 +241,6 @@ export const useTimelineViewStore = create<TimelineViewState>()(
         setCurrentDate: (date) => set((state) => {
           state.currentDate = date;
           state.computeViewData();
-        }),
-
-        setViewStyle: (style) => set((state) => {
-          state.viewStyle = style;
-        }),
-
-        toggleViewStyle: () => set((state) => {
-          state.viewStyle = state.viewStyle === 'modern' ? 'bubble' : 'modern';
         }),
 
         navigateNext: () => {

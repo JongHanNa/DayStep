@@ -123,25 +123,6 @@ export {
 } from './memo-tag-templates';
 
 // ================================
-// 동기부여 시스템
-// ================================
-export * from './motivation';
-
-export {
-  createUserMotivationMessageWithJWT,
-  updateUserMotivationMessageWithJWT,
-  deleteUserMotivationMessageWithJWT,
-  fetchUserMotivationMessagesWithJWT,
-  linkMotivationToTodoWithJWT,
-  unlinkMotivationFromTodoWithJWT,
-  unlinkAllMotivationsFromTodoWithJWT,
-  fetchTodoMotivationsWithJWT,
-  fetchMotivationTodosWithJWT,
-  fetchTodoMotivationWithJWT,
-  fetchAllTodoMotivationLinksWithJWT
-} from './motivation';
-
-// ================================
 // Second Brain System
 // ================================
 export * from './areas-resources';

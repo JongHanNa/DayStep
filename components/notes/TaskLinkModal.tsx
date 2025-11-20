@@ -53,7 +53,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(currentLinkedTaskId || null);
   const [selectedDate, setSelectedDate] = useState<string | null>(currentLinkedDate || null);
   const [activeTab, setActiveTab] = useState<'regular' | 'recurring'>('regular');
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useState<any[]>([]); // DB 형태(snake_case)로 저장
   const [loading, setLoading] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<'single' | 'recurring' | 'instance'>('single');
   
@@ -117,8 +117,14 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
 
         console.log('📋 할일 목록 조회 시작:', { userId });
         const allTodos = await fetchAllTodosWithJWT(userId);
-        console.log('✅ 할일 목록 조회 완료:', { todosCount: allTodos.length, todos: allTodos });
-        setTodos(allTodos);
+
+        // Entity 객체를 DB 형태(snake_case)로 변환
+        const dbTodos = allTodos.map((todo: any) =>
+          typeof todo.toDatabase === 'function' ? todo.toDatabase() : todo
+        );
+
+        console.log('✅ 할일 목록 조회 완료:', { todosCount: dbTodos.length, todos: dbTodos });
+        setTodos(dbTodos);
       } catch (error) {
         console.error('❌ 할일 목록 조회 실패:', error);
       } finally {
@@ -192,9 +198,20 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
     }
   };
 
+  // 디버깅: 실제 데이터 구조 확인
+  console.log('🔍 필터링 디버깅:', todos.slice(0, 3).map(t => ({
+    id: t.id,
+    title: t.title,
+    recurrence_pattern: t.recurrence_pattern,
+    activeTab
+  })));
+
   const filteredTodos = todos.filter(todo => {
-    // 반복 할일 여부 확인: recurrence_pattern이 'none'이 아니거나 null이 아닌 경우
-    const isRecurring = todo.recurrence_pattern && todo.recurrence_pattern !== 'none';
+    // 반복 할일 여부 확인: DB 형태(snake_case) 사용
+    const recurrencePattern = todo.recurrence_pattern;
+    const isRecurring = recurrencePattern !== 'none' &&
+                        recurrencePattern !== null &&
+                        recurrencePattern !== undefined;
 
     if (activeTab === 'regular' && isRecurring) return false;
     if (activeTab === 'recurring' && !isRecurring) return false;
@@ -206,8 +223,11 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
 
   // 반복 할일의 날짜 인스턴스 생성 (과거 30일 ~ 미래 30일)
   const generateDateInstances = (todo: Todo): string[] => {
-    // 반복 할일 여부 확인: recurrence_pattern이 'none'이 아니거나 null이 아닌 경우
-    const isRecurring = todo.recurrence_pattern && todo.recurrence_pattern !== 'none';
+    // 반복 할일 여부 확인: DB 형태(snake_case) 사용
+    const recurrencePattern = todo.recurrence_pattern;
+    const isRecurring = recurrencePattern !== 'none' &&
+                        recurrencePattern !== null &&
+                        recurrencePattern !== undefined;
     if (!isRecurring) return [];
 
     const instances: string[] = [];
@@ -221,13 +241,21 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
     let currentDate = new Date(startDate);
 
     while (isBefore(currentDate, endDate) && instances.length < 60) { // 최대 60개 인스턴스
-      const dayOfWeek = currentDate.getDay();
-      // recurrence_days_of_week는 JSON 형태로 저장되어 있을 수 있음
-      const recurringDays = Array.isArray(todo.recurrence_days_of_week)
-        ? todo.recurrence_days_of_week as number[]
-        : [];
+      let shouldInclude = false;
 
-      if (recurringDays.includes(dayOfWeek)) {
+      if (todo.recurrence_pattern === 'daily') {
+        // daily 패턴은 모든 날짜 포함
+        shouldInclude = true;
+      } else {
+        // weekly 등 다른 패턴은 recurrence_days_of_week 확인
+        const dayOfWeek = currentDate.getDay();
+        const recurringDays = Array.isArray(todo.recurrence_days_of_week)
+          ? todo.recurrence_days_of_week as number[]
+          : [];
+        shouldInclude = recurringDays.includes(dayOfWeek);
+      }
+
+      if (shouldInclude) {
         instances.push(format(currentDate, 'yyyy-MM-dd'));
       }
 

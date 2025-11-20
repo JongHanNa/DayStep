@@ -185,6 +185,9 @@ export interface Note {
   resource_id?: string;
   resource?: Resource; // 관계 데이터
 
+  // 할일 연결 (N:N, todo_notes junction table을 통해 로드)
+  todos?: Array<{ id: string; title: string }>;
+
   // 노트 간 연결 (N:N, note_connections junction table을 통해 로드)
   connectedNotes?: Note[];
 

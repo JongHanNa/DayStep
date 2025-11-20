@@ -80,6 +80,7 @@ export interface TodoStoreState extends BaseStoreState {
   fetchTodosForCurrentView: () => Promise<void>;
   fetchTodosForDate: (utcStart: Date, utcEnd: Date) => Promise<Todo[]>;
   fetchTodosByProjectId: (projectId: string) => Promise<any[]>;
+  fetchAllTodos: () => Promise<void>; // 전체 할일 조회 (날짜 범위 제한 없음)
   fetchTodoById: (id: string) => Promise<Todo | null>;
   createTodo: (data: CreateTodoInput) => Promise<Todo | null>;
   createTodoWithRecurrence: (input: CreateTodoInput) => Promise<Todo[]>;

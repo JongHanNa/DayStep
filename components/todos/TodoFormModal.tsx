@@ -19,7 +19,6 @@ import TodoMetadata from './form/TodoMetadata';
 import LinkedNotes from './form/LinkedNotes';
 import NoteInput from './form/NoteInput';
 import ContactsSection from './form/ContactsSection';
-import MotivationSelection from './form/MotivationSelection';
 import { useElasticScroll } from '@/hooks/useElasticScroll';
 import { useTodoFormState } from '@/hooks/useTodoFormState';
 import { useTodoFormHandlers } from '@/hooks/useTodoFormHandlers';
@@ -295,15 +294,6 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
               <NoteInput
                 memos={values.memos}
                 onMemosChange={actions.setMemos}
-                selectedColor={values.selectedColor}
-              />
-
-              {/* 동기부여 메시지 선택 섹션 */}
-              <MotivationSelection
-                todoId={editingTodo?.id}
-                todoContent={values.content}
-                selectedMotivations={values.selectedMotivations}
-                onMotivationsChange={actions.setSelectedMotivations}
                 selectedColor={values.selectedColor}
               />
 

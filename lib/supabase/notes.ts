@@ -12,7 +12,7 @@ export async function fetchNotesWithJWT(userId: string): Promise<Note[]> {
   console.log('📝 JWT 방식으로 노트 조회:', { userId });
 
   try {
-    // tags를 JOIN으로 가져오기 위한 select 쿼리
+    // tags와 todo_notes를 JOIN으로 가져오기 위한 select 쿼리
     const rawNotes = await queryRLSTableWithJWT('notes', [
       {
         column: 'user_id',
@@ -20,21 +20,26 @@ export async function fetchNotesWithJWT(userId: string): Promise<Note[]> {
         value: userId
       }
     ], {
-      select: '*,note_tag_links(tag_id,note_tags(id,name,color,icon))',
+      select: '*,note_tag_links(tag_id,note_tags(id,name,color,icon)),todo_notes(todo_id,todos(id,title))',
       order: 'created_at.desc'
     });
 
-    // note_tag_links를 tags 배열로 변환
+    // note_tag_links를 tags 배열로, todo_notes를 todos 배열로 변환
     const notes = (rawNotes || []).map((note: any) => {
       const tags = (note.note_tag_links || [])
         .map((link: any) => link.note_tags)
         .filter(Boolean);
 
-      // note_tag_links 제거하고 tags 추가
-      const { note_tag_links, ...rest } = note;
+      const todos = (note.todo_notes || [])
+        .map((link: any) => link.todos)
+        .filter(Boolean);
+
+      // note_tag_links, todo_notes 제거하고 tags, todos 추가
+      const { note_tag_links, todo_notes, ...rest } = note;
       return {
         ...rest,
-        tags
+        tags,
+        todos
       };
     });
 

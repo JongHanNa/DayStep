@@ -5,6 +5,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useNoteTagStore } from '@/state/stores/noteTagStore';
+import { useTodoStore } from '@/state/stores/todoStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
@@ -13,6 +14,7 @@ import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { Plus, Pin, Inbox, BookmarkCheck, FileText, FolderOpen } from 'lucide-react';
 import type { Note, NoteType, NoteCategory } from '@/types/second-brain';
+import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 
 const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   note: '일반 노트',
@@ -33,11 +35,15 @@ export default function NotesPage() {
   const { appUser } = useAuth();
   const { notes, fetchNotes, updateNote, createNote } = useNoteStore();
   const { tags, loadAllTags } = useNoteTagStore();
+  const { todos: entityTodos, fetchAllTodos } = useTodoStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  // Entity Todo를 database Todo 형식으로 변환
+  const todos = entityTodos.map(todo => todo.toDatabase() as any);
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
   useEffect(() => {
@@ -48,8 +54,9 @@ export default function NotesPage() {
     if (appUser?.id) {
       fetchNotes(appUser.id);
       loadAllTags(appUser.id);
+      fetchAllTodos();
     }
-  }, [appUser?.id, fetchNotes, loadAllTags]);
+  }, [appUser?.id, fetchNotes, loadAllTags, fetchAllTodos]);
 
   // 탭별 노트 필터링
   const getFilteredNotes = (): Note[] => {
@@ -106,7 +113,7 @@ export default function NotesPage() {
       linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
       isPinned: note.is_pinned,
       projectIds: note.projects?.map((p) => p.id) || [],
-      todoIds: [],
+      todoIds: note.todos?.map((t) => t.id) || [], // ✅ 기존 할일 연결 정보 로드
       noteIds: note.connectedNotes?.map((n) => n.id) || [],
     });
   };
@@ -127,6 +134,7 @@ export default function NotesPage() {
         }
       }
 
+      // 노트 기본 정보 저장
       await updateNote(editingNote.id, appUser.id, {
         title: noteForm.title,
         content: noteForm.content,
@@ -135,6 +143,11 @@ export default function NotesPage() {
         area_id,
         resource_id,
       });
+
+      // 할일 연결 저장
+      if (noteForm.todoIds !== undefined) {
+        await updateNoteTodos(editingNote.id, noteForm.todoIds, appUser.id);
+      }
 
       setEditingNote(null);
       setNoteForm(null);
@@ -394,7 +407,7 @@ export default function NotesPage() {
             areas={[]}
             resources={[]}
             projects={[]}
-            todos={[]}
+            todos={todos}
             notes={notes}
             allTags={tags}
           />
