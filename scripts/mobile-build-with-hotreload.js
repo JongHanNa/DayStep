@@ -67,7 +67,21 @@ function runMobileBuild() {
   return new Promise((resolve, reject) => {
     console.log('📱 모바일 빌드를 시작합니다...');
     console.log('웹 개발 서버의 핫 리로드가 중단된 상태에서 안전하게 빌드됩니다.\n');
-    
+
+    const path = require('path');
+    const ENV_PRODUCTION_LOCAL = path.join(process.cwd(), '.env.production.local');
+    const ENV_DEVELOPMENT = path.join(process.cwd(), '.env.development');
+
+    // .env.development 내용을 .env.production.local로 복사
+    console.log('📝 개발 DB 설정을 위한 임시 환경 파일 생성 중...');
+    if (!fs.existsSync(ENV_DEVELOPMENT)) {
+      reject(new Error('.env.development 파일이 존재하지 않습니다.'));
+      return;
+    }
+    const devEnvContent = fs.readFileSync(ENV_DEVELOPMENT, 'utf-8');
+    fs.writeFileSync(ENV_PRODUCTION_LOCAL, devEnvContent);
+    console.log('✅ 개발 DB 설정 완료\n');
+
     const buildCommands = [
       // 출력 폴더만 정리 (캐시는 보존하여 속도 향상)
       'rm -rf out',
@@ -77,8 +91,8 @@ function runMobileBuild() {
       'node scripts/build-mobile-routes.js backup && node scripts/build-mobile-routes.js mobile',
 
       // 개발 친화적 고성능 빌드 (디버깅 정보 보존)
-      // Note: NODE_ENV=production 유지 (export 모드 필수), 개발 DB는 .env.development.local에서 로드
-      'NODE_OPTIONS="--max-old-space-size=4096" BUILD_TARGET=mobile npx next build --no-lint',
+      // NODE_ENV=production (export 모드 필수), CAPACITOR_ENV=development (개발 DB)
+      'cross-env NODE_ENV=production BUILD_TARGET=mobile CAPACITOR_ENV=development NODE_OPTIONS="--max-old-space-size=4096" npx next build --no-lint',
 
       // Capacitor 동기화 (sync 사용 - 디버깅에 필요한 설정들 포함)
       'npm run mobile:sync',
@@ -86,19 +100,28 @@ function runMobileBuild() {
       // 복원
       'node scripts/build-mobile-routes.js restore'
     ];
-    
+
     const fullCommand = buildCommands.join(' && ');
-    
+
     const buildProcess = spawn('sh', ['-c', fullCommand], {
       stdio: 'inherit',
       cwd: process.cwd(),
       env: {
         ...process.env,
-        BUILD_TARGET: 'mobile'
+        NODE_ENV: 'production',
+        BUILD_TARGET: 'mobile',
+        CAPACITOR_ENV: 'development'
       }
     });
-    
+
     buildProcess.on('close', (code) => {
+      // .env.production.local 정리 (성공/실패 무관)
+      if (fs.existsSync(ENV_PRODUCTION_LOCAL)) {
+        console.log('\n🧹 임시 환경 파일 정리 중...');
+        fs.unlinkSync(ENV_PRODUCTION_LOCAL);
+        console.log('✅ Cleanup 완료');
+      }
+
       if (code === 0) {
         console.log('\n✅ 모바일 빌드가 완료되었습니다!');
         resolve();
@@ -107,8 +130,15 @@ function runMobileBuild() {
         reject(new Error(`Build failed with code ${code}`));
       }
     });
-    
+
     buildProcess.on('error', (error) => {
+      // 오류 시에도 .env.production.local 정리
+      if (fs.existsSync(ENV_PRODUCTION_LOCAL)) {
+        console.log('\n🧹 임시 환경 파일 정리 중...');
+        fs.unlinkSync(ENV_PRODUCTION_LOCAL);
+        console.log('✅ Cleanup 완료');
+      }
+
       console.error('\n❌ 빌드 프로세스에서 오류가 발생했습니다:', error);
       reject(error);
     });
