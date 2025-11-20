@@ -34,9 +34,6 @@ const ScrollProgressSection = dynamic(
 export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const { toast } = useToast();
-  const { clearSelectedGroup } = useNavigationStore();
 
   // 🎯 Capacitor 환경에서는 즉시 리다이렉트 (랜딩 페이지 렌더링 차단)
   const isCapacitor = typeof window !== 'undefined' && window.location.protocol === 'capacitor:';
@@ -45,9 +42,6 @@ export default function LandingPage() {
   // 회전하는 기능 텍스트 상태
   const features = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
-
-  // 세션 만료 감지를 위한 이전 인증 상태 추적
-  const prevAuthenticatedRef = useRef<boolean | null>(null);
 
   // Framer Motion variants
   const featureContainerVariants = staggerFadeInUpVariants(60, 0.15);
@@ -64,100 +58,20 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [features.length]);
 
-  // 🚨 Capacitor 환경: 즉시 리다이렉트 (로딩 완료 대기하지 않음)
+  // 🔄 웹 환경에서만 인증 체크 및 리다이렉트 (Capacitor는 렌더 함수에서 처리)
   useEffect(() => {
-    if (typeof window === 'undefined' || !isCapacitor) return;
+    // Capacitor 환경은 렌더 함수에서 즉시 리다이렉트하므로 여기서는 제외
+    if (typeof window === 'undefined' || isCapacitor) return;
 
-    // 이미 리다이렉트했으면 중복 실행 방지
-    if (hasRedirected) return;
-
-    console.log('📱 Capacitor 환경 감지 - 랜딩 페이지 렌더링 차단');
-
-    // 🔄 세션 만료 감지 (이전에 인증되었다가 비인증 상태로 변경)
-    const wasAuthenticated = prevAuthenticatedRef.current === true;
-    const isNowUnauthenticated = !loading && !isAuthenticated;
-
-    if (wasAuthenticated && isNowUnauthenticated) {
-      console.log('⚠️ 세션 만료 감지됨 - 로그인 페이지로 즉시 이동');
-      setHasRedirected(true);
-
-      // 토스트 메시지 표시
-      toast({
-        title: '세션이 만료되었습니다',
-        description: '보안을 위해 다시 로그인해주세요.',
-        variant: 'destructive',
-        duration: 3000,
-      });
-
-      // 즉시 로그인 페이지로 이동
-      router.replace('/login');
-      return;
-    }
-
-    // 이전 인증 상태 업데이트
-    prevAuthenticatedRef.current = isAuthenticated;
-
-    // 로딩 완료 후 리다이렉트
+    // 웹 환경: 로딩 완료 후 인증 상태에 따라 리다이렉트
     if (!loading) {
-      setHasRedirected(true);
-
-      // 🔄 네비게이션 상태 초기화 (페이지 이동 전)
-      clearSelectedGroup();
-
       if (isAuthenticated) {
-        console.log('✅ 인증됨 - 마지막 방문 페이지 복원 시도');
-
-        // 🔄 마지막 방문 페이지 복원
-        getLastVisitedRoute()
-          .then((lastRoute) => {
-            if (lastRoute && lastRoute !== '/') {
-              console.log(`📍 마지막 방문 페이지로 복원: ${lastRoute}`);
-              router.replace(lastRoute);
-            } else {
-              console.log('📍 저장된 경로 없음 - 기본 Areas 페이지로 이동');
-              router.replace('/second-brain/areas');
-            }
-          })
-          .catch((error) => {
-            console.error('❌ 마지막 방문 페이지 복원 실패:', error);
-            // Fallback: 기본 페이지로 이동
-            router.replace('/second-brain/areas');
-          });
-      } else {
-        console.log('❌ 비인증 - 로그인 페이지로 즉시 이동');
-        router.replace('/login');
-      }
-    }
-  }, [isAuthenticated, loading, router, pathname, toast, isCapacitor, hasRedirected, clearSelectedGroup]);
-
-  // ⏱️ 15초 타임아웃 fallback (세션 복원 실패 대비)
-  useEffect(() => {
-    if (!isCapacitor) {
-      return;
-    }
-    if (hasRedirected) {
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      if (!hasRedirected && loading) {
-        console.warn('⚠️ 15초 타임아웃 - 세션 복원 실패로 추정, 강제 리다이렉트');
-        setHasRedirected(true);
-
-        toast({
-          title: '세션 복원 실패',
-          description: '기본 페이지로 이동합니다.',
-          variant: 'destructive',
-          duration: 3000,
-        });
-
-        // 강제로 기본 페이지로 이동
+        console.log('✅ [웹] 인증됨 - Areas 페이지로 이동');
         router.replace('/second-brain/areas');
       }
-    }, 15000); // 15초
-
-    return () => clearTimeout(timeoutId);
-  }, [isCapacitor, hasRedirected, loading, router, toast]);
+      // 비인증 상태는 랜딩 페이지 그대로 표시
+    }
+  }, [isAuthenticated, loading, router, isCapacitor]);
 
   // "데스크톱에서 시작하기" 버튼 클릭 핸들러
   const handleGetStarted = () => {
@@ -174,25 +88,27 @@ export default function LandingPage() {
     alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
   };
 
-  // 🚨 Capacitor 환경: 마지막 방문 페이지 복원 시도 → 실패 시 책임 페이지로
+  // 🚨 Capacitor 환경: 즉시 리다이렉트 (인증 체크 없이)
   if (isCapacitor) {
     if (!hasRedirected) {
       setHasRedirected(true);
 
-      // 마지막 방문 페이지 복원 시도
+      console.log('📱 Capacitor 환경 감지 - 즉시 리다이렉트 실행');
+
+      // 마지막 방문 페이지 복원 시도 (WebView 크래시 후에도 빠른 복구)
       getLastVisitedRoute()
         .then((lastRoute) => {
           if (lastRoute && lastRoute !== '/') {
-            console.log(`📍 마지막 방문 페이지로 복원: ${lastRoute}`);
+            console.log(`📍 [Capacitor] 마지막 방문 페이지로 복원: ${lastRoute}`);
             router.replace(lastRoute);
           } else {
-            console.log('📍 저장된 경로 없음 - 책임 페이지로 이동');
+            console.log('📍 [Capacitor] 저장된 경로 없음 - Areas 페이지로 이동');
             router.replace('/second-brain/areas');
           }
         })
         .catch((error) => {
-          console.error('❌ 마지막 방문 페이지 복원 실패:', error);
-          // Fallback: 책임 페이지로 이동
+          console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
+          // Fallback: Areas 페이지로 이동
           router.replace('/second-brain/areas');
         });
     }
@@ -202,7 +118,7 @@ export default function LandingPage() {
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
-          <p className="text-lg text-base-content/70 font-medium">로딩 중...</p>
+          <p className="text-lg text-base-content/70 font-medium">페이지 복원 중...</p>
         </div>
       </div>
     );
