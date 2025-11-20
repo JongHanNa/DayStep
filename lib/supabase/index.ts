@@ -82,8 +82,6 @@ export * from './preferences';
 // 메모 시스템
 // ================================
 export * from './memo-instances';
-export * from './memo-tags';
-export * from './memo-tag-templates';
 
 export {
   // Memo Instances
@@ -96,31 +94,6 @@ export {
   fetchMemoInstancesByTaskIdWithJWT,
   createMultipleMemoInstancesWithJWT
 } from './memo-instances';
-
-export {
-  // Memo Tags
-  fetchAllMemoTagsWithJWT,
-  fetchTagsForMemoWithJWT,
-  createMemoTagWithJWT,
-  updateMemoTagWithJWT,
-  deleteMemoTagWithJWT,
-  linkMemoToTagWithJWT,
-  unlinkMemoFromTagWithJWT,
-  linkMemoToMultipleTagsWithJWT,
-  unlinkAllTagsFromMemoWithJWT,
-  updateMemoTagsWithJWT
-} from './memo-tags';
-
-export {
-  // Memo Tag Templates
-  fetchNoteTagTemplatesWithJWT,
-  fetchNoteTagTemplatesByCategoryWithJWT,
-  createTagFromTemplateWithJWT,
-  createDefaultTagsForUserWithJWT,
-  fetchUserTagsWithTemplatesWithJWT,
-  updateMemoTagsWithTemplates,
-  fetchNoteTagLinksWithJWT
-} from './memo-tag-templates';
 
 // ================================
 // Second Brain System

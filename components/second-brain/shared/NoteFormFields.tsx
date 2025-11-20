@@ -1,8 +1,8 @@
 'use client';
 
-import type { AreaResource as Area, AreaResource as Resource, Project, NoteCategory, Note, NoteTag } from '@/types/second-brain';
+import type { AreaResource as Area, AreaResource as Resource, Project, NoteCategory, Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
-import { Tag, FileText, FolderTree, StickyNote, Star } from 'lucide-react';
+import { FileText, FolderTree, StickyNote, Star } from 'lucide-react';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
 import CollapsibleTodoSection from './CollapsibleTodoSection';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
@@ -21,7 +21,6 @@ export interface NoteFormData {
   projectIds?: string[]; // 여러 프로젝트 연결 (N:N)
   todoIds?: string[]; // 여러 할일 연결 (N:N)
   noteIds?: string[]; // 여러 노트 연결 (N:N)
-  tagIds?: string[]; // 태그 IDs (N:N)
 }
 
 interface NoteFormFieldsProps {
@@ -32,7 +31,6 @@ interface NoteFormFieldsProps {
   projects?: Project[]; // 프로젝트 목록 (선택)
   todos?: Todo[]; // 할일 목록 (선택)
   notes?: Note[]; // 선택 가능한 노트 목록
-  allTags?: NoteTag[]; // 사용 가능한 태그 목록
   currentNoteId?: string; // 순환 참조 방지용 (현재 편집 중인 노트)
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 모달 열기
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
@@ -58,7 +56,6 @@ export default function NoteFormFields({
   projects = [],
   todos = [],
   notes = [],
-  allTags = [],
   currentNoteId,
   onNoteClick,
   onCreateNote,
@@ -203,46 +200,6 @@ export default function NoteFormFields({
           userId={userId}
           onImmediateSave={onNoteImmediateSave}
         />
-      )}
-
-      {/* 태그 (다중 선택) */}
-      {allTags.length > 0 && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <Tag className="h-5 w-5" style={{ color: '#808080' }} />
-            태그
-          </label>
-
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-            <div className="flex flex-wrap gap-2">
-              {allTags.map((tag) => {
-                const isSelected = note.tagIds?.includes(tag.id);
-                return (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => {
-                      const currentIds = note.tagIds || [];
-                      const newIds = isSelected
-                        ? currentIds.filter(id => id !== tag.id)
-                        : [...currentIds, tag.id];
-                      onChange({ ...note, tagIds: newIds });
-                    }}
-                    className="badge badge-lg gap-2"
-                    style={{
-                      backgroundColor: isSelected ? (tag.color || '#808080') : '#E5E7EB',
-                      color: isSelected ? '#ffffff' : '#333333',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {tag.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
       )}
 
       {/* 내용 (프리뷰 - 클릭 시 편집 모달) */}

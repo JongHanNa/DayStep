@@ -17,7 +17,6 @@ import { FontProvider } from "@/components/providers/FontProvider";
 import { Toaster } from "sonner";
 import { RealtimeSyncProvider } from "@/components/providers/RealtimeSyncProvider";
 import { ReminderProvider } from "@/components/providers/ReminderProvider";
-import { NoteTagProvider } from "@/components/providers/NoteTagProvider";
 import { AppLifecycleHandler } from "@/components/providers/AppLifecycleHandler";
 import { STYLING, UI_LAYOUT } from "@/lib/constants";
 import { getTailwindClasses } from "@/lib/theme-colors";
@@ -52,9 +51,8 @@ export default function RootLayout({
           <FontProvider>
             <AuthProvider initialAuth={initialAuth}>
               <AppLifecycleHandler />
-              <NoteTagProvider>
-                <RealtimeSyncProvider>
-                  <ReminderProvider>
+              <RealtimeSyncProvider>
+                <ReminderProvider>
                   {/* <Navigation /> */}
                   <TopNavWrapper />
                   <main
@@ -81,7 +79,6 @@ export default function RootLayout({
                   />
                   </ReminderProvider>
                 </RealtimeSyncProvider>
-              </NoteTagProvider>
               </AuthProvider>
             </FontProvider>
           </ThemeProvider>

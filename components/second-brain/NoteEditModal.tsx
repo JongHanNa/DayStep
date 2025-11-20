@@ -6,7 +6,7 @@ import ContentEditorModal from './ContentEditorModal';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAuth } from '@/app/context/AuthContext';
-import type { AreaResource as Area, AreaResource as Resource, Project, Note, NoteTag } from '@/types/second-brain';
+import type { AreaResource as Area, AreaResource as Resource, Project, Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
 interface NoteEditModalProps {
@@ -21,7 +21,6 @@ interface NoteEditModalProps {
   projects?: Project[];
   todos?: Todo[];
   notes?: Note[]; // 선택 가능한 노트 목록
-  allTags?: NoteTag[]; // 사용 가능한 태그 목록
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 콜백
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   titlePlaceholder?: string;
@@ -40,7 +39,6 @@ export default function NoteEditModal({
   projects = [],
   todos = [],
   notes = [],
-  allTags = [],
   onNoteClick,
   onCreateNote,
   titlePlaceholder = '',
@@ -130,7 +128,6 @@ export default function NoteEditModal({
                 projects={projects}
                 todos={todos}
                 notes={notes}
-                allTags={allTags}
                 currentNoteId={note.id}
                 onNoteClick={onNoteClick}
                 onCreateNote={onCreateNote}

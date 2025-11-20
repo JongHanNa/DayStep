@@ -4,13 +4,12 @@ import React, { memo, useMemo, useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { Repeat, Check, StickyNote, ChevronDown, Tag } from 'lucide-react';
+import { Repeat, Check, StickyNote, ChevronDown } from 'lucide-react';
 import { getUnifiedIcon, UnifiedIconKey } from '@/lib/icon-collection';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useNoteStore } from '@/state/stores/noteStore';
-import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { PomodoroTimer } from '@/components/ui/PomodoroTimer';
 import { getColorById, getColorByHex, DEFAULT_COLOR } from '@/lib/color-palette';
@@ -66,9 +65,6 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 연결된 노트 확인
   const { notes, setSelectedNoteForEdit, getDisplayNotesForTask } = useNoteStore();
 
-  // 태그 정보 확인
-  const { getTagsForMemo } = useNoteTagStore();
-
   // 타임라인 ID에서 실제 UUID 추출 (todo- 접두사 제거, recurrence 부분 처리)
   const extractTaskId = (timelineId: string) => {
     // "todo-" 접두사 제거
@@ -87,7 +83,6 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 노트 상태 관리
   const [displayNotes, setDisplayNotes] = useState<Array<any>>([]);
   const [hasLinkedNotes, setHasLinkedNotes] = useState(false);
-  const [noteTags, setNoteTags] = useState<Array<any>>([]);
 
   // 노트 로딩 함수
   const loadDisplayNotes = async () => {
@@ -114,24 +109,11 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
 
       setDisplayNotes(notesToDisplay);
       setHasLinkedNotes(notesToDisplay.length > 0);
-
-      // 노트들의 태그도 수집
-      const allTags = new Map();
-      notesToDisplay.forEach(note => {
-        const noteId = note._isInstance ? note.original_note_id : note.id;
-        const tags = getTagsForMemo(noteId);
-        tags.forEach(tag => {
-          allTags.set(tag.id, tag);
-        });
-      });
-
-      setNoteTags(Array.from(allTags.values()));
     } catch (error) {
       console.error('노트 로딩 실패:', error);
       // 에러 시 빈 배열로 설정 (추가 API 호출 없이 안전하게 처리)
       setDisplayNotes([]);
       setHasLinkedNotes(false);
-      setNoteTags([]);
     }
   };
 
@@ -690,39 +672,6 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
             isNotesExpanded ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'
           )}
         >
-          {/* 노트 태그들 표시 - 아코디언 내부 상단 */}
-          {noteTags.length > 0 && isNotesExpanded && (
-            <div className="mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Tag className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                <div className="flex flex-wrap gap-1.5">
-                  {noteTags.map((tag) => (
-                    <div
-                      key={tag.id}
-                      className={cn(
-                        "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium",
-                        "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300",
-                        "hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
-                        tag.is_template && "ring-1 ring-blue-400 ring-opacity-50"
-                      )}
-                    >
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      <span className="truncate max-w-[120px]">
-                        {tag.name}
-                      </span>
-                      {tag.is_template && (
-                        <span className="text-blue-500 text-[10px] ml-0.5">(T)</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
           <div
             className="space-y-2 max-h-80 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >

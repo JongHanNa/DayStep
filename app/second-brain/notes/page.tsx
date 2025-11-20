@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
-import { useNoteTagStore } from '@/state/stores/noteTagStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
@@ -34,7 +33,6 @@ const TAB_ICONS: Record<NoteTabType, any> = {
 export default function NotesPage() {
   const { appUser } = useAuth();
   const { notes, fetchNotes, updateNote, createNote } = useNoteStore();
-  const { tags, loadAllTags } = useNoteTagStore();
   const { todos: entityTodos, fetchAllTodos } = useTodoStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
@@ -53,10 +51,9 @@ export default function NotesPage() {
   useEffect(() => {
     if (appUser?.id) {
       fetchNotes(appUser.id);
-      loadAllTags(appUser.id);
       fetchAllTodos();
     }
-  }, [appUser?.id, fetchNotes, loadAllTags, fetchAllTodos]);
+  }, [appUser?.id, fetchNotes, fetchAllTodos]);
 
   // 탭별 노트 필터링
   const getFilteredNotes = (): Note[] => {
@@ -284,17 +281,8 @@ export default function NotesPage() {
                                 {note.content.replace(/[#*`]/g, '').substring(0, 100)}...
                               </p>
 
-                              {/* 태그 및 영역/자원 표시 */}
+                              {/* 영역/자원 표시 */}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                {note.tags.slice(0, 3).map((tag) => (
-                                  <span
-                                    key={tag.id}
-                                    className="badge badge-xs badge-ghost"
-                                    style={tag.color ? { backgroundColor: tag.color + '20', color: tag.color } : undefined}
-                                  >
-                                    {tag.name}
-                                  </span>
-                                ))}
                                 {note.area && (
                                   <span className="badge badge-xs" style={{ backgroundColor: note.area.color + '20', color: note.area.color }}>
                                     영역: {note.area.title}
@@ -351,22 +339,8 @@ export default function NotesPage() {
                                 {note.content.replace(/[#*`]/g, '').substring(0, 100)}...
                               </p>
 
-                              {/* 태그 및 영역/자원 표시 */}
+                              {/* 영역/자원 표시 */}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                {(note.tags || []).slice(0, 3).map((tag) => (
-                                  <span
-                                    key={tag.id}
-                                    className="badge badge-xs badge-ghost"
-                                    style={tag.color ? { backgroundColor: tag.color + '20', color: tag.color } : undefined}
-                                  >
-                                    {tag.name}
-                                  </span>
-                                ))}
-                                {(note.tags || []).length > 3 && (
-                                  <span className="badge badge-xs badge-ghost">
-                                    +{(note.tags || []).length - 3}
-                                  </span>
-                                )}
                                 {note.area && (
                                   <span className="badge badge-xs" style={{ backgroundColor: note.area.color + '20', color: note.area.color }}>
                                     영역: {note.area.title}
@@ -409,7 +383,6 @@ export default function NotesPage() {
             projects={[]}
             todos={todos}
             notes={notes}
-            allTags={tags}
           />
         )}
       </div>
