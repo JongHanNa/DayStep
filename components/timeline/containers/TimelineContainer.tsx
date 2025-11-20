@@ -103,7 +103,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
   const { isAuthenticated, loading: authLoading, appUser } = useAuth();
 
   // Note Store hooks
-  const { pinnedNotes, initialize: initializeNote } = useNoteStore();
+  const { pinnedNotes, getNotes } = useNoteStore();
 
   // Capacitor/WebView 환경에서 스크롤 최적화 (스크롤 기능 유지)
   useEffect(() => {
@@ -217,9 +217,9 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
         currentDate: currentDate.toISOString().split('T')[0]
       });
 
-      // NoteStore 초기화 (appUser 있을 때)
+      // NoteStore 재조회 (appUser 있을 때) - 캐시 우회하여 항상 최신 데이터 가져오기
       if (appUser?.id) {
-        initializeNote(appUser.id);
+        getNotes(appUser.id);
       }
       
       // 현재 날짜의 KST 범위를 UTC로 변환
@@ -245,7 +245,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
         });
       });
     }
-  }, [isAuthenticated, authLoading, currentDate, currentDateString, fetchTodosForDate, appUser?.id, initializeNote]);
+  }, [isAuthenticated, authLoading, currentDate, currentDateString, fetchTodosForDate, appUser?.id, getNotes]);
 
   // 실제 데이터가 로드된 후에만 타임라인 아이템 생성
   useEffect(() => {

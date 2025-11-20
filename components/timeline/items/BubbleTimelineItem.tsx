@@ -124,7 +124,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     };
 
     loadLinkedNotes();
-  }, [item.type, actualTaskId]);
+  }, [item.type, actualTaskId, notes]); // ✅ notes 추가: noteStore.notes 변경 시 재조회
 
   // 완료 상태 계산
   const isCompleted = useMemo(() => {
