@@ -16,8 +16,6 @@ import { PomodoroTimer } from '@/components/ui/PomodoroTimer';
 import { getColorById, getColorByHex, DEFAULT_COLOR } from '@/lib/color-palette';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
 import { isRecurringTodo } from '@/lib/utils/recurring';
-import { useMotivationStore } from '@/state/stores/motivationStore';
-import MotivationBadge from '@/components/motivation/MotivationBadge';
 
 interface TimelineItemCardProps {
   item: {
@@ -71,9 +69,6 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   // 태그 정보 확인
   const { getTagsForMemo } = useNoteTagStore();
 
-  // 동기부여 메시지 확인
-  const { getMotivationForTodo, getMotivationsForTodo } = useMotivationStore();
-  
   // 타임라인 ID에서 실제 UUID 추출 (todo- 접두사 제거, recurrence 부분 처리)
   const extractTaskId = (timelineId: string) => {
     // "todo-" 접두사 제거
@@ -93,9 +88,6 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
   const [displayNotes, setDisplayNotes] = useState<Array<any>>([]);
   const [hasLinkedNotes, setHasLinkedNotes] = useState(false);
   const [noteTags, setNoteTags] = useState<Array<any>>([]);
-
-  // 연결된 동기부여 메시지들 확인
-  const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
 
   // 노트 로딩 함수
   const loadDisplayNotes = async () => {
@@ -486,28 +478,9 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                 </Tooltip>
               </TooltipProvider>
             )}
-
-            {/* 동기부여 메시지 배지들 - 제목과 같은 라인에 표시 */}
-            {linkedMotivationMessages.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-1 min-w-0 ml-1 overflow-hidden">
-                <MotivationBadge
-                  message={linkedMotivationMessages[0]}
-                  variant="compact"
-                  size="sm"
-                  className="flex-1 min-w-0 max-w-none"
-                />
-                {linkedMotivationMessages.length > 1 && (
-                  <div className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md flex-shrink-0">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                      외 {linkedMotivationMessages.length - 1}개
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
-        
+
         {/* 포모도로 타이머 (시간 지정된 할일만) */}
         {item.type === 'todo' && item.startTime && item.endTime && (
           <div className="flex-shrink-0 mr-2">

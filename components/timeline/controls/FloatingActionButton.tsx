@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Clock, Archive, Smartphone, StickyNote, Users, User, Heart } from 'lucide-react';
+import { Plus, Clock, Archive, Smartphone, StickyNote, Users, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +18,6 @@ import TodoFormModal from '@/components/todos/TodoFormModal';
 import NoteSheet from '@/components/notes/NoteSheet';
 import ContactListSheet from '@/components/contacts/ContactListSheet';
 import ContactDetailModal from '@/components/contacts/ContactDetailModal';
-import MotivationSheet from '@/components/motivation/MotivationSheet';
 import { Capacitor } from '@capacitor/core';
 import { widgetSyncService } from '@/services/widget-sync.service';
 import { isRecurringTodo } from '@/lib/recurrence-utils';
@@ -33,7 +32,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
   const [quickMemoSheetOpen, setNoteSheetOpen] = useState(false);
   const [contactListSheetOpen, setContactListSheetOpen] = useState(false);
   const [contactDetailOpen, setContactDetailOpen] = useState(false);
-  const [motivationSheetOpen, setMotivationSheetOpen] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   
@@ -287,19 +285,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               </div>
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={() => setMotivationSheetOpen(true)}
-              className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
-            >
-              <div className="p-2 rounded-full bg-primary/10">
-                <Heart className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-foreground">동기부여</div>
-                <div className="text-xs text-muted-foreground">의지력 강화</div>
-              </div>
-            </DropdownMenuItem>
-
             {Capacitor.isNativePlatform() && (
               <>
                 <div className="h-px bg-border mx-2 my-1" />
@@ -344,12 +329,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
         open={contactDetailOpen}
         onOpenChange={setContactDetailOpen}
         mode="create"
-      />
-
-      {/* 동기부여 시트 */}
-      <MotivationSheet
-        open={motivationSheetOpen}
-        onOpenChange={setMotivationSheetOpen}
       />
     </>
   );

@@ -3,7 +3,6 @@ import { format, addMinutes } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore } from '@/state/stores/noteStore';
-import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/context/AuthContext';
 import { getColorById } from '@/lib/color-palette';
@@ -65,7 +64,6 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
   const createNote = useNoteStore(state => state.createNote);
   const deleteLinkedNotes = useNoteStore(state => state.deleteLinkedNotes);
   const getLinkedNotesByTaskId = useNoteStore(state => state.getLinkedNotesByTaskId);
-  const linkMotivationToTodo = useMotivationStore(state => state.linkMotivationToTodo);
 
   const isEditMode = !!editingTodo;
 
@@ -505,18 +503,6 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
             }
           }
         }
-
-        // 할일 생성 후 선택된 동기부여 메시지들 연결
-        if (createdTodoId && values.selectedMotivations.length > 0) {
-          for (const motivation of values.selectedMotivations) {
-            try {
-              await linkMotivationToTodo(createdTodoId, motivation.id);
-            } catch (motivationError) {
-              console.error('동기부여 메시지 연결 실패:', motivationError);
-              // 동기부여 메시지 연결 실패는 할일 생성을 방해하지 않음
-            }
-          }
-        }
       }
 
       // 성공 메시지 구성
@@ -530,10 +516,6 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
         }
       }
 
-      // 동기부여 메시지가 함께 연결된 경우 메시지에 추가
-      if (!isEditMode && values.selectedMotivations.length > 0) {
-        successMessage += `\n동기부여 메시지 ${values.selectedMotivations.length}개도 함께 연결되었습니다.`;
-      }
       if (values.scheduleType === 'timed' && values.startDate && values.startTime) {
         const startDateTime = new Date(`${values.startDate}T${values.startTime}`);
         const actionText = isEditMode ? '수정되었습니다' : '추가되었습니다';

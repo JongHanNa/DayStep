@@ -5,7 +5,6 @@ import { UnifiedIconKey } from '@/lib/icon-collection';
 import { DEFAULT_COLOR, getColorByHex, getColorById } from '@/lib/color-palette';
 import type { MemoData } from '@/components/todos/form/NoteInput';
 import type { Contact } from '@/types/contacts';
-import type { MotivationMessage } from '@/types/motivation';
 
 export interface TodoFormStateValues {
   // 기본 필드
@@ -41,12 +40,9 @@ export interface TodoFormStateValues {
   
   // 노트 관련 상태
   memos: MemoData[];
-  
+
   // 연락처 관련 상태
   selectedContacts: Contact[];
-
-  // 동기부여 메시지 관련 상태
-  selectedMotivations: MotivationMessage[];
 }
 
 export interface TodoFormStateActions {
@@ -73,7 +69,6 @@ export interface TodoFormStateActions {
   setSelectedDaysOfWeek: (days: number[]) => void;
   setMemos: (memos: MemoData[]) => void;
   setSelectedContacts: (contacts: Contact[]) => void;
-  setSelectedMotivations: (motivations: MotivationMessage[]) => void;
 }
 
 export interface TodoFormStateConfig {
@@ -122,9 +117,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   
   // 연락처 관련 상태
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
-
-  // 동기부여 메시지 관련 상태
-  const [selectedMotivations, setSelectedMotivations] = useState<MotivationMessage[]>([]);
 
   // UI 상태
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
@@ -420,9 +412,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
 
     // 연락처 상태 초기화
     setSelectedContacts([]);
-
-    // 동기부여 메시지 상태 초기화
-    setSelectedMotivations([]);
   }, [getCurrentDefaultValues, initialStartTime, initialEndTime, validateAndFormatTime]);
 
   // 폼 초기화 (useCallback으로 감싸서 의존성 배열 안정화)
@@ -459,7 +448,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     selectedDaysOfWeek,
     memos,
     selectedContacts,
-    selectedMotivations,
   };
 
   // 액션 함수들 반환
@@ -487,7 +475,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     setSelectedDaysOfWeek,
     setMemos,
     setSelectedContacts,
-    setSelectedMotivations,
   };
 
   // UI 상태들 반환

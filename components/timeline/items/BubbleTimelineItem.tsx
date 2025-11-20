@@ -8,10 +8,8 @@ import * as Icons from 'lucide-react';
 import { getUnifiedIcon, UnifiedIconKey } from '@/lib/icon-collection';
 import { Check } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useNoteStore } from '@/state/stores/noteStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
-import MotivationBadge from '@/components/motivation/MotivationBadge';
 
 // 🎨 테마 색상 상수 (CSS 변수 사용)
 const THEME_COLORS = {
@@ -85,7 +83,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
   // 스토어 훅
   const { todos, todoCompletions } = useTodoStore();
-  const { getMotivationsForTodo } = useMotivationStore();
   const { notes } = useNoteStore();
   const { bubbleShape } = useSettingsStore();
 
@@ -99,9 +96,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   };
 
   const actualTaskId = extractTaskId(item.id);
-
-  // 동기부여 메시지
-  const linkedMotivationMessages = item.type === 'todo' ? getMotivationsForTodo(actualTaskId) : [];
 
   // 노트 확인 (junction table API 사용)
   const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
@@ -910,24 +904,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     {item.title}
                   </h3>
 
-                  {/* 동기부여 메시지 배지들 - 제목과 같은 라인에 표시 */}
-                  {linkedMotivationMessages.length > 0 && (
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0 ml-1 overflow-hidden">
-                      <MotivationBadge
-                        message={linkedMotivationMessages[0]}
-                        variant="compact"
-                        size="sm"
-                        className="flex-1 min-w-0 max-w-none"
-                      />
-                      {linkedMotivationMessages.length > 1 && (
-                        <div className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md flex-shrink-0">
-                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            외 {linkedMotivationMessages.length - 1}개
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
