@@ -713,12 +713,6 @@ export const BubbleTimelineView: React.FC = () => {
                                   // occurrence_date + 시작 시간 조합
                                   const instanceStart = new Date(`${occurrenceDate}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`);
 
-                                  console.log('🔍 [START-TIME-CALC]:', {
-                                    occurrenceDate,
-                                    originalTime,
-                                    instanceStart: instanceStart.toISOString()
-                                  });
-
                                   return instanceStart.toISOString();
                                 } catch (e) {
                                   console.warn('반복 할일 시작시간 계산 실패:', e);
@@ -762,15 +756,6 @@ export const BubbleTimelineView: React.FC = () => {
                                   const durationMs = endDate.getTime() - startDate.getTime();
                                   const instanceEnd = new Date(instanceStart.getTime() + durationMs);
 
-                                  console.log('🔍 [END-TIME-CALC]:', {
-                                    occurrenceDate,
-                                    originalStart: originalStartTime,
-                                    originalEnd: originalEndTime,
-                                    instanceStart: instanceStart.toISOString(),
-                                    instanceEnd: instanceEnd.toISOString(),
-                                    durationMs
-                                  });
-
                                   return instanceEnd.toISOString();
                                 } catch (e) {
                                   console.warn('반복 할일 종료시간 계산 실패:', e);
@@ -785,49 +770,6 @@ export const BubbleTimelineView: React.FC = () => {
                               }
                               return null;
                             })(),
-
-                            // 🔍 디버깅 로그
-                            ...((() => {
-                              console.log('🔍 [BUBBLE-VIEW] 반복 할일 클릭:', {
-                                id: originalTodo.id,
-                                title: originalTodo.title,
-                                original_start: originalTodo.start_time || originalTodo.startTime,
-                                original_end: originalTodo.end_time || originalTodo.endTime,
-                                occurrence_date: (timelineItem.data as any).recurrence_occurrence_date,
-                                computed_start: (() => {
-                                  const originalTime = originalTodo.start_time || originalTodo.startTime;
-                                  if (originalTime) {
-                                    if (typeof originalTime === 'string') { return originalTime; }
-                                    if (originalTime instanceof Date) { return originalTime.toISOString(); }
-                                    try { return new Date(originalTime).toISOString(); } catch { /* fallback */ }
-                                  }
-                                  return null;
-                                })(),
-                                computed_end: (() => {
-                                  const originalStartTime = originalTodo.start_time || originalTodo.startTime;
-                                  const originalEndTime = originalTodo.end_time || originalTodo.endTime;
-
-                                  if (originalStartTime && originalEndTime) {
-                                    try {
-                                      const startDate = new Date(originalStartTime);
-                                      const endDate = new Date(originalEndTime);
-                                      const isSameDay = startDate.toDateString() === endDate.toDateString();
-
-                                      if (isSameDay) {
-                                        const durationMs = endDate.getTime() - startDate.getTime();
-                                        const instanceStartTime = new Date(originalStartTime);
-                                        const instanceEndTime = new Date(instanceStartTime.getTime() + durationMs);
-                                        return instanceEndTime.toISOString();
-                                      }
-                                    } catch (e) {
-                                      // ignore
-                                    }
-                                  }
-                                  return null;
-                                })()
-                              });
-                              return {};
-                            })()),
 
                             recurrence_pattern: originalTodo.recurrence_pattern || originalTodo.recurrencePattern || 'none',
                             recurrence_end_date: (() => {

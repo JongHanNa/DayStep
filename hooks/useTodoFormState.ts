@@ -227,13 +227,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
         const formattedEndDate = format(endTimeKST, 'yyyy-MM-dd');
         setEndDate(formattedEndDate);
 
-        console.log('🔍 [DEBUG] endDate 설정:', {
-          db_end_time: todo.end_time,
-          kst_date: formattedEndDate,
-          kst_time: format(endTimeKST, 'HH:mm'),
-          endDate_state: formattedEndDate
-        });
-
         if (hasTimeInfo) {
           const formattedEndTime = validateAndFormatTime(format(endTimeKST, 'HH:mm'));
           setEndTime(formattedEndTime);

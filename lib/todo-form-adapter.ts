@@ -19,12 +19,6 @@ export function convertToTodoFormData(values: TodoFormStateValues): TodoFormData
   const endDate = values.endDate ? new Date(`${values.endDate}T00:00:00`) : undefined;
   const recurrenceEndDate = values.recurrenceEndDate ? new Date(`${values.recurrenceEndDate}T00:00:00`) : undefined;
 
-  console.log('🔍 [ADAPTER] endDate 변환:', {
-    input: values.endDate,
-    parsed: endDate,
-    output: endDate ? format(endDate, 'yyyy-MM-dd') : undefined
-  });
-
   return {
     title: values.content,
     icon: values.selectedIcon,
