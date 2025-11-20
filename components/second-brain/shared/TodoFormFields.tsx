@@ -14,6 +14,7 @@ import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
+import { useTypingEffect } from '@/hooks/useTypingEffect';
 
 /**
  * 할일 폼 필드 타입
@@ -125,6 +126,22 @@ export default function TodoFormFields({
   onProjectImmediateSave,
   onNoteImmediateSave,
 }: TodoFormFieldsProps) {
+  // 타이핑 효과를 위한 플레이스홀더 텍스트
+  const placeholderTexts = [
+    "예: 요구사항 정리",
+    "예: 미팅 일정 잡기",
+    "예: 보고서 작성하기",
+    "예: 고객 문의 답변"
+  ];
+
+  const typingPlaceholder = useTypingEffect({
+    texts: placeholderTexts,
+    speed: 80,
+    deleteSpeed: 40,
+    delayBetweenTexts: 2000,
+    loop: true
+  });
+
   // 아이콘 브라우저 모달
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
@@ -204,7 +221,7 @@ export default function TodoFormFields({
                   type="text"
                   value={todo.title}
                   onChange={(e) => onChange({ ...todo, title: e.target.value })}
-                  placeholder={titlePlaceholder}
+                  placeholder={typingPlaceholder}
                   className="bg-white border-0 border-b-2 rounded-none focus:outline-none transition-none"
                   style={{
                     fontSize: '20px',
