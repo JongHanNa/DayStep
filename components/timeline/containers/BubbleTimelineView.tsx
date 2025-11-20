@@ -29,6 +29,8 @@ export const BubbleTimelineView: React.FC = () => {
     items: storeItems  // 🔧 스토어의 실제 items 상태도 의존 (리스트뷰와 동일)
   } = useTimelineViewStore();
   const updateTodo = useTodoStore(state => state.updateTodo);
+  const toggleTodo = useTodoStore(state => state.toggleTodo);
+  const toggleRecurrenceCompletion = useTodoStore(state => state.toggleRecurrenceCompletion);
   const todos = useTodoStore(state => state.todos);
   const currentTime = useCurrentTime();
 
@@ -842,12 +844,22 @@ export const BubbleTimelineView: React.FC = () => {
                 }}
                 onToggleComplete={async (itemId: string) => {
                   // 완료 상태 토글
-                  const actualId = itemId.startsWith('todo-') ? itemId.replace('todo-', '') : itemId;
-                  const todo = timedItems.find(t => t.id === itemId);
-                  if (todo && todo.type === 'todo') {
-                    await updateTodo(actualId, {
-                      completed: !todo.data?.completed
-                    });
+                  const item = timedItems.find(t => t.id === itemId);
+
+                  if (item && item.type === 'todo') {
+                    const todoData = item.data as any;
+                    const isRecurring = todoData?.is_recurrence_instance ||
+                                      (todoData?.recurrence_pattern && todoData.recurrence_pattern !== 'none');
+
+                    if (isRecurring) {
+                      // 반복 할일: 날짜별 완료 토글
+                      const originalId = todoData.recurrence_source_id || todoData.id;
+                      await toggleRecurrenceCompletion(originalId, currentDate);
+                    } else {
+                      // 일반 할일: 기존 완료 토글 (todo- 프리픽스 제거)
+                      const actualId = itemId.replace('todo-', '');
+                      await toggleTodo(actualId);
+                    }
                   }
                 }}
                 onTouchStart={(e) => handleDragStart(e, item.id)}
