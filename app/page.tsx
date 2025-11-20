@@ -35,8 +35,9 @@ export default function LandingPage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
-  // 🎯 Capacitor 환경에서는 즉시 리다이렉트 (랜딩 페이지 렌더링 차단)
-  const isCapacitor = typeof window !== 'undefined' && window.location.protocol === 'capacitor:';
+  // 🔑 하이드레이션 안전한 Capacitor 감지 (서버/클라이언트 초기 렌더링 동일)
+  const [isCapacitor, setIsCapacitor] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const hasRedirectedRef = useRef(false);
 
   // 회전하는 기능 텍스트 상태
@@ -58,10 +59,21 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [features.length]);
 
-  // 🔄 웹 환경에서만 인증 체크 및 리다이렉트 (Capacitor는 렌더 함수에서 처리)
+  // 🚀 1단계: 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
-    // Capacitor 환경은 렌더 함수에서 즉시 리다이렉트하므로 여기서는 제외
-    if (typeof window === 'undefined' || isCapacitor) return;
+    const checkCapacitor = typeof window !== 'undefined' &&
+                          window.location.protocol === 'capacitor:';
+    setIsCapacitor(checkCapacitor);
+
+    if (checkCapacitor) {
+      console.log('📱 Capacitor 환경 감지: capacitor:');
+    }
+  }, []); // 빈 배열로 한 번만 실행
+
+  // 🔄 웹 환경에서만 인증 체크 및 리다이렉트
+  useEffect(() => {
+    // Capacitor 환경은 아래 useEffect에서 처리
+    if (isCapacitor) return;
 
     // 웹 환경: 로딩 완료 후 인증 상태에 따라 리다이렉트
     if (!loading) {
@@ -88,53 +100,45 @@ export default function LandingPage() {
     alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
   };
 
-  // 🚨 Capacitor 환경: useEffect에서 리다이렉트 (렌더 함수에서 비동기 작업 방지)
+  // 🚀 2단계: Capacitor 환경에서 마지막 방문 페이지로 리다이렉트
   useEffect(() => {
-    // Capacitor 환경이 아니거나 이미 리다이렉트 했으면 종료
-    if (!isCapacitor || hasRedirectedRef.current) return;
+    // Capacitor 환경이 아니거나, 이미 리다이렉트 했거나, 아직 로딩 중이면 종료
+    if (!isCapacitor || hasRedirectedRef.current || loading) return;
 
     // 리다이렉트 플래그 설정 (단 한 번만 실행 보장)
     hasRedirectedRef.current = true;
+    setIsRedirecting(true);
 
-    console.log('📱 Capacitor 환경 감지 - 리다이렉트 시작');
+    console.log('📱 Capacitor 환경 - 리다이렉트 시작');
 
     // 마지막 방문 페이지 복원 시도 (WebView 크래시 후에도 빠른 복구)
     getLastVisitedRoute()
       .then((lastRoute) => {
-        if (lastRoute && lastRoute !== '/') {
-          console.log(`📍 [Capacitor] 마지막 방문 페이지로 복원: ${lastRoute}`);
-          router.replace(lastRoute);
-        } else {
-          console.log('📍 [Capacitor] 저장된 경로 없음 - Areas 페이지로 이동');
-          router.replace('/second-brain/areas');
-        }
+        const targetRoute = lastRoute && lastRoute !== '/'
+          ? lastRoute
+          : '/second-brain/areas';
+
+        console.log(`📍 [Capacitor] 페이지로 이동: ${targetRoute}`);
+        router.replace(targetRoute);
       })
       .catch((error) => {
         console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
         // Fallback: Areas 페이지로 이동
         router.replace('/second-brain/areas');
       });
-  }, [isCapacitor, router]);
+  }, [isCapacitor, loading, router]);
 
-  // Capacitor 환경: 리다이렉트 완료될 때까지 로딩 화면 표시
-  if (isCapacitor) {
+  // 🎯 로딩 화면 표시 (하이드레이션 안전: 서버/클라이언트 동일 조건)
+  // - loading: 인증 상태 확인 중 (웹/모바일 공통)
+  // - isCapacitor && isRedirecting: Capacitor 환경에서 리다이렉트 진행 중
+  if (loading || (isCapacitor && isRedirecting)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
-          <p className="text-lg text-base-content/70 font-medium">페이지 복원 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 웹 환경: 로딩 중이면 로딩 화면 표시
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
-          <p className="text-lg text-base-content/70 font-medium">로딩 중...</p>
+          <p className="text-lg text-base-content/70 font-medium">
+            {isCapacitor ? '페이지 복원 중...' : '로딩 중...'}
+          </p>
         </div>
       </div>
     );
