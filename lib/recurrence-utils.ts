@@ -211,77 +211,7 @@ export function generateRecurrenceInstances({
       };
     });
 
-    // 🆕 크로스데이 할일의 전날 인스턴스 추가
-    const additionalInstances: GeneratedRecurrenceItem[] = [];
-
-    instances.forEach((instance, index) => {
-      const startTime = new Date(instance.data.start_time);
-      const endTime = instance.data.end_time ? new Date(instance.data.end_time) : null;
-
-      if (!endTime) return; // 종료 시간 없으면 스킵
-
-      // 크로스데이 여부 확인 (시간만 비교)
-      const startTimeOfDay = startTime.getHours() * 60 + startTime.getMinutes();
-      const endTimeOfDay = endTime.getHours() * 60 + endTime.getMinutes();
-      const isCrossDay = endTimeOfDay < startTimeOfDay;
-
-      if (isCrossDay) {
-        // 전날 날짜 계산
-        const previousDay = new Date(instance.occurrenceDate);
-        previousDay.setDate(previousDay.getDate() - 1);
-        const prevDateString = format(previousDay, 'yyyy-MM-dd');
-
-        // 🔧 반복 시작일 이전의 전날 인스턴스는 생성하지 않음
-        const startDay = startOfDay(new Date(startDate));
-        const prevDay = startOfDay(previousDay);
-
-        if (prevDay.getTime() < startDay.getTime()) {
-          return; // 반복 시작일 이전은 skip
-        }
-
-        // 전날 시작 시간 (전날 같은 시간)
-        const prevInstanceStartTime = new Date(previousDay);
-        prevInstanceStartTime.setHours(startTime.getHours(), startTime.getMinutes(), startTime.getSeconds());
-
-        // ✅ 오늘 종료 시간 (occurrence date 당일의 endTime)
-        // instance.occurrenceDate는 이미 22:30 같은 시간이 포함되어 있으므로
-        // 날짜 부분만 추출하여 endTime 시간을 설정
-        const occurrenceDateOnly = new Date(instance.occurrenceDate);
-        occurrenceDateOnly.setHours(0, 0, 0, 0);  // 자정으로 초기화
-        const prevInstanceEndTime = new Date(
-          occurrenceDateOnly.getFullYear(),
-          occurrenceDateOnly.getMonth(),
-          occurrenceDateOnly.getDate(),
-          endTime.getHours(),
-          endTime.getMinutes(),
-          endTime.getSeconds()
-        );
-
-        // 전날 인스턴스가 조회 범위에 속하는지 확인
-        // (endTime이 rangeStart ~ rangeEnd에 속하면 표시)
-        if (prevInstanceEndTime >= rangeStart && prevInstanceEndTime <= endOfDay(rangeEnd)) {
-          const prevInstanceData = {
-            ...originalTodo,
-            id: `${originalTodo.id}-recurrence-${prevDateString}-prev`,
-            start_time: prevInstanceStartTime.toISOString(),
-            end_time: prevInstanceEndTime.toISOString(),
-            schedule_type: schedule_type,
-            is_recurrence_instance: true,
-            recurrence_source_id: originalTodo.id,
-            recurrence_occurrence_date: prevDateString
-          };
-
-          additionalInstances.push({
-            id: `${originalTodo.id}-recurrence-${prevDateString}-prev`,
-            originalId: originalTodo.id,
-            occurrenceDate: prevInstanceStartTime,
-            data: prevInstanceData
-          });
-        }
-      }
-    });
-
-    return [...instances, ...additionalInstances];
+    return instances;
 
   } catch (error) {
     console.error(`❌ [반복 할일 ${originalTodo.id}] 인스턴스 생성 중 오류:`, error);
