@@ -150,14 +150,14 @@ export default function TodoFormFields({
   return (
     <>
       {/* 아이콘 및 제목 - 통합 섹션 */}
-      <div className="my-4">
-        <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-          <Tag className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+      <div className="mx-4 my-2">
+        <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
+          <Tag className="h-5 w-5" style={{ color: todo.color || '#DBAC6C' }} />
           아이콘 및 제목
         </label>
 
-        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-          <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-white">
+          <div className="flex items-center gap-3 pr-16">
             {/* 아이콘 버튼 */}
             <div className="relative">
               <button
@@ -171,7 +171,7 @@ export default function TodoFormFields({
                   const IconComponent = getUnifiedIcon((todo.icon || 'CheckSquare') as UnifiedIconKey);
                   return <IconComponent
                     className="group-hover:scale-110 transition-transform"
-                    style={{ color: todo.color || '#808080' }}
+                    style={{ color: todo.color || '#DBAC6C' }}
                     size={24}
                   />;
                 })()}
@@ -181,7 +181,7 @@ export default function TodoFormFields({
               <div
                 className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
                 style={{
-                  backgroundColor: todo.color || '#808080',
+                  backgroundColor: todo.color || '#DBAC6C',
                   border: '2px solid white'
                 }}
               >
@@ -195,7 +195,7 @@ export default function TodoFormFields({
               value={todo.title}
               onChange={(e) => onChange({ ...todo, title: e.target.value })}
               placeholder={titlePlaceholder}
-              className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
+              className="flex-1 bg-white border-0 border-b-2 rounded-none focus:outline-none transition-none"
               style={{
                 fontSize: '20px',
                 color: '#333333',
