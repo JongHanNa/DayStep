@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Clock, Archive, Smartphone, StickyNote, Users, User } from 'lucide-react';
+import { Plus, Clock, Smartphone, StickyNote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -16,8 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoFormModal from '@/components/todos/TodoFormModal';
 import NoteSheet from '@/components/notes/NoteSheet';
-import ContactListSheet from '@/components/contacts/ContactListSheet';
-import ContactDetailModal from '@/components/contacts/ContactDetailModal';
 import { Capacitor } from '@capacitor/core';
 import { widgetSyncService } from '@/services/widget-sync.service';
 import { isRecurringTodo } from '@/lib/recurrence-utils';
@@ -30,11 +27,9 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
   const [isOpen, setIsOpen] = useState(false);
   const [todoModalOpen, setTodoModalOpen] = useState(false);
   const [quickMemoSheetOpen, setNoteSheetOpen] = useState(false);
-  const [contactListSheetOpen, setContactListSheetOpen] = useState(false);
-  const [contactDetailOpen, setContactDetailOpen] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
-  
+
   const todos = useTodoStore(state => state.todos);
 
   const handleAddTodo = () => {
@@ -44,16 +39,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
 
   const handleOpenNote = () => {
     setNoteSheetOpen(true);
-    setIsOpen(false);
-  };
-
-  const handleOpenContactList = () => {
-    setContactListSheetOpen(true);
-    setIsOpen(false);
-  };
-
-  const handleAddNewContact = () => {
-    setContactDetailOpen(true);
     setIsOpen(false);
   };
 
@@ -259,32 +244,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               </div>
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={handleOpenContactList}
-              className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
-            >
-              <div className="p-2 rounded-full bg-primary/10">
-                <Users className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-foreground">인물</div>
-                <div className="text-xs text-muted-foreground">연락처 보기</div>
-              </div>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={handleAddNewContact}
-              className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
-            >
-              <div className="p-2 rounded-full bg-primary/10">
-                <User className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-foreground">새 연락처</div>
-                <div className="text-xs text-muted-foreground">연락처 추가</div>
-              </div>
-            </DropdownMenuItem>
-
             {Capacitor.isNativePlatform() && (
               <>
                 <div className="h-px bg-border mx-2 my-1" />
@@ -311,24 +270,11 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
         open={todoModalOpen}
         onOpenChange={setTodoModalOpen}
       />
-      
+
       {/* 퀵메모 시트 */}
       <NoteSheet
         open={quickMemoSheetOpen}
         onOpenChange={setNoteSheetOpen}
-      />
-      
-      {/* 연락처 목록 시트 */}
-      <ContactListSheet
-        open={contactListSheetOpen}
-        onOpenChange={setContactListSheetOpen}
-      />
-
-      {/* 연락처 상세 모달 */}
-      <ContactDetailModal
-        open={contactDetailOpen}
-        onOpenChange={setContactDetailOpen}
-        mode="create"
       />
     </>
   );
