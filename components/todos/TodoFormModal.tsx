@@ -13,12 +13,8 @@ import RecurringUpdateDialog from './RecurringUpdateDialog';
 import SimpleDeleteDialog from './SimpleDeleteDialog';
 import TodoBasicFields from './form/TodoBasicFields';
 import ScheduleSettings from './form/ScheduleSettings';
-import DepartureSettings from './form/DepartureSettings';
 import RecurrenceSettings from './form/RecurrenceSettings';
 import TodoMetadata from './form/TodoMetadata';
-import LinkedNotes from './form/LinkedNotes';
-import NoteInput from './form/NoteInput';
-import ContactsSection from './form/ContactsSection';
 import { useElasticScroll } from '@/hooks/useElasticScroll';
 import { useTodoFormState } from '@/hooks/useTodoFormState';
 import { useTodoFormHandlers } from '@/hooks/useTodoFormHandlers';
@@ -255,8 +251,8 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 selectedColor={values.selectedColor}
               />
 
-              {/* 출발 정보 설정 */}
-              <DepartureSettings
+              {/* 출발 정보 설정 - 임시로 숨김 처리 */}
+              {/* <DepartureSettings
                 departureLocation={values.departureLocation}
                 departureDate={values.departureDate}
                 departureTime={values.departureTime}
@@ -264,7 +260,7 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 onDateChange={actions.setDepartureDate}
                 onTimeChange={actions.setDepartureTime}
                 selectedColor={values.selectedColor}
-              />
+              /> */}
 
               {/* 반복 설정 - 스케줄 설정 바로 아래 */}
               <RecurrenceSettings
@@ -281,26 +277,6 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
                 onRecurrenceCountChange={actions.setRecurrenceCount}
                 onRecurrenceEndTypeChange={actions.setRecurrenceEndType}
                 onDayOfWeekToggle={handlers.handleDayOfWeekToggle}
-                selectedColor={values.selectedColor}
-              />
-
-
-              {/* 연결된 노트 표시 (수정 모드일 때만) */}
-              {computed.isEditMode && editingTodo && (
-                <LinkedNotes taskId={editingTodo.id} />
-              )}
-
-              {/* 노트 입력 (항상 표시) */}
-              <NoteInput
-                memos={values.memos}
-                onMemosChange={actions.setMemos}
-                selectedColor={values.selectedColor}
-              />
-
-              {/* 연락처 연결 섹션 */}
-              <ContactsSection
-                selectedContacts={values.selectedContacts}
-                onContactsChange={actions.setSelectedContacts}
                 selectedColor={values.selectedColor}
               />
 
