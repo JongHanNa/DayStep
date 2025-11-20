@@ -150,7 +150,7 @@ export default function TodoFormFields({
   return (
     <>
       {/* 아이콘 및 제목 - 통합 섹션 */}
-      <div className="mx-4 my-2">
+      <div className="my-2">
         <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
           <Tag className="h-5 w-5" style={{ color: todo.color || '#DBAC6C' }} />
           아이콘 및 제목
@@ -189,24 +189,40 @@ export default function TodoFormFields({
               </div>
             </div>
 
-            {/* 제목 입력 */}
-            <input
-              type="text"
-              value={todo.title}
-              onChange={(e) => onChange({ ...todo, title: e.target.value })}
-              placeholder={titlePlaceholder}
-              className="flex-1 bg-white border-0 border-b-2 rounded-none focus:outline-none transition-none"
-              style={{
-                fontSize: '20px',
-                color: '#333333',
-                borderBottomColor: '#D1D5DB',
-                outline: 'none',
-                boxShadow: 'none',
-                fontWeight: '600',
+            {/* 제목 입력 - iOS WebView scale 문제 해결 */}
+            <div className="flex-1">
+              <div className="input-scale-wrapper" style={{
+                transform: 'scale(1.6)',
+                transformOrigin: 'left bottom',
+                WebkitTransform: 'scale(1.6)',
+                WebkitTransformOrigin: 'left bottom',
+                width: '80%',
                 height: '44px',
-              }}
-              required
-            />
+                position: 'relative'
+              }}>
+                <input
+                  type="text"
+                  value={todo.title}
+                  onChange={(e) => onChange({ ...todo, title: e.target.value })}
+                  placeholder={titlePlaceholder}
+                  className="bg-white border-0 border-b-2 rounded-none focus:outline-none transition-none"
+                  style={{
+                    fontSize: '20px',
+                    color: '#333333',
+                    borderBottomColor: '#D1D5DB',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    fontWeight: '600',
+                    height: '44px',
+                    lineHeight: '0.9',
+                    paddingTop: '16px',
+                    paddingBottom: '0px',
+                    width: '100%',
+                  }}
+                  required
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
