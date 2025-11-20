@@ -733,7 +733,8 @@ export const useTodoStore = createStore<TodoStoreState>(
       updateRecurringTodo: async (
         id: string,
         updates: Partial<CreateTodoInput>,
-        updateType: "this" | "future" | "all"
+        updateType: "this" | "future" | "all",
+        occurrenceDate?: Date
       ): Promise<Todo[]> => {
         const originalTodos = [...get().todos];
 
@@ -757,7 +758,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             }
           });
 
-          await updateRecurringTodoAction(id, updates, updateType);
+          await updateRecurringTodoAction(id, updates, updateType, occurrenceDate);
 
           // void 반환이므로 데이터를 다시 로드해야 함
           await get().fetchTodosForCurrentView();

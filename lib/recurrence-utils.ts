@@ -175,7 +175,8 @@ export function generateRecurrenceInstances({
         schedule_type: schedule_type, // 명시적으로 schedule_type 포함
         is_recurrence_instance: true,
         recurrence_source_id: originalTodo.id,
-        recurrence_occurrence_date: format(occurrenceDate, 'yyyy-MM-dd')
+        recurrence_occurrence_date: format(occurrenceDate, 'yyyy-MM-dd'),
+        time_override: override || undefined // 🔧 override 정보 추가
       };
 
       return {

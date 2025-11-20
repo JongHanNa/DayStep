@@ -53,18 +53,20 @@ export const updateRecurringTodoAction = createAsyncAction(
   async (
     id: string,
     updates: Partial<CreateTodoInput>,
-    updateType: "this" | "future" | "all"
+    updateType: "this" | "future" | "all",
+    occurrenceDate?: Date
   ) => {
     logStoreAction("TodoStore", "updateRecurringTodo", {
       id,
       updates,
       updateType,
+      occurrenceDate,
     });
 
     try {
       // TodoService를 통한 실제 업데이트
       const updateInput: UpdateTodoInput = { id, ...updates };
-      await todoService.updateRecurringTodo(id, updateInput, updateType);
+      await todoService.updateRecurringTodo(id, updateInput, updateType, occurrenceDate);
 
       return true;
     } catch (error) {

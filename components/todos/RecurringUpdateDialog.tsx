@@ -12,7 +12,7 @@ interface RecurringUpdateDialogProps {
   originalTime: { start: Date; end?: Date };
   newTime: { start: Date; end?: Date };
   occurrenceDate: Date;
-  onUpdateChoice: (choice: 'this-only' | 'from-now' | 'all') => Promise<void>;
+  onUpdateChoice: (choice: 'this-only' | 'from-now' | 'all', occurrenceDate: Date) => Promise<void>;
 }
 
 export default function RecurringUpdateDialog({
@@ -44,7 +44,13 @@ export default function RecurringUpdateDialog({
   const handleChoice = async (choice: 'this-only' | 'from-now' | 'all') => {
     try {
       setIsProcessing(true);
-      await onUpdateChoice(choice);
+      console.log('🔍 [RecurringUpdateDialog] handleChoice 호출:', {
+        choice,
+        occurrenceDate,
+        occurrenceDateType: typeof occurrenceDate,
+        occurrenceDateString: occurrenceDate?.toISOString()
+      });
+      await onUpdateChoice(choice, occurrenceDate);
       onOpenChange(false);
     } catch (error) {
       console.error('반복 할일 업데이트 실패:', error);

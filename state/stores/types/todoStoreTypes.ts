@@ -91,7 +91,8 @@ export interface TodoStoreState extends BaseStoreState {
   updateRecurringTodo: (
     id: string,
     updates: Partial<CreateTodoInput>,
-    updateType: "this" | "future" | "all"
+    updateType: "this" | "future" | "all",
+    occurrenceDate?: Date
   ) => Promise<Todo[]>;
   deleteTodo: (id: string) => Promise<boolean>;
   deleteRecurringTodo: (id: string, deleteType: 'this' | 'future' | 'all', excludedDate?: string) => Promise<boolean>;

@@ -702,6 +702,12 @@ export const BubbleTimelineView: React.FC = () => {
                             start_time: (() => {
                               const originalTime = originalTodo.start_time || originalTodo.startTime;
                               const occurrenceDate = (timelineItem.data as any).recurrence_occurrence_date;
+                              const override = (timelineItem.data as any).time_override; // 🔧 override 데이터 추가
+
+                              // 🔧 override가 있으면 우선 사용
+                              if (override && override.start_time) {
+                                return override.start_time;
+                              }
 
                               // 반복 인스턴스: occurrence_date + 원본 시간 조합
                               if (occurrenceDate && originalTime) {
@@ -736,6 +742,12 @@ export const BubbleTimelineView: React.FC = () => {
                               const originalStartTime = originalTodo.start_time || originalTodo.startTime;
                               const originalEndTime = originalTodo.end_time || originalTodo.endTime;
                               const occurrenceDate = (timelineItem.data as any).recurrence_occurrence_date;
+                              const override = (timelineItem.data as any).time_override; // 🔧 override 데이터 추가
+
+                              // 🔧 override가 있으면 우선 사용
+                              if (override && override.end_time) {
+                                return override.end_time;
+                              }
 
                               // 반복 인스턴스: occurrence_date + 원본 시간 조합
                               if (occurrenceDate && originalStartTime && originalEndTime) {

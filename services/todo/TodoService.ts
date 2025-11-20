@@ -20,6 +20,13 @@ import {
   deleteAllTodoExclusionsWithJWT,
   updateWithJWT
 } from '@/lib/supabaseWebViewHelper';
+import {
+  createTimeOverrideWithJWT,
+  updateTimeOverrideWithJWT,
+  queryTimeOverridesWithJWT,
+  deleteTimeOverridesFromDateWithJWT,
+  deleteAllTimeOverridesWithJWT
+} from '@/lib/supabase/time-overrides';
 // getCurrentUser는 Capacitor 백업 세션 패턴으로 교체됨
 import { supabase } from '@/lib/supabase';
 
@@ -1370,10 +1377,26 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
   /**
    * 반복 일정 할일 업데이트
    */
-  async updateRecurringTodo(id: string, updates: UpdateTodoInput, updateType: 'this' | 'future' | 'all'): Promise<void> {
+  async updateRecurringTodo(
+    id: string,
+    updates: UpdateTodoInput,
+    updateType: 'this' | 'future' | 'all',
+    occurrenceDate?: Date // 특정 날짜 인스턴스 업데이트용
+  ): Promise<void> {
+    // ✅ 클로저 캡처를 위한 명시적 변수 저장
+    const capturedOccurrenceDate = occurrenceDate;
+
     return this.executeWithPerformanceTracking(
       'updateRecurringTodo',
       async () => {
+        console.log('🔍 [TodoService.updateRecurringTodo] 콜백 진입:', {
+          capturedOccurrenceDate,
+          occurrenceDateType: typeof capturedOccurrenceDate,
+          occurrenceDateString: capturedOccurrenceDate?.toISOString(),
+          updateType,
+          id
+        });
+
         this.validateRequiredFields({ id, updates, updateType }, ['id', 'updates', 'updateType'], 'updateRecurringTodo');
 
         const todo = await this.findById(id);
@@ -1386,6 +1409,34 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           );
         }
 
+        // userId 획득 (Capacitor 백업 세션 패턴 사용)
+        let userId: string | null = null;
+
+        if (isCapacitorEnvironment()) {
+          const { Preferences } = await import('@capacitor/preferences');
+          const sessionData = await Preferences.get({ key: 'supabase_auth_session' });
+          if (sessionData.value) {
+            try {
+              const session = JSON.parse(sessionData.value);
+              userId = session?.user?.id || null;
+            } catch (e) {
+              console.error('세션 파싱 실패:', e);
+            }
+          }
+        } else {
+          const { data } = await supabase.auth.getSession();
+          userId = data?.session?.user?.id || null;
+        }
+
+        if (!userId) {
+          throw new ServiceError(
+            '사용자 인증 정보를 찾을 수 없습니다.',
+            'UNAUTHORIZED',
+            undefined,
+            { todoId: id }
+          );
+        }
+
         const updateData = {
           ...updates,
           updated_at: new Date().toISOString(),
@@ -1393,29 +1444,69 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
 
         switch (updateType) {
           case 'this':
-            // 현재 인스턴스만 업데이트
-            await this.executeQuery(
-              this.client
-                .from('todos')
-                .update(updateData)
-                .eq('id', id)
-                .select()
-                .single(),
-              { todoId: id, updateData }
+            // 🔧 수정: 특정 날짜 인스턴스만 업데이트 (todo_time_overrides 사용)
+            if (!capturedOccurrenceDate) {
+              throw new ServiceError(
+                '특정 인스턴스 업데이트에는 날짜 정보가 필요합니다.',
+                'MISSING_OCCURRENCE_DATE',
+                undefined,
+                { todoId: id }
+              );
+            }
+
+            // 날짜를 YYYY-MM-DD 형식으로 변환
+            const overrideDate = capturedOccurrenceDate.toISOString().split('T')[0];
+
+            // 기존 override 확인
+            const existingOverrides = await queryTimeOverridesWithJWT(
+              id,
+              userId,
+              { start: overrideDate, end: overrideDate }
             );
+
+            if (existingOverrides.length > 0) {
+              // 업데이트
+              await updateTimeOverrideWithJWT(id, overrideDate, {
+                start_time: updates.start_time,
+                end_time: updates.end_time
+              });
+            } else {
+              // 생성
+              await createTimeOverrideWithJWT({
+                parent_todo_id: id,
+                user_id: userId,
+                override_date: overrideDate,
+                start_time: updates.start_time!,
+                end_time: updates.end_time
+              });
+            }
             break;
 
           case 'future':
-            // 현재와 미래 인스턴스 모두 업데이트
+            // 🔧 수정: 이후 모든 일정 업데이트
+            // 1. 해당 날짜 이후의 모든 override 삭제
+            if (!capturedOccurrenceDate) {
+              throw new ServiceError(
+                '이후 일정 업데이트에는 날짜 정보가 필요합니다.',
+                'MISSING_OCCURRENCE_DATE',
+                undefined,
+                { todoId: id }
+              );
+            }
+
+            const fromDate = capturedOccurrenceDate.toISOString().split('T')[0];
+            await deleteTimeOverridesFromDateWithJWT(id, fromDate, userId);
+
+            // 2. 원본 todos 업데이트
             if (todo.parentTodoId) {
               await this.executeQuery(
                 this.client
                   .from('todos')
                   .update(updateData)
                   .eq('parent_todo_id', todo.parentTodoId)
-                  .gte('start_time', todo.startTime?.toISOString() || new Date().toISOString())
+                  .gte('start_time', capturedOccurrenceDate.toISOString())
                   .select(),
-                { parentId: todo.parentTodoId, fromDate: todo.startTime }
+                { parentId: todo.parentTodoId, fromDate: capturedOccurrenceDate }
               );
             } else {
               // 자신이 부모인 경우
@@ -1424,15 +1515,19 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
                   .from('todos')
                   .update(updateData)
                   .or(`id.eq.${id},parent_todo_id.eq.${id}`)
-                  .gte('start_time', todo.startTime?.toISOString() || new Date().toISOString())
+                  .gte('start_time', capturedOccurrenceDate.toISOString())
                   .select(),
-                { todoId: id, fromDate: todo.startTime }
+                { todoId: id, fromDate: capturedOccurrenceDate }
               );
             }
             break;
 
           case 'all':
-            // 부모와 모든 자식 인스턴스 업데이트
+            // 🔧 수정: 모든 일정 업데이트
+            // 1. 모든 override 삭제
+            await deleteAllTimeOverridesWithJWT(id, userId);
+
+            // 2. 원본 todos 업데이트
             const parentId = todo.parentTodoId || id;
             await this.executeQuery(
               this.client

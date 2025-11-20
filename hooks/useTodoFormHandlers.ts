@@ -311,35 +311,62 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       return;
     }
 
-    // 반복 할일 수정 시 시간 변경 확인
-    if (isEditMode && editingTodo && editingTodo.recurrence_pattern && 
-        editingTodo.recurrence_pattern !== 'none' && values.scheduleType === 'timed') {
-      
+    // 반복 할일 수정 시 시간/날짜 변경 확인 (매일, 매주, 매달 패턴)
+    if (isEditMode && editingTodo && editingTodo.recurrence_pattern &&
+        editingTodo.recurrence_pattern !== 'none' && values.scheduleType !== 'anytime') {
+
       const originalStart = editingTodo.start_time ? new Date(editingTodo.start_time) : null;
       const originalEnd = editingTodo.end_time ? new Date(editingTodo.end_time) : null;
-      
+
       if (originalStart) {
-        const newStart = new Date(`${values.startDate}T${values.startTime}+09:00`);
-        const newEnd = values.endDate && values.endTime 
-          ? new Date(`${values.endDate}T${values.endTime}+09:00`) 
-          : addMinutes(newStart, 60);
-        
-        // 시간이 변경되었는지 확인
-        const startTimeChanged = Math.abs(newStart.getTime() - originalStart.getTime()) > 60000; // 1분 이상 차이
-        const endTimeChanged = originalEnd ? 
-          Math.abs(newEnd.getTime() - originalEnd.getTime()) > 60000 : false;
-        
-        if (startTimeChanged || endTimeChanged) {
-          // 시간 변경 모달 데이터 설정
+        let timeChanged = false;
+        let newStart: Date;
+        let newEnd: Date;
+
+        // scheduleType에 따라 다르게 처리
+        if (values.scheduleType === 'timed') {
+          // 시간 지정 일정: 날짜 + 시간 비교
+          newStart = new Date(`${values.startDate}T${values.startTime}+09:00`);
+          newEnd = values.endDate && values.endTime
+            ? new Date(`${values.endDate}T${values.endTime}+09:00`)
+            : addMinutes(newStart, 60);
+
+          const startDiff = Math.abs(newStart.getTime() - originalStart.getTime());
+          const endDiff = originalEnd ? Math.abs(newEnd.getTime() - originalEnd.getTime()) : 0;
+          const startTimeChanged = startDiff >= 60000; // 1분 이상 차이
+          const endTimeChanged = originalEnd ? endDiff >= 60000 : false;
+
+          timeChanged = startTimeChanged || endTimeChanged;
+        } else if (values.scheduleType === 'all_day') {
+          // 종일 일정: 날짜만 비교
+          const originalDate = format(originalStart, 'yyyy-MM-dd');
+          const newDate = values.startDate;
+
+          if (originalDate !== newDate) {
+            // 날짜가 변경된 경우, 시간은 자정(00:00)으로 설정
+            newStart = new Date(`${values.startDate}T00:00:00+09:00`);
+            newEnd = values.endDate ? new Date(`${values.endDate}T23:59:59+09:00`) : new Date(newStart);
+            timeChanged = true;
+          }
+        }
+
+        if (timeChanged) {
+          // 시간/날짜 변경 모달 데이터 설정
           setOriginalTimeForUpdate({
             start: originalStart,
             end: originalEnd || undefined
           });
           setNewTimeForUpdate({
-            start: newStart,
-            end: newEnd
+            start: newStart!,
+            end: newEnd!
           });
-          setOccurrenceDate(originalStart); // 현재 수정 중인 할일의 날짜
+
+          // 반복 인스턴스의 실제 날짜 사용 (recurrence_occurrence_date)
+          const occurrenceDate = (editingTodo as any).recurrence_occurrence_date
+            ? new Date((editingTodo as any).recurrence_occurrence_date)
+            : originalStart;
+          setOccurrenceDate(occurrenceDate);
+
           setShowRecurringUpdateDialog(true);
           return; // 여기서 중단하여 시간 변경 모달을 표시
         }
@@ -708,8 +735,20 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
   }, [editingTodo, deleteRecurringTodo, deleteLinkedNotes, toast, onOpenChange, setIsDeleting, setShowRecurringDeleteDialog]);
 
   // 반복 할일 시간 변경 핸들러
-  const handleRecurringTimeUpdate = useCallback(async (choice: 'this-only' | 'from-now' | 'all') => {
-    if (!editingTodo || !newTimeForUpdate || !occurrenceDate) return;
+  const handleRecurringTimeUpdate = useCallback(async (
+    choice: 'this-only' | 'from-now' | 'all',
+    occurrenceDate: Date
+  ) => {
+    console.log('🔍 [handleRecurringTimeUpdate] 함수 진입:', {
+      choice,
+      occurrenceDate,
+      occurrenceDateType: typeof occurrenceDate,
+      occurrenceDateString: occurrenceDate?.toISOString(),
+      hasEditingTodo: !!editingTodo,
+      hasNewTimeForUpdate: !!newTimeForUpdate
+    });
+
+    if (!editingTodo || !newTimeForUpdate) return;
 
     setIsSubmitting(true);
     try {
@@ -744,7 +783,16 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
 
       // updateRecurringTodo 호출 (선택에 따라 업데이트 범위가 결정됨)
       const updateType: 'this' | 'future' | 'all' = choice === 'this-only' ? 'this' : choice === 'from-now' ? 'future' : 'all';
-      await updateRecurringTodo?.(editingTodo.id, todoData, updateType);
+
+      console.log('🔍 [handleRecurringTimeUpdate] updateRecurringTodo 호출 직전:', {
+        todoId: editingTodo.id,
+        updateType,
+        occurrenceDate,
+        occurrenceDateType: typeof occurrenceDate,
+        occurrenceDateString: occurrenceDate.toISOString()
+      });
+
+      await updateRecurringTodo?.(editingTodo.id, todoData, updateType, occurrenceDate);
 
       const successMessages = {
         'this-only': '이 일정만 시간이 변경되었습니다.',
@@ -771,7 +819,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [editingTodo, newTimeForUpdate, occurrenceDate, values, updateRecurringTodo, toast, setShowRecurringUpdateDialog, onOpenChange, setIsSubmitting]);
+  }, [editingTodo, newTimeForUpdate, values, updateRecurringTodo, toast, setShowRecurringUpdateDialog, onOpenChange, setIsSubmitting]);
 
   return {
     // 계산 유틸리티
