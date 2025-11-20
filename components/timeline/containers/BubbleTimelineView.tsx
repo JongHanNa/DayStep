@@ -455,6 +455,14 @@ export const BubbleTimelineView: React.FC = () => {
 
         if (isRecurring) {
           // 반복 할일: RecurringUpdateDialog 표시
+          console.log('🔍 [BubbleTimelineView] RecurringUpdateDialog 데이터 설정:', {
+            currentDate,
+            currentDateType: typeof currentDate,
+            currentDateString: currentDate?.toISOString(),
+            draggedItemStartTime: draggedItem.startTime,
+            draggedItemStartTimeType: typeof draggedItem.startTime
+          });
+
           setRecurringUpdateDialog({
             open: true,
             data: {
