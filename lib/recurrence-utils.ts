@@ -51,6 +51,30 @@ export function generateRecurrenceInstances({
     // ✅ 서버에서 이미 종료일 필터링 완료 - until 설정 불필요
     let untilDate: Date | undefined = undefined;
 
+    // 🔧 크로스데이 할일의 경우 마지막 날 다음날까지 범위 확장
+    if (recurrence_end_date) {
+      const lastDay = new Date(recurrence_end_date);
+
+      // 크로스데이 여부 확인 (원본 할일의 시작/종료 시간 비교)
+      const originalStart = new Date(start_time);
+      const endTimeValue = originalTodo.end_time || originalTodo.endTime;
+      if (endTimeValue) {
+        const originalEnd = new Date(endTimeValue);
+        const startTimeOfDay = originalStart.getHours() * 60 + originalStart.getMinutes();
+        const endTimeOfDay = originalEnd.getHours() * 60 + originalEnd.getMinutes();
+        const isCrossDay = endTimeOfDay < startTimeOfDay;
+
+        if (isCrossDay) {
+          // 마지막 발생일의 다음날 자정까지 범위 포함
+          untilDate = endOfDay(new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() + 1));
+        } else {
+          untilDate = endOfDay(lastDay);
+        }
+      } else {
+        untilDate = endOfDay(lastDay);
+      }
+    }
+
     // RRule 옵션 설정
     const ruleOptions: any = {
       dtstart: startDate, // 🔧 원본 시작 시간 사용 (startOfDay 제거)
@@ -206,6 +230,14 @@ export function generateRecurrenceInstances({
         const previousDay = new Date(instance.occurrenceDate);
         previousDay.setDate(previousDay.getDate() - 1);
         const prevDateString = format(previousDay, 'yyyy-MM-dd');
+
+        // 🔧 반복 시작일 이전의 전날 인스턴스는 생성하지 않음
+        const startDay = startOfDay(new Date(startDate));
+        const prevDay = startOfDay(previousDay);
+
+        if (prevDay.getTime() < startDay.getTime()) {
+          return; // 반복 시작일 이전은 skip
+        }
 
         // 전날 시작 시간 (전날 같은 시간)
         const prevInstanceStartTime = new Date(previousDay);
