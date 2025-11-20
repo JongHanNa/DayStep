@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Clock, Smartphone, StickyNote } from 'lucide-react';
+import { Plus, Clock, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +14,6 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoFormModal from '@/components/todos/TodoFormModal';
-import NoteSheet from '@/components/notes/NoteSheet';
 import { Capacitor } from '@capacitor/core';
 import { widgetSyncService } from '@/services/widget-sync.service';
 import { isRecurringTodo } from '@/lib/recurrence-utils';
@@ -26,7 +25,6 @@ interface FloatingActionButtonProps {
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [todoModalOpen, setTodoModalOpen] = useState(false);
-  const [quickMemoSheetOpen, setNoteSheetOpen] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
 
@@ -34,11 +32,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
 
   const handleAddTodo = () => {
     setTodoModalOpen(true);
-    setIsOpen(false);
-  };
-
-  const handleOpenNote = () => {
-    setNoteSheetOpen(true);
     setIsOpen(false);
   };
 
@@ -231,19 +224,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
               </div>
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={handleOpenNote}
-              className="flex items-center gap-3 py-3 px-3 cursor-pointer hover:bg-accent focus:bg-accent"
-            >
-              <div className="p-2 rounded-full bg-primary/10">
-                <StickyNote className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-foreground">퀵메모</div>
-                <div className="text-xs text-muted-foreground">빠른 노트 작성</div>
-              </div>
-            </DropdownMenuItem>
-
             {Capacitor.isNativePlatform() && (
               <>
                 <div className="h-px bg-border mx-2 my-1" />
@@ -269,12 +249,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
       <TodoFormModal
         open={todoModalOpen}
         onOpenChange={setTodoModalOpen}
-      />
-
-      {/* 퀵메모 시트 */}
-      <NoteSheet
-        open={quickMemoSheetOpen}
-        onOpenChange={setNoteSheetOpen}
       />
     </>
   );
