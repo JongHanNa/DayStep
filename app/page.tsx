@@ -37,7 +37,7 @@ export default function LandingPage() {
 
   // 🎯 Capacitor 환경에서는 즉시 리다이렉트 (랜딩 페이지 렌더링 차단)
   const isCapacitor = typeof window !== 'undefined' && window.location.protocol === 'capacitor:';
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   // 회전하는 기능 텍스트 상태
   const features = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
@@ -90,8 +90,9 @@ export default function LandingPage() {
 
   // 🚨 Capacitor 환경: 즉시 리다이렉트 (인증 체크 없이)
   if (isCapacitor) {
-    if (!hasRedirected) {
-      setHasRedirected(true);
+    // useRef로 단 한 번만 실행 보장 (React의 setState는 비동기이므로)
+    if (!hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
 
       console.log('📱 Capacitor 환경 감지 - 즉시 리다이렉트 실행');
 
