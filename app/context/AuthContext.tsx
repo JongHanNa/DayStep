@@ -81,17 +81,17 @@ export function AuthProvider({
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(false); // 서버/클라이언트 모두 false로 시작
+  const [loading, setLoading] = useState(true); // 🔑 서버/클라이언트 모두 true로 시작 (Hydration 안전)
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Capacitor 환경에서 자동 토큰 갱신 활성화
   useCapacitorAutoTokenRefresh();
-  
+
   // 하이드레이션 완료 체크
   useEffect(() => {
     console.log('🚀 AuthContext - 하이드레이션 시작');
     setIsHydrated(true);
-    setLoading(true); // 하이드레이션 완료 후에만 loading 활성화
+    // loading은 이미 true이므로 여기서 설정하지 않음 (Hydration Mismatch 방지)
   }, []); // 빈 의존성 배열로 한 번만 실행
 
   // 초기 세션 확인 - 하이드레이션 완료 후에만 실행 (환경별 분리)

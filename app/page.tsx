@@ -88,33 +88,36 @@ export default function LandingPage() {
     alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
   };
 
-  // 🚨 Capacitor 환경: 즉시 리다이렉트 (인증 체크 없이)
-  if (isCapacitor) {
-    // useRef로 단 한 번만 실행 보장 (React의 setState는 비동기이므로)
-    if (!hasRedirectedRef.current) {
-      hasRedirectedRef.current = true;
+  // 🚨 Capacitor 환경: useEffect에서 리다이렉트 (렌더 함수에서 비동기 작업 방지)
+  useEffect(() => {
+    // Capacitor 환경이 아니거나 이미 리다이렉트 했으면 종료
+    if (!isCapacitor || hasRedirectedRef.current) return;
 
-      console.log('📱 Capacitor 환경 감지 - 즉시 리다이렉트 실행');
+    // 리다이렉트 플래그 설정 (단 한 번만 실행 보장)
+    hasRedirectedRef.current = true;
 
-      // 마지막 방문 페이지 복원 시도 (WebView 크래시 후에도 빠른 복구)
-      getLastVisitedRoute()
-        .then((lastRoute) => {
-          if (lastRoute && lastRoute !== '/') {
-            console.log(`📍 [Capacitor] 마지막 방문 페이지로 복원: ${lastRoute}`);
-            router.replace(lastRoute);
-          } else {
-            console.log('📍 [Capacitor] 저장된 경로 없음 - Areas 페이지로 이동');
-            router.replace('/second-brain/areas');
-          }
-        })
-        .catch((error) => {
-          console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
-          // Fallback: Areas 페이지로 이동
+    console.log('📱 Capacitor 환경 감지 - 리다이렉트 시작');
+
+    // 마지막 방문 페이지 복원 시도 (WebView 크래시 후에도 빠른 복구)
+    getLastVisitedRoute()
+      .then((lastRoute) => {
+        if (lastRoute && lastRoute !== '/') {
+          console.log(`📍 [Capacitor] 마지막 방문 페이지로 복원: ${lastRoute}`);
+          router.replace(lastRoute);
+        } else {
+          console.log('📍 [Capacitor] 저장된 경로 없음 - Areas 페이지로 이동');
           router.replace('/second-brain/areas');
-        });
-    }
+        }
+      })
+      .catch((error) => {
+        console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
+        // Fallback: Areas 페이지로 이동
+        router.replace('/second-brain/areas');
+      });
+  }, [isCapacitor, router]);
 
-    // 리다이렉트 완료될 때까지 로딩 화면 표시
+  // Capacitor 환경: 리다이렉트 완료될 때까지 로딩 화면 표시
+  if (isCapacitor) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="text-center">
