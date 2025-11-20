@@ -27,6 +27,7 @@ import {
   deleteTimeOverridesFromDateWithJWT,
   deleteAllTimeOverridesWithJWT
 } from '@/lib/supabase/time-overrides';
+import { format } from 'date-fns';
 // getCurrentUser는 Capacitor 백업 세션 패턴으로 교체됨
 import { supabase } from '@/lib/supabase';
 
@@ -1454,8 +1455,8 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               );
             }
 
-            // 날짜를 YYYY-MM-DD 형식으로 변환
-            const overrideDate = capturedOccurrenceDate.toISOString().split('T')[0];
+            // 날짜를 YYYY-MM-DD 형식으로 변환 (로컬 날짜 기준)
+            const overrideDate = format(capturedOccurrenceDate, 'yyyy-MM-dd');
 
             // 기존 override 확인
             const existingOverrides = await queryTimeOverridesWithJWT(
@@ -1494,7 +1495,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               );
             }
 
-            const fromDate = capturedOccurrenceDate.toISOString().split('T')[0];
+            const fromDate = format(capturedOccurrenceDate, 'yyyy-MM-dd');
             await deleteTimeOverridesFromDateWithJWT(id, fromDate, userId);
 
             // 2. 원본 todos 업데이트
