@@ -32,6 +32,13 @@ const ScrollProgressSection = dynamic(
 );
 
 export default function LandingPage() {
+  // 🔍 디버깅: 렌더링 시점 추적
+  console.log('🔍 [DEBUG] page.tsx 렌더링', {
+    timestamp: new Date().toISOString(),
+    isServer: typeof window === 'undefined',
+    protocol: typeof window !== 'undefined' ? window.location.protocol : 'server',
+  });
+
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
@@ -69,6 +76,18 @@ export default function LandingPage() {
       console.log('📱 Capacitor 환경 감지: capacitor:');
     }
   }, []); // 빈 배열로 한 번만 실행
+
+  // 🔍 디버깅: 하이드레이션 완료 후 상태 추적
+  useEffect(() => {
+    console.log('🔍 [DEBUG] 하이드레이션 완료', {
+      isCapacitor,
+      isRedirecting,
+      loading,
+      isAuthenticated,
+      hasRedirected: hasRedirectedRef.current,
+      location: typeof window !== 'undefined' ? window.location.href : 'unknown',
+    });
+  }, [isCapacitor, isRedirecting, loading, isAuthenticated]);
 
   // 🔄 웹 환경에서만 인증 체크 및 리다이렉트
   useEffect(() => {
@@ -120,11 +139,30 @@ export default function LandingPage() {
 
         console.log(`📍 [Capacitor] 페이지로 이동: ${targetRoute}`);
         router.replace(targetRoute);
+
+        // 🔍 디버깅: 네비게이션 성공 확인
+        setTimeout(() => {
+          console.log('🔍 [DEBUG] 네비게이션 후 상태', {
+            currentPath: window.location.pathname,
+            targetRoute,
+            navigationSuccess: window.location.pathname === targetRoute,
+            isRedirecting,
+          });
+        }, 100);
       })
       .catch((error) => {
         console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
         // Fallback: Areas 페이지로 이동
         router.replace('/second-brain/areas');
+
+        // 🔍 디버깅: 폴백 네비게이션 확인
+        setTimeout(() => {
+          console.log('🔍 [DEBUG] 폴백 네비게이션 후 상태', {
+            currentPath: window.location.pathname,
+            targetRoute: '/second-brain/areas',
+            navigationSuccess: window.location.pathname === '/second-brain/areas',
+          });
+        }, 100);
       });
   }, [isCapacitor, loading, router]);
 
