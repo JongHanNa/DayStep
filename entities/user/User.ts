@@ -10,7 +10,10 @@ export class User {
     public readonly email: string,
     public readonly name: string | null,
     public readonly createdAt: Date,
-    public readonly updatedAt: Date
+    public readonly updatedAt: Date,
+    public readonly hasActiveSubscription: boolean | null = false,
+    public readonly subscriptionType: 'free' | 'trial' | 'pro_monthly' | 'pro_yearly' | null = 'free',
+    public readonly subscriptionExpiresAt: Date | null = null
   ) {}
 
   /**
@@ -22,7 +25,10 @@ export class User {
       data.email,
       data.name,
       new Date(data.created_at),
-      new Date(data.updated_at)
+      new Date(data.updated_at),
+      data.has_active_subscription,
+      data.subscription_type,
+      data.subscription_expires_at ? new Date(data.subscription_expires_at) : null
     );
   }
 
@@ -74,6 +80,9 @@ export class User {
       name: this.name,
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),
+      has_active_subscription: this.hasActiveSubscription,
+      subscription_type: this.subscriptionType,
+      subscription_expires_at: this.subscriptionExpiresAt?.toISOString() || null,
     };
   }
 

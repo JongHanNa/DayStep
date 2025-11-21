@@ -78,9 +78,25 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
       sound: "beep.wav",
     },
   },
-  includePlugins: ["@capgo/capacitor-social-login", "@capacitor/preferences", "@capacitor/local-notifications", "@capacitor-community/contacts", "@daystep/widget-bridge", "@daystep/contact-groups"],
-  // 커뮤니티 연락처 플러그인 + 로컬 ContactGroups 플러그인 동시 사용
-  packageClassList: ["SocialLoginPlugin", "PreferencesPlugin", "LocalNotificationsPlugin", "ContactsPlugin", "WidgetBridgePlugin", "ContactGroupsPlugin"],
+  includePlugins: [
+    "@capgo/capacitor-social-login",
+    "@capacitor/preferences",
+    "@capacitor/local-notifications",
+    "@capacitor-community/contacts",
+    "@daystep/widget-bridge",
+    "@daystep/contact-groups",
+    "@revenuecat/purchases-capacitor" // Revenue Cat 구독 결제 플러그인
+  ],
+  // 커뮤니티 연락처 플러그인 + 로컬 ContactGroups 플러그인 + Revenue Cat 동시 사용
+  packageClassList: [
+    "SocialLoginPlugin",
+    "PreferencesPlugin",
+    "LocalNotificationsPlugin",
+    "ContactsPlugin",
+    "WidgetBridgePlugin",
+    "ContactGroupsPlugin",
+    "PurchasesPlugin" // Revenue Cat 클래스
+  ],
 };
 
 export default config;

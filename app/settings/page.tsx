@@ -11,7 +11,8 @@ import {
   Calendar,
   CheckCircle,
   Layers,
-  Settings
+  Settings,
+  Crown
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,12 +22,15 @@ import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { SyncStatusIndicator } from '@/components/ui/pull-to-refresh';
 import { useContacts } from '@/lib/contacts/useContacts';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
+import { useSubscription } from '@/hooks/useSubscription';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
 
 function SettingsPageContent() {
   const { user, isAuthenticated, loading } = useAuth();
   const { timeFormat } = useSettingsStore();
   const { showDayStartGap, showPastGaps } = useTimelineViewStore();
   const { contacts, isAvailable } = useContacts();
+  const { hasActiveSubscription, isInTrial, paymentsEnabled } = useSubscription();
   const router = useRouter();
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
@@ -278,11 +282,47 @@ function SettingsPageContent() {
 
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-4">계정</h3>
-          <div className="bg-card border border-border rounded-xl">
+          <div className="bg-card border border-border rounded-xl divide-y divide-border">
+            {/* 구독 관리 - 결제 활성화 시에만 표시 */}
+            {paymentsEnabled && (
+              <Link href="/settings/subscription" className="group">
+                <div
+                  className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
+                  role="button"
+                  aria-label="구독 관리 - Pro 기능 및 구독"
+                  tabIndex={0}
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+                    <Crown className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-foreground">구독 관리</h4>
+                      {hasActiveSubscription && (
+                        <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full font-semibold">
+                          Pro
+                        </span>
+                      )}
+                      {isInTrial && (
+                        <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full font-semibold">
+                          체험 중
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {hasActiveSubscription
+                        ? 'Pro 기능 활성화됨'
+                        : 'Pro 구독으로 모든 기능 잠금 해제'}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            )}
+
             {/* 계정 관리 */}
             <Link href="/settings/account" className="group">
               <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-xl"
+                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
                 role="button"
                 aria-label="계정 관리 - 프로필 및 보안"
                 tabIndex={0}

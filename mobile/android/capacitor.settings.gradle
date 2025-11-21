@@ -19,3 +19,6 @@ project(':daystep-widget-bridge').projectDir = new File('../../plugins/widget-br
 
 include ':daystep-contact-groups'
 project(':daystep-contact-groups').projectDir = new File('../../plugins/contact-groups/android')
+
+include ':revenuecat-purchases-capacitor'
+project(':revenuecat-purchases-capacitor').projectDir = new File('../../node_modules/@revenuecat/purchases-capacitor/android')

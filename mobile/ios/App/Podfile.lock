@@ -56,6 +56,12 @@ PODS:
     - GTMSessionFetcher/Core (< 4.0, >= 3.3)
   - GTMSessionFetcher/Core (3.5.0)
   - PromisesObjC (2.4.0)
+  - PurchasesHybridCommon (17.19.1):
+    - RevenueCat (= 5.48.0)
+  - RevenueCat (5.48.0)
+  - RevenuecatPurchasesCapacitor (11.2.15):
+    - Capacitor
+    - PurchasesHybridCommon (= 17.19.1)
 
 DEPENDENCIES:
   - "Capacitor (from `../../../node_modules/@capacitor/ios`)"
@@ -66,6 +72,7 @@ DEPENDENCIES:
   - "CapgoCapacitorSocialLogin (from `../../../node_modules/@capgo/capacitor-social-login`)"
   - DaystepContactGroups (from `../../../plugins/contact-groups`)
   - DaystepWidgetBridge (from `../../../plugins/widget-bridge`)
+  - "RevenuecatPurchasesCapacitor (from `../../../node_modules/@revenuecat/purchases-capacitor`)"
 
 SPEC REPOS:
   trunk:
@@ -81,6 +88,8 @@ SPEC REPOS:
     - GTMAppAuth
     - GTMSessionFetcher
     - PromisesObjC
+    - PurchasesHybridCommon
+    - RevenueCat
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -99,6 +108,8 @@ EXTERNAL SOURCES:
     :path: "../../../plugins/contact-groups"
   DaystepWidgetBridge:
     :path: "../../../plugins/widget-bridge"
+  RevenuecatPurchasesCapacitor:
+    :path: "../../../node_modules/@revenuecat/purchases-capacitor"
 
 SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
@@ -121,7 +132,10 @@ SPEC CHECKSUMS:
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  PurchasesHybridCommon: a4837eebc889b973668af685d6c23b89a038461d
+  RevenueCat: 1e61140a343a77dc286f171b3ffab99ca09a4b57
+  RevenuecatPurchasesCapacitor: 2c14f8cccaa2100a8585e75bec5984a62ccae52c
 
-PODFILE CHECKSUM: 2e730434b58a2c8b3f1953ceaa1bfbb37d97dfbf
+PODFILE CHECKSUM: 32caec9381cbdec34687dfae4951445bc31030ea
 
 COCOAPODS: 1.16.2

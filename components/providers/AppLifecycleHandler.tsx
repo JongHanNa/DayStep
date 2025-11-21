@@ -2,10 +2,12 @@
 
 import { useEffect } from 'react';
 import { App } from '@capacitor/app';
+import { initializeRevenueCat } from '@/lib/revenue-cat';
 
 /**
  * Capacitor 앱 라이프사이클 이벤트를 처리하는 컴포넌트
- * 백그라운드 복귀 시 불필요한 리다이렉트를 방지합니다.
+ * - 백그라운드 복귀 시 불필요한 리다이렉트 방지
+ * - Revenue Cat 초기화 (구독 결제 시스템)
  */
 export function AppLifecycleHandler() {
   useEffect(() => {
@@ -20,6 +22,15 @@ export function AppLifecycleHandler() {
     }
 
     console.log('📱 Capacitor 환경 - AppLifecycleHandler 활성화');
+
+    // Revenue Cat 초기화 (비동기 실행, 블로킹 없음)
+    initializeRevenueCat()
+      .then(() => {
+        console.log('💳 Revenue Cat 초기화 완료');
+      })
+      .catch((error) => {
+        console.error('💳 Revenue Cat 초기화 실패:', error);
+      });
 
     // 앱 상태 변경 이벤트 리스너
     const handleAppStateChange = (state: { isActive: boolean }) => {

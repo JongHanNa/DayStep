@@ -28,8 +28,8 @@ export function convertToTodoFormData(values: TodoFormStateValues): TodoFormData
     clarification: 'schedule_clear',
     nextActionStatuses: [],
 
-    // 스케줄 관련 (time_unscheduled는 timed로 변환)
-    scheduleType: values.scheduleType === 'time_unscheduled' ? 'timed' : values.scheduleType,
+    // 스케줄 관련
+    scheduleType: values.scheduleType,
     scheduledDate,
     includeTime: values.scheduleType === 'timed',
     startTime: values.startTime || undefined,

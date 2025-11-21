@@ -1,7 +1,3 @@
-// 🔄 Auto-generated file - Do not edit manually
-// Run `npm run supabase:types` to regenerate this file after database schema changes
-// This file will be automatically updated to reflect the current database structure
-
 export type Json =
   | string
   | number
@@ -205,69 +201,6 @@ export type Database = {
           },
         ]
       }
-      motivation_tags: {
-        Row: {
-          color: string
-          created_at: string | null
-          icon: string
-          id: string
-          is_default: boolean | null
-          name: string
-          user_id: string | null
-        }
-        Insert: {
-          color: string
-          created_at?: string | null
-          icon: string
-          id: string
-          is_default?: boolean | null
-          name: string
-          user_id?: string | null
-        }
-        Update: {
-          color?: string
-          created_at?: string | null
-          icon?: string
-          id?: string
-          is_default?: boolean | null
-          name?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      motivation_templates: {
-        Row: {
-          content: string
-          created_at: string | null
-          difficulty: string | null
-          icon: string
-          id: string
-          image_url: string | null
-          tags: Json
-          updated_at: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          difficulty?: string | null
-          icon: string
-          id: string
-          image_url?: string | null
-          tags?: Json
-          updated_at?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          difficulty?: string | null
-          icon?: string
-          id?: string
-          image_url?: string | null
-          tags?: Json
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       note_instances: {
         Row: {
           content: string
@@ -351,143 +284,6 @@ export type Database = {
             columns: ["target_note_id"]
             isOneToOne: false
             referencedRelation: "notes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      note_tag_links: {
-        Row: {
-          assigned_at: string
-          id: string
-          is_active: boolean
-          note_id: string
-          tag_id: string | null
-          template_id: string | null
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string
-          id?: string
-          is_active?: boolean
-          note_id: string
-          tag_id?: string | null
-          template_id?: string | null
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string
-          id?: string
-          is_active?: boolean
-          note_id?: string
-          tag_id?: string | null
-          template_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "note_tag_links_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "note_tags"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "note_tag_links_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "note_tag_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      note_tag_templates: {
-        Row: {
-          category: string
-          color: string
-          created_at: string | null
-          description: string | null
-          icon: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          sort_order: number | null
-        }
-        Insert: {
-          category?: string
-          color: string
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          sort_order?: number | null
-        }
-        Update: {
-          category?: string
-          color?: string
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          sort_order?: number | null
-        }
-        Relationships: []
-      }
-      note_tags: {
-        Row: {
-          color: string
-          created_at: string
-          description: string | null
-          icon: string | null
-          id: string
-          is_active: boolean
-          is_predefined: boolean | null
-          is_system_derived: boolean | null
-          name: string
-          position: number
-          template_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          description?: string | null
-          icon?: string | null
-          id?: string
-          is_active?: boolean
-          is_predefined?: boolean | null
-          is_system_derived?: boolean | null
-          name: string
-          position?: number
-          template_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          description?: string | null
-          icon?: string | null
-          id?: string
-          is_active?: boolean
-          is_predefined?: boolean | null
-          is_system_derived?: boolean | null
-          name?: string
-          position?: number
-          template_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "note_tags_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "note_tag_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -731,6 +527,208 @@ export type Database = {
           },
         ]
       }
+      review_checklist_items: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_default: boolean | null
+          label: string
+          section: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_default?: boolean | null
+          label: string
+          section: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          section?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      review_checklist_state: {
+        Row: {
+          checked_at: string | null
+          checklist_item_id: string | null
+          created_at: string | null
+          id: string
+          is_checked: boolean | null
+          reset_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          checked_at?: string | null
+          checklist_item_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_checked?: boolean | null
+          reset_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          checked_at?: string | null
+          checklist_item_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_checked?: boolean | null
+          reset_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_checklist_state_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "review_checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_history: {
+        Row: {
+          created_at: string | null
+          event_timestamp: string | null
+          event_type: Database["public"]["Enums"]["subscription_event_type_enum"]
+          id: string
+          metadata: Json | null
+          platform: Database["public"]["Enums"]["platform_enum"]
+          product_id: string
+          revenue_cat_event_id: string | null
+          revenue_cat_transaction_id: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_timestamp?: string | null
+          event_type: Database["public"]["Enums"]["subscription_event_type_enum"]
+          id?: string
+          metadata?: Json | null
+          platform: Database["public"]["Enums"]["platform_enum"]
+          product_id: string
+          revenue_cat_event_id?: string | null
+          revenue_cat_transaction_id?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_timestamp?: string | null
+          event_type?: Database["public"]["Enums"]["subscription_event_type_enum"]
+          id?: string
+          metadata?: Json | null
+          platform?: Database["public"]["Enums"]["platform_enum"]
+          product_id?: string
+          revenue_cat_event_id?: string | null
+          revenue_cat_transaction_id?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          auto_renew_enabled: boolean | null
+          cancelled_at: string | null
+          created_at: string | null
+          id: string
+          is_legacy_user: boolean | null
+          latest_receipt_data: string | null
+          legacy_grace_period_end: string | null
+          metadata: Json | null
+          original_purchase_date: string | null
+          platform: Database["public"]["Enums"]["platform_enum"]
+          product_id: string
+          promo_code: string | null
+          promo_discount_percentage: number | null
+          promo_duration_months: number | null
+          revenue_cat_original_transaction_id: string | null
+          revenue_cat_subscriber_id: string | null
+          status: Database["public"]["Enums"]["subscription_status_enum"]
+          subscription_end_date: string | null
+          subscription_start_date: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_renew_enabled?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_legacy_user?: boolean | null
+          latest_receipt_data?: string | null
+          legacy_grace_period_end?: string | null
+          metadata?: Json | null
+          original_purchase_date?: string | null
+          platform?: Database["public"]["Enums"]["platform_enum"]
+          product_id: string
+          promo_code?: string | null
+          promo_discount_percentage?: number | null
+          promo_duration_months?: number | null
+          revenue_cat_original_transaction_id?: string | null
+          revenue_cat_subscriber_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status_enum"]
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_renew_enabled?: boolean | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_legacy_user?: boolean | null
+          latest_receipt_data?: string | null
+          legacy_grace_period_end?: string | null
+          metadata?: Json | null
+          original_purchase_date?: string | null
+          platform?: Database["public"]["Enums"]["platform_enum"]
+          product_id?: string
+          promo_code?: string | null
+          promo_discount_percentage?: number | null
+          promo_duration_months?: number | null
+          revenue_cat_original_transaction_id?: string | null
+          revenue_cat_subscriber_id?: string | null
+          status?: Database["public"]["Enums"]["subscription_status_enum"]
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       todo_completions: {
         Row: {
           completed_at: string | null
@@ -844,44 +842,6 @@ export type Database = {
           {
             foreignKeyName: "todo_exclusions_parent_todo_id_fkey"
             columns: ["parent_todo_id"]
-            isOneToOne: false
-            referencedRelation: "todos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      todo_motivation_links: {
-        Row: {
-          assigned_at: string | null
-          id: string
-          is_active: boolean | null
-          motivation_id: string
-          motivation_type: string
-          todo_id: string
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          motivation_id: string
-          motivation_type: string
-          todo_id: string
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          motivation_id?: string
-          motivation_type?: string
-          todo_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "todo_motivation_links_todo_id_fkey"
-            columns: ["todo_id"]
             isOneToOne: false
             referencedRelation: "todos"
             referencedColumns: ["id"]
@@ -1122,42 +1082,6 @@ export type Database = {
           },
         ]
       }
-      user_motivation_messages: {
-        Row: {
-          color: string | null
-          content: string
-          created_at: string | null
-          icon: string
-          id: string
-          image_url: string | null
-          tags: Json
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          color?: string | null
-          content: string
-          created_at?: string | null
-          icon: string
-          id?: string
-          image_url?: string | null
-          tags?: Json
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          color?: string | null
-          content?: string
-          created_at?: string | null
-          icon?: string
-          id?: string
-          image_url?: string | null
-          tags?: Json
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_preferences: {
         Row: {
           created_at: string | null
@@ -1197,22 +1121,37 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          has_active_subscription: boolean | null
           id: string
           name: string | null
+          subscription_expires_at: string | null
+          subscription_type:
+            | Database["public"]["Enums"]["subscription_type_enum"]
+            | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
+          has_active_subscription?: boolean | null
           id: string
           name?: string | null
+          subscription_expires_at?: string | null
+          subscription_type?:
+            | Database["public"]["Enums"]["subscription_type_enum"]
+            | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
+          has_active_subscription?: boolean | null
           id?: string
           name?: string | null
+          subscription_expires_at?: string | null
+          subscription_type?:
+            | Database["public"]["Enums"]["subscription_type_enum"]
+            | null
           updated_at?: string
         }
         Relationships: []
@@ -1257,10 +1196,6 @@ export type Database = {
       }
     }
     Functions: {
-      create_default_tags_for_user: {
-        Args: { p_user_id: string }
-        Returns: number
-      }
       create_tag_from_template: {
         Args: {
           p_custom_color?: string
@@ -1296,6 +1231,7 @@ export type Database = {
         | "work_in_progress"
         | "read_later"
         | "reference"
+      platform_enum: "ios" | "android" | "web"
       progress_status_enum:
         | "not_started"
         | "in_progress"
@@ -1308,12 +1244,27 @@ export type Database = {
         | "weekly"
         | "monthly"
         | "custom"
-      schedule_type_enum:
-        | "all_day"
-        | "timed"
-        | "anytime"
-        | "none"
-        | "time_unscheduled"
+      schedule_type_enum: "all_day" | "timed" | "anytime" | "none"
+      subscription_event_type_enum:
+        | "trial_started"
+        | "trial_converted"
+        | "trial_expired"
+        | "subscription_started"
+        | "subscription_renewed"
+        | "subscription_cancelled"
+        | "subscription_expired"
+        | "subscription_paused"
+        | "subscription_resumed"
+        | "product_changed"
+        | "refund_issued"
+        | "billing_issue"
+      subscription_status_enum:
+        | "trial"
+        | "active"
+        | "cancelled"
+        | "expired"
+        | "paused"
+      subscription_type_enum: "free" | "trial" | "pro_monthly" | "pro_yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1468,6 +1419,7 @@ export const Constants = {
         "read_later",
         "reference",
       ],
+      platform_enum: ["ios", "android", "web"],
       progress_status_enum: [
         "not_started",
         "in_progress",
@@ -1476,13 +1428,29 @@ export const Constants = {
       ],
       quarter_enum: ["Q1", "Q2", "Q3", "Q4"],
       recurrence_pattern_enum: ["none", "daily", "weekly", "monthly", "custom"],
-      schedule_type_enum: [
-        "all_day",
-        "timed",
-        "anytime",
-        "none",
-        "time_unscheduled",
+      schedule_type_enum: ["all_day", "timed", "anytime", "none"],
+      subscription_event_type_enum: [
+        "trial_started",
+        "trial_converted",
+        "trial_expired",
+        "subscription_started",
+        "subscription_renewed",
+        "subscription_cancelled",
+        "subscription_expired",
+        "subscription_paused",
+        "subscription_resumed",
+        "product_changed",
+        "refund_issued",
+        "billing_issue",
       ],
+      subscription_status_enum: [
+        "trial",
+        "active",
+        "cancelled",
+        "expired",
+        "paused",
+      ],
+      subscription_type_enum: ["free", "trial", "pro_monthly", "pro_yearly"],
     },
   },
 } as const

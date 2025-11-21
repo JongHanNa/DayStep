@@ -18,6 +18,7 @@ import { Toaster } from "sonner";
 import { RealtimeSyncProvider } from "@/components/providers/RealtimeSyncProvider";
 import { ReminderProvider } from "@/components/providers/ReminderProvider";
 import { AppLifecycleHandler } from "@/components/providers/AppLifecycleHandler";
+import { SubscriptionSyncProvider } from "@/components/providers/SubscriptionSyncProvider";
 import { STYLING, UI_LAYOUT } from "@/lib/constants";
 import { getTailwindClasses } from "@/lib/theme-colors";
 export const metadata: Metadata = {
@@ -51,8 +52,9 @@ export default function RootLayout({
           <FontProvider>
             <AuthProvider initialAuth={initialAuth}>
               <AppLifecycleHandler />
-              <RealtimeSyncProvider>
-                <ReminderProvider>
+              <SubscriptionSyncProvider>
+                <RealtimeSyncProvider>
+                  <ReminderProvider>
                   {/* <Navigation /> */}
                   <TopNavWrapper />
                   <main
@@ -79,9 +81,10 @@ export default function RootLayout({
                   />
                   </ReminderProvider>
                 </RealtimeSyncProvider>
-              </AuthProvider>
-            </FontProvider>
-          </ThemeProvider>
+              </SubscriptionSyncProvider>
+            </AuthProvider>
+          </FontProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

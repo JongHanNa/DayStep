@@ -429,6 +429,9 @@ export class EntityPersistenceManager {
         name: item.name,
         created_at: item.createdAt,
         updated_at: item.updatedAt,
+        has_active_subscription: item.hasActiveSubscription || false,
+        subscription_type: item.subscriptionType || 'free',
+        subscription_expires_at: item.subscriptionExpiresAt || null,
       })
     );
   }

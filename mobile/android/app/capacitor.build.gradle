@@ -15,6 +15,7 @@ dependencies {
     implementation project(':capacitor-community-contacts')
     implementation project(':daystep-widget-bridge')
     implementation project(':daystep-contact-groups')
+    implementation project(':revenuecat-purchases-capacitor')
 
 }
 
