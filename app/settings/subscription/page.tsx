@@ -56,8 +56,7 @@ export default function SubscriptionPage() {
   const handlePurchase = async (plan: 'monthly' | 'yearly') => {
     setIsPurchasing(true);
     try {
-      const packageId = plan === 'monthly' ? 'pro_monthly' : 'pro_yearly';
-      const result = await purchasePackage(packageId);
+      const result = await purchasePackage(plan);
 
       if (result.success) {
         toast.success('구독이 완료되었습니다! 🎉');

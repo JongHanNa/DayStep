@@ -92,7 +92,7 @@ function runMobileBuild() {
 
       // 개발 친화적 고성능 빌드 (디버깅 정보 보존)
       // NODE_ENV=production (export 모드 필수), CAPACITOR_ENV=development (개발 DB)
-      'cross-env NODE_ENV=production BUILD_TARGET=mobile CAPACITOR_ENV=development NODE_OPTIONS="--max-old-space-size=4096" npx next build --no-lint',
+      'cross-env NODE_ENV=production BUILD_TARGET=mobile CAPACITOR_ENV=development NEXT_PUBLIC_CAPACITOR_ENV=development NODE_OPTIONS="--max-old-space-size=4096" npx next build --no-lint',
 
       // Capacitor 동기화 (sync 사용 - 디버깅에 필요한 설정들 포함)
       'npm run mobile:sync',
@@ -110,7 +110,8 @@ function runMobileBuild() {
         ...process.env,
         NODE_ENV: 'production',
         BUILD_TARGET: 'mobile',
-        CAPACITOR_ENV: 'development'
+        CAPACITOR_ENV: 'development',
+        NEXT_PUBLIC_CAPACITOR_ENV: 'development'
       }
     });
 

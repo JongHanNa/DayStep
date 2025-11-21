@@ -26,7 +26,8 @@ async function buildMobileProd() {
       ...process.env,
       NODE_ENV: 'production',
       BUILD_TARGET: 'mobile',
-      CAPACITOR_ENV: 'production'
+      CAPACITOR_ENV: 'production',
+      NEXT_PUBLIC_CAPACITOR_ENV: 'production'
     };
 
     execSync('npx next build', {

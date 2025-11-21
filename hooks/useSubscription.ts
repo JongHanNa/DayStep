@@ -151,7 +151,7 @@ export const useSubscription = () => {
    * 구독 구매
    */
   const purchasePackage = useCallback(
-    async (packageIdentifier: 'pro_monthly' | 'pro_yearly') => {
+    async (plan: 'monthly' | 'yearly') => {
       if (!FEATURE_FLAGS.PAYMENTS_ENABLED) {
         return {
           success: false,
@@ -170,10 +170,10 @@ export const useSubscription = () => {
       setError(null);
 
       try {
-        console.log('💳 구독 구매 시작:', packageIdentifier);
+        console.log('💳 구독 구매 시작:', plan);
 
         const { customerInfo: newCustomerInfo, error: purchaseError } =
-          await purchaseSubscription(packageIdentifier);
+          await purchaseSubscription(plan);
 
         if (purchaseError) {
           throw purchaseError;

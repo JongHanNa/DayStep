@@ -37,9 +37,12 @@
 
 #### 2. iOS App Store Connect 설정 ✅
 - 구독 그룹: "Pro Subscription" 생성
-- 상품 등록:
-  - **pro_monthly**: ₩5,900/월
-  - **pro_yearly**: ₩49,000/년 (30% 할인)
+- **프로덕션 앱 (DayStep, com.daystep.app)** 상품 등록:
+  - **pro_monthly**: ₩1,100/월
+  - **pro_yearly**: ₩9,900/년 (25% 할인)
+- **개발 앱 (DevDayStep, com.daystep.app.dev)** 상품 등록:
+  - **pro_monthly_dev**: ₩1,100/월
+  - **pro_yearly_dev**: ₩9,900/년 (25% 할인)
 - StoreKit 2 (P8 Key) 연동 완료
 - Apple Small Business Program 가입 완료
 
@@ -125,16 +128,32 @@ npx supabase secrets set REVENUE_CAT_WEBHOOK_SECRET=3f28b12c-a7c5-4921-b982-2b0e
 - Environment: `Production only`
 - Test Result: ✅ **200 OK**
 
-#### 13. 환경 변수 업데이트 및 자동 전환 ✅
-**환경별 API Keys 분리**:
-- 개발 빌드 (`com.daystep.app.dev`) → Dev Keys 사용
-- 프로덕션 빌드 (`com.daystep.app`) → Prod Keys 사용
+#### 13. 환경별 설정 및 Product ID 분리 ✅
+
+**개발/프로덕션 환경 완전 분리**:
+- 개발 빌드 (`com.daystep.app.dev`) → Dev Keys + Dev Products
+- 프로덕션 빌드 (`com.daystep.app`) → Prod Keys + Prod Products
 - `lib/revenue-cat.ts`에서 `CAPACITOR_ENV` 기반 자동 전환
+
+**환경별 Product ID 매핑**:
+| 환경 | 월간 구독 | 연간 구독 |
+|------|----------|----------|
+| 개발 (Development) | `pro_monthly_dev` | `pro_yearly_dev` |
+| 프로덕션 (Production) | `pro_monthly` | `pro_yearly` |
+
+**가격 정보** (개발/프로덕션 동일):
+- 월간 구독: ₩1,100/월
+- 연간 구독: ₩9,900/년 (25% 할인)
 
 **`.env.development`** (개발 빌드용):
 ```env
 # Feature Flag
 NEXT_PUBLIC_PAYMENTS_ENABLED=true  # 개발/테스트를 위해 활성화
+
+# 가격 설정
+NEXT_PUBLIC_PRO_MONTHLY_PRICE=₩1,100
+NEXT_PUBLIC_PRO_YEARLY_PRICE=₩9,900
+NEXT_PUBLIC_PRO_YEARLY_DISCOUNT_PERCENTAGE=25
 
 # Revenue Cat Dev Keys (com.daystep.app.dev)
 NEXT_PUBLIC_REVENUE_CAT_IOS_KEY=appl_mUUewYlCtREMQUmfobiDcQFHhwc
@@ -149,6 +168,11 @@ REVENUE_CAT_WEBHOOK_SECRET=3f28b12c-a7c5-4921-b982-2b0eac85bc9a
 # Feature Flag
 NEXT_PUBLIC_PAYMENTS_ENABLED=false  # 초기에는 false (유료화 오픈 시 true로 변경)
 
+# 가격 설정
+NEXT_PUBLIC_PRO_MONTHLY_PRICE=₩1,100
+NEXT_PUBLIC_PRO_YEARLY_PRICE=₩9,900
+NEXT_PUBLIC_PRO_YEARLY_DISCOUNT_PERCENTAGE=25
+
 # Revenue Cat Prod Keys (com.daystep.app)
 NEXT_PUBLIC_REVENUE_CAT_IOS_KEY=appl_RwbvtdTdmeVjYzSeXFsvLrLGZRj
 NEXT_PUBLIC_REVENUE_CAT_ANDROID_KEY=goog_xrcGLtpeKvXTWipzylWDMRZCCoD
@@ -158,11 +182,37 @@ REVENUE_CAT_WEBHOOK_SECRET=3f28b12c-a7c5-4921-b982-2b0eac85bc9a
 ```
 
 **환경별 빌드 동작**:
-| 빌드 명령어 | Bundle ID | Revenue Cat Keys | 로그 레벨 |
-|------------|-----------|------------------|----------|
-| `npm run dev:mobile` | `com.daystep.app.dev` | Dev Keys | DEBUG |
-| `npm run build:mobile` | `com.daystep.app.dev` | Dev Keys | DEBUG |
-| `npm run build:mobile:prod` | `com.daystep.app` | Prod Keys | INFO |
+| 빌드 명령어 | Bundle ID | Revenue Cat Keys | Product IDs | 로그 레벨 |
+|------------|-----------|------------------|-------------|----------|
+| `npm run dev:mobile` | `com.daystep.app.dev` | Dev Keys | `*_dev` | DEBUG |
+| `npm run build:mobile` | `com.daystep.app.dev` | Dev Keys | `*_dev` | DEBUG |
+| `npm run build:mobile:prod` | `com.daystep.app` | Prod Keys | `pro_*` | INFO |
+
+**자동 전환 로직** (`lib/revenue-cat.ts`):
+```typescript
+// 환경별 Product ID 매핑
+const PRODUCT_IDS = {
+  development: {
+    monthly: 'pro_monthly_dev',
+    yearly: 'pro_yearly_dev',
+  },
+  production: {
+    monthly: 'pro_monthly',
+    yearly: 'pro_yearly',
+  },
+};
+
+// CAPACITOR_ENV 또는 NODE_ENV로 자동 판단
+function getProductId(plan: 'monthly' | 'yearly'): string {
+  const isDevelopment =
+    process.env.CAPACITOR_ENV === 'development' ||
+    process.env.NODE_ENV === 'development';
+
+  return isDevelopment
+    ? PRODUCT_IDS.development[plan]
+    : PRODUCT_IDS.production[plan];
+}
+```
 
 **⚠️ 추가 작업 필요 (앱 출시 전)**:
 1. Vercel Dashboard → Settings → Environment Variables
@@ -365,5 +415,5 @@ npx supabase functions deploy revenue-cat-webhook --project-ref iqiwjorjyryxhcgu
 ---
 
 **작성일**: 2025-11-21
-**최종 업데이트**: 2025-11-21 (개발/프로덕션 환경 분리 및 자동 전환 구현)
+**최종 업데이트**: 2025-11-21 (개발/프로덕션 Product ID 분리 및 가격 변경)
 **작성자**: Claude (DayStep 결제 시스템 구현)

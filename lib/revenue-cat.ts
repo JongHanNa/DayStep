@@ -9,6 +9,38 @@ import { Capacitor } from '@capacitor/core';
 import { FEATURE_FLAGS } from './featureFlags';
 
 /**
+ * 환경별 Product ID 매핑
+ */
+const PRODUCT_IDS = {
+  development: {
+    monthly: 'pro_monthly_dev',
+    yearly: 'pro_yearly_dev',
+  },
+  production: {
+    monthly: 'pro_monthly',
+    yearly: 'pro_yearly',
+  },
+} as const;
+
+/**
+ * 현재 환경에 맞는 Product ID 가져오기
+ */
+function getProductId(plan: 'monthly' | 'yearly'): string {
+  const isDevelopment =
+    process.env.NEXT_PUBLIC_CAPACITOR_ENV === 'development' ||
+    process.env.CAPACITOR_ENV === 'development' ||
+    process.env.NODE_ENV === 'development';
+
+  const productId = isDevelopment
+    ? PRODUCT_IDS.development[plan]
+    : PRODUCT_IDS.production[plan];
+
+  console.log(`[RevenueCat] Environment: ${isDevelopment ? 'Development' : 'Production'}, Plan: ${plan}, Product ID: ${productId}`);
+
+  return productId;
+}
+
+/**
  * Revenue Cat 초기화
  *
  * 앱 시작 시 호출 필요 (App.tsx 또는 _app.tsx)
@@ -28,6 +60,12 @@ export async function initializeRevenueCat(): Promise<void> {
       return;
     }
 
+    // 환경 판단 (NEXT_PUBLIC_CAPACITOR_ENV 우선, 런타임 접근 가능)
+    const isDevelopment =
+      process.env.NEXT_PUBLIC_CAPACITOR_ENV === 'development' ||
+      process.env.CAPACITOR_ENV === 'development' ||
+      process.env.NODE_ENV === 'development';
+
     // API Key 선택
     const apiKey =
       platform === 'ios'
@@ -39,8 +77,12 @@ export async function initializeRevenueCat(): Promise<void> {
       return;
     }
 
+    // 환경 정보 로깅 (디버깅용)
+    console.log(`[RevenueCat] Environment: ${isDevelopment ? 'Development' : 'Production'}`);
+    console.log(`[RevenueCat] Platform: ${platform}`);
+    console.log(`[RevenueCat] API Key: ${apiKey.slice(0, 10)}...`);
+
     // Debug 모드 설정 (개발 환경에서만)
-    const isDevelopment = process.env.NODE_ENV === 'development';
     await Purchases.setLogLevel({ level: isDevelopment ? LOG_LEVEL.DEBUG : LOG_LEVEL.INFO });
 
     // Revenue Cat 초기화
@@ -48,7 +90,7 @@ export async function initializeRevenueCat(): Promise<void> {
       apiKey,
     });
 
-    console.log('[RevenueCat] Initialized successfully on', platform);
+    console.log('[RevenueCat] Initialized successfully');
   } catch (error) {
     console.error('[RevenueCat] Initialization failed:', error);
     // 초기화 실패해도 앱 크래시는 방지
@@ -110,16 +152,19 @@ export async function getAvailableOfferings(): Promise<PurchasesOfferings | null
 /**
  * 구독 구매
  *
- * @param packageIdentifier - 'pro_monthly' | 'pro_yearly'
+ * @param plan - 'monthly' | 'yearly'
  */
 export async function purchaseSubscription(
-  packageIdentifier: string
+  plan: 'monthly' | 'yearly'
 ): Promise<{ customerInfo: CustomerInfo | null; error: Error | null }> {
   if (!FEATURE_FLAGS.PAYMENTS_ENABLED) {
     return { customerInfo: null, error: new Error('Payments are disabled') };
   }
 
   try {
+    // 환경에 맞는 Product ID 가져오기
+    const packageIdentifier = getProductId(plan);
+
     const offerings = await getAvailableOfferings();
     if (!offerings || !offerings.current) {
       throw new Error('No offerings available');
@@ -130,6 +175,8 @@ export async function purchaseSubscription(
     );
 
     if (!packageToPurchase) {
+      console.error('[RevenueCat] Package not found. Available packages:',
+        offerings.current.availablePackages.map(p => p.identifier));
       throw new Error(`Package not found: ${packageIdentifier}`);
     }
 
