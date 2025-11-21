@@ -28,9 +28,12 @@
 
 #### 1. Revenue Cat 계정 및 API Keys ✅
 - 프로젝트 생성: "DayStep"
-- App-specific Public API Keys 획득:
-  - iOS: `appl_RwbvtdTdmeVjYzSeXFsvLrLGZRj`
-  - Android: `goog_xrcGLtpeKvXTWipzylWDMRZCCoD`
+- **프로덕션 앱** App-specific Public API Keys:
+  - iOS: `appl_RwbvtdTdmeVjYzSeXFsvLrLGZRj` (com.daystep.app)
+  - Android: `goog_xrcGLtpeKvXTWipzylWDMRZCCoD` (com.daystep.app)
+- **개발 앱** App-specific Public API Keys:
+  - iOS: `appl_mUUewYlCtREMQUmfobiDcQFHhwc` (com.daystep.app.dev)
+  - Android: `goog_ErneYCWdfUDuKtRvMGNJTFDPnPm` (com.daystep.app.dev)
 
 #### 2. iOS App Store Connect 설정 ✅
 - 구독 그룹: "Pro Subscription" 생성
@@ -45,8 +48,12 @@
 - Android 상품 등록은 승인 후 진행 예정
 
 #### 4. Revenue Cat 앱 등록 ✅
-- iOS 앱: "DayStep iOS" (StoreKit 2)
-- Android 앱: "DayStep Android" (결제 프로필 승인 후 완료 예정)
+- **프로덕션 앱**:
+  - iOS: "DayStep iOS" (Bundle ID: `com.daystep.app`, StoreKit 2)
+  - Android: "DayStep Android" (Bundle ID: `com.daystep.app`, 결제 프로필 승인 후 완료 예정)
+- **개발 앱**:
+  - iOS: "DayStep iOS Dev" (Bundle ID: `com.daystep.app.dev`, StoreKit 2, Sandbox only)
+  - Android: "DayStep Android Dev" (Bundle ID: `com.daystep.app.dev`, 결제 프로필 승인 후 완료 예정)
 
 #### 5. Revenue Cat Products 매핑 ✅
 - `pro_monthly` → iOS: `pro_monthly`
@@ -118,10 +125,31 @@ npx supabase secrets set REVENUE_CAT_WEBHOOK_SECRET=3f28b12c-a7c5-4921-b982-2b0e
 - Environment: `Production only`
 - Test Result: ✅ **200 OK**
 
-#### 13. 환경 변수 업데이트 ✅
-**`.env.development`**:
+#### 13. 환경 변수 업데이트 및 자동 전환 ✅
+**환경별 API Keys 분리**:
+- 개발 빌드 (`com.daystep.app.dev`) → Dev Keys 사용
+- 프로덕션 빌드 (`com.daystep.app`) → Prod Keys 사용
+- `lib/revenue-cat.ts`에서 `CAPACITOR_ENV` 기반 자동 전환
+
+**`.env.development`** (개발 빌드용):
 ```env
-# Revenue Cat API Keys (App-specific Public API Keys)
+# Feature Flag
+NEXT_PUBLIC_PAYMENTS_ENABLED=true  # 개발/테스트를 위해 활성화
+
+# Revenue Cat Dev Keys (com.daystep.app.dev)
+NEXT_PUBLIC_REVENUE_CAT_IOS_KEY=appl_mUUewYlCtREMQUmfobiDcQFHhwc
+NEXT_PUBLIC_REVENUE_CAT_ANDROID_KEY=goog_ErneYCWdfUDuKtRvMGNJTFDPnPm
+
+# Revenue Cat Webhook Secret (Supabase Functions용)
+REVENUE_CAT_WEBHOOK_SECRET=3f28b12c-a7c5-4921-b982-2b0eac85bc9a
+```
+
+**`.env.production`** (프로덕션 빌드용):
+```env
+# Feature Flag
+NEXT_PUBLIC_PAYMENTS_ENABLED=false  # 초기에는 false (유료화 오픈 시 true로 변경)
+
+# Revenue Cat Prod Keys (com.daystep.app)
 NEXT_PUBLIC_REVENUE_CAT_IOS_KEY=appl_RwbvtdTdmeVjYzSeXFsvLrLGZRj
 NEXT_PUBLIC_REVENUE_CAT_ANDROID_KEY=goog_xrcGLtpeKvXTWipzylWDMRZCCoD
 
@@ -129,13 +157,19 @@ NEXT_PUBLIC_REVENUE_CAT_ANDROID_KEY=goog_xrcGLtpeKvXTWipzylWDMRZCCoD
 REVENUE_CAT_WEBHOOK_SECRET=3f28b12c-a7c5-4921-b982-2b0eac85bc9a
 ```
 
-**`.env.production`**: 동일한 값
+**환경별 빌드 동작**:
+| 빌드 명령어 | Bundle ID | Revenue Cat Keys | 로그 레벨 |
+|------------|-----------|------------------|----------|
+| `npm run dev:mobile` | `com.daystep.app.dev` | Dev Keys | DEBUG |
+| `npm run build:mobile` | `com.daystep.app.dev` | Dev Keys | DEBUG |
+| `npm run build:mobile:prod` | `com.daystep.app` | Prod Keys | INFO |
 
 **⚠️ 추가 작업 필요 (앱 출시 전)**:
 1. Vercel Dashboard → Settings → Environment Variables
 2. 다음 변수들을 추가:
-   - `NEXT_PUBLIC_REVENUE_CAT_IOS_KEY`
-   - `NEXT_PUBLIC_REVENUE_CAT_ANDROID_KEY`
+   - `NEXT_PUBLIC_REVENUE_CAT_IOS_KEY` (Prod Key)
+   - `NEXT_PUBLIC_REVENUE_CAT_ANDROID_KEY` (Prod Key)
+   - `NEXT_PUBLIC_PAYMENTS_ENABLED=true` (유료화 오픈 시)
 3. Production과 Preview 모두 설정
 
 ---
@@ -331,5 +365,5 @@ npx supabase functions deploy revenue-cat-webhook --project-ref iqiwjorjyryxhcgu
 ---
 
 **작성일**: 2025-11-21
-**최종 업데이트**: 2025-11-21
+**최종 업데이트**: 2025-11-21 (개발/프로덕션 환경 분리 및 자동 전환 구현)
 **작성자**: Claude (DayStep 결제 시스템 구현)
