@@ -5,6 +5,8 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
@@ -34,6 +36,8 @@ export default function NotesPage() {
   const { appUser } = useAuth();
   const { notes, fetchNotes, updateNote, createNote } = useNoteStore();
   const { todos: entityTodos, fetchAllTodos } = useTodoStore();
+  const { areas, fetchAreas } = useAreaStore();
+  const { resources, fetchResources } = useResourceStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -52,8 +56,10 @@ export default function NotesPage() {
     if (appUser?.id) {
       fetchNotes(appUser.id);
       fetchAllTodos();
+      fetchAreas(appUser.id);
+      fetchResources(appUser.id);
     }
-  }, [appUser?.id, fetchNotes, fetchAllTodos]);
+  }, [appUser?.id, fetchNotes, fetchAllTodos, fetchAreas, fetchResources]);
 
   // 탭별 노트 필터링
   const getFilteredNotes = (): Note[] => {
@@ -377,8 +383,8 @@ export default function NotesPage() {
             }}
             onChange={setNoteForm}
             onSave={handleSave}
-            areas={[]}
-            resources={[]}
+            areas={areas}
+            resources={resources}
             projects={[]}
             todos={todos}
             notes={notes}
