@@ -120,6 +120,18 @@ serve(async (req) => {
 });
 
 /**
+ * Product ID 정규화 (_dev, _prod 접미사 제거)
+ *
+ * @example
+ * normalizeProductId('pro_monthly_dev') → 'pro_monthly'
+ * normalizeProductId('pro_yearly_prod') → 'pro_yearly'
+ * normalizeProductId('pro_monthly') → 'pro_monthly'
+ */
+function normalizeProductId(productId: string): string {
+  return productId.replace(/_(dev|prod)$/, '');
+}
+
+/**
  * 첫 구매 처리 (체험 → 유료 전환 또는 바로 구매)
  */
 async function handleInitialPurchase(supabase: any, event: any) {
@@ -179,7 +191,7 @@ async function handleInitialPurchase(supabase: any, event: any) {
     .from('users')
     .update({
       has_active_subscription: true,
-      subscription_type: isTrial ? 'trial' : productId,
+      subscription_type: isTrial ? 'trial' : normalizeProductId(productId),
       subscription_expires_at: expiresAt,
     })
     .eq('id', userId);
@@ -341,7 +353,7 @@ async function handleProductChange(supabase: any, event: any) {
   await supabase
     .from('users')
     .update({
-      subscription_type: productId,
+      subscription_type: normalizeProductId(productId),
       subscription_expires_at: expiresAt,
     })
     .eq('id', userId);

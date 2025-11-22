@@ -162,22 +162,33 @@ export async function purchaseSubscription(
   }
 
   try {
-    // 환경에 맞는 Product ID 가져오기
-    const packageIdentifier = getProductId(plan);
+    // 환경에 맞는 Product ID 로깅 (디버깅용)
+    const productId = getProductId(plan);
+    console.log('[RevenueCat] Target Product ID:', productId);
 
     const offerings = await getAvailableOfferings();
     if (!offerings || !offerings.current) {
       throw new Error('No offerings available');
     }
 
+    // Package Type으로 매칭 (RevenueCat 표준 방식)
+    const targetPackageType = plan === 'monthly' ? 'MONTHLY' : 'ANNUAL';
+    console.log('[RevenueCat] Looking for package type:', targetPackageType);
+    console.log('[RevenueCat] Available packages:',
+      offerings.current.availablePackages.map(p => ({
+        identifier: p.identifier,
+        packageType: p.packageType,
+        productId: p.product.identifier
+      }))
+    );
+
     const packageToPurchase = offerings.current.availablePackages.find(
-      (pkg) => pkg.identifier === packageIdentifier
+      (pkg) => pkg.packageType === targetPackageType
     );
 
     if (!packageToPurchase) {
-      console.error('[RevenueCat] Package not found. Available packages:',
-        offerings.current.availablePackages.map(p => p.identifier));
-      throw new Error(`Package not found: ${packageIdentifier}`);
+      console.error('[RevenueCat] Package not found for type:', targetPackageType);
+      throw new Error(`Package not found for type: ${targetPackageType}`);
     }
 
     const { customerInfo } = await Purchases.purchasePackage({

@@ -414,6 +414,76 @@ npx supabase functions deploy revenue-cat-webhook --project-ref iqiwjorjyryxhcgu
 
 ---
 
+## 🐛 트러블슈팅: "None of the products could be fetched from App Store Connect" 오류
+
+### 문제 상황
+- **RevenueCat Dashboard**: Products 상태가 **"Ready to Submit"** ✅ (메타데이터 읽기 성공)
+- **App Store Connect**: 제품 상태가 **"제출 준비 완료"**
+- **App Store Connect API**: "Valid credentials" ✅ (API 키 정상)
+- **앱 실행 시**: 구독 구매 시도 시 **"None of the products could be fetched from App Store Connect"** 오류 발생
+
+### 근본 원인
+**RevenueCat API ≠ StoreKit API**
+
+RevenueCat Dashboard가 "Ready to Submit"으로 표시되는 것은 **RevenueCat API가 App Store Connect에서 제품 메타데이터를 읽을 수 있다**는 의미일 뿐입니다.
+
+**하지만 실제 앱에서는 Apple의 StoreKit API를 사용**하며, StoreKit API는 다음 조건이 필요합니다:
+- ❌ **"제출 준비 완료" 상태**: 메타데이터만 완성, StoreKit API에 노출 안 됨
+- ✅ **최소 1회 심사 제출**: 심사 통과/거부 무관, StoreKit API에 노출됨
+
+**왜 이런 차이가 발생하나요?**
+- **RevenueCat API**: App Store Connect API를 사용 → 제품 메타데이터만 읽음
+- **StoreKit API**: Apple의 실제 구매 API → 심사 제출 이력 있는 제품만 조회 가능
+- **결과**: RevenueCat Dashboard는 정상, 앱은 오류
+
+### 해결 방법
+
+#### Option 1: 즉시 테스트 (권장) - StoreKit Configuration 파일 사용
+**장점**:
+- 심사 제출 없이 즉시 테스트 가능
+- Xcode 시뮬레이터 및 실제 기기에서 모두 작동
+- 로컬 개발 환경에서 완전히 독립적으로 테스트
+
+**단점**:
+- 개발 환경에서만 사용 가능
+- TestFlight 또는 프로덕션에서는 작동하지 않음
+
+**구현 완료**:
+- ✅ `mobile/ios/App/DayStepDev.storekit` 생성
+- ✅ 개발용 제품 정의 (`pro_monthly_dev`, `pro_yearly_dev`)
+- ✅ Xcode Scheme 설정에서 StoreKit 파일 연결 필요
+
+**Xcode 설정 방법**:
+1. Xcode에서 `mobile/ios/App/App.xcodeproj` 열기
+2. Product → Scheme → Edit Scheme (⌘ + <)
+3. Run → Options → StoreKit Configuration
+4. `DayStepDev.storekit` 선택
+5. 빌드 및 실행
+
+#### Option 2: 장기 해결 - 심사 제출
+**방법**:
+1. App Store Connect → 인앱구매 → `pro_monthly_dev`, `pro_yearly_dev`
+2. 각 제품의 "심사 제출" 버튼 클릭
+3. 앱 전체를 심사에 올릴 필요 없음 (제품만 제출 가능)
+4. 심사 통과/거부 여부와 무관 (제출 이력이 중요)
+
+**효과**:
+- RevenueCat이 App Store Connect API를 통해 제품 정보 조회 가능
+- TestFlight 및 프로덕션에서 실제 결제 테스트 가능
+
+**예상 소요 시간**:
+- 심사 제출 후 API 동기화: 수 분 ~ 2시간
+- 실제 심사 대기 시간: 무관 (동기화는 즉시 시작)
+
+### 추가 체크 사항
+만약 위 방법으로도 해결되지 않는다면:
+- [ ] Bundle ID 일치 확인 (RevenueCat Dashboard vs Xcode)
+- [ ] Product ID 일치 확인 (App Store Connect vs RevenueCat Products)
+- [ ] API 키 권한 확인 ("앱 관리" 권한 필요)
+- [ ] API 키가 모든 앱에 적용되는지 확인 (특정 앱만 선택한 경우 문제 발생)
+
+---
+
 **작성일**: 2025-11-21
-**최종 업데이트**: 2025-11-21 (개발/프로덕션 Product ID 분리 및 가격 변경)
+**최종 업데이트**: 2025-11-22 
 **작성자**: Claude (DayStep 결제 시스템 구현)
