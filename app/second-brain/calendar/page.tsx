@@ -526,7 +526,6 @@ export default function CalendarPage() {
       title,
       content: '',
       note_category: 'work_in_progress' as const,
-      tags: [],
       is_pinned: false,
     });
   };

@@ -158,7 +158,6 @@ export default function NoteInboxList({
       title: title,
       content: '',
       note_category: 'none',
-      tags: [],
       is_pinned: false,
     });
 

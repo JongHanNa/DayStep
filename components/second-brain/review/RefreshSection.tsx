@@ -159,7 +159,6 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
       title,
       content: '',
       note_category: 'work_in_progress',
-      tags: [],
       is_pinned: false,
     });
 

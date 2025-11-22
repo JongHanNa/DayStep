@@ -451,7 +451,6 @@ export default function InboxPage() {
       title,
       content: '',
       note_category: 'work_in_progress', // 기본값
-      tags: [],
       is_pinned: false,
     });
   };

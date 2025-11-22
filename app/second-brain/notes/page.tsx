@@ -173,7 +173,6 @@ export default function NotesPage() {
         title: '새노트',
         content: '',
         note_category: noteCategory,
-        tags: [],
         is_pinned: false,
       });
 
