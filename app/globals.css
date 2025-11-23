@@ -842,3 +842,38 @@ body h1, body h2, body h3, body h4, body h5, body h6, body p, body span, body di
 .dark .todo-form [data-radix-select-trigger] span {
   color: #e5e7eb !important;
 }
+
+/* ========================================
+   텍스트 선택 하이라이트
+   ======================================== */
+
+/* 라이트모드 selection */
+::selection {
+  background-color: rgba(59, 130, 246, 0.3); /* accent 색상 30% */
+  color: inherit;
+}
+
+::-moz-selection {
+  background-color: rgba(59, 130, 246, 0.3);
+  color: inherit;
+}
+
+/* 다크모드 selection */
+.dark ::selection {
+  background-color: rgba(96, 165, 250, 0.3);
+  color: inherit;
+}
+
+.dark ::-moz-selection {
+  background-color: rgba(96, 165, 250, 0.3);
+  color: inherit;
+}
+
+/* CodeMirror 에디터 내 selection 강제 */
+.cm-editor ::selection {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.dark .cm-editor ::selection {
+  background-color: rgba(96, 165, 250, 0.3) !important;
+}

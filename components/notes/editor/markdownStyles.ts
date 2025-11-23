@@ -220,10 +220,9 @@ export const webFocusTheme = EditorView.theme({
     visibility: 'hidden !important',
     opacity: '0 !important',
   },
-  // 비포커스 상태: selection 완전 숨김 (drawSelection 활성화 후)
+  // 비포커스 상태: selection 투명도 낮춤 (드래그 시 보이도록)
   '&:not(.cm-focused) .cm-selectionBackground': {
-    opacity: '0 !important',
-    background: 'transparent !important',
+    backgroundColor: 'hsl(var(--accent) / 0.3)',
   },
   // 비포커스 상태: active line 배경 완전 숨김
   '&:not(.cm-focused) .cm-activeLine': {
@@ -310,8 +309,7 @@ export const globalMarkdownStyles = `
     touch-action: manipulation !important;
     -webkit-touch-callout: none !important;
     -webkit-tap-highlight-color: transparent !important;
-    -webkit-user-select: none !important;
-    user-select: none !important;
+    /* user-select은 .cm-content에서 text로 설정됨 (328-330라인) */
   }
   
   .advanced-markdown-editor-container .cm-editor {
@@ -328,7 +326,14 @@ export const globalMarkdownStyles = `
     -webkit-user-select: text !important;
     user-select: text !important;
   }
-  
+
+  /* 텍스트 선택 강제 활성화 */
+  .advanced-markdown-editor-container .cm-editor *,
+  .advanced-markdown-editor-container .cm-content * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+
   /* 모바일 환경에서만 포커스 완전 제거 (Capacitor 환경) */
   [data-platform="mobile"] .advanced-markdown-editor-container *:focus,
   [data-platform="mobile"] .advanced-markdown-editor-container *:focus-visible,
@@ -380,13 +385,12 @@ export const globalMarkdownStyles = `
 
   /* 포커스 상태에서만 selection 배경 표시 */
   .advanced-markdown-editor-container .cm-editor.cm-focused .cm-selectionBackground {
-    background-color: hsl(var(--accent)) !important;
+    background-color: rgba(59, 130, 246, 0.3) !important;
   }
 
-  /* 비포커스 상태: selection 완전 숨김 (drawSelection 활성화 후) */
+  /* 비포커스 상태: selection 투명도 낮춤 (드래그 시 보이도록) */
   .advanced-markdown-editor-container .cm-editor:not(.cm-focused) .cm-selectionBackground {
-    opacity: 0 !important;
-    background: transparent !important;
+    background-color: rgba(59, 130, 246, 0.15) !important;
   }
 
   /* 비포커스 상태: active line 배경 완전 숨김 */
