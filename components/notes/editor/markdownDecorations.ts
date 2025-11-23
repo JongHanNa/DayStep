@@ -7,10 +7,19 @@ export const livePreviewField = StateField.define<Set<number>>({
     return new Set();
   },
   update(set, tr) {
-    // 현재 커서가 있는 라인만 편집 모드로 유지
-    if (tr.selection) {
-      const currentLine = tr.state.doc.lineAt(tr.selection.main.head).number;
-      return new Set([currentLine]);
+    // 문서 변경 또는 selection 변경 시 업데이트 (드래그 범위 포함)
+    if (tr.docChanged || tr.selection) {
+      // 드래그 범위 선택 시: 시작 라인부터 끝 라인까지 편집 모드
+      const { from, to } = tr.state.selection.main;
+      const startLine = tr.state.doc.lineAt(from).number;
+      const endLine = tr.state.doc.lineAt(to).number;
+
+      // 범위 내 모든 라인을 편집 모드로 전환
+      const editLines = new Set<number>();
+      for (let lineNum = startLine; lineNum <= endLine; lineNum++) {
+        editLines.add(lineNum);
+      }
+      return editLines;
     }
     return set;
   }
@@ -29,8 +38,12 @@ export const markdownHideDecorations = StateField.define<DecorationSet>({
     return buildMarkdownDecorations(state);
   },
   update(decorations, tr) {
-    if (tr.docChanged || tr.selection) {
+    if (tr.docChanged) {
       return buildMarkdownDecorations(tr.state);
+    }
+    // selection만 변경된 경우 기존 decoration 유지 (DOM re-render 방지)
+    if (tr.selection && !tr.docChanged) {
+      return decorations;
     }
     return decorations.map(tr.changes);
   },

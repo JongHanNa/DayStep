@@ -110,8 +110,44 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     createEditorTheme(minHeight),
   ], [minHeight, platform]);
 
+  // onChange 디바운싱으로 리렌더 빈도 감소 (selection 유지 시간 확보)
+  const debouncedOnChangeRef = useRef<NodeJS.Timeout | null>(null);
+
+  // selection 상태 백업 (리렌더 후 복원용)
+  const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
+
   const handleChange = useCallback((val: string) => {
-    onChange(val);
+    // 현재 selection 백업
+    const view = editorRef.current?.view;
+    if (view) {
+      const { from, to } = view.state.selection.main;
+      if (from !== to) {
+        lastSelectionRef.current = { from, to };
+      }
+    }
+
+    // 기존 타이머 취소
+    if (debouncedOnChangeRef.current) {
+      clearTimeout(debouncedOnChangeRef.current);
+    }
+
+    // 150ms 디바운스
+    debouncedOnChangeRef.current = setTimeout(() => {
+      onChange(val);
+
+      // onChange 후 selection 복원 (다음 틱)
+      setTimeout(() => {
+        if (lastSelectionRef.current && editorRef.current?.view) {
+          const view = editorRef.current.view;
+          view.dispatch({
+            selection: {
+              anchor: lastSelectionRef.current.from,
+              head: lastSelectionRef.current.to
+            }
+          });
+        }
+      }, 0);
+    }, 150);
   }, [onChange]);
   
   // CodeMirror view가 생성될 때 view 참조 저장
@@ -286,6 +322,14 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
       return;
     }
 
+    // 드래그로 생성된 selection이 있는 경우 커서 이동 스킵
+    const currentSelection = editorView.state.selection.main;
+    if (!currentSelection.empty) {
+      console.log('📝 [Editor] 드래그 selection 감지, 커서 이동 스킵 (selection 유지)');
+      editorView.focus(); // 포커스만 보장
+      return;
+    }
+
     const clientX = event.clientX;
     const clientY = event.clientY;
 
@@ -360,7 +404,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
             lineNumbers: false,
             foldGutter: false,
             dropCursor: false,
-            allowMultipleSelections: false,
+            allowMultipleSelections: true,
             indentOnInput: false,
             bracketMatching: true,
             closeBrackets: true,

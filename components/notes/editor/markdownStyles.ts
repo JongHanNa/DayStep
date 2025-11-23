@@ -390,7 +390,7 @@ export const globalMarkdownStyles = `
 
   /* 비포커스 상태: selection 투명도 낮춤 (드래그 시 보이도록) */
   .advanced-markdown-editor-container .cm-editor:not(.cm-focused) .cm-selectionBackground {
-    background-color: rgba(59, 130, 246, 0.15) !important;
+    background-color: rgba(59, 130, 246, 0.35) !important;
   }
 
   /* 비포커스 상태: active line 배경 완전 숨김 */
