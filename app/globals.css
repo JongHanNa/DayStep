@@ -868,12 +868,3 @@ body h1, body h2, body h3, body h4, body h5, body h6, body p, body span, body di
   background-color: rgba(96, 165, 250, 0.3);
   color: inherit;
 }
-
-/* CodeMirror 에디터 내 selection 강제 */
-.cm-editor ::selection {
-  background-color: rgba(59, 130, 246, 0.3) !important;
-}
-
-.dark .cm-editor ::selection {
-  background-color: rgba(96, 165, 250, 0.3) !important;
-}
