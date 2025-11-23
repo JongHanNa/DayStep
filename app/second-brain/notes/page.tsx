@@ -65,8 +65,8 @@ export default function NotesPage() {
   const getFilteredNotes = (): Note[] => {
     switch (activeTab) {
       case 'inbox':
-        // 수집함: note_category가 'none'이고 area/resource에 연결되지 않은 노트
-        return notes.filter((note) => note.note_category === 'none' && !note.area_resource_id);
+        // 수집함: area/resource에 연결되지 않은 노트 (분류와 무관)
+        return notes.filter((note) => !note.area_resource_id);
       case 'read_later':
         // 나중에 보기: note_category가 'read_later'
         return notes.filter((note) => note.note_category === 'read_later');
@@ -95,7 +95,7 @@ export default function NotesPage() {
 
   // 탭별 카운트 계산
   const tabCounts = {
-    inbox: notes.filter((n) => n.note_category === 'none' && !n.area_resource_id).length,
+    inbox: notes.filter((n) => !n.area_resource_id).length,
     read_later: notes.filter((n) => n.note_category === 'read_later').length,
     draft: notes.filter((n) => n.note_category === 'work_in_progress').length,
     area_resource: notes.filter((n) => n.area_resource_id).length,
