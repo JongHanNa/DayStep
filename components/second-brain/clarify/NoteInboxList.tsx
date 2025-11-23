@@ -122,7 +122,7 @@ export default function NoteInboxList({
         }
       };
 
-      // InboxItem 업데이트 (project_id는 더이상 사용하지 않음)
+      // InboxItem 업데이트 (InboxItem은 area_id, resource_id 사용)
       await updateInboxItem(user.id, editingNote.id, {
         content: noteForm.title,
         note_title: noteForm.title,

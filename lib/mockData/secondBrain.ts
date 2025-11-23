@@ -675,7 +675,7 @@ export const mockNotes: Note[] = [
 ## 2분 규칙
 2분 이내 할 수 있으면 즉시 실행`,
     note_category: 'reference',
-    resource_id: 'resource-1',
+    area_resource_id: 'resource-1',
     is_pinned: false,
     created_at: new Date('2025-01-05').toISOString(),
     updated_at: new Date('2025-01-05').toISOString(),
@@ -693,7 +693,7 @@ export const mockNotes: Note[] = [
 
 참고: https://react.dev/blog/2025/01/01/react-19`,
     note_category: 'read_later',
-    resource_id: 'resource-2',
+    area_resource_id: 'resource-2',
     is_pinned: false,
     created_at: new Date('2025-02-01').toISOString(),
     updated_at: new Date('2025-02-01').toISOString(),
@@ -716,7 +716,7 @@ export const mockNotes: Note[] = [
 - 베타 테스트
 - 마케팅 준비`,
     note_category: 'work_in_progress',
-    area_id: 'area-1',
+    area_resource_id: 'area-1',
     is_pinned: true,
     created_at: new Date('2025-01-01').toISOString(),
     updated_at: new Date('2025-10-10').toISOString(),

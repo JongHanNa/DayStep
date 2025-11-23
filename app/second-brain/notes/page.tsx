@@ -66,7 +66,7 @@ export default function NotesPage() {
     switch (activeTab) {
       case 'inbox':
         // 수집함: note_category가 'none'이고 area/resource에 연결되지 않은 노트
-        return notes.filter((note) => note.note_category === 'none' && !note.area_id && !note.resource_id);
+        return notes.filter((note) => note.note_category === 'none' && !note.area_resource_id);
       case 'read_later':
         // 나중에 보기: note_category가 'read_later'
         return notes.filter((note) => note.note_category === 'read_later');
@@ -74,11 +74,13 @@ export default function NotesPage() {
         // 원고: note_category가 'work_in_progress'
         return notes.filter((note) => note.note_category === 'work_in_progress');
       case 'area_resource':
-        // 영역·자원: area_id 또는 resource_id가 있는 노트
+        // 영역·자원: area_resource_id가 있는 노트
         if (activeSubTab === 'areas') {
-          return notes.filter((note) => note.area_id);
+          // 영역 필터: area_resource_id가 areas 배열에 있는지 확인
+          return notes.filter((note) => note.area_resource_id && areas.some(a => a.id === note.area_resource_id));
         } else {
-          return notes.filter((note) => note.resource_id);
+          // 자원 필터: area_resource_id가 resources 배열에 있는지 확인
+          return notes.filter((note) => note.area_resource_id && resources.some(r => r.id === note.area_resource_id));
         }
       default:
         return notes;
@@ -93,27 +95,36 @@ export default function NotesPage() {
 
   // 탭별 카운트 계산
   const tabCounts = {
-    inbox: notes.filter((n) => n.note_category === 'none' && !n.area_id && !n.resource_id).length,
+    inbox: notes.filter((n) => n.note_category === 'none' && !n.area_resource_id).length,
     read_later: notes.filter((n) => n.note_category === 'read_later').length,
     draft: notes.filter((n) => n.note_category === 'work_in_progress').length,
-    area_resource: notes.filter((n) => n.area_id || n.resource_id).length,
+    area_resource: notes.filter((n) => n.area_resource_id).length,
   };
 
   // 서브탭 카운트 계산
   const subTabCounts = {
-    areas: notes.filter((n) => n.area_id).length,
-    resources: notes.filter((n) => n.resource_id).length,
+    areas: notes.filter((n) => n.area_resource_id && areas.some(a => a.id === n.area_resource_id)).length,
+    resources: notes.filter((n) => n.area_resource_id && resources.some(r => r.id === n.area_resource_id)).length,
   };
 
   // 노트 클릭 핸들러
   const handleNoteClick = (note: Note) => {
     setEditingNote(note);
+
+    // area_resource_id를 linkedAreaOrResource로 변환
+    let linkedAreaOrResource = '';
+    if (note.area_resource_id) {
+      // areas 배열에 있으면 'area-', 아니면 'resource-' 프리픽스 추가
+      const isArea = areas.some(a => a.id === note.area_resource_id);
+      linkedAreaOrResource = isArea ? `area-${note.area_resource_id}` : `resource-${note.area_resource_id}`;
+    }
+
     setNoteForm({
       id: note.id, // 노트 ID 추가 (자동 저장을 위해 필수)
       title: note.title || '',
       content: note.content || '',
       note_category: note.note_category,
-      linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
+      linkedAreaOrResource,
       isPinned: note.is_pinned,
       projectIds: note.projects?.map((p) => p.id) || [],
       todoIds: note.todos?.map((t) => t.id) || [], // ✅ 기존 할일 연결 정보 로드
@@ -126,15 +137,12 @@ export default function NotesPage() {
     if (!editingNote || !noteForm || !appUser?.id) return;
 
     try {
-      let area_id: string | undefined;
-      let resource_id: string | undefined;
+      // linkedAreaOrResource를 area_resource_id로 변환
+      let area_resource_id: string | undefined;
 
       if (noteForm.linkedAreaOrResource) {
-        if (noteForm.linkedAreaOrResource.startsWith('area-')) {
-          area_id = noteForm.linkedAreaOrResource.replace('area-', '');
-        } else if (noteForm.linkedAreaOrResource.startsWith('resource-')) {
-          resource_id = noteForm.linkedAreaOrResource.replace('resource-', '');
-        }
+        // 'area-' 또는 'resource-' 프리픽스 제거
+        area_resource_id = noteForm.linkedAreaOrResource.replace(/^(area|resource)-/, '');
       }
 
       // 노트 기본 정보 저장
@@ -143,8 +151,7 @@ export default function NotesPage() {
         content: noteForm.content,
         note_category: noteForm.note_category,
         is_pinned: noteForm.isPinned,
-        area_id,
-        resource_id,
+        area_resource_id,
       });
 
       // 할일 연결 저장
@@ -273,7 +280,7 @@ export default function NotesPage() {
                                 const IconComponent = TAB_ICONS[
                                   note.note_category === 'read_later' ? 'read_later' :
                                   note.note_category === 'work_in_progress' ? 'draft' :
-                                  (note.area_id || note.resource_id) ? 'area_resource' :
+                                  note.area_resource_id ? 'area_resource' :
                                   'inbox'
                                 ];
                                 return <IconComponent className="w-5 h-5 text-primary" />;
@@ -288,16 +295,16 @@ export default function NotesPage() {
 
                               {/* 영역/자원 표시 */}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                {note.area && (
-                                  <span className="badge badge-xs" style={{ backgroundColor: note.area.color + '20', color: note.area.color }}>
-                                    영역: {note.area.title}
-                                  </span>
-                                )}
-                                {note.resource && (
-                                  <span className="badge badge-xs" style={{ backgroundColor: note.resource.color + '20', color: note.resource.color }}>
-                                    자원: {note.resource.title}
-                                  </span>
-                                )}
+                                {note.area_resource_id && (() => {
+                                  const areaResource = areas.find(a => a.id === note.area_resource_id) || resources.find(r => r.id === note.area_resource_id);
+                                  if (!areaResource) return null;
+                                  const isArea = areas.some(a => a.id === note.area_resource_id);
+                                  return (
+                                    <span className="badge badge-xs" style={{ backgroundColor: areaResource.color + '20', color: areaResource.color }}>
+                                      {isArea ? '영역' : '자원'}: {areaResource.title}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
@@ -331,7 +338,7 @@ export default function NotesPage() {
                                 const IconComponent = TAB_ICONS[
                                   note.note_category === 'read_later' ? 'read_later' :
                                   note.note_category === 'work_in_progress' ? 'draft' :
-                                  (note.area_id || note.resource_id) ? 'area_resource' :
+                                  note.area_resource_id ? 'area_resource' :
                                   'inbox'
                                 ];
                                 return <IconComponent className="w-5 h-5" />;
@@ -346,16 +353,16 @@ export default function NotesPage() {
 
                               {/* 영역/자원 표시 */}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                {note.area && (
-                                  <span className="badge badge-xs" style={{ backgroundColor: note.area.color + '20', color: note.area.color }}>
-                                    영역: {note.area.title}
-                                  </span>
-                                )}
-                                {note.resource && (
-                                  <span className="badge badge-xs" style={{ backgroundColor: note.resource.color + '20', color: note.resource.color }}>
-                                    자원: {note.resource.title}
-                                  </span>
-                                )}
+                                {note.area_resource_id && (() => {
+                                  const areaResource = areas.find(a => a.id === note.area_resource_id) || resources.find(r => r.id === note.area_resource_id);
+                                  if (!areaResource) return null;
+                                  const isArea = areas.some(a => a.id === note.area_resource_id);
+                                  return (
+                                    <span className="badge badge-xs" style={{ backgroundColor: areaResource.color + '20', color: areaResource.color }}>
+                                      {isArea ? '영역' : '자원'}: {areaResource.title}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>

@@ -101,7 +101,7 @@ export default function TodoEditModal({
       title: note.title,
       content: note.content,
       note_category: note.note_category,
-      linkedAreaOrResource: note.area_id ? `area-${note.area_id}` : note.resource_id ? `resource-${note.resource_id}` : '',
+      linkedAreaOrResource: note.area_resource_id ? (areas.some(a => a.id === note.area_resource_id) ? `area-${note.area_resource_id}` : `resource-${note.area_resource_id}`) : '',
       isPinned: note.is_pinned,
       projectIds: [], // N:N 관계로 변경됨
       todoIds: [], // N:N 관계로 변경됨

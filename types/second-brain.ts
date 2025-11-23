@@ -170,10 +170,7 @@ export interface Note {
 
   // PARA 연결
   projects?: Project[]; // 여러 프로젝트 연결 (N:N, project_notes junction table을 통해 로드)
-  area_id?: string;
-  area?: Area; // 관계 데이터
-  resource_id?: string;
-  resource?: Resource; // 관계 데이터
+  area_resource_id?: string; // 영역 또는 자원 연결 (areas_resources 테이블)
 
   // 할일 연결 (N:N, todo_notes junction table을 통해 로드)
   todos?: Array<{ id: string; title: string }>;
