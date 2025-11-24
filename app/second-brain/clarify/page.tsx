@@ -133,8 +133,6 @@ export default function ClarifyPage() {
       fetchInboxGoals(appUser.id),    // DB View: 필터링된 목표만 조회
     ]);
 
-    console.log('✅ [ClarifyPage] loadInboxData 완료');
-
     // DB View에서 필터링된 데이터를 직접 사용
     // 클라이언트 필터링 불필요 (DB 레벨에서 이미 처리됨)
     setProjectInbox(inboxProjects);
@@ -286,7 +284,36 @@ export default function ClarifyPage() {
 
   // 프로젝트 클릭 핸들러 - Project 그대로 전달
   const handleProjectClick = (project: Project) => {
-    setEditingProject({ ...project, paraSelection: '', isNew: false });
+    // 날짜 형식 변환: ISO datetime을 YYYY-MM-DD로 변환
+    const formatDateForInput = (dateString?: string) => {
+      if (!dateString) return '';
+      // ISO datetime 형식 (2025-01-15T00:00:00.000Z)을 date 형식 (2025-01-15)으로 변환
+      return dateString.split('T')[0];
+    };
+
+    // area_resource_id → paraSelection 변환
+    let paraSelection = '';
+    if (project.area_resource_id) {
+      // area인지 resource인지 구분하기 위해 areas와 resources 배열 체크
+      const isArea = areas.some(a => a.id === project.area_resource_id);
+      const isResource = resources.some(r => r.id === project.area_resource_id);
+
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else if (isResource) {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
+    }
+
+    const editData = {
+      ...project,
+      paraSelection,
+      isNew: false,
+      start_date: formatDateForInput(project.start_date),
+      end_date: formatDateForInput(project.end_date)
+    };
+
+    setEditingProject(editData);
     setEditDialogOpen(true);
   };
 
@@ -634,9 +661,6 @@ export default function ClarifyPage() {
       <ProjectEditDialog
         open={editDialogOpen}
         editingProject={editingProject}
-        goals={goals}
-        areas={areas}
-        resources={resources}
         onSave={handleSaveProject}
         onCancel={handleCancelEdit}
         onDelete={handleDeleteProject}

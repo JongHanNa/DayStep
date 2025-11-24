@@ -484,9 +484,6 @@ export default function GoalsPage() {
       <ProjectEditDialog
         open={projectDialogOpen}
         editingProject={editingProject}
-        goals={goals}
-        areas={areas}
-        resources={resources}
         onSave={handleSaveProject}
         onCancel={handleCancelProjectEdit}
         onDelete={handleDeleteProjectClick}

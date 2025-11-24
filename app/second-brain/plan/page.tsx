@@ -504,9 +504,6 @@ export default function PlanPage() {
         <ProjectEditDialog
           open={projectDialogOpen}
           editingProject={editingProject}
-          goals={goals}
-          areas={areas}
-          resources={resources}
           onSave={handleSaveProject}
           onCancel={handleCancelProjectEdit}
           onDelete={handleDeleteProject}

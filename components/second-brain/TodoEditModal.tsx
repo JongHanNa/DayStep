@@ -221,9 +221,6 @@ export default function TodoEditModal({
         <ProjectEditDialog
           open={showProjectEditModal}
           editingProject={editingProject}
-          goals={[]}
-          areas={areas}
-          resources={resources}
           onSave={async (projectData, area_id, resource_id) => {
             if (!editingProject || !onUpdateProject) return;
             await onUpdateProject(editingProject.id, projectData.title || editingProject.title);

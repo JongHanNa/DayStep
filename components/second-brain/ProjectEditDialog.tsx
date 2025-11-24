@@ -16,11 +16,16 @@ import TodoFormFields, { type TodoFormData } from '@/components/second-brain/sha
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoEditModal from './TodoEditModal';
 import TodoListModal from './TodoListModal';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
+import { getProjectNotes } from '@/lib/supabase/project-notes';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import MonthlyCalendar from '@/components/calendar/MonthlyCalendar';
 import WeeklyCalendar from '@/components/shared/WeeklyCalendar';
@@ -81,9 +86,6 @@ function convertTodoItemToInboxItem(todoItem: TodoItem): InboxItemWithEndDate {
 interface ProjectEditDialogProps {
   open: boolean;
   editingProject: (Project & { isNew?: boolean; paraSelection?: string }) | null;
-  goals: Goal[];
-  areas: Area[];
-  resources: Resource[];
   onSave: (projectData: Partial<Project>, area_id?: string, resource_id?: string) => Promise<void>;
   onCancel: () => void;
   onDelete: (project: Project) => void;
@@ -93,15 +95,17 @@ interface ProjectEditDialogProps {
 export default function ProjectEditDialog({
   open,
   editingProject,
-  goals,
-  areas,
-  resources,
   onSave,
   onCancel,
   onDelete,
   onProjectChange,
 }: ProjectEditDialogProps) {
   const { openModal, closeModal } = useModalStore();
+
+  // Store에서 직접 구독 (항상 최신 데이터 사용)
+  const { goals } = useGoalStore();
+  const { areas } = useAreaStore();
+  const { resources } = useResourceStore();
 
   // 모달 열림/닫힘 상태 관리
   useEffect(() => {
@@ -132,6 +136,9 @@ export default function ProjectEditDialog({
   const fetchTodosByProjectId = useTodoStore(state => state.fetchTodosByProjectId);
   const updateTodo = useTodoStore(state => state.updateTodo);
   const createTodo = useTodoStore(state => state.createTodo);
+
+  // noteStore에서 모든 노트 가져오기
+  const allNotes = useNoteStore(state => state.notes);
 
   // 프로젝트 변경 시 해당 프로젝트의 할일 로드
   useEffect(() => {
@@ -213,6 +220,47 @@ export default function ProjectEditDialog({
         setTodos([]);
       });
   }, [editingProject?.id, editingProject?.isNew, userId, fetchTodosByProjectId]);
+
+  // 프로젝트 변경 시 해당 프로젝트의 노트 로드
+  useEffect(() => {
+    if (!editingProject || editingProject.isNew) {
+      setNotes([]);
+      return;
+    }
+
+    // getProjectNotes로 프로젝트 노트 ID 배열 조회
+    getProjectNotes(editingProject.id)
+      .then((noteIds: string[]) => {
+        // noteStore에서 해당 ID의 노트 찾기
+        const projectNotes = allNotes
+          .filter(note => noteIds.includes(note.id))
+          .map(note => ({
+            id: note.id,
+            title: note.title,
+            content: note.content,
+            note_category: note.note_category,
+            // area_resource_id → linkedAreaOrResource 변환 (area-{id} 또는 resource-{id} 형식)
+            linkedAreaOrResource: note.area_resource_id
+              ? (areas.some(a => a.id === note.area_resource_id)
+                  ? `area-${note.area_resource_id}`
+                  : `resource-${note.area_resource_id}`)
+              : undefined,
+            isPinned: note.is_pinned,
+            // projects 배열 → projectIds 문자열 배열 변환
+            projectIds: note.projects?.map(p => p.id) || [],
+            // todos 배열 → todoIds 문자열 배열 변환
+            todoIds: note.todos?.map(t => t.id) || [],
+            // connectedNotes 배열 → noteIds 문자열 배열 변환
+            noteIds: note.connectedNotes?.map(n => n.id) || [],
+          }));
+
+        setNotes(projectNotes);
+      })
+      .catch(error => {
+        console.error('프로젝트 노트 로드 실패:', error);
+        setNotes([]);
+      });
+  }, [editingProject?.id, editingProject?.isNew, allNotes, areas, resources]);
 
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());

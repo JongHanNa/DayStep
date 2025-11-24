@@ -334,9 +334,6 @@ export default function ProjectsPage() {
         <ProjectEditDialog
           open={editDialogOpen}
           editingProject={editingProject}
-          goals={goals}
-          areas={areas}
-          resources={resources}
           onSave={handleSaveProject}
           onCancel={handleCancelEdit}
           onDelete={handleDeleteClick}
