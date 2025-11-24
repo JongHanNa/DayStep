@@ -16,6 +16,7 @@ import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { updateNoteNotes } from '@/lib/supabase/note-notes';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
+import { mapInboxItemToNoteForm } from '@/lib/helpers/noteDataMapper';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, Edit3, X, Boxes } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -233,27 +234,8 @@ export default function InboxPage() {
         noteIds: [], // inbox item에는 noteId 연결 필드 없음 (추후 필요시 추가)
       });
     } else {
-      // note_category를 NoteCategory enum으로 매핑
-      const mapCategoryToNoteCategory = (category?: string): NoteFormData['note_category'] => {
-        switch (category) {
-          case '중간 작업물':
-            return 'work_in_progress';
-          case '나중에 보기':
-            return 'read_later';
-          case '레퍼런스':
-            return 'reference';
-          default:
-            return 'work_in_progress';
-        }
-      };
-
-      setNoteForm({
-        title: item.note_title || item.content,
-        content: item.note_content || '',
-        note_category: mapCategoryToNoteCategory(item.note_category),
-        linkedAreaOrResource: item.linked_area_or_resource || '',
-        isPinned: item.is_pinned || false,
-      });
+      // ✅ 공통 매핑 함수 사용 (중복 코드 제거, 일관성 보장)
+      setNoteForm(mapInboxItemToNoteForm(item));
     }
   };
 

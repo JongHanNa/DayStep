@@ -84,6 +84,12 @@ function noteToInboxItem(note: any): InboxItem {
                    note.note_category === 'reference' ? '레퍼런스' : '중간 작업물',
     is_pinned: note.is_pinned || false,
     linked_area_or_resource: note.area_resource_id ? `area-${note.area_resource_id}` : '',
+
+    // ✅ Junction 데이터 추가 (프로젝트/할일/노트 연결)
+    projects: note.projects || [],
+    todos: note.todos || [],
+    connectedNotes: note.connectedNotes || [],
+
     created_at: note.created_at,
     updated_at: note.updated_at,
   };
