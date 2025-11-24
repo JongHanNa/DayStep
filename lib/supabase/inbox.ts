@@ -82,13 +82,43 @@ export async function fetchPlanTodos(userId: string): Promise<any[]> {
  * DB 레벨 필터링 조건:
  *   - area_resource_id IS NULL (영역/자원 미연결)
  *   - 모든 분류 포함 (none, work_in_progress, read_later, reference)
+ *
+ * Junction 테이블 JOIN:
+ *   - todo_notes → todos (할일 연결)
+ *   - project_notes → projects (프로젝트 연결)
+ *   - note_notes → notes (노트 연결)
  */
 export async function fetchInboxNotes(userId: string): Promise<any[]> {
   console.log('📥 수집함 노트 조회:', { userId });
 
   try {
-    const path = `/notes?user_id=eq.${userId}&area_resource_id=is.null&select=*&order=created_at.desc`;
-    const notes = await fetchWithJWT(path);
+    // Junction 테이블 JOIN으로 연결 데이터 가져오기
+    const path = `/notes?user_id=eq.${userId}&area_resource_id=is.null&select=*,todo_notes(todo_id,todos(id,title)),project_notes(project_id,projects(id,title,icon,color,status)),note_notes!note_notes_source_note_id_fkey(target_note_id,target_note:notes!note_notes_target_note_id_fkey(id,title))&order=created_at.desc`;
+    const rawNotes = await fetchWithJWT(path);
+
+    // Junction 데이터를 배열로 변환
+    const notes = (rawNotes || []).map((note: any) => {
+      const todos = (note.todo_notes || [])
+        .map((link: any) => link.todos)
+        .filter(Boolean);
+
+      const projects = (note.project_notes || [])
+        .map((link: any) => link.projects)
+        .filter(Boolean);
+
+      const connectedNotes = (note.note_notes || [])
+        .map((link: any) => link.target_note)
+        .filter(Boolean);
+
+      // Junction table 필드 제거하고 변환된 배열 추가
+      const { todo_notes, project_notes, note_notes, ...rest } = note;
+      return {
+        ...rest,
+        todos,
+        projects,
+        connectedNotes
+      };
+    });
 
     console.log('✅ 수집함 노트 조회 성공:', { count: notes?.length || 0 });
     return notes || [];

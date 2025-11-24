@@ -20,6 +20,7 @@ import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 import { updateNoteProjects } from '@/lib/supabase/project-notes';
 import { updateNoteNotes } from '@/lib/supabase/note-notes';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import { mapNoteToNoteForm } from '@/lib/helpers/noteDataMapper';
 
 const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   note: '일반 노트',
@@ -118,26 +119,8 @@ export default function NotesPage() {
   // 노트 클릭 핸들러
   const handleNoteClick = (note: Note) => {
     setEditingNote(note);
-
-    // area_resource_id를 linkedAreaOrResource로 변환
-    let linkedAreaOrResource = '';
-    if (note.area_resource_id) {
-      // areas 배열에 있으면 'area-', 아니면 'resource-' 프리픽스 추가
-      const isArea = areas.some(a => a.id === note.area_resource_id);
-      linkedAreaOrResource = isArea ? `area-${note.area_resource_id}` : `resource-${note.area_resource_id}`;
-    }
-
-    setNoteForm({
-      id: note.id, // 노트 ID 추가 (자동 저장을 위해 필수)
-      title: note.title || '',
-      content: note.content || '',
-      note_category: note.note_category,
-      linkedAreaOrResource,
-      isPinned: note.is_pinned,
-      projectIds: note.projects?.map((p) => p.id) || [],
-      todoIds: note.todos?.map((t) => t.id) || [], // ✅ 기존 할일 연결 정보 로드
-      noteIds: note.connectedNotes?.map((n) => n.id) || [],
-    });
+    // ✅ 공통 매핑 함수 사용 (중복 코드 제거, 일관성 보장)
+    setNoteForm(mapNoteToNoteForm(note, areas));
   };
 
   // 노트 저장 핸들러

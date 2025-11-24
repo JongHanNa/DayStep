@@ -271,6 +271,11 @@ export interface InboxItem {
   // 메타데이터
   clarified_at?: string;
 
+  // Junction 관계 (N:N) - DB JOIN으로 채워짐
+  projects?: Project[]; // project_notes junction table
+  todos?: Array<{ id: string; title: string }>; // todo_notes junction table
+  connectedNotes?: Note[]; // note_notes junction table
+
   created_at: string;
   updated_at: string;
 }

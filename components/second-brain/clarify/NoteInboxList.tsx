@@ -12,6 +12,7 @@ import { useAuthStore } from '@/state/stores/authStore';
 import { updateProjectNotes } from '@/lib/supabase/project-notes';
 import { createNoteWithJWT } from '@/lib/supabase/notes';
 import { createProjectWithJWT } from '@/lib/supabase/projects';
+import { mapInboxItemToNoteForm } from '@/lib/helpers/noteDataMapper';
 
 interface NoteInboxListProps {
   notes: InboxItem[];
@@ -56,31 +57,9 @@ export default function NoteInboxList({
   const [clickedNote, setClickedNote] = useState<Note | null>(null);
 
   const handleNoteClick = (note: InboxItem) => {
-    // note_category를 NoteCategory enum으로 매핑
-    const mapCategoryToNoteCategory = (category?: string): NoteFormData['note_category'] => {
-      switch (category) {
-        case '중간 작업물':
-          return 'work_in_progress';
-        case '나중에 보기':
-          return 'read_later';
-        case '레퍼런스':
-          return 'reference';
-        default:
-          return 'work_in_progress';
-      }
-    };
-
     setEditingNote(note);
-    setNoteForm({
-      title: note.note_title || note.content,
-      content: note.note_content || '',
-      note_category: mapCategoryToNoteCategory(note.note_category),
-      linkedAreaOrResource: note.linked_area_or_resource || '',
-      isPinned: note.is_pinned || false,
-      projectIds: [], // N:N 관계로 변경됨
-      todoIds: [], // N:N 관계로 변경됨
-      noteIds: [], // 연결된 노트
-    });
+    // ✅ 공통 매핑 함수 사용 (중복 코드 제거, 일관성 보장)
+    setNoteForm(mapInboxItemToNoteForm(note));
   };
 
   const handleSave = async () => {
