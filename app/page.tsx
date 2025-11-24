@@ -137,32 +137,58 @@ export default function LandingPage() {
           ? lastRoute
           : '/second-brain/areas';
 
-        console.log(`📍 [Capacitor] 페이지로 이동: ${targetRoute}`);
-        router.replace(targetRoute);
+        // 🔑 현재 경로 체크 (WebView 크래시 후 이미 목표 페이지에 있을 수 있음)
+        const currentPath = window.location.pathname;
 
-        // 🔍 디버깅: 네비게이션 성공 확인
-        setTimeout(() => {
-          console.log('🔍 [DEBUG] 네비게이션 후 상태', {
-            currentPath: window.location.pathname,
+        if (currentPath !== targetRoute) {
+          // 다른 페이지에 있으면 리다이렉트 실행
+          console.log(`📍 [Capacitor] 페이지로 이동: ${currentPath} → ${targetRoute}`);
+          router.replace(targetRoute);
+
+          // 🔍 디버깅: 네비게이션 성공 확인
+          setTimeout(() => {
+            console.log('🔍 [DEBUG] 네비게이션 후 상태', {
+              currentPath: window.location.pathname,
+              targetRoute,
+              navigationSuccess: window.location.pathname === targetRoute,
+            });
+          }, 100);
+        } else {
+          // 이미 목표 페이지에 있으면 로딩만 해제
+          console.log(`✅ [Capacitor] 이미 목표 페이지에 있음 - 리다이렉트 스킵: ${currentPath}`);
+          setIsRedirecting(false);
+
+          // 🔍 디버깅: 스킵 확인
+          console.log('🔍 [DEBUG] 리다이렉트 스킵됨', {
+            currentPath,
             targetRoute,
-            navigationSuccess: window.location.pathname === targetRoute,
-            isRedirecting,
+            alreadyOnTargetPage: true,
           });
-        }, 100);
+        }
       })
       .catch((error) => {
         console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
-        // Fallback: Areas 페이지로 이동
-        router.replace('/second-brain/areas');
 
-        // 🔍 디버깅: 폴백 네비게이션 확인
-        setTimeout(() => {
-          console.log('🔍 [DEBUG] 폴백 네비게이션 후 상태', {
-            currentPath: window.location.pathname,
-            targetRoute: '/second-brain/areas',
-            navigationSuccess: window.location.pathname === '/second-brain/areas',
-          });
-        }, 100);
+        const currentPath = window.location.pathname;
+        const fallbackRoute = '/second-brain/areas';
+
+        if (currentPath !== fallbackRoute) {
+          // Fallback: Areas 페이지로 이동
+          router.replace(fallbackRoute);
+
+          // 🔍 디버깅: 폴백 네비게이션 확인
+          setTimeout(() => {
+            console.log('🔍 [DEBUG] 폴백 네비게이션 후 상태', {
+              currentPath: window.location.pathname,
+              targetRoute: fallbackRoute,
+              navigationSuccess: window.location.pathname === fallbackRoute,
+            });
+          }, 100);
+        } else {
+          // 이미 Areas 페이지에 있으면 로딩만 해제
+          console.log(`✅ [Capacitor] 폴백 페이지에 이미 있음 - 리다이렉트 스킵: ${currentPath}`);
+          setIsRedirecting(false);
+        }
       });
   }, [isCapacitor, loading, router]);
 
