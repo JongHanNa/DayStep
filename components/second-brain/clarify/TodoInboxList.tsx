@@ -265,6 +265,7 @@ export default function TodoInboxList({
               drag={!isEditMode ? "x" : false}
               dragConstraints={{ left: -80, right: 0 }}
               dragElastic={0.2}
+              dragMomentum={false}
               onDragStart={!isEditMode ? (() => {
                 return (event: any, info: any) => {
                   dragStartX.current = info.point.x;
@@ -274,9 +275,16 @@ export default function TodoInboxList({
               onDragEnd={!isEditMode ? (() => {
                 return (event: any, info: any) => {
                   const dragDistance = Math.abs(info.point.x - dragStartX.current);
-                  if (dragDistance > 5) {
-                    const threshold = -40;
-                    if (info.offset.x < threshold) {
+                  if (dragDistance > 1) {
+                    const distanceThreshold = -1; // 방향 기준: 1px만 왼쪽으로 드래그
+                    const velocityThreshold = -50; // 속도 기준: 매우 낮은 속도
+
+                    // 조금이라도 왼쪽으로 움직이면 자동으로 완전히 열림
+                    const shouldOpen =
+                      info.offset.x < distanceThreshold ||
+                      info.velocity.x < velocityThreshold;
+
+                    if (shouldOpen) {
                       onSwipe(todo.id);
                     } else {
                       onSwipe(null);
@@ -289,7 +297,12 @@ export default function TodoInboxList({
                 borderTopRightRadius: swipedItemId === todo.id ? 0 : '0.5rem',
                 borderBottomRightRadius: swipedItemId === todo.id ? 0 : '0.5rem',
               }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{
+                type: "spring",
+                stiffness: 500, // 400 → 500 (더욱 빠른 반응)
+                damping: 40, // 35 → 40 (더 안정적)
+                mass: 0.6, // 0.8 → 0.6 (더 가볍게)
+              }}
               onClick={() => {
                 if (isDragging.current) {
                   isDragging.current = false;

@@ -420,11 +420,17 @@ export default function InboxPage() {
   ) => {
     const dragDistance = Math.abs(info.point.x - dragStartX.current);
 
-    if (dragDistance > 5) {
-      // 5px 이상 드래그 → 실제 스와이프로 판단
-      const threshold = -40; // 40px 이상 왼쪽으로 드래그 시 버튼 노출
+    if (dragDistance > 1) {
+      // 1px 이상 드래그 → 실제 스와이프로 판단 (초민감)
+      const distanceThreshold = -1; // 방향 기준: 1px만 왼쪽으로 드래그
+      const velocityThreshold = -50; // 속도 기준: 매우 낮은 속도
 
-      if (info.offset.x < threshold) {
+      // 조금이라도 왼쪽으로 움직이면 자동으로 완전히 열림
+      const shouldOpen =
+        info.offset.x < distanceThreshold ||
+        info.velocity.x < velocityThreshold;
+
+      if (shouldOpen) {
         // 카드 열기 (휴지통 버튼 노출)
         setSwipedItemId(item.id);
       } else {
@@ -432,7 +438,7 @@ export default function InboxPage() {
         setSwipedItemId(null);
       }
     } else {
-      // 5px 미만 드래그 → 클릭으로 간주 (onClick에서 처리)
+      // 1px 미만 드래그 → 클릭으로 간주 (onClick에서 처리)
       isDragging.current = false;
     }
   };
@@ -680,6 +686,7 @@ export default function InboxPage() {
                   drag={!isEditMode ? "x" : false}
                   dragConstraints={{ left: -80, right: 0 }}
                   dragElastic={0.2}
+                  dragMomentum={false}
                   onDragStart={!isEditMode ? handleDragStart() : undefined}
                   onDragEnd={!isEditMode ? handleSwipe(item) : undefined}
                   animate={{
@@ -687,7 +694,12 @@ export default function InboxPage() {
                     borderTopRightRadius: swipedItemId === item.id ? 0 : '0.5rem',
                     borderBottomRightRadius: swipedItemId === item.id ? 0 : '0.5rem',
                   }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500, // 400 → 500 (더욱 빠른 반응)
+                    damping: 40, // 35 → 40 (더 안정적)
+                    mass: 0.6, // 0.8 → 0.6 (더 가볍게)
+                  }}
                   onClick={() => {
                     // 드래그 직후에는 클릭 무시
                     if (isDragging.current) {
