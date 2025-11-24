@@ -11,15 +11,17 @@ import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { Archive } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import ArchiveSection from '@/components/second-brain/ArchiveSection';
+import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { Goal, Project, AreaResource } from '@/types/second-brain';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 export default function ArchivePage() {
   const { appUser } = useAuth();
   const { fetchArchivedGoals, updateGoal, deleteGoal } = useGoalStore();
-  const { fetchArchivedProjects, fetchProjects, updateProject, deleteProject } = useProjectStore();
-  const { fetchArchivedAreasResources, updateArea, deleteArea } = useAreaStore();
-  const { updateResource, deleteResource } = useResourceStore();
+  const { fetchArchivedProjects, fetchProjects, updateProject, deleteProject, projects: storeProjects } = useProjectStore();
+  const { fetchArchivedAreasResources, fetchAreas, updateArea, deleteArea, areas } = useAreaStore();
+  const { fetchResources, updateResource, deleteResource, resources } = useResourceStore();
   const { fetchInboxItems, inboxItems } = useInboxStore();
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
@@ -42,11 +44,13 @@ export default function ArchivePage() {
     new Set(['paused-goals', 'paused-projects', 'completed-goals', 'completed-projects', 'archived-areas-resources'])
   );
 
-  // 액션 메뉴 상태
-  const [actionMenuOpen, setActionMenuOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<{ type: 'goal' | 'project' | 'area-resource'; item: Goal | Project | AreaResource } | null>(null);
+  // 편집 모달 상태
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<(Goal & { paraSelection?: string; isNew?: boolean }) | null>(null);
+  const [editingProject, setEditingProject] = useState<(Project & { paraSelection?: string; isNew?: boolean }) | null>(null);
 
-  // 삭제 확인 다이얼로그
+  // 삭제 확인 다이얼로그 (영역/자원용)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: 'goal' | 'project' | 'area-resource'; id: string; title: string } | null>(null);
 
@@ -80,9 +84,13 @@ export default function ArchivePage() {
       // 아카이브된 영역/자원 (단일 함수로 중복 없이 가져옴)
       setArchivedAreasResources(archivedItems);
 
-      // 할일 데이터 가져오기 (프로젝트 현황 계산용)
-      await fetchInboxItems(appUser.id);
-      await fetchProjects(appUser.id);
+      // 할일 데이터, 모든 프로젝트, 영역, 자원 가져오기
+      await Promise.all([
+        fetchInboxItems(appUser.id),
+        fetchProjects(appUser.id),
+        fetchAreas(appUser.id),
+        fetchResources(appUser.id),
+      ]);
     } catch (error) {
       console.error('아카이브 데이터 로드 실패:', error);
     } finally {
@@ -155,57 +163,41 @@ export default function ArchivePage() {
     });
   };
 
-  // 카드 클릭 핸들러 (액션 메뉴 표시)
+  // 카드 클릭 핸들러 (편집 모달 표시)
   const handleEditGoal = (item: Goal | Project | AreaResource) => {
-    setSelectedItem({ type: 'goal', item });
-    setActionMenuOpen(true);
+    const goal = item as Goal;
+
+    // paraSelection 생성 (목표 페이지와 동일한 패턴)
+    let paraSelection = '';
+    if (goal.area_id) {
+      paraSelection = `area-${goal.area_id}`;
+    } else if (goal.resource_id) {
+      paraSelection = `resource-${goal.resource_id}`;
+    }
+
+    setEditingGoal({ ...goal, paraSelection, isNew: false });
+    setGoalDialogOpen(true);
   };
 
   const handleEditProject = (item: Goal | Project | AreaResource) => {
-    setSelectedItem({ type: 'project', item });
-    setActionMenuOpen(true);
+    const project = item as Project;
+
+    // paraSelection 생성 (프로젝트 페이지와 동일한 패턴)
+    let paraSelection = '';
+    if (project.goal_id) {
+      paraSelection = `goal-${project.goal_id}`;
+    }
+
+    setEditingProject({ ...project, paraSelection, isNew: false });
+    setProjectDialogOpen(true);
   };
 
   const handleEditAreaResource = (item: Goal | Project | AreaResource) => {
-    setSelectedItem({ type: 'area-resource', item });
-    setActionMenuOpen(true);
-  };
-
-  // 복원 핸들러
-  const handleRestore = async () => {
-    if (!selectedItem || !appUser?.id) return;
-
-    setActionMenuOpen(false);
-    try {
-      if (selectedItem.type === 'goal') {
-        // 목표 복원: paused → in_progress
-        await updateGoal(appUser.id, selectedItem.item.id, { status: 'in_progress' });
-      } else if (selectedItem.type === 'project') {
-        // 프로젝트 복원: paused → in_progress
-        await updateProject(appUser.id, selectedItem.item.id, { status: 'in_progress' });
-      } else if (selectedItem.type === 'area-resource') {
-        // 영역/자원 복원: archived → area (임시)
-        await updateArea(appUser.id, selectedItem.item.id, { status: 'area' } as any);
-      }
-      await loadArchiveData();
-      alert('복원되었습니다.');
-    } catch (error) {
-      console.error('복원 실패:', error);
-      alert('복원에 실패했습니다.');
-    } finally {
-      setSelectedItem(null);
-    }
-  };
-
-  // 삭제 핸들러
-  const handleDeleteClick = () => {
-    if (!selectedItem) return;
-
-    setActionMenuOpen(false);
+    // 영역/자원은 별도 처리 (현재는 삭제 확인 다이얼로그만 표시)
     setItemToDelete({
-      type: selectedItem.type,
-      id: selectedItem.item.id,
-      title: selectedItem.item.title,
+      type: 'area-resource',
+      id: item.id,
+      title: item.title,
     });
     setDeleteConfirmOpen(true);
   };
@@ -335,47 +327,72 @@ export default function ArchivePage() {
         {/* 하단 네비게이션 */}
         <SecondBrainBottomNav />
 
-        {/* 액션 메뉴 다이얼로그 */}
-        {actionMenuOpen && selectedItem && (
-          <dialog open className="modal modal-bottom sm:modal-middle">
-            <div className="modal-box">
-              <h3 className="font-bold text-lg mb-4">{selectedItem.item.title}</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={handleRestore}
-                  className="btn btn-primary w-full"
-                >
-                  복원하기
-                </button>
-                <button
-                  onClick={handleDeleteClick}
-                  className="btn btn-error btn-outline w-full"
-                >
-                  삭제하기
-                </button>
-                <button
-                  onClick={() => {
-                    setActionMenuOpen(false);
-                    setSelectedItem(null);
-                  }}
-                  className="btn w-full"
-                >
-                  취소
-                </button>
-              </div>
-            </div>
-            <div
-              className="modal-backdrop"
-              onClick={() => {
-                setActionMenuOpen(false);
-                setSelectedItem(null);
-              }}
-            />
-          </dialog>
+        {/* 목표 편집 모달 */}
+        {goalDialogOpen && editingGoal && (
+          <GoalEditDialog
+            open={goalDialogOpen}
+            editingGoal={editingGoal}
+            areas={areas}
+            resources={resources}
+            projects={storeProjects}
+            onSave={async (goalData, area_id, resource_id) => {
+              if (!appUser?.id) return;
+              await updateGoal(appUser.id, editingGoal.id, {
+                ...goalData,
+                area_id: area_id || undefined,
+                resource_id: resource_id || undefined,
+              });
+              await loadArchiveData();
+              setGoalDialogOpen(false);
+              setEditingGoal(null);
+            }}
+            onCancel={() => {
+              setGoalDialogOpen(false);
+              setEditingGoal(null);
+            }}
+            onDelete={async (goal) => {
+              if (!appUser?.id) return;
+              await deleteGoal(appUser.id, goal.id);
+              await loadArchiveData();
+              setGoalDialogOpen(false);
+              setEditingGoal(null);
+            }}
+            onGoalChange={(goal) => {
+              setEditingGoal(goal);
+            }}
+          />
         )}
 
+        {/* 프로젝트 편집 모달 */}
+        {projectDialogOpen && editingProject && (
+          <ProjectEditDialog
+            open={projectDialogOpen}
+            editingProject={editingProject}
+            onSave={async (projectData) => {
+              if (!appUser?.id) return;
+              await updateProject(appUser.id, editingProject.id, projectData);
+              await loadArchiveData();
+              setProjectDialogOpen(false);
+              setEditingProject(null);
+            }}
+            onCancel={() => {
+              setProjectDialogOpen(false);
+              setEditingProject(null);
+            }}
+            onDelete={async (project) => {
+              if (!appUser?.id) return;
+              await deleteProject(appUser.id, project.id);
+              await loadArchiveData();
+              setProjectDialogOpen(false);
+              setEditingProject(null);
+            }}
+            onProjectChange={(project) => {
+              setEditingProject(project);
+            }}
+          />
+        )}
 
-        {/* 삭제 확인 다이얼로그 */}
+        {/* 삭제 확인 다이얼로그 (영역/자원용) */}
         {deleteConfirmOpen && itemToDelete && (
           <dialog open className="modal modal-bottom sm:modal-middle">
             <div className="modal-box">
