@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CheckSquare, Search, ChevronDown, ChevronUp, Clock, Repeat, Calendar } from 'lucide-react';
+import { CheckSquare, Search, ChevronDown, ChevronUp, Clock, Repeat, Calendar, Plus } from 'lucide-react';
 import type { Todo } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { format, startOfDay, addDays, isBefore } from 'date-fns';
@@ -18,6 +18,8 @@ interface CollapsibleTodoSectionProps {
   noteId?: string;
   userId?: string;
   onImmediateSave?: (todoIds: string[]) => Promise<void>;
+  // 할일 생성
+  onCreateTodo?: (title: string) => Promise<Todo>;
 }
 
 export default function CollapsibleTodoSection({
@@ -28,6 +30,7 @@ export default function CollapsibleTodoSection({
   noteId,
   userId,
   onImmediateSave,
+  onCreateTodo,
 }: CollapsibleTodoSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,6 +143,29 @@ export default function CollapsibleTodoSection({
         // 실패 시 원래 상태로 되돌리기
         onChange(selectedTodoIds);
       }
+    }
+  };
+
+  // 할일 생성 및 자동 연결
+  const handleCreateTodo = async () => {
+    if (!onCreateTodo || !searchQuery.trim()) return;
+
+    try {
+      const newTodo = await onCreateTodo(searchQuery.trim());
+      const newIds = [...selectedTodoIds, newTodo.id];
+
+      // 로컬 상태 즉시 업데이트
+      onChange(newIds);
+
+      // DB에 즉시 저장 (선택적)
+      if (onImmediateSave) {
+        await onImmediateSave(newIds);
+      }
+
+      // 검색어 초기화
+      setSearchQuery('');
+    } catch (error) {
+      console.error('할일 생성 실패:', error);
     }
   };
 
@@ -444,6 +470,23 @@ export default function CollapsibleTodoSection({
               : activeTab === 'normal'
               ? '일반 할일이 없습니다'
               : '반복 할일이 없습니다'}
+          </div>
+        )}
+
+        {/* 검색어가 있을 때 항상 생성 버튼 표시 */}
+        {onCreateTodo && searchQuery.trim() && (
+          <div className="p-3 border-t border-base-300">
+            <button
+              type="button"
+              onClick={handleCreateTodo}
+              className="w-full flex items-center gap-2 p-3 rounded-lg hover:bg-base-200 transition-colors text-left"
+            >
+              <Plus className="h-5 w-5 text-base-content/70" />
+              <CheckSquare className="h-5 w-5 text-base-content/70" />
+              <span className="text-sm">
+                새로운 <strong>{searchQuery}</strong> 할일 생성
+              </span>
+            </button>
           </div>
         )}
       </div>

@@ -199,6 +199,29 @@ export default function NotesPage() {
     }
   };
 
+  // 할일 생성 핸들러
+  const handleCreateTodo = async (title: string) => {
+    if (!appUser?.id) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+
+    // EntityTodo 생성 (useTodoStore의 createTodo 사용)
+    const { createTodo } = useTodoStore.getState();
+    const newEntityTodo = await createTodo({
+      title,
+      user_id: appUser.id,
+      completed: false,
+      schedule_type: 'anytime',
+    });
+
+    if (!newEntityTodo) {
+      throw new Error('할일 생성에 실패했습니다.');
+    }
+
+    // Database Todo 형식으로 반환
+    return newEntityTodo.toDatabase() as any;
+  };
+
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-base-200 pb-20">
@@ -395,6 +418,7 @@ export default function NotesPage() {
             projects={[]}
             todos={todos}
             notes={notes}
+            onCreateTodo={handleCreateTodo}
           />
         )}
       </div>

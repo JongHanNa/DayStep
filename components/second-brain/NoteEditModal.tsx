@@ -23,6 +23,7 @@ interface NoteEditModalProps {
   notes?: Note[]; // 선택 가능한 노트 목록
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 콜백
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
+  onCreateTodo?: (title: string) => Promise<Todo>; // 새 할일 생성
   titlePlaceholder?: string;
   contentPlaceholder?: string;
 }
@@ -41,6 +42,7 @@ export default function NoteEditModal({
   notes = [],
   onNoteClick,
   onCreateNote,
+  onCreateTodo,
   titlePlaceholder = '',
   contentPlaceholder = '',
 }: NoteEditModalProps) {
@@ -132,6 +134,7 @@ export default function NoteEditModal({
                 currentNoteId={note.id}
                 onNoteClick={onNoteClick}
                 onCreateNote={onCreateNote}
+                onCreateTodo={onCreateTodo}
                 titlePlaceholder={titlePlaceholder}
                 contentPlaceholder={contentPlaceholder}
                 onContentClick={handleContentClick}

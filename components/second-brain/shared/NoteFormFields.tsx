@@ -34,6 +34,7 @@ interface NoteFormFieldsProps {
   currentNoteId?: string; // 순환 참조 방지용 (현재 편집 중인 노트)
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 모달 열기
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
+  onCreateTodo?: (title: string) => Promise<Todo>; // 새 할일 생성
   titlePlaceholder?: string;
   contentPlaceholder?: string;
   onContentClick?: () => void; // 내용 클릭 시 편집 모달 열기
@@ -41,6 +42,7 @@ interface NoteFormFieldsProps {
   noteId?: string;
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
+  onTodoImmediateSave?: (todoIds: string[]) => Promise<void>;
 }
 
 /**
@@ -59,12 +61,14 @@ export default function NoteFormFields({
   currentNoteId,
   onNoteClick,
   onCreateNote,
+  onCreateTodo,
   titlePlaceholder = '예: 회의 내용',
   contentPlaceholder = '노트 내용을 입력하세요...',
   onContentClick,
   noteId,
   userId,
   onNoteImmediateSave,
+  onTodoImmediateSave,
 }: NoteFormFieldsProps) {
   // 순환 참조 방지: 현재 편집 중인 노트 제외
   const availableNotes = currentNoteId
@@ -229,6 +233,8 @@ export default function NoteFormFields({
         noteColor="#808080"
         noteId={noteId}
         userId={userId}
+        onCreateTodo={onCreateTodo}
+        onImmediateSave={onTodoImmediateSave}
       />
 
       {/* 고정하기 */}
