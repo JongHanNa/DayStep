@@ -337,11 +337,22 @@ export default function ArchivePage() {
             projects={storeProjects}
             onSave={async (goalData, area_id, resource_id) => {
               if (!appUser?.id) return;
-              await updateGoal(appUser.id, editingGoal.id, {
-                ...goalData,
+
+              // UI 전용 필드(isNew, paraSelection 등)를 제외하고 DB 필드만 추출
+              const updateData = {
+                title: goalData.title!,
+                icon: goalData.icon!,
+                color: goalData.color!,
+                status: goalData.status!,
                 area_id: area_id || undefined,
                 resource_id: resource_id || undefined,
-              });
+                start_date: goalData.start_date || undefined,
+                end_date: goalData.end_date || undefined,
+                year_goal: goalData.year_goal ?? null,
+                quarter_goal: goalData.quarter_goal ?? null,
+              };
+
+              await updateGoal(appUser.id, editingGoal.id, updateData);
               await loadArchiveData();
               setGoalDialogOpen(false);
               setEditingGoal(null);
@@ -370,7 +381,21 @@ export default function ArchivePage() {
             editingProject={editingProject}
             onSave={async (projectData) => {
               if (!appUser?.id) return;
-              await updateProject(appUser.id, editingProject.id, projectData);
+
+              // UI 전용 필드(isNew, paraSelection 등)를 제외하고 DB 필드만 추출
+              const updateData = {
+                title: projectData.title!,
+                description: projectData.description || '',
+                icon: projectData.icon!,
+                color: projectData.color!,
+                status: projectData.status!,
+                goal_id: projectData.goal_id || undefined,
+                area_resource_id: projectData.area_resource_id || undefined,
+                start_date: projectData.start_date || undefined,
+                end_date: projectData.end_date || undefined,
+              };
+
+              await updateProject(appUser.id, editingProject.id, updateData);
               await loadArchiveData();
               setProjectDialogOpen(false);
               setEditingProject(null);
