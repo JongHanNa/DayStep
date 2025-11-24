@@ -102,13 +102,31 @@ export default function TodoEditModal({
 
   // 노트 클릭 핸들러
   const handleNoteClick = (note: Note) => {
+    // area_resource_id → linkedAreaOrResource 변환
+    let linkedAreaOrResource = '';
+    if (note.area_resource_id) {
+      // Store에서 최신 데이터 직접 조회
+      const latestAreas = useAreaStore.getState().areas;
+      const latestResources = useResourceStore.getState().resources;
+
+      // area인지 resource인지 구분
+      const isArea = latestAreas.some(a => a.id === note.area_resource_id);
+      const isResource = latestResources.some(r => r.id === note.area_resource_id);
+
+      if (isArea) {
+        linkedAreaOrResource = `area-${note.area_resource_id}`;
+      } else if (isResource) {
+        linkedAreaOrResource = `resource-${note.area_resource_id}`;
+      }
+    }
+
     setEditingNote(note);
     setNoteForm({
       id: note.id,
       title: note.title,
       content: note.content,
       note_category: note.note_category,
-      linkedAreaOrResource: note.area_resource_id ? (areas.some(a => a.id === note.area_resource_id) ? `area-${note.area_resource_id}` : `resource-${note.area_resource_id}`) : '',
+      linkedAreaOrResource,
       isPinned: note.is_pinned,
       projectIds: [], // N:N 관계로 변경됨
       todoIds: [], // N:N 관계로 변경됨

@@ -231,28 +231,42 @@ export default function ProjectEditDialog({
     // getProjectNotes로 프로젝트 노트 ID 배열 조회
     getProjectNotes(editingProject.id)
       .then((noteIds: string[]) => {
+        // Store에서 최신 데이터 직접 조회
+        const latestAreas = useAreaStore.getState().areas;
+        const latestResources = useResourceStore.getState().resources;
+
         // noteStore에서 해당 ID의 노트 찾기
         const projectNotes = allNotes
           .filter(note => noteIds.includes(note.id))
-          .map(note => ({
-            id: note.id,
-            title: note.title,
-            content: note.content,
-            note_category: note.note_category,
-            // area_resource_id → linkedAreaOrResource 변환 (area-{id} 또는 resource-{id} 형식)
-            linkedAreaOrResource: note.area_resource_id
-              ? (areas.some(a => a.id === note.area_resource_id)
-                  ? `area-${note.area_resource_id}`
-                  : `resource-${note.area_resource_id}`)
-              : undefined,
-            isPinned: note.is_pinned,
-            // projects 배열 → projectIds 문자열 배열 변환
-            projectIds: note.projects?.map(p => p.id) || [],
-            // todos 배열 → todoIds 문자열 배열 변환
-            todoIds: note.todos?.map(t => t.id) || [],
-            // connectedNotes 배열 → noteIds 문자열 배열 변환
-            noteIds: note.connectedNotes?.map(n => n.id) || [],
-          }));
+          .map(note => {
+            // area_resource_id → linkedAreaOrResource 변환
+            let linkedAreaOrResource: string | undefined = undefined;
+            if (note.area_resource_id) {
+              const isArea = latestAreas.some(a => a.id === note.area_resource_id);
+              const isResource = latestResources.some(r => r.id === note.area_resource_id);
+
+              if (isArea) {
+                linkedAreaOrResource = `area-${note.area_resource_id}`;
+              } else if (isResource) {
+                linkedAreaOrResource = `resource-${note.area_resource_id}`;
+              }
+            }
+
+            return {
+              id: note.id,
+              title: note.title,
+              content: note.content,
+              note_category: note.note_category,
+              linkedAreaOrResource,
+              isPinned: note.is_pinned,
+              // projects 배열 → projectIds 문자열 배열 변환
+              projectIds: note.projects?.map(p => p.id) || [],
+              // todos 배열 → todoIds 문자열 배열 변환
+              todoIds: note.todos?.map(t => t.id) || [],
+              // connectedNotes 배열 → noteIds 문자열 배열 변환
+              noteIds: note.connectedNotes?.map(n => n.id) || [],
+            };
+          });
 
         setNotes(projectNotes);
       })
@@ -260,7 +274,7 @@ export default function ProjectEditDialog({
         console.error('프로젝트 노트 로드 실패:', error);
         setNotes([]);
       });
-  }, [editingProject?.id, editingProject?.isNew, allNotes, areas, resources]);
+  }, [editingProject?.id, editingProject?.isNew, allNotes]);
 
   // 달력 상태
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());

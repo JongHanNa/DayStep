@@ -10,6 +10,8 @@ import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { getInboxRemovalMessage } from '@/lib/utils/inboxMessages';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
@@ -66,6 +68,8 @@ export default function TodoInboxList({
   const { inboxItems, fetchInboxItems } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
   const { createNote, updateNote, deleteNote } = useNoteStore();
+  const { areas } = useAreaStore();
+  const { resources } = useResourceStore();
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
   const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
 
@@ -374,6 +378,8 @@ export default function TodoInboxList({
         onChange={(updated) => setTodoForm(todoForm ? { ...todoForm, ...updated } : null)}
         projects={projects}
         notes={notes}
+        areas={areas}
+        resources={resources}
         onCreateProject={handleCreateProject}
         onUpdateProject={handleUpdateProject}
         onDeleteProject={handleDeleteProject}
