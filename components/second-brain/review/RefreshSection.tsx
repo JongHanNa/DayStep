@@ -224,7 +224,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
   const activeProjects = projects.filter((project) => project.status !== 'completed');
 
   // 활성 목표 필터링 (완료되지 않은 목표)
-  const activeGoals = goals.filter((goal) => goal.status !== 'completed' && goal.status !== 'archived');
+  const activeGoals = goals.filter((goal) => goal.status !== 'completed' && goal.status !== 'paused');
 
   // 프로젝트 통계 계산 (연결된 할일 기반)
   const getProjectStats = (projectId: string) => {

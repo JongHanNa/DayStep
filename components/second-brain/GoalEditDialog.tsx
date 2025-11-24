@@ -208,13 +208,13 @@ export default function GoalEditDialog({
                     <div className="p-3 rounded-lg bg-base-200 border border-base-300">
                       <select
                         value={editingGoal.status}
-                        onChange={(e) => onGoalChange({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived' })}
+                        onChange={(e) => onGoalChange({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'paused' | 'completed' })}
                         className="select select-bordered w-full"
                       >
                         <option value="not_started">시작 안함</option>
                         <option value="in_progress">진행중</option>
                         <option value="completed">완료</option>
-                        <option value="suspended">중단</option>
+                        <option value="paused">중단</option>
                       </select>
                     </div>
                   </div>

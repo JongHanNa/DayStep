@@ -230,7 +230,7 @@ export default function GoalCompassPage() {
   // 1. 진행 중인 목표
   const ongoingGoals = useMemo(() => {
     return goals.filter(
-      (goal) => goal.status !== 'completed' && goal.status !== 'archived'
+      (goal) => goal.status !== 'completed' && goal.status !== 'paused'
     );
   }, [goals]);
 

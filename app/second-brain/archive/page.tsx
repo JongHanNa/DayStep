@@ -70,7 +70,7 @@ export default function ArchivePage() {
       ]);
 
       // 목표 분류 (중단 vs 완료)
-      setPausedGoals(goals.filter((g) => g.status === 'suspended'));
+      setPausedGoals(goals.filter((g) => g.status === 'paused'));
       setCompletedGoals(goals.filter((g) => g.status === 'completed'));
 
       // 프로젝트 분류 (중단 vs 완료)
@@ -178,7 +178,7 @@ export default function ArchivePage() {
     setActionMenuOpen(false);
     try {
       if (selectedItem.type === 'goal') {
-        // 목표 복원: suspended → in_progress
+        // 목표 복원: paused → in_progress
         await updateGoal(appUser.id, selectedItem.item.id, { status: 'in_progress' });
       } else if (selectedItem.type === 'project') {
         // 프로젝트 복원: paused → in_progress

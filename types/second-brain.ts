@@ -134,7 +134,7 @@ export interface Goal {
   // 메타데이터
   icon?: string;
   color: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'suspended' | 'archived';
+  status: 'not_started' | 'in_progress' | 'paused' | 'completed';
 
   // 연결된 프로젝트 (파생 데이터)
   projects?: Project[];

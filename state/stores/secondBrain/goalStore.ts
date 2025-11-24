@@ -48,9 +48,9 @@ export const useGoalStore = createStore<GoalStoreState>(
     fetchArchivedGoals: async (userId: string) => {
       try {
         const allGoals = await fetchGoalsWithJWT(userId);
-        // status가 'suspended' 또는 'completed'인 목표만 필터링
+        // status가 'paused' 또는 'completed'인 목표만 필터링
         const archivedGoals = allGoals.filter(
-          (goal: Goal) => goal.status === 'suspended' || goal.status === 'completed'
+          (goal: Goal) => goal.status === 'paused' || goal.status === 'completed'
         );
         return archivedGoals;
       } catch (error) {
