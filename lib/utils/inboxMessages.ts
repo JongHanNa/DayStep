@@ -38,7 +38,7 @@ export function getInboxRemovalMessage(todo: InboxItem): string | null {
 
   // none: 명료화 필요
   if (!clarification || clarification === 'none') {
-    return '명료화를 완료하면 수집함에서 사라집니다';
+    return '명료화(언젠가, 대기중,다음행동,일정)를 완료하면 수집함에서 사라집니다. 필요 없는 할일은 삭제 하세요.';
   }
 
   /* 임시 숨김: 다시알림 조건
