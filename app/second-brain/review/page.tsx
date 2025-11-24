@@ -84,7 +84,7 @@ export default function ReviewPage() {
           <div className="bg-base-100 rounded-lg overflow-hidden">
             <button
               onClick={() => toggleSection('empty')}
-              className="w-full p-4 flex items-center justify-between hover:bg-base-200 transition-colors"
+              className="w-full p-4 flex items-center justify-between bg-transparent hover:opacity-80 transition-opacity"
             >
               <div className="flex items-center gap-3">
                 {expandedSection === 'empty' ? (
@@ -106,7 +106,7 @@ export default function ReviewPage() {
           <div className="bg-base-100 rounded-lg overflow-hidden">
             <button
               onClick={() => toggleSection('refresh')}
-              className="w-full p-4 flex items-center justify-between hover:bg-base-200 transition-colors"
+              className="w-full p-4 flex items-center justify-between bg-transparent hover:opacity-80 transition-opacity"
             >
               <div className="flex items-center gap-3">
                 {expandedSection === 'refresh' ? (
@@ -128,7 +128,7 @@ export default function ReviewPage() {
           <div className="bg-base-100 rounded-lg overflow-hidden">
             <button
               onClick={() => toggleSection('add')}
-              className="w-full p-4 flex items-center justify-between hover:bg-base-200 transition-colors"
+              className="w-full p-4 flex items-center justify-between bg-transparent hover:opacity-80 transition-opacity"
             >
               <div className="flex items-center gap-3">
                 {expandedSection === 'add' ? (
