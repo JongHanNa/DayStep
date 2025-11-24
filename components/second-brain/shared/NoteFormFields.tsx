@@ -33,6 +33,7 @@ interface NoteFormFieldsProps {
   notes?: Note[]; // 선택 가능한 노트 목록
   currentNoteId?: string; // 순환 참조 방지용 (현재 편집 중인 노트)
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 모달 열기
+  onTodoClick?: (todo: Todo) => void; // 할일 클릭 시 모달 열기
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onCreateTodo?: (title: string) => Promise<Todo>; // 새 할일 생성
   titlePlaceholder?: string;
@@ -60,6 +61,7 @@ export default function NoteFormFields({
   notes = [],
   currentNoteId,
   onNoteClick,
+  onTodoClick,
   onCreateNote,
   onCreateTodo,
   titlePlaceholder = '예: 회의 내용',
@@ -234,6 +236,7 @@ export default function NoteFormFields({
         noteId={noteId}
         userId={userId}
         onCreateTodo={onCreateTodo}
+        onTodoClick={onTodoClick}
         onImmediateSave={onTodoImmediateSave}
       />
 

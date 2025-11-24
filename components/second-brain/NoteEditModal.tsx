@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import ContentEditorModal from './ContentEditorModal';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAuth } from '@/app/context/AuthContext';
@@ -24,6 +26,8 @@ interface NoteEditModalProps {
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 콜백
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onCreateTodo?: (title: string) => Promise<Todo>; // 새 할일 생성
+  onUpdateTodo?: (id: string) => Promise<void>; // 할일 업데이트
+  onDeleteTodo?: (id: string) => Promise<void>; // 할일 삭제
   titlePlaceholder?: string;
   contentPlaceholder?: string;
 }
@@ -43,6 +47,8 @@ export default function NoteEditModal({
   onNoteClick,
   onCreateNote,
   onCreateTodo,
+  onUpdateTodo,
+  onDeleteTodo,
   titlePlaceholder = '',
   contentPlaceholder = '',
 }: NoteEditModalProps) {
@@ -50,6 +56,10 @@ export default function NoteEditModal({
   const { updateNote } = useNoteStore();
   const { user } = useAuth();
   const [isContentEditorOpen, setIsContentEditorOpen] = useState(false);
+
+  // 할일 편집 모달 상태
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
 
   // 모달 열림/닫힘 상태 관리 (하단 네비 숨김)
   useEffect(() => {
@@ -69,6 +79,33 @@ export default function NoteEditModal({
   // 내용 저장 핸들러
   const handleContentSave = () => {
     setIsContentEditorOpen(false);
+  };
+
+  // 할일 클릭 핸들러
+  const handleTodoClick = (todo: Todo) => {
+    setEditingTodo(todo);
+    setTodoForm({
+      title: todo.title,
+      clarification: todo.clarification,
+      completed: todo.completed || false,
+      isHighlight: false,
+      scheduledDate: todo.start_time ? new Date(todo.start_time) : undefined,
+      scheduleType: todo.schedule_type || 'anytime',
+      projectIds: [],
+      noteIds: [],
+    });
+  };
+
+  // 할일 저장 핸들러
+  const handleTodoSave = async () => {
+    if (!editingTodo || !todoForm || !onUpdateTodo) return;
+    try {
+      await onUpdateTodo(editingTodo.id);
+      setEditingTodo(null);
+      setTodoForm(null);
+    } catch (error) {
+      console.error('할일 저장 실패:', error);
+    }
   };
 
   // 자동저장 핸들러
@@ -133,6 +170,7 @@ export default function NoteEditModal({
                 notes={notes}
                 currentNoteId={note.id}
                 onNoteClick={onNoteClick}
+                onTodoClick={handleTodoClick}
                 onCreateNote={onCreateNote}
                 onCreateTodo={onCreateTodo}
                 titlePlaceholder={titlePlaceholder}
@@ -155,6 +193,29 @@ export default function NoteEditModal({
         placeholder={contentPlaceholder}
         enableAutoSave={true}
         onAutoSave={handleAutoSave}
+      />
+
+      {/* 할일 편집 모달 */}
+      <TodoEditModal
+        open={editingTodo !== null && todoForm !== null}
+        todo={todoForm}
+        onClose={() => {
+          setEditingTodo(null);
+          setTodoForm(null);
+        }}
+        onSave={handleTodoSave}
+        onChange={setTodoForm}
+        onDelete={async () => {
+          if (!editingTodo || !onDeleteTodo) return;
+          await onDeleteTodo(editingTodo.id);
+          setEditingTodo(null);
+          setTodoForm(null);
+        }}
+        projects={projects}
+        notes={notes}
+        areas={areas}
+        resources={resources}
+        todos={todos}
       />
     </dialog>
   );

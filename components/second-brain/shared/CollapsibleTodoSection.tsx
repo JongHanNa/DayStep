@@ -20,6 +20,8 @@ interface CollapsibleTodoSectionProps {
   onImmediateSave?: (todoIds: string[]) => Promise<void>;
   // 할일 생성
   onCreateTodo?: (title: string) => Promise<Todo>;
+  // 할일 클릭 시 편집 모달 열기
+  onTodoClick?: (todo: Todo) => void;
 }
 
 export default function CollapsibleTodoSection({
@@ -31,6 +33,7 @@ export default function CollapsibleTodoSection({
   userId,
   onImmediateSave,
   onCreateTodo,
+  onTodoClick,
 }: CollapsibleTodoSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -310,16 +313,23 @@ export default function CollapsibleTodoSection({
 
                 return (
                   <div key={todo.id}>
-                    <label
-                      className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
-                    >
+                    <div className="flex items-center gap-2 p-2 rounded hover:bg-base-200 transition-colors">
+                      {/* 체크박스 - 연결/해제 */}
                       <input
                         type="checkbox"
                         checked={true}
-                        onChange={() => toggleTodo(todo.id, todo)}
-                        className="checkbox checkbox-sm"
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleTodo(todo.id, todo);
+                        }}
+                        className="checkbox checkbox-sm cursor-pointer"
                       />
-                      <div className="flex-1">
+
+                      {/* 클릭 가능 영역 - 할일 편집 모달 열기 */}
+                      <div
+                        className="flex-1 cursor-pointer"
+                        onClick={() => onTodoClick?.(todo)}
+                      >
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">{todo.title}</span>
                           {isRecurring && (
@@ -340,7 +350,7 @@ export default function CollapsibleTodoSection({
                           </div>
                         )}
                       </div>
-                    </label>
+                    </div>
 
                     {/* 특정 날짜 연결 선택 시 DatePicker 표시 */}
                     {selectedRecurringTodo?.id === todo.id &&
@@ -392,16 +402,23 @@ export default function CollapsibleTodoSection({
 
                 return (
                   <div key={todo.id}>
-                    <label
-                      className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
-                    >
+                    <div className="flex items-center gap-2 p-2 rounded hover:bg-base-200 transition-colors">
+                      {/* 체크박스 - 연결/해제 */}
                       <input
                         type="checkbox"
                         checked={false}
-                        onChange={() => toggleTodo(todo.id, todo)}
-                        className="checkbox checkbox-sm"
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleTodo(todo.id, todo);
+                        }}
+                        className="checkbox checkbox-sm cursor-pointer"
                       />
-                      <div className="flex-1">
+
+                      {/* 클릭 가능 영역 - 할일 편집 모달 열기 */}
+                      <div
+                        className="flex-1 cursor-pointer"
+                        onClick={() => onTodoClick?.(todo)}
+                      >
                         <div className="flex items-center gap-2">
                           <span className="text-sm">{todo.title}</span>
                           {isRecurring && (
@@ -422,7 +439,7 @@ export default function CollapsibleTodoSection({
                           </div>
                         )}
                       </div>
-                    </label>
+                    </div>
 
                     {/* 특정 날짜 연결 선택 시 DatePicker 표시 */}
                     {selectedRecurringTodo?.id === todo.id &&
