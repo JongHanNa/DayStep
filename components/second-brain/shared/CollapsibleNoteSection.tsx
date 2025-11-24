@@ -164,29 +164,30 @@ export default function CollapsibleNoteSection({
             </div>
             <div className="space-y-1">
               {connectedNotes.map(note => (
-                <label
+                <div
                   key={note.id}
-                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 transition-colors"
                 >
+                  {/* 체크박스 - 연결/해제 */}
                   <input
                     type="checkbox"
                     checked={true}
-                    onChange={() => toggleNote(note.id)}
-                    className="checkbox checkbox-sm"
-                  />
-                  <FileText className="h-4 w-4" style={{ color: '#808080' }} />
-                  <span
-                    className="text-sm flex-1"
-                    onClick={(e) => {
-                      if (onNoteClick) {
-                        e.preventDefault();
-                        onNoteClick(note);
-                      }
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleNote(note.id);
                     }}
+                    className="checkbox checkbox-sm cursor-pointer"
+                  />
+
+                  {/* 클릭 가능 영역 - 노트 편집 모달 열기 */}
+                  <div
+                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    onClick={() => onNoteClick?.(note)}
                   >
-                    {note.title}
-                  </span>
-                </label>
+                    <FileText className="h-4 w-4" style={{ color: '#808080' }} />
+                    <span className="text-sm">{note.title}</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -200,29 +201,30 @@ export default function CollapsibleNoteSection({
             </div>
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {otherNotes.map(note => (
-                <label
+                <div
                   key={note.id}
-                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 transition-colors"
                 >
+                  {/* 체크박스 - 연결/해제 */}
                   <input
                     type="checkbox"
                     checked={false}
-                    onChange={() => toggleNote(note.id)}
-                    className="checkbox checkbox-sm"
-                  />
-                  <FileText className="h-4 w-4" style={{ color: '#808080' }} />
-                  <span
-                    className="text-sm flex-1"
-                    onClick={(e) => {
-                      if (onNoteClick) {
-                        e.preventDefault();
-                        onNoteClick(note);
-                      }
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleNote(note.id);
                     }}
+                    className="checkbox checkbox-sm cursor-pointer"
+                  />
+
+                  {/* 클릭 가능 영역 - 노트 편집 모달 열기 */}
+                  <div
+                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    onClick={() => onNoteClick?.(note)}
                   >
-                    {note.title}
-                  </span>
-                </label>
+                    <FileText className="h-4 w-4" style={{ color: '#808080' }} />
+                    <span className="text-sm">{note.title}</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
