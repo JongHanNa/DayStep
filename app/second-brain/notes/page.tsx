@@ -7,6 +7,7 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
@@ -14,8 +15,10 @@ import AreaResourceSubTabs, { type SubTabType } from '@/components/second-brain/
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { Plus, Pin, Inbox, BookmarkCheck, FileText, FolderOpen } from 'lucide-react';
-import type { Note, NoteType, NoteCategory } from '@/types/second-brain';
+import type { Note, NoteType, NoteCategory, Project } from '@/types/second-brain';
 import { updateNoteTodos } from '@/lib/supabase/todo-notes';
+import { updateNoteProjects } from '@/lib/supabase/project-notes';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 
 const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   note: '일반 노트',
@@ -38,11 +41,14 @@ export default function NotesPage() {
   const { todos: entityTodos, fetchAllTodos } = useTodoStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
+  const { projects, fetchProjects, createProject, updateProject, deleteProject } = useProjectStore();
   const [activeTab, setActiveTab] = useState<NoteTabType>('inbox');
   const [activeSubTab, setActiveSubTab] = useState<SubTabType>('areas');
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [showProjectEditModal, setShowProjectEditModal] = useState(false);
 
   // Entity Todo를 database Todo 형식으로 변환
   const todos = entityTodos.map(todo => todo.toDatabase() as any);
@@ -58,8 +64,9 @@ export default function NotesPage() {
       fetchAllTodos();
       fetchAreas(appUser.id);
       fetchResources(appUser.id);
+      fetchProjects(appUser.id);
     }
-  }, [appUser?.id, fetchNotes, fetchAllTodos, fetchAreas, fetchResources]);
+  }, [appUser?.id, fetchNotes, fetchAllTodos, fetchAreas, fetchResources, fetchProjects]);
 
   // 탭별 노트 필터링
   const getFilteredNotes = (): Note[] => {
@@ -159,6 +166,11 @@ export default function NotesPage() {
         await updateNoteTodos(editingNote.id, noteForm.todoIds, appUser.id);
       }
 
+      // 프로젝트 연결 저장
+      if (noteForm.projectIds !== undefined) {
+        await updateNoteProjects(editingNote.id, noteForm.projectIds, appUser.id);
+      }
+
       setEditingNote(null);
       setNoteForm(null);
       fetchNotes(appUser.id);
@@ -220,6 +232,53 @@ export default function NotesPage() {
 
     // Database Todo 형식으로 반환
     return newEntityTodo.toDatabase() as any;
+  };
+
+  // 프로젝트 생성 핸들러
+  const handleCreateProject = async (title: string): Promise<Project> => {
+    if (!appUser?.id) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+
+    const newProject = await createProject(appUser.id, {
+      title,
+      description: '',
+      status: 'not_started',
+      color: '#808080',
+      order_index: 0,
+    });
+
+    if (!newProject) {
+      throw new Error('프로젝트 생성에 실패했습니다.');
+    }
+
+    return newProject;
+  };
+
+  // 프로젝트 수정 핸들러
+  const handleUpdateProject = async (id: string, title: string): Promise<void> => {
+    if (!appUser?.id) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+
+    await updateProject(appUser.id, id, { title });
+    await fetchProjects(appUser.id);
+  };
+
+  // 프로젝트 삭제 핸들러
+  const handleDeleteProject = async (id: string): Promise<void> => {
+    if (!appUser?.id) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+
+    await deleteProject(appUser.id, id);
+    await fetchProjects(appUser.id);
+  };
+
+  // 프로젝트 클릭 핸들러
+  const handleProjectClick = (project: Project) => {
+    setEditingProject(project);
+    setShowProjectEditModal(true);
   };
 
   return (
@@ -415,10 +474,38 @@ export default function NotesPage() {
             onSave={handleSave}
             areas={areas}
             resources={resources}
-            projects={[]}
+            projects={projects}
             todos={todos}
             notes={notes}
             onCreateTodo={handleCreateTodo}
+            onCreateProject={handleCreateProject}
+            onUpdateProject={handleUpdateProject}
+            onDeleteProject={handleDeleteProject}
+            onProjectClick={handleProjectClick}
+          />
+        )}
+
+        {/* 프로젝트 편집 모달 */}
+        {editingProject && (
+          <ProjectEditDialog
+            open={showProjectEditModal}
+            editingProject={editingProject}
+            onSave={async (projectData, area_id, resource_id) => {
+              if (!editingProject) return;
+              await handleUpdateProject(editingProject.id, projectData.title || editingProject.title);
+              setShowProjectEditModal(false);
+              setEditingProject(null);
+            }}
+            onCancel={() => {
+              setShowProjectEditModal(false);
+              setEditingProject(null);
+            }}
+            onDelete={async (project) => {
+              await handleDeleteProject(project.id);
+              setShowProjectEditModal(false);
+              setEditingProject(null);
+            }}
+            onProjectChange={setEditingProject}
           />
         )}
       </div>

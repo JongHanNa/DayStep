@@ -24,10 +24,14 @@ interface NoteEditModalProps {
   todos?: Todo[];
   notes?: Note[]; // 선택 가능한 노트 목록
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 콜백
+  onProjectClick?: (project: Project) => void; // 프로젝트 클릭 시 콜백
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onCreateTodo?: (title: string) => Promise<Todo>; // 새 할일 생성
+  onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
   onUpdateTodo?: (id: string) => Promise<void>; // 할일 업데이트
+  onUpdateProject?: (id: string, title: string) => Promise<void>; // 프로젝트 업데이트
   onDeleteTodo?: (id: string) => Promise<void>; // 할일 삭제
+  onDeleteProject?: (id: string) => Promise<void>; // 프로젝트 삭제
   titlePlaceholder?: string;
   contentPlaceholder?: string;
 }
@@ -45,10 +49,14 @@ export default function NoteEditModal({
   todos = [],
   notes = [],
   onNoteClick,
+  onProjectClick,
   onCreateNote,
   onCreateTodo,
+  onCreateProject,
   onUpdateTodo,
+  onUpdateProject,
   onDeleteTodo,
+  onDeleteProject,
   titlePlaceholder = '',
   contentPlaceholder = '',
 }: NoteEditModalProps) {
@@ -171,11 +179,15 @@ export default function NoteEditModal({
                 currentNoteId={note.id}
                 onNoteClick={onNoteClick}
                 onTodoClick={handleTodoClick}
+                onProjectClick={onProjectClick}
                 onCreateNote={onCreateNote}
                 onCreateTodo={onCreateTodo}
+                onCreateProject={onCreateProject}
                 titlePlaceholder={titlePlaceholder}
                 contentPlaceholder={contentPlaceholder}
                 onContentClick={handleContentClick}
+                noteId={note.id}
+                userId={user?.id}
               />
             )}
           </div>

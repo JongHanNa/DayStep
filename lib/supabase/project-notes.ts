@@ -156,3 +156,38 @@ export async function updateProjectNotes(projectId: string, noteIds: string[]): 
     return false;
   }
 }
+
+/**
+ * Update all project connections for a note (노트의 모든 프로젝트 연결 업데이트)
+ * @param noteId - Note ID
+ * @param projectIds - 연결할 프로젝트 ID 배열 (여러 개 가능)
+ * @param userId - User ID (RLS 정책 필수)
+ */
+export async function updateNoteProjects(noteId: string, projectIds: string[], userId: string): Promise<boolean> {
+  try {
+    // 1. 기존 연결 모두 삭제
+    await fetchWithJWT(`/project_notes?note_id=eq.${noteId}`, {
+      method: 'DELETE',
+    });
+
+    // 2. 새로운 연결 생성
+    if (projectIds.length > 0) {
+      // 배치 삽입을 위한 데이터 준비 (user_id 포함)
+      const insertData = projectIds.map((projectId) => ({
+        project_id: projectId,
+        note_id: noteId,
+        user_id: userId,
+      }));
+
+      await fetchWithJWT('/project_notes', {
+        method: 'POST',
+        body: JSON.stringify(insertData),
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating note projects:', error);
+    return false;
+  }
+}

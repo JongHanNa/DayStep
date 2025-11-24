@@ -5,6 +5,7 @@ import type { Todo } from '@/types';
 import { FileText, FolderTree, StickyNote, Star } from 'lucide-react';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
 import CollapsibleTodoSection from './CollapsibleTodoSection';
+import CollapsibleProjectSection from './CollapsibleProjectSection';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
 
 /**
@@ -34,8 +35,10 @@ interface NoteFormFieldsProps {
   currentNoteId?: string; // 순환 참조 방지용 (현재 편집 중인 노트)
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 모달 열기
   onTodoClick?: (todo: Todo) => void; // 할일 클릭 시 모달 열기
+  onProjectClick?: (project: Project) => void; // 프로젝트 클릭 시 모달 열기
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onCreateTodo?: (title: string) => Promise<Todo>; // 새 할일 생성
+  onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
   titlePlaceholder?: string;
   contentPlaceholder?: string;
   onContentClick?: () => void; // 내용 클릭 시 편집 모달 열기
@@ -44,6 +47,7 @@ interface NoteFormFieldsProps {
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
   onTodoImmediateSave?: (todoIds: string[]) => Promise<void>;
+  onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
 }
 
 /**
@@ -62,8 +66,10 @@ export default function NoteFormFields({
   currentNoteId,
   onNoteClick,
   onTodoClick,
+  onProjectClick,
   onCreateNote,
   onCreateTodo,
+  onCreateProject,
   titlePlaceholder = '예: 회의 내용',
   contentPlaceholder = '노트 내용을 입력하세요...',
   onContentClick,
@@ -71,6 +77,7 @@ export default function NoteFormFields({
   userId,
   onNoteImmediateSave,
   onTodoImmediateSave,
+  onProjectImmediateSave,
 }: NoteFormFieldsProps) {
   // 순환 참조 방지: 현재 편집 중인 노트 제외
   const availableNotes = currentNoteId
@@ -159,40 +166,6 @@ export default function NoteFormFields({
         </div>
       </div>
 
-      {/* 프로젝트 (다중 선택) */}
-      {projects.length > 0 && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <FolderTree className="h-5 w-5" style={{ color: '#808080' }} />
-            프로젝트
-          </label>
-
-          <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-            <div className="flex flex-wrap gap-2">
-              {projects.map((project) => {
-                const isSelected = note.projectIds?.includes(project.id);
-                return (
-                  <button
-                    key={project.id}
-                    type="button"
-                    onClick={() => {
-                      const currentIds = note.projectIds || [];
-                      const newIds = isSelected
-                        ? currentIds.filter(id => id !== project.id)
-                        : [...currentIds, project.id];
-                      onChange({ ...note, projectIds: newIds });
-                    }}
-                    className={`btn btn-sm ${isSelected ? 'bg-base-300' : 'btn-ghost'}`}
-                  >
-                    {project.title}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 연결된 노트 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (
         <CollapsibleNoteSection
@@ -239,6 +212,21 @@ export default function NoteFormFields({
         onTodoClick={onTodoClick}
         onImmediateSave={onTodoImmediateSave}
       />
+
+      {/* 프로젝트 (다중 선택) - onCreateProject prop이 있을 때만 표시 */}
+      {onCreateProject && projects.length > 0 && (
+        <CollapsibleProjectSection
+          selectedProjectIds={note.projectIds || []}
+          allProjects={projects}
+          onChange={(projectIds) => onChange({ ...note, projectIds })}
+          onCreateProject={onCreateProject}
+          onProjectClick={onProjectClick}
+          todoColor="#808080"
+          todoId={noteId}
+          userId={userId}
+          onImmediateSave={onProjectImmediateSave}
+        />
+      )}
 
       {/* 고정하기 */}
       <div className="my-4">
