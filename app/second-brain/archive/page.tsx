@@ -184,8 +184,22 @@ export default function ArchivePage() {
 
     // paraSelection 생성 (프로젝트 페이지와 동일한 패턴)
     let paraSelection = '';
+
+    // goal_id 처리
     if (project.goal_id) {
       paraSelection = `goal-${project.goal_id}`;
+    }
+
+    // area_resource_id 처리
+    if (project.area_resource_id) {
+      const isArea = areas.some(a => a.id === project.area_resource_id);
+      const isResource = resources.some(r => r.id === project.area_resource_id);
+
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else if (isResource) {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
     }
 
     setEditingProject({ ...project, paraSelection, isNew: false });
