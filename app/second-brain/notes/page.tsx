@@ -18,6 +18,7 @@ import { Plus, Pin, Inbox, BookmarkCheck, FileText, FolderOpen } from 'lucide-re
 import type { Note, NoteType, NoteCategory, Project } from '@/types/second-brain';
 import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 import { updateNoteProjects } from '@/lib/supabase/project-notes';
+import { updateNoteNotes } from '@/lib/supabase/note-notes';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 
 const NOTE_TYPE_LABELS: Record<NoteType, string> = {
@@ -281,6 +282,40 @@ export default function NotesPage() {
     setShowProjectEditModal(true);
   };
 
+  // 노트 생성 핸들러
+  const handleCreateNote = async (title: string): Promise<Note> => {
+    if (!appUser?.id) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+
+    const newNote = await createNote(appUser.id, {
+      title,
+      content: '',
+      note_category: 'work_in_progress', // 기본값
+      is_pinned: false,
+    });
+
+    if (!newNote) {
+      throw new Error('노트 생성에 실패했습니다.');
+    }
+
+    return newNote;
+  };
+
+  // 노트-노트 즉시 저장 핸들러
+  const handleNoteNoteImmediateSave = async (noteIds: string[]) => {
+    if (!editingNote?.id || !appUser?.id) return;
+
+    try {
+      await updateNoteNotes(editingNote.id, noteIds, appUser.id);
+      // UI 동기화를 위해 재조회
+      await fetchNotes(appUser.id);
+    } catch (error) {
+      console.error('노트-노트 연결 저장 실패:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-base-200 pb-20">
@@ -482,6 +517,8 @@ export default function NotesPage() {
             onUpdateProject={handleUpdateProject}
             onDeleteProject={handleDeleteProject}
             onProjectClick={handleProjectClick}
+            onCreateNote={handleCreateNote}
+            onNoteNoteImmediateSave={handleNoteNoteImmediateSave}
           />
         )}
 

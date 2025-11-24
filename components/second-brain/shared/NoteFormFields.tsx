@@ -166,21 +166,6 @@ export default function NoteFormFields({
         </div>
       </div>
 
-      {/* 연결된 노트 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
-      {onCreateNote && (
-        <CollapsibleNoteSection
-          selectedNoteIds={note.noteIds || []}
-          allNotes={availableNotes}
-          onChange={(noteIds) => onChange({ ...note, noteIds })}
-          onCreateNote={onCreateNote}
-          onNoteClick={onNoteClick}
-          todoColor="#808080"
-          todoId={noteId}
-          userId={userId}
-          onImmediateSave={onNoteImmediateSave}
-        />
-      )}
-
       {/* 내용 (프리뷰 - 클릭 시 편집 모달) */}
       <div className="my-4">
         <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
@@ -200,6 +185,21 @@ export default function NoteFormFields({
         </div>
       </div>
 
+      {/* 프로젝트 (다중 선택) - onCreateProject prop이 있을 때만 표시 */}
+      {onCreateProject && projects.length > 0 && (
+        <CollapsibleProjectSection
+          selectedProjectIds={note.projectIds || []}
+          allProjects={projects}
+          onChange={(projectIds) => onChange({ ...note, projectIds })}
+          onCreateProject={onCreateProject}
+          onProjectClick={onProjectClick}
+          todoColor="#808080"
+          todoId={noteId}
+          userId={userId}
+          onImmediateSave={onProjectImmediateSave}
+        />
+      )}
+
       {/* 할일 (다중 선택) */}
       <CollapsibleTodoSection
         selectedTodoIds={note.todoIds || []}
@@ -213,18 +213,18 @@ export default function NoteFormFields({
         onImmediateSave={onTodoImmediateSave}
       />
 
-      {/* 프로젝트 (다중 선택) - onCreateProject prop이 있을 때만 표시 */}
-      {onCreateProject && projects.length > 0 && (
-        <CollapsibleProjectSection
-          selectedProjectIds={note.projectIds || []}
-          allProjects={projects}
-          onChange={(projectIds) => onChange({ ...note, projectIds })}
-          onCreateProject={onCreateProject}
-          onProjectClick={onProjectClick}
+      {/* 연결된 노트 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
+      {onCreateNote && (
+        <CollapsibleNoteSection
+          selectedNoteIds={note.noteIds || []}
+          allNotes={availableNotes}
+          onChange={(noteIds) => onChange({ ...note, noteIds })}
+          onCreateNote={onCreateNote}
+          onNoteClick={onNoteClick}
           todoColor="#808080"
           todoId={noteId}
           userId={userId}
-          onImmediateSave={onProjectImmediateSave}
+          onImmediateSave={onNoteImmediateSave}
         />
       )}
 

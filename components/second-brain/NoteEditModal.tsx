@@ -32,6 +32,7 @@ interface NoteEditModalProps {
   onUpdateProject?: (id: string, title: string) => Promise<void>; // 프로젝트 업데이트
   onDeleteTodo?: (id: string) => Promise<void>; // 할일 삭제
   onDeleteProject?: (id: string) => Promise<void>; // 프로젝트 삭제
+  onNoteNoteImmediateSave?: (noteIds: string[]) => Promise<void>; // 노트-노트 즉시 저장
   titlePlaceholder?: string;
   contentPlaceholder?: string;
 }
@@ -57,6 +58,7 @@ export default function NoteEditModal({
   onUpdateProject,
   onDeleteTodo,
   onDeleteProject,
+  onNoteNoteImmediateSave,
   titlePlaceholder = '',
   contentPlaceholder = '',
 }: NoteEditModalProps) {
@@ -188,6 +190,7 @@ export default function NoteEditModal({
                 onContentClick={handleContentClick}
                 noteId={note.id}
                 userId={user?.id}
+                onNoteImmediateSave={onNoteNoteImmediateSave}
               />
             )}
           </div>

@@ -10,9 +10,11 @@ import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { updateProjectWithJWT, deleteProjectWithJWT } from '@/lib/supabase/projects';
 import { updateInboxTodo, updateInboxNote } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
+import { updateNoteNotes } from '@/lib/supabase/note-notes';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { Plus, Trash2, Edit3, X, Boxes } from 'lucide-react';
@@ -325,7 +327,7 @@ export default function InboxPage() {
     }
   };
 
-  // 노트 즉시 저장 핸들러
+  // 노트 즉시 저장 핸들러 (할일-노트 연결)
   const handleNoteImmediateSave = async (noteIds: string[]) => {
     if (!editingItem?.id || !appUser?.id) return;
 
@@ -337,6 +339,40 @@ export default function InboxPage() {
       console.error('노트 연결 저장 실패:', error);
       throw error;
     }
+  };
+
+  // 노트-노트 즉시 저장 핸들러
+  const handleNoteNoteImmediateSave = async (noteIds: string[]) => {
+    if (!editingItem?.id || !appUser?.id) return;
+
+    try {
+      await updateNoteNotes(editingItem.id, noteIds, appUser.id);
+      // UI 동기화를 위해 재조회
+      await fetchInboxItems(appUser.id);
+    } catch (error) {
+      console.error('노트-노트 연결 저장 실패:', error);
+      throw error;
+    }
+  };
+
+  // 프로젝트 수정 핸들러
+  const handleUpdateProject = async (id: string, title: string): Promise<void> => {
+    if (!appUser?.id) throw new Error('사용자 정보가 없습니다.');
+    await updateProjectWithJWT(id, appUser.id, { title });
+    await fetchInboxItems(appUser.id);
+  };
+
+  // 프로젝트 삭제 핸들러
+  const handleDeleteProject = async (id: string): Promise<void> => {
+    if (!appUser?.id) throw new Error('사용자 정보가 없습니다.');
+    await deleteProjectWithJWT(id, appUser.id);
+    await fetchInboxItems(appUser.id);
+  };
+
+  // 프로젝트 클릭 핸들러
+  const handleProjectClick = (project: Project) => {
+    console.log('Project clicked:', project);
+    // 필요시 프로젝트 편집 모달 구현
   };
 
   const handleDelete = async (id: string) => {
@@ -800,7 +836,19 @@ export default function InboxPage() {
         onChange={setNoteForm}
         areas={areas}
         resources={resources}
+        projects={projects}
         todos={todos}
+        notes={notes}
+        onNoteClick={(note) => {
+          // 노트 클릭 시 처리 (필요시 구현)
+          console.log('Note clicked:', note);
+        }}
+        onProjectClick={handleProjectClick}
+        onCreateNote={handleCreateNote}
+        onCreateProject={handleCreateProject}
+        onUpdateProject={handleUpdateProject}
+        onDeleteProject={handleDeleteProject}
+        onNoteNoteImmediateSave={handleNoteNoteImmediateSave}
         titlePlaceholder=""
         contentPlaceholder=""
       />
