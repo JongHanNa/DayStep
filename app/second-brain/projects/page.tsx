@@ -27,8 +27,8 @@ export default function ProjectsPage() {
 
   const [isCreating, setIsCreating] = useState(false);
 
-  // 접기/펼치기 상태 관리 (기본: 모두 펼침)
-  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set(['no-goal']));
+  // 접기/펼치기 상태 관리 (기본: 모두 접힘)
+  const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
 
   // 편집 관련 state
   const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
@@ -53,12 +53,7 @@ export default function ProjectsPage() {
     }
   }, [appUser?.id, fetchProjects, fetchInboxItems, fetchGoals, fetchAreas, fetchResources]);
 
-  // 초기 로딩 시 모든 목표를 펼친 상태로 설정
-  useEffect(() => {
-    const allGoalIds = new Set<string>(['no-goal']);
-    goals.forEach((goal) => allGoalIds.add(goal.id));
-    setExpandedGoals(allGoalIds);
-  }, [goals]);
+  // 초기 로딩 시 모든 목표를 접힌 상태로 유지 (useEffect 제거됨)
 
   // 목표별로 프로젝트 그룹화 (useMemo로 캐싱)
   const projectsByGoal = useMemo(() => {
