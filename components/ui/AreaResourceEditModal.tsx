@@ -50,7 +50,7 @@ export default function AreaResourceEditModal({
     if (editingItem.isNew) {
       return pageType === 'area' ? '새 책임 추가' : '새 자원 추가';
     }
-    return pageType === 'area' ? '책임 편집' : '자원 편집';
+    return '책임/자원 편집';
   };
 
   // 제목 플레이스홀더 결정
@@ -60,7 +60,7 @@ export default function AreaResourceEditModal({
 
   // 섹션 제목 결정
   const getSectionTitle = () => {
-    return pageType === 'area' ? '책임 아이콘 및 제목' : '자원 아이콘 및 제목';
+    return '아이콘 및 제목';
   };
 
   if (!open) return null;

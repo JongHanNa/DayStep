@@ -13,7 +13,9 @@ import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import ArchiveSection from '@/components/second-brain/ArchiveSection';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
 import type { Goal, Project, AreaResource } from '@/types/second-brain';
+import type { SecondBrainItemType } from '@/types/settings';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 export default function ArchivePage() {
@@ -47,10 +49,13 @@ export default function ArchivePage() {
   // 편집 모달 상태
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [areaResourceDialogOpen, setAreaResourceDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<(Goal & { paraSelection?: string; isNew?: boolean }) | null>(null);
   const [editingProject, setEditingProject] = useState<(Project & { paraSelection?: string; isNew?: boolean }) | null>(null);
+  const [editingAreaResource, setEditingAreaResource] = useState<(AreaResource & { isNew?: boolean }) | null>(null);
+  const [areaResourcePageType, setAreaResourcePageType] = useState<'area' | 'resource'>('area');
 
-  // 삭제 확인 다이얼로그 (영역/자원용)
+  // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: 'goal' | 'project' | 'area-resource'; id: string; title: string } | null>(null);
 
@@ -207,13 +212,66 @@ export default function ArchivePage() {
   };
 
   const handleEditAreaResource = (item: Goal | Project | AreaResource) => {
-    // 영역/자원은 별도 처리 (현재는 삭제 확인 다이얼로그만 표시)
+    const areaResource = item as AreaResource;
+
+    // Area인지 Resource인지 구분
+    const isArea = areas.some(a => a.id === areaResource.id);
+    const isResource = resources.some(r => r.id === areaResource.id);
+
+    const pageType = isArea ? 'area' : 'resource';
+
+    setEditingAreaResource({ ...areaResource, isNew: false });
+    setAreaResourcePageType(pageType);
+    setAreaResourceDialogOpen(true);
+  };
+
+  // Area/Resource 저장 핸들러
+  const handleSaveAreaResource = async () => {
+    if (!appUser?.id || !editingAreaResource) return;
+
+    try {
+      // UI 전용 필드(isNew 등)를 제외하고 DB 필드만 추출
+      const updateData = {
+        title: editingAreaResource.title!,
+        icon: editingAreaResource.icon!,
+        color: editingAreaResource.color!,
+        status: editingAreaResource.status!,
+      };
+
+      // Area인지 Resource인지 구분하여 적절한 store 함수 호출
+      if (areaResourcePageType === 'area') {
+        await updateArea(appUser.id, editingAreaResource.id, updateData);
+      } else {
+        await updateResource(appUser.id, editingAreaResource.id, updateData);
+      }
+
+      await loadArchiveData();
+      setAreaResourceDialogOpen(false);
+      setEditingAreaResource(null);
+    } catch (error) {
+      console.error('Area/Resource 저장 실패:', error);
+      alert('저장에 실패했습니다.');
+    }
+  };
+
+  // Area/Resource 편집 취소 핸들러
+  const handleCancelAreaResourceEdit = () => {
+    setAreaResourceDialogOpen(false);
+    setEditingAreaResource(null);
+  };
+
+  // Area/Resource 삭제 핸들러 (삭제 확인 다이얼로그 표시)
+  const handleDeleteAreaResource = () => {
+    if (!editingAreaResource) return;
+
     setItemToDelete({
       type: 'area-resource',
-      id: item.id,
-      title: item.title,
+      id: editingAreaResource.id,
+      title: editingAreaResource.title,
     });
     setDeleteConfirmOpen(true);
+    setAreaResourceDialogOpen(false);
+    setEditingAreaResource(null);
   };
 
   const handleDeleteConfirm = async () => {
@@ -431,7 +489,24 @@ export default function ArchivePage() {
           />
         )}
 
-        {/* 삭제 확인 다이얼로그 (영역/자원용) */}
+        {/* 영역/자원 편집 모달 */}
+        {areaResourceDialogOpen && editingAreaResource && (
+          <AreaResourceEditModal
+            open={areaResourceDialogOpen}
+            editingItem={editingAreaResource}
+            itemType="archive"
+            pageType={areaResourcePageType}
+            onCancel={handleCancelAreaResourceEdit}
+            onSave={handleSaveAreaResource}
+            onDelete={handleDeleteAreaResource}
+            onItemChange={setEditingAreaResource}
+            onItemTypeChange={(newType) => {
+              // itemType 변경은 archive 고정이므로 무시
+            }}
+          />
+        )}
+
+        {/* 삭제 확인 다이얼로그 */}
         {deleteConfirmOpen && itemToDelete && (
           <dialog open className="modal modal-bottom sm:modal-middle">
             <div className="modal-box">
