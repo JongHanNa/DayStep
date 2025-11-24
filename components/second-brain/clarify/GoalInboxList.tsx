@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef } from 'react';
-import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
+import SwipeableCard from '@/components/shared/SwipeableCard';
 import type { Goal } from '@/types/second-brain';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -17,9 +17,7 @@ interface GoalInboxListProps {
   swipedItemId: string | null;
   onSelectionChange: (id: string, isChecked: boolean, shiftKey: boolean, index: number) => void;
   onSwipe: (itemId: string | null) => void;
-  onDeleteClick: (e: React.MouseEvent, itemId: string) => void;
-  dragStartX: React.MutableRefObject<number>;
-  isDragging: React.MutableRefObject<boolean>;
+  onDeleteClick: (itemId: string) => void;
 }
 
 export default function GoalInboxList({
@@ -31,8 +29,6 @@ export default function GoalInboxList({
   onSelectionChange,
   onSwipe,
   onDeleteClick,
-  dragStartX,
-  isDragging,
 }: GoalInboxListProps) {
   if (goals.length === 0) {
     return (
@@ -58,62 +54,27 @@ export default function GoalInboxList({
         const hasNoEndDate = !goal.end_date;
 
         return (
-          <div key={goal.id} className="relative overflow-hidden rounded-lg">
-            {/* 배경 레이어 - 삭제 버튼 */}
-            <div className="absolute inset-0 bg-error flex items-center justify-end px-4">
+          <SwipeableCard
+            key={goal.id}
+            itemId={goal.id}
+            onDelete={onDeleteClick}
+            disabled={isEditMode}
+            swipedItemId={swipedItemId}
+            onSwipe={onSwipe}
+            onClick={(itemId) => {
+              if (isEditMode) {
+                const newChecked = !selectedIds.has(itemId);
+                onSelectionChange(itemId, newChecked, false, index);
+              } else {
+                onGoalClick?.(goal);
+              }
+            }}
+          >
               <button
-                onClick={(e) => onDeleteClick(e, goal.id)}
-                className="text-white flex items-center gap-2 font-medium"
-              >
-                <Trash2 className="w-5 h-5" />
-                삭제
-              </button>
-            </div>
-
-            {/* 카드 레이어 */}
-            <motion.div
-              drag={!isEditMode ? "x" : false}
-              dragConstraints={{ left: -80, right: 0 }}
-              dragElastic={0.1}
-              onDragStart={() => {
-                isDragging.current = true;
-              }}
-              onDragEnd={(_, info) => {
-                const threshold = -60;
-                if (info.offset.x < threshold) {
-                  onSwipe(goal.id);
-                } else {
-                  onSwipe(null);
-                }
-                setTimeout(() => {
-                  isDragging.current = false;
-                }, 0);
-              }}
-              animate={{
-                x: swipedItemId === goal.id ? -80 : 0,
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative bg-white"
-            >
-              <button
-                onClick={(e) => {
-                  if (isDragging.current) {
-                    e.preventDefault();
-                    return;
-                  }
-
-                  if (isEditMode) {
-                    onSelectionChange(
-                      goal.id,
-                      !selectedIds.has(goal.id),
-                      e.nativeEvent.shiftKey,
-                      index
-                    );
-                  } else {
-                    onGoalClick?.(goal);
-                  }
-                }}
                 className="relative hover:bg-base-100 transition-colors cursor-pointer w-full text-left"
+                onClick={(e) => {
+                  e.stopPropagation(); // SwipeableCard의 onClick과 분리
+                }}
               >
                 <div className="p-4">
                   <div className="flex items-start gap-3">
@@ -173,8 +134,7 @@ export default function GoalInboxList({
                   </div>
                 </div>
               </button>
-            </motion.div>
-          </div>
+            </SwipeableCard>
         );
       })}
     </div>

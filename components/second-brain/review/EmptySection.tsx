@@ -41,8 +41,6 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
-  const dragStartX = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
 
   // 체크리스트 항목별 체크 상태 확인
   const isChecked = (itemId: string) => {
@@ -89,8 +87,7 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
     setSwipedItemId(itemId);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, itemId: string) => {
-    e.stopPropagation();
+  const handleDeleteClick = (itemId: string) => {
     if (confirm('이 항목을 삭제하시겠습니까?')) {
       // 삭제 로직은 TodoInboxList 내부에서 처리
     }
@@ -218,8 +215,6 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
               onSelectionChange={handleSelectionChange}
               onSwipe={handleSwipe}
               onDeleteClick={handleDeleteClick}
-              dragStartX={dragStartX}
-              isDragging={isDragging}
             />
           )}
           {activeInboxTab === 'notes' && (
@@ -237,8 +232,6 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
               onSelectionChange={handleSelectionChange}
               onSwipe={handleSwipe}
               onDeleteClick={handleDeleteClick}
-              dragStartX={dragStartX}
-              isDragging={isDragging}
             />
           )}
           {activeInboxTab === 'projects' && (
@@ -250,8 +243,6 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
               onSelectionChange={handleSelectionChange}
               onSwipe={handleSwipe}
               onDeleteClick={handleDeleteClick}
-              dragStartX={dragStartX}
-              isDragging={isDragging}
             />
           )}
           {activeInboxTab === 'goals' && (
@@ -263,8 +254,6 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
               onSelectionChange={handleSelectionChange}
               onSwipe={handleSwipe}
               onDeleteClick={handleDeleteClick}
-              dragStartX={dragStartX}
-              isDragging={isDragging}
             />
           )}
         </div>

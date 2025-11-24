@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Pin, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import SwipeableCard from '@/components/shared/SwipeableCard';
 import type { InboxItem, AreaResource as Area, AreaResource as Resource, Project, Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
@@ -28,9 +28,7 @@ interface NoteInboxListProps {
   swipedItemId: string | null;
   onSelectionChange: (id: string, isChecked: boolean, shiftKey: boolean, index: number) => void;
   onSwipe: (itemId: string | null) => void;
-  onDeleteClick: (e: React.MouseEvent, itemId: string) => void;
-  dragStartX: React.MutableRefObject<number>;
-  isDragging: React.MutableRefObject<boolean>;
+  onDeleteClick: (itemId: string) => void;
 }
 
 export default function NoteInboxList({
@@ -47,8 +45,6 @@ export default function NoteInboxList({
   onSelectionChange,
   onSwipe,
   onDeleteClick,
-  dragStartX,
-  isDragging,
 }: NoteInboxListProps) {
   const user = useAuthStore((state) => state.user);
   const { updateInboxItem } = useInboxStore();
@@ -192,86 +188,26 @@ export default function NoteInboxList({
     );
   }
 
-  // 드래그 이벤트 핸들러
-  const handleDragStart = () => (event: MouseEvent | TouchEvent | PointerEvent) => {
-    if ('touches' in event) {
-      dragStartX.current = event.touches[0].clientX;
-    } else if ('clientX' in event) {
-      dragStartX.current = event.clientX;
-    }
-    isDragging.current = false;
-  };
-
-  const handleSwipe = (note: InboxItem) => (event: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
-    const threshold = 20;
-    if (Math.abs(info.offset.x) > threshold) {
-      isDragging.current = true;
-
-      if (info.offset.x < -40) {
-        onSwipe(note.id);
-      } else {
-        onSwipe(null);
-      }
-    }
-  };
-
   return (
     <>
       <div className="space-y-2">
         {notes.map((note, index) => (
-          <div key={note.id} className="relative overflow-hidden rounded-lg">
-            {/* 배경 레이어: 삭제 버튼 */}
-            {!isEditMode && (
-              <div
-                className="absolute inset-y-0 right-0 flex items-center justify-end bg-error"
-                style={{ width: '85px' }}
-              >
-                <button
-                  onClick={(e) => onDeleteClick(e, note.id)}
-                  className="btn btn-circle btn-ghost mr-2"
-                  title="삭제"
-                >
-                  <Trash2 className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            )}
-
-            {/* 카드 레이어 */}
-            <motion.div
-              className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full"
-              style={{
-                borderTopLeftRadius: '0.5rem',
-                borderBottomLeftRadius: '0.5rem',
-              }}
-              // 일반 모드에서만 드래그 활성화
-              drag={!isEditMode ? "x" : false}
-              dragConstraints={{ left: -80, right: 0 }}
-              dragElastic={0.2}
-              onDragStart={!isEditMode ? handleDragStart() : undefined}
-              onDragEnd={!isEditMode ? handleSwipe(note) : undefined}
-              animate={{
-                x: swipedItemId === note.id ? -80 : 0,
-                borderTopRightRadius: swipedItemId === note.id ? 0 : '0.5rem',
-                borderBottomRightRadius: swipedItemId === note.id ? 0 : '0.5rem',
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              onClick={(e) => {
-                // 드래그 직후에는 클릭 무시
-                if (isDragging.current) {
-                  isDragging.current = false;
-                  return;
-                }
-
-                if (isEditMode) {
-                  // 편집 모드: 체크박스 토글
-                  const newChecked = !selectedIds.has(note.id);
-                  onSelectionChange(note.id, newChecked, e.nativeEvent.shiftKey, index);
-                } else {
-                  // 일반 모드: 편집 모달 열기
-                  handleNoteClick(note);
-                }
-              }}
-            >
+          <SwipeableCard
+            key={note.id}
+            itemId={note.id}
+            onDelete={onDeleteClick}
+            disabled={isEditMode}
+            swipedItemId={swipedItemId}
+            onSwipe={onSwipe}
+            onClick={(itemId) => {
+              if (isEditMode) {
+                const newChecked = !selectedIds.has(itemId);
+                onSelectionChange(itemId, newChecked, false, index);
+              } else {
+                handleNoteClick(note);
+              }
+            }}
+          >
               <div className="p-4">
                 <div className="flex items-start gap-3">
                   {/* 편집 모드 체크박스 */}
@@ -315,8 +251,7 @@ export default function NoteInboxList({
                   )}
                 </div>
               </div>
-            </motion.div>
-          </div>
+            </SwipeableCard>
         ))}
       </div>
 

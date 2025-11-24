@@ -59,10 +59,6 @@ export default function ClarifyPage() {
   // 스와이프 상태
   const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
 
-  // 드래그/클릭 구분
-  const dragStartX = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
-
   // ✅ 모든 useEffect를 조건문 위로 이동 (React Hooks 규칙 준수)
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
@@ -215,8 +211,7 @@ export default function ClarifyPage() {
   };
 
   // 스와이프 삭제 버튼 클릭 핸들러
-  const handleDeleteClick = (e: React.MouseEvent, itemId: string) => {
-    e.stopPropagation();
+  const handleDeleteClick = (itemId: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
       handleSingleDelete(itemId);
       setSwipedItemId(null);
@@ -621,8 +616,6 @@ export default function ClarifyPage() {
                 onSelectionChange={handleSelectionChange}
                 onSwipe={setSwipedItemId}
                 onDeleteClick={handleDeleteClick}
-                dragStartX={dragStartX}
-                isDragging={isDragging}
               />
             )}
             {activeTab === 'notes' && (
@@ -640,8 +633,6 @@ export default function ClarifyPage() {
                 onSelectionChange={handleSelectionChange}
                 onSwipe={setSwipedItemId}
                 onDeleteClick={handleDeleteClick}
-                dragStartX={dragStartX}
-                isDragging={isDragging}
               />
             )}
             {activeTab === 'projects' && (
@@ -654,8 +645,6 @@ export default function ClarifyPage() {
                 onSelectionChange={handleSelectionChange}
                 onSwipe={setSwipedItemId}
                 onDeleteClick={handleDeleteClick}
-                dragStartX={dragStartX}
-                isDragging={isDragging}
               />
             )}
             {activeTab === 'goals' && (
@@ -668,8 +657,6 @@ export default function ClarifyPage() {
                 onSelectionChange={handleSelectionChange}
                 onSwipe={setSwipedItemId}
                 onDeleteClick={handleDeleteClick}
-                dragStartX={dragStartX}
-                isDragging={isDragging}
               />
             )}
           </div>

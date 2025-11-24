@@ -18,10 +18,10 @@ import { updateNoteNotes } from '@/lib/supabase/note-notes';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { mapInboxItemToNoteForm } from '@/lib/helpers/noteDataMapper';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
+import SwipeableCard from '@/components/shared/SwipeableCard';
 import { Plus, Trash2, Edit3, X, Boxes } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { motion, PanInfo } from 'framer-motion';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
@@ -65,10 +65,6 @@ export default function InboxPage() {
 
   // 스와이프된 카드 ID 추적
   const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
-
-  // 드래그/클릭 구분을 위한 ref
-  const dragStartX = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
 
   const { openModal, closeModal } = useModalStore();
 
@@ -404,51 +400,10 @@ export default function InboxPage() {
     setLastSelectedIndex(currentIndex);
   };
 
-  // 드래그 시작 핸들러
-  const handleDragStart = () => (
-    event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
-  ) => {
-    dragStartX.current = info.point.x;
-    isDragging.current = true;
-  };
-
-  // 스와이프 핸들러 (카드 열기/닫기)
-  const handleSwipe = (item: InboxItem) => (
-    event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
-  ) => {
-    const dragDistance = Math.abs(info.point.x - dragStartX.current);
-
-    if (dragDistance > 1) {
-      // 1px 이상 드래그 → 실제 스와이프로 판단 (초민감)
-      const distanceThreshold = -1; // 방향 기준: 1px만 왼쪽으로 드래그
-      const velocityThreshold = -50; // 속도 기준: 매우 낮은 속도
-
-      // 조금이라도 왼쪽으로 움직이면 자동으로 완전히 열림
-      const shouldOpen =
-        info.offset.x < distanceThreshold ||
-        info.velocity.x < velocityThreshold;
-
-      if (shouldOpen) {
-        // 카드 열기 (휴지통 버튼 노출)
-        setSwipedItemId(item.id);
-      } else {
-        // 카드 닫기
-        setSwipedItemId(null);
-      }
-    } else {
-      // 1px 미만 드래그 → 클릭으로 간주 (onClick에서 처리)
-      isDragging.current = false;
-    }
-  };
-
   // 삭제 버튼 클릭 핸들러
-  const handleDeleteClick = (e: React.MouseEvent, itemId: string) => {
-    e.stopPropagation();
+  const handleDeleteClick = (itemId: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
       handleDelete(itemId);
-      setSwipedItemId(null);
     }
   };
 
@@ -658,70 +613,29 @@ export default function InboxPage() {
         ) : (
           <div className="space-y-2">
             {filteredItems.map((item) => (
-              <div key={item.id} className="relative overflow-hidden rounded-lg">
-                {/* 배경 레이어: 삭제 버튼 */}
-                {!isEditMode && (
-                  <div
-                    className="absolute inset-y-0 right-0 flex items-center justify-end bg-error"
-                    style={{ width: '85px' }}
-                  >
-                    <button
-                      onClick={(e) => handleDeleteClick(e, item.id)}
-                      className="btn btn-circle btn-ghost mr-2"
-                      title="삭제"
-                    >
-                      <Trash2 className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
-                )}
-
-                {/* 카드 레이어 */}
-                <motion.div
-                  className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full"
-                  style={{
-                    borderTopLeftRadius: '0.5rem',
-                    borderBottomLeftRadius: '0.5rem',
-                  }}
-                  // 일반 모드에서만 드래그 활성화
-                  drag={!isEditMode ? "x" : false}
-                  dragConstraints={{ left: -80, right: 0 }}
-                  dragElastic={0.2}
-                  dragMomentum={false}
-                  onDragStart={!isEditMode ? handleDragStart() : undefined}
-                  onDragEnd={!isEditMode ? handleSwipe(item) : undefined}
-                  animate={{
-                    x: swipedItemId === item.id ? -80 : 0,
-                    borderTopRightRadius: swipedItemId === item.id ? 0 : '0.5rem',
-                    borderBottomRightRadius: swipedItemId === item.id ? 0 : '0.5rem',
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 500, // 400 → 500 (더욱 빠른 반응)
-                    damping: 40, // 35 → 40 (더 안정적)
-                    mass: 0.6, // 0.8 → 0.6 (더 가볍게)
-                  }}
-                  onClick={() => {
-                    // 드래그 직후에는 클릭 무시
-                    if (isDragging.current) {
-                      isDragging.current = false;
-                      return;
-                    }
-
-                    if (isEditMode) {
-                      // 편집 모드: 체크박스 토글
-                      const newSet = new Set(selectedIds);
-                      if (newSet.has(item.id)) {
-                        newSet.delete(item.id);
-                      } else {
-                        newSet.add(item.id);
-                      }
-                      setSelectedIds(newSet);
+              <SwipeableCard
+                key={item.id}
+                itemId={item.id}
+                onDelete={handleDeleteClick}
+                disabled={isEditMode}
+                swipedItemId={swipedItemId}
+                onSwipe={setSwipedItemId}
+                onClick={(itemId) => {
+                  if (isEditMode) {
+                    // 편집 모드: 체크박스 토글
+                    const newSet = new Set(selectedIds);
+                    if (newSet.has(itemId)) {
+                      newSet.delete(itemId);
                     } else {
-                      // 일반 모드: 편집 모달 열기
-                      handleCardClick(item);
+                      newSet.add(itemId);
                     }
-                  }}
-                >
+                    setSelectedIds(newSet);
+                  } else {
+                    // 일반 모드: 편집 모달 열기
+                    handleCardClick(item);
+                  }
+                }}
+              >
                 <div className="p-4">
                   <div className="flex items-start gap-3">
                     {/* 편집 모드 체크박스 */}
@@ -783,8 +697,7 @@ export default function InboxPage() {
                     </div>
                   </div>
                 </div>
-                </motion.div>
-              </div>
+              </SwipeableCard>
             ))}
           </div>
         )}

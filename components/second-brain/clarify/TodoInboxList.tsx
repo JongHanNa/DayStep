@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Calendar, Star, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import SwipeableCard from '@/components/shared/SwipeableCard';
 import type { InboxItem, Project, Note } from '@/types/second-brain';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
@@ -30,9 +30,7 @@ interface TodoInboxListProps {
   swipedItemId: string | null;
   onSelectionChange: (id: string, isChecked: boolean, shiftKey: boolean, index: number) => void;
   onSwipe: (itemId: string | null) => void;
-  onDeleteClick: (e: React.MouseEvent, itemId: string) => void;
-  dragStartX: React.MutableRefObject<number>;
-  isDragging: React.MutableRefObject<boolean>;
+  onDeleteClick: (itemId: string) => void;
 }
 
 // 명료화 enum 값을 한글로 변환
@@ -61,9 +59,7 @@ export default function TodoInboxList({
   swipedItemId,
   onSelectionChange,
   onSwipe,
-  onDeleteClick,
-  dragStartX,
-  isDragging
+  onDeleteClick
 }: TodoInboxListProps) {
   const { inboxItems, fetchInboxItems } = useInboxStore();
   const { createProject, updateProject, deleteProject } = useProjectStore();
@@ -243,80 +239,22 @@ export default function TodoInboxList({
     <>
       <div className="space-y-2">
         {todos.map((todo, index) => (
-          <div key={todo.id} className="relative overflow-hidden rounded-lg">
-            {/* 배경 레이어: 삭제 버튼 */}
-            {!isEditMode && (
-              <div
-                className="absolute inset-y-0 right-0 flex items-center justify-end bg-error"
-                style={{ width: '85px' }}
-              >
-                <button
-                  onClick={(e) => onDeleteClick(e, todo.id)}
-                  className="btn btn-circle btn-ghost mr-2"
-                >
-                  <Trash2 className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            )}
-
-            {/* 카드 레이어 (framer-motion) */}
-            <motion.div
-              className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full"
-              drag={!isEditMode ? "x" : false}
-              dragConstraints={{ left: -80, right: 0 }}
-              dragElastic={0.2}
-              dragMomentum={false}
-              onDragStart={!isEditMode ? (() => {
-                return (event: any, info: any) => {
-                  dragStartX.current = info.point.x;
-                  isDragging.current = true;
-                };
-              })() : undefined}
-              onDragEnd={!isEditMode ? (() => {
-                return (event: any, info: any) => {
-                  const dragDistance = Math.abs(info.point.x - dragStartX.current);
-                  if (dragDistance > 1) {
-                    const distanceThreshold = -1; // 방향 기준: 1px만 왼쪽으로 드래그
-                    const velocityThreshold = -50; // 속도 기준: 매우 낮은 속도
-
-                    // 조금이라도 왼쪽으로 움직이면 자동으로 완전히 열림
-                    const shouldOpen =
-                      info.offset.x < distanceThreshold ||
-                      info.velocity.x < velocityThreshold;
-
-                    if (shouldOpen) {
-                      onSwipe(todo.id);
-                    } else {
-                      onSwipe(null);
-                    }
-                  }
-                };
-              })() : undefined}
-              animate={{
-                x: swipedItemId === todo.id ? -80 : 0,
-                borderTopRightRadius: swipedItemId === todo.id ? 0 : '0.5rem',
-                borderBottomRightRadius: swipedItemId === todo.id ? 0 : '0.5rem',
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 500, // 400 → 500 (더욱 빠른 반응)
-                damping: 40, // 35 → 40 (더 안정적)
-                mass: 0.6, // 0.8 → 0.6 (더 가볍게)
-              }}
-              onClick={() => {
-                if (isDragging.current) {
-                  isDragging.current = false;
-                  return;
-                }
-
-                if (isEditMode) {
-                  const newChecked = !selectedIds.has(todo.id);
-                  onSelectionChange(todo.id, newChecked, false, index);
-                } else {
-                  handleTodoClick(todo);
-                }
-              }}
-            >
+          <SwipeableCard
+            key={todo.id}
+            itemId={todo.id}
+            onDelete={onDeleteClick}
+            disabled={isEditMode}
+            swipedItemId={swipedItemId}
+            onSwipe={onSwipe}
+            onClick={(itemId) => {
+              if (isEditMode) {
+                const newChecked = !selectedIds.has(itemId);
+                onSelectionChange(itemId, newChecked, false, index);
+              } else {
+                handleTodoClick(todo);
+              }
+            }}
+          >
               <div className="p-4">
                 <div className="flex items-start gap-3">
                   {/* 편집 모드 체크박스 */}
@@ -374,8 +312,7 @@ export default function TodoInboxList({
                   </div>
                 </div>
               </div>
-            </motion.div>
-          </div>
+            </SwipeableCard>
         ))}
       </div>
 
