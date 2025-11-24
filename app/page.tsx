@@ -121,8 +121,8 @@ export default function LandingPage() {
 
   // 🚀 2단계: Capacitor 환경에서 마지막 방문 페이지로 리다이렉트
   useEffect(() => {
-    // Capacitor 환경이 아니거나, 이미 리다이렉트 했거나, 아직 로딩 중이면 종료
-    if (!isCapacitor || hasRedirectedRef.current || loading) return;
+    // Capacitor 환경이 아니거나 이미 리다이렉트 했으면 종료
+    if (!isCapacitor || hasRedirectedRef.current) return;
 
     // 리다이렉트 플래그 설정 (단 한 번만 실행 보장)
     hasRedirectedRef.current = true;
