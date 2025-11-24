@@ -131,7 +131,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
       clearTimeout(debouncedOnChangeRef.current);
     }
 
-    // 150ms 디바운스
+    // ✅ 50ms 디바운스 (150ms → 50ms, 상태 동기화 지연 최소화)
     debouncedOnChangeRef.current = setTimeout(() => {
       onChange(val);
 
@@ -147,7 +147,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
           });
         }
       }, 0);
-    }, 150);
+    }, 50);
   }, [onChange]);
   
   // CodeMirror view가 생성될 때 view 참조 저장

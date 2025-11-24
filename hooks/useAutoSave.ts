@@ -48,6 +48,9 @@ export const useAutoSave = (
       return;
     }
 
+    // ✅ 저장 시작 시점의 content를 명시적으로 캡처
+    const contentToSave = content;
+
     try {
       setSaveStatus('saving');
       setErrorMessage(null);
@@ -60,7 +63,8 @@ export const useAutoSave = (
 
       setSaveStatus('saved');
       setLastSavedAt(new Date());
-      lastContentRef.current = content;
+      // ✅ 실제 저장된 content 값으로 ref 업데이트
+      lastContentRef.current = contentToSave;
 
       // 2초 후 상태를 idle로 변경
       setTimeout(() => {

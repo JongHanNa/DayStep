@@ -75,10 +75,11 @@ export default function NoteEditModal({
       throw new Error('노트 ID 또는 사용자 정보가 없습니다.');
     }
 
+    // ✅ DB만 업데이트, 실시간 입력은 에디터가 관리
     await updateNote(note.id, user.id, { content });
 
-    // onChange도 호출하여 상위 컴포넌트 상태 동기화
-    onChange({ ...note, content });
+    // ❌ onChange 호출 제거 - 자동 저장 후 오래된 content로 상태 재설정 방지
+    // onChange({ ...note, content });
   };
 
   if (!open || !note) return null;
