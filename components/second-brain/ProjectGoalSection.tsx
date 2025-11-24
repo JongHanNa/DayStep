@@ -68,53 +68,52 @@ const ProjectGoalSection = memo(function ProjectGoalSection({
       {/* 섹션 헤더 */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 bg-transparent hover:opacity-80 transition-opacity"
+        className="w-full flex flex-col gap-2 px-4 py-3 bg-transparent hover:bg-base-200 transition-colors"
         aria-label={`${isNoGoalSection ? '목표없음' : goal?.title} 섹션 ${isExpanded ? '접기' : '펼치기'}`}
         aria-expanded={isExpanded}
       >
-        <div className="flex items-center gap-3">
-          {/* 색상 인디케이터 */}
-          <div
-            className="w-3 h-3 rounded-full flex-shrink-0"
-            style={{ backgroundColor: goalColor }}
+        {/* 첫 줄: 색상 + 이름 + 아이콘 */}
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            {/* 색상 인디케이터 */}
+            <div
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: goalColor }}
+            />
+            {/* 그룹명 */}
+            <span className="font-semibold text-base">
+              {isNoGoalSection ? '목표없음' : goal?.title}
+            </span>
+          </div>
+          {/* 펼치기 아이콘 */}
+          <ChevronDown
+            className={cn(
+              'w-5 h-5 transition-transform duration-200',
+              isExpanded && 'rotate-180'
+            )}
           />
-          {/* 그룹명 */}
-          <span className="font-semibold text-base">
-            {isNoGoalSection ? '목표없음' : goal?.title}
-          </span>
-
-          {/* 상태별 카운트 - 접힌 상태에서만 표시 */}
-          {!isExpanded && (
-            <>
-              {/* 데스크탑 */}
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="badge badge-sm badge-ghost">전체 프로젝트 {statusCounts.all}</span>
-                <span className={`badge badge-sm ${statusCounts.in_progress >= 1 ? 'badge-info' : 'badge-ghost'}`}>
-                  진행중 {statusCounts.in_progress}
-                </span>
-                <span className={`badge badge-sm ${statusCounts.not_started >= 1 ? 'badge-ghost' : 'badge-ghost'}`}>
-                  시작안함 {statusCounts.not_started}
-                </span>
-                <span className={`badge badge-sm ${statusCounts.completed >= 1 ? 'badge-success' : 'badge-ghost'}`}>
-                  완료 {statusCounts.completed}
-                </span>
-                <span className={`badge badge-sm ${statusCounts.paused >= 1 ? 'badge-warning' : 'badge-ghost'}`}>
-                  중단 {statusCounts.paused}
-                </span>
-              </div>
-
-              {/* 모바일 */}
-              <span className="badge badge-sm badge-ghost sm:hidden">전체 {projects.length}</span>
-            </>
-          )}
         </div>
-        {/* 펼치기 아이콘 */}
-        <ChevronDown
-          className={cn(
-            'w-5 h-5 transition-transform duration-200',
-            isExpanded && 'rotate-180'
-          )}
-        />
+
+        {/* 둘째 줄: 상태별 카운트 - 접힌 상태에서만 표시 */}
+        {!isExpanded && (
+          <div className="flex items-center gap-3 flex-wrap pl-6">
+            <span className="flex items-center gap-1">
+              전체 <span className="badge badge-sm">{statusCounts.all}</span>
+            </span>
+            <span className={cn('flex items-center gap-1', statusCounts.in_progress === 0 ? 'opacity-20' : 'opacity-50')}>
+              진행중 <span className="badge badge-sm">{statusCounts.in_progress}</span>
+            </span>
+            <span className={cn('flex items-center gap-1', statusCounts.not_started === 0 ? 'opacity-20' : 'opacity-50')}>
+              시작안함 <span className="badge badge-sm">{statusCounts.not_started}</span>
+            </span>
+            <span className={cn('flex items-center gap-1', statusCounts.completed === 0 ? 'opacity-20' : 'opacity-50')}>
+              완료 <span className="badge badge-sm">{statusCounts.completed}</span>
+            </span>
+            <span className={cn('flex items-center gap-1', statusCounts.paused === 0 ? 'opacity-20' : 'opacity-50')}>
+              중단 <span className="badge badge-sm">{statusCounts.paused}</span>
+            </span>
+          </div>
+        )}
       </button>
 
       {/* 프로젝트 목록 */}
