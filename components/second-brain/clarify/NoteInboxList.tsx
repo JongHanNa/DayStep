@@ -11,6 +11,7 @@ import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useAuthStore } from '@/state/stores/authStore';
 import { updateProjectNotes } from '@/lib/supabase/project-notes';
 import { createNoteWithJWT } from '@/lib/supabase/notes';
+import { createProjectWithJWT } from '@/lib/supabase/projects';
 
 interface NoteInboxListProps {
   notes: InboxItem[];
@@ -176,6 +177,28 @@ export default function NoteInboxList({
     console.log('연결된 노트 클릭:', note);
   };
 
+  // 새 프로젝트 생성 핸들러
+  const handleCreateProject = async (title: string): Promise<Project> => {
+    if (!user?.id) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+    const newProject = await createProjectWithJWT({
+      user_id: user.id,
+      title: title,
+      icon: '📁',
+      color: '#6366F1',
+      status: 'not_started',
+      description: '',
+      order_index: 0,
+    });
+
+    if (!newProject) {
+      throw new Error('프로젝트 생성에 실패했습니다.');
+    }
+
+    onRefresh(); // 프로젝트 목록 새로고침
+    return newProject;
+  };
+
   if (notes.length === 0) {
     return (
       <div className="text-center py-12">
@@ -335,6 +358,7 @@ export default function NoteInboxList({
         notes={allNotes}
         onNoteClick={handleConnectedNoteClick}
         onCreateNote={handleCreateNote}
+        onCreateProject={handleCreateProject}
       />
     </>
   );
