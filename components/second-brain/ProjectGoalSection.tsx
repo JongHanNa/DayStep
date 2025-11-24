@@ -82,8 +82,31 @@ const ProjectGoalSection = memo(function ProjectGoalSection({
           <span className="font-semibold text-base">
             {isNoGoalSection ? '목표없음' : goal?.title}
           </span>
-          {/* 프로젝트 개수 뱃지 */}
-          <span className="badge badge-sm">{projects.length}</span>
+
+          {/* 상태별 카운트 - 접힌 상태에서만 표시 */}
+          {!isExpanded && (
+            <>
+              {/* 데스크탑 */}
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="badge badge-sm badge-ghost">전체 프로젝트 {statusCounts.all}</span>
+                <span className={`badge badge-sm ${statusCounts.in_progress >= 1 ? 'badge-info' : 'badge-ghost'}`}>
+                  진행중 {statusCounts.in_progress}
+                </span>
+                <span className={`badge badge-sm ${statusCounts.not_started >= 1 ? 'badge-ghost' : 'badge-ghost'}`}>
+                  시작안함 {statusCounts.not_started}
+                </span>
+                <span className={`badge badge-sm ${statusCounts.completed >= 1 ? 'badge-success' : 'badge-ghost'}`}>
+                  완료 {statusCounts.completed}
+                </span>
+                <span className={`badge badge-sm ${statusCounts.paused >= 1 ? 'badge-warning' : 'badge-ghost'}`}>
+                  중단 {statusCounts.paused}
+                </span>
+              </div>
+
+              {/* 모바일 */}
+              <span className="badge badge-sm badge-ghost sm:hidden">전체 {projects.length}</span>
+            </>
+          )}
         </div>
         {/* 펼치기 아이콘 */}
         <ChevronDown
