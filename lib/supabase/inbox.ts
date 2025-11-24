@@ -77,13 +77,17 @@ export async function fetchPlanTodos(userId: string): Promise<any[]> {
 }
 
 /**
- * 수집함 노트 목록 조회 (note_category = 'none'인 notes)
+ * 수집함 노트 목록 조회 (영역/자원에 연결되지 않은 모든 notes)
+ *
+ * DB 레벨 필터링 조건:
+ *   - area_resource_id IS NULL (영역/자원 미연결)
+ *   - 모든 분류 포함 (none, work_in_progress, read_later, reference)
  */
 export async function fetchInboxNotes(userId: string): Promise<any[]> {
   console.log('📥 수집함 노트 조회:', { userId });
 
   try {
-    const path = `/notes?user_id=eq.${userId}&note_category=eq.none&select=*&order=created_at.desc`;
+    const path = `/notes?user_id=eq.${userId}&area_resource_id=is.null&select=*&order=created_at.desc`;
     const notes = await fetchWithJWT(path);
 
     console.log('✅ 수집함 노트 조회 성공:', { count: notes?.length || 0 });
