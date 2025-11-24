@@ -7,6 +7,8 @@ import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFiel
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import { useModalStore } from '@/state/stores/modalStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import type { Project, Note, AreaResource as Area, AreaResource as Resource } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
@@ -128,7 +130,39 @@ export default function TodoEditModal({
 
   // 프로젝트 클릭 핸들러
   const handleProjectClick = (project: Project) => {
-    setEditingProject(project);
+    // 날짜 형식 변환: ISO datetime을 YYYY-MM-DD로 변환
+    const formatDateForInput = (dateString?: string) => {
+      if (!dateString) return '';
+      return dateString.split('T')[0];
+    };
+
+    // area_resource_id → paraSelection 변환
+    let paraSelection = '';
+    if (project.area_resource_id) {
+      // Store에서 최신 데이터 직접 조회
+      const latestAreas = useAreaStore.getState().areas;
+      const latestResources = useResourceStore.getState().resources;
+
+      // area인지 resource인지 구분
+      const isArea = latestAreas.some(a => a.id === project.area_resource_id);
+      const isResource = latestResources.some(r => r.id === project.area_resource_id);
+
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else if (isResource) {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
+    }
+
+    const editData = {
+      ...project,
+      paraSelection,
+      isNew: false,
+      start_date: formatDateForInput(project.start_date),
+      end_date: formatDateForInput(project.end_date)
+    };
+
+    setEditingProject(editData);
     setShowProjectEditModal(true);
   };
 
