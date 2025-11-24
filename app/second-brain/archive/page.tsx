@@ -42,9 +42,7 @@ export default function ArchivePage() {
   const [loading, setLoading] = useState(true);
 
   // 섹션 펼침/접힘 상태
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['paused-goals', 'paused-projects', 'completed-goals', 'completed-projects', 'archived-areas-resources'])
-  );
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   // 편집 모달 상태
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
