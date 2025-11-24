@@ -195,7 +195,35 @@ const handleNoteClick = (note) => {
 **문제**: 테스트/수정 어려움, 재사용 불가
 **해결**: 컴포넌트 분리, Custom Hook 추출
 
-#### **4️⃣ 타입 안정성 무시 안티패턴**
+#### **4️⃣ 하드코딩 안티패턴**
+
+**증상**:
+- Magic Number/String 직접 사용
+- 환경별 설정을 코드에 하드코딩
+
+**문제**:
+- 유지보수 어려움 (값 변경 시 전체 검색 필요)
+- 환경별 배포 복잡 (개발/스테이징/운영)
+- 의미 파악 어려움 (`if (status === 1)` 의미는?)
+
+**해결**:
+- 상수 파일 분리 (`lib/constants/`)
+- 환경 변수 사용 (`.env.development`, `.env.production`)
+- 명확한 상수명 (`STATUS_ACTIVE`, `MAX_RETRY_COUNT`)
+
+**실제 사례**:
+```typescript
+// ❌ Before: 하드코딩
+if (status === 1) { /* ... */ }
+const url = "https://api.example.com";
+
+// ✅ After: 상수화
+const TODO_STATUS = { ACTIVE: 1, COMPLETED: 2 } as const;
+if (status === TODO_STATUS.ACTIVE) { /* ... */ }
+const url = process.env.NEXT_PUBLIC_API_URL;
+```
+
+#### **5️⃣ 타입 안정성 무시 안티패턴**
 
 **증상**: `any` 타입 남용
 **문제**: 런타임 에러, IDE 지원 불가
