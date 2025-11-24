@@ -6,6 +6,8 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { ChevronDown, Target, FolderKanban, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
@@ -18,6 +20,8 @@ import {
   getYear,
   safeParseDate
 } from '@/lib/date-utils';
+import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { Goal, Project } from '@/types/second-brain';
 
 // hex 색상을 rgba로 변환하는 헬퍼 함수
@@ -84,16 +88,28 @@ function TabButton({ label, count, isActive, onClick }: TabButtonProps) {
 // 목표 카드 컴포넌트
 interface GoalCardProps {
   goal: Goal;
+  onClick?: () => void;
 }
 
-function GoalCard({ goal }: GoalCardProps) {
+function GoalCard({ goal, onClick }: GoalCardProps) {
   const daysUntil = goal.end_date ? calculateDaysUntil(goal.end_date) : null;
   const daysLabel = daysUntil !== null ? formatDaysRemaining(daysUntil) : '';
   const isDanger = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
   const isWarning = daysUntil !== null && daysUntil > 7 && daysUntil <= 30;
 
   return (
-    <div className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3">
+    <div
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3"
+    >
       <div className="flex items-start gap-3 mb-3">
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
@@ -139,9 +155,10 @@ interface ProjectCardProps {
   project: Project;
   showGoalName?: boolean;
   goals?: Goal[];
+  onClick?: () => void;
 }
 
-function ProjectCard({ project, showGoalName = false, goals = [] }: ProjectCardProps) {
+function ProjectCard({ project, showGoalName = false, goals = [], onClick }: ProjectCardProps) {
   const daysUntil = project.end_date ? calculateDaysUntil(project.end_date) : null;
   const daysLabel = daysUntil !== null ? formatDaysRemaining(daysUntil) : '';
   const isDanger = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
@@ -152,7 +169,18 @@ function ProjectCard({ project, showGoalName = false, goals = [] }: ProjectCardP
     : null;
 
   return (
-    <div className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3">
+    <div
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3"
+    >
       <div className="flex items-start gap-3 mb-3">
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
@@ -204,9 +232,11 @@ function EmptyState({ message }: { message: string }) {
 }
 
 export default function GoalCompassPage() {
-  const { user } = useAuth();
-  const { goals, fetchGoals } = useGoalStore();
-  const { projects, fetchProjects } = useProjectStore();
+  const { user, appUser } = useAuth();
+  const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
+  const { projects, fetchProjects, updateProject, deleteProject } = useProjectStore();
+  const { areas, fetchAreas } = useAreaStore();
+  const { resources, fetchResources } = useResourceStore();
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
   useEffect(() => {
@@ -219,13 +249,61 @@ export default function GoalCompassPage() {
   const [completedGoalsTab, setCompletedGoalsTab] = useState('month');
   const [completedProjectsTab, setCompletedProjectsTab] = useState<'goal' | 'month'>('goal');
 
+  // 편집 모달 상태
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<(Goal & { paraSelection?: string; isNew?: boolean }) | null>(null);
+  const [editingProject, setEditingProject] = useState<(Project & { paraSelection?: string; isNew?: boolean }) | null>(null);
+
   // 데이터 페칭
   useEffect(() => {
     if (user?.id) {
       fetchGoals(user.id);
       fetchProjects(user.id);
+      fetchAreas(user.id);
+      fetchResources(user.id);
     }
-  }, [user?.id, fetchGoals, fetchProjects]);
+  }, [user?.id, fetchGoals, fetchProjects, fetchAreas, fetchResources]);
+
+  // 목표 클릭 핸들러
+  const handleGoalClick = (goal: Goal) => {
+    // paraSelection 생성 (아카이브 페이지와 동일한 패턴)
+    let paraSelection = '';
+    if (goal.area_id) {
+      paraSelection = `area-${goal.area_id}`;
+    } else if (goal.resource_id) {
+      paraSelection = `resource-${goal.resource_id}`;
+    }
+
+    setEditingGoal({ ...goal, paraSelection, isNew: false });
+    setGoalDialogOpen(true);
+  };
+
+  // 프로젝트 클릭 핸들러
+  const handleProjectClick = (project: Project) => {
+    // paraSelection 생성 (아카이브 페이지와 동일한 패턴)
+    let paraSelection = '';
+
+    // goal_id 처리
+    if (project.goal_id) {
+      paraSelection = `goal-${project.goal_id}`;
+    }
+
+    // area_resource_id 처리
+    if (project.area_resource_id) {
+      const isArea = areas.some(a => a.id === project.area_resource_id);
+      const isResource = resources.some(r => r.id === project.area_resource_id);
+
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else if (isResource) {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
+    }
+
+    setEditingProject({ ...project, paraSelection, isNew: false });
+    setProjectDialogOpen(true);
+  };
 
   // 1. 진행 중인 목표
   const ongoingGoals = useMemo(() => {
@@ -498,7 +576,7 @@ export default function GoalCompassPage() {
                     <div key={quarter} className="mb-6">
                       <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{quarter}</h3>
                       {goalList.map((goal) => (
-                        <GoalCard key={goal.id} goal={goal} />
+                        <GoalCard key={goal.id} goal={goal} onClick={() => handleGoalClick(goal)} />
                       ))}
                     </div>
                   ))
@@ -515,7 +593,7 @@ export default function GoalCompassPage() {
                     <div key={year} className="mb-6">
                       <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{year}</h3>
                       {goalList.map((goal) => (
-                        <GoalCard key={goal.id} goal={goal} />
+                        <GoalCard key={goal.id} goal={goal} onClick={() => handleGoalClick(goal)} />
                       ))}
                     </div>
                   ))
@@ -560,7 +638,7 @@ export default function GoalCompassPage() {
                     <div key={goalName} className="mb-6">
                       <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{goalName}</h3>
                       {projectList.map((project) => (
-                        <ProjectCard key={project.id} project={project} goals={goals} />
+                        <ProjectCard key={project.id} project={project} goals={goals} onClick={() => handleProjectClick(project)} />
                       ))}
                     </div>
                   ))
@@ -577,7 +655,7 @@ export default function GoalCompassPage() {
                     <div key={month} className="mb-6">
                       <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{month}</h3>
                       {projectList.map((project) => (
-                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} />
+                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} onClick={() => handleProjectClick(project)} />
                       ))}
                     </div>
                   ))
@@ -594,7 +672,7 @@ export default function GoalCompassPage() {
                     <div key={week} className="mb-6">
                       <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{week}</h3>
                       {projectList.map((project) => (
-                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} />
+                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} onClick={() => handleProjectClick(project)} />
                       ))}
                     </div>
                   ))
@@ -625,7 +703,7 @@ export default function GoalCompassPage() {
                 <div key={month} className="mb-6">
                   <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{month}</h3>
                   {goalList.map((goal) => (
-                    <GoalCard key={goal.id} goal={goal} />
+                    <GoalCard key={goal.id} goal={goal} onClick={() => handleGoalClick(goal)} />
                   ))}
                 </div>
               ))
@@ -662,7 +740,7 @@ export default function GoalCompassPage() {
                     <div key={goalName} className="mb-6">
                       <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{goalName}</h3>
                       {projectList.map((project) => (
-                        <ProjectCard key={project.id} project={project} goals={goals} />
+                        <ProjectCard key={project.id} project={project} goals={goals} onClick={() => handleProjectClick(project)} />
                       ))}
                     </div>
                   ))
@@ -679,7 +757,7 @@ export default function GoalCompassPage() {
                     <div key={month} className="mb-6">
                       <h3 className="font-semibold text-sm text-base-content/70 mb-2 px-2">{month}</h3>
                       {projectList.map((project) => (
-                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} />
+                        <ProjectCard key={project.id} project={project} showGoalName goals={goals} onClick={() => handleProjectClick(project)} />
                       ))}
                     </div>
                   ))
@@ -691,6 +769,96 @@ export default function GoalCompassPage() {
 
         {/* 하단 네비게이션 */}
         <SecondBrainBottomNav />
+
+        {/* 목표 편집 모달 */}
+        {goalDialogOpen && editingGoal && (
+          <GoalEditDialog
+            open={goalDialogOpen}
+            editingGoal={editingGoal}
+            areas={areas}
+            resources={resources}
+            projects={projects}
+            onSave={async (goalData, area_id, resource_id) => {
+              if (!appUser?.id) return;
+
+              // UI 전용 필드(isNew, paraSelection 등)를 제외하고 DB 필드만 추출
+              const updateData = {
+                title: goalData.title!,
+                icon: goalData.icon!,
+                color: goalData.color!,
+                status: goalData.status!,
+                area_id: area_id || undefined,
+                resource_id: resource_id || undefined,
+                start_date: goalData.start_date || undefined,
+                end_date: goalData.end_date || undefined,
+                year_goal: goalData.year_goal ?? null,
+                quarter_goal: goalData.quarter_goal ?? null,
+              };
+
+              await updateGoal(appUser.id, editingGoal.id, updateData);
+              await fetchGoals(appUser.id);
+              setGoalDialogOpen(false);
+              setEditingGoal(null);
+            }}
+            onCancel={() => {
+              setGoalDialogOpen(false);
+              setEditingGoal(null);
+            }}
+            onDelete={async (goal) => {
+              if (!appUser?.id) return;
+              await deleteGoal(appUser.id, goal.id);
+              await fetchGoals(appUser.id);
+              setGoalDialogOpen(false);
+              setEditingGoal(null);
+            }}
+            onGoalChange={(goal) => {
+              setEditingGoal(goal);
+            }}
+          />
+        )}
+
+        {/* 프로젝트 편집 모달 */}
+        {projectDialogOpen && editingProject && (
+          <ProjectEditDialog
+            open={projectDialogOpen}
+            editingProject={editingProject}
+            onSave={async (projectData) => {
+              if (!appUser?.id) return;
+
+              // UI 전용 필드(isNew, paraSelection 등)를 제외하고 DB 필드만 추출
+              const updateData = {
+                title: projectData.title!,
+                description: projectData.description || '',
+                icon: projectData.icon!,
+                color: projectData.color!,
+                status: projectData.status!,
+                goal_id: projectData.goal_id || undefined,
+                area_resource_id: projectData.area_resource_id || undefined,
+                start_date: projectData.start_date || undefined,
+                end_date: projectData.end_date || undefined,
+              };
+
+              await updateProject(appUser.id, editingProject.id, updateData);
+              await fetchProjects(appUser.id);
+              setProjectDialogOpen(false);
+              setEditingProject(null);
+            }}
+            onCancel={() => {
+              setProjectDialogOpen(false);
+              setEditingProject(null);
+            }}
+            onDelete={async (project) => {
+              if (!appUser?.id) return;
+              await deleteProject(appUser.id, project.id);
+              await fetchProjects(appUser.id);
+              setProjectDialogOpen(false);
+              setEditingProject(null);
+            }}
+            onProjectChange={(project) => {
+              setEditingProject(project);
+            }}
+          />
+        )}
       </div>
     </AuthGuard>
   );
