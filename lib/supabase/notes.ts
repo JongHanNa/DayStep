@@ -12,7 +12,7 @@ export async function fetchNotesWithJWT(userId: string): Promise<Note[]> {
   console.log('📝 JWT 방식으로 노트 조회:', { userId });
 
   try {
-    // todo_notes와 project_notes를 JOIN으로 가져오기 위한 select 쿼리
+    // todo_notes, project_notes, note_notes를 JOIN으로 가져오기 위한 select 쿼리
     const rawNotes = await queryRLSTableWithJWT('notes', [
       {
         column: 'user_id',
@@ -20,11 +20,11 @@ export async function fetchNotesWithJWT(userId: string): Promise<Note[]> {
         value: userId
       }
     ], {
-      select: '*,todo_notes(todo_id,todos(id,title)),project_notes(project_id,projects(id,title,icon,color,status))',
+      select: '*,todo_notes(todo_id,todos(id,title)),project_notes(project_id,projects(id,title,icon,color,status)),note_notes!note_notes_source_note_id_fkey(target_note_id,target_note:notes!note_notes_target_note_id_fkey(id,title))',
       order: 'created_at.desc'
     });
 
-    // todo_notes와 project_notes를 배열로 변환
+    // todo_notes, project_notes, note_notes를 배열로 변환
     const notes = (rawNotes || []).map((note: any) => {
       const todos = (note.todo_notes || [])
         .map((link: any) => link.todos)
@@ -34,12 +34,17 @@ export async function fetchNotesWithJWT(userId: string): Promise<Note[]> {
         .map((link: any) => link.projects)
         .filter(Boolean);
 
-      // junction table 필드 제거하고 todos, projects 추가
-      const { todo_notes, project_notes, ...rest } = note;
+      const connectedNotes = (note.note_notes || [])
+        .map((link: any) => link.target_note)
+        .filter(Boolean);
+
+      // junction table 필드 제거하고 todos, projects, connectedNotes 추가
+      const { todo_notes, project_notes, note_notes, ...rest } = note;
       return {
         ...rest,
         todos,
-        projects
+        projects,
+        connectedNotes
       };
     });
 
