@@ -34,6 +34,8 @@ export interface TodoFormContentProps {
 
   /** 노트 클릭 핸들러 (편집 모달 열기) */
   onNoteClick?: (note: Note) => void;
+  /** 프로젝트 클릭 핸들러 (편집 모달 열기) */
+  onProjectClick?: (project: Project) => void;
 
   /** 플레이스홀더 */
   titlePlaceholder?: string;
@@ -66,6 +68,7 @@ export default function TodoFormContent({
   onUpdateNote,
   onDeleteNote,
   onNoteClick,
+  onProjectClick,
   titlePlaceholder,
   clarificationPlaceholder,
   showClarification = true,
@@ -88,6 +91,7 @@ export default function TodoFormContent({
       projects={projects}
       notes={notes}
       onNoteClick={onNoteClick}
+      onProjectClick={onProjectClick}
       onCreateProject={onCreateProject}
       onUpdateProject={onUpdateProject}
       onDeleteProject={onDeleteProject}

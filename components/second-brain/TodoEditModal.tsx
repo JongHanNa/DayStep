@@ -5,6 +5,7 @@ import TodoFormContent from '@/components/todos/TodoFormContent';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import { useModalStore } from '@/state/stores/modalStore';
 import type { Project, Note, AreaResource as Area, AreaResource as Resource } from '@/types/second-brain';
 import type { Todo } from '@/types';
@@ -83,6 +84,10 @@ export default function TodoEditModal({
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
 
+  // 프로젝트 편집 모달 상태
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [showProjectEditModal, setShowProjectEditModal] = useState(false);
+
   // 모달 열림/닫힘 상태 관리
   useEffect(() => {
     if (open) {
@@ -119,6 +124,12 @@ export default function TodoEditModal({
     } catch (error) {
       console.error('노트 저장 실패:', error);
     }
+  };
+
+  // 프로젝트 클릭 핸들러
+  const handleProjectClick = (project: Project) => {
+    setEditingProject(project);
+    setShowProjectEditModal(true);
   };
 
   if (!open || !todo) return null;
@@ -160,6 +171,7 @@ export default function TodoEditModal({
             projects={projects}
             notes={notes}
             onNoteClick={handleNoteClick}
+            onProjectClick={handleProjectClick}
             onCreateProject={onCreateProject}
             onUpdateProject={onUpdateProject}
             onDeleteProject={onDeleteProject}
@@ -203,6 +215,34 @@ export default function TodoEditModal({
         projects={projects}
         todos={todos}
       />
+
+      {/* 프로젝트 편집 모달 */}
+      {editingProject && (
+        <ProjectEditDialog
+          open={showProjectEditModal}
+          editingProject={editingProject}
+          goals={[]}
+          areas={areas}
+          resources={resources}
+          onSave={async (projectData, area_id, resource_id) => {
+            if (!editingProject || !onUpdateProject) return;
+            await onUpdateProject(editingProject.id, projectData.title || editingProject.title);
+            setShowProjectEditModal(false);
+            setEditingProject(null);
+          }}
+          onCancel={() => {
+            setShowProjectEditModal(false);
+            setEditingProject(null);
+          }}
+          onDelete={async (project) => {
+            if (!onDeleteProject) return;
+            await onDeleteProject(project.id);
+            setShowProjectEditModal(false);
+            setEditingProject(null);
+          }}
+          onProjectChange={setEditingProject}
+        />
+      )}
     </dialog>
   );
 }

@@ -9,6 +9,7 @@ interface CollapsibleProjectSectionProps {
   allProjects: Project[];
   onChange: (projectIds: string[]) => void;
   onCreateProject?: (title: string) => Promise<Project>;
+  onProjectClick?: (project: Project) => void; // 프로젝트 클릭 시 편집 모달 열기
   todoColor?: string;
   // 즉시 DB 저장을 위한 props
   todoId?: string;
@@ -21,6 +22,7 @@ export default function CollapsibleProjectSection({
   allProjects = [],
   onChange,
   onCreateProject,
+  onProjectClick,
   todoColor = '#808080',
   todoId,
   userId,
@@ -162,19 +164,30 @@ export default function CollapsibleProjectSection({
             </div>
             <div className="space-y-1">
               {connectedProjects.map(project => (
-                <label
+                <div
                   key={project.id}
-                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 transition-colors"
                 >
+                  {/* 체크박스 - 연결/해제 */}
                   <input
                     type="checkbox"
                     checked={true}
-                    onChange={() => toggleProject(project.id)}
-                    className="checkbox checkbox-sm"
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleProject(project.id);
+                    }}
+                    className="checkbox checkbox-sm cursor-pointer"
                   />
-                  <Folder className="h-4 w-4" style={{ color: project.color || '#808080' }} />
-                  <span className="text-sm flex-1">{project.title}</span>
-                </label>
+
+                  {/* 클릭 가능 영역 - 프로젝트 편집 모달 열기 */}
+                  <div
+                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    onClick={() => onProjectClick?.(project)}
+                  >
+                    <Folder className="h-4 w-4" style={{ color: project.color || '#808080' }} />
+                    <span className="text-sm">{project.title}</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -188,19 +201,30 @@ export default function CollapsibleProjectSection({
             </div>
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {otherProjects.map(project => (
-                <label
+                <div
                   key={project.id}
-                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 p-2 rounded hover:bg-base-200 transition-colors"
                 >
+                  {/* 체크박스 - 연결/해제 */}
                   <input
                     type="checkbox"
                     checked={false}
-                    onChange={() => toggleProject(project.id)}
-                    className="checkbox checkbox-sm"
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleProject(project.id);
+                    }}
+                    className="checkbox checkbox-sm cursor-pointer"
                   />
-                  <Folder className="h-4 w-4" style={{ color: project.color || '#808080' }} />
-                  <span className="text-sm flex-1">{project.title}</span>
-                </label>
+
+                  {/* 클릭 가능 영역 - 프로젝트 편집 모달 열기 */}
+                  <div
+                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    onClick={() => onProjectClick?.(project)}
+                  >
+                    <Folder className="h-4 w-4" style={{ color: project.color || '#808080' }} />
+                    <span className="text-sm">{project.title}</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
