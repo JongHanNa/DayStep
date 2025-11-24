@@ -38,7 +38,7 @@ interface AccordionSectionProps {
   children: React.ReactNode;
 }
 
-function AccordionSection({ title, count, icon, defaultExpanded = true, children }: AccordionSectionProps) {
+function AccordionSection({ title, count, icon, defaultExpanded = false, children }: AccordionSectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
@@ -473,7 +473,6 @@ export default function GoalCompassPage() {
             title="진행 중인 목표"
             count={ongoingGoals.length}
             icon={<Target className="w-5 h-5 text-primary" />}
-            defaultExpanded={true}
           >
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
@@ -530,7 +529,6 @@ export default function GoalCompassPage() {
             title="진행 중인 프로젝트"
             count={ongoingProjects.length}
             icon={<FolderKanban className="w-5 h-5 text-secondary" />}
-            defaultExpanded={true}
           >
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
@@ -610,7 +608,6 @@ export default function GoalCompassPage() {
             title="완료된 목표"
             count={completedGoals.length}
             icon={<CheckCircle2 className="w-5 h-5 text-success" />}
-            defaultExpanded={true}
           >
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
@@ -640,7 +637,6 @@ export default function GoalCompassPage() {
             title="완료된 프로젝트"
             count={completedProjects.length}
             icon={<CheckCircle2 className="w-5 h-5 text-info" />}
-            defaultExpanded={true}
           >
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
