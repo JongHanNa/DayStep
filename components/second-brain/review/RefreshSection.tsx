@@ -350,7 +350,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
         </div>
 
         {/* 탭별 내용 */}
-        <div className="mt-4">
+        <div className="mt-4 bg-base-200 rounded-lg p-4">
           {refreshTab === 'next_actions' && (
             <div className="space-y-2">
               {nextActionTodos.map((todo) => (
