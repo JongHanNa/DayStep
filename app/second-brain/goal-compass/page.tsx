@@ -8,7 +8,7 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { ChevronDown, Target, FolderKanban, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Target, FolderKanban, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import {
@@ -18,8 +18,11 @@ import {
   getWeekRange,
   getMonthKey,
   getYear,
-  safeParseDate
+  safeParseDate,
+  calculatePeriodProgress,
+  analyzeDateStatus,
 } from '@/lib/date-utils';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { Goal, Project } from '@/types/second-brain';
@@ -96,6 +99,11 @@ function GoalCard({ goal, onClick }: GoalCardProps) {
   const daysLabel = daysUntil !== null ? formatDaysRemaining(daysUntil) : '';
   const isDanger = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
   const isWarning = daysUntil !== null && daysUntil > 7 && daysUntil <= 30;
+  const isOverdue = daysUntil !== null && daysUntil < 0;
+
+  // 기간 경과율 및 상태 계산
+  const periodProgress = calculatePeriodProgress(goal.start_date, goal.end_date);
+  const dateStatus = analyzeDateStatus(goal.start_date, goal.end_date, goal.status);
 
   return (
     <div
@@ -119,15 +127,17 @@ function GoalCard({ goal, onClick }: GoalCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-base truncate">{goal.title}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm text-base-content/60">진행도: {goal.progress}%</span>
+          {/* 상태 뱃지 + D-day */}
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <StatusBadge status={dateStatus} />
             {daysLabel && (
               <span
                 className={cn(
                   'text-sm font-medium',
                   isDanger && 'text-error',
                   isWarning && 'text-warning',
-                  !isDanger && !isWarning && 'text-base-content/60'
+                  isOverdue && 'text-error',
+                  !isDanger && !isWarning && !isOverdue && 'text-base-content/60'
                 )}
               >
                 {daysLabel}
@@ -136,15 +146,41 @@ function GoalCard({ goal, onClick }: GoalCardProps) {
           </div>
         </div>
       </div>
-      {/* 진행률 바 */}
-      <div
-        className="w-full rounded-full h-2"
-        style={{ backgroundColor: hexToRgba(goal.color, 0.2) }}
-      >
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${goal.progress}%`, backgroundColor: goal.color }}
-        />
+
+      {/* 진행률 섹션 */}
+      <div className="space-y-2">
+        {/* 목표 진행도 */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-xs text-base-content/60">
+            <span>목표 진행도</span>
+            <span className="font-medium">{goal.progress}%</span>
+          </div>
+          <div
+            className="w-full rounded-full h-2"
+            style={{ backgroundColor: hexToRgba(goal.color, 0.2) }}
+          >
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${goal.progress}%`, backgroundColor: goal.color }}
+            />
+          </div>
+        </div>
+
+        {/* 기간 경과율 (날짜 설정된 경우만) */}
+        {periodProgress !== null && (
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-xs text-base-content/60">
+              <span>기간 경과율</span>
+              <span className="font-medium">{periodProgress}%</span>
+            </div>
+            <div className="w-full rounded-full h-1.5 bg-base-300">
+              <div
+                className="h-full rounded-full transition-all bg-base-content/30"
+                style={{ width: `${periodProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -163,6 +199,26 @@ function ProjectCard({ project, showGoalName = false, goals = [], onClick }: Pro
   const daysLabel = daysUntil !== null ? formatDaysRemaining(daysUntil) : '';
   const isDanger = daysUntil !== null && daysUntil >= 0 && daysUntil <= 7;
   const isWarning = daysUntil !== null && daysUntil > 7 && daysUntil <= 30;
+  const isOverdue = daysUntil !== null && daysUntil < 0;
+
+  // 기간 경과율 및 상태 계산
+  const periodProgress = calculatePeriodProgress(project.start_date, project.end_date);
+  const dateStatus = analyzeDateStatus(
+    project.start_date,
+    project.end_date,
+    project.status,
+    project.completed_at
+  );
+
+  // 할일 완료율 계산
+  const taskCompletionRate = project.total_todos > 0
+    ? Math.round((project.completed_todos / project.total_todos) * 100)
+    : 0;
+
+  // 진행률 불일치 경고 (기간 경과율 > 할일 완료율 + 20%)
+  const isProgressMismatch = periodProgress !== null
+    && periodProgress > taskCompletionRate + 20
+    && project.status !== 'completed';
 
   const goalName = showGoalName && project.goal_id
     ? goals.find(g => g.id === project.goal_id)?.title
@@ -191,32 +247,73 @@ function ProjectCard({ project, showGoalName = false, goals = [], onClick }: Pro
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-base truncate">{project.title}</h3>
           {goalName && <p className="text-xs text-base-content/50 truncate">{goalName}</p>}
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm text-base-content/60">달성률: {project.progress}%</span>
+          {/* 상태 뱃지 + D-day + 경고 */}
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <StatusBadge status={dateStatus} />
             {daysLabel && (
               <span
                 className={cn(
                   'text-sm font-medium',
                   isDanger && 'text-error',
                   isWarning && 'text-warning',
-                  !isDanger && !isWarning && 'text-base-content/60'
+                  isOverdue && 'text-error',
+                  !isDanger && !isWarning && !isOverdue && 'text-base-content/60'
                 )}
               >
                 {daysLabel}
               </span>
             )}
+            {isProgressMismatch && (
+              <span
+                className="text-warning inline-flex items-center"
+                title="진행률이 기간 대비 뒤처지고 있습니다"
+              >
+                <AlertTriangle className="w-4 h-4" />
+              </span>
+            )}
           </div>
         </div>
       </div>
-      {/* 진행률 바 */}
-      <div
-        className="w-full rounded-full h-2"
-        style={{ backgroundColor: hexToRgba(project.color, 0.2) }}
-      >
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${project.progress}%`, backgroundColor: project.color }}
-        />
+
+      {/* 듀얼 진행률 섹션 */}
+      <div className="space-y-2">
+        {/* 할일 완료율 (주요) */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-xs text-base-content/60">
+            <span>할일 완료율</span>
+            <span className="font-medium">
+              {project.total_todos > 0
+                ? `${project.completed_todos}/${project.total_todos} (${taskCompletionRate}%)`
+                : '할일 없음'
+              }
+            </span>
+          </div>
+          <div
+            className="w-full rounded-full h-2"
+            style={{ backgroundColor: hexToRgba(project.color, 0.2) }}
+          >
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${taskCompletionRate}%`, backgroundColor: project.color }}
+            />
+          </div>
+        </div>
+
+        {/* 기간 경과율 (보조, 날짜 설정된 경우만) */}
+        {periodProgress !== null && (
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-xs text-base-content/60">
+              <span>기간 경과율</span>
+              <span className="font-medium">{periodProgress}%</span>
+            </div>
+            <div className="w-full rounded-full h-1.5 bg-base-300">
+              <div
+                className="h-full rounded-full transition-all bg-base-content/30"
+                style={{ width: `${periodProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

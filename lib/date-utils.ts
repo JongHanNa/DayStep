@@ -585,3 +585,100 @@ export function getYear(date: Date | string): number {
   const d = safeParseDate(date);
   return d.getFullYear();
 }
+
+// ============================================
+// 목표 나침반 페이지용 진행률/상태 유틸리티
+// ============================================
+
+/**
+ * 날짜 상태 타입 (목표/프로젝트 카드에서 사용)
+ */
+export type DateStatus =
+  | 'no_dates'           // 시작일/종료일 둘 다 없음
+  | 'no_start_date'      // 시작일만 없음
+  | 'no_end_date'        // 종료일만 없음
+  | 'not_started'        // 시작일 이전
+  | 'in_progress'        // 진행 중 (기간 내)
+  | 'overdue'            // 종료일 지남 (미완료)
+  | 'completed'          // 완료됨
+  | 'completed_early'    // 조기 완료 (종료일 전 완료)
+  | 'completed_late';    // 지연 완료 (종료일 후 완료)
+
+/**
+ * 기간 기준 진행률 계산 (시작일~종료일 경과 %)
+ * @returns 0-100 또는 null (날짜 미설정 시)
+ */
+export function calculatePeriodProgress(
+  startDate: string | Date | null | undefined,
+  endDate: string | Date | null | undefined
+): number | null {
+  if (!startDate || !endDate) return null;
+
+  const today = typeof window !== 'undefined' ? getKSTCurrentDate() : new Date();
+  const start = startOfDay(safeParseDate(startDate));
+  const end = startOfDay(safeParseDate(endDate));
+
+  // 시작일 이전
+  if (today < start) return 0;
+  // 종료일 이후
+  if (today > end) return 100;
+
+  const totalDays = differenceInDays(end, start);
+  if (totalDays <= 0) return 100;
+
+  const elapsedDays = differenceInDays(today, start);
+  return Math.round((elapsedDays / totalDays) * 100);
+}
+
+/**
+ * 목표/프로젝트 날짜 상태 분석
+ */
+export function analyzeDateStatus(
+  startDate: string | Date | null | undefined,
+  endDate: string | Date | null | undefined,
+  status: string,
+  completedAt?: string | Date | null
+): DateStatus {
+  const today = typeof window !== 'undefined' ? getKSTCurrentDate() : new Date();
+  const start = startDate ? startOfDay(safeParseDate(startDate)) : null;
+  const end = endDate ? startOfDay(safeParseDate(endDate)) : null;
+
+  // 완료 상태 체크
+  if (status === 'completed') {
+    if (!end || !completedAt) return 'completed';
+    const completed = startOfDay(safeParseDate(completedAt));
+    if (completed <= end) return 'completed_early';
+    return 'completed_late';
+  }
+
+  // 날짜 미설정 체크
+  if (!start && !end) return 'no_dates';
+  if (!start) return 'no_start_date';
+  if (!end) return 'no_end_date';
+
+  // 기간 체크
+  if (today < start) return 'not_started';
+  if (today > end) return 'overdue';
+  return 'in_progress';
+}
+
+/**
+ * 상태별 라벨/색상 정보 가져오기
+ */
+export function getDateStatusInfo(status: DateStatus): {
+  label: string;
+  color: 'neutral' | 'info' | 'success' | 'warning' | 'error';
+} {
+  const statusMap: Record<DateStatus, { label: string; color: 'neutral' | 'info' | 'success' | 'warning' | 'error' }> = {
+    no_dates: { label: '날짜 미설정', color: 'neutral' },
+    no_start_date: { label: '시작일 미설정', color: 'neutral' },
+    no_end_date: { label: '종료일 미설정', color: 'neutral' },
+    not_started: { label: '시작 전', color: 'info' },
+    in_progress: { label: '진행 중', color: 'success' },
+    overdue: { label: '기한 초과', color: 'error' },
+    completed: { label: '완료', color: 'success' },
+    completed_early: { label: '조기 완료', color: 'success' },
+    completed_late: { label: '지연 완료', color: 'warning' },
+  };
+  return statusMap[status];
+}
