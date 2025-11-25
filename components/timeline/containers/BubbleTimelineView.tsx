@@ -827,7 +827,7 @@ export const BubbleTimelineView: React.FC = () => {
                             anytime_duration: originalTodo.anytime_duration || null,
                             // Second Brain 필드들 추가
                             clarification: originalTodo.clarification || 'none',
-                            next_action_contexts: originalTodo.next_action_contexts || null,
+                            next_action_context_ids: originalTodo.next_action_context_ids || null,
                             is_today_highlight: originalTodo.is_today_highlight || false,
                             assigned_to: originalTodo.assigned_to || null,
                             assigned_date: (() => {

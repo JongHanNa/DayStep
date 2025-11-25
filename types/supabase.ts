@@ -989,7 +989,7 @@ export type Database = {
           icon: string | null
           id: string
           is_today_highlight: boolean
-          next_action_contexts: string[] | null
+          next_action_context_ids: string[] | null
           order_index: number
           parent_todo_id: string | null
           priority: string | null
@@ -1019,7 +1019,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_today_highlight?: boolean
-          next_action_contexts?: string[] | null
+          next_action_context_ids?: string[] | null
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null
@@ -1049,7 +1049,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_today_highlight?: boolean
-          next_action_contexts?: string[] | null
+          next_action_context_ids?: string[] | null
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null

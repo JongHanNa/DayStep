@@ -17,7 +17,6 @@ import { getInboxRemovalMessage } from '@/lib/utils/inboxMessages';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { linkProjectNote } from '@/lib/supabase/project-notes';
-import { nextActionToEnglish } from '@/lib/utils/nextActionMapping';
 
 interface TodoInboxListProps {
   todos: InboxItem[];
@@ -100,8 +99,7 @@ export default function TodoInboxList({
       await updateInboxTodo(userId, editingTodo.id, {
         title: updatedTodo.title,
         clarification: updatedTodo.clarification,
-        next_action_contexts: updatedTodo.nextActionStatuses ? nextActionToEnglish(updatedTodo.nextActionStatuses) : undefined,
-        next_action_context_ids: updatedTodo.nextActionContextIds || null, // 신규 다음행동상황 ID 배열
+        next_action_context_ids: updatedTodo.nextActionContextIds || null,
         scheduled_date: updatedTodo.scheduledDate
           ? (() => {
               // Date 객체를 YYYY-MM-DD 문자열로 변환

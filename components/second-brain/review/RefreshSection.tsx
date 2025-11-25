@@ -15,7 +15,6 @@ import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { linkProjectNote } from '@/lib/supabase/project-notes';
-import { nextActionToEnglish } from '@/lib/utils/nextActionMapping';
 import { Calendar, CheckSquare, Clock, Folder, Pause, Target } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 
@@ -102,9 +101,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
       await updateInboxTodo(user.id, editingTodo.id, {
         title: updatedTodo.title,
         clarification: updatedTodo.clarification,
-        next_action_contexts: updatedTodo.nextActionStatuses
-          ? nextActionToEnglish(updatedTodo.nextActionStatuses)
-          : undefined,
+        next_action_context_ids: updatedTodo.nextActionContextIds || undefined,
         scheduled_date: updatedTodo.scheduledDate
           ? (() => {
               const dateStr = updatedTodo.scheduledDate.toISOString().split('T')[0];

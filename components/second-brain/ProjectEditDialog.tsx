@@ -772,7 +772,6 @@ export default function ProjectEditDialog({
           icon: updatedTodo.icon,
           color: updatedTodo.color,
           clarification: updatedTodo.clarification as any,
-          next_action_statuses: updatedTodo.nextActionStatuses as any,
           next_action_context_ids: updatedTodo.nextActionContextIds || null,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
           // start_time을 scheduledDate + startTime 조합으로 설정
@@ -935,7 +934,6 @@ export default function ProjectEditDialog({
           icon: updatedTodo.icon,
           color: updatedTodo.color,
           clarification: updatedTodo.clarification as any,
-          next_action_statuses: updatedTodo.nextActionStatuses as any,
           next_action_context_ids: updatedTodo.nextActionContextIds || null,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
           // start_time을 scheduledDate + startTime 조합으로 설정

@@ -23,7 +23,7 @@ import {
   deleteInboxTodo,
   deleteInboxNote,
 } from '@/lib/supabase/inbox';
-import { nextActionToKorean } from '@/lib/utils/nextActionMapping';
+// nextActionToKorean 제거됨 - next_action_context_ids 사용
 
 interface InboxStoreState {
   inboxItems: InboxItem[];
@@ -58,7 +58,8 @@ function todoToInboxItem(todo: any): InboxItem {
     schedule_type: todo.schedule_type || 'none',
     is_highlight: todo.is_today_highlight || false,
     is_completed: todo.completed || false,
-    next_action_status: todo.next_action_contexts?.length > 0 ? JSON.stringify(nextActionToKorean(todo.next_action_contexts)) : '',
+    next_action_status: '', // 레거시 필드, next_action_context_ids 사용
+    next_action_context_ids: todo.next_action_context_ids || [],
     recurrence_pattern: todo.recurrence_pattern || 'none',
     project_id: todo.todo_projects?.[0]?.project_id || undefined, // ✅ todo_projects JOIN 데이터에서 project_id 추출
     created_at: todo.created_at,
@@ -219,7 +220,7 @@ export const useInboxStore = createStore<InboxStoreState>(
             schedule_type: data.schedule_type,
             is_today_highlight: data.is_highlight,
             completed: data.is_completed,
-            next_action_contexts: data.next_action_status ? JSON.parse(data.next_action_status) : undefined,
+            next_action_context_ids: data.next_action_context_ids || undefined,
           };
 
           const createdTodo = await createInboxTodo(userId, todoData);
@@ -270,8 +271,8 @@ export const useInboxStore = createStore<InboxStoreState>(
           if (data.scheduled_date !== undefined) todoData.scheduled_date = data.scheduled_date;
           if (data.is_highlight !== undefined) todoData.is_today_highlight = data.is_highlight;
           if (data.is_completed !== undefined) todoData.completed = data.is_completed;
-          if (data.next_action_status !== undefined) {
-            todoData.next_action_contexts = data.next_action_status ? JSON.parse(data.next_action_status) : null;
+          if (data.next_action_context_ids !== undefined) {
+            todoData.next_action_context_ids = data.next_action_context_ids || null;
           }
 
           const updatedTodo = await updateInboxTodo(userId, id, todoData);

@@ -46,7 +46,8 @@ function todoToInboxItem(todo: any): InboxItem {
     clarification: todo.clarification || 'none',
     is_completed: todo.completed || false,
     is_highlight: todo.is_today_highlight || false,
-    next_action_status: todo.next_action_contexts ? JSON.stringify(todo.next_action_contexts) : undefined,
+    next_action_status: '', // 레거시 필드, next_action_context_ids 사용
+    next_action_context_ids: todo.next_action_context_ids || [],
     project_id: todo.project_id,
     icon: todo.icon,
     color: todo.color,
@@ -304,7 +305,7 @@ export default function CalendarPage() {
       await updateInboxTodo(appUser.id, editingItem.id, {
         title: todoForm.title,
         clarification: todoForm.clarification,
-        next_action_contexts: todoForm.nextActionStatuses,
+        next_action_context_ids: todoForm.nextActionContextIds,
         scheduled_date: finalDateTime?.toISOString(),
         schedule_type: todoForm.scheduleType,
         is_today_highlight: todoForm.isHighlight,

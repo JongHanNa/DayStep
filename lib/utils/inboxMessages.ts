@@ -23,7 +23,7 @@ import type { InboxItem } from '@/types/second-brain';
  *
  * @example
  * // next_action 상황 미선택
- * getInboxRemovalMessage({ clarification: 'next_action', next_action_contexts: [] })
+ * getInboxRemovalMessage({ clarification: 'next_action', next_action_context_ids: [] })
  * // → "다음행동 상황을 선택하면 수집함에서 사라집니다"
  *
  * @example

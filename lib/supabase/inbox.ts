@@ -14,7 +14,7 @@ import { fetchWithJWT, createWithJWT, updateWithJWT, deleteWithJWT } from './cor
  *   - clarification != 'waiting' (대기중: 무조건 제외)
  *   - clarification != 'someday' (언젠가: 무조건 제외)
  *   - NOT (clarification = 'schedule_clear' AND start_time IS NOT NULL) (일정+날짜: 제외)
- *   - NOT (clarification = 'next_action' AND next_action_contexts.length > 0) (다음행동+상황: 제외)
+ *   - NOT (clarification = 'next_action' AND next_action_context_ids.length > 0) (다음행동+상황: 제외)
  *
  * ✅ 변경 사항: Materialized View 대신 todos 테이블 직접 조회 (실시간 데이터)
  */
@@ -30,9 +30,8 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
     const filteredTodos = todos?.filter((todo: any) => {
       // schedule_clear + start_time 있으면 제외
       if (todo.clarification === 'schedule_clear' && todo.start_time) return false;
-      // next_action + contexts 있으면 제외 (레거시 + 신규 컬럼 모두 체크)
-      if (todo.clarification === 'next_action' &&
-          (todo.next_action_contexts?.length > 0 || todo.next_action_context_ids?.length > 0)) return false;
+      // next_action + context_ids 있으면 제외
+      if (todo.clarification === 'next_action' && todo.next_action_context_ids?.length > 0) return false;
       return true;
     }) || [];
 
@@ -52,7 +51,7 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
  *   - clarification != 'someday' (언젠가: 무조건 제외)
  *
  * 클라이언트 필터링 조건:
- *   - NOT (clarification = 'next_action' AND next_action_contexts.length > 0) (다음행동+상황: 제외)
+ *   - NOT (clarification = 'next_action' AND next_action_context_ids.length > 0) (다음행동+상황: 제외)
  *
  * ✅ fetchInboxTodos와의 차이점:
  *   - schedule_clear + start_time 필터 제거 (계획 페이지에 표시)
@@ -140,7 +139,7 @@ export async function createInboxTodo(userId: string, data: {
   is_today_highlight?: boolean;
   completed?: boolean;
   project_id?: string;
-  next_action_contexts?: string[];
+  next_action_context_ids?: string[];
 }): Promise<any> {
   console.log('📝 수집함 할일 생성:', { userId, data });
 
@@ -153,7 +152,7 @@ export async function createInboxTodo(userId: string, data: {
       is_today_highlight: data.is_today_highlight || false,
       completed: data.completed || false,
       project_id: data.project_id,
-      next_action_contexts: data.next_action_contexts || null,
+      next_action_context_ids: data.next_action_context_ids || null,
       schedule_type: data.schedule_type || 'none', // 전달받은 값 사용, 없으면 기본값 'none'
       recurrence_pattern: 'none',
       icon: null,
@@ -216,9 +215,8 @@ export async function updateInboxTodo(
     is_today_highlight?: boolean;
     completed?: boolean;
     project_id?: string;
-    next_action_contexts?: string[];
-    next_action_context_ids?: string[] | null; // 신규 다음행동상황 ID 배열
-    schedule_type?: string; // ✅ 일정 유형 필드 추가
+    next_action_context_ids?: string[] | null; // 다음행동상황 ID 배열
+    schedule_type?: string; // 일정 유형 필드
   }
 ): Promise<any> {
   console.log('✏️ 수집함 할일 수정:', { userId, todoId, data });
@@ -232,9 +230,8 @@ export async function updateInboxTodo(
     if (data.is_today_highlight !== undefined) updateData.is_today_highlight = data.is_today_highlight;
     if (data.completed !== undefined) updateData.completed = data.completed;
     if (data.project_id !== undefined) updateData.project_id = data.project_id;
-    if (data.next_action_contexts !== undefined) updateData.next_action_contexts = data.next_action_contexts;
-    if (data.next_action_context_ids !== undefined) updateData.next_action_context_ids = data.next_action_context_ids; // 신규 다음행동상황 ID 배열
-    if (data.schedule_type !== undefined) updateData.schedule_type = data.schedule_type; // ✅ 일정 유형 매핑
+    if (data.next_action_context_ids !== undefined) updateData.next_action_context_ids = data.next_action_context_ids;
+    if (data.schedule_type !== undefined) updateData.schedule_type = data.schedule_type;
 
     const result = await updateWithJWT('todos', { column: 'id', operator: 'eq', value: todoId }, updateData);
     console.log('✅ 수집함 할일 수정 성공:', { result });

@@ -255,7 +255,7 @@ export default function InboxPage() {
         await updateInboxTodo(appUser.id, editingItem.id, {
           title: todoForm.title,
           clarification: todoForm.clarification,
-          next_action_contexts: todoForm.nextActionStatuses,
+          next_action_context_ids: todoForm.nextActionContextIds,
           scheduled_date: finalDateTime?.toISOString(),
           schedule_type: todoForm.scheduleType,
           is_today_highlight: todoForm.isHighlight,

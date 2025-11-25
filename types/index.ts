@@ -291,9 +291,7 @@ export interface CreateTodoInput {
 
   // Second Brain System fields
   clarification?: Clarification;
-  next_action_contexts?: NextActionContext[];
-  next_action_statuses?: NextActionContext[]; // alias for next_action_contexts
-  next_action_context_ids?: string[] | null; // 다음행동상황 ID 배열 (새 시스템)
+  next_action_context_ids?: string[] | null; // 다음행동상황 ID 배열
   is_today_highlight?: boolean;
   assigned_to?: string | null;
   assigned_date?: string | null;
@@ -521,7 +519,7 @@ export interface ProjectUpdate extends Partial<ProjectInsert> {
 // Extended Todo type with new fields (기존 Todo 타입을 확장하지 않고 새 필드만 문서화)
 export interface TodoExtendedFields {
   clarification: Clarification;
-  next_action_contexts: NextActionContext[] | null;
+  next_action_context_ids: string[] | null;
   is_today_highlight: boolean;
   assigned_to: string | null;
   assigned_date: string | null;
