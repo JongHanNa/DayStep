@@ -134,7 +134,7 @@ export default function SwipeableCard({
 
       {/* 카드 레이어 */}
       <motion.div
-        className="relative bg-white hover:bg-base-100 transition-colors cursor-pointer w-full"
+        className="relative bg-base-100 hover:bg-base-300 transition-colors cursor-pointer w-full"
         style={{
           borderTopLeftRadius: '0.5rem',
           borderBottomLeftRadius: '0.5rem',
