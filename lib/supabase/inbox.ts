@@ -30,8 +30,9 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
     const filteredTodos = todos?.filter((todo: any) => {
       // schedule_clear + start_time 있으면 제외
       if (todo.clarification === 'schedule_clear' && todo.start_time) return false;
-      // next_action + contexts 있으면 제외
-      if (todo.clarification === 'next_action' && todo.next_action_contexts?.length > 0) return false;
+      // next_action + contexts 있으면 제외 (레거시 + 신규 컬럼 모두 체크)
+      if (todo.clarification === 'next_action' &&
+          (todo.next_action_contexts?.length > 0 || todo.next_action_context_ids?.length > 0)) return false;
       return true;
     }) || [];
 
@@ -216,6 +217,7 @@ export async function updateInboxTodo(
     completed?: boolean;
     project_id?: string;
     next_action_contexts?: string[];
+    next_action_context_ids?: string[] | null; // 신규 다음행동상황 ID 배열
     schedule_type?: string; // ✅ 일정 유형 필드 추가
   }
 ): Promise<any> {
@@ -231,6 +233,7 @@ export async function updateInboxTodo(
     if (data.completed !== undefined) updateData.completed = data.completed;
     if (data.project_id !== undefined) updateData.project_id = data.project_id;
     if (data.next_action_contexts !== undefined) updateData.next_action_contexts = data.next_action_contexts;
+    if (data.next_action_context_ids !== undefined) updateData.next_action_context_ids = data.next_action_context_ids; // 신규 다음행동상황 ID 배열
     if (data.schedule_type !== undefined) updateData.schedule_type = data.schedule_type; // ✅ 일정 유형 매핑
 
     const result = await updateWithJWT('todos', { column: 'id', operator: 'eq', value: todoId }, updateData);

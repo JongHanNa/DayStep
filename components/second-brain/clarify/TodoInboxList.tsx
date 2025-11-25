@@ -79,6 +79,7 @@ export default function TodoInboxList({
       title: todoToEdit.content,
       clarification: todoToEdit.clarification,
       nextActionStatuses: todoToEdit.next_action_status ? [todoToEdit.next_action_status] : [],
+      nextActionContextIds: todoToEdit.next_action_context_ids || [], // 신규 다음행동상황 ID 배열
       scheduledDate: todoToEdit.scheduled_date ? new Date(todoToEdit.scheduled_date) : undefined,
       isHighlight: todoToEdit.is_highlight || false,
       completed: todoToEdit.is_completed || false,
@@ -100,6 +101,7 @@ export default function TodoInboxList({
         title: updatedTodo.title,
         clarification: updatedTodo.clarification,
         next_action_contexts: updatedTodo.nextActionStatuses ? nextActionToEnglish(updatedTodo.nextActionStatuses) : undefined,
+        next_action_context_ids: updatedTodo.nextActionContextIds || null, // 신규 다음행동상황 ID 배열
         scheduled_date: updatedTodo.scheduledDate
           ? (() => {
               // Date 객체를 YYYY-MM-DD 문자열로 변환

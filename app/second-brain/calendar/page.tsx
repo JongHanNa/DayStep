@@ -227,6 +227,7 @@ export default function CalendarPage() {
       title: item.content,
       clarification: item.clarification || '',
       nextActionStatuses,
+      nextActionContextIds: item.next_action_context_ids || [],
       scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
       scheduleType: item.schedule_type || 'none',
       startTime,
@@ -649,6 +650,8 @@ export default function CalendarPage() {
             showHighlight={true}
             showCompleted={true}
             showProjects={true}
+            todoId={editingItem?.id}
+            userId={appUser?.id}
           />
         </div>
 

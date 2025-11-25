@@ -246,7 +246,8 @@ export interface InboxItem {
 
   // 할일 타입 전용 필드
   clarification?: string; // 명료화
-  next_action_status?: string; // 다음행동상황
+  next_action_status?: string; // 다음행동상황 (레거시)
+  next_action_context_ids?: string[]; // 다음행동상황 ID 배열
   scheduled_date?: string; // 예정 날짜 (ISO date string)
   schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none'; // 일정 유형
   is_highlight?: boolean; // 오늘의 하이라이트

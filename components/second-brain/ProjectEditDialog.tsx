@@ -171,6 +171,7 @@ export default function ProjectEditDialog({
               displayOrder: todo.displayOrder || todo.orderIndex || 0,
               clarification: todo.clarification,
               nextActionStatuses: todo.nextActionStatuses,
+              nextActionContextIds: todo.nextActionContextIds || todo.next_action_context_ids || [],
               // ✅ Fix: scheduleType 필드 매핑 ('none' → undefined 변환)
               scheduleType: todo.scheduleType === 'none' ? undefined : todo.scheduleType,
               // ✅ Fix: DB start_time에서 includeTime 계산 (시간 정보 있으면 true)
@@ -772,6 +773,7 @@ export default function ProjectEditDialog({
           color: updatedTodo.color,
           clarification: updatedTodo.clarification as any,
           next_action_statuses: updatedTodo.nextActionStatuses as any,
+          next_action_context_ids: updatedTodo.nextActionContextIds || null,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
           // start_time을 scheduledDate + startTime 조합으로 설정
           start_time: updatedTodo.scheduledDate
@@ -934,6 +936,7 @@ export default function ProjectEditDialog({
           color: updatedTodo.color,
           clarification: updatedTodo.clarification as any,
           next_action_statuses: updatedTodo.nextActionStatuses as any,
+          next_action_context_ids: updatedTodo.nextActionContextIds || null,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
           // start_time을 scheduledDate + startTime 조합으로 설정
           start_time: updatedTodo.scheduledDate
@@ -1435,6 +1438,7 @@ export default function ProjectEditDialog({
           }
         }}
         todoId={editingTodo?.id}
+        userId={appUser?.id}
         onProjectImmediateSave={handleProjectImmediateSave}
         onNoteImmediateSave={handleNoteImmediateSave}
       />
@@ -1459,6 +1463,7 @@ export default function ProjectEditDialog({
         onDelete={todoFromList ? () => handleRemoveTodo(todoFromList.id) : undefined}
         onChange={(updated) => setTodoFromList(todoFromList ? { ...todoFromList, ...updated } : null)}
         todoId={todoFromList?.id}
+        userId={appUser?.id}
         onProjectImmediateSave={handleProjectImmediateSaveFromList}
         onNoteImmediateSave={handleNoteImmediateSaveFromList}
       />

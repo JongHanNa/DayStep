@@ -293,6 +293,7 @@ export interface CreateTodoInput {
   clarification?: Clarification;
   next_action_contexts?: NextActionContext[];
   next_action_statuses?: NextActionContext[]; // alias for next_action_contexts
+  next_action_context_ids?: string[] | null; // 다음행동상황 ID 배열 (새 시스템)
   is_today_highlight?: boolean;
   assigned_to?: string | null;
   assigned_date?: string | null;

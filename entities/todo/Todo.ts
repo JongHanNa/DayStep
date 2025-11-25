@@ -42,7 +42,10 @@ export class Todo {
     public readonly resourceId: string | null = null,
 
     // 명료화 필드
-    public readonly clarification: Clarification = 'none'
+    public readonly clarification: Clarification = 'none',
+
+    // 다음행동상황 필드
+    public readonly nextActionContextIds: string[] | null = null
   ) {}
 
   /**
@@ -81,6 +84,9 @@ export class Todo {
 
     // 명료화 필드
     const clarification = record.clarification ?? 'none';
+
+    // 다음행동상황 필드
+    const nextActionContextIds = record.nextActionContextIds ?? record.next_action_context_ids ?? null;
 
     // title 필드
     const title = data.title;
@@ -124,7 +130,10 @@ export class Todo {
       resourceId || null,
 
       // 명료화 필드
-      clarification as Clarification
+      clarification as Clarification,
+
+      // 다음행동상황 필드
+      Array.isArray(nextActionContextIds) ? nextActionContextIds : null
     );
   }
 
@@ -425,7 +434,9 @@ export class Todo {
       this.projectId,
       this.goalId,
       this.areaId,
-      this.resourceId
+      this.resourceId,
+      this.clarification,
+      this.nextActionContextIds
     );
   }
 
@@ -472,7 +483,9 @@ export class Todo {
       this.projectId,
       this.goalId,
       this.areaId,
-      this.resourceId
+      this.resourceId,
+      this.clarification,
+      this.nextActionContextIds
     );
   }
 
@@ -539,6 +552,10 @@ export class Todo {
 
       // Second Brain 관계 필드들 (DB에는 project_id만 존재)
       project_id: this.projectId,
+
+      // 명료화 및 다음행동상황 필드
+      clarification: this.clarification,
+      next_action_context_ids: this.nextActionContextIds,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),
