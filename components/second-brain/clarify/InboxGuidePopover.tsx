@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Info, Lock, Unlock } from 'lucide-react';
+import { Info, Lock, Unlock, X } from 'lucide-react';
 import type { InboxTabType } from './InboxTabs';
 
 const STORAGE_KEY = 'daystep_inbox_guide_hover_enabled';
@@ -291,6 +291,8 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
   const [enableHoverOpen, setEnableHoverOpen] = useState(true);
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const [mounted, setMounted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const buttonRef = useRef<HTMLDivElement>(null);
   const guide = GUIDE_CONTENT[activeTab];
 
@@ -349,6 +351,51 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
+  // 드래그 시작 핸들러
+  const handleDragStart = (e: React.MouseEvent) => {
+    // 닫기 버튼 클릭 시 드래그 시작하지 않음
+    if ((e.target as HTMLElement).closest('button')) return;
+
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - popoverPosition.left,
+      y: e.clientY - popoverPosition.top,
+    });
+    e.preventDefault(); // 텍스트 선택 방지
+  };
+
+  // 드래그 중 처리
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const popoverWidth = Math.min(500, viewportWidth * 0.9);
+
+      let newLeft = e.clientX - dragOffset.x;
+      let newTop = e.clientY - dragOffset.y;
+
+      // 화면 경계 제한
+      newLeft = Math.max(0, Math.min(newLeft, viewportWidth - popoverWidth));
+      newTop = Math.max(0, Math.min(newTop, viewportHeight - 100));
+
+      setPopoverPosition({ top: newTop, left: newLeft });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
   return (
     <div className="inline-block my-3" ref={buttonRef}>
       <div className="flex items-center gap-2">
@@ -403,10 +450,22 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
             aria-modal="true"
             aria-labelledby="guide-title"
           >
-            {/* 헤더 */}
-            <div className="flex items-center gap-2 p-4 border-b border-base-300">
-              <span className="text-2xl">{guide.icon}</span>
-              <h3 id="guide-title" className="font-bold text-lg">{guide.title}</h3>
+            {/* 헤더 - 드래그 핸들 */}
+            <div
+              className="flex items-center justify-between p-4 border-b border-base-300 cursor-move select-none"
+              onMouseDown={handleDragStart}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{guide.icon}</span>
+                <h3 id="guide-title" className="font-bold text-lg">{guide.title}</h3>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 hover:bg-base-300 rounded-lg transition-colors"
+                aria-label="가이드 닫기"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {/* 내용 */}
