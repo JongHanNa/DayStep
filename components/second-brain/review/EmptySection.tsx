@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useReviewStore } from '@/lib/stores/reviewStore';
 import { useAuth } from '@/app/context/AuthContext';
@@ -13,6 +13,7 @@ import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
 import NoteInboxList from '@/components/second-brain/clarify/NoteInboxList';
 import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
 import GoalInboxList from '@/components/second-brain/clarify/GoalInboxList';
+import { filterInboxProjects } from '@/lib/helpers/projectFilters';
 
 interface EmptySectionProps {
   isExpanded: boolean;
@@ -103,11 +104,21 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
   const todos = inboxItems.filter((item) => item.item_type === 'todo');
   const noteItems = inboxItems.filter((item) => item.item_type === 'note');
 
-  // 프로젝트와 목표는 inboxItems가 아니라 실제 projects/goals 스토어에서 필터링
-  // 수집함 규칙: status/end_date/area/resource가 없는 것들
-  const projectItems = projects.filter((project) =>
-    !project.status || !project.end_date
-  );
+  // 프로젝트 수집함 필터링 (명료화 페이지와 동일한 조건 사용)
+  // 조건: area_resource_id + end_date + todoCount > 0 모두 충족 시 제외
+  const projectItems = useMemo(() => {
+    // 프로젝트별 할일 갯수 계산 (inboxItems에서 project_id로 그룹화)
+    const todoCountMap = new Map<string, number>();
+    inboxItems.forEach((item) => {
+      if (item.item_type === 'todo' && item.project_id) {
+        const count = todoCountMap.get(item.project_id) || 0;
+        todoCountMap.set(item.project_id, count + 1);
+      }
+    });
+    return filterInboxProjects(projects, todoCountMap);
+  }, [projects, inboxItems]);
+
+  // 목표 수집함 필터링
   const goalItems = goals.filter((goal) =>
     !goal.end_date || (!goal.area_id && !goal.resource_id)
   );

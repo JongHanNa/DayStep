@@ -5,6 +5,7 @@
  */
 
 import { fetchWithJWT, createWithJWT, updateWithJWT, deleteWithJWT } from './core';
+import { filterInboxProjects } from '@/lib/helpers/projectFilters';
 
 /**
  * 수집함 할일 목록 조회 (todos 테이블 직접 조회)
@@ -341,16 +342,8 @@ export async function fetchInboxProjects(userId: string): Promise<any[]> {
       todoCountMap.set(tp.project_id, count + 1);
     });
 
-    // 클라이언트 필터링: area_resource_id + end_date + todo_count > 0 제외
-    const filteredProjects = projects?.filter((project: any) => {
-      const hasAreaResource = project.area_resource_id != null;
-      const hasEndDate = project.end_date != null;
-      const todoCount = todoCountMap.get(project.id) || 0;
-
-      // area_resource_id + end_date + todo_count > 0 모두 충족 시 제외
-      if (hasAreaResource && hasEndDate && todoCount > 0) return false;
-      return true;
-    }) || [];
+    // 클라이언트 필터링: 공통 헬퍼 함수 사용
+    const filteredProjects = filterInboxProjects(projects || [], todoCountMap);
 
     console.log('✅ 수집함 프로젝트 조회 성공:', { count: filteredProjects.length });
     return filteredProjects;
