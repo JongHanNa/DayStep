@@ -18,7 +18,8 @@ import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import TodoDragPreview from '@/components/shared/TodoDragPreview';
 import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { fetchScheduledTodos } from '@/lib/supabase/calendar';
-import type { InboxItem } from '@/types/second-brain';
+import type { InboxItem, GTDStatus } from '@/types/second-brain';
+import type { TodoWithRecurrenceInstance } from '@/types';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useDndKit } from '@/hooks/useDndKit';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
@@ -32,16 +33,16 @@ import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
 type CalendarTab = 'week-schedule' | 'week-plan' | 'week-routine' | 'month-schedule' | 'month-plan' | 'month-routine';
 
 // todos 테이블 데이터를 InboxItem으로 변환
-function todoToInboxItem(todo: any): InboxItem {
+function todoToInboxItem(todo: TodoWithRecurrenceInstance): InboxItem {
   return {
     id: todo.id,
     user_id: todo.user_id,
     content: todo.title,
     item_type: 'todo',
-    status: todo.clarification || 'none',
+    status: (todo.clarification || 'inbox') as GTDStatus, // clarification을 GTDStatus로 매핑
     created_at: todo.created_at,
     updated_at: todo.updated_at,
-    scheduled_date: todo.start_time || undefined,
+    scheduled_date: todo.start_time ?? undefined,
     schedule_type: todo.schedule_type || 'none',
     clarification: todo.clarification || 'none',
     is_completed: todo.completed || false,
@@ -49,8 +50,8 @@ function todoToInboxItem(todo: any): InboxItem {
     next_action_status: '', // 레거시 필드, next_action_context_ids 사용
     next_action_context_ids: todo.next_action_context_ids || [],
     project_id: todo.project_id,
-    icon: todo.icon,
-    color: todo.color,
+    icon: todo.icon ?? undefined,
+    color: todo.color ?? '',
     // 반복 인스턴스 관련 필드
     is_recurrence_instance: todo.is_recurrence_instance || false,
     recurrence_source_id: todo.recurrence_source_id,

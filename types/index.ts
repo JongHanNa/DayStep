@@ -17,6 +17,15 @@ export type RecurrencePattern =
 // Application types based on database schema
 export type User = Tables<"users">;
 export type Todo = Tables<"todos">;
+
+// Todo + 반복 인스턴스 런타임 필드 (달력 등에서 사용)
+export type TodoWithRecurrenceInstance = Todo & {
+  project_id?: string;  // projects 관계 테이블에서 가져옴
+  is_recurrence_instance?: boolean;
+  recurrence_source_id?: string;
+  recurrence_occurrence_date?: string;
+};
+
 export type PomodoroSession = Tables<"pomodoro_sessions">;
 
 // Memo Tag types (manually defined until Supabase types are updated)
