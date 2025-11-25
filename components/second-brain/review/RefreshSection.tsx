@@ -15,7 +15,7 @@ import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { linkProjectNote } from '@/lib/supabase/project-notes';
 import { Calendar, CheckSquare, Clock, Folder, Pause, Target, RotateCcw } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format } from 'date-fns';
 
 interface RefreshSectionProps {
   isExpanded: boolean;
@@ -52,6 +52,36 @@ const getGoalDday = (goal: { end_date?: string | null }): string => {
   if (diffDays > 0) return `D-${diffDays}`;
   if (diffDays === 0) return 'D-Day';
   return `D+${Math.abs(diffDays)}`;
+};
+
+// 명료화 한글 레이블
+const getClarificationLabel = (clarification?: string): string => {
+  const labelMap: Record<string, string> = {
+    'reminder': '다시알림',
+    'someday': '언젠가',
+    'waiting': '대기중',
+    'next_action': '다음행동',
+    'schedule_clear': '일정',
+  };
+  return labelMap[clarification || ''] || clarification || '';
+};
+
+// 프로젝트 상태 한글 레이블
+const getProjectStatusLabel = (status?: string): string => {
+  const labelMap: Record<string, string> = {
+    'not_started': '시작 전',
+    'in_progress': '진행중',
+    'paused': '중단',
+    'completed': '완료',
+  };
+  return labelMap[status || ''] || status || '미지정';
+};
+
+// 날짜 포맷 (ISO → 읽기 쉽게)
+const formatScheduleDate = (dateStr?: string): string => {
+  if (!dateStr) return '없음';
+  const date = new Date(dateStr);
+  return format(date, 'M월 d일');
 };
 
 export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
@@ -297,6 +327,13 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     return { completed, total, completionRate };
   };
 
+  // 프로젝트 ID → 이름 조회
+  const getProjectName = (projectId?: string): string => {
+    if (!projectId) return '없음';
+    const project = projects.find(p => p.id === projectId);
+    return project?.title || '없음';
+  };
+
   if (!isExpanded) return null;
 
   return (
@@ -357,7 +394,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                 <div key={todo.id} className="p-3 bg-base-100 rounded-lg">
                   <div className="font-medium">{todo.content}</div>
                   <div className="text-xs text-base-content/60 mt-1">
-                    다음행동 상황 | 프로젝트: {todo.project_id || '없음'}
+                    다음행동 상황 | 프로젝트: {getProjectName(todo.project_id)}
                   </div>
                 </div>
               ))}
@@ -380,7 +417,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                 <div key={todo.id} className="p-3 bg-base-100 rounded-lg">
                   <div className="font-medium">{todo.content}</div>
                   <div className="text-xs text-base-content/60 mt-1">
-                    명료화: {todo.clarification} | 날짜: {todo.scheduled_date || '없음'} | 프로젝트: {todo.project_id || '없음'}
+                    명료화: {getClarificationLabel(todo.clarification)} | 날짜: {formatScheduleDate(todo.scheduled_date)} | 프로젝트: {getProjectName(todo.project_id)}
                   </div>
                 </div>
               ))}
@@ -400,7 +437,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                     <div key={project.id} className="p-3 bg-base-100 rounded-lg">
                       <div className="font-medium">{project.title}</div>
                       <div className="text-xs text-base-content/60 mt-1">
-                        상태: {project.status || '미지정'} | D-day: {getProjectDday(project)} |
+                        상태: {getProjectStatusLabel(project.status)} | D-day: {getProjectDday(project)} |
                         할일: {stats.completed}/{stats.total} |
                         완료율: {stats.completionRate}%
                       </div>
@@ -417,7 +454,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                 <div key={todo.id} className="p-3 bg-base-100 rounded-lg">
                   <div className="font-medium">{todo.content}</div>
                   <div className="text-xs text-base-content/60 mt-1">
-                    날짜: {todo.scheduled_date || '없음'} | 프로젝트: {todo.project_id || '없음'}
+                    날짜: {formatScheduleDate(todo.scheduled_date)} | 프로젝트: {getProjectName(todo.project_id)}
                   </div>
                 </div>
               ))}
