@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { useReviewStore } from '@/lib/stores/reviewStore';
 import { useAuth } from '@/app/context/AuthContext';
-import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
-import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
-import NoteInboxList from '@/components/second-brain/clarify/NoteInboxList';
-import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
-import GoalInboxList from '@/components/second-brain/clarify/GoalInboxList';
-import { filterInboxProjects } from '@/lib/helpers/projectFilters';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import InboxListSection from '@/components/second-brain/clarify/InboxListSection';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
+import { fetchInboxProjects, fetchInboxGoals } from '@/lib/supabase/inbox';
+import type { Project, Goal, UpdateProjectInput, UpdateGoalInput } from '@/types/second-brain';
 
 interface EmptySectionProps {
   isExpanded: boolean;
@@ -29,19 +30,41 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
     removeChecklistItem,
   } = useReviewStore();
 
-  const { inboxItems, fetchInboxItems } = useInboxStore();
-  const { projects } = useProjectStore();
+  const { inboxItems, fetchInboxItems, deleteInboxItem } = useInboxStore();
+  const { projects, updateProject, deleteProject } = useProjectStore();
   const { notes } = useNoteStore();
-  const { goals } = useGoalStore();
+  const { goals, updateGoal, deleteGoal } = useGoalStore();
+  const { areas } = useAreaStore();
+  const { resources } = useResourceStore();
 
   const [isAddingSource, setIsAddingSource] = useState(false);
   const [newSourceLabel, setNewSourceLabel] = useState('');
-  const [activeInboxTab, setActiveInboxTab] = useState<InboxTabType>('todos');
 
-  // 편집 모드 관련 상태
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
+  // 프로젝트 편집 모달 상태
+  const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // 목표 편집 모달 상태
+  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+
+  // 프로젝트/목표 수집함 상태 (DB View에서 로드)
+  const [projectItems, setProjectItems] = useState<Project[]>([]);
+  const [goalItems, setGoalItems] = useState<Goal[]>([]);
+
+  // 프로젝트/목표 수집함 데이터 로드 (명료화 페이지와 동일한 DB View 사용)
+  useEffect(() => {
+    const loadInboxData = async () => {
+      if (!user) return;
+      const [inboxProjects, inboxGoals] = await Promise.all([
+        fetchInboxProjects(user.id),
+        fetchInboxGoals(user.id),
+      ]);
+      setProjectItems(inboxProjects);
+      setGoalItems(inboxGoals);
+    };
+    loadInboxData();
+  }, [user]);
 
   // 체크리스트 항목별 체크 상태 확인
   const isChecked = (itemId: string) => {
@@ -73,30 +96,161 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
     }
   };
 
-  // 편집 모드 핸들러
-  const handleSelectionChange = (id: string, isChecked: boolean, shiftKey: boolean, index: number) => {
-    const newSelected = new Set(selectedIds);
-    if (isChecked) {
-      newSelected.add(id);
-    } else {
-      newSelected.delete(id);
+  const handleRefresh = async () => {
+    if (!user) return;
+    // inboxItems와 프로젝트/목표 수집함 모두 새로고침
+    await Promise.all([
+      fetchInboxItems(user.id),
+      (async () => {
+        const [inboxProjects, inboxGoals] = await Promise.all([
+          fetchInboxProjects(user.id),
+          fetchInboxGoals(user.id),
+        ]);
+        setProjectItems(inboxProjects);
+        setGoalItems(inboxGoals);
+      })(),
+    ]);
+  };
+
+  // 프로젝트 클릭 핸들러
+  const handleProjectClick = (project: Project) => {
+    const formatDateForInput = (dateString?: string) => {
+      if (!dateString) return '';
+      return dateString.split('T')[0];
+    };
+
+    let paraSelection = '';
+    if (project.area_resource_id) {
+      const isArea = areas.some(a => a.id === project.area_resource_id);
+      const isResource = resources.some(r => r.id === project.area_resource_id);
+
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else if (isResource) {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
     }
-    setSelectedIds(newSelected);
+
+    const editData = {
+      ...project,
+      paraSelection,
+      isNew: false,
+      start_date: formatDateForInput(project.start_date),
+      end_date: formatDateForInput(project.end_date)
+    };
+
+    setEditingProject(editData);
+    setEditDialogOpen(true);
   };
 
-  const handleSwipe = (itemId: string | null) => {
-    setSwipedItemId(itemId);
-  };
+  // 프로젝트 저장 핸들러
+  const handleSaveProject = async (projectData: Partial<Project>) => {
+    if (!user || !editingProject) return;
 
-  const handleDeleteClick = (itemId: string) => {
-    if (confirm('이 항목을 삭제하시겠습니까?')) {
-      // 삭제 로직은 TodoInboxList 내부에서 처리
+    try {
+      const updateData: UpdateProjectInput = {
+        title: projectData.title!,
+        description: projectData.description || '',
+        icon: projectData.icon!,
+        color: projectData.color!,
+        status: projectData.status!,
+        goal_id: projectData.goal_id || undefined,
+        start_date: projectData.start_date || undefined,
+        end_date: projectData.end_date || undefined,
+      };
+
+      await updateProject(user.id, editingProject.id, updateData);
+      setEditDialogOpen(false);
+      setEditingProject(null);
+      handleRefresh();
+    } catch (error) {
+      console.error('프로젝트 저장 실패:', error);
+      alert('프로젝트 저장에 실패했습니다.');
     }
   };
 
-  const handleRefresh = () => {
-    if (user) {
-      fetchInboxItems(user.id);
+  // 프로젝트 편집 취소
+  const handleCancelEdit = () => {
+    setEditDialogOpen(false);
+    setEditingProject(null);
+  };
+
+  // 프로젝트 삭제 핸들러
+  const handleDeleteProject = async (project: Project) => {
+    if (!confirm(`"${project.title}" 프로젝트를 삭제하시겠습니까?`)) return;
+    if (!user) return;
+
+    try {
+      await deleteProject(user.id, project.id);
+      setEditDialogOpen(false);
+      setEditingProject(null);
+      handleRefresh();
+    } catch (error) {
+      console.error('프로젝트 삭제 실패:', error);
+      alert('프로젝트 삭제에 실패했습니다.');
+    }
+  };
+
+  // 목표 클릭 핸들러
+  const handleGoalClick = (goal: Goal) => {
+    let paraSelection = '';
+    if (goal.area_id) {
+      paraSelection = `area-${goal.area_id}`;
+    } else if (goal.resource_id) {
+      paraSelection = `resource-${goal.resource_id}`;
+    }
+
+    setEditingGoal({ ...goal, paraSelection, isNew: false });
+    setGoalDialogOpen(true);
+  };
+
+  // 목표 저장 핸들러
+  const handleSaveGoal = async (goalData: Partial<Goal>, area_id?: string, resource_id?: string) => {
+    if (!user || !editingGoal) return;
+
+    try {
+      await updateGoal(user.id, editingGoal.id, {
+        title: goalData.title!,
+        description: goalData.description || '',
+        icon: goalData.icon,
+        color: goalData.color!,
+        status: goalData.status!,
+        area_id,
+        resource_id,
+        start_date: goalData.start_date || undefined,
+        end_date: goalData.end_date || undefined,
+        year_goal: goalData.year_goal || undefined,
+        quarter_goal: goalData.quarter_goal || undefined,
+      } as UpdateGoalInput);
+
+      setGoalDialogOpen(false);
+      setEditingGoal(null);
+      handleRefresh();
+    } catch (error) {
+      console.error('목표 저장 실패:', error);
+      alert('목표 저장에 실패했습니다.');
+    }
+  };
+
+  // 목표 편집 취소
+  const handleCancelGoalEdit = () => {
+    setGoalDialogOpen(false);
+    setEditingGoal(null);
+  };
+
+  // 목표 삭제 핸들러
+  const handleDeleteGoal = async (goal: Goal) => {
+    if (!confirm(`"${goal.title}" 목표를 삭제하시겠습니까?`)) return;
+    if (!user) return;
+
+    try {
+      await deleteGoal(user.id, goal.id);
+      setGoalDialogOpen(false);
+      setEditingGoal(null);
+      handleRefresh();
+    } catch (error) {
+      console.error('목표 삭제 실패:', error);
+      alert('목표 삭제에 실패했습니다.');
     }
   };
 
@@ -104,31 +258,7 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
   const todos = inboxItems.filter((item) => item.item_type === 'todo');
   const noteItems = inboxItems.filter((item) => item.item_type === 'note');
 
-  // 프로젝트 수집함 필터링 (명료화 페이지와 동일한 조건 사용)
-  // 조건: area_resource_id + end_date + todoCount > 0 모두 충족 시 제외
-  const projectItems = useMemo(() => {
-    // 프로젝트별 할일 갯수 계산 (inboxItems에서 project_id로 그룹화)
-    const todoCountMap = new Map<string, number>();
-    inboxItems.forEach((item) => {
-      if (item.item_type === 'todo' && item.project_id) {
-        const count = todoCountMap.get(item.project_id) || 0;
-        todoCountMap.set(item.project_id, count + 1);
-      }
-    });
-    return filterInboxProjects(projects, todoCountMap);
-  }, [projects, inboxItems]);
-
-  // 목표 수집함 필터링
-  const goalItems = goals.filter((goal) =>
-    !goal.end_date || (!goal.area_id && !goal.resource_id)
-  );
-
-  const inboxCounts = {
-    todos: todos.length,
-    notes: noteItems.length,
-    projects: projectItems.length,
-    goals: goalItems.length,
-  };
+  // projectItems, goalItems는 이제 useState + useEffect로 DB View에서 로드됨 (위 참조)
 
   if (!isExpanded) return null;
   if (!user) return null;
@@ -204,71 +334,53 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
       </div>
 
       {/* 수집함 비우기 섹션 (명료화 페이지와 동일) */}
-      <div>
-        <InboxTabs
-          activeTab={activeInboxTab}
-          onTabChange={setActiveInboxTab}
-          counts={inboxCounts}
-        />
+      <InboxListSection
+        todos={todos}
+        noteItems={noteItems}
+        projects={projectItems}
+        goals={goalItems}
+        allProjects={projects}
+        allNotes={notes}
+        areas={areas}
+        resources={resources}
+        onRefresh={handleRefresh}
+        userId={user.id}
+        onProjectClick={handleProjectClick}
+        onGoalClick={handleGoalClick}
+        onSingleDelete={async (itemId, tab) => {
+          if (tab === 'todos' || tab === 'notes') {
+            await deleteInboxItem(user.id, itemId);
+          } else if (tab === 'projects') {
+            await deleteProject(user.id, itemId);
+          } else if (tab === 'goals') {
+            await deleteGoal(user.id, itemId);
+          }
+          handleRefresh();
+        }}
+      />
 
-        {/* 탭별 내용 - 명료화 페이지 컴포넌트 재사용 */}
-        <div className="mt-4">
-          {activeInboxTab === 'todos' && (
-            <TodoInboxList
-              todos={todos}
-              projects={projects}
-              notes={notes}
-              onRefresh={handleRefresh}
-              userId={user.id}
-              isEditMode={isEditMode}
-              selectedIds={selectedIds}
-              swipedItemId={swipedItemId}
-              onSelectionChange={handleSelectionChange}
-              onSwipe={handleSwipe}
-              onDeleteClick={handleDeleteClick}
-            />
-          )}
-          {activeInboxTab === 'notes' && (
-            <NoteInboxList
-              notes={noteItems}
-              areas={[]}
-              resources={[]}
-              projects={projects}
-              todos={[]}
-              allNotes={notes}
-              onRefresh={handleRefresh}
-              isEditMode={isEditMode}
-              selectedIds={selectedIds}
-              swipedItemId={swipedItemId}
-              onSelectionChange={handleSelectionChange}
-              onSwipe={handleSwipe}
-              onDeleteClick={handleDeleteClick}
-            />
-          )}
-          {activeInboxTab === 'projects' && (
-            <ProjectInboxList
-              projects={projectItems}
-              isEditMode={isEditMode}
-              selectedIds={selectedIds}
-              swipedItemId={swipedItemId}
-              onSelectionChange={handleSelectionChange}
-              onSwipe={handleSwipe}
-              onDeleteClick={handleDeleteClick}
-            />
-          )}
-          {activeInboxTab === 'goals' && (
-            <GoalInboxList
-              goals={goalItems}
-              isEditMode={isEditMode}
-              selectedIds={selectedIds}
-              swipedItemId={swipedItemId}
-              onSelectionChange={handleSelectionChange}
-              onSwipe={handleSwipe}
-              onDeleteClick={handleDeleteClick}
-            />
-          )}
-        </div>
-      </div>
+      {/* 프로젝트 편집 모달 */}
+      <ProjectEditDialog
+        open={editDialogOpen}
+        editingProject={editingProject}
+        onSave={handleSaveProject}
+        onCancel={handleCancelEdit}
+        onDelete={handleDeleteProject}
+        onProjectChange={setEditingProject}
+      />
+
+      {/* 목표 편집 모달 */}
+      <GoalEditDialog
+        open={goalDialogOpen}
+        editingGoal={editingGoal}
+        areas={areas}
+        resources={resources}
+        projects={projects}
+        onSave={handleSaveGoal}
+        onCancel={handleCancelGoalEdit}
+        onDelete={handleDeleteGoal}
+        onGoalChange={setEditingGoal}
+      />
     </div>
   );
 }

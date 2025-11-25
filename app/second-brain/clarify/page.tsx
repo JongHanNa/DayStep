@@ -12,19 +12,14 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { fetchInboxProjects, fetchInboxGoals } from '@/lib/supabase/inbox';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
-import InboxTabs, { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
-import TodoInboxList from '@/components/second-brain/clarify/TodoInboxList';
-import NoteInboxList from '@/components/second-brain/clarify/NoteInboxList';
-import ProjectInboxList from '@/components/second-brain/clarify/ProjectInboxList';
-import GoalInboxList from '@/components/second-brain/clarify/GoalInboxList';
+import { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
+import InboxListSection from '@/components/second-brain/clarify/InboxListSection';
 import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProjectsSection';
-import InboxGuidePopover from '@/components/second-brain/clarify/InboxGuidePopover';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import type { InboxItem, Project, UpdateProjectInput, Goal, UpdateGoalInput } from '@/types/second-brain';
-import { motion, PanInfo } from 'framer-motion';
-import { Trash2, Edit3, X } from 'lucide-react';
+import { Edit3, X } from 'lucide-react';
 
 export default function ClarifyPage() {
   const { appUser } = useAuth();
@@ -56,9 +51,6 @@ export default function ClarifyPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
-  // 스와이프 상태
-  const [swipedItemId, setSwipedItemId] = useState<string | null>(null);
-
   // ✅ 모든 useEffect를 조건문 위로 이동 (React Hooks 규칙 준수)
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
@@ -82,31 +74,6 @@ export default function ClarifyPage() {
     setTodoInbox(inboxTodos);
     setNoteInbox(inboxNotes);
   }, [inboxItems, loading]);
-
-  // 외부 클릭 시 스와이프된 카드 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (swipedItemId) {
-        setSwipedItemId(null);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [swipedItemId]);
-
-  // 현재 활성화된 탭의 항목 배열 반환
-  const getCurrentTabItems = (): Array<InboxItem | Project | Goal> => {
-    switch (activeTab) {
-      case 'todos': return todoInbox;
-      case 'notes': return noteInbox;
-      case 'projects': return projectInbox;
-      case 'goals': return goalInbox;
-      default: return [];
-    }
-  };
 
   const loadInboxData = async () => {
     if (!appUser?.id) return;
@@ -145,136 +112,6 @@ export default function ClarifyPage() {
 
   const handleRefresh = () => {
     loadInboxData();
-  };
-
-  // 일괄 삭제 핸들러
-  const handleBulkDelete = async () => {
-    if (!appUser?.id || selectedIds.size === 0) return;
-
-    if (!confirm(`선택한 ${selectedIds.size}개 항목을 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      const deleteIds = Array.from(selectedIds);
-
-      // 탭별 삭제 API 호출
-      if (activeTab === 'todos' || activeTab === 'notes') {
-        // InboxItem 삭제
-        await Promise.all(
-          deleteIds.map(id => deleteInboxItem(appUser.id!, id))
-        );
-      } else if (activeTab === 'projects') {
-        // Project 삭제
-        await Promise.all(
-          deleteIds.map(id => deleteProject(appUser.id!, id))
-        );
-      } else if (activeTab === 'goals') {
-        // Goal 삭제
-        await Promise.all(
-          deleteIds.map(id => deleteGoal(appUser.id!, id))
-        );
-      }
-
-      // 데이터 재조회
-      await loadInboxData();
-
-      // 상태 초기화
-      setSelectedIds(new Set());
-      setIsEditMode(false);
-    } catch (error) {
-      console.error('❌ 일괄 삭제 실패:', error);
-      alert('일부 항목 삭제에 실패했습니다.');
-    }
-  };
-
-  // 단일 삭제 핸들러
-  const handleSingleDelete = async (itemId: string) => {
-    if (!appUser?.id) return;
-
-    try {
-      // 탭별 삭제 API 호출
-      if (activeTab === 'todos' || activeTab === 'notes') {
-        await deleteInboxItem(appUser.id, itemId);
-      } else if (activeTab === 'projects') {
-        await deleteProject(appUser.id, itemId);
-      } else if (activeTab === 'goals') {
-        await deleteGoal(appUser.id, itemId);
-      }
-
-      // 데이터 재조회
-      await loadInboxData();
-    } catch (error) {
-      console.error('삭제 실패:', error);
-      throw error;
-    }
-  };
-
-  // 스와이프 삭제 버튼 클릭 핸들러
-  const handleDeleteClick = (itemId: string) => {
-    if (confirm('정말 삭제하시겠습니까?')) {
-      handleSingleDelete(itemId);
-      setSwipedItemId(null);
-    }
-  };
-
-  // Shift + 클릭 범위 선택 처리
-  const handleRangeSelection = (
-    currentIndex: number,
-    isChecked: boolean,
-    itemId: string
-  ) => {
-    const currentItems = getCurrentTabItems();
-
-    if (lastSelectedIndex === null) {
-      // 첫 선택: 일반 체크/해제
-      const newSet = new Set(selectedIds);
-      if (isChecked) {
-        newSet.add(itemId);
-      } else {
-        newSet.delete(itemId);
-      }
-      setSelectedIds(newSet);
-      setLastSelectedIndex(currentIndex);
-      return;
-    }
-
-    // 범위 선택: lastSelectedIndex와 currentIndex 사이의 모든 아이템
-    const start = Math.min(lastSelectedIndex, currentIndex);
-    const end = Math.max(lastSelectedIndex, currentIndex);
-
-    const newSet = new Set(selectedIds);
-    for (let i = start; i <= end; i++) {
-      if (isChecked) {
-        newSet.add(currentItems[i].id);
-      } else {
-        newSet.delete(currentItems[i].id);
-      }
-    }
-
-    setSelectedIds(newSet);
-    setLastSelectedIndex(currentIndex);
-  };
-
-  // 통합 선택 핸들러
-  const handleSelectionChange = (
-    itemId: string,
-    isChecked: boolean,
-    shiftKey: boolean,
-    index: number
-  ) => {
-    if (shiftKey) {
-      handleRangeSelection(index, isChecked, itemId);
-    } else {
-      const newSet = new Set(selectedIds);
-      if (isChecked) {
-        newSet.add(itemId);
-      } else {
-        newSet.delete(itemId);
-      }
-      setSelectedIds(newSet);
-      setLastSelectedIndex(index);
-    }
   };
 
   // 프로젝트 클릭 핸들러 - Project 그대로 전달
@@ -543,123 +380,49 @@ export default function ClarifyPage() {
         <section>
           <h2 className="text-xl font-bold mb-4">수집함 비우기</h2>
 
-          {/* 수집함 탭 */}
-          <InboxTabs
-            activeTab={activeTab}
-            onTabChange={(newTab) => {
-              setActiveTab(newTab);
-              if (isEditMode) {
-                setSelectedIds(new Set());
-                setLastSelectedIndex(null);
-              }
+          <InboxListSection
+            todos={todoInbox}
+            noteItems={noteInbox}
+            projects={projectInbox}
+            goals={goalInbox}
+            allProjects={projects}
+            allNotes={notes}
+            areas={areas}
+            resources={resources}
+            onRefresh={handleRefresh}
+            userId={appUser?.id || ''}
+            onProjectClick={handleProjectClick}
+            onGoalClick={handleGoalClick}
+            isEditMode={isEditMode}
+            onEditModeChange={setIsEditMode}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              setSelectedIds(new Set());
+              setLastSelectedIndex(null);
             }}
-            counts={{
-              todos: todoInbox.length,
-              notes: noteInbox.length,
-              projects: projectInbox.length,
-              goals: goalInbox.length,
+            showEditModeActionBar={true}
+            onBulkDelete={async (ids, tab) => {
+              const deleteIds = Array.from(ids);
+              if (tab === 'todos' || tab === 'notes') {
+                await Promise.all(deleteIds.map(id => deleteInboxItem(appUser!.id!, id)));
+              } else if (tab === 'projects') {
+                await Promise.all(deleteIds.map(id => deleteProject(appUser!.id!, id)));
+              } else if (tab === 'goals') {
+                await Promise.all(deleteIds.map(id => deleteGoal(appUser!.id!, id)));
+              }
+              await loadInboxData();
+            }}
+            onSingleDelete={async (itemId, tab) => {
+              if (tab === 'todos' || tab === 'notes') {
+                await deleteInboxItem(appUser!.id!, itemId);
+              } else if (tab === 'projects') {
+                await deleteProject(appUser!.id!, itemId);
+              } else if (tab === 'goals') {
+                await deleteGoal(appUser!.id!, itemId);
+              }
+              await loadInboxData();
             }}
           />
-
-          {/* 편집 모드 액션 바 */}
-          {isEditMode && (
-            <div className="mt-3 p-3 bg-base-100 rounded-lg flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-sm"
-                  checked={selectedIds.size === getCurrentTabItems().length && getCurrentTabItems().length > 0}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedIds(new Set(getCurrentTabItems().map(item => item.id)));
-                    } else {
-                      setSelectedIds(new Set());
-                    }
-                  }}
-                />
-                <span className="text-sm font-medium">전체 선택</span>
-              </label>
-
-              <div className="flex items-center gap-2">
-                {selectedIds.size > 0 && (
-                  <span className="badge badge-primary">
-                    {selectedIds.size}개 선택됨
-                  </span>
-                )}
-                <button
-                  onClick={handleBulkDelete}
-                  className="btn btn-error btn-sm rounded-full"
-                  disabled={selectedIds.size === 0}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  삭제
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 가이드 팝오버 */}
-          <InboxGuidePopover activeTab={activeTab} />
-
-          {/* 수집함 리스트 */}
-          <div className="mt-4">
-            {activeTab === 'todos' && (
-              <TodoInboxList
-                todos={todoInbox}
-                projects={projects}
-                notes={notes}
-                onRefresh={handleRefresh}
-                userId={appUser?.id || ''}
-                isEditMode={isEditMode}
-                selectedIds={selectedIds}
-                swipedItemId={swipedItemId}
-                onSelectionChange={handleSelectionChange}
-                onSwipe={setSwipedItemId}
-                onDeleteClick={handleDeleteClick}
-              />
-            )}
-            {activeTab === 'notes' && (
-              <NoteInboxList
-                notes={noteInbox}
-                areas={areas}
-                resources={resources}
-                projects={projects}
-                todos={[]} // TODO: Todo 타입 정리 후 todos 전달
-                allNotes={notes}  // 노트-노트 연결을 위한 전체 노트 목록
-                onRefresh={handleRefresh}
-                isEditMode={isEditMode}
-                selectedIds={selectedIds}
-                swipedItemId={swipedItemId}
-                onSelectionChange={handleSelectionChange}
-                onSwipe={setSwipedItemId}
-                onDeleteClick={handleDeleteClick}
-              />
-            )}
-            {activeTab === 'projects' && (
-              <ProjectInboxList
-                projects={projectInbox}
-                onProjectClick={handleProjectClick}
-                isEditMode={isEditMode}
-                selectedIds={selectedIds}
-                swipedItemId={swipedItemId}
-                onSelectionChange={handleSelectionChange}
-                onSwipe={setSwipedItemId}
-                onDeleteClick={handleDeleteClick}
-              />
-            )}
-            {activeTab === 'goals' && (
-              <GoalInboxList
-                goals={goalInbox}
-                onGoalClick={handleGoalClick}
-                isEditMode={isEditMode}
-                selectedIds={selectedIds}
-                swipedItemId={swipedItemId}
-                onSelectionChange={handleSelectionChange}
-                onSwipe={setSwipedItemId}
-                onDeleteClick={handleDeleteClick}
-              />
-            )}
-          </div>
         </section>
 
         {/* 구분선 */}
