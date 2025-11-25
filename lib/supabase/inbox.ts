@@ -78,6 +78,25 @@ export async function fetchPlanTodos(userId: string): Promise<any[]> {
 }
 
 /**
+ * 언젠가 할일 목록 조회 (todos 테이블 직접 조회)
+ * - clarification = 'someday'인 할일만 조회
+ */
+export async function fetchSomedayTodos(userId: string): Promise<any[]> {
+  console.log('📅 언젠가 할일 조회:', { userId });
+
+  try {
+    const path = `/todos?user_id=eq.${userId}&clarification=eq.someday&select=*,todo_projects(project_id)&order=created_at.desc`;
+    const todos = await fetchWithJWT(path);
+
+    console.log('✅ 언젠가 할일 조회 성공:', { count: todos?.length || 0 });
+    return todos || [];
+  } catch (error) {
+    console.error('❌ 언젠가 할일 조회 실패:', error);
+    return [];
+  }
+}
+
+/**
  * 수집함 노트 목록 조회 (영역/자원에 연결되지 않은 모든 notes)
  *
  * DB 레벨 필터링 조건:
