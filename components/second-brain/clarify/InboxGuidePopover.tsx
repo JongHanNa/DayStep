@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Info, Lock, Unlock } from 'lucide-react';
 import type { InboxTabType } from './InboxTabs';
 
@@ -288,7 +289,36 @@ const GUIDE_LABELS: Record<InboxTabType, string> = {
 export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [enableHoverOpen, setEnableHoverOpen] = useState(true);
+  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
+  const buttonRef = useRef<HTMLDivElement>(null);
   const guide = GUIDE_CONTENT[activeTab];
+
+  // 클라이언트 사이드 마운트 확인 (Portal용)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 팝오버 위치 계산
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const popoverWidth = Math.min(500, viewportWidth * 0.9);
+
+      // 좌측 위치 계산 (우측 경계 벗어남 방지)
+      let left = rect.left;
+      if (left + popoverWidth > viewportWidth - 16) {
+        left = viewportWidth - popoverWidth - 16;
+      }
+      left = Math.max(16, left);
+
+      // 상단 위치: 항상 버튼 바로 아래 (버튼을 가리지 않음)
+      const top = rect.bottom + 8;
+
+      setPopoverPosition({ top, left });
+    }
+  }, [isOpen]);
 
   // localStorage에서 호버 설정 불러오기
   useEffect(() => {
@@ -320,7 +350,7 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
   }, [isOpen]);
 
   return (
-    <div className="relative inline-block my-3">
+    <div className="inline-block my-3" ref={buttonRef}>
       <div className="flex items-center gap-2">
         {/* 가이드 버튼 */}
         <button
@@ -355,8 +385,8 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
         </button>
       </div>
 
-      {/* 팝오버 */}
-      {isOpen && (
+      {/* 팝오버 - Portal로 body에 렌더링 */}
+      {mounted && isOpen && createPortal(
         <>
           {/* 배경 오버레이 - 클릭 시 닫기 */}
           <div
@@ -367,7 +397,8 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
 
           {/* 팝오버 콘텐츠 */}
           <div
-            className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-base-300 z-50 w-[90vw] max-w-[500px] max-sm:w-[90vw] md:w-[500px]"
+            style={{ top: popoverPosition.top, left: popoverPosition.left }}
+            className="fixed bg-white dark:bg-base-100 rounded-lg shadow-xl border border-base-300 z-50 w-[90vw] max-w-[500px]"
             role="dialog"
             aria-modal="true"
             aria-labelledby="guide-title"
@@ -385,7 +416,8 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
