@@ -1,5 +1,14 @@
 'use client';
 
+// Capacitor SDK Window 타입 확장
+declare global {
+  interface Window {
+    Capacitor?: {
+      isNativePlatform?: () => boolean;
+    };
+  }
+}
+
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useRef, useState } from 'react';
@@ -31,6 +40,9 @@ const ScrollProgressSection = dynamic(
   { ssr: false }
 );
 
+// 🔑 컴포넌트 외부 상수 (리렌더링 시 참조 변경 방지)
+const FEATURES = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
+
 export default function LandingPage() {
   // 🔍 디버깅: 렌더링 시점 추적
   console.log('🔍 [DEBUG] page.tsx 렌더링', {
@@ -47,8 +59,7 @@ export default function LandingPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const hasRedirectedRef = useRef(false);
 
-  // 회전하는 기능 텍스트 상태
-  const features = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
+  // 회전하는 기능 텍스트 상태 (FEATURES 상수는 컴포넌트 외부에 정의됨)
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
 
   // Framer Motion variants
@@ -57,27 +68,52 @@ export default function LandingPage() {
   const viewportOptions = getViewportOptions(true, 0.3);
   const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
 
-  // 3초마다 기능 텍스트 회전
+  // 3초마다 기능 텍스트 회전 (FEATURES 상수 사용으로 의존성 배열 비움)
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentFeatureIndex((prev) => (prev + 1) % features.length);
+      setCurrentFeatureIndex((prev) => (prev + 1) % FEATURES.length);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [features.length]);
+  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
 
-  // 🚀 1단계: 하이드레이션 완료 후 Capacitor 환경 감지
+  // 🚀 1단계: 하이드레이션 완료 후 Capacitor 환경 감지 (이중 감지 + 재시도)
   useEffect(() => {
-    const checkCapacitor = typeof window !== 'undefined' &&
-                          window.location.protocol === 'capacitor:';
-    setIsCapacitor(checkCapacitor);
+    const detectCapacitor = async () => {
+      // 1차: Capacitor SDK 확인 (가장 신뢰성 높음)
+      if (typeof window !== 'undefined' && window.Capacitor) {
+        const sdkResult = window.Capacitor.isNativePlatform?.() ?? false;
+        if (sdkResult) {
+          console.log('📱 Capacitor SDK로 환경 감지 성공');
+          setIsCapacitor(true);
+          return;
+        }
+      }
 
-    if (checkCapacitor) {
-      console.log('📱 Capacitor 환경 감지: capacitor:');
-    }
+      // 2차: URL 프로토콜 확인 (폴백)
+      if (typeof window !== 'undefined' && window.location.protocol === 'capacitor:') {
+        console.log('📱 URL 프로토콜로 환경 감지 성공');
+        setIsCapacitor(true);
+        return;
+      }
+
+      // 3차: 재시도 (SDK 초기화 대기 - WebView 크래시 복구 시 필요)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (typeof window !== 'undefined') {
+        const retrySDK = window.Capacitor?.isNativePlatform?.() ?? false;
+        const retryProtocol = window.location.protocol === 'capacitor:';
+
+        if (retrySDK || retryProtocol) {
+          console.log('📱 재시도 후 Capacitor 환경 감지 성공', { retrySDK, retryProtocol });
+          setIsCapacitor(true);
+        }
+      }
+    };
+
+    detectCapacitor();
   }, []); // 빈 배열로 한 번만 실행
 
-  // 🔍 디버깅: 하이드레이션 완료 후 상태 추적
+  // 🔍 디버깅: 하이드레이션 완료 후 상태 추적 (Capacitor SDK 상태 포함)
   useEffect(() => {
     console.log('🔍 [DEBUG] 하이드레이션 완료', {
       isCapacitor,
@@ -85,6 +121,10 @@ export default function LandingPage() {
       loading,
       isAuthenticated,
       hasRedirected: hasRedirectedRef.current,
+      // Capacitor SDK 상태 추가
+      hasCapacitorSDK: typeof window !== 'undefined' && !!window.Capacitor,
+      sdkResult: typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.(),
+      protocol: typeof window !== 'undefined' ? window.location.protocol : 'server',
       location: typeof window !== 'undefined' ? window.location.href : 'unknown',
     });
   }, [isCapacitor, isRedirecting, loading, isAuthenticated]);
@@ -238,7 +278,7 @@ export default function LandingPage() {
                     exit="exit"
                     className="text-white text-6xl sm:text-7xl"
                   >
-                    {features[currentFeatureIndex]}
+                    {FEATURES[currentFeatureIndex]}
                   </motion.span>
                 </AnimatePresence>
               </div>
