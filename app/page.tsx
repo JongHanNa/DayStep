@@ -177,53 +177,55 @@ export default function LandingPage() {
           ? lastRoute
           : '/second-brain/areas';
 
-        // 🔑 현재 경로 체크 (WebView 크래시 후 이미 목표 페이지에 있을 수 있음)
-        const currentPath = window.location.pathname;
+        // 🔑 Trailing slash 정규화 (WebView 크래시 후 URL에 trailing slash가 붙을 수 있음)
+        const currentPath = (window.location.pathname.replace(/\/$/, '') || '/');
+        const normalizedTarget = (targetRoute.replace(/\/$/, '') || '/');
 
-        if (currentPath !== targetRoute) {
+        if (currentPath !== normalizedTarget) {
           // 다른 페이지에 있으면 리다이렉트 실행
-          console.log(`📍 [Capacitor] 페이지로 이동: ${currentPath} → ${targetRoute}`);
-          router.replace(targetRoute);
+          console.log(`📍 [Capacitor] 페이지로 이동: ${currentPath} → ${normalizedTarget}`);
+          router.replace(normalizedTarget);
 
-          // 🔍 디버깅: 네비게이션 성공 확인
+          // 🔒 안전장치: 2초 후에도 네비게이션 실패 시 로딩 해제
           setTimeout(() => {
-            console.log('🔍 [DEBUG] 네비게이션 후 상태', {
-              currentPath: window.location.pathname,
-              targetRoute,
-              navigationSuccess: window.location.pathname === targetRoute,
-            });
-          }, 100);
+            const afterPath = (window.location.pathname.replace(/\/$/, '') || '/');
+            if (afterPath !== normalizedTarget) {
+              console.warn('⚠️ [Capacitor] 네비게이션 실패 - 로딩 해제', {
+                afterPath,
+                normalizedTarget,
+              });
+              setIsRedirecting(false);
+            }
+          }, 2000);
         } else {
           // 이미 목표 페이지에 있으면 로딩만 해제
           console.log(`✅ [Capacitor] 이미 목표 페이지에 있음 - 리다이렉트 스킵: ${currentPath}`);
           setIsRedirecting(false);
-
-          // 🔍 디버깅: 스킵 확인
-          console.log('🔍 [DEBUG] 리다이렉트 스킵됨', {
-            currentPath,
-            targetRoute,
-            alreadyOnTargetPage: true,
-          });
         }
       })
       .catch((error) => {
         console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
 
-        const currentPath = window.location.pathname;
+        // 🔑 Trailing slash 정규화
+        const currentPath = (window.location.pathname.replace(/\/$/, '') || '/');
         const fallbackRoute = '/second-brain/areas';
 
         if (currentPath !== fallbackRoute) {
           // Fallback: Areas 페이지로 이동
+          console.log(`📍 [Capacitor] 폴백 페이지로 이동: ${currentPath} → ${fallbackRoute}`);
           router.replace(fallbackRoute);
 
-          // 🔍 디버깅: 폴백 네비게이션 확인
+          // 🔒 안전장치: 2초 후에도 네비게이션 실패 시 로딩 해제
           setTimeout(() => {
-            console.log('🔍 [DEBUG] 폴백 네비게이션 후 상태', {
-              currentPath: window.location.pathname,
-              targetRoute: fallbackRoute,
-              navigationSuccess: window.location.pathname === fallbackRoute,
-            });
-          }, 100);
+            const afterPath = (window.location.pathname.replace(/\/$/, '') || '/');
+            if (afterPath !== fallbackRoute) {
+              console.warn('⚠️ [Capacitor] 폴백 네비게이션 실패 - 로딩 해제', {
+                afterPath,
+                fallbackRoute,
+              });
+              setIsRedirecting(false);
+            }
+          }, 2000);
         } else {
           // 이미 Areas 페이지에 있으면 로딩만 해제
           console.log(`✅ [Capacitor] 폴백 페이지에 이미 있음 - 리다이렉트 스킵: ${currentPath}`);
