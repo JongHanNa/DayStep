@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useReviewStore } from '@/lib/stores/reviewStore';
 import { useAuth } from '@/app/context/AuthContext';
-import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
@@ -11,7 +10,7 @@ import WeeklyCalendar from '@/components/shared/WeeklyCalendar';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import type { InboxItem } from '@/types/second-brain';
-import { updateInboxTodo } from '@/lib/supabase/inbox';
+import { updateInboxTodo, fetchPlanTodos } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { linkProjectNote } from '@/lib/supabase/project-notes';
@@ -65,14 +64,51 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     refreshTab,
     setRefreshTab,
   } = useReviewStore();
-  const { inboxItems, fetchInboxItems } = useInboxStore();
   const { projects, createProject, updateProject: updateProjectStore, deleteProject } = useProjectStore();
   const { goals } = useGoalStore();
   const { notes, createNote, updateNote, deleteNote } = useNoteStore();
 
+  // 갱신하기 섹션 전용 로컬 상태 (PlanTodos - 명료화 완료된 할일 포함)
+  const [refreshItems, setRefreshItems] = useState<InboxItem[]>([]);
+
   // TodoEditModal 상태
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
   const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
+
+  // 갱신하기 섹션용 데이터 로드 함수 (재사용 가능)
+  const loadRefreshData = async () => {
+    if (!user) return;
+    try {
+      const todos = await fetchPlanTodos(user.id);
+      // todos 데이터를 InboxItem 형식으로 변환
+      const items: InboxItem[] = todos.map((todo: any) => ({
+        id: todo.id,
+        user_id: todo.user_id,
+        content: todo.title,
+        status: 'inbox',
+        item_type: 'todo' as const,
+        clarification: todo.clarification || '',
+        scheduled_date: todo.start_time || undefined,
+        schedule_type: todo.schedule_type || 'none',
+        is_highlight: todo.is_today_highlight || false,
+        is_completed: todo.completed || false,
+        next_action_status: '',
+        next_action_context_ids: todo.next_action_context_ids || [],
+        recurrence_pattern: todo.recurrence_pattern || 'none',
+        project_id: todo.todo_projects?.[0]?.project_id || undefined,
+        created_at: todo.created_at,
+        updated_at: todo.updated_at,
+      }));
+      setRefreshItems(items);
+    } catch (error) {
+      console.error('갱신하기 데이터 로드 실패:', error);
+    }
+  };
+
+  // 초기 데이터 로드
+  useEffect(() => {
+    loadRefreshData();
+  }, [user]);
 
   // 체크 상태 확인
   const isChecked = (itemId: string) => {
@@ -93,7 +129,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
 
   // 할일 클릭 핸들러 (주간 달력에서 사용)
   const handleTodoClick = (todo: InboxItem) => {
-    const latestTodo = inboxItems.find((item) => item.id === todo.id);
+    const latestTodo = refreshItems.find((item) => item.id === todo.id);
     const todoToEdit = latestTodo || todo;
 
     setEditingTodo(todoToEdit);
@@ -135,7 +171,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
         schedule_type: updatedTodo.scheduleType,
       });
 
-      await fetchInboxItems(user.id);
+      await loadRefreshData();
       setEditingTodo(null);
       setTodoForm(null);
     } catch (error) {
@@ -202,7 +238,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     if (!editingTodo?.id || !user) return;
     try {
       await updateTodoProjects(editingTodo.id, projectIds, user.id);
-      await fetchInboxItems(user.id);
+      await loadRefreshData();
     } catch (error) {
       console.error('프로젝트 연결 저장 실패:', error);
       throw error;
@@ -214,24 +250,24 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     if (!editingTodo?.id || !user) return;
     try {
       await updateTodoNotes(editingTodo.id, noteIds, user.id);
-      await fetchInboxItems(user.id);
+      await loadRefreshData();
     } catch (error) {
       console.error('노트 연결 저장 실패:', error);
       throw error;
     }
   };
 
-  // 명료화 속성별 필터링
-  const nextActionTodos = inboxItems.filter(
+  // 명료화 속성별 필터링 (refreshItems 사용 - 명료화 완료된 할일 포함)
+  const nextActionTodos = refreshItems.filter(
     (item) => item.item_type === 'todo' && item.clarification === 'next_action'
   );
-  const scheduleTodos = inboxItems.filter(
+  const scheduleTodos = refreshItems.filter(
     (item) =>
       item.item_type === 'todo' &&
       (item.clarification === 'next_action' || item.clarification === 'schedule_clear') &&
       !item.is_completed
   );
-  const waitingTodos = inboxItems.filter(
+  const waitingTodos = refreshItems.filter(
     (item) => item.item_type === 'todo' && item.clarification === 'waiting'
   );
 
@@ -243,7 +279,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
 
   // 프로젝트 통계 계산 (연결된 할일 기반)
   const getProjectStats = (projectId: string) => {
-    const projectTodos = inboxItems.filter(
+    const projectTodos = refreshItems.filter(
       (item) => item.item_type === 'todo' && item.project_id === projectId
     );
     const completed = projectTodos.filter((todo) => todo.is_completed).length;
