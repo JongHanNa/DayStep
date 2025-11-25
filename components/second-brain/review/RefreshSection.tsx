@@ -268,7 +268,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
       {/* 갱신하기 체크리스트 */}
       <div className="p-4 bg-base-200 rounded-lg">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-semibold">아래 사항을 확인해 주세요.</h4>
+          <h4 className="text-sm font-semibold">내가 분류한 것들을 훑어 보면서 필요한 것들을 갱신해 주세요.</h4>
           <button
             onClick={handleResetRefresh}
             className="btn btn-ghost btn-xs rounded-full"
