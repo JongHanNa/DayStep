@@ -147,6 +147,9 @@ export default function CollapsibleNextActionSection({
   const handleDelete = async (contextId: string) => {
     if (!onDeleteContext) return;
 
+    // 삭제 확인 다이얼로그
+    if (!confirm('이 다음행동 상황을 삭제하시겠습니까?')) return;
+
     try {
       const success = await onDeleteContext(contextId);
       if (success) {
