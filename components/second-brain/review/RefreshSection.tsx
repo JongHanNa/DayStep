@@ -8,8 +8,13 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import WeeklyCalendar from '@/components/shared/WeeklyCalendar';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import type { InboxItem } from '@/types/second-brain';
+import type { Project, Goal } from '@/types/second-brain';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { updateInboxTodo, fetchPlanTodos } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
@@ -95,7 +100,9 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     setRefreshTab,
   } = useReviewStore();
   const { projects, createProject, updateProject: updateProjectStore, deleteProject } = useProjectStore();
-  const { goals } = useGoalStore();
+  const { goals, updateGoal, deleteGoal } = useGoalStore();
+  const { areas } = useAreaStore();
+  const { resources } = useResourceStore();
   const { notes, createNote, updateNote, deleteNote } = useNoteStore();
 
   // 갱신하기 섹션 전용 로컬 상태 (PlanTodos - 명료화 완료된 할일 포함)
@@ -104,6 +111,14 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
   // TodoEditModal 상태
   const [editingTodo, setEditingTodo] = useState<InboxItem | null>(null);
   const [todoForm, setTodoForm] = useState<TodoFormData | null>(null);
+
+  // 프로젝트 편집 모달 상태
+  const [editingProject, setEditingProject] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+
+  // 목표 편집 모달 상태
+  const [editingGoal, setEditingGoal] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
 
   // 갱신하기 섹션용 데이터 로드 함수 (재사용 가능)
   const loadRefreshData = async () => {
@@ -287,6 +302,46 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     }
   };
 
+  // 프로젝트 클릭 핸들러
+  const handleProjectClick = (project: Project) => {
+    let paraSelection = '';
+    if (project.area_resource_id) {
+      const isArea = areas.some((a) => a.id === project.area_resource_id);
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
+    }
+
+    setEditingProject({
+      ...project,
+      start_date: project.start_date?.split('T')[0],
+      end_date: project.end_date?.split('T')[0],
+      paraSelection,
+    });
+    setProjectDialogOpen(true);
+  };
+
+  // 목표 클릭 핸들러
+  const handleGoalClick = (goal: Goal) => {
+    let paraSelection = '';
+    if (goal.area_id) {
+      paraSelection = `area-${goal.area_id}`;
+    } else if (goal.resource_id) {
+      paraSelection = `resource-${goal.resource_id}`;
+    }
+
+    setEditingGoal({
+      ...goal,
+      start_date: goal.start_date?.split('T')[0],
+      end_date: goal.end_date?.split('T')[0],
+      paraSelection,
+      isNew: false,
+    });
+    setGoalDialogOpen(true);
+  };
+
   // 명료화 속성별 필터링 (refreshItems 사용 - 명료화 완료된 할일 포함)
   const nextActionTodos = refreshItems.filter(
     (item) => item.item_type === 'todo' && item.clarification === 'next_action'
@@ -391,7 +446,11 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
           {refreshTab === 'next_actions' && (
             <div className="space-y-2">
               {nextActionTodos.map((todo) => (
-                <div key={todo.id} className="p-3 bg-base-100 rounded-lg">
+                <div
+                  key={todo.id}
+                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleTodoClick(todo)}
+                >
                   <div className="font-medium">{todo.content}</div>
                   <div className="text-xs text-base-content/60 mt-1">
                     다음행동 상황 | 프로젝트: {getProjectName(todo.project_id)}
@@ -414,7 +473,11 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
           {refreshTab === 'schedules' && (
             <div className="space-y-2">
               {scheduleTodos.map((todo) => (
-                <div key={todo.id} className="p-3 bg-base-100 rounded-lg">
+                <div
+                  key={todo.id}
+                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleTodoClick(todo)}
+                >
                   <div className="font-medium">{todo.content}</div>
                   <div className="text-xs text-base-content/60 mt-1">
                     명료화: {getClarificationLabel(todo.clarification)} | 날짜: {formatScheduleDate(todo.scheduled_date)} | 프로젝트: {getProjectName(todo.project_id)}
@@ -434,7 +497,11 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                 activeProjects.map((project) => {
                   const stats = getProjectStats(project.id);
                   return (
-                    <div key={project.id} className="p-3 bg-base-100 rounded-lg">
+                    <div
+                      key={project.id}
+                      className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                      onClick={() => handleProjectClick(project)}
+                    >
                       <div className="font-medium">{project.title}</div>
                       <div className="text-xs text-base-content/60 mt-1">
                         상태: {getProjectStatusLabel(project.status)} | D-day: {getProjectDday(project)} |
@@ -451,7 +518,11 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
           {refreshTab === 'waiting' && (
             <div className="space-y-2">
               {waitingTodos.map((todo) => (
-                <div key={todo.id} className="p-3 bg-base-100 rounded-lg">
+                <div
+                  key={todo.id}
+                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleTodoClick(todo)}
+                >
                   <div className="font-medium">{todo.content}</div>
                   <div className="text-xs text-base-content/60 mt-1">
                     날짜: {formatScheduleDate(todo.scheduled_date)} | 프로젝트: {getProjectName(todo.project_id)}
@@ -471,7 +542,11 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                 activeGoals.map((goal) => {
                   const stats = getGoalStats(goal.id);
                   return (
-                    <div key={goal.id} className="p-3 bg-base-100 rounded-lg">
+                    <div
+                      key={goal.id}
+                      className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                      onClick={() => handleGoalClick(goal)}
+                    >
                       <div className="font-medium">{goal.title}</div>
                       <div className="text-xs text-base-content/60 mt-1">
                         {goal.year_goal ? '연간' : goal.quarter_goal ? '분기' : '기간'} |
@@ -510,6 +585,55 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
         userId={user?.id}
         onProjectImmediateSave={handleProjectImmediateSave}
         onNoteImmediateSave={handleNoteImmediateSave}
+      />
+
+      {/* 프로젝트 편집 모달 */}
+      <ProjectEditDialog
+        open={projectDialogOpen}
+        editingProject={editingProject}
+        onSave={async (projectData) => {
+          if (!user || !editingProject) return;
+          await updateProjectStore(user.id, editingProject.id, projectData);
+          setProjectDialogOpen(false);
+          setEditingProject(null);
+        }}
+        onCancel={() => {
+          setProjectDialogOpen(false);
+          setEditingProject(null);
+        }}
+        onDelete={async (project) => {
+          if (!user) return;
+          await deleteProject(user.id, project.id);
+          setProjectDialogOpen(false);
+          setEditingProject(null);
+        }}
+        onProjectChange={setEditingProject}
+      />
+
+      {/* 목표 편집 모달 */}
+      <GoalEditDialog
+        open={goalDialogOpen}
+        editingGoal={editingGoal}
+        areas={areas}
+        resources={resources}
+        projects={projects}
+        onSave={async (goalData, area_id, resource_id) => {
+          if (!user || !editingGoal) return;
+          await updateGoal(user.id, editingGoal.id, { ...goalData, area_id, resource_id });
+          setGoalDialogOpen(false);
+          setEditingGoal(null);
+        }}
+        onCancel={() => {
+          setGoalDialogOpen(false);
+          setEditingGoal(null);
+        }}
+        onDelete={async (goal) => {
+          if (!user) return;
+          await deleteGoal(user.id, goal.id);
+          setGoalDialogOpen(false);
+          setEditingGoal(null);
+        }}
+        onGoalChange={setEditingGoal}
       />
     </div>
   );
