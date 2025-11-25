@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
@@ -14,7 +14,7 @@ import AddSection from '@/components/second-brain/review/AddSection';
 
 export default function ReviewPage() {
   const { user } = useAuth();
-  const { fetchChecklists, fetchStates, resetAllChecklists } = useReviewStore();
+  const { fetchChecklists, fetchStates } = useReviewStore();
   const { fetchInboxItems } = useInboxStore();
 
   const [expandedSection, setExpandedSection] = useState<'empty' | 'refresh' | 'add' | null>(
@@ -40,18 +40,6 @@ export default function ReviewPage() {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // 체크리스트 초기화
-  const handleReset = async () => {
-    if (!user) return;
-    if (!confirm('모든 체크리스트를 초기화하시겠습니까?')) return;
-
-    try {
-      await resetAllChecklists(user.id);
-    } catch (error) {
-      console.error('Failed to reset checklists:', error);
-    }
-  };
-
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-base-200 pb-20">
@@ -62,19 +50,7 @@ export default function ReviewPage() {
               process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-base-content/70">주간/월간 점검을 진행하세요</p>
-              </div>
-              <button
-                onClick={handleReset}
-                className="btn btn-ghost btn-sm rounded-full"
-                title="체크리스트 초기화"
-              >
-                <RotateCcw className="w-4 h-4" />
-                리셋
-              </button>
-            </div>
+            <p className="text-sm text-base-content/70">주간/월간 점검을 진행하세요</p>
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import {
   fetchChecklistStates,
   updateChecklistState,
   resetChecklist,
+  resetChecklistBySection,
   type ReviewChecklistItem,
   type ReviewChecklistState,
 } from '@/lib/supabase/review';
@@ -32,6 +33,7 @@ interface ReviewStore {
   addChecklistItem: (userId: string, section: 'empty' | 'refresh', label: string) => Promise<void>;
   removeChecklistItem: (userId: string, itemId: string) => Promise<void>;
   resetAllChecklists: (userId: string) => Promise<void>;
+  resetSectionChecklists: (userId: string, section: 'empty' | 'refresh') => Promise<void>;
   setRefreshTab: (tab: ReviewStore['refreshTab']) => void;
   setAddTab: (tab: ReviewStore['addTab']) => void;
 }
@@ -157,6 +159,39 @@ export const useReviewStore = create<ReviewStore>((set, get) => ({
       set({ checklistStates: new Map() });
     } catch (error) {
       console.error('resetAllChecklists failed:', error);
+      throw error;
+    }
+  },
+
+  // Reset checklists by section
+  resetSectionChecklists: async (userId: string, section: 'empty' | 'refresh') => {
+    try {
+      const { checklistStates, emptyChecklists, refreshChecklists } = get();
+
+      // 해당 섹션의 item ID들
+      const sectionItems = section === 'empty' ? emptyChecklists : refreshChecklists;
+      const sectionItemIds = new Set(sectionItems.map((item) => item.id));
+
+      // DB 업데이트
+      await resetChecklistBySection(userId, section);
+
+      // Optimistic update: 해당 섹션의 상태만 초기화
+      const updatedStates = new Map(checklistStates);
+      sectionItemIds.forEach((itemId) => {
+        const currentState = updatedStates.get(itemId);
+        if (currentState) {
+          updatedStates.set(itemId, {
+            ...currentState,
+            is_checked: false,
+            checked_at: null,
+            reset_at: new Date().toISOString(),
+          });
+        }
+      });
+
+      set({ checklistStates: updatedStates });
+    } catch (error) {
+      console.error('resetSectionChecklists failed:', error);
       throw error;
     }
   },

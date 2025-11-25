@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, RotateCcw } from 'lucide-react';
 import { useReviewStore } from '@/lib/stores/reviewStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
@@ -28,6 +28,7 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
     toggleChecklistItem,
     addChecklistItem,
     removeChecklistItem,
+    resetSectionChecklists,
   } = useReviewStore();
 
   const { inboxItems, fetchInboxItems, deleteInboxItem } = useInboxStore();
@@ -93,6 +94,18 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
       await removeChecklistItem(user.id, itemId);
     } catch (error) {
       console.error('Failed to remove source:', error);
+    }
+  };
+
+  // 비우기 섹션 리셋
+  const handleResetEmpty = async () => {
+    if (!user) return;
+    if (!confirm('비우기 체크리스트를 초기화하시겠습니까?')) return;
+
+    try {
+      await resetSectionChecklists(user.id, 'empty');
+    } catch (error) {
+      console.error('Failed to reset empty checklists:', error);
     }
   };
 
@@ -267,10 +280,20 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
     <div className="space-y-4">
       {/* 수집 매체 체크리스트 */}
       <div className="p-4 bg-base-200 rounded-lg">
-        <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <span className="text-lg">📥</span>
-          어디부터 점검해볼까요
-        </h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <span className="text-lg">📥</span>
+            어디부터 점검해볼까요
+          </h4>
+          <button
+            onClick={handleResetEmpty}
+            className="btn btn-ghost btn-xs rounded-full"
+            title="체크리스트 초기화"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            리셋
+          </button>
+        </div>
 
         {/* 체크박스 그리드 (3컬럼) */}
         <div className="grid grid-cols-3 gap-3">

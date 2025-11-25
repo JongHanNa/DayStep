@@ -15,7 +15,7 @@ import { updateInboxTodo } from '@/lib/supabase/inbox';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { linkProjectNote } from '@/lib/supabase/project-notes';
-import { Calendar, CheckSquare, Clock, Folder, Pause, Target } from 'lucide-react';
+import { Calendar, CheckSquare, Clock, Folder, Pause, Target, RotateCcw } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 
 interface RefreshSectionProps {
@@ -57,8 +57,14 @@ const getGoalDday = (goal: { end_date?: string | null }): string => {
 
 export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
   const { user } = useAuth();
-  const { refreshChecklists, checklistStates, toggleChecklistItem, refreshTab, setRefreshTab } =
-    useReviewStore();
+  const {
+    refreshChecklists,
+    checklistStates,
+    toggleChecklistItem,
+    resetSectionChecklists,
+    refreshTab,
+    setRefreshTab,
+  } = useReviewStore();
   const { inboxItems, fetchInboxItems } = useInboxStore();
   const { projects, createProject, updateProject: updateProjectStore, deleteProject } = useProjectStore();
   const { goals } = useGoalStore();
@@ -71,6 +77,18 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
   // 체크 상태 확인
   const isChecked = (itemId: string) => {
     return checklistStates.get(itemId)?.is_checked || false;
+  };
+
+  // 갱신하기 섹션 리셋
+  const handleResetRefresh = async () => {
+    if (!user) return;
+    if (!confirm('갱신하기 체크리스트를 초기화하시겠습니까?')) return;
+
+    try {
+      await resetSectionChecklists(user.id, 'refresh');
+    } catch (error) {
+      console.error('Failed to reset refresh checklists:', error);
+    }
   };
 
   // 할일 클릭 핸들러 (주간 달력에서 사용)
@@ -249,7 +267,17 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
     <div className="space-y-4">
       {/* 갱신하기 체크리스트 */}
       <div className="p-4 bg-base-200 rounded-lg">
-        <h4 className="text-sm font-semibold mb-3">아래 사항을 확인해 주세요.</h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold">아래 사항을 확인해 주세요.</h4>
+          <button
+            onClick={handleResetRefresh}
+            className="btn btn-ghost btn-xs rounded-full"
+            title="체크리스트 초기화"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            리셋
+          </button>
+        </div>
 
         {/* 2컬럼 체크박스 */}
         <div className="grid grid-cols-2 gap-3">

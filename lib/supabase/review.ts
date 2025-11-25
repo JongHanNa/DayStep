@@ -266,6 +266,51 @@ export async function resetChecklist(userId: string): Promise<void> {
 }
 
 /**
+ * 섹션별 체크리스트 초기화
+ */
+export async function resetChecklistBySection(
+  userId: string,
+  section: 'empty' | 'refresh'
+): Promise<void> {
+  try {
+    // 1. 해당 섹션의 checklist_item_id들 조회
+    const itemConditions: QueryCondition[] = [
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'section', operator: 'eq', value: section },
+    ];
+
+    const items = await queryRLSTableWithJWT('review_checklist_items', itemConditions, {
+      select: 'id',
+    });
+
+    if (!items || items.length === 0) {
+      return;
+    }
+
+    const itemIds = items.map((item: { id: string }) => item.id);
+
+    // 2. 해당 item_id들의 상태를 초기화
+    const resetAt = new Date().toISOString();
+
+    for (const itemId of itemIds) {
+      const stateConditions: QueryCondition[] = [
+        { column: 'user_id', operator: 'eq', value: userId },
+        { column: 'checklist_item_id', operator: 'eq', value: itemId },
+      ];
+
+      await updateWithJWT('review_checklist_state', stateConditions, {
+        is_checked: false,
+        checked_at: null,
+        reset_at: resetAt,
+      });
+    }
+  } catch (error) {
+    console.error('resetChecklistBySection failed:', error);
+    throw error;
+  }
+}
+
+/**
  * 명료화 속성별 할일 조회 (점검 페이지 전용)
  */
 export async function fetchReviewTodos(
