@@ -334,7 +334,8 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
       </div>
 
       {/* 수집함 비우기 섹션 (명료화 페이지와 동일) */}
-      <InboxListSection
+      <div className="bg-base-200 rounded-lg p-4">
+        <InboxListSection
         todos={todos}
         noteItems={noteItems}
         projects={projectItems}
@@ -358,6 +359,7 @@ export default function EmptySection({ isExpanded }: EmptySectionProps) {
           handleRefresh();
         }}
       />
+      </div>
 
       {/* 프로젝트 편집 모달 */}
       <ProjectEditDialog
