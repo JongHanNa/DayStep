@@ -448,7 +448,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
               {nextActionTodos.map((todo) => (
                 <div
                   key={todo.id}
-                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300 transition-colors"
                   onClick={() => handleTodoClick(todo)}
                 >
                   <div className="font-medium">{todo.content}</div>
@@ -475,7 +475,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
               {scheduleTodos.map((todo) => (
                 <div
                   key={todo.id}
-                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300 transition-colors"
                   onClick={() => handleTodoClick(todo)}
                 >
                   <div className="font-medium">{todo.content}</div>
@@ -499,7 +499,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                   return (
                     <div
                       key={project.id}
-                      className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                      className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300 transition-colors"
                       onClick={() => handleProjectClick(project)}
                     >
                       <div className="font-medium">{project.title}</div>
@@ -520,7 +520,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
               {waitingTodos.map((todo) => (
                 <div
                   key={todo.id}
-                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                  className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300 transition-colors"
                   onClick={() => handleTodoClick(todo)}
                 >
                   <div className="font-medium">{todo.content}</div>
@@ -544,7 +544,7 @@ export default function RefreshSection({ isExpanded }: RefreshSectionProps) {
                   return (
                     <div
                       key={goal.id}
-                      className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-200 transition-colors"
+                      className="p-3 bg-base-100 rounded-lg cursor-pointer hover:bg-base-300 transition-colors"
                       onClick={() => handleGoalClick(goal)}
                     >
                       <div className="font-medium">{goal.title}</div>
