@@ -560,3 +560,36 @@ export interface AreaResourceNoteCount {
   status: AreaResourceStatus;
   note_count: number;
 }
+
+// ============================================
+// Next Action Context Types (DB-based)
+// ============================================
+
+/**
+ * 다음행동상황 항목 (사용자별 DB 저장)
+ */
+export interface NextActionContextItem {
+  id: string;
+  user_id: string;
+  title: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * 다음행동상황 생성 입력
+ */
+export interface CreateNextActionContextInput {
+  title: string;
+  display_order?: number;
+}
+
+/**
+ * 다음행동상황 수정 입력
+ */
+export interface UpdateNextActionContextInput {
+  id: string;
+  title?: string;
+  display_order?: number;
+}

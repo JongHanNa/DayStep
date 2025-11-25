@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
-import type { RecurrencePattern } from '@/types';
+import type { RecurrencePattern, NextActionContextItem } from '@/types';
 import CollapsibleProjectSection from './CollapsibleProjectSection';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
 import CollapsibleNextActionSection from './CollapsibleNextActionSection';
@@ -15,6 +15,8 @@ import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
+import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
+import { updateTodoNextActionContextIds } from '@/lib/supabase/next-action-contexts';
 
 /**
  * 할일 폼 필드 타입
@@ -25,7 +27,8 @@ export interface TodoFormData {
   icon?: string; // 아이콘 키 (UnifiedIconKey)
   color?: string; // 색상 hex 값
   clarification?: string;
-  nextActionStatuses?: string[]; // 다중 선택
+  nextActionStatuses?: string[]; // 다중 선택 (레거시 - 영어 키)
+  nextActionContextIds?: string[]; // 다중 선택 (새로운 - UUID)
   scheduledDate?: Date;
   isHighlight: boolean;
   completed: boolean;
@@ -81,21 +84,8 @@ interface TodoFormFieldsProps {
   userId?: string;
   onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
+  onNextActionContextImmediateSave?: (contextIds: string[]) => Promise<void>;
 }
-
-// 다음행동상황 옵션
-const NEXT_ACTION_OPTIONS = [
-  '집중할 때',
-  '틈날 때',
-  '지칠 때',
-  '모바일 작업',
-  'PC 작업',
-  '집에서',
-  '밖에서',
-  '어디서나',
-  '사무실',
-  '나중에',
-];
 
 /**
  * 할일 입력 폼 필드 (재사용 컴포넌트)
@@ -127,7 +117,24 @@ export default function TodoFormFields({
   userId,
   onProjectImmediateSave,
   onNoteImmediateSave,
+  onNextActionContextImmediateSave,
 }: TodoFormFieldsProps) {
+  // 다음행동상황 스토어
+  const {
+    contexts: nextActionContexts,
+    loadContexts,
+    createContext,
+    updateContext,
+    deleteContext,
+  } = useNextActionContextStore();
+
+  // userId가 있으면 다음행동상황 목록 로드
+  useEffect(() => {
+    if (userId) {
+      loadContexts(userId);
+    }
+  }, [userId, loadContexts]);
+
   // 타이핑 효과를 위한 플레이스홀더 텍스트
   const placeholderTexts = [
     "예: 요구사항 정리",
@@ -158,12 +165,27 @@ export default function TodoFormFields({
     onChange({ ...todo, color });
   };
 
-  const toggleNextActionStatus = (status: string) => {
-    const currentStatuses = todo.nextActionStatuses || [];
-    const newStatuses = currentStatuses.includes(status)
-      ? currentStatuses.filter((s) => s !== status)
-      : [...currentStatuses, status];
-    onChange({ ...todo, nextActionStatuses: newStatuses });
+  // 다음행동상황 핸들러들
+  const handleNextActionContextCreate = async (title: string) => {
+    if (!userId) return null;
+    return await createContext(userId, title);
+  };
+
+  const handleNextActionContextUpdate = async (id: string, title: string) => {
+    return await updateContext(id, title);
+  };
+
+  const handleNextActionContextDelete = async (id: string) => {
+    return await deleteContext(id);
+  };
+
+  const handleNextActionContextImmediateSave = async (contextIds: string[]) => {
+    if (onNextActionContextImmediateSave) {
+      await onNextActionContextImmediateSave(contextIds);
+    } else if (todoId) {
+      // 기본 즉시 저장 로직
+      await updateTodoNextActionContextIds(todoId, contextIds);
+    }
   };
 
   return (
@@ -338,41 +360,21 @@ export default function TodoFormFields({
         </div>
       )}
 
-      {/* 다음행동상황 (다중 선택) */}
+      {/* 다음행동상황 (다중 선택) - DB 기반 */}
       {showNextActionStatus && todo.clarification === 'next_action' && (
         <div>
-          {/* 선택된 항목 뱃지 표시 */}
-          {todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {todo.nextActionStatuses.map(status => (
-                <div
-                  key={status}
-                  className="badge gap-2"
-                  style={{
-                    backgroundColor: todo.color || '#808080',
-                    color: '#ffffff',
-                    border: 'none'
-                  }}
-                >
-                  {status}
-                  <button
-                    type="button"
-                    onClick={() => toggleNextActionStatus(status)}
-                    className="hover:opacity-70 rounded-full p-0.5 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* CollapsibleNextActionSection 컴포넌트 */}
+          {/* CollapsibleNextActionSection 컴포넌트 - DB 기반 */}
           <CollapsibleNextActionSection
-            selectedStatuses={todo.nextActionStatuses || []}
-            onChange={(statuses) => onChange({ ...todo, nextActionStatuses: statuses })}
-            options={NEXT_ACTION_OPTIONS}
+            selectedContextIds={todo.nextActionContextIds || []}
+            allContexts={nextActionContexts}
+            onChange={(contextIds) => onChange({ ...todo, nextActionContextIds: contextIds })}
+            onCreateContext={handleNextActionContextCreate}
+            onUpdateContext={handleNextActionContextUpdate}
+            onDeleteContext={handleNextActionContextDelete}
             todoColor={todo.color || '#808080'}
+            todoId={todoId}
+            userId={userId}
+            onImmediateSave={handleNextActionContextImmediateSave}
           />
         </div>
       )}
