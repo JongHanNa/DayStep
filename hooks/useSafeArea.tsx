@@ -27,6 +27,20 @@ export function useSafeArea() {
   const [isSupported, setIsSupported] = useState(false);
 
   useEffect(() => {
+    // Capacitor 환경 감지 및 클래스 추가
+    const detectAndAddCapacitorClass = () => {
+      if (typeof window !== 'undefined') {
+        const isCapacitor = window.location.protocol === 'capacitor:' ||
+                            (window as any).Capacitor?.isNativePlatform?.();
+
+        if (isCapacitor) {
+          document.documentElement.classList.add('capacitor');
+        }
+      }
+    };
+
+    detectAndAddCapacitorClass();
+
     // Safe Area 지원 여부 감지
     const checkSafeAreaSupport = () => {
       // CSS env() 함수 지원 확인

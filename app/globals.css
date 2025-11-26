@@ -5,17 +5,23 @@
 /* 헤더 높이 CSS 변수 - 최상위 레벨에서 정의 */
 :root {
   --header-height: 56px; /* h-14 = 3.5rem = 56px */
-  --header-total-height: calc(56px + 52px); /* 모바일 웹: 108px (헤더 + safe-area-top 패딩) */
+  --header-total-height: 56px; /* 기본값: 일반 웹 브라우저 */
 }
 
-@media (min-width: 768px) {
+/* PWA standalone 모드: safe-area 적용 */
+@media (display-mode: standalone) {
   :root {
-    --header-total-height: 56px; /* 데스크톱 웹: 헤더만 */
+    --header-total-height: calc(56px + env(safe-area-inset-top, 0px));
   }
 }
 
+/* Capacitor 환경 - @layer 밖에서 정의 (높은 우선순위) */
 .capacitor {
   --header-total-height: calc(56px + 44px); /* 100px - iOS 노치 포함 */
+}
+
+.capacitor .safe-area-top {
+  padding-top: 44px !important; /* iOS 상태바 + 노치 */
 }
 
 /* 배터리 효율성 최적화 애니메이션 */
@@ -508,33 +514,23 @@ body {
     }
     
     .safe-area-top {
-      /* iOS 상태바(47px) + 안전 여백(5px) = 52px */
-      padding-top: max(52px, env(safe-area-inset-top));
+      padding-top: 0; /* 일반 브라우저: 패딩 없음 */
     }
-    
+
     .safe-area-bottom {
       padding-bottom: env(safe-area-inset-bottom);
       padding-bottom: max(12px, env(safe-area-inset-bottom));
     }
-    
-    /* Capacitor 환경에서 강제 적용 */
-    .capacitor .safe-area-top {
-      padding-top: 44px; /* iOS 상태바 + 노치 영역 */
-    }
-    
-    /* 레거시 iOS 대응 */
-    @media only screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) {
+
+    /* PWA standalone 모드: safe-area 적용 */
+    @media (display-mode: standalone) {
       .safe-area-top {
-        padding-top: 44px; /* iPhone X/XS */
+        padding-top: env(safe-area-inset-top, 0px);
       }
     }
-    
-    @media only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) {
-      .safe-area-top {
-        padding-top: 44px; /* iPhone XR */
-      }
-    }
-    
+
+    /* Capacitor 스타일은 @layer 밖 (파일 상단)에서 정의됨 */
+
     /* 하드웨어 가속 최적화 */
     .hardware-accelerated {
       transform: translateZ(0);

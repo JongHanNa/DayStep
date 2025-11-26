@@ -23,6 +23,10 @@ export function AppLifecycleHandler() {
 
     console.log('📱 Capacitor 환경 - AppLifecycleHandler 활성화');
 
+    // Capacitor 클래스 추가 (CSS 선택자 .capacitor .safe-area-top 활성화용)
+    document.documentElement.classList.add('capacitor');
+    console.log('🎨 Capacitor 클래스 추가됨 - safe-area-top 활성화');
+
     // Revenue Cat 초기화 (비동기 실행, 블로킹 없음)
     initializeRevenueCat()
       .then(() => {
