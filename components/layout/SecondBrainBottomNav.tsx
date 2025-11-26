@@ -20,7 +20,7 @@ export default function SecondBrainBottomNav() {
   }, [pathname, clearSelectedGroup]);
 
   // 네비게이션을 숨길 페이지 목록
-  const hiddenPaths = ['/', '/login'];
+  const hiddenPaths = ['/', '/login', '/landing'];
   const isOnboarding = pathname?.startsWith('/second-brain/onboarding');
   const isHiddenPath = hiddenPaths.includes(pathname || '');
 
