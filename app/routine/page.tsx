@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, Target, Layers, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
@@ -236,8 +235,6 @@ export default function RoutinePage() {
           </div>
         </div>
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

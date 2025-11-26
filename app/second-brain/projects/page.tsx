@@ -9,7 +9,6 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { Plus } from 'lucide-react';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import ProjectGoalSection from '@/components/second-brain/ProjectGoalSection';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import type { CreateProjectInput, UpdateProjectInput, Project } from '@/types/second-brain';
@@ -370,8 +369,6 @@ export default function ProjectsPage() {
           </Sheet.Container>
         </Sheet>
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

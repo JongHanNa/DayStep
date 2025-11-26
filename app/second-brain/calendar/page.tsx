@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, Plus, Star } from 'lucide-react';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import WeeklyCalendar from '@/components/shared/WeeklyCalendar';
@@ -631,8 +630,6 @@ export default function CalendarPage() {
             {renderCalendar()}
           </div>
 
-          {/* 하단 네비게이션 */}
-          <SecondBrainBottomNav />
 
           {/* 할일 편집 모달 */}
           <TodoEditModal

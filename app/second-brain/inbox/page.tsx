@@ -17,7 +17,6 @@ import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { updateNoteNotes } from '@/lib/supabase/note-notes';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { mapInboxItemToNoteForm } from '@/lib/helpers/noteDataMapper';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import SwipeableCard from '@/components/shared/SwipeableCard';
 import { Plus, Trash2, Edit3, X, Boxes } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -767,8 +766,6 @@ export default function InboxPage() {
         onTemplateSelect={handleTemplateSelect}
       />
 
-      {/* 하단 네비게이션 */}
-      <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
@@ -864,8 +863,6 @@ export default function GoalCompassPage() {
           </AccordionSection>
         </div>
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
 
         {/* 목표 편집 모달 */}
         {goalDialogOpen && editingGoal && (

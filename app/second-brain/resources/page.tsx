@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { Plus, Pencil, Lightbulb } from 'lucide-react';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateAreaResourceInput, AreaResource as Resource, CreateAreaInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -526,8 +525,6 @@ export default function ResourcesPage() {
         </dialog>
       )}
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

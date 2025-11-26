@@ -5,6 +5,7 @@ import {
   DEFAULT_TODO_COMPLETION_SETTINGS,
   CompletionBehavior
 } from '@/types/settings';
+import { ColorTheme, DEFAULT_COLOR_THEME } from '@/lib/color-themes';
 
 export type TimeFormat = '12h' | '24h';
 export type FontFamily = 'system' | 'opendyslexic';
@@ -12,6 +13,8 @@ export type WordSpacing = number; // -0.5 ~ 0.5 범위의 em 단위
 export type LetterSpacing = number; // -0.2 ~ 0.3 범위의 em 단위
 export type FontSize = number; // 12 ~ 24 범위의 px 단위
 export type BubbleShape = 'circle' | 'square' | 'arrow'; // 타임라인 버블 아이콘 형태
+
+export type { ColorTheme } from '@/lib/color-themes';
 
 interface SettingsState {
   // 시간 표기법 설정
@@ -29,6 +32,9 @@ interface SettingsState {
   // 할일 완료 설정
   todoCompletion: TodoCompletionSettings;
 
+  // 컬러 테마 설정
+  colorTheme: ColorTheme;
+
   // Actions
   setTimeFormat: (format: TimeFormat) => void;
   setFontFamily: (family: FontFamily) => void;
@@ -39,6 +45,7 @@ interface SettingsState {
   setCompletionBehavior: (behavior: CompletionBehavior) => void;
   setShowCompletedItems: (show: boolean) => void;
   setCompletedItemsOpacity: (opacity: number) => void;
+  setColorTheme: (theme: ColorTheme) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -65,6 +72,9 @@ export const useSettingsStore = create<SettingsState>()(
 
         // 할일 완료 설정 기본값
         todoCompletion: DEFAULT_TODO_COMPLETION_SETTINGS,
+
+        // 기본값: Ocean Blue 테마
+        colorTheme: DEFAULT_COLOR_THEME,
 
         // Actions
         setTimeFormat: (format: TimeFormat) => {
@@ -126,6 +136,11 @@ export const useSettingsStore = create<SettingsState>()(
             }
           }));
         },
+
+        setColorTheme: (theme: ColorTheme) => {
+          console.log('⚙️ 컬러 테마 설정 변경:', theme);
+          set({ colorTheme: theme });
+        },
       }),
       {
         name: 'settings-store',
@@ -137,6 +152,7 @@ export const useSettingsStore = create<SettingsState>()(
           fontSize: state.fontSize,
           bubbleShape: state.bubbleShape,
           todoCompletion: state.todoCompletion,
+          colorTheme: state.colorTheme,
         }),
       }
     ),

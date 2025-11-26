@@ -102,8 +102,8 @@
   /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Dark 모드 (data-theme 필수) */
   --color-primary: oklch(47% 10% 264deg);
   --color-primary-content: oklch(100% 0% 68deg);
-  --color-base-200: #f8f8f8;
-  --color-base-300: oklch(96% 1% 289deg);
+  --color-base-200: #1e1e2e;
+  --color-base-300: #2d2d3d;
 
   /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
   --primary-foreground: 0 0% 100%; /* 흰색 HSL */
@@ -867,4 +867,108 @@ body h1, body h2, body h3, body h4, body h5, body h6, body p, body span, body di
 .dark ::-moz-selection {
   background-color: rgba(96, 165, 250, 0.3);
   color: inherit;
+}
+
+/* ========================================
+   컬러 테마 시스템 (9개 테마)
+   ======================================== */
+
+/* Luxury Gold */
+[data-color-theme="luxury-gold"] {
+  --color-primary: #D4AF37;
+  --color-primary-content: #1a1a1a;
+}
+
+/* Ocean Blue (기본값) */
+[data-color-theme="ocean-blue"] {
+  --color-primary: #3B82F6;
+  --color-primary-content: #ffffff;
+}
+
+/* Nature Green */
+[data-color-theme="nature-green"] {
+  --color-primary: #22C55E;
+  --color-primary-content: #ffffff;
+}
+
+/* Royal Purple */
+[data-color-theme="royal-purple"] {
+  --color-primary: #9333EA;
+  --color-primary-content: #ffffff;
+}
+
+/* Rose Pink */
+[data-color-theme="rose-pink"] {
+  --color-primary: #EC4899;
+  --color-primary-content: #ffffff;
+}
+
+/* Sunset Orange */
+[data-color-theme="sunset-orange"] {
+  --color-primary: #F97316;
+  --color-primary-content: #ffffff;
+}
+
+/* Aqua Teal */
+[data-color-theme="aqua-teal"] {
+  --color-primary: #14B8A6;
+  --color-primary-content: #ffffff;
+}
+
+/* Deep Indigo */
+[data-color-theme="deep-indigo"] {
+  --color-primary: #4F46E5;
+  --color-primary-content: #ffffff;
+}
+
+/* Vibrant Red */
+[data-color-theme="vibrant-red"] {
+  --color-primary: #EF4444;
+  --color-primary-content: #ffffff;
+}
+
+/* 다크모드에서 컬러 테마 밝기 조정 */
+[data-theme="dark"][data-color-theme="luxury-gold"] {
+  --color-primary: #F5D67B;
+  --color-primary-content: #1a1a1a;
+}
+
+[data-theme="dark"][data-color-theme="ocean-blue"] {
+  --color-primary: #60A5FA;
+  --color-primary-content: #1a1a1a;
+}
+
+[data-theme="dark"][data-color-theme="nature-green"] {
+  --color-primary: #4ADE80;
+  --color-primary-content: #1a1a1a;
+}
+
+[data-theme="dark"][data-color-theme="royal-purple"] {
+  --color-primary: #A855F7;
+  --color-primary-content: #ffffff;
+}
+
+[data-theme="dark"][data-color-theme="rose-pink"] {
+  --color-primary: #F472B6;
+  --color-primary-content: #1a1a1a;
+}
+
+[data-theme="dark"][data-color-theme="sunset-orange"] {
+  --color-primary: #FB923C;
+  --color-primary-content: #1a1a1a;
+}
+
+[data-theme="dark"][data-color-theme="aqua-teal"] {
+  --color-primary: #2DD4BF;
+  --color-primary-content: #1a1a1a;
+}
+
+[data-theme="dark"][data-color-theme="deep-indigo"] {
+  --color-primary: #818CF8;
+  --color-primary-content: #ffffff;
+}
+
+[data-theme="dark"][data-color-theme="vibrant-red"] {
+  --color-primary: #F87171;
+  --color-primary-content: #1a1a1a;
 }

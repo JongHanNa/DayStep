@@ -11,7 +11,6 @@ import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { fetchInboxProjects, fetchInboxGoals } from '@/lib/supabase/inbox';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { type InboxTabType } from '@/components/second-brain/clarify/InboxTabs';
 import InboxListSection from '@/components/second-brain/clarify/InboxListSection';
 import ActiveProjectsSection from '@/components/second-brain/clarify/ActiveProjectsSection';
@@ -439,8 +438,6 @@ export default function ClarifyPage() {
 
       </div>
 
-      {/* 하단 네비게이션 */}
-      <SecondBrainBottomNav />
 
       {/* 프로젝트 편집 모달 */}
       <ProjectEditDialog

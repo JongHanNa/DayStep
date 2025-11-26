@@ -9,7 +9,6 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { Archive } from 'lucide-react';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import ArchiveSection from '@/components/second-brain/ArchiveSection';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
@@ -394,8 +393,6 @@ export default function ArchivePage() {
           />
         </div>
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
 
         {/* 목표 편집 모달 */}
         {goalDialogOpen && editingGoal && (

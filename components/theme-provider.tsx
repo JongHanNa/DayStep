@@ -2,6 +2,7 @@
 
 import { ThemeContext, Theme, ThemeContextType } from '@/hooks/useTheme';
 import { useEffect, useState } from 'react';
+import { useSettingsStore } from '@/state/stores/settingsStore';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const colorTheme = useSettingsStore((state) => state.colorTheme);
 
   // 시스템 테마 감지
   const getSystemTheme = (): 'light' | 'dark' => {
@@ -49,6 +51,14 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
     root.classList.add(effectiveTheme);
     root.setAttribute('data-theme', effectiveTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
   }, [theme]);
+
+  // 컬러 테마 적용
+  useEffect(() => {
+    const root = document.documentElement;
+    if (colorTheme) {
+      root.setAttribute('data-color-theme', colorTheme);
+    }
+  }, [colorTheme]);
 
   // 시스템 테마 변경 감지
   useEffect(() => {

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useAuth } from '@/app/context/AuthContext';
 import { useReviewStore } from '@/lib/stores/reviewStore';
@@ -123,8 +122,6 @@ export default function ReviewPage() {
           </div>
         </div>
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

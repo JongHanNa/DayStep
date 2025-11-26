@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { DndContext } from '@dnd-kit/core';
 import { useDndKit } from '@/hooks/useDndKit';
@@ -526,8 +525,6 @@ export default function PlanPage() {
             </div>
           </div>
 
-          {/* 하단 네비게이션 */}
-          <SecondBrainBottomNav />
         </div>
 
         {/* 할일 편집 모달 */}

@@ -8,7 +8,6 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
 import AreaResourceSubTabs, { type SubTabType } from '@/components/second-brain/notes/AreaResourceSubTabs';
@@ -476,8 +475,6 @@ export default function NotesPage() {
           )}
         </div>
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
 
         {/* 노트 편집 모달 */}
         {editingNote && noteForm && (

@@ -6,7 +6,6 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { Plus, Lightbulb, Pencil } from 'lucide-react';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateAreaInput, AreaResource as Area, CreateResourceInput } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
@@ -512,8 +511,6 @@ export default function AreasPage() {
         </dialog>
       )}
 
-      {/* 하단 네비게이션 */}
-      <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

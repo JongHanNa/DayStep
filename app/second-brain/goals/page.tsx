@@ -6,7 +6,6 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { Plus, Pencil, X } from 'lucide-react';
-import SecondBrainBottomNav from '@/components/layout/SecondBrainBottomNav';
 import type { CreateGoalInput, Goal, Project } from '@/types/second-brain';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
@@ -515,8 +514,6 @@ export default function GoalsPage() {
         </dialog>
       )}
 
-        {/* 하단 네비게이션 */}
-        <SecondBrainBottomNav />
       </div>
     </AuthGuard>
   );

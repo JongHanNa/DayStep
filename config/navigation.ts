@@ -115,3 +115,25 @@ export const getActiveItemFromPath = (pathname: string, groupType: NavigationGro
   const group = NAVIGATION_GROUPS[groupType];
   return group.items.find(item => pathname.startsWith(item.href)) || null;
 };
+
+// 유틸리티 함수: 현재 경로에서 페이지 제목 가져오기
+export const getPageTitleFromPath = (pathname: string): string => {
+  // 모든 그룹의 아이템에서 현재 경로와 매칭되는 것을 찾음
+  for (const group of Object.values(NAVIGATION_GROUPS)) {
+    const item = group.items.find(item => pathname.startsWith(item.href));
+    if (item) return item.label;
+  }
+
+  // 특수 경로 처리
+  if (pathname === '/settings' || pathname.startsWith('/settings')) {
+    return '설정';
+  }
+  if (pathname === '/timeline') {
+    return '타임라인';
+  }
+  if (pathname === '/' || pathname === '/landing') {
+    return 'DayStep';
+  }
+
+  return 'DayStep';
+};
