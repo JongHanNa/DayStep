@@ -459,10 +459,13 @@ export default function PlanPage() {
 
     for (const item of overdueTodos) {
       await updateInboxItem(appUser.id, item.id, {
-        scheduled_date: undefined,
-        clarification: undefined,
+        scheduled_date: null as unknown as string,  // DB에 null 저장
+        clarification: 'none',
       });
     }
+
+    // UI 새로고침
+    await fetchPlanItems(appUser.id);
   };
 
   return (
