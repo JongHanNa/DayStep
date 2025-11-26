@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { AlertCircle, ArrowRight, Pause, Briefcase, RotateCcw } from 'lucide-react';
+import { AlertCircle, ArrowRight, Pause, Briefcase, RotateCcw, ChevronDown, Zap } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import type { InboxItem, Project } from '@/types/second-brain';
+import type { NextActionContextItem } from '@/types';
 
 interface UnscheduledTodosListProps {
   overdueTodos: InboxItem[];
@@ -12,6 +14,7 @@ interface UnscheduledTodosListProps {
   projectTodos: InboxItem[];
   waitingTodos: InboxItem[];
   projects: Project[];
+  nextActionContexts?: NextActionContextItem[];
   onResetOverdue: () => void;
   onTodoClick?: (item: InboxItem) => void;
 }
@@ -37,10 +40,25 @@ export default function UnscheduledTodosList({
   projectTodos,
   waitingTodos,
   projects,
+  nextActionContexts,
   onResetOverdue,
   onTodoClick,
 }: UnscheduledTodosListProps) {
   const [activeTab, setActiveTab] = useState<'overdue' | 'nextAction' | 'project' | 'waiting'>('overdue');
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+
+  // 프로젝트 아코디언 토글
+  const toggleProject = (projectId: string) => {
+    setExpandedProjects(prev => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  };
 
   // 진행 중인 프로젝트에 연결된 할일 수 계산
   const projectAssignedTodosCount = useMemo(() => {
@@ -140,7 +158,13 @@ export default function UnscheduledTodosList({
             ) : (
               <div className="space-y-2">
                 {nextActionTodos.map((todo) => (
-                  <DraggableTodoItem key={todo.id} todo={todo} showNextActionStatuses onTodoClick={onTodoClick} />
+                  <DraggableTodoItem
+                    key={todo.id}
+                    todo={todo}
+                    showNextActionStatuses
+                    nextActionContexts={nextActionContexts}
+                    onTodoClick={onTodoClick}
+                  />
                 ))}
               </div>
             )}
@@ -154,39 +178,60 @@ export default function UnscheduledTodosList({
                 진행 중인 프로젝트가 없습니다.
               </div>
             ) : (
-              <div className="space-y-4">
-                {groupTodosByProject(projectTodos).map((group) => (
-                  <div key={group.projectId || 'no-project'} className="space-y-2">
-                    {/* 그룹 헤더 */}
-                    <div className="flex items-center gap-2 sticky top-0 bg-base-200 py-2 -mx-4 px-4">
-                      <Briefcase className="w-4 h-4" style={{ color: '#808080' }} />
-                      <h3 className="font-semibold" style={{ color: '#808080' }}>
-                        {group.projectName}
-                      </h3>
-                      <span className="badge badge-sm bg-base-300" style={{ color: '#808080' }}>
-                        {group.todos.length}
-                      </span>
-                    </div>
-
-                    {/* 그룹 내 할일들 */}
-                    <div className="space-y-2">
-                      {group.todos.length === 0 ? (
-                        <div className="text-sm text-base-content/50 py-2 px-4">
-                          날짜 설정이 필요한 할일이 없습니다.
+              <div className="space-y-2">
+                {groupTodosByProject(projectTodos).map((group) => {
+                  const isExpanded = expandedProjects.has(group.projectId);
+                  return (
+                    <div key={group.projectId || 'no-project'}>
+                      {/* 클릭 가능한 아코디언 헤더 */}
+                      <button
+                        onClick={() => toggleProject(group.projectId)}
+                        className="w-full flex items-center justify-between gap-2 bg-base-300 py-2 px-3 rounded-lg hover:bg-base-300/80 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-4 h-4" style={{ color: '#808080' }} />
+                          <span className="font-semibold" style={{ color: '#808080' }}>
+                            {group.projectName}
+                          </span>
+                          <span className="badge badge-sm bg-base-200" style={{ color: '#808080' }}>
+                            {group.todos.length}
+                          </span>
                         </div>
-                      ) : (
-                        group.todos.map((todo) => (
-                          <DraggableTodoItem
-                            key={todo.id}
-                            todo={todo}
-                            showClarification
-                            onTodoClick={onTodoClick}
-                          />
-                        ))
-                      )}
+                        <ChevronDown
+                          className={cn(
+                            'w-4 h-4 text-base-content/50 transition-transform duration-200',
+                            isExpanded && 'rotate-180'
+                          )}
+                        />
+                      </button>
+
+                      {/* 콘텐츠 (접기/펼치기) */}
+                      <div
+                        className={cn(
+                          'overflow-hidden transition-all duration-200 ease-out',
+                          isExpanded ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0'
+                        )}
+                      >
+                        <div className="space-y-2 pl-2">
+                          {group.todos.length === 0 ? (
+                            <div className="text-sm text-base-content/50 py-2 px-2">
+                              날짜 설정이 필요한 할일이 없습니다.
+                            </div>
+                          ) : (
+                            group.todos.map((todo) => (
+                              <DraggableTodoItem
+                                key={todo.id}
+                                todo={todo}
+                                showClarification
+                                onTodoClick={onTodoClick}
+                              />
+                            ))
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -219,6 +264,7 @@ interface DraggableTodoItemProps {
   showNextActionStatuses?: boolean;
   showClarification?: boolean;
   showDate?: boolean;
+  nextActionContexts?: NextActionContextItem[];
   onTodoClick?: (item: InboxItem) => void;
 }
 
@@ -227,6 +273,7 @@ function DraggableTodoItem({
   showNextActionStatuses,
   showClarification,
   showDate,
+  nextActionContexts,
   onTodoClick
 }: DraggableTodoItemProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -268,6 +315,22 @@ function DraggableTodoItem({
             </p>
           )}
 
+          {/* 다음행동상황 badges */}
+          {showNextActionStatuses && nextActionContexts && todo.next_action_context_ids && todo.next_action_context_ids.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {todo.next_action_context_ids.map((contextId: string) => {
+                const context = nextActionContexts.find(c => c.id === contextId);
+                if (!context) return null;
+                return (
+                  <span key={contextId} className="inline-flex items-center gap-1 badge badge-sm bg-base-200">
+                    <Zap className="w-3 h-3" />
+                    {context.title}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          {/* 기존 next_action_status (레거시) */}
           {showNextActionStatuses && todo.next_action_status && (
             <div className="flex flex-wrap gap-1 mt-1">
               {todo.next_action_status.split(', ').map((status: string) => (

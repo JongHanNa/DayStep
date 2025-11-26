@@ -21,6 +21,7 @@ import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
 import type { Note, InboxItem, Project } from '@/types/second-brain';
 
 // 목 노트 데이터
@@ -110,6 +111,10 @@ export default function PlanPage() {
   const areas = useAreaStore(state => state.areas);
   const resources = useResourceStore(state => state.resources);
 
+  // 다음행동상황 스토어
+  const nextActionContexts = useNextActionContextStore(state => state.contexts);
+  const loadNextActionContexts = useNextActionContextStore(state => state.loadContexts);
+
   // 목데이터 상태
   const [notes, setNotes] = useState(MOCK_NOTES);
 
@@ -123,8 +128,9 @@ export default function PlanPage() {
     if (appUser?.id) {
       fetchProjects(appUser.id);
       fetchPlanItems(appUser.id);
+      loadNextActionContexts(appUser.id);
     }
-  }, [appUser?.id, fetchProjects, fetchPlanItems]);
+  }, [appUser?.id, fetchProjects, fetchPlanItems, loadNextActionContexts]);
 
   // 프로젝트 필터 상태
   const [projectFilterType, setProjectFilterType] = useState<'in_progress' | 'not_started'>('in_progress');
@@ -505,6 +511,7 @@ export default function PlanPage() {
                 projectTodos={projectTodos}
                 waitingTodos={waitingTodos}
                 projects={projects}
+                nextActionContexts={nextActionContexts}
                 onResetOverdue={handleResetOverdueTodos}
                 onTodoClick={handleTodoClick}
               />
