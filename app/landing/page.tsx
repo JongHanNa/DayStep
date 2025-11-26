@@ -57,12 +57,8 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 웹 환경: 인증된 사용자는 앱으로 리다이렉트
-  useEffect(() => {
-    if (!loading && isAuthenticated) {
-      router.replace('/second-brain/areas');
-    }
-  }, [isAuthenticated, loading, router]);
+  // 참고: 로그인 사용자도 랜딩 페이지에 머물 수 있음
+  // 루트 페이지(/)에서 비인증 사용자만 /landing으로 리다이렉트됨
 
   // "데스크톱에서 시작하기" 버튼 클릭 핸들러
   const handleGetStarted = () => {
