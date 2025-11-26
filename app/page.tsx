@@ -1,542 +1,73 @@
 'use client';
 
-// Capacitor SDK Window 타입 확장
-declare global {
-  interface Window {
-    Capacitor?: {
-      isNativePlatform?: () => boolean;
-    };
-  }
-}
-
-import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
-import { useEffect, useRef, useState } from 'react';
-import {
-  CheckCircle2,
-  Calendar,
-  Target,
-  Brain,
-  Sparkles,
-  ArrowRight,
-  Smartphone
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { staggerFadeInUpVariants, scaleFadeInVariants, getViewportOptions, getBidirectionalViewportOptions, rotatingTextVariants } from '@/lib/animations/scrollAnimations';
-import dynamic from 'next/dynamic';
-import LandingNav from '@/components/layout/LandingNav';
-import StatsSection from '@/components/landing/StatsSection';
-import SystemSection from '@/components/landing/SystemSection';
-import TestimonialsSection from '@/components/landing/TestimonialsSection';
-import FAQSection from '@/components/landing/FAQSection';
-import ScrollColorTransition from '@/components/landing/ScrollColorTransition';
-import { useToast } from '@/hooks/use-toast';
-import { getLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
-import { useNavigationStore } from '@/state/stores/navigationStore';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Network } from 'lucide-react';
 
-// Hydration 오류 방지를 위해 ScrollProgressSection을 클라이언트 전용 렌더링
-const ScrollProgressSection = dynamic(
-  () => import('@/components/landing/ScrollProgressSection'),
-  { ssr: false }
-);
-
-// 🔑 컴포넌트 외부 상수 (리렌더링 시 참조 변경 방지)
-const FEATURES = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
-
-export default function LandingPage() {
-  // 🔍 디버깅: 렌더링 시점 추적
-  console.log('🔍 [DEBUG] page.tsx 렌더링', {
-    timestamp: new Date().toISOString(),
-    isServer: typeof window === 'undefined',
-    protocol: typeof window !== 'undefined' ? window.location.protocol : 'server',
-  });
-
+/**
+ * 루트 페이지 (/)
+ *
+ * WebView 크래시 후에도 유용한 앱 페이지를 표시하여 사용자 경험 개선.
+ *
+ * 라우팅 흐름:
+ * - 인증됨: 그래프 뷰 대시보드 표시 (개발 예정)
+ * - 비인증 + 웹: /landing으로 리다이렉트 (마케팅 페이지)
+ * - 비인증 + Capacitor: /login으로 리다이렉트
+ */
+export default function HomePage() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
-
-  // 🔑 하이드레이션 안전한 Capacitor 감지 (서버/클라이언트 초기 렌더링 동일)
   const [isCapacitor, setIsCapacitor] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const hasRedirectedRef = useRef(false);
 
-  // 회전하는 기능 텍스트 상태 (FEATURES 상수는 컴포넌트 외부에 정의됨)
-  const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
-
-  // Framer Motion variants
-  const featureContainerVariants = staggerFadeInUpVariants(60, 0.15);
-  const ctaVariants = scaleFadeInVariants(0.9);
-  const viewportOptions = getViewportOptions(true, 0.3);
-  const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.3);
-
-  // 3초마다 기능 텍스트 회전 (FEATURES 상수 사용으로 의존성 배열 비움)
+  // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentFeatureIndex((prev) => (prev + 1) % FEATURES.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
-
-  // 🚀 1단계: 하이드레이션 완료 후 Capacitor 환경 감지 (이중 감지 + 재시도)
-  useEffect(() => {
-    const detectCapacitor = async () => {
-      // 1차: Capacitor SDK 확인 (가장 신뢰성 높음)
-      if (typeof window !== 'undefined' && window.Capacitor) {
-        const sdkResult = window.Capacitor.isNativePlatform?.() ?? false;
-        if (sdkResult) {
-          console.log('📱 Capacitor SDK로 환경 감지 성공');
-          setIsCapacitor(true);
-          return;
-        }
-      }
-
-      // 2차: URL 프로토콜 확인 (폴백)
-      if (typeof window !== 'undefined' && window.location.protocol === 'capacitor:') {
-        console.log('📱 URL 프로토콜로 환경 감지 성공');
-        setIsCapacitor(true);
-        return;
-      }
-
-      // 3차: 재시도 (SDK 초기화 대기 - WebView 크래시 복구 시 필요)
-      await new Promise(resolve => setTimeout(resolve, 100));
-      if (typeof window !== 'undefined') {
-        const retrySDK = window.Capacitor?.isNativePlatform?.() ?? false;
-        const retryProtocol = window.location.protocol === 'capacitor:';
-
-        if (retrySDK || retryProtocol) {
-          console.log('📱 재시도 후 Capacitor 환경 감지 성공', { retrySDK, retryProtocol });
-          setIsCapacitor(true);
-        }
-      }
-    };
-
-    detectCapacitor();
-  }, []); // 빈 배열로 한 번만 실행
-
-  // 🔍 디버깅: 하이드레이션 완료 후 상태 추적 (Capacitor SDK 상태 포함)
-  useEffect(() => {
-    console.log('🔍 [DEBUG] 하이드레이션 완료', {
-      isCapacitor,
-      isRedirecting,
-      loading,
-      isAuthenticated,
-      hasRedirected: hasRedirectedRef.current,
-      // Capacitor SDK 상태 추가
-      hasCapacitorSDK: typeof window !== 'undefined' && !!window.Capacitor,
-      sdkResult: typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.(),
-      protocol: typeof window !== 'undefined' ? window.location.protocol : 'server',
-      location: typeof window !== 'undefined' ? window.location.href : 'unknown',
-    });
-  }, [isCapacitor, isRedirecting, loading, isAuthenticated]);
-
-  // 🔄 웹 환경에서만 인증 체크 및 리다이렉트
-  useEffect(() => {
-    // Capacitor 환경은 아래 useEffect에서 처리
-    if (isCapacitor) return;
-
-    // 웹 환경: 로딩 완료 후 인증 상태에 따라 리다이렉트
-    if (!loading) {
-      if (isAuthenticated) {
-        console.log('✅ [웹] 인증됨 - Areas 페이지로 이동');
-        router.replace('/second-brain/areas');
-      }
-      // 비인증 상태는 랜딩 페이지 그대로 표시
+    if (typeof window !== 'undefined') {
+      const isNative = window.location.protocol === 'capacitor:';
+      setIsCapacitor(isNative);
     }
-  }, [isAuthenticated, loading, router, isCapacitor]);
+  }, []);
 
-  // "데스크톱에서 시작하기" 버튼 클릭 핸들러
-  const handleGetStarted = () => {
-    if (isAuthenticated) {
-      router.push('/second-brain/areas');
-    } else {
-      router.push('/login');
-    }
-  };
-
-  // "모바일 앱 다운로드" 버튼 클릭 핸들러
-  const handleMobileDownload = () => {
-    // TODO: 앱 다운로드 페이지 또는 모달 구현
-    alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
-  };
-
-  // 🚀 2단계: Capacitor 환경에서 마지막 방문 페이지로 리다이렉트
+  // 비인증 사용자 리다이렉트
   useEffect(() => {
-    // Capacitor 환경이 아니거나 이미 리다이렉트 했으면 종료
-    if (!isCapacitor || hasRedirectedRef.current) return;
+    if (loading) {
+      return;
+    }
 
-    // 리다이렉트 플래그 설정 (단 한 번만 실행 보장)
-    hasRedirectedRef.current = true;
-    setIsRedirecting(true);
+    if (!isAuthenticated) {
+      // 웹: /landing (마케팅 페이지)
+      // 모바일: /login (로그인 페이지)
+      router.replace(isCapacitor ? '/login' : '/landing');
+    }
+  }, [isAuthenticated, loading, isCapacitor, router]);
 
-    console.log('📱 Capacitor 환경 - 리다이렉트 시작');
-
-    // 마지막 방문 페이지 복원 시도 (WebView 크래시 후에도 빠른 복구)
-    getLastVisitedRoute()
-      .then((lastRoute) => {
-        const targetRoute = lastRoute && lastRoute !== '/'
-          ? lastRoute
-          : '/second-brain/areas';
-
-        // 🔑 핵심: app/page.tsx는 루트("/") 경로의 컴포넌트
-        // WebView 크래시 후 URL이 /second-brain/clarify/처럼 보여도
-        // 실제 렌더링되는 건 이 루트 컴포넌트이므로, targetRoute가 "/"가 아니면 항상 리다이렉트
-        if (targetRoute !== '/') {
-          // 루트가 아닌 다른 페이지로 이동 필요
-          console.log(`📍 [Capacitor] 페이지로 이동: / → ${targetRoute}`);
-          router.replace(targetRoute);
-
-          // 🔒 안전장치: 2초 후에도 페이지 전환 안 되면 로딩 해제
-          setTimeout(() => {
-            console.warn('⚠️ [Capacitor] 네비게이션 타임아웃 - 로딩 해제');
-            setIsRedirecting(false);
-          }, 2000);
-        } else {
-          // targetRoute가 루트면 이미 목표 페이지에 있음
-          console.log(`✅ [Capacitor] 이미 루트 페이지에 있음 - 리다이렉트 스킵`);
-          setIsRedirecting(false);
-        }
-      })
-      .catch((error) => {
-        console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
-
-        // 🔑 핵심: app/page.tsx는 루트("/") 경로이므로, 폴백 페이지로 항상 리다이렉트
-        const fallbackRoute = '/second-brain/areas';
-        console.log(`📍 [Capacitor] 폴백 페이지로 이동: / → ${fallbackRoute}`);
-        router.replace(fallbackRoute);
-
-        // 🔒 안전장치: 2초 후에도 페이지 전환 안 되면 로딩 해제
-        setTimeout(() => {
-          console.warn('⚠️ [Capacitor] 폴백 네비게이션 타임아웃 - 로딩 해제');
-          setIsRedirecting(false);
-        }, 2000);
-      });
-  }, [isCapacitor, loading, router]);
-
-  // 🎯 로딩 화면 표시 (하이드레이션 안전: 서버/클라이언트 동일 조건)
-  // - loading: 인증 상태 확인 중 (웹/모바일 공통)
-  // - isCapacitor && isRedirecting: Capacitor 환경에서 리다이렉트 진행 중
-  if (loading || (isCapacitor && isRedirecting)) {
+  // 로딩 중 또는 비인증 상태
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary mx-auto mb-6"></div>
-          <p className="text-lg text-base-content/70 font-medium">
-            {isCapacitor ? '페이지 복원 중...' : '로딩 중...'}
-          </p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary" />
       </div>
     );
   }
 
+  // 인증된 사용자: 그래프 뷰 대시보드 (개발 예정)
   return (
-    <div className="min-h-screen show-scrollbar">
-      {/* 스크롤 기반 배경색 전환 */}
-      <ScrollColorTransition />
-
-      {/* 상단 네비게이션 */}
-      <LandingNav />
-
-      {/* Hero Section */}
-      <section id="hero" className="relative min-h-screen flex items-center justify-center px-4 py-20 pt-32">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          {/* Logo/Title */}
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <div className="text-6xl sm:text-7xl font-semibold text-white flex flex-col items-center">
-              <span className="mb-2">하루를 체계적으로 관리하는</span>
-              <div className="relative min-h-[6rem] sm:min-h-[7.5rem] w-full flex items-center justify-center overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={currentFeatureIndex}
-                    variants={rotatingTextVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    className="text-white text-6xl sm:text-7xl"
-                  >
-                    {FEATURES[currentFeatureIndex]}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Description */}
-          <motion.p
-            className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            타임라인으로 하루를 시각화하고, Second Brain으로 생각을 정리하며,
-            목표를 향해 한 걸음씩 나아가세요.
-          </motion.p>
-
-          {/* Dual CTA Buttons */}
-          <motion.div
-            className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            <button
-              onClick={handleGetStarted}
-              className="btn btn-primary btn-lg gap-2 px-8 w-full sm:w-auto rounded-full"
-            >
-              데스크톱에서 시작하기
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleMobileDownload}
-              className="btn btn-soft btn-lg gap-2 px-8 w-full sm:w-auto rounded-full"
-            >
-              모바일 앱 다운로드
-              <Smartphone className="w-5 h-5" />
-            </button>
-          </motion.div>
-          <motion.p
-            className="text-sm text-white/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            iOS, Android 지원
-          </motion.p>
-
-          {/* Quick Stats */}
-          <motion.div
-            className="pt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 1 }}
-          >
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-white">간편</div>
-              <p className="text-sm text-white/80">직관적인 인터페이스</p>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-white">체계적</div>
-              <p className="text-sm text-white/80">Second Brain 시스템</p>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-white">효율적</div>
-              <p className="text-sm text-white/80">타임라인 뷰</p>
-            </div>
-          </motion.div>
+    <div className="min-h-screen flex items-center justify-center bg-base-100">
+      <div className="text-center space-y-6">
+        <div className="w-20 h-20 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center">
+          <Network className="w-10 h-10 text-primary" />
         </div>
-      </section>
-
-      {/* Stats Section */}
-      <StatsSection />
-
-      {/* Scroll Progress Section - 이미지 태그 모이는 효과 */}
-      <ScrollProgressSection />
-
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={bidirectionalViewportOptions}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-4xl font-bold text-white mb-4">
-              주요 기능
-            </h2>
-            <p className="text-lg text-white/90">
-              생산성을 높이는 강력한 도구들
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={featureContainerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={bidirectionalViewportOptions}
-          >
-            {/* Feature 1 */}
-            <motion.div
-              variants={featureContainerVariants.item}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-base-content">
-                타임라인 뷰
-              </h3>
-              <p className="text-base-content/70">
-                하루 일정을 시각적으로 관리하고 시간대별로 할일을 배치하세요.
-              </p>
-            </motion.div>
-
-            {/* Feature 2 */}
-            <motion.div
-              variants={featureContainerVariants.item}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
-                <Brain className="w-6 h-6 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold text-base-content">
-                Second Brain
-              </h3>
-              <p className="text-base-content/70">
-                생각을 수집하고, 명료화하며, 체계적으로 정리하는 시스템.
-              </p>
-            </motion.div>
-
-            {/* Feature 3 */}
-            <motion.div
-              variants={featureContainerVariants.item}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
-                <Target className="w-6 h-6 text-secondary" />
-              </div>
-              <h3 className="text-xl font-semibold text-base-content">
-                목표 관리
-              </h3>
-              <p className="text-base-content/70">
-                장기 목표를 설정하고 단계별로 달성해 나가세요.
-              </p>
-            </motion.div>
-
-            {/* Feature 4 */}
-            <motion.div
-              variants={featureContainerVariants.item}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-info" />
-              </div>
-              <h3 className="text-xl font-semibold text-base-content">
-                할일 관리
-              </h3>
-              <p className="text-base-content/70">
-                프로젝트별로 할일을 정리하고 우선순위를 관리하세요.
-              </p>
-            </motion.div>
-
-            {/* Feature 5 */}
-            <motion.div
-              variants={featureContainerVariants.item}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-success" />
-              </div>
-              <h3 className="text-xl font-semibold text-base-content">
-                AI 추천
-              </h3>
-              <p className="text-base-content/70">
-                상황에 맞는 동기부여 문구와 추천 할일을 제공합니다.
-              </p>
-            </motion.div>
-
-            {/* Feature 6 */}
-            <motion.div
-              variants={featureContainerVariants.item}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-warning" />
-              </div>
-              <h3 className="text-xl font-semibold text-base-content">
-                반복 일정
-              </h3>
-              <p className="text-base-content/70">
-                매일, 매주, 매월 반복되는 일정을 자동으로 생성하세요.
-              </p>
-            </motion.div>
-          </motion.div>
+        <div>
+          <h1 className="text-2xl font-bold text-base-content mb-2">그래프 뷰</h1>
+          <p className="text-base-content/70">개발 예정</p>
         </div>
-      </section>
-
-      {/* System Section */}
-      <SystemSection />
-
-      {/* Testimonials Section */}
-      <TestimonialsSection />
-
-      {/* FAQ Section */}
-      <FAQSection />
-
-      {/* CTA Section */}
-      <motion.section
-        className="py-20 px-4"
-        variants={ctaVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={bidirectionalViewportOptions}
-      >
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h2 className="text-4xl font-bold text-white">
-            지금 바로 시작하세요
-          </h2>
-          <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            무료로 시작하고, 생산성을 높이는 첫 걸음을 내딛으세요.
-          </p>
-          <button
-            onClick={handleGetStarted}
-            className="btn btn-primary btn-lg gap-2 px-8 rounded-full"
-          >
-            시작하기
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      </motion.section>
-
-      {/* Footer */}
-      <footer className="py-12 px-4 border-t border-base-300/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            {/* About */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">DayStep</h3>
-              <p className="text-sm text-white/80">
-                하루를 체계적으로 관리하는 생산성 앱
-              </p>
-            </div>
-
-            {/* Links */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">링크</h3>
-              <ul className="space-y-2 text-sm text-white/80">
-                <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
-                    이용약관
-                  </a>
-                </li>
-                <li>
-                  <a href="/privacy" className="hover:text-white transition-colors">
-                    개인정보처리방침
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">문의</h3>
-              <p className="text-sm text-white/80">
-                support@daystep.app
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-base-300 text-center text-sm text-white/80">
-            © 2024 DayStep. All rights reserved.
-          </div>
-        </div>
-      </footer>
+        <button
+          onClick={() => router.push('/second-brain/areas')}
+          className="btn btn-primary btn-sm rounded-full"
+        >
+          Areas로 이동
+        </button>
+      </div>
     </div>
   );
 }

@@ -67,9 +67,9 @@ export default function LandingNav() {
   );
 
   const navLinks = [
-    { label: '기능 소개', href: '/#features' },
-    { label: '시스템 소개', href: '/#system' },
-    { label: 'FAQ', href: '/#faq' },
+    { label: '기능 소개', href: '/landing#features' },
+    { label: '시스템 소개', href: '/landing#system' },
+    { label: 'FAQ', href: '/landing#faq' },
   ];
 
   const handleGetStarted = () => {
@@ -91,7 +91,7 @@ export default function LandingNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* 로고 */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/landing" className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-white">DayStep</span>
           </Link>
 
