@@ -25,7 +25,7 @@ export default function ColorThemeModal({ isOpen, onClose }: ColorThemeModalProp
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-3xl p-0">
+      <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-3xl p-0 bg-base-100" hideOverlay hideCloseButton>
         {/* 헤더 */}
         <SheetHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-4 border-b border-base-200">
           <div className="flex items-center gap-2">
