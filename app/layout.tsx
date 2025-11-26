@@ -46,7 +46,7 @@ export default function RootLayout({
   const { safeAreaBackground, darkSafeArea } = getTailwindClasses();
 
   return (
-    <html lang="ko" className={openDyslexic.variable}>
+    <html lang="ko" className={`${openDyslexic.variable} bg-base-200`}>
       <body className="antialiased mobile-container scrollbar-hide bg-base-200">
         <ThemeProvider>
           <FontProvider>
