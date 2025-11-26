@@ -302,7 +302,7 @@ export default function AreasPage() {
       <div className="sticky top-0 z-10 bg-base-200 border-b border-base-300">
         <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
           <p className="text-sm text-base-content/70 mt-1">
-            지속적으로 관심을 가져야 하는 영역을 관리하세요
+            내가 책임져야 하는 영역들을 관리하세요
           </p>
         </div>
       </div>
@@ -312,7 +312,7 @@ export default function AreasPage() {
         {/* 영역 목록 */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">영역 목록 ({areas.length}개)</h2>
+            <h2 className="text-lg font-semibold">책임 영역 목록 ({areas.length}개)</h2>
             <div className="flex gap-2">
               <button onClick={handleOpenPresetDialog} className="btn btn-ghost btn-sm rounded-full">
                 <Lightbulb className="w-4 h-4" />
