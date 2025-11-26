@@ -177,60 +177,38 @@ export default function LandingPage() {
           ? lastRoute
           : '/second-brain/areas';
 
-        // 🔑 Trailing slash 정규화 (WebView 크래시 후 URL에 trailing slash가 붙을 수 있음)
-        const currentPath = (window.location.pathname.replace(/\/$/, '') || '/');
-        const normalizedTarget = (targetRoute.replace(/\/$/, '') || '/');
+        // 🔑 핵심: app/page.tsx는 루트("/") 경로의 컴포넌트
+        // WebView 크래시 후 URL이 /second-brain/clarify/처럼 보여도
+        // 실제 렌더링되는 건 이 루트 컴포넌트이므로, targetRoute가 "/"가 아니면 항상 리다이렉트
+        if (targetRoute !== '/') {
+          // 루트가 아닌 다른 페이지로 이동 필요
+          console.log(`📍 [Capacitor] 페이지로 이동: / → ${targetRoute}`);
+          router.replace(targetRoute);
 
-        if (currentPath !== normalizedTarget) {
-          // 다른 페이지에 있으면 리다이렉트 실행
-          console.log(`📍 [Capacitor] 페이지로 이동: ${currentPath} → ${normalizedTarget}`);
-          router.replace(normalizedTarget);
-
-          // 🔒 안전장치: 2초 후에도 네비게이션 실패 시 로딩 해제
+          // 🔒 안전장치: 2초 후에도 페이지 전환 안 되면 로딩 해제
           setTimeout(() => {
-            const afterPath = (window.location.pathname.replace(/\/$/, '') || '/');
-            if (afterPath !== normalizedTarget) {
-              console.warn('⚠️ [Capacitor] 네비게이션 실패 - 로딩 해제', {
-                afterPath,
-                normalizedTarget,
-              });
-              setIsRedirecting(false);
-            }
+            console.warn('⚠️ [Capacitor] 네비게이션 타임아웃 - 로딩 해제');
+            setIsRedirecting(false);
           }, 2000);
         } else {
-          // 이미 목표 페이지에 있으면 로딩만 해제
-          console.log(`✅ [Capacitor] 이미 목표 페이지에 있음 - 리다이렉트 스킵: ${currentPath}`);
+          // targetRoute가 루트면 이미 목표 페이지에 있음
+          console.log(`✅ [Capacitor] 이미 루트 페이지에 있음 - 리다이렉트 스킵`);
           setIsRedirecting(false);
         }
       })
       .catch((error) => {
         console.error('❌ [Capacitor] 마지막 방문 페이지 복원 실패:', error);
 
-        // 🔑 Trailing slash 정규화
-        const currentPath = (window.location.pathname.replace(/\/$/, '') || '/');
+        // 🔑 핵심: app/page.tsx는 루트("/") 경로이므로, 폴백 페이지로 항상 리다이렉트
         const fallbackRoute = '/second-brain/areas';
+        console.log(`📍 [Capacitor] 폴백 페이지로 이동: / → ${fallbackRoute}`);
+        router.replace(fallbackRoute);
 
-        if (currentPath !== fallbackRoute) {
-          // Fallback: Areas 페이지로 이동
-          console.log(`📍 [Capacitor] 폴백 페이지로 이동: ${currentPath} → ${fallbackRoute}`);
-          router.replace(fallbackRoute);
-
-          // 🔒 안전장치: 2초 후에도 네비게이션 실패 시 로딩 해제
-          setTimeout(() => {
-            const afterPath = (window.location.pathname.replace(/\/$/, '') || '/');
-            if (afterPath !== fallbackRoute) {
-              console.warn('⚠️ [Capacitor] 폴백 네비게이션 실패 - 로딩 해제', {
-                afterPath,
-                fallbackRoute,
-              });
-              setIsRedirecting(false);
-            }
-          }, 2000);
-        } else {
-          // 이미 Areas 페이지에 있으면 로딩만 해제
-          console.log(`✅ [Capacitor] 폴백 페이지에 이미 있음 - 리다이렉트 스킵: ${currentPath}`);
+        // 🔒 안전장치: 2초 후에도 페이지 전환 안 되면 로딩 해제
+        setTimeout(() => {
+          console.warn('⚠️ [Capacitor] 폴백 네비게이션 타임아웃 - 로딩 해제');
           setIsRedirecting(false);
-        }
+        }, 2000);
       });
   }, [isCapacitor, loading, router]);
 
