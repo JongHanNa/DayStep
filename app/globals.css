@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 헤더 높이 CSS 변수 - 최상위 레벨에서 정의 */
+:root {
+  --header-height: 56px; /* h-14 = 3.5rem = 56px */
+  --header-total-height: calc(56px + 52px); /* 모바일 웹: 108px (헤더 + safe-area-top 패딩) */
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-total-height: 56px; /* 데스크톱 웹: 헤더만 */
+  }
+}
+
+.capacitor {
+  --header-total-height: calc(56px + 44px); /* 100px - iOS 노치 포함 */
+}
+
 /* 배터리 효율성 최적화 애니메이션 */
 @import '../styles/animations.css';
 

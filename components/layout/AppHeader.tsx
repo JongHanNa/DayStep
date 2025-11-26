@@ -74,7 +74,7 @@ export default function AppHeader() {
       </header>
 
       {/* 헤더 높이만큼 공간 확보 (safe-area-top 포함) */}
-      <div className="h-14 safe-area-top" />
+      <div className="h-[--header-total-height]" />
 
       {/* 컬러 테마 모달 */}
       <ColorThemeModal
