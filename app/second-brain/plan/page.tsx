@@ -131,6 +131,7 @@ export default function PlanPage() {
 
   // 할일 편집 모달 상태
   const [selectedTodo, setSelectedTodo] = useState<TodoFormData | null>(null);
+  const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 프로젝트 편집 모달 상태
@@ -151,8 +152,10 @@ export default function PlanPage() {
       projectIds: item.project_id ? [item.project_id] : [],
       noteIds: [], // InboxItem에는 없음
       nextActionStatuses: item.next_action_status ? item.next_action_status.split(', ') : [],
+      nextActionContextIds: item.next_action_context_ids || [],
     };
     setSelectedTodo(formData);
+    setSelectedTodoId(item.id);
     setIsModalOpen(true);
   };
 
@@ -160,12 +163,13 @@ export default function PlanPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTodo(null);
+    setSelectedTodoId(null);
   };
 
   // 할일 저장 핸들러
   const handleSaveTodo = async (updatedTodo: TodoFormData) => {
-    // 현재 편집 중인 InboxItem 찾기
-    const currentItem = inboxItems.find(item => item.content === selectedTodo?.title);
+    // 현재 편집 중인 InboxItem 찾기 (ID로 정확한 매칭)
+    const currentItem = inboxItems.find(item => item.id === selectedTodoId);
 
     if (!currentItem) {
       console.error('편집 중인 할일을 찾을 수 없습니다.');
@@ -185,6 +189,7 @@ export default function PlanPage() {
         clarification: updatedTodo.clarification,
         project_id: updatedTodo.projectIds?.[0],
         next_action_status: updatedTodo.nextActionStatuses?.join(', '),
+        next_action_context_ids: updatedTodo.nextActionContextIds || [],
       });
 
       // 즉시 UI 반영을 위해 데이터 재조회
@@ -534,6 +539,8 @@ export default function PlanPage() {
           onUpdateNote={handleUpdateNote}
           onDeleteNote={handleDeleteNote}
           titlePlaceholder="할일 제목을 입력하세요"
+          todoId={selectedTodoId || undefined}
+          userId={appUser?.id}
         />
 
         {/* 프로젝트 편집 모달 */}
