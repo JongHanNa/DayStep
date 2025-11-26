@@ -28,16 +28,15 @@ export default function HomePage() {
     }
   }, []);
 
-  // 비인증 사용자 리다이렉트
+  // Capacitor 비인증 사용자만 리다이렉트
+  // 웹 비인증 사용자: next.config.ts의 rewrite로 /landing 표시 (URL 유지)
   useEffect(() => {
     if (loading) {
       return;
     }
 
-    if (!isAuthenticated) {
-      // 웹: /landing (마케팅 페이지)
-      // 모바일: /login (로그인 페이지)
-      router.replace(isCapacitor ? '/login' : '/landing');
+    if (!isAuthenticated && isCapacitor) {
+      router.replace('/login');
     }
   }, [isAuthenticated, loading, isCapacitor, router]);
 
