@@ -354,6 +354,11 @@ const nextConfig: NextConfig = {
   ...(isWebBuild && {
     async rewrites() {
       return [
+        // 웹에서 루트 URL을 /landing으로 rewrite (URL 유지)
+        {
+          source: '/',
+          destination: '/landing',
+        },
         {
           source: '/.well-known/apple-app-site-association',
           destination: '/api/apple-app-site-association',
