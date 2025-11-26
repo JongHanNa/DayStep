@@ -47,7 +47,7 @@ export default function RootLayout({
 
   return (
     <html lang="ko" className={openDyslexic.variable}>
-      <body className="antialiased mobile-container scrollbar-hide">
+      <body className="antialiased mobile-container scrollbar-hide bg-base-200">
         <ThemeProvider>
           <FontProvider>
             <AuthProvider initialAuth={initialAuth}>

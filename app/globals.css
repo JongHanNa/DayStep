@@ -138,6 +138,9 @@ html, body {
   /* 기본적으로 모든 페이지에서 스크롤바 숨김 */
   scrollbar-width: none;  /* Firefox */
   -ms-overflow-style: none;  /* IE/Edge */
+
+  /* Pull-to-refresh 시 헤더 뒤 영역 배경색 (DaisyUI 테마 연동) */
+  @apply bg-base-200;
 }
 
 html::-webkit-scrollbar,
