@@ -600,12 +600,12 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
           style={getInlineStyles().timelineBackground}
         >
 
-          {/* Timeline Header - 고정 위치 (DynamicTopTabs 아래) */}
+          {/* Timeline Header - 고정 위치 (AppHeader 아래) */}
           <div
             className={cn("fixed left-0 right-0 z-50 scrollbar-hide", getTailwindClasses().timelineBackground)}
             style={{
               ...getInlineStyles().timelineBackground,
-              top: 'var(--top-tabs-height, 4rem)'
+              top: 'var(--header-total-height, 56px)'
             }}
           >
             <TimelineHeader />
