@@ -42,31 +42,26 @@ export default function UnscheduledTodosList({
 }: UnscheduledTodosListProps) {
   const [activeTab, setActiveTab] = useState<'overdue' | 'nextAction' | 'project' | 'waiting'>('overdue');
 
-  // 프로젝트가 할당된 할일 수 계산
+  // 진행 중인 프로젝트에 연결된 할일 수 계산
   const projectAssignedTodosCount = useMemo(() => {
-    return projectTodos.filter(todo => todo.project_id).length;
-  }, [projectTodos]);
+    const inProgressProjectIds = projects
+      .filter(p => p.status === 'in_progress')
+      .map(p => p.id);
+    return projectTodos.filter(todo =>
+      todo.project_id && inProgressProjectIds.includes(todo.project_id)
+    ).length;
+  }, [projectTodos, projects]);
 
-  // 프로젝트별 할일 그룹화 (프로젝트가 할당된 할일들만)
+  // 진행 중인 프로젝트 기준으로 할일 그룹화 (할일 0개여도 프로젝트 표시)
   const groupTodosByProject = (todos: InboxItem[]) => {
-    const groups: { projectId: string | null; projectName: string; todos: InboxItem[] }[] = [];
+    // 진행 중인 프로젝트 목록 기준으로 그룹 생성
+    const inProgressProjects = projects.filter(p => p.status === 'in_progress');
 
-    // 프로젝트별 그룹 (project_id가 있는 할일들만)
-    const projectIds = [...new Set(todos.filter(todo => todo.project_id).map(todo => todo.project_id))];
-    projectIds.forEach(projectId => {
-      const project = projects.find(p => p.id === projectId);
-      const projectTodosForGroup = todos.filter(todo => todo.project_id === projectId);
-
-      if (projectTodosForGroup.length > 0) {
-        groups.push({
-          projectId: projectId!,
-          projectName: project?.title || '알 수 없는 프로젝트',
-          todos: projectTodosForGroup,
-        });
-      }
-    });
-
-    return groups;
+    return inProgressProjects.map(project => ({
+      projectId: project.id,
+      projectName: project.title,
+      todos: todos.filter(todo => todo.project_id === project.id),
+    }));
   };
 
   return (
@@ -154,9 +149,9 @@ export default function UnscheduledTodosList({
 
         {activeTab === 'project' && (
           <div>
-            {projectTodos.length === 0 ? (
+            {projects.filter(p => p.status === 'in_progress').length === 0 ? (
               <div className="text-center py-12 text-base-content/50">
-                프로젝트 할일이 없습니다.
+                진행 중인 프로젝트가 없습니다.
               </div>
             ) : (
               <div className="space-y-4">
@@ -175,14 +170,20 @@ export default function UnscheduledTodosList({
 
                     {/* 그룹 내 할일들 */}
                     <div className="space-y-2">
-                      {group.todos.map((todo) => (
-                        <DraggableTodoItem
-                          key={todo.id}
-                          todo={todo}
-                          showClarification
-                          onTodoClick={onTodoClick}
-                        />
-                      ))}
+                      {group.todos.length === 0 ? (
+                        <div className="text-sm text-base-content/50 py-2 px-4">
+                          날짜 설정이 필요한 할일이 없습니다.
+                        </div>
+                      ) : (
+                        group.todos.map((todo) => (
+                          <DraggableTodoItem
+                            key={todo.id}
+                            todo={todo}
+                            showClarification
+                            onTodoClick={onTodoClick}
+                          />
+                        ))
+                      )}
                     </div>
                   </div>
                 ))}

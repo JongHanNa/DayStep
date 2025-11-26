@@ -364,6 +364,7 @@ export default function PlanPage() {
         return false;
       }
       // 프로젝트 연결된 할일만 표시 (project_id가 있어야 함)
+      // 프로젝트 상태 필터링은 UnscheduledTodosList에서 처리
       if (!item.project_id) {
         return false;
       }
