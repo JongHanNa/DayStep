@@ -176,7 +176,8 @@ export default function TodoFormFields({
   };
 
   const handleNextActionContextDelete = async (id: string) => {
-    return await deleteContext(id);
+    if (!userId) return false;
+    return await deleteContext(id, userId);
   };
 
   const handleNextActionContextImmediateSave = async (contextIds: string[]) => {

@@ -23,7 +23,7 @@ interface NextActionContextStoreState {
   loadContexts: (userId: string) => Promise<void>;
   createContext: (userId: string, title: string) => Promise<NextActionContextItem | null>;
   updateContext: (id: string, title: string) => Promise<NextActionContextItem | null>;
-  deleteContext: (id: string) => Promise<boolean>;
+  deleteContext: (id: string, userId: string) => Promise<boolean>;
   reorderContexts: (items: { id: string; display_order: number }[]) => Promise<boolean>;
   clearContexts: () => void;
 }
@@ -139,7 +139,7 @@ export const useNextActionContextStore = createStore<NextActionContextStoreState
       }
     },
 
-    deleteContext: async (id: string) => {
+    deleteContext: async (id: string, userId: string) => {
       try {
         const currentContexts = get().contexts;
 
@@ -148,8 +148,8 @@ export const useNextActionContextStore = createStore<NextActionContextStoreState
           contexts: currentContexts.filter((c: NextActionContextItem) => c.id !== id),
         });
 
-        // 실제 API 호출
-        const success = await deleteNextActionContext(id);
+        // 실제 API 호출 (userId 전달하여 todos 테이블에서도 정리)
+        const success = await deleteNextActionContext(id, userId);
 
         if (!success) {
           // 실패 시 롤백

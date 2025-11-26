@@ -123,10 +123,52 @@ export async function updateNextActionContext(
 }
 
 /**
- * 다음행동상황 삭제
+ * 삭제된 next_action_context ID를 모든 todos에서 제거
+ * @param userId - 사용자 ID
+ * @param contextId - 삭제된 다음행동상황 ID
  */
-export async function deleteNextActionContext(id: string): Promise<boolean> {
+async function cleanupDeletedContextFromTodos(
+  userId: string,
+  contextId: string
+): Promise<void> {
+  // 1. 해당 contextId를 포함하는 todos 조회
+  const todos = await fetchWithJWT(
+    `/todos?user_id=eq.${userId}&next_action_context_ids=cs.{${contextId}}&select=id,next_action_context_ids`
+  );
+
+  if (!Array.isArray(todos) || todos.length === 0) {
+    return;
+  }
+
+  // 2. 각 todo에서 contextId 제거
+  for (const todo of todos) {
+    const updatedIds = (todo.next_action_context_ids || []).filter(
+      (id: string) => id !== contextId
+    );
+
+    await fetchWithJWT(`/todos?id=eq.${todo.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        next_action_context_ids: updatedIds.length > 0 ? updatedIds : null,
+      }),
+    });
+  }
+}
+
+/**
+ * 다음행동상황 삭제
+ * @param id - 삭제할 다음행동상황 ID
+ * @param userId - 사용자 ID (todos 테이블 정리용)
+ */
+export async function deleteNextActionContext(
+  id: string,
+  userId: string
+): Promise<boolean> {
   try {
+    // 1. todos 테이블에서 먼저 해당 ID 정리
+    await cleanupDeletedContextFromTodos(userId, id);
+
+    // 2. next_action_contexts 테이블에서 삭제
     await fetchWithJWT(`/next_action_contexts?id=eq.${id}`, {
       method: 'DELETE',
     });
