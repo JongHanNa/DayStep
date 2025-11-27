@@ -21,6 +21,7 @@ const defaultFilter: GraphFilter = {
   showCompleted: true,
   showArchived: false,
   connectionDepth: 3,
+  linkWidth: 1,
 };
 
 interface GraphStoreState {
@@ -50,6 +51,7 @@ interface GraphStoreState {
   toggleNodeType: (type: GraphNodeType) => void;
   setSearchQuery: (query: string) => void;
   setConnectionDepth: (depth: number) => void;
+  setLinkWidth: (width: number) => void;
   toggleShowCompleted: () => void;
   toggleShowArchived: () => void;
 
@@ -119,6 +121,12 @@ export const useGraphStore = create<GraphStoreState>()(
       setConnectionDepth: (depth) => {
         set((state) => ({
           filter: { ...state.filter, connectionDepth: Math.max(1, Math.min(5, depth)) },
+        }));
+      },
+
+      setLinkWidth: (width) => {
+        set((state) => ({
+          filter: { ...state.filter, linkWidth: Math.max(0.5, Math.min(3, width)) },
         }));
       },
 

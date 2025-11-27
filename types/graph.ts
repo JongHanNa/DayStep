@@ -48,6 +48,7 @@ export interface GraphFilter {
   showCompleted: boolean;
   showArchived: boolean;
   connectionDepth: number; // 1-5, how many levels of connections to show
+  linkWidth: number; // 0.5-3, link width multiplier
 }
 
 // Default filter values
@@ -57,6 +58,7 @@ export const DEFAULT_GRAPH_FILTER: GraphFilter = {
   showCompleted: true,
   showArchived: false,
   connectionDepth: 3,
+  linkWidth: 1,
 };
 
 // Relation data from junction tables

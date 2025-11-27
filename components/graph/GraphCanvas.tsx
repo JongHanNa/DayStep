@@ -8,8 +8,9 @@
 import { useRef, useCallback, useEffect, useState, ComponentType } from 'react';
 import ForceGraph2DComponent from './ForceGraph2DWrapper';
 import type { GraphNode, GraphLink, GraphData } from '@/types/graph';
-import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter } from '@/state/stores/graphStore';
 import { getNodeSize, getLinkColor, getLinkWidth } from '@/lib/graph-utils';
+import { useTheme } from '@/hooks/useTheme';
 
 // react-force-graph-2d의 제네릭 타입이 복잡하여 타입 캐스팅 사용
 const ForceGraph2D = ForceGraph2DComponent as ComponentType<Record<string, unknown>>;
@@ -27,7 +28,10 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
 
   const selectedNodeId = useGraphSelectedNode();
   const hoveredNodeId = useGraphHoveredNode();
+  const filter = useGraphFilter();
   const { setSelectedNode, setHoveredNode, openEditModal, zoomLevel, setZoomLevel } = useGraphStore();
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'dark';
 
   // 컨테이너 크기 추적
   useEffect(() => {
@@ -169,15 +173,15 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
     []
   );
 
-  // 링크 색상
+  // 링크 색상 (테마에 따라 변경)
   const linkColor = useCallback((link: GraphLink) => {
-    return getLinkColor(link);
-  }, []);
+    return getLinkColor(link, isDarkMode);
+  }, [isDarkMode]);
 
-  // 링크 너비
-  const linkWidth = useCallback((link: GraphLink) => {
-    return getLinkWidth(link);
-  }, []);
+  // 링크 너비 (필터 설정에 따라 변경)
+  const linkWidthFn = useCallback((link: GraphLink) => {
+    return getLinkWidth(link, filter.linkWidth);
+  }, [filter.linkWidth]);
 
   return (
     <div
@@ -202,7 +206,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         onNodeHover={handleNodeHover}
         // 링크 설정
         linkColor={linkColor}
-        linkWidth={linkWidth}
+        linkWidth={linkWidthFn}
         linkDirectionalParticles={2}
         linkDirectionalParticleWidth={2}
         linkDirectionalParticleSpeed={0.005}

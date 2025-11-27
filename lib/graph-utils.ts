@@ -143,16 +143,23 @@ export function getNodeSize(node: GraphNode): number {
   return NODE_SIZES[node.type] || 10;
 }
 
-// Get link color based on type
-export function getLinkColor(link: GraphLink): string {
-  return link.type === 'hierarchy'
-    ? 'rgba(255, 255, 255, 0.3)'
-    : 'rgba(255, 255, 255, 0.15)';
+// Get link color based on type and theme
+export function getLinkColor(link: GraphLink, isDarkMode: boolean = true): string {
+  if (isDarkMode) {
+    return link.type === 'hierarchy'
+      ? 'rgba(255, 255, 255, 0.4)'
+      : 'rgba(255, 255, 255, 0.2)';
+  } else {
+    return link.type === 'hierarchy'
+      ? 'rgba(0, 0, 0, 0.3)'
+      : 'rgba(0, 0, 0, 0.15)';
+  }
 }
 
-// Get link width based on type
-export function getLinkWidth(link: GraphLink): number {
-  return link.type === 'hierarchy' ? 1.5 : 0.8;
+// Get link width based on type with optional multiplier
+export function getLinkWidth(link: GraphLink, widthMultiplier: number = 1): number {
+  const baseWidth = link.type === 'hierarchy' ? 1.5 : 0.8;
+  return baseWidth * widthMultiplier;
 }
 
 // Filter graph data to show only connected nodes within depth
