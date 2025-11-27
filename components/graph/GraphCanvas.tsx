@@ -53,6 +53,30 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
     };
   }, []);
 
+  // D3 Force 설정 - 노드 배치 물리 시뮬레이션
+  useEffect(() => {
+    if (!graphRef.current) return;
+
+    const fg = graphRef.current as any;
+
+    // Link force - 연결된 노드 간 거리 120px 유지
+    fg.d3Force('link')
+      .distance(120)   // 목표 거리 (100-150px 범위의 중간값)
+      .strength(0.5);  // 중간 강도
+
+    // Charge force - 노드 간 척력으로 겹치지 않도록 밀어냄
+    fg.d3Force('charge')
+      .strength(-400)      // 척력 강도 (음수 = 밀어냄)
+      .distanceMax(300);   // 최대 영향 거리 (성능 최적화)
+
+    // Center force - 화면 중앙으로 부드럽게 끌어당김
+    fg.d3Force('center')
+      .x(dimensions.width / 2)
+      .y(dimensions.height / 2)
+      .strength(0.05);  // 매우 약한 중력 (중심 클러스터 패턴 유지)
+
+  }, [dimensions, graphData]);
+
   // 노드 클릭 핸들러
   const handleNodeClick = useCallback(
     (node: GraphNode | null) => {
@@ -343,10 +367,10 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         linkDirectionalParticleWidth={2}
         linkDirectionalParticleSpeed={0.005}
         // 물리 시뮬레이션 설정
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.3}
-        warmupTicks={50}
-        cooldownTicks={100}
+        d3AlphaDecay={0.015}        // 조금 더 느린 냉각 (0.02 → 0.015)
+        d3VelocityDecay={0.4}       // 더 빠른 안정화 (0.3 → 0.4)
+        warmupTicks={100}           // 초기 안정화 강화 (50 → 100)
+        cooldownTicks={150}         // 더 긴 애니메이션 (100 → 150, 약 2.5초)
         cooldownTime={3000}
         // 상호작용 설정
         enableZoomInteraction={true}
