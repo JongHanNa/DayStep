@@ -42,7 +42,7 @@ export function useGraphData(): UseGraphDataReturn {
   const { resources, fetchResources, loading: resourcesLoading } = useResourceStore();
   const { goals, fetchGoals, loading: goalsLoading } = useGoalStore();
   const { projects, fetchProjects, loading: projectsLoading } = useProjectStore();
-  const { todos } = useTodoStore();
+  const { todos, fetchAllTodos } = useTodoStore();
   const { notes, fetchNotes, loading: notesLoading } = useNoteStore();
 
   // 관계 데이터 상태
@@ -66,6 +66,7 @@ export function useGraphData(): UseGraphDataReturn {
         if (resources.length === 0) await fetchResources(userId);
         if (goals.length === 0) await fetchGoals(userId);
         if (projects.length === 0) await fetchProjects(userId);
+        if (todos.length === 0) await fetchAllTodos();
         if (notes.length === 0) await fetchNotes(userId);
       } catch (err) {
         console.error('❌ 그래프 데이터 로딩 실패:', err);
@@ -74,7 +75,7 @@ export function useGraphData(): UseGraphDataReturn {
     };
 
     loadAllData();
-  }, [userId, areas.length, resources.length, goals.length, projects.length, notes.length]);
+  }, [userId, areas.length, resources.length, goals.length, projects.length, todos.length, notes.length, fetchAreas, fetchResources, fetchGoals, fetchProjects, fetchAllTodos, fetchNotes]);
 
   // 관계 데이터 로딩 (프로젝트와 노트가 로드된 후)
   useEffect(() => {
@@ -223,6 +224,7 @@ export function useGraphData(): UseGraphDataReturn {
         fetchResources(userId),
         fetchGoals(userId),
         fetchProjects(userId),
+        fetchAllTodos(),
         fetchNotes(userId),
       ]);
 
@@ -234,7 +236,7 @@ export function useGraphData(): UseGraphDataReturn {
       console.error('❌ 그래프 데이터 새로고침 실패:', err);
       setError(err instanceof Error ? err.message : '새로고침 실패');
     }
-  }, [userId, projects, notes, fetchAreas, fetchResources, fetchGoals, fetchProjects, fetchNotes]);
+  }, [userId, projects, notes, fetchAreas, fetchResources, fetchGoals, fetchProjects, fetchAllTodos, fetchNotes]);
 
   // 로딩 상태 통합
   const loading = areasLoading || resourcesLoading || goalsLoading || projectsLoading || notesLoading || relationsLoading;
