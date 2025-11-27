@@ -47,7 +47,7 @@ export function GraphControls({ nodeCount, linkCount, isFiltered }: GraphControl
   }
 
   return (
-    <div className="absolute top-4 right-4 z-10 w-64 bg-base-100/95 backdrop-blur-sm rounded-xl shadow-xl border border-base-300">
+    <div className="absolute top-4 right-4 z-10 w-64 bg-base-100 rounded-xl shadow-xl border border-base-300">
       {/* 헤더 */}
       <div className="flex items-center justify-between p-3 border-b border-base-300">
         <div className="flex items-center gap-2">
