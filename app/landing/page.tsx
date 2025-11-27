@@ -57,6 +57,27 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // 랜딩 페이지에서만 html/body의 bg-base-200 제거
+  // (ScrollColorTransition이 동적 배경 처리)
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+
+    // 현재 클래스 저장
+    const htmlClasses = html.className;
+    const bodyClasses = body.className;
+
+    // bg-base-200 제거
+    html.classList.remove('bg-base-200');
+    body.classList.remove('bg-base-200');
+
+    // 언마운트 시 원복
+    return () => {
+      html.className = htmlClasses;
+      body.className = bodyClasses;
+    };
+  }, []);
+
   // 참고: 로그인 사용자도 랜딩 페이지에 머물 수 있음
   // 루트 페이지(/)에서 비인증 사용자만 /landing으로 리다이렉트됨
 
