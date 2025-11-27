@@ -6,14 +6,13 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useGraphFilter, useGraphSelectedNode } from '@/state/stores/graphStore';
+import { useGraphFilter } from '@/state/stores/graphStore';
 import type { GraphData, GraphNode, GraphLink } from '@/types/graph';
 import {
   searchNodes,
   filterNodesByType,
   filterNodesByStatus,
   filterLinksForNodes,
-  filterByConnectionDepth,
 } from '@/lib/graph-utils';
 
 interface UseFilteredGraphDataReturn {
@@ -25,7 +24,6 @@ interface UseFilteredGraphDataReturn {
 
 export function useFilteredGraphData(graphData: GraphData): UseFilteredGraphDataReturn {
   const filter = useGraphFilter();
-  const selectedNodeId = useGraphSelectedNode();
 
   const filteredData: GraphData = useMemo(() => {
     let filteredNodes = [...graphData.nodes];
@@ -48,22 +46,11 @@ export function useFilteredGraphData(graphData: GraphData): UseFilteredGraphData
     const nodeIdSet = new Set(filteredNodes.map((n) => n.id));
     filteredLinks = filterLinksForNodes(filteredLinks, nodeIdSet);
 
-    // 5. 연결 깊이 필터링 (노드 선택 시)
-    if (selectedNodeId && filter.connectionDepth < 5) {
-      const depthFilteredData = filterByConnectionDepth(
-        { nodes: filteredNodes, links: filteredLinks },
-        selectedNodeId,
-        filter.connectionDepth
-      );
-      filteredNodes = depthFilteredData.nodes;
-      filteredLinks = depthFilteredData.links;
-    }
-
     return {
       nodes: filteredNodes,
       links: filteredLinks,
     };
-  }, [graphData, filter, selectedNodeId]);
+  }, [graphData, filter]);
 
   // 필터 적용 여부 확인
   const isFiltered = useMemo(() => {
@@ -71,10 +58,9 @@ export function useFilteredGraphData(graphData: GraphData): UseFilteredGraphData
       filter.nodeTypes.length < 6 ||
       !filter.showCompleted ||
       filter.showArchived ||
-      filter.searchQuery.trim() !== '' ||
-      (selectedNodeId !== null && filter.connectionDepth < 5)
+      filter.searchQuery.trim() !== ''
     );
-  }, [filter, selectedNodeId]);
+  }, [filter]);
 
   return {
     filteredData,

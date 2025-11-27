@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Network, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useGraphData } from './hooks/useGraphData';
@@ -17,6 +17,28 @@ import { GraphLegend } from './GraphLegend';
 import { GraphCreateModal } from './GraphCreateModal';
 import { useGraphStore, useGraphEditModal } from '@/state/stores/graphStore';
 
+// 편집 모달들
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
+import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
+import NoteEditModal from '@/components/second-brain/NoteEditModal';
+
+// Store들
+import { useTodoStore } from '@/state/stores/todoStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+
+// 타입
+import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import type { NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import type { Project, Goal, AreaResource, Note } from '@/types/second-brain';
+import type { SecondBrainItemType } from '@/types/settings';
+import type { Clarification } from '@/types';
+
 export default function GraphView() {
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id;
@@ -24,6 +46,42 @@ export default function GraphView() {
   const { filteredData, nodeCount, linkCount, isFiltered } = useFilteredGraphData(graphData);
   const { isOpen: isEditModalOpen, node: editingNode } = useGraphEditModal();
   const { closeEditModal } = useGraphStore();
+
+  // Store 데이터 및 액션 가져오기
+  const updateTodo = useTodoStore((state) => state.updateTodo);
+  const deleteTodo = useTodoStore((state) => state.deleteTodo);
+
+  const { projects, updateProject, deleteProject } = useProjectStore();
+  const { goals, updateGoal, deleteGoal } = useGoalStore();
+  const { areas, updateArea, deleteArea } = useAreaStore();
+  const { resources, updateResource, deleteResource } = useResourceStore();
+  const { notes, updateNote, deleteNote } = useNoteStore();
+
+  // Todo 편집 상태
+  const [editingTodoData, setEditingTodoData] = useState<TodoFormData | null>(null);
+
+  // Note 편집 상태
+  const [editingNoteData, setEditingNoteData] = useState<NoteFormData | null>(null);
+
+  // Project 편집 상태
+  const [editingProjectData, setEditingProjectData] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
+
+  // Goal 편집 상태
+  const [editingGoalData, setEditingGoalData] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
+
+  // Area/Resource 편집 상태
+  const [editingAreaResourceData, setEditingAreaResourceData] = useState<(AreaResource & { isNew?: boolean }) | null>(null);
+  const [areaResourceItemType, setAreaResourceItemType] = useState<SecondBrainItemType>('area');
+
+  // 모달 닫기 핸들러
+  const handleCloseEditModal = useCallback(() => {
+    closeEditModal();
+    setEditingTodoData(null);
+    setEditingNoteData(null);
+    setEditingProjectData(null);
+    setEditingGoalData(null);
+    setEditingAreaResourceData(null);
+  }, [closeEditModal]);
 
   // 인증 대기
   if (authLoading) {
@@ -147,29 +205,185 @@ export default function GraphView() {
         <span className="text-xs">새로고침</span>
       </button>
 
-      {/* TODO: 노드 편집 모달 (기존 모달 연동) */}
-      {/* 현재는 콘솔 로그로 확인, 추후 기존 모달 컴포넌트와 연동 예정 */}
-      {isEditModalOpen && editingNode && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box max-w-sm">
-            <h3 className="font-bold text-lg">{editingNode.title}</h3>
-            <p className="py-4 text-base-content/70">
-              타입: {editingNode.type}<br />
-              ID: {editingNode.id}
-            </p>
-            <p className="text-xs text-base-content/50">
-              (추후 기존 편집 모달과 연동 예정)
-            </p>
-            <div className="modal-action">
-              <button onClick={closeEditModal} className="btn btn-sm rounded-full">
-                닫기
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={closeEditModal}>close</button>
-          </form>
-        </dialog>
+      {/* 노드 편집 모달 - 타입별 분기 */}
+      {isEditModalOpen && editingNode && userId && (
+        <>
+          {/* Todo 편집 */}
+          {editingNode.type === 'todo' && (
+            <TodoEditModal
+              open={true}
+              todo={editingTodoData || editingNode.originalData}
+              onClose={handleCloseEditModal}
+              onSave={async () => {
+                if (editingTodoData) {
+                  // TodoFormData → CreateTodoInput 변환
+                  let startTimeISO: string | undefined;
+                  if (editingTodoData.scheduledDate) {
+                    const date = new Date(editingTodoData.scheduledDate);
+                    if (editingTodoData.scheduleType === 'timed' && editingTodoData.startTime) {
+                      const [hours, minutes] = editingTodoData.startTime.split(':');
+                      date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                    }
+                    startTimeISO = date.toISOString();
+                  }
+
+                  await updateTodo(editingNode.id, {
+                    title: editingTodoData.title,
+                    clarification: editingTodoData.clarification as Clarification | undefined,
+                    schedule_type: editingTodoData.scheduleType || 'none',
+                    start_time: startTimeISO,
+                    completed: editingTodoData.completed,
+                    is_today_highlight: editingTodoData.isHighlight,
+                    next_action_context_ids: editingTodoData.nextActionContextIds,
+                    color: editingTodoData.color,
+                    icon: editingTodoData.icon,
+                  });
+                }
+                handleCloseEditModal();
+                refetch();
+              }}
+              onChange={(data) => setEditingTodoData(data)}
+              onDelete={async () => {
+                await deleteTodo(editingNode.id);
+                handleCloseEditModal();
+                refetch();
+              }}
+            />
+          )}
+
+          {/* Project 편집 */}
+          {editingNode.type === 'project' && (
+            <ProjectEditDialog
+              open={true}
+              editingProject={editingProjectData || editingNode.originalData}
+              onSave={async (data) => {
+                await updateProject(userId, editingNode.id, data);
+                handleCloseEditModal();
+                refetch();
+              }}
+              onCancel={handleCloseEditModal}
+              onDelete={async () => {
+                await deleteProject(userId, editingNode.id);
+                handleCloseEditModal();
+                refetch();
+              }}
+              onProjectChange={(project) => setEditingProjectData(project)}
+            />
+          )}
+
+          {/* Goal 편집 */}
+          {editingNode.type === 'goal' && (
+            <GoalEditDialog
+              open={true}
+              editingGoal={editingGoalData || editingNode.originalData}
+              areas={areas}
+              resources={resources}
+              projects={projects}
+              onSave={async (data) => {
+                await updateGoal(userId, editingNode.id, data);
+                handleCloseEditModal();
+                refetch();
+              }}
+              onCancel={handleCloseEditModal}
+              onDelete={async () => {
+                await deleteGoal(userId, editingNode.id);
+                handleCloseEditModal();
+                refetch();
+              }}
+              onGoalChange={(goal) => setEditingGoalData(goal)}
+            />
+          )}
+
+          {/* Area 편집 */}
+          {editingNode.type === 'area' && (
+            <AreaResourceEditModal
+              open={true}
+              editingItem={editingAreaResourceData || editingNode.originalData}
+              itemType={areaResourceItemType}
+              pageType="area"
+              onCancel={handleCloseEditModal}
+              onSave={async () => {
+                if (editingAreaResourceData) {
+                  const { title, color, icon, is_pinned } = editingAreaResourceData;
+                  await updateArea(userId, editingNode.id, { title, color, icon, is_pinned });
+                }
+                handleCloseEditModal();
+                refetch();
+              }}
+              onDelete={async () => {
+                await deleteArea(userId, editingNode.id);
+                handleCloseEditModal();
+                refetch();
+              }}
+              onItemChange={(item) => setEditingAreaResourceData(item)}
+              onItemTypeChange={(type) => setAreaResourceItemType(type)}
+            />
+          )}
+
+          {/* Resource 편집 */}
+          {editingNode.type === 'resource' && (
+            <AreaResourceEditModal
+              open={true}
+              editingItem={editingAreaResourceData || editingNode.originalData}
+              itemType={areaResourceItemType}
+              pageType="resource"
+              onCancel={handleCloseEditModal}
+              onSave={async () => {
+                if (editingAreaResourceData) {
+                  const { title, color, icon, is_pinned } = editingAreaResourceData;
+                  await updateResource(userId, editingNode.id, { title, color, icon, is_pinned });
+                }
+                handleCloseEditModal();
+                refetch();
+              }}
+              onDelete={async () => {
+                await deleteResource(userId, editingNode.id);
+                handleCloseEditModal();
+                refetch();
+              }}
+              onItemChange={(item) => setEditingAreaResourceData(item)}
+              onItemTypeChange={(type) => setAreaResourceItemType(type)}
+            />
+          )}
+
+          {/* Note 편집 */}
+          {editingNode.type === 'note' && (
+            <NoteEditModal
+              open={true}
+              note={editingNoteData || editingNode.originalData}
+              areas={areas}
+              resources={resources}
+              onClose={handleCloseEditModal}
+              onSave={async () => {
+                if (editingNoteData) {
+                  // NoteFormData → UpdateNoteInput 변환
+                  // linkedAreaOrResource: 'area-xxx' | 'resource-xxx' → area_resource_id
+                  let areaResourceId: string | undefined;
+                  if (editingNoteData.linkedAreaOrResource) {
+                    const [, id] = editingNoteData.linkedAreaOrResource.split('-');
+                    areaResourceId = id;
+                  }
+
+                  await updateNote(editingNode.id, userId, {
+                    title: editingNoteData.title,
+                    content: editingNoteData.content,
+                    note_category: editingNoteData.note_category,
+                    area_resource_id: areaResourceId,
+                    is_pinned: editingNoteData.isPinned,
+                  });
+                }
+                handleCloseEditModal();
+                refetch();
+              }}
+              onChange={(data) => setEditingNoteData(data)}
+              onDelete={async () => {
+                await deleteNote(editingNode.id, userId);
+                handleCloseEditModal();
+                refetch();
+              }}
+            />
+          )}
+        </>
       )}
     </div>
   );

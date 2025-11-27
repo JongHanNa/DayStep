@@ -28,7 +28,6 @@ export function GraphControls({ nodeCount, linkCount, isFiltered }: GraphControl
     toggleNodeType,
     toggleShowCompleted,
     toggleShowArchived,
-    setConnectionDepth,
     setLinkWidth,
     resetFilter,
   } = useGraphStore();
@@ -136,28 +135,6 @@ export function GraphControls({ nodeCount, linkCount, isFiltered }: GraphControl
               />
               <span className="text-xs">보관 항목 표시</span>
             </label>
-          </div>
-        </div>
-
-        {/* 연결 깊이 */}
-        <div>
-          <label className="text-xs font-medium text-base-content/70 mb-2 block">
-            연결 깊이: {filter.connectionDepth}
-          </label>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={filter.connectionDepth}
-            onChange={(e) => setConnectionDepth(parseInt(e.target.value))}
-            className="range range-xs range-primary"
-          />
-          <div className="flex justify-between text-[10px] text-base-content/50 mt-1">
-            <span>1</span>
-            <span>2</span>
-            <span>3</span>
-            <span>4</span>
-            <span>5</span>
           </div>
         </div>
 
