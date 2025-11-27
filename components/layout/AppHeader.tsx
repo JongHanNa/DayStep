@@ -6,6 +6,7 @@ import { useSidebarStore } from '@/state/stores/sidebarStore';
 import { getPageTitleFromPath } from '@/config/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useState } from 'react';
+import { useAuth } from '@/app/context/AuthContext';
 import ColorThemeModal from '@/components/settings/ColorThemeModal';
 
 export default function AppHeader() {
@@ -13,12 +14,16 @@ export default function AppHeader() {
   const { open } = useSidebarStore();
   const { resolvedTheme, setTheme } = useTheme();
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const pageTitle = getPageTitleFromPath(pathname);
 
   // 숨겨야 하는 경로
-  const hiddenPaths = ['/', '/login', '/landing', '/second-brain/onboarding'];
-  const shouldHide = hiddenPaths.some(path => pathname === path);
+  // - /login, /landing, /second-brain/onboarding: 항상 숨김
+  // - /: 비인증 시 숨김 (LandingPage), 인증 시 표시 (GraphView)
+  const alwaysHiddenPaths = ['/login', '/landing', '/second-brain/onboarding'];
+  const shouldHide = alwaysHiddenPaths.some(path => pathname === path) ||
+                     (pathname === '/' && !isAuthenticated);
 
   if (shouldHide) {
     return null;

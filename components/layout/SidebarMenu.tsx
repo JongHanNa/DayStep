@@ -116,7 +116,10 @@ export default function SidebarMenu() {
                 {/* 메뉴 아이템들 */}
                 <div className="px-2">
                   {group.items.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
+                    // 루트 경로('/')는 정확히 일치할 때만 활성화, 나머지는 startsWith 사용
+                    const isActive = item.href === '/'
+                      ? pathname === '/'
+                      : pathname.startsWith(item.href);
                     const Icon = item.icon;
 
                     return (

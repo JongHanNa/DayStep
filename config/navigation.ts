@@ -16,6 +16,7 @@ import {
   Bell,
   Palette,
   Shield,
+  Network,
   LucideIcon
 } from 'lucide-react';
 
@@ -45,6 +46,7 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
     label: '시작',
     icon: Home,
     items: [
+      { id: 'graph-view', label: '그래프 뷰', icon: Network, href: '/' },
       { id: 'areas', label: '책임', icon: Target, href: '/second-brain/areas' },
       { id: 'resources', label: '자원', icon: BookOpen, href: '/second-brain/resources' },
       { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
@@ -131,7 +133,10 @@ export const getPageTitleFromPath = (pathname: string): string => {
   if (pathname === '/timeline') {
     return '타임라인';
   }
-  if (pathname === '/' || pathname === '/landing') {
+  if (pathname === '/') {
+    return '그래프 뷰';
+  }
+  if (pathname === '/landing') {
     return 'DayStep';
   }
 
