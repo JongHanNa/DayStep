@@ -9,7 +9,8 @@ import { useRef, useCallback, useEffect, useState, ComponentType } from 'react';
 import ForceGraph2DComponent from './ForceGraph2DWrapper';
 import type { GraphNode, GraphLink, GraphData } from '@/types/graph';
 import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter } from '@/state/stores/graphStore';
-import { getNodeSize, getLinkColor, getLinkWidth } from '@/lib/graph-utils';
+import { getNodeSize, getLinkColor, getLinkWidth, NODE_TYPE_LABELS } from '@/lib/graph-utils';
+import type { GraphNodeType } from '@/types/graph';
 import { useTheme } from '@/hooks/useTheme';
 
 // react-force-graph-2d의 제네릭 타입이 복잡하여 타입 캐스팅 사용
@@ -86,6 +87,116 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
     [setZoomLevel]
   );
 
+  // 노드 타입별 아이콘 심볼 (Canvas에서 그릴 수 있는 간단한 형태)
+  const drawNodeIcon = useCallback((
+    ctx: CanvasRenderingContext2D,
+    type: GraphNodeType,
+    x: number,
+    y: number,
+    iconSize: number
+  ) => {
+    ctx.strokeStyle = '#fff';
+    ctx.fillStyle = '#fff';
+    ctx.lineWidth = Math.max(1.5, iconSize * 0.15);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const s = iconSize; // 아이콘 크기
+
+    switch (type) {
+      case 'area': // Briefcase 아이콘
+        ctx.beginPath();
+        // 가방 본체
+        ctx.roundRect(x - s * 0.5, y - s * 0.25, s, s * 0.6, s * 0.1);
+        ctx.stroke();
+        // 손잡이
+        ctx.beginPath();
+        ctx.moveTo(x - s * 0.2, y - s * 0.25);
+        ctx.lineTo(x - s * 0.2, y - s * 0.4);
+        ctx.lineTo(x + s * 0.2, y - s * 0.4);
+        ctx.lineTo(x + s * 0.2, y - s * 0.25);
+        ctx.stroke();
+        break;
+
+      case 'resource': // Archive 아이콘
+        ctx.beginPath();
+        // 상단 박스
+        ctx.roundRect(x - s * 0.5, y - s * 0.4, s, s * 0.3, s * 0.05);
+        ctx.stroke();
+        // 하단 박스
+        ctx.beginPath();
+        ctx.roundRect(x - s * 0.45, y - s * 0.1, s * 0.9, s * 0.5, s * 0.05);
+        ctx.stroke();
+        // 중앙 라인
+        ctx.beginPath();
+        ctx.moveTo(x - s * 0.15, y + s * 0.1);
+        ctx.lineTo(x + s * 0.15, y + s * 0.1);
+        ctx.stroke();
+        break;
+
+      case 'goal': // Target 아이콘
+        // 외원
+        ctx.beginPath();
+        ctx.arc(x, y, s * 0.45, 0, 2 * Math.PI);
+        ctx.stroke();
+        // 중원
+        ctx.beginPath();
+        ctx.arc(x, y, s * 0.25, 0, 2 * Math.PI);
+        ctx.stroke();
+        // 내원 (채움)
+        ctx.beginPath();
+        ctx.arc(x, y, s * 0.08, 0, 2 * Math.PI);
+        ctx.fill();
+        break;
+
+      case 'project': // Folder 아이콘
+        ctx.beginPath();
+        // 폴더 탭
+        ctx.moveTo(x - s * 0.45, y - s * 0.2);
+        ctx.lineTo(x - s * 0.45, y - s * 0.35);
+        ctx.lineTo(x - s * 0.15, y - s * 0.35);
+        ctx.lineTo(x, y - s * 0.2);
+        // 폴더 본체
+        ctx.lineTo(x + s * 0.45, y - s * 0.2);
+        ctx.lineTo(x + s * 0.45, y + s * 0.35);
+        ctx.lineTo(x - s * 0.45, y + s * 0.35);
+        ctx.closePath();
+        ctx.stroke();
+        break;
+
+      case 'todo': // CheckSquare 아이콘
+        ctx.beginPath();
+        // 사각형
+        ctx.roundRect(x - s * 0.4, y - s * 0.4, s * 0.8, s * 0.8, s * 0.1);
+        ctx.stroke();
+        // 체크마크
+        ctx.beginPath();
+        ctx.moveTo(x - s * 0.2, y);
+        ctx.lineTo(x - s * 0.05, y + s * 0.15);
+        ctx.lineTo(x + s * 0.25, y - s * 0.15);
+        ctx.stroke();
+        break;
+
+      case 'note': // StickyNote 아이콘
+        ctx.beginPath();
+        // 노트 본체 (접힌 모서리 제외)
+        ctx.moveTo(x + s * 0.15, y - s * 0.4);
+        ctx.lineTo(x - s * 0.4, y - s * 0.4);
+        ctx.lineTo(x - s * 0.4, y + s * 0.4);
+        ctx.lineTo(x + s * 0.4, y + s * 0.4);
+        ctx.lineTo(x + s * 0.4, y - s * 0.15);
+        ctx.lineTo(x + s * 0.15, y - s * 0.4);
+        ctx.stroke();
+        // 접힌 부분
+        ctx.beginPath();
+        ctx.moveTo(x + s * 0.15, y - s * 0.4);
+        ctx.lineTo(x + s * 0.15, y - s * 0.15);
+        ctx.lineTo(x + s * 0.4, y - s * 0.15);
+        ctx.stroke();
+        break;
+    }
+  }, []);
+
   // 커스텀 노드 렌더링
   const nodeCanvasObject = useCallback(
     (node: GraphNode & { x?: number; y?: number }, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -120,45 +231,66 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         ctx.stroke();
       }
 
-      // 노드 아이콘 또는 첫 글자
-      const fontSize = Math.max(8, size * 0.8);
-      ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#fff';
+      // 노드 타입별 아이콘 그리기
+      const iconSize = size * 0.7;
+      drawNodeIcon(ctx, node.type, x, y, iconSize);
 
-      // 첫 글자 표시 (아이콘 대신)
-      const firstChar = node.title.charAt(0).toUpperCase();
-      ctx.fillText(firstChar, x, y);
+      // 라벨은 onRenderFramePost에서 별도로 그림 (z-index 문제 해결)
+    },
+    [selectedNodeId, hoveredNodeId, drawNodeIcon]
+  );
 
-      // 호버 시 제목 표시
-      if ((isHovered || isSelected) && globalScale > 0.8) {
-        const labelFontSize = Math.max(10, 12 / globalScale);
+  // 모든 노드가 그려진 후 라벨을 별도로 그리기 (z-index 문제 해결)
+  const onRenderFramePost = useCallback(
+    (ctx: CanvasRenderingContext2D, globalScale: number) => {
+      // 줌 레벨이 너무 낮으면 라벨 표시 안함
+      if (globalScale <= 0.4) return;
+
+      graphData.nodes.forEach((node) => {
+        const nodeWithPos = node as GraphNode & { x?: number; y?: number };
+        if (nodeWithPos.x === undefined || nodeWithPos.y === undefined) return;
+
+        const x = nodeWithPos.x;
+        const y = nodeWithPos.y;
+        const baseSize = getNodeSize(node);
+        const isSelected = node.id === selectedNodeId;
+        const isHovered = node.id === hoveredNodeId;
+        const size = isSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
+
+        const labelFontSize = Math.max(8, Math.min(11, 10 / globalScale));
         ctx.font = `500 ${labelFontSize}px Inter, system-ui, sans-serif`;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
 
-        // 배경 박스
-        const textWidth = ctx.measureText(node.title).width;
-        const padding = 4;
-        const labelY = y + size + 12;
+        // 제목 텍스트 (최대 길이 제한)
+        const maxTitleLength = 15;
+        const displayTitle = node.title.length > maxTitleLength
+          ? node.title.substring(0, maxTitleLength) + '...'
+          : node.title;
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        const textWidth = ctx.measureText(displayTitle).width;
+        const padding = 3;
+        const labelY = y + size + 8;
+
+        // 배경 박스 (호버/선택 시 더 진하게)
+        const bgOpacity = isSelected ? 0.85 : isHovered ? 0.75 : 0.6;
+        ctx.fillStyle = `rgba(0, 0, 0, ${bgOpacity})`;
         ctx.beginPath();
         ctx.roundRect(
           x - textWidth / 2 - padding,
           labelY - labelFontSize / 2 - padding / 2,
           textWidth + padding * 2,
           labelFontSize + padding,
-          4
+          3
         );
         ctx.fill();
 
         // 텍스트
-        ctx.fillStyle = '#fff';
-        ctx.fillText(node.title, x, labelY);
-      }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isSelected || isHovered ? '#fff' : 'rgba(255, 255, 255, 0.9)';
+        ctx.fillText(displayTitle, x, labelY);
+      });
     },
-    [selectedNodeId, hoveredNodeId]
+    [graphData.nodes, selectedNodeId, hoveredNodeId]
   );
 
   // 노드 포인터 영역 크기
@@ -221,6 +353,8 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         enablePanInteraction={true}
         enableNodeDrag={true}
         onZoom={handleZoom}
+        // 라벨을 모든 노드 위에 그리기 위한 후처리
+        onRenderFramePost={onRenderFramePost}
         // 배경
         backgroundColor="transparent"
       />

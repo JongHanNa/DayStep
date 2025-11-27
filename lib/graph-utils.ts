@@ -33,6 +33,22 @@ export const NODE_TYPE_ICONS: Record<GraphNodeType, string> = {
   note: 'lucide-StickyNote',
 };
 
+// Canvas용 아이콘 SVG Path (24x24 viewBox 기준)
+export const NODE_TYPE_ICON_PATHS: Record<GraphNodeType, string> = {
+  // Briefcase (책임/Area)
+  area: 'M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16 M2 10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8z',
+  // Archive (자원/Resource)
+  resource: 'M21 8v13H3V8 M1 3h22v5H1z M10 12h4',
+  // Target (목표/Goal)
+  goal: 'M12 12m-10 0a10 10 0 1 0 20 0 10 10 0 1 0-20 0 M12 12m-6 0a6 6 0 1 0 12 0 6 6 0 1 0-12 0 M12 12m-2 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0',
+  // FolderOpen (프로젝트/Project)
+  project: 'M5 19a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2 2h9a2 2 0 0 1 2 2v1 M5 19h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2z',
+  // CheckSquare (할일/Todo)
+  todo: 'M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
+  // StickyNote (노트/Note)
+  note: 'M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-5-5z M15 3v6h6',
+};
+
 // Node sizes for rendering
 export const NODE_SIZES: Record<GraphNodeType, number> = {
   area: 16,
