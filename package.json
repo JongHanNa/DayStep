@@ -138,6 +138,7 @@
     "react-datepicker": "^8.7.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.0.0",
+    "react-force-graph-2d": "^1.29.0",
     "react-hook-form": "^7.61.1",
     "react-modal-sheet": "^4.4.0",
     "react-textarea-autosize": "^8.5.9",
