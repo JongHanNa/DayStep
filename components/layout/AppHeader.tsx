@@ -14,19 +14,39 @@ export default function AppHeader() {
   const { open } = useSidebarStore();
   const { resolvedTheme, setTheme } = useTheme();
   const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   const pageTitle = getPageTitleFromPath(pathname);
+
+  // pathname의 trailing slash 제거 (일관된 비교를 위해)
+  const normalizedPathname = pathname.endsWith('/') && pathname !== '/'
+    ? pathname.slice(0, -1)
+    : pathname;
+
+  // 세션 확인 중에는 헤더를 숨김 (Capacitor 환경에서 깜빡임 방지)
+  // CSS 로딩 실패 대비 인라인 스타일 적용
+  if (loading) {
+    return (
+      <div style={{ display: 'none', opacity: 0, pointerEvents: 'none' }}>
+        {/* 완전 숨김 보장 */}
+      </div>
+    );
+  }
 
   // 숨겨야 하는 경로
   // - /login, /landing, /second-brain/onboarding: 항상 숨김
   // - /: 비인증 시 숨김 (LandingPage), 인증 시 표시 (GraphView)
   const alwaysHiddenPaths = ['/login', '/landing', '/second-brain/onboarding'];
-  const shouldHide = alwaysHiddenPaths.some(path => pathname === path) ||
-                     (pathname === '/' && !isAuthenticated);
+  const shouldHide = alwaysHiddenPaths.some(path => normalizedPathname === path) ||
+                     (normalizedPathname === '/' && !isAuthenticated);
 
+  // CSS 로딩 실패 대비 인라인 스타일로 완전 숨김
   if (shouldHide) {
-    return null;
+    return (
+      <div style={{ display: 'none', opacity: 0, pointerEvents: 'none' }}>
+        {/* 완전 숨김 보장 */}
+      </div>
+    );
   }
 
   const toggleTheme = () => {
