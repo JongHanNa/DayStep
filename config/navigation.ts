@@ -103,11 +103,34 @@ export const getGroupPaths = (groupType: NavigationGroupType): string[] => {
   return NAVIGATION_GROUPS[groupType].items.map(item => item.href);
 };
 
+/**
+ * Helper: Find navigation item matching the current pathname
+ * Uses longest-first sorting to avoid prefix matching issues (e.g., '/' matching everything)
+ */
+const findNavItemByPath = (pathname: string, items: NavigationItem[]): NavigationItem | null => {
+  // 경로 길이 내림차순 정렬 (긴 경로부터 검사)
+  // This ensures /second-brain/areas is checked before /
+  const sortedItems = [...items].sort((a, b) => b.href.length - a.href.length);
+
+  for (const item of sortedItems) {
+    // 정확한 경로 매칭 (e.g., '/' or '/timeline')
+    if (item.href === pathname) {
+      return item;
+    }
+    // 경로 경계 매칭 (e.g., /areas matches /areas/123 but not /areas-old)
+    if (pathname.startsWith(item.href + '/')) {
+      return item;
+    }
+  }
+
+  return null;
+};
+
 // 유틸리티 함수: 현재 경로에서 활성 그룹 찾기
 export const getActiveGroupFromPath = (pathname: string): NavigationGroupType | null => {
   for (const [groupType, group] of Object.entries(NAVIGATION_GROUPS)) {
-    const isActive = group.items.some(item => pathname.startsWith(item.href));
-    if (isActive) return groupType as NavigationGroupType;
+    const item = findNavItemByPath(pathname, group.items);
+    if (item) return groupType as NavigationGroupType;
   }
   return null;
 };
@@ -115,14 +138,14 @@ export const getActiveGroupFromPath = (pathname: string): NavigationGroupType | 
 // 유틸리티 함수: 현재 경로에서 활성 아이템 찾기
 export const getActiveItemFromPath = (pathname: string, groupType: NavigationGroupType): NavigationItem | null => {
   const group = NAVIGATION_GROUPS[groupType];
-  return group.items.find(item => pathname.startsWith(item.href)) || null;
+  return findNavItemByPath(pathname, group.items);
 };
 
 // 유틸리티 함수: 현재 경로에서 페이지 제목 가져오기
 export const getPageTitleFromPath = (pathname: string): string => {
   // 모든 그룹의 아이템에서 현재 경로와 매칭되는 것을 찾음
   for (const group of Object.values(NAVIGATION_GROUPS)) {
-    const item = group.items.find(item => pathname.startsWith(item.href));
+    const item = findNavItemByPath(pathname, group.items);
     if (item) return item.label;
   }
 
