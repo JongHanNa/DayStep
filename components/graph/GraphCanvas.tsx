@@ -25,6 +25,7 @@ interface GraphCanvasProps {
 export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: GraphCanvasProps) {
   const graphRef = useRef<unknown>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pendingZoomRef = useRef<number | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
   const selectedNodeId = useGraphSelectedNode();
@@ -103,13 +104,22 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
     onBackgroundClick?.();
   }, [setSelectedNode, setHoveredNode, onBackgroundClick]);
 
-  // 줌 변경 핸들러
+  // 줌 변경 핸들러 - 렌더링 중 setState 방지를 위해 ref에 저장
   const handleZoom = useCallback(
     (zoom: { k: number }) => {
-      setZoomLevel(zoom.k);
+      pendingZoomRef.current = zoom.k;
     },
-    [setZoomLevel]
+    []
   );
+
+  // 렌더링 완료 후 대기 중인 zoom을 스토어에 동기화
+  useEffect(() => {
+    if (pendingZoomRef.current !== null) {
+      const zoomValue = pendingZoomRef.current;
+      pendingZoomRef.current = null;
+      setZoomLevel(zoomValue);
+    }
+  });
 
   // 노드 타입별 아이콘 심볼 (Canvas에서 그릴 수 있는 간단한 형태)
   const drawNodeIcon = useCallback((
