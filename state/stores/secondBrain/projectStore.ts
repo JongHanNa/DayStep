@@ -28,6 +28,7 @@ interface ProjectStoreState {
   unarchiveProject: (userId: string, id: string) => Promise<Project>;
   updateProjectProgress: (id: string, totalTodos: number, completedTodos: number) => Promise<Project>;
   reorderProjects: (projectIds: string[]) => Promise<void>;
+  clearProjects: () => void;
 }
 
 export const useProjectStore = createStore<ProjectStoreState>(
@@ -354,6 +355,9 @@ export const useProjectStore = createStore<ProjectStoreState>(
         throw error;
       }
     },
+
+    // 로그아웃 시 스토어 초기화
+    clearProjects: () => set({ projects: [], loading: false, error: null }),
   }),
   {
     name: 'project-store',

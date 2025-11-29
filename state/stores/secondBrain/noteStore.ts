@@ -258,6 +258,9 @@ export const useNoteStore = createStore<NoteStoreState>(
         throw error;
       }
     },
+
+    // 로그아웃 시 스토어 초기화
+    clearNotes: () => set({ notes: [], loading: false, error: null }),
   }),
   {
     name: 'note-store',

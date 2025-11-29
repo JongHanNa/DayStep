@@ -1136,6 +1136,11 @@ export const useTodoStore = createStore<TodoStoreState>(
         });
       },
 
+      // 로그아웃 시 스토어 초기화
+      clearTodos: () => {
+        get().reset();
+      },
+
       // 낙관적 업데이트 관리
       retryFailedOperation: async (operationId: string) => {
         // TODO: 구현 필요

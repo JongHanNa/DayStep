@@ -27,6 +27,7 @@ interface AreaStoreState {
   archiveArea: (userId: string, id: string) => Promise<AreaResource>;
   unarchiveArea: (userId: string, id: string) => Promise<AreaResource>;
   reorderAreas: (userId: string, areaIds: string[]) => Promise<void>;
+  clearAreas: () => void;
 }
 
 export const useAreaStore = createStore<AreaStoreState>(
@@ -262,6 +263,9 @@ export const useAreaStore = createStore<AreaStoreState>(
         throw error;
       }
     },
+
+    // 로그아웃 시 스토어 초기화
+    clearAreas: () => set({ areas: [], loading: false, error: null }),
   }),
   {
     name: 'area-store',

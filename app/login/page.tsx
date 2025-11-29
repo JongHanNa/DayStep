@@ -68,6 +68,9 @@ export default function LoginPage() {
     redirect: string | null;
   }>({ error: null, redirect: null });
 
+  // 개발 환경 여부 확인
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   useEffect(() => {
     // LoginPage 마운트 - 클라이언트 사이드 렌더링
     setIsClient(true);
@@ -145,6 +148,26 @@ export default function LoginPage() {
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 p-10 sm:p-12">
             <div className="space-y-6 sm:space-y-8">
               <LoginButton provider="google" />
+
+              {/* 개발 환경 전용: 테스트 계정 로그인 */}
+              {isDevelopment && (
+                <>
+                  {/* 구분선 */}
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="bg-white/80 dark:bg-gray-800/80 px-4 text-gray-500 dark:text-gray-400">
+                        개발 전용
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 테스트 계정 로그인 버튼 */}
+                  <LoginButton provider="test-account" />
+                </>
+              )}
             </div>
           </div>
 

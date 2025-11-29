@@ -23,6 +23,7 @@ export interface AuthContextType {
   // 인증 메서드
   signInWithGoogle: () => Promise<void>;
   signInWithKakao: () => Promise<void>;
+  signInWithTestAccount: () => Promise<void>;
   signOut: () => Promise<void>;
   
   // 유틸리티

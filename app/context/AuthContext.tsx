@@ -17,6 +17,12 @@ import {
 import { useCapacitorAutoTokenRefresh } from '@/lib/auth/useAutoTokenRefresh';
 import { useAuthStore } from '@/state/stores/authStore';
 import { clearLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useTodoStore } from '@/state/stores/todoStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 
 // 환경 감지 (실제 Capacitor 환경에서만 모바일로 감지)
 const isMobileEnvironment = (() => {
@@ -61,6 +67,7 @@ const defaultContextValue: AuthContextType = {
   loading: false, // 하이드레이션 안전성을 위해 초기값을 false로 설정
   signInWithGoogle: async () => {},
   signInWithKakao: async () => {},
+  signInWithTestAccount: async () => {},
   signOut: async () => {},
   isAuthenticated: false,
   isHydrated: false,
@@ -584,6 +591,50 @@ export function AuthProvider({
     }
   };
 
+  // 테스트 계정 로그인 (개발 환경 전용)
+  const signInWithTestAccount = async () => {
+    // 개발 환경 체크
+    if (process.env.NODE_ENV !== 'development') {
+      console.warn('[Auth] 테스트 계정 로그인은 개발 환경에서만 사용 가능합니다.');
+      return;
+    }
+
+    const email = process.env.NEXT_PUBLIC_TEST_ACCOUNT_EMAIL;
+    const password = process.env.NEXT_PUBLIC_TEST_ACCOUNT_PASSWORD;
+
+    if (!email || !password) {
+      console.error('[Auth] 테스트 계정 환경 변수가 설정되지 않았습니다.');
+      alert('테스트 계정 정보가 없습니다. .env.development 파일을 확인하세요.');
+      return;
+    }
+
+    console.log('[Auth] 테스트 계정 로그인 시작:', email);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('[Auth] 테스트 계정 로그인 성공:', data.user?.id);
+
+      // onAuthStateChange에서 상태 업데이트 처리됨
+      // 타임라인으로 리다이렉트 (기존 OAuth 패턴과 동일)
+      window.location.href = '/timeline';
+
+    } catch (error) {
+      console.error('[Auth] 테스트 계정 로그인 실패:', error);
+      const errorMessage = error instanceof Error ? error.message : '테스트 계정 로그인 중 오류가 발생했습니다.';
+      alert(`테스트 계정 로그인 오류: ${errorMessage}`);
+      setLoading(false);
+    }
+  };
+
   // 로그아웃
   const signOut = async () => {
     console.log('[Auth] Starting sign out...');
@@ -643,6 +694,16 @@ export function AuthProvider({
       // 📍 Capacitor: 마지막 방문 페이지 정보 삭제
       await clearLastVisitedRoute();
 
+      // ✅ 모든 Zustand 스토어 초기화
+      console.log('[Auth] Clearing all Zustand stores...');
+      useAreaStore.getState().clearAreas();
+      useResourceStore.getState().clearResources();
+      useGoalStore.getState().clearGoals();
+      useProjectStore.getState().clearProjects();
+      useTodoStore.getState().clearTodos();
+      useNoteStore.getState().clearNotes();
+      console.log('[Auth] All stores cleared');
+
     } catch (globalError) {
       console.error('[Auth] Sign out error:', globalError);
     } finally {
@@ -670,6 +731,7 @@ export function AuthProvider({
     loading,
     signInWithGoogle,
     signInWithKakao,
+    signInWithTestAccount,
     signOut,
     isAuthenticated: !!user,
     isHydrated,

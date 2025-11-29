@@ -25,6 +25,7 @@ interface ResourceStoreState {
   archiveResource: (userId: string, id: string) => Promise<AreaResource>;
   unarchiveResource: (userId: string, id: string) => Promise<AreaResource>;
   reorderResources: (userId: string, resourceIds: string[]) => Promise<void>;
+  clearResources: () => void;
 }
 
 export const useResourceStore = createStore<ResourceStoreState>(
@@ -239,6 +240,9 @@ export const useResourceStore = createStore<ResourceStoreState>(
         throw error;
       }
     },
+
+    // 로그아웃 시 스토어 초기화
+    clearResources: () => set({ resources: [], loading: false, error: null }),
   }),
   {
     name: 'resource-store',

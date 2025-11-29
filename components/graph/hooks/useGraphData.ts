@@ -55,19 +55,21 @@ export function useGraphData(): UseGraphDataReturn {
   const [relationsLoading, setRelationsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 초기 데이터 로딩
+  // 초기 데이터 로딩 - userId 변경 시 항상 새로 로드 (캐시 의존성 제거)
   useEffect(() => {
     if (!userId) return;
 
     const loadAllData = async () => {
       try {
-        // 기존 스토어 데이터가 비어있으면 로드
-        if (areas.length === 0) await fetchAreas(userId);
-        if (resources.length === 0) await fetchResources(userId);
-        if (goals.length === 0) await fetchGoals(userId);
-        if (projects.length === 0) await fetchProjects(userId);
-        if (todos.length === 0) await fetchAllTodos();
-        if (notes.length === 0) await fetchNotes(userId);
+        // userId가 변경되면 항상 새로 로드 (캐시 체크 제거)
+        await Promise.all([
+          fetchAreas(userId),
+          fetchResources(userId),
+          fetchGoals(userId),
+          fetchProjects(userId),
+          fetchAllTodos(),
+          fetchNotes(userId),
+        ]);
       } catch (err) {
         console.error('❌ 그래프 데이터 로딩 실패:', err);
         setError(err instanceof Error ? err.message : '데이터 로딩 실패');
@@ -75,7 +77,7 @@ export function useGraphData(): UseGraphDataReturn {
     };
 
     loadAllData();
-  }, [userId, areas.length, resources.length, goals.length, projects.length, todos.length, notes.length, fetchAreas, fetchResources, fetchGoals, fetchProjects, fetchAllTodos, fetchNotes]);
+  }, [userId, fetchAreas, fetchResources, fetchGoals, fetchProjects, fetchAllTodos, fetchNotes]);
 
   // 관계 데이터 로딩 (프로젝트와 노트가 로드된 후)
   useEffect(() => {

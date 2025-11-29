@@ -23,6 +23,7 @@ interface GoalStoreState {
   createGoal: (userId: string, data: CreateGoalInput) => Promise<Goal>;
   updateGoal: (userId: string, id: string, data: UpdateGoalInput) => Promise<Goal>;
   deleteGoal: (userId: string, id: string) => Promise<boolean>;
+  clearGoals: () => void;
 }
 
 export const useGoalStore = createStore<GoalStoreState>(
@@ -160,6 +161,9 @@ export const useGoalStore = createStore<GoalStoreState>(
         throw error;
       }
     },
+
+    // 로그아웃 시 스토어 초기화
+    clearGoals: () => set({ goals: [], loading: false, error: null }),
   }),
   {
     name: 'goal-store',

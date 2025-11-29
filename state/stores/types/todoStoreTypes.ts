@@ -157,6 +157,7 @@ export interface TodoStoreState extends BaseStoreState {
 
   // 스토어 초기화
   reset: () => void;
+  clearTodos: () => void; // 로그아웃 시 스토어 초기화
 
   // 낙관적 업데이트 관리
   retryFailedOperation: (operationId: string) => Promise<void>;
