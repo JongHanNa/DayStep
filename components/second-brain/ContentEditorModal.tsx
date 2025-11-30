@@ -81,8 +81,9 @@ export default function ContentEditorModal({
 
   if (!open) return null;
 
+  // Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor
   return (
-    <dialog open className="modal modal-open">
+    <dialog open className="modal modal-open z-[110]">
       <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
         {/* 헤더 */}
         <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1 border-b border-base-300 sticky top-0 bg-base-200 z-10`}>

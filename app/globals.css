@@ -55,6 +55,18 @@
   z-index: 999999 !important;
 }
 
+/* Z-index hierarchy enforcement for dialogs
+ * Ensures all modals appear above AppHeader (z-40)
+ * See CLAUDE.md "Z-Index 계층 구조" for full hierarchy
+ */
+dialog[open] {
+  z-index: 110;
+}
+
+dialog::backdrop {
+  z-index: 109; /* Between AppHeader (40) and dialog (110) */
+}
+
 /* 드래그 모드 시 스크롤 완전 차단 */
 .dragging-active {
   touch-action: none !important;

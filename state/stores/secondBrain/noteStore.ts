@@ -31,6 +31,7 @@ interface NoteStoreState {
   deleteNote: (id: string, userId: string) => Promise<boolean>;
   pinNote: (id: string, userId: string) => Promise<Note>;
   unpinNote: (id: string, userId: string) => Promise<Note>;
+  clearNotes: () => void;
 }
 
 export const useNoteStore = createStore<NoteStoreState>(
