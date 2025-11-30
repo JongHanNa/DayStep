@@ -118,7 +118,8 @@ export default function ContentEditorModal({
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'auto'
           }}
         >
           <style jsx>{`
@@ -126,14 +127,12 @@ export default function ContentEditorModal({
               display: none;
             }
           `}</style>
-          <div className="pt-0 pb-0">
-            <AdvancedMarkdownEditor
-              value={content}
-              onChange={handleContentChange}
-              placeholder={placeholder}
-              minHeight={770}
-            />
-          </div>
+          <AdvancedMarkdownEditor
+            value={content}
+            onChange={handleContentChange}
+            placeholder={placeholder}
+            minHeight={770}
+          />
         </div>
       </div>
       <div className="modal-backdrop" onClick={onClose} />

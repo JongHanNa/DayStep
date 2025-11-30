@@ -253,64 +253,61 @@ const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
                 backgroundColor: 'white'
               }}
             >
-              <div className="flex-1 overflow-hidden">
-                <div
-                  className="h-full px-4 pt-4"
-                  style={{
-                    overflowY: 'auto',
-                    touchAction: 'pan-y',
-                    pointerEvents: 'auto',
-                  }}
-                >
-                  <div className="space-y-4">
-                    {/* 뷰 모드에 따른 렌더링 */}
-                    {(viewMode === 'edit' || viewMode === 'both') && (
-                      <div className={cn(
-                        viewMode === 'both' && 'mb-6'
-                      )}>
-                        {viewMode === 'both' && (
-                          <div className="mb-2">
-                            <Badge variant="outline" className="text-xs">
-                              <Edit3 className="h-3 w-3 mr-1" />
-                              편집
-                            </Badge>
-                          </div>
-                        )}
-                        <AdvancedMarkdownEditor
-                          value={content}
-                          onChange={handleContentChange}
-                          placeholder={placeholder}
-                          className="text-sm"
-                          minHeight={viewMode === 'both' ? 300 : 600}
-                          onFocus={keyboardAwareModal.handleEditorFocus}
-                          onBlur={keyboardAwareModal.handleEditorBlur}
-                        />
-                      </div>
-                    )}
-
-                    {(viewMode === 'preview' || viewMode === 'both') && content.trim() && (
-                      <div>
-                        {viewMode === 'both' && (
-                          <div className="mb-2">
-                            <Badge variant="outline" className="text-xs">
-                              미리보기
-                            </Badge>
-                          </div>
-                        )}
-                        <div className="border border-border rounded-lg p-4 bg-gray-50/50">
-                          <MarkdownViewer content={content} />
+              <div
+                className="flex-1 overflow-y-auto px-4 pt-4"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'auto'
+                }}
+              >
+                <div className="space-y-4">
+                  {/* 뷰 모드에 따른 렌더링 */}
+                  {(viewMode === 'edit' || viewMode === 'both') && (
+                    <div className={cn(
+                      viewMode === 'both' && 'mb-6'
+                    )}>
+                      {viewMode === 'both' && (
+                        <div className="mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            <Edit3 className="h-3 w-3 mr-1" />
+                            편집
+                          </Badge>
                         </div>
-                      </div>
-                    )}
+                      )}
+                      <AdvancedMarkdownEditor
+                        value={content}
+                        onChange={handleContentChange}
+                        placeholder={placeholder}
+                        className="text-sm"
+                        minHeight={viewMode === 'both' ? 300 : 600}
+                        onFocus={keyboardAwareModal.handleEditorFocus}
+                        onBlur={keyboardAwareModal.handleEditorBlur}
+                      />
+                    </div>
+                  )}
 
-                    {viewMode === 'preview' && !content.trim() && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <StickyNote className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                        <p className="text-sm">미리 볼 내용이 없습니다</p>
-                        <p className="text-xs text-muted-foreground/70">편집 모드로 전환해서 내용을 입력해보세요</p>
+                  {(viewMode === 'preview' || viewMode === 'both') && content.trim() && (
+                    <div>
+                      {viewMode === 'both' && (
+                        <div className="mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            미리보기
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="border border-border rounded-lg p-4 bg-gray-50/50">
+                        <MarkdownViewer content={content} />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {viewMode === 'preview' && !content.trim() && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <StickyNote className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-sm">미리 볼 내용이 없습니다</p>
+                      <p className="text-xs text-muted-foreground/70">편집 모드로 전환해서 내용을 입력해보세요</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
