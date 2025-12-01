@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useNoteStore } from '@/state/stores/noteStore';
+import { useTheme } from '@/hooks/useTheme';
 import ConfettiExplosion from 'react-confetti-explosion';
 import { PomodoroTimer } from '@/components/ui/PomodoroTimer';
 import { getColorById, getColorByHex, DEFAULT_COLOR } from '@/lib/color-palette';
@@ -61,7 +62,11 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
 }) => {
   // 완료 동작 설정 가져오기
   const todoCompletion = useSettingsStore(state => state.todoCompletion);
-  
+
+  // 다크모드 상태 가져오기
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'dark';
+
   // 연결된 노트 확인
   const { notes, setSelectedNoteForEdit, getDisplayNotesForTask } = useNoteStore();
 
@@ -566,10 +571,10 @@ const TimelineItemCard: React.FC<TimelineItemCardProps> = memo(({
                 // 최종 완료 상태 사용
                 finalIsCompleted
                   ? 'border-transparent text-white transform scale-105'
-                  : 'bg-white'
+                  : 'bg-white dark:bg-gray-800'
               )}
               style={{
-                backgroundColor: finalIsCompleted ? (todoColor?.hex || '#22C55E') : 'white',
+                backgroundColor: finalIsCompleted ? (todoColor?.hex || '#22C55E') : (isDarkMode ? '#1f2937' : 'white'),
                 borderColor: finalIsCompleted ? 'transparent' : (todoColor?.hex || '#D1D5DB')
               }}
             >

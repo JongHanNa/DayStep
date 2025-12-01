@@ -10,6 +10,7 @@ import { Check } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore } from '@/state/stores/noteStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
+import { useTheme } from '@/hooks/useTheme';
 
 // 🎨 테마 색상 상수 (CSS 변수 사용)
 const THEME_COLORS = {
@@ -85,6 +86,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   const { todos, todoCompletions } = useTodoStore();
   const { notes } = useNoteStore();
   const { bubbleShape } = useSettingsStore();
+
+  // 다크모드 상태 가져오기
+  const { resolvedTheme } = useTheme();
+  const isDarkMode = resolvedTheme === 'dark';
 
   // 타임라인 ID에서 실제 UUID 추출
   const extractTaskId = (timelineId: string) => {
@@ -976,10 +981,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     process.env.BUILD_TARGET === 'web' && 'hover:scale-110',
                     isCompleted
                       ? 'border-transparent text-white transform scale-105'
-                      : 'bg-white'
+                      : 'bg-white dark:bg-gray-800'
                   )}
                   style={{
-                    backgroundColor: isCompleted ? (item.color || THEME_COLORS.COMPLETED) : 'white',
+                    backgroundColor: isCompleted ? (item.color || THEME_COLORS.COMPLETED) : (isDarkMode ? '#1f2937' : 'white'),
                     borderColor: isCompleted ? 'transparent' : (item.color || THEME_COLORS.BORDER_DEFAULT)
                   }}
                 >

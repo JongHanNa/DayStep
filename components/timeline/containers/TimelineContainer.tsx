@@ -23,7 +23,6 @@ import { useAuth } from '@/app/context/AuthContext';
 import { TimelineHeader } from '../controls';
 import { PERFORMANCE, UI_LAYOUT } from '@/lib/constants';
 import { logger } from '@/lib/logger';
-import { getTailwindClasses, getInlineStyles } from '@/lib/theme-colors';
 
 interface TimelineContainerProps {
   className?: string;
@@ -588,8 +587,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
     });
     return (
       <div
-        className={cn("flex items-center justify-center h-full scrollbar-hide", getTailwindClasses().timelineBackground)}
-        style={getInlineStyles().timelineBackground}
+        className={cn("flex items-center justify-center h-full scrollbar-hide timeline-background")}
       >
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400 mx-auto mb-6" />
@@ -603,15 +601,13 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
     <ToastProvider>
       <TimelineDndProvider>
         <div
-          className={cn('flex flex-col scrollbar-hide', getTailwindClasses().timelineBackground, className)}
-          style={getInlineStyles().timelineBackground}
+          className={cn('flex flex-col scrollbar-hide timeline-background', className)}
         >
 
           {/* Timeline Header - 고정 위치 (AppHeader 아래, 같은 z-index 레벨) */}
           <div
-            className={cn("fixed left-0 right-0 z-40 scrollbar-hide", getTailwindClasses().timelineBackground)}
+            className={cn("fixed left-0 right-0 z-40 scrollbar-hide timeline-background")}
             style={{
-              ...getInlineStyles().timelineBackground,
               top: 'var(--header-total-height, 56px)'
             }}
           >
