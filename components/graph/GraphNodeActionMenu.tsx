@@ -6,7 +6,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { SquarePen, Trash } from 'lucide-react';
 import { useGraphStore, useGraphActionMenu } from '@/state/stores/graphStore';
 import type { GraphNode } from '@/types/graph';
 
@@ -83,14 +83,14 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
         className="w-11 h-11 rounded-full bg-base-200 hover:bg-base-300 flex items-center justify-center transition-all duration-200 hover:scale-105"
         title="편집"
       >
-        <Pencil className="w-4 h-4 text-base-content" />
+        <SquarePen className="w-4 h-4 text-base-content" />
       </button>
       <button
         onClick={handleDelete}
         className="w-11 h-11 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all duration-200 hover:scale-105"
         title="삭제"
       >
-        <Trash2 className="w-4 h-4 text-error" />
+        <Trash className="w-4 h-4 text-error" />
       </button>
     </div>
   );
