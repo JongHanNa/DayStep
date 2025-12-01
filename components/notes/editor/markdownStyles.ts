@@ -321,10 +321,27 @@ export const globalMarkdownStyles = `
   }
   
   .advanced-markdown-editor-container .cm-content {
-    caret-color: hsl(var(--foreground)) !important;
     touch-action: manipulation !important;
     -webkit-user-select: text !important;
     user-select: text !important;
+  }
+
+  /* 웹 전용: 네이티브 caret 표시 */
+  [data-platform="web"] .advanced-markdown-editor-container .cm-content {
+    caret-color: hsl(var(--foreground)) !important;
+  }
+
+  /* 모바일: 네이티브 caret 숨김 (CodeMirror 커서만 사용) */
+  [data-platform="mobile"] .advanced-markdown-editor-container .cm-content,
+  [data-platform="mobile"] .advanced-markdown-editor-container .cm-editor .cm-content {
+    caret-color: transparent !important;
+  }
+
+  /* iOS WebView 전용: 네이티브 caret 완전 숨김 (가장 강력한 우선순위) */
+  @supports (-webkit-touch-callout: none) {
+    [data-platform="mobile"] .advanced-markdown-editor-container .cm-content {
+      caret-color: transparent !important;
+    }
   }
 
   /* 텍스트 선택 강제 활성화 */
