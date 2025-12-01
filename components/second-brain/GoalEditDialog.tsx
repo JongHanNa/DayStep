@@ -102,8 +102,8 @@ export default function GoalEditDialog({
   return (
     <>
       <dialog open className="modal modal-open">
-        <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-100 z-10`}>
+        <div className={`modal-box bg-base-200 w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-200 z-10`}>
             <button onClick={onCancel} className="btn btn-primary btn-sm rounded-full">
               취소
             </button>
@@ -141,14 +141,14 @@ export default function GoalEditDialog({
                     </label>
 
                     {/* 아이콘 + 제목 입력 */}
-                    <div className="rounded-lg bg-base-100">
+                    <div className="rounded-lg bg-base-200">
                       <div className="flex items-center gap-3 pl-2 pr-16 pt-2 pb-2">
                         {/* 아이콘 버튼 */}
                         <div className="relative">
                           <button
                             type="button"
                             onClick={() => setIconBrowserOpen(true)}
-                            className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-200"
+                            className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-100"
                             title="아이콘 변경하기"
                           >
                             {(() => {
@@ -189,7 +189,7 @@ export default function GoalEditDialog({
                               value={editingGoal.title}
                               onChange={(e) => onGoalChange({ ...editingGoal, title: e.target.value })}
                               placeholder="목표 제목을 입력하세요"
-                              className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+                              className="bg-base-200 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
                               style={{
                                 fontSize: '20px',
                                 outline: 'none',
@@ -218,11 +218,11 @@ export default function GoalEditDialog({
                     </label>
 
                     {/* 셀렉트 박스 */}
-                    <div className="py-3 px-1 rounded-lg bg-base-100">
+                    <div className="py-3 px-1 rounded-lg bg-base-200">
                       <select
                         value={editingGoal.status}
                         onChange={(e) => onGoalChange({ ...editingGoal, status: e.target.value as 'not_started' | 'in_progress' | 'paused' | 'completed' })}
-                        className="select select-bordered w-full bg-base-200"
+                        className="select select-bordered w-full bg-base-100"
                       >
                         <option value="not_started">시작 안함</option>
                         <option value="in_progress">진행중</option>
@@ -241,11 +241,11 @@ export default function GoalEditDialog({
                     </label>
 
                     {/* 셀렉트 박스 */}
-                    <div className="py-3 px-1 rounded-lg bg-base-100">
+                    <div className="py-3 px-1 rounded-lg bg-base-200">
                       <select
                         value={editingGoal.paraSelection}
                         onChange={(e) => onGoalChange({ ...editingGoal, paraSelection: e.target.value })}
-                        className="select select-bordered w-full bg-base-200"
+                        className="select select-bordered w-full bg-base-100"
                       >
                         <option value="">선택 안 함</option>
                         <optgroup label="영역">
@@ -275,7 +275,7 @@ export default function GoalEditDialog({
                     </label>
 
                     {/* 날짜 입력 그리드 */}
-                    <div className="py-3 px-1 rounded-lg bg-base-100">
+                    <div className="py-3 px-1 rounded-lg bg-base-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="form-control">
                           <label className="label">
@@ -285,7 +285,7 @@ export default function GoalEditDialog({
                             type="date"
                             value={editingGoal.start_date || ''}
                             onChange={(e) => onGoalChange({ ...editingGoal, start_date: e.target.value })}
-                            className="input input-bordered w-full bg-base-200"
+                            className="input input-bordered w-full bg-base-100"
                           />
                         </div>
 
@@ -297,7 +297,7 @@ export default function GoalEditDialog({
                             type="date"
                             value={editingGoal.end_date || ''}
                             onChange={(e) => onGoalChange({ ...editingGoal, end_date: e.target.value })}
-                            className="input input-bordered w-full bg-base-200"
+                            className="input input-bordered w-full bg-base-100"
                           />
                         </div>
                       </div>
@@ -313,7 +313,7 @@ export default function GoalEditDialog({
                     </label>
 
                     {/* 입력 그리드 */}
-                    <div className="py-3 px-1 rounded-lg bg-base-100">
+                    <div className="py-3 px-1 rounded-lg bg-base-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="form-control">
                           <label className="label">
@@ -322,7 +322,7 @@ export default function GoalEditDialog({
                           <select
                             value={editingGoal.year_goal ?? ''}
                             onChange={(e) => onGoalChange({ ...editingGoal, year_goal: e.target.value ? parseInt(e.target.value) : undefined })}
-                            className="select select-bordered w-full bg-base-200"
+                            className="select select-bordered w-full bg-base-100"
                           >
                             <option value="">선택 안 함</option>
                             {Array.from({ length: 6 }, (_, i) => {
@@ -343,7 +343,7 @@ export default function GoalEditDialog({
                           <select
                             value={editingGoal.quarter_goal ?? ''}
                             onChange={(e) => onGoalChange({ ...editingGoal, quarter_goal: e.target.value ? e.target.value as 'Q1' | 'Q2' | 'Q3' | 'Q4' : undefined })}
-                            className="select select-bordered w-full bg-base-200"
+                            className="select select-bordered w-full bg-base-100"
                           >
                             <option value="">선택 안 함</option>
                             <option value="Q1">1분기 (1~3월)</option>
@@ -358,7 +358,7 @@ export default function GoalEditDialog({
 
                   {/* 프로젝트 영역 */}
                   {!editingGoal.isNew && onAddProject && onEditProject && onDeleteProject && (
-                    <div className="card bg-base-200 mb-4">
+                    <div className="card bg-base-100 mb-4">
                       <div className="card-body">
                         <div className="flex items-center justify-between mb-4">
                           <h2 className="text-lg font-semibold">연결된 프로젝트</h2>
@@ -388,7 +388,7 @@ export default function GoalEditDialog({
                                 <div
                                   key={project.id}
                                   onClick={() => onEditProject(project)}
-                                  className="flex items-start gap-3 p-3 bg-base-100 rounded-lg transition-colors cursor-pointer"
+                                  className="flex items-start gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
                                 >
                                   <div
                                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
