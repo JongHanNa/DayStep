@@ -34,6 +34,7 @@ interface TodoEditModalProps {
   titlePlaceholder?: string;
   clarificationPlaceholder?: string;
   additionalContent?: React.ReactNode;
+  headerTitle?: string; // 모달 헤더 제목 (기본값: "할일 편집")
   // 섹션 표시 여부 제어
   showClarification?: boolean;
   showNextActionStatus?: boolean;
@@ -69,6 +70,7 @@ export default function TodoEditModal({
   titlePlaceholder,
   clarificationPlaceholder,
   additionalContent,
+  headerTitle = '할일 편집',
   showClarification,
   showNextActionStatus,
   showScheduledDate,
@@ -195,7 +197,7 @@ export default function TodoEditModal({
           <button onClick={onClose} className="btn btn-primary btn-sm rounded-full">
             취소
           </button>
-          <h3 className="text-lg font-semibold">할일 편집</h3>
+          <h3 className="text-lg font-semibold">{headerTitle}</h3>
           <div className="flex gap-2">
             {onDelete && (
               <button

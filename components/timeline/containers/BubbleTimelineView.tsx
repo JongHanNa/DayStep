@@ -8,9 +8,15 @@ import { TimelineItem } from '@/types/timeline-view';
 import { BubbleTimelineItem } from '../items/BubbleTimelineItem';
 import { useCurrentTime } from '@/lib/hooks/useCurrentTime';
 import { isRecurringTodo } from '@/lib/utils/recurring';
-import { Todo as DbTodo } from '@/types';
+import { Todo as DbTodo, Clarification } from '@/types';
 import TodoFormModal from '@/components/todos/TodoFormModal';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { format } from 'date-fns';
 
 /**
  * 버블 스타일 타임라인 뷰 컴포넌트
@@ -33,6 +39,11 @@ export const BubbleTimelineView: React.FC = () => {
   const toggleRecurrenceCompletion = useTodoStore(state => state.toggleRecurrenceCompletion);
   const todos = useTodoStore(state => state.todos);
   const currentTime = useCurrentTime();
+
+  // Second Brain stores
+  const { projects } = useProjectStore();
+  const { areas } = useAreaStore();
+  const { resources } = useResourceStore();
 
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false);
@@ -78,8 +89,8 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 할일 수정 모달 상태
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
-  const [selectedTodo, setSelectedTodo] = useState<any | null>(null);
+  const [editingTodoForm, setEditingTodoForm] = useState<TodoFormData | null>(null);
+  const [originalTodoId, setOriginalTodoId] = useState<string | null>(null);
 
   // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
@@ -568,6 +579,96 @@ export const BubbleTimelineView: React.FC = () => {
     }
   }, [recurringUpdateDialog, updateTodo]);
 
+  // DB 데이터 → TodoFormData 변환 함수
+  const mapDbTodoToFormData = useCallback((dbTodo: any): TodoFormData => {
+    // 시간 추출 (HH:mm 형식)
+    let startTimeStr: string | undefined;
+    let endTimeStr: string | undefined;
+
+    if (dbTodo.start_time) {
+      const startDate = new Date(dbTodo.start_time);
+      startTimeStr = format(startDate, 'HH:mm');
+    }
+
+    // end_time도 HH:mm 형식으로 변환
+    if (dbTodo.end_time) {
+      const endDate = new Date(dbTodo.end_time);
+      endTimeStr = format(endDate, 'HH:mm');
+    }
+
+    const scheduleType = dbTodo.schedule_type || 'anytime';
+    const hasEndTime = !!dbTodo.end_time;
+
+    return {
+      title: dbTodo.title || '',
+      clarification: dbTodo.clarification || '',
+      nextActionStatuses: [],
+      nextActionContextIds: dbTodo.next_action_context_ids || [],
+      scheduledDate: dbTodo.start_time ? new Date(dbTodo.start_time) : new Date(),
+      isHighlight: dbTodo.is_today_highlight || false,
+      completed: dbTodo.completed || false,
+      projectIds: dbTodo.project_ids || [],
+      noteIds: [],
+      scheduleType,
+      startTime: startTimeStr,
+      endTime: endTimeStr,
+      includeTime: scheduleType === 'timed',
+      // ✅ 종료일 관련 필드 추가
+      includeEndDate: hasEndTime,  // end_time이 있으면 토글 활성화
+      endDate: dbTodo.end_time ? new Date(dbTodo.end_time) : undefined,
+      icon: dbTodo.icon,
+      color: dbTodo.color,
+
+      // 반복 설정 매핑
+      recurrencePattern: dbTodo.recurrence_pattern || 'none',
+      recurrenceInterval: dbTodo.recurrence_interval || 1,
+      recurrenceEndType: dbTodo.recurrence_end_type || 'never',
+      recurrenceEndDate: dbTodo.recurrence_end_date
+        ? new Date(dbTodo.recurrence_end_date)
+        : undefined,
+      recurrenceCount: dbTodo.recurrence_count,
+      selectedDaysOfWeek: dbTodo.recurrence_days_of_week || [],
+    };
+  }, []);;
+
+  // 할일 수정 저장 핸들러
+  const handleEditSave = useCallback(async (formData: TodoFormData) => {
+    if (!originalTodoId) return;
+
+    try {
+      // 시간 처리
+      let finalDateTime: string | undefined;
+      if (formData.scheduledDate) {
+        const dateObj = new Date(formData.scheduledDate);
+        if (formData.scheduleType === 'timed' && formData.startTime) {
+          const [hours, minutes] = formData.startTime.split(':');
+          dateObj.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        }
+        finalDateTime = dateObj.toISOString();
+      }
+
+      await updateTodo(originalTodoId, {
+        title: formData.title,
+        clarification: formData.clarification as Clarification | undefined,
+        schedule_type: formData.scheduleType,
+        start_time: finalDateTime,
+        end_time: formData.endTime,
+        is_today_highlight: formData.isHighlight,
+        completed: formData.completed,
+        project_ids: formData.projectIds,
+        icon: formData.icon,
+        color: formData.color,
+        next_action_context_ids: formData.nextActionContextIds,
+      });
+
+      setIsEditModalOpen(false);
+      setEditingTodoForm(null);
+      setOriginalTodoId(null);
+    } catch (error) {
+      console.error('할일 수정 실패:', error);
+    }
+  }, [originalTodoId, updateTodo]);
+
   // 간격 클릭 핸들러 (할일 추가 모달 표시)
   const handleGapClick = useCallback((startTime: Date, endTime: Date) => {
     setAddModalStartTime(startTime);
@@ -845,12 +946,15 @@ export const BubbleTimelineView: React.FC = () => {
                             }
                           };
 
-                          setSelectedTodo(combinedData);
+                          setOriginalTodoId(combinedData.id);
+                          setEditingTodoForm(mapDbTodoToFormData(combinedData));
                         } else {
-                          setSelectedTodo(timelineItem.data);
+                          setOriginalTodoId(timelineItem.data?.id || itemId);
+                          setEditingTodoForm(mapDbTodoToFormData(timelineItem.data));
                         }
                       } else {
-                        setSelectedTodo(timelineItem.data);
+                        setOriginalTodoId(timelineItem.data?.id || itemId);
+                        setEditingTodoForm(mapDbTodoToFormData(timelineItem.data));
                       }
                       setIsEditModalOpen(true);
                     } else {
@@ -877,7 +981,8 @@ export const BubbleTimelineView: React.FC = () => {
                           })()
                         };
 
-                        setSelectedTodo(updatedTodoData);
+                        setOriginalTodoId(updatedTodoData.id || itemId);
+                        setEditingTodoForm(mapDbTodoToFormData(updatedTodoData));
                         setIsEditModalOpen(true);
                       }
                     }
@@ -964,11 +1069,23 @@ export const BubbleTimelineView: React.FC = () => {
         initialEndTime={addModalEndTime}
       />
 
-      {/* 할일 수정 모달 - DB에서 조회한 최신 데이터 사용 */}
-      <TodoFormModal
+      {/* 할일 수정 모달 - TodoEditModal 사용 */}
+      <TodoEditModal
         open={isEditModalOpen}
-        onOpenChange={setIsEditModalOpen}
-        editingTodo={selectedTodo}
+        todo={editingTodoForm}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingTodoForm(null);
+          setOriginalTodoId(null);
+        }}
+        onSave={handleEditSave}
+        onChange={setEditingTodoForm}
+        projects={projects}
+        areas={areas}
+        resources={resources}
+        showScheduledDate={true}
+        showHighlight={true}
+        showProjects={true}
       />
     </div>
   );

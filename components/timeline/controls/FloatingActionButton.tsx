@@ -4,17 +4,95 @@ import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import TodoFormModal from '@/components/todos/TodoFormModal';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import { useTodoStore } from '@/state/stores/todoStore';
+import type { Clarification } from '@/types';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface FloatingActionButtonProps {
   className?: string;
+  currentDate?: Date; // 타임라인에서 현재 보고 있는 날짜
 }
 
-const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }) => {
+// 빈 폼 데이터 초기화
+const getEmptyTodoForm = (scheduledDate?: Date): TodoFormData => ({
+  title: '',
+  clarification: 'schedule_clear', // "일정"으로 고정
+  nextActionStatuses: [],
+  nextActionContextIds: [],
+  scheduledDate: scheduledDate || new Date(),
+  isHighlight: false,
+  completed: false,
+  projectIds: [],
+  noteIds: [],
+  scheduleType: 'anytime',
+});
+
+const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
+  className,
+  currentDate
+}) => {
   const [todoModalOpen, setTodoModalOpen] = useState(false);
+  const [todoForm, setTodoForm] = useState<TodoFormData>(getEmptyTodoForm(currentDate));
+
+  const { user } = useAuth();
+  const { createTodo } = useTodoStore();
+  const { projects } = useProjectStore();
+  const { areas } = useAreaStore();
+  const { resources } = useResourceStore();
 
   const handleAddTodo = () => {
+    // 모달 열 때 폼 초기화 (현재 날짜로)
+    setTodoForm(getEmptyTodoForm(currentDate));
     setTodoModalOpen(true);
+  };
+
+  const handleClose = () => {
+    setTodoModalOpen(false);
+    setTodoForm(getEmptyTodoForm(currentDate));
+  };
+
+  const handleSave = async (formData: TodoFormData) => {
+    if (!user?.id || !formData.title.trim()) return;
+
+    try {
+      // 시간 처리
+      let finalDateTime: Date | undefined = formData.scheduledDate;
+
+      if (formData.scheduleType === 'timed' && formData.startTime && finalDateTime) {
+        const [hours, minutes] = formData.startTime.split(':');
+        finalDateTime = new Date(finalDateTime);
+        finalDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+
+      // createTodo 호출
+      await createTodo({
+        user_id: user.id,
+        title: formData.title,
+        clarification: formData.clarification as Clarification | undefined,
+        schedule_type: formData.scheduleType || 'anytime',
+        start_time: finalDateTime?.toISOString(),
+        end_time: formData.endTime,
+        is_today_highlight: formData.isHighlight,
+        completed: formData.completed,
+        project_ids: formData.projectIds,
+        icon: formData.icon,
+        color: formData.color,
+        next_action_context_ids: formData.nextActionContextIds,
+      });
+
+      handleClose();
+    } catch (error) {
+      console.error('할일 생성 실패:', error);
+    }
+  };
+
+  const handleChange = (updated: TodoFormData) => {
+    setTodoForm(prev => ({ ...prev, ...updated }));
   };
 
   return (
@@ -34,10 +112,21 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ className }
         </Button>
       </div>
 
-      {/* 할일 추가 모달 */}
-      <TodoFormModal
+      {/* 할일 추가 모달 - 명료화 페이지 스타일 */}
+      <TodoEditModal
         open={todoModalOpen}
-        onOpenChange={setTodoModalOpen}
+        todo={todoForm}
+        onClose={handleClose}
+        onSave={handleSave}
+        onChange={handleChange}
+        projects={projects}
+        areas={areas}
+        resources={resources}
+        headerTitle="할일 추가"
+        showScheduledDate={true}
+        showHighlight={true}
+        showProjects={true}
+        showClarification={false}
       />
     </>
   );
