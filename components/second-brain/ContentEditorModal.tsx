@@ -5,7 +5,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
 import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
 import { useAutoSave } from '@/hooks/useAutoSave';
-import { ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, PanelTop } from 'lucide-react';
 
 interface ContentEditorModalProps {
   open: boolean;
@@ -58,6 +58,9 @@ export default function ContentEditorModal({
   // 제목 접기/펼치기 상태
   const [isTitleExpanded, setIsTitleExpanded] = useState(false);
 
+  // 툴바 표시/숨김 상태
+  const [isToolbarVisible, setIsToolbarVisible] = useState(true);
+
 
   // 자동저장 Hook
   const autoSave = useAutoSave(content, {
@@ -109,18 +112,28 @@ export default function ContentEditorModal({
             <ChevronLeft size={24} />
           </button>
 
-          <div
-            className="flex-1 flex items-center justify-center gap-2 min-w-0 cursor-pointer"
-            onClick={() => setIsTitleExpanded(!isTitleExpanded)}
-          >
-            <h3 className={`text-lg font-semibold text-center ${isTitleExpanded ? '' : 'line-clamp-1'}`}>
-              {title || '내용 편집'}
-            </h3>
-            {title && title.length > 15 && (
-              <span className="flex-shrink-0 text-base-content/50">
-                {isTitleExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </span>
-            )}
+          <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
+            <div
+              className="flex items-center gap-1 cursor-pointer"
+              onClick={() => setIsTitleExpanded(!isTitleExpanded)}
+            >
+              <h3 className={`text-lg font-semibold text-center ${isTitleExpanded ? '' : 'line-clamp-1'}`}>
+                {title || '내용 편집'}
+              </h3>
+              {title && title.length > 15 && (
+                <span className="flex-shrink-0 text-base-content/50">
+                  {isTitleExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </span>
+              )}
+            </div>
+            {/* 툴바 토글 버튼 */}
+            <button
+              onClick={() => setIsToolbarVisible(!isToolbarVisible)}
+              className={`btn btn-ghost btn-circle btn-xs ${isToolbarVisible ? 'text-primary' : 'text-base-content/50'}`}
+              title={isToolbarVisible ? '툴바 숨기기' : '툴바 보이기'}
+            >
+              <PanelTop size={18} />
+            </button>
             {enableAutoSave && (
               <AutoSaveStatus
                 status={autoSave.saveStatus}
@@ -157,6 +170,7 @@ export default function ContentEditorModal({
             minHeight={770}
             fontSize={editorFontSize}
             onFontSizeChange={setEditorFontSize}
+            showToolbar={isToolbarVisible}
           />
         </div>
       </div>

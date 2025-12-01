@@ -27,6 +27,8 @@ interface AdvancedMarkdownEditorProps {
   fontSize?: number;
   /** 글자 크기 변경 콜백 */
   onFontSizeChange?: (size: number) => void;
+  /** 툴바 표시 여부 (기본: true) */
+  showToolbar?: boolean;
 }
 
 
@@ -53,6 +55,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
   onBlur,
   fontSize,
   onFontSizeChange,
+  showToolbar = true,
 }, ref) => {
   const editorRef = useRef<any>(null);
   const [platform, setPlatform] = useState<'web' | 'mobile'>('web');
@@ -409,7 +412,9 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
       className={`advanced-markdown-editor-container ${className}`}
       data-platform={platform}
     >
-      <MarkdownToolbar onInsert={handleToolbarInsert} fontSize={fontSize} onFontSizeChange={onFontSizeChange} />
+      {showToolbar && (
+        <MarkdownToolbar onInsert={handleToolbarInsert} fontSize={fontSize} onFontSizeChange={onFontSizeChange} />
+      )}
       
       <div
         className="rounded-b-lg overflow-hidden editor-touch-wrapper"
