@@ -199,7 +199,7 @@ export default function TodoFormFields({
         </label>
 
         <div className="rounded-lg bg-base-200 overflow-visible">
-          <div className="flex items-center gap-3 pl-3 pr-16 pt-2 pb-3">
+          <div className="flex items-center gap-3 pl-0 pr-16 pt-2 pb-3">
             {/* 아이콘 버튼 */}
             <div className="relative">
               <button
