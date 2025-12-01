@@ -686,7 +686,8 @@ export const globalMarkdownStyles = `
 export function createEditorTheme(minHeight: number) {
   return EditorView.theme({
     '&': {
-      height: `${minHeight}px`,
+      height: 'auto',
+      minHeight: `${minHeight}px`,
     },
     '.cm-editor': {
       backgroundColor: 'transparent',

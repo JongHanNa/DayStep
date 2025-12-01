@@ -149,19 +149,6 @@ export default function ContentEditorModal({
             }
           `}</style>
 
-          {/* 글자 크기 조절 슬라이더 */}
-          <div className="flex items-center gap-3 px-4 py-2 bg-base-300/50">
-            <span className="text-sm text-base-content/70">글자 크기: {editorFontSize}px</span>
-            <input
-              type="range"
-              min="12"
-              max="24"
-              value={editorFontSize}
-              onChange={(e) => setEditorFontSize(Number(e.target.value))}
-              className="range range-xs range-primary w-32"
-            />
-          </div>
-
           {/* 마크다운 에디터 */}
           <AdvancedMarkdownEditor
             value={content}
@@ -169,6 +156,7 @@ export default function ContentEditorModal({
             placeholder={placeholder}
             minHeight={770}
             fontSize={editorFontSize}
+            onFontSizeChange={setEditorFontSize}
           />
         </div>
       </div>

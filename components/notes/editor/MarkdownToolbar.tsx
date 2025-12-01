@@ -18,10 +18,12 @@ import { Button } from '@/components/ui/button';
 
 interface MarkdownToolbarProps {
   onInsert: (text: string, cursorOffset?: number) => void;
+  fontSize?: number;
+  onFontSizeChange?: (size: number) => void;
 }
 
 // 키보드 툴바 컴포넌트 (현재 #, 체크박스만 활성화)
-const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert }) => {
+const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert, fontSize, onFontSizeChange }) => {
   const tools = [
     {
       icon: <Hash size={16} />,
@@ -82,7 +84,7 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert }) => {
   ];
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 bg-background">
+    <div className="flex flex-wrap items-center gap-1 p-2 bg-base-100 sticky top-0 z-10">
       {tools.map((tool) => (
         <Button
           key={tool.label}
@@ -95,6 +97,21 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert }) => {
           {tool.icon}
         </Button>
       ))}
+
+      {/* 글자 크기 슬라이더 */}
+      {fontSize !== undefined && onFontSizeChange && (
+        <div className="flex items-center gap-2 ml-2 pl-2 border-l border-base-300">
+          <span className="text-xs text-base-content/70 whitespace-nowrap">{fontSize}px</span>
+          <input
+            type="range"
+            min="12"
+            max="24"
+            value={fontSize}
+            onChange={(e) => onFontSizeChange(Number(e.target.value))}
+            className="range range-xs range-primary w-20"
+          />
+        </div>
+      )}
     </div>
   );
 };
