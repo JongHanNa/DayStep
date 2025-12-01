@@ -198,11 +198,10 @@ export default function GraphView() {
       {/* 새로고침 버튼 */}
       <button
         onClick={refetch}
-        className="absolute top-4 left-1/2 -translate-x-1/2 z-10 btn btn-sm btn-ghost bg-base-100/90 backdrop-blur-sm shadow-lg rounded-full gap-2"
+        className="absolute top-4 left-4 z-10 btn btn-sm btn-ghost bg-base-100/90 backdrop-blur-sm shadow-lg rounded-full"
         title="새로고침"
       >
         <RefreshCw className="w-4 h-4" />
-        <span className="text-xs">새로고침</span>
       </button>
 
       {/* 노드 편집 모달 - 타입별 분기 */}

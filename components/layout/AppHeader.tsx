@@ -55,7 +55,7 @@ export default function AppHeader() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 bg-base-200 border-b border-base-300 safe-area-top">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-base-200 safe-area-top">
         <div className="flex items-center justify-between h-14 px-4">
           {/* 왼쪽: 햄버거 메뉴 버튼 */}
           <button
