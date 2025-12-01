@@ -104,8 +104,8 @@ dialog::backdrop {
   /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
   --color-primary: #9061C5;
   --color-primary-content: oklch(100% 0% 68deg);
-  --color-base-200: #f8f8f8;
-  --color-base-300: oklch(96% 1% 289deg);
+  --color-base-200: oklch(96% 1% 289deg);
+  --color-base-300: #f8f8f8;
 
   /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
   --primary-foreground: 0 0% 100%; /* 흰색 HSL */
@@ -139,8 +139,8 @@ dialog::backdrop {
 
   /* 🎨 순수 무채색 다크모드 배경 (초록빛 제거) */
   --color-base-100: #242424;  /* 콘텐츠/카드 영역 (가장 밝음) */
-  --color-base-200: #1a1a1a;  /* 메인 배경 */
-  --color-base-300: #121212;  /* 강조/헤더 영역 (가장 어두움) */
+  --color-base-200: #121212;  /* 강조/헤더 영역 (가장 어두움) */
+  --color-base-300: #1a1a1a;  /* 메인 배경 */
 
   /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
   --primary-foreground: 0 0% 100%; /* 흰색 HSL */
