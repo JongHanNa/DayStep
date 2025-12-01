@@ -53,11 +53,11 @@ export default function GraphView() {
   const updateTodo = useTodoStore((state) => state.updateTodo);
   const deleteTodo = useTodoStore((state) => state.deleteTodo);
 
-  const { projects, updateProject, deleteProject } = useProjectStore();
+  const { projects, createProject, updateProject, deleteProject } = useProjectStore();
   const { goals, updateGoal, deleteGoal } = useGoalStore();
   const { areas, updateArea, deleteArea } = useAreaStore();
   const { resources, updateResource, deleteResource } = useResourceStore();
-  const { notes, updateNote, deleteNote } = useNoteStore();
+  const { notes, createNote, updateNote, deleteNote } = useNoteStore();
 
   // Todo 편집 상태
   const [editingTodoData, setEditingTodoData] = useState<TodoFormData | null>(null);
@@ -96,6 +96,35 @@ export default function GraphView() {
       refetch();
     }
   }, [deleteNote, userId, refetch]);
+
+  // 프로젝트 생성 핸들러 (노트 편집 모달용)
+  const handleCreateProject = useCallback(async (title: string): Promise<Project> => {
+    if (!userId) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+    const newProject = await createProject(userId, {
+      title,
+      description: '',
+      status: 'not_started',
+      color: '#808080',
+      order_index: 0,
+    });
+    return newProject;
+  }, [userId, createProject]);
+
+  // 노트 생성 핸들러 (노트 편집 모달용)
+  const handleCreateNote = useCallback(async (title: string): Promise<Note> => {
+    if (!userId) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+    const newNote = await createNote(userId, {
+      title,
+      content: '',
+      note_category: 'work_in_progress',
+      is_pinned: false,
+    });
+    return newNote;
+  }, [userId, createNote]);
 
   // 인증 대기
   if (authLoading) {
@@ -372,6 +401,10 @@ export default function GraphView() {
               note={editingNoteData || editingNode.originalData}
               areas={areas}
               resources={resources}
+              projects={projects}
+              notes={notes}
+              onCreateProject={handleCreateProject}
+              onCreateNote={handleCreateNote}
               onClose={handleCloseEditModal}
               onSave={async () => {
                 if (editingNoteData) {
