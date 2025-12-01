@@ -5,6 +5,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
 import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { Pause, Play } from 'lucide-react';
 
 interface ContentEditorModalProps {
   open: boolean;
@@ -53,6 +54,9 @@ export default function ContentEditorModal({
 
   // 글자 크기 조절 상태
   const [editorFontSize, setEditorFontSize] = useState(18);
+
+  // 마퀴 애니메이션 상태
+  const [isMarqueeEnabled, setIsMarqueeEnabled] = useState(true);
 
   // 자동저장 Hook
   const autoSave = useAutoSave(content, {
@@ -105,7 +109,11 @@ export default function ContentEditorModal({
           </button>
 
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold truncate max-w-[200px]">{title || '내용 편집'}</h3>
+            <div className="relative max-w-[200px] overflow-hidden">
+              <h3 className={`text-lg font-semibold whitespace-nowrap ${isMarqueeEnabled ? 'animate-marquee' : ''}`}>
+                {title || '내용 편집'}
+              </h3>
+            </div>
             {enableAutoSave && (
               <AutoSaveStatus
                 status={autoSave.saveStatus}
@@ -114,24 +122,17 @@ export default function ContentEditorModal({
             )}
           </div>
 
-          {/* 자동저장이므로 저장 버튼 자리는 빈 공간으로 유지 (레이아웃 균형) */}
-          <div className="w-[52px]" />
+          {/* 마퀴 토글 버튼 */}
+          <button
+            onClick={() => setIsMarqueeEnabled(!isMarqueeEnabled)}
+            className="btn btn-ghost btn-sm btn-circle"
+            title={isMarqueeEnabled ? '스크롤 끄기' : '스크롤 켜기'}
+          >
+            {isMarqueeEnabled ? <Pause size={16} /> : <Play size={16} />}
+          </button>
         </div>
 
-        {/* 글자 크기 조절 슬라이더 */}
-        <div className="flex items-center gap-3 px-4 py-2 bg-base-300/50">
-          <span className="text-sm text-base-content/70">글자 크기: {editorFontSize}px</span>
-          <input
-            type="range"
-            min="12"
-            max="24"
-            value={editorFontSize}
-            onChange={(e) => setEditorFontSize(Number(e.target.value))}
-            className="range range-xs range-primary w-32"
-          />
-        </div>
-
-        {/* 마크다운 에디터 */}
+        {/* 스크롤 영역: 슬라이더 + 에디터 */}
         <div
           className="flex-1 overflow-y-auto px-0"
           style={{
@@ -146,6 +147,21 @@ export default function ContentEditorModal({
               display: none;
             }
           `}</style>
+
+          {/* 글자 크기 조절 슬라이더 */}
+          <div className="flex items-center gap-3 px-4 py-2 bg-base-300/50">
+            <span className="text-sm text-base-content/70">글자 크기: {editorFontSize}px</span>
+            <input
+              type="range"
+              min="12"
+              max="24"
+              value={editorFontSize}
+              onChange={(e) => setEditorFontSize(Number(e.target.value))}
+              className="range range-xs range-primary w-32"
+            />
+          </div>
+
+          {/* 마크다운 에디터 */}
           <AdvancedMarkdownEditor
             value={content}
             onChange={handleContentChange}
