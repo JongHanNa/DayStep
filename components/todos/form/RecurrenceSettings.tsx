@@ -91,7 +91,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
         반복 설정
       </Label>
 
-      <div className="space-y-4 p-4 rounded-lg bg-base-200">
+      <div className="space-y-4 p-4 rounded-lg bg-base-100">
 
       <div>
         <Label style={{ color: '#666666', marginBottom: '8px', display: 'block' }}>반복 패턴</Label>
