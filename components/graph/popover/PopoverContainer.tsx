@@ -65,9 +65,13 @@ export function PopoverContainer({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        // 액션 메뉴 클릭은 무시 (액션 메뉴에서 팝오버 전환 시)
         const target = event.target as HTMLElement;
+
+        // 액션 메뉴 클릭은 무시 (액션 메뉴에서 팝오버 전환 시)
         if (target.closest('[data-action-menu]')) return;
+
+        // ForceGraph2D 캔버스 클릭 무시 (캔버스가 이벤트 타겟으로 설정되는 경우)
+        if (target.tagName === 'CANVAS') return;
 
         onClose();
       }

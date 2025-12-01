@@ -15,7 +15,7 @@ import {
   StickyNote,
   Trash,
 } from 'lucide-react';
-import { useGraphStore, useGraphActionMenu, type NotePopoverType } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphActionMenu, useGraphPopover, type NotePopoverType } from '@/state/stores/graphStore';
 import type { GraphNode } from '@/types/graph';
 import type { Note } from '@/types/second-brain';
 
@@ -54,14 +54,15 @@ function MenuItem({ icon: Icon, label, count, variant, onClick }: MenuItemProps)
 
 export function GraphNodeActionMenu({ onDelete }: GraphNodeActionMenuProps) {
   const { isOpen, node, position } = useGraphActionMenu();
+  const { activePopover } = useGraphPopover();
   const { closeActionMenu, openPopover } = useGraphStore();
   const menuRef = useRef<HTMLDivElement>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [nodeToDelete, setNodeToDelete] = useState<GraphNode | null>(null);
 
-  // 외부 클릭 시 메뉴 닫기 (확인 대화상자가 열려있으면 무시)
+  // 외부 클릭 시 메뉴 닫기 (확인 대화상자 또는 팝오버가 열려있으면 무시)
   useEffect(() => {
-    if (!isOpen || showDeleteConfirm) return;
+    if (!isOpen || showDeleteConfirm || activePopover) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -78,7 +79,7 @@ export function GraphNodeActionMenu({ onDelete }: GraphNodeActionMenuProps) {
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, closeActionMenu, showDeleteConfirm]);
+  }, [isOpen, closeActionMenu, showDeleteConfirm, activePopover]);
 
   // ESC 키로 메뉴 닫기
   useEffect(() => {

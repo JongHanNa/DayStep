@@ -8,7 +8,7 @@
 import { useRef, useCallback, useEffect, useState, ComponentType } from 'react';
 import ForceGraph2DComponent from './ForceGraph2DWrapper';
 import type { GraphNode, GraphLink, GraphData } from '@/types/graph';
-import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu, useGraphPopover } from '@/state/stores/graphStore';
 import { getNodeSize, getLinkColor, getLinkWidth, NODE_TYPE_LABELS } from '@/lib/graph-utils';
 import type { GraphNodeType } from '@/types/graph';
 import { useTheme } from '@/hooks/useTheme';
@@ -32,6 +32,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const hoveredNodeId = useGraphHoveredNode();
   const filter = useGraphFilter();
   const { isOpen: isActionMenuOpen, node: actionMenuNode } = useGraphActionMenu();
+  const { activePopover } = useGraphPopover();
   const { setSelectedNode, setHoveredNode, openEditModal, openActionMenu, closeActionMenu, zoomLevel, setZoomLevel } = useGraphStore();
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === 'dark';
@@ -120,9 +121,12 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const handleBackgroundClick = useCallback(() => {
     setSelectedNode(null);
     setHoveredNode(null);
-    closeActionMenu();
+    // 팝오버가 열려있으면 액션 메뉴를 닫지 않음 (팝오버 내 클릭이 배경 클릭으로 인식되는 것 방지)
+    if (!activePopover) {
+      closeActionMenu();
+    }
     onBackgroundClick?.();
-  }, [setSelectedNode, setHoveredNode, closeActionMenu, onBackgroundClick]);
+  }, [setSelectedNode, setHoveredNode, closeActionMenu, activePopover, onBackgroundClick]);
 
   // 줌 변경 핸들러 - 렌더링 중 setState 방지를 위해 ref에 저장
   const handleZoom = useCallback(
