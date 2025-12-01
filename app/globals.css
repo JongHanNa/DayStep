@@ -726,13 +726,9 @@ body {
   animation: completeTask 0.3s ease-in-out;
 }
 
-/* 타임라인 전용 배경색 */
+/* 타임라인 전용 배경색 - DaisyUI bg-base-200 사용 */
 .timeline-background {
-  background-color: #f8f8f8;
-}
-
-.dark .timeline-background {
-  background-color: #1e293b;
+  background-color: oklch(var(--b2));
 }
 
 @keyframes completeTask {
