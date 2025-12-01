@@ -2,9 +2,11 @@
 .react-modal-sheet-backdrop {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
+  z-index: 100 !important; /* AppHeader(z-40), TimelineHeader(z-50)보다 높게 */
 }
 
 .react-modal-sheet-container {
+  z-index: 105 !important; /* backdrop보다 높게, AppHeader(z-40), TimelineHeader(z-50)보다 높게 */
   background: var(--background);
   border-top-left-radius: 1rem;
   border-top-right-radius: 1rem;

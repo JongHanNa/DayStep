@@ -152,7 +152,14 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
     // 페이지 로드 완료 후 한번 더 적용
     const timer = setTimeout(applyScrollOptimization, 100);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // 동적으로 추가한 스타일 제거 (Capacitor 환경에서 다른 페이지로 이동 시 스타일 잔류 방지)
+      const styleElement = document.getElementById('scrollbar-hide-override');
+      if (styleElement) {
+        styleElement.remove();
+      }
+    };
   }, [pathname]); // pathname 변경시마다 실행
   
   // 렌더링마다 인증 상태를 즉시 로그
@@ -600,9 +607,9 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
           style={getInlineStyles().timelineBackground}
         >
 
-          {/* Timeline Header - 고정 위치 (AppHeader 아래) */}
+          {/* Timeline Header - 고정 위치 (AppHeader 아래, 같은 z-index 레벨) */}
           <div
-            className={cn("fixed left-0 right-0 z-50 scrollbar-hide", getTailwindClasses().timelineBackground)}
+            className={cn("fixed left-0 right-0 z-40 scrollbar-hide", getTailwindClasses().timelineBackground)}
             style={{
               ...getInlineStyles().timelineBackground,
               top: 'var(--header-total-height, 56px)'
