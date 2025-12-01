@@ -104,7 +104,7 @@ export default function CollapsibleProjectSection({
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
-          className="w-full p-3 rounded-lg bg-base-200 border border-base-300 hover:bg-base-300 transition-colors"
+          className="w-full p-3 rounded-lg bg-base-100 border border-base-300 hover:bg-base-300 transition-colors"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default function CollapsibleProjectSection({
       <button
         type="button"
         onClick={() => setIsExpanded(false)}
-        className="w-full p-3 rounded-t-lg bg-base-200 border border-base-300 hover:bg-base-300 transition-colors"
+        className="w-full p-3 rounded-t-lg bg-base-100 border border-base-300 hover:bg-base-300 transition-colors"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
