@@ -36,6 +36,9 @@ interface AdvancedMarkdownEditorProps {
 
 
 
+// 더블탭 감지 임계값 (ms)
+const DOUBLE_TAP_THRESHOLD = 300;
+
 const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps>(({
   value,
   onChange,
@@ -47,6 +50,9 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
 }, ref) => {
   const editorRef = useRef<any>(null);
   const [platform, setPlatform] = useState<'web' | 'mobile'>('web');
+
+  // 더블탭 감지를 위한 마지막 터치 시간 추적
+  const lastTouchTimeRef = useRef<number>(0);
 
   // 플랫폼 감지 - 더 정확한 감지 로직
   useEffect(() => {
@@ -212,13 +218,23 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
   const handleTouchPositioning = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
     // 모달 드래그를 방지하기 위해 이벤트 전파 중단
     event.stopPropagation();
-    
+
+    // 더블탭 감지: iOS 네이티브 단어 선택에 위임
+    const now = Date.now();
+    const timeSinceLastTouch = now - lastTouchTimeRef.current;
+    lastTouchTimeRef.current = now;
+
+    if (timeSinceLastTouch < DOUBLE_TAP_THRESHOLD) {
+      console.log('📝 [Editor] 더블탭 감지, iOS 네이티브 단어 선택에 위임');
+      return; // 커서 이동 로직 스킵 → iOS가 단어 선택 처리
+    }
+
     const editorView = editorRef.current?.view;
     if (!editorView) return;
 
     // 체크박스나 다른 위젯 클릭은 제외
     const target = event.target as HTMLElement;
-    if (target.classList.contains('cm-checkbox-container') || 
+    if (target.classList.contains('cm-checkbox-container') ||
         target.classList.contains('cm-checkbox') ||
         target.closest('.cm-checkbox-container')) {
       console.log('📝 [Editor] 체크박스 클릭 감지, 커서 이동 스킵');
@@ -228,12 +244,12 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     // changedTouches에서 터치 위치 구하기 (터치 종료 지점)
     if (event.changedTouches.length === 0) return;
     const touch = event.changedTouches[0];
-    
+
     const clientX = touch.clientX;
     const clientY = touch.clientY;
-    
-    console.log('📝 [Editor] 터치 종료 위치 기반 커서 이동:', { 
-      clientX, 
+
+    console.log('📝 [Editor] 싱글탭 감지, 터치 종료 위치 기반 커서 이동:', {
+      clientX,
       clientY,
       touchType: 'touchend'
     });
@@ -245,11 +261,19 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
         return;
       }
 
+      // 이미 단어 선택(드래그 selection)이 있으면 스킵 (iOS 더블탭 또는 드래그 선택 보호)
+      const currentSelection = editorView.state.selection.main;
+      if (!currentSelection.empty) {
+        console.log('📝 [Editor] 기존 selection 유지:', currentSelection.from, '-', currentSelection.to);
+        editorView.focus();
+        return;
+      }
+
       // 에디터 영역 확인 (최신 rect 가져오기)
       const editorRect = editorView.dom.getBoundingClientRect();
-      const isInEditorArea = clientX >= editorRect.left && 
-                            clientX <= editorRect.right && 
-                            clientY >= editorRect.top && 
+      const isInEditorArea = clientX >= editorRect.left &&
+                            clientX <= editorRect.right &&
+                            clientY >= editorRect.top &&
                             clientY <= editorRect.bottom;
 
       if (!isInEditorArea) {
@@ -259,22 +283,22 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
       }
 
       console.log('📝 [Editor] 지연 후 커서 위치 계산:', {
-        clientX, 
+        clientX,
         clientY,
-        editorRect: { 
-          left: editorRect.left, 
-          top: editorRect.top, 
-          width: editorRect.width, 
+        editorRect: {
+          left: editorRect.left,
+          top: editorRect.top,
+          width: editorRect.width,
           height: editorRect.height
         }
       });
 
       // posAtCoords로 정확한 위치 계산
       const pos = editorView.posAtCoords({ x: clientX, y: clientY });
-      
+
       if (typeof pos === 'number' && pos >= 0 && pos <= editorView.state.doc.length) {
         console.log('📝 [Editor] 계산된 텍스트 위치:', pos, '/ 전체 길이:', editorView.state.doc.length);
-        
+
         // 현재 커서 위치와 다른 경우에만 이동
         const currentPos = editorView.state.selection.main.head;
         if (Math.abs(currentPos - pos) > 1) { // 1자 이상 차이날 때만 이동
@@ -287,7 +311,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
         } else {
           console.log('📝 [Editor] 비슷한 위치에 커서가 있어서 이동 스킵');
         }
-        
+
         // 포커스 보장
         editorView.focus();
       } else {
