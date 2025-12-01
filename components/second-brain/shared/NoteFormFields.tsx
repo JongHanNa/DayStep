@@ -93,23 +93,36 @@ export default function NoteFormFields({
           제목
         </label>
 
-        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
-          <input
-            type="text"
-            value={note.title}
-            onChange={(e) => onChange({ ...note, title: e.target.value })}
-            placeholder={titlePlaceholder}
-            className="w-full bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
-            style={{
-              fontSize: '20px',
-              color: '#333333',
-              borderBottomColor: '#D1D5DB',
-              outline: 'none',
-              boxShadow: 'none',
-              fontWeight: '600',
-              height: '44px',
-            }}
-          />
+        <div className="p-3 rounded-lg bg-base-100">
+          {/* 제목 입력 - iOS WebView scale 문제 해결 */}
+          <div className="input-scale-wrapper" style={{
+            transform: 'scale(1.6)',
+            transformOrigin: 'left bottom',
+            WebkitTransform: 'scale(1.6)',
+            WebkitTransformOrigin: 'left bottom',
+            width: '80%',
+            height: '44px',
+            position: 'relative'
+          }}>
+            <input
+              type="text"
+              value={note.title}
+              onChange={(e) => onChange({ ...note, title: e.target.value })}
+              placeholder={titlePlaceholder}
+              className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+              style={{
+                fontSize: '20px',
+                outline: 'none',
+                boxShadow: 'none',
+                fontWeight: '600',
+                height: '44px',
+                lineHeight: '0.9',
+                paddingTop: '16px',
+                paddingBottom: '0px',
+                width: '100%',
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -120,7 +133,7 @@ export default function NoteFormFields({
           영역/자원
         </label>
 
-        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100">
           <select
             value={note.linkedAreaOrResource || ''}
             onChange={(e) => onChange({ ...note, linkedAreaOrResource: e.target.value })}
@@ -152,7 +165,7 @@ export default function NoteFormFields({
           분류
         </label>
 
-        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100">
           <select
             value={note.note_category}
             onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
