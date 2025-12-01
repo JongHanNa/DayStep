@@ -254,7 +254,7 @@ const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
               }}
             >
               <div
-                className="flex-1 overflow-y-auto px-4 pt-4"
+                className="flex-1 overflow-y-auto px-0 pt-4"
                 style={{
                   WebkitOverflowScrolling: 'touch',
                   overscrollBehavior: 'auto'

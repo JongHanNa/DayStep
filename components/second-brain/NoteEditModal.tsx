@@ -168,7 +168,7 @@ export default function NoteEditModal({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4">
+        <div className="flex-1 overflow-y-auto px-0">
           <div className="py-4">
             {note && (
               <NoteFormFields

@@ -326,6 +326,11 @@ export const globalMarkdownStyles = `
     touch-action: manipulation !important;
     -webkit-touch-callout: none !important;
     -webkit-tap-highlight-color: transparent !important;
+    padding: 0 !important;
+  }
+
+  .advanced-markdown-editor-container .cm-scroller {
+    padding: 0 !important;
   }
 
   /* 모바일 환경: 글자 크기는 createLivePreviewTheme에서 동적으로 관리 */
@@ -691,10 +696,12 @@ export function createEditorTheme(minHeight: number) {
     },
     '.cm-editor': {
       backgroundColor: 'transparent',
+      padding: '0',
     },
     '.cm-scroller': {
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
+      padding: '0',
       '&::-webkit-scrollbar': {
         display: 'none',
       },
