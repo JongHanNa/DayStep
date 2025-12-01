@@ -198,7 +198,7 @@ export default function TodoFormFields({
           아이콘 및 제목
         </label>
 
-        <div className="p-2 rounded-lg bg-base-100">
+        <div className="p-0 rounded-lg bg-base-100">
           <div className="flex items-center gap-3 pr-16">
             {/* 아이콘 버튼 */}
             <div className="relative">
@@ -274,7 +274,7 @@ export default function TodoFormFields({
             명료화
           </label>
 
-          <div className="p-2 rounded-lg bg-base-100">
+          <div className="p-0 rounded-lg bg-base-100">
             <select
               value={todo.clarification || ''}
               onChange={(e) => {
@@ -293,7 +293,7 @@ export default function TodoFormFields({
 
                 onChange({ ...todo, ...updates });
               }}
-              className="select select-bordered w-full"
+              className="select select-bordered w-full bg-base-200"
             >
               <option value="">선택 안 함(수집함으로 이동됨)</option>
               {/* 임시 숨김: 다시알림 옵션
@@ -316,45 +316,43 @@ export default function TodoFormFields({
             일정 유형
           </label>
 
-          <div className="p-2 rounded-lg bg-base-100">
-            <select
-              value={todo.scheduleType || 'anytime'}
-              onChange={(e) => {
-                const scheduleType = e.target.value as 'anytime' | 'timed' | 'all_day' | 'none';
-                const updates: any = { scheduleType };
+          <select
+            value={todo.scheduleType || 'anytime'}
+            onChange={(e) => {
+              const scheduleType = e.target.value as 'anytime' | 'timed' | 'all_day' | 'none';
+              const updates: any = { scheduleType };
 
-                // 자동 세팅
-                if (scheduleType === 'anytime' || scheduleType === 'all_day') {
-                  updates.scheduledDate = new Date(); // 오늘
-                  updates.includeEndDate = false;
-                  updates.includeTime = false;
-                } else if (scheduleType === 'timed') {
-                  updates.scheduledDate = new Date(); // 오늘
-                  updates.includeTime = true;
-                  const now = new Date();
-                  updates.startTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                } else if (scheduleType === 'none') {
-                  // 선택 안함: 날짜/시간 정보 초기화
-                  updates.scheduledDate = undefined;
-                  updates.includeEndDate = false;
-                  updates.includeTime = false;
-                  updates.startTime = undefined;
-                  updates.endDate = undefined;
-                  updates.endTime = undefined;
-                }
+              // 자동 세팅
+              if (scheduleType === 'anytime' || scheduleType === 'all_day') {
+                updates.scheduledDate = new Date(); // 오늘
+                updates.includeEndDate = false;
+                updates.includeTime = false;
+              } else if (scheduleType === 'timed') {
+                updates.scheduledDate = new Date(); // 오늘
+                updates.includeTime = true;
+                const now = new Date();
+                updates.startTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+              } else if (scheduleType === 'none') {
+                // 선택 안함: 날짜/시간 정보 초기화
+                updates.scheduledDate = undefined;
+                updates.includeEndDate = false;
+                updates.includeTime = false;
+                updates.startTime = undefined;
+                updates.endDate = undefined;
+                updates.endTime = undefined;
+              }
 
-                onChange({ ...todo, ...updates });
-              }}
-              className="select select-bordered w-full"
-            >
-              {todo.clarification !== 'schedule_clear' && (
-                <option value="none">📝 선택 안함 · 일정 없음</option>
-              )}
-              <option value="anytime">⏰ 언제든지 · 특정 날짜에 타임라인에서 언제든지 바로 시작하거나 추후 계획 페이지에서 시간 지정해서 사용 가능(이때 시간 지정하면 일정유형이 시간지정으로 변경됨)</option>
-              <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
-              <option value="all_day">📅 종일 · 하루 종일</option>
-            </select>
-          </div>
+              onChange({ ...todo, ...updates });
+            }}
+            className="select select-bordered w-full bg-base-200"
+          >
+            {todo.clarification !== 'schedule_clear' && (
+              <option value="none">📝 선택 안함 · 일정 없음</option>
+            )}
+            <option value="anytime">⏰ 언제든지 · 특정 날짜에 타임라인에서 언제든지 바로 시작하거나 추후 계획 페이지에서 시간 지정해서 사용 가능(이때 시간 지정하면 일정유형이 시간지정으로 변경됨)</option>
+            <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
+            <option value="all_day">📅 종일 · 하루 종일</option>
+          </select>
         </div>
       )}
 
@@ -387,19 +385,17 @@ export default function TodoFormFields({
               날짜
             </label>
 
-            <div className="p-2 rounded-lg bg-base-100">
-              <input
-                type="date"
-                value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
-                onChange={(e) =>
-                  onChange({
-                    ...todo,
-                    scheduledDate: e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined,
-                  })
-                }
-                className="input input-bordered w-full"
-              />
-            </div>
+            <input
+              type="date"
+              value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
+              onChange={(e) =>
+                onChange({
+                  ...todo,
+                  scheduledDate: e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined,
+                })
+              }
+              className="input input-bordered w-full bg-base-200"
+            />
           </div>
 
           {/* 시작 시간 (시간 포함 ON일 때만) */}
@@ -410,14 +406,12 @@ export default function TodoFormFields({
                 시작 시간
               </label>
 
-              <div className="p-2 rounded-lg bg-base-100">
-                <input
-                  type="time"
-                  value={todo.startTime || '09:00'}
-                  onChange={(e) => onChange({ ...todo, startTime: e.target.value })}
-                  className="input input-bordered w-full"
-                />
-              </div>
+              <input
+                type="time"
+                value={todo.startTime || '09:00'}
+                onChange={(e) => onChange({ ...todo, startTime: e.target.value })}
+                className="input input-bordered w-full bg-base-200"
+              />
             </div>
           )}
 
@@ -430,19 +424,17 @@ export default function TodoFormFields({
                   종료 날짜
                 </label>
 
-                <div className="p-2 rounded-lg bg-base-100">
-                  <input
-                    type="date"
-                    value={todo.endDate ? format(todo.endDate, 'yyyy-MM-dd') : ''}
-                    onChange={(e) =>
-                      onChange({
-                        ...todo,
-                        endDate: e.target.value ? new Date(e.target.value) : undefined,
-                      })
-                    }
-                    className="input input-bordered w-full"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={todo.endDate ? format(todo.endDate, 'yyyy-MM-dd') : ''}
+                  onChange={(e) =>
+                    onChange({
+                      ...todo,
+                      endDate: e.target.value ? new Date(e.target.value) : undefined,
+                    })
+                  }
+                  className="input input-bordered w-full bg-base-200"
+                />
               </div>
 
               {/* 종료 시간 (종료일 ON + 시간 포함 ON일 때만) */}
@@ -453,14 +445,12 @@ export default function TodoFormFields({
                     종료 시간
                   </label>
 
-                  <div className="p-2 rounded-lg bg-base-100">
-                    <input
-                      type="time"
-                      value={todo.endTime || '18:00'}
-                      onChange={(e) => onChange({ ...todo, endTime: e.target.value })}
-                      className="input input-bordered w-full"
-                    />
-                  </div>
+                  <input
+                    type="time"
+                    value={todo.endTime || '18:00'}
+                    onChange={(e) => onChange({ ...todo, endTime: e.target.value })}
+                    className="input input-bordered w-full bg-base-200"
+                  />
                 </div>
               )}
             </>
