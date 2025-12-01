@@ -122,7 +122,7 @@ export default function ContentEditorModal({
     <dialog open className="modal modal-open z-[110]">
       <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
         {/* 헤더 */}
-        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1 border-b border-base-300`}>
+        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1`}>
           <button
             onClick={onClose}
             className="btn btn-ghost btn-circle btn-sm"

@@ -969,7 +969,7 @@ export default function ProjectEditDialog({
       <dialog open className="modal modal-open z-[110]">
         <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (취소-제목-삭제-저장) */}
-          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-100 z-10`}>
             <button onClick={onCancel} className="btn btn-primary btn-sm rounded-full">
               취소
             </button>
@@ -1413,7 +1413,7 @@ export default function ProjectEditDialog({
         <dialog open className="modal modal-open z-[110]">
           <div className={`modal-box w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 (취소-제목-저장) */}
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 border-b border-base-300 sticky top-0 bg-base-100 z-10`}>
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-100 z-10`}>
               <button onClick={handleCancelNoteEdit} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
