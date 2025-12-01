@@ -137,7 +137,7 @@ export default function NoteFormFields({
           <select
             value={note.linkedAreaOrResource || ''}
             onChange={(e) => onChange({ ...note, linkedAreaOrResource: e.target.value })}
-            className="select select-bordered w-full"
+            className="select select-bordered w-full bg-base-200"
           >
             <option value="">선택 안 함</option>
             <optgroup label="영역">
@@ -169,7 +169,7 @@ export default function NoteFormFields({
           <select
             value={note.note_category}
             onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
-            className="select select-bordered w-full"
+            className="select select-bordered w-full bg-base-200"
           >
             <option value="none">선택 안함</option>
             <option value="read_later">나중에 보기 - 시간이 붕뜨는데 뭘 해야할지 모를 때</option>
@@ -243,7 +243,7 @@ export default function NoteFormFields({
 
       {/* 고정하기 */}
       <div className="my-4">
-        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-200">
           <label className="cursor-pointer flex items-center justify-between">
             <span className="label-text flex items-center gap-2">
               <Star className="w-4 h-4" />
