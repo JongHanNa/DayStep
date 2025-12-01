@@ -126,14 +126,6 @@ export default function ContentEditorModal({
                 </span>
               )}
             </div>
-            {/* 툴바 토글 버튼 */}
-            <button
-              onClick={() => setIsToolbarVisible(!isToolbarVisible)}
-              className={`btn btn-ghost btn-circle btn-xs ${isToolbarVisible ? 'text-primary' : 'text-base-content/50'}`}
-              title={isToolbarVisible ? '툴바 숨기기' : '툴바 보이기'}
-            >
-              <PanelTop size={18} />
-            </button>
             {enableAutoSave && (
               <AutoSaveStatus
                 status={autoSave.saveStatus}
@@ -142,8 +134,14 @@ export default function ContentEditorModal({
             )}
           </div>
 
-          {/* 오른쪽 균형용 빈 공간 */}
-          <div className="w-[52px]" />
+          {/* 툴바 토글 버튼 (오른쪽) */}
+          <button
+            onClick={() => setIsToolbarVisible(!isToolbarVisible)}
+            className={`btn btn-ghost btn-circle btn-sm ${isToolbarVisible ? 'text-primary' : 'text-base-content/50'}`}
+            title={isToolbarVisible ? '툴바 숨기기' : '툴바 보이기'}
+          >
+            <PanelTop size={20} />
+          </button>
         </div>
 
         {/* 스크롤 영역: 슬라이더 + 에디터 */}
