@@ -198,8 +198,8 @@ export default function TodoFormFields({
           아이콘 및 제목
         </label>
 
-        <div className="rounded-lg bg-base-200 overflow-hidden">
-          <div className="flex items-center gap-3 pl-2 pr-16 pt-2">
+        <div className="rounded-lg bg-base-200 overflow-visible">
+          <div className="flex items-center gap-3 pl-3 pr-16 pt-2 pb-3">
             {/* 아이콘 버튼 */}
             <div className="relative">
               <button
