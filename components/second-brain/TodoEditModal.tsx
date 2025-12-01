@@ -215,7 +215,7 @@ export default function TodoEditModal({
         </div>
 
         {/* 콘텐츠 영역 */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-2">
           <TodoFormContent
             formData={todo}
             onChange={onChange}
