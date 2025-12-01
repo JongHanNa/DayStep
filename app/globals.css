@@ -148,7 +148,7 @@ dialog::backdrop {
 
   /* 🎨 타임라인 전용 색상 - 다크모드 */
   --timeline-bg: 217 33% 17%; /* #1e293b */
-  --timeline-connector: 215 25% 35%; /* #475569 */
+  --timeline-connector: 276 7% 18%; /* #2d2a32 - base-300과 동일 */
   --timeline-connector-active: 213 97% 87%; /* #60a5fa */
 
   /* 🎨 섹션 헤더 색상 - 다크모드 */
