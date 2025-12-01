@@ -183,7 +183,7 @@ export default function NoteFormFields({
         </label>
 
         <div
-          className="p-3 rounded-lg bg-base-200 border border-base-300 cursor-pointer hover:bg-base-300 transition-colors min-h-[100px]"
+          className="p-3 rounded-lg bg-base-100 border border-base-300 cursor-pointer hover:bg-base-300 transition-colors min-h-[100px]"
           onClick={onContentClick}
         >
           {note.content ? (
@@ -239,7 +239,7 @@ export default function NoteFormFields({
 
       {/* 고정하기 */}
       <div className="my-4">
-        <div className="p-3 rounded-lg bg-base-200">
+        <div className="p-3 rounded-lg bg-base-100">
           <label className="cursor-pointer flex items-center justify-between">
             <span className="label-text flex items-center gap-2">
               <Star className="w-4 h-4" />
