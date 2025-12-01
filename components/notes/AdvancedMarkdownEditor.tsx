@@ -7,7 +7,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';
 
 // 분리된 모듈들 임포트
-import { markdownHighlightStyle, livePreviewTheme, createEditorTheme, globalMarkdownStyles, webFocusTheme, mobileFocusTheme } from './editor/markdownStyles';
+import { markdownHighlightStyle, createLivePreviewTheme, createEditorTheme, globalMarkdownStyles, webFocusTheme, mobileFocusTheme } from './editor/markdownStyles';
 import { livePreviewField, markdownHideDecorations, hideMarkdownExtension, setCurrentEditorView } from './editor/markdownDecorations';
 import { checkboxClickExtension } from './editor/checkboxFeature';
 import { markdownKeymap } from './editor/markdownKeymap';
@@ -109,7 +109,8 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     dynamicCursorPlugin,
     // drawSelection() 추가 - .cm-selectionBackground 활성화 (필수)
     drawSelection(),
-    livePreviewTheme,
+    // 플랫폼별 기본 글자 크기 적용 (웹: 14px, 모바일: 16px)
+    createLivePreviewTheme(platform === 'mobile'),
     // 플랫폼별 포커스 테마 적용 (CodeMirror 6 공식 방법)
     platform === 'web' ? webFocusTheme : mobileFocusTheme,
     EditorView.lineWrapping,

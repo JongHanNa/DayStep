@@ -10,7 +10,8 @@ interface ContentEditorModalProps {
   open: boolean;
   content: string;
   onClose: () => void;
-  onSave: () => void;
+  /** @deprecated 자동저장으로 대체됨 - 하위 호환성을 위해 유지 */
+  onSave?: () => void;
   onChange: (content: string) => void;
   placeholder?: string;
   /**
@@ -31,6 +32,7 @@ export default function ContentEditorModal({
   open,
   content,
   onClose,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSave,
   onChange,
   placeholder = '내용을 입력하세요..',
@@ -91,7 +93,7 @@ export default function ContentEditorModal({
             onClick={onClose}
             className="btn btn-primary btn-sm rounded-full"
           >
-            취소
+            닫기
           </button>
 
           <div className="flex items-center gap-3">
@@ -104,12 +106,8 @@ export default function ContentEditorModal({
             )}
           </div>
 
-          <button
-            onClick={onSave}
-            className="btn btn-primary btn-sm rounded-full"
-          >
-            저장
-          </button>
+          {/* 자동저장이므로 저장 버튼 자리는 빈 공간으로 유지 (레이아웃 균형) */}
+          <div className="w-[52px]" />
         </div>
 
         {/* 마크다운 에디터 */}

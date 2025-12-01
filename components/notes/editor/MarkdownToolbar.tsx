@@ -1,17 +1,18 @@
 import React from 'react';
-import { 
-  Bold, 
-  Italic, 
-  Strikethrough, 
-  Code, 
-  List, 
-  ListOrdered,
-  Quote,
-  Minus,
+import {
   Hash,
   Square,
-  CheckSquare,
-  Highlighter
+  // TODO: 아래 기능들은 나중에 구현 예정
+  // Bold,
+  // Italic,
+  // Strikethrough,
+  // Code,
+  // List,
+  // ListOrdered,
+  // Quote,
+  // Minus,
+  // CheckSquare,
+  // Highlighter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -19,7 +20,7 @@ interface MarkdownToolbarProps {
   onInsert: (text: string, cursorOffset?: number) => void;
 }
 
-// 키보드 툴바 컴포넌트
+// 키보드 툴바 컴포넌트 (현재 #, 체크박스만 활성화)
 const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert }) => {
   const tools = [
     {
@@ -28,55 +29,56 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert }) => {
       action: () => onInsert('# ', 0),
     },
     {
-      icon: <Bold size={16} />,
-      label: 'Bold',
-      action: () => onInsert('****', -2),
-    },
-    {
-      icon: <Italic size={16} />,
-      label: 'Italic', 
-      action: () => onInsert('**', -1),
-    },
-    {
-      icon: <Strikethrough size={16} />,
-      label: 'Strikethrough',
-      action: () => onInsert('~~~~', -2),
-    },
-    {
-      icon: <Code size={16} />,
-      label: 'Code',
-      action: () => onInsert('``', -1),
-    },
-    {
       icon: <Square size={16} />,
       label: 'Checkbox',
       action: () => onInsert('- [ ] ', 0),
     },
-    {
-      icon: <Highlighter size={16} />,
-      label: 'Highlight',
-      action: () => onInsert('====', -2),
-    },
-    {
-      icon: <Quote size={16} />,
-      label: 'Quote',
-      action: () => onInsert('> ', 0),
-    },
-    {
-      icon: <List size={16} />,
-      label: 'List',
-      action: () => onInsert('- ', 0),
-    },
-    {
-      icon: <ListOrdered size={16} />,
-      label: 'Ordered List',
-      action: () => onInsert('1. ', 0),
-    },
-    {
-      icon: <Minus size={16} />,
-      label: 'Divider',
-      action: () => onInsert('\n---\n', 0),
-    },
+    // TODO: 아래 기능들은 나중에 구현 예정
+    // {
+    //   icon: <Bold size={16} />,
+    //   label: 'Bold',
+    //   action: () => onInsert('****', -2),
+    // },
+    // {
+    //   icon: <Italic size={16} />,
+    //   label: 'Italic',
+    //   action: () => onInsert('**', -1),
+    // },
+    // {
+    //   icon: <Strikethrough size={16} />,
+    //   label: 'Strikethrough',
+    //   action: () => onInsert('~~~~', -2),
+    // },
+    // {
+    //   icon: <Code size={16} />,
+    //   label: 'Code',
+    //   action: () => onInsert('``', -1),
+    // },
+    // {
+    //   icon: <Highlighter size={16} />,
+    //   label: 'Highlight',
+    //   action: () => onInsert('====', -2),
+    // },
+    // {
+    //   icon: <Quote size={16} />,
+    //   label: 'Quote',
+    //   action: () => onInsert('> ', 0),
+    // },
+    // {
+    //   icon: <List size={16} />,
+    //   label: 'List',
+    //   action: () => onInsert('- ', 0),
+    // },
+    // {
+    //   icon: <ListOrdered size={16} />,
+    //   label: 'Ordered List',
+    //   action: () => onInsert('1. ', 0),
+    // },
+    // {
+    //   icon: <Minus size={16} />,
+    //   label: 'Divider',
+    //   action: () => onInsert('\n---\n', 0),
+    // },
   ];
 
   return (

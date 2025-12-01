@@ -77,18 +77,19 @@ export const markdownHighlightStyle = HighlightStyle.define([
   }
 ]);
 
-// Live Preview 테마 (CodeMirror 내부 스타일)
-export const livePreviewTheme = EditorView.theme({
-  '.cm-line': {
-    padding: '4px 0',
-    lineHeight: '1.6',
-  },
-  '.cm-line.editing': {
-    backgroundColor: 'transparent',
-  },
-  '.cm-editor': {
-    fontSize: '14px',
-  },
+// Live Preview 테마 생성 함수 (플랫폼별 글자 크기)
+export function createLivePreviewTheme(isMobile: boolean = false) {
+  return EditorView.theme({
+    '.cm-line': {
+      padding: '4px 0',
+      lineHeight: '1.6',
+    },
+    '.cm-line.editing': {
+      backgroundColor: 'transparent',
+    },
+    '.cm-editor': {
+      fontSize: isMobile ? '16px' : '14px',
+    },
   // 마크다운 헤더 크기 스타일 (다양한 가능한 클래스명 모두 시도)
   '.cm-header-1, .cm-header1, .cm-heading-1, .cm-heading1, .tok-heading1, .tok-ATXHeading1': {
     fontSize: '2em !important',
@@ -199,7 +200,11 @@ export const livePreviewTheme = EditorView.theme({
     marginTop: '4px !important',
     marginBottom: '4px !important',
   }
-});
+  });
+}
+
+// 기본 livePreviewTheme (하위 호환성)
+export const livePreviewTheme = createLivePreviewTheme(false);
 
 // 웹 환경용 포커스 테마 (CodeMirror 6 공식 방법)
 export const webFocusTheme = EditorView.theme({
@@ -318,6 +323,15 @@ export const globalMarkdownStyles = `
     touch-action: manipulation !important;
     -webkit-touch-callout: none !important;
     -webkit-tap-highlight-color: transparent !important;
+  }
+
+  /* 모바일 환경: 기본 글자 크기 증가 (14px → 16px) */
+  [data-platform="mobile"] .advanced-markdown-editor-container .cm-editor {
+    font-size: 16px !important;
+  }
+
+  [data-platform="mobile"] .advanced-markdown-editor-container .cm-content {
+    font-size: 16px !important;
   }
   
   .advanced-markdown-editor-container .cm-content {
