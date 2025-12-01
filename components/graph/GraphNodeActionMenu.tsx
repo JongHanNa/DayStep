@@ -70,27 +70,27 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-base-100 rounded-lg shadow-xl border border-base-300 overflow-hidden min-w-[120px]"
+      className="absolute z-50 bg-base-100 rounded-[28px] shadow-xl p-2 flex flex-col gap-2"
       style={{
         left: position.x,
         top: position.y,
-        transform: 'translate(8px, -50%)',  // 오른쪽 중앙에 표시 (노드 제목 가림 방지)
+        transform: 'translate(8px, -50%)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
       }}
     >
       <button
         onClick={handleEdit}
-        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-base-content hover:bg-base-200 transition-colors"
+        className="w-11 h-11 rounded-full bg-base-200 hover:bg-base-300 flex items-center justify-center transition-all duration-200 hover:scale-105"
+        title="편집"
       >
-        <Pencil className="w-4 h-4" />
-        <span>편집</span>
+        <Pencil className="w-4 h-4 text-base-content" />
       </button>
-      <div className="h-px bg-base-300" />
       <button
         onClick={handleDelete}
-        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-error hover:bg-error/10 transition-colors"
+        className="w-11 h-11 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all duration-200 hover:scale-105"
+        title="삭제"
       >
-        <Trash2 className="w-4 h-4" />
-        <span>삭제</span>
+        <Trash2 className="w-4 h-4 text-error" />
       </button>
     </div>
   );
