@@ -26,6 +26,10 @@ interface ContentEditorModalProps {
    * 자동저장 디바운스 시간 (기본: 1000ms)
    */
   debounceMs?: number;
+  /**
+   * 헤더에 표시할 제목 (미지정 시 기본값 사용)
+   */
+  title?: string;
 }
 
 export default function ContentEditorModal({
@@ -39,12 +43,16 @@ export default function ContentEditorModal({
   enableAutoSave = false,
   onAutoSave,
   debounceMs = 1000,
+  title,
 }: ContentEditorModalProps) {
   const { openModal, closeModal } = useModalStore();
 
   // 사용자 편집 상태 추적
   const [hasUserEditedContent, setHasUserEditedContent] = useState(false);
   const [originalContent] = useState(content);
+
+  // 글자 크기 조절 상태
+  const [editorFontSize, setEditorFontSize] = useState(18);
 
   // 자동저장 Hook
   const autoSave = useAutoSave(content, {
@@ -88,7 +96,7 @@ export default function ContentEditorModal({
     <dialog open className="modal modal-open z-[110]">
       <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
         {/* 헤더 */}
-        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1 border-b border-base-300 sticky top-0 bg-base-200 z-10`}>
+        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1 border-b border-base-300`}>
           <button
             onClick={onClose}
             className="btn btn-primary btn-sm rounded-full"
@@ -97,7 +105,7 @@ export default function ContentEditorModal({
           </button>
 
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold">내용 편집</h3>
+            <h3 className="text-lg font-semibold truncate max-w-[200px]">{title || '내용 편집'}</h3>
             {enableAutoSave && (
               <AutoSaveStatus
                 status={autoSave.saveStatus}
@@ -108,6 +116,19 @@ export default function ContentEditorModal({
 
           {/* 자동저장이므로 저장 버튼 자리는 빈 공간으로 유지 (레이아웃 균형) */}
           <div className="w-[52px]" />
+        </div>
+
+        {/* 글자 크기 조절 슬라이더 */}
+        <div className="flex items-center gap-3 px-4 py-2 bg-base-300/50">
+          <span className="text-sm text-base-content/70">글자 크기: {editorFontSize}px</span>
+          <input
+            type="range"
+            min="12"
+            max="24"
+            value={editorFontSize}
+            onChange={(e) => setEditorFontSize(Number(e.target.value))}
+            className="range range-xs range-primary w-32"
+          />
         </div>
 
         {/* 마크다운 에디터 */}
@@ -130,6 +151,7 @@ export default function ContentEditorModal({
             onChange={handleContentChange}
             placeholder={placeholder}
             minHeight={770}
+            fontSize={editorFontSize}
           />
         </div>
       </div>

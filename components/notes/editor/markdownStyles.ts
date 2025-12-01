@@ -77,8 +77,8 @@ export const markdownHighlightStyle = HighlightStyle.define([
   }
 ]);
 
-// Live Preview 테마 생성 함수 (플랫폼별 글자 크기)
-export function createLivePreviewTheme(isMobile: boolean = false) {
+// Live Preview 테마 생성 함수 (글자 크기 직접 지정)
+export function createLivePreviewTheme(fontSizePx: number = 14) {
   return EditorView.theme({
     '.cm-line': {
       padding: '4px 0',
@@ -88,7 +88,10 @@ export function createLivePreviewTheme(isMobile: boolean = false) {
       backgroundColor: 'transparent',
     },
     '.cm-editor': {
-      fontSize: isMobile ? '16px' : '14px',
+      fontSize: `${fontSizePx}px !important`,
+    },
+    '.cm-content': {
+      fontSize: `${fontSizePx}px !important`,
     },
   // 마크다운 헤더 크기 스타일 (다양한 가능한 클래스명 모두 시도)
   '.cm-header-1, .cm-header1, .cm-heading-1, .cm-heading1, .tok-heading1, .tok-ATXHeading1': {
@@ -203,8 +206,8 @@ export function createLivePreviewTheme(isMobile: boolean = false) {
   });
 }
 
-// 기본 livePreviewTheme (하위 호환성)
-export const livePreviewTheme = createLivePreviewTheme(false);
+// 기본 livePreviewTheme (하위 호환성 - 웹 기본값 14px)
+export const livePreviewTheme = createLivePreviewTheme(14);
 
 // 웹 환경용 포커스 테마 (CodeMirror 6 공식 방법)
 export const webFocusTheme = EditorView.theme({
@@ -325,14 +328,8 @@ export const globalMarkdownStyles = `
     -webkit-tap-highlight-color: transparent !important;
   }
 
-  /* 모바일 환경: 기본 글자 크기 증가 (14px → 16px) */
-  [data-platform="mobile"] .advanced-markdown-editor-container .cm-editor {
-    font-size: 16px !important;
-  }
-
-  [data-platform="mobile"] .advanced-markdown-editor-container .cm-content {
-    font-size: 16px !important;
-  }
+  /* 모바일 환경: 글자 크기는 createLivePreviewTheme에서 동적으로 관리 */
+  /* fontSize prop 또는 플랫폼 기본값(모바일: 16px, 웹: 14px)이 적용됨 */
   
   .advanced-markdown-editor-container .cm-content {
     touch-action: manipulation !important;

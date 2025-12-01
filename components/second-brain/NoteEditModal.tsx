@@ -209,6 +209,7 @@ export default function NoteEditModal({
         placeholder={contentPlaceholder}
         enableAutoSave={true}
         onAutoSave={handleAutoSave}
+        title={note?.title}
       />
 
       {/* 할일 편집 모달 */}

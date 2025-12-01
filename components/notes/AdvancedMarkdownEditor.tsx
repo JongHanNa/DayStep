@@ -23,6 +23,8 @@ interface AdvancedMarkdownEditorProps {
   minHeight?: number;
   onFocus?: () => void;
   onBlur?: () => void;
+  /** 글자 크기 (px). 미지정 시 플랫폼별 기본값 적용 (웹: 14px, 모바일: 16px) */
+  fontSize?: number;
 }
 
 
@@ -47,6 +49,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
   minHeight = 400,
   onFocus,
   onBlur,
+  fontSize,
 }, ref) => {
   const editorRef = useRef<any>(null);
   const [platform, setPlatform] = useState<'web' | 'mobile'>('web');
@@ -109,13 +112,13 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     dynamicCursorPlugin,
     // drawSelection() 추가 - .cm-selectionBackground 활성화 (필수)
     drawSelection(),
-    // 플랫폼별 기본 글자 크기 적용 (웹: 14px, 모바일: 16px)
-    createLivePreviewTheme(platform === 'mobile'),
+    // 글자 크기 적용: props로 지정된 값 > 플랫폼별 기본값 (웹: 14px, 모바일: 16px)
+    createLivePreviewTheme(fontSize ?? (platform === 'mobile' ? 16 : 14)),
     // 플랫폼별 포커스 테마 적용 (CodeMirror 6 공식 방법)
     platform === 'web' ? webFocusTheme : mobileFocusTheme,
     EditorView.lineWrapping,
     createEditorTheme(minHeight),
-  ], [minHeight, platform]);
+  ], [minHeight, platform, fontSize]);
 
   // onChange 디바운싱으로 리렌더 빈도 감소 (selection 유지 시간 확보)
   const debouncedOnChangeRef = useRef<NodeJS.Timeout | null>(null);
@@ -419,6 +422,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
         }}
       >
         <CodeMirror
+          key={`editor-${fontSize ?? (platform === 'mobile' ? 16 : 14)}`}
           ref={editorRef}
           value={value}
           onChange={handleChange}
