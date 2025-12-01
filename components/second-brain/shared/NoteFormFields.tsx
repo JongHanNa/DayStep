@@ -93,14 +93,14 @@ export default function NoteFormFields({
           제목
         </label>
 
-        <div className="p-3 rounded-lg bg-base-100">
+        <div className="rounded-lg bg-base-100 overflow-hidden" style={{ paddingTop: '0px' }}>
           {/* 제목 입력 - iOS WebView scale 문제 해결 */}
           <div className="input-scale-wrapper" style={{
             transform: 'scale(1.6)',
             transformOrigin: 'left bottom',
             WebkitTransform: 'scale(1.6)',
             WebkitTransformOrigin: 'left bottom',
-            width: '80%',
+            width: '62.5%',
             height: '44px',
             position: 'relative'
           }}>
@@ -133,7 +133,7 @@ export default function NoteFormFields({
           영역/자원
         </label>
 
-        <div className="p-3 rounded-lg bg-base-100">
+        <div className="p-0 rounded-lg bg-base-100">
           <select
             value={note.linkedAreaOrResource || ''}
             onChange={(e) => onChange({ ...note, linkedAreaOrResource: e.target.value })}
@@ -165,7 +165,7 @@ export default function NoteFormFields({
           분류
         </label>
 
-        <div className="p-3 rounded-lg bg-base-100">
+        <div className="p-0 rounded-lg bg-base-100">
           <select
             value={note.note_category}
             onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
