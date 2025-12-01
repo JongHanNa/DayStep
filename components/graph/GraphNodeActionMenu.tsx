@@ -1,23 +1,60 @@
 /**
- * GraphNodeActionMenu - 그래프 노드 클릭 시 액션 선택 메뉴
- * 노트 노드 클릭 시 편집/삭제 선택지를 제공
+ * GraphNodeActionMenu - 그래프 노드 클릭 시 섹션별 편집 메뉴
+ * 노트 노드 클릭 시 각 섹션을 선택하여 팝오버로 바로 편집 가능
  */
 
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { SquarePen, Trash } from 'lucide-react';
-import { useGraphStore, useGraphActionMenu } from '@/state/stores/graphStore';
+import {
+  Type,
+  FileText,
+  FolderTree,
+  Folder,
+  CheckSquare,
+  StickyNote,
+  Trash,
+} from 'lucide-react';
+import { useGraphStore, useGraphActionMenu, type NotePopoverType } from '@/state/stores/graphStore';
 import type { GraphNode } from '@/types/graph';
+import type { Note } from '@/types/second-brain';
 
 interface GraphNodeActionMenuProps {
-  onEdit: (node: GraphNode) => void;
   onDelete: (node: GraphNode) => void;
 }
 
-export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuProps) {
+interface MenuItemProps {
+  icon: React.ElementType;
+  label: string;
+  count?: number;
+  variant?: 'default' | 'danger';
+  onClick: () => void;
+}
+
+function MenuItem({ icon: Icon, label, count, variant, onClick }: MenuItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full px-3 py-2 flex items-center gap-3 rounded-lg transition-colors ${
+        variant === 'danger'
+          ? 'hover:bg-red-50 text-error'
+          : 'hover:bg-base-200'
+      }`}
+    >
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className="flex-1 text-left text-sm">{label}</span>
+      {count !== undefined && count > 0 && (
+        <span className="text-xs text-base-content/50 bg-base-200 px-1.5 py-0.5 rounded-full">
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+export function GraphNodeActionMenu({ onDelete }: GraphNodeActionMenuProps) {
   const { isOpen, node, position } = useGraphActionMenu();
-  const { closeActionMenu } = useGraphStore();
+  const { closeActionMenu, openPopover } = useGraphStore();
   const menuRef = useRef<HTMLDivElement>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [nodeToDelete, setNodeToDelete] = useState<GraphNode | null>(null);
@@ -61,7 +98,7 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeActionMenu, showDeleteConfirm]);
 
-  // 메뉴가 닫힐 때 확인 대화상자 상태 초기화 (삭제 진행 중이 아닐 때만)
+  // 메뉴가 닫힐 때 확인 대화상자 상태 초기화
   useEffect(() => {
     if (!isOpen && !showDeleteConfirm) {
       setShowDeleteConfirm(false);
@@ -71,9 +108,20 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
 
   if (!isOpen || !node || !position) return null;
 
-  const handleEdit = () => {
-    closeActionMenu();
-    onEdit(node);
+  // 노트 데이터에서 연결 개수 계산
+  const noteData = node.originalData as Note | undefined;
+  const projectCount = noteData?.projects?.length || 0;
+  const todoCount = noteData?.todos?.length || 0;
+  const linkedNoteCount = noteData?.connectedNotes?.length || 0;
+
+  // 섹션 메뉴 클릭 핸들러
+  const handleSectionClick = (type: NotePopoverType) => {
+    // 팝오버 위치: 메뉴 오른쪽에 표시
+    const popoverPosition = {
+      x: position.x + 200, // 메뉴 오른쪽
+      y: position.y,
+    };
+    openPopover(type, popoverPosition);
   };
 
   const handleDeleteClick = () => {
@@ -100,7 +148,8 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
       {/* 액션 메뉴 */}
       <div
         ref={menuRef}
-        className="absolute z-50 bg-base-100 rounded-[28px] shadow-xl p-2 flex flex-col gap-2"
+        data-action-menu
+        className="absolute z-50 bg-base-100 rounded-xl shadow-xl p-2 min-w-[180px]"
         style={{
           left: position.x,
           top: position.y,
@@ -108,20 +157,51 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
         }}
       >
-        <button
-          onClick={handleEdit}
-          className="w-11 h-11 rounded-full bg-base-200 hover:bg-base-300 flex items-center justify-center transition-all duration-200 hover:scale-105"
-          title="편집"
-        >
-          <SquarePen className="w-4 h-4 text-base-content" />
-        </button>
-        <button
+        {/* 섹션 메뉴 */}
+        <MenuItem
+          icon={Type}
+          label="제목"
+          onClick={() => handleSectionClick('title')}
+        />
+        <MenuItem
+          icon={FileText}
+          label="내용"
+          onClick={() => handleSectionClick('content')}
+        />
+        <MenuItem
+          icon={FolderTree}
+          label="영역/자원"
+          onClick={() => handleSectionClick('areaResource')}
+        />
+        <MenuItem
+          icon={Folder}
+          label="프로젝트"
+          count={projectCount}
+          onClick={() => handleSectionClick('project')}
+        />
+        <MenuItem
+          icon={CheckSquare}
+          label="할일"
+          count={todoCount}
+          onClick={() => handleSectionClick('todo')}
+        />
+        <MenuItem
+          icon={StickyNote}
+          label="노트"
+          count={linkedNoteCount}
+          onClick={() => handleSectionClick('note')}
+        />
+
+        {/* 구분선 */}
+        <div className="border-t border-base-300 my-2" />
+
+        {/* 삭제 버튼 */}
+        <MenuItem
+          icon={Trash}
+          label="삭제"
+          variant="danger"
           onClick={handleDeleteClick}
-          className="w-11 h-11 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center transition-all duration-200 hover:scale-105"
-          title="삭제"
-        >
-          <Trash className="w-4 h-4 text-error" />
-        </button>
+        />
       </div>
 
       {/* 삭제 확인 대화상자 */}

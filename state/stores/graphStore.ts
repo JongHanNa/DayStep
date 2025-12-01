@@ -30,6 +30,9 @@ interface ActionMenuPosition {
   y: number;
 }
 
+// Popover types for note editing
+export type NotePopoverType = 'title' | 'content' | 'areaResource' | 'project' | 'todo' | 'note';
+
 interface GraphStoreState {
   // Filter state
   filter: GraphFilter;
@@ -51,6 +54,10 @@ interface GraphStoreState {
   actionMenuOpen: boolean;
   actionMenuNode: GraphNode | null;
   actionMenuPosition: ActionMenuPosition | null;
+
+  // Popover state (for note section editing)
+  activePopover: NotePopoverType | null;
+  popoverPosition: { x: number; y: number } | null;
 
   // View state
   zoomLevel: number;
@@ -83,6 +90,10 @@ interface GraphStoreState {
   openActionMenu: (node: GraphNode, position: ActionMenuPosition) => void;
   closeActionMenu: () => void;
 
+  // Actions - Popover
+  openPopover: (type: NotePopoverType, position: { x: number; y: number }) => void;
+  closePopover: () => void;
+
   // Actions - View
   setZoomLevel: (level: number) => void;
   toggleControls: () => void;
@@ -104,6 +115,8 @@ export const useGraphStore = create<GraphStoreState>()(
       actionMenuOpen: false,
       actionMenuNode: null,
       actionMenuPosition: null,
+      activePopover: null,
+      popoverPosition: null,
       zoomLevel: 1,
       isControlsOpen: true,
 
@@ -211,6 +224,9 @@ export const useGraphStore = create<GraphStoreState>()(
           actionMenuOpen: true,
           actionMenuNode: node,
           actionMenuPosition: position,
+          // 팝오버 상태 초기화 (이전 팝오버가 남아있으면 새 액션 메뉴에서 자동으로 열리는 버그 방지)
+          activePopover: null,
+          popoverPosition: null,
         });
       },
 
@@ -219,6 +235,22 @@ export const useGraphStore = create<GraphStoreState>()(
           actionMenuOpen: false,
           actionMenuNode: null,
           actionMenuPosition: null,
+        });
+      },
+
+      // Popover actions
+      openPopover: (type, position) => {
+        set({
+          activePopover: type,
+          popoverPosition: position,
+          // 팝오버 열 때 액션 메뉴는 닫지 않음 (노드 정보 유지 필요)
+        });
+      },
+
+      closePopover: () => {
+        set({
+          activePopover: null,
+          popoverPosition: null,
         });
       },
 
@@ -272,5 +304,15 @@ export const useGraphActionMenu = () =>
       isOpen: state.actionMenuOpen,
       node: state.actionMenuNode,
       position: state.actionMenuPosition,
+    }))
+  );
+
+export const useGraphPopover = () =>
+  useGraphStore(
+    useShallow((state) => ({
+      activePopover: state.activePopover,
+      position: state.popoverPosition,
+      openPopover: state.openPopover,
+      closePopover: state.closePopover,
     }))
   );

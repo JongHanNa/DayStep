@@ -16,14 +16,23 @@ import { GraphFAB } from './GraphFAB';
 import { GraphLegend } from './GraphLegend';
 import { GraphCreateModal } from './GraphCreateModal';
 import { GraphNodeActionMenu } from './GraphNodeActionMenu';
-import { useGraphStore, useGraphEditModal } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphEditModal, useGraphPopover, useGraphActionMenu } from '@/state/stores/graphStore';
+
+// 팝오버 컴포넌트들
+import {
+  TitleEditPopover,
+  AreaResourceSelectPopover,
+  ProjectLinkPopover,
+  TodoLinkPopover,
+  NoteLinkPopover,
+} from './popover';
+import ContentEditorModal from '@/components/second-brain/ContentEditorModal';
 
 // 편집 모달들
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
-import NoteEditModal from '@/components/second-brain/NoteEditModal';
 
 // Store들
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -35,11 +44,11 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 
 // 유틸리티
 import { updateNoteNotes } from '@/lib/supabase/note-notes';
-import { mapNoteToNoteForm } from '@/lib/helpers/noteDataMapper';
+import { updateNoteProjects } from '@/lib/supabase/project-notes';
+import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 
 // 타입
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
-import type { NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import type { Project, Goal, AreaResource, Note } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { Clarification } from '@/types';
@@ -51,7 +60,9 @@ export default function GraphView() {
   const { graphData, loading, error, refetch } = useGraphData();
   const { filteredData, nodeCount, linkCount, isFiltered } = useFilteredGraphData(graphData);
   const { isOpen: isEditModalOpen, node: editingNode } = useGraphEditModal();
-  const { closeEditModal, openEditModal } = useGraphStore();
+  const { closeEditModal } = useGraphStore();
+  const { activePopover, position: popoverPosition, closePopover } = useGraphPopover();
+  const { node: actionMenuNode } = useGraphActionMenu();
 
   // Store 데이터 및 액션 가져오기
   const entityTodos = useTodoStore((state) => state.todos);
@@ -72,8 +83,8 @@ export default function GraphView() {
   // Todo 편집 상태
   const [editingTodoData, setEditingTodoData] = useState<TodoFormData | null>(null);
 
-  // Note 편집 상태
-  const [editingNoteData, setEditingNoteData] = useState<NoteFormData | null>(null);
+  // 내용 편집 모달 상태
+  const [contentEditorContent, setContentEditorContent] = useState('');
 
   // Project 편집 상태
   const [editingProjectData, setEditingProjectData] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
@@ -89,33 +100,95 @@ export default function GraphView() {
   const handleCloseEditModal = useCallback(() => {
     closeEditModal();
     setEditingTodoData(null);
-    setEditingNoteData(null);
     setEditingProjectData(null);
     setEditingGoalData(null);
     setEditingAreaResourceData(null);
   }, [closeEditModal]);
 
-  // 노트 편집 모달 열릴 때 Note → NoteFormData 변환
-  // (연결된 프로젝트/할일/노트 ID 배열로 변환)
+  // 팝오버 닫기 핸들러
+  const handleClosePopover = useCallback(() => {
+    closePopover();
+  }, [closePopover]);
+
+  // content 팝오버가 열릴 때 현재 노트의 content 설정
   useEffect(() => {
-    if (isEditModalOpen && editingNode?.type === 'note' && editingNode.originalData) {
-      // Note 객체를 NoteFormData로 변환 (mapNoteToNoteForm 사용)
-      const noteFormData = mapNoteToNoteForm(editingNode.originalData, areas);
-      setEditingNoteData(noteFormData);
+    if (activePopover === 'content' && actionMenuNode?.originalData) {
+      setContentEditorContent(actionMenuNode.originalData.content || '');
     }
-  }, [isEditModalOpen, editingNode, areas]);
+  }, [activePopover, actionMenuNode]);
 
-  // 노트 액션 메뉴 핸들러
-  const handleNoteEdit = useCallback((node: GraphNode) => {
-    openEditModal(node);
-  }, [openEditModal]);
-
+  // 노트 삭제 핸들러 (액션 메뉴용)
   const handleNoteDelete = useCallback(async (node: GraphNode) => {
     if (userId) {
       await deleteNote(node.id, userId);
       refetch();
     }
   }, [deleteNote, userId, refetch]);
+
+  // === 팝오버 저장 핸들러들 ===
+
+  // 제목 저장
+  const handleTitleSave = useCallback(async (title: string) => {
+    if (!actionMenuNode || !userId) return;
+    await updateNote(actionMenuNode.id, userId, { title });
+    refetch();
+  }, [actionMenuNode, userId, updateNote, refetch]);
+
+  // 영역/자원 저장
+  const handleAreaResourceSave = useCallback(async (linkedId: string | undefined) => {
+    if (!actionMenuNode || !userId) return;
+    // linkedId: 'area-xxx' | 'resource-xxx' | undefined → area_resource_id 추출
+    let areaResourceId: string | undefined;
+    if (linkedId) {
+      const [, id] = linkedId.split('-');
+      areaResourceId = id;
+    }
+    await updateNote(actionMenuNode.id, userId, { area_resource_id: areaResourceId });
+    refetch();
+  }, [actionMenuNode, userId, updateNote, refetch]);
+
+  // 프로젝트 연결 토글
+  const handleProjectToggle = useCallback(async (projectId: string, isSelected: boolean) => {
+    if (!actionMenuNode || !userId) return;
+    const noteData = actionMenuNode.originalData as Note;
+    const currentIds = noteData.projects?.map(p => p.id) || [];
+    const newIds = isSelected
+      ? [...currentIds, projectId]
+      : currentIds.filter(id => id !== projectId);
+    await updateNoteProjects(actionMenuNode.id, newIds, userId);
+    refetch();
+  }, [actionMenuNode, userId, refetch]);
+
+  // 할일 연결 토글
+  const handleTodoToggle = useCallback(async (todoId: string, isSelected: boolean) => {
+    if (!actionMenuNode || !userId) return;
+    const noteData = actionMenuNode.originalData as Note;
+    const currentIds = noteData.todos?.map(t => t.id) || [];
+    const newIds = isSelected
+      ? [...currentIds, todoId]
+      : currentIds.filter(id => id !== todoId);
+    await updateNoteTodos(actionMenuNode.id, newIds, userId);
+    refetch();
+  }, [actionMenuNode, userId, refetch]);
+
+  // 노트 연결 토글
+  const handleNoteToggle = useCallback(async (noteId: string, isSelected: boolean) => {
+    if (!actionMenuNode || !userId) return;
+    const noteData = actionMenuNode.originalData as Note;
+    const currentIds = noteData.connectedNotes?.map(n => n.id) || [];
+    const newIds = isSelected
+      ? [...currentIds, noteId]
+      : currentIds.filter(id => id !== noteId);
+    await updateNoteNotes(actionMenuNode.id, newIds, userId);
+    refetch();
+  }, [actionMenuNode, userId, refetch]);
+
+  // 내용 저장
+  const handleContentSave = useCallback(async (content: string) => {
+    if (!actionMenuNode || !userId) return;
+    await updateNote(actionMenuNode.id, userId, { content });
+    refetch();
+  }, [actionMenuNode, userId, updateNote, refetch]);
 
   // 프로젝트 생성 핸들러 (노트 편집 모달용)
   const handleCreateProject = useCallback(async (title: string): Promise<Project> => {
@@ -164,13 +237,6 @@ export default function GraphView() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return newEntityTodo.toDatabase() as any;
   }, [userId, createTodo]);
-
-  // 노트-노트 연결 즉시 저장 핸들러 (노트 편집 모달용)
-  const handleNoteNoteImmediateSave = useCallback(async (noteIds: string[]) => {
-    if (!editingNode?.id || !userId) return;
-    await updateNoteNotes(editingNode.id, noteIds, userId);
-    refetch(); // 그래프 데이터 새로고침
-  }, [editingNode?.id, userId, refetch]);
 
   // 인증 대기
   if (authLoading) {
@@ -274,11 +340,104 @@ export default function GraphView() {
       {/* 생성 모달 */}
       <GraphCreateModal />
 
-      {/* 노트 노드 액션 메뉴 (편집/삭제 선택) */}
+      {/* 노트 노드 액션 메뉴 (섹션별 편집) */}
       <GraphNodeActionMenu
-        onEdit={handleNoteEdit}
         onDelete={handleNoteDelete}
       />
+
+      {/* 노트 섹션 팝오버들 */}
+      {actionMenuNode && popoverPosition && userId && (
+        <>
+          {/* 제목 편집 팝오버 */}
+          {activePopover === 'title' && (
+            <TitleEditPopover
+              position={popoverPosition}
+              initialTitle={(actionMenuNode.originalData as Note)?.title || ''}
+              onSave={async (title) => {
+                await handleTitleSave(title);
+                handleClosePopover();
+              }}
+              onClose={handleClosePopover}
+            />
+          )}
+
+          {/* 내용 편집 모달 */}
+          {activePopover === 'content' && (
+            <ContentEditorModal
+              open={true}
+              onClose={handleClosePopover}
+              title="내용 편집"
+              content={contentEditorContent}
+              onChange={setContentEditorContent}
+              enableAutoSave={true}
+              onAutoSave={async (content: string) => {
+                await handleContentSave(content);
+              }}
+              placeholder="내용을 입력하세요..."
+            />
+          )}
+
+          {/* 영역/자원 선택 팝오버 */}
+          {activePopover === 'areaResource' && (
+            <AreaResourceSelectPopover
+              position={popoverPosition}
+              selectedId={
+                (actionMenuNode.originalData as Note)?.area_resource_id
+                  ? (() => {
+                      const arId = (actionMenuNode.originalData as Note).area_resource_id;
+                      const isArea = areas.some(a => a.id === arId);
+                      return isArea ? `area-${arId}` : `resource-${arId}`;
+                    })()
+                  : undefined
+              }
+              areas={areas}
+              resources={resources}
+              onSelect={async (linkedId) => {
+                await handleAreaResourceSave(linkedId);
+                handleClosePopover();
+              }}
+              onClose={handleClosePopover}
+            />
+          )}
+
+          {/* 프로젝트 연결 팝오버 */}
+          {activePopover === 'project' && (
+            <ProjectLinkPopover
+              position={popoverPosition}
+              selectedProjectIds={(actionMenuNode.originalData as Note)?.projects?.map(p => p.id) || []}
+              allProjects={projects}
+              onToggle={handleProjectToggle}
+              onCreateProject={handleCreateProject}
+              onClose={handleClosePopover}
+            />
+          )}
+
+          {/* 할일 연결 팝오버 */}
+          {activePopover === 'todo' && (
+            <TodoLinkPopover
+              position={popoverPosition}
+              selectedTodoIds={(actionMenuNode.originalData as Note)?.todos?.map(t => t.id) || []}
+              allTodos={todos}
+              onToggle={handleTodoToggle}
+              onCreateTodo={handleCreateTodo}
+              onClose={handleClosePopover}
+            />
+          )}
+
+          {/* 노트 연결 팝오버 */}
+          {activePopover === 'note' && (
+            <NoteLinkPopover
+              position={popoverPosition}
+              currentNoteId={actionMenuNode.id}
+              selectedNoteIds={(actionMenuNode.originalData as Note)?.connectedNotes?.map(n => n.id) || []}
+              allNotes={notes}
+              onToggle={handleNoteToggle}
+              onCreateNote={handleCreateNote}
+              onClose={handleClosePopover}
+            />
+          )}
+        </>
+      )}
 
       {/* 로딩 인디케이터 (데이터 새로고침 시) */}
       {loading && graphData.nodes.length > 0 && (
@@ -440,50 +599,7 @@ export default function GraphView() {
             />
           )}
 
-          {/* Note 편집 - editingNoteData가 준비된 후에만 렌더링 (uncontrolled to controlled 오류 방지) */}
-          {editingNode.type === 'note' && editingNoteData && (
-            <NoteEditModal
-              open={true}
-              note={editingNoteData}
-              areas={areas}
-              resources={resources}
-              projects={projects}
-              todos={todos}
-              notes={notes}
-              onCreateProject={handleCreateProject}
-              onCreateTodo={handleCreateTodo}
-              onCreateNote={handleCreateNote}
-              onNoteNoteImmediateSave={handleNoteNoteImmediateSave}
-              onClose={handleCloseEditModal}
-              onSave={async () => {
-                if (editingNoteData) {
-                  // NoteFormData → UpdateNoteInput 변환
-                  // linkedAreaOrResource: 'area-xxx' | 'resource-xxx' → area_resource_id
-                  let areaResourceId: string | undefined;
-                  if (editingNoteData.linkedAreaOrResource) {
-                    const [, id] = editingNoteData.linkedAreaOrResource.split('-');
-                    areaResourceId = id;
-                  }
-
-                  await updateNote(editingNode.id, userId, {
-                    title: editingNoteData.title,
-                    content: editingNoteData.content,
-                    note_category: editingNoteData.note_category,
-                    area_resource_id: areaResourceId,
-                    is_pinned: editingNoteData.isPinned,
-                  });
-                }
-                handleCloseEditModal();
-                refetch();
-              }}
-              onChange={(data) => setEditingNoteData(data)}
-              onDelete={async () => {
-                await deleteNote(editingNode.id, userId);
-                handleCloseEditModal();
-                refetch();
-              }}
-            />
-          )}
+          {/* Note: 노트 편집은 팝오버 시스템으로 대체됨 */}
         </>
       )}
     </div>
