@@ -198,14 +198,14 @@ export default function TodoFormFields({
           아이콘 및 제목
         </label>
 
-        <div className="rounded-lg bg-base-100 overflow-hidden">
+        <div className="rounded-lg bg-base-200 overflow-hidden">
           <div className="flex items-center gap-3 pl-2 pr-16 pt-2">
             {/* 아이콘 버튼 */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIconBrowserOpen(true)}
-                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-200"
+                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-100"
                 title="아이콘 변경하기"
               >
                 {(() => {
@@ -246,7 +246,7 @@ export default function TodoFormFields({
                   value={todo.title}
                   onChange={(e) => onChange({ ...todo, title: e.target.value })}
                   placeholder={typingPlaceholder}
-                  className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+                  className="bg-base-200 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
                   style={{
                     fontSize: '20px',
                     outline: 'none',
@@ -274,7 +274,7 @@ export default function TodoFormFields({
             명료화
           </label>
 
-          <div className="p-0 rounded-lg bg-base-100">
+          <div className="p-0 rounded-lg bg-base-200">
             <select
               value={todo.clarification || ''}
               onChange={(e) => {
@@ -293,7 +293,7 @@ export default function TodoFormFields({
 
                 onChange({ ...todo, ...updates });
               }}
-              className="select select-bordered w-full bg-base-200"
+              className="select select-bordered w-full bg-base-100"
             >
               <option value="">선택 안 함(수집함으로 이동됨)</option>
               {/* 임시 숨김: 다시알림 옵션
@@ -344,7 +344,7 @@ export default function TodoFormFields({
 
               onChange({ ...todo, ...updates });
             }}
-            className="select select-bordered w-full bg-base-200"
+            className="select select-bordered w-full bg-base-100"
           >
             {todo.clarification !== 'schedule_clear' && (
               <option value="none">📝 선택 안함 · 일정 없음</option>
@@ -394,7 +394,7 @@ export default function TodoFormFields({
                   scheduledDate: e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined,
                 })
               }
-              className="input input-bordered w-full bg-base-200"
+              className="input input-bordered w-full bg-base-100"
             />
           </div>
 
@@ -410,7 +410,7 @@ export default function TodoFormFields({
                 type="time"
                 value={todo.startTime || '09:00'}
                 onChange={(e) => onChange({ ...todo, startTime: e.target.value })}
-                className="input input-bordered w-full bg-base-200"
+                className="input input-bordered w-full bg-base-100"
               />
             </div>
           )}
@@ -433,7 +433,7 @@ export default function TodoFormFields({
                       endDate: e.target.value ? new Date(e.target.value) : undefined,
                     })
                   }
-                  className="input input-bordered w-full bg-base-200"
+                  className="input input-bordered w-full bg-base-100"
                 />
               </div>
 
@@ -449,7 +449,7 @@ export default function TodoFormFields({
                     type="time"
                     value={todo.endTime || '18:00'}
                     onChange={(e) => onChange({ ...todo, endTime: e.target.value })}
-                    className="input input-bordered w-full bg-base-200"
+                    className="input input-bordered w-full bg-base-100"
                   />
                 </div>
               )}
@@ -459,7 +459,7 @@ export default function TodoFormFields({
           {/* 종료일 토글 - 언제든지/종일일 때 숨김 */}
           {todo.scheduleType && todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
             <div className="my-4">
-              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+              <div className="p-3 rounded-lg bg-base-100 border border-base-300">
                 <label className="cursor-pointer flex items-center justify-between">
                   <span className="label-text">종료일</span>
                   <input
@@ -477,7 +477,7 @@ export default function TodoFormFields({
           {todo.scheduleType === 'timed' ? (
             // 시간지정일 때는 강제 활성화 (비활성화 불가)
             <div className="my-4">
-              <div className="p-3 rounded-lg bg-base-200 border border-base-300 opacity-50">
+              <div className="p-3 rounded-lg bg-base-100 border border-base-300 opacity-50">
                 <label className="cursor-not-allowed flex items-center justify-between">
                   <span className="label-text">시간 포함 (자동)</span>
                   <input
@@ -492,7 +492,7 @@ export default function TodoFormFields({
           ) : todo.scheduleType && todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
             // 언제든지/종일이 아닐 때만 표시
             <div className="my-4">
-              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+              <div className="p-3 rounded-lg bg-base-100 border border-base-300">
                 <label className="cursor-pointer flex items-center justify-between">
                   <span className="label-text">시간 포함</span>
                   <input
@@ -514,7 +514,7 @@ export default function TodoFormFields({
                 예상 소요 시간
               </label>
 
-              <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+              <div className="p-3 rounded-lg bg-base-100 border border-base-300">
                 <ScrollDurationPicker
                   selectedHours={Math.floor((todo.anytimeDuration ?? 30) / 60)}
                   selectedMinutes={(todo.anytimeDuration ?? 30) % 60}
