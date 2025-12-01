@@ -74,7 +74,7 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
       style={{
         left: position.x,
         top: position.y,
-        transform: 'translate(8px, -50%)',
+        transform: 'translate(20px, -50%)',
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
       }}
     >
