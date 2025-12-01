@@ -292,8 +292,8 @@ export function ScrollDurationPicker({
             <div className="h-[60px]" />
           </div>
 
-          <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-base-100 to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-base-100 to-transparent pointer-events-none z-10" />
         </div>
 
         {/* 분 선택 휠 */}
@@ -340,8 +340,8 @@ export function ScrollDurationPicker({
             <div className="h-[60px]" />
           </div>
 
-          <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-base-100 to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-base-100 to-transparent pointer-events-none z-10" />
         </div>
       </div>
     </div>

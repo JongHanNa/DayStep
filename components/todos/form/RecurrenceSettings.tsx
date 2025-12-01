@@ -91,7 +91,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
         반복 설정
       </Label>
 
-      <div className="space-y-4 p-4 rounded-lg" style={{ backgroundColor: '#f8f8f8' }}>
+      <div className="space-y-4 p-4 rounded-lg bg-base-200">
 
       <div>
         <Label style={{ color: '#666666', marginBottom: '8px', display: 'block' }}>반복 패턴</Label>
@@ -137,9 +137,9 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
                       key={day.value}
                       type="button"
                       onClick={() => onDayOfWeekToggle(day.value)}
-                      className="h-10 w-10 text-sm font-medium rounded-full transition-all duration-200 border-0 shadow-none hover:bg-gray-100 flex items-center justify-center"
+                      className={`h-10 w-10 text-sm font-medium rounded-full transition-all duration-200 border-0 shadow-none hover:opacity-80 flex items-center justify-center ${!isSelected ? 'bg-base-100' : ''}`}
                       style={{
-                        backgroundColor: isSelected ? (colorData?.hex || '#DBAC6C') : 'white',
+                        backgroundColor: isSelected ? (colorData?.hex || '#DBAC6C') : undefined,
                         color: isSelected ? 'white' : '#999999',
                       }}
                     >
