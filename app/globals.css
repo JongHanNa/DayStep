@@ -106,7 +106,7 @@ dialog::backdrop {
   --color-primary-content: oklch(100% 0% 68deg);
   --color-base-100: #ffffff;
   --color-base-200: oklch(96% 1% 289deg);
-  --color-base-300: #f8f8f8;
+  --color-base-300: #eae8ed;
 
   /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
   --primary-foreground: 0 0% 100%; /* 흰색 HSL */
@@ -141,7 +141,7 @@ dialog::backdrop {
   /* 🎨 순수 무채색 다크모드 배경 (초록빛 제거) */
   --color-base-100: #242424;  /* 콘텐츠/카드 영역 (가장 밝음) */
   --color-base-200: #121212;  /* 강조/헤더 영역 (가장 어두움) */
-  --color-base-300: #1a1a1a;  /* 메인 배경 */
+  --color-base-300: #2d2a32;  /* hover 색상 (보라빛 회색) */
 
   /* ✅ Tailwind CSS용 primary-foreground 변수 추가 */
   --primary-foreground: 0 0% 100%; /* 흰색 HSL */
