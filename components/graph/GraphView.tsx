@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Network, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useGraphData } from './hooks/useGraphData';
@@ -33,6 +33,10 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 
+// 유틸리티
+import { updateNoteNotes } from '@/lib/supabase/note-notes';
+import { mapNoteToNoteForm } from '@/lib/helpers/noteDataMapper';
+
 // 타입
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import type { NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
@@ -50,8 +54,14 @@ export default function GraphView() {
   const { closeEditModal, openEditModal } = useGraphStore();
 
   // Store 데이터 및 액션 가져오기
+  const entityTodos = useTodoStore((state) => state.todos);
+  const createTodo = useTodoStore((state) => state.createTodo);
   const updateTodo = useTodoStore((state) => state.updateTodo);
   const deleteTodo = useTodoStore((state) => state.deleteTodo);
+
+  // Entity Todo를 database Todo 형식으로 변환 (NoteEditModal용)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const todos = entityTodos.map(todo => todo.toDatabase() as any);
 
   const { projects, createProject, updateProject, deleteProject } = useProjectStore();
   const { goals, updateGoal, deleteGoal } = useGoalStore();
@@ -84,6 +94,16 @@ export default function GraphView() {
     setEditingGoalData(null);
     setEditingAreaResourceData(null);
   }, [closeEditModal]);
+
+  // 노트 편집 모달 열릴 때 Note → NoteFormData 변환
+  // (연결된 프로젝트/할일/노트 ID 배열로 변환)
+  useEffect(() => {
+    if (isEditModalOpen && editingNode?.type === 'note' && editingNode.originalData) {
+      // Note 객체를 NoteFormData로 변환 (mapNoteToNoteForm 사용)
+      const noteFormData = mapNoteToNoteForm(editingNode.originalData, areas);
+      setEditingNoteData(noteFormData);
+    }
+  }, [isEditModalOpen, editingNode, areas]);
 
   // 노트 액션 메뉴 핸들러
   const handleNoteEdit = useCallback((node: GraphNode) => {
@@ -125,6 +145,32 @@ export default function GraphView() {
     });
     return newNote;
   }, [userId, createNote]);
+
+  // 할일 생성 핸들러 (노트 편집 모달용)
+  const handleCreateTodo = useCallback(async (title: string) => {
+    if (!userId) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+    const newEntityTodo = await createTodo({
+      title,
+      user_id: userId,
+      completed: false,
+      schedule_type: 'anytime',
+    });
+    if (!newEntityTodo) {
+      throw new Error('할일 생성에 실패했습니다.');
+    }
+    // Database Todo 형식으로 반환 (NoteEditModal 타입 호환)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return newEntityTodo.toDatabase() as any;
+  }, [userId, createTodo]);
+
+  // 노트-노트 연결 즉시 저장 핸들러 (노트 편집 모달용)
+  const handleNoteNoteImmediateSave = useCallback(async (noteIds: string[]) => {
+    if (!editingNode?.id || !userId) return;
+    await updateNoteNotes(editingNode.id, noteIds, userId);
+    refetch(); // 그래프 데이터 새로고침
+  }, [editingNode?.id, userId, refetch]);
 
   // 인증 대기
   if (authLoading) {
@@ -394,17 +440,20 @@ export default function GraphView() {
             />
           )}
 
-          {/* Note 편집 */}
-          {editingNode.type === 'note' && (
+          {/* Note 편집 - editingNoteData가 준비된 후에만 렌더링 (uncontrolled to controlled 오류 방지) */}
+          {editingNode.type === 'note' && editingNoteData && (
             <NoteEditModal
               open={true}
-              note={editingNoteData || editingNode.originalData}
+              note={editingNoteData}
               areas={areas}
               resources={resources}
               projects={projects}
+              todos={todos}
               notes={notes}
               onCreateProject={handleCreateProject}
+              onCreateTodo={handleCreateTodo}
               onCreateNote={handleCreateNote}
+              onNoteNoteImmediateSave={handleNoteNoteImmediateSave}
               onClose={handleCloseEditModal}
               onSave={async () => {
                 if (editingNoteData) {
