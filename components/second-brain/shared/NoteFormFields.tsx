@@ -133,29 +133,27 @@ export default function NoteFormFields({
           영역/자원
         </label>
 
-        <div className="p-0 rounded-lg bg-base-100">
-          <select
-            value={note.linkedAreaOrResource || ''}
-            onChange={(e) => onChange({ ...note, linkedAreaOrResource: e.target.value })}
-            className="select select-bordered w-full bg-base-200"
-          >
-            <option value="">선택 안 함</option>
-            <optgroup label="영역">
-              {areas.map((area) => (
-                <option key={area.id} value={`area-${area.id}`}>
-                  {area.title}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="자원">
-              {resources.map((resource) => (
-                <option key={resource.id} value={`resource-${resource.id}`}>
-                  {resource.title}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-        </div>
+        <select
+          value={note.linkedAreaOrResource || ''}
+          onChange={(e) => onChange({ ...note, linkedAreaOrResource: e.target.value })}
+          className="select select-bordered w-full bg-base-200"
+        >
+          <option value="">선택 안 함</option>
+          <optgroup label="영역">
+            {areas.map((area) => (
+              <option key={area.id} value={`area-${area.id}`}>
+                {area.title}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="자원">
+            {resources.map((resource) => (
+              <option key={resource.id} value={`resource-${resource.id}`}>
+                {resource.title}
+              </option>
+            ))}
+          </optgroup>
+        </select>
       </div>
 
       {/* 분류 */}
@@ -165,18 +163,16 @@ export default function NoteFormFields({
           분류
         </label>
 
-        <div className="p-0 rounded-lg bg-base-100">
-          <select
-            value={note.note_category}
-            onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
-            className="select select-bordered w-full bg-base-200"
-          >
-            <option value="none">선택 안함</option>
-            <option value="read_later">나중에 보기 - 시간이 붕뜨는데 뭘 해야할지 모를 때</option>
-            <option value="work_in_progress">중간 작업물 - 내가 작성하던 중간 작업물, 최근에 작업했던 노트</option>
-            <option value="reference">레퍼런스 - 자주 찾아보는 정보나 나중에 참고할 자료나 링크</option>
-          </select>
-        </div>
+        <select
+          value={note.note_category}
+          onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
+          className="select select-bordered w-full bg-base-200"
+        >
+          <option value="none">선택 안함</option>
+          <option value="read_later">나중에 보기 - 시간이 붕뜨는데 뭘 해야할지 모를 때</option>
+          <option value="work_in_progress">중간 작업물 - 내가 작성하던 중간 작업물, 최근에 작업했던 노트</option>
+          <option value="reference">레퍼런스 - 자주 찾아보는 정보나 나중에 참고할 자료나 링크</option>
+        </select>
       </div>
 
       {/* 내용 (프리뷰 - 클릭 시 편집 모달) */}
