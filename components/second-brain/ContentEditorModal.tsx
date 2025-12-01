@@ -5,6 +5,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
 import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ContentEditorModalProps {
   open: boolean;
@@ -53,6 +54,9 @@ export default function ContentEditorModal({
 
   // 글자 크기 조절 상태
   const [editorFontSize, setEditorFontSize] = useState(18);
+
+  // 제목 접기/펼치기 상태
+  const [isTitleExpanded, setIsTitleExpanded] = useState(false);
 
 
   // 자동저장 Hook
@@ -105,10 +109,18 @@ export default function ContentEditorModal({
             닫기
           </button>
 
-          <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
-            <h3 className="text-lg font-semibold text-center">
+          <div
+            className="flex-1 flex items-center justify-center gap-2 min-w-0 cursor-pointer"
+            onClick={() => setIsTitleExpanded(!isTitleExpanded)}
+          >
+            <h3 className={`text-lg font-semibold text-center ${isTitleExpanded ? '' : 'line-clamp-1'}`}>
               {title || '내용 편집'}
             </h3>
+            {title && title.length > 15 && (
+              <span className="flex-shrink-0 text-base-content/50">
+                {isTitleExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </span>
+            )}
             {enableAutoSave && (
               <AutoSaveStatus
                 status={autoSave.saveStatus}
