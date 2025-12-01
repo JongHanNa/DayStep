@@ -198,15 +198,14 @@ export default function TodoFormFields({
           아이콘 및 제목
         </label>
 
-        <div className="p-2 rounded-lg bg-white">
+        <div className="p-2 rounded-lg bg-base-100">
           <div className="flex items-center gap-3 pr-16">
             {/* 아이콘 버튼 */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIconBrowserOpen(true)}
-                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
-                style={{ backgroundColor: '#f3f4f6' }}
+                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-200"
                 title="아이콘 변경하기"
               >
                 {(() => {
@@ -247,11 +246,9 @@ export default function TodoFormFields({
                   value={todo.title}
                   onChange={(e) => onChange({ ...todo, title: e.target.value })}
                   placeholder={typingPlaceholder}
-                  className="bg-white border-0 border-b-2 rounded-none focus:outline-none transition-none"
+                  className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
                   style={{
                     fontSize: '20px',
-                    color: '#333333',
-                    borderBottomColor: '#D1D5DB',
                     outline: 'none',
                     boxShadow: 'none',
                     fontWeight: '600',
@@ -277,7 +274,7 @@ export default function TodoFormFields({
             명료화
           </label>
 
-          <div className="p-2 rounded-lg bg-white">
+          <div className="p-2 rounded-lg bg-base-100">
             <select
               value={todo.clarification || ''}
               onChange={(e) => {
@@ -319,7 +316,7 @@ export default function TodoFormFields({
             일정 유형
           </label>
 
-          <div className="p-2 rounded-lg bg-white">
+          <div className="p-2 rounded-lg bg-base-100">
             <select
               value={todo.scheduleType || 'anytime'}
               onChange={(e) => {
@@ -390,7 +387,7 @@ export default function TodoFormFields({
               날짜
             </label>
 
-            <div className="p-2 rounded-lg bg-white">
+            <div className="p-2 rounded-lg bg-base-100">
               <input
                 type="date"
                 value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
@@ -413,7 +410,7 @@ export default function TodoFormFields({
                 시작 시간
               </label>
 
-              <div className="p-2 rounded-lg bg-white">
+              <div className="p-2 rounded-lg bg-base-100">
                 <input
                   type="time"
                   value={todo.startTime || '09:00'}
@@ -433,7 +430,7 @@ export default function TodoFormFields({
                   종료 날짜
                 </label>
 
-                <div className="p-2 rounded-lg bg-white">
+                <div className="p-2 rounded-lg bg-base-100">
                   <input
                     type="date"
                     value={todo.endDate ? format(todo.endDate, 'yyyy-MM-dd') : ''}
@@ -456,7 +453,7 @@ export default function TodoFormFields({
                     종료 시간
                   </label>
 
-                  <div className="p-2 rounded-lg bg-white">
+                  <div className="p-2 rounded-lg bg-base-100">
                     <input
                       type="time"
                       value={todo.endTime || '18:00'}
