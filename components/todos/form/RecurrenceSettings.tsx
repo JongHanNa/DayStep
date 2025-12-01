@@ -122,7 +122,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
                 onChange={handleIntervalChange}
                 className="w-20"
               />
-              <span className="text-sm text-gray-600">{getIntervalLabel(recurrencePattern, recurrenceInterval)}</span>
+              <span className="text-sm text-base-content/60">{getIntervalLabel(recurrencePattern, recurrenceInterval)}</span>
             </div>
           </div>
 
@@ -189,7 +189,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
                   onChange={handleCountChange}
                   className="w-20"
                 />
-                <span className="text-sm text-gray-600">회</span>
+                <span className="text-sm text-base-content/60">회</span>
               </div>
             )}
           </div>
