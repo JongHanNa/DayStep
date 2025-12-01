@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useModalStore } from '@/state/stores/modalStore';
 import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
 import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
@@ -61,6 +61,10 @@ export default function ContentEditorModal({
   // 툴바 표시/숨김 상태
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
 
+  // 제목 잘림 감지
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+
 
   // 자동저장 Hook
   const autoSave = useAutoSave(content, {
@@ -88,6 +92,20 @@ export default function ContentEditorModal({
     };
   }, [open, openModal, closeModal]);
 
+  // 제목 잘림 감지
+  useEffect(() => {
+    const checkTruncation = () => {
+      if (titleRef.current && !isTitleExpanded) {
+        const el = titleRef.current;
+        setIsTitleTruncated(el.scrollWidth > el.clientWidth);
+      }
+    };
+
+    checkTruncation();
+    window.addEventListener('resize', checkTruncation);
+    return () => window.removeEventListener('resize', checkTruncation);
+  }, [title, open, isTitleExpanded]);
+
   // 내용 변경 핸들러 (사용자 편집 감지)
   const handleContentChange = (value: string) => {
     onChange(value);
@@ -114,13 +132,16 @@ export default function ContentEditorModal({
 
           <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
             <div
-              className="flex items-center gap-1 cursor-pointer"
-              onClick={() => setIsTitleExpanded(!isTitleExpanded)}
+              className={`flex items-center gap-1 min-w-0 max-w-full ${isTitleTruncated || isTitleExpanded ? 'cursor-pointer' : ''}`}
+              onClick={() => (isTitleTruncated || isTitleExpanded) && setIsTitleExpanded(!isTitleExpanded)}
             >
-              <h3 className={`text-lg font-semibold text-center ${isTitleExpanded ? '' : 'line-clamp-1'}`}>
+              <h3
+                ref={titleRef}
+                className={`text-lg font-semibold text-center ${isTitleExpanded ? 'whitespace-normal' : 'truncate'}`}
+              >
                 {title || '내용 편집'}
               </h3>
-              {title && title.length > 15 && (
+              {(isTitleTruncated || isTitleExpanded) && (
                 <span className="flex-shrink-0 text-base-content/50">
                   {isTitleExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </span>
