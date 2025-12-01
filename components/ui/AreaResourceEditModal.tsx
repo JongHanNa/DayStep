@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Tag, Palette, Activity, Pin } from 'lucide-react';
+import { Tag, Palette, Activity } from 'lucide-react';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
@@ -68,9 +68,9 @@ export default function AreaResourceEditModal({
   return (
     <>
       <dialog open className="modal modal-open">
-        <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+        <div className={`modal-box bg-base-200 w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 */}
-          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-100 z-10`}>
+          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-200 z-10`}>
             <button onClick={onCancel} className="btn btn-primary btn-sm rounded-full">
               취소
             </button>
@@ -104,14 +104,14 @@ export default function AreaResourceEditModal({
                 </label>
 
                 {/* 아이콘 + 제목 입력 */}
-                <div className="rounded-lg bg-base-100">
+                <div className="rounded-lg bg-base-200">
                   <div className="flex items-center gap-3 pl-2 pr-16 pt-2 pb-2">
                     {/* 아이콘 버튼 */}
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setIconBrowserOpen(true)}
-                        className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-200"
+                        className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-100"
                         title="아이콘 변경하기"
                       >
                         {(() => {
@@ -152,7 +152,7 @@ export default function AreaResourceEditModal({
                           value={editingItem.title}
                           onChange={(e) => onItemChange({ ...editingItem, title: e.target.value })}
                           placeholder={getTitlePlaceholder()}
-                          className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+                          className="bg-base-200 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
                           style={{
                             fontSize: '20px',
                             outline: 'none',
@@ -181,11 +181,11 @@ export default function AreaResourceEditModal({
                 </label>
 
                 {/* 셀렉트 박스 */}
-                <div className="py-3 px-1 rounded-lg bg-base-100">
+                <div className="py-3 px-1 rounded-lg bg-base-200">
                   <select
                     value={itemType}
                     onChange={(e) => onItemTypeChange(e.target.value as SecondBrainItemType)}
-                    className="select select-bordered w-full bg-base-200"
+                    className="select select-bordered w-full bg-base-100"
                   >
                     <option value="area">책임 영역</option>
                     <option value="resource">관심 자원</option>
@@ -194,13 +194,13 @@ export default function AreaResourceEditModal({
                 </div>
               </div>
 
-              {/* 고정하기 */}
+{/* 고정하기 섹션 - 숨김 처리
               <div className="my-4">
                 <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                   <Pin className="h-5 w-5" style={{ color: editingItem.color }} />
                   고정하기
                 </label>
-                <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                <div className="p-3 rounded-lg bg-base-100 border border-base-300">
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -212,6 +212,7 @@ export default function AreaResourceEditModal({
                   </label>
                 </div>
               </div>
+              */}
             </div>
           </div>
         </div>
