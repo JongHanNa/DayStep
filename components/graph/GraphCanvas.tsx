@@ -8,7 +8,7 @@
 import { useRef, useCallback, useEffect, useState, ComponentType } from 'react';
 import ForceGraph2DComponent from './ForceGraph2DWrapper';
 import type { GraphNode, GraphLink, GraphData } from '@/types/graph';
-import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu } from '@/state/stores/graphStore';
 import { getNodeSize, getLinkColor, getLinkWidth, NODE_TYPE_LABELS } from '@/lib/graph-utils';
 import type { GraphNodeType } from '@/types/graph';
 import { useTheme } from '@/hooks/useTheme';
@@ -31,7 +31,8 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const selectedNodeId = useGraphSelectedNode();
   const hoveredNodeId = useGraphHoveredNode();
   const filter = useGraphFilter();
-  const { setSelectedNode, setHoveredNode, openEditModal, zoomLevel, setZoomLevel } = useGraphStore();
+  const { isOpen: isActionMenuOpen, node: actionMenuNode } = useGraphActionMenu();
+  const { setSelectedNode, setHoveredNode, openEditModal, openActionMenu, closeActionMenu, zoomLevel, setZoomLevel } = useGraphStore();
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === 'dark';
 
@@ -80,13 +81,31 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
 
   // 노드 클릭 핸들러
   const handleNodeClick = useCallback(
-    (node: GraphNode | null) => {
+    (node: GraphNode | null, event?: MouseEvent) => {
       if (!node) return;
       setSelectedNode(node.id);
-      openEditModal(node as GraphNode);
+
+      // 노트 노드는 액션 메뉴 표시 (편집/삭제 선택)
+      if (node.type === 'note' && event && containerRef.current) {
+        // 같은 노드를 다시 클릭하면 메뉴 닫기 (토글)
+        if (isActionMenuOpen && actionMenuNode?.id === node.id) {
+          closeActionMenu();
+        } else {
+          const containerRect = containerRef.current.getBoundingClientRect();
+          const position = {
+            x: event.clientX - containerRect.left,
+            y: event.clientY - containerRect.top,
+          };
+          openActionMenu(node as GraphNode, position);
+        }
+      } else {
+        // 다른 타입은 액션 메뉴 닫고 편집 모달 열기
+        closeActionMenu();
+        openEditModal(node as GraphNode);
+      }
       onNodeClick?.(node as GraphNode);
     },
-    [setSelectedNode, openEditModal, onNodeClick]
+    [setSelectedNode, openEditModal, openActionMenu, closeActionMenu, isActionMenuOpen, actionMenuNode, onNodeClick]
   );
 
   // 노드 호버 핸들러
@@ -101,8 +120,9 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const handleBackgroundClick = useCallback(() => {
     setSelectedNode(null);
     setHoveredNode(null);
+    closeActionMenu();
     onBackgroundClick?.();
-  }, [setSelectedNode, setHoveredNode, onBackgroundClick]);
+  }, [setSelectedNode, setHoveredNode, closeActionMenu, onBackgroundClick]);
 
   // 줌 변경 핸들러 - 렌더링 중 setState 방지를 위해 ref에 저장
   const handleZoom = useCallback(
@@ -370,6 +390,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         nodePointerAreaPaint={nodePointerAreaPaint}
         onNodeClick={handleNodeClick}
         onNodeHover={handleNodeHover}
+        onBackgroundClick={handleBackgroundClick}
         // 링크 설정
         linkColor={linkColor}
         linkWidth={linkWidthFn}

@@ -15,6 +15,7 @@ import { GraphControls } from './GraphControls';
 import { GraphFAB } from './GraphFAB';
 import { GraphLegend } from './GraphLegend';
 import { GraphCreateModal } from './GraphCreateModal';
+import { GraphNodeActionMenu } from './GraphNodeActionMenu';
 import { useGraphStore, useGraphEditModal } from '@/state/stores/graphStore';
 
 // 편집 모달들
@@ -38,6 +39,7 @@ import type { NoteFormData } from '@/components/second-brain/shared/NoteFormFiel
 import type { Project, Goal, AreaResource, Note } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { Clarification } from '@/types';
+import type { GraphNode } from '@/types/graph';
 
 export default function GraphView() {
   const { user, loading: authLoading } = useAuth();
@@ -45,7 +47,7 @@ export default function GraphView() {
   const { graphData, loading, error, refetch } = useGraphData();
   const { filteredData, nodeCount, linkCount, isFiltered } = useFilteredGraphData(graphData);
   const { isOpen: isEditModalOpen, node: editingNode } = useGraphEditModal();
-  const { closeEditModal } = useGraphStore();
+  const { closeEditModal, openEditModal } = useGraphStore();
 
   // Store 데이터 및 액션 가져오기
   const updateTodo = useTodoStore((state) => state.updateTodo);
@@ -82,6 +84,18 @@ export default function GraphView() {
     setEditingGoalData(null);
     setEditingAreaResourceData(null);
   }, [closeEditModal]);
+
+  // 노트 액션 메뉴 핸들러
+  const handleNoteEdit = useCallback((node: GraphNode) => {
+    openEditModal(node);
+  }, [openEditModal]);
+
+  const handleNoteDelete = useCallback(async (node: GraphNode) => {
+    if (userId) {
+      await deleteNote(node.id, userId);
+      refetch();
+    }
+  }, [deleteNote, userId, refetch]);
 
   // 인증 대기
   if (authLoading) {
@@ -184,6 +198,12 @@ export default function GraphView() {
 
       {/* 생성 모달 */}
       <GraphCreateModal />
+
+      {/* 노트 노드 액션 메뉴 (편집/삭제 선택) */}
+      <GraphNodeActionMenu
+        onEdit={handleNoteEdit}
+        onDelete={handleNoteDelete}
+      />
 
       {/* 로딩 인디케이터 (데이터 새로고침 시) */}
       {loading && graphData.nodes.length > 0 && (

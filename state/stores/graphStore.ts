@@ -24,6 +24,12 @@ const defaultFilter: GraphFilter = {
   linkWidth: 1,
 };
 
+// Action menu position interface
+interface ActionMenuPosition {
+  x: number;
+  y: number;
+}
+
 interface GraphStoreState {
   // Filter state
   filter: GraphFilter;
@@ -40,6 +46,11 @@ interface GraphStoreState {
   // Edit modal state
   editModalOpen: boolean;
   editingNode: GraphNode | null;
+
+  // Action menu state (for note nodes)
+  actionMenuOpen: boolean;
+  actionMenuNode: GraphNode | null;
+  actionMenuPosition: ActionMenuPosition | null;
 
   // View state
   zoomLevel: number;
@@ -68,6 +79,10 @@ interface GraphStoreState {
   openEditModal: (node: GraphNode) => void;
   closeEditModal: () => void;
 
+  // Actions - Action Menu
+  openActionMenu: (node: GraphNode, position: ActionMenuPosition) => void;
+  closeActionMenu: () => void;
+
   // Actions - View
   setZoomLevel: (level: number) => void;
   toggleControls: () => void;
@@ -86,6 +101,9 @@ export const useGraphStore = create<GraphStoreState>()(
       createModalParentId: null,
       editModalOpen: false,
       editingNode: null,
+      actionMenuOpen: false,
+      actionMenuNode: null,
+      actionMenuPosition: null,
       zoomLevel: 1,
       isControlsOpen: true,
 
@@ -187,6 +205,23 @@ export const useGraphStore = create<GraphStoreState>()(
         });
       },
 
+      // Action menu actions
+      openActionMenu: (node, position) => {
+        set({
+          actionMenuOpen: true,
+          actionMenuNode: node,
+          actionMenuPosition: position,
+        });
+      },
+
+      closeActionMenu: () => {
+        set({
+          actionMenuOpen: false,
+          actionMenuNode: null,
+          actionMenuPosition: null,
+        });
+      },
+
       // View actions
       setZoomLevel: (level) => {
         set({ zoomLevel: Math.max(0.1, Math.min(4, level)) });
@@ -229,5 +264,13 @@ export const useGraphControls = () =>
       isControlsOpen: state.isControlsOpen,
       toggleControls: state.toggleControls,
       setControlsOpen: state.setControlsOpen,
+    }))
+  );
+export const useGraphActionMenu = () =>
+  useGraphStore(
+    useShallow((state) => ({
+      isOpen: state.actionMenuOpen,
+      node: state.actionMenuNode,
+      position: state.actionMenuPosition,
     }))
   );
