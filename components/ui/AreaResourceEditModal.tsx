@@ -104,15 +104,14 @@ export default function AreaResourceEditModal({
                 </label>
 
                 {/* 아이콘 + 제목 입력 */}
-                <div className="p-3 rounded-lg bg-base-200 border border-base-300">
-                  <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-base-100">
+                  <div className="flex items-center gap-3 pl-2 pr-16 pt-2 pb-2">
                     {/* 아이콘 버튼 */}
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setIconBrowserOpen(true)}
-                        className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group"
-                        style={{ backgroundColor: '#f3f4f6' }}
+                        className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-200"
                         title="아이콘 변경하기"
                       >
                         {(() => {
@@ -137,24 +136,38 @@ export default function AreaResourceEditModal({
                       </div>
                     </div>
 
-                    {/* 제목 입력 */}
-                    <input
-                      type="text"
-                      value={editingItem.title}
-                      onChange={(e) => onItemChange({ ...editingItem, title: e.target.value })}
-                      placeholder={getTitlePlaceholder()}
-                      className="flex-1 bg-base-100 border-0 border-b-2 rounded-none focus:outline-none transition-none"
-                      style={{
-                        fontSize: '20px',
-                        color: '#333333',
-                        borderBottomColor: '#D1D5DB',
-                        outline: 'none',
-                        boxShadow: 'none',
-                        fontWeight: '600',
+                    {/* 제목 입력 - TodoFormFields와 동일한 스타일 */}
+                    <div className="flex-1">
+                      <div className="input-scale-wrapper" style={{
+                        transform: 'scale(1.6)',
+                        transformOrigin: 'left bottom',
+                        WebkitTransform: 'scale(1.6)',
+                        WebkitTransformOrigin: 'left bottom',
+                        width: '80%',
                         height: '44px',
-                      }}
-                      required
-                    />
+                        position: 'relative'
+                      }}>
+                        <input
+                          type="text"
+                          value={editingItem.title}
+                          onChange={(e) => onItemChange({ ...editingItem, title: e.target.value })}
+                          placeholder={getTitlePlaceholder()}
+                          className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+                          style={{
+                            fontSize: '20px',
+                            outline: 'none',
+                            boxShadow: 'none',
+                            fontWeight: '600',
+                            height: '44px',
+                            lineHeight: '0.9',
+                            paddingTop: '16px',
+                            paddingBottom: '0px',
+                            width: '100%',
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -168,11 +181,11 @@ export default function AreaResourceEditModal({
                 </label>
 
                 {/* 셀렉트 박스 */}
-                <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+                <div className="py-3 px-1 rounded-lg bg-base-100">
                   <select
                     value={itemType}
                     onChange={(e) => onItemTypeChange(e.target.value as SecondBrainItemType)}
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full bg-base-200"
                   >
                     <option value="area">책임 영역</option>
                     <option value="resource">관심 자원</option>
