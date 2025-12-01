@@ -93,7 +93,7 @@ export default function NoteFormFields({
           제목
         </label>
 
-        <div className="rounded-lg bg-base-100 overflow-hidden" style={{ paddingTop: '0px' }}>
+        <div className="rounded-lg bg-base-200 overflow-hidden" style={{ paddingTop: '0px' }}>
           {/* 제목 입력 - iOS WebView scale 문제 해결 */}
           <div className="input-scale-wrapper" style={{
             transform: 'scale(1.6)',
@@ -109,7 +109,7 @@ export default function NoteFormFields({
               value={note.title}
               onChange={(e) => onChange({ ...note, title: e.target.value })}
               placeholder={titlePlaceholder}
-              className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+              className="bg-base-200 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
               style={{
                 fontSize: '20px',
                 outline: 'none',
@@ -136,7 +136,7 @@ export default function NoteFormFields({
         <select
           value={note.linkedAreaOrResource || ''}
           onChange={(e) => onChange({ ...note, linkedAreaOrResource: e.target.value })}
-          className="select select-bordered w-full bg-base-200"
+          className="select select-bordered w-full bg-base-100"
         >
           <option value="">선택 안 함</option>
           <optgroup label="영역">
@@ -166,7 +166,7 @@ export default function NoteFormFields({
         <select
           value={note.note_category}
           onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
-          className="select select-bordered w-full bg-base-200"
+          className="select select-bordered w-full bg-base-100"
         >
           <option value="none">선택 안함</option>
           <option value="read_later">나중에 보기 - 시간이 붕뜨는데 뭘 해야할지 모를 때</option>
