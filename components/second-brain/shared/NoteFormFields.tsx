@@ -93,7 +93,7 @@ export default function NoteFormFields({
           제목
         </label>
 
-        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
           <input
             type="text"
             value={note.title}
@@ -120,7 +120,7 @@ export default function NoteFormFields({
           영역/자원
         </label>
 
-        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
           <select
             value={note.linkedAreaOrResource || ''}
             onChange={(e) => onChange({ ...note, linkedAreaOrResource: e.target.value })}
@@ -152,7 +152,7 @@ export default function NoteFormFields({
           분류
         </label>
 
-        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
           <select
             value={note.note_category}
             onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
@@ -230,7 +230,7 @@ export default function NoteFormFields({
 
       {/* 고정하기 */}
       <div className="my-4">
-        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
           <label className="cursor-pointer flex items-center justify-between">
             <span className="label-text flex items-center gap-2">
               <Star className="w-4 h-4" />
