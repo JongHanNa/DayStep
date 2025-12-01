@@ -86,7 +86,7 @@ export default function GraphView() {
   // 인증 대기
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-300">
+      <div className="min-h-screen flex items-center justify-center bg-base-200">
         <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
@@ -95,7 +95,7 @@ export default function GraphView() {
   // 로그인 필요
   if (!userId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-300">
+      <div className="min-h-screen flex items-center justify-center bg-base-200">
         <div className="text-center space-y-4">
           <Network className="w-16 h-16 mx-auto text-base-content/30" />
           <div>
@@ -112,7 +112,7 @@ export default function GraphView() {
   // 에러 상태
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-300">
+      <div className="min-h-screen flex items-center justify-center bg-base-200">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 mx-auto bg-error/10 rounded-full flex items-center justify-center">
             <Network className="w-8 h-8 text-error" />
@@ -133,7 +133,7 @@ export default function GraphView() {
   // 로딩 상태
   if (loading && graphData.nodes.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-300">
+      <div className="min-h-screen flex items-center justify-center bg-base-200">
         <div className="text-center space-y-4">
           <span className="loading loading-spinner loading-lg text-primary"></span>
           <p className="text-base-content/60">그래프 데이터를 불러오는 중...</p>
@@ -145,7 +145,7 @@ export default function GraphView() {
   // 빈 데이터 상태
   if (graphData.nodes.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-300 relative">
+      <div className="min-h-screen flex items-center justify-center bg-base-200 relative">
         <div className="text-center space-y-4">
           <div className="w-20 h-20 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center">
             <Network className="w-10 h-10 text-primary" />
@@ -165,7 +165,7 @@ export default function GraphView() {
   }
 
   return (
-    <div className="h-[calc(100vh-var(--header-total-height))] bg-base-300 relative overflow-hidden">
+    <div className="h-[calc(100vh-var(--header-total-height))] bg-base-200 relative overflow-hidden">
       {/* 메인 그래프 캔버스 */}
       <GraphCanvas graphData={filteredData} />
 

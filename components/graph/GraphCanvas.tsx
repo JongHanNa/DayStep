@@ -352,7 +352,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   return (
     <div
       ref={containerRef}
-      className="w-full h-full bg-base-300 relative"
+      className="w-full h-full bg-base-200 relative"
       onClick={(e) => {
         // 빈 공간 클릭 시만 처리
         if (e.target === containerRef.current) {

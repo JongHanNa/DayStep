@@ -40,7 +40,7 @@ export default function SidebarMenu() {
     <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
       <SheetContent
         side="left"
-        className="w-[280px] sm:w-[320px] p-0 bg-base-300 flex flex-col"
+        className="w-[280px] sm:w-[320px] p-0 bg-base-200 flex flex-col"
         hideOverlay
       >
         {/* 접근성을 위한 숨겨진 제목/설명 */}

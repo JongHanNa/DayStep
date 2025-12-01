@@ -16,7 +16,7 @@ const ForceGraph2D = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-full flex items-center justify-center bg-base-300">
+      <div className="w-full h-full flex items-center justify-center bg-base-200">
         <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     )
