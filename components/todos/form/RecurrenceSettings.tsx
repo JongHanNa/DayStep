@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { RecurrencePattern } from '@/types';
-import { PASTEL_COLORS } from '@/lib/color-palette';
 
 export interface RecurrenceSettingsProps {
   showRecurrenceSettings: boolean;
@@ -79,15 +78,13 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
     onRecurrenceCountChange(parseInt(e.target.value) || undefined);
   }, [onRecurrenceCountChange]);
 
-  // 선택된 색상 정보 가져오기 - PASTEL_COLORS에서 직접 찾아서 DEFAULT_COLOR fallback 방지
-  const colorData = selectedColor
-    ? PASTEL_COLORS.find(color => color.id === selectedColor) || null
-    : null;
+  // 선택된 색상 정보 가져오기 - hex 값으로 직접 사용
+  const accentColor = selectedColor || '#DBAC6C';
 
   return (
     <div className="my-2">
       <Label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
-        <Repeat className="w-5 h-5" style={{ color: colorData?.hex || '#DBAC6C' }} />
+        <Repeat className="w-5 h-5" style={{ color: accentColor }} />
         반복 설정
       </Label>
 
@@ -104,7 +101,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
           ]}
           value={recurrencePattern}
           onValueChange={(value) => onRecurrencePatternChange(value as RecurrencePattern)}
-          accentColor={colorData?.hex || '#DBAC6C'}
+          accentColor={accentColor}
           className="w-full"
         />
       </div>
@@ -139,7 +136,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
                       onClick={() => onDayOfWeekToggle(day.value)}
                       className={`h-10 w-10 text-sm font-medium rounded-full transition-all duration-200 border-0 shadow-none hover:opacity-80 flex items-center justify-center ${!isSelected ? 'bg-base-100' : ''}`}
                       style={{
-                        backgroundColor: isSelected ? (colorData?.hex || '#DBAC6C') : undefined,
+                        backgroundColor: isSelected ? accentColor : undefined,
                         color: isSelected ? 'white' : '#999999',
                       }}
                     >
@@ -161,7 +158,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
               ]}
               value={recurrenceEndType}
               onValueChange={(value) => onRecurrenceEndTypeChange(value as 'never' | 'date' | 'count')}
-              accentColor={colorData?.hex || '#DBAC6C'}
+              accentColor={accentColor}
               className="w-full mb-3"
             />
 
@@ -171,7 +168,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
                 <DateSelector
                   selectedDate={recurrenceEndDate}
                   onDateChange={onRecurrenceEndDateChange}
-                  accentColor={colorData?.hex || '#DBAC6C'}
+                  accentColor={accentColor}
                   showQuickOptions={false}
                   useMinimalCalendar={true}
                 />

@@ -557,15 +557,15 @@ export default function TodoFormFields({
         </>
       )}
 
-      {/* 오늘의 하이라이트 */}
-      {showHighlight && (
+      {/* 오늘의 하이라이트 - 임시 숨김 */}
+      {/* {showHighlight && (
         <div className="my-4">
           <label className="cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
               checked={todo.isHighlight}
               onChange={(e) => onChange({ ...todo, isHighlight: e.target.checked })}
-              className="checkbox"
+              className="checkbox bg-base-100"
             />
             <span className="label-text flex items-center gap-1">
               <Star className="w-4 h-4" />
@@ -573,22 +573,22 @@ export default function TodoFormFields({
             </span>
           </label>
         </div>
-      )}
+      )} */}
 
       {/* 완료 여부 */}
       {showCompleted && (
         <div className="my-4">
           <label className="cursor-pointer flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={todo.completed}
-              onChange={(e) => onChange({ ...todo, completed: e.target.checked })}
-              className="checkbox"
-            />
             <span className="label-text flex items-center gap-1">
               <CheckCircle2 className="w-4 h-4" />
               완료됨
             </span>
+            <input
+              type="checkbox"
+              checked={todo.completed}
+              onChange={(e) => onChange({ ...todo, completed: e.target.checked })}
+              className="checkbox bg-base-100"
+            />
           </label>
         </div>
       )}
