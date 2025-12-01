@@ -128,8 +128,12 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const handleZoom = useCallback(
     (zoom: { k: number }) => {
       pendingZoomRef.current = zoom.k;
+      // pan/zoom 시 액션 메뉴 닫기 (노드에서 메뉴가 분리되는 것 방지)
+      if (isActionMenuOpen) {
+        closeActionMenu();
+      }
     },
-    []
+    [isActionMenuOpen, closeActionMenu]
   );
 
   // 렌더링 완료 후 대기 중인 zoom을 스토어에 동기화
