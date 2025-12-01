@@ -74,7 +74,7 @@ export function GraphNodeActionMenu({ onEdit, onDelete }: GraphNodeActionMenuPro
       style={{
         left: position.x,
         top: position.y,
-        transform: 'translate(-50%, 8px)',
+        transform: 'translate(8px, -50%)',  // 오른쪽 중앙에 표시 (노드 제목 가림 방지)
       }}
     >
       <button
