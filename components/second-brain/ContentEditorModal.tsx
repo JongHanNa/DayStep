@@ -5,7 +5,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
 import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
 import { useAutoSave } from '@/hooks/useAutoSave';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft } from 'lucide-react';
 
 interface ContentEditorModalProps {
   open: boolean;
@@ -104,9 +104,9 @@ export default function ContentEditorModal({
         <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1 border-b border-base-300`}>
           <button
             onClick={onClose}
-            className="btn btn-primary btn-sm rounded-full"
+            className="btn btn-ghost btn-circle btn-sm"
           >
-            닫기
+            <ChevronLeft size={24} />
           </button>
 
           <div
