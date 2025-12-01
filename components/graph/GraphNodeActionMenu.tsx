@@ -7,12 +7,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Type,
-  FileText,
-  FolderTree,
-  Folder,
-  CheckSquare,
-  StickyNote,
+  // 기존 섹션 메뉴용 아이콘 (향후 저장 기능 완료 후 복원)
+  // Type,
+  // FileText,
+  // FolderTree,
+  // Folder,
+  // CheckSquare,
+  // StickyNote,
+  Pencil,
   Trash,
 } from 'lucide-react';
 import { useGraphStore, useGraphActionMenu, useGraphPopover, type NotePopoverType } from '@/state/stores/graphStore';
@@ -21,6 +23,7 @@ import type { Note } from '@/types/second-brain';
 
 interface GraphNodeActionMenuProps {
   onDelete: (node: GraphNode) => void;
+  onEdit: (node: GraphNode) => void;
 }
 
 interface MenuItemProps {
@@ -52,7 +55,7 @@ function MenuItem({ icon: Icon, label, count, variant, onClick }: MenuItemProps)
   );
 }
 
-export function GraphNodeActionMenu({ onDelete }: GraphNodeActionMenuProps) {
+export function GraphNodeActionMenu({ onDelete, onEdit }: GraphNodeActionMenuProps) {
   const { isOpen, node, position } = useGraphActionMenu();
   const { activePopover } = useGraphPopover();
   const { closeActionMenu, openPopover } = useGraphStore();
@@ -158,39 +161,14 @@ export function GraphNodeActionMenu({ onDelete }: GraphNodeActionMenuProps) {
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
         }}
       >
-        {/* 섹션 메뉴 */}
+        {/* 편집 메뉴 */}
         <MenuItem
-          icon={Type}
-          label="제목"
-          onClick={() => handleSectionClick('title')}
-        />
-        <MenuItem
-          icon={FileText}
-          label="내용"
-          onClick={() => handleSectionClick('content')}
-        />
-        <MenuItem
-          icon={FolderTree}
-          label="영역/자원"
-          onClick={() => handleSectionClick('areaResource')}
-        />
-        <MenuItem
-          icon={Folder}
-          label="프로젝트"
-          count={projectCount}
-          onClick={() => handleSectionClick('project')}
-        />
-        <MenuItem
-          icon={CheckSquare}
-          label="할일"
-          count={todoCount}
-          onClick={() => handleSectionClick('todo')}
-        />
-        <MenuItem
-          icon={StickyNote}
-          label="노트"
-          count={linkedNoteCount}
-          onClick={() => handleSectionClick('note')}
+          icon={Pencil}
+          label="편집"
+          onClick={() => {
+            onEdit(node);
+            closeActionMenu();
+          }}
         />
 
         {/* 구분선 */}
@@ -203,6 +181,17 @@ export function GraphNodeActionMenu({ onDelete }: GraphNodeActionMenuProps) {
           variant="danger"
           onClick={handleDeleteClick}
         />
+
+        {/*
+         * TODO: 저장 기능 오류 수정 후 아래 섹션 메뉴 복원
+         *
+         * <MenuItem icon={Type} label="제목" onClick={() => handleSectionClick('title')} />
+         * <MenuItem icon={FileText} label="내용" onClick={() => handleSectionClick('content')} />
+         * <MenuItem icon={FolderTree} label="영역/자원" onClick={() => handleSectionClick('areaResource')} />
+         * <MenuItem icon={Folder} label="프로젝트" count={projectCount} onClick={() => handleSectionClick('project')} />
+         * <MenuItem icon={CheckSquare} label="할일" count={todoCount} onClick={() => handleSectionClick('todo')} />
+         * <MenuItem icon={StickyNote} label="노트" count={linkedNoteCount} onClick={() => handleSectionClick('note')} />
+         */}
       </div>
 
       {/* 삭제 확인 대화상자 */}

@@ -33,6 +33,9 @@ import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
+import NoteEditModal from '@/components/second-brain/NoteEditModal';
+import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import { mapNoteToNoteForm } from '@/lib/helpers/noteDataMapper';
 
 // Store들
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -96,6 +99,10 @@ export default function GraphView() {
   const [editingAreaResourceData, setEditingAreaResourceData] = useState<(AreaResource & { isNew?: boolean }) | null>(null);
   const [areaResourceItemType, setAreaResourceItemType] = useState<SecondBrainItemType>('area');
 
+  // Note 편집 상태 (NoteEditModal용)
+  const [editingNoteForModal, setEditingNoteForModal] = useState<Note | null>(null);
+  const [noteFormData, setNoteFormData] = useState<NoteFormData | null>(null);
+
   // 모달 닫기 핸들러
   const handleCloseEditModal = useCallback(() => {
     closeEditModal();
@@ -124,6 +131,61 @@ export default function GraphView() {
       refetch();
     }
   }, [deleteNote, userId, refetch]);
+
+  // 노트 편집 모달 열기 핸들러 (액션 메뉴용)
+  const handleNoteEdit = useCallback((node: GraphNode) => {
+    const note = node.originalData as Note;
+    setEditingNoteForModal(note);
+    setNoteFormData(mapNoteToNoteForm(note, areas));
+  }, [areas]);
+
+  // 노트 편집 모달 닫기 핸들러
+  const handleCloseNoteEditModal = useCallback(() => {
+    setEditingNoteForModal(null);
+    setNoteFormData(null);
+  }, []);
+
+  // 노트 편집 모달 저장 핸들러
+  const handleNoteEditModalSave = useCallback(async () => {
+    if (!editingNoteForModal || !noteFormData || !userId) return;
+
+    try {
+      // linkedAreaOrResource를 area_resource_id로 변환
+      let area_resource_id: string | undefined;
+      if (noteFormData.linkedAreaOrResource) {
+        area_resource_id = noteFormData.linkedAreaOrResource.replace(/^(area|resource)-/, '');
+      }
+
+      // 노트 기본 정보 저장
+      await updateNote(editingNoteForModal.id, userId, {
+        title: noteFormData.title,
+        content: noteFormData.content,
+        note_category: noteFormData.note_category,
+        is_pinned: noteFormData.isPinned,
+        area_resource_id,
+      });
+
+      // 할일 연결 저장
+      if (noteFormData.todoIds !== undefined) {
+        await updateNoteTodos(editingNoteForModal.id, noteFormData.todoIds, userId);
+      }
+
+      // 프로젝트 연결 저장
+      if (noteFormData.projectIds !== undefined) {
+        await updateNoteProjects(editingNoteForModal.id, noteFormData.projectIds, userId);
+      }
+
+      // 노트-노트 연결 저장
+      if (noteFormData.noteIds !== undefined) {
+        await updateNoteNotes(editingNoteForModal.id, noteFormData.noteIds, userId);
+      }
+
+      handleCloseNoteEditModal();
+      refetch();
+    } catch (error) {
+      console.error('노트 저장 오류:', error);
+    }
+  }, [editingNoteForModal, noteFormData, userId, updateNote, refetch, handleCloseNoteEditModal]);
 
   // === 팝오버 저장 핸들러들 ===
 
@@ -218,6 +280,20 @@ export default function GraphView() {
     });
     return newNote;
   }, [userId, createNote]);
+
+  // 노트-노트 즉시 저장 핸들러 (노트 편집 모달용)
+  const handleNoteNoteImmediateSave = useCallback(async (noteIds: string[]) => {
+    if (!editingNoteForModal?.id || !userId) return;
+
+    try {
+      await updateNoteNotes(editingNoteForModal.id, noteIds, userId);
+      // UI 동기화를 위해 재조회
+      refetch();
+    } catch (error) {
+      console.error('노트-노트 연결 저장 실패:', error);
+      throw error;
+    }
+  }, [editingNoteForModal?.id, userId, refetch]);
 
   // 할일 생성 핸들러 (노트 편집 모달용)
   const handleCreateTodo = useCallback(async (title: string) => {
@@ -340,9 +416,10 @@ export default function GraphView() {
       {/* 생성 모달 */}
       <GraphCreateModal />
 
-      {/* 노트 노드 액션 메뉴 (섹션별 편집) */}
+      {/* 노트 노드 액션 메뉴 */}
       <GraphNodeActionMenu
         onDelete={handleNoteDelete}
+        onEdit={handleNoteEdit}
       />
 
       {/* 노트 섹션 팝오버들 */}
@@ -599,8 +676,27 @@ export default function GraphView() {
             />
           )}
 
-          {/* Note: 노트 편집은 팝오버 시스템으로 대체됨 */}
         </>
+      )}
+
+      {/* 노트 편집 모달 (액션 메뉴에서 편집 클릭 시) */}
+      {editingNoteForModal && noteFormData && (
+        <NoteEditModal
+          open={!!editingNoteForModal}
+          note={noteFormData}
+          onClose={handleCloseNoteEditModal}
+          onChange={setNoteFormData}
+          onSave={handleNoteEditModalSave}
+          areas={areas}
+          resources={resources}
+          projects={projects}
+          todos={todos}
+          notes={notes}
+          onCreateTodo={handleCreateTodo}
+          onCreateProject={handleCreateProject}
+          onCreateNote={handleCreateNote}
+          onNoteNoteImmediateSave={handleNoteNoteImmediateSave}
+        />
       )}
     </div>
   );
