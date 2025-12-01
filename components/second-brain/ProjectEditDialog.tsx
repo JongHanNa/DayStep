@@ -967,9 +967,9 @@ export default function ProjectEditDialog({
   return (
     <>
       <dialog open className="modal modal-open z-[110]">
-        <div className={`modal-box w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+        <div className={`modal-box bg-base-200 w-full max-w-7xl px-3 h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
           {/* 헤더 (취소-제목-삭제-저장) */}
-          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-100 z-10`}>
+          <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-200 z-10`}>
             <button onClick={onCancel} className="btn btn-primary btn-sm rounded-full">
               취소
             </button>
@@ -1005,14 +1005,14 @@ export default function ProjectEditDialog({
               </label>
 
               {/* 아이콘 + 제목 입력 */}
-              <div className="rounded-lg bg-base-100">
+              <div className="rounded-lg bg-base-200">
                 <div className="flex items-center gap-3 pl-2 pr-16 pt-2 pb-2">
                   {/* 아이콘 버튼 */}
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setIconBrowserOpen(true)}
-                      className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-200"
+                      className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-100"
                       title="아이콘 변경하기"
                     >
                       {(() => {
@@ -1053,7 +1053,7 @@ export default function ProjectEditDialog({
                         value={editingProject.title}
                         onChange={(e) => onProjectChange({ ...editingProject, title: e.target.value })}
                         placeholder="프로젝트 제목을 입력하세요"
-                        className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+                        className="bg-base-200 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
                         style={{
                           fontSize: '20px',
                           outline: 'none',
@@ -1082,11 +1082,11 @@ export default function ProjectEditDialog({
             </label>
 
             {/* 셀렉트 박스 */}
-            <div className="py-3 px-1 rounded-lg bg-base-100">
+            <div className="py-3 px-1 rounded-lg bg-base-200">
               <select
                 value={editingProject.paraSelection}
                 onChange={(e) => onProjectChange({ ...editingProject, paraSelection: e.target.value })}
-                className="select select-bordered w-full bg-base-200"
+                className="select select-bordered w-full bg-base-100"
               >
                 <option value="">선택 안 함</option>
                 <optgroup label="영역">
@@ -1116,11 +1116,11 @@ export default function ProjectEditDialog({
             </label>
 
             {/* 셀렉트 박스 */}
-            <div className="py-3 px-1 rounded-lg bg-base-100">
+            <div className="py-3 px-1 rounded-lg bg-base-200">
               <select
                 value={editingProject.goal_id || ''}
                 onChange={(e) => onProjectChange({ ...editingProject, goal_id: e.target.value })}
-                className="select select-bordered w-full bg-base-200"
+                className="select select-bordered w-full bg-base-100"
               >
                 <option value="">선택 안 함</option>
                 {goals.map((goal) => (
@@ -1141,7 +1141,7 @@ export default function ProjectEditDialog({
             </label>
 
             {/* 셀렉트 박스 */}
-            <div className="py-3 px-1 rounded-lg bg-base-100">
+            <div className="py-3 px-1 rounded-lg bg-base-200">
               <select
                 value={editingProject.status}
                 onChange={(e) =>
@@ -1150,7 +1150,7 @@ export default function ProjectEditDialog({
                     status: e.target.value as 'not_started' | 'in_progress' | 'paused' | 'completed',
                   })
                 }
-                className="select select-bordered w-full bg-base-200"
+                className="select select-bordered w-full bg-base-100"
               >
                 <option value="not_started">시작 안함</option>
                 <option value="in_progress">진행중</option>
@@ -1171,12 +1171,12 @@ export default function ProjectEditDialog({
               </label>
 
               {/* 날짜 입력 */}
-              <div className="py-3 px-1 rounded-lg bg-base-100">
+              <div className="py-3 px-1 rounded-lg bg-base-200">
                 <input
                   type="date"
                   value={editingProject.start_date || ''}
                   onChange={(e) => onProjectChange({ ...editingProject, start_date: e.target.value })}
-                  className="input input-bordered w-full bg-base-200"
+                  className="input input-bordered w-full bg-base-100"
                 />
               </div>
             </div>
@@ -1190,19 +1190,19 @@ export default function ProjectEditDialog({
               </label>
 
               {/* 날짜 입력 */}
-              <div className="py-3 px-1 rounded-lg bg-base-100">
+              <div className="py-3 px-1 rounded-lg bg-base-200">
                 <input
                   type="date"
                   value={editingProject.end_date || ''}
                   onChange={(e) => onProjectChange({ ...editingProject, end_date: e.target.value })}
-                  className="input input-bordered w-full bg-base-200"
+                  className="input input-bordered w-full bg-base-100"
                 />
               </div>
             </div>
           </div>
 
           {/* ========== 노트 영역 ========== */}
-          <div className="card bg-base-200 mb-4">
+          <div className="card bg-base-100 mb-4">
             <div className="card-body p-3">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">노트</h2>
@@ -1240,7 +1240,7 @@ export default function ProjectEditDialog({
                         <div
                           key={note.id}
                           onClick={() => handleNoteClick(note)}
-                          className="flex items-start gap-3 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
+                          className="flex items-start gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
@@ -1277,7 +1277,7 @@ export default function ProjectEditDialog({
 
           {/* ========== 할일 영역 ========== */}
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDndEnd} {...dndContextProps}>
-            <div className="card bg-base-200 mb-4">
+            <div className="card bg-base-100 mb-4">
               <div className="card-body p-3">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">할일</h2>
@@ -1308,7 +1308,7 @@ export default function ProjectEditDialog({
             </div>
 
             {/* ========== 달력 영역 ========== */}
-            <div className="card bg-base-200 mb-4">
+            <div className="card bg-base-100 mb-4">
               <div className="card-body p-3">
                 <h2 className="text-lg font-semibold mb-4">할일 계획</h2>
 
@@ -1334,8 +1334,8 @@ export default function ProjectEditDialog({
                   </button>
                 </div>
 
-                <div className="flex items-start gap-2 p-3 bg-base-100 rounded-lg mb-4">
-                  <div className="flex items-center justify-center w-6 h-6 rounded bg-base-200 flex-shrink-0">
+                <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg mb-4">
+                  <div className="flex items-center justify-center w-6 h-6 rounded bg-base-100 flex-shrink-0">
                     <Calendar className="w-4 h-4 text-primary" />
                   </div>
                   <p className="text-sm text-base-content/70">
@@ -1411,9 +1411,9 @@ export default function ProjectEditDialog({
       {/* 노트 편집 모달 - Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor */}
       {showNoteEditModal && editingNote && (
         <dialog open className="modal modal-open z-[110]">
-          <div className={`modal-box w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+          <div className={`modal-box bg-base-200 w-full max-w-4xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
             {/* 헤더 (취소-제목-저장) */}
-            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-100 z-10`}>
+            <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-200 z-10`}>
               <button onClick={handleCancelNoteEdit} className="btn btn-primary btn-sm rounded-full">
                 취소
               </button>
@@ -1506,7 +1506,7 @@ function TodoDraggableItem({
       {...attributes}
       {...listeners}
       onClick={() => onEdit(todo)}
-      className={`flex items-start gap-2 p-3 bg-base-100 rounded-lg hover:bg-base-300 transition-colors cursor-pointer ${
+      className={`flex items-start gap-2 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors cursor-pointer ${
         isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-pointer'
       }`}
     >
@@ -1591,7 +1591,7 @@ function CompletedView({
           {completedTodos.map((todo) => (
             <div
               key={todo.id}
-              className="flex items-start gap-2 p-3 bg-base-100 rounded-lg"
+              className="flex items-start gap-2 p-3 bg-base-200 rounded-lg"
             >
               <input
                 type="checkbox"
