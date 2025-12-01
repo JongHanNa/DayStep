@@ -5,7 +5,6 @@ import { useModalStore } from '@/state/stores/modalStore';
 import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
 import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
 import { useAutoSave } from '@/hooks/useAutoSave';
-import { Pause, Play } from 'lucide-react';
 
 interface ContentEditorModalProps {
   open: boolean;
@@ -55,8 +54,6 @@ export default function ContentEditorModal({
   // 글자 크기 조절 상태
   const [editorFontSize, setEditorFontSize] = useState(18);
 
-  // 마퀴 애니메이션 상태
-  const [isMarqueeEnabled, setIsMarqueeEnabled] = useState(true);
 
   // 자동저장 Hook
   const autoSave = useAutoSave(content, {
@@ -108,12 +105,10 @@ export default function ContentEditorModal({
             닫기
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="relative max-w-[200px] overflow-hidden">
-              <h3 className={`text-lg font-semibold whitespace-nowrap ${isMarqueeEnabled ? 'animate-marquee' : ''}`}>
-                {title || '내용 편집'}
-              </h3>
-            </div>
+          <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
+            <h3 className="text-lg font-semibold text-center">
+              {title || '내용 편집'}
+            </h3>
             {enableAutoSave && (
               <AutoSaveStatus
                 status={autoSave.saveStatus}
@@ -122,14 +117,8 @@ export default function ContentEditorModal({
             )}
           </div>
 
-          {/* 마퀴 토글 버튼 */}
-          <button
-            onClick={() => setIsMarqueeEnabled(!isMarqueeEnabled)}
-            className="btn btn-ghost btn-sm btn-circle"
-            title={isMarqueeEnabled ? '스크롤 끄기' : '스크롤 켜기'}
-          >
-            {isMarqueeEnabled ? <Pause size={16} /> : <Play size={16} />}
-          </button>
+          {/* 오른쪽 균형용 빈 공간 */}
+          <div className="w-[52px]" />
         </div>
 
         {/* 스크롤 영역: 슬라이더 + 에디터 */}
