@@ -105,8 +105,55 @@ export const PRO_FEATURES = [
  * Free Tier 제한사항
  */
 export const FREE_TIER_LIMITS = {
-  MAX_TODOS: 50,
+  // 기존 제한 (조정됨)
+  MAX_TODOS: 30, // 일반 할일 (recurrence_pattern = 'none')
   MAX_PROJECTS: 3,
   MAX_NOTES: 10,
   MAX_CONTACTS: 5,
+
+  // 신규 제한
+  MAX_HABITS: 5, // 반복 할일 (습관)
+  MAX_GOALS: 3,
+  MAX_AREAS_RESOURCES: 5,
+
+  // 경고 임계값 (%)
+  WARNING_THRESHOLD: 80,
 } as const;
+
+/**
+ * 엔티티 타입 (용량 제한용)
+ */
+export type UsageEntityType =
+  | 'todo'
+  | 'habit'
+  | 'project'
+  | 'goal'
+  | 'note'
+  | 'area_resource'
+  | 'contact';
+
+/**
+ * 엔티티별 제한값 매핑
+ */
+export const ENTITY_LIMIT_MAP: Record<UsageEntityType, number> = {
+  todo: FREE_TIER_LIMITS.MAX_TODOS,
+  habit: FREE_TIER_LIMITS.MAX_HABITS,
+  project: FREE_TIER_LIMITS.MAX_PROJECTS,
+  goal: FREE_TIER_LIMITS.MAX_GOALS,
+  note: FREE_TIER_LIMITS.MAX_NOTES,
+  area_resource: FREE_TIER_LIMITS.MAX_AREAS_RESOURCES,
+  contact: FREE_TIER_LIMITS.MAX_CONTACTS,
+};
+
+/**
+ * 엔티티 한글명 매핑
+ */
+export const ENTITY_DISPLAY_NAME: Record<UsageEntityType, string> = {
+  todo: '할일',
+  habit: '습관',
+  project: '프로젝트',
+  goal: '목표',
+  note: '노트',
+  area_resource: '영역/자원',
+  contact: '연락처',
+};

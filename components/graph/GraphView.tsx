@@ -48,6 +48,9 @@ import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 // 유틸리티
 import { updateNoteNotes } from '@/lib/supabase/note-notes';
 import { updateNoteProjects } from '@/lib/supabase/project-notes';
+
+// 구독/용량 관련
+import { UsageBanner } from '@/components/subscription/UsageBanner';
 import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 
 // 타입
@@ -436,6 +439,9 @@ export default function GraphView() {
 
   return (
     <div className="h-[calc(100vh-var(--header-total-height))] bg-base-200 relative overflow-hidden">
+      {/* 용량 경고 배너 */}
+      <UsageBanner className="mx-4 mt-4 absolute top-0 left-0 right-0 z-30" />
+
       {/* 메인 그래프 캔버스 */}
       <GraphCanvas graphData={filteredData} />
 
