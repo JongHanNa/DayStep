@@ -275,21 +275,27 @@ export const useSubscription = () => {
   }, [isNative, setLoading, setError, setCustomerInfo, syncSubscription]);
 
   /**
-   * 사용자 로그인 시 Revenue Cat에 사용자 ID 설정
+   * 사용자 로그인 시 Revenue Cat에 사용자 ID 설정 및 구독 정보 동기화
    */
   const linkUserToRevenueCat = useCallback(
     async (userId: string) => {
-      if (!FEATURE_FLAGS.PAYMENTS_ENABLED || !isNative) {
+      // 결제 비활성화 시 동작 안함
+      if (!FEATURE_FLAGS.PAYMENTS_ENABLED) {
         return;
       }
 
-      try {
-        console.log('💳 Revenue Cat에 사용자 연결:', userId);
-        await setRevenueCatUserId(userId);
-        await syncSubscription(userId);
-      } catch (err) {
-        console.error('💳 Revenue Cat 사용자 연결 실패:', err);
+      // 네이티브 환경: RevenueCat 연결
+      if (isNative) {
+        try {
+          console.log('💳 Revenue Cat에 사용자 연결:', userId);
+          await setRevenueCatUserId(userId);
+        } catch (err) {
+          console.error('💳 Revenue Cat 사용자 연결 실패:', err);
+        }
       }
+
+      // 모든 환경: DB 구독 정보 동기화 (웹 포함)
+      await syncSubscription(userId);
     },
     [isNative, syncSubscription]
   );

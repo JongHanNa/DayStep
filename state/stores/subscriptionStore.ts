@@ -158,8 +158,11 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           // DB의 구독 상태 확인
           const hasDbSubscription = checkActiveSubscription(subscriptionInfo.status);
 
-          // 둘 중 하나라도 활성이면 구독 활성으로 간주
-          const hasActiveSubscription = hasRevenueCatEntitlement || hasDbSubscription;
+          // 개발 환경에서는 DB 상태만 체크 (RevenueCat 무시 - 테스트 편의)
+          // 프로덕션에서는 둘 중 하나라도 활성이면 구독 활성으로 간주
+          const hasActiveSubscription = process.env.NODE_ENV === 'development'
+            ? hasDbSubscription
+            : (hasRevenueCatEntitlement || hasDbSubscription);
 
           const isInTrial = checkInTrial(
             subscriptionInfo.status,
