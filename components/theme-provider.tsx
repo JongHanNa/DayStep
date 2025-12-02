@@ -9,9 +9,9 @@ interface ThemeProviderProps {
   defaultTheme?: Theme;
 }
 
-export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
+export function ThemeProvider({ children, defaultTheme = 'dark' }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
   const colorTheme = useSettingsStore((state) => state.colorTheme);
 
   // 시스템 테마 감지
