@@ -862,7 +862,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           >
             {/* 시간 표시 - 할일 제목 위 */}
             {startTime && endTime && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 flex-wrap">
+              <div className="text-sm text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5 flex-wrap">
                 <span>
                   {formatTime(startTime)}
                   {isPreviousDay && <span className="text-xs font-medium text-orange-600 dark:text-orange-400 ml-1">-1</span>}
@@ -893,48 +893,42 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   </span>
                 )}
                 {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && (
-                  <Icons.Repeat className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Icons.Repeat className="w-4 h-4 text-muted-foreground" />
                 )}
               </div>
             )}
 
-            {/* 제목과 동기부여 메시지 - 우측 패딩 추가 (버튼 공간 확보) */}
-            <div className="flex items-center gap-3 w-full pr-10">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h3 className={cn(
-                    "font-medium text-base text-gray-900 dark:text-gray-100",
-                    isCompleted && "line-through decoration-red-500 dark:decoration-red-400 decoration-2"
-                  )}>
-                    {item.title}
-                  </h3>
+            {/* 제목과 메모 아이콘 - 같은 라인에 배치 */}
+            <div className="flex items-center gap-1 w-full pr-10">
+              <h3 className={cn(
+                "font-bold text-xl text-gray-900 dark:text-gray-100",
+                isCompleted && "line-through decoration-red-500 dark:decoration-red-400 decoration-2"
+              )}>
+                {item.title}
+              </h3>
 
-                </div>
-              </div>
-            </div>
-
-            {/* 노트 드롭다운 */}
-            {linkedNotes.length > 0 && (
-              <div className="relative mt-1.5" onClick={(e) => e.stopPropagation()}>
-                <div className="dropdown dropdown-bottom">
-                  <div
-                    tabIndex={0}
-                    role="button"
-                    className="btn btn-ghost btn-xs gap-1 h-auto min-h-0 px-2 py-1"
-                  >
-                    <span className="text-xs flex items-center gap-1">
-                      <Icons.StickyNote className="w-3.5 h-3.5" />
-                      {linkedNotes.length}
-                    </span>
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+              {/* 노트 드롭다운 - 제목 오른쪽 */}
+              {linkedNotes.length > 0 && (
+                <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="dropdown dropdown-bottom">
+                    <div
+                      tabIndex={0}
+                      role="button"
+                      className="btn btn-ghost btn-xs gap-1 h-auto min-h-0 px-2 py-1"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
+                      <span className="text-xs flex items-center gap-1">
+                        <Icons.StickyNote className="w-4 h-4" />
+                        {linkedNotes.length}
+                      </span>
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   <div
                     tabIndex={0}
                     className="dropdown-content menu bg-base-100 rounded-box z-[1] w-72 p-3 shadow-lg border border-base-300 mt-1"
@@ -969,6 +963,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                 </div>
               </div>
             )}
+            </div>
 
             {/* 완료 체크박스 - 카드 우측 중앙에 절대 위치 */}
             {item.type === 'todo' && (
@@ -979,7 +974,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     onToggleComplete(item.id);
                   }}
                   className={cn(
-                    'completion-checkbox w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
+                    'completion-checkbox w-6 h-6 rounded-full border-4 flex items-center justify-center flex-shrink-0 relative overflow-hidden',
                     'transition-all duration-300 ease-out',
                     process.env.BUILD_TARGET === 'web' && 'hover:scale-110',
                     isCompleted
