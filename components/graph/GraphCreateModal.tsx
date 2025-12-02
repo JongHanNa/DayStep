@@ -16,8 +16,21 @@ import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAuth } from '@/app/context/AuthContext';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import type { GraphNodeType } from '@/types/graph';
+import type { UsageEntityType } from '@/lib/featureFlags';
 import { NODE_TYPE_COLORS, NODE_TYPE_LABELS } from '@/lib/graph-utils';
+
+// GraphNodeType → UsageEntityType 매핑
+const NODE_TO_USAGE_TYPE: Record<GraphNodeType, UsageEntityType> = {
+  area: 'area_resource',
+  resource: 'area_resource',
+  goal: 'goal',
+  project: 'project',
+  todo: 'todo', // 기본값 (habit은 recurrence에 따라)
+  note: 'note',
+};
 
 // 노드 타입별 아이콘
 const NODE_ICONS: Record<GraphNodeType, React.ElementType> = {
@@ -42,6 +55,9 @@ export function GraphCreateModal() {
   const { createTodo } = useTodoStore();
   const { createNote } = useNoteStore();
 
+  // 용량 체크 훅
+  const { checkAndProceed, limitResult, isModalOpen, closeModal, onCreateSuccess } = useUsageLimitCheck();
+
   // 폼 상태
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,76 +74,82 @@ export function GraphCreateModal() {
     const userId = user?.id;
     if (!userId || !title.trim()) return;
 
-    setLoading(true);
-    setError(null);
+    // 용량 체크 후 생성 진행
+    const usageType = NODE_TO_USAGE_TYPE[type];
 
-    try {
-      switch (type) {
-        case 'area':
-          await createArea(userId, {
-            title: title.trim(),
-            color: color,
-            is_pinned: false,
-            order_index: 0,
-          });
-          break;
+    await checkAndProceed(usageType, async () => {
+      setLoading(true);
+      setError(null);
 
-        case 'resource':
-          await createResource(userId, {
-            title: title.trim(),
-            color: color,
-            is_pinned: false,
-            order_index: 0,
-          });
-          break;
+      try {
+        switch (type) {
+          case 'area':
+            await createArea(userId, {
+              title: title.trim(),
+              color: color,
+              is_pinned: false,
+              order_index: 0,
+            });
+            break;
 
-        case 'goal':
-          await createGoal(userId, {
-            title: title.trim(),
-            color: color,
-            status: 'not_started',
-            // Goal has area_id and resource_id, not area_resource_id
-            area_id: parentId || undefined,
-          });
-          break;
+          case 'resource':
+            await createResource(userId, {
+              title: title.trim(),
+              color: color,
+              is_pinned: false,
+              order_index: 0,
+            });
+            break;
 
-        case 'project':
-          await createProject(userId, {
-            title: title.trim(),
-            color: color,
-            status: 'not_started',
-            goal_id: parentId || undefined,
-            order_index: 0,
-          });
-          break;
+          case 'goal':
+            await createGoal(userId, {
+              title: title.trim(),
+              color: color,
+              status: 'not_started',
+              // Goal has area_id and resource_id, not area_resource_id
+              area_id: parentId || undefined,
+            });
+            break;
 
-        case 'todo':
-          await createTodo({
-            title: title.trim(),
-            schedule_type: 'anytime',
-            priority: 'medium',
-          });
-          break;
+          case 'project':
+            await createProject(userId, {
+              title: title.trim(),
+              color: color,
+              status: 'not_started',
+              goal_id: parentId || undefined,
+              order_index: 0,
+            });
+            break;
 
-        case 'note':
-          await createNote(userId, {
-            title: title.trim(),
-            content: '',
-            note_category: 'none',
-            is_pinned: false,
-          });
-          break;
+          case 'todo':
+            await createTodo({
+              title: title.trim(),
+              schedule_type: 'anytime',
+              priority: 'medium',
+            });
+            break;
+
+          case 'note':
+            await createNote(userId, {
+              title: title.trim(),
+              content: '',
+              note_category: 'none',
+              is_pinned: false,
+            });
+            break;
+        }
+
+        // 성공 시 카운트 증가 및 닫기
+        onCreateSuccess(usageType);
+        setTitle('');
+        closeCreateModal();
+      } catch (err) {
+        console.error('❌ 노드 생성 실패:', err);
+        setError(err instanceof Error ? err.message : '생성에 실패했습니다.');
+      } finally {
+        setLoading(false);
       }
-
-      // 성공 시 닫기
-      setTitle('');
-      closeCreateModal();
-    } catch (err) {
-      console.error('❌ 노드 생성 실패:', err);
-      setError(err instanceof Error ? err.message : '생성에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleCancel = () => {
@@ -137,6 +159,7 @@ export function GraphCreateModal() {
   };
 
   return (
+    <>
     <dialog open className="modal modal-open">
       <div className="modal-box max-w-sm">
         {/* 헤더 */}
@@ -214,6 +237,16 @@ export function GraphCreateModal() {
         <button onClick={handleCancel}>close</button>
       </form>
     </dialog>
+
+    {/* 용량 제한 모달 */}
+    {isModalOpen && limitResult && (
+      <UsageLimitModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        result={limitResult}
+      />
+    )}
+  </>
   );
 }
 

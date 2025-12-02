@@ -51,6 +51,7 @@ import { updateNoteProjects } from '@/lib/supabase/project-notes';
 
 // 구독/용량 관련
 import { UsageBanner } from '@/components/subscription/UsageBanner';
+import { useUsageStats } from '@/hooks/useUsageStats';
 import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 
 // 타입
@@ -85,6 +86,9 @@ export default function GraphView() {
   const { areas, updateArea, deleteArea } = useAreaStore();
   const { resources, updateResource, deleteResource } = useResourceStore();
   const { notes, createNote, updateNote, deleteNote } = useNoteStore();
+
+  // 용량 체크
+  const { canCreate, incrementCount } = useUsageStats();
 
   // Todo 편집 상태
   const [editingTodoData, setEditingTodoData] = useState<TodoFormData | null>(null);
@@ -299,6 +303,11 @@ export default function GraphView() {
     if (!userId) {
       throw new Error('사용자 정보가 없습니다.');
     }
+    // 용량 체크
+    const result = canCreate('project');
+    if (result.blocked) {
+      throw new Error(`프로젝트 한도에 도달했습니다. (${result.current}/${result.limit})`);
+    }
     const newProject = await createProject(userId, {
       title,
       description: '',
@@ -306,13 +315,19 @@ export default function GraphView() {
       color: '#808080',
       order_index: 0,
     });
+    incrementCount('project');
     return newProject;
-  }, [userId, createProject]);
+  }, [userId, createProject, canCreate, incrementCount]);
 
   // 노트 생성 핸들러 (노트 편집 모달용)
   const handleCreateNote = useCallback(async (title: string): Promise<Note> => {
     if (!userId) {
       throw new Error('사용자 정보가 없습니다.');
+    }
+    // 용량 체크
+    const result = canCreate('note');
+    if (result.blocked) {
+      throw new Error(`노트 한도에 도달했습니다. (${result.current}/${result.limit})`);
     }
     const newNote = await createNote(userId, {
       title,
@@ -320,8 +335,9 @@ export default function GraphView() {
       note_category: 'work_in_progress',
       is_pinned: false,
     });
+    incrementCount('note');
     return newNote;
-  }, [userId, createNote]);
+  }, [userId, createNote, canCreate, incrementCount]);
 
   // 노트-노트 즉시 저장 핸들러 (노트 편집 모달용)
   const handleNoteNoteImmediateSave = useCallback(async (noteIds: string[]) => {
@@ -342,6 +358,11 @@ export default function GraphView() {
     if (!userId) {
       throw new Error('사용자 정보가 없습니다.');
     }
+    // 용량 체크 (기본: todo, 반복 패턴 있으면 habit)
+    const result = canCreate('todo');
+    if (result.blocked) {
+      throw new Error(`할일 한도에 도달했습니다. (${result.current}/${result.limit})`);
+    }
     const newEntityTodo = await createTodo({
       title,
       user_id: userId,
@@ -351,10 +372,11 @@ export default function GraphView() {
     if (!newEntityTodo) {
       throw new Error('할일 생성에 실패했습니다.');
     }
+    incrementCount('todo');
     // Database Todo 형식으로 반환 (NoteEditModal 타입 호환)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return newEntityTodo.toDatabase() as any;
-  }, [userId, createTodo]);
+  }, [userId, createTodo, canCreate, incrementCount]);
 
   // 인증 대기
   if (authLoading) {
