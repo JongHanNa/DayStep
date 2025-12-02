@@ -68,15 +68,10 @@ export async function devActivateSubscription(userId: string): Promise<{ success
   try {
     console.log('💳 [DEV] 구독 활성화 시작:', userId);
 
-    // 직접 업데이트
-    const { error } = await (supabase as any)
-      .from('subscriptions')
-      .update({
-        status: 'active',
-        cancelled_at: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId);
+    // RPC 함수 호출 (SECURITY DEFINER로 RLS 우회)
+    const { error } = await (supabase.rpc as any)('dev_activate_subscription', {
+      p_user_id: userId,
+    });
 
     if (error) {
       console.error('💳 [DEV] 구독 활성화 실패:', error);
