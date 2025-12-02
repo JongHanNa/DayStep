@@ -604,18 +604,15 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
           className={cn('flex flex-col scrollbar-hide timeline-background', className)}
         >
 
-          {/* Timeline Header - 고정 위치 (AppHeader 아래, 같은 z-index 레벨) */}
+          {/* Timeline Header - 스크롤과 함께 움직임 */}
           <div
-            className={cn("fixed left-0 right-0 z-40 scrollbar-hide timeline-background")}
-            style={{
-              top: 'var(--header-total-height, 56px)'
-            }}
+            className={cn("scrollbar-hide timeline-background")}
           >
             <TimelineHeader />
           </div>
 
           {/* Main timeline content - full width without sidebar */}
-          <div className="flex flex-1 pt-32 pb-20 scrollbar-hide" {...swipeGesture}>
+          <div className="flex flex-1 pb-20 scrollbar-hide" {...swipeGesture}>
             {/* Timeline view content - main 컨테이너 스크롤 사용으로 고무줄 효과 활성화 */}
             <div
               ref={containerRef}
