@@ -473,38 +473,7 @@ export default function TodoFormFields({
             </div>
           )}
 
-          {/* 시간 포함 토글 */}
-          {todo.scheduleType === 'timed' ? (
-            // 시간지정일 때는 강제 활성화 (비활성화 불가)
-            <div className="my-4">
-              <div className="p-3 rounded-lg bg-base-100 border border-base-300 opacity-50">
-                <label className="cursor-not-allowed flex items-center justify-between">
-                  <span className="label-text">시간 포함 (자동)</span>
-                  <input
-                    type="checkbox"
-                    checked={true}
-                    disabled
-                    className="toggle toggle-primary"
-                  />
-                </label>
-              </div>
-            </div>
-          ) : todo.scheduleType && todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
-            // 언제든지/종일이 아닐 때만 표시
-            <div className="my-4">
-              <div className="p-3 rounded-lg bg-base-100 border border-base-300">
-                <label className="cursor-pointer flex items-center justify-between">
-                  <span className="label-text">시간 포함</span>
-                  <input
-                    type="checkbox"
-                    checked={todo.includeTime || false}
-                    onChange={(e) => onChange({ ...todo, includeTime: e.target.checked })}
-                    className="toggle toggle-primary"
-                  />
-                </label>
-              </div>
-            </div>
-          )}
+          {/* 시간 포함 토글 - 숨김 처리 (scheduleType으로 자동 결정됨) */}
 
           {/* 예상 소요 시간 (언제든지일 때만) */}
           {(!todo.scheduleType || todo.scheduleType === 'anytime') && (
