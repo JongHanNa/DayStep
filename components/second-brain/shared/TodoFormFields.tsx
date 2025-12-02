@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette } from 'lucide-react';
+import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, Repeat } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
 import type { RecurrencePattern, NextActionContextItem } from '@/types';
@@ -54,6 +54,9 @@ export interface TodoFormData {
   recurrenceEndDate?: Date; // 반복 종료 날짜
   recurrenceCount?: number; // 반복 횟수
   selectedDaysOfWeek?: number[]; // 반복 요일 선택 (0=일요일, 6=토요일)
+
+  // 반복 할일 원본 정보
+  originalCreatedDate?: Date; // 할일 원본 생성 날짜 (반복 할일 편집 시 표시용)
 }
 
 interface TodoFormFieldsProps {
@@ -304,6 +307,18 @@ export default function TodoFormFields({
               <option value="next_action">⚡ 다음행동 · 특정 행동상황이 되면 할 일. 당장은 날짜나 시간을 넣기에 불명확하지만 나중에 계획 페이지에서 날짜를 지정해줄 수 있음 (다음행동상황 선택 시 수집함에서 사라짐)</option>
               <option value="schedule_clear">📅 일정 · 당장 날짜나 시간을 넣기에 명확한 할일 (날짜 설정 시 수집함에서 사라짐)</option>
             </select>
+          </div>
+        </div>
+      )}
+
+      {/* 반복 할일 원본 날짜 (일정 섹션 상단, 반복 할일 편집 시에만) */}
+      {todo.originalCreatedDate && todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
+        <div className="my-4">
+          <div className="p-3 rounded-lg bg-info/10 border border-info/20">
+            <span className="text-sm text-info flex items-center gap-2">
+              <Repeat className="h-4 w-4" />
+              원본 생성일: {format(todo.originalCreatedDate, 'yyyy년 M월 d일')}
+            </span>
           </div>
         </div>
       )}

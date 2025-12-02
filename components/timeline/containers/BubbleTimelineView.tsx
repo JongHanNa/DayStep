@@ -628,8 +628,11 @@ export const BubbleTimelineView: React.FC = () => {
         : undefined,
       recurrenceCount: dbTodo.recurrence_count,
       selectedDaysOfWeek: dbTodo.recurrence_days_of_week || [],
+
+      // 반복 할일 원본 날짜 (편집 시 표시용)
+      originalCreatedDate: dbTodo.created_at ? new Date(dbTodo.created_at) : undefined,
     };
-  }, []);;
+  }, []);
 
   // 할일 수정 저장 핸들러
   const handleEditSave = useCallback(async (formData: TodoFormData) => {
