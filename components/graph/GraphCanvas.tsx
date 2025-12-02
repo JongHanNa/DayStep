@@ -86,8 +86,8 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
       if (!node) return;
       setSelectedNode(node.id);
 
-      // 노트 노드는 액션 메뉴 표시 (편집/삭제 선택)
-      if (node.type === 'note' && event && containerRef.current) {
+      // 모든 노드에 액션 메뉴 표시 (편집/삭제 선택)
+      if (event && containerRef.current) {
         // 같은 노드를 다시 클릭하면 메뉴 닫기 (토글)
         if (isActionMenuOpen && actionMenuNode?.id === node.id) {
           closeActionMenu();
@@ -99,10 +99,6 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
           };
           openActionMenu(node as GraphNode, position);
         }
-      } else {
-        // 다른 타입은 액션 메뉴 닫고 편집 모달 열기
-        closeActionMenu();
-        openEditModal(node as GraphNode);
       }
       onNodeClick?.(node as GraphNode);
     },

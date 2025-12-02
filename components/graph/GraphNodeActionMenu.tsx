@@ -34,6 +34,19 @@ interface MenuItemProps {
   onClick: () => void;
 }
 
+// 노드 타입별 한글 라벨
+const getNodeTypeLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    note: '노트',
+    todo: '할일',
+    project: '프로젝트',
+    goal: '목표',
+    area: '책임',
+    resource: '자원',
+  };
+  return labels[type] || '항목';
+};
+
 function MenuItem({ icon: Icon, label, count, variant, onClick }: MenuItemProps) {
   return (
     <button
@@ -195,12 +208,12 @@ export function GraphNodeActionMenu({ onDelete, onEdit }: GraphNodeActionMenuPro
       </div>
 
       {/* 삭제 확인 대화상자 */}
-      {showDeleteConfirm && (
+      {showDeleteConfirm && nodeToDelete && (
         <dialog open className="modal z-[110]">
           <div className="modal-box max-w-xs">
-            <h3 className="font-bold text-lg">노트 삭제</h3>
+            <h3 className="font-bold text-lg">{getNodeTypeLabel(nodeToDelete.type)} 삭제</h3>
             <p className="py-4 text-base-content/70">
-              이 노트를 정말 삭제하시겠습니까?
+              이 {getNodeTypeLabel(nodeToDelete.type)}을(를) 정말 삭제하시겠습니까?
             </p>
             <div className="modal-action">
               <button

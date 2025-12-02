@@ -63,7 +63,7 @@ export default function GraphView() {
   const { graphData, loading, error, refetch } = useGraphData();
   const { filteredData, nodeCount, linkCount, isFiltered } = useFilteredGraphData(graphData);
   const { isOpen: isEditModalOpen, node: editingNode } = useGraphEditModal();
-  const { closeEditModal } = useGraphStore();
+  const { closeEditModal, closeActionMenu, openEditModal } = useGraphStore();
   const { activePopover, position: popoverPosition, closePopover } = useGraphPopover();
   const { node: actionMenuNode } = useGraphActionMenu();
 
@@ -138,6 +138,45 @@ export default function GraphView() {
     setEditingNoteForModal(note);
     setNoteFormData(mapNoteToNoteForm(note, areas));
   }, [areas]);
+
+  // 통합 편집 핸들러 (모든 노드 타입)
+  const handleNodeEdit = useCallback((node: GraphNode) => {
+    closeActionMenu();
+    if (node.type === 'note') {
+      // 노트는 NoteEditModal 사용
+      handleNoteEdit(node);
+    } else {
+      // 다른 타입은 기존 편집 모달 사용
+      openEditModal(node);
+    }
+  }, [closeActionMenu, openEditModal, handleNoteEdit]);
+
+  // 통합 삭제 핸들러 (모든 노드 타입)
+  const handleNodeDelete = useCallback(async (node: GraphNode) => {
+    if (!userId) return;
+
+    switch (node.type) {
+      case 'note':
+        await deleteNote(node.id, userId);
+        break;
+      case 'todo':
+        await deleteTodo(node.id);
+        break;
+      case 'project':
+        await deleteProject(userId, node.id);
+        break;
+      case 'goal':
+        await deleteGoal(userId, node.id);
+        break;
+      case 'area':
+        await deleteArea(userId, node.id);
+        break;
+      case 'resource':
+        await deleteResource(userId, node.id);
+        break;
+    }
+    refetch();
+  }, [userId, deleteNote, deleteTodo, deleteProject, deleteGoal, deleteArea, deleteResource, refetch]);
 
   // 노트 편집 모달 닫기 핸들러
   const handleCloseNoteEditModal = useCallback(() => {
@@ -416,10 +455,10 @@ export default function GraphView() {
       {/* 생성 모달 */}
       <GraphCreateModal />
 
-      {/* 노트 노드 액션 메뉴 */}
+      {/* 노드 액션 메뉴 (모든 노드 타입) */}
       <GraphNodeActionMenu
-        onDelete={handleNoteDelete}
-        onEdit={handleNoteEdit}
+        onDelete={handleNodeDelete}
+        onEdit={handleNodeEdit}
       />
 
       {/* 노트 섹션 팝오버들 */}
