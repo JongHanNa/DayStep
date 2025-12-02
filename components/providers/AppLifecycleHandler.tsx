@@ -3,11 +3,13 @@
 import { useEffect } from 'react';
 import { App } from '@capacitor/app';
 import { initializeRevenueCat } from '@/lib/revenue-cat';
+import { toast } from 'sonner';
 
 /**
  * Capacitor 앱 라이프사이클 이벤트를 처리하는 컴포넌트
  * - 백그라운드 복귀 시 불필요한 리다이렉트 방지
  * - Revenue Cat 초기화 (구독 결제 시스템)
+ * - RevenueCat Redemption Link 딥링크 처리
  */
 export function AppLifecycleHandler() {
   useEffect(() => {
@@ -49,8 +51,27 @@ export function AppLifecycleHandler() {
       }
     };
 
+    // RevenueCat Redemption Link 딥링크 처리
+    const handleAppUrlOpen = ({ url }: { url: string }) => {
+      console.log('🔗 딥링크 수신:', url);
+
+      // RevenueCat Redemption Link 처리 (rc-fc3b432dc6://)
+      if (url.startsWith('rc-fc3b432dc6://')) {
+        console.log('💳 RevenueCat Redemption Link 감지 - 구독 활성화 처리');
+        toast.success('웹 구독이 활성화되었습니다! 🎉', {
+          description: '잠시 후 페이지가 새로고침됩니다.',
+        });
+
+        // 잠시 후 페이지 새로고침하여 구독 상태 동기화
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+    };
+
     // 이벤트 리스너 등록
     App.addListener('appStateChange', handleAppStateChange);
+    App.addListener('appUrlOpen', handleAppUrlOpen);
 
     // 클린업: 컴포넌트 언마운트 시 리스너 제거
     return () => {

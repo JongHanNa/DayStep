@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Crown, RefreshCw, Calendar, AlertCircle, Wrench, XCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Crown, RefreshCw, Calendar, AlertCircle, Wrench, XCircle, CheckCircle, Globe, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -249,20 +249,27 @@ export default function SubscriptionPage() {
         </Card>
       )}
 
-      {/* 웹 환경 알림 */}
-      {!isNative && (
+      {/* 웹에서 구독하기 */}
+      {!isNative && !hasActiveSubscription && (
         <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-800 dark:text-blue-200">
-                <p className="font-semibold mb-1">모바일 앱에서만 구독 가능</p>
+                <p className="font-semibold mb-1">웹에서 구독하기</p>
                 <p>
-                  iOS 또는 Android 앱을 다운로드하여 구독을 시작하세요.
-                  웹에서는 구독 정보만 확인할 수 있습니다.
+                  웹 브라우저에서 바로 구독을 시작할 수 있습니다.
+                  결제 완료 후 모바일 앱에서 자동으로 활성화됩니다.
                 </p>
               </div>
             </div>
+            <Button
+              onClick={() => window.open('https://pay.rev.cat/mlbejsuwbyayjgrq/', '_blank')}
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              웹에서 Pro 구독하기
+            </Button>
           </CardContent>
         </Card>
       )}
