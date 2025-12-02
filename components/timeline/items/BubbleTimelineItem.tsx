@@ -893,7 +893,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   </span>
                 )}
                 {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && (
-                  <span>🔄</span>
+                  <Icons.Repeat className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
               </div>
             )}
@@ -922,7 +922,10 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     role="button"
                     className="btn btn-ghost btn-xs gap-1 h-auto min-h-0 px-2 py-1"
                   >
-                    <span className="text-xs">📝 {linkedNotes.length}</span>
+                    <span className="text-xs flex items-center gap-1">
+                      <Icons.StickyNote className="w-3.5 h-3.5" />
+                      {linkedNotes.length}
+                    </span>
                     <svg
                       className="w-3 h-3"
                       fill="none"
