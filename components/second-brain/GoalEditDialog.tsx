@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, X, Tag, Palette, Activity, Layers, Calendar, Target } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Plus, X, Tag, Palette, Activity, Layers, Calendar, Target, FolderKanban } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import type { Swiper as SwiperType } from 'swiper';
+import { cn } from '@/lib/utils';
+
+import 'swiper/css';
 import type { Goal, AreaResource as Area, AreaResource as Resource, Project } from '@/types/second-brain';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -356,74 +361,16 @@ export default function GoalEditDialog({
                     </div>
                   </div>
 
-                  {/* 프로젝트 영역 */}
+                  {/* 프로젝트 영역 - 상태별 슬라이드 그룹화 */}
                   {!editingGoal.isNew && onAddProject && onEditProject && onDeleteProject && (
-                    <div className="card bg-base-100 mb-4">
-                      <div className="card-body">
-                        <div className="flex items-center justify-between mb-4">
-                          <h2 className="text-lg font-semibold">연결된 프로젝트</h2>
-                          <button
-                            onClick={onAddProject}
-                            className="btn btn-ghost btn-sm"
-                            disabled={isCreatingProject}
-                          >
-                            {isCreatingProject ? (
-                              <span className="loading loading-spinner loading-xs" />
-                            ) : (
-                              <Plus className="w-4 h-4" />
-                            )}
-                            {isCreatingProject ? '생성 중...' : '추가'}
-                          </button>
-                        </div>
-
-                        {filteredProjects.length === 0 ? (
-                          <div className="text-center py-8 text-base-content/60">
-                            연결된 프로젝트가 없습니다.
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {filteredProjects.map((project) => {
-                              const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
-                              return (
-                                <div
-                                  key={project.id}
-                                  onClick={() => onEditProject(project)}
-                                  className="flex items-start gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
-                                >
-                                  <div
-                                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                                    style={{
-                                      backgroundColor: project.color,
-                                    }}
-                                  >
-                                    <ProjectIconComponent className="w-5 h-5 text-white" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium truncate">{project.title}</div>
-                                    <div className="text-sm text-base-content/60">
-                                      {project.status === 'not_started' && '시작 안함'}
-                                      {project.status === 'in_progress' && '진행중'}
-                                      {project.status === 'paused' && '중단'}
-                                      {project.status === 'completed' && '완료'}
-                                    </div>
-                                  </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onDeleteProject(project);
-                                    }}
-                                    className="btn btn-ghost btn-sm btn-circle flex-shrink-0"
-                                    aria-label="프로젝트 제거"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <ProjectStatusSlider
+                      projects={filteredProjects}
+                      isCreatingProject={isCreatingProject}
+                      onAddProject={onAddProject}
+                      onEditProject={onEditProject}
+                      onDeleteProject={onDeleteProject}
+                      goalColor={editingGoal.color}
+                    />
                   )}
                 </>
               )}
@@ -443,5 +390,167 @@ export default function GoalEditDialog({
         onColorSelect={handleColorChange}
       />
     </>
+  );
+}
+
+// 상태 그룹 정의 (진행중 우선 순서)
+const STATUS_GROUPS = [
+  { key: 'in_progress', label: '진행중', color: 'bg-blue-500', textColor: 'text-blue-600' },
+  { key: 'not_started', label: '시작 안함', color: 'bg-gray-400', textColor: 'text-gray-600' },
+  { key: 'paused', label: '중단', color: 'bg-orange-500', textColor: 'text-orange-600' },
+  { key: 'completed', label: '완료', color: 'bg-green-500', textColor: 'text-green-600' },
+] as const;
+
+interface ProjectStatusSliderProps {
+  projects: Project[];
+  isCreatingProject: boolean;
+  onAddProject: () => void;
+  onEditProject: (project: Project) => void;
+  onDeleteProject: (project: Project) => void;
+  goalColor: string;
+}
+
+function ProjectStatusSlider({
+  projects,
+  isCreatingProject,
+  onAddProject,
+  onEditProject,
+  onDeleteProject,
+  goalColor,
+}: ProjectStatusSliderProps) {
+  const [activeGroupIndex, setActiveGroupIndex] = useState(0);
+  const swiperRef = useRef<SwiperType | null>(null);
+
+  // 상태별 프로젝트 그룹화
+  const groupedProjects = useMemo(() => {
+    return STATUS_GROUPS.map(group => ({
+      ...group,
+      projects: projects.filter(p => p.status === group.key)
+    }));
+  }, [projects]);
+
+  return (
+    <div className="my-4">
+      {/* 섹션 제목 */}
+      <div className="flex items-center justify-between mb-3">
+        <label className="flex items-center gap-3 text-lg font-semibold" style={{ color: '#666666' }}>
+          <FolderKanban className="h-5 w-5" style={{ color: goalColor }} />
+          연결된 프로젝트
+        </label>
+        <button
+          onClick={onAddProject}
+          className="btn btn-ghost btn-sm"
+          disabled={isCreatingProject}
+        >
+          {isCreatingProject ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+          {isCreatingProject ? '생성 중...' : '추가'}
+        </button>
+      </div>
+
+      {/* 상단 탭 네비게이션 */}
+      <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide">
+        {groupedProjects.map((group, index) => (
+          <button
+            key={group.key}
+            onClick={() => {
+              setActiveGroupIndex(index);
+              swiperRef.current?.slideTo(index);
+            }}
+            aria-selected={activeGroupIndex === index}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+              activeGroupIndex === index
+                ? "bg-primary text-primary-content"
+                : "bg-base-200 text-base-content/60 hover:text-base-content hover:bg-base-300"
+            )}
+          >
+            {group.label}
+            <span className="ml-1 opacity-70">({group.projects.length})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* 슬라이드 컨테이너 - Swiper */}
+      <div className="rounded-lg bg-base-200 mt-2 py-3">
+        <Swiper
+          onSwiper={(swiper) => { swiperRef.current = swiper; }}
+          slidesPerView={1.15}
+          centeredSlides={true}
+          spaceBetween={12}
+          onSlideChange={(swiper) => setActiveGroupIndex(swiper.activeIndex)}
+          initialSlide={activeGroupIndex}
+          className="!overflow-visible"
+        >
+          {groupedProjects.map((group) => (
+            <SwiperSlide key={group.key}>
+              <div className="p-3 min-h-[120px] bg-base-100 rounded-lg">
+                {group.projects.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-base-content/50">
+                    <span className="text-sm">{group.label} 프로젝트가 없습니다</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {group.projects.map((project) => {
+                      const ProjectIconComponent = getUnifiedIcon(project.icon as UnifiedIconKey);
+                      return (
+                        <div
+                          key={project.id}
+                          onClick={() => onEditProject(project)}
+                          className="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors cursor-pointer"
+                        >
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: project.color }}
+                          >
+                            <ProjectIconComponent className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{project.title}</div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteProject(project);
+                            }}
+                            className="btn btn-ghost btn-sm btn-circle flex-shrink-0"
+                            aria-label="프로젝트 연결 해제"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
+
+      {/* 슬라이드 인디케이터 */}
+      <div className="flex justify-center gap-1.5 mt-3">
+        {groupedProjects.map((group, index) => (
+          <button
+            key={group.key}
+            onClick={() => {
+              setActiveGroupIndex(index);
+              swiperRef.current?.slideTo(index);
+            }}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all",
+              activeGroupIndex === index
+                ? "bg-primary w-4"
+                : "bg-base-300 hover:bg-base-content/30"
+            )}
+            aria-label={`${group.label} 그룹으로 이동`}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
