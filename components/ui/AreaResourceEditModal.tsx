@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import { Tag, Palette, Activity } from 'lucide-react';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
+import CollapsibleGoalSection from '@/components/second-brain/shared/CollapsibleGoalSection';
+import CollapsibleProjectSection from '@/components/second-brain/shared/CollapsibleProjectSection';
+import CollapsibleNoteSection from '@/components/second-brain/shared/CollapsibleNoteSection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import type { SecondBrainItemType } from '@/types/settings';
-import type { Area, Resource } from '@/types/second-brain';
+import type { Area, Resource, Goal, Project, Note } from '@/types/second-brain';
 
 interface AreaResourceEditModalProps {
   open: boolean;
@@ -19,6 +22,25 @@ interface AreaResourceEditModalProps {
   onDelete: () => void;
   onItemChange: (item: (Area | Resource) & { isNew?: boolean }) => void;
   onItemTypeChange: (type: SecondBrainItemType) => void;
+  // 목표, 프로젝트, 노트 관련 props
+  goals?: Goal[];
+  projects?: Project[];
+  notes?: Note[];
+  linkedGoalIds?: string[];
+  linkedProjectIds?: string[];
+  linkedNoteIds?: string[];
+  onLinkedGoalsChange?: (ids: string[]) => void;
+  onLinkedProjectsChange?: (ids: string[]) => void;
+  onLinkedNotesChange?: (ids: string[]) => void;
+  onGoalClick?: (goal: Goal) => void;
+  onProjectClick?: (project: Project) => void;
+  onNoteClick?: (note: Note) => void;
+  onCreateGoal?: (title: string) => Promise<Goal>;
+  onCreateProject?: (title: string) => Promise<Project>;
+  onCreateNote?: (title: string) => Promise<Note>;
+  onGoalImmediateSave?: (goalIds: string[]) => Promise<void>;
+  onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
+  onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
 export default function AreaResourceEditModal({
@@ -31,6 +53,25 @@ export default function AreaResourceEditModal({
   onDelete,
   onItemChange,
   onItemTypeChange,
+  // 목표, 프로젝트, 노트 관련 props
+  goals = [],
+  projects = [],
+  notes = [],
+  linkedGoalIds = [],
+  linkedProjectIds = [],
+  linkedNoteIds = [],
+  onLinkedGoalsChange,
+  onLinkedProjectsChange,
+  onLinkedNotesChange,
+  onGoalClick,
+  onProjectClick,
+  onNoteClick,
+  onCreateGoal,
+  onCreateProject,
+  onCreateNote,
+  onGoalImmediateSave,
+  onProjectImmediateSave,
+  onNoteImmediateSave,
 }: AreaResourceEditModalProps) {
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
@@ -193,6 +234,46 @@ export default function AreaResourceEditModal({
                   </select>
                 </div>
               </div>
+
+              {/* 목표 섹션 */}
+              {onLinkedGoalsChange && (
+                <CollapsibleGoalSection
+                  selectedGoalIds={linkedGoalIds}
+                  allGoals={goals}
+                  onChange={onLinkedGoalsChange}
+                  onCreateGoal={onCreateGoal}
+                  onGoalClick={onGoalClick}
+                  areaResourceColor={editingItem.color}
+                  areaResourceId={editingItem.id}
+                  onImmediateSave={onGoalImmediateSave}
+                />
+              )}
+
+              {/* 프로젝트 섹션 */}
+              {onLinkedProjectsChange && (
+                <CollapsibleProjectSection
+                  selectedProjectIds={linkedProjectIds}
+                  allProjects={projects}
+                  onChange={onLinkedProjectsChange}
+                  onCreateProject={onCreateProject}
+                  onProjectClick={onProjectClick}
+                  todoColor={editingItem.color}
+                  onImmediateSave={onProjectImmediateSave}
+                />
+              )}
+
+              {/* 노트 섹션 */}
+              {onLinkedNotesChange && (
+                <CollapsibleNoteSection
+                  selectedNoteIds={linkedNoteIds}
+                  allNotes={notes}
+                  onChange={onLinkedNotesChange}
+                  onCreateNote={onCreateNote}
+                  onNoteClick={onNoteClick}
+                  todoColor={editingItem.color}
+                  onImmediateSave={onNoteImmediateSave}
+                />
+              )}
 
 {/* 고정하기 섹션 - 숨김 처리
               <div className="my-4">

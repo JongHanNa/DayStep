@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { Plus, Pencil, Lightbulb } from 'lucide-react';
-import type { CreateAreaResourceInput, AreaResource as Resource, CreateAreaInput } from '@/types/second-brain';
+import type { CreateAreaResourceInput, AreaResource as Resource, CreateAreaInput, Goal, Project, Note } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -34,6 +37,9 @@ export default function ResourcesPage() {
   const { appUser } = useAuth();
   const { createResource, updateResource, deleteResource, resources, fetchResources, archiveResource, unarchiveResource } = useResourceStore();
   const { createArea, deleteArea: deleteAreaFromStore } = useAreaStore();
+  const { goals, fetchGoals, createGoal, updateGoal } = useGoalStore();
+  const { projects, fetchProjects, createProject, updateProject } = useProjectStore();
+  const { notes, fetchNotes, createNote, updateNote } = useNoteStore();
   const { openModal, closeModal } = useModalStore();
 
   // 편집 관련 state
@@ -41,6 +47,11 @@ export default function ResourcesPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [itemType, setItemType] = useState<SecondBrainItemType>('resource');
   const [isCreatingResource, setIsCreatingResource] = useState(false);
+
+  // 연결된 목표, 프로젝트, 노트 ID 관리
+  const [linkedGoalIds, setLinkedGoalIds] = useState<string[]>([]);
+  const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
+  const [linkedNoteIds, setLinkedNoteIds] = useState<string[]>([]);
 
   // 삭제 확인 다이얼로그
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -58,8 +69,11 @@ export default function ResourcesPage() {
   useEffect(() => {
     if (appUser?.id) {
       fetchResources(appUser.id);
+      fetchGoals(appUser.id);
+      fetchProjects(appUser.id);
+      fetchNotes(appUser.id);
     }
-  }, [appUser?.id, fetchResources]);
+  }, [appUser?.id, fetchResources, fetchGoals, fetchProjects, fetchNotes]);
 
   // 편집 모달 상태 관리 (하단 네비 숨김)
   useEffect(() => {
@@ -109,6 +123,16 @@ export default function ResourcesPage() {
   const handleEditResource = (resource: Resource) => {
     setEditingResource({ ...resource, isNew: false });
     setItemType(resource.status === 'archived' ? 'archive' : 'resource');
+
+    // 연결된 목표, 프로젝트, 노트 ID 설정
+    const connectedGoals = goals.filter(g => g.area_id === resource.id || g.resource_id === resource.id);
+    const connectedProjects = projects.filter(p => p.area_resource_id === resource.id);
+    const connectedNotes = notes.filter(n => n.area_resource_id === resource.id);
+
+    setLinkedGoalIds(connectedGoals.map(g => g.id));
+    setLinkedProjectIds(connectedProjects.map(p => p.id));
+    setLinkedNoteIds(connectedNotes.map(n => n.id));
+
     setEditDialogOpen(true);
   };
 
@@ -256,6 +280,118 @@ export default function ResourcesPage() {
   const handleCancelDelete = () => {
     setDeleteConfirmOpen(false);
     setResourceToDelete(null);
+  };
+
+  // 목표 생성 핸들러
+  const handleCreateGoal = async (title: string): Promise<Goal> => {
+    if (!appUser?.id || !editingResource) throw new Error('인증 필요');
+    const newGoal = await createGoal(appUser.id, {
+      title,
+      status: 'not_started',
+      color: editingResource.color,
+      icon: 'lucide-Target',
+      resource_id: editingResource.id,
+    });
+    return newGoal;
+  };
+
+  // 프로젝트 생성 핸들러
+  const handleCreateProject = async (title: string): Promise<Project> => {
+    if (!appUser?.id || !editingResource) throw new Error('인증 필요');
+    const newProject = await createProject(appUser.id, {
+      title,
+      status: 'not_started',
+      color: editingResource.color,
+      icon: 'lucide-FolderKanban',
+      area_resource_id: editingResource.id,
+      order_index: projects.length,
+    });
+    return newProject;
+  };
+
+  // 노트 생성 핸들러
+  const handleCreateNote = async (title: string): Promise<Note> => {
+    if (!appUser?.id || !editingResource) throw new Error('인증 필요');
+    const newNote = await createNote(appUser.id, {
+      title,
+      content: '',
+      area_resource_id: editingResource.id,
+      is_pinned: false,
+      note_category: 'none',
+    });
+    return newNote;
+  };
+
+  // 목표 즉시 저장 핸들러
+  const handleGoalImmediateSave = async (goalIds: string[]) => {
+    if (!appUser?.id || !editingResource) return;
+
+    // 현재 자원에 연결된 목표들 가져오기
+    const currentGoals = goals.filter(g => g.area_id === editingResource.id || g.resource_id === editingResource.id);
+    const currentGoalIds = currentGoals.map(g => g.id);
+
+    // 추가된 목표
+    const addedIds = goalIds.filter(id => !currentGoalIds.includes(id));
+    // 제거된 목표
+    const removedIds = currentGoalIds.filter(id => !goalIds.includes(id));
+
+    // 추가된 목표 연결
+    for (const goalId of addedIds) {
+      await updateGoal(appUser.id, goalId, { resource_id: editingResource.id, area_id: undefined });
+    }
+
+    // 제거된 목표 연결 해제
+    for (const goalId of removedIds) {
+      await updateGoal(appUser.id, goalId, { resource_id: undefined, area_id: undefined });
+    }
+  };
+
+  // 프로젝트 즉시 저장 핸들러
+  const handleProjectImmediateSave = async (projectIds: string[]) => {
+    if (!appUser?.id || !editingResource) return;
+
+    // 현재 자원에 연결된 프로젝트들 가져오기
+    const currentProjects = projects.filter(p => p.area_resource_id === editingResource.id);
+    const currentProjectIds = currentProjects.map(p => p.id);
+
+    // 추가된 프로젝트
+    const addedIds = projectIds.filter(id => !currentProjectIds.includes(id));
+    // 제거된 프로젝트
+    const removedIds = currentProjectIds.filter(id => !projectIds.includes(id));
+
+    // 추가된 프로젝트 연결
+    for (const projectId of addedIds) {
+      await updateProject(appUser.id, projectId, { area_resource_id: editingResource.id });
+    }
+
+    // 제거된 프로젝트 연결 해제
+    for (const projectId of removedIds) {
+      await updateProject(appUser.id, projectId, { area_resource_id: undefined });
+    }
+  };
+
+  // 노트 즉시 저장 핸들러
+  const handleNoteImmediateSave = async (noteIds: string[]) => {
+    if (!appUser?.id || !editingResource) return;
+
+    // 현재 자원에 연결된 노트들 가져오기
+    const currentNotes = notes.filter(n => n.area_resource_id === editingResource.id);
+    const currentNoteIds = currentNotes.map(n => n.id);
+
+    // 추가된 노트
+    const addedIds = noteIds.filter(id => !currentNoteIds.includes(id));
+    // 제거된 노트
+    const removedIds = currentNoteIds.filter(id => !noteIds.includes(id));
+
+    // 추가된 노트 연결
+    for (const noteId of addedIds) {
+      await updateNote(appUser.id, noteId, { area_resource_id: editingResource.id });
+    }
+
+    // 제거된 노트 연결 해제
+    for (const noteId of removedIds) {
+      await updateNote(appUser.id, noteId, { area_resource_id: undefined });
+    }
   };
 
   // 추천 항목 추가 다이얼로그 열기
@@ -412,6 +548,22 @@ export default function ResourcesPage() {
         onDelete={handleDeleteFromModal}
         onItemChange={setEditingResource}
         onItemTypeChange={handleItemTypeChange}
+        // 목표, 프로젝트, 노트 관련 props
+        goals={goals}
+        projects={projects}
+        notes={notes}
+        linkedGoalIds={linkedGoalIds}
+        linkedProjectIds={linkedProjectIds}
+        linkedNoteIds={linkedNoteIds}
+        onLinkedGoalsChange={setLinkedGoalIds}
+        onLinkedProjectsChange={setLinkedProjectIds}
+        onLinkedNotesChange={setLinkedNoteIds}
+        onCreateGoal={handleCreateGoal}
+        onCreateProject={handleCreateProject}
+        onCreateNote={handleCreateNote}
+        onGoalImmediateSave={handleGoalImmediateSave}
+        onProjectImmediateSave={handleProjectImmediateSave}
+        onNoteImmediateSave={handleNoteImmediateSave}
       />
 
       {/* 삭제 확인 다이얼로그 */}

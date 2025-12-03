@@ -7,22 +7,24 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useInboxStore } from '@/state/stores/secondBrain/inboxStore';
 import { Archive } from 'lucide-react';
 import ArchiveSection from '@/components/second-brain/ArchiveSection';
 import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
 import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
-import type { Goal, Project, AreaResource } from '@/types/second-brain';
+import type { Goal, Project, AreaResource, Note } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 
 export default function ArchivePage() {
   const { appUser } = useAuth();
-  const { fetchArchivedGoals, updateGoal, deleteGoal } = useGoalStore();
-  const { fetchArchivedProjects, fetchProjects, updateProject, deleteProject, projects: storeProjects } = useProjectStore();
+  const { fetchArchivedGoals, updateGoal, deleteGoal, createGoal, goals: storeGoals, fetchGoals } = useGoalStore();
+  const { fetchArchivedProjects, fetchProjects, updateProject, deleteProject, createProject, projects: storeProjects } = useProjectStore();
   const { fetchArchivedAreasResources, fetchAreas, updateArea, deleteArea, areas } = useAreaStore();
   const { fetchResources, updateResource, deleteResource, resources } = useResourceStore();
+  const { notes: storeNotes, fetchNotes, createNote, updateNote } = useNoteStore();
   const { fetchInboxItems, inboxItems } = useInboxStore();
 
   // 경로 저장 (Capacitor 앱 복귀 시 마지막 페이지 복원용)
@@ -56,6 +58,11 @@ export default function ArchivePage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: 'goal' | 'project' | 'area-resource'; id: string; title: string } | null>(null);
 
+  // 연결된 목표, 프로젝트, 노트 ID 관리 (Area/Resource 편집용)
+  const [linkedGoalIds, setLinkedGoalIds] = useState<string[]>([]);
+  const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
+  const [linkedNoteIds, setLinkedNoteIds] = useState<string[]>([]);
+
   // 데이터 로드
   useEffect(() => {
     if (appUser?.id) {
@@ -86,12 +93,14 @@ export default function ArchivePage() {
       // 아카이브된 영역/자원 (단일 함수로 중복 없이 가져옴)
       setArchivedAreasResources(archivedItems);
 
-      // 할일 데이터, 모든 프로젝트, 영역, 자원 가져오기
+      // 할일 데이터, 모든 프로젝트, 영역, 자원, 목표, 노트 가져오기
       await Promise.all([
         fetchInboxItems(appUser.id),
         fetchProjects(appUser.id),
         fetchAreas(appUser.id),
         fetchResources(appUser.id),
+        fetchGoals(appUser.id),
+        fetchNotes(appUser.id),
       ]);
     } catch (error) {
       console.error('아카이브 데이터 로드 실패:', error);
@@ -217,6 +226,15 @@ export default function ArchivePage() {
 
     const pageType = isArea ? 'area' : 'resource';
 
+    // 연결된 목표, 프로젝트, 노트 ID 설정
+    const connectedGoals = storeGoals.filter(g => g.area_id === areaResource.id || g.resource_id === areaResource.id);
+    const connectedProjects = storeProjects.filter(p => p.area_resource_id === areaResource.id);
+    const connectedNotes = storeNotes.filter(n => n.area_resource_id === areaResource.id);
+
+    setLinkedGoalIds(connectedGoals.map(g => g.id));
+    setLinkedProjectIds(connectedProjects.map(p => p.id));
+    setLinkedNoteIds(connectedNotes.map(n => n.id));
+
     setEditingAreaResource({ ...areaResource, isNew: false });
     setAreaResourcePageType(pageType);
     setAreaResourceDialogOpen(true);
@@ -269,6 +287,111 @@ export default function ArchivePage() {
     setDeleteConfirmOpen(true);
     setAreaResourceDialogOpen(false);
     setEditingAreaResource(null);
+  };
+
+  // 목표 생성 핸들러 (Area/Resource에서 생성)
+  const handleCreateGoalForAreaResource = async (title: string): Promise<Goal> => {
+    if (!appUser?.id || !editingAreaResource) throw new Error('인증 필요');
+    const isArea = areaResourcePageType === 'area';
+    const newGoal = await createGoal(appUser.id, {
+      title,
+      status: 'not_started',
+      color: editingAreaResource.color,
+      icon: 'lucide-Target',
+      area_id: isArea ? editingAreaResource.id : undefined,
+      resource_id: !isArea ? editingAreaResource.id : undefined,
+    });
+    return newGoal;
+  };
+
+  // 프로젝트 생성 핸들러 (Area/Resource에서 생성)
+  const handleCreateProjectForAreaResource = async (title: string): Promise<Project> => {
+    if (!appUser?.id || !editingAreaResource) throw new Error('인증 필요');
+    const newProject = await createProject(appUser.id, {
+      title,
+      status: 'not_started',
+      color: editingAreaResource.color,
+      icon: 'lucide-FolderKanban',
+      area_resource_id: editingAreaResource.id,
+      order_index: storeProjects.length,
+    });
+    return newProject;
+  };
+
+  // 노트 생성 핸들러 (Area/Resource에서 생성)
+  const handleCreateNoteForAreaResource = async (title: string): Promise<Note> => {
+    if (!appUser?.id || !editingAreaResource) throw new Error('인증 필요');
+    const newNote = await createNote(appUser.id, {
+      title,
+      content: '',
+      area_resource_id: editingAreaResource.id,
+      is_pinned: false,
+      note_category: 'none',
+    });
+    return newNote;
+  };
+
+  // 목표 즉시 저장 핸들러
+  const handleGoalImmediateSave = async (goalIds: string[]) => {
+    if (!appUser?.id || !editingAreaResource) return;
+
+    const isArea = areaResourcePageType === 'area';
+    const currentGoals = storeGoals.filter(g =>
+      isArea ? g.area_id === editingAreaResource.id : g.resource_id === editingAreaResource.id
+    );
+    const currentGoalIds = currentGoals.map(g => g.id);
+
+    const addedIds = goalIds.filter(id => !currentGoalIds.includes(id));
+    const removedIds = currentGoalIds.filter(id => !goalIds.includes(id));
+
+    for (const goalId of addedIds) {
+      await updateGoal(appUser.id, goalId, isArea
+        ? { area_id: editingAreaResource.id, resource_id: undefined }
+        : { resource_id: editingAreaResource.id, area_id: undefined }
+      );
+    }
+
+    for (const goalId of removedIds) {
+      await updateGoal(appUser.id, goalId, { area_id: undefined, resource_id: undefined });
+    }
+  };
+
+  // 프로젝트 즉시 저장 핸들러
+  const handleProjectImmediateSave = async (projectIds: string[]) => {
+    if (!appUser?.id || !editingAreaResource) return;
+
+    const currentProjects = storeProjects.filter(p => p.area_resource_id === editingAreaResource.id);
+    const currentProjectIds = currentProjects.map(p => p.id);
+
+    const addedIds = projectIds.filter(id => !currentProjectIds.includes(id));
+    const removedIds = currentProjectIds.filter(id => !projectIds.includes(id));
+
+    for (const projectId of addedIds) {
+      await updateProject(appUser.id, projectId, { area_resource_id: editingAreaResource.id });
+    }
+
+    for (const projectId of removedIds) {
+      await updateProject(appUser.id, projectId, { area_resource_id: undefined });
+    }
+  };
+
+  // 노트 즉시 저장 핸들러
+  const handleNoteImmediateSave = async (noteIds: string[]) => {
+    if (!appUser?.id || !editingAreaResource) return;
+
+    const currentNotes = storeNotes.filter(n => n.area_resource_id === editingAreaResource.id);
+    const currentNoteIds = currentNotes.map(n => n.id);
+
+    const addedIds = noteIds.filter(id => !currentNoteIds.includes(id));
+    const removedIds = currentNoteIds.filter(id => !noteIds.includes(id));
+
+    for (const noteId of addedIds) {
+      await updateNote(appUser.id, noteId, { area_resource_id: editingAreaResource.id });
+    }
+
+    for (const noteId of removedIds) {
+      await updateNote(appUser.id, noteId, { area_resource_id: undefined });
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -498,6 +621,22 @@ export default function ArchivePage() {
             onItemTypeChange={(newType) => {
               // itemType 변경은 archive 고정이므로 무시
             }}
+            // 목표, 프로젝트, 노트 관련 props
+            goals={storeGoals}
+            projects={storeProjects}
+            notes={storeNotes}
+            linkedGoalIds={linkedGoalIds}
+            linkedProjectIds={linkedProjectIds}
+            linkedNoteIds={linkedNoteIds}
+            onLinkedGoalsChange={setLinkedGoalIds}
+            onLinkedProjectsChange={setLinkedProjectIds}
+            onLinkedNotesChange={setLinkedNoteIds}
+            onCreateGoal={handleCreateGoalForAreaResource}
+            onCreateProject={handleCreateProjectForAreaResource}
+            onCreateNote={handleCreateNoteForAreaResource}
+            onGoalImmediateSave={handleGoalImmediateSave}
+            onProjectImmediateSave={handleProjectImmediateSave}
+            onNoteImmediateSave={handleNoteImmediateSave}
           />
         )}
 

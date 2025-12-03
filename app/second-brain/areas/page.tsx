@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { Plus, Lightbulb, Pencil } from 'lucide-react';
-import type { CreateAreaInput, AreaResource as Area, CreateResourceInput } from '@/types/second-brain';
+import type { CreateAreaInput, AreaResource as Area, CreateResourceInput, Goal, Project, Note } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -35,6 +38,9 @@ export default function AreasPage() {
   const { appUser } = useAuth();
   const { createArea, updateArea, deleteArea, areas, fetchAreas, archiveArea, unarchiveArea } = useAreaStore();
   const { createResource, deleteResource: deleteResourceFromStore } = useResourceStore();
+  const { goals, fetchGoals, createGoal, updateGoal } = useGoalStore();
+  const { projects, fetchProjects, createProject, updateProject } = useProjectStore();
+  const { notes, fetchNotes, createNote, updateNote } = useNoteStore();
   const { openModal, closeModal } = useModalStore();
 
   // 편집 관련 state
@@ -51,6 +57,11 @@ export default function AreasPage() {
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
   const [selectedPresets, setSelectedPresets] = useState<AreaPreset[]>([]);
 
+  // 연결된 목표/프로젝트/노트 ID (로컬 상태)
+  const [linkedGoalIds, setLinkedGoalIds] = useState<string[]>([]);
+  const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
+  const [linkedNoteIds, setLinkedNoteIds] = useState<string[]>([]);
+
   // 📍 Capacitor: 마지막 방문 페이지 저장
   useEffect(() => {
     saveLastVisitedRoute('/second-brain/areas');
@@ -59,8 +70,11 @@ export default function AreasPage() {
   useEffect(() => {
     if (appUser?.id) {
       fetchAreas(appUser.id);
+      fetchGoals(appUser.id);
+      fetchProjects(appUser.id);
+      fetchNotes(appUser.id);
     }
-  }, [appUser?.id, fetchAreas]);
+  }, [appUser?.id, fetchAreas, fetchGoals, fetchProjects, fetchNotes]);
 
   // 편집 모달 상태 관리 (하단 네비 숨김)
   useEffect(() => {
@@ -110,6 +124,16 @@ export default function AreasPage() {
   const handleEditArea = (area: Area) => {
     setEditingArea({ ...area, isNew: false });
     setItemType(area.status === 'archived' ? 'archive' : 'area');
+
+    // 연결된 항목들 설정 (area_id 또는 resource_id로 연결 확인)
+    const connectedGoalIds = goals.filter(g => g.area_id === area.id || g.resource_id === area.id).map(g => g.id);
+    const connectedProjectIds = projects.filter(p => p.area_resource_id === area.id).map(p => p.id);
+    const connectedNoteIds = notes.filter(n => n.area_resource_id === area.id).map(n => n.id);
+
+    setLinkedGoalIds(connectedGoalIds);
+    setLinkedProjectIds(connectedProjectIds);
+    setLinkedNoteIds(connectedNoteIds);
+
     setEditDialogOpen(true);
   };
 
@@ -295,6 +319,113 @@ export default function AreasPage() {
     setSelectedPresets([]);
   };
 
+  // 목표 생성 핸들러
+  const handleCreateGoal = async (title: string): Promise<Goal> => {
+    if (!appUser?.id || !editingArea) throw new Error('인증 필요');
+
+    const newGoal = await createGoal(appUser.id, {
+      title,
+      icon: 'lucide-Target',
+      color: editingArea.color,
+      status: 'not_started',
+      area_id: editingArea.id, // area로 연결
+    });
+    return newGoal;
+  };
+
+  // 프로젝트 생성 핸들러
+  const handleCreateProject = async (title: string): Promise<Project> => {
+    if (!appUser?.id || !editingArea) throw new Error('인증 필요');
+
+    const newProject = await createProject(appUser.id, {
+      title,
+      icon: 'lucide-FolderOpen',
+      color: editingArea.color,
+      status: 'not_started',
+      area_resource_id: editingArea.id,
+      order_index: projects.length,
+    });
+    return newProject;
+  };
+
+  // 노트 생성 핸들러
+  const handleCreateNote = async (title: string): Promise<Note> => {
+    if (!appUser?.id || !editingArea) throw new Error('인증 필요');
+
+    const newNote = await createNote(appUser.id, {
+      title,
+      content: '',
+      area_resource_id: editingArea.id,
+      is_pinned: false,
+      note_category: 'none',
+    });
+    return newNote;
+  };
+
+  // 목표 연결 즉시 저장
+  const handleGoalImmediateSave = async (goalIds: string[]) => {
+    if (!appUser?.id || !editingArea) return;
+
+    // 현재 연결된 목표들 가져오기 (area_id 또는 resource_id로 연결 확인)
+    const currentLinkedGoals = goals.filter(g => g.area_id === editingArea.id || g.resource_id === editingArea.id);
+
+    // 새로 연결할 목표들
+    const goalsToLink = goalIds.filter(id => !currentLinkedGoals.some(g => g.id === id));
+    // 연결 해제할 목표들
+    const goalsToUnlink = currentLinkedGoals.filter(g => !goalIds.includes(g.id));
+
+    // 연결 (area_id로 설정)
+    for (const goalId of goalsToLink) {
+      await updateGoal(appUser.id, goalId, { area_id: editingArea.id });
+    }
+
+    // 연결 해제
+    for (const goal of goalsToUnlink) {
+      await updateGoal(appUser.id, goal.id, { area_id: undefined, resource_id: undefined });
+    }
+
+    // 데이터 새로고침
+    await fetchGoals(appUser.id);
+  };
+
+  // 프로젝트 연결 즉시 저장
+  const handleProjectImmediateSave = async (projectIds: string[]) => {
+    if (!appUser?.id || !editingArea) return;
+
+    const currentLinkedProjects = projects.filter(p => p.area_resource_id === editingArea.id);
+    const projectsToLink = projectIds.filter(id => !currentLinkedProjects.some(p => p.id === id));
+    const projectsToUnlink = currentLinkedProjects.filter(p => !projectIds.includes(p.id));
+
+    for (const projectId of projectsToLink) {
+      await updateProject(appUser.id, projectId, { area_resource_id: editingArea.id });
+    }
+
+    for (const project of projectsToUnlink) {
+      await updateProject(appUser.id, project.id, { area_resource_id: undefined });
+    }
+
+    await fetchProjects(appUser.id);
+  };
+
+  // 노트 연결 즉시 저장
+  const handleNoteImmediateSave = async (noteIds: string[]) => {
+    if (!appUser?.id || !editingArea) return;
+
+    const currentLinkedNotes = notes.filter(n => n.area_resource_id === editingArea.id);
+    const notesToLink = noteIds.filter(id => !currentLinkedNotes.some(n => n.id === id));
+    const notesToUnlink = currentLinkedNotes.filter(n => !noteIds.includes(n.id));
+
+    for (const noteId of notesToLink) {
+      await updateNote(appUser.id, noteId, { area_resource_id: editingArea.id });
+    }
+
+    for (const note of notesToUnlink) {
+      await updateNote(appUser.id, note.id, { area_resource_id: undefined });
+    }
+
+    await fetchNotes(appUser.id);
+  };
+
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-base-200 pb-20">
@@ -398,6 +529,22 @@ export default function AreasPage() {
         onDelete={handleDeleteFromModal}
         onItemChange={setEditingArea}
         onItemTypeChange={handleItemTypeChange}
+        // 목표, 프로젝트, 노트 props
+        goals={goals}
+        projects={projects}
+        notes={notes}
+        linkedGoalIds={linkedGoalIds}
+        linkedProjectIds={linkedProjectIds}
+        linkedNoteIds={linkedNoteIds}
+        onLinkedGoalsChange={setLinkedGoalIds}
+        onLinkedProjectsChange={setLinkedProjectIds}
+        onLinkedNotesChange={setLinkedNoteIds}
+        onCreateGoal={handleCreateGoal}
+        onCreateProject={handleCreateProject}
+        onCreateNote={handleCreateNote}
+        onGoalImmediateSave={handleGoalImmediateSave}
+        onProjectImmediateSave={handleProjectImmediateSave}
+        onNoteImmediateSave={handleNoteImmediateSave}
       />
 
       {/* 삭제 확인 다이얼로그 */}
