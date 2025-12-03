@@ -32,9 +32,7 @@
     {
       "files": ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
       "rules": {
-        "no-console": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-non-null-assertion": "off"
+        "no-console": "off"
       }
     },
     {
@@ -53,8 +51,7 @@
     {
       "files": ["scripts/**/*", "*.config.{js,ts}"],
       "rules": {
-        "no-console": "off",
-        "@typescript-eslint/no-var-requires": "off"
+        "no-console": "off"
       }
     }
   ]

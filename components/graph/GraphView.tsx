@@ -78,7 +78,6 @@ export default function GraphView() {
   const deleteTodo = useTodoStore((state) => state.deleteTodo);
 
   // Entity Todo를 database Todo 형식으로 변환 (NoteEditModal용)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const todos = entityTodos.map(todo => todo.toDatabase() as any);
 
   const { projects, createProject, updateProject, deleteProject } = useProjectStore();
@@ -374,7 +373,6 @@ export default function GraphView() {
     }
     incrementCount('todo');
     // Database Todo 형식으로 반환 (NoteEditModal 타입 호환)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return newEntityTodo.toDatabase() as any;
   }, [userId, createTodo, canCreate, incrementCount]);
 

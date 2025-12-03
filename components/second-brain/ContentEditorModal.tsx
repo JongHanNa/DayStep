@@ -37,7 +37,6 @@ export default function ContentEditorModal({
   open,
   content,
   onClose,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSave,
   onChange,
   placeholder = '내용을 입력하세요..',
