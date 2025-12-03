@@ -464,9 +464,7 @@ export default function GoalCompassPage() {
 
   // 1. 진행 중인 목표
   const ongoingGoals = useMemo(() => {
-    return goals.filter(
-      (goal) => goal.status !== 'completed' && goal.status !== 'paused'
-    );
+    return goals.filter((goal) => goal.status === 'in_progress');
   }, [goals]);
 
   // 진행 중인 목표 - 분기별 그룹화
@@ -520,7 +518,7 @@ export default function GoalCompassPage() {
   // 2. 진행 중인 프로젝트 (종료일이 설정된 것만)
   const ongoingProjects = useMemo(() => {
     return projects.filter(
-      (project) => project.end_date && project.status !== 'completed'
+      (project) => project.end_date && project.status === 'in_progress'
     );
   }, [projects]);
 
