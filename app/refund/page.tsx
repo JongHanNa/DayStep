@@ -165,17 +165,7 @@ export default function RefundPage() {
           <p className="text-gray-600 mb-4">환불을 요청하시려면 다음 방법 중 하나를 이용해 주세요.</p>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
-            방법 1: 서비스 내 환불 요청
-          </h3>
-          <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
-            <li>DayStep 앱 또는 웹에서 로그인</li>
-            <li>설정 → 구독 관리로 이동</li>
-            <li>&quot;환불 요청&quot; 버튼 클릭</li>
-            <li>환불 사유 선택 및 제출</li>
-          </ol>
-
-          <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
-            방법 2: 이메일 환불 요청
+            방법 1: 이메일 환불 요청
           </h3>
           <p className="text-gray-600 mb-2">
             아래 정보와 함께 <strong>skwhdgks@gmail.com</strong>으로 이메일을
@@ -188,7 +178,7 @@ export default function RefundPage() {
           </ul>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
-            방법 3: Paddle 고객 지원
+            방법 2: Paddle 고객 지원
           </h3>
           <p className="text-gray-600">
             결제 관련 문의는 Paddle 고객 지원을 통해서도 가능합니다. 결제 시
@@ -314,17 +304,36 @@ export default function RefundPage() {
           </h2>
           <p className="text-gray-600 mb-4">
             환불을 원하지 않고 다음 결제만 방지하고 싶으신 경우, 구독을 취소하실 수
-            있습니다.
+            있습니다. 결제 플랫폼에 따라 취소 방법이 다릅니다.
           </p>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
-            구독 취소 방법
+            웹에서 결제한 경우 (Paddle)
           </h3>
           <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
-            <li>DayStep 앱 또는 웹에서 로그인</li>
-            <li>설정 → 구독 관리로 이동</li>
-            <li>&quot;구독 취소&quot; 버튼 클릭</li>
-            <li>취소 확인</li>
+            <li>결제 시 수신한 영수증 이메일 확인</li>
+            <li>&quot;Manage Subscription&quot; 링크 클릭</li>
+            <li>Paddle 고객 포털에서 구독 취소</li>
+          </ol>
+
+          <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
+            iOS 앱에서 결제한 경우
+          </h3>
+          <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
+            <li>iPhone 설정 앱 열기</li>
+            <li>상단의 Apple ID 탭</li>
+            <li>구독 → DayStep 선택</li>
+            <li>구독 취소</li>
+          </ol>
+
+          <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
+            Android 앱에서 결제한 경우
+          </h3>
+          <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
+            <li>Google Play 스토어 앱 열기</li>
+            <li>프로필 아이콘 → 결제 및 구독</li>
+            <li>구독 → DayStep 선택</li>
+            <li>구독 취소</li>
           </ol>
 
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
