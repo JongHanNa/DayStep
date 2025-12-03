@@ -174,7 +174,7 @@ function GoalCard({ goal, onClick }: GoalCardProps) {
             </div>
             <div className="w-full rounded-full h-1.5 bg-base-200">
               <div
-                className="h-full rounded-full transition-all bg-base-content/30"
+                className="h-full rounded-full transition-all bg-warning"
                 style={{ width: `${periodProgress}%` }}
               />
             </div>
@@ -307,7 +307,7 @@ function ProjectCard({ project, showGoalName = false, goals = [], onClick }: Pro
             </div>
             <div className="w-full rounded-full h-1.5 bg-base-200">
               <div
-                className="h-full rounded-full transition-all bg-base-content/30"
+                className="h-full rounded-full transition-all bg-warning"
                 style={{ width: `${periodProgress}%` }}
               />
             </div>
