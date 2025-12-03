@@ -710,13 +710,13 @@ export default function GoalCompassPage() {
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
                 label="분기별"
-                count={ongoingGoals.length}
+                count={Object.values(ongoingGoalsByQuarter).flat().length}
                 isActive={ongoingGoalsTab === 'quarter'}
                 onClick={() => setOngoingGoalsTab('quarter')}
               />
               <TabButton
                 label="연간"
-                count={ongoingGoals.length}
+                count={Object.values(ongoingGoalsByYear).flat().length}
                 isActive={ongoingGoalsTab === 'year'}
                 onClick={() => setOngoingGoalsTab('year')}
               />
@@ -766,19 +766,19 @@ export default function GoalCompassPage() {
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
                 label="목표별"
-                count={ongoingProjects.length}
+                count={Object.values(ongoingProjectsByGoal).flat().length}
                 isActive={ongoingProjectsTab === 'goal'}
                 onClick={() => setOngoingProjectsTab('goal')}
               />
               <TabButton
                 label="월별"
-                count={ongoingProjects.length}
+                count={Object.values(ongoingProjectsByMonth).flat().length}
                 isActive={ongoingProjectsTab === 'month'}
                 onClick={() => setOngoingProjectsTab('month')}
               />
               <TabButton
                 label="주별"
-                count={ongoingProjects.length}
+                count={Object.values(ongoingProjectsByWeek).flat().length}
                 isActive={ongoingProjectsTab === 'week'}
                 onClick={() => setOngoingProjectsTab('week')}
               />
@@ -845,7 +845,7 @@ export default function GoalCompassPage() {
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
                 label="월별"
-                count={completedGoals.length}
+                count={Object.values(completedGoalsByMonth).flat().length}
                 isActive={true}
                 onClick={() => {}}
               />
@@ -874,13 +874,13 @@ export default function GoalCompassPage() {
             <div className="tabs tabs-boxed inline-flex mb-4">
               <TabButton
                 label="목표별"
-                count={completedProjects.length}
+                count={Object.values(completedProjectsByGoal).flat().length}
                 isActive={completedProjectsTab === 'goal'}
                 onClick={() => setCompletedProjectsTab('goal')}
               />
               <TabButton
                 label="월별"
-                count={completedProjects.length}
+                count={Object.values(completedProjectsByMonth).flat().length}
                 isActive={completedProjectsTab === 'month'}
                 onClick={() => setCompletedProjectsTab('month')}
               />
