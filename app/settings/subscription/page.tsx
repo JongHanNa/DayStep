@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Crown, RefreshCw, Calendar, AlertCircle, Wrench, XCircle, CheckCircle, Globe, CreditCard } from 'lucide-react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,40 @@ import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import { toast } from 'sonner';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { devCancelSubscription, devActivateSubscription } from '@/lib/supabase/subscription';
+
+// Paddle 설정
+const PADDLE_CONFIG = {
+  clientToken: 'live_f3f52a96a4d916a1382ee66aaa1',
+  environment: 'production' as const,
+  prices: {
+    monthly: 'pri_01kbgwtw6fdknst82vxc9sjg3s',
+    yearly: 'pri_01kbgx1kbjmtw96e0fkjg46j1r',
+  },
+};
+
+// Paddle 타입 선언
+declare global {
+  interface Window {
+    Paddle?: {
+      Environment: {
+        set: (env: 'sandbox' | 'production') => void;
+      };
+      Setup: (config: { token: string }) => void;
+      Checkout: {
+        open: (options: {
+          items: Array<{ priceId: string; quantity: number }>;
+          customData?: Record<string, any>;
+          settings?: {
+            displayMode?: 'overlay' | 'inline';
+            theme?: 'light' | 'dark';
+            locale?: string;
+            successUrl?: string;
+          };
+        }) => void;
+      };
+    };
+  }
+}
 
 export default function SubscriptionPage() {
   const router = useRouter();
@@ -34,9 +69,72 @@ export default function SubscriptionPage() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [isDevCancelling, setIsDevCancelling] = useState(false);
   const [isDevActivating, setIsDevActivating] = useState(false);
+  const [isPaddleReady, setIsPaddleReady] = useState(false);
+  const [isPaddleLoading, setIsPaddleLoading] = useState(false);
 
   // 개발 환경 여부
   const isDevelopment = process.env.NODE_ENV === 'development';
+
+  // Paddle 초기화
+  const initializePaddle = useCallback(() => {
+    if (window.Paddle && !isPaddleReady) {
+      try {
+        window.Paddle.Environment.set(PADDLE_CONFIG.environment);
+        window.Paddle.Setup({ token: PADDLE_CONFIG.clientToken });
+        setIsPaddleReady(true);
+        console.log('Paddle initialized successfully');
+      } catch (error) {
+        console.error('Paddle initialization error:', error);
+      }
+    }
+  }, [isPaddleReady]);
+
+  // Paddle Checkout 열기
+  const openPaddleCheckout = useCallback((plan: 'monthly' | 'yearly') => {
+    if (!window.Paddle) {
+      toast.error('결제 시스템을 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    setIsPaddleLoading(true);
+
+    try {
+      const priceId = PADDLE_CONFIG.prices[plan];
+
+      window.Paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customData: {
+          app_user_id: user.id,
+        },
+        settings: {
+          displayMode: 'overlay',
+          theme: 'light',
+          locale: 'ko',
+          successUrl: `${window.location.origin}/settings/subscription?success=true`,
+        },
+      });
+    } catch (error) {
+      console.error('Paddle checkout error:', error);
+      toast.error('결제 창을 열 수 없습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsPaddleLoading(false);
+    }
+  }, [user?.id]);
+
+  // 결제 성공 처리
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      toast.success('결제가 완료되었습니다! 구독이 곧 활성화됩니다.');
+      // URL에서 success 파라미터 제거
+      router.replace('/settings/subscription');
+    }
+  }, [router]);
 
   // 경로 저장
   useEffect(() => {
@@ -249,7 +347,7 @@ export default function SubscriptionPage() {
         </Card>
       )}
 
-      {/* 웹에서 구독하기 */}
+      {/* 웹에서 구독하기 (Paddle) */}
       {!isNative && !hasActiveSubscription && (
         <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
           <CardContent className="pt-6 space-y-4">
@@ -263,13 +361,36 @@ export default function SubscriptionPage() {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => window.open('https://pay.rev.cat/mlbejsuwbyayjgrq/', '_blank')}
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
-            >
-              <CreditCard className="w-4 h-4 mr-2" />
-              웹에서 Pro 구독하기
-            </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={() => openPaddleCheckout('monthly')}
+                disabled={isPaddleLoading || !isPaddleReady}
+                variant="outline"
+                className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900"
+              >
+                {isPaddleLoading ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <CreditCard className="w-4 h-4 mr-2" />
+                )}
+                월간 ₩1,100
+              </Button>
+              <Button
+                onClick={() => openPaddleCheckout('yearly')}
+                disabled={isPaddleLoading || !isPaddleReady}
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white"
+              >
+                {isPaddleLoading ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <CreditCard className="w-4 h-4 mr-2" />
+                )}
+                연간 ₩9,900
+              </Button>
+            </div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
+              연간 구독 시 25% 할인 (월 ₩825)
+            </p>
           </CardContent>
         </Card>
       )}
@@ -428,6 +549,18 @@ export default function SubscriptionPage() {
           에 동의하는 것으로 간주됩니다.
         </p>
       </div>
+
+      {/* Paddle.js 스크립트 로드 (웹에서만) */}
+      {!isNative && (
+        <Script
+          src="https://cdn.paddle.com/paddle/v2/paddle.js"
+          strategy="afterInteractive"
+          onLoad={initializePaddle}
+          onError={(e) => {
+            console.error('Paddle.js load error:', e);
+          }}
+        />
+      )}
     </div>
   );
 }

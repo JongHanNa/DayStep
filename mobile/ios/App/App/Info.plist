@@ -34,14 +34,6 @@
           <string>com.daystep.app</string>
         </array>
       </dict>
-      <dict>
-        <key>CFBundleURLName</key>
-        <string>RevenueCatRedemption</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>rc-fc3b432dc6</string>
-        </array>
-      </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
