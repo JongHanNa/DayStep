@@ -11,6 +11,7 @@ import {
   updateProjectWithJWT,
   deleteProjectWithJWT,
 } from '@/lib/supabase/projects';
+import { queryRLSTableWithJWT } from '@/lib/supabase/core';
 
 interface ProjectStoreState {
   projects: Project[];
@@ -43,13 +44,34 @@ export const useProjectStore = createStore<ProjectStoreState>(
 
         const projects = await fetchProjectsWithJWT(userId);
 
-        // 진행도 필드 추가 (프론트엔드에서만 계산, DB에 저장 안 함)
-        const projectsWithProgress = projects.map((p) => ({
-          ...p,
-          total_todos: 0,
-          completed_todos: 0,
-          progress: 0,
-        }));
+        // project_todo_stats에서 할일 통계 조회
+        const stats = await queryRLSTableWithJWT('project_todo_stats', [
+          { column: 'user_id', operator: 'eq', value: userId }
+        ]);
+
+        // 통계 타입 정의
+        interface ProjectTodoStat {
+          project_id: string;
+          total_todos: number;
+          completed_todos: number;
+          completion_rate: string;
+        }
+
+        // 통계를 Map으로 변환 (project_id → stats)
+        const statsMap = new Map<string, ProjectTodoStat>(
+          (stats || []).map((s: ProjectTodoStat) => [s.project_id, s])
+        );
+
+        // 프로젝트에 실제 통계 병합
+        const projectsWithProgress = projects.map((p) => {
+          const stat = statsMap.get(p.id);
+          return {
+            ...p,
+            total_todos: stat?.total_todos || 0,
+            completed_todos: stat?.completed_todos || 0,
+            progress: stat?.completion_rate ? parseFloat(stat.completion_rate) : 0,
+          };
+        });
 
         set({ projects: projectsWithProgress, loading: false });
       } catch (error) {
@@ -63,15 +85,37 @@ export const useProjectStore = createStore<ProjectStoreState>(
     fetchArchivedProjects: async (userId: string) => {
       try {
         const allProjects = await fetchProjectsWithJWT(userId);
+
+        // project_todo_stats에서 할일 통계 조회
+        const stats = await queryRLSTableWithJWT('project_todo_stats', [
+          { column: 'user_id', operator: 'eq', value: userId }
+        ]);
+
+        // 통계 타입 정의
+        interface ProjectTodoStat {
+          project_id: string;
+          total_todos: number;
+          completed_todos: number;
+          completion_rate: string;
+        }
+
+        // 통계를 Map으로 변환
+        const statsMap = new Map<string, ProjectTodoStat>(
+          (stats || []).map((s: ProjectTodoStat) => [s.project_id, s])
+        );
+
         // status가 'paused' 또는 'completed'인 프로젝트만 필터링
         const archivedProjects = allProjects
           .filter((project: Project) => project.status === 'paused' || project.status === 'completed')
-          .map((p) => ({
-            ...p,
-            total_todos: 0,
-            completed_todos: 0,
-            progress: 0,
-          }));
+          .map((p) => {
+            const stat = statsMap.get(p.id);
+            return {
+              ...p,
+              total_todos: stat?.total_todos || 0,
+              completed_todos: stat?.completed_todos || 0,
+              progress: stat?.completion_rate ? parseFloat(stat.completion_rate) : 0,
+            };
+          });
         return archivedProjects;
       } catch (error) {
         set({
