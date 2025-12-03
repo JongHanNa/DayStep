@@ -115,7 +115,7 @@ function GoalCard({ goal, onClick }: GoalCardProps) {
       }}
       role="button"
       tabIndex={0}
-      className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3"
+      className="flex flex-col p-4 bg-base-100 hover:bg-base-300 transition-colors cursor-pointer rounded-lg mb-3"
     >
       <div className="flex items-start gap-3 mb-3">
         <div
@@ -172,7 +172,7 @@ function GoalCard({ goal, onClick }: GoalCardProps) {
               <span>기간 경과율</span>
               <span className="font-medium">{periodProgress}%</span>
             </div>
-            <div className="w-full rounded-full h-1.5 bg-base-300">
+            <div className="w-full rounded-full h-1.5 bg-base-200">
               <div
                 className="h-full rounded-full transition-all bg-base-content/30"
                 style={{ width: `${periodProgress}%` }}
@@ -234,7 +234,7 @@ function ProjectCard({ project, showGoalName = false, goals = [], onClick }: Pro
       }}
       role="button"
       tabIndex={0}
-      className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer rounded-lg mb-3"
+      className="flex flex-col p-4 bg-base-100 hover:bg-base-300 transition-colors cursor-pointer rounded-lg mb-3"
     >
       <div className="flex items-start gap-3 mb-3">
         <div
@@ -305,7 +305,7 @@ function ProjectCard({ project, showGoalName = false, goals = [], onClick }: Pro
               <span>기간 경과율</span>
               <span className="font-medium">{periodProgress}%</span>
             </div>
-            <div className="w-full rounded-full h-1.5 bg-base-300">
+            <div className="w-full rounded-full h-1.5 bg-base-200">
               <div
                 className="h-full rounded-full transition-all bg-base-content/30"
                 style={{ width: `${periodProgress}%` }}
