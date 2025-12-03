@@ -100,6 +100,7 @@ export default function GraphView() {
 
   // Goal 편집 상태
   const [editingGoalData, setEditingGoalData] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   // Area/Resource 편집 상태
   const [editingAreaResourceData, setEditingAreaResourceData] = useState<(AreaResource & { isNew?: boolean }) | null>(null);
@@ -156,6 +157,67 @@ export default function GraphView() {
       openEditModal(node);
     }
   }, [closeActionMenu, openEditModal, handleNoteEdit]);
+
+  // 프로젝트 추가 핸들러 (GoalEditDialog 내에서 호출)
+  const handleAddProjectInGoal = useCallback(async () => {
+    if (!editingNode || editingNode.type !== 'goal' || !userId) return;
+
+    setIsCreatingProject(true);
+    try {
+      await createProject(userId, {
+        title: '새 프로젝트',
+        icon: 'lucide-FolderOpen',
+        color: '#A8DADC',
+        status: 'not_started',
+        goal_id: editingNode.id,
+        order_index: projects.length,
+      });
+      refetch();
+    } catch (error) {
+      console.error('프로젝트 생성 실패:', error);
+      alert('프로젝트 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingProject(false);
+    }
+  }, [editingNode, userId, createProject, projects.length, refetch]);
+
+  // 프로젝트 편집 핸들러 (GoalEditDialog 내에서 호출)
+  const handleEditProjectInGoal = useCallback((project: Project) => {
+    let paraSelection = '';
+    if (project.goal_id) {
+      paraSelection = `goal-${project.goal_id}`;
+    }
+    setEditingProjectData({ ...project, paraSelection, isNew: false });
+    // GoalEditDialog를 닫고 ProjectEditDialog 열기
+    closeEditModal();
+    // 약간의 지연 후 프로젝트 편집 모달 열기
+    setTimeout(() => {
+      const projectNode: GraphNode = {
+        id: project.id,
+        type: 'project',
+        title: project.title,
+        color: project.color,
+        icon: project.icon || null,
+        originalData: project,
+      };
+      openEditModal(projectNode);
+    }, 100);
+  }, [closeEditModal, openEditModal]);
+
+  // 프로젝트 삭제 핸들러 (GoalEditDialog 내에서 호출)
+  const handleDeleteProjectInGoal = useCallback(async (project: Project) => {
+    if (!userId) return;
+
+    if (confirm('정말로 이 프로젝트를 삭제하시겠습니까?')) {
+      try {
+        await deleteProject(userId, project.id);
+        refetch();
+      } catch (error) {
+        console.error('프로젝트 삭제 실패:', error);
+        alert('프로젝트 삭제에 실패했습니다.');
+      }
+    }
+  }, [userId, deleteProject, refetch]);
 
   // 통합 삭제 핸들러 (모든 노드 타입)
   const handleNodeDelete = useCallback(async (node: GraphNode) => {
@@ -686,6 +748,10 @@ export default function GraphView() {
                 refetch();
               }}
               onGoalChange={(goal) => setEditingGoalData(goal)}
+              onAddProject={handleAddProjectInGoal}
+              onEditProject={handleEditProjectInGoal}
+              onDeleteProject={handleDeleteProjectInGoal}
+              isCreatingProject={isCreatingProject}
             />
           )}
 

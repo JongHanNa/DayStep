@@ -330,7 +330,7 @@ function EmptyState({ message }: { message: string }) {
 export default function GoalCompassPage() {
   const { user, appUser } = useAuth();
   const { goals, fetchGoals, updateGoal, deleteGoal } = useGoalStore();
-  const { projects, fetchProjects, updateProject, deleteProject } = useProjectStore();
+  const { projects, fetchProjects, createProject, updateProject, deleteProject } = useProjectStore();
   const { areas, fetchAreas } = useAreaStore();
   const { resources, fetchResources } = useResourceStore();
 
@@ -350,6 +350,7 @@ export default function GoalCompassPage() {
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<(Goal & { paraSelection?: string; isNew?: boolean }) | null>(null);
   const [editingProject, setEditingProject] = useState<(Project & { paraSelection?: string; isNew?: boolean }) | null>(null);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   // 데이터 페칭
   useEffect(() => {
@@ -373,6 +374,66 @@ export default function GoalCompassPage() {
 
     setEditingGoal({ ...goal, paraSelection, isNew: false });
     setGoalDialogOpen(true);
+  };
+
+  // 프로젝트 추가 핸들러 (GoalEditDialog 내에서 호출)
+  const handleAddProject = async () => {
+    if (!editingGoal || editingGoal.isNew) {
+      alert('먼저 목표를 저장해주세요.');
+      return;
+    }
+
+    if (isCreatingProject || !appUser?.id) return;
+
+    setIsCreatingProject(true);
+    try {
+      await createProject(appUser.id, {
+        title: '새 프로젝트',
+        icon: 'lucide-FolderOpen',
+        color: '#A8DADC',
+        status: 'not_started',
+        goal_id: editingGoal.id,
+        order_index: projects.length,
+      });
+    } catch (error) {
+      console.error('프로젝트 생성 실패:', error);
+      alert('프로젝트 생성에 실패했습니다.');
+    } finally {
+      setIsCreatingProject(false);
+    }
+  };
+
+  // 프로젝트 편집 핸들러 (GoalEditDialog 내에서 호출)
+  const handleEditProject = (project: Project) => {
+    let paraSelection = '';
+    if (project.goal_id) {
+      paraSelection = `goal-${project.goal_id}`;
+    }
+    if (project.area_resource_id) {
+      const isArea = areas.some(a => a.id === project.area_resource_id);
+      const isResource = resources.some(r => r.id === project.area_resource_id);
+      if (isArea) {
+        paraSelection = `area-${project.area_resource_id}`;
+      } else if (isResource) {
+        paraSelection = `resource-${project.area_resource_id}`;
+      }
+    }
+    setEditingProject({ ...project, paraSelection, isNew: false });
+    setProjectDialogOpen(true);
+  };
+
+  // 프로젝트 삭제 핸들러 (GoalEditDialog 내에서 호출)
+  const handleDeleteProject = async (project: Project) => {
+    if (!appUser?.id) return;
+
+    if (confirm('정말로 이 프로젝트를 삭제하시겠습니까?')) {
+      try {
+        await deleteProject(appUser.id, project.id);
+      } catch (error) {
+        console.error('프로젝트 삭제 실패:', error);
+        alert('프로젝트 삭제에 실패했습니다.');
+      }
+    }
   };
 
   // 프로젝트 클릭 핸들러
@@ -908,6 +969,10 @@ export default function GoalCompassPage() {
             onGoalChange={(goal) => {
               setEditingGoal(goal);
             }}
+            onAddProject={handleAddProject}
+            onEditProject={handleEditProject}
+            onDeleteProject={handleDeleteProject}
+            isCreatingProject={isCreatingProject}
           />
         )}
 
