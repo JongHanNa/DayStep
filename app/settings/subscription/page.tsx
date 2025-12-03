@@ -443,29 +443,44 @@ export default function SubscriptionPage() {
       )}
 
       {/* 구독 관리 링크 (활성 구독자만) */}
-      {hasActiveSubscription && subscriptionInfo?.platform && (
+      {hasActiveSubscription && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">구독 관리</CardTitle>
             <CardDescription>
-              구독을 취소하거나 결제 정보를 변경하려면 앱스토어에서 관리하세요
+              구독을 취소하거나 결제 정보를 변경하세요
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                if (subscriptionInfo.platform === 'ios') {
-                  window.open('https://apps.apple.com/account/subscriptions', '_blank');
-                } else if (subscriptionInfo.platform === 'android') {
-                  window.open('https://play.google.com/store/account/subscriptions', '_blank');
-                }
-              }}
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              {subscriptionInfo.platform === 'ios' ? 'App Store' : 'Play Store'}에서 관리
-            </Button>
+          <CardContent className="space-y-4">
+            {/* iOS/Android 구독자 */}
+            {subscriptionInfo?.platform && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  if (subscriptionInfo.platform === 'ios') {
+                    window.open('https://apps.apple.com/account/subscriptions', '_blank');
+                  } else if (subscriptionInfo.platform === 'android') {
+                    window.open('https://play.google.com/store/account/subscriptions', '_blank');
+                  }
+                }}
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                {subscriptionInfo.platform === 'ios' ? 'App Store' : 'Play Store'}에서 관리
+              </Button>
+            )}
+
+            {/* 웹(Paddle) 구독자 - platform 없음 */}
+            {!subscriptionInfo?.platform && (
+              <div className="text-sm text-muted-foreground space-y-2">
+                <p className="font-medium text-foreground">웹에서 결제하셨다면:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>결제 시 수신한 영수증 이메일 확인</li>
+                  <li>&quot;Manage Subscription&quot; 링크 클릭</li>
+                  <li>Paddle 고객 포털에서 구독 관리</li>
+                </ol>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
