@@ -298,6 +298,12 @@ export default function RefundPage() {
             <li>
               구독 기간의 80% 이상 경과 후 환불 요청하는 경우 (14일 이내 제외)
             </li>
+            <li>
+              <strong>이전에 환불을 받은 적이 있는 경우 (1인 1회 제한)</strong>
+            </li>
+            <li>
+              <strong>동일인이 반복적으로 구독 및 환불을 요청하는 경우</strong>
+            </li>
           </ul>
         </section>
 
