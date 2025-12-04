@@ -8,6 +8,7 @@ import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFiel
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
+import RecurringDeleteDialog from '@/components/todos/RecurringDeleteDialog';
 import { useModalStore } from '@/state/stores/modalStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -20,7 +21,8 @@ interface TodoEditModalProps {
   onClose: () => void;
   onSave: (todo: TodoFormData) => void;
   onChange: (todo: TodoFormData) => void;
-  onDelete?: () => void; // 삭제 핸들러 추가
+  onDelete?: () => void; // 일반 삭제 핸들러
+  onRecurringDelete?: (deleteType: 'this' | 'future' | 'all') => void; // 반복 삭제 핸들러
   // 선택적 props (수집 페이지 등에서 사용)
   projects?: Project[];
   notes?: Note[];
@@ -58,6 +60,7 @@ export default function TodoEditModal({
   onSave,
   onChange,
   onDelete,
+  onRecurringDelete,
   projects,
   notes,
   areas = [],
@@ -109,6 +112,8 @@ export default function TodoEditModal({
 
   // 삭제 확인 다이얼로그 상태
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // 반복 삭제 다이얼로그 상태
+  const [showRecurringDeleteDialog, setShowRecurringDeleteDialog] = useState(false);
 
   // 노트 편집 모달 상태
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -225,9 +230,17 @@ export default function TodoEditModal({
           </button>
           <h3 className="text-lg font-semibold">{headerTitle}</h3>
           <div className="flex gap-2">
-            {onDelete && (
+            {(onDelete || onRecurringDelete) && (
               <button
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => {
+                  // 반복 할일인지 확인
+                  const isRecurring = todo?.recurrencePattern && todo.recurrencePattern !== 'none';
+                  if (isRecurring && onRecurringDelete) {
+                    setShowRecurringDeleteDialog(true);
+                  } else {
+                    setShowDeleteConfirm(true);
+                  }
+                }}
                 className="btn btn-ghost btn-sm text-error rounded-full"
               >
                 삭제
@@ -328,7 +341,7 @@ export default function TodoEditModal({
         />
       )}
 
-      {/* 삭제 확인 다이얼로그 */}
+      {/* 삭제 확인 다이얼로그 (일반 할일) */}
       {showDeleteConfirm && (
         <dialog open className="modal modal-open z-[120]">
           <div className="modal-box bg-base-100 max-w-sm">
@@ -356,6 +369,25 @@ export default function TodoEditModal({
           </div>
           <div className="modal-backdrop bg-black/50" onClick={() => setShowDeleteConfirm(false)} />
         </dialog>
+      )}
+
+      {/* 반복 할일 삭제 다이얼로그 */}
+      {showRecurringDeleteDialog && todo && (
+        <RecurringDeleteDialog
+          isOpen={showRecurringDeleteDialog}
+          onClose={() => setShowRecurringDeleteDialog(false)}
+          onConfirm={async (deleteType) => {
+            setShowRecurringDeleteDialog(false);
+            onClose();
+            onRecurringDelete?.(deleteType);
+          }}
+          todo={{
+            id: todoId || '',
+            title: todo.title,
+            recurrence_pattern: todo.recurrencePattern,
+          } as any}
+          isDeleting={false}
+        />
       )}
     </dialog>
   );

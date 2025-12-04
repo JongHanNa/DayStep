@@ -38,6 +38,7 @@ export const BubbleTimelineView: React.FC = () => {
   const toggleTodo = useTodoStore(state => state.toggleTodo);
   const toggleRecurrenceCompletion = useTodoStore(state => state.toggleRecurrenceCompletion);
   const deleteTodo = useTodoStore(state => state.deleteTodo);
+  const deleteRecurringTodo = useTodoStore(state => state.deleteRecurringTodo);
   const createTodo = useTodoStore(state => state.createTodo);
   const todos = useTodoStore(state => state.todos);
   const currentTime = useCurrentTime();
@@ -643,8 +644,12 @@ export const BubbleTimelineView: React.FC = () => {
       recurrenceCount: dbTodo.recurrence_count,
       selectedDaysOfWeek: dbTodo.recurrence_days_of_week || [],
 
-      // 반복 할일 원본 날짜 (편집 시 표시용) - start_time 사용
-      originalStartDate: dbTodo.start_time ? new Date(dbTodo.start_time) : undefined,
+      // 반복 할일 원본 날짜 (편집 시 표시용)
+      // 반복 인스턴스인 경우: _instanceInfo.originalStartDate (원본 할일의 시작 날짜)
+      // 일반 할일인 경우: start_time 사용
+      originalStartDate: dbTodo._instanceInfo?.originalStartDate
+        ? new Date(dbTodo._instanceInfo.originalStartDate)
+        : (dbTodo.start_time ? new Date(dbTodo.start_time) : undefined),
       // 반복 인스턴스 여부 (날짜 필드 잠금용)
       isRecurrenceInstance: !!dbTodo._instanceInfo,
     };
@@ -703,19 +708,41 @@ export const BubbleTimelineView: React.FC = () => {
     }
   }, [originalTodoId, updateTodo]);
 
-  // 할일 삭제 핸들러
-  const handleDeleteTodo = useCallback(async () => {
+  // 할일 삭제 핸들러 (일반 삭제 및 반복 삭제 모두 지원)
+  const handleDeleteTodo = useCallback(async (deleteType?: 'this' | 'future' | 'all') => {
     if (!originalTodoId) return;
 
     try {
-      await deleteTodo(originalTodoId);
+      if (deleteType) {
+        // 반복 삭제인 경우
+        // 현재 편집 중인 할일의 인스턴스 날짜 추출
+        const editingTodo = editingTodoForm;
+        let excludedDate: string | undefined;
+
+        if (deleteType === 'this' && editingTodo?.scheduledDate) {
+          // scheduledDate는 Date 객체이므로 직접 사용
+          const scheduledDate = editingTodo.scheduledDate instanceof Date
+            ? editingTodo.scheduledDate
+            : new Date(editingTodo.scheduledDate);
+
+          if (!isNaN(scheduledDate.getTime())) {
+            excludedDate = scheduledDate.toISOString().split('T')[0];
+          }
+        }
+
+        await deleteRecurringTodo(originalTodoId, deleteType, excludedDate);
+      } else {
+        // 일반 삭제
+        await deleteTodo(originalTodoId);
+      }
+
       setIsEditModalOpen(false);
       setEditingTodoForm(null);
       setOriginalTodoId(null);
     } catch (error) {
       console.error('할일 삭제 실패:', error);
     }
-  }, [originalTodoId, deleteTodo]);
+  }, [originalTodoId, deleteTodo, deleteRecurringTodo, editingTodoForm]);
 
   // 빈 폼 데이터 초기화 (FloatingActionButton과 동일)
   const getEmptyTodoForm = useCallback((scheduledDate?: Date): TodoFormData => ({
@@ -1078,7 +1105,9 @@ export const BubbleTimelineView: React.FC = () => {
                               instanceId: timelineItem.id,
                               instanceDate: (timelineItem.data as any).recurrence_occurrence_date,
                               startTime: timelineItem.startTime,
-                              endTime: timelineItem.endTime
+                              endTime: timelineItem.endTime,
+                              // 원본 반복 할일의 시작 날짜 (편집 모달 표시용)
+                              originalStartDate: originalTodo.start_time || originalTodo.startTime
                             }
                           };
 
@@ -1230,7 +1259,9 @@ export const BubbleTimelineView: React.FC = () => {
         }}
         onSave={handleEditSave}
         onChange={setEditingTodoForm}
-        onDelete={handleDeleteTodo}
+        onDelete={() => handleDeleteTodo()}
+        onRecurringDelete={(deleteType) => handleDeleteTodo(deleteType)}
+        todoId={originalTodoId || undefined}
         projects={projects}
         areas={areas}
         resources={resources}
