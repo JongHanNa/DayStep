@@ -1059,14 +1059,13 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       {/* 드래그 중 시간 표시 (fixed position으로 항상 위에 표시) */}
       {isDragging && bubbleFixedPosition && displayStartTime && (
         <div
-          className="text-xs font-semibold whitespace-nowrap text-gray-700 dark:text-gray-300"
+          className="text-xs font-semibold whitespace-nowrap text-gray-700 dark:text-gray-200 bg-white/95 dark:bg-gray-800/95"
           style={{
             position: 'fixed',
             left: `${bubbleFixedPosition.centerX}px`,
             top: `${bubbleFixedPosition.top - bubbleHeight / 2 - 30}px`,
             transform: 'translateX(-50%)',
             zIndex: 100,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
             padding: '4px 10px',
             borderRadius: '6px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -1078,14 +1077,13 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
       {isDragging && bubbleFixedPosition && displayEndTime && (
         <div
-          className="text-xs font-semibold whitespace-nowrap text-gray-700 dark:text-gray-300"
+          className="text-xs font-semibold whitespace-nowrap text-gray-700 dark:text-gray-200 bg-white/95 dark:bg-gray-800/95"
           style={{
             position: 'fixed',
             left: `${bubbleFixedPosition.centerX}px`,
             top: `${bubbleFixedPosition.top + bubbleHeight / 2 + 8}px`,
             transform: 'translateX(-50%)',
             zIndex: 100,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
             padding: '4px 10px',
             borderRadius: '6px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
