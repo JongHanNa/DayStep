@@ -19,9 +19,12 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import { Capacitor } from '@capacitor/core';
 import { TimelineItem } from '@/types';
 import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+
+const isCapacitor = Capacitor.isNativePlatform();
 
 interface TimelineDndProviderProps {
   children: React.ReactNode;
@@ -40,16 +43,18 @@ export const TimelineDndProvider: React.FC<TimelineDndProviderProps> = ({ childr
   const updateTodo = useTodoStore(state => state.updateTodo);
 
   // Configure sensors for better touch and keyboard support
+  // 프로젝트 편집 모달(useDndKit.ts)과 동일한 민감도로 설정
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Minimum drag distance before activation
+        delay: 300, // 300ms 꾹 누르기 필요 (기존: distance: 8)
+        tolerance: 5,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250, // 250ms delay for touch to avoid scroll conflicts
-        tolerance: 5,
+        delay: isCapacitor ? 400 : 300, // Capacitor: 400ms, 웹: 300ms (기존: 250ms)
+        tolerance: isCapacitor ? 8 : 5, // Capacitor: 8px, 웹: 5px (WebView 좌표 오차 보정)
       },
     }),
     useSensor(KeyboardSensor, {
