@@ -13,7 +13,10 @@ import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { useAuth } from '@/app/context/AuthContext';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
+import LastInstanceDeleteDialog from '@/components/todos/LastInstanceDeleteDialog';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { calculateRemainingInstances } from '@/lib/recurrence-utils';
+import { queryTodoExclusionsWithJWT } from '@/lib/supabaseWebViewHelper';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { format } from 'date-fns';
@@ -97,6 +100,14 @@ export const BubbleTimelineView: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTodoForm, setEditingTodoForm] = useState<TodoFormData | null>(null);
   const [originalTodoId, setOriginalTodoId] = useState<string | null>(null);
+
+  // 마지막 인스턴스 삭제 다이얼로그 상태
+  const [showLastInstanceDialog, setShowLastInstanceDialog] = useState(false);
+  const [lastInstanceInfo, setLastInstanceInfo] = useState<{
+    todoId: string;
+    todoTitle: string;
+  } | null>(null);
+  const [isLastInstanceDeleting, setIsLastInstanceDeleting] = useState(false);
 
   // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
@@ -728,6 +739,60 @@ export const BubbleTimelineView: React.FC = () => {
           if (!isNaN(scheduledDate.getTime())) {
             excludedDate = scheduledDate.toISOString().split('T')[0];
           }
+
+          // 마지막 인스턴스인지 확인 (무한 반복이 아닌 경우에만)
+          const originalTodo = todos.find(t => t.id === originalTodoId);
+          if (originalTodo && user?.id) {
+            // 종료 유형 추론: count 또는 end_date가 있으면 유한 반복
+            const hasEndDate = !!originalTodo.recurrenceEndDate;
+            const hasCount = !!originalTodo.recurrenceCount;
+            const isFiniteRecurrence = hasEndDate || hasCount;
+
+            // 유한 반복인 경우에만 마지막 인스턴스 확인
+            if (isFiniteRecurrence) {
+              try {
+                // 기존 제외된 날짜 조회
+                const exclusions = await queryTodoExclusionsWithJWT(originalTodoId, user.id);
+                const excludedDates = Array.isArray(exclusions)
+                  ? exclusions.map((e: string | { excluded_date: string }) =>
+                      typeof e === 'string' ? e : e.excluded_date)
+                  : [];
+
+                // 남은 인스턴스 수 계산 (null을 undefined로 변환)
+                const todoForCalc = {
+                  recurrencePattern: originalTodo.recurrencePattern,
+                  recurrenceEndDate: originalTodo.recurrenceEndDate,
+                  recurrenceCount: originalTodo.recurrenceCount ?? undefined,
+                  recurrenceInterval: originalTodo.recurrenceInterval ?? undefined,
+                  recurrenceDaysOfWeek: originalTodo.recurrenceDaysOfWeek ?? undefined,
+                  startTime: originalTodo.startTime,
+                };
+                const remainingCount = calculateRemainingInstances(todoForCalc, excludedDates);
+
+                console.log('🔍 [마지막 인스턴스 확인]', {
+                  todoId: originalTodoId,
+                  remainingCount,
+                  excludedDates,
+                  hasEndDate,
+                  hasCount
+                });
+
+                // 남은 인스턴스가 1개면 (현재 삭제하려는 것이 마지막)
+                if (remainingCount === 1) {
+                  // 마지막 인스턴스 삭제 다이얼로그 표시
+                  setLastInstanceInfo({
+                    todoId: originalTodoId,
+                    todoTitle: originalTodo.title
+                  });
+                  setShowLastInstanceDialog(true);
+                  return; // 다이얼로그에서 확인 후 삭제 진행
+                }
+              } catch (error) {
+                console.error('마지막 인스턴스 확인 실패:', error);
+                // 확인 실패 시 기존 로직으로 진행
+              }
+            }
+          }
         }
 
         await deleteRecurringTodo(originalTodoId, deleteType, excludedDate);
@@ -742,7 +807,30 @@ export const BubbleTimelineView: React.FC = () => {
     } catch (error) {
       console.error('할일 삭제 실패:', error);
     }
-  }, [originalTodoId, deleteTodo, deleteRecurringTodo, editingTodoForm]);
+  }, [originalTodoId, deleteTodo, deleteRecurringTodo, editingTodoForm, todos, user?.id]);
+
+  // 마지막 인스턴스 삭제 확인 핸들러
+  const handleLastInstanceConfirm = useCallback(async () => {
+    if (!lastInstanceInfo) return;
+
+    try {
+      setIsLastInstanceDeleting(true);
+
+      // 원본 할일 완전 삭제 (관련 데이터도 cascade로 삭제됨)
+      await deleteTodo(lastInstanceInfo.todoId);
+
+      // 상태 정리
+      setShowLastInstanceDialog(false);
+      setLastInstanceInfo(null);
+      setIsEditModalOpen(false);
+      setEditingTodoForm(null);
+      setOriginalTodoId(null);
+    } catch (error) {
+      console.error('마지막 인스턴스 삭제 실패:', error);
+    } finally {
+      setIsLastInstanceDeleting(false);
+    }
+  }, [lastInstanceInfo, deleteTodo]);
 
   // 빈 폼 데이터 초기화 (FloatingActionButton과 동일)
   const getEmptyTodoForm = useCallback((scheduledDate?: Date): TodoFormData => ({
@@ -1201,6 +1289,18 @@ export const BubbleTimelineView: React.FC = () => {
           newTime={recurringUpdateDialog.data.newTime}
         />
       )}
+
+      {/* 마지막 인스턴스 삭제 확인 다이얼로그 */}
+      <LastInstanceDeleteDialog
+        isOpen={showLastInstanceDialog}
+        onClose={() => {
+          setShowLastInstanceDialog(false);
+          setLastInstanceInfo(null);
+        }}
+        onConfirm={handleLastInstanceConfirm}
+        todoTitle={lastInstanceInfo?.todoTitle || ''}
+        isDeleting={isLastInstanceDeleting}
+      />
 
       {/* 드래그 프리뷰 카드 (손가락 따라다님) */}
       {isDragging && draggedItemId && (

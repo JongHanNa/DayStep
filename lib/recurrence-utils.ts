@@ -444,3 +444,127 @@ export function parseCompletionDate(dateString: string): Date {
   const date = new Date(dateString + 'T00:00:00');
   return startOfDay(date);
 }
+
+/**
+ * 두 날짜 사이의 반복 인스턴스 수 계산
+ * @param startDate 시작 날짜
+ * @param endDate 종료 날짜
+ * @param pattern 반복 패턴 (daily, weekly, monthly)
+ * @param interval 반복 간격 (기본값: 1)
+ * @param daysOfWeek 주간 반복 시 요일 배열 (0=일, 1=월, ...)
+ * @returns 총 인스턴스 수
+ */
+export function calculateInstancesBetweenDates(
+  startDate: Date,
+  endDate: Date,
+  pattern: string,
+  interval: number = 1,
+  daysOfWeek?: number[]
+): number {
+  if (startDate > endDate) return 0;
+
+  const start = startOfDay(startDate);
+  const end = startOfDay(endDate);
+  const diffDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+  switch (pattern) {
+    case 'daily':
+      // 매일 반복: (종료일 - 시작일) / 간격 + 1
+      return Math.floor(diffDays / interval) + 1;
+
+    case 'weekly':
+      if (daysOfWeek && daysOfWeek.length > 0) {
+        // 특정 요일만 반복: 해당 요일 수 계산
+        let count = 0;
+        const current = new Date(start);
+        while (current <= end) {
+          if (daysOfWeek.includes(current.getDay())) {
+            count++;
+          }
+          current.setDate(current.getDate() + 1);
+        }
+        // 간격 적용 (매주 = interval 1, 2주마다 = interval 2)
+        if (interval > 1) {
+          return Math.ceil(count / interval);
+        }
+        return count;
+      } else {
+        // 주간 반복 (간격 적용)
+        const diffWeeks = Math.floor(diffDays / 7);
+        return Math.floor(diffWeeks / interval) + 1;
+      }
+
+    case 'monthly':
+      // 월간 반복: 월 차이 계산
+      const startYear = start.getFullYear();
+      const startMonth = start.getMonth();
+      const endYear = end.getFullYear();
+      const endMonth = end.getMonth();
+      const diffMonths = (endYear - startYear) * 12 + (endMonth - startMonth);
+      return Math.floor(diffMonths / interval) + 1;
+
+    default:
+      return 0;
+  }
+}
+
+/**
+ * 반복 할일의 남은 인스턴스 수 계산
+ * @param todo 반복 할일 정보
+ * @param excludedDates 제외된 날짜 목록 (YYYY-MM-DD 형식)
+ * @returns 남은 인스턴스 수 (무한 반복인 경우 -1)
+ */
+export function calculateRemainingInstances(
+  todo: {
+    recurrence_pattern?: string;
+    recurrencePattern?: string;
+    recurrence_end_date?: Date | string | null;
+    recurrenceEndDate?: Date | string | null;
+    recurrence_count?: number | null;
+    recurrenceCount?: number | null;
+    recurrence_interval?: number;
+    recurrenceInterval?: number;
+    recurrence_days_of_week?: number[];
+    recurrenceDaysOfWeek?: number[];
+    start_time?: Date | string | null;
+    startTime?: Date | string | null;
+  },
+  excludedDates: string[]
+): number {
+  // 패턴 추출 (camelCase와 snake_case 모두 지원)
+  const pattern = todo.recurrence_pattern || todo.recurrencePattern;
+  if (!pattern || pattern === 'none') {
+    return 0;
+  }
+
+  const endDate = todo.recurrence_end_date || todo.recurrenceEndDate;
+  const count = todo.recurrence_count || todo.recurrenceCount;
+  const startTime = todo.start_time || todo.startTime;
+
+  // 종료일과 횟수가 모두 없으면 무한 반복
+  if (!endDate && !count) {
+    return -1; // 무한 반복
+  }
+
+  let totalInstances = 0;
+
+  if (count) {
+    // 횟수 기반 종료
+    totalInstances = count;
+  } else if (endDate && startTime) {
+    // 날짜 기반 종료
+    const interval = todo.recurrence_interval || todo.recurrenceInterval || 1;
+    const daysOfWeek = todo.recurrence_days_of_week || todo.recurrenceDaysOfWeek;
+
+    totalInstances = calculateInstancesBetweenDates(
+      new Date(startTime),
+      new Date(endDate),
+      pattern,
+      interval,
+      daysOfWeek
+    );
+  }
+
+  // 남은 인스턴스 = 전체 - 제외된 날짜
+  return Math.max(0, totalInstances - excludedDates.length);
+}
