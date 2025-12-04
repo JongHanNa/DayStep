@@ -69,6 +69,15 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         finalDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       }
 
+      // end_time 처리: endDate + endTime 결합하여 ISO 타임스탬프 생성
+      let finalEndDateTime: string | undefined;
+      if (formData.scheduleType === 'timed' && formData.endTime && formData.endDate) {
+        const [endHours, endMinutes] = formData.endTime.split(':');
+        const endDateTime = new Date(formData.endDate);
+        endDateTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+        finalEndDateTime = endDateTime.toISOString();
+      }
+
       // createTodo 호출
       await createTodo({
         user_id: user.id,
@@ -76,7 +85,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         clarification: formData.clarification as Clarification | undefined,
         schedule_type: formData.scheduleType || 'anytime',
         start_time: finalDateTime?.toISOString(),
-        end_time: formData.endTime,
+        end_time: finalEndDateTime,
         is_today_highlight: formData.isHighlight,
         completed: formData.completed,
         project_ids: formData.projectIds,
