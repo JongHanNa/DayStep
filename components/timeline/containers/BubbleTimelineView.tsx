@@ -365,15 +365,31 @@ export const BubbleTimelineView: React.FC = () => {
       savedScrollPositionRef.current = timelineContainer.scrollTop;
     }
 
-    // ✅ 초기 위치만 저장 (타이머는 handleDragMove에서 시작)
+    // ✅ 초기 위치 저장
     setDragStartY(clientY);
     setInitialTouch({ x: clientX, y: clientY });
     setDraggedItemId(itemId);
 
+    // ✅ 300ms 타이머 즉시 시작 (움직이지 않아도 프리뷰 표시)
+    const timer = setTimeout(() => {
+      setIsDragging(true);
+      setDragCurrentY(clientY);
+      setDragCurrentX(clientX);
+
+      // 🔒 완전한 스크롤 차단 활성화
+      enableScrollLock();
+
+      // 햅틱 피드백
+      if ('vibrate' in navigator) {
+        navigator.vibrate([50, 30, 50]);
+      }
+    }, 300);
+    setLongPressTimer(timer);
+
     // ⚡ NOTE: preventDefault는 BubbleTimelineItem에서 DOM 레벨로 처리
     // React synthetic events는 Chrome DevTools 모바일 모드에서 passive로 처리되어
     // preventDefault()가 무시되므로, 직접 DOM listener를 사용
-  }, []);
+  }, [enableScrollLock]);
 
   // 드래그 이동 (터치/마우스 통합)
   const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
@@ -387,34 +403,6 @@ export const BubbleTimelineView: React.FC = () => {
 
       // 🎯 자동 스크롤 경계 체크
       checkAutoScroll(clientY);
-    } else if (initialTouch && !longPressTimer && draggedItemId) {
-      // ✅ 정지 상태 확인: 50px 이상 움직였으면 스크롤로 간주 (리스트뷰와 동일)
-      const deltaX = Math.abs(clientX - initialTouch.x);
-      const deltaY = Math.abs(clientY - initialTouch.y);
-
-      if (deltaX > 50 || deltaY > 50) {
-        // 스크롤로 간주하고 초기화
-        setInitialTouch(null);
-        setDraggedItemId(null);
-        return;
-      }
-
-      // ✅ 정지 상태 유지 중 → 300ms 타이머 시작 (리스트뷰와 동일)
-      const timer = setTimeout(() => {
-        setIsDragging(true);
-        setDragCurrentY(clientY); // 드래그 시작 시 현재 위치로 설정
-        setDragCurrentX(clientX); // X 좌표도 설정
-
-        // 🔒 완전한 스크롤 차단 활성화 (리스트뷰와 동일)
-        enableScrollLock();
-
-        // 햅틱 피드백
-        if ('vibrate' in navigator) {
-          navigator.vibrate([50, 30, 50]);
-        }
-      }, 300);
-
-      setLongPressTimer(timer);
     } else if (longPressTimer && initialTouch) {
       // ✅ 타이머 진행 중 50px 이상 움직이면 취소 (리스트뷰와 동일)
       const deltaX = Math.abs(clientX - initialTouch.x);
@@ -427,7 +415,7 @@ export const BubbleTimelineView: React.FC = () => {
         setDraggedItemId(null);
       }
     }
-  }, [isDragging, draggedItemId, initialTouch, longPressTimer, enableScrollLock, checkAutoScroll]);
+  }, [isDragging, draggedItemId, initialTouch, longPressTimer, checkAutoScroll]);
 
   // 드래그 종료 (터치/마우스 통합)
   const handleDragEnd = useCallback(async () => {
