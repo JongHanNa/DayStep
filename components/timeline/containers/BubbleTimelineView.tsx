@@ -70,6 +70,9 @@ export const BubbleTimelineView: React.FC = () => {
   // 🎯 스크롤 컨테이너 ref
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // 드래그 종료 시간 ref (onClick 방지용 - React 배치 업데이트 우회)
+  const lastDragEndTimeRef = useRef(0);
+
   // 반복 할일 업데이트 다이얼로그 상태
   const [recurringUpdateDialog, setRecurringUpdateDialog] = useState<{
     open: boolean;
@@ -414,6 +417,9 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 드래그 종료 (터치/마우스 통합)
   const handleDragEnd = useCallback(async () => {
+    // 드래그 종료 시간 기록 (onClick 방지용 - React 배치 업데이트 우회)
+    lastDragEndTimeRef.current = Date.now();
+
     // 타이머가 있으면 취소
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -767,6 +773,7 @@ export const BubbleTimelineView: React.FC = () => {
                 dragOffset={isDragging && draggedItemId === item.id ? dragCurrentY - dragStartY : 0}
                 scrollOffset={isDragging && draggedItemId === item.id ? scrollAccumulatedRef.current : 0}
                 dragCurrentY={isDragging && draggedItemId === item.id ? dragCurrentY : undefined}
+                lastDragEndTime={lastDragEndTimeRef.current}
                 isToday={isToday}
                 currentTime={currentTime}
                 currentDate={currentDate}

@@ -29,6 +29,7 @@ interface BubbleTimelineItemProps {
   dragOffset: number;
   scrollOffset?: number; // 자동 스크롤 보정용
   dragCurrentY?: number; // ✅ 드래그 중 손가락 Y 좌표 (프리뷰 카드와 동일)
+  lastDragEndTime: number; // 드래그 종료 시간 (onClick 방지용)
   isToday: boolean;
   currentTime: Date;
   currentDate: Date;  // viewing date (어제/오늘/내일 등)
@@ -61,6 +62,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   dragOffset,
   scrollOffset = 0, // 자동 스크롤 보정용 (기본값 0)
   dragCurrentY, // ✅ 드래그 중 손가락 Y 좌표
+  lastDragEndTime, // 드래그 종료 시간 (onClick 방지용)
   isToday,
   currentTime,
   currentDate,  // viewing date (어제/오늘/내일 등)
@@ -764,6 +766,11 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
           !isDragging && process.env.BUILD_TARGET === 'web' && 'hover:shadow-[0_0_12px_rgba(0,0,0,0.1)] rounded-lg'
         )}
         onClick={(e) => {
+          // 드래그 직후 100ms 이내 클릭 무시 (React 배치 업데이트 우회)
+          const isDragJustEnded = Date.now() - lastDragEndTime < 100;
+          if (isDragJustEnded || isDragging) {
+            return;
+          }
           // 체크박스 클릭이 아닐 때만 할일 수정 모달 열기
           const target = e.target as HTMLElement;
           if (!target.closest('.completion-checkbox')) {
