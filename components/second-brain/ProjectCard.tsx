@@ -41,7 +41,7 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
     <div className="relative overflow-hidden rounded-lg">
       <div
         onClick={handleClick}
-        className="flex flex-col p-4 bg-base-100 hover:bg-base-200 transition-colors cursor-pointer group"
+        className="flex flex-col p-4 bg-base-100 hover:bg-base-300 transition-colors cursor-pointer group"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
