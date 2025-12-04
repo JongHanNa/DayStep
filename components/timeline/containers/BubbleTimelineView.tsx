@@ -631,7 +631,12 @@ export const BubbleTimelineView: React.FC = () => {
       // 반복 설정 매핑
       recurrencePattern: dbTodo.recurrence_pattern || 'none',
       recurrenceInterval: dbTodo.recurrence_interval || 1,
-      recurrenceEndType: dbTodo.recurrence_end_type || 'never',
+      // recurrenceEndType은 DB에 없으므로 recurrence_end_date, recurrence_count로 유추
+      recurrenceEndType: dbTodo.recurrence_end_date
+        ? 'date'
+        : dbTodo.recurrence_count
+          ? 'count'
+          : 'never',
       recurrenceEndDate: dbTodo.recurrence_end_date
         ? new Date(dbTodo.recurrence_end_date)
         : undefined,
