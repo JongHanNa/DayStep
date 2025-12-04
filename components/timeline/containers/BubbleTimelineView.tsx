@@ -439,8 +439,8 @@ export const BubbleTimelineView: React.FC = () => {
       const deltaY = dragCurrentY - dragStartY;
       const minutesChange = Math.round(deltaY);
 
-      // ✅ 최소 드래그 거리 체크: 5px 미만이면 모달 표시 안 함
-      if (Math.abs(deltaY) < 5) {
+      // ✅ 최소 드래그 거리 체크: 1px 미만이면 모달 표시 안 함 (1분 이상 이동 시 모달 열림)
+      if (Math.abs(deltaY) < 1) {
         // 실제 드래그 없음 → 상태만 초기화하고 모달 안 띄움
         setIsDragging(false);
         setDraggedItemId(null);
