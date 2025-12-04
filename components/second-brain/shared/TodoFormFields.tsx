@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, Repeat } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
 import type { RecurrencePattern, NextActionContextItem } from '@/types';
@@ -57,6 +58,7 @@ export interface TodoFormData {
 
   // 반복 할일 원본 정보
   originalCreatedDate?: Date; // 할일 원본 생성 날짜 (반복 할일 편집 시 표시용)
+  isRecurrenceInstance?: boolean; // 반복 인스턴스 여부 (날짜 잠금용)
 }
 
 interface TodoFormFieldsProps {
@@ -153,6 +155,50 @@ export default function TodoFormFields({
     delayBetweenTexts: 2000,
     loop: true
   });
+
+  // 시간 문자열을 분 단위로 변환
+  const timeToMinutes = useCallback((time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  }, []);
+
+  // 시간 간격 검증 (최대 23시간 59분 = 1439분)
+  const validateTimeGap = useCallback((startTime: string, endTime: string): boolean => {
+    const startMinutes = timeToMinutes(startTime);
+    let endMinutes = timeToMinutes(endTime);
+
+    // 종료 시간이 시작 시간보다 작으면 다음날로 계산
+    if (endMinutes < startMinutes) {
+      endMinutes += 24 * 60; // 1440분 추가
+    }
+
+    const gap = endMinutes - startMinutes;
+    return gap <= 23 * 60 + 59; // 1439분 이하
+  }, [timeToMinutes]);
+
+  // 시작 시간 변경 핸들러 (간격 검증 포함)
+  const handleStartTimeChange = useCallback((newStartTime: string) => {
+    // 반복 인스턴스이고 종료 시간이 있는 경우 간격 검증
+    if (todo.isRecurrenceInstance && todo.endTime) {
+      if (!validateTimeGap(newStartTime, todo.endTime)) {
+        toast.error('시작~종료 시간 간격은 최대 23시간 59분입니다');
+        return; // 변경 취소
+      }
+    }
+    onChange({ ...todo, startTime: newStartTime });
+  }, [todo, onChange, validateTimeGap]);
+
+  // 종료 시간 변경 핸들러 (간격 검증 포함)
+  const handleEndTimeChange = useCallback((newEndTime: string) => {
+    // 반복 인스턴스이고 시작 시간이 있는 경우 간격 검증
+    if (todo.isRecurrenceInstance && todo.startTime) {
+      if (!validateTimeGap(todo.startTime, newEndTime)) {
+        toast.error('시작~종료 시간 간격은 최대 23시간 59분입니다');
+        return; // 변경 취소
+      }
+    }
+    onChange({ ...todo, endTime: newEndTime });
+  }, [todo, onChange, validateTimeGap]);
 
   // 아이콘 브라우저 모달
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
@@ -405,6 +451,9 @@ export default function TodoFormFields({
             <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
               <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
               날짜
+              {todo.isRecurrenceInstance && (
+                <span className="text-xs text-info font-normal">(반복 인스턴스)</span>
+              )}
             </label>
 
             <input
@@ -416,7 +465,8 @@ export default function TodoFormFields({
                   scheduledDate: e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined,
                 })
               }
-              className="input input-bordered w-full bg-base-100"
+              disabled={todo.isRecurrenceInstance}
+              className={`input input-bordered w-full bg-base-100 ${todo.isRecurrenceInstance ? 'opacity-60 cursor-not-allowed' : ''}`}
             />
           </div>
 
@@ -431,7 +481,7 @@ export default function TodoFormFields({
               <input
                 type="time"
                 value={todo.startTime || '09:00'}
-                onChange={(e) => onChange({ ...todo, startTime: e.target.value })}
+                onChange={(e) => handleStartTimeChange(e.target.value)}
                 className="input input-bordered w-full bg-base-100"
               />
             </div>
@@ -444,6 +494,9 @@ export default function TodoFormFields({
                 <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
                   <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
                   종료 날짜
+                  {todo.isRecurrenceInstance && (
+                    <span className="text-xs text-info font-normal">(반복 인스턴스)</span>
+                  )}
                 </label>
 
                 <input
@@ -455,7 +508,8 @@ export default function TodoFormFields({
                       endDate: e.target.value ? new Date(e.target.value) : undefined,
                     })
                   }
-                  className="input input-bordered w-full bg-base-100"
+                  disabled={todo.isRecurrenceInstance}
+                  className={`input input-bordered w-full bg-base-100 ${todo.isRecurrenceInstance ? 'opacity-60 cursor-not-allowed' : ''}`}
                 />
               </div>
 
@@ -470,7 +524,7 @@ export default function TodoFormFields({
                   <input
                     type="time"
                     value={todo.endTime || '18:00'}
-                    onChange={(e) => onChange({ ...todo, endTime: e.target.value })}
+                    onChange={(e) => handleEndTimeChange(e.target.value)}
                     className="input input-bordered w-full bg-base-100"
                   />
                 </div>

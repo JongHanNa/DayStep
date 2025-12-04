@@ -640,6 +640,8 @@ export const BubbleTimelineView: React.FC = () => {
 
       // 반복 할일 원본 날짜 (편집 시 표시용)
       originalCreatedDate: dbTodo.created_at ? new Date(dbTodo.created_at) : undefined,
+      // 반복 인스턴스 여부 (날짜 필드 잠금용)
+      isRecurrenceInstance: !!dbTodo._instanceInfo,
     };
   }, []);
 
