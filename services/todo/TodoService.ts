@@ -461,7 +461,16 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           departure_time: (todoData as any).departure_time,
           // ✅ 프로젝트/노트 연결 필드 추가
           project_ids: (todoData as any).project_ids,
-          note_ids: (todoData as any).note_ids
+          note_ids: (todoData as any).note_ids,
+          // ✅ Second Brain System 필드 추가
+          clarification: (todoData as any).clarification,
+          next_action_context_ids: (todoData as any).next_action_context_ids,
+          is_today_highlight: (todoData as any).is_today_highlight,
+          assigned_to: (todoData as any).assigned_to,
+          assigned_date: (todoData as any).assigned_date,
+          // ✅ 아이콘/색상 필드 추가
+          icon: todoData.icon || undefined,
+          color: todoData.color || undefined
         };
 
         // 새로운 생성 메서드 사용 (첫 번째 할일만 반환)

@@ -349,9 +349,11 @@ export default function TodoFormFields({
                 updates.endDate = new Date(); // 오늘 날짜로 기본 설정
                 const now = new Date();
                 updates.startTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                // 종료 시간은 시작 시간 + 1시간
-                const endHour = (now.getHours() + 1) % 24;
-                updates.endTime = `${String(endHour).padStart(2, '0')}:00`;
+                // 종료 시간은 시작 시간 + 30분
+                const endMinutes = now.getMinutes() + 30;
+                const endHour = endMinutes >= 60 ? (now.getHours() + 1) % 24 : now.getHours();
+                const endMin = endMinutes % 60;
+                updates.endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
               } else if (scheduleType === 'none') {
                 // 선택 안함: 날짜/시간 정보 초기화
                 updates.scheduledDate = undefined;

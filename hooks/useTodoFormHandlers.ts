@@ -148,11 +148,11 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       actions.setEndDate(values.startDate);
       actions.setEndTime('');
     } else if (value === 'timed') {
-      // 시간 지정으로 변경시 종료 시간 자동 설정
+      // 시간 지정으로 변경시 종료 시간 자동 설정 (시작 시간 + 30분)
       actions.setEndDate(values.startDate);
       if (values.startTime) {
         const startDateTime = new Date(`2000-01-01T${values.startTime}`);
-        const endDateTime = addMinutes(startDateTime, 60);
+        const endDateTime = addMinutes(startDateTime, 30);
         actions.setEndTime(format(endDateTime, 'HH:mm'));
       }
     }
@@ -433,6 +433,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
         priority: values.priority,
         icon: values.selectedIcon,
         color: getColorById(values.selectedColor).hex,
+        clarification: values.clarification || 'schedule_clear', // ✅ 명료화 상태 추가
         schedule_type: values.scheduleType,
       };
 

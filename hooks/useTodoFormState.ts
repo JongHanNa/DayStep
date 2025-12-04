@@ -13,6 +13,7 @@ export interface TodoFormStateValues {
   priority: 'low' | 'medium' | 'high';
   selectedIcon: UnifiedIconKey;
   selectedColor: string;
+  clarification: string; // 명료화 상태 (schedule_clear, next_action, waiting, someday 등)
 
   // 스케줄 관련 상태
   scheduleType: ScheduleType;
@@ -51,6 +52,7 @@ export interface TodoFormStateActions {
   setPriority: (priority: 'low' | 'medium' | 'high') => void;
   setSelectedIcon: (icon: UnifiedIconKey) => void;
   setSelectedColor: (color: string) => void;
+  setClarification: (clarification: string) => void;
   setScheduleType: (type: ScheduleType) => void;
   setStartDate: (date: string) => void;
   setStartTime: (time: string) => void;
@@ -87,6 +89,7 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [selectedIcon, setSelectedIcon] = useState<UnifiedIconKey>('lucide-Home');
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR.id);
+  const [clarification, setClarification] = useState('schedule_clear'); // 기본값: 일정
   
   // 스케줄 관련 상태
   const [scheduleType, setScheduleType] = useState<ScheduleType>('anytime');
@@ -438,6 +441,7 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     priority,
     selectedIcon,
     selectedColor,
+    clarification,
     scheduleType,
     startDate,
     startTime,
@@ -465,6 +469,7 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     setPriority,
     setSelectedIcon,
     setSelectedColor,
+    setClarification,
     setScheduleType,
     setStartDate,
     setStartTime,
