@@ -502,8 +502,12 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           );
         }
 
+        // ✅ project_ids, note_ids 분리 (DB 컬럼이 아닌 연결 테이블로 관리)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { project_ids, note_ids, ...todoDataWithoutRelations } = todoData as any;
+
         const updateData = {
-          ...todoData,
+          ...todoDataWithoutRelations,
           updated_at: new Date().toISOString(),
         };
 

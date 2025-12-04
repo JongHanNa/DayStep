@@ -648,7 +648,7 @@ export const BubbleTimelineView: React.FC = () => {
     if (!originalTodoId) return;
 
     try {
-      // 시간 처리
+      // 시간 처리 (start_time)
       let finalDateTime: string | undefined;
       if (formData.scheduledDate) {
         const dateObj = new Date(formData.scheduledDate);
@@ -659,12 +659,27 @@ export const BubbleTimelineView: React.FC = () => {
         finalDateTime = dateObj.toISOString();
       }
 
+      // ✅ end_time도 ISO 문자열로 변환 (DB는 timestamptz 타입)
+      let finalEndTime: string | undefined;
+      if (formData.endTime && formData.scheduledDate) {
+        // endTime이 "HH:MM" 형식인 경우 ISO로 변환
+        if (formData.endTime.match(/^\d{2}:\d{2}$/)) {
+          const endDateObj = new Date(formData.scheduledDate);
+          const [endHours, endMinutes] = formData.endTime.split(':');
+          endDateObj.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+          finalEndTime = endDateObj.toISOString();
+        } else {
+          // 이미 ISO 형식이면 그대로 사용
+          finalEndTime = formData.endTime;
+        }
+      }
+
       await updateTodo(originalTodoId, {
         title: formData.title,
         clarification: formData.clarification as Clarification | undefined,
         schedule_type: formData.scheduleType,
         start_time: finalDateTime,
-        end_time: formData.endTime,
+        end_time: finalEndTime,
         is_today_highlight: formData.isHighlight,
         completed: formData.completed,
         project_ids: formData.projectIds,
