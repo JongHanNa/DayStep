@@ -81,6 +81,16 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 버블 위치 계산을 위한 ref
   const bubbleWrapperRef = React.useRef<HTMLDivElement>(null);
 
+  // 🎯 DOM 레벨 터치 이벤트 처리를 위한 ref (iOS WebView 스크롤 차단용)
+  const cardRef = useRef<HTMLDivElement>(null);
+  const portalBubbleRef = useRef<HTMLDivElement>(null);
+  const absoluteBubbleRef = useRef<HTMLDivElement>(null);
+
+  // 🎯 v7: 단일 리스너 + isDraggingRef로 상태 확인 (리스너 교체 시 스크롤 시작 문제 해결)
+  const bubbleTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchMoveListenerRef = useRef<((e: TouchEvent) => void) | null>(null);
+  const isDraggingRef = useRef(false);
+
   // 버블 너비 (고정) - useMemo보다 먼저 선언
   const bubbleWidth = 64;
 
@@ -132,6 +142,32 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
 
     loadLinkedNotes();
   }, [item.type, actualTaskId, notes]); // ✅ notes 추가: noteStore.notes 변경 시 재조회
+
+  // 🎯 iOS WebView 드래그 중 스크롤 차단 (Portal 버블에 DOM 레벨 리스너)
+  // Portal은 document.body에 렌더링되므로 cardRef 리스너로는 포착 불가
+  // Portal 버블 요소에 직접 DOM 리스너를 등록하여 스크롤 차단
+  useEffect(() => {
+    const element = portalBubbleRef.current;
+    if (!element || !isDragging) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // 드래그 중일 때 스크롤 차단 (DOM 레벨이라 iOS WebView에서도 작동)
+      e.preventDefault();
+    };
+
+    // passive: false로 등록해야 preventDefault() 작동
+    element.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      element.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isDragging]);
+
+  // 🎯 v7: isDragging 상태를 ref에 동기화 (리스너 내부에서 최신 상태 확인용)
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+    console.log('[DEBUG] isDraggingRef updated:', isDragging);
+  }, [isDragging]);
 
   // 완료 상태 계산
   const isCompleted = useMemo(() => {
@@ -766,6 +802,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
     <>
       {/* 클릭 가능한 영역: 버블 + 카드 전체 포함 (호버 효과도 포함) */}
       <div
+        ref={cardRef}
         className={cn(
           'flex items-start gap-4',
           'cursor-pointer select-none transition-all',
@@ -816,6 +853,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               // 드래그 중: document.body에 Portal로 렌더링 (iOS WebView 레이어 충돌 완전 해결)
               createPortal(
                 <div
+                  ref={portalBubbleRef}
                   className="flex items-center justify-center"
                   style={{
                     position: 'fixed',
@@ -825,8 +863,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     width: `${bubbleWidth}px`,
                     height: `${bubbleHeight}px`,
                     zIndex: 999999, // 최상위 레이어
-                    pointerEvents: 'none', // 터치 이벤트 투과
+                    pointerEvents: 'auto', // 터치 이벤트 받아서 스크롤 차단 + 프리뷰 카드 업데이트
                   }}
+                  onTouchMove={onTouchMove} // React 이벤트로 프리뷰 카드 위치 업데이트
                 >
                   <div
                     className="flex items-center justify-center transition-all duration-300"
@@ -839,7 +878,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               )
             ) : (
               // 일반 상태: absolute positioning
+              // 🎯 롱프레스 감지를 위한 터치 이벤트 핸들러 추가
               <div
+                ref={absoluteBubbleRef}
                 className="flex items-center justify-center"
                 style={{
                   position: 'absolute',
@@ -849,6 +890,69 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   height: `${bubbleHeight}px`,
                   transition: 'transform 0.2s ease-out',
                   zIndex: 10, // 막대보다 앞에
+                  // 🎯 v8: iOS Safari/WKWebView에서 스크롤 제스처로 판단하지 않도록 설정
+                  touchAction: 'none',
+                }}
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  bubbleTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
+
+                  // 🎯 v8: 요소 자체에 DOM 리스너 등록 (window 대신)
+                  // iOS Safari에서는 window 리스너가 스크롤 시 호출되지 않음
+                  const element = absoluteBubbleRef.current;
+                  if (!element) return;
+
+                  const handleTouchMove = (moveEvent: TouchEvent) => {
+                    // isDragging이면 무조건 스크롤 차단 (50px 룰 무시)
+                    if (isDraggingRef.current) {
+                      moveEvent.preventDefault();
+                      const touch = moveEvent.touches[0];
+                      console.log('[DEBUG] drag preventDefault, calling onTouchMove with:', touch.clientX.toFixed(0), touch.clientY.toFixed(0));
+                      // 🎯 v10: 프리뷰 카드 이동을 위해 React 핸들러 수동 호출
+                      // DOM TouchEvent를 React.TouchEvent로 캐스팅하여 전달
+                      onTouchMove?.(moveEvent as unknown as React.TouchEvent);
+                      return;
+                    }
+
+                    // isDragging이 아닐 때만 50px 룰 적용
+                    const startPos = bubbleTouchStartRef.current;
+                    if (!startPos) return;
+
+                    const moveTouch = moveEvent.touches[0];
+                    const deltaX = Math.abs(moveTouch.clientX - startPos.x);
+                    const deltaY = Math.abs(moveTouch.clientY - startPos.y);
+
+                    // 50px 이상 이동 시 스크롤 허용 (빠른 스와이프)
+                    if (deltaX > 50 || deltaY > 50) {
+                      if (touchMoveListenerRef.current && absoluteBubbleRef.current) {
+                        absoluteBubbleRef.current.removeEventListener('touchmove', touchMoveListenerRef.current);
+                        touchMoveListenerRef.current = null;
+                      }
+                      bubbleTouchStartRef.current = null;
+                      console.log('[DEBUG] 50px 초과 이동, 스크롤 허용');
+                      return;
+                    }
+
+                    // 50px 미만 이동 시 스크롤 차단
+                    moveEvent.preventDefault();
+                    console.log('[DEBUG] pre-drag preventDefault, delta:', deltaX.toFixed(1), deltaY.toFixed(1));
+                  };
+
+                  touchMoveListenerRef.current = handleTouchMove;
+                  element.addEventListener('touchmove', handleTouchMove, { passive: false });
+                  console.log('[DEBUG] touchmove listener added on bubble element');
+
+                  onTouchStart(e);
+                }}
+                onTouchMove={onTouchMove}
+                onTouchEnd={() => {
+                  if (touchMoveListenerRef.current && absoluteBubbleRef.current) {
+                    absoluteBubbleRef.current.removeEventListener('touchmove', touchMoveListenerRef.current);
+                    touchMoveListenerRef.current = null;
+                    console.log('[DEBUG] touchmove listener removed on touchend');
+                  }
+                  bubbleTouchStartRef.current = null;
+                  onTouchEnd();
                 }}
               >
                 <div

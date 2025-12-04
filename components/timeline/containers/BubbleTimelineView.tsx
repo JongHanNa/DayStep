@@ -80,6 +80,12 @@ export const BubbleTimelineView: React.FC = () => {
   // 드래그 종료 시간 ref (onClick 방지용 - React 배치 업데이트 우회)
   const lastDragEndTimeRef = useRef(0);
 
+  // 🎯 v11: isDragging 상태를 ref로도 유지 (useCallback 클로저 문제 해결)
+  const isDraggingRef = useRef(false);
+
+  // 🎯 v13: draggedItemId도 ref로 관리 (useCallback 클로저 문제 해결)
+  const draggedItemIdRef = useRef<string | null>(null);
+
   // 반복 할일 업데이트 다이얼로그 상태
   const [recurringUpdateDialog, setRecurringUpdateDialog] = useState<{
     open: boolean;
@@ -163,6 +169,16 @@ export const BubbleTimelineView: React.FC = () => {
     setScrollAccumulatedTrigger(prev => prev + 1);  // ✅ 리렌더링 트리거 (버블 위치 업데이트)
     setAutoScrollTrigger(prev => prev + 1); // 렌더링 트리거
   }, []);
+
+  // 🎯 v11: isDragging 상태를 ref에 동기화 (useCallback 클로저에서 최신 값 참조용)
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
+
+  // 🎯 v13: draggedItemId 상태를 ref에 동기화
+  useEffect(() => {
+    draggedItemIdRef.current = draggedItemId;
+  }, [draggedItemId]);
 
   // 🎯 자동 스크롤 실행 useEffect
   useEffect(() => {
@@ -393,10 +409,18 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 드래그 이동 (터치/마우스 통합)
   const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const hasTouches = 'touches' in e;
+    // 🎯 v11: ref를 사용하여 항상 최신 값 확인 (useCallback 클로저 문제 해결)
+    const currentIsDragging = isDraggingRef.current;
+    // 🎯 v13: draggedItemId도 ref에서 읽기 (useCallback 클로저 문제 해결)
+    const currentDraggedItemId = draggedItemIdRef.current;
+    console.log('[DEBUG] handleDragMove called, hasTouches:', hasTouches, 'isDragging:', currentIsDragging, 'draggedItemId:', currentDraggedItemId);
+    const clientY = hasTouches ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const clientX = hasTouches ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
 
-    if (isDragging && draggedItemId) {
+    // 🎯 v13: ref 값으로 체크
+    if (currentIsDragging && currentDraggedItemId) {
+      console.log('[DEBUG] updating position:', clientX.toFixed(0), clientY.toFixed(0));
       // 이미 드래그 중이면 위치 업데이트 (X, Y 모두)
       setDragCurrentY(clientY);
       setDragCurrentX(clientX);
@@ -415,7 +439,8 @@ export const BubbleTimelineView: React.FC = () => {
         setDraggedItemId(null);
       }
     }
-  }, [isDragging, draggedItemId, initialTouch, longPressTimer, checkAutoScroll]);
+  }, [initialTouch, longPressTimer, checkAutoScroll]);
+  // ✅ v13: dependency에서 isDragging, draggedItemId 모두 제거 (ref 사용으로 항상 최신 값 참조)
 
   // 드래그 종료 (터치/마우스 통합)
   const handleDragEnd = useCallback(async () => {
