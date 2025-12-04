@@ -92,6 +92,14 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         icon: formData.icon,
         color: formData.color,
         next_action_context_ids: formData.nextActionContextIds,
+        // 반복 설정 필드
+        recurrence_pattern: (formData.recurrencePattern || 'none') as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
+        recurrence_interval: formData.recurrenceInterval || 1,
+        recurrence_end_date: formData.recurrenceEndDate
+          ? new Date(formData.recurrenceEndDate).toISOString().split('T')[0]
+          : undefined,
+        recurrence_count: formData.recurrenceCount || undefined,
+        recurrence_days_of_week: formData.selectedDaysOfWeek || undefined,
       });
 
       handleClose();
