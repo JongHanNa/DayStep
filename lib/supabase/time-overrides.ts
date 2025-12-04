@@ -5,32 +5,33 @@
 import { createWithJWT, updateWithJWT, queryRLSTableWithJWT, deleteWithJWT, type QueryCondition } from './core';
 
 /**
- * JWT 방식으로 반복 할일 시간 override 생성
+ * JWT 방식으로 반복 할일 시간/제목 override 생성
  */
 export async function createTimeOverrideWithJWT(overrideData: {
   parent_todo_id: string;
   user_id: string;
   override_date: string; // YYYY-MM-DD 형식
-  start_time: string; // ISO string
+  start_time?: string; // ISO string (선택적 - 제목만 변경할 수도 있음)
   end_time?: string; // ISO string
+  title?: string; // 제목 override (선택적)
 }): Promise<any> {
-  console.log('⏰ JWT 방식으로 시간 override 생성:', { overrideData });
+  console.log('⏰ JWT 방식으로 시간/제목 override 생성:', { overrideData });
 
   try {
     const result = await createWithJWT('todo_time_overrides', {
       ...overrideData,
       updated_at: new Date().toISOString()
     });
-    console.log('✅ JWT 시간 override 생성 성공:', { result });
+    console.log('✅ JWT 시간/제목 override 생성 성공:', { result });
     return result;
   } catch (error) {
-    console.error('❌ JWT 시간 override 생성 실패:', error);
+    console.error('❌ JWT 시간/제목 override 생성 실패:', error);
     throw error;
   }
 }
 
 /**
- * JWT 방식으로 반복 할일 시간 override 업데이트
+ * JWT 방식으로 반복 할일 시간/제목 override 업데이트
  */
 export async function updateTimeOverrideWithJWT(
   parentTodoId: string,
@@ -38,9 +39,10 @@ export async function updateTimeOverrideWithJWT(
   updateData: {
     start_time?: string;
     end_time?: string;
+    title?: string; // 제목 override (선택적)
   }
 ): Promise<any> {
-  console.log('⏰ JWT 방식으로 시간 override 업데이트:', {
+  console.log('⏰ JWT 방식으로 시간/제목 override 업데이트:', {
     parentTodoId,
     overrideDate,
     updateData
@@ -63,10 +65,10 @@ export async function updateTimeOverrideWithJWT(
       updated_at: new Date().toISOString()
     });
 
-    console.log('✅ JWT 시간 override 업데이트 성공:', { result });
+    console.log('✅ JWT 시간/제목 override 업데이트 성공:', { result });
     return result;
   } catch (error) {
-    console.error('❌ JWT 시간 override 업데이트 실패:', error);
+    console.error('❌ JWT 시간/제목 override 업데이트 실패:', error);
     throw error;
   }
 }

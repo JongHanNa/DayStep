@@ -58,6 +58,13 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
     setNewTimeForUpdate: uiState.setNewTimeForUpdate,
     occurrenceDate: uiState.occurrenceDate,
     setOccurrenceDate: uiState.setOccurrenceDate,
+    // 반복 할일 변경 유형 및 제목 변경 관련
+    changeType: uiState.changeType,
+    setChangeType: uiState.setChangeType,
+    originalTitle: uiState.originalTitle,
+    setOriginalTitle: uiState.setOriginalTitle,
+    newTitle: uiState.newTitle,
+    setNewTitle: uiState.setNewTitle,
   });
 
   // 탄성 스크롤 효과
@@ -317,20 +324,26 @@ const TodoFormModal: React.FC<TodoFormModalProps> = ({
       />
     )}
 
-    {/* 반복 할일 시간 변경 다이얼로그 */}
-    {editingTodo && uiState.originalTimeForUpdate && uiState.newTimeForUpdate && uiState.occurrenceDate && (
+    {/* 반복 할일 변경 다이얼로그 (제목/시간) */}
+    {editingTodo && uiState.occurrenceDate && uiState.changeType && (
       <RecurringUpdateDialog
         open={uiState.showRecurringUpdateDialog}
         onOpenChange={(open) => {
           if (!open) {
             uiState.setShowRecurringUpdateDialog(false);
+            uiState.setChangeType(null);
+            uiState.setOriginalTitle(null);
+            uiState.setNewTitle(null);
           }
         }}
         todoTitle={editingTodo.title}
+        occurrenceDate={uiState.occurrenceDate}
+        onUpdateChoice={handlers.handleRecurringUpdate}
+        changeType={uiState.changeType}
         originalTime={uiState.originalTimeForUpdate}
         newTime={uiState.newTimeForUpdate}
-        occurrenceDate={uiState.occurrenceDate}
-        onUpdateChoice={handlers.handleRecurringTimeUpdate}
+        originalTitle={uiState.originalTitle}
+        newTitle={uiState.newTitle}
       />
     )}
 

@@ -57,7 +57,7 @@ export interface TodoFormData {
   selectedDaysOfWeek?: number[]; // 반복 요일 선택 (0=일요일, 6=토요일)
 
   // 반복 할일 원본 정보
-  originalCreatedDate?: Date; // 할일 원본 생성 날짜 (반복 할일 편집 시 표시용)
+  originalStartDate?: Date; // 할일 원본 시작 날짜 (반복 할일 편집 시 표시용)
   isRecurrenceInstance?: boolean; // 반복 인스턴스 여부 (날짜 잠금용)
 }
 
@@ -358,12 +358,12 @@ export default function TodoFormFields({
       )}
 
       {/* 반복 할일 원본 날짜 (일정 섹션 상단, 반복 할일 편집 시에만) */}
-      {todo.originalCreatedDate && todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
+      {todo.originalStartDate && todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
         <div className="my-4">
           <div className="p-3 rounded-lg bg-info/10 border border-info/20">
             <span className="text-sm text-info flex items-center gap-2">
               <Repeat className="h-4 w-4" />
-              원본 생성일: {format(todo.originalCreatedDate, 'yyyy년 M월 d일')}
+              원본 일정 날짜: {format(todo.originalStartDate, 'yyyy년 M월 d일')}
             </span>
           </div>
         </div>

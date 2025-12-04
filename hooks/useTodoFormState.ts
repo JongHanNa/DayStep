@@ -139,6 +139,11 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   const [newTimeForUpdate, setNewTimeForUpdate] = useState<{ start: Date; end?: Date } | null>(null);
   const [occurrenceDate, setOccurrenceDate] = useState<Date | null>(null);
 
+  // 반복 할일 변경 유형 및 제목 변경 추적 상태
+  const [changeType, setChangeType] = useState<'time' | 'title' | 'mixed' | null>(null);
+  const [originalTitle, setOriginalTitle] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState<string | null>(null);
+
   // 수정 모드인지 확인
   const isEditMode = !!editingTodo;
 
@@ -516,6 +521,13 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
     setNewTimeForUpdate,
     occurrenceDate,
     setOccurrenceDate,
+    // 반복 할일 변경 유형 및 제목 변경 추적 상태
+    changeType,
+    setChangeType,
+    originalTitle,
+    setOriginalTitle,
+    newTitle,
+    setNewTitle,
   };
 
   // duration 변경 시 자동으로 endTime 업데이트

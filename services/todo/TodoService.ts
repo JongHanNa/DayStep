@@ -1471,6 +1471,10 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             // 날짜를 YYYY-MM-DD 형식으로 변환 (로컬 날짜 기준)
             const overrideDate = format(capturedOccurrenceDate, 'yyyy-MM-dd');
 
+            // 🆕 제목 변경 정보 추출 (handleRecurringUpdate에서 _titleChange로 전달됨)
+            const titleChange = (updates as any)._titleChange;
+            const newTitleForOverride = titleChange?.newTitle;
+
             // 기존 override 확인
             const existingOverrides = await queryTimeOverridesWithJWT(
               id,
@@ -1478,21 +1482,34 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               { start: overrideDate, end: overrideDate }
             );
 
+            // override 데이터 구성 (시간과 제목 모두 선택적)
+            const overrideUpdateData: { start_time?: string; end_time?: string; title?: string } = {};
+            if (updates.start_time) overrideUpdateData.start_time = updates.start_time;
+            if (updates.end_time) overrideUpdateData.end_time = updates.end_time;
+            if (newTitleForOverride) overrideUpdateData.title = newTitleForOverride;
+
+            console.log('🔍 [TodoService] 인스턴스 override 데이터:', {
+              overrideDate,
+              overrideUpdateData,
+              hasTitleChange: !!newTitleForOverride,
+              hasTimeChange: !!(updates.start_time || updates.end_time)
+            });
+
             if (existingOverrides.length > 0) {
               // 업데이트
-              await updateTimeOverrideWithJWT(id, overrideDate, {
-                start_time: updates.start_time,
-                end_time: updates.end_time
-              });
+              await updateTimeOverrideWithJWT(id, overrideDate, overrideUpdateData);
             } else {
-              // 생성
-              await createTimeOverrideWithJWT({
-                parent_todo_id: id,
-                user_id: userId,
-                override_date: overrideDate,
-                start_time: updates.start_time!,
-                end_time: updates.end_time
-              });
+              // 생성 - 시간이나 제목 중 하나라도 있으면 생성
+              if (Object.keys(overrideUpdateData).length > 0) {
+                await createTimeOverrideWithJWT({
+                  parent_todo_id: id,
+                  user_id: userId,
+                  override_date: overrideDate,
+                  start_time: updates.start_time,
+                  end_time: updates.end_time,
+                  title: newTitleForOverride
+                });
+              }
             }
             break;
 

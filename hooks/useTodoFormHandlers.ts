@@ -29,6 +29,13 @@ export interface TodoFormHandlersConfig {
   setNewTimeForUpdate: (time: { start: Date; end?: Date } | null) => void;
   occurrenceDate: Date | null;
   setOccurrenceDate: (date: Date | null) => void;
+  // 반복 할일 변경 유형 및 제목 변경 관련
+  changeType: 'time' | 'title' | 'mixed' | null;
+  setChangeType: (type: 'time' | 'title' | 'mixed' | null) => void;
+  originalTitle: string | null;
+  setOriginalTitle: (title: string | null) => void;
+  newTitle: string | null;
+  setNewTitle: (title: string | null) => void;
 }
 
 export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
@@ -52,6 +59,13 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     setNewTimeForUpdate,
     occurrenceDate,
     setOccurrenceDate,
+    // 반복 할일 변경 유형 및 제목 변경 관련
+    changeType,
+    setChangeType,
+    originalTitle,
+    setOriginalTitle,
+    newTitle,
+    setNewTitle,
   } = config;
 
   const { toast } = useToast();
@@ -311,18 +325,24 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       return;
     }
 
-    // 반복 할일 수정 시 시간/날짜 변경 확인 (매일, 매주, 매달 패턴)
+    // 반복 할일 수정 시 제목/시간 변경 확인 (매일, 매주, 매달 패턴)
     if (isEditMode && editingTodo && editingTodo.recurrence_pattern &&
-        editingTodo.recurrence_pattern !== 'none' && values.scheduleType !== 'anytime') {
+        editingTodo.recurrence_pattern !== 'none') {
+
+      // 제목 변경 감지
+      const originalTodoTitle = editingTodo.title || '';
+      const newTodoTitle = values.content.trim();
+      const titleChanged = originalTodoTitle !== newTodoTitle;
 
       const originalStart = editingTodo.start_time ? new Date(editingTodo.start_time) : null;
       const originalEnd = editingTodo.end_time ? new Date(editingTodo.end_time) : null;
 
-      if (originalStart) {
-        let timeChanged = false;
-        let newStart: Date;
-        let newEnd: Date;
+      let timeChanged = false;
+      let newStart: Date | undefined;
+      let newEnd: Date | undefined;
 
+      // 시간 변경 감지 (anytime이 아닌 경우에만)
+      if (values.scheduleType !== 'anytime' && originalStart) {
         // scheduleType에 따라 다르게 처리
         if (values.scheduleType === 'timed') {
           // 시간 지정 일정: 날짜 + 시간 비교
@@ -349,27 +369,53 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
             timeChanged = true;
           }
         }
+      }
 
-        if (timeChanged) {
-          // 시간/날짜 변경 모달 데이터 설정
+      // 제목 또는 시간이 변경된 경우 선택 모달 표시
+      if (titleChanged || timeChanged) {
+        // 변경 유형 결정
+        let detectedChangeType: 'time' | 'title' | 'mixed';
+        if (titleChanged && timeChanged) {
+          detectedChangeType = 'mixed';
+        } else if (titleChanged) {
+          detectedChangeType = 'title';
+        } else {
+          detectedChangeType = 'time';
+        }
+        setChangeType(detectedChangeType);
+
+        // 제목 변경 정보 설정
+        if (titleChanged) {
+          setOriginalTitle(originalTodoTitle);
+          setNewTitle(newTodoTitle);
+        } else {
+          setOriginalTitle(null);
+          setNewTitle(null);
+        }
+
+        // 시간 변경 정보 설정
+        if (timeChanged && newStart && newEnd) {
           setOriginalTimeForUpdate({
-            start: originalStart,
+            start: originalStart!,
             end: originalEnd || undefined
           });
           setNewTimeForUpdate({
-            start: newStart!,
-            end: newEnd!
+            start: newStart,
+            end: newEnd
           });
-
-          // 반복 인스턴스의 실제 날짜 사용 (recurrence_occurrence_date)
-          const occurrenceDate = (editingTodo as any).recurrence_occurrence_date
-            ? new Date((editingTodo as any).recurrence_occurrence_date)
-            : originalStart;
-          setOccurrenceDate(occurrenceDate);
-
-          setShowRecurringUpdateDialog(true);
-          return; // 여기서 중단하여 시간 변경 모달을 표시
+        } else {
+          setOriginalTimeForUpdate(null);
+          setNewTimeForUpdate(null);
         }
+
+        // 반복 인스턴스의 실제 날짜 사용 (recurrence_occurrence_date)
+        const occurrenceDateValue = (editingTodo as any).recurrence_occurrence_date
+          ? new Date((editingTodo as any).recurrence_occurrence_date)
+          : originalStart || new Date();
+        setOccurrenceDate(occurrenceDateValue);
+
+        setShowRecurringUpdateDialog(true);
+        return; // 여기서 중단하여 변경 선택 모달을 표시
       }
     }
 
@@ -735,46 +781,60 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     }
   }, [editingTodo, deleteRecurringTodo, deleteLinkedNotes, toast, onOpenChange, setIsDeleting, setShowRecurringDeleteDialog]);
 
-  // 반복 할일 시간 변경 핸들러
-  const handleRecurringTimeUpdate = useCallback(async (
+  // 반복 할일 변경 핸들러 (제목 + 시간 변경 모두 지원)
+  const handleRecurringUpdate = useCallback(async (
     choice: 'this-only' | 'from-now' | 'all',
     occurrenceDate: Date
   ) => {
-    console.log('🔍 [handleRecurringTimeUpdate] 함수 진입:', {
+    console.log('🔍 [handleRecurringUpdate] 함수 진입:', {
       choice,
       occurrenceDate,
-      occurrenceDateType: typeof occurrenceDate,
-      occurrenceDateString: occurrenceDate?.toISOString(),
+      changeType,
       hasEditingTodo: !!editingTodo,
-      hasNewTimeForUpdate: !!newTimeForUpdate
+      hasNewTimeForUpdate: !!newTimeForUpdate,
+      hasNewTitle: !!newTitle
     });
 
-    if (!editingTodo || !newTimeForUpdate) return;
+    if (!editingTodo) return;
+
+    // 제목만 변경, 시간만 변경, 또는 둘 다 변경일 수 있음
+    const hasTitleChange = changeType === 'title' || changeType === 'mixed';
+    const hasTimeChange = changeType === 'time' || changeType === 'mixed';
+
+    // 제목만 변경인 경우 newTimeForUpdate가 없어도 됨
+    if (hasTimeChange && !newTimeForUpdate) {
+      console.warn('시간 변경이 필요하지만 newTimeForUpdate가 없습니다.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       // 기본 할일 데이터 구성
       const todoData: any = {
-        title: values.content.trim(), // ✅ title 필드로 전송 (UI는 content 사용)
+        title: values.content.trim(),
         priority: values.priority,
         icon: values.selectedIcon,
         color: getColorById(values.selectedColor).hex,
         schedule_type: values.scheduleType,
-        start_time: newTimeForUpdate.start.toISOString(),
-        end_time: newTimeForUpdate.end?.toISOString() || addMinutes(newTimeForUpdate.start, 60).toISOString(),
       };
 
+      // 시간 변경이 있는 경우에만 시간 데이터 추가
+      if (hasTimeChange && newTimeForUpdate) {
+        todoData.start_time = newTimeForUpdate.start.toISOString();
+        todoData.end_time = newTimeForUpdate.end?.toISOString() || addMinutes(newTimeForUpdate.start, 60).toISOString();
+      }
+
       // 반복 설정
-      if (values.showRecurrenceSettings && 
-          values.recurrencePattern && 
+      if (values.showRecurrenceSettings &&
+          values.recurrencePattern &&
           values.recurrencePattern !== 'none') {
         todoData.recurrence_pattern = values.recurrencePattern;
         todoData.recurrence_interval = values.recurrenceInterval;
-        
+
         if (values.recurrencePattern === 'weekly' && values.selectedDaysOfWeek.length > 0) {
           todoData.recurrence_days_of_week = values.selectedDaysOfWeek;
         }
-        
+
         if (values.recurrenceEndType === 'date' && values.recurrenceEndDate) {
           todoData.recurrence_end_date = values.recurrenceEndDate;
         } else if (values.recurrenceEndType === 'count' && values.recurrenceCount) {
@@ -782,45 +842,88 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
         }
       }
 
+      // 제목 변경 정보를 todoData에 추가 (updateRecurringTodo에서 처리할 수 있도록)
+      if (hasTitleChange && newTitle) {
+        todoData._titleChange = {
+          originalTitle: originalTitle,
+          newTitle: newTitle
+        };
+      }
+
       // updateRecurringTodo 호출 (선택에 따라 업데이트 범위가 결정됨)
       const updateType: 'this' | 'future' | 'all' = choice === 'this-only' ? 'this' : choice === 'from-now' ? 'future' : 'all';
 
-      console.log('🔍 [handleRecurringTimeUpdate] updateRecurringTodo 호출 직전:', {
+      console.log('🔍 [handleRecurringUpdate] updateRecurringTodo 호출 직전:', {
         todoId: editingTodo.id,
         updateType,
         occurrenceDate,
-        occurrenceDateType: typeof occurrenceDate,
-        occurrenceDateString: occurrenceDate.toISOString()
+        changeType,
+        hasTitleChange,
+        hasTimeChange
       });
 
       await updateRecurringTodo?.(editingTodo.id, todoData, updateType, occurrenceDate);
 
-      const successMessages = {
-        'this-only': '이 일정만 시간이 변경되었습니다.',
-        'from-now': '이 일정부터 모든 미래 일정의 시간이 변경되었습니다.',
-        'all': '모든 반복 일정의 시간이 변경되었습니다.'
-      };
+      // 성공 메시지 구성
+      let successTitle = '';
+      let successDescription = '';
+
+      if (changeType === 'mixed') {
+        successTitle = '변경 완료!';
+        if (choice === 'this-only') {
+          successDescription = '이 일정의 제목과 시간이 변경되었습니다.';
+        } else if (choice === 'from-now') {
+          successDescription = '이 일정부터 모든 미래 일정의 제목과 시간이 변경되었습니다.';
+        } else {
+          successDescription = '모든 반복 일정의 제목과 시간이 변경되었습니다.';
+        }
+      } else if (changeType === 'title') {
+        successTitle = '제목 변경 완료!';
+        if (choice === 'this-only') {
+          successDescription = '이 일정의 제목만 변경되었습니다.';
+        } else if (choice === 'from-now') {
+          successDescription = '이 일정부터 모든 미래 일정의 제목이 변경되었습니다.';
+        } else {
+          successDescription = '모든 반복 일정의 제목이 변경되었습니다.';
+        }
+      } else {
+        successTitle = '시간 변경 완료!';
+        if (choice === 'this-only') {
+          successDescription = '이 일정의 시간만 변경되었습니다.';
+        } else if (choice === 'from-now') {
+          successDescription = '이 일정부터 모든 미래 일정의 시간이 변경되었습니다.';
+        } else {
+          successDescription = '모든 반복 일정의 시간이 변경되었습니다.';
+        }
+      }
 
       toast({
-        title: '시간 변경 완료!',
-        description: successMessages[choice],
+        title: successTitle,
+        description: successDescription,
       });
 
+      // 상태 초기화
+      setChangeType(null);
+      setOriginalTitle(null);
+      setNewTitle(null);
       setShowRecurringUpdateDialog(false);
       onOpenChange(false);
 
     } catch (error) {
-      console.error('🔴 [ERROR] 반복 할일 시간 변경 실패:', error);
-      
+      console.error('🔴 [ERROR] 반복 할일 변경 실패:', error);
+
       toast({
-        title: '시간 변경 실패',
-        description: `반복 할일 시간을 변경하는 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+        title: '변경 실패',
+        description: `반복 할일을 변경하는 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
-  }, [editingTodo, newTimeForUpdate, values, updateRecurringTodo, toast, setShowRecurringUpdateDialog, onOpenChange, setIsSubmitting]);
+  }, [editingTodo, newTimeForUpdate, newTitle, originalTitle, changeType, values, updateRecurringTodo, toast, setShowRecurringUpdateDialog, onOpenChange, setIsSubmitting, setChangeType, setOriginalTitle, setNewTitle]);
+
+  // 이전 버전과의 호환성을 위한 별칭
+  const handleRecurringTimeUpdate = handleRecurringUpdate;
 
   return {
     // 계산 유틸리티
@@ -843,7 +946,8 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
     handleSimpleDelete,
     handleRecurringDelete,
     
-    // 반복 할일 시간 변경
-    handleRecurringTimeUpdate,
+    // 반복 할일 변경 (제목 + 시간)
+    handleRecurringUpdate,
+    handleRecurringTimeUpdate, // 이전 버전 호환용 별칭
   };
 };

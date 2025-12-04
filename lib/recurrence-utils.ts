@@ -6,7 +6,7 @@ interface RecurringTodoOptions {
   rangeStart: Date;  // 검색 시작 범위
   rangeEnd: Date;    // 검색 종료 범위
   excludedDates?: string[]; // 제외할 날짜 목록 (YYYY-MM-DD 형식)
-  timeOverrides?: { [date: string]: { start_time: string; end_time?: string } }; // 시간 override 목록
+  timeOverrides?: { [date: string]: { start_time?: string; end_time?: string; title?: string } }; // 시간/제목 override 목록
 }
 
 interface GeneratedRecurrenceItem {
@@ -147,10 +147,11 @@ export function generateRecurrenceInstances({
       let instanceStartTime: Date;
       let instanceEndTime: Date | null = null;
 
-      // 🆕 시간 override 확인 - 특정 날짜에 대한 시간 변경이 있는지 체크
+      // 🆕 시간/제목 override 확인 - 특정 날짜에 대한 변경이 있는지 체크
       const override = timeOverrides[dateString];
 
-      if (override) {
+      // 시간 override가 있는 경우 (start_time이 있어야 시간 override)
+      if (override && override.start_time) {
         // 🎯 시간 override가 있는 경우: override 시간 사용
         console.log(`⏰ 시간 override 적용: ${dateString}`, override);
         instanceStartTime = new Date(override.start_time);
@@ -191,16 +192,21 @@ export function generateRecurrenceInstances({
         instanceStartTime = startOfDay(occurrenceDate);
       }
 
+      // 🆕 제목 override 적용 - 인스턴스별 제목 변경 지원
+      const instanceTitle = override?.title || originalTodo.title || originalTodo.content;
+
       const instanceData = {
         ...originalTodo,
         id: `${originalTodo.id}-recurrence-${format(occurrenceDate, 'yyyy-MM-dd')}-${index}`,
+        title: instanceTitle, // 🆕 제목 override 적용
+        content: instanceTitle, // 🆕 content도 동기화 (UI에서 content 사용 시)
         start_time: instanceStartTime.toISOString(),
         end_time: instanceEndTime?.toISOString() || null,
         schedule_type: schedule_type, // 명시적으로 schedule_type 포함
         is_recurrence_instance: true,
         recurrence_source_id: originalTodo.id,
         recurrence_occurrence_date: format(occurrenceDate, 'yyyy-MM-dd'),
-        time_override: override || undefined // 🔧 override 정보 추가
+        time_override: override || undefined // 🔧 override 정보 추가 (시간/제목 모두 포함)
       };
 
       return {

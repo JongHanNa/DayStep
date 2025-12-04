@@ -638,8 +638,8 @@ export const BubbleTimelineView: React.FC = () => {
       recurrenceCount: dbTodo.recurrence_count,
       selectedDaysOfWeek: dbTodo.recurrence_days_of_week || [],
 
-      // 반복 할일 원본 날짜 (편집 시 표시용)
-      originalCreatedDate: dbTodo.created_at ? new Date(dbTodo.created_at) : undefined,
+      // 반복 할일 원본 날짜 (편집 시 표시용) - start_time 사용
+      originalStartDate: dbTodo.start_time ? new Date(dbTodo.start_time) : undefined,
       // 반복 인스턴스 여부 (날짜 필드 잠금용)
       isRecurrenceInstance: !!dbTodo._instanceInfo,
     };
@@ -1146,16 +1146,17 @@ export const BubbleTimelineView: React.FC = () => {
         </div>
       </div>
 
-      {/* 반복 할일 업데이트 다이얼로그 */}
+      {/* 반복 할일 업데이트 다이얼로그 (드래그앤드롭 시간 변경) */}
       {recurringUpdateDialog.data && (
         <RecurringUpdateDialog
           open={recurringUpdateDialog.open}
           onOpenChange={(open) => setRecurringUpdateDialog({ open })}
           todoTitle={recurringUpdateDialog.data.todoTitle}
-          originalTime={recurringUpdateDialog.data.originalTime}
-          newTime={recurringUpdateDialog.data.newTime}
           occurrenceDate={recurringUpdateDialog.data.occurrenceDate}
           onUpdateChoice={handleRecurringUpdateChoice}
+          changeType="time"
+          originalTime={recurringUpdateDialog.data.originalTime}
+          newTime={recurringUpdateDialog.data.newTime}
         />
       )}
 
