@@ -905,7 +905,7 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                     })()})
                   </span>
                 )}
-                {item.type === 'todo' && item.data.recurrence_pattern !== 'none' && (
+                {item.type === 'todo' && ((item.data as any).is_recurrence_instance || (item.data.recurrence_pattern && item.data.recurrence_pattern !== 'none')) && (
                   <Icons.Repeat className="w-4 h-4 text-muted-foreground" />
                 )}
               </div>
