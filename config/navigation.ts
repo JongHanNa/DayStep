@@ -17,6 +17,7 @@ import {
   Palette,
   Shield,
   Network,
+  Timer,
   LucideIcon
 } from 'lucide-react';
 
@@ -75,6 +76,7 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
       { id: 'goal-compass', label: '목표 나침반', icon: Compass, href: '/second-brain/goal-compass' },
       { id: 'notes', label: '노트', icon: FileText, href: '/second-brain/notes' },
       { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },
+      { id: 'pomodoro', label: '포모도로', icon: Timer, href: '/second-brain/pomodoro' },
     ]
   },
   settings: {

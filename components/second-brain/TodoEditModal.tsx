@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { Play } from 'lucide-react';
 import TodoFormContent from '@/components/todos/TodoFormContent';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
@@ -83,6 +85,27 @@ export default function TodoEditModal({
   onNoteImmediateSave,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
+  const router = useRouter();
+
+  // 현재 시간에 해당하는 할일인지 판별
+  const isCurrentTimeTodo = useMemo(() => {
+    if (!todo) return false;
+    if (todo.scheduleType !== 'timed') return false;
+    if (!todo.startTime || !todo.endTime) return false;
+
+    const now = new Date();
+    const start = new Date(todo.startTime);
+    const end = new Date(todo.endTime);
+    return now >= start && now <= end;
+  }, [todo]);
+
+  // 포모도로 페이지로 이동
+  const handlePomodoroClick = () => {
+    if (todo && todoId) {
+      onClose(); // 모달 닫기
+      router.push(`/second-brain/pomodoro?todoId=${todoId}&todoTitle=${encodeURIComponent(todo.title || '')}`);
+    }
+  };
 
   // 노트 편집 모달 상태
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -208,6 +231,15 @@ export default function TodoEditModal({
                 className="btn btn-ghost btn-sm text-error rounded-full"
               >
                 삭제
+              </button>
+            )}
+            {/* 포모도로 재생 버튼 - 현재 시간 할일일 때만 */}
+            {isCurrentTimeTodo && (
+              <button
+                onClick={handlePomodoroClick}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                <Play className="h-4 w-4" />
               </button>
             )}
             <button onClick={() => onSave(todo)} className="btn btn-primary btn-sm rounded-full">
