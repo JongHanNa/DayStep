@@ -37,6 +37,7 @@ export const BubbleTimelineView: React.FC = () => {
   const updateTodo = useTodoStore(state => state.updateTodo);
   const toggleTodo = useTodoStore(state => state.toggleTodo);
   const toggleRecurrenceCompletion = useTodoStore(state => state.toggleRecurrenceCompletion);
+  const deleteTodo = useTodoStore(state => state.deleteTodo);
   const todos = useTodoStore(state => state.todos);
   const currentTime = useCurrentTime();
 
@@ -679,6 +680,20 @@ export const BubbleTimelineView: React.FC = () => {
     }
   }, [originalTodoId, updateTodo]);
 
+  // 할일 삭제 핸들러
+  const handleDeleteTodo = useCallback(async () => {
+    if (!originalTodoId) return;
+
+    try {
+      await deleteTodo(originalTodoId);
+      setIsEditModalOpen(false);
+      setEditingTodoForm(null);
+      setOriginalTodoId(null);
+    } catch (error) {
+      console.error('할일 삭제 실패:', error);
+    }
+  }, [originalTodoId, deleteTodo]);
+
   // 간격 클릭 핸들러 (할일 추가 모달 표시)
   const handleGapClick = useCallback((startTime: Date, endTime: Date) => {
     setAddModalStartTime(startTime);
@@ -973,6 +988,8 @@ export const BubbleTimelineView: React.FC = () => {
                       if (timelineItem.data) {
                         const updatedTodoData = {
                           ...timelineItem.data,
+                          // ✅ clarification 명시적 보존 (매핑 누락 방지)
+                          clarification: (timelineItem.data as any)?.clarification || '',
                           schedule_type: timelineItem.data?.schedule_type ||
                                         (timelineItem.data as any)?.scheduleType ||
                                         (timelineItem.startTime ? 'timed' : 'anytime'),
@@ -1091,6 +1108,7 @@ export const BubbleTimelineView: React.FC = () => {
         }}
         onSave={handleEditSave}
         onChange={setEditingTodoForm}
+        onDelete={handleDeleteTodo}
         projects={projects}
         areas={areas}
         resources={resources}
