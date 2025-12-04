@@ -113,6 +113,12 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
       return;
     }
 
+    // 임시 ID인 경우 노트 조회 건너뛰기 (optimistic update 중)
+    if (actualTaskId.startsWith('temp-')) {
+      setLinkedNotes([]);
+      return;
+    }
+
     const loadLinkedNotes = async () => {
       try {
         const { getNotesByTaskId } = useNoteStore.getState();
