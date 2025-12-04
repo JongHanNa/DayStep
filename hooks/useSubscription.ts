@@ -17,6 +17,7 @@ import {
 } from '@/lib/revenue-cat';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import { supabase } from '@/lib/supabase';
+import { queryRLSTableWithJWT } from '@/lib/supabase/core';
 
 /**
  * 구독 관리 Hook
@@ -45,34 +46,34 @@ export const useSubscription = () => {
 
   /**
    * Supabase DB에서 구독 정보 조회
+   * JWT 토큰 기반 REST API 호출 (Capacitor WebView 호환)
    */
   const fetchSubscriptionFromDb = useCallback(
     async (userId: string): Promise<SubscriptionInfo | null> => {
       try {
-        console.log('💳 DB에서 구독 정보 조회:', userId);
+        console.log('💳 DB에서 구독 정보 조회 (JWT):', userId);
 
-        // subscriptions 테이블 타입이 아직 생성되지 않아서 any 캐스팅 사용
-        const { data, error: dbError } = await (supabase as any)
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (dbError) {
-          // 구독 정보가 없는 경우는 에러가 아님
-          if (dbError.code === 'PGRST116') {
-            console.log('💳 구독 정보 없음 (신규 사용자)');
-            return null;
+        // JWT 방식으로 subscriptions 테이블 조회 (모바일 WebView 호환)
+        const data = await queryRLSTableWithJWT(
+          'subscriptions',
+          { column: 'user_id', operator: 'eq', value: userId },
+          {
+            select: '*',
+            order: 'created_at.desc',
+            limit: 1,
+            single: true
           }
-          throw dbError;
+        );
+
+        // 구독 정보가 없는 경우
+        if (!data) {
+          console.log('💳 구독 정보 없음 (신규 사용자)');
+          return null;
         }
 
         console.log('💳 DB 구독 정보 조회 성공:', data);
 
         // DB 컬럼명을 camelCase로 변환
-        // @ts-ignore - subscriptions 테이블 타입 미생성
         return {
           id: data.id,
           userId: data.user_id,
