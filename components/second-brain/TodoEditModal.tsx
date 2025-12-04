@@ -107,6 +107,9 @@ export default function TodoEditModal({
     }
   };
 
+  // 삭제 확인 다이얼로그 상태
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   // 노트 편집 모달 상태
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
@@ -224,10 +227,7 @@ export default function TodoEditModal({
           <div className="flex gap-2">
             {onDelete && (
               <button
-                onClick={() => {
-                  onClose();
-                  onDelete();
-                }}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="btn btn-ghost btn-sm text-error rounded-full"
               >
                 삭제
@@ -326,6 +326,36 @@ export default function TodoEditModal({
           }}
           onProjectChange={setEditingProject}
         />
+      )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      {showDeleteConfirm && (
+        <dialog open className="modal modal-open z-[120]">
+          <div className="modal-box bg-base-100 max-w-sm">
+            <h3 className="font-bold text-lg mb-4">할일 삭제</h3>
+            <p className="text-base-content/70 mb-2">정말로 이 할일을 삭제하시겠습니까?</p>
+            <p className="text-sm font-medium mb-6 break-words">&ldquo;{todo?.title}&rdquo;</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  onClose();
+                  onDelete?.();
+                }}
+                className="btn btn-error btn-sm rounded-full"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop bg-black/50" onClick={() => setShowDeleteConfirm(false)} />
+        </dialog>
       )}
     </dialog>
   );
