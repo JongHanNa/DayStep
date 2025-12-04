@@ -19,18 +19,28 @@ interface FloatingActionButtonProps {
 }
 
 // 빈 폼 데이터 초기화
-const getEmptyTodoForm = (scheduledDate?: Date): TodoFormData => ({
-  title: '',
-  clarification: 'schedule_clear', // "일정"으로 고정
-  nextActionStatuses: [],
-  nextActionContextIds: [],
-  scheduledDate: scheduledDate || new Date(),
-  isHighlight: false,
-  completed: false,
-  projectIds: [],
-  noteIds: [],
-  scheduleType: 'anytime',
-});
+const getEmptyTodoForm = (scheduledDate?: Date): TodoFormData => {
+  const now = new Date();
+  const endTime = new Date(now.getTime() + 30 * 60 * 1000); // 현재 시간 + 30분
+
+  return {
+    title: '',
+    clarification: 'schedule_clear', // "일정"으로 고정
+    nextActionStatuses: [],
+    nextActionContextIds: [],
+    scheduledDate: scheduledDate || new Date(),
+    isHighlight: false,
+    completed: false,
+    projectIds: [],
+    noteIds: [],
+    scheduleType: 'timed', // 타임라인에서는 시간지정이 기본
+    includeTime: true,
+    includeEndDate: true,
+    startTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+    endDate: scheduledDate || new Date(),
+    endTime: `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`,
+  };
+};
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   className,
