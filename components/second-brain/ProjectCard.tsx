@@ -41,7 +41,7 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
     <div className="relative overflow-hidden rounded-lg">
       <div
         onClick={handleClick}
-        className="flex flex-col p-4 bg-white hover:bg-base-100 transition-colors cursor-pointer group"
+        className="flex flex-col p-4 bg-base-100 hover:bg-base-200 transition-colors cursor-pointer group"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -97,7 +97,7 @@ const ProjectCard = memo(function ProjectCard({ project, onEditClick }: ProjectC
             {project.completed_todos}/{project.total_todos} ({progress}%)
           </span>
         </div>
-        <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-base-300 rounded-full h-2 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-300"
             style={{
