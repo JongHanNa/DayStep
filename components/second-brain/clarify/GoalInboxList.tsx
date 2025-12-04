@@ -70,12 +70,7 @@ export default function GoalInboxList({
               }
             }}
           >
-              <button
-                className="relative hover:bg-base-100 transition-colors cursor-pointer w-full text-left"
-                onClick={(e) => {
-                  e.stopPropagation(); // SwipeableCard의 onClick과 분리
-                }}
-              >
+              <div className="relative hover:bg-base-100 transition-colors cursor-pointer w-full text-left">
                 <div className="p-4">
                   <div className="flex items-start gap-3">
                     {/* 편집 모드: 체크박스 */}
@@ -133,7 +128,7 @@ export default function GoalInboxList({
                     </div>
                   </div>
                 </div>
-              </button>
+              </div>
             </SwipeableCard>
         );
       })}
