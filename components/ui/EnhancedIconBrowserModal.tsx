@@ -183,7 +183,7 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
         onClose={onClose}
         {...modalConfig}
       >
-      <Sheet.Container>
+      <Sheet.Container className="!bg-white dark:!bg-gray-900">
         <Sheet.Header>
           {/* 드래그 핸들 영역과 X 버튼 */}
           <div className="w-full flex justify-between items-center py-2 px-4">
@@ -350,8 +350,8 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
         </Sheet.Header>
 
         {/* 스크롤 가능한 아이콘 그리드 영역 */}
-        <div 
-          className="flex-1 overflow-y-auto scrollbar-hide px-1"
+        <div
+          className="flex-1 overflow-y-auto scrollbar-hide px-1 bg-white dark:bg-gray-900"
           style={{
             height: '82vh',
             maxHeight: '82vh',
@@ -360,7 +360,6 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
             touchAction: 'pan-y',
-            background: 'var(--background)',
           }}
         >
           {/* 카테고리별 아이콘 그리드 */}
@@ -399,7 +398,7 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                                   "hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
                                   isSelected
                                     ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 shadow-md"
-                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                                 )}
                               >
                                 <div className="flex items-center justify-center">

@@ -11,6 +11,7 @@ import {
   updateGoalWithJWT,
   deleteGoalWithJWT,
 } from '@/lib/supabase/goals';
+import { queryRLSTableWithJWT } from '@/lib/supabase/core';
 
 interface GoalStoreState {
   goals: Goal[];
@@ -37,7 +38,37 @@ export const useGoalStore = createStore<GoalStoreState>(
         set({ loading: true, error: null });
 
         const goals = await fetchGoalsWithJWT(userId);
-        set({ goals, loading: false });
+
+        // goal_todo_stats에서 할일 통계 조회
+        const stats = await queryRLSTableWithJWT('goal_todo_stats', [
+          { column: 'user_id', operator: 'eq', value: userId }
+        ]);
+
+        // 통계 타입 정의
+        interface GoalTodoStat {
+          goal_id: string;
+          total_todos: number;
+          completed_todos: number;
+          completion_rate: string;
+        }
+
+        // 통계를 Map으로 변환 (goal_id → stats)
+        const statsMap = new Map<string, GoalTodoStat>(
+          (stats || []).map((s: GoalTodoStat) => [s.goal_id, s])
+        );
+
+        // 목표에 실제 통계 병합
+        const goalsWithProgress = goals.map((g) => {
+          const stat = statsMap.get(g.id);
+          return {
+            ...g,
+            total_todos: stat?.total_todos || 0,
+            completed_todos: stat?.completed_todos || 0,
+            progress: stat?.completion_rate ? parseFloat(stat.completion_rate) : 0,
+          };
+        });
+
+        set({ goals: goalsWithProgress, loading: false });
       } catch (error) {
         set({
           error: error instanceof Error ? error.message : '목표를 불러오는데 실패했습니다.',
@@ -49,10 +80,37 @@ export const useGoalStore = createStore<GoalStoreState>(
     fetchArchivedGoals: async (userId: string) => {
       try {
         const allGoals = await fetchGoalsWithJWT(userId);
-        // status가 'paused' 또는 'completed'인 목표만 필터링
-        const archivedGoals = allGoals.filter(
-          (goal: Goal) => goal.status === 'paused' || goal.status === 'completed'
+
+        // goal_todo_stats에서 할일 통계 조회
+        const stats = await queryRLSTableWithJWT('goal_todo_stats', [
+          { column: 'user_id', operator: 'eq', value: userId }
+        ]);
+
+        // 통계 타입 정의
+        interface GoalTodoStat {
+          goal_id: string;
+          total_todos: number;
+          completed_todos: number;
+          completion_rate: string;
+        }
+
+        // 통계를 Map으로 변환
+        const statsMap = new Map<string, GoalTodoStat>(
+          (stats || []).map((s: GoalTodoStat) => [s.goal_id, s])
         );
+
+        // status가 'paused' 또는 'completed'인 목표만 필터링
+        const archivedGoals = allGoals
+          .filter((goal: Goal) => goal.status === 'paused' || goal.status === 'completed')
+          .map((g) => {
+            const stat = statsMap.get(g.id);
+            return {
+              ...g,
+              total_todos: stat?.total_todos || 0,
+              completed_todos: stat?.completed_todos || 0,
+              progress: stat?.completion_rate ? parseFloat(stat.completion_rate) : 0,
+            };
+          });
         return archivedGoals;
       } catch (error) {
         set({
