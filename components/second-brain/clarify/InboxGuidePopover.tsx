@@ -2,10 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Info, Lock, Unlock, X } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 import type { InboxTabType } from './InboxTabs';
-
-const STORAGE_KEY = 'daystep_inbox_guide_hover_enabled';
 
 interface InboxGuidePopoverProps {
   activeTab: InboxTabType;
@@ -288,7 +286,6 @@ const GUIDE_LABELS: Record<InboxTabType, string> = {
 
 export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [enableHoverOpen, setEnableHoverOpen] = useState(true);
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const [mounted, setMounted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -321,21 +318,6 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
       setPopoverPosition({ top, left });
     }
   }, [isOpen]);
-
-  // localStorage에서 호버 설정 불러오기
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) {
-      setEnableHoverOpen(stored === 'true');
-    }
-  }, []);
-
-  // 호버 설정 변경 시 localStorage에 저장
-  const toggleHoverOpen = () => {
-    const newValue = !enableHoverOpen;
-    setEnableHoverOpen(newValue);
-    localStorage.setItem(STORAGE_KEY, String(newValue));
-  };
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -398,39 +380,16 @@ export default function InboxGuidePopover({ activeTab }: InboxGuidePopoverProps)
 
   return (
     <div className="inline-block my-3" ref={buttonRef}>
-      <div className="flex items-center gap-2">
-        {/* 가이드 버튼 */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          onMouseEnter={() => enableHoverOpen && setIsOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-base-content/70 hover:text-base-content hover:bg-base-300/50 rounded-lg transition-colors"
-          aria-label="가이드 보기"
-          aria-expanded={isOpen}
-        >
-          <Info className="w-4 h-4" />
-          <span>{GUIDE_LABELS[activeTab]}</span>
-        </button>
-
-        {/* 호버 토글 버튼 */}
-        <button
-          onClick={toggleHoverOpen}
-          className="flex items-center gap-1.5 px-2 py-2 text-xs text-base-content/60 hover:text-base-content hover:bg-base-300/50 rounded-lg transition-colors"
-          aria-label={enableHoverOpen ? '호버 열림 끄기' : '호버 열림 켜기'}
-          title={enableHoverOpen ? '호버 열림 끄기' : '호버 열림 켜기'}
-        >
-          {enableHoverOpen ? (
-            <>
-              <Unlock className="w-4 h-4" />
-              <span>호버 열기 ON</span>
-            </>
-          ) : (
-            <>
-              <Lock className="w-4 h-4" />
-              <span>호버 열기 OFF</span>
-            </>
-          )}
-        </button>
-      </div>
+      {/* 가이드 버튼 */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-base-content/70 hover:text-base-content hover:bg-base-300/50 rounded-lg transition-colors"
+        aria-label="가이드 보기"
+        aria-expanded={isOpen}
+      >
+        <Info className="w-4 h-4" />
+        <span>{GUIDE_LABELS[activeTab]}</span>
+      </button>
 
       {/* 팝오버 - Portal로 body에 렌더링 */}
       {mounted && isOpen && createPortal(
