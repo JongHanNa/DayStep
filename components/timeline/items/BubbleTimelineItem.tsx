@@ -89,6 +89,8 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
   // 🎯 v7: 단일 리스너 + isDraggingRef로 상태 확인 (리스너 교체 시 스크롤 시작 문제 해결)
   const bubbleTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const touchMoveListenerRef = useRef<((e: TouchEvent) => void) | null>(null);
+  // 🎯 v14: DOM touchend 리스너도 추가 (preventDefault() 호출 시 React onTouchEnd가 호출되지 않는 문제 해결)
+  const touchEndListenerRef = useRef<(() => void) | null>(null);
   const isDraggingRef = useRef(false);
 
   // 버블 너비 (고정) - useMemo보다 먼저 선언
@@ -942,14 +944,40 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   element.addEventListener('touchmove', handleTouchMove, { passive: false });
                   console.log('[DEBUG] touchmove listener added on bubble element');
 
+                  // 🎯 v14: DOM touchend 리스너도 등록 (preventDefault() 호출 시 React onTouchEnd가 호출되지 않음)
+                  const handleTouchEnd = () => {
+                    console.log('[DEBUG] DOM touchend fired');
+                    // 리스너 정리
+                    if (touchMoveListenerRef.current && absoluteBubbleRef.current) {
+                      absoluteBubbleRef.current.removeEventListener('touchmove', touchMoveListenerRef.current);
+                      touchMoveListenerRef.current = null;
+                    }
+                    if (touchEndListenerRef.current && absoluteBubbleRef.current) {
+                      absoluteBubbleRef.current.removeEventListener('touchend', touchEndListenerRef.current);
+                      touchEndListenerRef.current = null;
+                    }
+                    bubbleTouchStartRef.current = null;
+                    // React 핸들러 호출
+                    onTouchEnd();
+                  };
+                  touchEndListenerRef.current = handleTouchEnd;
+                  element.addEventListener('touchend', handleTouchEnd);
+                  console.log('[DEBUG] touchend listener added on bubble element');
+
                   onTouchStart(e);
                 }}
                 onTouchMove={onTouchMove}
                 onTouchEnd={() => {
+                  // 🎯 v14: DOM touchend 리스너가 이미 처리했을 수 있으므로 중복 방지
                   if (touchMoveListenerRef.current && absoluteBubbleRef.current) {
                     absoluteBubbleRef.current.removeEventListener('touchmove', touchMoveListenerRef.current);
                     touchMoveListenerRef.current = null;
-                    console.log('[DEBUG] touchmove listener removed on touchend');
+                    console.log('[DEBUG] touchmove listener removed on React touchend');
+                  }
+                  if (touchEndListenerRef.current && absoluteBubbleRef.current) {
+                    absoluteBubbleRef.current.removeEventListener('touchend', touchEndListenerRef.current);
+                    touchEndListenerRef.current = null;
+                    console.log('[DEBUG] touchend listener removed on React touchend');
                   }
                   bubbleTouchStartRef.current = null;
                   onTouchEnd();

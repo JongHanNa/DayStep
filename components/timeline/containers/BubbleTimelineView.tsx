@@ -86,6 +86,10 @@ export const BubbleTimelineView: React.FC = () => {
   // 🎯 v13: draggedItemId도 ref로 관리 (useCallback 클로저 문제 해결)
   const draggedItemIdRef = useRef<string | null>(null);
 
+  // 🎯 v16: dragStartY, dragCurrentY도 ref로 관리 (useCallback 클로저 문제 해결)
+  const dragStartYRef = useRef(0);
+  const dragCurrentYRef = useRef(0);
+
   // 반복 할일 업데이트 다이얼로그 상태
   const [recurringUpdateDialog, setRecurringUpdateDialog] = useState<{
     open: boolean;
@@ -383,6 +387,7 @@ export const BubbleTimelineView: React.FC = () => {
 
     // ✅ 초기 위치 저장
     setDragStartY(clientY);
+    dragStartYRef.current = clientY;  // 🎯 v16: ref도 업데이트
     setInitialTouch({ x: clientX, y: clientY });
     setDraggedItemId(itemId);
 
@@ -390,6 +395,7 @@ export const BubbleTimelineView: React.FC = () => {
     const timer = setTimeout(() => {
       setIsDragging(true);
       setDragCurrentY(clientY);
+      dragCurrentYRef.current = clientY;  // 🎯 v16: ref도 업데이트
       setDragCurrentX(clientX);
 
       // 🔒 완전한 스크롤 차단 활성화
@@ -423,6 +429,7 @@ export const BubbleTimelineView: React.FC = () => {
       console.log('[DEBUG] updating position:', clientX.toFixed(0), clientY.toFixed(0));
       // 이미 드래그 중이면 위치 업데이트 (X, Y 모두)
       setDragCurrentY(clientY);
+      dragCurrentYRef.current = clientY;  // 🎯 v16: ref도 업데이트
       setDragCurrentX(clientX);
 
       // 🎯 자동 스크롤 경계 체크
@@ -444,6 +451,14 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 드래그 종료 (터치/마우스 통합)
   const handleDragEnd = useCallback(async () => {
+    // 🎯 v15: ref를 사용하여 항상 최신 값 확인 (useCallback 클로저 문제 해결)
+    const currentIsDragging = isDraggingRef.current;
+    const currentDraggedItemId = draggedItemIdRef.current;
+    // 🎯 v16: dragStartY, dragCurrentY도 ref에서 읽기
+    const currentDragStartY = dragStartYRef.current;
+    const currentDragCurrentY = dragCurrentYRef.current;
+    console.log('[DEBUG] handleDragEnd called, isDragging:', currentIsDragging, 'draggedItemId:', currentDraggedItemId, 'dragStartY:', currentDragStartY, 'dragCurrentY:', currentDragCurrentY);
+
     // 타이머가 있으면 취소
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -452,7 +467,8 @@ export const BubbleTimelineView: React.FC = () => {
 
     // ✅ 실제로 드래그 중이 아니면 무시 (다른 카드의 이벤트로 인한 오작동 방지)
     // 단순 클릭 시에는 lastDragEndTimeRef를 업데이트하지 않아 onClick이 정상 동작함
-    if (!isDragging) {
+    // 🎯 v15: ref 값으로 체크
+    if (!currentIsDragging) {
       // 드래그 중이 아니어도 초기 상태 정리
       setDraggedItemId(null);
       setInitialTouch(null);
@@ -462,13 +478,17 @@ export const BubbleTimelineView: React.FC = () => {
     // ✅ 실제 드래그가 있었을 때만 시간 기록 (onClick 방지용 - React 배치 업데이트 우회)
     lastDragEndTimeRef.current = Date.now();
 
-    if (draggedItemId) {
+    // 🎯 v15: ref 값으로 체크
+    if (currentDraggedItemId) {
       // Y축 이동 거리를 시간으로 변환 (1px = 1분)
-      const deltaY = dragCurrentY - dragStartY;
+      // 🎯 v16: ref 값 사용
+      const deltaY = currentDragCurrentY - currentDragStartY;
       const minutesChange = Math.round(deltaY);
+      console.log('[DEBUG] handleDragEnd deltaY:', deltaY, 'dragStartY:', currentDragStartY, 'dragCurrentY:', currentDragCurrentY);
 
       // ✅ 최소 드래그 거리 체크: 1px 미만이면 모달 표시 안 함 (1분 이상 이동 시 모달 열림)
       if (Math.abs(deltaY) < 1) {
+        console.log('[DEBUG] handleDragEnd deltaY < 1, skipping modal');
         // 실제 드래그 없음 → 상태만 초기화하고 모달 안 띄움
         setIsDragging(false);
         setDraggedItemId(null);
@@ -486,9 +506,12 @@ export const BubbleTimelineView: React.FC = () => {
       }
 
       // 드래그된 할일 찾기
-      const draggedItem = timedItems.find(item => item.id === draggedItemId);
+      // 🎯 v15: ref 값으로 검색
+      const draggedItem = timedItems.find(item => item.id === currentDraggedItemId);
+      console.log('[DEBUG] handleDragEnd draggedItem found:', !!draggedItem, 'timedItems count:', timedItems.length);
 
       if (draggedItem && draggedItem.startTime && draggedItem.endTime) {
+        console.log('[DEBUG] handleDragEnd proceeding with time update');
         const newStartTime = new Date(new Date(draggedItem.startTime).getTime() + minutesChange * 60 * 1000);
         const newEndTime = new Date(new Date(draggedItem.endTime).getTime() + minutesChange * 60 * 1000);
 
@@ -548,7 +571,8 @@ export const BubbleTimelineView: React.FC = () => {
 
     // 🔓 스크롤 차단 해제 (리스트뷰와 동일)
     disableScrollLock();
-  }, [isDragging, draggedItemId, dragStartY, dragCurrentY, timedItems, longPressTimer, disableScrollLock, currentDate, updateTodo]);;
+  }, [timedItems, longPressTimer, disableScrollLock, currentDate, updateTodo]);
+  // ✅ v16: dependency에서 isDragging, draggedItemId, dragStartY, dragCurrentY 모두 제거 (ref 사용으로 항상 최신 값 참조)
 
   // 🎯 드래그 중 전역 마우스 이벤트 처리 (아이템 영역 벗어나도 추적)
   useEffect(() => {
