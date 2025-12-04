@@ -9,8 +9,8 @@ import { BubbleTimelineItem } from '../items/BubbleTimelineItem';
 import { useCurrentTime } from '@/lib/hooks/useCurrentTime';
 import { isRecurringTodo } from '@/lib/utils/recurring';
 import { Todo as DbTodo, Clarification } from '@/types';
-import TodoFormModal from '@/components/todos/TodoFormModal';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import { useAuth } from '@/app/context/AuthContext';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
@@ -38,8 +38,10 @@ export const BubbleTimelineView: React.FC = () => {
   const toggleTodo = useTodoStore(state => state.toggleTodo);
   const toggleRecurrenceCompletion = useTodoStore(state => state.toggleRecurrenceCompletion);
   const deleteTodo = useTodoStore(state => state.deleteTodo);
+  const createTodo = useTodoStore(state => state.createTodo);
   const todos = useTodoStore(state => state.todos);
   const currentTime = useCurrentTime();
+  const { user } = useAuth();
 
   // Second Brain stores
   const { projects } = useProjectStore();
@@ -88,8 +90,7 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 할일 추가 모달 상태
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addModalStartTime, setAddModalStartTime] = useState<Date | null>(null);
-  const [addModalEndTime, setAddModalEndTime] = useState<Date | null>(null);
+  const [gapTodoForm, setGapTodoForm] = useState<TodoFormData | null>(null);
 
   // 할일 수정 모달 상태
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -694,11 +695,90 @@ export const BubbleTimelineView: React.FC = () => {
     }
   }, [originalTodoId, deleteTodo]);
 
-  // 간격 클릭 핸들러 (할일 추가 모달 표시)
+  // 빈 폼 데이터 초기화 (FloatingActionButton과 동일)
+  const getEmptyTodoForm = useCallback((scheduledDate?: Date): TodoFormData => ({
+    title: '',
+    clarification: 'schedule_clear',
+    nextActionStatuses: [],
+    nextActionContextIds: [],
+    scheduledDate: scheduledDate || new Date(),
+    isHighlight: false,
+    completed: false,
+    projectIds: [],
+    noteIds: [],
+    scheduleType: 'anytime',
+  }), []);
+
+  // 간격 클릭 핸들러 (할일 추가 모달 표시) - TodoEditModal 사용
   const handleGapClick = useCallback((startTime: Date, endTime: Date) => {
-    setAddModalStartTime(startTime);
-    setAddModalEndTime(endTime);
+    // 시간대 정보 포함한 폼 초기화
+    const form = getEmptyTodoForm(currentDate);
+    form.scheduleType = 'timed';
+    form.startTime = format(startTime, 'HH:mm');
+    form.endTime = format(endTime, 'HH:mm');
+    form.includeTime = true;
+    form.includeEndDate = true;
+    form.endDate = currentDate;
+    setGapTodoForm(form);
     setIsAddModalOpen(true);
+  }, [currentDate, getEmptyTodoForm]);
+
+  // Gap 할일 저장 핸들러 (FloatingActionButton과 동일 패턴)
+  const handleGapSave = useCallback(async (formData: TodoFormData) => {
+    if (!user?.id || !formData.title.trim()) return;
+
+    try {
+      // 시간 처리
+      let finalDateTime: Date | undefined = formData.scheduledDate;
+
+      if (formData.scheduleType === 'timed' && formData.startTime && finalDateTime) {
+        const [hours, minutes] = formData.startTime.split(':');
+        finalDateTime = new Date(finalDateTime);
+        finalDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+
+      // end_time 처리: endDate + endTime 결합하여 ISO 타임스탬프 생성
+      let finalEndDateTime: string | undefined;
+      if (formData.scheduleType === 'timed' && formData.endTime && formData.endDate) {
+        const [endHours, endMinutes] = formData.endTime.split(':');
+        const endDateTime = new Date(formData.endDate);
+        endDateTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+        finalEndDateTime = endDateTime.toISOString();
+      }
+
+      // createTodo 호출
+      await createTodo({
+        user_id: user.id,
+        title: formData.title,
+        clarification: formData.clarification as Clarification | undefined,
+        schedule_type: formData.scheduleType || 'anytime',
+        start_time: finalDateTime?.toISOString(),
+        end_time: finalEndDateTime,
+        is_today_highlight: formData.isHighlight,
+        completed: formData.completed,
+        project_ids: formData.projectIds,
+        icon: formData.icon,
+        color: formData.color,
+        next_action_context_ids: formData.nextActionContextIds,
+      });
+
+      // 모달 닫기
+      setIsAddModalOpen(false);
+      setGapTodoForm(null);
+    } catch (error) {
+      console.error('할일 생성 실패:', error);
+    }
+  }, [user, createTodo]);
+
+  // Gap 폼 변경 핸들러
+  const handleGapChange = useCallback((updated: TodoFormData) => {
+    setGapTodoForm(prev => prev ? { ...prev, ...updated } : updated);
+  }, []);
+
+  // Gap 모달 닫기 핸들러
+  const handleGapClose = useCallback(() => {
+    setIsAddModalOpen(false);
+    setGapTodoForm(null);
   }, []);
 
   // 오늘인지 확인
@@ -1089,13 +1169,24 @@ export const BubbleTimelineView: React.FC = () => {
         </div>
       )}
 
-      {/* 할일 추가 모달 */}
-      <TodoFormModal
-        open={isAddModalOpen}
-        onOpenChange={setIsAddModalOpen}
-        initialStartTime={addModalStartTime}
-        initialEndTime={addModalEndTime}
-      />
+      {/* 할일 추가 모달 - TodoEditModal 사용 (플로팅 버튼과 동일) */}
+      {gapTodoForm && (
+        <TodoEditModal
+          open={isAddModalOpen}
+          todo={gapTodoForm}
+          onClose={handleGapClose}
+          onSave={handleGapSave}
+          onChange={handleGapChange}
+          projects={projects}
+          areas={areas}
+          resources={resources}
+          headerTitle="할일 추가"
+          showScheduledDate={true}
+          showHighlight={true}
+          showProjects={true}
+          showClarification={false}
+        />
+      )}
 
       {/* 할일 수정 모달 - TodoEditModal 사용 */}
       <TodoEditModal
