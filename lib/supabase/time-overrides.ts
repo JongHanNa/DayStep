@@ -18,7 +18,7 @@ export async function createTimeOverrideWithJWT(overrideData: {
   console.log('⏰ JWT 방식으로 시간/제목 override 생성:', { overrideData });
 
   try {
-    const result = await createWithJWT('todo_time_overrides', {
+    const result = await createWithJWT('todo_overrides', {
       ...overrideData,
       updated_at: new Date().toISOString()
     });
@@ -49,7 +49,7 @@ export async function updateTimeOverrideWithJWT(
   });
 
   try {
-    const result = await updateWithJWT('todo_time_overrides', [
+    const result = await updateWithJWT('todo_overrides', [
       {
         column: 'parent_todo_id',
         operator: 'eq',
@@ -117,7 +117,7 @@ export async function queryTimeOverridesWithJWT(
       );
     }
 
-    const overrides = await queryRLSTableWithJWT('todo_time_overrides', conditions, {
+    const overrides = await queryRLSTableWithJWT('todo_overrides', conditions, {
       select: '*',
       order: 'override_date.asc'
     });
@@ -148,7 +148,7 @@ export async function deleteTimeOverrideWithJWT(
   });
 
   try {
-    const result = await deleteWithJWT('todo_time_overrides', [
+    const result = await deleteWithJWT('todo_overrides', [
       {
         column: 'parent_todo_id',
         operator: 'eq',
@@ -189,7 +189,7 @@ export async function deleteTimeOverridesFromDateWithJWT(
   });
 
   try {
-    const result = await deleteWithJWT('todo_time_overrides', [
+    const result = await deleteWithJWT('todo_overrides', [
       {
         column: 'parent_todo_id',
         operator: 'eq',
@@ -228,7 +228,7 @@ export async function deleteAllTimeOverridesWithJWT(
   });
 
   try {
-    const result = await deleteWithJWT('todo_time_overrides', [
+    const result = await deleteWithJWT('todo_overrides', [
       {
         column: 'parent_todo_id',
         operator: 'eq',

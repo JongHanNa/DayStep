@@ -933,7 +933,7 @@ export type Database = {
           },
         ]
       }
-      todo_time_overrides: {
+      todo_overrides: {
         Row: {
           created_at: string | null
           end_time: string | null
@@ -969,7 +969,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "todo_time_overrides_parent_todo_id_fkey"
+            foreignKeyName: "todo_overrides_parent_todo_id_fkey"
             columns: ["parent_todo_id"]
             isOneToOne: false
             referencedRelation: "todos"
