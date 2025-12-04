@@ -417,9 +417,6 @@ export const BubbleTimelineView: React.FC = () => {
 
   // 드래그 종료 (터치/마우스 통합)
   const handleDragEnd = useCallback(async () => {
-    // 드래그 종료 시간 기록 (onClick 방지용 - React 배치 업데이트 우회)
-    lastDragEndTimeRef.current = Date.now();
-
     // 타이머가 있으면 취소
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -427,12 +424,16 @@ export const BubbleTimelineView: React.FC = () => {
     }
 
     // ✅ 실제로 드래그 중이 아니면 무시 (다른 카드의 이벤트로 인한 오작동 방지)
+    // 단순 클릭 시에는 lastDragEndTimeRef를 업데이트하지 않아 onClick이 정상 동작함
     if (!isDragging) {
       // 드래그 중이 아니어도 초기 상태 정리
       setDraggedItemId(null);
       setInitialTouch(null);
       return;
     }
+
+    // ✅ 실제 드래그가 있었을 때만 시간 기록 (onClick 방지용 - React 배치 업데이트 우회)
+    lastDragEndTimeRef.current = Date.now();
 
     if (draggedItemId) {
       // Y축 이동 거리를 시간으로 변환 (1px = 1분)
