@@ -515,10 +515,10 @@ export default function GoalCompassPage() {
     return grouped;
   }, [ongoingGoals]);
 
-  // 2. 진행 중인 프로젝트 (종료일이 설정된 것만)
+  // 2. 진행 중인 프로젝트
   const ongoingProjects = useMemo(() => {
     return projects.filter(
-      (project) => project.end_date && project.status === 'in_progress'
+      (project) => project.status === 'in_progress'
     );
   }, [projects]);
 
