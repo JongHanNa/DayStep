@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Play } from 'lucide-react';
 import TodoFormContent from '@/components/todos/TodoFormContent';
@@ -219,8 +220,9 @@ export default function TodoEditModal({
 
   if (!open || !todo) return null;
 
-  // Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor
-  return (
+  // Portal을 사용하여 document.body에 렌더링
+  // 부모 컨테이너의 overflow 영향을 받지 않도록 함 (Capacitor WebView 호환성)
+  const modalContent = (
     <dialog open className="modal modal-open z-[110]">
       <div className={`modal-box bg-base-200 w-full max-w-7xl h-screen flex flex-col overflow-hidden p-[10px] ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
         {/* 헤더 (취소-제목-삭제-저장) */}
@@ -391,4 +393,9 @@ export default function TodoEditModal({
       )}
     </dialog>
   );
+
+  // SSR 환경에서는 document가 없으므로 체크 필요
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(modalContent, document.body);
 }

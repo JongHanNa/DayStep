@@ -1,19 +1,16 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Menu, Sun, Moon, Palette } from 'lucide-react';
+import { Menu, Sun, Moon } from 'lucide-react';
 import { useSidebarStore } from '@/state/stores/sidebarStore';
 import { getPageTitleFromPath } from '@/config/navigation';
 import { useTheme } from '@/hooks/useTheme';
-import { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import ColorThemeModal from '@/components/settings/ColorThemeModal';
 
 export default function AppHeader() {
   const pathname = usePathname();
   const { open } = useSidebarStore();
   const { resolvedTheme, setTheme } = useTheme();
-  const [isColorThemeModalOpen, setIsColorThemeModalOpen] = useState(false);
   const { isAuthenticated, loading } = useAuth();
 
   const pageTitle = getPageTitleFromPath(pathname);
@@ -71,41 +68,23 @@ export default function AppHeader() {
             {pageTitle}
           </h1>
 
-          {/* 오른쪽: 테마 버튼들 */}
-          <div className="flex items-center gap-1">
-            {/* 라이트/다크 모드 토글 */}
-            <button
-              onClick={toggleTheme}
-              className="btn btn-ghost btn-circle"
-              aria-label={resolvedTheme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-            >
-              {resolvedTheme === 'light' ? (
-                <Moon className="w-5 h-5" />
-              ) : (
-                <Sun className="w-5 h-5" />
-              )}
-            </button>
-
-            {/* 컬러 테마 버튼 */}
-            <button
-              onClick={() => setIsColorThemeModalOpen(true)}
-              className="btn btn-ghost btn-circle"
-              aria-label="컬러 테마 선택"
-            >
-              <Palette className="w-5 h-5" />
-            </button>
-          </div>
+          {/* 오른쪽: 라이트/다크 모드 토글 */}
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost btn-circle"
+            aria-label={resolvedTheme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
+          >
+            {resolvedTheme === 'light' ? (
+              <Moon className="w-5 h-5" />
+            ) : (
+              <Sun className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </header>
 
       {/* 헤더 높이만큼 공간 확보 (safe-area-top 포함) */}
       <div className="h-[--header-total-height]" />
-
-      {/* 컬러 테마 모달 */}
-      <ColorThemeModal
-        isOpen={isColorThemeModalOpen}
-        onClose={() => setIsColorThemeModalOpen(false)}
-      />
     </>
   );
 }
