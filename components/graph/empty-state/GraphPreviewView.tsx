@@ -272,7 +272,7 @@ export function GraphPreviewView({
       </div>
 
       {/* 그래프 컨테이너 - Swiper로 양옆 카드 노출 */}
-      <div className="relative h-[480px] overflow-hidden">
+      <div className="relative h-[480px]">
         <Swiper
           onSwiper={(swiper) => { swiperRef.current = swiper; }}
           slidesPerView={1.12}

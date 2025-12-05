@@ -84,9 +84,9 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-base-200 relative">
+    <div className="min-h-screen flex flex-col bg-base-200 relative overflow-x-hidden">
       {/* 메인 콘텐츠 영역 */}
-      <div className="flex-1 flex flex-col items-center pt-8 px-4 pb-24 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center pt-8 px-4 pb-24 overflow-y-auto overflow-x-hidden">
         {/* 헤더 */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
