@@ -208,7 +208,7 @@ export function GraphEmptyState() {
                 </div>
                 <div className="text-left">
                   <div className="font-medium">책임 영역</div>
-                  <div className="text-sm text-base-content/60">삶에서 담당하는 역할</div>
+                  <div className="text-sm text-base-content/60">삶에서 책임져야 하는 영역</div>
                 </div>
               </button>
 
@@ -223,8 +223,8 @@ export function GraphEmptyState() {
                   <Archive className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left">
-                  <div className="font-medium">자원</div>
-                  <div className="text-sm text-base-content/60">관리하고 싶은 것들</div>
+                  <div className="font-medium">관심 자원</div>
+                  <div className="text-sm text-base-content/60">책임이 없는 관심사</div>
                 </div>
               </button>
             </motion.div>
