@@ -7,7 +7,7 @@
 
 import { useRef, useCallback, useEffect, useState, ComponentType } from 'react';
 import ForceGraph2DComponent from './ForceGraph2DWrapper';
-import type { GraphNode, GraphLink, GraphData } from '@/types/graph';
+import type { GraphNode, GraphLink, GraphData, GraphAnimationMode } from '@/types/graph';
 import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu, useGraphPopover, useGraphFocus, useGraphMultiSelection } from '@/state/stores/graphStore';
 import { getNodeSize, getLinkColor, getLinkWidth, NODE_TYPE_LABELS } from '@/lib/graph-utils';
 import type { GraphNodeType } from '@/types/graph';
@@ -42,6 +42,12 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
   // 초기 로드 및 zoomToFit 상태
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const shouldZoomToFitRef = useRef(false);
+
+  // 애니메이션 상태 관리
+  type AnimationPhase = 'simulating' | 'ready' | 'animating' | 'done';
+  const [animationPhase, setAnimationPhase] = useState<AnimationPhase>('simulating');
+  const [nodeVisibility, setNodeVisibility] = useState<Map<string, { opacity: number; scale: number }>>(new Map());
+  const animationFrameRef = useRef<number | null>(null);
 
   // 마퀴 선택 상태
   const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
@@ -221,7 +227,130 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
     }
   }, [shouldZoomToFit]);
 
-  // onEngineStop 핸들러 - 시뮬레이션 완료 시 zoomToFit 실행
+  // 모드별 시뮬레이션 설정
+  const getSimulationConfig = useCallback((mode: GraphAnimationMode) => {
+    const configs = {
+      fast: { warmupTicks: 200, cooldownTicks: 100, cooldownTime: 1500 },
+      fade: { warmupTicks: 150, cooldownTicks: 80, cooldownTime: 1500 },
+      'scale-fade': { warmupTicks: 150, cooldownTicks: 80, cooldownTime: 1500 },
+      ripple: { warmupTicks: 200, cooldownTicks: 50, cooldownTime: 1000 }
+    };
+    return configs[mode];
+  }, []);
+
+  // Easing 함수 (부드러운 애니메이션)
+  const easeOutCubic = useCallback((t: number) => 1 - Math.pow(1 - t, 3), []);
+
+  // 일괄 애니메이션 트리거 (fade, scale-fade)
+  const triggerBatchAnimation = useCallback(() => {
+    setAnimationPhase('animating');
+    const duration = filter.animationMode === 'fade' ? 300 : 400;
+    const startTime = performance.now();
+
+    const animate = (time: number) => {
+      const progress = Math.min((time - startTime) / duration, 1);
+      const eased = easeOutCubic(progress);
+
+      const newVisibility = new Map<string, { opacity: number; scale: number }>();
+      graphData.nodes.forEach(node => {
+        newVisibility.set(node.id, {
+          opacity: eased,
+          scale: filter.animationMode === 'scale-fade' ? 0.5 + 0.5 * eased : 1
+        });
+      });
+      setNodeVisibility(newVisibility);
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        setAnimationPhase('done');
+        animationFrameRef.current = null;
+      }
+    };
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [filter.animationMode, graphData.nodes, easeOutCubic]);
+
+  // 순차 애니메이션 트리거 (ripple)
+  const triggerRippleAnimation = useCallback(() => {
+    setAnimationPhase('animating');
+
+    // 연결 수 계산
+    const connectionCount = new Map<string, number>();
+    graphData.nodes.forEach(node => connectionCount.set(node.id, 0));
+    graphData.links.forEach(link => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      connectionCount.set(sourceId, (connectionCount.get(sourceId) || 0) + 1);
+      connectionCount.set(targetId, (connectionCount.get(targetId) || 0) + 1);
+    });
+
+    // 연결 수 기준 정렬 (많은 순)
+    const sortedNodes = [...graphData.nodes].sort((a, b) =>
+      (connectionCount.get(b.id) || 0) - (connectionCount.get(a.id) || 0)
+    );
+
+    // 초기 상태: 모두 숨김
+    const initialVisibility = new Map<string, { opacity: number; scale: number }>();
+    graphData.nodes.forEach(node => {
+      initialVisibility.set(node.id, { opacity: 0, scale: 0.5 });
+    });
+    setNodeVisibility(initialVisibility);
+
+    // 순차적으로 노드 등장
+    const delay = 40; // 노드 간 딜레이 (ms)
+    const duration = 250; // 개별 애니메이션 시간 (ms)
+
+    sortedNodes.forEach((node, index) => {
+      setTimeout(() => {
+        const startTime = performance.now();
+
+        const animateNode = (time: number) => {
+          const progress = Math.min((time - startTime) / duration, 1);
+          const eased = easeOutCubic(progress);
+
+          setNodeVisibility(prev => {
+            const newMap = new Map(prev);
+            newMap.set(node.id, {
+              opacity: eased,
+              scale: 0.5 + 0.5 * eased
+            });
+            return newMap;
+          });
+
+          if (progress < 1) {
+            requestAnimationFrame(animateNode);
+          } else if (index === sortedNodes.length - 1) {
+            setAnimationPhase('done');
+          }
+        };
+        requestAnimationFrame(animateNode);
+      }, index * delay);
+    });
+  }, [graphData.nodes, graphData.links, easeOutCubic]);
+
+  // 애니메이션 정리
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  // graphData 변경 시 애니메이션 상태 초기화
+  useEffect(() => {
+    if (graphData.nodes.length > 0) {
+      setAnimationPhase('simulating');
+      // 모든 모드: 시뮬레이션 완료 전까지 노드 숨김 (겹침 현상 방지)
+      const hiddenVisibility = new Map<string, { opacity: number; scale: number }>();
+      graphData.nodes.forEach(node => {
+        hiddenVisibility.set(node.id, { opacity: 0, scale: filter.animationMode === 'scale-fade' ? 0.5 : 1 });
+      });
+      setNodeVisibility(hiddenVisibility);
+    }
+  }, [graphData.nodes, filter.animationMode]);
+
+  // onEngineStop 핸들러 - 시뮬레이션 완료 시 zoomToFit 및 애니메이션 실행
   const handleEngineStop = useCallback(() => {
     // 첫 로드 시 zoomToFit
     if (!isInitialLoadComplete && graphData.nodes.length > 0) {
@@ -235,7 +364,26 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
       shouldZoomToFitRef.current = false;
       onZoomToFitComplete?.();
     }
-  }, [isInitialLoadComplete, graphData.nodes.length, safeZoomToFit, onZoomToFitComplete]);
+
+    // 시뮬레이션 완료 시 애니메이션 트리거
+    if (animationPhase === 'simulating' && graphData.nodes.length > 0) {
+      if (filter.animationMode === 'fast') {
+        // fast 모드: 시뮬레이션 완료 후 즉시 표시 (애니메이션 없음)
+        const fullVisibility = new Map<string, { opacity: number; scale: number }>();
+        graphData.nodes.forEach(node => {
+          fullVisibility.set(node.id, { opacity: 1, scale: 1 });
+        });
+        setNodeVisibility(fullVisibility);
+        setAnimationPhase('done');
+      } else if (filter.animationMode === 'fade' || filter.animationMode === 'scale-fade') {
+        // fade/scale-fade: 일괄 애니메이션
+        triggerBatchAnimation();
+      } else if (filter.animationMode === 'ripple') {
+        // ripple: 순차 애니메이션
+        triggerRippleAnimation();
+      }
+    }
+  }, [isInitialLoadComplete, graphData.nodes.length, safeZoomToFit, onZoomToFitComplete, animationPhase, filter.animationMode, triggerBatchAnimation, triggerRippleAnimation]);
 
   // 화면 좌표를 그래프 좌표로 변환
   const screenToGraph = useCallback((screenX: number, screenY: number) => {
@@ -538,14 +686,23 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
   // 커스텀 노드 렌더링
   const nodeCanvasObject = useCallback(
     (node: GraphNode & { x?: number; y?: number }, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      // 애니메이션 visibility 적용
+      const visibility = nodeVisibility.get(node.id) || { opacity: 1, scale: 1 };
+      if (visibility.opacity <= 0) return; // 완전 투명이면 렌더링 스킵
+
       const isSelected = node.id === selectedNodeId;
       const isHovered = node.id === hoveredNodeId;
       const isMultiSelected = selectedNodeIds.includes(node.id);
       const baseSize = getNodeSize(node);
-      const size = isSelected || isMultiSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
+      const rawSize = isSelected || isMultiSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
+      const size = rawSize * visibility.scale; // 스케일 애니메이션 적용
 
       const x = node.x ?? 0;
       const y = node.y ?? 0;
+
+      // globalAlpha 저장 및 설정
+      const prevAlpha = ctx.globalAlpha;
+      ctx.globalAlpha = visibility.opacity;
 
       // 다중 선택 시 강조 효과 (청록색 글로우)
       if (isMultiSelected) {
@@ -588,9 +745,12 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
       const iconSize = size * 0.7;
       drawNodeIcon(ctx, node.type, x, y, iconSize);
 
+      // globalAlpha 복원
+      ctx.globalAlpha = prevAlpha;
+
       // 라벨은 onRenderFramePost에서 별도로 그림 (z-index 문제 해결)
     },
-    [selectedNodeId, hoveredNodeId, selectedNodeIds, drawNodeIcon]
+    [selectedNodeId, hoveredNodeId, selectedNodeIds, drawNodeIcon, nodeVisibility]
   );
 
   // 모든 노드가 그려진 후 라벨을 별도로 그리기 (z-index 문제 해결)
@@ -606,13 +766,22 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         const nodeWithPos = node as GraphNode & { x?: number; y?: number };
         if (nodeWithPos.x === undefined || nodeWithPos.y === undefined) return;
 
+        // 애니메이션 visibility 적용 (라벨도 노드와 함께 페이드인)
+        const visibility = nodeVisibility.get(node.id) || { opacity: 1, scale: 1 };
+        if (visibility.opacity <= 0) return; // 완전 투명이면 라벨도 스킵
+
         const x = nodeWithPos.x;
         const y = nodeWithPos.y;
         const baseSize = getNodeSize(node);
         const isSelected = node.id === selectedNodeId;
         const isHovered = node.id === hoveredNodeId;
         const isMultiSelected = selectedNodeIds.includes(node.id);
-        const size = isSelected || isMultiSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
+        const rawSize = isSelected || isMultiSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
+        const size = rawSize * visibility.scale;
+
+        // globalAlpha 저장 및 설정
+        const prevAlpha = ctx.globalAlpha;
+        ctx.globalAlpha = visibility.opacity;
 
         const labelFontSize = Math.max(8, Math.min(11, 10 / globalScale));
         ctx.font = `500 ${labelFontSize}px Inter, system-ui, sans-serif`;
@@ -658,9 +827,12 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         ctx.textBaseline = 'middle';
         ctx.fillStyle = isSelected || isHovered || isMultiSelected ? '#fff' : 'rgba(255, 255, 255, 0.9)';
         ctx.fillText(displayTitle, labelX, labelY);
+
+        // globalAlpha 복원
+        ctx.globalAlpha = prevAlpha;
       });
     },
-    [graphData.nodes, selectedNodeId, hoveredNodeId, selectedNodeIds, dimensions.width]
+    [graphData.nodes, selectedNodeId, hoveredNodeId, selectedNodeIds, dimensions.width, nodeVisibility]
   );
 
   // 노드 포인터 영역 크기
@@ -684,6 +856,11 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
   const linkWidthFn = useCallback((link: GraphLink) => {
     return getLinkWidth(link, filter.linkWidth);
   }, [filter.linkWidth]);
+
+  // 링크 visibility (노드 애니메이션과 동기화 - 시뮬레이션 중에는 숨김)
+  const linkVisibility = useCallback(() => {
+    return animationPhase !== 'simulating';
+  }, [animationPhase]);
 
   // 사각형 선택 영역 스타일 계산
   const getMarqueeStyle = useCallback(() => {
@@ -730,15 +907,16 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         // 링크 설정
         linkColor={linkColor}
         linkWidth={linkWidthFn}
+        linkVisibility={linkVisibility}
         linkDirectionalParticles={2}
         linkDirectionalParticleWidth={2}
         linkDirectionalParticleSpeed={0.005}
-        // 물리 시뮬레이션 설정
-        d3AlphaDecay={0.015}        // 조금 더 느린 냉각 (0.02 → 0.015)
-        d3VelocityDecay={0.4}       // 더 빠른 안정화 (0.3 → 0.4)
-        warmupTicks={100}           // 초기 안정화 강화 (50 → 100)
-        cooldownTicks={150}         // 더 긴 애니메이션 (100 → 150, 약 2.5초)
-        cooldownTime={3000}
+        // 물리 시뮬레이션 설정 (애니메이션 모드별 동적 적용)
+        d3AlphaDecay={0.02}
+        d3VelocityDecay={0.4}
+        warmupTicks={getSimulationConfig(filter.animationMode).warmupTicks}
+        cooldownTicks={getSimulationConfig(filter.animationMode).cooldownTicks}
+        cooldownTime={getSimulationConfig(filter.animationMode).cooldownTime}
         // 상호작용 설정
         enableZoomInteraction={true}
         enablePanInteraction={!isMarqueeActive && !isShiftPressed}

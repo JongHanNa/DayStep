@@ -11,6 +11,7 @@ import type {
   GraphFilter,
   GraphNode,
   GraphNodeType,
+  GraphAnimationMode,
   DEFAULT_GRAPH_FILTER,
 } from '@/types/graph';
 
@@ -22,6 +23,7 @@ const defaultFilter: GraphFilter = {
   showArchived: false,
   connectionDepth: 3,
   linkWidth: 1,
+  animationMode: 'fast', // 기본값: 빠른 안정화
 };
 
 // Action menu position interface
@@ -79,6 +81,7 @@ interface GraphStoreState {
   setLinkWidth: (width: number) => void;
   toggleShowCompleted: () => void;
   toggleShowArchived: () => void;
+  setAnimationMode: (mode: GraphAnimationMode) => void;
 
   // Actions - Selection
   setSelectedNode: (nodeId: string | null) => void;
@@ -192,6 +195,12 @@ export const useGraphStore = create<GraphStoreState>()(
       toggleShowArchived: () => {
         set((state) => ({
           filter: { ...state.filter, showArchived: !state.filter.showArchived },
+        }));
+      },
+
+      setAnimationMode: (mode) => {
+        set((state) => ({
+          filter: { ...state.filter, animationMode: mode },
         }));
       },
 

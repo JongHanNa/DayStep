@@ -5,7 +5,7 @@
 
 'use client';
 
-import { Search, Filter, Eye, EyeOff, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Search, Filter, X } from 'lucide-react';
 import {
   useGraphStore,
   useGraphFilter,

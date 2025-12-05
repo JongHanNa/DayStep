@@ -8,6 +8,9 @@ export type GraphNodeType = 'area' | 'resource' | 'goal' | 'project' | 'todo' | 
 // Link type enum
 export type GraphLinkType = 'hierarchy' | 'reference';
 
+// Animation mode enum
+export type GraphAnimationMode = 'fast' | 'fade' | 'scale-fade' | 'ripple';
+
 // Graph node interface for react-force-graph
 export interface GraphNode {
   id: string;
@@ -49,6 +52,7 @@ export interface GraphFilter {
   showArchived: boolean;
   connectionDepth: number; // 1-5, how many levels of connections to show
   linkWidth: number; // 0.5-3, link width multiplier
+  animationMode: GraphAnimationMode; // 노드 등장 애니메이션 모드
 }
 
 // Default filter values
@@ -59,6 +63,7 @@ export const DEFAULT_GRAPH_FILTER: GraphFilter = {
   showArchived: false,
   connectionDepth: 3,
   linkWidth: 1,
+  animationMode: 'fast', // 기본값: 빠른 안정화
 };
 
 // Relation data from junction tables
