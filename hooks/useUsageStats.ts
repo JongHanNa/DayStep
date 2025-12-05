@@ -61,7 +61,7 @@ const entityToStatsField: Record<UsageEntityType, keyof UserUsageStats> = {
  * 용량 통계 Hook
  */
 export function useUsageStats() {
-  const { stats, isLoading, error, setStats, setLoading, setError, incrementCount, decrementCount } =
+  const { stats, isLoading, error, setStats, setLoading, setError, incrementCount, decrementCount, invalidateIfUserChanged } =
     useUsageStore();
   const { hasActiveSubscription } = useSubscription();
   const { user } = useAuth();
@@ -85,7 +85,7 @@ export function useUsageStats() {
 
     try {
       const data = await getOrInitializeUserUsageStats(user.id);
-      setStats(data);
+      setStats(data, user.id);
     } catch (err: any) {
       console.error('📊 용량 조회 실패:', err);
       setError(err.message || '용량 조회 실패');
@@ -95,13 +95,19 @@ export function useUsageStats() {
   }, [user?.id, setStats, setLoading, setError]);
 
   /**
-   * 로그인 시 자동 조회
+   * 로그인 시 자동 조회 + 사용자 변경 시 캐시 무효화
    */
   useEffect(() => {
-    if (user?.id && !stats) {
+    if (!user?.id) return;
+
+    // 사용자가 변경되면 캐시 무효화
+    const invalidated = invalidateIfUserChanged(user.id);
+
+    // 캐시가 없거나 무효화되면 새로 fetch
+    if (!stats || invalidated) {
       fetchStats();
     }
-  }, [user?.id, stats, fetchStats]);
+  }, [user?.id, stats, fetchStats, invalidateIfUserChanged]);
 
   /**
    * 생성 가능 여부 체크

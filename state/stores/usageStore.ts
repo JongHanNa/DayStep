@@ -21,11 +21,15 @@ interface UsageState {
   isLoading: boolean;
   error: string | null;
   lastFetchedAt: string | null;
+  cachedUserId: string | null; // 캐시된 user_id 추적
 
   // Actions
-  setStats: (stats: UserUsageStats | null) => void;
+  setStats: (stats: UserUsageStats | null, userId?: string) => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
+
+  // 사용자 변경 시 캐시 무효화
+  invalidateIfUserChanged: (userId: string) => boolean;
 
   // Optimistic Update (생성/삭제 시 즉시 반영)
   incrementCount: (entity: UsageEntityType) => void;
@@ -56,6 +60,7 @@ const initialState = {
   isLoading: false,
   error: null,
   lastFetchedAt: null,
+  cachedUserId: null as string | null, // 캐시된 user_id 추적
 };
 
 /**
@@ -66,9 +71,10 @@ export const useUsageStore = create<UsageState>()(
     (set, get) => ({
       ...initialState,
 
-      setStats: (stats) =>
+      setStats: (stats, userId) =>
         set({
           stats,
+          cachedUserId: userId || stats?.userId || null,
           lastFetchedAt: new Date().toISOString(),
           error: null,
         }),
@@ -76,6 +82,30 @@ export const useUsageStore = create<UsageState>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       setError: (error) => set({ error }),
+
+      /**
+       * 사용자 변경 시 캐시 무효화
+       * @returns true면 무효화됨 (다시 fetch 필요)
+       */
+      invalidateIfUserChanged: (userId) => {
+        const { cachedUserId, stats } = get();
+
+        // cachedUserId 또는 stats.userId로 캐시된 사용자 확인
+        // (기존 캐시 데이터는 cachedUserId가 없을 수 있음)
+        const cachedId = cachedUserId || stats?.userId;
+
+        if (cachedId && cachedId !== userId) {
+          console.log('📊 사용자 변경 감지 - 캐시 무효화:', { cached: cachedId, current: userId });
+          set({
+            stats: null,
+            cachedUserId: null,
+            lastFetchedAt: null,
+            error: null,
+          });
+          return true;
+        }
+        return false;
+      },
 
       incrementCount: (entity) => {
         const { stats } = get();
@@ -116,6 +146,7 @@ export const useUsageStore = create<UsageState>()(
       partialize: (state) => ({
         stats: state.stats,
         lastFetchedAt: state.lastFetchedAt,
+        cachedUserId: state.cachedUserId,
       }),
     }
   )
