@@ -624,8 +624,8 @@ export function AuthProvider({
       console.log('[Auth] 테스트 계정 로그인 성공:', data.user?.id);
 
       // onAuthStateChange에서 상태 업데이트 처리됨
-      // 타임라인으로 리다이렉트 (기존 OAuth 패턴과 동일)
-      window.location.href = '/timeline';
+      // 그래프뷰로 리다이렉트
+      window.location.href = '/graph';
 
     } catch (error) {
       console.error('[Auth] 테스트 계정 로그인 실패:', error);
