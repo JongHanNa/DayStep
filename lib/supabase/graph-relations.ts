@@ -13,6 +13,13 @@ import type {
 } from '@/types/graph';
 
 /**
+ * UUID 형식 유효성 검사
+ * temp ID나 잘못된 형식의 ID를 필터링
+ */
+const isValidUUID = (id: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+/**
  * Todo-Project 연결 관계 조회
  */
 export async function fetchTodoProjectRelations(userId: string): Promise<TodoProjectRelation[]> {
@@ -61,7 +68,9 @@ export async function fetchTodoNoteRelations(userId: string): Promise<TodoNoteRe
  * project_notes 테이블에는 user_id가 없으므로 전체 조회 후 필터링
  */
 export async function fetchProjectNoteRelations(projectIds: string[]): Promise<ProjectNoteRelation[]> {
-  if (projectIds.length === 0) return [];
+  // UUID 유효성 검사 - temp ID 및 잘못된 형식 필터링
+  const validProjectIds = projectIds.filter(isValidUUID);
+  if (validProjectIds.length === 0) return [];
 
   try {
     // project_notes 테이블에는 user_id가 없으므로 project_id로 필터링
@@ -69,7 +78,7 @@ export async function fetchProjectNoteRelations(projectIds: string[]): Promise<P
       {
         column: 'project_id',
         operator: 'in',
-        value: `(${projectIds.join(',')})`
+        value: `(${validProjectIds.join(',')})`
       }
     ], {
       select: '*'
@@ -87,7 +96,9 @@ export async function fetchProjectNoteRelations(projectIds: string[]): Promise<P
  * note_notes 테이블에는 user_id가 없으므로 note_id로 필터링
  */
 export async function fetchNoteNoteRelations(noteIds: string[]): Promise<NoteNoteRelation[]> {
-  if (noteIds.length === 0) return [];
+  // UUID 유효성 검사 - temp ID 및 잘못된 형식 필터링
+  const validNoteIds = noteIds.filter(isValidUUID);
+  if (validNoteIds.length === 0) return [];
 
   try {
     // source_note_id 또는 target_note_id가 사용자의 노트인 관계만 조회
@@ -95,7 +106,7 @@ export async function fetchNoteNoteRelations(noteIds: string[]): Promise<NoteNot
       {
         column: 'source_note_id',
         operator: 'in',
-        value: `(${noteIds.join(',')})`
+        value: `(${validNoteIds.join(',')})`
       }
     ], {
       select: '*'

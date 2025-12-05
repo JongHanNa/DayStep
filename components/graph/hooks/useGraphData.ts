@@ -84,10 +84,17 @@ export function useGraphData(): UseGraphDataReturn {
     if (!userId || projects.length === 0) return;
 
     const loadRelations = async () => {
+      // temp ID 필터링 (optimistic update 대기)
+      const validProjects = projects.filter((p) => !p.id.startsWith('temp-'));
+      const validNotes = notes.filter((n) => !n.id.startsWith('temp-'));
+
+      // 유효한 프로젝트가 없으면 스킵
+      if (validProjects.length === 0) return;
+
       setRelationsLoading(true);
       try {
-        const projectIds = projects.map((p) => p.id);
-        const noteIds = notes.map((n) => n.id);
+        const projectIds = validProjects.map((p) => p.id);
+        const noteIds = validNotes.map((n) => n.id);
         const graphRelations = await fetchAllGraphRelations(userId, projectIds, noteIds);
         setRelations(graphRelations);
       } catch (err) {
@@ -230,8 +237,12 @@ export function useGraphData(): UseGraphDataReturn {
         fetchNotes(userId),
       ]);
 
-      const projectIds = projects.map((p) => p.id);
-      const noteIds = notes.map((n) => n.id);
+      // temp ID 필터링
+      const validProjects = projects.filter((p) => !p.id.startsWith('temp-'));
+      const validNotes = notes.filter((n) => !n.id.startsWith('temp-'));
+
+      const projectIds = validProjects.map((p) => p.id);
+      const noteIds = validNotes.map((n) => n.id);
       const graphRelations = await fetchAllGraphRelations(userId, projectIds, noteIds);
       setRelations(graphRelations);
     } catch (err) {
