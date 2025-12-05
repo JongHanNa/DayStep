@@ -1,7 +1,8 @@
 /**
- * GraphEmptyState - 그래프뷰 빈 상태 컴포넌트
+ * GraphEmptyState - 초보자 온보딩 컴포넌트
  *
- * 앱의 계층 구조를 시각적으로 설명하고 추천 항목을 통해 빠른 시작 유도
+ * 앱을 처음 사용하는 사용자를 위한 템플릿 추천 화면
+ * 추천 항목을 선택하면 초안이 생성되고, 이후 자유롭게 수정 가능
  * 4가지 뷰 형태: 캐러셀, 아코디언, 그래프 프리뷰, 칩
  */
 
@@ -97,9 +98,9 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">시작하기</span>
           </div>
-          <h1 className="text-2xl font-bold mb-2">나의 그래프를 시작하세요</h1>
+          <h1 className="text-2xl font-bold mb-2">쉽게 시작하세요</h1>
           <p className="text-base-content/60 text-sm max-w-xs mx-auto">
-            추천 항목을 선택하여 나만의 생산성 시스템을 만들어보세요
+            추천 템플릿을 선택하면 바로 사용 가능한 초안이 생성됩니다
           </p>
         </motion.div>
 
