@@ -880,7 +880,9 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
               )
             ) : (
               // 일반 상태: absolute positioning
-              // 🎯 롱프레스 감지를 위한 터치 이벤트 핸들러 추가
+              // 🎯 v22-reversed: 버블 아이콘에서 드래그 시작 불가
+              // - 터치 핸들러 제거 → 컨테이너(제목/카드 영역)에서만 드래그 가능
+              // - touchAction 제거 → 버블 아이콘 위에서도 스크롤 가능
               <div
                 ref={absoluteBubbleRef}
                 className="flex items-center justify-center"
@@ -892,95 +894,6 @@ export const BubbleTimelineItem: React.FC<BubbleTimelineItemProps> = ({
                   height: `${bubbleHeight}px`,
                   transition: 'transform 0.2s ease-out',
                   zIndex: 10, // 막대보다 앞에
-                  // 🎯 v8: iOS Safari/WKWebView에서 스크롤 제스처로 판단하지 않도록 설정
-                  touchAction: 'none',
-                }}
-                onTouchStart={(e) => {
-                  const touch = e.touches[0];
-                  bubbleTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
-
-                  // 🎯 v8: 요소 자체에 DOM 리스너 등록 (window 대신)
-                  // iOS Safari에서는 window 리스너가 스크롤 시 호출되지 않음
-                  const element = absoluteBubbleRef.current;
-                  if (!element) return;
-
-                  const handleTouchMove = (moveEvent: TouchEvent) => {
-                    // isDragging이면 무조건 스크롤 차단 (50px 룰 무시)
-                    if (isDraggingRef.current) {
-                      moveEvent.preventDefault();
-                      const touch = moveEvent.touches[0];
-                      console.log('[DEBUG] drag preventDefault, calling onTouchMove with:', touch.clientX.toFixed(0), touch.clientY.toFixed(0));
-                      // 🎯 v10: 프리뷰 카드 이동을 위해 React 핸들러 수동 호출
-                      // DOM TouchEvent를 React.TouchEvent로 캐스팅하여 전달
-                      onTouchMove?.(moveEvent as unknown as React.TouchEvent);
-                      return;
-                    }
-
-                    // isDragging이 아닐 때만 50px 룰 적용
-                    const startPos = bubbleTouchStartRef.current;
-                    if (!startPos) return;
-
-                    const moveTouch = moveEvent.touches[0];
-                    const deltaX = Math.abs(moveTouch.clientX - startPos.x);
-                    const deltaY = Math.abs(moveTouch.clientY - startPos.y);
-
-                    // 50px 이상 이동 시 스크롤 허용 (빠른 스와이프)
-                    if (deltaX > 50 || deltaY > 50) {
-                      if (touchMoveListenerRef.current && absoluteBubbleRef.current) {
-                        absoluteBubbleRef.current.removeEventListener('touchmove', touchMoveListenerRef.current);
-                        touchMoveListenerRef.current = null;
-                      }
-                      bubbleTouchStartRef.current = null;
-                      console.log('[DEBUG] 50px 초과 이동, 스크롤 허용');
-                      return;
-                    }
-
-                    // 50px 미만 이동 시 스크롤 차단
-                    moveEvent.preventDefault();
-                    console.log('[DEBUG] pre-drag preventDefault, delta:', deltaX.toFixed(1), deltaY.toFixed(1));
-                  };
-
-                  touchMoveListenerRef.current = handleTouchMove;
-                  element.addEventListener('touchmove', handleTouchMove, { passive: false });
-                  console.log('[DEBUG] touchmove listener added on bubble element');
-
-                  // 🎯 v14: DOM touchend 리스너도 등록 (preventDefault() 호출 시 React onTouchEnd가 호출되지 않음)
-                  const handleTouchEnd = () => {
-                    console.log('[DEBUG] DOM touchend fired');
-                    // 리스너 정리
-                    if (touchMoveListenerRef.current && absoluteBubbleRef.current) {
-                      absoluteBubbleRef.current.removeEventListener('touchmove', touchMoveListenerRef.current);
-                      touchMoveListenerRef.current = null;
-                    }
-                    if (touchEndListenerRef.current && absoluteBubbleRef.current) {
-                      absoluteBubbleRef.current.removeEventListener('touchend', touchEndListenerRef.current);
-                      touchEndListenerRef.current = null;
-                    }
-                    bubbleTouchStartRef.current = null;
-                    // React 핸들러 호출
-                    onTouchEnd();
-                  };
-                  touchEndListenerRef.current = handleTouchEnd;
-                  element.addEventListener('touchend', handleTouchEnd);
-                  console.log('[DEBUG] touchend listener added on bubble element');
-
-                  onTouchStart(e);
-                }}
-                onTouchMove={onTouchMove}
-                onTouchEnd={() => {
-                  // 🎯 v14: DOM touchend 리스너가 이미 처리했을 수 있으므로 중복 방지
-                  if (touchMoveListenerRef.current && absoluteBubbleRef.current) {
-                    absoluteBubbleRef.current.removeEventListener('touchmove', touchMoveListenerRef.current);
-                    touchMoveListenerRef.current = null;
-                    console.log('[DEBUG] touchmove listener removed on React touchend');
-                  }
-                  if (touchEndListenerRef.current && absoluteBubbleRef.current) {
-                    absoluteBubbleRef.current.removeEventListener('touchend', touchEndListenerRef.current);
-                    touchEndListenerRef.current = null;
-                    console.log('[DEBUG] touchend listener removed on React touchend');
-                  }
-                  bubbleTouchStartRef.current = null;
-                  onTouchEnd();
                 }}
               >
                 <div
