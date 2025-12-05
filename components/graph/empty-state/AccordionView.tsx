@@ -1,15 +1,20 @@
 /**
- * AccordionView - 아코디언 펼침 뷰
+ * AccordionView - 세트 기반 아코디언 뷰
  *
- * 각 계층을 탭하면 추천 항목들이 펼쳐지는 형태
+ * 각 세트를 탭하면 세트 내 항목들이 펼쳐지는 형태
+ * 세트 전체 선택/해제 + 개별 항목 토글 가능
  */
 
 'use client';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, Sparkles } from 'lucide-react';
-import { RECOMMENDATIONS, type RecommendationItem } from './RecommendationData';
+import { Check, ChevronDown } from 'lucide-react';
+import {
+  RECOMMENDATION_SETS,
+  type RecommendationSet,
+  type RecommendationItem,
+} from './RecommendationData';
 import {
   APPLE_SPRING,
   ACCORDION_CONTENT,
@@ -17,6 +22,7 @@ import {
   CARD_ENTRANCE,
   STAGGER,
 } from '@/lib/animations/appleMotion';
+import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
 
 interface AccordionViewProps {
   selectedIds: Set<string>;
@@ -29,21 +35,46 @@ export function AccordionView({
   onToggleSelection,
   isSelected,
 }: AccordionViewProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['area']));
+  const [expandedSets, setExpandedSets] = useState<Set<string>>(
+    new Set([RECOMMENDATION_SETS[0]?.id])
+  );
 
-  const toggleSection = (type: string) => {
-    setExpandedSections((prev) => {
+  const toggleSet = (setId: string) => {
+    setExpandedSets((prev) => {
       const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
+      if (next.has(setId)) {
+        next.delete(setId);
       } else {
-        next.add(type);
+        next.add(setId);
       }
       return next;
     });
   };
 
-  const categories = RECOMMENDATIONS;
+  // 세트 전체 선택 여부
+  const isSetFullySelected = (set: RecommendationSet): boolean => {
+    return set.items.every((item) => isSelected(item.id));
+  };
+
+  // 세트 부분 선택 여부
+  const isSetPartiallySelected = (set: RecommendationSet): boolean => {
+    const selectedCount = set.items.filter((item) => isSelected(item.id)).length;
+    return selectedCount > 0 && selectedCount < set.items.length;
+  };
+
+  // 세트 전체 토글
+  const toggleSetSelection = (set: RecommendationSet) => {
+    const allSelected = isSetFullySelected(set);
+    set.items.forEach((item) => {
+      if (allSelected) {
+        if (isSelected(item.id)) onToggleSelection(item.id);
+      } else {
+        if (!isSelected(item.id)) onToggleSelection(item.id);
+      }
+    });
+  };
+
+  const sets = RECOMMENDATION_SETS;
 
   return (
     <motion.div
@@ -58,57 +89,48 @@ export function AccordionView({
         },
       }}
     >
-      {categories.map((category, categoryIndex) => {
-        const isExpanded = expandedSections.has(category.type);
-        const Icon = category.items[0]?.icon;
-        const selectedInCategory = category.items.filter((item) => isSelected(item.id)).length;
+      {sets.map((set, setIndex) => {
+        const isExpanded = expandedSets.has(set.id);
+        const selectedInSet = set.items.filter((item) => isSelected(item.id)).length;
 
         return (
           <motion.div
-            key={category.type}
+            key={set.id}
             variants={CARD_ENTRANCE}
-            custom={categoryIndex}
+            custom={setIndex}
             className="bg-base-100 rounded-xl border border-base-300 overflow-hidden"
           >
-            {/* 섹션 헤더 */}
+            {/* 세트 헤더 */}
             <button
-              onClick={() => toggleSection(category.type)}
+              onClick={() => toggleSet(set.id)}
               className={`
                 w-full p-4 flex items-center gap-3 text-left transition-colors
                 ${isExpanded ? 'bg-base-200' : 'hover:bg-base-200/50'}
               `}
             >
-              {/* 아이콘 */}
+              {/* 이모지 아이콘 */}
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: category.items[0]?.color }}
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
+                style={{ backgroundColor: `${set.color}20` }}
               >
-                {Icon && <Icon className="w-5 h-5 text-white" />}
+                {set.emoji}
               </div>
 
               {/* 텍스트 */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold">{category.label}</h3>
-                  {categoryIndex === 0 && (
-                    <div className="px-1.5 py-0.5 bg-primary/10 rounded-full flex items-center gap-1">
-                      <Sparkles className="w-2.5 h-2.5 text-primary" />
-                      <span className="text-[10px] text-primary font-medium">시작</span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-base-content/60">{category.description}</p>
+                <h3 className="font-bold">{set.title}</h3>
+                <p className="text-sm text-base-content/60">{set.description}</p>
               </div>
 
               {/* 선택된 개수 뱃지 */}
-              {selectedInCategory > 0 && (
+              {selectedInSet > 0 && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={APPLE_SPRING.bouncy}
                   className="px-2 py-1 bg-primary text-primary-content text-xs font-medium rounded-full"
                 >
-                  {selectedInCategory}
+                  {selectedInSet}/{set.items.length}
                 </motion.div>
               )}
 
@@ -143,7 +165,7 @@ export function AccordionView({
                       },
                     }}
                   >
-                    {category.items.map((item, index) => (
+                    {set.items.map((item, index) => (
                       <AccordionItem
                         key={item.id}
                         item={item}
@@ -152,6 +174,36 @@ export function AccordionView({
                         index={index}
                       />
                     ))}
+
+                    {/* 세트 전체 선택 버튼 */}
+                    <motion.button
+                      onClick={() => toggleSetSelection(set)}
+                      whileTap={{ scale: 0.98 }}
+                      className={`
+                        w-full py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 mt-2
+                        ${
+                          isSetFullySelected(set)
+                            ? 'bg-primary text-primary-content'
+                            : isSetPartiallySelected(set)
+                            ? 'bg-primary/20 text-primary border-2 border-primary/30'
+                            : 'bg-base-300 text-base-content hover:bg-base-200'
+                        }
+                      `}
+                    >
+                      {isSetFullySelected(set) ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          선택됨
+                        </>
+                      ) : isSetPartiallySelected(set) ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          일부 선택됨
+                        </>
+                      ) : (
+                        '이 세트 선택하기'
+                      )}
+                    </motion.button>
                   </motion.div>
                 </motion.div>
               )}
@@ -187,6 +239,7 @@ interface AccordionItemProps {
 
 function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps) {
   const Icon = item.icon;
+  const typeLabel = NODE_TYPE_LABELS[item.type];
 
   return (
     <motion.button
@@ -196,9 +249,10 @@ function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps
       whileTap={{ scale: 0.98 }}
       className={`
         group w-full p-3 rounded-lg flex items-center gap-3 text-left transition-colors
-        ${isSelected
-          ? 'bg-primary/10 border border-primary/30'
-          : 'bg-base-200 border border-transparent hover:bg-base-300'
+        ${
+          isSelected
+            ? 'bg-primary/10 border border-primary/30'
+            : 'bg-base-200 border border-transparent hover:bg-base-300'
         }
       `}
     >
@@ -213,9 +267,10 @@ function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps
         className={`
           w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
           border-2 transition-all
-          ${isSelected
-            ? 'border-transparent'
-            : 'border-base-content/30 bg-base-100 group-hover:border-base-content/50'
+          ${
+            isSelected
+              ? 'border-transparent'
+              : 'border-base-content/30 bg-base-100 group-hover:border-base-content/50'
           }
         `}
         style={isSelected ? { backgroundColor: item.color } : undefined}
@@ -241,7 +296,18 @@ function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps
 
       {/* 텍스트 */}
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm truncate">{item.title}</div>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm truncate">{item.title}</span>
+          <span
+            className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0"
+            style={{
+              backgroundColor: `${item.color}20`,
+              color: item.color,
+            }}
+          >
+            {typeLabel}
+          </span>
+        </div>
         <div className="text-xs text-base-content/50 truncate">{item.description}</div>
       </div>
     </motion.button>

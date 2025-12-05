@@ -1,22 +1,28 @@
 /**
- * GraphPreviewView - 미니 그래프 데모 뷰
+ * GraphPreviewView - 세트 기반 미니 그래프 데모 뷰
  *
- * 실제 그래프처럼 노드들이 연결된 시각화로 계층 구조를 보여줌
+ * 각 세트의 4개 노드를 트리 형태로 시각화
+ * 세트 인디케이터로 다른 세트 미리보기 가능
  */
 
 'use client';
 
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
-import { RECOMMENDATIONS, type RecommendationItem } from './RecommendationData';
+import { useState, useMemo } from 'react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  RECOMMENDATION_SETS,
+  type RecommendationSet,
+  type RecommendationItem,
+} from './RecommendationData';
 import {
   APPLE_SPRING,
   FLOATING_NODE,
   CONNECTION_LINE,
-  STAGGER,
+  swipePower,
+  SWIPE_THRESHOLD,
 } from '@/lib/animations/appleMotion';
-import { NODE_TYPE_COLORS } from '@/lib/graph-utils';
+import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
 
 interface GraphPreviewViewProps {
   selectedIds: Set<string>;
@@ -24,7 +30,7 @@ interface GraphPreviewViewProps {
   isSelected: (id: string) => boolean;
 }
 
-// 노드 위치 계산 (트리 레이아웃)
+// 노드 위치 계산
 interface NodePosition {
   item: RecommendationItem;
   x: number;
@@ -38,170 +44,245 @@ export function GraphPreviewView({
   onToggleSelection,
   isSelected,
 }: GraphPreviewViewProps) {
-  // 미리 정의된 샘플 노드들 (각 카테고리에서 대표 항목)
-  const sampleNodes = useMemo(() => {
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const sets = RECOMMENDATION_SETS;
+  const currentSet = sets[currentSetIndex];
+
+  const goToSet = (index: number) => {
+    if (index < 0 || index >= sets.length) return;
+    setDirection(index > currentSetIndex ? 1 : -1);
+    setCurrentSetIndex(index);
+  };
+
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const power = swipePower(info.offset.x, info.velocity.x);
+
+    if (power > SWIPE_THRESHOLD) {
+      if (info.offset.x < 0 && currentSetIndex < sets.length - 1) {
+        goToSet(currentSetIndex + 1);
+      } else if (info.offset.x > 0 && currentSetIndex > 0) {
+        goToSet(currentSetIndex - 1);
+      }
+    }
+  };
+
+  // 세트 전체 선택 여부
+  const isSetFullySelected = (set: RecommendationSet): boolean => {
+    return set.items.every((item) => isSelected(item.id));
+  };
+
+  // 세트 부분 선택 여부
+  const isSetPartiallySelected = (set: RecommendationSet): boolean => {
+    const selectedCount = set.items.filter((item) => isSelected(item.id)).length;
+    return selectedCount > 0 && selectedCount < set.items.length;
+  };
+
+  // 세트 전체 토글
+  const toggleSetSelection = (set: RecommendationSet) => {
+    const allSelected = isSetFullySelected(set);
+    set.items.forEach((item) => {
+      if (allSelected) {
+        if (isSelected(item.id)) onToggleSelection(item.id);
+      } else {
+        if (!isSelected(item.id)) onToggleSelection(item.id);
+      }
+    });
+  };
+
+  // 현재 세트의 노드 위치 계산
+  const nodePositions = useMemo((): NodePosition[] => {
     const positions: NodePosition[] = [];
     const containerWidth = 320;
-    const containerHeight = 400;
     const centerX = containerWidth / 2;
 
-    // 계층별 Y 위치
-    const levelY = {
-      area: 60,
-      resource: 60,
-      goal: 150,
-      project: 240,
-      todo: 330,
-      note: 330,
-    };
+    // 4단계 계층 Y 위치 (세로로 더 촘촘하게)
+    const levelY = [50, 130, 210, 290]; // Area/Resource, Goal, Project, Todo
 
-    // Area (왼쪽 상단)
-    const area = RECOMMENDATIONS.find((c) => c.type === 'area')?.items[0];
-    if (area) {
-      positions.push({
-        item: area,
-        x: centerX - 80,
-        y: levelY.area,
-      });
-    }
+    currentSet.items.forEach((item, index) => {
+      const y = levelY[index] || levelY[levelY.length - 1];
+      const parentIndex = index - 1;
 
-    // Resource (오른쪽 상단)
-    const resource = RECOMMENDATIONS.find((c) => c.type === 'resource')?.items[0];
-    if (resource) {
       positions.push({
-        item: resource,
-        x: centerX + 80,
-        y: levelY.resource,
-      });
-    }
-
-    // Goals (Area 아래)
-    const goals = RECOMMENDATIONS.find((c) => c.type === 'goal')?.items.slice(0, 2) || [];
-    goals.forEach((goal, i) => {
-      positions.push({
-        item: goal,
-        x: centerX - 60 + i * 120,
-        y: levelY.goal,
-        parentX: i === 0 ? centerX - 80 : centerX + 80,
-        parentY: levelY.area,
-      });
-    });
-
-    // Projects (Goal 아래)
-    const projects = RECOMMENDATIONS.find((c) => c.type === 'project')?.items.slice(0, 2) || [];
-    projects.forEach((project, i) => {
-      positions.push({
-        item: project,
-        x: centerX - 60 + i * 120,
-        y: levelY.project,
-        parentX: centerX - 60 + i * 120,
-        parentY: levelY.goal,
-      });
-    });
-
-    // Todos (Project 아래 왼쪽)
-    const todos = RECOMMENDATIONS.find((c) => c.type === 'todo')?.items.slice(0, 1) || [];
-    todos.forEach((todo) => {
-      positions.push({
-        item: todo,
-        x: centerX - 80,
-        y: levelY.todo,
-        parentX: centerX - 60,
-        parentY: levelY.project,
-      });
-    });
-
-    // Notes (독립적 - 오른쪽 하단)
-    const notes = RECOMMENDATIONS.find((c) => c.type === 'note')?.items.slice(0, 1) || [];
-    notes.forEach((note) => {
-      positions.push({
-        item: note,
-        x: centerX + 80,
-        y: levelY.note,
+        item,
+        x: centerX,
+        y,
+        parentX: parentIndex >= 0 ? centerX : undefined,
+        parentY: parentIndex >= 0 ? levelY[parentIndex] : undefined,
       });
     });
 
     return positions;
-  }, []);
+  }, [currentSet]);
+
+  const cardVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: APPLE_SPRING.smooth,
+    },
+    exit: (direction: number) => ({
+      x: direction > 0 ? -300 : 300,
+      opacity: 0,
+      transition: APPLE_SPRING.smooth,
+    }),
+  };
 
   return (
     <div className="w-full max-w-sm mx-auto">
-      {/* 그래프 컨테이너 */}
-      <div className="relative w-[320px] mx-auto h-[400px] bg-base-100 rounded-2xl border border-base-300 overflow-hidden">
-        {/* 배경 그리드 */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
+      {/* 세트 인디케이터 */}
+      <div className="flex items-center justify-between mb-4 px-2">
+        <button
+          onClick={() => goToSet(currentSetIndex - 1)}
+          disabled={currentSetIndex === 0}
+          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
 
-        {/* 연결선 SVG */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {sampleNodes.map((node, index) => {
-            if (!node.parentX || !node.parentY) return null;
-
-            return (
-              <motion.path
-                key={`line-${node.item.id}`}
-                d={`M ${node.parentX} ${node.parentY} Q ${(node.parentX + node.x) / 2} ${(node.parentY + node.y) / 2 + 20} ${node.x} ${node.y}`}
-                fill="none"
-                stroke={node.item.color}
-                strokeWidth={2}
-                strokeOpacity={isSelected(node.item.id) ? 0.8 : 0.3}
-                variants={CONNECTION_LINE}
-                initial="hidden"
-                animate="visible"
-                custom={index}
-              />
-            );
-          })}
-        </svg>
-
-        {/* 노드들 */}
-        {sampleNodes.map((node, index) => (
-          <GraphNode
-            key={node.item.id}
-            item={node.item}
-            x={node.x}
-            y={node.y}
-            centerX={160}
-            index={index}
-            isSelected={isSelected(node.item.id)}
-            onToggle={() => onToggleSelection(node.item.id)}
-          />
-        ))}
-
-        {/* 범례 */}
-        <div className="absolute bottom-3 left-3 right-3 flex justify-center gap-3 flex-wrap">
-          {Object.entries(NODE_TYPE_COLORS).map(([type, color]) => (
-            <div key={type} className="flex items-center gap-1">
-              <div
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              <span className="text-[10px] text-base-content/50">
-                {type === 'area' ? '책임' :
-                 type === 'resource' ? '자원' :
-                 type === 'goal' ? '목표' :
-                 type === 'project' ? '프로젝트' :
-                 type === 'todo' ? '할일' : '노트'}
-              </span>
-            </div>
+        <div className="flex gap-1.5">
+          {sets.map((set, index) => (
+            <motion.button
+              key={set.id}
+              onClick={() => goToSet(index)}
+              className="h-2 rounded-full transition-colors"
+              style={{ backgroundColor: set.color }}
+              animate={{
+                width: index === currentSetIndex ? 24 : 8,
+                opacity: index === currentSetIndex ? 1 : 0.4,
+              }}
+              transition={APPLE_SPRING.snappy}
+            />
           ))}
         </div>
+
+        <button
+          onClick={() => goToSet(currentSetIndex + 1)}
+          disabled={currentSetIndex === sets.length - 1}
+          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* 안내 텍스트 */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        className="text-center text-sm text-base-content/50 mt-4"
+      {/* 세트 제목 */}
+      <motion.div
+        key={currentSet.id + '-title'}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-3"
       >
-        노드를 클릭하여 선택하세요
-      </motion.p>
+        <span className="text-xl mr-2">{currentSet.emoji}</span>
+        <span className="font-bold">{currentSet.title}</span>
+      </motion.div>
+
+      {/* 그래프 컨테이너 */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        className="cursor-grab active:cursor-grabbing"
+      >
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentSet.id}
+            custom={direction}
+            variants={cardVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+          >
+            <div className="relative w-[320px] mx-auto h-[340px] bg-base-100 rounded-2xl border border-base-300 overflow-hidden">
+              {/* 배경 그리드 */}
+              <div
+                className="absolute inset-0 opacity-5"
+                style={{
+                  backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
+                  backgroundSize: '20px 20px',
+                }}
+              />
+
+              {/* 연결선 SVG */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                {nodePositions.map((node, index) => {
+                  if (!node.parentX || !node.parentY) return null;
+
+                  return (
+                    <motion.line
+                      key={`line-${node.item.id}`}
+                      x1={node.parentX}
+                      y1={node.parentY + 20}
+                      x2={node.x}
+                      y2={node.y - 20}
+                      stroke={node.item.color}
+                      strokeWidth={2}
+                      strokeOpacity={isSelected(node.item.id) ? 0.8 : 0.3}
+                      variants={CONNECTION_LINE}
+                      initial="hidden"
+                      animate="visible"
+                      custom={index}
+                    />
+                  );
+                })}
+              </svg>
+
+              {/* 노드들 */}
+              {nodePositions.map((node, index) => (
+                <GraphNode
+                  key={node.item.id}
+                  item={node.item}
+                  x={node.x}
+                  y={node.y}
+                  index={index}
+                  isSelected={isSelected(node.item.id)}
+                  onToggle={() => onToggleSelection(node.item.id)}
+                />
+              ))}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+
+      {/* 세트 전체 선택 버튼 */}
+      <motion.button
+        onClick={() => toggleSetSelection(currentSet)}
+        whileTap={{ scale: 0.98 }}
+        className={`
+          w-full mt-4 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2
+          ${
+            isSetFullySelected(currentSet)
+              ? 'bg-primary text-primary-content'
+              : isSetPartiallySelected(currentSet)
+              ? 'bg-primary/20 text-primary border-2 border-primary/30'
+              : 'bg-base-200 text-base-content hover:bg-base-300'
+          }
+        `}
+      >
+        {isSetFullySelected(currentSet) ? (
+          <>
+            <Check className="w-5 h-5" />
+            선택됨
+          </>
+        ) : isSetPartiallySelected(currentSet) ? (
+          <>
+            <Check className="w-5 h-5" />
+            일부 선택됨
+          </>
+        ) : (
+          '이 세트 선택하기'
+        )}
+      </motion.button>
+
+      {/* 페이지 표시 */}
+      <div className="text-center mt-3 text-sm text-base-content/50">
+        {currentSetIndex + 1} / {sets.length}
+      </div>
 
       {/* 선택된 개수 */}
       {selectedIds.size > 0 && (
@@ -225,16 +306,15 @@ interface GraphNodeProps {
   item: RecommendationItem;
   x: number;
   y: number;
-  centerX: number;
   index: number;
   isSelected: boolean;
   onToggle: () => void;
 }
 
-function GraphNode({ item, x, y, centerX, index, isSelected, onToggle }: GraphNodeProps) {
+function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) {
   const Icon = item.icon;
-  const size = item.type === 'area' || item.type === 'resource' ? 48 : 40;
-  const isLeftSide = x < centerX;
+  const size = item.type === 'area' || item.type === 'resource' ? 44 : 40;
+  const typeLabel = NODE_TYPE_LABELS[item.type];
 
   return (
     <motion.button
@@ -291,19 +371,24 @@ function GraphNode({ item, x, y, centerX, index, isSelected, onToggle }: GraphNo
         )}
       </div>
 
-      {/* 라벨 - 좌우 대칭 배치 */}
+      {/* 라벨 */}
       <motion.div
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 + index * 0.1 }}
-        className={`absolute -bottom-6 whitespace-nowrap ${
-          isLeftSide
-            ? 'right-1/2 translate-x-1/2'  // 왼쪽 노드 → 라벨 노드 아래 왼쪽
-            : 'left-1/2 -translate-x-1/2'   // 오른쪽 노드 → 라벨 노드 아래 오른쪽
-        }`}
+        transition={{ delay: 0.3 + index * 0.1 }}
+        className="absolute left-1/2 -translate-x-1/2 -bottom-7 whitespace-nowrap"
       >
         <span className="text-[10px] font-medium text-base-content/70 bg-base-100/80 px-1.5 py-0.5 rounded">
           {item.title}
+        </span>
+        <span
+          className="ml-1 text-[8px] px-1 py-0.5 rounded"
+          style={{
+            backgroundColor: `${item.color}20`,
+            color: item.color,
+          }}
+        >
+          {typeLabel}
         </span>
       </motion.div>
     </motion.button>
