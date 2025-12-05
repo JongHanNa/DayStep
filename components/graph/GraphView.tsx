@@ -68,6 +68,7 @@ export default function GraphView() {
   const userId = user?.id;
   const { graphData, loading, error, refetch } = useGraphData();
   const { filteredData, nodeCount, linkCount, isFiltered } = useFilteredGraphData(graphData);
+  const [shouldZoomToFit, setShouldZoomToFit] = useState(false);
   const { isOpen: isEditModalOpen, node: editingNode } = useGraphEditModal();
   const { closeEditModal, closeActionMenu, openEditModal } = useGraphStore();
   const { activePopover, position: popoverPosition, closePopover } = useGraphPopover();
@@ -111,6 +112,12 @@ export default function GraphView() {
   // Note 편집 상태 (NoteEditModal용)
   const [editingNoteForModal, setEditingNoteForModal] = useState<Note | null>(null);
   const [noteFormData, setNoteFormData] = useState<NoteFormData | null>(null);
+
+  // 새로고침 핸들러 (데이터 리페치 후 zoomToFit 트리거)
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+    setShouldZoomToFit(true);
+  }, [refetch]);
 
   // 모달 닫기 핸들러
   const handleCloseEditModal = useCallback(() => {
@@ -546,7 +553,11 @@ export default function GraphView() {
       <UsageBanner className="mx-4 mt-4 absolute top-0 left-0 right-0 z-30" />
 
       {/* 메인 그래프 캔버스 */}
-      <GraphCanvas graphData={filteredData} />
+      <GraphCanvas
+        graphData={filteredData}
+        shouldZoomToFit={shouldZoomToFit}
+        onZoomToFitComplete={() => setShouldZoomToFit(false)}
+      />
 
       {/* 필터 컨트롤 패널 */}
       <GraphControls
@@ -682,7 +693,7 @@ export default function GraphView() {
 
       {/* 새로고침 버튼 */}
       <button
-        onClick={refetch}
+        onClick={handleRefresh}
         className="absolute top-4 left-4 z-10 btn btn-sm btn-ghost bg-base-100/90 backdrop-blur-sm shadow-lg rounded-full"
         title="새로고침"
       >

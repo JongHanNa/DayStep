@@ -29,13 +29,19 @@ interface GraphCanvasProps {
   onNodeClick?: (node: GraphNode) => void;
   onBackgroundClick?: () => void;
   onMultiSelect?: (nodeIds: string[]) => void;
+  shouldZoomToFit?: boolean;           // 새로고침 시 zoomToFit 트리거
+  onZoomToFitComplete?: () => void;    // zoomToFit 완료 콜백
 }
 
-export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMultiSelect }: GraphCanvasProps) {
+export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMultiSelect, shouldZoomToFit, onZoomToFitComplete }: GraphCanvasProps) {
   const graphRef = useRef<unknown>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingZoomRef = useRef<number | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  // 초기 로드 및 zoomToFit 상태
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const shouldZoomToFitRef = useRef(false);
 
   // 마퀴 선택 상태
   const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
@@ -187,6 +193,49 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
       setZoomLevel(zoomValue);
     }
   });
+
+  // 안전한 zoomToFit - 줌인 방지 (줌아웃만 허용)
+  const safeZoomToFit = useCallback((duration: number = 500, padding: number = 50) => {
+    const fg = graphRef.current as any;
+    if (!fg || graphData.nodes.length === 0) return;
+
+    const currentZoom = fg.zoom(); // 현재 줌 레벨 저장
+    fg.zoomToFit(0, padding);      // 즉시 fit 계산
+    const fittedZoom = fg.zoom();  // fit된 줌 레벨 확인
+
+    if (fittedZoom > currentZoom) {
+      // 줌인이면 원래 줌 레벨로 복원 + 중심만 이동
+      fg.zoom(currentZoom, 0);
+      // 노드 중심으로 카메라 이동
+      const avgX = graphData.nodes.reduce((sum, n: any) => sum + (n.x || 0), 0) / graphData.nodes.length;
+      const avgY = graphData.nodes.reduce((sum, n: any) => sum + (n.y || 0), 0) / graphData.nodes.length;
+      fg.centerAt(avgX, avgY, duration);
+    }
+    // 줌아웃인 경우 이미 적용됨 (0ms로 즉시 적용)
+  }, [graphData.nodes]);
+
+  // shouldZoomToFit prop 변경 감지
+  useEffect(() => {
+    if (shouldZoomToFit) {
+      shouldZoomToFitRef.current = true;
+    }
+  }, [shouldZoomToFit]);
+
+  // onEngineStop 핸들러 - 시뮬레이션 완료 시 zoomToFit 실행
+  const handleEngineStop = useCallback(() => {
+    // 첫 로드 시 zoomToFit
+    if (!isInitialLoadComplete && graphData.nodes.length > 0) {
+      safeZoomToFit(500, 50);
+      setIsInitialLoadComplete(true);
+    }
+
+    // 새로고침 시 zoomToFit
+    if (shouldZoomToFitRef.current) {
+      safeZoomToFit(500, 50);
+      shouldZoomToFitRef.current = false;
+      onZoomToFitComplete?.();
+    }
+  }, [isInitialLoadComplete, graphData.nodes.length, safeZoomToFit, onZoomToFitComplete]);
 
   // 화면 좌표를 그래프 좌표로 변환
   const screenToGraph = useCallback((screenX: number, screenY: number) => {
@@ -695,6 +744,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         enablePanInteraction={!isMarqueeActive && !isShiftPressed}
         enableNodeDrag={!isMarqueeActive && !isShiftPressed}
         onZoom={handleZoom}
+        onEngineStop={handleEngineStop}
         // 라벨을 모든 노드 위에 그리기 위한 후처리
         onRenderFramePost={onRenderFramePost}
         // 배경
