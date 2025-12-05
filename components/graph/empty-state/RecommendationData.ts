@@ -53,6 +53,7 @@ export interface RecommendationItem {
   icon: LucideIcon;
   color: string;
   category?: string;
+  parentId?: string; // 부모 항목 ID (관계 설정용)
 }
 
 export interface RecommendationCategory {
@@ -188,6 +189,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         icon: Scale,
         color: NODE_TYPE_COLORS.goal,
         category: '건강',
+        parentId: 'area-health', // 건강 관리 Area와 연결
       },
       {
         id: 'goal-savings',
@@ -197,6 +199,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         icon: PiggyBank,
         color: NODE_TYPE_COLORS.goal,
         category: '재정',
+        parentId: 'area-finance', // 재정 관리 Area와 연결
       },
       {
         id: 'goal-english',
@@ -206,6 +209,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         icon: Languages,
         color: NODE_TYPE_COLORS.goal,
         category: '자기계발',
+        parentId: 'area-growth', // 자기계발 Area와 연결
       },
       {
         id: 'goal-exercise',
@@ -215,6 +219,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         icon: Dumbbell,
         color: NODE_TYPE_COLORS.goal,
         category: '건강',
+        parentId: 'area-health', // 건강 관리 Area와 연결
       },
     ],
   },
@@ -230,6 +235,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '3개월 다이어트',
         icon: Salad,
         color: NODE_TYPE_COLORS.project,
+        parentId: 'goal-weight', // 체중 감량 Goal과 연결
       },
       {
         id: 'project-invest',
@@ -238,6 +244,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '자산 배분 구성',
         icon: TrendingUp,
         color: NODE_TYPE_COLORS.project,
+        parentId: 'goal-savings', // 저축 1000만원 Goal과 연결
       },
       {
         id: 'project-cert',
@@ -246,6 +253,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '목표 자격증 준비',
         icon: Award,
         color: NODE_TYPE_COLORS.project,
+        parentId: 'goal-english', // 영어 공부 Goal과 연결
       },
       {
         id: 'project-travel',
@@ -254,6 +262,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '다음 여행 준비',
         icon: Plane,
         color: NODE_TYPE_COLORS.project,
+        parentId: 'area-hobby', // 취미/여가 Area와 연결 (Goal 없이 직접)
       },
     ],
   },
@@ -269,6 +278,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '기상 후 운동',
         icon: Sun,
         color: NODE_TYPE_COLORS.todo,
+        parentId: 'project-diet', // 다이어트 계획 Project와 연결
       },
       {
         id: 'todo-expense',
@@ -277,6 +287,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '오늘 지출 기록',
         icon: Receipt,
         color: NODE_TYPE_COLORS.todo,
+        parentId: 'project-invest', // 투자 포트폴리오 Project와 연결
       },
       {
         id: 'todo-reading',
@@ -285,6 +296,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '독서 습관',
         icon: Book,
         color: NODE_TYPE_COLORS.todo,
+        parentId: 'project-cert', // 자격증 취득 Project와 연결
       },
     ],
   },
@@ -300,6 +312,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '책에서 얻은 인사이트',
         icon: FileText,
         color: NODE_TYPE_COLORS.note,
+        parentId: 'project-cert', // 자격증 취득 Project와 연결
       },
       {
         id: 'note-idea',
@@ -308,6 +321,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '떠오르는 생각들',
         icon: Lightbulb,
         color: NODE_TYPE_COLORS.note,
+        parentId: 'area-growth', // 자기계발 Area와 연결
       },
       {
         id: 'note-meeting',
@@ -316,6 +330,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '미팅 내용 기록',
         icon: ClipboardList,
         color: NODE_TYPE_COLORS.note,
+        parentId: 'area-career', // 커리어 Area와 연결
       },
       {
         id: 'note-gratitude',
@@ -324,6 +339,7 @@ export const RECOMMENDATIONS: RecommendationCategory[] = [
         description: '하루 감사한 것들',
         icon: Heart,
         color: NODE_TYPE_COLORS.note,
+        parentId: 'area-health', // 건강 관리 Area와 연결
       },
     ],
   },

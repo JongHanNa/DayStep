@@ -28,7 +28,12 @@ import {
   VIEW_TRANSITION_3D,
 } from '@/lib/animations/appleMotion';
 
-export function GraphEmptyState() {
+interface GraphEmptyStateProps {
+  /** 생성 완료 후 호출되는 콜백 (그래프 데이터 refetch용) */
+  onComplete?: () => Promise<void>;
+}
+
+export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
   // 뷰 스와이프 훅
   const {
     currentView,
@@ -51,7 +56,7 @@ export function GraphEmptyState() {
     isLoading,
     error,
     isSelected,
-  } = useBatchCreate();
+  } = useBatchCreate({ onComplete });
 
   // 현재 뷰에 따른 컴포넌트 렌더링
   const renderCurrentView = () => {

@@ -500,7 +500,7 @@ export default function GraphView() {
 
   // 빈 데이터 상태
   if (graphData.nodes.length === 0) {
-    return <GraphEmptyState />;
+    return <GraphEmptyState onComplete={refetch} />;
   }
 
   return (
