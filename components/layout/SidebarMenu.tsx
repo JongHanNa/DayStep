@@ -64,8 +64,7 @@ export default function SidebarMenu() {
   const renderStartGroup = () => {
     const group = NAVIGATION_GROUPS.start;
     const graphView = group.items.find(i => i.id === 'graph-view');
-    const areas = group.items.find(i => i.id === 'areas');
-    const resources = group.items.find(i => i.id === 'resources');
+    const areasResources = group.items.find(i => i.id === 'areas-resources');
     const goals = group.items.find(i => i.id === 'goals');
     const projects = group.items.find(i => i.id === 'projects');
 
@@ -85,10 +84,9 @@ export default function SidebarMenu() {
 
         {/* 트리 구조: 책임/자원 → 목표 → 프로젝트 */}
         <div className="px-2 mt-1">
-          {/* 책임과 자원 (같은 가로 라인) */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1">{areas && renderMenuItem(areas)}</div>
-            <div className="flex-1">{resources && renderMenuItem(resources)}</div>
+          {/* 책임/자원 (통합 메뉴) */}
+          <div>
+            {areasResources && renderMenuItem(areasResources)}
           </div>
 
           {/* 연결선: 책임/자원 → 목표 */}
