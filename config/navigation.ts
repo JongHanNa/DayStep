@@ -44,7 +44,7 @@ export interface NavigationGroup {
 export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
   start: {
     id: 'start',
-    label: '시작',
+    label: '영역 관리',
     icon: Home,
     items: [
       { id: 'graph-view', label: '그래프 뷰', icon: Network, href: '/' },
@@ -55,7 +55,7 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
   },
   routine: {
     id: 'routine',
-    label: '워크플로우',
+    label: 'GTD 워크플로우',
     icon: CheckSquare,
     items: [
       { id: 'inbox', label: '수집', icon: Inbox, href: '/second-brain/inbox' },
