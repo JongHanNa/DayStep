@@ -179,18 +179,60 @@ export function getItemDates(item: RecommendationItem): {
 }
 
 /**
- * 상대적 날짜 텍스트 생성 (예: "오늘", "내일", "3일 후")
+ * 상대적 기간 텍스트 생성 (예: "3일 후", "2주 후", "3개월 후")
+ */
+function getRelativeOffsetText(offset: number): string {
+  if (offset === 0) {
+    return '오늘';
+  }
+  if (offset === 1) {
+    return '내일';
+  }
+  if (offset === -1) {
+    return '어제';
+  }
+  if (offset > 0 && offset <= 7) {
+    return `${offset}일 후`;
+  }
+  if (offset < 0 && offset >= -7) {
+    return `${Math.abs(offset)}일 전`;
+  }
+  if (offset > 7 && offset <= 30) {
+    return `${Math.ceil(offset / 7)}주 후`;
+  }
+  if (offset > 30) {
+    return `${Math.ceil(offset / 30)}개월 후`;
+  }
+  return `${offset}일`;
+}
+
+/**
+ * 날짜 텍스트 생성 (정확한 날짜 + 상대적 기간)
+ * - 오늘/내일: 그대로 표시
+ * - 그 외: "12월 15일 (3주 후)", "2026년 3월 1일 (3개월 후)"
  */
 export function getRelativeDateText(offset: number): string {
-  if (offset === 0) { return '오늘'; }
-  if (offset === 1) { return '내일'; }
-  if (offset === -1) { return '어제'; }
-  if (offset > 0 && offset <= 7) { return `${offset}일 후`; }
-  if (offset < 0 && offset >= -7) { return `${Math.abs(offset)}일 전`; }
-  if (offset > 7 && offset <= 30) { return `${Math.ceil(offset / 7)}주 후`; }
-  if (offset > 30 && offset <= 90) { return `${Math.ceil(offset / 30)}개월 후`; }
-  if (offset > 90) { return `${Math.ceil(offset / 30)}개월 후`; }
-  return `${offset}일`;
+  if (offset === 0) {
+    return '오늘';
+  }
+  if (offset === 1) {
+    return '내일';
+  }
+
+  const today = startOfDay(new Date());
+  const targetDate = addDays(today, offset);
+  const currentYear = today.getFullYear();
+  const targetYear = targetDate.getFullYear();
+
+  // 정확한 날짜
+  const exactDate = targetYear === currentYear
+    ? format(targetDate, 'M월 d일', { locale: ko })
+    : format(targetDate, 'yyyy년 M월 d일', { locale: ko });
+
+  // 상대적 기간
+  const relativeText = getRelativeOffsetText(offset);
+
+  return `${exactDate} (${relativeText})`;
 }
 
 // ============================================
