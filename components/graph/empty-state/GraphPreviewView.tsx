@@ -172,17 +172,6 @@ export function GraphPreviewView({
         </button>
       </div>
 
-      {/* 세트 제목 */}
-      <motion.div
-        key={currentSet.id + '-title'}
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-3"
-      >
-        <span className="text-xl mr-2">{currentSet.emoji}</span>
-        <span className="font-bold">{currentSet.title}</span>
-      </motion.div>
-
       {/* 그래프 컨테이너 */}
       <motion.div
         drag="x"

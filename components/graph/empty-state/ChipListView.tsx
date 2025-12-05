@@ -165,26 +165,8 @@ function SetSection({
   isSetFullySelected,
   isSetPartiallySelected,
 }: SetSectionProps) {
-  const selectedInSet = set.items.filter((item) => isSelected(item.id)).length;
-
   return (
     <motion.div variants={CARD_ENTRANCE} custom={setIndex}>
-      {/* 세트 헤더 */}
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">{set.emoji}</span>
-        <h3 className="font-semibold text-sm">{set.title}</h3>
-        {selectedInSet > 0 && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={APPLE_SPRING.bouncy}
-            className="ml-auto px-1.5 py-0.5 bg-primary text-primary-content text-[10px] font-medium rounded-full"
-          >
-            {selectedInSet}/{set.items.length}
-          </motion.div>
-        )}
-      </div>
-
       {/* TreeView로 계층 구조 표시 */}
       <div className="space-y-2">
         <TreeView
