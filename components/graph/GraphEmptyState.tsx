@@ -125,7 +125,7 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
           className="w-full max-w-md mx-auto flex-1"
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.1}
+          dragElastic={0}
           onDragEnd={handleDragEnd}
         >
           <AnimatePresence mode="wait" custom={direction}>

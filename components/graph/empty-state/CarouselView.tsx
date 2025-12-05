@@ -161,7 +161,7 @@ export function CarouselView({
         {/* 가로 스크롤 탭 */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden touch-pan-x scrollbar-hide"
+          className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden touch-pan-x scrollbar-hide overscroll-x-contain"
         >
           <div className="flex gap-2 px-1 py-1 w-max">
             {sets.map((set, index) => {
