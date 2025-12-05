@@ -55,27 +55,37 @@ export function CarouselView({
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // 카드 인덱스 변경 시 해당 탭으로 자동 스크롤 (중앙 정렬)
+  // 카드 인덱스 변경 시 해당 탭으로 자동 스크롤 (세 번째 탭부터)
   useEffect(() => {
     const tabButton = tabRefs.current[currentCardIndex];
     const container = scrollContainerRef.current;
     if (tabButton && container) {
-      // 컨테이너와 탭 정보
-      const containerWidth = container.offsetWidth;
-      const containerScrollWidth = container.scrollWidth;
-      const tabLeft = tabButton.offsetLeft;
-      const tabWidth = tabButton.offsetWidth;
+      // 첫 번째, 두 번째 탭은 스크롤하지 않음 (왼쪽에 자연스럽게 위치)
+      if (currentCardIndex < 2) {
+        container.scrollTo({
+          left: 0,
+          behavior: 'smooth',
+        });
+        return;
+      }
 
-      // 탭을 정확히 중앙에 위치시키기 위한 스크롤 위치
-      const idealScrollLeft = tabLeft - (containerWidth / 2) + (tabWidth / 2);
+      // 탭의 중앙이 컨테이너 중앙에 오도록 계산
+      const containerRect = container.getBoundingClientRect();
+      const tabRect = tabButton.getBoundingClientRect();
 
-      // 스크롤 범위 제한 (0 ~ maxScroll)
-      const maxScroll = containerScrollWidth - containerWidth;
-      const targetScroll = Math.max(0, Math.min(idealScrollLeft, maxScroll));
+      // 현재 스크롤 위치 + (탭 중앙 - 컨테이너 중앙)
+      const tabCenter = tabRect.left + tabRect.width / 2;
+      const containerCenter = containerRect.left + containerRect.width / 2;
+      const scrollOffset = tabCenter - containerCenter;
 
-      // 부드러운 스크롤 애니메이션
+      const targetScroll = container.scrollLeft + scrollOffset;
+
+      // 스크롤 범위 제한
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const finalScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
       container.scrollTo({
-        left: targetScroll,
+        left: finalScroll,
         behavior: 'smooth',
       });
     }
