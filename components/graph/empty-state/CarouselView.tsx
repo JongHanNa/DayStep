@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -51,6 +51,27 @@ export function CarouselView({
 
   const sets = RECOMMENDATION_SETS;
   const currentSet = sets[currentCardIndex];
+
+  // 탭 버튼 refs (자동 스크롤용)
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // 카드 인덱스 변경 시 해당 탭으로 자동 스크롤
+  useEffect(() => {
+    const tabButton = tabRefs.current[currentCardIndex];
+    const container = scrollContainerRef.current;
+    if (tabButton && container) {
+      const containerWidth = container.offsetWidth;
+      const tabLeft = tabButton.offsetLeft;
+      const tabWidth = tabButton.offsetWidth;
+      // 탭을 중앙에 위치시키기 위한 스크롤 위치 계산
+      const scrollTo = tabLeft - (containerWidth / 2) + (tabWidth / 2);
+      container.scrollTo({
+        left: Math.max(0, scrollTo),
+        behavior: 'smooth',
+      });
+    }
+  }, [currentCardIndex]);
 
   const goToCard = (index: number) => {
     if (index < 0 || index >= sets.length) return;
@@ -136,36 +157,62 @@ export function CarouselView({
 
   return (
     <div className="w-full max-w-sm mx-auto">
-      {/* 카테고리 인디케이터 */}
-      <div className="flex items-center justify-between mb-4 px-2">
+      {/* 카테고리 네비게이터 */}
+      <div className="flex items-center gap-2 mb-4">
         <button
           onClick={() => goToCard(currentCardIndex - 1)}
           disabled={currentCardIndex === 0}
-          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30"
+          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30 flex-shrink-0"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <div className="flex gap-1.5">
-          {sets.map((set, index) => (
-            <motion.button
-              key={set.id}
-              onClick={() => goToCard(index)}
-              className="h-2 rounded-full transition-colors"
-              style={{ backgroundColor: set.color }}
-              animate={{
-                width: index === currentCardIndex ? 24 : 8,
-                opacity: index === currentCardIndex ? 1 : 0.4,
-              }}
-              transition={APPLE_SPRING.snappy}
-            />
-          ))}
+        {/* 가로 스크롤 탭 */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden touch-pan-x scrollbar-hide"
+        >
+          <div className="flex gap-2 px-1 py-1 w-max">
+            {sets.map((set, index) => {
+              const isActive = index === currentCardIndex;
+              // 세트의 첫 번째 책임(area/resource) 아이템의 제목 찾기
+              const areaItem = set.items.find(
+                (item) => item.type === 'area' || item.type === 'resource'
+              );
+              const displayTitle = areaItem?.title || set.title;
+
+              return (
+                <motion.button
+                  key={set.id}
+                  ref={(el) => { tabRefs.current[index] = el; }}
+                  onClick={() => goToCard(index)}
+                  className={`
+                    flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap
+                    text-xs font-medium transition-all flex-shrink-0
+                    ${isActive
+                      ? 'text-white shadow-md'
+                      : 'bg-base-200 text-base-content/60 hover:bg-base-300'
+                    }
+                  `}
+                  style={isActive ? { backgroundColor: set.color } : undefined}
+                  animate={{
+                    scale: isActive ? 1 : 0.95,
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={APPLE_SPRING.snappy}
+                >
+                  <span>{set.emoji}</span>
+                  <span>{displayTitle}</span>
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
 
         <button
           onClick={() => goToCard(currentCardIndex + 1)}
           disabled={currentCardIndex === sets.length - 1}
-          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30"
+          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30 flex-shrink-0"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
