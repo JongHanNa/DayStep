@@ -147,7 +147,7 @@ export function CarouselView({
   }, [sets]);
 
   return (
-    <div className="w-full max-w-sm mx-auto">
+    <div className="w-full max-w-lg mx-auto">
       {/* 카테고리 네비게이터 */}
       <div className="flex items-center gap-2 mb-4">
         <button

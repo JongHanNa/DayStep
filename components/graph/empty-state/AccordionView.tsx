@@ -87,7 +87,7 @@ export function AccordionView({
 
   return (
     <motion.div
-      className="w-full max-w-sm mx-auto space-y-3"
+      className="w-full max-w-lg mx-auto space-y-3"
       initial="hidden"
       animate="visible"
       variants={{
