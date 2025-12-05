@@ -47,7 +47,6 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
     label: '영역 관리',
     icon: Home,
     items: [
-      { id: 'graph-view', label: '그래프 뷰', icon: Network, href: '/' },
       { id: 'areas-resources', label: '책임/자원', icon: Target, href: '/second-brain/areas-resources' },
       { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
       { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/second-brain/projects' },
@@ -66,9 +65,10 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
   },
   productivity: {
     id: 'productivity',
-    label: '생산성',
+    label: '생산성/뷰',
     icon: Target,
     items: [
+      { id: 'graph-view', label: '그래프 뷰', icon: Network, href: '/' },
       { id: 'timeline', label: '타임라인', icon: Clock, href: '/timeline' },
       { id: 'calendar', label: '달력', icon: Calendar, href: '/second-brain/calendar' },
       { id: 'goal-compass', label: '목표 나침반', icon: Compass, href: '/second-brain/goal-compass' },

@@ -63,7 +63,6 @@ export default function SidebarMenu() {
   // 시작 그룹 트리 구조 렌더링
   const renderStartGroup = () => {
     const group = NAVIGATION_GROUPS.start;
-    const graphView = group.items.find(i => i.id === 'graph-view');
     const areasResources = group.items.find(i => i.id === 'areas-resources');
     const goals = group.items.find(i => i.id === 'goals');
     const projects = group.items.find(i => i.id === 'projects');
@@ -77,13 +76,8 @@ export default function SidebarMenu() {
           </span>
         </div>
 
-        {/* 그래프 뷰 (최상위) */}
-        <div className="px-2">
-          {graphView && renderMenuItem(graphView)}
-        </div>
-
         {/* 트리 구조: 책임/자원 → 목표 → 프로젝트 */}
-        <div className="px-2 mt-1">
+        <div className="px-2">
           {/* 책임/자원 (통합 메뉴) */}
           <div>
             {areasResources && renderMenuItem(areasResources)}
