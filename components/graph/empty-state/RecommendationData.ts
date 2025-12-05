@@ -77,6 +77,12 @@ export interface RecommendationItem {
   childCount?: number; // 하위 항목 수 힌트 (예: "목표 3개 포함")
 }
 
+// 트리 구조 노드 타입
+export interface TreeNode extends RecommendationItem {
+  children: TreeNode[];
+  depth: number;
+}
+
 export interface RecommendationCategory {
   type: GraphNodeType;
   label: string;
@@ -1537,4 +1543,83 @@ export function getSetItemIds(setId: string): string[] {
  */
 export function getAllSetItems(): RecommendationItem[] {
   return RECOMMENDATION_SETS.flatMap((set) => set.items);
+}
+
+// ============================================
+// 트리 구조 유틸리티
+// ============================================
+
+/**
+ * 플랫 아이템 배열을 parentId 기반 트리 구조로 변환
+ * 같은 부모의 자식들은 같은 depth를 가짐
+ */
+export function buildTree(items: RecommendationItem[]): TreeNode[] {
+  const itemMap = new Map<string, TreeNode>();
+  const roots: TreeNode[] = [];
+
+  // 1단계: 모든 아이템을 TreeNode로 변환
+  items.forEach((item) => {
+    itemMap.set(item.id, { ...item, children: [], depth: 0 });
+  });
+
+  // 2단계: 부모-자식 관계 설정 및 depth 계산
+  items.forEach((item) => {
+    const node = itemMap.get(item.id)!;
+    if (item.parentId && itemMap.has(item.parentId)) {
+      const parent = itemMap.get(item.parentId)!;
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  // 3단계: depth 재귀 계산
+  function calculateDepth(node: TreeNode, depth: number): void {
+    node.depth = depth;
+    node.children.forEach((child) => calculateDepth(child, depth + 1));
+  }
+  roots.forEach((root) => calculateDepth(root, 0));
+
+  return roots;
+}
+
+/**
+ * 트리에서 모든 노드 ID 수집 (재귀)
+ */
+export function collectAllNodeIds(nodes: TreeNode[]): string[] {
+  const ids: string[] = [];
+  function collect(node: TreeNode): void {
+    ids.push(node.id);
+    node.children.forEach(collect);
+  }
+  nodes.forEach(collect);
+  return ids;
+}
+
+/**
+ * 트리에서 특정 노드의 모든 자손 ID 수집
+ */
+export function collectDescendantIds(node: TreeNode): string[] {
+  const ids: string[] = [];
+  function collect(n: TreeNode): void {
+    n.children.forEach((child) => {
+      ids.push(child.id);
+      collect(child);
+    });
+  }
+  collect(node);
+  return ids;
+}
+
+/**
+ * 트리의 총 노드 수 계산
+ */
+export function countTreeNodes(nodes: TreeNode[]): number {
+  let count = 0;
+  function countNode(node: TreeNode): void {
+    count++;
+    node.children.forEach(countNode);
+  }
+  nodes.forEach(countNode);
+  return count;
 }

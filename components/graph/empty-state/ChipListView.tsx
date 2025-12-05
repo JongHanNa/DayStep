@@ -2,27 +2,27 @@
  * ChipListView - 세트 기반 칩/태그 목록 뷰
  *
  * 각 세트별로 칩들을 나열하여 빠른 다중 선택
+ * TreeView를 사용하여 실제 부모-자식 계층 구조 표시
  * 세트 전체 선택 + 개별 항목 토글 가능
  */
 
 'use client';
 
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Check, CheckCheck, Clock } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
-  type RecommendationItem,
-  getItemDates,
-  getRelativeDateText,
+  buildTree,
 } from './RecommendationData';
+import { TreeView } from './TreeView';
 import {
   APPLE_SPRING,
   CHIP_VARIANTS,
   CARD_ENTRANCE,
   STAGGER,
 } from '@/lib/animations/appleMotion';
-import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
 
 interface ChipListViewProps {
   selectedIds: Set<string>;
@@ -35,7 +35,30 @@ export function ChipListView({
   onToggleSelection,
   isSelected,
 }: ChipListViewProps) {
+  // 트리 내부 펼침 상태
+  const [expandedTreeIds, setExpandedTreeIds] = useState<Set<string>>(() => {
+    // 초기에 루트 노드들만 펼침
+    const initialExpanded = new Set<string>();
+    RECOMMENDATION_SETS.forEach((set) => {
+      const tree = buildTree(set.items);
+      tree.forEach((root) => initialExpanded.add(root.id));
+    });
+    return initialExpanded;
+  });
+
   const sets = RECOMMENDATION_SETS;
+
+  const toggleTreeExpand = (nodeId: string) => {
+    setExpandedTreeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  };
 
   // 세트 전체 선택 여부
   const isSetFullySelected = (set: RecommendationSet): boolean => {
@@ -53,9 +76,13 @@ export function ChipListView({
     const allSelected = isSetFullySelected(set);
     set.items.forEach((item) => {
       if (allSelected) {
-        if (isSelected(item.id)) { onToggleSelection(item.id); }
+        if (isSelected(item.id)) {
+          onToggleSelection(item.id);
+        }
       } else {
-        if (!isSelected(item.id)) { onToggleSelection(item.id); }
+        if (!isSelected(item.id)) {
+          onToggleSelection(item.id);
+        }
       }
     });
   };
@@ -73,18 +100,25 @@ export function ChipListView({
         },
       }}
     >
-      {sets.map((set, setIndex) => (
-        <SetSection
-          key={set.id}
-          set={set}
-          setIndex={setIndex}
-          onToggleSelection={onToggleSelection}
-          onToggleSet={() => toggleSetSelection(set)}
-          isSelected={isSelected}
-          isSetFullySelected={isSetFullySelected(set)}
-          isSetPartiallySelected={isSetPartiallySelected(set)}
-        />
-      ))}
+      {sets.map((set, setIndex) => {
+        const tree = useMemo(() => buildTree(set.items), [set.items]);
+
+        return (
+          <SetSection
+            key={set.id}
+            set={set}
+            setIndex={setIndex}
+            tree={tree}
+            expandedTreeIds={expandedTreeIds}
+            onToggleExpand={toggleTreeExpand}
+            onToggleSelection={onToggleSelection}
+            onToggleSet={() => toggleSetSelection(set)}
+            isSelected={isSelected}
+            isSetFullySelected={isSetFullySelected(set)}
+            isSetPartiallySelected={isSetPartiallySelected(set)}
+          />
+        );
+      })}
 
       {/* 선택된 개수 */}
       {selectedIds.size > 0 && (
@@ -104,9 +138,14 @@ export function ChipListView({
 // 세트 섹션 컴포넌트
 // ============================================
 
+import type { TreeNode } from './RecommendationData';
+
 interface SetSectionProps {
   set: RecommendationSet;
   setIndex: number;
+  tree: TreeNode[];
+  expandedTreeIds: Set<string>;
+  onToggleExpand: (id: string) => void;
   onToggleSelection: (id: string) => void;
   onToggleSet: () => void;
   isSelected: (id: string) => boolean;
@@ -117,6 +156,9 @@ interface SetSectionProps {
 function SetSection({
   set,
   setIndex,
+  tree,
+  expandedTreeIds,
+  onToggleExpand,
   onToggleSelection,
   onToggleSet,
   isSelected,
@@ -143,25 +185,17 @@ function SetSection({
         )}
       </div>
 
-      {/* 칩 컨테이너 */}
-      <motion.div
-        className="flex flex-wrap gap-2"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: { staggerChildren: STAGGER.fast },
-          },
-        }}
-      >
-        {set.items.map((item) => (
-          <Chip
-            key={item.id}
-            item={item}
-            isSelected={isSelected(item.id)}
-            onToggle={() => onToggleSelection(item.id)}
-          />
-        ))}
+      {/* TreeView로 계층 구조 표시 */}
+      <div className="space-y-2">
+        <TreeView
+          nodes={tree}
+          expandedIds={expandedTreeIds}
+          selectedIds={new Set()}
+          onToggleExpand={onToggleExpand}
+          onToggleSelection={onToggleSelection}
+          isSelected={isSelected}
+          variant="chip"
+        />
 
         {/* 세트 전체 선택 칩 */}
         <motion.button
@@ -176,8 +210,8 @@ function SetSection({
               isSetFullySelected
                 ? 'border-primary bg-primary text-primary-content'
                 : isSetPartiallySelected
-                ? 'border-primary/50 bg-primary/10 text-primary'
-                : 'border-base-300 bg-base-200 hover:bg-base-300 text-base-content/70'
+                  ? 'border-primary/50 bg-primary/10 text-primary'
+                  : 'border-base-300 bg-base-200 hover:bg-base-300 text-base-content/70'
             }
           `}
         >
@@ -189,84 +223,8 @@ function SetSection({
           </motion.div>
           <span>전체</span>
         </motion.button>
-      </motion.div>
+      </div>
     </motion.div>
-  );
-}
-
-// ============================================
-// 칩 컴포넌트
-// ============================================
-
-interface ChipProps {
-  item: RecommendationItem;
-  isSelected: boolean;
-  onToggle: () => void;
-}
-
-function Chip({ item, isSelected, onToggle }: ChipProps) {
-  const Icon = item.icon;
-  const typeLabel = NODE_TYPE_LABELS[item.type];
-  const dates = getItemDates(item);
-  const isTodo = item.type === 'todo';
-
-  // 시간 텍스트 생성
-  const timeText = isTodo && dates.formattedTime
-    ? `${item.dateConfig?.startOffset && item.dateConfig.startOffset > 0
-        ? getRelativeDateText(item.dateConfig.startOffset)
-        : ''} ${dates.formattedTime}`
-    : null;
-
-  return (
-    <motion.button
-      onClick={onToggle}
-      variants={CHIP_VARIANTS}
-      whileTap="tap"
-      animate={isSelected ? 'selected' : 'visible'}
-      className={`
-        inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
-        transition-colors border-2
-        ${
-          isSelected
-            ? 'border-primary bg-primary/10 text-primary'
-            : 'border-base-300 bg-base-100 hover:bg-base-200 text-base-content'
-        }
-      `}
-    >
-      {/* 아이콘 또는 체크 */}
-      <motion.div
-        animate={{ rotate: isSelected ? 360 : 0 }}
-        transition={APPLE_SPRING.bouncy}
-      >
-        {isSelected ? (
-          <Check className="w-3.5 h-3.5" />
-        ) : (
-          <Icon className="w-3.5 h-3.5" style={{ color: item.color }} />
-        )}
-      </motion.div>
-
-      {/* 텍스트 */}
-      <span>{item.title}</span>
-
-      {/* 시간 (Todo만) */}
-      {timeText && (
-        <span className="text-[9px] text-base-content/60 flex items-center gap-0.5">
-          <Clock className="w-3 h-3" />
-          {timeText.trim()}
-        </span>
-      )}
-
-      {/* 타입 뱃지 */}
-      <span
-        className="text-[9px] px-1 py-0.5 rounded"
-        style={{
-          backgroundColor: `${item.color}20`,
-          color: item.color,
-        }}
-      >
-        {typeLabel}
-      </span>
-    </motion.button>
   );
 }
 

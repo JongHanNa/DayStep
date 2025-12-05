@@ -2,21 +2,22 @@
  * AccordionView - 세트 기반 아코디언 뷰
  *
  * 각 세트를 탭하면 세트 내 항목들이 펼쳐지는 형태
+ * TreeView를 사용하여 실제 부모-자식 계층 구조 표시
  * 세트 전체 선택/해제 + 개별 항목 토글 가능
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, Clock, Calendar, ChevronRight } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
-  type RecommendationItem,
-  getItemDates,
-  getRelativeDateText,
+  buildTree,
+  collectAllNodeIds,
 } from './RecommendationData';
+import { TreeView } from './TreeView';
 import {
   APPLE_SPRING,
   ACCORDION_CONTENT,
@@ -24,7 +25,6 @@ import {
   CARD_ENTRANCE,
   STAGGER,
 } from '@/lib/animations/appleMotion';
-import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
 
 interface AccordionViewProps {
   selectedIds: Set<string>;
@@ -37,9 +37,21 @@ export function AccordionView({
   onToggleSelection,
   isSelected,
 }: AccordionViewProps) {
+  // 펼쳐진 세트 ID
   const [expandedSets, setExpandedSets] = useState<Set<string>>(
     new Set([RECOMMENDATION_SETS[0]?.id])
   );
+
+  // 트리 내부 펼침 상태 (세트별로 관리)
+  const [expandedTreeIds, setExpandedTreeIds] = useState<Set<string>>(() => {
+    // 초기에 루트 노드들만 펼침
+    const initialExpanded = new Set<string>();
+    RECOMMENDATION_SETS.forEach((set) => {
+      const tree = buildTree(set.items);
+      tree.forEach((root) => initialExpanded.add(root.id));
+    });
+    return initialExpanded;
+  });
 
   const toggleSet = (setId: string) => {
     setExpandedSets((prev) => {
@@ -48,6 +60,18 @@ export function AccordionView({
         next.delete(setId);
       } else {
         next.add(setId);
+      }
+      return next;
+    });
+  };
+
+  const toggleTreeExpand = (nodeId: string) => {
+    setExpandedTreeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
       }
       return next;
     });
@@ -69,9 +93,13 @@ export function AccordionView({
     const allSelected = isSetFullySelected(set);
     set.items.forEach((item) => {
       if (allSelected) {
-        if (isSelected(item.id)) { onToggleSelection(item.id); }
+        if (isSelected(item.id)) {
+          onToggleSelection(item.id);
+        }
       } else {
-        if (!isSelected(item.id)) { onToggleSelection(item.id); }
+        if (!isSelected(item.id)) {
+          onToggleSelection(item.id);
+        }
       }
     });
   };
@@ -94,6 +122,7 @@ export function AccordionView({
       {sets.map((set, setIndex) => {
         const isExpanded = expandedSets.has(set.id);
         const selectedInSet = set.items.filter((item) => isSelected(item.id)).length;
+        const tree = useMemo(() => buildTree(set.items), [set.items]);
 
         return (
           <motion.div
@@ -155,27 +184,17 @@ export function AccordionView({
                   variants={ACCORDION_CONTENT}
                   className="overflow-hidden"
                 >
-                  <motion.div
-                    className="p-3 pt-0 space-y-2"
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      visible: {
-                        opacity: 1,
-                        transition: { staggerChildren: STAGGER.fast, delayChildren: 0.05 },
-                      },
-                    }}
-                  >
-                    {set.items.map((item, index) => (
-                      <AccordionItem
-                        key={item.id}
-                        item={item}
-                        isSelected={isSelected(item.id)}
-                        onToggle={() => onToggleSelection(item.id)}
-                        index={index}
-                      />
-                    ))}
+                  <div className="p-3 pt-0 space-y-2">
+                    {/* TreeView로 계층 구조 표시 */}
+                    <TreeView
+                      nodes={tree}
+                      expandedIds={expandedTreeIds}
+                      selectedIds={selectedIds}
+                      onToggleExpand={toggleTreeExpand}
+                      onToggleSelection={onToggleSelection}
+                      isSelected={isSelected}
+                      variant="default"
+                    />
 
                     {/* 세트 전체 선택 버튼 */}
                     <motion.button
@@ -187,8 +206,8 @@ export function AccordionView({
                           isSetFullySelected(set)
                             ? 'bg-primary text-primary-content'
                             : isSetPartiallySelected(set)
-                            ? 'bg-primary/20 text-primary border-2 border-primary/30'
-                            : 'bg-base-300 text-base-content hover:bg-base-200'
+                              ? 'bg-primary/20 text-primary border-2 border-primary/30'
+                              : 'bg-base-300 text-base-content hover:bg-base-200'
                         }
                       `}
                     >
@@ -206,7 +225,7 @@ export function AccordionView({
                         '이 세트 선택하기'
                       )}
                     </motion.button>
-                  </motion.div>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -225,128 +244,6 @@ export function AccordionView({
         </motion.div>
       )}
     </motion.div>
-  );
-}
-
-// ============================================
-// 아코디언 아이템 컴포넌트
-// ============================================
-
-interface AccordionItemProps {
-  item: RecommendationItem;
-  isSelected: boolean;
-  onToggle: () => void;
-  index: number;
-}
-
-function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps) {
-  const Icon = item.icon;
-  const typeLabel = NODE_TYPE_LABELS[item.type];
-  const dates = getItemDates(item);
-  const hasChildCount = item.childCount !== undefined && item.childCount > 0;
-  const isTodo = item.type === 'todo';
-  const isGoalOrProject = item.type === 'goal' || item.type === 'project';
-
-  return (
-    <motion.button
-      onClick={onToggle}
-      variants={CARD_ENTRANCE}
-      custom={index}
-      whileTap={{ scale: 0.98 }}
-      className={`
-        group w-full p-3 rounded-lg flex items-center gap-3 text-left transition-colors
-        ${
-          isSelected
-            ? 'bg-primary/10 border border-primary/30'
-            : 'bg-base-200 border border-transparent hover:bg-base-300'
-        }
-      `}
-    >
-      {/* 체크박스 */}
-      <motion.div
-        animate={isSelected ? 'checked' : 'unchecked'}
-        variants={{
-          unchecked: { scale: 1 },
-          checked: { scale: 1 },
-        }}
-        whileTap={{ scale: 0.9 }}
-        className={`
-          w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
-          border-2 transition-all
-          ${
-            isSelected
-              ? 'border-transparent'
-              : 'border-base-content/30 bg-base-100 group-hover:border-base-content/50'
-          }
-        `}
-        style={isSelected ? { backgroundColor: item.color } : undefined}
-      >
-        {isSelected && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={APPLE_SPRING.bouncy}
-          >
-            <Check className="w-3 h-3 text-white" />
-          </motion.div>
-        )}
-      </motion.div>
-
-      {/* 아이콘 */}
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: `${item.color}20` }}
-      >
-        <Icon className="w-4 h-4" style={{ color: item.color }} />
-      </div>
-
-      {/* 텍스트 */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm truncate">{item.title}</span>
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{
-              backgroundColor: `${item.color}20`,
-              color: item.color,
-            }}
-          >
-            {typeLabel}
-          </span>
-          {/* 하위 항목 수 */}
-          {hasChildCount && (
-            <span className="text-[10px] text-base-content/40 flex items-center gap-0.5">
-              <ChevronRight className="w-3 h-3" />
-              {item.childCount}개
-            </span>
-          )}
-        </div>
-
-        {/* 설명 + 날짜/시간 */}
-        <div className="flex items-center gap-2 mt-0.5">
-          <div className="text-xs text-base-content/50 truncate flex-1">{item.description}</div>
-
-          {/* Todo 시간 표시 */}
-          {isTodo && dates.formattedTime && (
-            <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
-              <Clock className="w-3 h-3" />
-              {item.dateConfig?.startOffset !== undefined && item.dateConfig.startOffset > 0
-                ? getRelativeDateText(item.dateConfig.startOffset)
-                : '오늘'}{' '}
-              {dates.formattedTime}
-            </span>
-          )}
-
-          {/* Goal/Project 기간 표시 */}
-          {isGoalOrProject && item.dateConfig?.endOffset !== undefined && (
-            <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
-              <Calendar className="w-3 h-3" />
-              ~{getRelativeDateText(item.dateConfig.endOffset)}
-            </span>
-          )}
-        </div>
-      </div>
-    </motion.button>
   );
 }
 

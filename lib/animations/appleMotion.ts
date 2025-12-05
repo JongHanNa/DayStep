@@ -348,3 +348,84 @@ export const createTransition = (
   ...APPLE_SPRING[preset],
   ...overrides,
 });
+
+// ============================================
+// 트리 뷰 애니메이션
+// ============================================
+
+/** 트리 노드 등장/퇴장 애니메이션 */
+export const TREE_NODE_VARIANTS: Variants = {
+  hidden: {
+    opacity: 0,
+    x: -10,
+    height: 0,
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    height: 'auto',
+    transition: {
+      ...APPLE_SPRING.default,
+      height: { duration: 0.3 },
+    },
+  },
+  exit: {
+    opacity: 0,
+    x: -10,
+    height: 0,
+    transition: {
+      duration: 0.2,
+      height: { duration: 0.2 },
+    },
+  },
+};
+
+/** 트리 접기/펼치기 컨테이너 애니메이션 */
+export const TREE_COLLAPSE: Variants = {
+  expanded: {
+    height: 'auto',
+    opacity: 1,
+    transition: {
+      height: APPLE_SPRING.smooth,
+      opacity: { duration: 0.25, delay: 0.05 },
+      staggerChildren: STAGGER.fast,
+      delayChildren: 0.05,
+    },
+  },
+  collapsed: {
+    height: 0,
+    opacity: 0,
+    transition: {
+      height: { duration: 0.25 },
+      opacity: { duration: 0.15 },
+    },
+  },
+};
+
+/** 트리 펼치기/접기 화살표 회전 */
+export const TREE_CHEVRON: Variants = {
+  collapsed: {
+    rotate: 0,
+    transition: APPLE_SPRING.snappy,
+  },
+  expanded: {
+    rotate: 90,
+    transition: APPLE_SPRING.snappy,
+  },
+};
+
+/** 트리 아이템 선택 피드백 */
+export const TREE_ITEM_SELECT: Variants = {
+  unselected: {
+    scale: 1,
+    backgroundColor: 'transparent',
+  },
+  selected: {
+    scale: 1,
+    transition: APPLE_SPRING.bouncy,
+  },
+  tap: {
+    scale: 0.98,
+    transition: APPLE_SPRING.snappy,
+  },
+};

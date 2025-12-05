@@ -2,27 +2,27 @@
  * CarouselView - 세트 기반 캐러셀 뷰
  *
  * 세트 단위로 추천 항목을 한번에 선택/해제
+ * TreeView를 사용하여 실제 부모-자식 계층 구조 표시
  * 개별 항목 수정도 가능
  */
 
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Check, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
-  type RecommendationItem,
-  type RecommendationSet
+  type RecommendationSet,
+  buildTree,
 } from './RecommendationData';
+import { TreeView } from './TreeView';
 import {
   APPLE_SPRING,
-  CARD_ENTRANCE,
   STAGGER,
   swipePower,
   SWIPE_THRESHOLD,
 } from '@/lib/animations/appleMotion';
-import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
 
 interface CarouselViewProps {
   selectedIds: Set<string>;
@@ -37,8 +37,17 @@ export function CarouselView({
 }: CarouselViewProps) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [expandedSetId, setExpandedSetId] = useState<string | null>(null);
-  const constraintsRef = useRef<HTMLDivElement>(null);
+
+  // 트리 내부 펼침 상태
+  const [expandedTreeIds, setExpandedTreeIds] = useState<Set<string>>(() => {
+    // 초기에 루트 노드들만 펼침
+    const initialExpanded = new Set<string>();
+    RECOMMENDATION_SETS.forEach((set) => {
+      const tree = buildTree(set.items);
+      tree.forEach((root) => initialExpanded.add(root.id));
+    });
+    return initialExpanded;
+  });
 
   const sets = RECOMMENDATION_SETS;
   const currentSet = sets[currentCardIndex];
@@ -47,7 +56,6 @@ export function CarouselView({
     if (index < 0 || index >= sets.length) return;
     setDirection(index > currentCardIndex ? 1 : -1);
     setCurrentCardIndex(index);
-    setExpandedSetId(null); // 카드 변경 시 접기
   };
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -60,6 +68,18 @@ export function CarouselView({
         goToCard(currentCardIndex - 1);
       }
     }
+  };
+
+  const toggleTreeExpand = (nodeId: string) => {
+    setExpandedTreeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
   };
 
   // 세트 전체 선택 여부 확인
@@ -111,6 +131,9 @@ export function CarouselView({
     }),
   };
 
+  // 현재 세트의 트리 구조
+  const currentTree = useMemo(() => buildTree(currentSet.items), [currentSet.items]);
+
   return (
     <div className="w-full max-w-sm mx-auto">
       {/* 카테고리 인디케이터 */}
@@ -149,10 +172,7 @@ export function CarouselView({
       </div>
 
       {/* 카드 컨테이너 */}
-      <div
-        ref={constraintsRef}
-        className="relative h-[420px] overflow-hidden"
-      >
+      <div className="relative h-[480px] overflow-hidden">
         <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={currentCardIndex}
@@ -169,15 +189,14 @@ export function CarouselView({
           >
             <SetCard
               set={currentSet}
+              tree={currentTree}
               isFullySelected={isSetFullySelected(currentSet)}
               isPartiallySelected={isSetPartiallySelected(currentSet)}
               onToggleSet={() => toggleSetSelection(currentSet)}
               onToggleItem={onToggleSelection}
               isItemSelected={isSelected}
-              isExpanded={expandedSetId === currentSet.id}
-              onToggleExpand={() =>
-                setExpandedSetId(expandedSetId === currentSet.id ? null : currentSet.id)
-              }
+              expandedIds={expandedTreeIds}
+              onToggleExpand={toggleTreeExpand}
             />
           </motion.div>
         </AnimatePresence>
@@ -195,25 +214,29 @@ export function CarouselView({
 // 세트 카드 컴포넌트
 // ============================================
 
+import type { TreeNode } from './RecommendationData';
+
 interface SetCardProps {
   set: RecommendationSet;
+  tree: TreeNode[];
   isFullySelected: boolean;
   isPartiallySelected: boolean;
   onToggleSet: () => void;
   onToggleItem: (id: string) => void;
   isItemSelected: (id: string) => boolean;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
+  expandedIds: Set<string>;
+  onToggleExpand: (id: string) => void;
 }
 
 function SetCard({
   set,
+  tree,
   isFullySelected,
   isPartiallySelected,
   onToggleSet,
   onToggleItem,
   isItemSelected,
-  isExpanded,
+  expandedIds,
   onToggleExpand,
 }: SetCardProps) {
   return (
@@ -232,60 +255,31 @@ function SetCard({
         </div>
       </div>
 
-      {/* 세트 항목 미리보기 */}
-      <motion.div
-        className="space-y-2 flex-1 overflow-y-auto pr-1"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: { staggerChildren: STAGGER.fast, delayChildren: 0.1 },
-          },
-        }}
-      >
-        {set.items.map((item, index) => (
-          <SetItemRow
-            key={item.id}
-            item={item}
-            index={index}
-            isSelected={isItemSelected(item.id)}
-            onToggle={() => onToggleItem(item.id)}
-            showDetails={isExpanded}
-          />
-        ))}
-      </motion.div>
-
-      {/* 상세 보기 토글 */}
-      <button
-        onClick={onToggleExpand}
-        className="flex items-center justify-center gap-1 py-2 text-sm text-base-content/50 hover:text-base-content/70 transition-colors"
-      >
-        {isExpanded ? (
-          <>
-            <ChevronUp className="w-4 h-4" />
-            간략히
-          </>
-        ) : (
-          <>
-            <ChevronDown className="w-4 h-4" />
-            상세 보기
-          </>
-        )}
-      </button>
+      {/* TreeView로 계층 구조 표시 */}
+      <div className="flex-1 overflow-y-auto pr-1">
+        <TreeView
+          nodes={tree}
+          expandedIds={expandedIds}
+          selectedIds={new Set()}
+          onToggleExpand={onToggleExpand}
+          onToggleSelection={onToggleItem}
+          isSelected={isItemSelected}
+          variant="compact"
+        />
+      </div>
 
       {/* 세트 전체 선택 버튼 */}
       <motion.button
         onClick={onToggleSet}
         whileTap={{ scale: 0.98 }}
         className={`
-          w-full py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2
-          ${isFullySelected
-            ? 'bg-primary text-primary-content'
-            : isPartiallySelected
-            ? 'bg-primary/20 text-primary border-2 border-primary/30'
-            : 'bg-base-200 text-base-content hover:bg-base-300'
+          w-full py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 mt-4
+          ${
+            isFullySelected
+              ? 'bg-primary text-primary-content'
+              : isPartiallySelected
+                ? 'bg-primary/20 text-primary border-2 border-primary/30'
+                : 'bg-base-200 text-base-content hover:bg-base-300'
           }
         `}
       >
@@ -304,97 +298,6 @@ function SetCard({
         )}
       </motion.button>
     </div>
-  );
-}
-
-// ============================================
-// 세트 항목 행 컴포넌트
-// ============================================
-
-interface SetItemRowProps {
-  item: RecommendationItem;
-  index: number;
-  isSelected: boolean;
-  onToggle: () => void;
-  showDetails: boolean;
-}
-
-function SetItemRow({ item, index, isSelected, onToggle, showDetails }: SetItemRowProps) {
-  const Icon = item.icon;
-  const typeLabel = NODE_TYPE_LABELS[item.type];
-
-  return (
-    <motion.button
-      onClick={onToggle}
-      variants={CARD_ENTRANCE}
-      custom={index}
-      whileTap={{ scale: 0.98 }}
-      className={`
-        w-full p-3 rounded-xl flex items-center gap-3 text-left transition-all
-        ${isSelected
-          ? 'bg-primary/10 border-2 border-primary/30'
-          : 'bg-base-200 border-2 border-transparent hover:bg-base-300'
-        }
-      `}
-    >
-      {/* 체크박스 */}
-      <motion.div
-        animate={isSelected ? 'checked' : 'unchecked'}
-        className={`
-          w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0
-          border-2 transition-all
-          ${isSelected
-            ? 'border-transparent'
-            : 'border-base-content/30 bg-base-100'
-          }
-        `}
-        style={isSelected ? { backgroundColor: item.color } : undefined}
-      >
-        {isSelected && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={APPLE_SPRING.bouncy}
-          >
-            <Check className="w-3 h-3 text-white" />
-          </motion.div>
-        )}
-      </motion.div>
-
-      {/* 아이콘 */}
-      <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: item.color }}
-      >
-        <Icon className="w-4 h-4 text-white" />
-      </div>
-
-      {/* 텍스트 */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm truncate">{item.title}</span>
-          <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{
-              backgroundColor: `${item.color}20`,
-              color: item.color,
-            }}
-          >
-            {typeLabel}
-          </span>
-        </div>
-        {showDetails && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="text-xs text-base-content/50 truncate mt-0.5"
-          >
-            {item.description}
-          </motion.p>
-        )}
-      </div>
-    </motion.button>
   );
 }
 
