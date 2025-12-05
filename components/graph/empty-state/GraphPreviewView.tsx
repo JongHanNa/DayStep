@@ -108,16 +108,16 @@ export function GraphPreviewView({
   }
 
   const maxDepth = useMemo(() => getMaxDepth(tree), [tree]);
-  const containerWidth = 380;
-  const yStart = 40;
-  const yGap = 70;
-  const containerHeight = Math.max(380, yStart + maxDepth * yGap + 100);
+  const containerWidth = 420;
+  const yStart = 50;
+  const yGap = 80;
+  const containerHeight = Math.max(420, yStart + maxDepth * yGap + 80);
 
   // 트리 기반 노드 위치 계산 (리프 가중치 방식)
   const nodePositions = useMemo((): NodePosition[] => {
     const positions: NodePosition[] = [];
-    const padding = 20; // 좌우 여백
-    const minNodeSpacing = 60; // 리프 노드 최소 간격
+    const padding = 15; // 좌우 여백
+    const minNodeSpacing = 75; // 리프 노드 최소 간격
 
     // 전체 리프 수로 필요 너비 계산
     const totalLeaves = tree.reduce((sum, node) => sum + getLeafCount(node), 0);
@@ -249,7 +249,7 @@ export function GraphPreviewView({
             animate="center"
             exit="exit"
           >
-            <div className="relative w-[380px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
+            <div className="relative w-[420px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
               {/* 배경 그리드 */}
               <div
                 className="absolute inset-0 opacity-5"
