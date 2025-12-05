@@ -56,18 +56,27 @@ export function CarouselView({
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // 카드 인덱스 변경 시 해당 탭으로 자동 스크롤
+  // 카드 인덱스 변경 시 해당 탭으로 자동 스크롤 (중앙 정렬)
   useEffect(() => {
     const tabButton = tabRefs.current[currentCardIndex];
     const container = scrollContainerRef.current;
     if (tabButton && container) {
+      // 컨테이너와 탭 정보
       const containerWidth = container.offsetWidth;
+      const containerScrollWidth = container.scrollWidth;
       const tabLeft = tabButton.offsetLeft;
       const tabWidth = tabButton.offsetWidth;
-      // 탭을 중앙에 위치시키기 위한 스크롤 위치 계산
-      const scrollTo = tabLeft - (containerWidth / 2) + (tabWidth / 2);
+
+      // 탭을 정확히 중앙에 위치시키기 위한 스크롤 위치
+      const idealScrollLeft = tabLeft - (containerWidth / 2) + (tabWidth / 2);
+
+      // 스크롤 범위 제한 (0 ~ maxScroll)
+      const maxScroll = containerScrollWidth - containerWidth;
+      const targetScroll = Math.max(0, Math.min(idealScrollLeft, maxScroll));
+
+      // 부드러운 스크롤 애니메이션
       container.scrollTo({
-        left: Math.max(0, scrollTo),
+        left: targetScroll,
         behavior: 'smooth',
       });
     }
@@ -188,18 +197,29 @@ export function CarouselView({
                   onClick={() => goToCard(index)}
                   className={`
                     flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap
-                    text-xs font-medium transition-all flex-shrink-0
+                    text-xs font-medium flex-shrink-0
                     ${isActive
                       ? 'text-white shadow-md'
                       : 'bg-base-200 text-base-content/60 hover:bg-base-300'
                     }
                   `}
-                  style={isActive ? { backgroundColor: set.color } : undefined}
+                  initial={false}
                   animate={{
-                    scale: isActive ? 1 : 0.95,
+                    scale: isActive ? 1 : 0.92,
+                    backgroundColor: isActive ? set.color : 'oklch(var(--b2))',
+                    opacity: isActive ? 1 : 0.7,
                   }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={APPLE_SPRING.snappy}
+                  whileHover={{
+                    scale: isActive ? 1 : 0.96,
+                    opacity: 1,
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 400,
+                    damping: 25,
+                    mass: 0.5,
+                  }}
                 >
                   <span>{set.emoji}</span>
                   <span>{displayTitle}</span>
