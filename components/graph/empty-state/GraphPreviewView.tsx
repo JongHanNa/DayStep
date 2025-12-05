@@ -9,13 +9,13 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
   type RecommendationItem,
-  getItemDates,
-  getRelativeDateText,
+  type TreeNode,
+  buildTree,
 } from './RecommendationData';
 import {
   APPLE_SPRING,
@@ -24,7 +24,6 @@ import {
   swipePower,
   SWIPE_THRESHOLD,
 } from '@/lib/animations/appleMotion';
-import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
 
 interface GraphPreviewViewProps {
   selectedIds: Set<string>;
@@ -93,30 +92,91 @@ export function GraphPreviewView({
     });
   };
 
-  // 현재 세트의 노드 위치 계산
+  // 트리 구조 생성
+  const tree = useMemo(() => buildTree(currentSet.items), [currentSet.items]);
+
+  // 트리 최대 깊이 계산
+  function getMaxDepth(nodes: TreeNode[]): number {
+    if (nodes.length === 0) return 0;
+    return 1 + Math.max(0, ...nodes.map(n => getMaxDepth(n.children)));
+  }
+
+  // 리프 노드 수 계산 (가중치 기반 배치용)
+  function getLeafCount(node: TreeNode): number {
+    if (node.children.length === 0) return 1;
+    return node.children.reduce((sum, child) => sum + getLeafCount(child), 0);
+  }
+
+  const maxDepth = useMemo(() => getMaxDepth(tree), [tree]);
+  const containerWidth = 380;
+  const yStart = 40;
+  const yGap = 70;
+  const containerHeight = Math.max(380, yStart + maxDepth * yGap + 100);
+
+  // 트리 기반 노드 위치 계산 (리프 가중치 방식)
   const nodePositions = useMemo((): NodePosition[] => {
     const positions: NodePosition[] = [];
-    const containerWidth = 320;
-    const centerX = containerWidth / 2;
+    const padding = 20; // 좌우 여백
+    const minNodeSpacing = 60; // 리프 노드 최소 간격
 
-    // 4단계 계층 Y 위치 (세로로 더 촘촘하게)
-    const levelY = [50, 130, 210, 290]; // Area/Resource, Goal, Project, Todo
+    // 전체 리프 수로 필요 너비 계산
+    const totalLeaves = tree.reduce((sum, node) => sum + getLeafCount(node), 0);
+    const neededWidth = totalLeaves * minNodeSpacing;
+    const availableWidth = containerWidth - padding * 2;
 
-    currentSet.items.forEach((item, index) => {
-      const y = levelY[index] || levelY[levelY.length - 1];
-      const parentIndex = index - 1;
+    // 스케일 팩터: 필요 너비가 더 크면 축소
+    const scale = neededWidth > availableWidth ? availableWidth / neededWidth : 1;
+    const effectiveWidth = neededWidth * scale;
+    const startX = padding + (availableWidth - effectiveWidth) / 2;
 
-      positions.push({
-        item,
-        x: centerX,
-        y,
-        parentX: parentIndex >= 0 ? centerX : undefined,
-        parentY: parentIndex >= 0 ? levelY[parentIndex] : undefined,
+    // 재귀적으로 노드 위치 계산 (리프 가중치 기반)
+    function calculatePositions(
+      nodes: TreeNode[],
+      depth: number,
+      xStart: number,
+      xEnd: number,
+      parentX?: number,
+      parentY?: number
+    ) {
+      const y = yStart + depth * yGap;
+      const totalWidth = xEnd - xStart;
+
+      // 각 노드의 가중치 계산 (리프 수 기반)
+      const weights = nodes.map(node => getLeafCount(node));
+      const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+      let currentX = xStart;
+
+      nodes.forEach((node, i) => {
+        const nodeWidth = (weights[i] / totalWeight) * totalWidth;
+        const x = currentX + nodeWidth / 2;
+
+        positions.push({
+          item: node,
+          x,
+          y,
+          parentX,
+          parentY,
+        });
+
+        if (node.children.length > 0) {
+          calculatePositions(
+            node.children,
+            depth + 1,
+            currentX,
+            currentX + nodeWidth,
+            x,
+            y
+          );
+        }
+
+        currentX += nodeWidth;
       });
-    });
+    }
 
+    calculatePositions(tree, 0, startX, startX + effectiveWidth);
     return positions;
-  }, [currentSet]);
+  }, [tree]);
 
   const cardVariants = {
     enter: (direction: number) => ({
@@ -189,7 +249,7 @@ export function GraphPreviewView({
             animate="center"
             exit="exit"
           >
-            <div className="relative w-[320px] mx-auto h-[340px] bg-base-100 rounded-2xl border border-base-300 overflow-hidden">
+            <div className="relative w-[380px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
               {/* 배경 그리드 */}
               <div
                 className="absolute inset-0 opacity-5"
@@ -305,22 +365,12 @@ interface GraphNodeProps {
 function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) {
   const Icon = item.icon;
   const size = item.type === 'area' || item.type === 'resource' ? 44 : 40;
-  const typeLabel = NODE_TYPE_LABELS[item.type];
-  const dates = getItemDates(item);
-  const isTodo = item.type === 'todo';
-  const isGoalOrProject = item.type === 'goal' || item.type === 'project';
 
-  // 시간 텍스트
-  const timeText = isTodo && dates.formattedTime
-    ? `${item.dateConfig?.startOffset && item.dateConfig.startOffset > 0
-        ? getRelativeDateText(item.dateConfig.startOffset)
-        : '오늘'} ${dates.formattedTime}`
-    : null;
-
-  // 기간 텍스트
-  const periodText = isGoalOrProject && item.dateConfig?.endOffset
-    ? `~${getRelativeDateText(item.dateConfig.endOffset)}`
-    : null;
+  // 제목만 표시 (5자 초과 시 자름)
+  const maxTitleLength = 5;
+  const displayTitle = item.title.length > maxTitleLength
+    ? item.title.slice(0, maxTitleLength) + '…'
+    : item.title;
 
   return (
     <motion.button
@@ -377,42 +427,16 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
         )}
       </div>
 
-      {/* 라벨 */}
+      {/* 라벨 - 노드 바로 아래 중앙에 제목만 */}
       <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 + index * 0.1 }}
-        className="absolute left-1/2 -translate-x-1/2 -bottom-7 whitespace-nowrap flex flex-col items-center gap-0.5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 + index * 0.05 }}
+        className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap"
       >
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] font-medium text-base-content/70 bg-base-100/80 px-1.5 py-0.5 rounded">
-            {item.title}
-          </span>
-          <span
-            className="text-[8px] px-1 py-0.5 rounded"
-            style={{
-              backgroundColor: `${item.color}20`,
-              color: item.color,
-            }}
-          >
-            {typeLabel}
-          </span>
-        </div>
-
-        {/* 시간 or 기간 표시 */}
-        {(timeText || periodText) && (
-          <div className="flex items-center gap-1 text-[8px] text-base-content/50">
-            {timeText && (
-              <span className="flex items-center gap-0.5 bg-base-200 px-1 py-0.5 rounded">
-                <Clock className="w-2.5 h-2.5" />
-                {timeText}
-              </span>
-            )}
-            {periodText && (
-              <span className="bg-base-200 px-1 py-0.5 rounded">{periodText}</span>
-            )}
-          </div>
-        )}
+        <span className="text-[10px] font-medium text-base-content/70">
+          {displayTitle}
+        </span>
       </motion.div>
     </motion.button>
   );
