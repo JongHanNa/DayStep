@@ -108,7 +108,7 @@ export function GraphPreviewView({
   }
 
   const maxDepth = useMemo(() => getMaxDepth(tree), [tree]);
-  const containerWidth = 420;
+  const containerWidth = 500;
   const yStart = 50;
   const yGap = 80;
   const containerHeight = Math.max(420, yStart + maxDepth * yGap + 80);
@@ -185,7 +185,7 @@ export function GraphPreviewView({
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto">
+    <div className="w-full max-w-lg mx-auto">
       {/* 세트 인디케이터 */}
       <div className="flex items-center justify-between mb-4 px-2">
         <button
@@ -238,7 +238,7 @@ export function GraphPreviewView({
             animate="center"
             exit="exit"
           >
-            <div className="relative w-full max-w-[420px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
+            <div className="relative w-full max-w-[500px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
               {/* 배경 그리드 */}
               <div
                 className="absolute inset-0 opacity-5"
