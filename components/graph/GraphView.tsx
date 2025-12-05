@@ -17,6 +17,7 @@ import { GraphLegend } from './GraphLegend';
 import { GraphCreateModal } from './GraphCreateModal';
 import { GraphNodeActionMenu } from './GraphNodeActionMenu';
 import { GraphEmptyState } from './GraphEmptyState';
+import { GraphMultiSelectBar } from './GraphMultiSelectBar';
 import { useGraphStore, useGraphEditModal, useGraphPopover, useGraphActionMenu } from '@/state/stores/graphStore';
 
 // 팝오버 컴포넌트들
@@ -246,6 +247,42 @@ export default function GraphView() {
     }
     refetch();
   }, [userId, deleteNote, deleteTodo, deleteProject, deleteGoal, deleteArea, deleteResource, refetch]);
+
+  // 일괄 삭제 핸들러 (다중 선택된 노드들)
+  const handleBulkDelete = useCallback(async (nodeIds: string[]) => {
+    if (!userId || nodeIds.length === 0) return;
+
+    // 삭제할 노드들 찾기
+    const nodesToDelete = filteredData.nodes.filter((node) => nodeIds.includes(node.id));
+
+    // 모든 노드 삭제 (병렬 처리)
+    await Promise.all(
+      nodesToDelete.map(async (node) => {
+        switch (node.type) {
+          case 'note':
+            await deleteNote(node.id, userId);
+            break;
+          case 'todo':
+            await deleteTodo(node.id);
+            break;
+          case 'project':
+            await deleteProject(userId, node.id);
+            break;
+          case 'goal':
+            await deleteGoal(userId, node.id);
+            break;
+          case 'area':
+            await deleteArea(userId, node.id);
+            break;
+          case 'resource':
+            await deleteResource(userId, node.id);
+            break;
+        }
+      })
+    );
+
+    refetch();
+  }, [userId, filteredData.nodes, deleteNote, deleteTodo, deleteProject, deleteGoal, deleteArea, deleteResource, refetch]);
 
   // 노트 편집 모달 닫기 핸들러
   const handleCloseNoteEditModal = useCallback(() => {
@@ -523,6 +560,12 @@ export default function GraphView() {
 
       {/* FAB 버튼 (노드 생성) */}
       <GraphFAB />
+
+      {/* 다중 선택 액션 바 */}
+      <GraphMultiSelectBar
+        nodes={filteredData.nodes}
+        onDeleteSelected={handleBulkDelete}
+      />
 
       {/* 생성 모달 */}
       <GraphCreateModal />

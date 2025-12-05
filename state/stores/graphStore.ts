@@ -41,6 +41,10 @@ interface GraphStoreState {
   selectedNodeId: string | null;
   hoveredNodeId: string | null;
 
+  // Multi-selection state (for marquee/rectangle selection)
+  selectedNodeIds: string[];
+  isMarqueeSelecting: boolean;
+
   // Create modal state
   createModalOpen: boolean;
   createModalType: GraphNodeType | null;
@@ -81,6 +85,14 @@ interface GraphStoreState {
   setHoveredNode: (nodeId: string | null) => void;
   clearSelection: () => void;
 
+  // Actions - Multi-selection
+  setSelectedNodeIds: (nodeIds: string[]) => void;
+  addToSelection: (nodeId: string) => void;
+  removeFromSelection: (nodeId: string) => void;
+  toggleNodeSelection: (nodeId: string) => void;
+  clearMultiSelection: () => void;
+  setMarqueeSelecting: (isSelecting: boolean) => void;
+
   // Actions - Create Modal
   openCreateModal: (type: GraphNodeType, parentId?: string) => void;
   closeCreateModal: () => void;
@@ -114,6 +126,8 @@ export const useGraphStore = create<GraphStoreState>()(
       filter: defaultFilter,
       selectedNodeId: null,
       hoveredNodeId: null,
+      selectedNodeIds: [],
+      isMarqueeSelecting: false,
       createModalOpen: false,
       createModalType: null,
       createModalParentId: null,
@@ -192,6 +206,41 @@ export const useGraphStore = create<GraphStoreState>()(
 
       clearSelection: () => {
         set({ selectedNodeId: null, hoveredNodeId: null });
+      },
+
+      // Multi-selection actions
+      setSelectedNodeIds: (nodeIds) => {
+        set({ selectedNodeIds: nodeIds });
+      },
+
+      addToSelection: (nodeId) => {
+        set((state) => {
+          if (state.selectedNodeIds.includes(nodeId)) return state;
+          return { selectedNodeIds: [...state.selectedNodeIds, nodeId] };
+        });
+      },
+
+      removeFromSelection: (nodeId) => {
+        set((state) => ({
+          selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId),
+        }));
+      },
+
+      toggleNodeSelection: (nodeId) => {
+        set((state) => {
+          if (state.selectedNodeIds.includes(nodeId)) {
+            return { selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId) };
+          }
+          return { selectedNodeIds: [...state.selectedNodeIds, nodeId] };
+        });
+      },
+
+      clearMultiSelection: () => {
+        set({ selectedNodeIds: [] });
+      },
+
+      setMarqueeSelecting: (isSelecting) => {
+        set({ isMarqueeSelecting: isSelecting });
       },
 
       // Create modal actions
@@ -292,6 +341,19 @@ export const useGraphStore = create<GraphStoreState>()(
 export const useGraphFilter = () => useGraphStore((state) => state.filter);
 export const useGraphSelectedNode = () => useGraphStore((state) => state.selectedNodeId);
 export const useGraphHoveredNode = () => useGraphStore((state) => state.hoveredNodeId);
+export const useGraphMultiSelection = () =>
+  useGraphStore(
+    useShallow((state) => ({
+      selectedNodeIds: state.selectedNodeIds,
+      isMarqueeSelecting: state.isMarqueeSelecting,
+      setSelectedNodeIds: state.setSelectedNodeIds,
+      addToSelection: state.addToSelection,
+      removeFromSelection: state.removeFromSelection,
+      toggleNodeSelection: state.toggleNodeSelection,
+      clearMultiSelection: state.clearMultiSelection,
+      setMarqueeSelecting: state.setMarqueeSelecting,
+    }))
+  );
 export const useGraphCreateModal = () =>
   useGraphStore(
     useShallow((state) => ({

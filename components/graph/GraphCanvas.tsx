@@ -8,10 +8,18 @@
 import { useRef, useCallback, useEffect, useState, ComponentType } from 'react';
 import ForceGraph2DComponent from './ForceGraph2DWrapper';
 import type { GraphNode, GraphLink, GraphData } from '@/types/graph';
-import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu, useGraphPopover, useGraphFocus } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu, useGraphPopover, useGraphFocus, useGraphMultiSelection } from '@/state/stores/graphStore';
 import { getNodeSize, getLinkColor, getLinkWidth, NODE_TYPE_LABELS } from '@/lib/graph-utils';
 import type { GraphNodeType } from '@/types/graph';
 import { useTheme } from '@/hooks/useTheme';
+
+// 사각형 선택 영역 타입
+interface MarqueeRect {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
 
 // react-force-graph-2d의 제네릭 타입이 복잡하여 타입 캐스팅 사용
 const ForceGraph2D = ForceGraph2DComponent as ComponentType<Record<string, unknown>>;
@@ -20,13 +28,20 @@ interface GraphCanvasProps {
   graphData: GraphData;
   onNodeClick?: (node: GraphNode) => void;
   onBackgroundClick?: () => void;
+  onMultiSelect?: (nodeIds: string[]) => void;
 }
 
-export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: GraphCanvasProps) {
+export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMultiSelect }: GraphCanvasProps) {
   const graphRef = useRef<unknown>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingZoomRef = useRef<number | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  // 마퀴 선택 상태
+  const [marqueeRect, setMarqueeRect] = useState<MarqueeRect | null>(null);
+  const [isMarqueeActive, setIsMarqueeActive] = useState(false);
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const marqueeStartRef = useRef<{ x: number; y: number; graphX: number; graphY: number } | null>(null);
 
   const selectedNodeId = useGraphSelectedNode();
   const hoveredNodeId = useGraphHoveredNode();
@@ -34,6 +49,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const { isOpen: isActionMenuOpen, node: actionMenuNode } = useGraphActionMenu();
   const { activePopover } = useGraphPopover();
   const { focusNodeId, clearFocusNode } = useGraphFocus();
+  const { selectedNodeIds, setSelectedNodeIds, clearMultiSelection, setMarqueeSelecting } = useGraphMultiSelection();
   const { setSelectedNode, setHoveredNode, openEditModal, openActionMenu, closeActionMenu, zoomLevel, setZoomLevel } = useGraphStore();
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === 'dark';
@@ -103,6 +119,12 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const handleNodeClick = useCallback(
     (node: GraphNode | null, event?: MouseEvent) => {
       if (!node) return;
+
+      // 다중 선택 초기화 (노드를 직접 클릭하면 다중 선택 해제)
+      if (selectedNodeIds.length > 0) {
+        clearMultiSelection();
+      }
+
       setSelectedNode(node.id);
 
       // 모든 노드에 액션 메뉴 표시 (편집/삭제 선택)
@@ -121,7 +143,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
       }
       onNodeClick?.(node as GraphNode);
     },
-    [setSelectedNode, openEditModal, openActionMenu, closeActionMenu, isActionMenuOpen, actionMenuNode, onNodeClick]
+    [setSelectedNode, openEditModal, openActionMenu, closeActionMenu, isActionMenuOpen, actionMenuNode, onNodeClick, selectedNodeIds.length, clearMultiSelection]
   );
 
   // 노드 호버 핸들러
@@ -163,6 +185,173 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
       setZoomLevel(zoomValue);
     }
   });
+
+  // 화면 좌표를 그래프 좌표로 변환
+  const screenToGraph = useCallback((screenX: number, screenY: number) => {
+    if (!graphRef.current) return { x: screenX, y: screenY };
+    const fg = graphRef.current as any;
+    return fg.screen2GraphCoords(screenX, screenY);
+  }, []);
+
+  // 마퀴 선택 시작 핸들러
+  const handleMarqueeStart = useCallback((clientX: number, clientY: number) => {
+    if (!containerRef.current) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const x = clientX - containerRect.left;
+    const y = clientY - containerRect.top;
+    const graphCoords = screenToGraph(x, y);
+
+    marqueeStartRef.current = {
+      x,
+      y,
+      graphX: graphCoords.x,
+      graphY: graphCoords.y
+    };
+    setIsMarqueeActive(true);
+    setMarqueeSelecting(true);
+    setMarqueeRect({
+      startX: x,
+      startY: y,
+      endX: x,
+      endY: y
+    });
+
+    // 기존 선택 초기화 (새로운 마퀴 선택 시작)
+    setSelectedNode(null);
+    closeActionMenu();
+  }, [screenToGraph, setMarqueeSelecting, setSelectedNode, closeActionMenu]);
+
+  // 마퀴 선택 이동 핸들러
+  const handleMarqueeMove = useCallback((clientX: number, clientY: number) => {
+    if (!isMarqueeActive || !containerRef.current || !marqueeStartRef.current) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const x = clientX - containerRect.left;
+    const y = clientY - containerRect.top;
+
+    setMarqueeRect({
+      startX: marqueeStartRef.current.x,
+      startY: marqueeStartRef.current.y,
+      endX: x,
+      endY: y
+    });
+  }, [isMarqueeActive]);
+
+  // 마퀴 선택 종료 핸들러
+  const handleMarqueeEnd = useCallback(() => {
+    if (!isMarqueeActive || !marqueeRect) {
+      setIsMarqueeActive(false);
+      setMarqueeSelecting(false);
+      setMarqueeRect(null);
+      marqueeStartRef.current = null;
+      return;
+    }
+
+    // 선택 영역의 그래프 좌표 계산
+    const startCoords = screenToGraph(marqueeRect.startX, marqueeRect.startY);
+    const endCoords = screenToGraph(marqueeRect.endX, marqueeRect.endY);
+
+    const minX = Math.min(startCoords.x, endCoords.x);
+    const maxX = Math.max(startCoords.x, endCoords.x);
+    const minY = Math.min(startCoords.y, endCoords.y);
+    const maxY = Math.max(startCoords.y, endCoords.y);
+
+    // 선택 영역 내의 노드들 찾기
+    const selectedIds = graphData.nodes
+      .filter((node) => {
+        const nodeWithPos = node as GraphNode & { x?: number; y?: number };
+        if (nodeWithPos.x === undefined || nodeWithPos.y === undefined) return false;
+        return (
+          nodeWithPos.x >= minX &&
+          nodeWithPos.x <= maxX &&
+          nodeWithPos.y >= minY &&
+          nodeWithPos.y <= maxY
+        );
+      })
+      .map((node) => node.id);
+
+    // 선택된 노드들 설정
+    if (selectedIds.length > 0) {
+      setSelectedNodeIds(selectedIds);
+      onMultiSelect?.(selectedIds);
+    } else {
+      clearMultiSelection();
+    }
+
+    setIsMarqueeActive(false);
+    setMarqueeSelecting(false);
+    setMarqueeRect(null);
+    marqueeStartRef.current = null;
+  }, [isMarqueeActive, marqueeRect, screenToGraph, graphData.nodes, setSelectedNodeIds, clearMultiSelection, setMarqueeSelecting, onMultiSelect]);
+
+  // 마우스 이벤트 핸들러
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // 마우스 왼쪽 버튼 + Shift 키 조합만 처리
+    if (e.button !== 0) return;
+    if (!e.shiftKey) return; // Shift 키가 눌려있지 않으면 마퀴 선택 시작 안함
+
+    e.preventDefault(); // 기본 동작 방지
+    e.stopPropagation(); // 이벤트 전파 방지
+    handleMarqueeStart(e.clientX, e.clientY);
+  }, [handleMarqueeStart]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isMarqueeActive) return;
+    handleMarqueeMove(e.clientX, e.clientY);
+  }, [isMarqueeActive, handleMarqueeMove]);
+
+  const handleMouseUp = useCallback(() => {
+    if (!isMarqueeActive) return;
+    handleMarqueeEnd();
+  }, [isMarqueeActive, handleMarqueeEnd]);
+
+  // 터치 이벤트 핸들러는 사용하지 않음 (터치패드에서는 Shift+클릭 사용)
+  // 모바일에서는 별도 UI 필요
+
+  // 컨테이너 외부에서 마우스를 놓았을 때 처리
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isMarqueeActive) {
+        handleMarqueeEnd();
+      }
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('touchend', handleGlobalMouseUp);
+
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchend', handleGlobalMouseUp);
+    };
+  }, [isMarqueeActive, handleMarqueeEnd]);
+
+  // Shift 키 감지
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(false);
+        // Shift 키를 놓으면 마퀴 선택 종료
+        if (isMarqueeActive) {
+          handleMarqueeEnd();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isMarqueeActive, handleMarqueeEnd]);
 
   // 노드 타입별 아이콘 심볼 (Canvas에서 그릴 수 있는 간단한 형태)
   const drawNodeIcon = useCallback((
@@ -279,14 +468,29 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
     (node: GraphNode & { x?: number; y?: number }, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const isSelected = node.id === selectedNodeId;
       const isHovered = node.id === hoveredNodeId;
+      const isMultiSelected = selectedNodeIds.includes(node.id);
       const baseSize = getNodeSize(node);
-      const size = isSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
+      const size = isSelected || isMultiSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
 
       const x = node.x ?? 0;
       const y = node.y ?? 0;
 
-      // 선택/호버 시 글로우 효과
-      if (isSelected || isHovered) {
+      // 다중 선택 시 강조 효과 (청록색 글로우)
+      if (isMultiSelected) {
+        ctx.beginPath();
+        ctx.arc(x, y, size + 6, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.3)'; // sky-400 with opacity
+        ctx.fill();
+
+        // 다중 선택 테두리 (점선 효과를 위한 이중 원)
+        ctx.beginPath();
+        ctx.arc(x, y, size + 3, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      // 단일 선택/호버 시 글로우 효과
+      else if (isSelected || isHovered) {
         ctx.beginPath();
         ctx.arc(x, y, size + 4, 0, 2 * Math.PI);
         ctx.fillStyle = isSelected
@@ -302,8 +506,8 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
       ctx.fill();
 
       // 선택된 노드 테두리
-      if (isSelected) {
-        ctx.strokeStyle = '#fff';
+      if (isSelected || isMultiSelected) {
+        ctx.strokeStyle = isMultiSelected ? 'rgba(56, 189, 248, 1)' : '#fff';
         ctx.lineWidth = 2;
         ctx.stroke();
       }
@@ -314,7 +518,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
 
       // 라벨은 onRenderFramePost에서 별도로 그림 (z-index 문제 해결)
     },
-    [selectedNodeId, hoveredNodeId, drawNodeIcon]
+    [selectedNodeId, hoveredNodeId, selectedNodeIds, drawNodeIcon]
   );
 
   // 모든 노드가 그려진 후 라벨을 별도로 그리기 (z-index 문제 해결)
@@ -335,7 +539,8 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         const baseSize = getNodeSize(node);
         const isSelected = node.id === selectedNodeId;
         const isHovered = node.id === hoveredNodeId;
-        const size = isSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
+        const isMultiSelected = selectedNodeIds.includes(node.id);
+        const size = isSelected || isMultiSelected ? baseSize * 1.3 : isHovered ? baseSize * 1.15 : baseSize;
 
         const labelFontSize = Math.max(8, Math.min(11, 10 / globalScale));
         ctx.font = `500 ${labelFontSize}px Inter, system-ui, sans-serif`;
@@ -357,9 +562,9 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
           : x + size + 8; // 오른쪽 노드: 노드 오른쪽에 라벨
         const textAlign = isLeftSide ? 'right' : 'left';
 
-        // 배경 박스 (호버/선택 시 더 진하게)
-        const bgOpacity = isSelected ? 0.85 : isHovered ? 0.75 : 0.6;
-        ctx.fillStyle = `rgba(0, 0, 0, ${bgOpacity})`;
+        // 배경 박스 (호버/선택/다중선택 시 더 진하게)
+        const bgOpacity = isMultiSelected ? 0.85 : isSelected ? 0.85 : isHovered ? 0.75 : 0.6;
+        ctx.fillStyle = isMultiSelected ? 'rgba(56, 189, 248, 0.9)' : `rgba(0, 0, 0, ${bgOpacity})`;
         ctx.beginPath();
 
         // 텍스트 정렬에 따른 배경 박스 위치 조정
@@ -379,11 +584,11 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         // 텍스트
         ctx.textAlign = textAlign as CanvasTextAlign;
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = isSelected || isHovered ? '#fff' : 'rgba(255, 255, 255, 0.9)';
+        ctx.fillStyle = isSelected || isHovered || isMultiSelected ? '#fff' : 'rgba(255, 255, 255, 0.9)';
         ctx.fillText(displayTitle, labelX, labelY);
       });
     },
-    [graphData.nodes, selectedNodeId, hoveredNodeId, dimensions.width]
+    [graphData.nodes, selectedNodeId, hoveredNodeId, selectedNodeIds, dimensions.width]
   );
 
   // 노드 포인터 영역 크기
@@ -408,14 +613,35 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
     return getLinkWidth(link, filter.linkWidth);
   }, [filter.linkWidth]);
 
+  // 사각형 선택 영역 스타일 계산
+  const getMarqueeStyle = useCallback(() => {
+    if (!marqueeRect) return {};
+
+    const left = Math.min(marqueeRect.startX, marqueeRect.endX);
+    const top = Math.min(marqueeRect.startY, marqueeRect.endY);
+    const width = Math.abs(marqueeRect.endX - marqueeRect.startX);
+    const height = Math.abs(marqueeRect.endY - marqueeRect.startY);
+
+    return {
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+    };
+  }, [marqueeRect]);
+
   return (
     <div
       ref={containerRef}
-      className="w-full h-full bg-base-200 relative"
+      className={`w-full h-full bg-base-200 relative ${isShiftPressed ? 'cursor-crosshair' : ''}`}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
       onClick={(e) => {
-        // 빈 공간 클릭 시만 처리
-        if (e.target === containerRef.current) {
+        // 빈 공간 클릭 시만 처리 (마퀴 선택 중이 아닐 때)
+        if (e.target === containerRef.current && !isMarqueeActive) {
           handleBackgroundClick();
+          clearMultiSelection();
         }
       }}
     >
@@ -444,14 +670,32 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         cooldownTime={3000}
         // 상호작용 설정
         enableZoomInteraction={true}
-        enablePanInteraction={true}
-        enableNodeDrag={true}
+        enablePanInteraction={!isMarqueeActive && !isShiftPressed}
+        enableNodeDrag={!isMarqueeActive && !isShiftPressed}
         onZoom={handleZoom}
         // 라벨을 모든 노드 위에 그리기 위한 후처리
         onRenderFramePost={onRenderFramePost}
         // 배경
         backgroundColor="transparent"
       />
+
+      {/* Shift 키 안내 메시지 */}
+      {isShiftPressed && !isMarqueeActive && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-sky-500 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+          </svg>
+          드래그하여 영역 선택
+        </div>
+      )}
+
+      {/* 사각형 선택 영역 오버레이 */}
+      {isMarqueeActive && marqueeRect && (
+        <div
+          className="absolute pointer-events-none border-2 border-sky-400 bg-sky-400/20 rounded-sm"
+          style={getMarqueeStyle()}
+        />
+      )}
     </div>
   );
 }
