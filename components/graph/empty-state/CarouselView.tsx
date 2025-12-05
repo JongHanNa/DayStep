@@ -166,11 +166,12 @@ export function CarouselView({
           <div className="flex gap-2 px-1 py-1 w-max">
             {sets.map((set, index) => {
               const isActive = index === currentCardIndex;
-              // 세트의 첫 번째 책임(area/resource) 아이템의 제목 찾기
+              // 세트의 첫 번째 책임(area/resource) 아이템의 제목과 아이콘 찾기
               const areaItem = set.items.find(
                 (item) => item.type === 'area' || item.type === 'resource'
               );
               const displayTitle = areaItem?.title || set.title;
+              const TabIcon = areaItem?.icon;
 
               return (
                 <motion.button
@@ -203,7 +204,7 @@ export function CarouselView({
                     mass: 0.5,
                   }}
                 >
-                  <span>{set.emoji}</span>
+                  {TabIcon && <TabIcon className="w-3.5 h-3.5" />}
                   <span>{displayTitle}</span>
                 </motion.button>
               );
