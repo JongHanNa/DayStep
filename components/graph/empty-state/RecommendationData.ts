@@ -537,7 +537,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-health-area',
         dateConfig: { startOffset: 0, endOffset: 90 },
-        progress: 35,
         childCount: 2, // 프로젝트 2개 포함
       },
       // 목표 2: 운동 습관
@@ -550,7 +549,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-health-area',
         dateConfig: { startOffset: 0, endOffset: 60 },
-        progress: 50,
         childCount: 1,
       },
       // 프로젝트 1-1: 다이어트
@@ -563,7 +561,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-health-goal-1',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 40,
         childCount: 2,
       },
       // 프로젝트 1-2: 헬스장
@@ -576,7 +573,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-health-goal-1',
         dateConfig: { startOffset: 3, endOffset: 93 },
-        progress: 0,
         childCount: 1,
       },
       // 프로젝트 2-1: 홈트
@@ -589,7 +585,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-health-goal-2',
         dateConfig: { startOffset: 0, endOffset: 14 },
-        progress: 60,
         childCount: 2,
       },
       // 할일들
@@ -672,7 +667,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-finance-area',
         dateConfig: { startOffset: 0, endOffset: 180 },
-        progress: 25,
         childCount: 2,
       },
       {
@@ -684,7 +678,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-finance-area',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 40,
         childCount: 1,
       },
       {
@@ -696,7 +689,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-finance-goal-1',
         dateConfig: { startOffset: 0, endOffset: 7 },
-        progress: 80,
         childCount: 1,
       },
       {
@@ -708,7 +700,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-finance-goal-1',
         dateConfig: { startOffset: 7, endOffset: 37 },
-        progress: 10,
         childCount: 1,
       },
       {
@@ -720,7 +711,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-finance-goal-2',
         dateConfig: { startOffset: 0, endOffset: 14 },
-        progress: 60,
         childCount: 2,
       },
       {
@@ -792,7 +782,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-learning-area',
         dateConfig: { startOffset: 0, endOffset: 180 },
-        progress: 20,
         childCount: 2,
       },
       {
@@ -804,7 +793,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-learning-area',
         dateConfig: { startOffset: 0, endOffset: 365 },
-        progress: 15,
         childCount: 1,
       },
       {
@@ -816,7 +804,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-learning-goal-1',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 45,
         childCount: 2,
       },
       {
@@ -828,7 +815,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-learning-goal-1',
         dateConfig: { startOffset: 7, endOffset: 90 },
-        progress: 0,
         childCount: 1,
       },
       {
@@ -840,7 +826,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-learning-goal-2',
         dateConfig: { startOffset: 0, endOffset: 14 },
-        progress: 30,
         childCount: 2,
       },
       {
@@ -922,7 +907,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-family-area',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 60,
         childCount: 1,
       },
       {
@@ -934,7 +918,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-family-area',
         dateConfig: { startOffset: 0, endOffset: 365 },
-        progress: 50,
         childCount: 2,
       },
       {
@@ -946,7 +929,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-family-goal-1',
         dateConfig: { startOffset: 0, endOffset: 7 },
-        progress: 33,
         childCount: 2,
       },
       {
@@ -958,7 +940,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-family-goal-2',
         dateConfig: { startOffset: 14, endOffset: 21 },
-        progress: 20,
         childCount: 2,
       },
       {
@@ -970,7 +951,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-family-goal-2',
         dateConfig: { startOffset: 5, endOffset: 6 },
-        progress: 0,
         childCount: 1,
       },
       {
@@ -1052,7 +1032,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-career-area',
         dateConfig: { startOffset: 0, endOffset: 180 },
-        progress: 30,
         childCount: 2,
       },
       {
@@ -1064,7 +1043,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-career-area',
         dateConfig: { startOffset: 0, endOffset: 90 },
-        progress: 15,
         childCount: 1,
       },
       {
@@ -1076,7 +1054,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-career-goal-1',
         dateConfig: { startOffset: 0, endOffset: 60 },
-        progress: 45,
         childCount: 2,
       },
       {
@@ -1088,7 +1065,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-career-goal-1',
         dateConfig: { startOffset: 30, endOffset: 90 },
-        progress: 0,
         childCount: 1,
       },
       {
@@ -1100,7 +1076,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-career-goal-2',
         dateConfig: { startOffset: 0, endOffset: 45 },
-        progress: 20,
         childCount: 2,
       },
       {
@@ -1182,7 +1157,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-hobby-area',
         dateConfig: { startOffset: 0, endOffset: 90 },
-        progress: 10,
         childCount: 2,
       },
       {
@@ -1194,7 +1168,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-hobby-area',
         dateConfig: { startOffset: 0, endOffset: 365 },
-        progress: 50,
         childCount: 1,
       },
       {
@@ -1206,7 +1179,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-hobby-goal-1',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 25,
         childCount: 2,
       },
       {
@@ -1218,7 +1190,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-hobby-goal-1',
         dateConfig: { startOffset: 14, endOffset: 21 },
-        progress: 0,
         childCount: 1,
       },
       {
@@ -1230,7 +1201,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-hobby-goal-2',
         dateConfig: { startOffset: 30, endOffset: 60 },
-        progress: 30,
         childCount: 2,
       },
       {
@@ -1312,7 +1282,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-mindfulness-area',
         dateConfig: { startOffset: 0, endOffset: 21 },
-        progress: 40,
         childCount: 1,
       },
       {
@@ -1324,7 +1293,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-mindfulness-area',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 55,
         childCount: 2,
       },
       {
@@ -1336,7 +1304,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-mindfulness-goal-1',
         dateConfig: { startOffset: 0, endOffset: 21 },
-        progress: 40,
         childCount: 2,
       },
       {
@@ -1348,7 +1315,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-mindfulness-goal-2',
         dateConfig: { startOffset: 0, endOffset: 14 },
-        progress: 60,
         childCount: 2,
       },
       {
@@ -1360,7 +1326,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-mindfulness-goal-2',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 50,
         childCount: 1,
       },
       {
@@ -1442,7 +1407,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-productivity-resource',
         dateConfig: { startOffset: 0, endOffset: 30 },
-        progress: 35,
         childCount: 1,
       },
       {
@@ -1454,7 +1418,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.goal,
         parentId: 'set-productivity-resource',
         dateConfig: { startOffset: 0, endOffset: 21 },
-        progress: 50,
         childCount: 2,
       },
       {
@@ -1466,7 +1429,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-productivity-goal-1',
         dateConfig: { startOffset: 0, endOffset: 14 },
-        progress: 40,
         childCount: 3,
       },
       {
@@ -1478,7 +1440,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-productivity-goal-2',
         dateConfig: { startOffset: 0, endOffset: 7 },
-        progress: 55,
         childCount: 2,
       },
       {
@@ -1490,7 +1451,6 @@ export const RECOMMENDATION_SETS: RecommendationSet[] = [
         color: NODE_TYPE_COLORS.project,
         parentId: 'set-productivity-goal-2',
         dateConfig: { startOffset: 0, endOffset: 7 },
-        progress: 30,
         childCount: 1,
       },
       {

@@ -320,7 +320,6 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
   const dates = getItemDates(item);
   const isTodo = item.type === 'todo';
   const isGoalOrProject = item.type === 'goal' || item.type === 'project';
-  const hasProgress = item.progress !== undefined && item.progress > 0;
 
   // 시간 텍스트
   const timeText = isTodo && dates.formattedTime
@@ -329,8 +328,7 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
         : '오늘'} ${dates.formattedTime}`
     : null;
 
-  // 진행률 또는 기간 텍스트
-  const progressText = hasProgress ? `${item.progress}%` : null;
+  // 기간 텍스트
   const periodText = isGoalOrProject && item.dateConfig?.endOffset
     ? `~${getRelativeDateText(item.dateConfig.endOffset)}`
     : null;
@@ -361,41 +359,6 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
             border: `2px solid ${item.color}`,
           }}
         />
-      )}
-
-      {/* 진행률 링 (Goal/Project만) */}
-      {isGoalOrProject && hasProgress && (
-        <svg
-          className="absolute -inset-2"
-          style={{ width: size + 16, height: size + 16 }}
-        >
-          <circle
-            cx={(size + 16) / 2}
-            cy={(size + 16) / 2}
-            r={(size + 8) / 2}
-            fill="none"
-            stroke={`${item.color}30`}
-            strokeWidth={3}
-          />
-          <motion.circle
-            cx={(size + 16) / 2}
-            cy={(size + 16) / 2}
-            r={(size + 8) / 2}
-            fill="none"
-            stroke={item.color}
-            strokeWidth={3}
-            strokeLinecap="round"
-            strokeDasharray={Math.PI * (size + 8)}
-            initial={{ strokeDashoffset: Math.PI * (size + 8) }}
-            animate={{
-              strokeDashoffset: Math.PI * (size + 8) * (1 - (item.progress || 0) / 100),
-            }}
-            style={{
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'center',
-            }}
-          />
-        </svg>
       )}
 
       {/* 노드 본체 */}
@@ -447,8 +410,8 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
           </span>
         </div>
 
-        {/* 시간 or 진행률/기간 표시 */}
-        {(timeText || progressText || periodText) && (
+        {/* 시간 or 기간 표시 */}
+        {(timeText || periodText) && (
           <div className="flex items-center gap-1 text-[8px] text-base-content/50">
             {timeText && (
               <span className="flex items-center gap-0.5 bg-base-200 px-1 py-0.5 rounded">
@@ -456,15 +419,7 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
                 {timeText}
               </span>
             )}
-            {progressText && (
-              <span
-                className="font-bold px-1 py-0.5 rounded"
-                style={{ backgroundColor: `${item.color}30`, color: item.color }}
-              >
-                {progressText}
-              </span>
-            )}
-            {periodText && !progressText && (
+            {periodText && (
               <span className="bg-base-200 px-1 py-0.5 rounded">{periodText}</span>
             )}
           </div>

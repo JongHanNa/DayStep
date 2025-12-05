@@ -243,7 +243,6 @@ function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps
   const Icon = item.icon;
   const typeLabel = NODE_TYPE_LABELS[item.type];
   const dates = getItemDates(item);
-  const hasProgress = item.progress !== undefined && item.progress > 0;
   const hasChildCount = item.childCount !== undefined && item.childCount > 0;
   const isTodo = item.type === 'todo';
   const isGoalOrProject = item.type === 'goal' || item.type === 'project';
@@ -346,22 +345,6 @@ function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps
             </span>
           )}
         </div>
-
-        {/* 진행률 바 (Goal/Project만) */}
-        {isGoalOrProject && hasProgress && (
-          <div className="mt-1.5 flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-base-300 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${item.progress}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="h-full rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-            </div>
-            <span className="text-[10px] text-base-content/50 w-8 text-right">{item.progress}%</span>
-          </div>
-        )}
       </div>
     </motion.button>
   );
