@@ -85,26 +85,10 @@ export default function SidebarMenu() {
 
         {/* 트리 구조: 책임/자원 → 목표 → 프로젝트 */}
         <div className="px-2 mt-1">
-          {/* 책임과 자원 (같은 레벨, 목표의 부모) */}
-          <div className="relative">
-            {/* 왼쪽 수직선 */}
-            <div className="absolute left-[22px] top-[24px] bottom-[calc(100%-72px)] w-[2px] bg-base-content/20 rounded-full" />
-
-            {/* 책임 */}
-            <div className="relative">
-              <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-base-content/30 mr-2 ml-1 shrink-0" />
-                <div className="flex-1">{areas && renderMenuItem(areas)}</div>
-              </div>
-            </div>
-
-            {/* 자원 */}
-            <div className="relative">
-              <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-base-content/30 mr-2 ml-1 shrink-0" />
-                <div className="flex-1">{resources && renderMenuItem(resources)}</div>
-              </div>
-            </div>
+          {/* 책임과 자원 (같은 가로 라인) */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1">{areas && renderMenuItem(areas)}</div>
+            <div className="flex-1">{resources && renderMenuItem(resources)}</div>
           </div>
 
           {/* 연결선: 책임/자원 → 목표 */}
