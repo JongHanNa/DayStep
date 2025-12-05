@@ -1,9 +1,9 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, Settings, Plus, Filter } from 'lucide-react';
+import { Bell, Settings, Plus, Filter, ChevronRight, ArrowRight, RotateCcw } from 'lucide-react';
 import { useSidebarStore } from '@/state/stores/sidebarStore';
-import { NAVIGATION_GROUPS, NavigationGroupType } from '@/config/navigation';
+import { NAVIGATION_GROUPS, NavigationGroupType, NavigationItem } from '@/config/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import {
   Sheet,
@@ -35,6 +35,176 @@ export default function SidebarMenu() {
 
   // 그룹 순서 정의 (설정 제외)
   const groupOrder: NavigationGroupType[] = ['start', 'routine', 'productivity'];
+
+  // 메뉴 아이템 버튼 렌더링 (공통)
+  const renderMenuItem = (item: NavigationItem, indent: number = 0) => {
+    const isActive = item.href === '/'
+      ? pathname === '/'
+      : pathname.startsWith(item.href);
+    const Icon = item.icon;
+
+    return (
+      <button
+        key={item.id}
+        onClick={() => handleNavigate(item.href)}
+        className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
+          isActive
+            ? 'bg-primary text-primary-content'
+            : 'text-base-content hover:bg-base-300'
+        }`}
+        style={{ marginLeft: indent }}
+      >
+        <Icon className="w-5 h-5 shrink-0" />
+        <span className="font-medium">{item.label}</span>
+      </button>
+    );
+  };
+
+  // 시작 그룹 트리 구조 렌더링
+  const renderStartGroup = () => {
+    const group = NAVIGATION_GROUPS.start;
+    const graphView = group.items.find(i => i.id === 'graph-view');
+    const areas = group.items.find(i => i.id === 'areas');
+    const resources = group.items.find(i => i.id === 'resources');
+    const goals = group.items.find(i => i.id === 'goals');
+    const projects = group.items.find(i => i.id === 'projects');
+
+    return (
+      <div className="mb-2">
+        {/* 그룹 헤더 */}
+        <div className="px-5 py-2">
+          <span className="text-xs font-medium text-base-content/50 uppercase tracking-wider">
+            {group.label}
+          </span>
+        </div>
+
+        {/* 그래프 뷰 (최상위) */}
+        <div className="px-2">
+          {graphView && renderMenuItem(graphView)}
+        </div>
+
+        {/* 트리 구조: 책임/자원 → 목표 → 프로젝트 */}
+        <div className="px-2 mt-1">
+          {/* 책임과 자원 (같은 레벨, 목표의 부모) */}
+          <div className="relative">
+            {/* 왼쪽 수직선 */}
+            <div className="absolute left-[22px] top-[24px] bottom-[calc(100%-72px)] w-[2px] bg-base-content/20 rounded-full" />
+
+            {/* 책임 */}
+            <div className="relative">
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-base-content/30 mr-2 ml-1 shrink-0" />
+                <div className="flex-1">{areas && renderMenuItem(areas)}</div>
+              </div>
+            </div>
+
+            {/* 자원 */}
+            <div className="relative">
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-base-content/30 mr-2 ml-1 shrink-0" />
+                <div className="flex-1">{resources && renderMenuItem(resources)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 연결선: 책임/자원 → 목표 */}
+          <div className="flex items-center pl-4 py-1">
+            <div className="flex items-center text-base-content/40">
+              <div className="w-4 h-[2px] bg-base-content/20" />
+              <ChevronRight className="w-4 h-4 -ml-1" />
+            </div>
+          </div>
+
+          {/* 목표 (중간 레벨) */}
+          <div className="pl-4">
+            {goals && renderMenuItem(goals)}
+          </div>
+
+          {/* 연결선: 목표 → 프로젝트 */}
+          <div className="flex items-center pl-8 py-1">
+            <div className="flex items-center text-base-content/40">
+              <div className="w-4 h-[2px] bg-base-content/20" />
+              <ChevronRight className="w-4 h-4 -ml-1" />
+            </div>
+          </div>
+
+          {/* 프로젝트 (최하위 레벨) */}
+          <div className="pl-8">
+            {projects && renderMenuItem(projects)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 워크플로우 그룹 사이클 구조 렌더링
+  const renderWorkflowGroup = () => {
+    const group = NAVIGATION_GROUPS.routine;
+    const items = group.items;
+
+    return (
+      <div className="mb-2">
+        {/* 그룹 헤더 */}
+        <div className="px-5 py-2">
+          <span className="text-xs font-medium text-base-content/50 uppercase tracking-wider">
+            {group.label}
+          </span>
+        </div>
+
+        {/* 사이클 시각화 */}
+        <div className="px-2">
+          {/* 사이클 컨테이너 */}
+          <div className="relative bg-base-300/50 rounded-xl p-3">
+            {/* 상단: 수집 → 명료화 */}
+            <div className="flex items-center gap-1">
+              <div className="flex-1">{items[0] && renderMenuItem(items[0])}</div>
+              <ArrowRight className="w-4 h-4 text-base-content/40 shrink-0" />
+              <div className="flex-1">{items[1] && renderMenuItem(items[1])}</div>
+            </div>
+
+            {/* 중앙 연결: 순환 화살표 */}
+            <div className="flex justify-between items-center py-2 px-4">
+              <div className="flex items-center text-base-content/40">
+                <RotateCcw className="w-3 h-3" />
+                <span className="text-[10px] ml-1">사이클</span>
+              </div>
+              <div className="h-[2px] flex-1 mx-3 bg-gradient-to-r from-base-content/20 via-base-content/10 to-base-content/20" />
+              <ArrowRight className="w-4 h-4 text-base-content/40 rotate-90" />
+            </div>
+
+            {/* 하단: 점검 ← 계획 */}
+            <div className="flex items-center gap-1">
+              <div className="flex-1">{items[3] && renderMenuItem(items[3])}</div>
+              <ArrowRight className="w-4 h-4 text-base-content/40 shrink-0 rotate-180" />
+              <div className="flex-1">{items[2] && renderMenuItem(items[2])}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 일반 그룹 렌더링 (생산성 등)
+  const renderDefaultGroup = (groupType: NavigationGroupType) => {
+    const group = NAVIGATION_GROUPS[groupType];
+    if (!group.items.length) return null;
+
+    return (
+      <div key={groupType} className="mb-2">
+        {/* 그룹 헤더 */}
+        <div className="px-5 py-2">
+          <span className="text-xs font-medium text-base-content/50 uppercase tracking-wider">
+            {group.label}
+          </span>
+        </div>
+
+        {/* 메뉴 아이템들 */}
+        <div className="px-2">
+          {group.items.map((item) => renderMenuItem(item))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
@@ -101,45 +271,14 @@ export default function SidebarMenu() {
         {/* 메뉴 영역 */}
         <div className="flex-1 overflow-y-auto py-2">
           {groupOrder.map((groupType) => {
-            const group = NAVIGATION_GROUPS[groupType];
-            if (!group.items.length) return null;
-
-            return (
-              <div key={groupType} className="mb-2">
-                {/* 그룹 헤더 */}
-                <div className="px-5 py-2">
-                  <span className="text-xs font-medium text-base-content/50 uppercase tracking-wider">
-                    {group.label}
-                  </span>
-                </div>
-
-                {/* 메뉴 아이템들 */}
-                <div className="px-2">
-                  {group.items.map((item) => {
-                    // 루트 경로('/')는 정확히 일치할 때만 활성화, 나머지는 startsWith 사용
-                    const isActive = item.href === '/'
-                      ? pathname === '/'
-                      : pathname.startsWith(item.href);
-                    const Icon = item.icon;
-
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleNavigate(item.href)}
-                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
-                          isActive
-                            ? 'bg-primary text-primary-content'
-                            : 'text-base-content hover:bg-base-200'
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span className="font-medium">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
+            // 그룹별 커스텀 렌더링
+            if (groupType === 'start') {
+              return <div key={groupType}>{renderStartGroup()}</div>;
+            }
+            if (groupType === 'routine') {
+              return <div key={groupType}>{renderWorkflowGroup()}</div>;
+            }
+            return <div key={groupType}>{renderDefaultGroup(groupType)}</div>;
           })}
         </div>
 

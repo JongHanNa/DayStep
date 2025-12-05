@@ -16,6 +16,7 @@ import { GraphFAB } from './GraphFAB';
 import { GraphLegend } from './GraphLegend';
 import { GraphCreateModal } from './GraphCreateModal';
 import { GraphNodeActionMenu } from './GraphNodeActionMenu';
+import { GraphEmptyState } from './GraphEmptyState';
 import { useGraphStore, useGraphEditModal, useGraphPopover, useGraphActionMenu } from '@/state/stores/graphStore';
 
 // 팝오버 컴포넌트들
@@ -499,24 +500,7 @@ export default function GraphView() {
 
   // 빈 데이터 상태
   if (graphData.nodes.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200 relative">
-        <div className="text-center space-y-4">
-          <div className="w-20 h-20 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center">
-            <Network className="w-10 h-10 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">아직 데이터가 없습니다</h2>
-            <p className="text-base-content/60 mt-1">
-              오른쪽 하단의 + 버튼을 눌러<br />
-              첫 번째 항목을 추가해보세요!
-            </p>
-          </div>
-        </div>
-        <GraphFAB />
-        <GraphCreateModal />
-      </div>
-    );
+    return <GraphEmptyState />;
   }
 
   return (
