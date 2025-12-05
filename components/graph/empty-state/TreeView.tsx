@@ -10,7 +10,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronRight, Clock, Calendar } from 'lucide-react';
+import { Check, ChevronRight, Clock, Calendar, Repeat } from 'lucide-react';
 import {
   type TreeNode,
   getItemDates,
@@ -56,6 +56,56 @@ interface TreeNodeItemProps {
 
 // 들여쓰기 최대 깊이 (참고 스크린샷 기준 2레벨 정도)
 const MAX_INDENT = 24;
+
+// 요일 약어 매핑
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+
+/**
+ * 반복 패턴 텍스트 생성
+ */
+function getRecurrenceText(node: TreeNode): string | null {
+  const config = node.recurrenceConfig;
+  if (!config || config.pattern === 'none') {
+    return null;
+  }
+
+  switch (config.pattern) {
+    case 'daily':
+      if (config.interval && config.interval > 1) {
+        return `${config.interval}일마다`;
+      }
+      return '매일';
+
+    case 'weekly':
+      if (config.daysOfWeek && config.daysOfWeek.length > 0) {
+        if (config.daysOfWeek.length === 7) {
+          return '매일';
+        }
+        if (config.daysOfWeek.length === 5 &&
+            config.daysOfWeek.every(d => d >= 1 && d <= 5)) {
+          return '평일';
+        }
+        const days = config.daysOfWeek.map(d => DAY_NAMES[d]).join('/');
+        return `주 ${config.daysOfWeek.length}회 (${days})`;
+      }
+      return '매주';
+
+    case 'monthly':
+      if (config.dayOfMonth) {
+        return `매월 ${config.dayOfMonth}일`;
+      }
+      return '매월';
+
+    case 'custom':
+      if (config.interval) {
+        return `${config.interval}일마다`;
+      }
+      return '반복';
+
+    default:
+      return null;
+  }
+}
 
 export function TreeView({
   nodes,
@@ -130,6 +180,9 @@ function TreeNodeItem({
     isGoalOrProject && node.dateConfig?.endOffset
       ? `~${getRelativeDateText(node.dateConfig.endOffset)}`
       : null;
+
+  // 반복 패턴 텍스트 (Todo 전용)
+  const recurrenceText = isTodo ? getRecurrenceText(node) : null;
 
   // 노드 클릭 핸들러 (선택 토글)
   const handleNodeClick = () => {
@@ -223,9 +276,17 @@ function TreeNodeItem({
             )}
           </div>
 
-          {/* 날짜/시간 (compact/default만) */}
-          {variant !== 'chip' && (timeText || periodText) && (
+          {/* 날짜/시간/반복 (compact/default만) */}
+          {variant !== 'chip' && (timeText || periodText || recurrenceText) && (
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              {/* 반복 패턴 표시 */}
+              {recurrenceText && (
+                <span className="text-[10px] text-primary flex items-center gap-1 flex-shrink-0 bg-primary/10 px-1.5 py-0.5 rounded font-medium">
+                  <Repeat className="w-3 h-3" />
+                  {recurrenceText}
+                </span>
+              )}
+
               {/* Todo 시간 표시 */}
               {timeText && (
                 <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
