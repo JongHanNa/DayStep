@@ -9,11 +9,13 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
   type RecommendationItem,
+  getItemDates,
+  getRelativeDateText,
 } from './RecommendationData';
 import {
   APPLE_SPRING,
@@ -51,7 +53,7 @@ export function GraphPreviewView({
   const currentSet = sets[currentSetIndex];
 
   const goToSet = (index: number) => {
-    if (index < 0 || index >= sets.length) return;
+    if (index < 0 || index >= sets.length) { return; }
     setDirection(index > currentSetIndex ? 1 : -1);
     setCurrentSetIndex(index);
   };
@@ -84,9 +86,9 @@ export function GraphPreviewView({
     const allSelected = isSetFullySelected(set);
     set.items.forEach((item) => {
       if (allSelected) {
-        if (isSelected(item.id)) onToggleSelection(item.id);
+        if (isSelected(item.id)) { onToggleSelection(item.id); }
       } else {
-        if (!isSelected(item.id)) onToggleSelection(item.id);
+        if (!isSelected(item.id)) { onToggleSelection(item.id); }
       }
     });
   };
@@ -211,7 +213,7 @@ export function GraphPreviewView({
               {/* 연결선 SVG */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 {nodePositions.map((node, index) => {
-                  if (!node.parentX || !node.parentY) return null;
+                  if (!node.parentX || !node.parentY) { return null; }
 
                   return (
                     <motion.line
@@ -315,6 +317,23 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
   const Icon = item.icon;
   const size = item.type === 'area' || item.type === 'resource' ? 44 : 40;
   const typeLabel = NODE_TYPE_LABELS[item.type];
+  const dates = getItemDates(item);
+  const isTodo = item.type === 'todo';
+  const isGoalOrProject = item.type === 'goal' || item.type === 'project';
+  const hasProgress = item.progress !== undefined && item.progress > 0;
+
+  // 시간 텍스트
+  const timeText = isTodo && dates.formattedTime
+    ? `${item.dateConfig?.startOffset && item.dateConfig.startOffset > 0
+        ? getRelativeDateText(item.dateConfig.startOffset)
+        : '오늘'} ${dates.formattedTime}`
+    : null;
+
+  // 진행률 또는 기간 텍스트
+  const progressText = hasProgress ? `${item.progress}%` : null;
+  const periodText = isGoalOrProject && item.dateConfig?.endOffset
+    ? `~${getRelativeDateText(item.dateConfig.endOffset)}`
+    : null;
 
   return (
     <motion.button
@@ -342,6 +361,41 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
             border: `2px solid ${item.color}`,
           }}
         />
+      )}
+
+      {/* 진행률 링 (Goal/Project만) */}
+      {isGoalOrProject && hasProgress && (
+        <svg
+          className="absolute -inset-2"
+          style={{ width: size + 16, height: size + 16 }}
+        >
+          <circle
+            cx={(size + 16) / 2}
+            cy={(size + 16) / 2}
+            r={(size + 8) / 2}
+            fill="none"
+            stroke={`${item.color}30`}
+            strokeWidth={3}
+          />
+          <motion.circle
+            cx={(size + 16) / 2}
+            cy={(size + 16) / 2}
+            r={(size + 8) / 2}
+            fill="none"
+            stroke={item.color}
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeDasharray={Math.PI * (size + 8)}
+            initial={{ strokeDashoffset: Math.PI * (size + 8) }}
+            animate={{
+              strokeDashoffset: Math.PI * (size + 8) * (1 - (item.progress || 0) / 100),
+            }}
+            style={{
+              transform: 'rotate(-90deg)',
+              transformOrigin: 'center',
+            }}
+          />
+        </svg>
       )}
 
       {/* 노드 본체 */}
@@ -376,20 +430,45 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 + index * 0.1 }}
-        className="absolute left-1/2 -translate-x-1/2 -bottom-7 whitespace-nowrap"
+        className="absolute left-1/2 -translate-x-1/2 -bottom-7 whitespace-nowrap flex flex-col items-center gap-0.5"
       >
-        <span className="text-[10px] font-medium text-base-content/70 bg-base-100/80 px-1.5 py-0.5 rounded">
-          {item.title}
-        </span>
-        <span
-          className="ml-1 text-[8px] px-1 py-0.5 rounded"
-          style={{
-            backgroundColor: `${item.color}20`,
-            color: item.color,
-          }}
-        >
-          {typeLabel}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] font-medium text-base-content/70 bg-base-100/80 px-1.5 py-0.5 rounded">
+            {item.title}
+          </span>
+          <span
+            className="text-[8px] px-1 py-0.5 rounded"
+            style={{
+              backgroundColor: `${item.color}20`,
+              color: item.color,
+            }}
+          >
+            {typeLabel}
+          </span>
+        </div>
+
+        {/* 시간 or 진행률/기간 표시 */}
+        {(timeText || progressText || periodText) && (
+          <div className="flex items-center gap-1 text-[8px] text-base-content/50">
+            {timeText && (
+              <span className="flex items-center gap-0.5 bg-base-200 px-1 py-0.5 rounded">
+                <Clock className="w-2.5 h-2.5" />
+                {timeText}
+              </span>
+            )}
+            {progressText && (
+              <span
+                className="font-bold px-1 py-0.5 rounded"
+                style={{ backgroundColor: `${item.color}30`, color: item.color }}
+              >
+                {progressText}
+              </span>
+            )}
+            {periodText && !progressText && (
+              <span className="bg-base-200 px-1 py-0.5 rounded">{periodText}</span>
+            )}
+          </div>
+        )}
       </motion.div>
     </motion.button>
   );

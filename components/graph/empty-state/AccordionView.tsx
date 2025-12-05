@@ -9,11 +9,13 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Clock, Calendar, ChevronRight } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
   type RecommendationItem,
+  getItemDates,
+  getRelativeDateText,
 } from './RecommendationData';
 import {
   APPLE_SPRING,
@@ -67,9 +69,9 @@ export function AccordionView({
     const allSelected = isSetFullySelected(set);
     set.items.forEach((item) => {
       if (allSelected) {
-        if (isSelected(item.id)) onToggleSelection(item.id);
+        if (isSelected(item.id)) { onToggleSelection(item.id); }
       } else {
-        if (!isSelected(item.id)) onToggleSelection(item.id);
+        if (!isSelected(item.id)) { onToggleSelection(item.id); }
       }
     });
   };
@@ -240,6 +242,11 @@ interface AccordionItemProps {
 function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps) {
   const Icon = item.icon;
   const typeLabel = NODE_TYPE_LABELS[item.type];
+  const dates = getItemDates(item);
+  const hasProgress = item.progress !== undefined && item.progress > 0;
+  const hasChildCount = item.childCount !== undefined && item.childCount > 0;
+  const isTodo = item.type === 'todo';
+  const isGoalOrProject = item.type === 'goal' || item.type === 'project';
 
   return (
     <motion.button
@@ -307,8 +314,54 @@ function AccordionItem({ item, isSelected, onToggle, index }: AccordionItemProps
           >
             {typeLabel}
           </span>
+          {/* 하위 항목 수 */}
+          {hasChildCount && (
+            <span className="text-[10px] text-base-content/40 flex items-center gap-0.5">
+              <ChevronRight className="w-3 h-3" />
+              {item.childCount}개
+            </span>
+          )}
         </div>
-        <div className="text-xs text-base-content/50 truncate">{item.description}</div>
+
+        {/* 설명 + 날짜/시간 */}
+        <div className="flex items-center gap-2 mt-0.5">
+          <div className="text-xs text-base-content/50 truncate flex-1">{item.description}</div>
+
+          {/* Todo 시간 표시 */}
+          {isTodo && dates.formattedTime && (
+            <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
+              <Clock className="w-3 h-3" />
+              {item.dateConfig?.startOffset !== undefined && item.dateConfig.startOffset > 0
+                ? getRelativeDateText(item.dateConfig.startOffset)
+                : '오늘'}{' '}
+              {dates.formattedTime}
+            </span>
+          )}
+
+          {/* Goal/Project 기간 표시 */}
+          {isGoalOrProject && item.dateConfig?.endOffset !== undefined && (
+            <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
+              <Calendar className="w-3 h-3" />
+              ~{getRelativeDateText(item.dateConfig.endOffset)}
+            </span>
+          )}
+        </div>
+
+        {/* 진행률 바 (Goal/Project만) */}
+        {isGoalOrProject && hasProgress && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-base-300 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${item.progress}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="h-full rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+            </div>
+            <span className="text-[10px] text-base-content/50 w-8 text-right">{item.progress}%</span>
+          </div>
+        )}
       </div>
     </motion.button>
   );

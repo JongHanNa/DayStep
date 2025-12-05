@@ -8,11 +8,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Check, CheckCheck } from 'lucide-react';
+import { Check, CheckCheck, Clock } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
   type RecommendationItem,
+  getItemDates,
+  getRelativeDateText,
 } from './RecommendationData';
 import {
   APPLE_SPRING,
@@ -51,9 +53,9 @@ export function ChipListView({
     const allSelected = isSetFullySelected(set);
     set.items.forEach((item) => {
       if (allSelected) {
-        if (isSelected(item.id)) onToggleSelection(item.id);
+        if (isSelected(item.id)) { onToggleSelection(item.id); }
       } else {
-        if (!isSelected(item.id)) onToggleSelection(item.id);
+        if (!isSelected(item.id)) { onToggleSelection(item.id); }
       }
     });
   };
@@ -205,6 +207,19 @@ interface ChipProps {
 function Chip({ item, isSelected, onToggle }: ChipProps) {
   const Icon = item.icon;
   const typeLabel = NODE_TYPE_LABELS[item.type];
+  const dates = getItemDates(item);
+  const isTodo = item.type === 'todo';
+  const hasProgress = item.progress !== undefined && item.progress > 0;
+
+  // 시간 텍스트 생성
+  const timeText = isTodo && dates.formattedTime
+    ? `${item.dateConfig?.startOffset && item.dateConfig.startOffset > 0
+        ? getRelativeDateText(item.dateConfig.startOffset)
+        : ''} ${dates.formattedTime}`
+    : null;
+
+  // 진행률 텍스트
+  const progressText = hasProgress ? `${item.progress}%` : null;
 
   return (
     <motion.button
@@ -236,6 +251,24 @@ function Chip({ item, isSelected, onToggle }: ChipProps) {
 
       {/* 텍스트 */}
       <span>{item.title}</span>
+
+      {/* 시간 (Todo만) */}
+      {timeText && (
+        <span className="text-[9px] text-base-content/60 flex items-center gap-0.5">
+          <Clock className="w-3 h-3" />
+          {timeText.trim()}
+        </span>
+      )}
+
+      {/* 진행률 (Goal/Project만) */}
+      {progressText && (
+        <span
+          className="text-[9px] px-1 py-0.5 rounded-full font-bold"
+          style={{ backgroundColor: `${item.color}30`, color: item.color }}
+        >
+          {progressText}
+        </span>
+      )}
 
       {/* 타입 뱃지 */}
       <span
