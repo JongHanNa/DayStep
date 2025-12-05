@@ -8,7 +8,7 @@
 import { useRef, useCallback, useEffect, useState, ComponentType } from 'react';
 import ForceGraph2DComponent from './ForceGraph2DWrapper';
 import type { GraphNode, GraphLink, GraphData } from '@/types/graph';
-import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu, useGraphPopover } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphSelectedNode, useGraphHoveredNode, useGraphFilter, useGraphActionMenu, useGraphPopover, useGraphFocus } from '@/state/stores/graphStore';
 import { getNodeSize, getLinkColor, getLinkWidth, NODE_TYPE_LABELS } from '@/lib/graph-utils';
 import type { GraphNodeType } from '@/types/graph';
 import { useTheme } from '@/hooks/useTheme';
@@ -33,6 +33,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
   const filter = useGraphFilter();
   const { isOpen: isActionMenuOpen, node: actionMenuNode } = useGraphActionMenu();
   const { activePopover } = useGraphPopover();
+  const { focusNodeId, clearFocusNode } = useGraphFocus();
   const { setSelectedNode, setHoveredNode, openEditModal, openActionMenu, closeActionMenu, zoomLevel, setZoomLevel } = useGraphStore();
   const { resolvedTheme } = useTheme();
   const isDarkMode = resolvedTheme === 'dark';
@@ -79,6 +80,24 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
       .strength(0.05);  // 매우 약한 중력 (중심 클러스터 패턴 유지)
 
   }, [dimensions, graphData]);
+
+  // 새 노드 생성 시 포커스 (줌 + 중앙 이동)
+  useEffect(() => {
+    if (!focusNodeId || !graphRef.current) return;
+
+    const fg = graphRef.current as any;
+    const node = graphData.nodes.find((n) => n.id === focusNodeId) as GraphNode & { x?: number; y?: number };
+
+    if (node && node.x !== undefined && node.y !== undefined) {
+      // 해당 노드로 부드럽게 이동 + 줌
+      fg.centerAt(node.x, node.y, 500);
+      fg.zoom(1.5, 500);
+      // 노드 선택 상태로 설정
+      setSelectedNode(focusNodeId);
+      // 포커스 상태 초기화
+      clearFocusNode();
+    }
+  }, [focusNodeId, graphData.nodes, setSelectedNode, clearFocusNode]);
 
   // 노드 클릭 핸들러
   const handleNodeClick = useCallback(
@@ -304,6 +323,9 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
       // 줌 레벨이 너무 낮으면 라벨 표시 안함
       if (globalScale <= 0.4) return;
 
+      // 화면 중앙 x 좌표 계산
+      const centerX = dimensions.width / 2;
+
       graphData.nodes.forEach((node) => {
         const nodeWithPos = node as GraphNode & { x?: number; y?: number };
         if (nodeWithPos.x === undefined || nodeWithPos.y === undefined) return;
@@ -326,14 +348,27 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
 
         const textWidth = ctx.measureText(displayTitle).width;
         const padding = 3;
-        const labelY = y + size + 8;
+
+        // 노드 위치에 따라 라벨 위치 결정 (좌우 대칭)
+        const isLeftSide = x < centerX;
+        const labelY = y + size / 2 + 5; // 노드 아래쪽
+        const labelX = isLeftSide
+          ? x - size - 8  // 왼쪽 노드: 노드 왼쪽에 라벨
+          : x + size + 8; // 오른쪽 노드: 노드 오른쪽에 라벨
+        const textAlign = isLeftSide ? 'right' : 'left';
 
         // 배경 박스 (호버/선택 시 더 진하게)
         const bgOpacity = isSelected ? 0.85 : isHovered ? 0.75 : 0.6;
         ctx.fillStyle = `rgba(0, 0, 0, ${bgOpacity})`;
         ctx.beginPath();
+
+        // 텍스트 정렬에 따른 배경 박스 위치 조정
+        const boxX = isLeftSide
+          ? labelX - textWidth - padding
+          : labelX - padding;
+
         ctx.roundRect(
-          x - textWidth / 2 - padding,
+          boxX,
           labelY - labelFontSize / 2 - padding / 2,
           textWidth + padding * 2,
           labelFontSize + padding,
@@ -342,13 +377,13 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick }: Graph
         ctx.fill();
 
         // 텍스트
-        ctx.textAlign = 'center';
+        ctx.textAlign = textAlign as CanvasTextAlign;
         ctx.textBaseline = 'middle';
         ctx.fillStyle = isSelected || isHovered ? '#fff' : 'rgba(255, 255, 255, 0.9)';
-        ctx.fillText(displayTitle, x, labelY);
+        ctx.fillText(displayTitle, labelX, labelY);
       });
     },
-    [graphData.nodes, selectedNodeId, hoveredNodeId]
+    [graphData.nodes, selectedNodeId, hoveredNodeId, dimensions.width]
   );
 
   // 노드 포인터 영역 크기

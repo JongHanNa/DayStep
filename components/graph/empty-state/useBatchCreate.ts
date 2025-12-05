@@ -17,6 +17,7 @@ import type { RecommendationItem } from './RecommendationData';
 import { NODE_TYPE_COLORS } from '@/lib/graph-utils';
 import { addTodoProject } from '@/lib/supabase/todo-projects';
 import { linkProjectNote } from '@/lib/supabase/project-notes';
+import { useGraphFocus } from '@/state/stores/graphStore';
 
 interface UseBatchCreateReturn {
   /** 선택된 항목 ID 목록 */
@@ -57,6 +58,7 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
   const { createProject } = useProjectStore();
   const { createTodo } = useTodoStore();
   const { createNote } = useNoteStore();
+  const { setFocusNodeId } = useGraphFocus();
 
   const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -268,6 +270,14 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
         // 성공 시 선택 초기화
         clearSelection();
 
+        // 생성된 첫 번째 노드로 포커스 (줌 + 중앙 이동)
+        const createdIds = Array.from(idMap.values());
+        if (createdIds.length > 0) {
+          setTimeout(() => {
+            setFocusNodeId(createdIds[0]);
+          }, 100);
+        }
+
         // 완료 콜백 호출 (그래프 데이터 refetch)
         if (options?.onComplete) {
           await options.onComplete();
@@ -284,6 +294,7 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
       selectedIds,
       createItemWithRelation,
       clearSelection,
+      setFocusNodeId,
       options?.onComplete,
     ]
   );

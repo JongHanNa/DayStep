@@ -166,6 +166,7 @@ export function GraphPreviewView({
             item={node.item}
             x={node.x}
             y={node.y}
+            centerX={160}
             index={index}
             isSelected={isSelected(node.item.id)}
             onToggle={() => onToggleSelection(node.item.id)}
@@ -224,14 +225,16 @@ interface GraphNodeProps {
   item: RecommendationItem;
   x: number;
   y: number;
+  centerX: number;
   index: number;
   isSelected: boolean;
   onToggle: () => void;
 }
 
-function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) {
+function GraphNode({ item, x, y, centerX, index, isSelected, onToggle }: GraphNodeProps) {
   const Icon = item.icon;
   const size = item.type === 'area' || item.type === 'resource' ? 48 : 40;
+  const isLeftSide = x < centerX;
 
   return (
     <motion.button
@@ -288,12 +291,16 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
         )}
       </div>
 
-      {/* 라벨 */}
+      {/* 라벨 - 좌우 대칭 배치 */}
       <motion.div
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 + index * 0.1 }}
-        className="absolute left-1/2 -translate-x-1/2 -bottom-6 whitespace-nowrap"
+        className={`absolute -bottom-6 whitespace-nowrap ${
+          isLeftSide
+            ? 'right-1/2 translate-x-1/2'  // 왼쪽 노드 → 라벨 노드 아래 왼쪽
+            : 'left-1/2 -translate-x-1/2'   // 오른쪽 노드 → 라벨 노드 아래 오른쪽
+        }`}
       >
         <span className="text-[10px] font-medium text-base-content/70 bg-base-100/80 px-1.5 py-0.5 rounded">
           {item.title}

@@ -63,6 +63,9 @@ interface GraphStoreState {
   zoomLevel: number;
   isControlsOpen: boolean; // Controls panel visibility
 
+  // Focus state (for new node creation)
+  focusNodeId: string | null;
+
   // Actions - Filter
   setFilter: (filter: Partial<GraphFilter>) => void;
   resetFilter: () => void;
@@ -98,6 +101,10 @@ interface GraphStoreState {
   setZoomLevel: (level: number) => void;
   toggleControls: () => void;
   setControlsOpen: (open: boolean) => void;
+
+  // Actions - Focus
+  setFocusNodeId: (id: string | null) => void;
+  clearFocusNode: () => void;
 }
 
 export const useGraphStore = create<GraphStoreState>()(
@@ -119,6 +126,7 @@ export const useGraphStore = create<GraphStoreState>()(
       popoverPosition: null,
       zoomLevel: 1,
       isControlsOpen: true,
+      focusNodeId: null,
 
       // Filter actions
       setFilter: (newFilter) => {
@@ -266,6 +274,15 @@ export const useGraphStore = create<GraphStoreState>()(
       setControlsOpen: (open) => {
         set({ isControlsOpen: open });
       },
+
+      // Focus actions
+      setFocusNodeId: (id) => {
+        set({ focusNodeId: id });
+      },
+
+      clearFocusNode: () => {
+        set({ focusNodeId: null });
+      },
     }),
     { name: 'graphStore' }
   )
@@ -314,5 +331,14 @@ export const useGraphPopover = () =>
       position: state.popoverPosition,
       openPopover: state.openPopover,
       closePopover: state.closePopover,
+    }))
+  );
+
+export const useGraphFocus = () =>
+  useGraphStore(
+    useShallow((state) => ({
+      focusNodeId: state.focusNodeId,
+      setFocusNodeId: state.setFocusNodeId,
+      clearFocusNode: state.clearFocusNode,
     }))
   );

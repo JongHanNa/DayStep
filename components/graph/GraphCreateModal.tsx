@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { X, Briefcase, Archive, Target, FolderOpen, CheckSquare, StickyNote } from 'lucide-react';
-import { useGraphStore, useGraphCreateModal } from '@/state/stores/graphStore';
+import { useGraphStore, useGraphCreateModal, useGraphFocus } from '@/state/stores/graphStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
@@ -46,6 +46,7 @@ export function GraphCreateModal() {
   const { user } = useAuth();
   const { isOpen, type, parentId } = useGraphCreateModal();
   const { closeCreateModal } = useGraphStore();
+  const { setFocusNodeId } = useGraphFocus();
 
   // 스토어 액션들
   const { createArea } = useAreaStore();
@@ -82,67 +83,88 @@ export function GraphCreateModal() {
       setError(null);
 
       try {
+        let newNodeId: string | null = null;
+
         switch (type) {
-          case 'area':
-            await createArea(userId, {
+          case 'area': {
+            const created = await createArea(userId, {
               title: title.trim(),
               color: color,
               is_pinned: false,
               order_index: 0,
             });
+            newNodeId = created.id;
             break;
+          }
 
-          case 'resource':
-            await createResource(userId, {
+          case 'resource': {
+            const created = await createResource(userId, {
               title: title.trim(),
               color: color,
               is_pinned: false,
               order_index: 0,
             });
+            newNodeId = created.id;
             break;
+          }
 
-          case 'goal':
-            await createGoal(userId, {
+          case 'goal': {
+            const created = await createGoal(userId, {
               title: title.trim(),
               color: color,
               status: 'not_started',
               // Goal has area_id and resource_id, not area_resource_id
               area_id: parentId || undefined,
             });
+            newNodeId = created.id;
             break;
+          }
 
-          case 'project':
-            await createProject(userId, {
+          case 'project': {
+            const created = await createProject(userId, {
               title: title.trim(),
               color: color,
               status: 'not_started',
               goal_id: parentId || undefined,
               order_index: 0,
             });
+            newNodeId = created.id;
             break;
+          }
 
-          case 'todo':
-            await createTodo({
+          case 'todo': {
+            const created = await createTodo({
               title: title.trim(),
               schedule_type: 'anytime',
               priority: 'medium',
             });
+            newNodeId = created?.id || null;
             break;
+          }
 
-          case 'note':
-            await createNote(userId, {
+          case 'note': {
+            const created = await createNote(userId, {
               title: title.trim(),
               content: '',
               note_category: 'none',
               is_pinned: false,
             });
+            newNodeId = created.id;
             break;
+          }
         }
 
         // 성공 시 카운트 증가 및 닫기
         onCreateSuccess(usageType);
         setTitle('');
         closeCreateModal();
+
+        // 새 노드로 포커스 (모달 닫힌 후 실행되도록 setTimeout 사용)
+        if (newNodeId) {
+          setTimeout(() => {
+            setFocusNodeId(newNodeId);
+          }, 100);
+        }
       } catch (err) {
         console.error('❌ 노드 생성 실패:', err);
         setError(err instanceof Error ? err.message : '생성에 실패했습니다.');
