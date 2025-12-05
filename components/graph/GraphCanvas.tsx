@@ -289,25 +289,33 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // 마우스 왼쪽 버튼 + Shift 키 조합만 처리
     if (e.button !== 0) return;
-    if (!e.shiftKey) return; // Shift 키가 눌려있지 않으면 마퀴 선택 시작 안함
+    if (!e.shiftKey) return;
 
-    e.preventDefault(); // 기본 동작 방지
-    e.stopPropagation(); // 이벤트 전파 방지
+    e.preventDefault();
+    e.stopPropagation();
     handleMarqueeStart(e.clientX, e.clientY);
   }, [handleMarqueeStart]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    // Shift 키 + 드래그 중이면 마퀴 선택 시작 (세 손가락 드래그 지원)
+    // e.buttons === 1: 왼쪽 마우스 버튼이 눌린 상태
+    // e.buttons === 0: 버튼 없이 드래그 (세 손가락 터치패드 드래그)
+    if (e.shiftKey && !isMarqueeActive && !marqueeStartRef.current) {
+      // 마우스 버튼이 눌려있거나, 이동 거리가 있으면 마퀴 선택 시작
+      if (e.buttons === 1 || e.buttons === 0) {
+        handleMarqueeStart(e.clientX, e.clientY);
+        return;
+      }
+    }
+
     if (!isMarqueeActive) return;
     handleMarqueeMove(e.clientX, e.clientY);
-  }, [isMarqueeActive, handleMarqueeMove]);
+  }, [isMarqueeActive, handleMarqueeMove, handleMarqueeStart]);
 
   const handleMouseUp = useCallback(() => {
     if (!isMarqueeActive) return;
     handleMarqueeEnd();
   }, [isMarqueeActive, handleMarqueeEnd]);
-
-  // 터치 이벤트 핸들러는 사용하지 않음 (터치패드에서는 Shift+클릭 사용)
-  // 모바일에서는 별도 UI 필요
 
   // 컨테이너 외부에서 마우스를 놓았을 때 처리
   useEffect(() => {
