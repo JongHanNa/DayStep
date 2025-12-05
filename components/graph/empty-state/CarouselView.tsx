@@ -241,20 +241,6 @@ function SetCard({
 }: SetCardProps) {
   return (
     <div className="h-full p-4 bg-base-100 rounded-2xl shadow-lg border border-base-300 flex flex-col">
-      {/* 세트 헤더 */}
-      <div className="flex items-center gap-3 mb-4">
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-          style={{ backgroundColor: `${set.color}20` }}
-        >
-          {set.emoji}
-        </div>
-        <div className="flex-1">
-          <h3 className="font-bold text-lg">{set.title}</h3>
-          <p className="text-sm text-base-content/60">{set.description}</p>
-        </div>
-      </div>
-
       {/* TreeView로 계층 구조 표시 */}
       <div className="flex-1 overflow-y-auto pr-1">
         <TreeView

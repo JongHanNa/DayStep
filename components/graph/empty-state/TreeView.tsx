@@ -161,21 +161,6 @@ function TreeNodeItem({
           ${nodeSelected ? 'bg-primary/10' : 'hover:bg-base-200/50'}
         `}
       >
-        {/* 펼치기/접기 버튼 */}
-        {hasChildren && (
-          <motion.button
-            onClick={handleExpandClick}
-            className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-base-300"
-            animate={isExpanded ? 'expanded' : 'collapsed'}
-            variants={TREE_CHEVRON}
-          >
-            <ChevronRight className="w-3.5 h-3.5 text-base-content/60" />
-          </motion.button>
-        )}
-
-        {/* 자식 없는 경우 여백 */}
-        {!hasChildren && <div className="w-5 flex-shrink-0" />}
-
         {/* 체크박스 */}
         <motion.div
           whileTap={{ scale: 0.9 }}
@@ -263,6 +248,18 @@ function TreeNodeItem({
             </div>
           )}
         </div>
+
+        {/* 펼치기/접기 버튼 (오른쪽) */}
+        {hasChildren && (
+          <motion.button
+            onClick={handleExpandClick}
+            className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-base-300 ml-auto"
+            animate={isExpanded ? 'expanded' : 'collapsed'}
+            variants={TREE_CHEVRON}
+          >
+            <ChevronRight className="w-4 h-4 text-base-content/60" />
+          </motion.button>
+        )}
       </motion.div>
 
       {/* 자식 노드들 */}
