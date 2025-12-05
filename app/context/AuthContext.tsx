@@ -593,8 +593,11 @@ export function AuthProvider({
 
   // 테스트 계정 로그인 (개발 환경 전용)
   const signInWithTestAccount = async () => {
-    // 개발 환경 체크
-    if (process.env.NODE_ENV !== 'development') {
+    // 개발 환경 체크 (웹 개발 또는 Capacitor 개발 환경)
+    const isDevelopment = process.env.NODE_ENV === 'development' ||
+      process.env.NEXT_PUBLIC_CAPACITOR_ENV === 'development';
+
+    if (!isDevelopment) {
       console.warn('[Auth] 테스트 계정 로그인은 개발 환경에서만 사용 가능합니다.');
       return;
     }

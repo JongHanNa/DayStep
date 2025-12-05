@@ -68,8 +68,9 @@ export default function LoginPage() {
     redirect: string | null;
   }>({ error: null, redirect: null });
 
-  // 개발 환경 여부 확인
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  // 개발 환경 여부 확인 (웹 개발 또는 Capacitor 개발 환경)
+  const isDevelopment = process.env.NODE_ENV === 'development' ||
+    process.env.NEXT_PUBLIC_CAPACITOR_ENV === 'development';
 
   useEffect(() => {
     // LoginPage 마운트 - 클라이언트 사이드 렌더링
