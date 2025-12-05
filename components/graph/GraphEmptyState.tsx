@@ -1,246 +1,160 @@
 /**
  * GraphEmptyState - 그래프뷰 빈 상태 컴포넌트
- * 앱의 계층 구조를 시각적으로 설명하고 시작점을 안내
+ *
+ * 앱의 계층 구조를 시각적으로 설명하고 추천 항목을 통해 빠른 시작 유도
+ * 4가지 뷰 형태: 캐러셀, 아코디언, 그래프 프리뷰, 칩
  */
 
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Briefcase, Archive, Target, FolderOpen, CheckSquare, StickyNote, ChevronDown, Sparkles } from 'lucide-react';
-import { useGraphStore } from '@/state/stores/graphStore';
-import { NODE_TYPE_COLORS } from '@/lib/graph-utils';
-import type { GraphNodeType } from '@/types/graph';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import { GraphFAB } from './GraphFAB';
 import { GraphCreateModal } from './GraphCreateModal';
-
-// 계층 구조 정의
-const HIERARCHY_ITEMS = [
-  {
-    types: ['area', 'resource'] as GraphNodeType[],
-    label: '책임 / 자원',
-    description: '삶의 영역과 관리하는 것들',
-    icons: [Briefcase, Archive],
-    colors: [NODE_TYPE_COLORS.area, NODE_TYPE_COLORS.resource],
-    isStart: true,
-  },
-  {
-    types: ['goal'] as GraphNodeType[],
-    label: '목표',
-    description: '달성하고 싶은 것',
-    icons: [Target],
-    colors: [NODE_TYPE_COLORS.goal],
-  },
-  {
-    types: ['project'] as GraphNodeType[],
-    label: '프로젝트',
-    description: '목표 달성을 위한 계획',
-    icons: [FolderOpen],
-    colors: [NODE_TYPE_COLORS.project],
-  },
-  {
-    types: ['todo'] as GraphNodeType[],
-    label: '할일',
-    description: '구체적인 실행 항목',
-    icons: [CheckSquare],
-    colors: [NODE_TYPE_COLORS.todo],
-  },
-];
-
-const NOTE_ITEM = {
-  types: ['note'] as GraphNodeType[],
-  label: '노트',
-  description: '어디든 연결 가능한 메모',
-  icons: [StickyNote],
-  colors: [NODE_TYPE_COLORS.note],
-};
+import {
+  CarouselView,
+  AccordionView,
+  GraphPreviewView,
+  ChipListView,
+  ViewSwitcher,
+  SelectedItemsBar,
+  useViewSwipe,
+  useBatchCreate,
+  VIEW_TYPES,
+  type EmptyStateViewType,
+} from './empty-state';
+import {
+  APPLE_SPRING,
+  VIEW_TRANSITION_3D,
+} from '@/lib/animations/appleMotion';
 
 export function GraphEmptyState() {
-  const { openCreateModal } = useGraphStore();
-  const [showStartMenu, setShowStartMenu] = useState(false);
+  // 뷰 스와이프 훅
+  const {
+    currentView,
+    currentIndex,
+    direction,
+    goToView,
+    handleDragEnd,
+  } = useViewSwipe({
+    views: VIEW_TYPES.map((v) => v.type),
+    initialIndex: 0,
+  });
 
-  const handleStartCreate = (type: GraphNodeType) => {
-    openCreateModal(type);
-    setShowStartMenu(false);
+  // 일괄 생성 훅
+  const {
+    selectedIds,
+    toggleSelection,
+    clearSelection,
+    selectedCount,
+    createSelected,
+    isLoading,
+    error,
+    isSelected,
+  } = useBatchCreate();
+
+  // 현재 뷰에 따른 컴포넌트 렌더링
+  const renderCurrentView = () => {
+    const commonProps = {
+      selectedIds,
+      onToggleSelection: toggleSelection,
+      isSelected,
+    };
+
+    switch (currentView) {
+      case 'carousel':
+        return <CarouselView {...commonProps} />;
+      case 'accordion':
+        return <AccordionView {...commonProps} />;
+      case 'graph':
+        return <GraphPreviewView {...commonProps} />;
+      case 'chips':
+        return <ChipListView {...commonProps} />;
+      default:
+        return <CarouselView {...commonProps} />;
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-base-200 relative px-4 py-8">
-      {/* 메인 컨텐츠 */}
-      <div className="max-w-sm w-full">
+    <div className="min-h-screen flex flex-col bg-base-200 relative">
+      {/* 메인 콘텐츠 영역 */}
+      <div className="flex-1 flex flex-col items-center pt-8 px-4 pb-24 overflow-y-auto">
         {/* 헤더 */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-8"
+          transition={APPLE_SPRING.smooth}
+          className="text-center mb-6"
         >
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-primary">시작하기</span>
+          </div>
           <h1 className="text-2xl font-bold mb-2">나의 그래프를 시작하세요</h1>
-          <p className="text-base-content/60 text-sm">
-            모든 것이 연결된 나만의 시스템을 만들어보세요
+          <p className="text-base-content/60 text-sm max-w-xs mx-auto">
+            추천 항목을 선택하여 나만의 생산성 시스템을 만들어보세요
           </p>
         </motion.div>
 
-        {/* 트리 다이어그램 */}
-        <div className="space-y-3">
-          {HIERARCHY_ITEMS.map((item, index) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-            >
-              {/* 연결선 (첫 번째 제외) */}
-              {index > 0 && (
-                <div className="flex justify-center mb-3">
-                  <motion.div
-                    initial={{ scaleY: 0 }}
-                    animate={{ scaleY: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className="w-0.5 h-6 bg-base-content/20 origin-top"
-                  />
-                </div>
-              )}
-
-              {/* 노드 카드 */}
-              <div
-                className={`
-                  relative p-4 rounded-xl border-2 transition-all
-                  ${item.isStart
-                    ? 'bg-primary/10 border-primary/30 shadow-lg shadow-primary/10'
-                    : 'bg-base-100 border-base-300'
-                  }
-                `}
-              >
-                {/* 시작점 뱃지 */}
-                {item.isStart && (
-                  <div className="absolute -top-2 left-4 px-2 py-0.5 bg-primary text-primary-content text-xs font-medium rounded-full flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    여기서 시작
-                  </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                  {/* 아이콘들 */}
-                  <div className="flex -space-x-2">
-                    {item.icons.map((Icon, iconIndex) => (
-                      <div
-                        key={iconIndex}
-                        className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-base-200"
-                        style={{ backgroundColor: item.colors[iconIndex] }}
-                      >
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* 텍스트 */}
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-base">{item.label}</h3>
-                    <p className="text-sm text-base-content/60">{item.description}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* 노트 (독립적) */}
+        {/* 뷰 스위처 */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-          className="mt-6"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ ...APPLE_SPRING.smooth, delay: 0.2 }}
+          className="mb-6"
         >
-          <div className="flex items-center gap-2 mb-2 justify-center">
-            <div className="h-px flex-1 bg-base-content/10" />
-            <span className="text-xs text-base-content/40 px-2">독립적으로 연결 가능</span>
-            <div className="h-px flex-1 bg-base-content/10" />
-          </div>
-
-          <div className="p-3 rounded-xl bg-base-100 border border-base-300 border-dashed">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: NOTE_ITEM.colors[0] }}
-              >
-                <StickyNote className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-base">{NOTE_ITEM.label}</h3>
-                <p className="text-sm text-base-content/60">{NOTE_ITEM.description}</p>
-              </div>
-            </div>
-          </div>
+          <ViewSwitcher
+            currentView={currentView}
+            onViewChange={(view) => {
+              const index = VIEW_TYPES.findIndex((v) => v.type === view);
+              goToView(index);
+            }}
+          />
         </motion.div>
 
-        {/* CTA 버튼 */}
+        {/* 뷰 컨테이너 (스와이프 가능) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.6 }}
-          className="mt-8 relative"
+          className="w-full max-w-md mx-auto flex-1"
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.1}
+          onDragEnd={handleDragEnd}
         >
-          <button
-            onClick={() => setShowStartMenu(!showStartMenu)}
-            className="w-full btn btn-primary btn-lg rounded-full gap-2"
-          >
-            첫 책임 또는 자원 만들기
-            <ChevronDown className={`w-5 h-5 transition-transform ${showStartMenu ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* 드롭다운 메뉴 */}
-          {showStartMenu && (
+          <AnimatePresence mode="wait" custom={direction}>
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="absolute top-full left-0 right-0 mt-2 p-2 bg-base-100 rounded-2xl shadow-xl border border-base-300 z-10"
+              key={currentView}
+              custom={direction}
+              variants={VIEW_TRANSITION_3D}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="w-full"
+              style={{ perspective: 1000 }}
             >
-              <button
-                onClick={() => handleStartCreate('area')}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-base-200 transition-colors"
-              >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: NODE_TYPE_COLORS.area }}
-                >
-                  <Briefcase className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">책임 영역</div>
-                  <div className="text-sm text-base-content/60">삶에서 책임져야 하는 영역</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleStartCreate('resource')}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-base-200 transition-colors"
-              >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: NODE_TYPE_COLORS.resource }}
-                >
-                  <Archive className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">관심 자원</div>
-                  <div className="text-sm text-base-content/60">책임이 없는 관심사</div>
-                </div>
-              </button>
+              {renderCurrentView()}
             </motion.div>
-          )}
+          </AnimatePresence>
         </motion.div>
 
-        {/* 안내 텍스트 */}
+        {/* 하단 안내 */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.7 }}
-          className="text-center text-sm text-base-content/40 mt-4"
+          transition={{ delay: 1 }}
+          className="text-center text-sm text-base-content/40 mt-6"
         >
-          또는 오른쪽 하단의 + 버튼을 사용하세요
+          또는 오른쪽 하단의 + 버튼으로 직접 만들기
         </motion.p>
       </div>
+
+      {/* 선택 항목 하단 바 */}
+      <SelectedItemsBar
+        selectedCount={selectedCount}
+        isLoading={isLoading}
+        error={error}
+        onClear={clearSelection}
+        onCreate={createSelected}
+      />
 
       {/* FAB 버튼 */}
       <GraphFAB />
