@@ -2,14 +2,17 @@
  * SelectedItemsBar - 선택된 항목 하단 바
  *
  * 선택된 항목 수를 표시하고 일괄 생성 버튼 제공
+ * 무료 사용자 제한 초과 시 경고 표시
  */
 
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Loader2, X, Sparkles } from 'lucide-react';
+import { Check, Loader2, X, Sparkles, AlertTriangle, Crown } from 'lucide-react';
 import { BOTTOM_BAR, APPLE_SPRING } from '@/lib/animations/appleMotion';
-import { getAllRecommendations, type RecommendationItem } from './RecommendationData';
+import { getAllSetItems, type RecommendationItem } from './RecommendationData';
+import type { LimitCheckResult } from './useBatchCreate';
+import { useRouter } from 'next/navigation';
 
 interface SelectedItemsBarProps {
   selectedCount: number;
@@ -17,6 +20,8 @@ interface SelectedItemsBarProps {
   error: string | null;
   onClear: () => void;
   onCreate: (items: RecommendationItem[]) => Promise<void>;
+  limitCheck: LimitCheckResult;
+  hasActiveSubscription: boolean;
 }
 
 export function SelectedItemsBar({
@@ -25,12 +30,34 @@ export function SelectedItemsBar({
   error,
   onClear,
   onCreate,
+  limitCheck,
+  hasActiveSubscription,
 }: SelectedItemsBarProps) {
-  const allItems = getAllRecommendations();
+  const router = useRouter();
+  const allItems = getAllSetItems();
 
   const handleCreate = async () => {
+    if (!limitCheck.canCreate) return;
     await onCreate(allItems);
   };
+
+  const handleUpgrade = () => {
+    router.push('/settings/subscription');
+  };
+
+  // 제한 초과 메시지 생성
+  const getLimitExceededMessage = () => {
+    if (limitCheck.exceededEntities.length === 0) return null;
+
+    const messages = limitCheck.exceededEntities.map((e) => {
+      return `${e.displayName} ${e.limit}개 초과 (현재 ${e.current}개 + 선택 ${e.willAdd}개)`;
+    });
+
+    return messages.join(', ');
+  };
+
+  const limitMessage = getLimitExceededMessage();
+  const isBlocked = !limitCheck.canCreate && !hasActiveSubscription;
 
   return (
     <AnimatePresence>
@@ -55,6 +82,21 @@ export function SelectedItemsBar({
                 className="text-error text-sm text-center mb-2"
               >
                 {error}
+              </motion.div>
+            )}
+
+            {/* 제한 초과 경고 */}
+            {isBlocked && limitMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-start gap-2 bg-warning/10 text-warning rounded-lg px-3 py-2 mb-3"
+              >
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-medium">무료 플랜 제한</p>
+                  <p className="opacity-80">{limitMessage}</p>
+                </div>
               </motion.div>
             )}
 
@@ -88,25 +130,38 @@ export function SelectedItemsBar({
                 <X className="w-4 h-4" />
               </button>
 
-              {/* 일괄 생성 버튼 */}
-              <motion.button
-                onClick={handleCreate}
-                disabled={isLoading || selectedCount === 0}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1 btn btn-primary rounded-full gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    생성 중...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    시작하기
-                  </>
-                )}
-              </motion.button>
+              {/* 버튼 영역 */}
+              {isBlocked ? (
+                // 제한 초과 시 Pro 업그레이드 버튼
+                <motion.button
+                  onClick={handleUpgrade}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 btn btn-warning rounded-full gap-2"
+                >
+                  <Crown className="w-4 h-4" />
+                  Pro로 업그레이드
+                </motion.button>
+              ) : (
+                // 정상 상태: 일괄 생성 버튼
+                <motion.button
+                  onClick={handleCreate}
+                  disabled={isLoading || selectedCount === 0}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 btn btn-primary rounded-full gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      생성 중...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      시작하기
+                    </>
+                  )}
+                </motion.button>
+              )}
             </div>
           </div>
         </motion.div>

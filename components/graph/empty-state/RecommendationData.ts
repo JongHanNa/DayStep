@@ -26,15 +26,26 @@ import {
   PiggyBank,
   Languages,
   Dumbbell,
+  Target,
+  Smile,
+  Timer,
   // Project 아이콘
   Salad,
   TrendingUp,
   Award,
   Plane,
+  CalendarDays,
+  Code,
+  Sunrise,
+  Sparkles,
   // Todo 아이콘
   Sun,
   Receipt,
   Book,
+  UtensilsCrossed,
+  Laptop,
+  Activity,
+  Coffee,
   // Note 아이콘
   FileText,
   Lightbulb,
@@ -61,6 +72,15 @@ export interface RecommendationCategory {
   label: string;
   description: string;
   items: RecommendationItem[];
+}
+
+export interface RecommendationSet {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  color: string;
+  items: RecommendationItem[];  // Area→Goal→Project→Todo 순서로 연결된 항목들
 }
 
 // ============================================
@@ -386,3 +406,399 @@ export const VIEW_TYPES: { type: EmptyStateViewType; label: string; description:
   { type: 'graph', label: '그래프', description: '연결을 확인하세요' },
   { type: 'chips', label: '태그', description: '빠르게 선택하세요' },
 ];
+
+// ============================================
+// 추천 세트 데이터 (8개)
+// ============================================
+
+export const RECOMMENDATION_SETS: RecommendationSet[] = [
+  // 1. 건강/다이어트 세트
+  {
+    id: 'set-health',
+    title: '건강/다이어트',
+    description: '건강한 몸 만들기',
+    emoji: '🏃',
+    color: NODE_TYPE_COLORS.area,
+    items: [
+      {
+        id: 'set-health-area',
+        type: 'area',
+        title: '건강 관리',
+        description: '신체적, 정신적 건강 유지',
+        icon: Heart,
+        color: NODE_TYPE_COLORS.area,
+      },
+      {
+        id: 'set-health-goal',
+        type: 'goal',
+        title: '체중 감량',
+        description: '건강한 체중 달성',
+        icon: Scale,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-health-area',
+      },
+      {
+        id: 'set-health-project',
+        type: 'project',
+        title: '다이어트 계획',
+        description: '3개월 다이어트 프로젝트',
+        icon: Salad,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-health-goal',
+      },
+      {
+        id: 'set-health-todo',
+        type: 'todo',
+        title: '아침 운동 30분',
+        description: '기상 후 운동하기',
+        icon: Sun,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-health-project',
+      },
+    ],
+  },
+
+  // 2. 재정/저축 세트
+  {
+    id: 'set-finance',
+    title: '재정/저축',
+    description: '경제적 자유 달성',
+    emoji: '💰',
+    color: NODE_TYPE_COLORS.area,
+    items: [
+      {
+        id: 'set-finance-area',
+        type: 'area',
+        title: '재정 관리',
+        description: '수입, 지출, 투자 관리',
+        icon: Wallet,
+        color: NODE_TYPE_COLORS.area,
+      },
+      {
+        id: 'set-finance-goal',
+        type: 'goal',
+        title: '저축 1000만원',
+        description: '비상금 마련하기',
+        icon: PiggyBank,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-finance-area',
+      },
+      {
+        id: 'set-finance-project',
+        type: 'project',
+        title: '투자 포트폴리오',
+        description: '자산 배분 구성하기',
+        icon: TrendingUp,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-finance-goal',
+      },
+      {
+        id: 'set-finance-todo',
+        type: 'todo',
+        title: '가계부 작성',
+        description: '오늘 지출 기록하기',
+        icon: Receipt,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-finance-project',
+      },
+    ],
+  },
+
+  // 3. 자기계발/학습 세트
+  {
+    id: 'set-learning',
+    title: '자기계발/학습',
+    description: '성장하는 나 만들기',
+    emoji: '📚',
+    color: NODE_TYPE_COLORS.area,
+    items: [
+      {
+        id: 'set-learning-area',
+        type: 'area',
+        title: '자기계발',
+        description: '학습과 성장',
+        icon: GraduationCap,
+        color: NODE_TYPE_COLORS.area,
+      },
+      {
+        id: 'set-learning-goal',
+        type: 'goal',
+        title: '영어 공부',
+        description: '외국어 능력 향상',
+        icon: Languages,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-learning-area',
+      },
+      {
+        id: 'set-learning-project',
+        type: 'project',
+        title: '자격증 취득',
+        description: '목표 자격증 준비',
+        icon: Award,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-learning-goal',
+      },
+      {
+        id: 'set-learning-todo',
+        type: 'todo',
+        title: '책 10페이지 읽기',
+        description: '매일 독서 습관',
+        icon: Book,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-learning-project',
+      },
+    ],
+  },
+
+  // 4. 가족/관계 세트
+  {
+    id: 'set-family',
+    title: '가족/관계',
+    description: '소중한 사람들과 함께',
+    emoji: '👨‍👩‍👧',
+    color: NODE_TYPE_COLORS.area,
+    items: [
+      {
+        id: 'set-family-area',
+        type: 'area',
+        title: '가족/관계',
+        description: '소중한 사람들과의 관계',
+        icon: Users,
+        color: NODE_TYPE_COLORS.area,
+      },
+      {
+        id: 'set-family-goal',
+        type: 'goal',
+        title: '가족 시간 확보',
+        description: '함께하는 시간 늘리기',
+        icon: Target,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-family-area',
+      },
+      {
+        id: 'set-family-project',
+        type: 'project',
+        title: '주말 가족 활동',
+        description: '매주 함께하는 활동 계획',
+        icon: CalendarDays,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-family-goal',
+      },
+      {
+        id: 'set-family-todo',
+        type: 'todo',
+        title: '가족 저녁 식사',
+        description: '오늘 함께 저녁 먹기',
+        icon: UtensilsCrossed,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-family-project',
+      },
+    ],
+  },
+
+  // 5. 커리어/성장 세트
+  {
+    id: 'set-career',
+    title: '커리어/성장',
+    description: '직업적 성장 달성',
+    emoji: '💼',
+    color: NODE_TYPE_COLORS.area,
+    items: [
+      {
+        id: 'set-career-area',
+        type: 'area',
+        title: '커리어',
+        description: '직업과 경력 개발',
+        icon: Briefcase,
+        color: NODE_TYPE_COLORS.area,
+      },
+      {
+        id: 'set-career-goal',
+        type: 'goal',
+        title: '역량 강화',
+        description: '전문성 향상하기',
+        icon: TrendingUp,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-career-area',
+      },
+      {
+        id: 'set-career-project',
+        type: 'project',
+        title: '사이드 프로젝트',
+        description: '개인 프로젝트 진행',
+        icon: Code,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-career-goal',
+      },
+      {
+        id: 'set-career-todo',
+        type: 'todo',
+        title: '업무 스킬 공부',
+        description: '새로운 기술 학습',
+        icon: Laptop,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-career-project',
+      },
+    ],
+  },
+
+  // 6. 취미/여가 세트
+  {
+    id: 'set-hobby',
+    title: '취미/여가',
+    description: '즐거운 일상 만들기',
+    emoji: '🎨',
+    color: NODE_TYPE_COLORS.area,
+    items: [
+      {
+        id: 'set-hobby-area',
+        type: 'area',
+        title: '취미/여가',
+        description: '즐거움과 휴식',
+        icon: Palette,
+        color: NODE_TYPE_COLORS.area,
+      },
+      {
+        id: 'set-hobby-goal',
+        type: 'goal',
+        title: '새 취미 배우기',
+        description: '새로운 관심사 발굴',
+        icon: Sparkles,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-hobby-area',
+      },
+      {
+        id: 'set-hobby-project',
+        type: 'project',
+        title: '여행 계획',
+        description: '다음 여행 준비하기',
+        icon: Plane,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-hobby-goal',
+      },
+      {
+        id: 'set-hobby-todo',
+        type: 'todo',
+        title: '취미 활동 1시간',
+        description: '오늘 취미 시간 갖기',
+        icon: Activity,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-hobby-project',
+      },
+    ],
+  },
+
+  // 7. 마음챙김/웰빙 세트
+  {
+    id: 'set-mindfulness',
+    title: '마음챙김/웰빙',
+    description: '마음의 평화 찾기',
+    emoji: '🧘',
+    color: NODE_TYPE_COLORS.area,
+    items: [
+      {
+        id: 'set-mindfulness-area',
+        type: 'area',
+        title: '건강 관리',
+        description: '신체적, 정신적 건강',
+        icon: Heart,
+        color: NODE_TYPE_COLORS.area,
+      },
+      {
+        id: 'set-mindfulness-goal',
+        type: 'goal',
+        title: '스트레스 관리',
+        description: '마음의 안정 찾기',
+        icon: Smile,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-mindfulness-area',
+      },
+      {
+        id: 'set-mindfulness-project',
+        type: 'project',
+        title: '명상 습관',
+        description: '매일 명상 루틴 만들기',
+        icon: Sparkles,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-mindfulness-goal',
+      },
+      {
+        id: 'set-mindfulness-todo',
+        type: 'todo',
+        title: '명상 10분',
+        description: '오늘 명상하기',
+        icon: Clock,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-mindfulness-project',
+      },
+    ],
+  },
+
+  // 8. 생산성/루틴 세트
+  {
+    id: 'set-productivity',
+    title: '생산성/루틴',
+    description: '효율적인 하루 만들기',
+    emoji: '⚡',
+    color: NODE_TYPE_COLORS.resource,
+    items: [
+      {
+        id: 'set-productivity-resource',
+        type: 'resource',
+        title: '시간',
+        description: '하루 24시간의 활용',
+        icon: Clock,
+        color: NODE_TYPE_COLORS.resource,
+      },
+      {
+        id: 'set-productivity-goal',
+        type: 'goal',
+        title: '효율적인 하루',
+        description: '시간 관리 마스터',
+        icon: Timer,
+        color: NODE_TYPE_COLORS.goal,
+        parentId: 'set-productivity-resource',
+      },
+      {
+        id: 'set-productivity-project',
+        type: 'project',
+        title: '아침 루틴',
+        description: '생산적인 아침 만들기',
+        icon: Sunrise,
+        color: NODE_TYPE_COLORS.project,
+        parentId: 'set-productivity-goal',
+      },
+      {
+        id: 'set-productivity-todo',
+        type: 'todo',
+        title: '기상 후 루틴',
+        description: '아침 루틴 실천하기',
+        icon: Coffee,
+        color: NODE_TYPE_COLORS.todo,
+        parentId: 'set-productivity-project',
+      },
+    ],
+  },
+];
+
+/**
+ * 세트 ID로 세트 찾기
+ */
+export function getSetById(setId: string): RecommendationSet | undefined {
+  return RECOMMENDATION_SETS.find((set) => set.id === setId);
+}
+
+/**
+ * 세트의 모든 항목 ID 가져오기
+ */
+export function getSetItemIds(setId: string): string[] {
+  const set = getSetById(setId);
+  return set ? set.items.map((item) => item.id) : [];
+}
+
+/**
+ * 모든 세트의 모든 항목 가져오기 (플랫)
+ */
+export function getAllSetItems(): RecommendationItem[] {
+  return RECOMMENDATION_SETS.flatMap((set) => set.items);
+}

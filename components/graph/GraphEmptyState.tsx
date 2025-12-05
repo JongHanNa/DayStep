@@ -56,6 +56,8 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
     isLoading,
     error,
     isSelected,
+    limitCheck,
+    hasActiveSubscription,
   } = useBatchCreate({ onComplete });
 
   // 현재 뷰에 따른 컴포넌트 렌더링
@@ -159,6 +161,8 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
         error={error}
         onClear={clearSelection}
         onCreate={createSelected}
+        limitCheck={limitCheck}
+        hasActiveSubscription={hasActiveSubscription}
       />
 
       {/* FAB 버튼 */}

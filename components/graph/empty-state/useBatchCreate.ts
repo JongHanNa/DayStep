@@ -4,7 +4,7 @@
  * 선택된 추천 항목들을 한 번에 생성
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -14,10 +14,29 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import type { GraphNodeType } from '@/types/graph';
 import type { RecommendationItem } from './RecommendationData';
+import { getAllSetItems } from './RecommendationData';
 import { NODE_TYPE_COLORS } from '@/lib/graph-utils';
 import { addTodoProject } from '@/lib/supabase/todo-projects';
 import { linkProjectNote } from '@/lib/supabase/project-notes';
 import { useGraphFocus } from '@/state/stores/graphStore';
+import { useUsageStats, type CanCreateResult } from '@/hooks/useUsageStats';
+import { type UsageEntityType, ENTITY_DISPLAY_NAME } from '@/lib/featureFlags';
+
+/** 제한 초과 엔티티 정보 */
+export interface ExceededEntity {
+  entity: UsageEntityType;
+  displayName: string;
+  current: number;
+  limit: number;
+  willAdd: number;
+  total: number;
+}
+
+/** 제한 체크 결과 */
+export interface LimitCheckResult {
+  canCreate: boolean;
+  exceededEntities: ExceededEntity[];
+}
 
 interface UseBatchCreateReturn {
   /** 선택된 항목 ID 목록 */
@@ -38,6 +57,10 @@ interface UseBatchCreateReturn {
   error: string | null;
   /** 특정 항목이 선택되었는지 확인 */
   isSelected: (id: string) => boolean;
+  /** 제한 체크 결과 */
+  limitCheck: LimitCheckResult;
+  /** Pro 구독 여부 */
+  hasActiveSubscription: boolean;
 }
 
 interface UseBatchCreateOptions {
@@ -59,6 +82,81 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
   const { createTodo } = useTodoStore();
   const { createNote } = useNoteStore();
   const { setFocusNodeId } = useGraphFocus();
+
+  // 사용량 통계
+  const { canCreate, hasActiveSubscription } = useUsageStats();
+
+  // GraphNodeType을 UsageEntityType으로 매핑
+  const nodeTypeToEntityType = useCallback((nodeType: GraphNodeType): UsageEntityType | null => {
+    switch (nodeType) {
+      case 'area':
+      case 'resource':
+        return 'area_resource';
+      case 'goal':
+        return 'goal';
+      case 'project':
+        return 'project';
+      case 'todo':
+        return 'todo';
+      case 'note':
+        return 'note';
+      default:
+        return null;
+    }
+  }, []);
+
+  // 선택된 항목들의 제한 체크
+  const limitCheck = useMemo((): LimitCheckResult => {
+    // Pro 사용자는 무제한
+    if (hasActiveSubscription) {
+      return { canCreate: true, exceededEntities: [] };
+    }
+
+    // 선택된 항목 가져오기
+    const allItems = getAllSetItems();
+    const selectedItems = allItems.filter((item) => selectedIds.has(item.id));
+
+    if (selectedItems.length === 0) {
+      return { canCreate: true, exceededEntities: [] };
+    }
+
+    // 타입별 카운트
+    const typeCounts: Record<string, number> = {};
+    selectedItems.forEach((item) => {
+      const entityType = nodeTypeToEntityType(item.type);
+      if (entityType) {
+        typeCounts[entityType] = (typeCounts[entityType] || 0) + 1;
+      }
+    });
+
+    // 제한 초과 엔티티 확인
+    const exceededEntities: ExceededEntity[] = [];
+    const entityTypes: UsageEntityType[] = ['area_resource', 'goal', 'project', 'todo', 'note'];
+
+    entityTypes.forEach((entityType) => {
+      const willAdd = typeCounts[entityType] || 0;
+      if (willAdd === 0) return;
+
+      const result = canCreate(entityType);
+      const total = result.current + willAdd;
+
+      if (total > result.limit) {
+        exceededEntities.push({
+          entity: entityType,
+          displayName: result.displayName,
+          current: result.current,
+          limit: result.limit,
+          willAdd,
+          total,
+        });
+      }
+    });
+
+    return {
+      canCreate: exceededEntities.length === 0,
+      exceededEntities,
+    };
+  }, [selectedIds, hasActiveSubscription, canCreate, nodeTypeToEntityType]);
 
   const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -309,6 +407,8 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
     isLoading,
     error,
     isSelected,
+    limitCheck,
+    hasActiveSubscription,
   };
 }
 
