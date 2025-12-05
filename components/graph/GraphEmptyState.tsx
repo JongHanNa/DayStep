@@ -50,7 +50,7 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
   // 일괄 생성 훅
   const {
     selectedIds,
-    toggleSelection,
+    toggleSelectionWithDescendants,
     clearSelection,
     selectedCount,
     createSelected,
@@ -65,7 +65,7 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
   const renderCurrentView = () => {
     const commonProps = {
       selectedIds,
-      onToggleSelection: toggleSelection,
+      onToggleSelection: toggleSelectionWithDescendants,
       isSelected,
     };
 

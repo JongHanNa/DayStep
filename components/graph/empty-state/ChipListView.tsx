@@ -26,7 +26,7 @@ import {
 
 interface ChipListViewProps {
   selectedIds: Set<string>;
-  onToggleSelection: (id: string) => void;
+  onToggleSelection: (id: string, descendantIds: string[]) => void;
   isSelected: (id: string) => boolean;
 }
 
@@ -77,11 +77,11 @@ export function ChipListView({
     set.items.forEach((item) => {
       if (allSelected) {
         if (isSelected(item.id)) {
-          onToggleSelection(item.id);
+          onToggleSelection(item.id, []);
         }
       } else {
         if (!isSelected(item.id)) {
-          onToggleSelection(item.id);
+          onToggleSelection(item.id, []);
         }
       }
     });
@@ -146,7 +146,7 @@ interface SetSectionProps {
   tree: TreeNode[];
   expandedTreeIds: Set<string>;
   onToggleExpand: (id: string) => void;
-  onToggleSelection: (id: string) => void;
+  onToggleSelection: (id: string, descendantIds: string[]) => void;
   onToggleSet: () => void;
   isSelected: (id: string) => boolean;
   isSetFullySelected: boolean;

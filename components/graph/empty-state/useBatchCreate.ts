@@ -44,6 +44,8 @@ interface UseBatchCreateReturn {
   selectedIds: Set<string>;
   /** 항목 선택 토글 */
   toggleSelection: (id: string) => void;
+  /** 노드 + 하위 자손 전체 토글 */
+  toggleSelectionWithDescendants: (nodeId: string, descendantIds: string[]) => void;
   /** 모든 항목 선택 해제 */
   clearSelection: () => void;
   /** 특정 타입의 모든 항목 선택/해제 */
@@ -170,6 +172,27 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
       return next;
     });
   }, []);
+
+  // 노드 + 하위 자손 전체 토글
+  const toggleSelectionWithDescendants = useCallback(
+    (nodeId: string, descendantIds: string[]) => {
+      const allIds = [nodeId, ...descendantIds];
+
+      setSelectedIds((prev) => {
+        const isCurrentlySelected = prev.has(nodeId);
+        const next = new Set(prev);
+        allIds.forEach((id) => {
+          if (isCurrentlySelected) {
+            next.delete(id);
+          } else {
+            next.add(id);
+          }
+        });
+        return next;
+      });
+    },
+    []
+  );
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -415,6 +438,7 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
   return {
     selectedIds,
     toggleSelection,
+    toggleSelectionWithDescendants,
     clearSelection,
     toggleTypeSelection,
     selectedCount: selectedIds.size,

@@ -35,7 +35,7 @@ interface TreeViewProps {
   expandedIds: Set<string>;
   selectedIds: Set<string>;
   onToggleExpand: (id: string) => void;
-  onToggleSelection: (id: string) => void;
+  onToggleSelection: (id: string, descendantIds: string[]) => void;
   isSelected: (id: string) => boolean;
   variant?: 'default' | 'compact' | 'chip';
 }
@@ -45,7 +45,7 @@ interface TreeNodeItemProps {
   expandedIds: Set<string>;
   selectedIds: Set<string>;
   onToggleExpand: (id: string) => void;
-  onToggleSelection: (id: string) => void;
+  onToggleSelection: (id: string, descendantIds: string[]) => void;
   isSelected: (id: string) => boolean;
   variant: 'default' | 'compact' | 'chip';
 }
@@ -184,9 +184,10 @@ function TreeNodeItem({
   // 반복 패턴 텍스트 (Todo 전용)
   const recurrenceText = isTodo ? getRecurrenceText(node) : null;
 
-  // 노드 클릭 핸들러 (선택 토글)
+  // 노드 클릭 핸들러 (선택 토글 - 자손 포함)
   const handleNodeClick = () => {
-    onToggleSelection(node.id);
+    const descendantIds = collectDescendantIds(node);
+    onToggleSelection(node.id, descendantIds);
   };
 
   // 펼치기/접기 핸들러

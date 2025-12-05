@@ -23,7 +23,7 @@ import { TreeView } from './TreeView';
 
 interface CarouselViewProps {
   selectedIds: Set<string>;
-  onToggleSelection: (id: string) => void;
+  onToggleSelection: (id: string, descendantIds: string[]) => void;
   isSelected: (id: string) => boolean;
 }
 
@@ -126,12 +126,12 @@ export function CarouselView({
       if (allSelected) {
         // 모두 선택된 상태 → 전체 해제
         if (isSelected(item.id)) {
-          onToggleSelection(item.id);
+          onToggleSelection(item.id, []);
         }
       } else {
         // 일부 또는 전혀 선택 안됨 → 전체 선택
         if (!isSelected(item.id)) {
-          onToggleSelection(item.id);
+          onToggleSelection(item.id, []);
         }
       }
     });
@@ -273,7 +273,7 @@ interface SetCardProps {
   isFullySelected: boolean;
   isPartiallySelected: boolean;
   onToggleSet: () => void;
-  onToggleItem: (id: string) => void;
+  onToggleItem: (id: string, descendantIds: string[]) => void;
   isItemSelected: (id: string) => boolean;
   expandedIds: Set<string>;
   onToggleExpand: (id: string) => void;

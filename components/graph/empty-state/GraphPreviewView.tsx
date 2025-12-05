@@ -19,6 +19,7 @@ import {
   type RecommendationItem,
   type TreeNode,
   buildTree,
+  collectDescendantIds,
 } from './RecommendationData';
 import {
   APPLE_SPRING,
@@ -28,7 +29,7 @@ import {
 
 interface GraphPreviewViewProps {
   selectedIds: Set<string>;
-  onToggleSelection: (id: string) => void;
+  onToggleSelection: (id: string, descendantIds: string[]) => void;
   isSelected: (id: string) => boolean;
 }
 
@@ -39,6 +40,7 @@ interface NodePosition {
   y: number;
   parentXPercent?: number;
   parentY?: number;
+  descendantIds: string[]; // 하위 자손 ID 배열
 }
 
 export function GraphPreviewView({
@@ -115,9 +117,9 @@ export function GraphPreviewView({
     const allSelected = isSetFullySelected(set);
     set.items.forEach((item) => {
       if (allSelected) {
-        if (isSelected(item.id)) { onToggleSelection(item.id); }
+        if (isSelected(item.id)) { onToggleSelection(item.id, []); }
       } else {
-        if (!isSelected(item.id)) { onToggleSelection(item.id); }
+        if (!isSelected(item.id)) { onToggleSelection(item.id, []); }
       }
     });
   };
@@ -173,6 +175,7 @@ export function GraphPreviewView({
             y,
             parentXPercent,
             parentY,
+            descendantIds: collectDescendantIds(node),
           });
 
           if (node.children.length > 0) {
@@ -329,7 +332,8 @@ export function GraphPreviewView({
                     y={node.y}
                     index={index}
                     isSelected={isSelected(node.item.id)}
-                    onToggle={() => onToggleSelection(node.item.id)}
+                    onToggle={() => onToggleSelection(node.item.id, node.descendantIds)}
+                    descendantIds={node.descendantIds}
                   />
                 ))}
               </div>
@@ -398,9 +402,10 @@ interface GraphNodeProps {
   index: number;
   isSelected: boolean;
   onToggle: () => void;
+  descendantIds: string[];
 }
 
-function GraphNode({ item, xPercent, y, index, isSelected, onToggle }: GraphNodeProps) {
+function GraphNode({ item, xPercent, y, index, isSelected, onToggle, descendantIds }: GraphNodeProps) {
   const Icon = item.icon;
   const size = item.type === 'area' || item.type === 'resource' ? 44 : 40;
 

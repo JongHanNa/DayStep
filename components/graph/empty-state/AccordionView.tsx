@@ -24,7 +24,7 @@ import {
 
 interface AccordionViewProps {
   selectedIds: Set<string>;
-  onToggleSelection: (id: string) => void;
+  onToggleSelection: (id: string, descendantIds: string[]) => void;
   isSelected: (id: string) => boolean;
 }
 
@@ -73,11 +73,11 @@ export function AccordionView({
     set.items.forEach((item) => {
       if (allSelected) {
         if (isSelected(item.id)) {
-          onToggleSelection(item.id);
+          onToggleSelection(item.id, []);
         }
       } else {
         if (!isSelected(item.id)) {
-          onToggleSelection(item.id);
+          onToggleSelection(item.id, []);
         }
       }
     });
