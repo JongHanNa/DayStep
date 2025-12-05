@@ -31,12 +31,12 @@ interface GraphPreviewViewProps {
   isSelected: (id: string) => boolean;
 }
 
-// 노드 위치 계산
+// 노드 위치 계산 (퍼센트 기반)
 interface NodePosition {
   item: RecommendationItem;
-  x: number;
+  xPercent: number; // 0-100 퍼센트
   y: number;
-  parentX?: number;
+  parentXPercent?: number;
   parentY?: number;
 }
 
@@ -113,49 +113,38 @@ export function GraphPreviewView({
   const yGap = 80;
   const containerHeight = Math.max(420, yStart + maxDepth * yGap + 80);
 
-  // 트리 기반 노드 위치 계산 (리프 가중치 방식)
+  // 트리 기반 노드 위치 계산 (퍼센트 기반)
   const nodePositions = useMemo((): NodePosition[] => {
     const positions: NodePosition[] = [];
-    const padding = 15; // 좌우 여백
-    const minNodeSpacing = 75; // 리프 노드 최소 간격
-
-    // 전체 리프 수로 필요 너비 계산
-    const totalLeaves = tree.reduce((sum, node) => sum + getLeafCount(node), 0);
-    const neededWidth = totalLeaves * minNodeSpacing;
-    const availableWidth = containerWidth - padding * 2;
-
-    // 스케일 팩터: 필요 너비가 더 크면 축소
-    const scale = neededWidth > availableWidth ? availableWidth / neededWidth : 1;
-    const effectiveWidth = neededWidth * scale;
-    const startX = padding + (availableWidth - effectiveWidth) / 2;
+    const paddingPercent = 8; // 좌우 여백 (퍼센트)
 
     // 재귀적으로 노드 위치 계산 (리프 가중치 기반)
     function calculatePositions(
       nodes: TreeNode[],
       depth: number,
-      xStart: number,
-      xEnd: number,
-      parentX?: number,
+      xStartPercent: number,
+      xEndPercent: number,
+      parentXPercent?: number,
       parentY?: number
     ) {
       const y = yStart + depth * yGap;
-      const totalWidth = xEnd - xStart;
+      const totalWidth = xEndPercent - xStartPercent;
 
       // 각 노드의 가중치 계산 (리프 수 기반)
       const weights = nodes.map(node => getLeafCount(node));
       const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
-      let currentX = xStart;
+      let currentX = xStartPercent;
 
       nodes.forEach((node, i) => {
         const nodeWidth = (weights[i] / totalWeight) * totalWidth;
-        const x = currentX + nodeWidth / 2;
+        const xPercent = currentX + nodeWidth / 2;
 
         positions.push({
           item: node,
-          x,
+          xPercent,
           y,
-          parentX,
+          parentXPercent,
           parentY,
         });
 
@@ -165,7 +154,7 @@ export function GraphPreviewView({
             depth + 1,
             currentX,
             currentX + nodeWidth,
-            x,
+            xPercent,
             y
           );
         }
@@ -174,7 +163,7 @@ export function GraphPreviewView({
       });
     }
 
-    calculatePositions(tree, 0, startX, startX + effectiveWidth);
+    calculatePositions(tree, 0, paddingPercent, 100 - paddingPercent);
     return positions;
   }, [tree]);
 
@@ -249,7 +238,7 @@ export function GraphPreviewView({
             animate="center"
             exit="exit"
           >
-            <div className="relative w-[420px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
+            <div className="relative w-full max-w-[420px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
               {/* 배경 그리드 */}
               <div
                 className="absolute inset-0 opacity-5"
@@ -262,14 +251,14 @@ export function GraphPreviewView({
               {/* 연결선 SVG */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 {nodePositions.map((node, index) => {
-                  if (!node.parentX || !node.parentY) { return null; }
+                  if (node.parentXPercent === undefined || !node.parentY) { return null; }
 
                   return (
                     <motion.line
                       key={`line-${node.item.id}`}
-                      x1={node.parentX}
+                      x1={`${node.parentXPercent}%`}
                       y1={node.parentY + 20}
-                      x2={node.x}
+                      x2={`${node.xPercent}%`}
                       y2={node.y - 20}
                       stroke={node.item.color}
                       strokeWidth={2}
@@ -288,7 +277,7 @@ export function GraphPreviewView({
                 <GraphNode
                   key={node.item.id}
                   item={node.item}
-                  x={node.x}
+                  xPercent={node.xPercent}
                   y={node.y}
                   index={index}
                   isSelected={isSelected(node.item.id)}
@@ -355,30 +344,29 @@ export function GraphPreviewView({
 
 interface GraphNodeProps {
   item: RecommendationItem;
-  x: number;
+  xPercent: number;
   y: number;
   index: number;
   isSelected: boolean;
   onToggle: () => void;
 }
 
-function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) {
+function GraphNode({ item, xPercent, y, index, isSelected, onToggle }: GraphNodeProps) {
   const Icon = item.icon;
   const size = item.type === 'area' || item.type === 'resource' ? 44 : 40;
 
-  // 제목만 표시 (5자 초과 시 자름)
-  const maxTitleLength = 5;
-  const displayTitle = item.title.length > maxTitleLength
-    ? item.title.slice(0, maxTitleLength) + '…'
-    : item.title;
+  // 제목 전체 표시
+  const displayTitle = item.title;
 
   return (
     <motion.button
       onClick={onToggle}
       className="absolute"
       style={{
-        left: x - size / 2,
+        left: `calc(${xPercent}% - ${size / 2}px)`,
         top: y - size / 2,
+        width: size,
+        height: size,
       }}
       variants={FLOATING_NODE}
       initial="hidden"
@@ -402,10 +390,8 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
 
       {/* 노드 본체 */}
       <div
-        className="relative rounded-full flex items-center justify-center shadow-lg transition-shadow"
+        className="w-full h-full rounded-full flex items-center justify-center shadow-lg transition-shadow"
         style={{
-          width: size,
-          height: size,
           backgroundColor: item.color,
           boxShadow: isSelected
             ? `0 0 20px ${item.color}60`
@@ -432,7 +418,7 @@ function GraphNode({ item, x, y, index, isSelected, onToggle }: GraphNodeProps) 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 + index * 0.05 }}
-        className="absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap"
+        className="absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap"
       >
         <span className="text-[10px] font-medium text-base-content/70">
           {displayTitle}
