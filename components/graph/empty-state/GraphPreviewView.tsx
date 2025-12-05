@@ -127,7 +127,7 @@ export function GraphPreviewView({
   return (
     <div className="w-full max-w-sm mx-auto">
       {/* 그래프 컨테이너 */}
-      <div className="relative h-[400px] bg-base-100 rounded-2xl border border-base-300 overflow-hidden">
+      <div className="relative w-[320px] mx-auto h-[400px] bg-base-100 rounded-2xl border border-base-300 overflow-hidden">
         {/* 배경 그리드 */}
         <div
           className="absolute inset-0 opacity-5"
