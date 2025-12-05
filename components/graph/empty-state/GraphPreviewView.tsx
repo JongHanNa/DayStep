@@ -7,8 +7,11 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import type { Swiper as SwiperType } from 'swiper';
+import 'swiper/css';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
@@ -21,8 +24,6 @@ import {
   APPLE_SPRING,
   FLOATING_NODE,
   CONNECTION_LINE,
-  swipePower,
-  SWIPE_THRESHOLD,
 } from '@/lib/animations/appleMotion';
 
 interface GraphPreviewViewProps {
@@ -46,27 +47,56 @@ export function GraphPreviewView({
   isSelected,
 }: GraphPreviewViewProps) {
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
+
+  // Swiper 인스턴스 ref
+  const swiperRef = useRef<SwiperType | null>(null);
+
+  // 탭 버튼 refs (자동 스크롤용)
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const sets = RECOMMENDATION_SETS;
   const currentSet = sets[currentSetIndex];
 
+  // 카드 인덱스 변경 시 해당 탭으로 자동 스크롤 (세 번째 탭부터)
+  useEffect(() => {
+    const tabButton = tabRefs.current[currentSetIndex];
+    const container = scrollContainerRef.current;
+    if (tabButton && container) {
+      // 첫 번째, 두 번째 탭은 스크롤하지 않음 (왼쪽에 자연스럽게 위치)
+      if (currentSetIndex < 2) {
+        container.scrollTo({
+          left: 0,
+          behavior: 'smooth',
+        });
+        return;
+      }
+
+      // 탭의 중앙이 컨테이너 중앙에 오도록 계산
+      const containerRect = container.getBoundingClientRect();
+      const tabRect = tabButton.getBoundingClientRect();
+
+      // 현재 스크롤 위치 + (탭 중앙 - 컨테이너 중앙)
+      const tabCenter = tabRect.left + tabRect.width / 2;
+      const containerCenter = containerRect.left + containerRect.width / 2;
+      const scrollOffset = tabCenter - containerCenter;
+
+      const targetScroll = container.scrollLeft + scrollOffset;
+
+      // 스크롤 범위 제한
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const finalScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
+      container.scrollTo({
+        left: finalScroll,
+        behavior: 'smooth',
+      });
+    }
+  }, [currentSetIndex]);
+
   const goToSet = (index: number) => {
     if (index < 0 || index >= sets.length) { return; }
-    setDirection(index > currentSetIndex ? 1 : -1);
-    setCurrentSetIndex(index);
-  };
-
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const power = swipePower(info.offset.x, info.velocity.x);
-
-    if (power > SWIPE_THRESHOLD) {
-      if (info.offset.x < 0 && currentSetIndex < sets.length - 1) {
-        goToSet(currentSetIndex + 1);
-      } else if (info.offset.x > 0 && currentSetIndex > 0) {
-        goToSet(currentSetIndex - 1);
-      }
-    }
+    swiperRef.current?.slideTo(index);
   };
 
   // 세트 전체 선택 여부
@@ -92,9 +122,6 @@ export function GraphPreviewView({
     });
   };
 
-  // 트리 구조 생성
-  const tree = useMemo(() => buildTree(currentSet.items), [currentSet.items]);
-
   // 트리 최대 깊이 계산
   function getMaxDepth(nodes: TreeNode[]): number {
     if (nodes.length === 0) return 0;
@@ -107,187 +134,209 @@ export function GraphPreviewView({
     return node.children.reduce((sum, child) => sum + getLeafCount(child), 0);
   }
 
-  const maxDepth = useMemo(() => getMaxDepth(tree), [tree]);
-  const containerWidth = 500;
   const yStart = 50;
   const yGap = 80;
-  const containerHeight = Math.max(420, yStart + maxDepth * yGap + 80);
 
-  // 트리 기반 노드 위치 계산 (퍼센트 기반)
-  const nodePositions = useMemo((): NodePosition[] => {
-    const positions: NodePosition[] = [];
-    const paddingPercent = 8; // 좌우 여백 (퍼센트)
+  // 각 세트별 트리 구조와 노드 위치를 메모이제이션
+  const setsData = useMemo(() => {
+    return sets.map((set) => {
+      const tree = buildTree(set.items);
+      const maxDepth = getMaxDepth(tree);
+      const containerHeight = Math.max(420, yStart + maxDepth * yGap + 80);
 
-    // 재귀적으로 노드 위치 계산 (리프 가중치 기반)
-    function calculatePositions(
-      nodes: TreeNode[],
-      depth: number,
-      xStartPercent: number,
-      xEndPercent: number,
-      parentXPercent?: number,
-      parentY?: number
-    ) {
-      const y = yStart + depth * yGap;
-      const totalWidth = xEndPercent - xStartPercent;
+      const positions: NodePosition[] = [];
+      const paddingPercent = 8;
 
-      // 각 노드의 가중치 계산 (리프 수 기반)
-      const weights = nodes.map(node => getLeafCount(node));
-      const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+      function calculatePositions(
+        nodes: TreeNode[],
+        depth: number,
+        xStartPercent: number,
+        xEndPercent: number,
+        parentXPercent?: number,
+        parentY?: number
+      ) {
+        const y = yStart + depth * yGap;
+        const totalWidth = xEndPercent - xStartPercent;
 
-      let currentX = xStartPercent;
+        const weights = nodes.map(node => getLeafCount(node));
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
-      nodes.forEach((node, i) => {
-        const nodeWidth = (weights[i] / totalWeight) * totalWidth;
-        const xPercent = currentX + nodeWidth / 2;
+        let currentX = xStartPercent;
 
-        positions.push({
-          item: node,
-          xPercent,
-          y,
-          parentXPercent,
-          parentY,
-        });
+        nodes.forEach((node, i) => {
+          const nodeWidth = (weights[i] / totalWeight) * totalWidth;
+          const xPercent = currentX + nodeWidth / 2;
 
-        if (node.children.length > 0) {
-          calculatePositions(
-            node.children,
-            depth + 1,
-            currentX,
-            currentX + nodeWidth,
+          positions.push({
+            item: node,
             xPercent,
-            y
-          );
-        }
+            y,
+            parentXPercent,
+            parentY,
+          });
 
-        currentX += nodeWidth;
-      });
-    }
+          if (node.children.length > 0) {
+            calculatePositions(
+              node.children,
+              depth + 1,
+              currentX,
+              currentX + nodeWidth,
+              xPercent,
+              y
+            );
+          }
 
-    calculatePositions(tree, 0, paddingPercent, 100 - paddingPercent);
-    return positions;
-  }, [tree]);
+          currentX += nodeWidth;
+        });
+      }
 
-  const cardVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      transition: APPLE_SPRING.smooth,
-    },
-    exit: (direction: number) => ({
-      x: direction > 0 ? -300 : 300,
-      opacity: 0,
-      transition: APPLE_SPRING.smooth,
-    }),
-  };
+      calculatePositions(tree, 0, paddingPercent, 100 - paddingPercent);
+
+      return { set, tree, maxDepth, containerHeight, positions };
+    });
+  }, [sets]);
 
   return (
     <div className="w-full max-w-lg mx-auto">
-      {/* 세트 인디케이터 */}
-      <div className="flex items-center justify-between mb-4 px-2">
+      {/* 카테고리 네비게이터 */}
+      <div className="flex items-center gap-2 mb-4">
         <button
           onClick={() => goToSet(currentSetIndex - 1)}
           disabled={currentSetIndex === 0}
-          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30"
+          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30 flex-shrink-0"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <div className="flex gap-1.5">
-          {sets.map((set, index) => (
-            <motion.button
-              key={set.id}
-              onClick={() => goToSet(index)}
-              className="h-2 rounded-full transition-colors"
-              style={{ backgroundColor: set.color }}
-              animate={{
-                width: index === currentSetIndex ? 24 : 8,
-                opacity: index === currentSetIndex ? 1 : 0.4,
-              }}
-              transition={APPLE_SPRING.snappy}
-            />
-          ))}
+        {/* 가로 스크롤 탭 */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden touch-pan-x scrollbar-hide"
+        >
+          <div className="flex gap-2 px-1 py-1 w-max">
+            {sets.map((set, index) => {
+              const isActive = index === currentSetIndex;
+              // 세트의 첫 번째 책임(area/resource) 아이템의 제목과 아이콘 찾기
+              const areaItem = set.items.find(
+                (item) => item.type === 'area' || item.type === 'resource'
+              );
+              const displayTitle = areaItem?.title || set.title;
+              const TabIcon = areaItem?.icon;
+
+              return (
+                <motion.button
+                  key={set.id}
+                  ref={(el) => { tabRefs.current[index] = el; }}
+                  onClick={() => goToSet(index)}
+                  className={`
+                    flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap
+                    text-xs font-medium flex-shrink-0
+                    ${isActive
+                      ? 'text-white shadow-md'
+                      : 'bg-base-200 text-base-content/60 hover:bg-base-300'
+                    }
+                  `}
+                  initial={false}
+                  animate={{
+                    scale: isActive ? 1 : 0.92,
+                    backgroundColor: isActive ? set.color : 'oklch(var(--b2))',
+                    opacity: isActive ? 1 : 0.7,
+                  }}
+                  whileHover={{
+                    scale: isActive ? 1 : 0.96,
+                    opacity: 1,
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 400,
+                    damping: 25,
+                    mass: 0.5,
+                  }}
+                >
+                  {TabIcon && <TabIcon className="w-3.5 h-3.5" />}
+                  <span>{displayTitle}</span>
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
 
         <button
           onClick={() => goToSet(currentSetIndex + 1)}
           disabled={currentSetIndex === sets.length - 1}
-          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30"
+          className="btn btn-circle btn-ghost btn-sm disabled:opacity-30 flex-shrink-0"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
-      {/* 그래프 컨테이너 */}
-      <motion.div
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handleDragEnd}
-        className="cursor-grab active:cursor-grabbing"
-      >
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={currentSet.id}
-            custom={direction}
-            variants={cardVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-          >
-            <div className="relative w-full max-w-[500px] mx-auto bg-base-100 rounded-2xl border border-base-300 overflow-hidden" style={{ height: containerHeight }}>
-              {/* 배경 그리드 */}
+      {/* 그래프 컨테이너 - Swiper로 양옆 카드 노출 */}
+      <div className="relative h-[480px]">
+        <Swiper
+          onSwiper={(swiper) => { swiperRef.current = swiper; }}
+          slidesPerView={1.12}
+          centeredSlides={true}
+          spaceBetween={12}
+          onSlideChange={(swiper) => setCurrentSetIndex(swiper.activeIndex)}
+          initialSlide={currentSetIndex}
+          className="!overflow-visible h-full"
+        >
+          {setsData.map(({ set, positions, containerHeight }) => (
+            <SwiperSlide key={set.id}>
               <div
-                className="absolute inset-0 opacity-5"
-                style={{
-                  backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
-                  backgroundSize: '20px 20px',
-                }}
-              />
-
-              {/* 연결선 SVG */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                {nodePositions.map((node, index) => {
-                  if (node.parentXPercent === undefined || !node.parentY) { return null; }
-
-                  return (
-                    <motion.line
-                      key={`line-${node.item.id}`}
-                      x1={`${node.parentXPercent}%`}
-                      y1={node.parentY + 20}
-                      x2={`${node.xPercent}%`}
-                      y2={node.y - 20}
-                      stroke={node.item.color}
-                      strokeWidth={2}
-                      strokeOpacity={isSelected(node.item.id) ? 0.8 : 0.3}
-                      variants={CONNECTION_LINE}
-                      initial="hidden"
-                      animate="visible"
-                      custom={index}
-                    />
-                  );
-                })}
-              </svg>
-
-              {/* 노드들 */}
-              {nodePositions.map((node, index) => (
-                <GraphNode
-                  key={node.item.id}
-                  item={node.item}
-                  xPercent={node.xPercent}
-                  y={node.y}
-                  index={index}
-                  isSelected={isSelected(node.item.id)}
-                  onToggle={() => onToggleSelection(node.item.id)}
+                className="relative w-full bg-base-100 rounded-2xl border border-base-300 overflow-hidden h-full"
+              >
+                {/* 배경 그리드 */}
+                <div
+                  className="absolute inset-0 opacity-5"
+                  style={{
+                    backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
+                    backgroundSize: '20px 20px',
+                  }}
                 />
-              ))}
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </motion.div>
+
+                {/* 연결선 SVG */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  {positions.map((node, index) => {
+                    if (node.parentXPercent === undefined || !node.parentY) { return null; }
+
+                    return (
+                      <motion.line
+                        key={`line-${node.item.id}`}
+                        x1={`${node.parentXPercent}%`}
+                        y1={node.parentY + 20}
+                        x2={`${node.xPercent}%`}
+                        y2={node.y - 20}
+                        stroke={node.item.color}
+                        strokeWidth={2}
+                        strokeOpacity={isSelected(node.item.id) ? 0.8 : 0.3}
+                        variants={CONNECTION_LINE}
+                        initial="hidden"
+                        animate="visible"
+                        custom={index}
+                      />
+                    );
+                  })}
+                </svg>
+
+                {/* 노드들 */}
+                {positions.map((node, index) => (
+                  <GraphNode
+                    key={node.item.id}
+                    item={node.item}
+                    xPercent={node.xPercent}
+                    y={node.y}
+                    index={index}
+                    isSelected={isSelected(node.item.id)}
+                    onToggle={() => onToggleSelection(node.item.id)}
+                  />
+                ))}
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
 
       {/* 세트 전체 선택 버튼 */}
       <motion.button
