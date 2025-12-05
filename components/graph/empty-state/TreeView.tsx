@@ -223,13 +223,9 @@ function TreeNodeItem({
             )}
           </div>
 
-          {/* 설명 + 날짜/시간 (compact/default만) */}
-          {variant !== 'chip' && (
+          {/* 날짜/시간 (compact/default만) */}
+          {variant !== 'chip' && (timeText || periodText) && (
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <div className="text-xs text-base-content/50 truncate flex-1 min-w-0">
-                {node.description}
-              </div>
-
               {/* Todo 시간 표시 */}
               {timeText && (
                 <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">

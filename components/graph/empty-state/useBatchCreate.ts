@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { addDays, format } from 'date-fns';
 import { useAuth } from '@/app/context/AuthContext';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -263,10 +264,24 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
         }
 
         case 'todo': {
+          // 반복 설정 처리
+          const recurrence = item.recurrenceConfig;
+          const recurrenceEndDate = recurrence?.endOffset
+            ? addDays(new Date(), recurrence.endOffset)
+            : null;
+
           const todo = await createTodo({
             title: item.title,
             schedule_type: 'anytime',
             priority: 'medium',
+            // 반복 패턴 필드
+            recurrence_pattern: recurrence?.pattern ?? 'none',
+            recurrence_interval: recurrence?.interval ?? 1,
+            recurrence_days_of_week: recurrence?.daysOfWeek,
+            recurrence_day_of_month: recurrence?.dayOfMonth,
+            recurrence_end_date: recurrenceEndDate
+              ? format(recurrenceEndDate, 'yyyy-MM-dd')
+              : undefined,
           });
           if (!todo) {
             throw new Error('Todo 생성에 실패했습니다.');
