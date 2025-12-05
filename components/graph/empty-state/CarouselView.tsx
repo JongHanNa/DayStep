@@ -9,7 +9,10 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import type { Swiper as SwiperType } from 'swiper';
+import 'swiper/css';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
@@ -17,12 +20,6 @@ import {
   buildTree,
 } from './RecommendationData';
 import { TreeView } from './TreeView';
-import {
-  APPLE_SPRING,
-  STAGGER,
-  swipePower,
-  SWIPE_THRESHOLD,
-} from '@/lib/animations/appleMotion';
 
 interface CarouselViewProps {
   selectedIds: Set<string>;
@@ -36,7 +33,9 @@ export function CarouselView({
   isSelected,
 }: CarouselViewProps) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
+
+  // Swiper 인스턴스 ref
+  const swiperRef = useRef<SwiperType | null>(null);
 
   // 트리 내부 펼침 상태
   const [expandedTreeIds, setExpandedTreeIds] = useState<Set<string>>(() => {
@@ -84,20 +83,7 @@ export function CarouselView({
 
   const goToCard = (index: number) => {
     if (index < 0 || index >= sets.length) return;
-    setDirection(index > currentCardIndex ? 1 : -1);
-    setCurrentCardIndex(index);
-  };
-
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const power = swipePower(info.offset.x, info.velocity.x);
-
-    if (power > SWIPE_THRESHOLD) {
-      if (info.offset.x < 0 && currentCardIndex < sets.length - 1) {
-        goToCard(currentCardIndex + 1);
-      } else if (info.offset.x > 0 && currentCardIndex > 0) {
-        goToCard(currentCardIndex - 1);
-      }
-    }
+    swiperRef.current?.slideTo(index);
   };
 
   const toggleTreeExpand = (nodeId: string) => {
@@ -141,28 +127,14 @@ export function CarouselView({
     });
   };
 
-  const cardVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.9,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      transition: APPLE_SPRING.smooth,
-    },
-    exit: (direction: number) => ({
-      x: direction > 0 ? -300 : 300,
-      opacity: 0,
-      scale: 0.9,
-      transition: APPLE_SPRING.smooth,
-    }),
-  };
-
-  // 현재 세트의 트리 구조
-  const currentTree = useMemo(() => buildTree(currentSet.items), [currentSet.items]);
+  // 각 세트의 트리 구조를 메모이제이션
+  const treesMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof buildTree>>();
+    sets.forEach((set) => {
+      map.set(set.id, buildTree(set.items));
+    });
+    return map;
+  }, [sets]);
 
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -238,35 +210,36 @@ export function CarouselView({
         </button>
       </div>
 
-      {/* 카드 컨테이너 */}
-      <div className="relative h-[480px] overflow-hidden">
-        <AnimatePresence custom={direction} mode="wait">
-          <motion.div
-            key={currentCardIndex}
-            custom={direction}
-            variants={cardVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={handleDragEnd}
-            className="absolute inset-0 cursor-grab active:cursor-grabbing"
-          >
-            <SetCard
-              set={currentSet}
-              tree={currentTree}
-              isFullySelected={isSetFullySelected(currentSet)}
-              isPartiallySelected={isSetPartiallySelected(currentSet)}
-              onToggleSet={() => toggleSetSelection(currentSet)}
-              onToggleItem={onToggleSelection}
-              isItemSelected={isSelected}
-              expandedIds={expandedTreeIds}
-              onToggleExpand={toggleTreeExpand}
-            />
-          </motion.div>
-        </AnimatePresence>
+      {/* 카드 컨테이너 - Swiper로 양옆 카드 노출 */}
+      <div className="relative h-[480px]">
+        <Swiper
+          onSwiper={(swiper) => { swiperRef.current = swiper; }}
+          slidesPerView={1.12}
+          centeredSlides={true}
+          spaceBetween={12}
+          onSlideChange={(swiper) => setCurrentCardIndex(swiper.activeIndex)}
+          initialSlide={currentCardIndex}
+          className="!overflow-visible h-full"
+        >
+          {sets.map((set) => {
+            const tree = treesMap.get(set.id) || [];
+            return (
+              <SwiperSlide key={set.id}>
+                <SetCard
+                  set={set}
+                  tree={tree}
+                  isFullySelected={isSetFullySelected(set)}
+                  isPartiallySelected={isSetPartiallySelected(set)}
+                  onToggleSet={() => toggleSetSelection(set)}
+                  onToggleItem={onToggleSelection}
+                  isItemSelected={isSelected}
+                  expandedIds={expandedTreeIds}
+                  onToggleExpand={toggleTreeExpand}
+                />
+              </SwiperSlide>
+            );
+          })}
+        </Swiper>
       </div>
 
       {/* 페이지 표시 */}
