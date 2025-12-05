@@ -429,3 +429,28 @@ export const TREE_ITEM_SELECT: Variants = {
     transition: APPLE_SPRING.snappy,
   },
 };
+
+// ============================================
+// 카드 내부 뷰 전환 애니메이션
+// ============================================
+
+/** 카드 내부 뷰 전환 (crossfade + scale + blur) */
+export const CARD_VIEW_CROSSFADE: Variants = {
+  enter: {
+    opacity: 0,
+    scale: 0.92,
+    filter: 'blur(4px)',
+  },
+  center: {
+    opacity: 1,
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: APPLE_SPRING.smooth,
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.92,
+    filter: 'blur(4px)',
+    transition: { duration: 0.2 },
+  },
+};

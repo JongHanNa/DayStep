@@ -14,6 +14,7 @@ export { CarouselView } from './CarouselView';
 export { AccordionView } from './AccordionView';
 export { GraphPreviewView } from './GraphPreviewView';
 export { ChipListView } from './ChipListView';
+export { MiniGraphView } from './MiniGraphView';
 
 // UI 컴포넌트
 export { ViewSwitcher, DotIndicator } from './ViewSwitcher';

@@ -4,22 +4,25 @@
  * 세트 단위로 추천 항목을 한번에 선택/해제
  * TreeView를 사용하여 실제 부모-자식 계층 구조 표시
  * 개별 항목 수정도 가능
+ * 카드 내부에서 리스트↔그래프 뷰 토글 지원
  */
 
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, GitBranch, List } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
   buildTree,
 } from './RecommendationData';
 import { TreeView } from './TreeView';
+import { MiniGraphView } from './MiniGraphView';
+import { CARD_VIEW_CROSSFADE, APPLE_SPRING } from '@/lib/animations/appleMotion';
 
 interface CarouselViewProps {
   selectedIds: Set<string>;
@@ -36,6 +39,27 @@ export function CarouselView({
 
   // Swiper 인스턴스 ref
   const swiperRef = useRef<SwiperType | null>(null);
+
+  // 세트별 뷰 모드 상태 (list | graph)
+  const [cardViewModes, setCardViewModes] = useState<Map<string, 'list' | 'graph'>>(
+    new Map()
+  );
+
+  const toggleCardViewMode = useCallback((setId: string) => {
+    setCardViewModes((prev) => {
+      const next = new Map(prev);
+      const current = next.get(setId) || 'list';
+      next.set(setId, current === 'list' ? 'graph' : 'list');
+      return next;
+    });
+  }, []);
+
+  const getCardViewMode = useCallback(
+    (setId: string): 'list' | 'graph' => {
+      return cardViewModes.get(setId) || 'list';
+    },
+    [cardViewModes]
+  );
 
   // 트리 내부 펼침 상태
   const [expandedTreeIds, setExpandedTreeIds] = useState<Set<string>>(() => {
@@ -246,6 +270,8 @@ export function CarouselView({
                   isItemSelected={isSelected}
                   expandedIds={expandedTreeIds}
                   onToggleExpand={toggleTreeExpand}
+                  viewMode={getCardViewMode(set.id)}
+                  onToggleViewMode={() => toggleCardViewMode(set.id)}
                 />
               </SwiperSlide>
             );
@@ -277,6 +303,8 @@ interface SetCardProps {
   isItemSelected: (id: string) => boolean;
   expandedIds: Set<string>;
   onToggleExpand: (id: string) => void;
+  viewMode: 'list' | 'graph';
+  onToggleViewMode: () => void;
 }
 
 function SetCard({
@@ -289,20 +317,76 @@ function SetCard({
   isItemSelected,
   expandedIds,
   onToggleExpand,
+  viewMode,
+  onToggleViewMode,
 }: SetCardProps) {
   return (
-    <div className="h-full p-4 bg-base-100 rounded-2xl shadow-lg border border-base-300 flex flex-col">
-      {/* TreeView로 계층 구조 표시 */}
-      <div className="flex-1 overflow-y-auto pr-1">
-        <TreeView
-          nodes={tree}
-          expandedIds={expandedIds}
-          selectedIds={new Set()}
-          onToggleExpand={onToggleExpand}
-          onToggleSelection={onToggleItem}
-          isSelected={isItemSelected}
-          variant="compact"
-        />
+    <div className="h-full p-4 bg-base-100 rounded-2xl shadow-lg border border-base-300 flex flex-col relative">
+      {/* 뷰 토글 버튼 (우상단) */}
+      <motion.button
+        onClick={onToggleViewMode}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="absolute top-3 right-3 z-10 btn btn-circle btn-sm bg-base-200/80 backdrop-blur border-0 hover:bg-base-300"
+        aria-label={viewMode === 'list' ? '그래프 뷰로 전환' : '리스트 뷰로 전환'}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={viewMode}
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            exit={{ rotate: 90, opacity: 0 }}
+            transition={APPLE_SPRING.snappy}
+          >
+            {viewMode === 'list' ? (
+              <GitBranch className="w-4 h-4" />
+            ) : (
+              <List className="w-4 h-4" />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </motion.button>
+
+      {/* 뷰 콘텐츠 (애니메이션 전환) */}
+      <div className="flex-1 overflow-hidden">
+        <AnimatePresence mode="wait">
+          {viewMode === 'list' ? (
+            <motion.div
+              key="list"
+              variants={CARD_VIEW_CROSSFADE}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="h-full overflow-y-auto pr-1"
+            >
+              <TreeView
+                nodes={tree}
+                expandedIds={expandedIds}
+                selectedIds={new Set()}
+                onToggleExpand={onToggleExpand}
+                onToggleSelection={onToggleItem}
+                isSelected={isItemSelected}
+                variant="compact"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="graph"
+              variants={CARD_VIEW_CROSSFADE}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="h-full"
+            >
+              <MiniGraphView
+                set={set}
+                tree={tree}
+                isItemSelected={isItemSelected}
+                onToggleItem={onToggleItem}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 세트 전체 선택 버튼 */}
