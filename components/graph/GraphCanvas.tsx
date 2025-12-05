@@ -162,8 +162,10 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
     if (!activePopover) {
       closeActionMenu();
     }
+    // 다중 선택 해제
+    clearMultiSelection();
     onBackgroundClick?.();
-  }, [setSelectedNode, setHoveredNode, closeActionMenu, activePopover, onBackgroundClick]);
+  }, [setSelectedNode, setHoveredNode, closeActionMenu, activePopover, clearMultiSelection, onBackgroundClick]);
 
   // 줌 변경 핸들러 - 렌더링 중 setState 방지를 위해 ref에 저장
   const handleZoom = useCallback(
@@ -340,6 +342,19 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
       if (e.key === 'Shift') {
         setIsShiftPressed(true);
       }
+      // ESC 키로 선택 해제
+      if (e.key === 'Escape') {
+        if (isMarqueeActive) {
+          // 마퀴 선택 중이면 취소
+          setIsMarqueeActive(false);
+          setMarqueeRect(null);
+          marqueeStartRef.current = null;
+          setMarqueeSelecting(false);
+        } else if (selectedNodeIds.length > 0) {
+          // 선택된 노드가 있으면 선택 해제
+          clearMultiSelection();
+        }
+      }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -359,7 +374,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isMarqueeActive, handleMarqueeEnd]);
+  }, [isMarqueeActive, handleMarqueeEnd, selectedNodeIds.length, clearMultiSelection, setMarqueeSelecting]);
 
   // 노드 타입별 아이콘 심볼 (Canvas에서 그릴 수 있는 간단한 형태)
   const drawNodeIcon = useCallback((
@@ -649,7 +664,6 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         // 빈 공간 클릭 시만 처리 (마퀴 선택 중이 아닐 때)
         if (e.target === containerRef.current && !isMarqueeActive) {
           handleBackgroundClick();
-          clearMultiSelection();
         }
       }}
     >
