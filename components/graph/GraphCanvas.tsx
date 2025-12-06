@@ -754,6 +754,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
   );
 
   // 메타데이터 텍스트 생성 헬퍼
+  // Note: Todo는 camelCase (recurrencePattern), Goal/Project는 snake_case (year_goal, end_date)
   const getMetadataText = useCallback((node: GraphNode): string | null => {
     const data = node.originalData;
     if (!data) return null;
@@ -761,21 +762,27 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
     const parts: string[] = [];
 
     if (node.type === 'todo') {
-      // 반복 패턴
-      if (data.recurrence_pattern && data.recurrence_pattern !== 'none') {
+      // 반복 패턴 (Todo는 camelCase로 변환됨)
+      const recurrencePattern = data.recurrencePattern || data.recurrence_pattern;
+      const recurrenceDaysOfWeek = data.recurrenceDaysOfWeek || data.recurrence_days_of_week;
+      const recurrenceDayOfMonth = data.recurrenceDayOfMonth || data.recurrence_day_of_month;
+      const startTime = data.startTime || data.start_time;
+      const scheduleType = data.scheduleType || data.schedule_type;
+
+      if (recurrencePattern && recurrencePattern !== 'none') {
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-        if (data.recurrence_pattern === 'daily') {
+        if (recurrencePattern === 'daily') {
           parts.push('매일');
-        } else if (data.recurrence_pattern === 'weekly' && data.recurrence_days_of_week) {
-          const days = data.recurrence_days_of_week.map((d: number) => dayNames[d]).join('/');
-          parts.push(`주 ${data.recurrence_days_of_week.length}회 (${days})`);
-        } else if (data.recurrence_pattern === 'monthly') {
-          parts.push(`매월 ${data.recurrence_day_of_month || 1}일`);
+        } else if (recurrencePattern === 'weekly' && recurrenceDaysOfWeek) {
+          const days = recurrenceDaysOfWeek.map((d: number) => dayNames[d]).join('/');
+          parts.push(`주 ${recurrenceDaysOfWeek.length}회 (${days})`);
+        } else if (recurrencePattern === 'monthly') {
+          parts.push(`매월 ${recurrenceDayOfMonth || 1}일`);
         }
       }
       // 시간
-      if (data.start_time && data.schedule_type === 'timed') {
-        const time = new Date(data.start_time);
+      if (startTime && scheduleType === 'timed') {
+        const time = new Date(startTime);
         const hours = time.getHours();
         const minutes = time.getMinutes();
         const period = hours >= 12 ? '오후' : '오전';
@@ -783,17 +790,21 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         parts.push(`${period} ${displayHour}:${minutes.toString().padStart(2, '0')}`);
       }
     } else if (node.type === 'goal') {
-      // 연간/분기 목표
-      if (data.year_goal) {
-        parts.push(`${data.year_goal}년`);
+      // 연간/분기 목표 (Goal은 snake_case)
+      const yearGoal = data.yearGoal || data.year_goal;
+      const quarterGoal = data.quarterGoal || data.quarter_goal;
+      const endDate = data.endDate || data.end_date;
+
+      if (yearGoal) {
+        parts.push(`${yearGoal}년`);
       }
-      if (data.quarter_goal) {
-        parts.push(`${data.quarter_goal}분기`);
+      if (quarterGoal) {
+        parts.push(`${quarterGoal}분기`);
       }
       // 마감일
-      if (data.end_date) {
-        const endDate = new Date(data.end_date);
-        parts.push(`~${endDate.getMonth() + 1}/${endDate.getDate()}`);
+      if (endDate) {
+        const dateObj = new Date(endDate);
+        parts.push(`~${dateObj.getMonth() + 1}/${dateObj.getDate()}`);
       }
       // 상태
       if (data.status && data.status !== 'not_started') {
@@ -807,10 +818,12 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         }
       }
     } else if (node.type === 'project') {
-      // 마감일
-      if (data.end_date) {
-        const endDate = new Date(data.end_date);
-        parts.push(`~${endDate.getMonth() + 1}/${endDate.getDate()}`);
+      // 마감일 (Project는 snake_case)
+      const endDate = data.endDate || data.end_date;
+
+      if (endDate) {
+        const dateObj = new Date(endDate);
+        parts.push(`~${dateObj.getMonth() + 1}/${dateObj.getDate()}`);
       }
       // 상태
       if (data.status && data.status !== 'not_started') {
