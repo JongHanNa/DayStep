@@ -170,7 +170,7 @@ export function AccordionView({
                       initial="enter"
                       animate="center"
                       exit="exit"
-                      className="h-[200px]"
+                      className="h-[320px]"
                     >
                       <MiniGraphView
                         set={set}
