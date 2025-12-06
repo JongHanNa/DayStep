@@ -8,9 +8,7 @@
 
 'use client';
 
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
-import { GraphFAB } from './GraphFAB';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GraphCreateModal } from './GraphCreateModal';
 import {
   CarouselView,
@@ -88,12 +86,8 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
           transition={APPLE_SPRING.smooth}
           className="text-center mb-6"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">시작하기</span>
-          </div>
-          <h1 className="text-2xl font-bold mb-2">쉽게 시작하세요</h1>
-          <p className="text-base-content/60 text-sm max-w-xs mx-auto">
+          <h1 className="text-2xl font-bold mb-2 text-primary">쉽게 시작하세요</h1>
+          <p className="text-base-content/60 text-sm max-w-sm mx-auto">
             추천 템플릿을 선택하면 바로 사용 가능한 초안이 생성됩니다
           </p>
         </motion.div>
@@ -138,15 +132,6 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
           </AnimatePresence>
         </motion.div>
 
-        {/* 하단 안내 */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-center text-sm text-base-content/40 mt-6"
-        >
-          또는 오른쪽 하단의 + 버튼으로 직접 만들기
-        </motion.p>
       </div>
 
       {/* 선택 항목 하단 바 */}
@@ -160,8 +145,7 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
         hasActiveSubscription={hasActiveSubscription}
       />
 
-      {/* FAB 버튼 */}
-      <GraphFAB />
+      {/* 생성 모달 */}
       <GraphCreateModal />
     </div>
   );

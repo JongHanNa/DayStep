@@ -6,7 +6,8 @@
 
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutGrid, List } from 'lucide-react';
 import { VIEW_TYPES, type EmptyStateViewType } from './RecommendationData';
 import { APPLE_SPRING, DOT_INDICATOR } from '@/lib/animations/appleMotion';
@@ -22,30 +23,37 @@ const VIEW_ICONS: Record<EmptyStateViewType, React.ElementType> = {
 };
 
 export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
+  const [hoveredView, setHoveredView] = useState<EmptyStateViewType | null>(null);
+
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* 뷰 아이콘 + 선택된 뷰 위에 이름 표시 */}
+      {/* 뷰 아이콘 + hover 시 이름 표시 */}
       <div className="flex items-center gap-3">
         {VIEW_TYPES.map(({ type, label }) => {
           const Icon = VIEW_ICONS[type];
           const isActive = currentView === type;
+          const isHovered = hoveredView === type;
 
           return (
             <div key={type} className="relative flex flex-col items-center">
-              {/* 활성화된 뷰 이름 - 아이콘 위에 표시 */}
-              {isActive && (
-                <motion.span
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  transition={APPLE_SPRING.snappy}
-                  className="absolute -top-6 text-xs font-medium text-primary whitespace-nowrap"
-                >
-                  {label}
-                </motion.span>
-              )}
+              {/* hover 시 뷰 이름 표시 */}
+              <AnimatePresence>
+                {isHovered && (
+                  <motion.span
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    transition={APPLE_SPRING.snappy}
+                    className="absolute -top-6 text-xs font-medium text-primary whitespace-nowrap"
+                  >
+                    {label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
               <motion.button
                 onClick={() => onViewChange(type)}
+                onMouseEnter={() => setHoveredView(type)}
+                onMouseLeave={() => setHoveredView(null)}
                 className={`
                   flex items-center justify-center rounded-full transition-colors
                   ${isActive
@@ -87,14 +95,6 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
       </motion.div>
 
       {/* 스와이프 힌트 */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-        className="text-xs text-base-content/40"
-      >
-        좌우로 스와이프하여 뷰 전환
-      </motion.p>
     </div>
   );
 }
