@@ -149,6 +149,13 @@ export function TreeView({
 // TreeNodeItem 컴포넌트 (재귀)
 // ============================================
 
+// 안정적인 tween 전환 (떨림 방지 - spring의 overshoot 없음)
+const STABLE_TRANSITION = {
+  type: 'tween' as const,
+  duration: 0.25,
+  ease: [0.25, 0.1, 0.25, 1] as const, // cubic-bezier for smooth deceleration
+};
+
 // 메타데이터 fade 애니메이션 variants
 const METADATA_VARIANTS = {
   hidden: {
@@ -156,9 +163,9 @@ const METADATA_VARIANTS = {
     height: 0,
     marginTop: 0,
     transition: {
-      opacity: { duration: 0.15 },
-      height: { duration: 0.2 },
-      marginTop: { duration: 0.2 },
+      opacity: { type: 'tween' as const, duration: 0.15, ease: 'easeOut' as const },
+      height: { type: 'tween' as const, duration: 0.2, ease: 'easeOut' as const },
+      marginTop: { type: 'tween' as const, duration: 0.2, ease: 'easeOut' as const },
     },
   },
   visible: {
@@ -166,9 +173,9 @@ const METADATA_VARIANTS = {
     height: 'auto',
     marginTop: 2,
     transition: {
-      opacity: { duration: 0.2, delay: 0.05 },
-      height: { duration: 0.25 },
-      marginTop: { duration: 0.25 },
+      opacity: { type: 'tween' as const, duration: 0.2, delay: 0.05, ease: 'easeOut' as const },
+      height: { type: 'tween' as const, duration: 0.25, ease: 'easeOut' as const },
+      marginTop: { type: 'tween' as const, duration: 0.25, ease: 'easeOut' as const },
     },
   },
 };
@@ -231,15 +238,15 @@ function TreeNodeItem({
 
   return (
     <motion.div
-      layout
+      layout="position"
       className="relative"
       style={{ marginLeft: indent }}
       variants={TREE_NODE_VARIANTS}
-      transition={APPLE_SPRING.smooth}
+      transition={STABLE_TRANSITION}
     >
       {/* 노드 콘텐츠 - 깔끔한 블록 스타일 */}
       <motion.div
-        layout
+        layout="position"
         onClick={handleNodeClick}
         whileTap={{ scale: 0.98 }}
         className={`
@@ -252,12 +259,10 @@ function TreeNodeItem({
           paddingLeft: 8,
           paddingRight: 8,
         }}
-        transition={APPLE_SPRING.smooth}
+        transition={STABLE_TRANSITION}
       >
         {/* 체크박스 */}
-        <motion.div
-          layout
-          whileTap={{ scale: 0.9 }}
+        <div
           className={`
             w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
             border-2 transition-all
@@ -278,22 +283,21 @@ function TreeNodeItem({
               <Check className="w-3 h-3 text-white" />
             </motion.div>
           )}
-        </motion.div>
+        </div>
 
         {/* 아이콘 */}
         <motion.div
-          layout
           className="rounded-full flex items-center justify-center flex-shrink-0"
           animate={{
             width: isChipMode ? 24 : 32,
             height: isChipMode ? 24 : 32,
           }}
-          transition={APPLE_SPRING.smooth}
+          transition={STABLE_TRANSITION}
           style={{ backgroundColor: `${node.color}20` }}
         >
           <motion.div
             animate={{ scale: isChipMode ? 0.75 : 1 }}
-            transition={APPLE_SPRING.smooth}
+            transition={STABLE_TRANSITION}
           >
             <Icon
               className="w-4 h-4"
@@ -303,21 +307,19 @@ function TreeNodeItem({
         </motion.div>
 
         {/* 텍스트 */}
-        <motion.div layout className="flex-1 min-w-0">
-          <motion.div layout className="flex items-center gap-2 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
             <motion.span
-              layout
               className="font-medium truncate"
               animate={{ fontSize: isChipMode ? 12 : 14 }}
-              transition={APPLE_SPRING.smooth}
+              transition={STABLE_TRANSITION}
             >
               {node.title}
             </motion.span>
             <motion.span
-              layout
               className="px-1.5 py-0.5 rounded-full flex-shrink-0"
               animate={{ fontSize: isChipMode ? 8 : 10 }}
-              transition={APPLE_SPRING.smooth}
+              transition={STABLE_TRANSITION}
               style={{
                 backgroundColor: `${node.color}20`,
                 color: node.color,
@@ -332,7 +334,7 @@ function TreeNodeItem({
                 ({descendantCount}개)
               </span>
             )}
-          </motion.div>
+          </div>
 
           {/* 날짜/시간/반복 - AnimatePresence로 부드러운 전환 */}
           <AnimatePresence mode="wait">
@@ -371,12 +373,11 @@ function TreeNodeItem({
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
         {/* 펼치기/접기 버튼 (오른쪽) */}
         {hasChildren && (
           <motion.button
-            layout
             onClick={handleExpandClick}
             className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-base-300 ml-auto"
             animate={isExpanded ? 'expanded' : 'collapsed'}
