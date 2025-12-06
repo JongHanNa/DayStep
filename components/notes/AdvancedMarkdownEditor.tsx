@@ -126,44 +126,11 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     createEditorTheme(minHeight),
   ], [minHeight, platform, fontSize]);
 
-  // onChange 디바운싱으로 리렌더 빈도 감소 (selection 유지 시간 확보)
-  const debouncedOnChangeRef = useRef<NodeJS.Timeout | null>(null);
-
-  // selection 상태 백업 (리렌더 후 복원용)
-  const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
-
+  // ✅ 디바운스 제거 - 즉시 onChange 호출
+  // 디바운스가 있으면 빠른 연속 입력 시 Controlled Component 동기화로 입력 손실 발생
+  // 자동저장은 useAutoSave에서 1000ms 디바운스로 별도 처리됨
   const handleChange = useCallback((val: string) => {
-    // 현재 selection 백업
-    const view = editorRef.current?.view;
-    if (view) {
-      const { from, to } = view.state.selection.main;
-      if (from !== to) {
-        lastSelectionRef.current = { from, to };
-      }
-    }
-
-    // 기존 타이머 취소
-    if (debouncedOnChangeRef.current) {
-      clearTimeout(debouncedOnChangeRef.current);
-    }
-
-    // ✅ 50ms 디바운스 (150ms → 50ms, 상태 동기화 지연 최소화)
-    debouncedOnChangeRef.current = setTimeout(() => {
-      onChange(val);
-
-      // onChange 후 selection 복원 (다음 틱)
-      setTimeout(() => {
-        if (lastSelectionRef.current && editorRef.current?.view) {
-          const view = editorRef.current.view;
-          view.dispatch({
-            selection: {
-              anchor: lastSelectionRef.current.from,
-              head: lastSelectionRef.current.to
-            }
-          });
-        }
-      }, 0);
-    }, 50);
+    onChange(val);
   }, [onChange]);
   
   // CodeMirror view가 생성될 때 view 참조 저장

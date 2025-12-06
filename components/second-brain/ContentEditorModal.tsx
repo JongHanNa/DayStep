@@ -47,6 +47,9 @@ export default function ContentEditorModal({
 }: ContentEditorModalProps) {
   const { openModal, closeModal } = useModalStore();
 
+  // ✅ 내부 state 분리 - 외부 리렌더 영향 없이 에디터 독립적으로 동작
+  const [localContent, setLocalContent] = useState(content);
+
   // 사용자 편집 상태 추적
   const [hasUserEditedContent, setHasUserEditedContent] = useState(false);
   const [originalContent] = useState(content);
@@ -65,14 +68,14 @@ export default function ContentEditorModal({
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
 
 
-  // 자동저장 Hook
-  const autoSave = useAutoSave(content, {
+  // 자동저장 Hook - localContent 사용
+  const autoSave = useAutoSave(localContent, {
     onSave: async () => {
-      if (!content.trim()) {
+      if (!localContent.trim()) {
         throw new Error('내용을 입력해주세요');
       }
       if (onAutoSave) {
-        await onAutoSave(content);
+        await onAutoSave(localContent);
       }
     },
     debounceMs,
@@ -85,11 +88,13 @@ export default function ContentEditorModal({
       openModal();
       // 모달 열릴 때 편집 상태 초기화
       setHasUserEditedContent(false);
+      // ✅ 모달 열릴 때 외부 content로 localContent 초기화
+      setLocalContent(content);
     }
     return () => {
       closeModal();
     };
-  }, [open, openModal, closeModal]);
+  }, [open, openModal, closeModal, content]);
 
   // 제목 잘림 감지
   useEffect(() => {
@@ -107,6 +112,9 @@ export default function ContentEditorModal({
 
   // 내용 변경 핸들러 (사용자 편집 감지)
   const handleContentChange = (value: string) => {
+    // ✅ 내부 state 업데이트 (에디터용 - 즉시 반영)
+    setLocalContent(value);
+    // ✅ 부모에게도 전달 (자동저장용)
     onChange(value);
     // 사용자가 실제로 내용을 변경했을 때만 편집 상태로 표시
     if (!hasUserEditedContent && value !== originalContent) {
@@ -182,7 +190,7 @@ export default function ContentEditorModal({
 
           {/* 마크다운 에디터 */}
           <AdvancedMarkdownEditor
-            value={content}
+            value={localContent}  // ✅ 내부 state 사용 - 외부 리렌더 영향 없음
             onChange={handleContentChange}
             placeholder={placeholder}
             minHeight={770}
