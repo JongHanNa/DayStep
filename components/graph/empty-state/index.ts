@@ -12,7 +12,6 @@ export { useBatchCreate } from './useBatchCreate';
 // 뷰 컴포넌트
 export { CarouselView } from './CarouselView';
 export { AccordionView } from './AccordionView';
-export { GraphPreviewView } from './GraphPreviewView';
 export { ChipListView } from './ChipListView';
 export { MiniGraphView } from './MiniGraphView';
 
