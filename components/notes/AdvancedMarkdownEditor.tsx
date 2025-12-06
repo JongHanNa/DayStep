@@ -197,7 +197,7 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
         const { state } = view;
         const { selection } = state;
         const from = selection.main.from;
-        
+
         view.dispatch({
           changes: {
             from,
@@ -211,6 +211,30 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
         view.focus();
       }
     }
+  }, []);
+
+  // 선택된 텍스트를 감싸는 함수 (형광펜 등에 사용)
+  const handleWrapSelection = useCallback((prefix: string, suffix: string) => {
+    const view = editorRef.current?.view;
+    if (!view) return;
+
+    const { from, to } = view.state.selection.main;
+    const selectedText = view.state.sliceDoc(from, to);
+
+    if (selectedText) {
+      // 선택된 텍스트가 있으면 감싸기
+      view.dispatch({
+        changes: { from, to, insert: `${prefix}${selectedText}${suffix}` },
+        selection: { anchor: from + prefix.length + selectedText.length + suffix.length }
+      });
+    } else {
+      // 선택된 텍스트가 없으면 마커 삽입 후 커서를 중간으로
+      view.dispatch({
+        changes: { from, to, insert: `${prefix}${suffix}` },
+        selection: { anchor: from + prefix.length }
+      });
+    }
+    view.focus();
   }, []);
 
   // 터치 드래그 시 모달 드래그 방지
@@ -413,7 +437,12 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
       data-platform={platform}
     >
       {showToolbar && (
-        <MarkdownToolbar onInsert={handleToolbarInsert} fontSize={fontSize} onFontSizeChange={onFontSizeChange} />
+        <MarkdownToolbar
+          onInsert={handleToolbarInsert}
+          onWrapSelection={handleWrapSelection}
+          fontSize={fontSize}
+          onFontSizeChange={onFontSizeChange}
+        />
       )}
       
       <div

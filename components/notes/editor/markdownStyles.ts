@@ -491,6 +491,12 @@ export const globalMarkdownStyles = `
     padding: 1px 2px !important;
     border-radius: 2px !important;
   }
+
+  /* 다크모드 형광펜 배경색 */
+  [data-theme="dark"] .advanced-markdown-editor-container .cm-highlight-content,
+  [data-theme="dark"] .advanced-markdown-editor-container mark {
+    background-color: hsl(45, 100%, 35%) !important;
+  }
   
   .advanced-markdown-editor-container .cm-checkbox {
     display: inline-block !important;

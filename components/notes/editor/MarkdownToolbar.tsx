@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Hash,
   Square,
+  Highlighter,
   // TODO: 아래 기능들은 나중에 구현 예정
   // Bold,
   // Italic,
@@ -12,18 +13,18 @@ import {
   // Quote,
   // Minus,
   // CheckSquare,
-  // Highlighter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MarkdownToolbarProps {
   onInsert: (text: string, cursorOffset?: number) => void;
+  onWrapSelection: (prefix: string, suffix: string) => void;
   fontSize?: number;
   onFontSizeChange?: (size: number) => void;
 }
 
-// 키보드 툴바 컴포넌트 (현재 #, 체크박스만 활성화)
-const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert, fontSize, onFontSizeChange }) => {
+// 키보드 툴바 컴포넌트
+const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert, onWrapSelection, fontSize, onFontSizeChange }) => {
   const tools = [
     {
       icon: <Hash size={16} />,
@@ -34,6 +35,11 @@ const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({ onInsert, fontSize, o
       icon: <Square size={16} />,
       label: 'Checkbox',
       action: () => onInsert('- [ ] ', 0),
+    },
+    {
+      icon: <Highlighter size={16} />,
+      label: 'Highlight',
+      action: () => onWrapSelection('==', '=='),
     },
     // TODO: 아래 기능들은 나중에 구현 예정
     // {
