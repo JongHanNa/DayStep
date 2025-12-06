@@ -802,6 +802,7 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
       // 연간/분기 목표 (Goal은 snake_case)
       const yearGoal = data.yearGoal || data.year_goal;
       const quarterGoal = data.quarterGoal || data.quarter_goal;
+      const startDate = data.startDate || data.start_date;
       const endDate = data.endDate || data.end_date;
 
       if (yearGoal) {
@@ -810,10 +811,20 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
       if (quarterGoal) {
         parts.push(`${quarterGoal}분기`);
       }
-      // 마감일
-      if (endDate) {
-        const dateObj = new Date(endDate);
-        parts.push(`~${dateObj.getMonth() + 1}/${dateObj.getDate()}`);
+      // 날짜 (시작년월일 ~ 종료년월일)
+      if (startDate || endDate) {
+        const formatDate = (d: string) => {
+          const date = new Date(d);
+          return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+        };
+
+        if (startDate && endDate) {
+          parts.push(`${formatDate(startDate)} ~ ${formatDate(endDate)}`);
+        } else if (endDate) {
+          parts.push(`~ ${formatDate(endDate)}`);
+        } else if (startDate) {
+          parts.push(`${formatDate(startDate)} ~`);
+        }
       }
       // 상태
       if (data.status && data.status !== 'not_started') {
@@ -827,12 +838,23 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         }
       }
     } else if (node.type === 'project') {
-      // 마감일 (Project는 snake_case)
+      // 날짜 (Project는 snake_case)
+      const startDate = data.startDate || data.start_date;
       const endDate = data.endDate || data.end_date;
 
-      if (endDate) {
-        const dateObj = new Date(endDate);
-        parts.push(`~${dateObj.getMonth() + 1}/${dateObj.getDate()}`);
+      if (startDate || endDate) {
+        const formatDate = (d: string) => {
+          const date = new Date(d);
+          return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+        };
+
+        if (startDate && endDate) {
+          parts.push(`${formatDate(startDate)} ~ ${formatDate(endDate)}`);
+        } else if (endDate) {
+          parts.push(`~ ${formatDate(endDate)}`);
+        } else if (startDate) {
+          parts.push(`${formatDate(startDate)} ~`);
+        }
       }
       // 상태
       if (data.status && data.status !== 'not_started') {

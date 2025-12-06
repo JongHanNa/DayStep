@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { addDays, format } from 'date-fns';
+import { addDays, format, setHours, setMinutes } from 'date-fns';
 import { useAuth } from '@/app/context/AuthContext';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -260,11 +260,18 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
         }
 
         case 'goal': {
+          // 종료일 계산
+          const dateConfig = item.dateConfig;
+          const endDate = dateConfig?.endOffset !== undefined
+            ? format(addDays(new Date(), dateConfig.endOffset), 'yyyy-MM-dd')
+            : undefined;
+
           // Goal → Area 또는 Resource 연결
           const goal = await createGoal(userId, {
             title: item.title,
             color: color,
             status: 'not_started',
+            end_date: endDate,
             ...(parentType === 'area' && parentDbId ? { area_id: parentDbId } : {}),
             ...(parentType === 'resource' && parentDbId ? { resource_id: parentDbId } : {}),
           });
@@ -272,12 +279,19 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
         }
 
         case 'project': {
+          // 종료일 계산
+          const dateConfig = item.dateConfig;
+          const endDate = dateConfig?.endOffset !== undefined
+            ? format(addDays(new Date(), dateConfig.endOffset), 'yyyy-MM-dd')
+            : undefined;
+
           // Project → Goal 또는 Area/Resource 연결
           const project = await createProject(userId, {
             title: item.title,
             color: color,
             status: 'not_started',
             order_index: 0,
+            end_date: endDate,
             ...(parentType === 'goal' && parentDbId ? { goal_id: parentDbId } : {}),
             ...((parentType === 'area' || parentType === 'resource') && parentDbId
               ? { area_resource_id: parentDbId }
@@ -287,16 +301,39 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
         }
 
         case 'todo': {
-          // 반복 설정 처리
+          // 날짜/시간 설정 처리
+          const dateConfig = item.dateConfig;
           const recurrence = item.recurrenceConfig;
+
+          // start_time 계산
+          let startTime: Date | null = null;
+          let endTime: Date | null = null;
+          if (dateConfig?.startOffset !== undefined) {
+            startTime = addDays(new Date(), dateConfig.startOffset);
+            if (dateConfig.time) {
+              const [hours, minutes] = dateConfig.time.split(':').map(Number);
+              startTime = setHours(setMinutes(startTime, minutes), hours);
+              // end_time은 start_time + 1시간 (기본 duration)
+              endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+            }
+          }
+
+          // schedule_type 결정 (시간 설정이 있으면 'timed', 없으면 'anytime')
+          const scheduleType = dateConfig?.time ? 'timed' : 'anytime';
+
+          // 반복 종료일 계산
           const recurrenceEndDate = recurrence?.endOffset
             ? addDays(new Date(), recurrence.endOffset)
             : null;
 
           const todo = await createTodo({
             title: item.title,
-            schedule_type: 'anytime',
+            schedule_type: scheduleType,
+            start_time: startTime?.toISOString(),
+            end_time: endTime?.toISOString(),
             priority: 'medium',
+            // 일정 유형일 때 명료화 속성 설정
+            clarification: 'schedule_clear',
             // 반복 패턴 필드
             recurrence_pattern: recurrence?.pattern ?? 'none',
             recurrence_interval: recurrence?.interval ?? 1,
