@@ -753,6 +753,15 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
     [selectedNodeId, hoveredNodeId, selectedNodeIds, drawNodeIcon, nodeVisibility]
   );
 
+  // 반복 여부 체크 헬퍼
+  const isRecurringTodo = useCallback((node: GraphNode): boolean => {
+    if (node.type !== 'todo') return false;
+    const data = node.originalData;
+    if (!data) return false;
+    const recurrencePattern = data.recurrencePattern || data.recurrence_pattern;
+    return recurrencePattern && recurrencePattern !== 'none';
+  }, []);
+
   // 메타데이터 텍스트 생성 헬퍼
   // Note: Todo는 camelCase (recurrencePattern), Goal/Project는 snake_case (year_goal, end_date)
   const getMetadataText = useCallback((node: GraphNode): string | null => {
@@ -881,18 +890,25 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         // 메타데이터 텍스트
         const metadataText = getMetadataText(node);
         const hasMetadata = metadataText !== null;
+        const isRecurring = isRecurringTodo(node);
+        const repeatIconSize = metaFontSize; // 아이콘 크기
+        const iconSpacing = 3; // 아이콘과 텍스트 사이 간격
 
         // 텍스트 너비 측정
         ctx.font = `600 ${titleFontSize}px Inter, system-ui, sans-serif`;
         const titleWidth = ctx.measureText(displayTitle).width;
 
         let metaWidth = 0;
+        let iconWidth = 0;
         if (hasMetadata) {
           ctx.font = `400 ${metaFontSize}px Inter, system-ui, sans-serif`;
           metaWidth = ctx.measureText(metadataText).width;
+          if (isRecurring) {
+            iconWidth = repeatIconSize + iconSpacing;
+          }
         }
 
-        const maxWidth = Math.max(titleWidth, metaWidth);
+        const maxWidth = Math.max(titleWidth, metaWidth + iconWidth);
 
         // 노드 바로 아래 중앙 정렬
         const labelY = y + size + 10;
@@ -926,15 +942,77 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         // 메타데이터 텍스트 (있을 경우)
         if (hasMetadata) {
           ctx.font = `400 ${metaFontSize}px Inter, system-ui, sans-serif`;
-          ctx.fillStyle = isSelected || isHovered || isMultiSelected ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.7)';
-          ctx.fillText(metadataText, labelX, labelY + titleFontSize + 2);
+          const metaColor = isSelected || isHovered || isMultiSelected ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.7)';
+          ctx.fillStyle = metaColor;
+
+          const metaY = labelY + titleFontSize + 2;
+          const totalMetaWidth = iconWidth + metaWidth;
+
+          if (isRecurring) {
+            // 반복 아이콘 + 메타데이터 텍스트 함께 표시
+            const startX = labelX - totalMetaWidth / 2;
+
+            // Lucide Repeat 아이콘 그리기 (SVG path 기반)
+            const iconScale = repeatIconSize / 24; // Lucide 기본 24x24 기준
+            const iconX = startX;
+            const iconY = metaY;
+
+            ctx.save();
+            ctx.translate(iconX, iconY);
+            ctx.scale(iconScale, iconScale);
+            ctx.strokeStyle = metaColor;
+            ctx.lineWidth = 2 / iconScale; // 스케일에 맞게 조정
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Lucide Repeat 아이콘 path
+            // m17 2 4 4-4 4 (상단 화살표)
+            ctx.beginPath();
+            ctx.moveTo(17, 2);
+            ctx.lineTo(21, 6);
+            ctx.lineTo(17, 10);
+            ctx.stroke();
+
+            // M3 11v-1a4 4 0 0 1 4-4h14 (상단 라인)
+            ctx.beginPath();
+            ctx.moveTo(3, 11);
+            ctx.lineTo(3, 10);
+            ctx.arc(7, 10, 4, Math.PI, Math.PI * 1.5, false);
+            ctx.lineTo(21, 6);
+            ctx.stroke();
+
+            // m7 22-4-4 4-4 (하단 화살표)
+            ctx.beginPath();
+            ctx.moveTo(7, 22);
+            ctx.lineTo(3, 18);
+            ctx.lineTo(7, 14);
+            ctx.stroke();
+
+            // M21 13v1a4 4 0 0 1-4 4H3 (하단 라인)
+            ctx.beginPath();
+            ctx.moveTo(21, 13);
+            ctx.lineTo(21, 14);
+            ctx.arc(17, 14, 4, 0, Math.PI * 0.5, false);
+            ctx.lineTo(3, 18);
+            ctx.stroke();
+
+            ctx.restore();
+
+            // 메타데이터 텍스트
+            ctx.textAlign = 'left';
+            ctx.fillText(metadataText, startX + iconWidth, metaY);
+            ctx.textAlign = 'center'; // 원래 상태로 복원
+          } else {
+            // 메타데이터 텍스트만 표시
+            ctx.fillText(metadataText, labelX, metaY);
+          }
         }
 
         // globalAlpha 복원
         ctx.globalAlpha = prevAlpha;
       });
     },
-    [graphData.nodes, selectedNodeId, hoveredNodeId, selectedNodeIds, nodeVisibility, getMetadataText]
+    [graphData.nodes, selectedNodeId, hoveredNodeId, selectedNodeIds, nodeVisibility, getMetadataText, isRecurringTodo]
   );
 
   // 노드 포인터 영역 크기
