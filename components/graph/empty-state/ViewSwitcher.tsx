@@ -7,7 +7,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { LayoutGrid, List, Tag } from 'lucide-react';
+import { LayoutGrid, List } from 'lucide-react';
 import { VIEW_TYPES, type EmptyStateViewType } from './RecommendationData';
 import { APPLE_SPRING, DOT_INDICATOR } from '@/lib/animations/appleMotion';
 
@@ -19,7 +19,6 @@ interface ViewSwitcherProps {
 const VIEW_ICONS: Record<EmptyStateViewType, React.ElementType> = {
   carousel: LayoutGrid,
   accordion: List,
-  chips: Tag,
 };
 
 export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {

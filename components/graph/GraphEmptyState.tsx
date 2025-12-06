@@ -15,7 +15,6 @@ import { GraphCreateModal } from './GraphCreateModal';
 import {
   CarouselView,
   AccordionView,
-  ChipListView,
   ViewSwitcher,
   SelectedItemsBar,
   useViewSwipe,
@@ -73,8 +72,6 @@ export function GraphEmptyState({ onComplete }: GraphEmptyStateProps) {
         return <CarouselView {...commonProps} />;
       case 'accordion':
         return <AccordionView {...commonProps} />;
-      case 'chips':
-        return <ChipListView {...commonProps} />;
       default:
         return <CarouselView {...commonProps} />;
     }

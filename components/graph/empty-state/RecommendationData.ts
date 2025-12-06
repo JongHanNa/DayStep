@@ -518,12 +518,11 @@ export function getAllRecommendations(): RecommendationItem[] {
 /**
  * 뷰 타입 정의
  */
-export type EmptyStateViewType = 'carousel' | 'accordion' | 'chips';
+export type EmptyStateViewType = 'carousel' | 'accordion';
 
 export const VIEW_TYPES: { type: EmptyStateViewType; label: string; description: string }[] = [
   { type: 'carousel', label: '캐러셀', description: '카드를 스와이프하세요' },
   { type: 'accordion', label: '목록', description: '카테고리를 펼쳐보세요' },
-  { type: 'chips', label: '태그', description: '빠르게 선택하세요' },
 ];
 
 // ============================================
