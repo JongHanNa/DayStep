@@ -753,14 +753,86 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
     [selectedNodeId, hoveredNodeId, selectedNodeIds, drawNodeIcon, nodeVisibility]
   );
 
+  // 메타데이터 텍스트 생성 헬퍼
+  const getMetadataText = useCallback((node: GraphNode): string | null => {
+    const data = node.originalData;
+    if (!data) return null;
+
+    const parts: string[] = [];
+
+    if (node.type === 'todo') {
+      // 반복 패턴
+      if (data.recurrence_pattern && data.recurrence_pattern !== 'none') {
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        if (data.recurrence_pattern === 'daily') {
+          parts.push('매일');
+        } else if (data.recurrence_pattern === 'weekly' && data.recurrence_days_of_week) {
+          const days = data.recurrence_days_of_week.map((d: number) => dayNames[d]).join('/');
+          parts.push(`주 ${data.recurrence_days_of_week.length}회 (${days})`);
+        } else if (data.recurrence_pattern === 'monthly') {
+          parts.push(`매월 ${data.recurrence_day_of_month || 1}일`);
+        }
+      }
+      // 시간
+      if (data.start_time && data.schedule_type === 'timed') {
+        const time = new Date(data.start_time);
+        const hours = time.getHours();
+        const minutes = time.getMinutes();
+        const period = hours >= 12 ? '오후' : '오전';
+        const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+        parts.push(`${period} ${displayHour}:${minutes.toString().padStart(2, '0')}`);
+      }
+    } else if (node.type === 'goal') {
+      // 연간/분기 목표
+      if (data.year_goal) {
+        parts.push(`${data.year_goal}년`);
+      }
+      if (data.quarter_goal) {
+        parts.push(`${data.quarter_goal}분기`);
+      }
+      // 마감일
+      if (data.end_date) {
+        const endDate = new Date(data.end_date);
+        parts.push(`~${endDate.getMonth() + 1}/${endDate.getDate()}`);
+      }
+      // 상태
+      if (data.status && data.status !== 'not_started') {
+        const statusMap: Record<string, string> = {
+          'in_progress': '진행중',
+          'completed': '완료',
+          'on_hold': '보류',
+        };
+        if (statusMap[data.status]) {
+          parts.push(statusMap[data.status]);
+        }
+      }
+    } else if (node.type === 'project') {
+      // 마감일
+      if (data.end_date) {
+        const endDate = new Date(data.end_date);
+        parts.push(`~${endDate.getMonth() + 1}/${endDate.getDate()}`);
+      }
+      // 상태
+      if (data.status && data.status !== 'not_started') {
+        const statusMap: Record<string, string> = {
+          'in_progress': '진행중',
+          'completed': '완료',
+          'on_hold': '보류',
+        };
+        if (statusMap[data.status]) {
+          parts.push(statusMap[data.status]);
+        }
+      }
+    }
+
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }, []);
+
   // 모든 노드가 그려진 후 라벨을 별도로 그리기 (z-index 문제 해결)
   const onRenderFramePost = useCallback(
     (ctx: CanvasRenderingContext2D, globalScale: number) => {
       // 줌 레벨이 너무 낮으면 라벨 표시 안함
       if (globalScale <= 0.4) return;
-
-      // 화면 중앙 x 좌표 계산
-      const centerX = dimensions.width / 2;
 
       graphData.nodes.forEach((node) => {
         const nodeWithPos = node as GraphNode & { x?: number; y?: number };
@@ -783,56 +855,73 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         const prevAlpha = ctx.globalAlpha;
         ctx.globalAlpha = visibility.opacity;
 
-        const labelFontSize = Math.max(8, Math.min(11, 10 / globalScale));
-        ctx.font = `500 ${labelFontSize}px Inter, system-ui, sans-serif`;
+        const titleFontSize = Math.max(8, Math.min(11, 10 / globalScale));
+        const metaFontSize = Math.max(7, Math.min(9, 8 / globalScale));
+        const padding = 4;
 
         // 제목 텍스트 (최대 길이 제한)
-        const maxTitleLength = 15;
+        const maxTitleLength = 12;
         const displayTitle = node.title.length > maxTitleLength
           ? node.title.substring(0, maxTitleLength) + '...'
           : node.title;
 
-        const textWidth = ctx.measureText(displayTitle).width;
-        const padding = 3;
+        // 메타데이터 텍스트
+        const metadataText = getMetadataText(node);
+        const hasMetadata = metadataText !== null;
 
-        // 노드 위치에 따라 라벨 위치 결정 (좌우 대칭)
-        const isLeftSide = x < centerX;
-        const labelY = y + size / 2 + 5; // 노드 아래쪽
-        const labelX = isLeftSide
-          ? x - size - 8  // 왼쪽 노드: 노드 왼쪽에 라벨
-          : x + size + 8; // 오른쪽 노드: 노드 오른쪽에 라벨
-        const textAlign = isLeftSide ? 'right' : 'left';
+        // 텍스트 너비 측정
+        ctx.font = `600 ${titleFontSize}px Inter, system-ui, sans-serif`;
+        const titleWidth = ctx.measureText(displayTitle).width;
+
+        let metaWidth = 0;
+        if (hasMetadata) {
+          ctx.font = `400 ${metaFontSize}px Inter, system-ui, sans-serif`;
+          metaWidth = ctx.measureText(metadataText).width;
+        }
+
+        const maxWidth = Math.max(titleWidth, metaWidth);
+
+        // 노드 바로 아래 중앙 정렬
+        const labelY = y + size + 10;
+        const labelX = x;
+
+        // 배경 박스 높이 계산
+        const boxHeight = hasMetadata
+          ? titleFontSize + metaFontSize + padding * 2 + 2
+          : titleFontSize + padding * 2;
 
         // 배경 박스 (호버/선택/다중선택 시 더 진하게)
-        const bgOpacity = isMultiSelected ? 0.85 : isSelected ? 0.85 : isHovered ? 0.75 : 0.6;
+        const bgOpacity = isMultiSelected ? 0.85 : isSelected ? 0.85 : isHovered ? 0.75 : 0.65;
         ctx.fillStyle = isMultiSelected ? 'rgba(56, 189, 248, 0.9)' : `rgba(0, 0, 0, ${bgOpacity})`;
         ctx.beginPath();
-
-        // 텍스트 정렬에 따른 배경 박스 위치 조정
-        const boxX = isLeftSide
-          ? labelX - textWidth - padding
-          : labelX - padding;
-
         ctx.roundRect(
-          boxX,
-          labelY - labelFontSize / 2 - padding / 2,
-          textWidth + padding * 2,
-          labelFontSize + padding,
-          3
+          labelX - maxWidth / 2 - padding,
+          labelY - padding,
+          maxWidth + padding * 2,
+          boxHeight,
+          4
         );
         ctx.fill();
 
-        // 텍스트
-        ctx.textAlign = textAlign as CanvasTextAlign;
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = isSelected || isHovered || isMultiSelected ? '#fff' : 'rgba(255, 255, 255, 0.9)';
+        // 제목 텍스트
+        ctx.font = `600 ${titleFontSize}px Inter, system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = isSelected || isHovered || isMultiSelected ? '#fff' : 'rgba(255, 255, 255, 0.95)';
         ctx.fillText(displayTitle, labelX, labelY);
+
+        // 메타데이터 텍스트 (있을 경우)
+        if (hasMetadata) {
+          ctx.font = `400 ${metaFontSize}px Inter, system-ui, sans-serif`;
+          ctx.fillStyle = isSelected || isHovered || isMultiSelected ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.7)';
+          ctx.fillText(metadataText, labelX, labelY + titleFontSize + 2);
+        }
 
         // globalAlpha 복원
         ctx.globalAlpha = prevAlpha;
       });
     },
-    [graphData.nodes, selectedNodeId, hoveredNodeId, selectedNodeIds, dimensions.width, nodeVisibility]
+    [graphData.nodes, selectedNodeId, hoveredNodeId, selectedNodeIds, nodeVisibility, getMetadataText]
   );
 
   // 노드 포인터 영역 크기
