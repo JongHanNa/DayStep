@@ -809,7 +809,9 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
         parts.push(`${yearGoal}년`);
       }
       if (quarterGoal) {
-        parts.push(`${quarterGoal}분기`);
+        // Q1 → 1분기로 변환
+        const quarterNum = quarterGoal.replace('Q', '');
+        parts.push(`${quarterNum}분기`);
       }
       // 날짜 (시작년월일 ~ 종료년월일)
       if (startDate || endDate) {
@@ -826,12 +828,14 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
           parts.push(`${formatDate(startDate)} ~`);
         }
       }
-      // 상태
-      if (data.status && data.status !== 'not_started') {
+      // 상태 (모든 상태 표시)
+      if (data.status) {
         const statusMap: Record<string, string> = {
+          'not_started': '시작 안함',
           'in_progress': '진행중',
           'completed': '완료',
           'on_hold': '보류',
+          'paused': '일시정지',
         };
         if (statusMap[data.status]) {
           parts.push(statusMap[data.status]);
@@ -856,12 +860,14 @@ export function GraphCanvas({ graphData, onNodeClick, onBackgroundClick, onMulti
           parts.push(`${formatDate(startDate)} ~`);
         }
       }
-      // 상태
-      if (data.status && data.status !== 'not_started') {
+      // 상태 (모든 상태 표시)
+      if (data.status) {
         const statusMap: Record<string, string> = {
+          'not_started': '시작 안함',
           'in_progress': '진행중',
           'completed': '완료',
           'on_hold': '보류',
+          'paused': '일시정지',
         };
         if (statusMap[data.status]) {
           parts.push(statusMap[data.status]);

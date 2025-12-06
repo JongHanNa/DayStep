@@ -269,6 +269,22 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
             ? format(addDays(new Date(), dateConfig.endOffset), 'yyyy-MM-dd')
             : undefined;
 
+          // 연간/분기 목표: 종료일 기준 계산 (종료일 없으면 현재 날짜)
+          const targetDate = dateConfig?.endOffset !== undefined
+            ? addDays(new Date(), dateConfig.endOffset)
+            : new Date();
+          const yearGoal = targetDate.getFullYear();
+
+          // 분기 목표: 종료일 기준 분기 계산
+          const getQuarter = (date: Date): 'Q1' | 'Q2' | 'Q3' | 'Q4' => {
+            const month = date.getMonth();
+            if (month < 3) return 'Q1';
+            if (month < 6) return 'Q2';
+            if (month < 9) return 'Q3';
+            return 'Q4';
+          };
+          const quarterGoal = getQuarter(targetDate);
+
           // Goal → Area 또는 Resource 연결
           const goal = await createGoal(userId, {
             title: item.title,
@@ -276,6 +292,8 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
             status: 'not_started',
             start_date: startDate,
             end_date: endDate,
+            year_goal: yearGoal,
+            quarter_goal: quarterGoal,
             ...(parentType === 'area' && parentDbId ? { area_id: parentDbId } : {}),
             ...(parentType === 'resource' && parentDbId ? { resource_id: parentDbId } : {}),
           });
