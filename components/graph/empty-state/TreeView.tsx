@@ -19,9 +19,7 @@ import {
 } from './RecommendationData';
 import {
   APPLE_SPRING,
-  TREE_COLLAPSE,
   TREE_CHEVRON,
-  TREE_NODE_VARIANTS,
   STAGGER,
 } from '@/lib/animations/appleMotion';
 import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
@@ -241,7 +239,6 @@ function TreeNodeItem({
       layout="position"
       className="relative"
       style={{ marginLeft: indent }}
-      variants={TREE_NODE_VARIANTS}
       transition={STABLE_TRANSITION}
     >
       {/* 노드 콘텐츠 - 깔끔한 블록 스타일 */}
@@ -392,10 +389,10 @@ function TreeNodeItem({
       <AnimatePresence initial={false}>
         {hasChildren && isExpanded && (
           <motion.div
-            initial="collapsed"
-            animate="expanded"
-            exit="collapsed"
-            variants={TREE_COLLAPSE}
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            transition={{ duration: 0.2, ease: 'linear' }}
             className="overflow-hidden"
           >
             <div className="">

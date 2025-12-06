@@ -353,29 +353,25 @@ export const createTransition = (
 // 트리 뷰 애니메이션
 // ============================================
 
-/** 트리 노드 등장/퇴장 애니메이션 */
+/** 트리 노드 등장/퇴장 애니메이션 (opacity만 - height는 컨테이너가 담당) */
 export const TREE_NODE_VARIANTS: Variants = {
   hidden: {
     opacity: 0,
-    x: -10,
-    height: 0,
   },
   visible: {
     opacity: 1,
-    x: 0,
-    height: 'auto',
     transition: {
-      ...APPLE_SPRING.default,
-      height: { duration: 0.3 },
+      type: 'tween' as const,
+      duration: 0.25,
+      ease: 'easeOut' as const,
     },
   },
   exit: {
     opacity: 0,
-    x: -10,
-    height: 0,
     transition: {
-      duration: 0.2,
-      height: { duration: 0.2 },
+      type: 'tween' as const,
+      duration: 0.15,
+      ease: 'easeOut' as const,
     },
   },
 };
@@ -386,10 +382,16 @@ export const TREE_COLLAPSE: Variants = {
     height: 'auto',
     opacity: 1,
     transition: {
-      height: APPLE_SPRING.smooth,
-      opacity: { duration: 0.25, delay: 0.05 },
-      staggerChildren: STAGGER.fast,
-      delayChildren: 0.05,
+      height: {
+        type: 'tween' as const,
+        duration: 0.25,
+        ease: [0.25, 0.1, 0.25, 1] as const,
+      },
+      opacity: {
+        type: 'tween' as const,
+        duration: 0.25,
+        ease: 'easeOut' as const,
+      },
     },
   },
   collapsed: {
