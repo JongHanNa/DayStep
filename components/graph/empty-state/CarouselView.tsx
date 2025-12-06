@@ -402,7 +402,7 @@ function SetCard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
               transition={APPLE_SPRING.smooth}
-              className="h-full overflow-y-auto pr-1"
+              className="h-full overflow-y-auto pr-1 pt-8"
             >
               <TreeView
                 nodes={tree}

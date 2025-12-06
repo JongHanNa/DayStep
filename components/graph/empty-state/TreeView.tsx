@@ -244,10 +244,8 @@ function TreeNodeItem({
       {/* 노드 콘텐츠 - 깔끔한 블록 스타일 */}
       <motion.div
         layout="position"
-        onClick={handleNodeClick}
-        whileTap={{ scale: 0.98 }}
         className={`
-          group flex items-center gap-2 cursor-pointer transition-colors
+          group flex items-center gap-2 transition-colors
           ${nodeSelected ? 'bg-primary/10' : 'hover:bg-base-200/50'}
         `}
         animate={{
@@ -260,9 +258,10 @@ function TreeNodeItem({
       >
         {/* 체크박스 */}
         <div
+          onClick={handleNodeClick}
           className={`
             w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
-            border-2 transition-all
+            border-2 transition-all cursor-pointer
             ${
               nodeSelected
                 ? 'border-transparent'
@@ -313,17 +312,15 @@ function TreeNodeItem({
             >
               {node.title}
             </motion.span>
-            <motion.span
-              className="px-1.5 py-0.5 rounded-full flex-shrink-0"
-              animate={{ fontSize: isChipMode ? 8 : 10 }}
-              transition={STABLE_TRANSITION}
+            <span
+              className="px-1.5 py-0.5 rounded-full flex-shrink-0 text-[10px]"
               style={{
                 backgroundColor: `${node.color}20`,
                 color: node.color,
               }}
             >
               {typeLabel}
-            </motion.span>
+            </span>
 
             {/* 접혀 있을 때 자손 수 표시 */}
             {hasChildren && !isExpanded && (
