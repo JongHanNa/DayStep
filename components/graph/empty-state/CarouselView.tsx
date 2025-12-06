@@ -23,6 +23,10 @@ import {
 import { TreeView } from './TreeView';
 import { MiniGraphView } from './MiniGraphView';
 import { CARD_VIEW_CROSSFADE, APPLE_SPRING } from '@/lib/animations/appleMotion';
+import { NODE_TYPE_COLORS, NODE_TYPE_LABELS } from '@/lib/graph-utils';
+
+// 범례에 표시할 타입들 (책임, 자원, 목표, 프로젝트, 할일)
+const LEGEND_TYPES = ['area', 'resource', 'goal', 'project', 'todo'] as const;
 
 // 카드 뷰 모드 타입
 export type CardViewMode = 'detail' | 'compact' | 'graph';
@@ -405,8 +409,20 @@ function SetCard({
 
   return (
     <div className="h-full py-4 px-0 bg-base-100 rounded-2xl shadow-lg border border-base-300 flex flex-col relative">
-      {/* 뷰 모드 세그먼트 컨트롤 (우상단) */}
-      <div className="absolute top-3 right-3 z-10">
+      {/* 상단 컨트롤 바: 범례(좌) + 뷰모드(우) */}
+      <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between">
+        {/* 색상 범례 */}
+        <div className="flex items-center gap-2 text-[10px] text-base-content/70">
+          {LEGEND_TYPES.map((type) => (
+            <span key={type} className="flex items-center gap-1">
+              <span
+                className="w-2.5 h-2.5 rounded"
+                style={{ backgroundColor: NODE_TYPE_COLORS[type] }}
+              />
+              {NODE_TYPE_LABELS[type]}
+            </span>
+          ))}
+        </div>
         <ViewModeSegment value={viewMode} onChange={onViewModeChange} />
       </div>
 
