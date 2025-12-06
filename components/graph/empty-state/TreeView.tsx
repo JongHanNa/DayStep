@@ -22,7 +22,6 @@ import {
   TREE_CHEVRON,
   STAGGER,
 } from '@/lib/animations/appleMotion';
-import { NODE_TYPE_LABELS } from '@/lib/graph-utils';
 
 // ============================================
 // 타입 정의
@@ -190,7 +189,6 @@ function TreeNodeItem({
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedIds.has(node.id);
   const nodeSelected = isSelected(node.id);
-  const typeLabel = NODE_TYPE_LABELS[node.type];
   const dates = getItemDates(node);
   const isTodo = node.type === 'todo';
   const isGoalOrProject = node.type === 'goal' || node.type === 'project';
@@ -258,16 +256,11 @@ function TreeNodeItem({
         {/* 체크박스 */}
         <div
           onClick={handleNodeClick}
-          className={`
-            w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
-            border-2 transition-all cursor-pointer
-            ${
-              nodeSelected
-                ? 'border-transparent'
-                : 'border-base-content/30 bg-base-100 group-hover:border-base-content/50'
-            }
-          `}
-          style={nodeSelected ? { backgroundColor: node.color } : undefined}
+          className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 border-2 transition-all cursor-pointer"
+          style={nodeSelected
+            ? { backgroundColor: node.color, borderColor: 'transparent' }
+            : { borderColor: node.color, backgroundColor: `${node.color}20` }
+          }
         >
           {nodeSelected && (
             <motion.div
@@ -290,15 +283,6 @@ function TreeNodeItem({
             >
               {node.title}
             </motion.span>
-            <span
-              className="px-1.5 py-0.5 rounded-full flex-shrink-0 text-[10px]"
-              style={{
-                backgroundColor: `${node.color}20`,
-                color: node.color,
-              }}
-            >
-              {typeLabel}
-            </span>
 
             {/* 접혀 있을 때 자손 수 표시 */}
             {hasChildren && !isExpanded && (
