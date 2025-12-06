@@ -148,7 +148,7 @@ export function AccordionView({
               />
             </div>
 
-            <div className="p-3 space-y-2">
+            <div className="py-3 px-0 space-y-2">
               {/* 뷰 콘텐츠 */}
               <motion.div layout className="overflow-hidden pt-8">
                 <AnimatePresence mode="wait">
@@ -197,7 +197,7 @@ export function AccordionView({
                 onClick={() => toggleSetSelection(set)}
                 whileTap={{ scale: 0.98 }}
                 className={`
-                  w-full py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 mt-2
+                  w-[calc(100%-24px)] mx-3 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 mt-2
                   ${
                     isSetFullySelected(set)
                       ? 'bg-primary text-primary-content'

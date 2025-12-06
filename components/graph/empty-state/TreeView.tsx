@@ -190,7 +190,6 @@ function TreeNodeItem({
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedIds.has(node.id);
   const nodeSelected = isSelected(node.id);
-  const Icon = node.icon;
   const typeLabel = NODE_TYPE_LABELS[node.type];
   const dates = getItemDates(node);
   const isTodo = node.type === 'todo';
@@ -280,27 +279,6 @@ function TreeNodeItem({
             </motion.div>
           )}
         </div>
-
-        {/* 아이콘 */}
-        <motion.div
-          className="rounded-full flex items-center justify-center flex-shrink-0"
-          animate={{
-            width: isChipMode ? 24 : 32,
-            height: isChipMode ? 24 : 32,
-          }}
-          transition={STABLE_TRANSITION}
-          style={{ backgroundColor: `${node.color}20` }}
-        >
-          <motion.div
-            animate={{ scale: isChipMode ? 0.75 : 1 }}
-            transition={STABLE_TRANSITION}
-          >
-            <Icon
-              className="w-4 h-4"
-              style={{ color: node.color }}
-            />
-          </motion.div>
-        </motion.div>
 
         {/* 텍스트 */}
         <div className="flex-1 min-w-0">
