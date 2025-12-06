@@ -260,8 +260,11 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
         }
 
         case 'goal': {
-          // 종료일 계산
+          // 날짜 계산
           const dateConfig = item.dateConfig;
+          const startDate = dateConfig?.startOffset !== undefined
+            ? format(addDays(new Date(), dateConfig.startOffset), 'yyyy-MM-dd')
+            : undefined;
           const endDate = dateConfig?.endOffset !== undefined
             ? format(addDays(new Date(), dateConfig.endOffset), 'yyyy-MM-dd')
             : undefined;
@@ -271,6 +274,7 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
             title: item.title,
             color: color,
             status: 'not_started',
+            start_date: startDate,
             end_date: endDate,
             ...(parentType === 'area' && parentDbId ? { area_id: parentDbId } : {}),
             ...(parentType === 'resource' && parentDbId ? { resource_id: parentDbId } : {}),
@@ -279,8 +283,11 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
         }
 
         case 'project': {
-          // 종료일 계산
+          // 날짜 계산
           const dateConfig = item.dateConfig;
+          const startDate = dateConfig?.startOffset !== undefined
+            ? format(addDays(new Date(), dateConfig.startOffset), 'yyyy-MM-dd')
+            : undefined;
           const endDate = dateConfig?.endOffset !== undefined
             ? format(addDays(new Date(), dateConfig.endOffset), 'yyyy-MM-dd')
             : undefined;
@@ -291,6 +298,7 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
             color: color,
             status: 'not_started',
             order_index: 0,
+            start_date: startDate,
             end_date: endDate,
             ...(parentType === 'goal' && parentDbId ? { goal_id: parentDbId } : {}),
             ...((parentType === 'area' || parentType === 'resource') && parentDbId
