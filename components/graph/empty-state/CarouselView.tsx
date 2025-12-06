@@ -25,7 +25,7 @@ import { MiniGraphView } from './MiniGraphView';
 import { CARD_VIEW_CROSSFADE, APPLE_SPRING } from '@/lib/animations/appleMotion';
 
 // 카드 뷰 모드 타입
-type CardViewMode = 'detail' | 'compact' | 'graph';
+export type CardViewMode = 'detail' | 'compact' | 'graph';
 
 interface CarouselViewProps {
   selectedIds: Set<string>;
@@ -293,23 +293,28 @@ export function CarouselView({
 // 뷰 모드 세그먼트 컨트롤
 // ============================================
 
-const VIEW_MODE_OPTIONS: Array<{
-  value: CardViewMode;
-  icon: typeof AlignLeft;
-  label: string;
-}> = [
-  { value: 'detail', icon: AlignLeft, label: '상세' },
-  { value: 'compact', icon: Rows3, label: '간략' },
-  { value: 'graph', icon: GitBranch, label: '그래프' },
-];
-
-interface ViewModeSegmentProps {
+export interface ViewModeSegmentProps {
   value: CardViewMode;
   onChange: (mode: CardViewMode) => void;
 }
 
-function ViewModeSegment({ value, onChange }: ViewModeSegmentProps) {
-  const selectedIndex = VIEW_MODE_OPTIONS.findIndex((opt) => opt.value === value);
+export function ViewModeSegment({ value, onChange }: ViewModeSegmentProps) {
+  const isListMode = value === 'detail' || value === 'compact';
+  const isGraphMode = value === 'graph';
+
+  // 리스트 버튼 클릭: 상세 ↔ 간략 토글
+  const handleListClick = () => {
+    if (value === 'detail') {
+      onChange('compact');
+    } else {
+      onChange('detail');
+    }
+  };
+
+  // 그래프 버튼 클릭
+  const handleGraphClick = () => {
+    onChange('graph');
+  };
 
   return (
     <div className="relative flex items-center bg-base-200/70 backdrop-blur-sm rounded-full p-0.5">
@@ -318,32 +323,46 @@ function ViewModeSegment({ value, onChange }: ViewModeSegmentProps) {
         className="absolute bg-base-100 rounded-full shadow-sm"
         style={{ width: 26, height: 26 }}
         animate={{
-          x: 2 + selectedIndex * 26,
+          x: isGraphMode ? 2 + 26 : 2,
         }}
         transition={APPLE_SPRING.snappy}
       />
 
-      {/* 버튼들 */}
-      {VIEW_MODE_OPTIONS.map((option) => {
-        const Icon = option.icon;
-        const isActive = value === option.value;
+      {/* 리스트 모드 토글 버튼 (상세 ↔ 간략) */}
+      <motion.button
+        onClick={handleListClick}
+        className="relative z-10 w-[26px] h-[26px] flex items-center justify-center rounded-full"
+        whileTap={{ scale: 0.9 }}
+        aria-label={value === 'detail' ? '간략히 보기' : '상세히 보기'}
+      >
+        {value === 'detail' ? (
+          <AlignLeft
+            className={`w-3.5 h-3.5 transition-colors duration-200 ${
+              isListMode ? 'text-base-content' : 'text-base-content/40'
+            }`}
+          />
+        ) : (
+          <Rows3
+            className={`w-3.5 h-3.5 transition-colors duration-200 ${
+              isListMode ? 'text-base-content' : 'text-base-content/40'
+            }`}
+          />
+        )}
+      </motion.button>
 
-        return (
-          <motion.button
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            className="relative z-10 w-[26px] h-[26px] flex items-center justify-center rounded-full"
-            whileTap={{ scale: 0.9 }}
-            aria-label={option.label}
-          >
-            <Icon
-              className={`w-3.5 h-3.5 transition-colors duration-200 ${
-                isActive ? 'text-base-content' : 'text-base-content/40'
-              }`}
-            />
-          </motion.button>
-        );
-      })}
+      {/* 그래프 버튼 */}
+      <motion.button
+        onClick={handleGraphClick}
+        className="relative z-10 w-[26px] h-[26px] flex items-center justify-center rounded-full"
+        whileTap={{ scale: 0.9 }}
+        aria-label="그래프 보기"
+      >
+        <GitBranch
+          className={`w-3.5 h-3.5 transition-colors duration-200 ${
+            isGraphMode ? 'text-base-content' : 'text-base-content/40'
+          }`}
+        />
+      </motion.button>
     </div>
   );
 }

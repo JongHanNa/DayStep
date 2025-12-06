@@ -9,7 +9,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Check } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
@@ -17,9 +17,13 @@ import {
   buildTree,
 } from './RecommendationData';
 import { TreeView } from './TreeView';
+import { MiniGraphView } from './MiniGraphView';
+import { ViewModeSegment, type CardViewMode } from './CarouselView';
 import {
   CARD_ENTRANCE,
+  CARD_VIEW_CROSSFADE,
   STAGGER,
+  APPLE_SPRING,
 } from '@/lib/animations/appleMotion';
 
 interface AccordionViewProps {
@@ -52,6 +56,23 @@ export function AccordionView({
       } else {
         next.add(nodeId);
       }
+      return next;
+    });
+  };
+
+  // 세트별 뷰 모드 상태
+  const [cardViewModes, setCardViewModes] = useState<Map<string, CardViewMode>>(
+    new Map()
+  );
+
+  const getViewMode = (setId: string): CardViewMode => {
+    return cardViewModes.get(setId) || 'detail';
+  };
+
+  const setViewMode = (setId: string, mode: CardViewMode) => {
+    setCardViewModes((prev) => {
+      const next = new Map(prev);
+      next.set(setId, mode);
       return next;
     });
   };
@@ -100,25 +121,67 @@ export function AccordionView({
     >
       {sets.map((set, setIndex) => {
         const tree = useMemo(() => buildTree(set.items), [set.items]);
+        const viewMode = getViewMode(set.id);
+        const isListView = viewMode === 'detail' || viewMode === 'compact';
 
         return (
           <motion.div
             key={set.id}
             variants={CARD_ENTRANCE}
             custom={setIndex}
-            className="bg-base-100 rounded-xl border border-base-300 overflow-hidden"
+            className="bg-base-100 rounded-xl border border-base-300 overflow-hidden relative"
           >
-            <div className="p-3 space-y-2">
-              {/* TreeView로 계층 구조 표시 */}
-              <TreeView
-                nodes={tree}
-                expandedIds={expandedTreeIds}
-                selectedIds={selectedIds}
-                onToggleExpand={toggleTreeExpand}
-                onToggleSelection={onToggleSelection}
-                isSelected={isSelected}
-                variant="default"
+            {/* 뷰 모드 세그먼트 컨트롤 (우상단) */}
+            <div className="absolute top-3 right-3 z-10">
+              <ViewModeSegment
+                value={viewMode}
+                onChange={(mode) => setViewMode(set.id, mode)}
               />
+            </div>
+
+            <div className="p-3 space-y-2">
+              {/* 뷰 콘텐츠 */}
+              <motion.div layout className="overflow-hidden pt-8">
+                <AnimatePresence mode="wait">
+                  {isListView ? (
+                    <motion.div
+                      key="list-view"
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                      transition={APPLE_SPRING.smooth}
+                      className="overflow-y-auto"
+                    >
+                      <TreeView
+                        nodes={tree}
+                        expandedIds={expandedTreeIds}
+                        selectedIds={selectedIds}
+                        onToggleExpand={toggleTreeExpand}
+                        onToggleSelection={onToggleSelection}
+                        isSelected={isSelected}
+                        variant={viewMode === 'detail' ? 'compact' : 'chip'}
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="graph-view"
+                      variants={CARD_VIEW_CROSSFADE}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      className="h-[200px]"
+                    >
+                      <MiniGraphView
+                        set={set}
+                        tree={tree}
+                        isItemSelected={isSelected}
+                        onToggleItem={onToggleSelection}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
 
               {/* 세트 전체 선택 버튼 */}
               <motion.button
