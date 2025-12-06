@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
-import { Check, ChevronLeft, ChevronRight, GitBranch, List } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, GitBranch, AlignLeft, Rows3 } from 'lucide-react';
 import {
   RECOMMENDATION_SETS,
   type RecommendationSet,
@@ -23,6 +23,9 @@ import {
 import { TreeView } from './TreeView';
 import { MiniGraphView } from './MiniGraphView';
 import { CARD_VIEW_CROSSFADE, APPLE_SPRING } from '@/lib/animations/appleMotion';
+
+// 카드 뷰 모드 타입
+type CardViewMode = 'detail' | 'compact' | 'graph';
 
 interface CarouselViewProps {
   selectedIds: Set<string>;
@@ -40,23 +43,22 @@ export function CarouselView({
   // Swiper 인스턴스 ref
   const swiperRef = useRef<SwiperType | null>(null);
 
-  // 세트별 뷰 모드 상태 (list | graph)
-  const [cardViewModes, setCardViewModes] = useState<Map<string, 'list' | 'graph'>>(
+  // 세트별 뷰 모드 상태 (detail | compact | graph)
+  const [cardViewModes, setCardViewModes] = useState<Map<string, CardViewMode>>(
     new Map()
   );
 
-  const toggleCardViewMode = useCallback((setId: string) => {
+  const setCardViewMode = useCallback((setId: string, mode: CardViewMode) => {
     setCardViewModes((prev) => {
       const next = new Map(prev);
-      const current = next.get(setId) || 'list';
-      next.set(setId, current === 'list' ? 'graph' : 'list');
+      next.set(setId, mode);
       return next;
     });
   }, []);
 
   const getCardViewMode = useCallback(
-    (setId: string): 'list' | 'graph' => {
-      return cardViewModes.get(setId) || 'list';
+    (setId: string): CardViewMode => {
+      return cardViewModes.get(setId) || 'detail';
     },
     [cardViewModes]
   );
@@ -271,7 +273,7 @@ export function CarouselView({
                   expandedIds={expandedTreeIds}
                   onToggleExpand={toggleTreeExpand}
                   viewMode={getCardViewMode(set.id)}
-                  onToggleViewMode={() => toggleCardViewMode(set.id)}
+                  onViewModeChange={(mode) => setCardViewMode(set.id, mode)}
                 />
               </SwiperSlide>
             );
@@ -283,6 +285,65 @@ export function CarouselView({
       <div className="text-center mt-3 text-sm text-base-content/50">
         {currentCardIndex + 1} / {sets.length}
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// 뷰 모드 세그먼트 컨트롤
+// ============================================
+
+const VIEW_MODE_OPTIONS: Array<{
+  value: CardViewMode;
+  icon: typeof AlignLeft;
+  label: string;
+}> = [
+  { value: 'detail', icon: AlignLeft, label: '상세' },
+  { value: 'compact', icon: Rows3, label: '간략' },
+  { value: 'graph', icon: GitBranch, label: '그래프' },
+];
+
+interface ViewModeSegmentProps {
+  value: CardViewMode;
+  onChange: (mode: CardViewMode) => void;
+}
+
+function ViewModeSegment({ value, onChange }: ViewModeSegmentProps) {
+  const selectedIndex = VIEW_MODE_OPTIONS.findIndex((opt) => opt.value === value);
+
+  return (
+    <div className="relative flex items-center bg-base-200/70 backdrop-blur-sm rounded-full p-0.5">
+      {/* 슬라이딩 배경 인디케이터 */}
+      <motion.div
+        className="absolute bg-base-100 rounded-full shadow-sm"
+        style={{ width: 26, height: 26 }}
+        animate={{
+          x: 2 + selectedIndex * 26,
+        }}
+        transition={APPLE_SPRING.snappy}
+      />
+
+      {/* 버튼들 */}
+      {VIEW_MODE_OPTIONS.map((option) => {
+        const Icon = option.icon;
+        const isActive = value === option.value;
+
+        return (
+          <motion.button
+            key={option.value}
+            onClick={() => onChange(option.value)}
+            className="relative z-10 w-[26px] h-[26px] flex items-center justify-center rounded-full"
+            whileTap={{ scale: 0.9 }}
+            aria-label={option.label}
+          >
+            <Icon
+              className={`w-3.5 h-3.5 transition-colors duration-200 ${
+                isActive ? 'text-base-content' : 'text-base-content/40'
+              }`}
+            />
+          </motion.button>
+        );
+      })}
     </div>
   );
 }
@@ -303,8 +364,8 @@ interface SetCardProps {
   isItemSelected: (id: string) => boolean;
   expandedIds: Set<string>;
   onToggleExpand: (id: string) => void;
-  viewMode: 'list' | 'graph';
-  onToggleViewMode: () => void;
+  viewMode: CardViewMode;
+  onViewModeChange: (mode: CardViewMode) => void;
 }
 
 function SetCard({
@@ -318,45 +379,29 @@ function SetCard({
   expandedIds,
   onToggleExpand,
   viewMode,
-  onToggleViewMode,
+  onViewModeChange,
 }: SetCardProps) {
+  // 리스트 계열 뷰인지 확인 (detail 또는 compact)
+  const isListView = viewMode === 'detail' || viewMode === 'compact';
+
   return (
     <div className="h-full p-4 bg-base-100 rounded-2xl shadow-lg border border-base-300 flex flex-col relative">
-      {/* 뷰 토글 버튼 (우상단) */}
-      <motion.button
-        onClick={onToggleViewMode}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="absolute top-3 right-3 z-10 btn btn-circle btn-sm bg-base-200/80 backdrop-blur border-0 hover:bg-base-300"
-        aria-label={viewMode === 'list' ? '그래프 뷰로 전환' : '리스트 뷰로 전환'}
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewMode}
-            initial={{ rotate: -90, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            exit={{ rotate: 90, opacity: 0 }}
-            transition={APPLE_SPRING.snappy}
-          >
-            {viewMode === 'list' ? (
-              <GitBranch className="w-4 h-4" />
-            ) : (
-              <List className="w-4 h-4" />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </motion.button>
+      {/* 뷰 모드 세그먼트 컨트롤 (우상단) */}
+      <div className="absolute top-3 right-3 z-10">
+        <ViewModeSegment value={viewMode} onChange={onViewModeChange} />
+      </div>
 
       {/* 뷰 콘텐츠 (애니메이션 전환) */}
-      <div className="flex-1 overflow-hidden">
+      <motion.div layout className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          {viewMode === 'list' ? (
+          {isListView ? (
             <motion.div
-              key="list"
-              variants={CARD_VIEW_CROSSFADE}
-              initial="enter"
-              animate="center"
-              exit="exit"
+              key="list-view"
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+              transition={APPLE_SPRING.smooth}
               className="h-full overflow-y-auto pr-1"
             >
               <TreeView
@@ -366,12 +411,12 @@ function SetCard({
                 onToggleExpand={onToggleExpand}
                 onToggleSelection={onToggleItem}
                 isSelected={isItemSelected}
-                variant="compact"
+                variant={viewMode === 'detail' ? 'compact' : 'chip'}
               />
             </motion.div>
           ) : (
             <motion.div
-              key="graph"
+              key="graph-view"
               variants={CARD_VIEW_CROSSFADE}
               initial="enter"
               animate="center"
@@ -387,10 +432,11 @@ function SetCard({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* 세트 전체 선택 버튼 */}
       <motion.button
+        layout
         onClick={onToggleSet}
         whileTap={{ scale: 0.98 }}
         className={`
