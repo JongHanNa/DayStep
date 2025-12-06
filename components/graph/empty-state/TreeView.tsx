@@ -389,10 +389,11 @@ function TreeNodeItem({
       <AnimatePresence initial={false}>
         {hasChildren && isExpanded && (
           <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            transition={{ duration: 0.2, ease: 'linear' }}
+            initial={{ height: 0, opacity: 0, scaleY: 0.85 }}
+            animate={{ height: 'auto', opacity: 1, scaleY: 1 }}
+            exit={{ height: 0, opacity: 0, scaleY: 0.85 }}
+            transition={{ duration: 0.22, ease: [0.33, 0, 0.67, 1] }}
+            style={{ transformOrigin: 'top' }}
             className="overflow-hidden"
           >
             <div className="">
