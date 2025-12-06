@@ -106,6 +106,15 @@ export function AccordionView({
 
   const sets = RECOMMENDATION_SETS;
 
+  // 모든 세트의 트리를 미리 계산 (Rules of Hooks: map 콜백 내부에서 useMemo 사용 불가)
+  const treesMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof buildTree>>();
+    sets.forEach((set) => {
+      map.set(set.id, buildTree(set.items));
+    });
+    return map;
+  }, [sets]);
+
   return (
     <motion.div
       className="w-full max-w-lg mx-auto space-y-3"
@@ -120,7 +129,7 @@ export function AccordionView({
       }}
     >
       {sets.map((set, setIndex) => {
-        const tree = useMemo(() => buildTree(set.items), [set.items]);
+        const tree = treesMap.get(set.id) || [];
         const viewMode = getViewMode(set.id);
         const isListView = viewMode === 'detail' || viewMode === 'compact';
 
