@@ -404,7 +404,7 @@ function SetCard({
   const isListView = viewMode === 'detail' || viewMode === 'compact';
 
   return (
-    <div className="h-full p-4 bg-base-100 rounded-2xl shadow-lg border border-base-300 flex flex-col relative">
+    <div className="h-full py-4 px-0 bg-base-100 rounded-2xl shadow-lg border border-base-300 flex flex-col relative">
       {/* 뷰 모드 세그먼트 컨트롤 (우상단) */}
       <div className="absolute top-3 right-3 z-10">
         <ViewModeSegment value={viewMode} onChange={onViewModeChange} />
