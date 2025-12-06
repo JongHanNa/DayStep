@@ -105,16 +105,16 @@ export const PRO_FEATURES = [
  * Free Tier 제한사항
  */
 export const FREE_TIER_LIMITS = {
-  // 기존 제한 (조정됨)
-  MAX_TODOS: 30, // 일반 할일 (recurrence_pattern = 'none')
-  MAX_PROJECTS: 3,
-  MAX_NOTES: 10,
-  MAX_CONTACTS: 5,
+  // 기존 제한 (2배 증가)
+  MAX_TODOS: 60, // 일반 할일 (recurrence_pattern = 'none')
+  MAX_PROJECTS: 15,
+  MAX_NOTES: 40,
+  MAX_CONTACTS: 10,
 
-  // 신규 제한
+  // 신규 제한 (2배 증가)
   MAX_HABITS: 5, // 반복 할일 (습관)
-  MAX_GOALS: 3,
-  MAX_AREAS_RESOURCES: 5,
+  MAX_GOALS: 6,
+  MAX_AREAS_RESOURCES: 10,
 
   // 경고 임계값 (%)
   WARNING_THRESHOLD: 80,
