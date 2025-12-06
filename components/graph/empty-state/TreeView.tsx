@@ -149,6 +149,30 @@ export function TreeView({
 // TreeNodeItem 컴포넌트 (재귀)
 // ============================================
 
+// 메타데이터 fade 애니메이션 variants
+const METADATA_VARIANTS = {
+  hidden: {
+    opacity: 0,
+    height: 0,
+    marginTop: 0,
+    transition: {
+      opacity: { duration: 0.15 },
+      height: { duration: 0.2 },
+      marginTop: { duration: 0.2 },
+    },
+  },
+  visible: {
+    opacity: 1,
+    height: 'auto',
+    marginTop: 2,
+    transition: {
+      opacity: { duration: 0.2, delay: 0.05 },
+      height: { duration: 0.25 },
+      marginTop: { duration: 0.25 },
+    },
+  },
+};
+
 function TreeNodeItem({
   node,
   expandedIds,
@@ -184,6 +208,9 @@ function TreeNodeItem({
   // 반복 패턴 텍스트 (Todo 전용)
   const recurrenceText = isTodo ? getRecurrenceText(node) : null;
 
+  // 메타데이터 표시 여부 (chip 모드에서는 숨김)
+  const showMetadata = variant !== 'chip' && (timeText || periodText || recurrenceText);
+
   // 노드 클릭 핸들러 (선택 토글 - 자손 포함)
   const handleNodeClick = () => {
     const descendantIds = collectDescendantIds(node);
@@ -199,24 +226,37 @@ function TreeNodeItem({
   // 들여쓰기: 최대 깊이 제한 적용
   const indent = node.depth > 0 ? MAX_INDENT : 0;
 
+  // chip 모드 여부
+  const isChipMode = variant === 'chip';
+
   return (
     <motion.div
+      layout
       className="relative"
       style={{ marginLeft: indent }}
       variants={TREE_NODE_VARIANTS}
+      transition={APPLE_SPRING.smooth}
     >
       {/* 노드 콘텐츠 - 깔끔한 블록 스타일 */}
       <motion.div
+        layout
         onClick={handleNodeClick}
         whileTap={{ scale: 0.98 }}
         className={`
           group flex items-center gap-2 cursor-pointer transition-colors
-          ${variant === 'chip' ? 'py-1.5 px-2' : 'py-2.5 px-2'}
           ${nodeSelected ? 'bg-primary/10' : 'hover:bg-base-200/50'}
         `}
+        animate={{
+          paddingTop: isChipMode ? 6 : 10,
+          paddingBottom: isChipMode ? 6 : 10,
+          paddingLeft: 8,
+          paddingRight: 8,
+        }}
+        transition={APPLE_SPRING.smooth}
       >
         {/* 체크박스 */}
         <motion.div
+          layout
           whileTap={{ scale: 0.9 }}
           className={`
             w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
@@ -241,33 +281,50 @@ function TreeNodeItem({
         </motion.div>
 
         {/* 아이콘 */}
-        <div
-          className={`rounded-full flex items-center justify-center flex-shrink-0 ${variant === 'chip' ? 'w-6 h-6' : 'w-8 h-8'}`}
+        <motion.div
+          layout
+          className="rounded-full flex items-center justify-center flex-shrink-0"
+          animate={{
+            width: isChipMode ? 24 : 32,
+            height: isChipMode ? 24 : 32,
+          }}
+          transition={APPLE_SPRING.smooth}
           style={{ backgroundColor: `${node.color}20` }}
         >
-          <Icon
-            className={variant === 'chip' ? 'w-3 h-3' : 'w-4 h-4'}
-            style={{ color: node.color }}
-          />
-        </div>
+          <motion.div
+            animate={{ scale: isChipMode ? 0.75 : 1 }}
+            transition={APPLE_SPRING.smooth}
+          >
+            <Icon
+              className="w-4 h-4"
+              style={{ color: node.color }}
+            />
+          </motion.div>
+        </motion.div>
 
         {/* 텍스트 */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`font-medium truncate ${variant === 'chip' ? 'text-xs' : 'text-sm'}`}
+        <motion.div layout className="flex-1 min-w-0">
+          <motion.div layout className="flex items-center gap-2 flex-wrap">
+            <motion.span
+              layout
+              className="font-medium truncate"
+              animate={{ fontSize: isChipMode ? 12 : 14 }}
+              transition={APPLE_SPRING.smooth}
             >
               {node.title}
-            </span>
-            <span
-              className={`px-1.5 py-0.5 rounded-full flex-shrink-0 ${variant === 'chip' ? 'text-[8px]' : 'text-[10px]'}`}
+            </motion.span>
+            <motion.span
+              layout
+              className="px-1.5 py-0.5 rounded-full flex-shrink-0"
+              animate={{ fontSize: isChipMode ? 8 : 10 }}
+              transition={APPLE_SPRING.smooth}
               style={{
                 backgroundColor: `${node.color}20`,
                 color: node.color,
               }}
             >
               {typeLabel}
-            </span>
+            </motion.span>
 
             {/* 접혀 있을 때 자손 수 표시 */}
             {hasChildren && !isExpanded && (
@@ -275,41 +332,51 @@ function TreeNodeItem({
                 ({descendantCount}개)
               </span>
             )}
-          </div>
+          </motion.div>
 
-          {/* 날짜/시간/반복 (compact/default만) */}
-          {variant !== 'chip' && (timeText || periodText || recurrenceText) && (
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              {/* 반복 패턴 표시 */}
-              {recurrenceText && (
-                <span className="text-[10px] text-primary flex items-center gap-1 flex-shrink-0 bg-primary/10 px-1.5 py-0.5 rounded font-medium">
-                  <Repeat className="w-3 h-3" />
-                  {recurrenceText}
-                </span>
-              )}
+          {/* 날짜/시간/반복 - AnimatePresence로 부드러운 전환 */}
+          <AnimatePresence mode="wait">
+            {showMetadata && (
+              <motion.div
+                key="metadata"
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={METADATA_VARIANTS}
+                className="flex items-center gap-2 flex-wrap overflow-hidden"
+              >
+                {/* 반복 패턴 표시 */}
+                {recurrenceText && (
+                  <span className="text-[10px] text-primary flex items-center gap-1 flex-shrink-0 bg-primary/10 px-1.5 py-0.5 rounded font-medium">
+                    <Repeat className="w-3 h-3" />
+                    {recurrenceText}
+                  </span>
+                )}
 
-              {/* Todo 시간 표시 */}
-              {timeText && (
-                <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
-                  <Clock className="w-3 h-3" />
-                  {timeText}
-                </span>
-              )}
+                {/* Todo 시간 표시 */}
+                {timeText && (
+                  <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
+                    <Clock className="w-3 h-3" />
+                    {timeText}
+                  </span>
+                )}
 
-              {/* Goal/Project 기간 표시 */}
-              {periodText && (
-                <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
-                  <Calendar className="w-3 h-3" />
-                  {periodText}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+                {/* Goal/Project 기간 표시 */}
+                {periodText && (
+                  <span className="text-[10px] text-base-content/60 flex items-center gap-1 flex-shrink-0 bg-base-300 px-1.5 py-0.5 rounded">
+                    <Calendar className="w-3 h-3" />
+                    {periodText}
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {/* 펼치기/접기 버튼 (오른쪽) */}
         {hasChildren && (
           <motion.button
+            layout
             onClick={handleExpandClick}
             className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-base-300 ml-auto"
             animate={isExpanded ? 'expanded' : 'collapsed'}
