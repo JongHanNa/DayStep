@@ -11,7 +11,10 @@ import {
   Frown,
   PartyPopper,
   Trash2,
-  Loader2
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
@@ -82,6 +85,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showCompletedList, setShowCompletedList] = useState(false);
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -118,6 +122,22 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       if (todo.scheduleType === 'anytime') return true;
 
       return false;
+    });
+  }, [todos]);
+
+  // 오늘 완료한 할일 필터링 (updatedAt 기준 - 완료 시 갱신됨)
+  const getTodayCompletedTodos = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return todos.filter(todo => {
+      if (!todo.completed) return false;
+
+      // 오늘 업데이트된 완료 할일만 (완료 시 updatedAt이 갱신됨)
+      const updatedDate = new Date(todo.updatedAt);
+      return updatedDate >= today && updatedDate < tomorrow;
     });
   }, [todos]);
 
@@ -209,7 +229,29 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     }, 300);
   };
 
+  // 완료 취소 핸들러
+  const handleUncomplete = async (todoId: string) => {
+    if (isAnimating) return;
+
+    setIsAnimating(true);
+
+    // 할일 완료 취소 처리 (toggleTodo는 완료 상태를 토글)
+    await toggleTodo(todoId);
+
+    // 다시 추천 목록에 포함되도록 다음 추천 갱신
+    setTimeout(() => {
+      setIsAnimating(false);
+      // 완료된 목록이 비었으면 목록 닫기
+      const remaining = getTodayCompletedTodos().filter(t => t.id !== todoId);
+      if (remaining.length === 0) {
+        setShowCompletedList(false);
+      }
+      getNextRecommendation();
+    }, 300);
+  };
+
   const { currentRecommendation, completedInSession } = executionMode;
+  const todayCompletedTodos = getTodayCompletedTodos();
 
   return (
     <div className="min-h-screen flex flex-col bg-base-100">
@@ -306,6 +348,60 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
           )}
         </AnimatePresence>
       </main>
+
+      {/* 오늘 완료한 할일 목록 (하단 고정) */}
+      {todayCompletedTodos.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 shadow-lg">
+          {/* 토글 버튼 */}
+          <button
+            onClick={() => setShowCompletedList(!showCompletedList)}
+            className="w-full px-4 py-3 flex items-center justify-between text-sm"
+          >
+            <span className="flex items-center gap-2 text-base-content/70">
+              <Check className="w-4 h-4 text-success" />
+              오늘 완료한 할일 ({todayCompletedTodos.length}개)
+            </span>
+            {showCompletedList ? (
+              <ChevronDown className="w-4 h-4 text-base-content/50" />
+            ) : (
+              <ChevronUp className="w-4 h-4 text-base-content/50" />
+            )}
+          </button>
+
+          {/* 완료 목록 */}
+          <AnimatePresence>
+            {showCompletedList && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <ul className="px-4 pb-4 max-h-48 overflow-y-auto space-y-2">
+                  {todayCompletedTodos.map(todo => (
+                    <li
+                      key={todo.id}
+                      className="flex items-center justify-between bg-base-200 rounded-lg px-3 py-2"
+                    >
+                      <span className="text-sm text-base-content/70 line-through truncate flex-1">
+                        {todo.title}
+                      </span>
+                      <button
+                        onClick={() => handleUncomplete(todo.id)}
+                        disabled={isAnimating}
+                        className="btn btn-ghost btn-xs btn-circle ml-2 text-base-content/50 hover:text-warning"
+                        title="완료 취소"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }
