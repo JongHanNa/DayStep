@@ -1435,7 +1435,7 @@ function AdhocTimerView({
               type="text"
               value={inlineTodoInput}
               onChange={(e) => onInlineTodoInputChange(e.target.value)}
-              placeholder="지금 뭐 하고 있어요?"
+              placeholder="지금 무엇을 하세요?"
               className="input input-bordered input-sm flex-1 rounded-full text-center"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && inlineTodoInput.trim()) {
