@@ -902,10 +902,7 @@ function CircularProgressSlider({
   // 타이머 진행에 따라 각도 업데이트 (드래그 중이 아닐 때만)
   // isDraggingRef.current로 동기적 체크 (React state는 비동기라 타이밍 이슈 방지)
   useEffect(() => {
-    // 드래그 중인데 리셋하려고 하면 문제! (이 로그가 나오면 버그)
-    if (isDraggingRef.current) {
-      console.log('[useEffect] ⚠️ 드래그 중인데 리셋 시도! progress:', progress);
-    } else {
+    if (!isDraggingRef.current) {
       angle.set(progress * 360);
     }
   }, [progress, angle]);
@@ -955,18 +952,16 @@ function CircularProgressSlider({
     const newAngle = getAngleFromPoint(e.clientX, e.clientY);
     const currentAngle = lastValidAngle.current;
 
-    // ⭐ 360° 래핑 감지: 95% 이상(342°)에서 0° 근처(30° 미만)로 이동하면 완료
+    // 360° 래핑 감지: 95% 이상(342°)에서 0° 근처(30° 미만)로 이동하면 완료
     if (currentAngle > 342 && newAngle < 30) {
-      console.log('[handlePointerMove] 🎉 완료 감지! 360° 통과 (currentAngle:', currentAngle.toFixed(1), '→ newAngle:', newAngle.toFixed(1), ')');
       isDraggingRef.current = false;
       setIsDragging(false);
-      onDragEnd(1.0);  // 100% 완료
+      onDragEnd(1.0);
       return;
     }
 
-    // ⭐ 역방향 래핑 감지: 0° 근처에서 360° 근처로 이동하면 반시계방향으로 차단
+    // 역방향 래핑 감지: 0° 근처에서 360° 근처로 이동하면 반시계방향으로 차단
     if (currentAngle < 30 && newAngle > 330) {
-      console.log('[handlePointerMove] ❌ 역방향 래핑 차단 (0° → 360°)');
       return;
     }
 
@@ -975,17 +970,13 @@ function CircularProgressSlider({
     const normalizedDiff = angleDiff > 180 ? angleDiff - 360 :
       angleDiff < -180 ? angleDiff + 360 : angleDiff;
 
-    console.log('[handlePointerMove] newAngle:', newAngle.toFixed(1), 'currentAngle:', currentAngle.toFixed(1), 'diff:', normalizedDiff.toFixed(1));
-
     // 반시계방향으로 30도 이상 이동하면 차단
     if (normalizedDiff < -30) {
-      console.log('[handlePointerMove] ❌ 반시계방향 차단');
       return;
     }
 
     // 유효한 이동만 허용
     if (normalizedDiff >= 0 || Math.abs(normalizedDiff) < 30) {
-      console.log('[handlePointerMove] ✅ 각도 업데이트:', newAngle.toFixed(1), '(', (newAngle / 360 * 100).toFixed(1), '%)');
       lastValidAngle.current = newAngle;
       angle.set(newAngle);
       onDragProgress(newAngle / 360);
@@ -994,23 +985,18 @@ function CircularProgressSlider({
 
   // 포인터 다운 핸들러 (드래그 시작)
   const handlePointerDown = (e: React.PointerEvent) => {
-    console.log('[handlePointerDown] 🟢 드래그 시작');
     e.currentTarget.setPointerCapture(e.pointerId);
     isDraggingRef.current = true;
     setIsDragging(true);
     lastValidAngle.current = angle.get();
-    console.log('[handlePointerDown] lastValidAngle:', lastValidAngle.current.toFixed(1));
   };
 
   // 포인터 업 핸들러 (드래그 종료)
   const handlePointerUp = (e: React.PointerEvent) => {
-    console.log('[handlePointerUp] 🔴 드래그 종료');
     e.currentTarget.releasePointerCapture(e.pointerId);
 
     const finalAngle = angle.get();
     const finalProgress = finalAngle / 360;
-
-    console.log('[handlePointerUp] finalAngle:', finalAngle.toFixed(1), 'finalProgress:', (finalProgress * 100).toFixed(1) + '%');
 
     isDraggingRef.current = false;
     setIsDragging(false);
@@ -1018,11 +1004,8 @@ function CircularProgressSlider({
 
     // 95% 미만이면 원래 위치로 스프링 애니메이션
     if (finalProgress < 0.95) {
-      console.log('[handlePointerUp] ⬅️ 스냅백: progress * 360 =', progress * 360);
       angle.set(progress * 360);
       lastValidAngle.current = progress * 360;
-    } else {
-      console.log('[handlePointerUp] ✅ 완료! 95% 이상');
     }
   };
 
