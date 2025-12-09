@@ -6,6 +6,7 @@ import {
   Check,
   RefreshCw,
   ArrowLeft,
+  ArrowRight,
   Ban,
   Package,
   Frown,
@@ -1043,9 +1044,9 @@ function CircularProgressSlider({
         />
       </svg>
 
-      {/* 노브 - 투명 (프로그레스만 보이도록) */}
+      {/* 노브 - 투명 + 화살표 */}
       <motion.div
-        className="absolute rounded-full bg-transparent pointer-events-none"
+        className="absolute rounded-full bg-transparent pointer-events-none flex items-center justify-center"
         style={{
           width: knobWidth,
           height: knobHeight,
@@ -1055,7 +1056,9 @@ function CircularProgressSlider({
           y: knobY,
           rotate: knobRotation,
         }}
-      />
+      >
+        <ArrowRight className="w-4 h-4 text-violet-600" />
+      </motion.div>
 
       {/* 투명 드래그 핸들 - 전체 원 영역 (Pointer Events 사용) */}
       <div
