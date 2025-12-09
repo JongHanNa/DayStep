@@ -90,13 +90,17 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const EXECUTABLE_CLARIFICATIONS = ['schedule_clear', 'next_action'];
 
   // 오늘 실행 가능한 할일만 필터링
-  const getTodayTodos = useCallback(() => {
+  // useLatestState: true면 getState()로 최신 상태 조회, false면 렌더링 상태 사용
+  const getTodayTodos = useCallback((useLatestState: boolean = false) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    return todos.filter(todo => {
+    // 최신 상태가 필요하면 getState()로 직접 조회 (stale closure 방지)
+    const currentTodos = useLatestState ? useTodoStore.getState().todos : todos;
+
+    return currentTodos.filter(todo => {
       if (todo.completed) return false;
 
       // 명료화 유형 필터: schedule_clear, next_action만 추천
@@ -119,7 +123,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   // 다음 추천 할일 가져오기
   const getNextRecommendation = useCallback(() => {
-    const todayTodos = getTodayTodos();
+    // getState()로 최신 todos 상태 조회 (stale closure 방지)
+    const todayTodos = getTodayTodos(true);
     // Zustand getState()로 최신 상태 조회 (stale closure 방지)
     const { skippedTodoIds } = useADHDModeStore.getState().executionMode;
 
