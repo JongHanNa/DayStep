@@ -376,8 +376,11 @@ export async function updateWithJWT(
 
     console.log(`✅ JWT 데이터 업데이트 성공: ${tableName}`, { result });
     return result;
-  } catch (error) {
-    console.error(`❌ JWT 데이터 업데이트 실패: ${tableName}`, error);
+  } catch (error: any) {
+    // AbortError는 타임아웃으로 인한 정상적인 취소이므로 로그 출력 안 함
+    if (error?.name !== 'AbortError') {
+      console.error(`❌ JWT 데이터 업데이트 실패: ${tableName}`, error);
+    }
     throw error;
   }
 }

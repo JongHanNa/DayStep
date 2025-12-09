@@ -151,7 +151,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     // 할일 완료 처리
     await toggleTodo(currentTodo.id);
 
-    // ADHD Store 업데이트 및 학습 (DB 연동)
+    // ADHD Store 업데이트 및 학습 (DB 연동, fire and forget)
     markCompleted(currentTodo.id, method);
     learnFromCompletion(currentTodo, method, userId);
 
@@ -180,7 +180,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       await markSkipped(currentTodo.id, reason, userId);
       await deleteTodo(currentTodo.id);
     } else {
-      // 기존 로직: 건너뛰기 + 학습 (DB 연동)
+      // 기존 로직: 건너뛰기 + 학습 (DB 연동, fire and forget)
       await markSkipped(currentTodo.id, reason, userId);
       learnFromSkip(currentTodo, reason, userId);
     }

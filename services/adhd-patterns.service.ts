@@ -62,8 +62,11 @@ export class ADHDPatternsService {
         return data[0];
       }
       return null;
-    } catch (error) {
-      console.error('❌ ADHD 패턴 조회 오류:', error);
+    } catch (error: any) {
+      // AbortError는 React 재렌더링으로 인한 정상적인 취소이므로 무시
+      if (error?.name !== 'AbortError') {
+        console.error('❌ ADHD 패턴 조회 오류:', error);
+      }
       return null;
     }
   }
@@ -202,8 +205,11 @@ export class ADHDPatternsService {
       );
 
       console.log('📊 ADHD 스킵 패턴 학습:', { todoTitle: todo.title, reason });
-    } catch (error) {
-      console.error('❌ 스킵 패턴 업데이트 오류:', error);
+    } catch (error: any) {
+      // AbortError는 타임아웃으로 인한 정상적인 취소이므로 무시
+      if (error?.name !== 'AbortError') {
+        console.error('❌ 스킵 패턴 업데이트 오류:', error);
+      }
       // 학습 실패는 무시 (핵심 기능 아님)
     }
   }

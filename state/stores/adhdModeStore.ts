@@ -173,8 +173,11 @@ export const useADHDModeStore = create<ADHDModeState>()(
               }
             }));
             console.log(`📥 쿨다운 중인 Skip ${skippedTodoIds.length}개 로드`);
-          } catch (error) {
-            console.error('❌ Skip 로드 실패:', error);
+          } catch (error: any) {
+            // AbortError는 React 재렌더링으로 인한 정상적인 취소이므로 무시
+            if (error?.name !== 'AbortError') {
+              console.error('❌ Skip 로드 실패:', error);
+            }
             set((state) => ({
               executionMode: {
                 ...state.executionMode,

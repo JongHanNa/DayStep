@@ -76,8 +76,11 @@ export class TodoSkipsService {
       ], { order: 'cooldown_until.asc' });
 
       return data || [];
-    } catch (error) {
-      console.error('❌ 활성 Skip 조회 오류:', error);
+    } catch (error: any) {
+      // AbortError는 React 재렌더링으로 인한 정상적인 취소이므로 무시
+      if (error?.name !== 'AbortError') {
+        console.error('❌ 활성 Skip 조회 오류:', error);
+      }
       throw error;
     }
   }
