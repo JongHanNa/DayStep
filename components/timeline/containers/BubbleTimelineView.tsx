@@ -420,13 +420,11 @@ export const BubbleTimelineView: React.FC = () => {
     const currentIsDragging = isDraggingRef.current;
     // 🎯 v13: draggedItemId도 ref에서 읽기 (useCallback 클로저 문제 해결)
     const currentDraggedItemId = draggedItemIdRef.current;
-    console.log('[DEBUG] handleDragMove called, hasTouches:', hasTouches, 'isDragging:', currentIsDragging, 'draggedItemId:', currentDraggedItemId);
     const clientY = hasTouches ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     const clientX = hasTouches ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
 
     // 🎯 v13: ref 값으로 체크
     if (currentIsDragging && currentDraggedItemId) {
-      console.log('[DEBUG] updating position:', clientX.toFixed(0), clientY.toFixed(0));
       // 이미 드래그 중이면 위치 업데이트 (X, Y 모두)
       setDragCurrentY(clientY);
       dragCurrentYRef.current = clientY;  // 🎯 v16: ref도 업데이트
