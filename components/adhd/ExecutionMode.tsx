@@ -964,6 +964,12 @@ function CircularProgressSlider({
       return;
     }
 
+    // ⭐ 역방향 래핑 감지: 0° 근처에서 360° 근처로 이동하면 반시계방향으로 차단
+    if (currentAngle < 30 && newAngle > 330) {
+      console.log('[handlePointerMove] ❌ 역방향 래핑 차단 (0° → 360°)');
+      return;
+    }
+
     // 반시계방향 드래그 차단
     const angleDiff = newAngle - currentAngle;
     const normalizedDiff = angleDiff > 180 ? angleDiff - 360 :
