@@ -53,7 +53,10 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
 
-  // 오늘 할일만 필터링 (미완료 + 오늘 날짜)
+  // 추천 가능한 명료화 유형: 일정(schedule_clear), 다음행동(next_action)
+  const EXECUTABLE_CLARIFICATIONS = ['schedule_clear', 'next_action'];
+
+  // 오늘 실행 가능한 할일만 필터링
   const getTodayTodos = useCallback(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -63,13 +66,18 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     return todos.filter(todo => {
       if (todo.completed) return false;
 
-      // startTime이 오늘인 할일
+      // 명료화 유형 필터: schedule_clear, next_action만 추천
+      if (!EXECUTABLE_CLARIFICATIONS.includes(todo.clarification)) return false;
+
+      // next_action은 날짜 무관하게 항상 추천
+      if (todo.clarification === 'next_action') return true;
+
+      // schedule_clear: 오늘 날짜 또는 anytime
       if (todo.startTime) {
         const todoDate = new Date(todo.startTime);
         return todoDate >= today && todoDate < tomorrow;
       }
 
-      // anytime 타입은 항상 포함
       if (todo.scheduleType === 'anytime') return true;
 
       return false;
