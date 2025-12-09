@@ -915,9 +915,9 @@ function CircularProgressSlider({
   );
 
   // 노브 위치 계산 (12시 방향에서 시작, 시계방향)
-  // 캡슐 모양: w-6(24px) h-12(48px)
-  const knobWidth = 24;
-  const knobHeight = 48;
+  // 캡슐 모양: 트랙 위에 놓여있음 (중심선 유지)
+  const knobWidth = 40;
+  const knobHeight = 20;
   const knobX = useTransform(springAngle, (a) => {
     const rad = ((a - 90) * Math.PI) / 180;
     return center + radius * Math.cos(rad) - knobWidth / 2;
@@ -1043,10 +1043,12 @@ function CircularProgressSlider({
         />
       </svg>
 
-      {/* 노브 - 캡슐 모양 */}
+      {/* 노브 - 투명 (프로그레스만 보이도록) */}
       <motion.div
-        className="absolute w-6 h-12 rounded-full bg-violet-500 shadow-lg pointer-events-none"
+        className="absolute rounded-full bg-transparent pointer-events-none"
         style={{
+          width: knobWidth,
+          height: knobHeight,
           left: 0,
           top: 0,
           x: knobX,
