@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import {
   Check,
   RefreshCw,
@@ -26,6 +26,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
+// CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
 
 // 헬퍼 함수: 일정 유형 라벨
@@ -481,6 +482,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               key="adhoc-timer"
               timerState={timerState}
               onStop={handleStopAdhoc}
+              onComplete={handleAdhocTimerComplete}
             />
           )}
 
@@ -860,6 +862,230 @@ function EmptyStateView({ onGoToOrganize, onStartAdhoc }: EmptyStateViewProps) {
 }
 
 // ============================================
+// 커스텀 원형 프로그레스 슬라이더
+// ============================================
+
+interface CircularProgressSliderProps {
+  size: number;
+  progress: number; // 0-1
+  onDragProgress: (progress: number) => void;
+  onDragEnd: (finalProgress: number) => void;
+  isDragging: boolean;
+  setIsDragging: (dragging: boolean) => void;
+}
+
+function CircularProgressSlider({
+  size,
+  progress,
+  onDragProgress,
+  onDragEnd,
+  isDragging,
+  setIsDragging,
+}: CircularProgressSliderProps) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // SVG 설정
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth * 2) / 2 - 10;
+  const center = size / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  // 애니메이션 값 - 각도 (0-360)
+  const baseAngle = progress * 360;
+  const angle = useMotionValue(baseAngle);
+  const springAngle = useSpring(angle, {
+    stiffness: 200,  // 부드러운 탄성
+    damping: 25,
+    mass: 0.5
+  });
+
+  // 타이머 진행에 따라 각도 업데이트 (드래그 중이 아닐 때만)
+  // isDraggingRef.current로 동기적 체크 (React state는 비동기라 타이밍 이슈 방지)
+  useEffect(() => {
+    // 드래그 중인데 리셋하려고 하면 문제! (이 로그가 나오면 버그)
+    if (isDraggingRef.current) {
+      console.log('[useEffect] ⚠️ 드래그 중인데 리셋 시도! progress:', progress);
+    } else {
+      angle.set(progress * 360);
+    }
+  }, [progress, angle]);
+
+  // strokeDashoffset 계산
+  const strokeDashoffset = useTransform(
+    springAngle,
+    [0, 360],
+    [circumference, 0]
+  );
+
+  // 노브 위치 계산 (12시 방향에서 시작, 시계방향)
+  // 노브 크기(36px)의 절반을 미리 빼서 중심점 맞춤
+  const knobSize = 36; // w-9 = 36px
+  const knobX = useTransform(springAngle, (a) => {
+    const rad = ((a - 90) * Math.PI) / 180;
+    return center + radius * Math.cos(rad) - knobSize / 2;
+  });
+  const knobY = useTransform(springAngle, (a) => {
+    const rad = ((a - 90) * Math.PI) / 180;
+    return center + radius * Math.sin(rad) - knobSize / 2;
+  });
+
+  // 마지막 유효한 각도 저장 (반시계방향 차단용)
+  const lastValidAngle = React.useRef(baseAngle);
+
+  // 드래그 상태 동기적 관리 (React state는 비동기이므로 ref로 즉시 체크)
+  const isDraggingRef = React.useRef(false);
+
+  // 포인터 위치에서 각도 계산
+  const getAngleFromPoint = (clientX: number, clientY: number): number => {
+    if (!containerRef.current) return 0;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = clientX - rect.left - center;
+    const y = clientY - rect.top - center;
+    let deg = (Math.atan2(y, x) * 180) / Math.PI + 90;
+    if (deg < 0) deg += 360;
+    return deg;
+  };
+
+  // 포인터 이동 핸들러
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current || !containerRef.current) {
+      return;
+    }
+
+    const newAngle = getAngleFromPoint(e.clientX, e.clientY);
+    const currentAngle = lastValidAngle.current;
+
+    // ⭐ 360° 래핑 감지: 95% 이상(342°)에서 0° 근처(30° 미만)로 이동하면 완료
+    if (currentAngle > 342 && newAngle < 30) {
+      console.log('[handlePointerMove] 🎉 완료 감지! 360° 통과 (currentAngle:', currentAngle.toFixed(1), '→ newAngle:', newAngle.toFixed(1), ')');
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      onDragEnd(1.0);  // 100% 완료
+      return;
+    }
+
+    // 반시계방향 드래그 차단
+    const angleDiff = newAngle - currentAngle;
+    const normalizedDiff = angleDiff > 180 ? angleDiff - 360 :
+      angleDiff < -180 ? angleDiff + 360 : angleDiff;
+
+    console.log('[handlePointerMove] newAngle:', newAngle.toFixed(1), 'currentAngle:', currentAngle.toFixed(1), 'diff:', normalizedDiff.toFixed(1));
+
+    // 반시계방향으로 30도 이상 이동하면 차단
+    if (normalizedDiff < -30) {
+      console.log('[handlePointerMove] ❌ 반시계방향 차단');
+      return;
+    }
+
+    // 유효한 이동만 허용
+    if (normalizedDiff >= 0 || Math.abs(normalizedDiff) < 30) {
+      console.log('[handlePointerMove] ✅ 각도 업데이트:', newAngle.toFixed(1), '(', (newAngle / 360 * 100).toFixed(1), '%)');
+      lastValidAngle.current = newAngle;
+      angle.set(newAngle);
+      onDragProgress(newAngle / 360);
+    }
+  };
+
+  // 포인터 다운 핸들러 (드래그 시작)
+  const handlePointerDown = (e: React.PointerEvent) => {
+    console.log('[handlePointerDown] 🟢 드래그 시작');
+    e.currentTarget.setPointerCapture(e.pointerId);
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    lastValidAngle.current = angle.get();
+    console.log('[handlePointerDown] lastValidAngle:', lastValidAngle.current.toFixed(1));
+  };
+
+  // 포인터 업 핸들러 (드래그 종료)
+  const handlePointerUp = (e: React.PointerEvent) => {
+    console.log('[handlePointerUp] 🔴 드래그 종료');
+    e.currentTarget.releasePointerCapture(e.pointerId);
+
+    const finalAngle = angle.get();
+    const finalProgress = finalAngle / 360;
+
+    console.log('[handlePointerUp] finalAngle:', finalAngle.toFixed(1), 'finalProgress:', (finalProgress * 100).toFixed(1) + '%');
+
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    onDragEnd(finalProgress);
+
+    // 95% 미만이면 원래 위치로 스프링 애니메이션
+    if (finalProgress < 0.95) {
+      console.log('[handlePointerUp] ⬅️ 스냅백: progress * 360 =', progress * 360);
+      angle.set(progress * 360);
+      lastValidAngle.current = progress * 360;
+    } else {
+      console.log('[handlePointerUp] ✅ 완료! 95% 이상');
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative"
+      style={{ width: size, height: size }}
+    >
+      <svg width={size} height={size} className="transform -rotate-90">
+        {/* 배경 트랙 */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="#e5e7eb"
+          strokeWidth={strokeWidth}
+        />
+
+        {/* 프로그레스 아크 */}
+        <motion.circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="url(#progressGradient)"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          style={{ strokeDashoffset }}
+        />
+
+        {/* 그라데이션 정의 */}
+        <defs>
+          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#60a5fa" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {/* 노브 (시각적 표시만) */}
+      <motion.div
+        className="absolute w-9 h-9 rounded-full bg-primary shadow-lg flex items-center justify-center pointer-events-none"
+        style={{
+          left: 0,
+          top: 0,
+          x: knobX,
+          y: knobY,
+        }}
+      >
+        <div className="w-3 h-3 rounded-full bg-white/80" />
+      </motion.div>
+
+      {/* 투명 드래그 핸들 - 전체 원 영역 (Pointer Events 사용) */}
+      <div
+        className="absolute inset-0 cursor-grab active:cursor-grabbing rounded-full"
+        style={{ touchAction: 'none' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      />
+    </div>
+  );
+}
+
+// ============================================
 // 즉흥 포모도로 타이머 화면
 // ============================================
 
@@ -870,12 +1096,11 @@ interface AdhocTimerViewProps {
     duration: number;
   };
   onStop: () => void;
+  onComplete: () => void;
 }
 
-function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps & { onComplete?: () => void }) {
-  const svgRef = useRef<SVGSVGElement>(null);
+function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [dragProgress, setDragProgress] = useState<number | null>(null);
 
   // 시간 포맷팅 (mm:ss) - 밀리초를 초로 변환
   const formatTime = (ms: number) => {
@@ -886,82 +1111,28 @@ function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps & { onComple
   };
 
   // 진행률 계산 (0-1)
-  const actualProgress = timerState.duration > 0
-    ? (timerState.duration - timerState.remainingTime) / timerState.duration
-    : 0;
+  const progress = (timerState.duration - timerState.remainingTime) / timerState.duration;
 
-  // 드래그 중이면 드래그 진행률 사용
-  const displayProgress = isDragging && dragProgress !== null ? dragProgress : actualProgress;
-
-  // SVG 상수
-  const size = 192; // w-48 = 192px
-  const center = size / 2;
-  const radius = 88;
-  const circumference = 2 * Math.PI * radius;
-
-  // 인디케이터 위치 계산 (12시 방향이 0%, 시계방향으로 증가)
-  const indicatorAngle = (displayProgress * 360 - 90) * (Math.PI / 180);
-  const indicatorX = center + radius * Math.cos(indicatorAngle);
-  const indicatorY = center + radius * Math.sin(indicatorAngle);
-
-  // 마우스/터치 위치에서 각도 계산
-  const getProgressFromEvent = (clientX: number, clientY: number): number => {
-    if (!svgRef.current) return 0;
-    const rect = svgRef.current.getBoundingClientRect();
-    const svgCenterX = rect.left + rect.width / 2;
-    const svgCenterY = rect.top + rect.height / 2;
-
-    const angle = Math.atan2(clientY - svgCenterY, clientX - svgCenterX);
-    // 12시 방향을 0으로, 시계방향으로 증가
-    const degrees = (angle * 180 / Math.PI + 90 + 360) % 360;
-    return degrees / 360;
-  };
-
-  // 드래그 시작
-  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    setDragProgress(getProgressFromEvent(clientX, clientY));
-  };
-
-  // 드래그 중
+  // 타이머 자연 완료 감지
   useEffect(() => {
-    if (!isDragging) return;
+    if (timerState.remainingTime <= 0 && timerState.status === 'running') {
+      onComplete();
+    }
+  }, [timerState.remainingTime, timerState.status, onComplete]);
 
-    const handleMove = (e: MouseEvent | TouchEvent) => {
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-      const newProgress = getProgressFromEvent(clientX, clientY);
-      setDragProgress(newProgress);
+  // 드래그 중 진행률 업데이트
+  const handleDragProgress = () => {
+    // 드래그 중에는 UI 피드백만 제공 (실제 타이머는 변경하지 않음)
+  };
 
-      // 95% 이상이면 완료 처리
-      if (newProgress >= 0.95) {
-        setIsDragging(false);
-        setDragProgress(null);
-        onStop();
-      }
-    };
-
-    const handleEnd = () => {
-      setIsDragging(false);
-      setDragProgress(null);
-    };
-
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleEnd);
-    document.addEventListener('touchmove', handleMove);
-    document.addEventListener('touchend', handleEnd);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchmove', handleMove);
-      document.removeEventListener('touchend', handleEnd);
-    };
-  }, [isDragging, onStop]);
+  // 드래그 종료 처리
+  const handleDragEnd = (finalProgress: number) => {
+    // 95% 이상이면 완료 처리
+    if (finalProgress >= 0.95) {
+      onComplete();
+    }
+    // 95% 미만이면 CircularProgressSlider가 자동으로 스냅백 처리
+  };
 
   return (
     <motion.div
@@ -971,78 +1142,37 @@ function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps & { onComple
       className="w-full max-w-sm text-center"
     >
       {/* 타이머 원형 디스플레이 */}
-      <div className="relative w-48 h-48 mx-auto mb-8">
-        <svg
-          ref={svgRef}
-          className="w-full h-full"
-          style={{ overflow: 'visible' }}
-        >
-          {/* 배경 원 */}
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="8"
-            className="text-base-300"
-          />
-          {/* 진행 원 (12시 방향에서 시작하도록 회전) */}
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="8"
-            strokeLinecap="round"
-            className="text-primary"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - displayProgress)}
-            style={{
-              transform: 'rotate(-90deg)',
-              transformOrigin: '50% 50%',
-              transition: isDragging ? 'none' : 'stroke-dashoffset 0.5s ease',
-            }}
-          />
-          {/* 클릭 영역 확장용 투명 원 (더 넓은 터치 영역) */}
-          <circle
-            cx={indicatorX}
-            cy={indicatorY}
-            r={28}
-            fill="transparent"
-            className="cursor-grab"
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-          />
-          {/* 드래그 인디케이터 (눈금) */}
-          <circle
-            cx={indicatorX}
-            cy={indicatorY}
-            r={isDragging ? 18 : 14}
-            fill="currentColor"
-            className={`text-primary ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-            style={{
-              transition: isDragging ? 'none' : 'r 0.2s ease',
-              pointerEvents: 'none', // 투명 원에서 이벤트 처리
-            }}
-          />
-        </svg>
+      <div className="relative mx-auto mb-8" style={{ width: 200, height: 200 }}>
+        <CircularProgressSlider
+          size={200}
+          progress={progress}
+          onDragProgress={handleDragProgress}
+          onDragEnd={handleDragEnd}
+          isDragging={isDragging}
+          setIsDragging={setIsDragging}
+        />
 
-        {/* 시간 표시 */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {/* 중앙 콘텐츠 */}
+        <motion.div
+          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+          animate={{
+            scale: isDragging ? 0.95 : 1,
+            opacity: isDragging ? 0.8 : 1
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        >
           <span className="text-4xl font-bold text-base-content">
             {formatTime(timerState.remainingTime)}
           </span>
           <span className="text-sm text-base-content/50 mt-1">
             {isDragging ? '돌려서 완료' : timerState.status === 'running' ? '집중 중...' : '일시정지'}
           </span>
-        </div>
+        </motion.div>
       </div>
 
       {/* 안내 문구 */}
       <p className="text-sm text-base-content/50 mb-8">
-        {isDragging ? '12시 방향으로 돌리면 완료!' : '끝나면 뭐 했는지 물어볼게요'}
+        끝나면 뭐 했는지 물어볼게요
       </p>
 
       {/* 중단 버튼 */}
