@@ -828,15 +828,15 @@ function EmptyStateView({ onGoToOrganize, onStartAdhoc }: EmptyStateViewProps) {
       </p>
 
       <div className="flex flex-col gap-3">
-        {/* 정리하러 가기 버튼 */}
+        {/* 즉흥 포모도로 버튼 */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={onGoToOrganize}
+          onClick={onStartAdhoc}
           className="btn btn-primary btn-lg w-full rounded-full"
         >
-          <ListTodo className="w-5 h-5" />
-          정리하러 가기
+          <Zap className="w-5 h-5" />
+          지금 떠오른 거 할래
         </motion.button>
 
         {/* 구분선 */}
@@ -846,15 +846,15 @@ function EmptyStateView({ onGoToOrganize, onStartAdhoc }: EmptyStateViewProps) {
           <div className="flex-1 h-px bg-base-300" />
         </div>
 
-        {/* 즉흥 포모도로 버튼 */}
+        {/* 정리하러 가기 버튼 */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={onStartAdhoc}
+          onClick={onGoToOrganize}
           className="btn btn-ghost btn-md w-full rounded-full border border-base-300"
         >
-          <Zap className="w-5 h-5" />
-          지금 떠오른 거 할래
+          <ListTodo className="w-5 h-5" />
+          정리하러 가기
         </motion.button>
       </div>
     </motion.div>
