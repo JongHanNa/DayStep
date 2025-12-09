@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { Todo } from '@/entities/todo/Todo';
+import { TodoSkipsService } from '@/services/todo-skips.service';
+import { ADHDPatternsService, ADHDUserPatterns } from '@/services/adhd-patterns.service';
 
 // ============================================
 // 타입 정의
@@ -11,53 +13,29 @@ export type ADHDMode = 'entry' | 'execute' | 'organize' | null;
 export type SkipReason =
   | 'not_now'      // 지금 상황에 안 맞아
   | 'too_big'      // 너무 큰 일이야
-  | 'not_feeling'; // 기분이 안 나
-
-interface SkipRecord {
-  todoId: string;
-  reason: SkipReason;
-  timestamp: Date;
-  hour: number;
-}
-
-interface CompletionRecord {
-  todoId: string;
-  method: 'direct' | 'alternative'; // 직접 완료 vs 다른 방법으로 완료
-  timestamp: Date;
-  hour: number;
-}
-
-// 사용자 패턴 학습 데이터
-interface UserPatterns {
-  // 완료한 할일 특성
-  completedPatterns: {
-    avgTitleLength: number;
-    keywords: Record<string, number>; // 자주 완료하는 키워드 빈도
-    hourlyCompletionRate: number[];   // 시간대별 완료율 (0-23)
-  };
-
-  // 건너뛴 할일 특성
-  skippedPatterns: {
-    keywords: Record<string, number>;       // 자주 건너뛰는 키워드 빈도
-    tooBigKeywords: Record<string, number>; // "너무 큰 일" 사유로 건너뛴 키워드
-  };
-
-  // 학습 히스토리 (최근 100개)
-  completionHistory: CompletionRecord[];
-  skipHistory: SkipRecord[];
-}
+  | 'not_feeling'  // 기분이 안 나
+  | 'not_needed';  // 필요 없는 할일이야 (삭제)
 
 // 실행 모드 상태
 interface ExecutionModeState {
   currentRecommendation: Todo | null;
-  skippedTodoIds: string[];           // 현재 세션에서 건너뛴 할일
+  skippedTodoIds: string[];           // 쿨다운 중인 할일 ID (DB 기반)
   completedInSession: number;          // 현재 세션 완료 수
+  isLoadingSkips: boolean;             // Skip 로딩 상태
 }
 
 // 정리 모드 상태
 interface OrganizeModeState {
   consecutiveTodoAdds: number;         // 연속 할일 추가 수
   startTime: Date | null;              // 정리 모드 시작 시간
+}
+
+// DB에서 로드한 패턴 (캐시용)
+interface CachedPatterns {
+  completedKeywords: Record<string, number>;
+  skippedKeywords: Record<string, number>;
+  tooBigKeywords: Record<string, number>;
+  hourlyCompletionRate: number[];
 }
 
 // ============================================
@@ -74,22 +52,27 @@ interface ADHDModeState {
   // 정리 모드 상태
   organizeMode: OrganizeModeState;
 
-  // 사용자 설정 (settingsStore에서도 저장하지만 여기서도 캐시)
+  // 사용자 설정
   awakeningSentence: string | null;
 
-  // 패턴 학습 데이터
-  userPatterns: UserPatterns;
+  // 패턴 데이터 (DB에서 로드, 캐시용)
+  cachedPatterns: CachedPatterns | null;
+  isLoadingPatterns: boolean;
+
+  // 현재 사용자 ID (DB 연동용)
+  currentUserId: string | null;
 
   // === 모드 전환 Actions ===
   enterEntryMode: () => void;
-  enterExecuteMode: () => void;
+  enterExecuteMode: (userId: string) => Promise<void>;
   enterOrganizeMode: () => void;
   exitMode: () => void;
 
   // === 실행 모드 Actions ===
   setCurrentRecommendation: (todo: Todo | null) => void;
   markCompleted: (todoId: string, method: 'direct' | 'alternative') => void;
-  markSkipped: (todoId: string, reason: SkipReason) => void;
+  markSkipped: (todoId: string, reason: SkipReason, userId: string) => Promise<void>;
+  loadActiveSkips: (userId: string) => Promise<void>;
   resetSession: () => void;
 
   // === 정리 모드 Actions ===
@@ -102,12 +85,13 @@ interface ADHDModeState {
   // === 추천 알고리즘 ===
   calculateRecommendationScore: (todo: Todo) => number;
 
-  // === 패턴 학습 Actions ===
-  learnFromCompletion: (todo: Todo, method: 'direct' | 'alternative') => void;
-  learnFromSkip: (todo: Todo, reason: SkipReason) => void;
+  // === 패턴 학습 Actions (DB 연동) ===
+  learnFromCompletion: (todo: Todo, method: 'direct' | 'alternative', userId: string) => Promise<void>;
+  learnFromSkip: (todo: Todo, reason: SkipReason, userId: string) => Promise<void>;
+  loadUserPatterns: (userId: string) => Promise<void>;
 
   // === 유틸리티 ===
-  resetPatterns: () => void;
+  resetPatterns: (userId: string) => Promise<void>;
 }
 
 // ============================================
@@ -116,7 +100,6 @@ interface ADHDModeState {
 
 // 키워드 추출 (한글/영문 단어)
 function extractKeywords(title: string): string[] {
-  // 한글, 영문 단어 추출 (2글자 이상)
   const words = title
     .toLowerCase()
     .split(/[\s,.\-_!?]+/)
@@ -125,24 +108,18 @@ function extractKeywords(title: string): string[] {
 }
 
 // 기본 패턴 데이터
-const DEFAULT_USER_PATTERNS: UserPatterns = {
-  completedPatterns: {
-    avgTitleLength: 0,
-    keywords: {},
-    hourlyCompletionRate: Array(24).fill(0),
-  },
-  skippedPatterns: {
-    keywords: {},
-    tooBigKeywords: {},
-  },
-  completionHistory: [],
-  skipHistory: [],
+const DEFAULT_CACHED_PATTERNS: CachedPatterns = {
+  completedKeywords: {},
+  skippedKeywords: {},
+  tooBigKeywords: {},
+  hourlyCompletionRate: Array(24).fill(0),
 };
 
 const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
   currentRecommendation: null,
   skippedTodoIds: [],
   completedInSession: 0,
+  isLoadingSkips: false,
 };
 
 const DEFAULT_ORGANIZE_MODE: OrganizeModeState = {
@@ -163,7 +140,9 @@ export const useADHDModeStore = create<ADHDModeState>()(
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         awakeningSentence: null,
-        userPatterns: DEFAULT_USER_PATTERNS,
+        cachedPatterns: null,
+        isLoadingPatterns: false,
+        currentUserId: null,
 
         // === 모드 전환 Actions ===
         enterEntryMode: () => {
@@ -171,16 +150,41 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set({ currentMode: 'entry' });
         },
 
-        enterExecuteMode: () => {
+        enterExecuteMode: async (userId: string) => {
           console.log('🎯 ADHD: 실행 모드 진입');
+
           set({
             currentMode: 'execute',
+            currentUserId: userId,
             executionMode: {
-              ...get().executionMode,
-              skippedTodoIds: [],
-              completedInSession: 0,
+              ...DEFAULT_EXECUTION_MODE,
+              isLoadingSkips: true,
             }
           });
+
+          // DB에서 쿨다운 중인 skip 로드
+          try {
+            const skippedTodoIds = await TodoSkipsService.getActiveSkipTodoIds(userId);
+            set((state) => ({
+              executionMode: {
+                ...state.executionMode,
+                skippedTodoIds,
+                isLoadingSkips: false,
+              }
+            }));
+            console.log(`📥 쿨다운 중인 Skip ${skippedTodoIds.length}개 로드`);
+          } catch (error) {
+            console.error('❌ Skip 로드 실패:', error);
+            set((state) => ({
+              executionMode: {
+                ...state.executionMode,
+                isLoadingSkips: false,
+              }
+            }));
+          }
+
+          // 패턴 데이터도 로드
+          get().loadUserPatterns(userId);
         },
 
         enterOrganizeMode: () => {
@@ -200,6 +204,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             currentMode: null,
             executionMode: DEFAULT_EXECUTION_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
+            currentUserId: null,
           });
         },
 
@@ -223,14 +228,54 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        markSkipped: (todoId, reason) => {
+        markSkipped: async (todoId, reason, userId) => {
           console.log(`⏭️ ADHD: 할일 건너뛰기 (${reason})`, todoId);
+
+          // 1. 즉시 로컬 상태 업데이트 (낙관적 업데이트)
           set((state) => ({
             executionMode: {
               ...state.executionMode,
               skippedTodoIds: [...state.executionMode.skippedTodoIds, todoId],
             }
           }));
+
+          // 2. not_needed가 아닌 경우만 DB에 저장 (not_needed는 삭제이므로)
+          if (reason !== 'not_needed') {
+            try {
+              await TodoSkipsService.recordSkip(todoId, userId, reason);
+            } catch (error) {
+              console.error('❌ Skip DB 저장 실패:', error);
+              // 실패해도 로컬 상태는 유지 (UX 우선)
+            }
+          }
+        },
+
+        loadActiveSkips: async (userId: string) => {
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              isLoadingSkips: true,
+            }
+          }));
+
+          try {
+            const skippedTodoIds = await TodoSkipsService.getActiveSkipTodoIds(userId);
+            set((state) => ({
+              executionMode: {
+                ...state.executionMode,
+                skippedTodoIds,
+                isLoadingSkips: false,
+              }
+            }));
+          } catch (error) {
+            console.error('❌ Active Skips 로드 실패:', error);
+            set((state) => ({
+              executionMode: {
+                ...state.executionMode,
+                isLoadingSkips: false,
+              }
+            }));
+          }
         },
 
         resetSession: () => {
@@ -261,19 +306,20 @@ export const useADHDModeStore = create<ADHDModeState>()(
 
         // === 추천 알고리즘 ===
         calculateRecommendationScore: (todo) => {
-          const { userPatterns } = get();
+          const { cachedPatterns } = get();
+          const patterns = cachedPatterns || DEFAULT_CACHED_PATTERNS;
           let score = 100; // 기본 점수
 
           // === 규칙 기반 점수 ===
 
-          // 1. 제목 길이 (짧을수록 +점수, 간단한 작업일 가능성)
+          // 1. 제목 길이 (짧을수록 +점수)
           const titleLength = todo.title.length;
           if (titleLength <= 10) score += 30;
           else if (titleLength <= 20) score += 20;
           else if (titleLength <= 30) score += 10;
           else score -= 10;
 
-          // 2. 시간 지정 없음 +20점 (유연성, 지금 바로 할 수 있음)
+          // 2. 시간 지정 없음 +20점
           if (todo.scheduleType === 'anytime') score += 20;
 
           // 3. 시간 지정 할일은 해당 시간대에 우선 추천
@@ -282,18 +328,16 @@ export const useADHDModeStore = create<ADHDModeState>()(
             const startTime = new Date(todo.startTime);
             const diffMinutes = (startTime.getTime() - now.getTime()) / (1000 * 60);
 
-            // 시작 시간이 지났거나 30분 내에 시작이면 +40점
             if (diffMinutes <= 30) score += 40;
-            // 1시간 이내면 +20점
             else if (diffMinutes <= 60) score += 20;
           }
 
-          // 4. 반복 할일 -10점 (매일 하는 일이라 급하지 않음)
+          // 4. 반복 할일 -10점
           if (todo.recurrencePattern && todo.recurrencePattern !== 'none') {
             score -= 10;
           }
 
-          // 5. 우선순위 반영 (있는 경우)
+          // 5. 우선순위 반영
           if (todo.priority === 'high') score += 25;
           else if (todo.priority === 'medium') score += 10;
 
@@ -301,116 +345,86 @@ export const useADHDModeStore = create<ADHDModeState>()(
           const hour = new Date().getHours();
 
           // 현재 시간대 완료율 반영 (+0~30점)
-          const hourlyRate = userPatterns.completedPatterns.hourlyCompletionRate[hour];
+          const hourlyRate = patterns.hourlyCompletionRate[hour] || 0;
           score += Math.min(hourlyRate * 3, 30);
 
           // 키워드 매칭
           const keywords = extractKeywords(todo.title);
           keywords.forEach(kw => {
-            // 자주 완료하는 키워드 +5점
-            if (userPatterns.completedPatterns.keywords[kw]) {
-              score += 5;
-            }
-            // 자주 건너뛰는 키워드 -3점
-            if (userPatterns.skippedPatterns.keywords[kw]) {
-              score -= 3;
-            }
-            // "너무 큰 일"로 건너뛴 키워드 -5점
-            if (userPatterns.skippedPatterns.tooBigKeywords[kw]) {
-              score -= 5;
-            }
+            if (patterns.completedKeywords[kw]) score += 5;
+            if (patterns.skippedKeywords[kw]) score -= 3;
+            if (patterns.tooBigKeywords[kw]) score -= 5;
           });
 
           return score;
         },
 
-        // === 패턴 학습 Actions ===
-        learnFromCompletion: (todo, method) => {
-          const hour = new Date().getHours();
-          const keywords = extractKeywords(todo.title);
+        // === 패턴 학습 Actions (DB 연동) ===
+        learnFromCompletion: async (todo, method, userId) => {
+          console.log('📊 ADHD: 완료 패턴 학습', { todoTitle: todo.title, method });
 
-          set((state) => {
-            const newPatterns = { ...state.userPatterns };
+          // 백그라운드로 DB 업데이트 (실패해도 UX에 영향 없음)
+          try {
+            await ADHDPatternsService.updateCompletionPattern(userId, todo, method);
 
-            // 시간대별 완료율 업데이트
-            newPatterns.completedPatterns.hourlyCompletionRate[hour]++;
-
-            // 키워드 빈도 업데이트
-            keywords.forEach(kw => {
-              newPatterns.completedPatterns.keywords[kw] =
-                (newPatterns.completedPatterns.keywords[kw] || 0) + 1;
-            });
-
-            // 평균 제목 길이 업데이트
-            const totalCompleted = newPatterns.completionHistory.length;
-            newPatterns.completedPatterns.avgTitleLength =
-              (newPatterns.completedPatterns.avgTitleLength * totalCompleted + todo.title.length) / (totalCompleted + 1);
-
-            // 히스토리 추가 (최근 100개 유지)
-            newPatterns.completionHistory = [
-              ...newPatterns.completionHistory.slice(-99),
-              {
-                todoId: todo.id,
-                method,
-                timestamp: new Date(),
-                hour,
-              }
-            ];
-
-            return { userPatterns: newPatterns };
-          });
-
-          console.log('📊 ADHD: 완료 패턴 학습', { todoTitle: todo.title, method, hour });
+            // 캐시 갱신
+            const patterns = await ADHDPatternsService.getPatternsForScoring(userId);
+            set({ cachedPatterns: patterns });
+          } catch (error) {
+            console.error('❌ 완료 패턴 학습 실패:', error);
+          }
         },
 
-        learnFromSkip: (todo, reason) => {
-          const hour = new Date().getHours();
-          const keywords = extractKeywords(todo.title);
+        learnFromSkip: async (todo, reason, userId) => {
+          // not_needed는 학습 대상 아님
+          if (reason === 'not_needed') return;
 
-          set((state) => {
-            const newPatterns = { ...state.userPatterns };
+          console.log('📊 ADHD: 스킵 패턴 학습', { todoTitle: todo.title, reason });
 
-            // 키워드별 건너뛰기 빈도 업데이트
-            keywords.forEach(kw => {
-              newPatterns.skippedPatterns.keywords[kw] =
-                (newPatterns.skippedPatterns.keywords[kw] || 0) + 1;
+          try {
+            await ADHDPatternsService.updateSkipPattern(userId, todo, reason);
 
-              // "너무 큰 일" 사유면 별도 기록
-              if (reason === 'too_big') {
-                newPatterns.skippedPatterns.tooBigKeywords[kw] =
-                  (newPatterns.skippedPatterns.tooBigKeywords[kw] || 0) + 1;
-              }
+            // 캐시 갱신
+            const patterns = await ADHDPatternsService.getPatternsForScoring(userId);
+            set({ cachedPatterns: patterns });
+          } catch (error) {
+            console.error('❌ 스킵 패턴 학습 실패:', error);
+          }
+        },
+
+        loadUserPatterns: async (userId: string) => {
+          set({ isLoadingPatterns: true });
+
+          try {
+            const patterns = await ADHDPatternsService.getPatternsForScoring(userId);
+            set({
+              cachedPatterns: patterns,
+              isLoadingPatterns: false
             });
-
-            // 히스토리 추가 (최근 100개 유지)
-            newPatterns.skipHistory = [
-              ...newPatterns.skipHistory.slice(-99),
-              {
-                todoId: todo.id,
-                reason,
-                timestamp: new Date(),
-                hour,
-              }
-            ];
-
-            return { userPatterns: newPatterns };
-          });
-
-          console.log('📊 ADHD: 건너뛰기 패턴 학습', { todoTitle: todo.title, reason, hour });
+            console.log('📥 ADHD 패턴 데이터 로드 완료');
+          } catch (error) {
+            console.error('❌ 패턴 데이터 로드 실패:', error);
+            set({ isLoadingPatterns: false });
+          }
         },
 
         // === 유틸리티 ===
-        resetPatterns: () => {
+        resetPatterns: async (userId: string) => {
           console.log('🔄 ADHD: 패턴 데이터 초기화');
-          set({ userPatterns: DEFAULT_USER_PATTERNS });
+          try {
+            await ADHDPatternsService.resetPatterns(userId);
+            set({ cachedPatterns: DEFAULT_CACHED_PATTERNS });
+          } catch (error) {
+            console.error('❌ 패턴 초기화 실패:', error);
+          }
         },
       }),
       {
         name: 'adhd-mode-store',
         partialize: (state) => ({
           awakeningSentence: state.awakeningSentence,
-          userPatterns: state.userPatterns,
-          // currentMode와 executionMode는 persist하지 않음 (세션별 초기화)
+          // userPatterns는 더 이상 persist하지 않음 (DB에서 로드)
+          // currentMode와 executionMode는 세션별 초기화
         }),
       }
     ),

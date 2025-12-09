@@ -21,7 +21,7 @@ import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
  * - 비인증 + Capacitor: /login으로 리다이렉트
  */
 export default function HomePage() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
   const [isCapacitor, setIsCapacitor] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -81,7 +81,9 @@ export default function HomePage() {
   // 인증된 사용자 + ADHD 모드 활성화
   // 현재 모드에 따라 다른 화면 표시
   const handleExecute = () => {
-    enterExecuteMode();
+    if (user?.id) {
+      enterExecuteMode(user.id);
+    }
   };
 
   const handleOrganize = () => {

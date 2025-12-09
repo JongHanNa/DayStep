@@ -9,11 +9,14 @@ import {
   Ban,
   Package,
   Frown,
-  PartyPopper
+  PartyPopper,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface ExecutionModeProps {
   onExit: () => void;
@@ -28,6 +31,9 @@ type ViewState = 'recommendation' | 'skip-reason' | 'completed-all';
  * ADHD 사용자가 "지금 할 수 있는 가장 작은 것 하나"에 집중하도록 돕습니다.
  */
 export default function ExecutionMode({ onExit }: ExecutionModeProps) {
+  const { user } = useAuth();
+  const userId = user?.id;
+
   const {
     executionMode,
     awakeningSentence,
@@ -39,10 +45,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     learnFromSkip,
   } = useADHDModeStore();
 
-  const { todos, toggleTodo } = useTodoStore();
+  const { todos, toggleTodo, deleteTodo } = useTodoStore();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // 로딩 상태
+  const isLoadingSkips = executionMode.isLoadingSkips;
 
   // 오늘 할일만 필터링 (미완료 + 오늘 날짜)
   const getTodayTodos = useCallback(() => {
@@ -70,7 +79,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // 다음 추천 할일 가져오기
   const getNextRecommendation = useCallback(() => {
     const todayTodos = getTodayTodos();
-    const { skippedTodoIds } = executionMode;
+    // Zustand getState()로 최신 상태 조회 (stale closure 방지)
+    const { skippedTodoIds } = useADHDModeStore.getState().executionMode;
 
     // 건너뛴 할일 제외
     const candidates = todayTodos.filter(
@@ -93,26 +103,28 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     setCurrentRecommendation(scored[0].todo);
     setViewState('recommendation');
-  }, [getTodayTodos, executionMode, calculateRecommendationScore, setCurrentRecommendation]);
+  }, [getTodayTodos, calculateRecommendationScore, setCurrentRecommendation]);
 
-  // 초기 추천 로드
+  // 초기 추천 로드 (skip 로딩 완료 후)
   useEffect(() => {
-    getNextRecommendation();
-  }, []);
+    if (!isLoadingSkips) {
+      getNextRecommendation();
+    }
+  }, [isLoadingSkips]);
 
   // "했어" 클릭
   const handleComplete = async (method: 'direct' | 'alternative') => {
     const currentTodo = executionMode.currentRecommendation;
-    if (!currentTodo || isAnimating) return;
+    if (!currentTodo || isAnimating || !userId) return;
 
     setIsAnimating(true);
 
     // 할일 완료 처리
     await toggleTodo(currentTodo.id);
 
-    // ADHD Store 업데이트 및 학습
+    // ADHD Store 업데이트 및 학습 (DB 연동)
     markCompleted(currentTodo.id, method);
-    learnFromCompletion(currentTodo, method);
+    learnFromCompletion(currentTodo, method, userId);
 
     // 애니메이션 후 다음 추천
     setTimeout(() => {
@@ -127,15 +139,22 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   };
 
   // 사유 선택
-  const handleSkipReason = (reason: SkipReason) => {
+  const handleSkipReason = async (reason: SkipReason) => {
     const currentTodo = executionMode.currentRecommendation;
-    if (!currentTodo || isAnimating) return;
+    if (!currentTodo || isAnimating || !userId) return;
 
     setIsAnimating(true);
 
-    // ADHD Store 업데이트 및 학습
-    markSkipped(currentTodo.id, reason);
-    learnFromSkip(currentTodo, reason);
+    // "필요 없는 할일"이면 삭제
+    if (reason === 'not_needed') {
+      // skippedTodoIds에 추가하여 즉시 추천 목록에서 제외
+      await markSkipped(currentTodo.id, reason, userId);
+      await deleteTodo(currentTodo.id);
+    } else {
+      // 기존 로직: 건너뛰기 + 학습 (DB 연동)
+      await markSkipped(currentTodo.id, reason, userId);
+      learnFromSkip(currentTodo, reason, userId);
+    }
 
     // 다음 추천
     setTimeout(() => {
@@ -184,6 +203,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onComplete={() => handleComplete('direct')}
               onAlternativeComplete={() => handleComplete('alternative')}
               onSkip={handleSkipClick}
+              onDelete={() => handleSkipReason('not_needed')}
             />
           )}
 
@@ -221,6 +241,7 @@ interface RecommendationViewProps {
   onComplete: () => void;
   onAlternativeComplete: () => void;
   onSkip: () => void;
+  onDelete: () => void;
 }
 
 function RecommendationView({
@@ -230,6 +251,7 @@ function RecommendationView({
   onComplete,
   onAlternativeComplete,
   onSkip,
+  onDelete,
 }: RecommendationViewProps) {
   return (
     <motion.div
@@ -290,6 +312,18 @@ function RecommendationView({
           className="btn btn-ghost btn-sm w-full rounded-full text-base-content/60"
         >
           다른 거 추천해줘
+        </motion.button>
+
+        {/* 필요 없는 할일 삭제 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onDelete}
+          disabled={isAnimating}
+          className="btn btn-ghost btn-sm w-full rounded-full text-error/60"
+        >
+          <Trash2 className="w-4 h-4" />
+          필요 없는 할일이야
         </motion.button>
       </div>
 
