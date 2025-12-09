@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check,
@@ -25,6 +25,7 @@ import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
+import { usePomodoro } from '@/hooks/usePomodoro';
 import { useAuth } from '@/app/context/AuthContext';
 
 // 헬퍼 함수: 일정 유형 라벨
@@ -79,13 +80,15 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     enterOrganizeMode,
   } = useADHDModeStore();
 
-  // 포모도로 스토어
+  // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
     timerState,
     startTimer: startPomodoroTimer,
     stopTimer: stopPomodoroTimer,
-    reset: resetPomodoroTimer,
-  } = usePomodoroStore();
+  } = usePomodoro();
+
+  // 포모도로 설정은 스토어에서
+  const { settings: pomodoroSettings } = usePomodoroStore();
 
   const { todos, toggleTodo, deleteTodo, createTodo } = useTodoStore();
   const { contexts, loadContexts } = useNextActionContextStore();
@@ -273,14 +276,15 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // "지금 떠오른 거 할래" 클릭
   const handleStartAdhoc = () => {
     startAdhocMode();
-    startPomodoroTimer(); // 포모도로 시작 (기본 25분)
+    // usePomodoro().startTimer(duration, timerType, sessionId)
+    const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
+    startPomodoroTimer(duration, 'POMODORO');
     setViewState('adhoc-timer');
   };
 
   // 포모도로 중단
   const handleStopAdhoc = () => {
-    stopPomodoroTimer();
-    resetPomodoroTimer();
+    stopPomodoroTimer(); // usePomodoro의 stopTimer는 상태도 리셋함
     endAdhocMode();
     getNextRecommendation();
   };
@@ -307,7 +311,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     // 정리
     setAdhocCaptureTitle('');
-    resetPomodoroTimer();
+    stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
     markCompleted('adhoc', 'direct'); // 세션 완료 수 증가
 
@@ -320,7 +324,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // 기록 스킵
   const handleSkipAdhocCapture = () => {
     setAdhocCaptureTitle('');
-    resetPomodoroTimer();
+    stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
     getNextRecommendation();
   };
@@ -868,18 +872,96 @@ interface AdhocTimerViewProps {
   onStop: () => void;
 }
 
-function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps) {
-  // 시간 포맷팅 (mm:ss)
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps & { onComplete?: () => void }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragProgress, setDragProgress] = useState<number | null>(null);
+
+  // 시간 포맷팅 (mm:ss) - 밀리초를 초로 변환
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // 진행률 계산
-  const progress = timerState.duration > 0
-    ? ((timerState.duration - timerState.remainingTime) / timerState.duration) * 100
+  // 진행률 계산 (0-1)
+  const actualProgress = timerState.duration > 0
+    ? (timerState.duration - timerState.remainingTime) / timerState.duration
     : 0;
+
+  // 드래그 중이면 드래그 진행률 사용
+  const displayProgress = isDragging && dragProgress !== null ? dragProgress : actualProgress;
+
+  // SVG 상수
+  const size = 192; // w-48 = 192px
+  const center = size / 2;
+  const radius = 88;
+  const circumference = 2 * Math.PI * radius;
+
+  // 인디케이터 위치 계산 (12시 방향이 0%, 시계방향으로 증가)
+  const indicatorAngle = (displayProgress * 360 - 90) * (Math.PI / 180);
+  const indicatorX = center + radius * Math.cos(indicatorAngle);
+  const indicatorY = center + radius * Math.sin(indicatorAngle);
+
+  // 마우스/터치 위치에서 각도 계산
+  const getProgressFromEvent = (clientX: number, clientY: number): number => {
+    if (!svgRef.current) return 0;
+    const rect = svgRef.current.getBoundingClientRect();
+    const svgCenterX = rect.left + rect.width / 2;
+    const svgCenterY = rect.top + rect.height / 2;
+
+    const angle = Math.atan2(clientY - svgCenterY, clientX - svgCenterX);
+    // 12시 방향을 0으로, 시계방향으로 증가
+    const degrees = (angle * 180 / Math.PI + 90 + 360) % 360;
+    return degrees / 360;
+  };
+
+  // 드래그 시작
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setDragProgress(getProgressFromEvent(clientX, clientY));
+  };
+
+  // 드래그 중
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const newProgress = getProgressFromEvent(clientX, clientY);
+      setDragProgress(newProgress);
+
+      // 95% 이상이면 완료 처리
+      if (newProgress >= 0.95) {
+        setIsDragging(false);
+        setDragProgress(null);
+        onStop();
+      }
+    };
+
+    const handleEnd = () => {
+      setIsDragging(false);
+      setDragProgress(null);
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove);
+    document.addEventListener('touchend', handleEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging, onStop]);
 
   return (
     <motion.div
@@ -890,30 +972,60 @@ function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps) {
     >
       {/* 타이머 원형 디스플레이 */}
       <div className="relative w-48 h-48 mx-auto mb-8">
-        {/* 배경 원 */}
-        <svg className="w-full h-full transform -rotate-90">
+        <svg
+          ref={svgRef}
+          className="w-full h-full"
+          style={{ overflow: 'visible' }}
+        >
+          {/* 배경 원 */}
           <circle
-            cx="96"
-            cy="96"
-            r="88"
+            cx={center}
+            cy={center}
+            r={radius}
             fill="none"
             stroke="currentColor"
             strokeWidth="8"
             className="text-base-300"
           />
-          {/* 진행 원 */}
+          {/* 진행 원 (12시 방향에서 시작하도록 회전) */}
           <circle
-            cx="96"
-            cy="96"
-            r="88"
+            cx={center}
+            cy={center}
+            r={radius}
             fill="none"
             stroke="currentColor"
             strokeWidth="8"
             strokeLinecap="round"
             className="text-primary"
-            strokeDasharray={2 * Math.PI * 88}
-            strokeDashoffset={2 * Math.PI * 88 * (1 - progress / 100)}
-            style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - displayProgress)}
+            style={{
+              transform: 'rotate(-90deg)',
+              transformOrigin: '50% 50%',
+              transition: isDragging ? 'none' : 'stroke-dashoffset 0.5s ease',
+            }}
+          />
+          {/* 클릭 영역 확장용 투명 원 (더 넓은 터치 영역) */}
+          <circle
+            cx={indicatorX}
+            cy={indicatorY}
+            r={28}
+            fill="transparent"
+            className="cursor-grab"
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+          />
+          {/* 드래그 인디케이터 (눈금) */}
+          <circle
+            cx={indicatorX}
+            cy={indicatorY}
+            r={isDragging ? 18 : 14}
+            fill="currentColor"
+            className={`text-primary ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            style={{
+              transition: isDragging ? 'none' : 'r 0.2s ease',
+              pointerEvents: 'none', // 투명 원에서 이벤트 처리
+            }}
           />
         </svg>
 
@@ -923,14 +1035,14 @@ function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps) {
             {formatTime(timerState.remainingTime)}
           </span>
           <span className="text-sm text-base-content/50 mt-1">
-            {timerState.status === 'running' ? '집중 중...' : '일시정지'}
+            {isDragging ? '돌려서 완료' : timerState.status === 'running' ? '집중 중...' : '일시정지'}
           </span>
         </div>
       </div>
 
       {/* 안내 문구 */}
       <p className="text-sm text-base-content/50 mb-8">
-        끝나면 뭐 했는지 물어볼게요
+        {isDragging ? '12시 방향으로 돌리면 완료!' : '끝나면 뭐 했는지 물어볼게요'}
       </p>
 
       {/* 중단 버튼 */}
