@@ -1090,6 +1090,9 @@ interface AdhocTimerViewProps {
 function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
 
+  // 타이머 시작 시점 저장 (컴포넌트 마운트 시 한 번만)
+  const [startedAt] = useState(() => new Date());
+
   // 시간 포맷팅 (mm:ss) - 밀리초를 초로 변환
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -1097,6 +1100,14 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
     const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // 시간 포맷팅 (HH:mm) - 시작/종료 시간용
+  const formatTimeHHMM = (date: Date) => {
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  // 종료 예정 시간 계산
+  const endTime = new Date(startedAt.getTime() + timerState.duration);
 
   // 진행률 계산 (0-1)
   const progress = (timerState.duration - timerState.remainingTime) / timerState.duration;
@@ -1129,6 +1140,14 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
       exit={{ opacity: 0, scale: 0.9 }}
       className="w-full max-w-sm text-center"
     >
+      {/* 포커스 제목 */}
+      <h2 className="text-2xl font-bold text-base-content mb-1">포커스</h2>
+
+      {/* 시작 → 종료 시간 */}
+      <p className="text-base text-base-content/60 mb-6">
+        {formatTimeHHMM(startedAt)} → {formatTimeHHMM(endTime)}
+      </p>
+
       {/* 타이머 원형 디스플레이 (280px, 1.4배 확대) */}
       <div className="relative mx-auto mb-4" style={{ width: 280, height: 280 }}>
         <CircularProgressSlider
@@ -1158,14 +1177,12 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
         <span className="text-4xl font-bold text-base-content">
           {formatTime(timerState.remainingTime)}
         </span>
-        <p className="text-sm text-base-content/50 mt-1">
-          {isDragging ? '돌려서 완료' : timerState.status === 'running' ? '집중 중...' : '일시정지'}
-        </p>
       </div>
 
       {/* 안내 문구 */}
       <p className="text-sm text-base-content/50 mb-8">
-        끝나면 뭐 했는지 물어볼게요
+        끝나면 뭐 했는지 물어볼게요<br />
+        원을 드래그해서 바로 끝낼 수도 있어요
       </p>
 
       {/* 중단 버튼 */}
