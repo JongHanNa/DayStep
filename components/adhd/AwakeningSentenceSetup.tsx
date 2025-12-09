@@ -16,7 +16,7 @@ interface AwakeningSentenceSetupProps {
 
 /** 예시 각성 문장들 */
 const EXAMPLE_SENTENCES = [
-  '정리하다 하루 다 가면, 그건 섬김이 아니야',
+  '정리에 과몰입 하지마, 지금 시작해',
   '완벽한 계획보다 작은 실행이 낫다',
   '지금 이 순간, 할 수 있는 가장 작은 것 하나',
   '생각은 잠시, 행동은 지금',
