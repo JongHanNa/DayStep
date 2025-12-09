@@ -885,8 +885,8 @@ function CircularProgressSlider({
 }: CircularProgressSliderProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  // SVG 설정
-  const strokeWidth = 24;
+  // SVG 설정 (280px 기준 1.4배 확대)
+  const strokeWidth = 34;
   const radius = (size - strokeWidth) / 2 - 4;
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
@@ -917,8 +917,8 @@ function CircularProgressSlider({
 
   // 노브 위치 계산 (12시 방향에서 시작, 시계방향)
   // 캡슐 모양: 트랙 위에 놓여있음 (중심선 유지)
-  const knobWidth = 40;
-  const knobHeight = 20;
+  const knobWidth = 56;
+  const knobHeight = 28;
   const knobX = useTransform(springAngle, (a) => {
     const rad = ((a - 90) * Math.PI) / 180;
     return center + radius * Math.cos(rad) - knobWidth / 2;
@@ -1057,7 +1057,7 @@ function CircularProgressSlider({
           rotate: knobRotation,
         }}
       >
-        <ArrowRight className="w-4 h-4 text-violet-600" />
+        <ArrowRight className="w-6 h-6 text-violet-600" />
       </motion.div>
 
       {/* 투명 드래그 핸들 - 전체 원 영역 (Pointer Events 사용) */}
@@ -1129,10 +1129,10 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
       exit={{ opacity: 0, scale: 0.9 }}
       className="w-full max-w-sm text-center"
     >
-      {/* 타이머 원형 디스플레이 */}
-      <div className="relative mx-auto mb-4" style={{ width: 200, height: 200 }}>
+      {/* 타이머 원형 디스플레이 (280px, 1.4배 확대) */}
+      <div className="relative mx-auto mb-4" style={{ width: 280, height: 280 }}>
         <CircularProgressSlider
-          size={200}
+          size={280}
           progress={progress}
           onDragProgress={handleDragProgress}
           onDragEnd={handleDragEnd}
@@ -1149,7 +1149,7 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
           }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
         >
-          <Zap className="w-12 h-12 text-violet-500" />
+          <Zap className="w-16 h-16 text-violet-500" />
         </motion.div>
       </div>
 
