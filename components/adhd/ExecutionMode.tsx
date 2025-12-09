@@ -81,11 +81,12 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   } = useADHDModeStore();
 
   const { todos, toggleTodo, deleteTodo } = useTodoStore();
-  const { contexts } = useNextActionContextStore();
+  const { contexts, loadContexts } = useNextActionContextStore();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
   const [showCompletedList, setShowCompletedList] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false); // 기본적으로 접힌 상태
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -170,6 +171,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setCurrentRecommendation(scored[0].todo);
     setViewState('recommendation');
   }, [getTodayTodos, calculateRecommendationScore, setCurrentRecommendation]);
+
+  // 다음행동 상황 데이터 로드
+  useEffect(() => {
+    if (userId && contexts.length === 0) {
+      loadContexts(userId);
+    }
+  }, [userId, contexts.length, loadContexts]);
 
   // 초기 추천 로드 (skip 로딩 완료 후)
   useEffect(() => {
@@ -278,36 +286,63 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         <div className="w-10" /> {/* 균형을 위한 빈 공간 */}
       </header>
 
-      {/* 개발환경 디버그 패널 */}
+      {/* 개발환경 디버그 패널 (아코디언) */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="mx-4 mb-4 p-3 bg-base-200 rounded-lg text-xs">
-          <p className="font-semibold mb-2">📋 추천 후보 목록 ({getTodayTodos().length}개)</p>
-          <ul className="space-y-1 max-h-32 overflow-y-auto">
-            {getTodayTodos().map(todo => {
-              // 다음행동 상황 이름 가져오기
-              const contextNames = todo.nextActionContextIds
-                ?.map(id => contexts.find(c => c.id === id)?.title)
-                .filter(Boolean)
-                .join(', ') || '';
+        <div className="mx-4 mb-4 bg-base-200 rounded-lg text-xs overflow-hidden">
+          {/* 아코디언 헤더 */}
+          <button
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+            className="w-full p-3 flex items-center justify-between hover:bg-base-300/50 transition-colors"
+          >
+            <span className="font-semibold">📋 추천 후보 목록 ({getTodayTodos().length}개)</span>
+            {showDebugPanel ? (
+              <ChevronUp className="w-4 h-4 text-base-content/50" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-base-content/50" />
+            )}
+          </button>
 
-              // 쿨다운 남은 시간
-              const cooldown = getRemainingCooldown(todo.id, executionMode.skipCooldowns);
+          {/* 아코디언 내용 */}
+          <AnimatePresence>
+            {showDebugPanel && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <ul className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
+                  {getTodayTodos().map(todo => {
+                    // 다음행동 상황 이름 가져오기
+                    const contextNames = todo.nextActionContextIds
+                      ?.map(id => contexts.find(c => c.id === id)?.title)
+                      .filter(Boolean)
+                      .join(', ') || '';
 
-              return (
-                <li key={todo.id} className="truncate">
-                  • {todo.title}{' '}
-                  <span className="text-base-content/50">
-                    [{getClarificationLabel(todo.clarification)}]
-                    {todo.clarification === 'next_action' && contextNames && ` ${contextNames}`}
-                    {todo.clarification === 'schedule_clear' && todo.scheduleType && ` ${getScheduleTypeLabel(todo.scheduleType)}`}
-                  </span>
-                  {cooldown && (
-                    <span className="text-warning ml-1">⏳{cooldown}</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    // 쿨다운 남은 시간
+                    const cooldown = getRemainingCooldown(todo.id, executionMode.skipCooldowns);
+
+                    return (
+                      <li key={todo.id} className="truncate">
+                        • {todo.title}{' '}
+                        <span className="text-base-content/50">
+                          [{getClarificationLabel(todo.clarification)}]
+                          {todo.clarification === 'next_action' && contextNames && (
+                            <span className="text-info"> @{contextNames}</span>
+                          )}
+                          {todo.clarification === 'schedule_clear' && todo.scheduleType && ` ${getScheduleTypeLabel(todo.scheduleType)}`}
+                        </span>
+                        {cooldown && (
+                          <span className="text-warning ml-1">⏳{cooldown}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
