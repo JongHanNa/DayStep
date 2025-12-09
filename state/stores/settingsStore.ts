@@ -35,6 +35,9 @@ interface SettingsState {
   // 컬러 테마 설정
   colorTheme: ColorTheme;
 
+  // ADHD 모드 설정
+  adhdModeEnabled: boolean;
+
   // Actions
   setTimeFormat: (format: TimeFormat) => void;
   setFontFamily: (family: FontFamily) => void;
@@ -46,6 +49,7 @@ interface SettingsState {
   setShowCompletedItems: (show: boolean) => void;
   setCompletedItemsOpacity: (opacity: number) => void;
   setColorTheme: (theme: ColorTheme) => void;
+  setAdhdModeEnabled: (enabled: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -75,6 +79,9 @@ export const useSettingsStore = create<SettingsState>()(
 
         // 기본값: Ocean Blue 테마
         colorTheme: DEFAULT_COLOR_THEME,
+
+        // 기본값: ADHD 모드 활성화
+        adhdModeEnabled: true,
 
         // Actions
         setTimeFormat: (format: TimeFormat) => {
@@ -141,6 +148,11 @@ export const useSettingsStore = create<SettingsState>()(
           console.log('⚙️ 컬러 테마 설정 변경:', theme);
           set({ colorTheme: theme });
         },
+
+        setAdhdModeEnabled: (enabled: boolean) => {
+          console.log('⚙️ ADHD 모드 설정 변경:', enabled);
+          set({ adhdModeEnabled: enabled });
+        },
       }),
       {
         name: 'settings-store',
@@ -153,6 +165,7 @@ export const useSettingsStore = create<SettingsState>()(
           bubbleShape: state.bubbleShape,
           todoCompletion: state.todoCompletion,
           colorTheme: state.colorTheme,
+          adhdModeEnabled: state.adhdModeEnabled,
         }),
       }
     ),

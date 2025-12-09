@@ -24,6 +24,7 @@ import { useContacts } from '@/lib/contacts/useContacts';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { useSubscription } from '@/hooks/useSubscription';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
+import ADHDSettingsSection from '@/components/settings/ADHDSettingsSection';
 
 function SettingsPageContent() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -182,6 +183,9 @@ function SettingsPageContent() {
             </Link>
           </div>
         </div>
+
+        {/* ADHD 모드 설정 섹션 */}
+        <ADHDSettingsSection />
 
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-4">알림 및 기능</h3>

@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LandingPage from './landing/page';
 import GraphView from '@/components/graph/GraphView';
+import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
+import ExecutionMode from '@/components/adhd/ExecutionMode';
+import OrganizeModeWrapper from '@/components/adhd/OrganizeModeWrapper';
+import { useSettingsStore } from '@/state/stores/settingsStore';
+import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
 /**
  * 루트 페이지 (/)
  *
  * 라우팅 흐름:
- * - 인증됨: 그래프 뷰 대시보드 표시 (개발 예정)
+ * - 인증됨 + ADHD 모드: ADHDEntryScreen 또는 ExecutionMode 표시
+ * - 인증됨 + ADHD 모드 비활성화: GraphView 대시보드 표시
  * - 비인증 + 웹: LandingPage 직접 렌더링 (URL '/' 유지)
  * - 비인증 + Capacitor: /login으로 리다이렉트
  */
@@ -19,6 +25,10 @@ export default function HomePage() {
   const router = useRouter();
   const [isCapacitor, setIsCapacitor] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // ADHD 모드 상태
+  const { adhdModeEnabled } = useSettingsStore();
+  const { currentMode, enterEntryMode, enterExecuteMode, enterOrganizeMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -63,6 +73,40 @@ export default function HomePage() {
     return <LandingPage />;
   }
 
-  // 인증된 사용자: 그래프 뷰 대시보드
-  return <GraphView />;
+  // 인증된 사용자 + ADHD 모드 비활성화: 기존 그래프 뷰
+  if (!adhdModeEnabled) {
+    return <GraphView />;
+  }
+
+  // 인증된 사용자 + ADHD 모드 활성화
+  // 현재 모드에 따라 다른 화면 표시
+  const handleExecute = () => {
+    enterExecuteMode();
+  };
+
+  const handleOrganize = () => {
+    enterOrganizeMode();
+  };
+
+  const handleExitExecutionMode = () => {
+    enterEntryMode(); // 진입 화면으로 돌아가기
+  };
+
+  // 실행 모드
+  if (currentMode === 'execute') {
+    return <ExecutionMode onExit={handleExitExecutionMode} />;
+  }
+
+  // 정리 모드 (타이머 + 인터럽트 래퍼)
+  if (currentMode === 'organize') {
+    return <OrganizeModeWrapper onExit={handleExitExecutionMode} />;
+  }
+
+  // 진입 화면 (기본)
+  return (
+    <ADHDEntryScreen
+      onExecute={handleExecute}
+      onOrganize={handleOrganize}
+    />
+  );
 }
