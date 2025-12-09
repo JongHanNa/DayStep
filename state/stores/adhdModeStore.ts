@@ -20,6 +20,9 @@ export type SkipReason =
 interface AdhocModeState {
   isActive: boolean;
   startedAt: Date | null;
+  sessionId: string | null;        // DB 세션 ID (영속화용)
+  linkedTodoId: string | null;     // 연결된 미완료 할일 ID
+  linkedTodoTitle: string | null;  // 연결된 할일 제목 (표시용)
 }
 
 // 실행 모드 상태
@@ -86,6 +89,8 @@ interface ADHDModeState {
   // === 즉흥 모드 Actions (지금 떠오른 거 할래) ===
   startAdhocMode: () => void;
   endAdhocMode: () => void;
+  setSessionId: (sessionId: string | null) => void;
+  setLinkedTodo: (todoId: string | null, title: string | null) => void;
 
   // === 정리 모드 Actions ===
   recordTodoAddition: () => void;
@@ -130,6 +135,9 @@ const DEFAULT_CACHED_PATTERNS: CachedPatterns = {
 const DEFAULT_ADHOC_MODE: AdhocModeState = {
   isActive: false,
   startedAt: null,
+  sessionId: null,
+  linkedTodoId: null,
+  linkedTodoTitle: null,
 };
 
 const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
@@ -332,6 +340,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             executionMode: {
               ...state.executionMode,
               adhocMode: {
+                ...state.executionMode.adhocMode,
                 isActive: true,
                 startedAt: new Date(),
               },
@@ -345,6 +354,33 @@ export const useADHDModeStore = create<ADHDModeState>()(
             executionMode: {
               ...state.executionMode,
               adhocMode: DEFAULT_ADHOC_MODE,
+            }
+          }));
+        },
+
+        setSessionId: (sessionId) => {
+          console.log('🔗 ADHD: 세션 ID 설정', sessionId);
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                sessionId,
+              },
+            }
+          }));
+        },
+
+        setLinkedTodo: (todoId, title) => {
+          console.log('🔗 ADHD: 연결된 할일 설정', { todoId, title });
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                linkedTodoId: todoId,
+                linkedTodoTitle: title,
+              },
             }
           }));
         },

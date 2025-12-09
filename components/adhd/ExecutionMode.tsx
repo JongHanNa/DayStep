@@ -29,6 +29,7 @@ import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
+import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 
 // 헬퍼 함수: 일정 유형 라벨
 const getScheduleTypeLabel = (scheduleType: string): string => {
@@ -80,6 +81,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     startAdhocMode,
     endAdhocMode,
     enterOrganizeMode,
+    setSessionId,
+    setLinkedTodo,
   } = useADHDModeStore();
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
@@ -92,7 +95,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // 포모도로 설정은 스토어에서
   const { settings: pomodoroSettings } = usePomodoroStore();
 
-  const { todos, toggleTodo, deleteTodo, createTodo } = useTodoStore();
+  const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
   const { contexts, loadContexts } = useNextActionContextStore();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
@@ -100,6 +103,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [showCompletedList, setShowCompletedList] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false); // 기본적으로 접힌 상태
   const [adhocCaptureTitle, setAdhocCaptureTitle] = useState(''); // 즉흥 모드 완료 후 입력할 제목
+  const [showStopConfirmModal, setShowStopConfirmModal] = useState(false); // 그만할래 확인 모달
+  const [inlineTodoInput, setInlineTodoInput] = useState(''); // 타이머 진행 중 할일 입력
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -201,6 +206,45 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     }
   }, [isLoadingSkips]);
 
+  // 활성 세션 복원 (뒤로가기 후 다시 진입 시)
+  useEffect(() => {
+    const restoreActiveSession = async () => {
+      if (!userId) return;
+
+      try {
+        const activeSession = await PomodoroSessionService.getActiveSession(userId);
+        if (activeSession && !activeSession.is_completed) {
+          const startTime = new Date(activeSession.start_time).getTime();
+          const remaining = activeSession.duration - (Date.now() - startTime);
+
+          if (remaining > 0) {
+            console.log('🔄 활성 세션 복원:', { sessionId: activeSession.id, remaining });
+            // 세션 상태 복원
+            setSessionId(activeSession.id);
+            startAdhocMode();
+            startPomodoroTimer(remaining, 'POMODORO');
+            setViewState('adhoc-timer');
+
+            // 연결된 할일 복원
+            if (activeSession.linked_todo_id) {
+              const linkedTodo = await fetchTodoById(activeSession.linked_todo_id);
+              if (linkedTodo) {
+                setLinkedTodo(linkedTodo.id, linkedTodo.title);
+              }
+            }
+          } else {
+            // 시간 초과된 세션은 자동 완료 처리 (getActiveSession에서 처리됨)
+            console.log('⏰ 만료된 세션 발견, 이미 처리됨');
+          }
+        }
+      } catch (error) {
+        console.error('❌ 세션 복원 실패:', error);
+      }
+    };
+
+    restoreActiveSession();
+  }, [userId]);
+
   // "했어" 클릭
   const handleComplete = async (method: 'direct' | 'alternative') => {
     const currentTodo = executionMode.currentRecommendation;
@@ -276,24 +320,151 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // === 즉흥 모드 핸들러 ===
 
   // "지금 떠오른 거 할래" 클릭
-  const handleStartAdhoc = () => {
+  const handleStartAdhoc = async () => {
+    if (!userId) return;
+
     startAdhocMode();
-    // usePomodoro().startTimer(duration, timerType, sessionId)
     const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
+
+    // DB에 세션 생성
+    try {
+      const sessionId = await PomodoroSessionService.createSession(userId, duration);
+      setSessionId(sessionId);
+    } catch (error) {
+      console.error('❌ 세션 생성 실패:', error);
+      // 실패해도 타이머는 시작 (UX 우선)
+    }
+
     startPomodoroTimer(duration, 'POMODORO');
     setViewState('adhoc-timer');
   };
 
-  // 포모도로 중단
+  // 포모도로 중단 버튼 클릭
   const handleStopAdhoc = () => {
-    stopPomodoroTimer(); // usePomodoro의 stopTimer는 상태도 리셋함
+    const { linkedTodoId } = executionMode.adhocMode;
+
+    if (linkedTodoId) {
+      // 미완료 할일이 있으면 확인 모달 표시
+      setShowStopConfirmModal(true);
+    } else {
+      // 없으면 바로 중단
+      handleConfirmStop('delete');
+    }
+  };
+
+  // 중단 확인 모달에서 선택
+  const handleConfirmStop = async (action: 'delete' | 'keep') => {
+    const { sessionId, linkedTodoId } = executionMode.adhocMode;
+
+    if (action === 'delete' && linkedTodoId) {
+      // 미완료 할일 삭제
+      try {
+        await deleteTodo(linkedTodoId);
+        console.log('🗑️ 미완료 할일 삭제됨:', linkedTodoId);
+      } catch (error) {
+        console.error('❌ 할일 삭제 실패:', error);
+      }
+    }
+    // action === 'keep'이면 할일은 그대로 미완료 유지
+
+    // DB 세션 삭제
+    if (sessionId) {
+      try {
+        await PomodoroSessionService.deleteSession(sessionId);
+      } catch (error) {
+        console.error('❌ 세션 삭제 실패:', error);
+      }
+    }
+
+    // 상태 초기화
+    stopPomodoroTimer();
     endAdhocMode();
+    setSessionId(null);
+    setLinkedTodo(null, null);
+    setShowStopConfirmModal(false);
+    setInlineTodoInput('');
+
     getNextRecommendation();
   };
 
-  // 포모도로 완료 후 → 기록 화면으로
-  const handleAdhocTimerComplete = () => {
+  // 포모도로 완료 후 → 기록 화면으로 (또는 바로 완료)
+  const handleAdhocTimerComplete = async () => {
+    const { sessionId, linkedTodoId } = executionMode.adhocMode;
+
+    // DB 세션 완료 처리
+    if (sessionId) {
+      try {
+        await PomodoroSessionService.completeSession(sessionId);
+      } catch (error) {
+        console.error('❌ 세션 완료 처리 실패:', error);
+      }
+    }
+
+    // 연결된 할일이 있으면 완료 처리하고 바로 종료
+    if (linkedTodoId) {
+      try {
+        await updateTodo(linkedTodoId, { completed: true });
+        console.log('✅ 연결된 할일 완료 처리:', linkedTodoId);
+
+        // 정리 및 다음으로
+        stopPomodoroTimer();
+        endAdhocMode();
+        setSessionId(null);
+        setLinkedTodo(null, null);
+        markCompleted('adhoc', 'direct');
+        getNextRecommendation();
+        return;
+      } catch (error) {
+        console.error('❌ 할일 완료 처리 실패:', error);
+      }
+    }
+
+    // 연결된 할일이 없으면 기록 화면으로
     setViewState('adhoc-capture');
+  };
+
+  // 타이머 진행 중 미완료 할일 생성
+  const handleCreateInlineTodo = async () => {
+    if (!inlineTodoInput.trim() || !userId) return;
+
+    const { sessionId } = executionMode.adhocMode;
+
+    try {
+      // 미완료 할일 생성
+      const newTodo = await createTodo({
+        title: inlineTodoInput.trim(),
+        completed: false,
+        clarification: 'next_action',
+        schedule_type: 'anytime',
+        user_id: userId,
+      });
+
+      // 세션에 연결
+      if (sessionId && newTodo?.id) {
+        await PomodoroSessionService.linkTodo(sessionId, newTodo.id);
+        setLinkedTodo(newTodo.id, inlineTodoInput.trim());
+      }
+
+      setInlineTodoInput('');
+      console.log('✅ 미완료 할일 생성:', newTodo?.id);
+    } catch (error) {
+      console.error('❌ 미완료 할일 생성 실패:', error);
+    }
+  };
+
+  // 연결된 할일 연결 해제
+  const handleClearLinkedTodo = async () => {
+    const { sessionId } = executionMode.adhocMode;
+
+    if (sessionId) {
+      try {
+        await PomodoroSessionService.unlinkTodo(sessionId);
+      } catch (error) {
+        console.error('❌ 할일 연결 해제 실패:', error);
+      }
+    }
+
+    setLinkedTodo(null, null);
   };
 
   // 할일 기록하기
@@ -484,6 +655,12 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               timerState={timerState}
               onStop={handleStopAdhoc}
               onComplete={handleAdhocTimerComplete}
+              linkedTodoId={executionMode.adhocMode.linkedTodoId}
+              linkedTodoTitle={executionMode.adhocMode.linkedTodoTitle}
+              inlineTodoInput={inlineTodoInput}
+              onInlineTodoInputChange={setInlineTodoInput}
+              onCreateInlineTodo={handleCreateInlineTodo}
+              onClearLinkedTodo={handleClearLinkedTodo}
             />
           )}
 
@@ -553,6 +730,39 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             )}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* 그만할래 확인 모달 (미완료 할일 있을 때) */}
+      {showStopConfirmModal && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-2">미완료 할일이 있어요</h3>
+            <p className="text-base-content/70 mb-4 text-center py-2 px-4 bg-base-200 rounded-lg">
+              &ldquo;{executionMode.adhocMode.linkedTodoTitle}&rdquo;
+            </p>
+            <p className="text-sm text-base-content/60 mb-6">
+              어떻게 할까요?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleConfirmStop('delete')}
+                className="btn btn-ghost flex-1 rounded-full"
+              >
+                <Trash2 className="w-4 h-4" />
+                삭제
+              </button>
+              <button
+                onClick={() => handleConfirmStop('keep')}
+                className="btn btn-primary flex-1 rounded-full"
+              >
+                미완료 유지
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop bg-black/50">
+            <button onClick={() => setShowStopConfirmModal(false)}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );
@@ -1085,9 +1295,26 @@ interface AdhocTimerViewProps {
   };
   onStop: () => void;
   onComplete: () => void;
+  // 미완료 할일 관련 props
+  linkedTodoId: string | null;
+  linkedTodoTitle: string | null;
+  inlineTodoInput: string;
+  onInlineTodoInputChange: (value: string) => void;
+  onCreateInlineTodo: () => void;
+  onClearLinkedTodo: () => void;
 }
 
-function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps) {
+function AdhocTimerView({
+  timerState,
+  onStop,
+  onComplete,
+  linkedTodoId,
+  linkedTodoTitle,
+  inlineTodoInput,
+  onInlineTodoInputChange,
+  onCreateInlineTodo,
+  onClearLinkedTodo,
+}: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   // 타이머 시작 시점 저장 (컴포넌트 마운트 시 한 번만)
@@ -1109,8 +1336,10 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
   // 종료 예정 시간 계산
   const endTime = new Date(startedAt.getTime() + timerState.duration);
 
-  // 진행률 계산 (0-1)
-  const progress = (timerState.duration - timerState.remainingTime) / timerState.duration;
+  // 진행률 계산 (0-1) - division by zero 방지
+  const progress = timerState.duration > 0
+    ? (timerState.duration - timerState.remainingTime) / timerState.duration
+    : 0;
 
   // 타이머 자연 완료 감지
   useEffect(() => {
@@ -1179,10 +1408,60 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
         </span>
       </div>
 
+      {/* 미완료 할일 입력 또는 표시 */}
+      <div className="mb-4 px-4">
+        {!linkedTodoId ? (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={inlineTodoInput}
+              onChange={(e) => onInlineTodoInputChange(e.target.value)}
+              placeholder="지금 뭐 하고 있어요?"
+              className="input input-bordered input-sm flex-1 rounded-full text-center"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && inlineTodoInput.trim()) {
+                  onCreateInlineTodo();
+                }
+              }}
+            />
+            {inlineTodoInput.trim() && (
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onCreateInlineTodo}
+                className="btn btn-primary btn-sm btn-circle"
+              >
+                <Check className="w-4 h-4" />
+              </motion.button>
+            )}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between p-3 bg-base-200 rounded-full"
+          >
+            <span className="text-sm font-medium text-base-content truncate flex-1 text-center px-2">
+              {linkedTodoTitle}
+            </span>
+            <button
+              onClick={onClearLinkedTodo}
+              className="btn btn-ghost btn-xs btn-circle text-base-content/50 hover:text-base-content"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </div>
+
       {/* 안내 문구 */}
       <p className="text-sm text-base-content/50 mb-8">
-        끝나면 뭐 했는지 물어볼게요<br />
-        원을 드래그해서 바로 끝낼 수도 있어요
+        {linkedTodoId ? (
+          <>드래그하면 할일도 같이 완료돼요</>
+        ) : (
+          <>끝나면 뭐 했는지 물어볼게요<br />원을 드래그해서 바로 끝낼 수도 있어요</>
+        )}
       </p>
 
       {/* 중단 버튼 */}
