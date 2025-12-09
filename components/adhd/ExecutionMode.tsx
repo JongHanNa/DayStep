@@ -885,8 +885,8 @@ function CircularProgressSlider({
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // SVG 설정
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth * 2) / 2 - 10;
+  const strokeWidth = 24;
+  const radius = (size - strokeWidth) / 2 - 4;
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -915,16 +915,19 @@ function CircularProgressSlider({
   );
 
   // 노브 위치 계산 (12시 방향에서 시작, 시계방향)
-  // 노브 크기(36px)의 절반을 미리 빼서 중심점 맞춤
-  const knobSize = 36; // w-9 = 36px
+  // 캡슐 모양: w-6(24px) h-12(48px)
+  const knobWidth = 24;
+  const knobHeight = 48;
   const knobX = useTransform(springAngle, (a) => {
     const rad = ((a - 90) * Math.PI) / 180;
-    return center + radius * Math.cos(rad) - knobSize / 2;
+    return center + radius * Math.cos(rad) - knobWidth / 2;
   });
   const knobY = useTransform(springAngle, (a) => {
     const rad = ((a - 90) * Math.PI) / 180;
-    return center + radius * Math.sin(rad) - knobSize / 2;
+    return center + radius * Math.sin(rad) - knobHeight / 2;
   });
+  // 노브 회전 (트랙 접선 방향)
+  const knobRotation = useTransform(springAngle, (a) => a);
 
   // 마지막 유효한 각도 저장 (반시계방향 차단용)
   const lastValidAngle = React.useRef(baseAngle);
@@ -1016,50 +1019,41 @@ function CircularProgressSlider({
       style={{ width: size, height: size }}
     >
       <svg width={size} height={size} className="transform -rotate-90">
-        {/* 배경 트랙 */}
+        {/* 배경 트랙 - 연보라색 */}
         <circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke="#e5e7eb"
+          stroke="#e0e7ff"
           strokeWidth={strokeWidth}
         />
 
-        {/* 프로그레스 아크 */}
+        {/* 프로그레스 아크 - 보라색 */}
         <motion.circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke="url(#progressGradient)"
+          stroke="#8b5cf6"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           style={{ strokeDashoffset }}
         />
-
-        {/* 그라데이션 정의 */}
-        <defs>
-          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#60a5fa" />
-          </linearGradient>
-        </defs>
       </svg>
 
-      {/* 노브 (시각적 표시만) */}
+      {/* 노브 - 캡슐 모양 */}
       <motion.div
-        className="absolute w-9 h-9 rounded-full bg-primary shadow-lg flex items-center justify-center pointer-events-none"
+        className="absolute w-6 h-12 rounded-full bg-violet-500 shadow-lg pointer-events-none"
         style={{
           left: 0,
           top: 0,
           x: knobX,
           y: knobY,
+          rotate: knobRotation,
         }}
-      >
-        <div className="w-3 h-3 rounded-full bg-white/80" />
-      </motion.div>
+      />
 
       {/* 투명 드래그 핸들 - 전체 원 영역 (Pointer Events 사용) */}
       <div
@@ -1131,7 +1125,7 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
       className="w-full max-w-sm text-center"
     >
       {/* 타이머 원형 디스플레이 */}
-      <div className="relative mx-auto mb-8" style={{ width: 200, height: 200 }}>
+      <div className="relative mx-auto mb-4" style={{ width: 200, height: 200 }}>
         <CircularProgressSlider
           size={200}
           progress={progress}
@@ -1141,22 +1135,27 @@ function AdhocTimerView({ timerState, onStop, onComplete }: AdhocTimerViewProps)
           setIsDragging={setIsDragging}
         />
 
-        {/* 중앙 콘텐츠 */}
+        {/* 중앙에 Zap 아이콘 */}
         <motion.div
-          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
           animate={{
             scale: isDragging ? 0.95 : 1,
             opacity: isDragging ? 0.8 : 1
           }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
         >
-          <span className="text-4xl font-bold text-base-content">
-            {formatTime(timerState.remainingTime)}
-          </span>
-          <span className="text-sm text-base-content/50 mt-1">
-            {isDragging ? '돌려서 완료' : timerState.status === 'running' ? '집중 중...' : '일시정지'}
-          </span>
+          <Zap className="w-12 h-12 text-violet-500" />
         </motion.div>
+      </div>
+
+      {/* 시간 표시 - 원 아래 */}
+      <div className="text-center mb-4">
+        <span className="text-4xl font-bold text-base-content">
+          {formatTime(timerState.remainingTime)}
+        </span>
+        <p className="text-sm text-base-content/50 mt-1">
+          {isDragging ? '돌려서 완료' : timerState.status === 'running' ? '집중 중...' : '일시정지'}
+        </p>
       </div>
 
       {/* 안내 문구 */}
