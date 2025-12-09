@@ -20,6 +20,7 @@ export type SkipReason =
 interface ExecutionModeState {
   currentRecommendation: Todo | null;
   skippedTodoIds: string[];           // 쿨다운 중인 할일 ID (DB 기반)
+  skipCooldowns: Record<string, string>; // 쿨다운 종료 시간 { todoId: cooldown_until }
   completedInSession: number;          // 현재 세션 완료 수
   isLoadingSkips: boolean;             // Skip 로딩 상태
 }
@@ -118,6 +119,7 @@ const DEFAULT_CACHED_PATTERNS: CachedPatterns = {
 const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
   currentRecommendation: null,
   skippedTodoIds: [],
+  skipCooldowns: {},
   completedInSession: 0,
   isLoadingSkips: false,
 };
@@ -162,13 +164,20 @@ export const useADHDModeStore = create<ADHDModeState>()(
             }
           });
 
-          // DB에서 쿨다운 중인 skip 로드
+          // DB에서 쿨다운 중인 skip 로드 (전체 정보 포함)
           try {
-            const skippedTodoIds = await TodoSkipsService.getActiveSkipTodoIds(userId);
+            const activeSkips = await TodoSkipsService.getActiveSkips(userId);
+            const skippedTodoIds = activeSkips.map(skip => skip.todo_id);
+            const skipCooldowns: Record<string, string> = {};
+            activeSkips.forEach(skip => {
+              skipCooldowns[skip.todo_id] = skip.cooldown_until;
+            });
+
             set((state) => ({
               executionMode: {
                 ...state.executionMode,
                 skippedTodoIds,
+                skipCooldowns,
                 isLoadingSkips: false,
               }
             }));
@@ -234,11 +243,18 @@ export const useADHDModeStore = create<ADHDModeState>()(
         markSkipped: async (todoId, reason, userId) => {
           console.log(`⏭️ ADHD: 할일 건너뛰기 (${reason})`, todoId);
 
+          // 쿨다운 종료 시간 계산 (30분 후)
+          const cooldownUntil = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
           // 1. 즉시 로컬 상태 업데이트 (낙관적 업데이트)
           set((state) => ({
             executionMode: {
               ...state.executionMode,
               skippedTodoIds: [...state.executionMode.skippedTodoIds, todoId],
+              skipCooldowns: {
+                ...state.executionMode.skipCooldowns,
+                [todoId]: cooldownUntil,
+              },
             }
           }));
 
@@ -262,11 +278,18 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
 
           try {
-            const skippedTodoIds = await TodoSkipsService.getActiveSkipTodoIds(userId);
+            const activeSkips = await TodoSkipsService.getActiveSkips(userId);
+            const skippedTodoIds = activeSkips.map(skip => skip.todo_id);
+            const skipCooldowns: Record<string, string> = {};
+            activeSkips.forEach(skip => {
+              skipCooldowns[skip.todo_id] = skip.cooldown_until;
+            });
+
             set((state) => ({
               executionMode: {
                 ...state.executionMode,
                 skippedTodoIds,
+                skipCooldowns,
                 isLoadingSkips: false,
               }
             }));

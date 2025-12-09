@@ -38,6 +38,18 @@ const getScheduleTypeLabel = (scheduleType: string): string => {
   return labelMap[scheduleType] || scheduleType;
 };
 
+// 헬퍼 함수: 쿨다운 남은 시간 계산
+const getRemainingCooldown = (todoId: string, skipCooldowns: Record<string, string>): string | null => {
+  const cooldownUntil = skipCooldowns[todoId];
+  if (!cooldownUntil) return null;
+
+  const remaining = new Date(cooldownUntil).getTime() - Date.now();
+  if (remaining <= 0) return null;
+
+  const minutes = Math.ceil(remaining / 60000);
+  return `${minutes}분`;
+};
+
 interface ExecutionModeProps {
   onExit: () => void;
 }
@@ -231,6 +243,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
                 .filter(Boolean)
                 .join(', ') || '';
 
+              // 쿨다운 남은 시간
+              const cooldown = getRemainingCooldown(todo.id, executionMode.skipCooldowns);
+
               return (
                 <li key={todo.id} className="truncate">
                   • {todo.title}{' '}
@@ -239,6 +254,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
                     {todo.clarification === 'next_action' && contextNames && ` ${contextNames}`}
                     {todo.clarification === 'schedule_clear' && todo.scheduleType && ` ${getScheduleTypeLabel(todo.scheduleType)}`}
                   </span>
+                  {cooldown && (
+                    <span className="text-warning ml-1">⏳{cooldown}</span>
+                  )}
                 </li>
               );
             })}
