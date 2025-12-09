@@ -16,7 +16,27 @@ import {
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
 import { useAuth } from '@/app/context/AuthContext';
+
+// 헬퍼 함수: 명료화 라벨
+const getClarificationLabel = (clarification: string): string => {
+  const labelMap: Record<string, string> = {
+    'next_action': '다음행동',
+    'schedule_clear': '일정',
+  };
+  return labelMap[clarification] || clarification;
+};
+
+// 헬퍼 함수: 일정 유형 라벨
+const getScheduleTypeLabel = (scheduleType: string): string => {
+  const labelMap: Record<string, string> = {
+    'anytime': '언제든지',
+    'timed': '시간지정',
+    'all_day': '종일',
+  };
+  return labelMap[scheduleType] || scheduleType;
+};
 
 interface ExecutionModeProps {
   onExit: () => void;
@@ -46,6 +66,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   } = useADHDModeStore();
 
   const { todos, toggleTodo, deleteTodo } = useTodoStore();
+  const { contexts } = useNextActionContextStore();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -203,11 +224,24 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         <div className="mx-4 mb-4 p-3 bg-base-200 rounded-lg text-xs">
           <p className="font-semibold mb-2">📋 추천 후보 목록 ({getTodayTodos().length}개)</p>
           <ul className="space-y-1 max-h-32 overflow-y-auto">
-            {getTodayTodos().map(todo => (
-              <li key={todo.id} className="truncate">
-                • {todo.title} ({todo.clarification})
-              </li>
-            ))}
+            {getTodayTodos().map(todo => {
+              // 다음행동 상황 이름 가져오기
+              const contextNames = todo.nextActionContextIds
+                ?.map(id => contexts.find(c => c.id === id)?.title)
+                .filter(Boolean)
+                .join(', ') || '';
+
+              return (
+                <li key={todo.id} className="truncate">
+                  • {todo.title}{' '}
+                  <span className="text-base-content/50">
+                    [{getClarificationLabel(todo.clarification)}]
+                    {todo.clarification === 'next_action' && contextNames && ` ${contextNames}`}
+                    {todo.clarification === 'schedule_clear' && todo.scheduleType && ` ${getScheduleTypeLabel(todo.scheduleType)}`}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -220,6 +254,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             <RecommendationView
               key="recommendation"
               todo={currentRecommendation}
+              contexts={contexts}
               awakeningSentence={awakeningSentence}
               isAnimating={isAnimating}
               onComplete={() => handleComplete('direct')}
@@ -256,8 +291,14 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 // 서브 컴포넌트들
 // ============================================
 
+interface NextActionContextItem {
+  id: string;
+  title: string;
+}
+
 interface RecommendationViewProps {
   todo: Todo;
+  contexts: NextActionContextItem[];
   awakeningSentence: string | null;
   isAnimating: boolean;
   onComplete: () => void;
@@ -268,6 +309,7 @@ interface RecommendationViewProps {
 
 function RecommendationView({
   todo,
+  contexts,
   awakeningSentence,
   isAnimating,
   onComplete,
@@ -275,6 +317,14 @@ function RecommendationView({
   onSkip,
   onDelete,
 }: RecommendationViewProps) {
+  // 다음행동 상황 이름 가져오기
+  const getContextNames = (contextIds: string[] | null): string => {
+    if (!contextIds || contextIds.length === 0) return '';
+    return contextIds
+      .map(id => contexts.find(c => c.id === id)?.title)
+      .filter(Boolean)
+      .join(', ');
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -297,6 +347,19 @@ function RecommendationView({
         <h2 className="text-2xl font-bold text-base-content leading-relaxed">
           {todo.title}
         </h2>
+
+        {/* 속성 정보 */}
+        <div className="text-sm text-base-content/60 mt-3 flex items-center justify-center gap-2">
+          <span className="badge badge-ghost badge-sm">
+            {getClarificationLabel(todo.clarification)}
+          </span>
+          {todo.clarification === 'next_action' && todo.nextActionContextIds && (
+            <span>{getContextNames(todo.nextActionContextIds)}</span>
+          )}
+          {todo.clarification === 'schedule_clear' && todo.scheduleType && (
+            <span>{getScheduleTypeLabel(todo.scheduleType)}</span>
+          )}
+        </div>
       </motion.div>
 
       {/* 버튼들 */}
