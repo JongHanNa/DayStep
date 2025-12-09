@@ -553,16 +553,22 @@ export const useTimelineViewStore = create<TimelineViewState>()(
         // Utility actions
         loadItemsFromSources: async (todos, timelineTasks) => {
           try {
+            // ✅ temp ID 필터링 - optimistic update 중인 임시 데이터 제외
+            const validTodos = todos.filter(todo =>
+              !todo.id || !String(todo.id).startsWith('temp-')
+            );
+
             // 중복 호출 방지: 데이터 해시로 실제 변경 감지 (내용 변경도 포함)
             const storeCurrentDate = get().currentDate instanceof Date ? get().currentDate : new Date(get().currentDate);
             const currentDataHash = JSON.stringify({
               currentDate: format(storeCurrentDate, 'yyyy-MM-dd'), // 🔧 날짜 포함으로 반복 할일 처리 보장
-              todos: todos.map(t => ({
+              todos: validTodos.map(t => ({
                 id: t.id,
                 updated_at: t.updated_at,
                 title: t.title,
                 start_time: t.start_time,
-                schedule_type: t.schedule_type
+                schedule_type: t.schedule_type,
+                recurrence_pattern: t.recurrencePattern || t.recurrence_pattern
               })),
               timelineTasks: timelineTasks.map(tt => ({ id: tt.id, updated_at: tt.updated_at, title: tt.title, start_time: tt.start_time }))
             });
@@ -589,8 +595,8 @@ export const useTimelineViewStore = create<TimelineViewState>()(
           console.log('📝 서버에서 받은 할일 데이터 분석:', {
             앱화면날짜_KST: kstDateString,
             DB필터범위_UTC: `${utcStart.toISOString()} ~ ${utcEnd.toISOString()}`,
-            totalTodos: todos.length,
-            todoDetails: todos.map(t => ({
+            totalTodos: validTodos.length,
+            todoDetails: validTodos.map(t => ({
               id: t.id,
               title: t.title,
               scheduleType: t.scheduleType || t.schedule_type || '없음',
@@ -603,19 +609,19 @@ export const useTimelineViewStore = create<TimelineViewState>()(
           // 🔄 반복 할일 처리: 반복 할일들을 분리하여 가상 인스턴스 생성
           const regularTodos: any[] = [];
           const recurringTodos: any[] = [];
-          
-          todos.forEach(todo => {
+
+          validTodos.forEach(todo => {
             const isRecurring = isRecurringTodo(todo);
-            
+
             if (isRecurring) {
               recurringTodos.push(todo);
             } else {
               regularTodos.push(todo);
             }
           });
-          
+
           console.log('🔄 반복 할일 분류 결과:', {
-            원본할일수: todos.length,
+            원본할일수: validTodos.length,
             일반할일수: regularTodos.length,
             반복할일수: recurringTodos.length,
             일반할일제목들: regularTodos.map(t => t.title),
@@ -848,6 +854,7 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             set((state) => {
               console.log('📊 TimelineViewStore에 최종 저장:', {
                 원본서버데이터: todos.length,
+                tempID제외후: validTodos.length,
                 처리한할일수: allTodosToProcess.length,
                 생성된타임라인아이템수: items.length,
                 타임라인아이템제목들: items.map(item => item.title)
