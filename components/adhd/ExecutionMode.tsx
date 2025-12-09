@@ -198,6 +198,20 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         <div className="w-10" /> {/* 균형을 위한 빈 공간 */}
       </header>
 
+      {/* 개발환경 디버그 패널 */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mx-4 mb-4 p-3 bg-base-200 rounded-lg text-xs">
+          <p className="font-semibold mb-2">📋 추천 후보 목록 ({getTodayTodos().length}개)</p>
+          <ul className="space-y-1 max-h-32 overflow-y-auto">
+            {getTodayTodos().map(todo => (
+              <li key={todo.id} className="truncate">
+                • {todo.title} ({todo.clarification})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* 메인 콘텐츠 */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
         <AnimatePresence mode="wait">
