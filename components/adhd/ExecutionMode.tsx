@@ -14,12 +14,17 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
-  RotateCcw
+  RotateCcw,
+  ListTodo,
+  Zap,
+  Play,
+  Square
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
+import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { useAuth } from '@/app/context/AuthContext';
 
 // 헬퍼 함수: 일정 유형 라벨
@@ -48,7 +53,7 @@ interface ExecutionModeProps {
   onExit: () => void;
 }
 
-type ViewState = 'recommendation' | 'skip-reason' | 'completed-all';
+type ViewState = 'recommendation' | 'skip-reason' | 'completed-all' | 'empty-state' | 'adhoc-timer' | 'adhoc-capture';
 
 /**
  * ADHD 실행 모드 화면
@@ -69,15 +74,27 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     markSkipped,
     learnFromCompletion,
     learnFromSkip,
+    startAdhocMode,
+    endAdhocMode,
+    enterOrganizeMode,
   } = useADHDModeStore();
 
-  const { todos, toggleTodo, deleteTodo } = useTodoStore();
+  // 포모도로 스토어
+  const {
+    timerState,
+    startTimer: startPomodoroTimer,
+    stopTimer: stopPomodoroTimer,
+    reset: resetPomodoroTimer,
+  } = usePomodoroStore();
+
+  const { todos, toggleTodo, deleteTodo, createTodo } = useTodoStore();
   const { contexts, loadContexts } = useNextActionContextStore();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
   const [showCompletedList, setShowCompletedList] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false); // 기본적으로 접힌 상태
+  const [adhocCaptureTitle, setAdhocCaptureTitle] = useState(''); // 즉흥 모드 완료 후 입력할 제목
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -146,7 +163,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     );
 
     if (candidates.length === 0) {
-      setViewState('completed-all');
+      // 세션 중 완료한 할일이 있으면 축하 화면, 없으면 빈 상태 안내
+      const { completedInSession } = useADHDModeStore.getState().executionMode;
+      setViewState(completedInSession > 0 ? 'completed-all' : 'empty-state');
       setCurrentRecommendation(null);
       return;
     }
@@ -248,6 +267,76 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       getNextRecommendation();
     }, 300);
   };
+
+  // === 즉흥 모드 핸들러 ===
+
+  // "지금 떠오른 거 할래" 클릭
+  const handleStartAdhoc = () => {
+    startAdhocMode();
+    startPomodoroTimer(); // 포모도로 시작 (기본 25분)
+    setViewState('adhoc-timer');
+  };
+
+  // 포모도로 중단
+  const handleStopAdhoc = () => {
+    stopPomodoroTimer();
+    resetPomodoroTimer();
+    endAdhocMode();
+    getNextRecommendation();
+  };
+
+  // 포모도로 완료 후 → 기록 화면으로
+  const handleAdhocTimerComplete = () => {
+    setViewState('adhoc-capture');
+  };
+
+  // 할일 기록하기
+  const handleCaptureAdhocTodo = async () => {
+    if (!adhocCaptureTitle.trim() || !userId) return;
+
+    setIsAnimating(true);
+
+    // 완료된 할일로 저장
+    await createTodo({
+      title: adhocCaptureTitle.trim(),
+      completed: true,
+      clarification: 'next_action',
+      schedule_type: 'anytime',
+      user_id: userId,
+    });
+
+    // 정리
+    setAdhocCaptureTitle('');
+    resetPomodoroTimer();
+    endAdhocMode();
+    markCompleted('adhoc', 'direct'); // 세션 완료 수 증가
+
+    setTimeout(() => {
+      setIsAnimating(false);
+      getNextRecommendation();
+    }, 300);
+  };
+
+  // 기록 스킵
+  const handleSkipAdhocCapture = () => {
+    setAdhocCaptureTitle('');
+    resetPomodoroTimer();
+    endAdhocMode();
+    getNextRecommendation();
+  };
+
+  // 정리하기 모드로 이동
+  const handleGoToOrganize = () => {
+    enterOrganizeMode();
+  };
+
+  // 포모도로 완료 감지
+  useEffect(() => {
+    const { adhocMode } = executionMode;
+    if (adhocMode.isActive && timerState.status === 'completed') {
+      handleAdhocTimerComplete();
+    }
+  }, [timerState.status, executionMode.adhocMode.isActive]);
 
   const { currentRecommendation, completedInSession } = executionMode;
   const todayCompletedTodos = getTodayCompletedTodos();
@@ -351,6 +440,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onAlternativeComplete={() => handleComplete('alternative')}
               onSkip={handleSkipClick}
               onDelete={() => handleSkipReason('not_needed')}
+              onStartAdhoc={handleStartAdhoc}
             />
           )}
 
@@ -369,6 +459,36 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               key="completed-all"
               completedCount={completedInSession}
               onExit={onExit}
+            />
+          )}
+
+          {/* 빈 상태 화면 (할일 없음) */}
+          {viewState === 'empty-state' && (
+            <EmptyStateView
+              key="empty-state"
+              onGoToOrganize={handleGoToOrganize}
+              onStartAdhoc={handleStartAdhoc}
+            />
+          )}
+
+          {/* 즉흥 포모도로 타이머 화면 */}
+          {viewState === 'adhoc-timer' && (
+            <AdhocTimerView
+              key="adhoc-timer"
+              timerState={timerState}
+              onStop={handleStopAdhoc}
+            />
+          )}
+
+          {/* 즉흥 완료 후 기록 화면 */}
+          {viewState === 'adhoc-capture' && (
+            <AdhocCaptureView
+              key="adhoc-capture"
+              title={adhocCaptureTitle}
+              onTitleChange={setAdhocCaptureTitle}
+              onCapture={handleCaptureAdhocTodo}
+              onSkip={handleSkipAdhocCapture}
+              isAnimating={isAnimating}
             />
           )}
         </AnimatePresence>
@@ -449,6 +569,7 @@ interface RecommendationViewProps {
   onAlternativeComplete: () => void;
   onSkip: () => void;
   onDelete: () => void;
+  onStartAdhoc: () => void;
 }
 
 function RecommendationView({
@@ -460,6 +581,7 @@ function RecommendationView({
   onAlternativeComplete,
   onSkip,
   onDelete,
+  onStartAdhoc,
 }: RecommendationViewProps) {
   // 다음행동 상황 이름 가져오기
   const getContextNames = (contextIds: string[] | null): string => {
@@ -553,6 +675,18 @@ function RecommendationView({
         >
           <Trash2 className="w-4 h-4" />
           필요 없는 할일이야
+        </motion.button>
+
+        {/* 즉흥 포모도로 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onStartAdhoc}
+          disabled={isAnimating}
+          className="btn btn-ghost btn-sm w-full rounded-full text-primary/70 mt-4"
+        >
+          <Zap className="w-4 h-4" />
+          지금 떠오른 거 할래
         </motion.button>
       </div>
 
@@ -656,6 +790,237 @@ function CompletedAllView({ completedCount, onExit }: CompletedAllViewProps) {
       >
         나가기
       </button>
+    </motion.div>
+  );
+}
+
+// ============================================
+// 빈 상태 화면 (할일 없음)
+// ============================================
+
+interface EmptyStateViewProps {
+  onGoToOrganize: () => void;
+  onStartAdhoc: () => void;
+}
+
+function EmptyStateView({ onGoToOrganize, onStartAdhoc }: EmptyStateViewProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="w-full max-w-sm text-center"
+    >
+      <ListTodo className="w-16 h-16 mx-auto text-base-content/30 mb-6" />
+
+      <h2 className="text-xl font-bold text-base-content mb-2">
+        할일이 없네요
+      </h2>
+
+      <p className="text-base-content/60 mb-8">
+        정리하기로 할일을 먼저 만들어볼까요?
+      </p>
+
+      <div className="flex flex-col gap-3">
+        {/* 정리하러 가기 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onGoToOrganize}
+          className="btn btn-primary btn-lg w-full rounded-full"
+        >
+          <ListTodo className="w-5 h-5" />
+          정리하러 가기
+        </motion.button>
+
+        {/* 구분선 */}
+        <div className="flex items-center gap-3 my-2">
+          <div className="flex-1 h-px bg-base-300" />
+          <span className="text-xs text-base-content/40">또는</span>
+          <div className="flex-1 h-px bg-base-300" />
+        </div>
+
+        {/* 즉흥 포모도로 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onStartAdhoc}
+          className="btn btn-ghost btn-md w-full rounded-full border border-base-300"
+        >
+          <Zap className="w-5 h-5" />
+          지금 떠오른 거 할래
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// 즉흥 포모도로 타이머 화면
+// ============================================
+
+interface AdhocTimerViewProps {
+  timerState: {
+    status: 'idle' | 'running' | 'paused' | 'completed';
+    remainingTime: number;
+    duration: number;
+  };
+  onStop: () => void;
+}
+
+function AdhocTimerView({ timerState, onStop }: AdhocTimerViewProps) {
+  // 시간 포맷팅 (mm:ss)
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // 진행률 계산
+  const progress = timerState.duration > 0
+    ? ((timerState.duration - timerState.remainingTime) / timerState.duration) * 100
+    : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="w-full max-w-sm text-center"
+    >
+      {/* 타이머 원형 디스플레이 */}
+      <div className="relative w-48 h-48 mx-auto mb-8">
+        {/* 배경 원 */}
+        <svg className="w-full h-full transform -rotate-90">
+          <circle
+            cx="96"
+            cy="96"
+            r="88"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            className="text-base-300"
+          />
+          {/* 진행 원 */}
+          <circle
+            cx="96"
+            cy="96"
+            r="88"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            strokeLinecap="round"
+            className="text-primary"
+            strokeDasharray={2 * Math.PI * 88}
+            strokeDashoffset={2 * Math.PI * 88 * (1 - progress / 100)}
+            style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+          />
+        </svg>
+
+        {/* 시간 표시 */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-4xl font-bold text-base-content">
+            {formatTime(timerState.remainingTime)}
+          </span>
+          <span className="text-sm text-base-content/50 mt-1">
+            {timerState.status === 'running' ? '집중 중...' : '일시정지'}
+          </span>
+        </div>
+      </div>
+
+      {/* 안내 문구 */}
+      <p className="text-sm text-base-content/50 mb-8">
+        끝나면 뭐 했는지 물어볼게요
+      </p>
+
+      {/* 중단 버튼 */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onStop}
+        className="btn btn-ghost btn-md rounded-full border border-base-300"
+      >
+        <Square className="w-4 h-4" />
+        그만할래
+      </motion.button>
+    </motion.div>
+  );
+}
+
+// ============================================
+// 즉흥 완료 후 기록 화면
+// ============================================
+
+interface AdhocCaptureViewProps {
+  title: string;
+  onTitleChange: (title: string) => void;
+  onCapture: () => void;
+  onSkip: () => void;
+  isAnimating: boolean;
+}
+
+function AdhocCaptureView({
+  title,
+  onTitleChange,
+  onCapture,
+  onSkip,
+  isAnimating,
+}: AdhocCaptureViewProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="w-full max-w-sm text-center"
+    >
+      <Check className="w-16 h-16 mx-auto text-success mb-4" />
+
+      <h2 className="text-xl font-bold text-base-content mb-2">
+        뭐 했어요?
+      </h2>
+
+      <p className="text-base-content/60 mb-6">
+        방금 한 일을 기록해두면 나중에 도움이 돼요
+      </p>
+
+      {/* 입력 필드 */}
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => onTitleChange(e.target.value)}
+        placeholder="방금 한 일을 한 줄로"
+        className="input input-bordered w-full rounded-xl mb-6 text-center"
+        autoFocus
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && title.trim()) {
+            onCapture();
+          }
+        }}
+      />
+
+      <div className="flex flex-col gap-3">
+        {/* 기록할게 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onCapture}
+          disabled={!title.trim() || isAnimating}
+          className="btn btn-primary btn-lg w-full rounded-full"
+        >
+          기록할게
+        </motion.button>
+
+        {/* 그냥 넘어갈게 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onSkip}
+          disabled={isAnimating}
+          className="btn btn-ghost btn-sm w-full rounded-full text-base-content/50"
+        >
+          그냥 넘어갈게
+        </motion.button>
+      </div>
     </motion.div>
   );
 }

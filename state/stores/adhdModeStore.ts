@@ -16,6 +16,12 @@ export type SkipReason =
   | 'not_feeling'  // 기분이 안 나
   | 'not_needed';  // 필요 없는 할일이야 (삭제)
 
+// 즉흥 모드 상태 (지금 떠오른 거 할래)
+interface AdhocModeState {
+  isActive: boolean;
+  startedAt: Date | null;
+}
+
 // 실행 모드 상태
 interface ExecutionModeState {
   currentRecommendation: Todo | null;
@@ -23,6 +29,7 @@ interface ExecutionModeState {
   skipCooldowns: Record<string, string>; // 쿨다운 종료 시간 { todoId: cooldown_until }
   completedInSession: number;          // 현재 세션 완료 수
   isLoadingSkips: boolean;             // Skip 로딩 상태
+  adhocMode: AdhocModeState;          // 즉흥 포모도로 모드
 }
 
 // 정리 모드 상태
@@ -76,6 +83,10 @@ interface ADHDModeState {
   loadActiveSkips: (userId: string) => Promise<void>;
   resetSession: () => void;
 
+  // === 즉흥 모드 Actions (지금 떠오른 거 할래) ===
+  startAdhocMode: () => void;
+  endAdhocMode: () => void;
+
   // === 정리 모드 Actions ===
   recordTodoAddition: () => void;
   resetOrganizeMode: () => void;
@@ -116,12 +127,18 @@ const DEFAULT_CACHED_PATTERNS: CachedPatterns = {
   hourlyCompletionRate: Array(24).fill(0),
 };
 
+const DEFAULT_ADHOC_MODE: AdhocModeState = {
+  isActive: false,
+  startedAt: null,
+};
+
 const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
   currentRecommendation: null,
   skippedTodoIds: [],
   skipCooldowns: {},
   completedInSession: 0,
   isLoadingSkips: false,
+  adhocMode: DEFAULT_ADHOC_MODE,
 };
 
 const DEFAULT_ORGANIZE_MODE: OrganizeModeState = {
@@ -306,6 +323,30 @@ export const useADHDModeStore = create<ADHDModeState>()(
 
         resetSession: () => {
           set({ executionMode: DEFAULT_EXECUTION_MODE });
+        },
+
+        // === 즉흥 모드 Actions (지금 떠오른 거 할래) ===
+        startAdhocMode: () => {
+          console.log('🚀 ADHD: 즉흥 모드 시작');
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                isActive: true,
+                startedAt: new Date(),
+              },
+            }
+          }));
+        },
+
+        endAdhocMode: () => {
+          console.log('✅ ADHD: 즉흥 모드 종료');
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: DEFAULT_ADHOC_MODE,
+            }
+          }));
         },
 
         // === 정리 모드 Actions ===
