@@ -22,15 +22,6 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
 import { useAuth } from '@/app/context/AuthContext';
 
-// 헬퍼 함수: 명료화 라벨
-const getClarificationLabel = (clarification: string): string => {
-  const labelMap: Record<string, string> = {
-    'next_action': '다음행동',
-    'schedule_clear': '일정',
-  };
-  return labelMap[clarification] || clarification;
-};
-
 // 헬퍼 함수: 일정 유형 라벨
 const getScheduleTypeLabel = (scheduleType: string): string => {
   const labelMap: Record<string, string> = {
@@ -325,14 +316,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
                     return (
                       <li key={todo.id} className="truncate">
-                        • {todo.title}{' '}
-                        <span className="text-base-content/50">
-                          [{getClarificationLabel(todo.clarification)}]
-                          {todo.clarification === 'next_action' && contextNames && (
-                            <span className="text-info"> @{contextNames}</span>
-                          )}
-                          {todo.clarification === 'schedule_clear' && todo.scheduleType && ` ${getScheduleTypeLabel(todo.scheduleType)}`}
-                        </span>
+                        • {todo.title}
+                        {todo.clarification === 'next_action' && contextNames && (
+                          <span className="text-info text-base-content/50"> @{contextNames}</span>
+                        )}
+                        {todo.clarification === 'schedule_clear' && todo.scheduleType && (
+                          <span className="text-base-content/50"> {getScheduleTypeLabel(todo.scheduleType)}</span>
+                        )}
                         {cooldown && (
                           <span className="text-warning ml-1">⏳{cooldown}</span>
                         )}
@@ -502,18 +492,18 @@ function RecommendationView({
           {todo.title}
         </h2>
 
-        {/* 속성 정보 */}
-        <div className="text-sm text-base-content/60 mt-3 flex items-center justify-center gap-2">
-          <span className="badge badge-ghost badge-sm">
-            {getClarificationLabel(todo.clarification)}
-          </span>
-          {todo.clarification === 'next_action' && todo.nextActionContextIds && (
-            <span>{getContextNames(todo.nextActionContextIds)}</span>
-          )}
-          {todo.clarification === 'schedule_clear' && todo.scheduleType && (
-            <span>{getScheduleTypeLabel(todo.scheduleType)}</span>
-          )}
-        </div>
+        {/* 속성 정보: 다음행동 상황 또는 일정 유형 */}
+        {(todo.clarification === 'next_action' && todo.nextActionContextIds) ||
+         (todo.clarification === 'schedule_clear' && todo.scheduleType) ? (
+          <div className="text-sm text-base-content/60 mt-3 flex items-center justify-center gap-2">
+            {todo.clarification === 'next_action' && todo.nextActionContextIds && (
+              <span>@{getContextNames(todo.nextActionContextIds)}</span>
+            )}
+            {todo.clarification === 'schedule_clear' && todo.scheduleType && (
+              <span>{getScheduleTypeLabel(todo.scheduleType)}</span>
+            )}
+          </div>
+        ) : null}
       </motion.div>
 
       {/* 버튼들 */}
