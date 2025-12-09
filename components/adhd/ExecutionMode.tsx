@@ -90,6 +90,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     timerState,
     startTimer: startPomodoroTimer,
     stopTimer: stopPomodoroTimer,
+    isWorkerReady,
   } = usePomodoro();
 
   // 포모도로 설정은 스토어에서
@@ -105,6 +106,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [adhocCaptureTitle, setAdhocCaptureTitle] = useState(''); // 즉흥 모드 완료 후 입력할 제목
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false); // 그만할래 확인 모달
   const [inlineTodoInput, setInlineTodoInput] = useState(''); // 타이머 진행 중 할일 입력
+  const [restoredStartTime, setRestoredStartTime] = useState<Date | null>(null); // 세션 복원 시 원본 시작 시간
+  const [restoredDuration, setRestoredDuration] = useState<number | null>(null); // 세션 복원 시 원본 duration
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -207,18 +210,23 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   }, [isLoadingSkips]);
 
   // 활성 세션 복원 (뒤로가기 후 다시 진입 시)
+  // Worker 준비 완료 후에만 실행 (Worker 미준비 시 startPomodoroTimer 무시됨)
   useEffect(() => {
     const restoreActiveSession = async () => {
-      if (!userId) return;
+      if (!userId || !isWorkerReady) return;
 
       try {
         const activeSession = await PomodoroSessionService.getActiveSession(userId);
         if (activeSession && !activeSession.is_completed) {
-          const startTime = new Date(activeSession.start_time).getTime();
+          const originalStartTime = new Date(activeSession.start_time);
+          const startTime = originalStartTime.getTime();
           const remaining = activeSession.duration - (Date.now() - startTime);
 
           if (remaining > 0) {
             console.log('🔄 활성 세션 복원:', { sessionId: activeSession.id, remaining });
+            // 원본 시작 시간 및 duration 저장 (AdhocTimerView에서 사용)
+            setRestoredStartTime(originalStartTime);
+            setRestoredDuration(activeSession.duration);
             // 세션 상태 복원
             setSessionId(activeSession.id);
             startAdhocMode();
@@ -243,7 +251,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     };
 
     restoreActiveSession();
-  }, [userId]);
+  }, [userId, isWorkerReady]);
 
   // "했어" 클릭
   const handleComplete = async (method: 'direct' | 'alternative') => {
@@ -661,6 +669,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onInlineTodoInputChange={setInlineTodoInput}
               onCreateInlineTodo={handleCreateInlineTodo}
               onClearLinkedTodo={handleClearLinkedTodo}
+              originalStartTime={restoredStartTime || undefined}
+              originalDuration={restoredDuration || undefined}
             />
           )}
 
@@ -1302,6 +1312,10 @@ interface AdhocTimerViewProps {
   onInlineTodoInputChange: (value: string) => void;
   onCreateInlineTodo: () => void;
   onClearLinkedTodo: () => void;
+  // 세션 복원 시 원본 시작 시간 (없으면 현재 시간 사용)
+  originalStartTime?: Date;
+  // 세션 복원 시 원본 duration (없으면 timerState.duration 사용)
+  originalDuration?: number;
 }
 
 function AdhocTimerView({
@@ -1314,11 +1328,16 @@ function AdhocTimerView({
   onInlineTodoInputChange,
   onCreateInlineTodo,
   onClearLinkedTodo,
+  originalStartTime,
+  originalDuration,
 }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
 
-  // 타이머 시작 시점 저장 (컴포넌트 마운트 시 한 번만)
-  const [startedAt] = useState(() => new Date());
+  // 타이머 시작 시점 (세션 복원 시 원본 시간 사용, 아니면 현재 시간)
+  const [startedAt] = useState(() => originalStartTime || new Date());
+
+  // 원본 duration (세션 복원 시 DB의 duration, 아니면 timerState.duration)
+  const effectiveDuration = originalDuration || timerState.duration;
 
   // 시간 포맷팅 (mm:ss) - 밀리초를 초로 변환
   const formatTime = (ms: number) => {
@@ -1333,12 +1352,12 @@ function AdhocTimerView({
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  // 종료 예정 시간 계산
-  const endTime = new Date(startedAt.getTime() + timerState.duration);
+  // 종료 예정 시간 계산 (원본 duration 사용)
+  const endTime = new Date(startedAt.getTime() + effectiveDuration);
 
-  // 진행률 계산 (0-1) - division by zero 방지
-  const progress = timerState.duration > 0
-    ? (timerState.duration - timerState.remainingTime) / timerState.duration
+  // 진행률 계산 (0-1) - 원본 duration 기준으로 계산
+  const progress = effectiveDuration > 0
+    ? (effectiveDuration - timerState.remainingTime) / effectiveDuration
     : 0;
 
   // 타이머 자연 완료 감지
