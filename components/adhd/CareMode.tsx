@@ -533,7 +533,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                 해드리고 싶은 것이 있나요?
               </p>
               <p className="text-xs text-base-content/50 mb-2">
-                빚이 있어도 나는 생각보다 많이 가지고 있어요
+                커피 한 잔의 마음도 좋아요
               </p>
               <textarea
                 value={giftPlan}
