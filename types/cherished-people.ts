@@ -69,6 +69,7 @@ export interface CareInteraction {
   gratitude_note: string | null;
   recent_news: string | null;
   feeling_rating: number | null;  // 1-5
+  todo_id: string | null;         // 연결된 할일 ID
   created_at: string;
 }
 

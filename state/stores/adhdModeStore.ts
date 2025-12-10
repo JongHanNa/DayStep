@@ -8,7 +8,7 @@ import { ADHDPatternsService, ADHDUserPatterns } from '@/services/adhd-patterns.
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | null;
 
 export type SkipReason =
   | 'not_now'      // 지금 상황에 안 맞아
@@ -41,6 +41,16 @@ interface OrganizeModeState {
   startTime: Date | null;              // 정리 모드 시작 시간
 }
 
+// 마음 전해보기 모드 상태
+interface CareModeState {
+  isActive: boolean;
+  startedAt: Date | null;
+  selectedPersonId: string | null;      // 선택한 소중한 사람 ID
+  selectedPersonName: string | null;    // 선택한 사람 이름 (표시용)
+  sessionId: string | null;             // 포모도로 세션 ID
+  linkedTodoId: string | null;          // 연결된 할일 ID
+}
+
 // DB에서 로드한 패턴 (캐시용)
 interface CachedPatterns {
   completedKeywords: Record<string, number>;
@@ -62,6 +72,9 @@ interface ADHDModeState {
 
   // 정리 모드 상태
   organizeMode: OrganizeModeState;
+
+  // 마음 전해보기 모드 상태
+  careMode: CareModeState;
 
   // 사용자 설정
   awakeningSentence: string | null;
@@ -95,6 +108,12 @@ interface ADHDModeState {
   // === 정리 모드 Actions ===
   recordTodoAddition: () => void;
   resetOrganizeMode: () => void;
+
+  // === 마음 전해보기 모드 Actions ===
+  enterCareMode: (userId: string) => void;
+  setCareModePerson: (personId: string, personName: string) => void;
+  setCareModeLinkedTodo: (todoId: string) => void;
+  endCareMode: () => void;
 
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
@@ -154,6 +173,15 @@ const DEFAULT_ORGANIZE_MODE: OrganizeModeState = {
   startTime: null,
 };
 
+const DEFAULT_CARE_MODE: CareModeState = {
+  isActive: false,
+  startedAt: null,
+  selectedPersonId: null,
+  selectedPersonName: null,
+  sessionId: null,
+  linkedTodoId: null,
+};
+
 // ============================================
 // Store 생성
 // ============================================
@@ -166,6 +194,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         currentMode: null,
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
+        careMode: DEFAULT_CARE_MODE,
         awakeningSentence: null,
         cachedPatterns: null,
         isLoadingPatterns: false,
@@ -241,6 +270,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             currentMode: null,
             executionMode: DEFAULT_EXECUTION_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
+            careMode: DEFAULT_CARE_MODE,
             currentUserId: null,
           });
         },
@@ -399,6 +429,52 @@ export const useADHDModeStore = create<ADHDModeState>()(
         resetOrganizeMode: () => {
           console.log('🔄 ADHD: 정리 모드 상태 리셋');
           set({ organizeMode: DEFAULT_ORGANIZE_MODE });
+        },
+
+        // === 마음 전해보기 모드 Actions ===
+        enterCareMode: (userId: string) => {
+          console.log('💝 ADHD: 마음 전해보기 모드 진입');
+          set({
+            currentMode: 'care',
+            currentUserId: userId,
+            careMode: {
+              isActive: true,
+              startedAt: new Date(),
+              selectedPersonId: null,
+              selectedPersonName: null,
+              sessionId: null,
+              linkedTodoId: null,
+            }
+          });
+        },
+
+        setCareModePerson: (personId: string, personName: string) => {
+          console.log('💝 ADHD: 소중한 사람 선택', { personId, personName });
+          set((state) => ({
+            careMode: {
+              ...state.careMode,
+              selectedPersonId: personId,
+              selectedPersonName: personName,
+            }
+          }));
+        },
+
+        setCareModeLinkedTodo: (todoId: string) => {
+          console.log('💝 ADHD: 연결된 할일 설정', todoId);
+          set((state) => ({
+            careMode: {
+              ...state.careMode,
+              linkedTodoId: todoId,
+            }
+          }));
+        },
+
+        endCareMode: () => {
+          console.log('💝 ADHD: 마음 전해보기 모드 종료');
+          set({
+            currentMode: 'entry',
+            careMode: DEFAULT_CARE_MODE,
+          });
         },
 
         // === 설정 Actions ===

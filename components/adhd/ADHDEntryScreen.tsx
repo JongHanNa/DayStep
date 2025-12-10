@@ -6,13 +6,13 @@ import { Target, ListTodo, Heart, MessageCircle } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import { JournalReminderModal } from '@/components/balance';
-import WriteNewsSheet from '@/components/cherished/WriteNewsSheet';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 
 interface ADHDEntryScreenProps {
   userId?: string;
   onExecute: () => void;
   onOrganize: () => void;
+  onCare: () => void;
 }
 
 /**
@@ -22,7 +22,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onOrganize }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare }: ADHDEntryScreenProps) {
   const { awakeningSentence } = useADHDModeStore();
   const {
     checkAndShowReminder,
@@ -33,7 +33,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize }: ADHDE
   } = useBalanceStore();
 
   const [showJournalSetup, setShowJournalSetup] = useState(false);
-  const [showWriteNewsSheet, setShowWriteNewsSheet] = useState(false);
 
   // 앱 시작 시 저널 데이터 로드 및 상기 체크
   useEffect(() => {
@@ -63,7 +62,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize }: ADHDE
         {userId && (
           <PriorityReminderBanner
             userId={userId}
-            onContactClick={() => setShowWriteNewsSheet(true)}
+            onContactClick={onCare}
           />
         )}
 
@@ -92,7 +91,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize }: ADHDE
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setShowWriteNewsSheet(true)}
+            onClick={onCare}
             className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white border-none hover:from-pink-600 hover:to-purple-600"
           >
             <MessageCircle className="w-7 h-7" />
@@ -149,15 +148,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize }: ADHDE
 
       {/* 저널 상기 모달 */}
       {userId && <JournalReminderModal userId={userId} />}
-
-      {/* 마음 전해보기 시트 */}
-      {userId && (
-        <WriteNewsSheet
-          userId={userId}
-          isOpen={showWriteNewsSheet}
-          onClose={() => setShowWriteNewsSheet(false)}
-        />
-      )}
 
       {/* 저널 작성 모달 */}
       {showJournalSetup && userId && (

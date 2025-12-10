@@ -273,6 +273,70 @@ export class CherishedPeopleService {
     }
   }
 
+  /**
+   * 관심 기록 + 할일 연결 저장 (CareMode에서 사용)
+   *
+   * 1. todos 테이블에 완료된 할일 생성
+   * 2. care_interactions 테이블에 기록 생성 (todo_id 연결)
+   * 3. cherished_people 업데이트
+   */
+  static async addInteractionWithTodo(
+    userId: string,
+    input: CareInteractionInput,
+    todoTitle: string
+  ): Promise<{ interaction: CareInteraction; todoId: string } | null> {
+    try {
+      // 1. 완료된 할일 생성
+      const todoData = {
+        user_id: userId,
+        title: todoTitle,
+        completed: true,
+        is_relationship_task: true,
+        clarification: 'next_action',
+        schedule_type: 'anytime',
+        start_time: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const todoResult = await createWithJWT('todos', todoData);
+      if (!todoResult || todoResult.length === 0) {
+        throw new Error('할일 생성 실패');
+      }
+
+      const todoId = todoResult[0].id;
+
+      // 2. 관심 기록 생성 (todo_id 연결)
+      const interactionData = {
+        user_id: userId,
+        person_id: input.person_id,
+        interaction_type: input.interaction_type,
+        interaction_date: input.interaction_date,
+        description: input.description?.trim() || null,
+        gratitude_note: input.gratitude_note?.trim() || null,
+        recent_news: input.recent_news?.trim() || null,
+        feeling_rating: input.feeling_rating || null,
+        todo_id: todoId,
+      };
+
+      const interactionResult = await createWithJWT('care_interactions', interactionData);
+      if (!interactionResult || interactionResult.length === 0) {
+        throw new Error('관심 기록 생성 실패');
+      }
+
+      // 3. 소중한 사람의 마지막 상호작용 시간 + 카운트 업데이트
+      await this.updatePersonLastInteraction(input.person_id, userId);
+
+      console.log('💝 관심 기록 + 할일 연결 저장:', todoTitle);
+      return {
+        interaction: interactionResult[0],
+        todoId,
+      };
+    } catch (error) {
+      console.error('❌ 관심 기록 + 할일 저장 오류:', error);
+      return null;
+    }
+  }
+
   // ============================================
   // 연락 추천 시스템
   // ============================================

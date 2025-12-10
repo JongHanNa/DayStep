@@ -56,6 +56,7 @@ interface CherishedPeopleState {
 
   loadPersonInteractions: (userId: string, personId: string) => Promise<void>;
   addInteraction: (userId: string, input: CareInteractionInput) => Promise<CareInteraction | null>;
+  addInteractionWithTodo: (userId: string, input: CareInteractionInput, todoTitle: string) => Promise<{ interaction: CareInteraction; todoId: string } | null>;
   deleteInteraction: (interactionId: string, userId: string, personId: string) => Promise<boolean>;
 
   // Modal Actions
@@ -255,6 +256,40 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           return interaction;
         } catch (error) {
           console.error('❌ 관심 기록 실패:', error);
+          return null;
+        }
+      },
+
+      addInteractionWithTodo: async (userId, input, todoTitle) => {
+        try {
+          const result = await CherishedPeopleService.addInteractionWithTodo(userId, input, todoTitle);
+
+          if (result) {
+            // Update local state for the person
+            set((state) => ({
+              people: state.people.map((p) =>
+                p.id === input.person_id
+                  ? {
+                      ...p,
+                      last_interaction_at: new Date().toISOString(),
+                      interaction_count: p.interaction_count + 1,
+                    }
+                  : p
+              ),
+              // Add to interactions if currently viewing this person
+              selectedPersonInteractions:
+                state.selectedPersonForDetail?.id === input.person_id
+                  ? [result.interaction, ...state.selectedPersonInteractions]
+                  : state.selectedPersonInteractions,
+            }));
+
+            // Refresh recommendations
+            await get().loadRecommendations(userId);
+          }
+
+          return result;
+        } catch (error) {
+          console.error('❌ 관심 기록 + 할일 저장 실패:', error);
           return null;
         }
       },
