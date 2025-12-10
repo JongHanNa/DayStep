@@ -18,6 +18,7 @@ import {
   ListTodo,
   Zap,
   Play,
+  Pause,
   Square,
   Timer
 } from 'lucide-react';
@@ -90,6 +91,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     timerState,
     startTimer: startPomodoroTimer,
     stopTimer: stopPomodoroTimer,
+    pauseTimer,
+    resumeTimer,
+    adjustTime,
     isWorkerReady,
   } = usePomodoro();
 
@@ -710,6 +714,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               timerState={timerState}
               onStop={handleStopAdhoc}
               onComplete={handleAdhocTimerComplete}
+              onPause={pauseTimer}
+              onResume={resumeTimer}
+              onAdjustTime={adjustTime}
               linkedTodoId={executionMode.adhocMode.linkedTodoId}
               linkedTodoTitle={executionMode.adhocMode.linkedTodoTitle}
               inlineTodoInput={inlineTodoInput}
@@ -1352,6 +1359,10 @@ interface AdhocTimerViewProps {
   };
   onStop: () => void;
   onComplete: () => void;
+  // 타이머 컨트롤
+  onPause: () => void;
+  onResume: () => void;
+  onAdjustTime: (deltaMs: number) => void;
   // 미완료 할일 관련 props
   linkedTodoId: string | null;
   linkedTodoTitle: string | null;
@@ -1369,6 +1380,9 @@ function AdhocTimerView({
   timerState,
   onStop,
   onComplete,
+  onPause,
+  onResume,
+  onAdjustTime,
   linkedTodoId,
   linkedTodoTitle,
   inlineTodoInput,
@@ -1437,8 +1451,46 @@ function AdhocTimerView({
       exit={{ opacity: 0, scale: 0.9 }}
       className="w-full max-w-sm text-center"
     >
-      {/* 포커스 제목 */}
-      <h2 className="text-2xl font-bold text-base-content mb-1">포커스</h2>
+      {/* 상단: 할일 제목 또는 "포커스" */}
+      {linkedTodoId ? (
+        isEditingTitle ? (
+          <input
+            autoFocus
+            value={editingTitleValue}
+            onChange={(e) => setEditingTitleValue(e.target.value)}
+            onBlur={() => {
+              if (editingTitleValue.trim() && editingTitleValue !== linkedTodoTitle) {
+                onUpdateLinkedTodoTitle(editingTitleValue.trim());
+              }
+              setIsEditingTitle(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (editingTitleValue.trim() && editingTitleValue !== linkedTodoTitle) {
+                  onUpdateLinkedTodoTitle(editingTitleValue.trim());
+                }
+                setIsEditingTitle(false);
+              } else if (e.key === 'Escape') {
+                setIsEditingTitle(false);
+              }
+            }}
+            className="text-2xl font-bold text-base-content text-center bg-transparent border-none outline-none w-full mb-1"
+            placeholder="할일 제목"
+          />
+        ) : (
+          <h2
+            onClick={() => {
+              setEditingTitleValue(linkedTodoTitle || '');
+              setIsEditingTitle(true);
+            }}
+            className="text-2xl font-bold text-base-content mb-1 cursor-pointer hover:opacity-70 transition-opacity break-words px-4"
+          >
+            {linkedTodoTitle}
+          </h2>
+        )
+      ) : (
+        <h2 className="text-2xl font-bold text-base-content mb-1">포커스</h2>
+      )}
 
       {/* 시작 → 종료 시간 */}
       <p className="text-base text-base-content/60 mb-6">
@@ -1476,9 +1528,40 @@ function AdhocTimerView({
         </span>
       </div>
 
-      {/* 미완료 할일 입력 또는 표시 */}
-      <div className="mb-4 px-4">
-        {!linkedTodoId ? (
+      {/* 타이머 컨트롤 버튼 (-1분, 재생/중지, +1분) */}
+      <div className="flex items-center justify-center gap-4 mb-4">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => onAdjustTime(-60000)}
+          className="text-sm font-medium text-base-content/70 hover:text-base-content transition-colors"
+        >
+          -1분
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={timerState.status === 'paused' ? onResume : onPause}
+          className="btn btn-neutral rounded-full px-6"
+        >
+          {timerState.status === 'paused' ? (
+            <Play className="w-5 h-5" />
+          ) : (
+            <Pause className="w-5 h-5" />
+          )}
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => onAdjustTime(60000)}
+          className="text-sm font-medium text-base-content/70 hover:text-base-content transition-colors"
+        >
+          +1분
+        </motion.button>
+      </div>
+
+      {/* 미완료 할일 입력 (제목 없을 때만) */}
+      {!linkedTodoId && (
+        <div className="mb-4 px-4">
           <div className="flex gap-2">
             <input
               type="text"
@@ -1504,52 +1587,8 @@ function AdhocTimerView({
               </motion.button>
             )}
           </div>
-        ) : isEditingTitle ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-3 bg-base-200 rounded-xl"
-          >
-            <input
-              autoFocus
-              value={editingTitleValue}
-              onChange={(e) => setEditingTitleValue(e.target.value)}
-              onBlur={() => {
-                if (editingTitleValue.trim() && editingTitleValue !== linkedTodoTitle) {
-                  onUpdateLinkedTodoTitle(editingTitleValue.trim());
-                }
-                setIsEditingTitle(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  if (editingTitleValue.trim() && editingTitleValue !== linkedTodoTitle) {
-                    onUpdateLinkedTodoTitle(editingTitleValue.trim());
-                  }
-                  setIsEditingTitle(false);
-                } else if (e.key === 'Escape') {
-                  setIsEditingTitle(false);
-                }
-              }}
-              className="w-full text-sm font-medium text-base-content text-center bg-transparent border-none outline-none"
-              placeholder="할일 제목"
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={() => {
-              setEditingTitleValue(linkedTodoTitle || '');
-              setIsEditingTitle(true);
-            }}
-            className="p-3 bg-base-200 rounded-xl cursor-pointer hover:bg-base-300 transition-colors"
-          >
-            <span className="text-sm font-medium text-base-content block text-center break-words">
-              {linkedTodoTitle}
-            </span>
-          </motion.div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 안내 문구 */}
       <p className="text-sm text-base-content/50 mb-8">

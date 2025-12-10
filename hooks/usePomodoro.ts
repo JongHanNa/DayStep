@@ -108,9 +108,17 @@ export function usePomodoro() {
             setTimerState(prev => ({
               ...prev,
               ...statusPayload,
-              status: statusPayload.isRunning 
+              status: statusPayload.isRunning
                 ? (statusPayload.isPaused ? 'paused' : 'running')
                 : 'idle',
+            }));
+            break;
+
+          case 'TIME_ADJUSTED':
+            setTimerState(prev => ({
+              ...prev,
+              duration: payload.duration,
+              remainingTime: payload.remainingTime,
             }));
             break;
 
@@ -183,6 +191,10 @@ export function usePomodoro() {
     sendWorkerMessage('GET_STATUS');
   }, [sendWorkerMessage]);
 
+  const adjustTime = useCallback((deltaMs: number) => {
+    sendWorkerMessage('ADJUST_TIME', { delta: deltaMs });
+  }, [sendWorkerMessage]);
+
   // Helper functions
   const formatTime = useCallback((timeInMs: number): string => {
     const minutes = Math.floor(timeInMs / 60000);
@@ -205,6 +217,7 @@ export function usePomodoro() {
     resumeTimer,
     stopTimer,
     getStatus,
+    adjustTime,
 
     // Utilities
     formatTime,

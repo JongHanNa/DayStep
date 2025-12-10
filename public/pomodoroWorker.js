@@ -42,6 +42,9 @@ self.addEventListener('message', (event) => {
     case 'GET_STATUS':
       sendStatus();
       break;
+    case 'ADJUST_TIME':
+      adjustTime(payload.delta);
+      break;
     default:
       console.warn('Unknown message type:', type);
   }
@@ -168,6 +171,28 @@ function completeTimer() {
   startTime = null;
   currentDuration = 0;
   pausedTime = 0;
+}
+
+function adjustTime(delta) {
+  if (!isRunning) return;
+
+  // duration 조정 (최소 1분 = 60000ms 보장)
+  currentDuration = Math.max(60000, currentDuration + delta);
+
+  // 현재 경과 시간 계산
+  const now = performance.now();
+  const elapsed = isPaused ? pausedTime : (now - startTime);
+  const remainingTime = Math.max(0, currentDuration - elapsed);
+
+  self.postMessage({
+    type: 'TIME_ADJUSTED',
+    payload: {
+      duration: currentDuration,
+      remainingTime,
+      delta,
+      timestamp: Date.now()
+    }
+  });
 }
 
 function sendStatus() {
