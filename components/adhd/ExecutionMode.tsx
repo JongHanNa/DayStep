@@ -1507,9 +1507,9 @@ function AdhocTimerView({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between p-3 bg-base-200 rounded-full"
+            className="flex items-center justify-between p-3 bg-base-200 rounded-xl gap-2"
           >
-            <span className="text-sm font-medium text-base-content truncate flex-1 text-center px-2">
+            <span className="text-sm font-medium text-base-content flex-1 text-center px-2 break-words">
               {linkedTodoTitle}
             </span>
             <button
