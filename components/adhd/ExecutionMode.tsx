@@ -1415,8 +1415,8 @@ function AdhocTimerView({
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  // 종료 예정 시간 계산 (원본 duration 사용)
-  const endTime = new Date(startedAt.getTime() + effectiveDuration);
+  // 종료 예정 시간 계산 (남은 시간 기반 - 시간 조정 및 일시정지 반영)
+  const endTime = new Date(Date.now() + timerState.remainingTime);
 
   // 진행률 계산 (0-1) - 원본 duration 기준으로 계산
   const progress = effectiveDuration > 0
