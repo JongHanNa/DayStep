@@ -45,7 +45,10 @@ export class Todo {
     public readonly clarification: Clarification = 'none',
 
     // 다음행동상황 필드
-    public readonly nextActionContextIds: string[] | null = null
+    public readonly nextActionContextIds: string[] | null = null,
+
+    // 관계 할일 필드
+    public readonly isRelationshipTask: boolean = false
   ) {}
 
   /**
@@ -87,6 +90,9 @@ export class Todo {
 
     // 다음행동상황 필드
     const nextActionContextIds = record.nextActionContextIds ?? record.next_action_context_ids ?? null;
+
+    // 관계 할일 필드
+    const isRelationshipTask = record.isRelationshipTask ?? record.is_relationship_task ?? false;
 
     // title 필드
     const title = data.title;
@@ -133,7 +139,10 @@ export class Todo {
       clarification as Clarification,
 
       // 다음행동상황 필드
-      Array.isArray(nextActionContextIds) ? nextActionContextIds : null
+      Array.isArray(nextActionContextIds) ? nextActionContextIds : null,
+
+      // 관계 할일 필드
+      isRelationshipTask
     );
   }
 
@@ -436,7 +445,8 @@ export class Todo {
       this.areaId,
       this.resourceId,
       this.clarification,
-      this.nextActionContextIds
+      this.nextActionContextIds,
+      this.isRelationshipTask
     );
   }
 
@@ -485,7 +495,8 @@ export class Todo {
       this.areaId,
       this.resourceId,
       this.clarification,
-      this.nextActionContextIds
+      this.nextActionContextIds,
+      this.isRelationshipTask
     );
   }
 
@@ -556,6 +567,9 @@ export class Todo {
       // 명료화 및 다음행동상황 필드
       clarification: this.clarification,
       next_action_context_ids: this.nextActionContextIds,
+
+      // 관계 태그
+      is_relationship_task: this.isRelationshipTask,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),

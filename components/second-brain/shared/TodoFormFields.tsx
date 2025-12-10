@@ -18,6 +18,7 @@ import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
 import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
 import { updateTodoNextActionContextIds } from '@/lib/supabase/next-action-contexts';
+import { RelationshipTagToggle } from '@/components/balance';
 
 /**
  * 할일 폼 필드 타입
@@ -59,6 +60,9 @@ export interface TodoFormData {
   // 반복 할일 원본 정보
   originalStartDate?: Date; // 할일 원본 시작 날짜 (반복 할일 편집 시 표시용)
   isRecurrenceInstance?: boolean; // 반복 인스턴스 여부 (날짜 잠금용)
+
+  // 관계 균형 관련
+  isRelationshipTask?: boolean; // 관계 할일 여부
 }
 
 interface TodoFormFieldsProps {
@@ -637,6 +641,16 @@ export default function TodoFormFields({
           </label>
         </div>
       )}
+
+      {/* 관계 할일 태그 */}
+      <div className="my-4">
+        <RelationshipTagToggle
+          isRelationshipTask={todo.isRelationshipTask || false}
+          onChange={(value) => onChange({ ...todo, isRelationshipTask: value })}
+          title={todo.title}
+          showAutoDetectHint={true}
+        />
+      </div>
 
       {/* 프로젝트 추가 (다중 선택) - onCreateProject prop이 있고 showProjects가 true일 때만 표시 */}
       {onCreateProject && showProjects && (

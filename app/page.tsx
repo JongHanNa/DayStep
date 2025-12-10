@@ -107,6 +107,7 @@ export default function HomePage() {
   // 진입 화면 (기본)
   return (
     <ADHDEntryScreen
+      userId={user?.id}
       onExecute={handleExecute}
       onOrganize={handleOrganize}
     />

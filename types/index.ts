@@ -308,6 +308,9 @@ export interface CreateTodoInput {
   // Relations
   project_ids?: string[]; // 다중 프로젝트 연결
   note_ids?: string[]; // 연결된 노트 ID들
+
+  // Balance System
+  is_relationship_task?: boolean; // 관계 할일 여부
 }
 
 // Note instance types

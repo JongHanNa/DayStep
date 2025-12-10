@@ -31,6 +31,14 @@ import { usePomodoro } from '@/hooks/usePomodoro';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
+import { useBalanceStore } from '@/state/stores/balanceStore';
+import {
+  MorningIntentionPrompt,
+  EveningReviewPrompt,
+  RelationshipTagBadge,
+  BalanceCheckBanner,
+} from '@/components/balance';
+import { RelationshipDetectorService } from '@/services/relationship-detector.service';
 
 // 헬퍼 함수: 일정 유형 라벨
 const getScheduleTypeLabel = (scheduleType: string): string => {
@@ -102,6 +110,16 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
   const { contexts, loadContexts } = useNextActionContextStore();
+
+  // 균형 시스템 훅
+  const {
+    loadSettings: loadBalanceSettings,
+    loadTodayReflections,
+    checkAndShowMorningPrompt,
+    checkAndShowEveningPrompt,
+    showMorningPrompt,
+    showEveningPrompt,
+  } = useBalanceStore();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -215,6 +233,22 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       loadContexts(userId);
     }
   }, [userId, contexts.length, loadContexts]);
+
+  // 균형 시스템 초기화 및 아침 프롬프트 체크
+  useEffect(() => {
+    if (!userId) return;
+
+    const initBalance = async () => {
+      // 설정 및 오늘 리플렉션 로드
+      await loadBalanceSettings(userId);
+      await loadTodayReflections(userId);
+
+      // 아침 프롬프트 조건 확인 (오늘 아직 설정 안 했으면 표시)
+      await checkAndShowMorningPrompt(userId);
+    };
+
+    initBalance();
+  }, [userId, loadBalanceSettings, loadTodayReflections, checkAndShowMorningPrompt]);
 
   // 초기 추천 로드 (skip 로딩 완료 + 세션 복원 확인 완료 후)
   useEffect(() => {
@@ -724,11 +758,17 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
           )}
 
           {/* 모두 완료 화면 */}
-          {viewState === 'completed-all' && (
+          {viewState === 'completed-all' && userId && (
             <CompletedAllView
               key="completed-all"
               completedCount={completedInSession}
               onExit={onExit}
+              userId={userId}
+              onShowEveningPrompt={() => checkAndShowEveningPrompt(userId)}
+              completedTodos={todos.filter(t => t.completed).map(t => ({
+                title: t.title,
+                isRelationshipTask: t.isRelationshipTask
+              }))}
             />
           )}
 
@@ -896,6 +936,22 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
           </form>
         </dialog>
       )}
+
+      {/* 아침 의도 설정 프롬프트 */}
+      {userId && (
+        <MorningIntentionPrompt
+          userId={userId}
+          isOpen={showMorningPrompt}
+        />
+      )}
+
+      {/* 저녁 리뷰 프롬프트 */}
+      {userId && (
+        <EveningReviewPrompt
+          userId={userId}
+          isOpen={showEveningPrompt}
+        />
+      )}
     </div>
   );
 }
@@ -959,9 +1015,15 @@ function RecommendationView({
         animate={{ scale: 1, opacity: 1 }}
         className="bg-base-200 rounded-2xl p-6 mb-8"
       >
-        <h2 className="text-2xl font-bold text-base-content leading-relaxed">
-          {todo.title}
-        </h2>
+        <div className="flex items-center justify-center gap-2">
+          <h2 className="text-2xl font-bold text-base-content leading-relaxed">
+            {todo.title}
+          </h2>
+          {/* 관계 할일 배지 */}
+          {RelationshipDetectorService.isRelationshipTodo(todo.title, todo.isRelationshipTask) && (
+            <RelationshipTagBadge size="md" />
+          )}
+        </div>
 
         {/* 속성 정보: 다음행동 상황 또는 일정 유형 */}
         {(todo.clarification === 'next_action' && todo.nextActionContextIds) ||
@@ -1102,12 +1164,35 @@ function SkipReasonView({ onSelect, onCancel }: SkipReasonViewProps) {
   );
 }
 
+interface CompletedTodoForBalance {
+  title: string;
+  isRelationshipTask?: boolean | null;
+}
+
 interface CompletedAllViewProps {
   completedCount: number;
   onExit: () => void;
+  userId: string;
+  onShowEveningPrompt: () => void;
+  completedTodos: CompletedTodoForBalance[];
 }
 
-function CompletedAllView({ completedCount, onExit }: CompletedAllViewProps) {
+function CompletedAllView({ completedCount, onExit, userId, onShowEveningPrompt, completedTodos }: CompletedAllViewProps) {
+  const { todayEveningReview } = useBalanceStore();
+  const hasReviewedToday = !!todayEveningReview;
+
+  // 저녁 프롬프트 표시
+  useEffect(() => {
+    if (hasReviewedToday) return;
+
+    // 약간의 딜레이 후 저녁 프롬프트 표시 (축하 메시지 먼저 보여주고)
+    const timer = setTimeout(() => {
+      onShowEveningPrompt();
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [hasReviewedToday, onShowEveningPrompt]);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -1127,11 +1212,17 @@ function CompletedAllView({ completedCount, onExit }: CompletedAllViewProps) {
         대단해요!
       </h2>
 
-      <p className="text-base-content/60 mb-8">
+      <p className="text-base-content/60 mb-4">
         {completedCount > 0
           ? `오늘 ${completedCount}개를 실행했어요.`
           : '오늘 할 일을 모두 처리했어요!'}
       </p>
+
+      {/* 균형 체크 배너 */}
+      <BalanceCheckBanner
+        completedTodos={completedTodos}
+        className="mb-6 text-left"
+      />
 
       <button
         onClick={onExit}
