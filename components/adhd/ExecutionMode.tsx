@@ -113,6 +113,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [restoredStartTime, setRestoredStartTime] = useState<Date | null>(null); // 세션 복원 시 원본 시작 시간
   const [restoredDuration, setRestoredDuration] = useState<number | null>(null); // 세션 복원 시 원본 duration
   const [isRestoringSession, setIsRestoringSession] = useState(true); // 세션 복원 확인 전까지 추천 로드 지연
+  const [editingCompletedTodoId, setEditingCompletedTodoId] = useState<string | null>(null); // 완료 할일 편집 중인 ID
+  const [editingCompletedTodoTitle, setEditingCompletedTodoTitle] = useState(''); // 완료 할일 편집 중인 제목
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -349,6 +351,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       getNextRecommendation();
     }, 300);
   };
+
+  // 완료된 할일 제목 수정 핸들러
+  const handleUpdateCompletedTodoTitle = useCallback(async (todoId: string, newTitle: string) => {
+    if (!newTitle.trim()) return;
+    await updateTodo(todoId, { title: newTitle.trim() });
+    setEditingCompletedTodoId(null);
+  }, [updateTodo]);
 
   // === 즉흥 모드 핸들러 ===
 
@@ -776,9 +785,43 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
                       key={todo.id}
                       className="flex items-center justify-between bg-base-200 rounded-lg px-3 py-2"
                     >
-                      <span className="text-sm text-base-content/70 line-through truncate flex-1">
-                        {todo.title}
-                      </span>
+                      {editingCompletedTodoId === todo.id ? (
+                        <input
+                          autoFocus
+                          type="text"
+                          value={editingCompletedTodoTitle}
+                          onChange={(e) => setEditingCompletedTodoTitle(e.target.value)}
+                          onBlur={() => {
+                            if (editingCompletedTodoTitle.trim() && editingCompletedTodoTitle !== todo.title) {
+                              handleUpdateCompletedTodoTitle(todo.id, editingCompletedTodoTitle);
+                            }
+                            setEditingCompletedTodoId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (editingCompletedTodoTitle.trim() && editingCompletedTodoTitle !== todo.title) {
+                                handleUpdateCompletedTodoTitle(todo.id, editingCompletedTodoTitle);
+                              }
+                              setEditingCompletedTodoId(null);
+                            } else if (e.key === 'Escape') {
+                              e.preventDefault();
+                              setEditingCompletedTodoId(null);
+                            }
+                          }}
+                          className="text-sm text-base-content/70 line-through bg-transparent border-none outline-none flex-1"
+                        />
+                      ) : (
+                        <span
+                          onClick={() => {
+                            setEditingCompletedTodoId(todo.id);
+                            setEditingCompletedTodoTitle(todo.title);
+                          }}
+                          className="text-sm text-base-content/70 line-through truncate flex-1 cursor-pointer hover:opacity-70"
+                        >
+                          {todo.title}
+                        </span>
+                      )}
                       <button
                         onClick={() => handleUncomplete(todo.id)}
                         disabled={isAnimating}
