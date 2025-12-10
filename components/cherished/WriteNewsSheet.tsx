@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, Plus, Clock, Heart, Gift, MessageCircle } from 'lucide-react';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
+import { useBalanceStore } from '@/state/stores/balanceStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
@@ -29,6 +30,8 @@ export default function WriteNewsSheet({ userId, isOpen, onClose }: WriteNewsShe
     addPerson,
     addInteraction,
   } = useCherishedPeopleStore();
+
+  const { settings } = useBalanceStore();
 
   const [step, setStep] = useState<Step>('select-person');
   const [selectedPerson, setSelectedPerson] = useState<CherishedPerson | null>(null);
@@ -344,7 +347,7 @@ export default function WriteNewsSheet({ userId, isOpen, onClose }: WriteNewsShe
                     해드리고 싶은 것이 있나요?
                   </p>
                   <p className="text-xs text-base-content/50 mb-2">
-                    커피 한 잔의 마음도 좋아요
+                    {settings?.gift_hint_message || '커피 한 잔의 마음도 좋아요'}
                   </p>
                   <textarea
                     value={giftPlan}

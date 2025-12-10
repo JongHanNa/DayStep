@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
+import { useBalanceStore } from '@/state/stores/balanceStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
@@ -54,6 +55,8 @@ export default function CareMode({ onExit }: CareModeProps) {
     addPerson,
     addInteractionWithTodo,
   } = useCherishedPeopleStore();
+
+  const { settings } = useBalanceStore();
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
@@ -533,7 +536,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                 해드리고 싶은 것이 있나요?
               </p>
               <p className="text-xs text-base-content/50 mb-2">
-                커피 한 잔의 마음도 좋아요
+                {settings?.gift_hint_message || '커피 한 잔의 마음도 좋아요'}
               </p>
               <textarea
                 value={giftPlan}

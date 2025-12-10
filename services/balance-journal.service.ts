@@ -36,6 +36,7 @@ export interface BalanceSettings {
   journal_reminder_enabled: boolean;
   journal_reminder_frequency: number;
   last_journal_reminder_at: string | null;
+  gift_hint_message: string;
   created_at: string;
   updated_at: string;
 }
@@ -284,6 +285,7 @@ export class BalanceJournalService {
         journal_reminder_enabled: true,
         journal_reminder_frequency: 3,
         last_journal_reminder_at: null,
+        gift_hint_message: '커피 한 잔의 마음도 좋아요',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
