@@ -508,19 +508,18 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     }
   };
 
-  // 연결된 할일 연결 해제
-  const handleClearLinkedTodo = async () => {
-    const { sessionId } = executionMode.adhocMode;
+  // 연결된 할일 제목 수정
+  const handleUpdateLinkedTodoTitle = async (newTitle: string) => {
+    const { linkedTodoId } = executionMode.adhocMode;
+    if (!linkedTodoId || !newTitle.trim()) return;
 
-    if (sessionId) {
-      try {
-        await PomodoroSessionService.unlinkTodo(sessionId);
-      } catch (error) {
-        console.error('❌ 할일 연결 해제 실패:', error);
-      }
+    try {
+      await updateTodo(linkedTodoId, { title: newTitle.trim() });
+      setLinkedTodo(linkedTodoId, newTitle.trim());
+      console.log('✏️ 할일 제목 수정:', { todoId: linkedTodoId, newTitle });
+    } catch (error) {
+      console.error('❌ 할일 제목 수정 실패:', error);
     }
-
-    setLinkedTodo(null, null);
   };
 
   // 할일 기록하기
@@ -716,7 +715,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               inlineTodoInput={inlineTodoInput}
               onInlineTodoInputChange={setInlineTodoInput}
               onCreateInlineTodo={handleCreateInlineTodo}
-              onClearLinkedTodo={handleClearLinkedTodo}
+              onUpdateLinkedTodoTitle={handleUpdateLinkedTodoTitle}
               originalStartTime={restoredStartTime || undefined}
               originalDuration={restoredDuration || undefined}
             />
@@ -1359,7 +1358,7 @@ interface AdhocTimerViewProps {
   inlineTodoInput: string;
   onInlineTodoInputChange: (value: string) => void;
   onCreateInlineTodo: () => void;
-  onClearLinkedTodo: () => void;
+  onUpdateLinkedTodoTitle: (newTitle: string) => void;
   // 세션 복원 시 원본 시작 시간 (없으면 현재 시간 사용)
   originalStartTime?: Date;
   // 세션 복원 시 원본 duration (없으면 timerState.duration 사용)
@@ -1375,11 +1374,13 @@ function AdhocTimerView({
   inlineTodoInput,
   onInlineTodoInputChange,
   onCreateInlineTodo,
-  onClearLinkedTodo,
+  onUpdateLinkedTodoTitle,
   originalStartTime,
   originalDuration,
 }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitleValue, setEditingTitleValue] = useState('');
 
   // 타이머 시작 시점 (세션 복원 시 원본 시간 사용, 아니면 현재 시간)
   const [startedAt] = useState(() => originalStartTime || new Date());
@@ -1503,21 +1504,49 @@ function AdhocTimerView({
               </motion.button>
             )}
           </div>
+        ) : isEditingTitle ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 bg-base-200 rounded-xl"
+          >
+            <input
+              autoFocus
+              value={editingTitleValue}
+              onChange={(e) => setEditingTitleValue(e.target.value)}
+              onBlur={() => {
+                if (editingTitleValue.trim() && editingTitleValue !== linkedTodoTitle) {
+                  onUpdateLinkedTodoTitle(editingTitleValue.trim());
+                }
+                setIsEditingTitle(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (editingTitleValue.trim() && editingTitleValue !== linkedTodoTitle) {
+                    onUpdateLinkedTodoTitle(editingTitleValue.trim());
+                  }
+                  setIsEditingTitle(false);
+                } else if (e.key === 'Escape') {
+                  setIsEditingTitle(false);
+                }
+              }}
+              className="w-full text-sm font-medium text-base-content text-center bg-transparent border-none outline-none"
+              placeholder="할일 제목"
+            />
+          </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between p-3 bg-base-200 rounded-xl gap-2"
+            onClick={() => {
+              setEditingTitleValue(linkedTodoTitle || '');
+              setIsEditingTitle(true);
+            }}
+            className="p-3 bg-base-200 rounded-xl cursor-pointer hover:bg-base-300 transition-colors"
           >
-            <span className="text-sm font-medium text-base-content flex-1 text-center px-2 break-words">
+            <span className="text-sm font-medium text-base-content block text-center break-words">
               {linkedTodoTitle}
             </span>
-            <button
-              onClick={onClearLinkedTodo}
-              className="btn btn-ghost btn-xs btn-circle text-base-content/50 hover:text-base-content"
-            >
-              ✕
-            </button>
           </motion.div>
         )}
       </div>
