@@ -1595,7 +1595,7 @@ function AdhocTimerView({
       {/* 안내 문구 */}
       <p className="text-sm text-base-content/50 mb-8">
         {linkedTodoId ? (
-          <>시계 방향으로 드래그해서 완료하세요</>
+          <>원을 드래그해서 바로 끝낼 수도 있어요</>
         ) : (
           <>지금 기록안해도 끝나면 뭐 했는지 물어볼게요<br />원을 드래그해서 바로 끝낼 수도 있어요</>
         )}
