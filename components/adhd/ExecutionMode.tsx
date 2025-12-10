@@ -1466,11 +1466,13 @@ function AdhocTimerView({
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
+                e.preventDefault();
                 if (editingTitleValue.trim() && editingTitleValue !== linkedTodoTitle) {
                   onUpdateLinkedTodoTitle(editingTitleValue.trim());
                 }
                 setIsEditingTitle(false);
               } else if (e.key === 'Escape') {
+                e.preventDefault();
                 setIsEditingTitle(false);
               }
             }}
