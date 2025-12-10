@@ -108,6 +108,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [inlineTodoInput, setInlineTodoInput] = useState(''); // 타이머 진행 중 할일 입력
   const [restoredStartTime, setRestoredStartTime] = useState<Date | null>(null); // 세션 복원 시 원본 시작 시간
   const [restoredDuration, setRestoredDuration] = useState<number | null>(null); // 세션 복원 시 원본 duration
+  const [isRestoringSession, setIsRestoringSession] = useState(true); // 세션 복원 확인 전까지 추천 로드 지연
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -165,6 +166,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   // 다음 추천 할일 가져오기
   const getNextRecommendation = useCallback(() => {
+    // 이미 타이머 실행 중이면 추천 건너뛰기 (세션 복원 후 덮어쓰기 방지)
+    const { adhocMode } = useADHDModeStore.getState().executionMode;
+    if (adhocMode.isActive) {
+      console.log('⏭️ 타이머 실행 중 - 추천 로드 건너뛰기');
+      return;
+    }
+
     // getState()로 최신 todos 상태 조회 (stale closure 방지)
     const todayTodos = getTodayTodos(true);
     // Zustand getState()로 최신 상태 조회 (stale closure 방지)
@@ -202,18 +210,28 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     }
   }, [userId, contexts.length, loadContexts]);
 
-  // 초기 추천 로드 (skip 로딩 완료 후)
+  // 초기 추천 로드 (skip 로딩 완료 + 세션 복원 확인 완료 후)
   useEffect(() => {
-    if (!isLoadingSkips) {
+    // 세션 복원 확인이 끝난 후에만 추천 로드
+    if (!isLoadingSkips && !isRestoringSession) {
       getNextRecommendation();
     }
-  }, [isLoadingSkips]);
+  }, [isLoadingSkips, isRestoringSession]);
 
   // 활성 세션 복원 (뒤로가기 후 다시 진입 시)
   // Worker 준비 완료 후에만 실행 (Worker 미준비 시 startPomodoroTimer 무시됨)
   useEffect(() => {
     const restoreActiveSession = async () => {
-      if (!userId || !isWorkerReady) return;
+      // userId 없으면 복원 불가 → 바로 완료 처리
+      if (!userId) {
+        setIsRestoringSession(false);
+        return;
+      }
+
+      // Worker 미준비 시 대기 (isWorkerReady가 true 되면 재실행)
+      if (!isWorkerReady) {
+        return;
+      }
 
       try {
         const activeSession = await PomodoroSessionService.getActiveSession(userId);
@@ -247,6 +265,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         }
       } catch (error) {
         console.error('❌ 세션 복원 실패:', error);
+      } finally {
+        // 복원 시도 완료 (성공/실패/세션 없음 무관)
+        setIsRestoringSession(false);
       }
     };
 
@@ -1504,7 +1525,7 @@ function AdhocTimerView({
       {/* 안내 문구 */}
       <p className="text-sm text-base-content/50 mb-8">
         {linkedTodoId ? (
-          <>드래그하면 할일도 같이 완료돼요</>
+          <>드래그해서 완료할 수 있어요</>
         ) : (
           <>지금 기록안해도 끝나면 뭐 했는지 물어볼게요<br />원을 드래그해서 바로 끝낼 수도 있어요</>
         )}
