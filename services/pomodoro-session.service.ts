@@ -176,6 +176,27 @@ export class PomodoroSessionService {
   }
 
   /**
+   * 세션 duration 업데이트 (시간 조정 시)
+   * @param sessionId 세션 ID
+   * @param newDuration 새 duration (밀리초)
+   */
+  static async updateDuration(sessionId: string, newDuration: number): Promise<void> {
+    try {
+      await updateWithJWT('pomodoro_sessions', [
+        { column: 'id', operator: 'eq', value: sessionId }
+      ], {
+        duration: newDuration,
+        updated_at: new Date().toISOString()
+      });
+
+      console.log('⏱️ 세션 duration 업데이트:', { sessionId, newDuration });
+    } catch (error) {
+      console.error('❌ duration 업데이트 오류:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 세션 정보 조회
    * @param sessionId 세션 ID
    */

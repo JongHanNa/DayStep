@@ -365,6 +365,10 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const handleStartAdhoc = async () => {
     if (!userId) return;
 
+    // 복원 상태 초기화 (새 세션이므로)
+    setRestoredStartTime(null);
+    setRestoredDuration(null);
+
     startAdhocMode();
     const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
 
@@ -385,6 +389,10 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const handleStartPomodoroWithTodo = async () => {
     const currentTodo = executionMode.currentRecommendation;
     if (!userId || !currentTodo) return;
+
+    // 복원 상태 초기화 (새 세션이므로)
+    setRestoredStartTime(null);
+    setRestoredDuration(null);
 
     startAdhocMode();
     const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
@@ -452,6 +460,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setLinkedTodo(null, null);
     setShowStopConfirmModal(false);
     setInlineTodoInput('');
+    setRestoredStartTime(null);
+    setRestoredDuration(null);
 
     getNextRecommendation();
   };
@@ -480,6 +490,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         endAdhocMode();
         setSessionId(null);
         setLinkedTodo(null, null);
+        setRestoredStartTime(null);
+        setRestoredDuration(null);
         markCompleted('adhoc', 'direct');
         getNextRecommendation();
         return;
@@ -534,6 +546,19 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       console.error('❌ 할일 제목 수정 실패:', error);
     }
   };
+
+  // 타이머 시간 조정 (-1분/+1분) - Worker + DB 동시 업데이트
+  const handleAdjustTime = useCallback(async (deltaMs: number) => {
+    // 1. Worker에 시간 조정 메시지 전송
+    adjustTime(deltaMs);
+
+    // 2. DB에 새 duration 저장
+    const { sessionId } = executionMode.adhocMode;
+    if (sessionId) {
+      const newDuration = timerState.duration + deltaMs;
+      await PomodoroSessionService.updateDuration(sessionId, newDuration);
+    }
+  }, [adjustTime, executionMode.adhocMode, timerState.duration]);
 
   // 할일 기록하기
   const handleCaptureAdhocTodo = async () => {
@@ -725,7 +750,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onComplete={handleAdhocTimerComplete}
               onPause={pauseTimer}
               onResume={resumeTimer}
-              onAdjustTime={adjustTime}
+              onAdjustTime={handleAdjustTime}
               linkedTodoId={executionMode.adhocMode.linkedTodoId}
               linkedTodoTitle={executionMode.adhocMode.linkedTodoTitle}
               inlineTodoInput={inlineTodoInput}
