@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import {
   Check,
-  RefreshCw,
   ArrowLeft,
   ArrowRight,
   Ban,
@@ -19,7 +18,8 @@ import {
   ListTodo,
   Zap,
   Play,
-  Square
+  Square,
+  Timer
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
@@ -327,7 +327,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   // === 즉흥 모드 핸들러 ===
 
-  // "지금 떠오른 거 할래" 클릭
+  // "지금 떠오른거 타이머 켜고 할래" 클릭
   const handleStartAdhoc = async () => {
     if (!userId) return;
 
@@ -340,6 +340,33 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       setSessionId(sessionId);
     } catch (error) {
       console.error('❌ 세션 생성 실패:', error);
+      // 실패해도 타이머는 시작 (UX 우선)
+    }
+
+    startPomodoroTimer(duration, 'POMODORO');
+    setViewState('adhoc-timer');
+  };
+
+  // "타이머 켜고 할래" 클릭 - 현재 추천된 할일과 연결된 포모도로 시작
+  const handleStartPomodoroWithTodo = async () => {
+    const currentTodo = executionMode.currentRecommendation;
+    if (!userId || !currentTodo) return;
+
+    startAdhocMode();
+    const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
+
+    // DB에 세션 생성
+    try {
+      const sessionId = await PomodoroSessionService.createSession(userId, duration);
+      setSessionId(sessionId);
+
+      // 현재 할일과 연결
+      if (sessionId) {
+        await PomodoroSessionService.linkTodo(sessionId, currentTodo.id);
+        setLinkedTodo(currentTodo.id, currentTodo.title);
+      }
+    } catch (error) {
+      console.error('❌ 세션 생성/연결 실패:', error);
       // 실패해도 타이머는 시작 (UX 우선)
     }
 
@@ -622,7 +649,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               awakeningSentence={awakeningSentence}
               isAnimating={isAnimating}
               onComplete={() => handleComplete('direct')}
-              onAlternativeComplete={() => handleComplete('alternative')}
+              onStartPomodoroWithTodo={handleStartPomodoroWithTodo}
               onSkip={handleSkipClick}
               onDelete={() => handleSkipReason('not_needed')}
               onStartAdhoc={handleStartAdhoc}
@@ -793,7 +820,7 @@ interface RecommendationViewProps {
   awakeningSentence: string | null;
   isAnimating: boolean;
   onComplete: () => void;
-  onAlternativeComplete: () => void;
+  onStartPomodoroWithTodo: () => void;
   onSkip: () => void;
   onDelete: () => void;
   onStartAdhoc: () => void;
@@ -805,7 +832,7 @@ function RecommendationView({
   awakeningSentence,
   isAnimating,
   onComplete,
-  onAlternativeComplete,
+  onStartPomodoroWithTodo,
   onSkip,
   onDelete,
   onStartAdhoc,
@@ -869,16 +896,16 @@ function RecommendationView({
           했어
         </motion.button>
 
-        {/* 다른 방법으로 했어 버튼 */}
+        {/* 타이머 켜고 할래 버튼 */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={onAlternativeComplete}
+          onClick={onStartPomodoroWithTodo}
           disabled={isAnimating}
           className="btn btn-ghost btn-md w-full rounded-full border border-base-300"
         >
-          <RefreshCw className="w-5 h-5" />
-          다른 방법으로 했어
+          <Timer className="w-5 h-5" />
+          타이머 켜고 할래
         </motion.button>
 
         {/* 다른 거 추천해줘 버튼 */}
@@ -913,7 +940,7 @@ function RecommendationView({
           className="btn btn-ghost btn-sm w-full rounded-full text-primary/70 mt-4"
         >
           <Zap className="w-4 h-4" />
-          지금 떠오른 거 할래
+          지금 떠오른거 타이머 켜고 할래
         </motion.button>
       </div>
 
@@ -1057,7 +1084,7 @@ function EmptyStateView({ onGoToOrganize, onStartAdhoc }: EmptyStateViewProps) {
           className="btn btn-primary btn-lg w-full rounded-full"
         >
           <Zap className="w-5 h-5" />
-          지금 떠오른 거 할래
+          지금 떠오른거 타이머 켜고 할래
         </motion.button>
 
         {/* 구분선 */}
