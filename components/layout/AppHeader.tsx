@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, Sun, Moon, Clock, X } from 'lucide-react';
 import { useSidebarStore } from '@/state/stores/sidebarStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
@@ -15,6 +15,7 @@ const ORGANIZE_DURATION_SECONDS = 5 * 60;
 
 export default function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const { open } = useSidebarStore();
   const currentMode = useADHDModeStore(state => state.currentMode);
   const organizeStartTime = useADHDModeStore(state => state.organizeMode.startTime);
@@ -68,7 +69,8 @@ export default function AppHeader() {
   const handleExitOrganize = useCallback(() => {
     resetOrganizeMode();
     enterEntryMode();
-  }, [resetOrganizeMode, enterEntryMode]);
+    router.push('/'); // 다른 페이지에서도 메인 페이지로 이동
+  }, [resetOrganizeMode, enterEntryMode, router]);
 
   // pathname의 trailing slash 제거 (일관된 비교를 위해)
   const normalizedPathname = pathname.endsWith('/') && pathname !== '/'
