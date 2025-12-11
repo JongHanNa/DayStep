@@ -98,7 +98,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
 
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
-          {/* 마음 전해보기 버튼 */}
+          {/* 소중한 사람 챙기기 버튼 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -107,16 +107,18 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white border-none hover:from-pink-600 hover:to-purple-600"
             >
               <MessageCircle className="w-7 h-7" />
-              <span className="text-xl font-semibold">마음 전해보기</span>
+              <span className="text-xl font-semibold">소중한 사람 챙기기</span>
             </motion.button>
             {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-1 text-center">
-                소중한 사람에게 안부 전하기
+              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                일에 몰입하다 보면 소중한 사람들을 놓치기 쉬워요.
+                <br />
+                주기적으로 안부를 챙길 수 있게 도와줘요.
               </p>
             )}
           </div>
 
-          {/* 실행하기 버튼 */}
+          {/* 작은 것 하나 실행 버튼 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -125,16 +127,18 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
             >
               <Target className="w-7 h-7" />
-              <span className="text-xl font-semibold">실행하기</span>
+              <span className="text-xl font-semibold">작은 것 하나 실행</span>
             </motion.button>
             {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-1 text-center">
-                지금 할 수 있는 가장 작은 것 하나
+              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                할 일이 많으면 뭐부터 해야 할지 막막하죠.
+                <br />
+                오늘 할 일 중 하나를 추천받거나, 바로 타이머 켜고 실행할 수 있어요.
               </p>
             )}
           </div>
 
-          {/* 정리하기 버튼 */}
+          {/* 할 일 정리하기 버튼 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -143,11 +147,13 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
             >
               <ListTodo className="w-7 h-7" />
-              <span className="text-xl font-semibold">정리하기</span>
+              <span className="text-xl font-semibold">할 일 정리하기</span>
             </motion.button>
             {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-1 text-center">
-                할 일 정리하고 우선순위 잡기
+              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                머릿속이 복잡할 때 우선순위 정하기 어렵죠.
+                <br />
+                할 일들을 한눈에 보고 정리할 수 있어요.
               </p>
             )}
           </div>
@@ -164,22 +170,14 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <span className="text-xl font-semibold">관계 기록 보기</span>
             </motion.button>
             {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-1 text-center">
-                연락 기록과 감사 일기 모아보기
+              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                누구에게 뭘 들었는지 기억하기 어렵죠.
+                <br />
+                대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.
               </p>
             )}
           </div>
         </div>
-
-        {/* 하단 힌트 */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mt-8 text-xs text-base-content/40"
-        >
-          실행하기: 지금 할 수 있는 가장 작은 것 하나
-        </motion.p>
 
         {/* 저널 작성 유도 버튼 (저널이 없을 때) */}
         {userId && !hasJournals() && (
@@ -188,7 +186,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
             onClick={() => setShowJournalSetup(true)}
-            className="mt-4 flex items-center gap-2 text-xs text-primary/60 hover:text-primary"
+            className="mt-8 flex items-center gap-2 text-xs text-primary/60 hover:text-primary"
           >
             <Heart className="w-3 h-3" />
             나의 다짐 작성하기
