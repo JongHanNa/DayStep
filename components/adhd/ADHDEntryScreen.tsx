@@ -138,12 +138,12 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
           </div>
 
-          {/* 할 일 정리하기 버튼 */}
+          {/* 할 일 정리하기 버튼 - 기능 미연결 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={onOrganize}
+              onClick={() => {}}
               className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
             >
               <ListTodo className="w-7 h-7" />
@@ -177,6 +177,26 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               </p>
             )}
           </div>
+
+          {/* 예전 시스템 보기 버튼 - 개발 환경에서만 표시 */}
+          {process.env.NODE_ENV === 'development' && (
+            <div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onOrganize}
+                className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 border-dashed opacity-60"
+              >
+                <ListTodo className="w-7 h-7" />
+                <span className="text-xl font-semibold">예전 시스템 보기</span>
+              </motion.button>
+              {showDescriptions && (
+                <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                  개발자용: 이전 버전의 시스템입니다.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 저널 작성 유도 버튼 (저널이 없을 때) */}
