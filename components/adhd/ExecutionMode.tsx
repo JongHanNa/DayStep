@@ -783,7 +783,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               key="completed-all"
               completedCount={completedInSession}
               onExit={onExit}
-              completedTodos={todos.filter(t => t.completed).map(t => ({
+              completedTodos={todayCompletedTodos.map(t => ({
                 title: t.title,
                 isRelationshipTask: t.isRelationshipTask
               }))}
