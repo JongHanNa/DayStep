@@ -12,6 +12,7 @@ interface ADHDEntryScreenProps {
   onOrganize: () => void;
   onCare: () => void;
   onRelationshipInsights: () => void;
+  onTaskOrganize: () => void;
 }
 
 /**
@@ -21,7 +22,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize }: ADHDEntryScreenProps) {
   const { awakeningSentence } = useADHDModeStore();
   const [showDescriptions, setShowDescriptions] = useState(false);
 
@@ -111,12 +112,12 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
           </div>
 
-          {/* 할 일 정리하기 버튼 - 기능 미연결 */}
+          {/* 할 일 정리하기 버튼 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => {}}
+              onClick={onTaskOrganize}
               className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
             >
               <ListTodo className="w-7 h-7" />

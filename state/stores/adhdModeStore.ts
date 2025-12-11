@@ -8,7 +8,7 @@ import { ADHDPatternsService, ADHDUserPatterns } from '@/services/adhd-patterns.
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | null;
 
 export type SkipReason =
   | 'not_now'      // 지금 상황에 안 맞아
@@ -117,6 +117,9 @@ interface ADHDModeState {
 
   // === 관계 인사이트 모드 Actions ===
   enterRelationshipInsightsMode: (userId: string) => void;
+
+  // === 할일 정리 모드 Actions ===
+  enterTaskOrganizeMode: (userId: string) => void;
 
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
@@ -485,6 +488,15 @@ export const useADHDModeStore = create<ADHDModeState>()(
           console.log('📊 ADHD: 관계 인사이트 모드 진입');
           set({
             currentMode: 'relationship-insights',
+            currentUserId: userId,
+          });
+        },
+
+        // === 할일 정리 모드 Actions ===
+        enterTaskOrganizeMode: (userId: string) => {
+          console.log('📋 ADHD: 할일 정리 모드 진입');
+          set({
+            currentMode: 'task-organize',
             currentUserId: userId,
           });
         },
