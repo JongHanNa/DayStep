@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, Heart, MessageCircle, BookHeart, HelpCircle } from 'lucide-react';
+import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import { useBalanceStore } from '@/state/stores/balanceStore';
-import { JournalReminderModal } from '@/components/balance';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 
 interface ADHDEntryScreenProps {
@@ -25,32 +23,7 @@ interface ADHDEntryScreenProps {
  */
 export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights }: ADHDEntryScreenProps) {
   const { awakeningSentence } = useADHDModeStore();
-  const {
-    checkAndShowReminder,
-    loadJournals,
-    loadSettings,
-    showReminderModal,
-    hasJournals
-  } = useBalanceStore();
-
-  const [showJournalSetup, setShowJournalSetup] = useState(false);
   const [showDescriptions, setShowDescriptions] = useState(false);
-
-  // 앱 시작 시 저널 데이터 로드 및 상기 체크
-  useEffect(() => {
-    if (!userId) return;
-
-    const init = async () => {
-      // 설정 및 저널 로드
-      await loadSettings(userId);
-      await loadJournals(userId);
-
-      // 상기 조건 확인 후 모달 표시
-      await checkAndShowReminder(userId);
-    };
-
-    init();
-  }, [userId, loadSettings, loadJournals, checkAndShowReminder]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-base-100 px-6">
@@ -198,51 +171,8 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             </div>
           )}
         </div>
-
-        {/* 저널 작성 유도 버튼 (저널이 없을 때) */}
-        {userId && !hasJournals() && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            onClick={() => setShowJournalSetup(true)}
-            className="mt-8 flex items-center gap-2 text-xs text-primary/60 hover:text-primary"
-          >
-            <Heart className="w-3 h-3" />
-            나의 다짐 작성하기
-          </motion.button>
-        )}
       </motion.div>
 
-      {/* 저널 상기 모달 */}
-      {userId && <JournalReminderModal userId={userId} />}
-
-      {/* 저널 작성 모달 */}
-      {showJournalSetup && userId && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-base-100 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-4">
-              {/* 동적 import로 처리하거나 직접 import */}
-              {/* BalanceJournalSetup은 별도 페이지에서 사용하도록 유도 */}
-              <div className="text-center py-8">
-                <Heart className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-lg font-bold mb-2">나의 다짐 작성하기</h3>
-                <p className="text-sm text-base-content/60 mb-6">
-                  일에만 집중하다 관계를 놓쳤던 경험을 적어보세요.
-                  <br />
-                  작성한 내용은 주기적으로 상기됩니다.
-                </p>
-                <button
-                  onClick={() => setShowJournalSetup(false)}
-                  className="btn btn-ghost rounded-full"
-                >
-                  나중에 할게
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
