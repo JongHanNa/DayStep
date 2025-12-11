@@ -116,7 +116,7 @@ export default function PriorityReminderBanner({
               {/* 성찰 메시지 */}
               {reminderMessage && (
                 <p className="text-xs text-base-content/60 mt-1 italic">
-                  "{reminderMessage}"
+                  &ldquo;{reminderMessage}&rdquo;
                 </p>
               )}
 

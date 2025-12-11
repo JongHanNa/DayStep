@@ -261,7 +261,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             {reminderMessage && (
               <div className="p-4 rounded-xl bg-pink-100 border border-pink-200">
                 <p className="text-sm text-pink-700 text-center italic">
-                  "{reminderMessage}"
+                  &ldquo;{reminderMessage}&rdquo;
                 </p>
               </div>
             )}
