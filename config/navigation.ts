@@ -1,28 +1,20 @@
 import {
   Home,
   Target,
-  BookOpen,
   Compass,
   FolderOpen,
-  CheckSquare,
-  Inbox,
-  Search,
   Clock,
   Calendar,
   FileText,
-  Archive,
   Settings,
-  User,
-  Bell,
-  Palette,
-  Shield,
   Network,
   Timer,
+  Database,
   LucideIcon
 } from 'lucide-react';
 
-// 네비게이션 그룹 타입
-export type NavigationGroupType = 'start' | 'routine' | 'productivity' | 'settings';
+// 네비게이션 그룹 타입 (GTD 워크플로우 제거)
+export type NavigationGroupType = 'productivity' | 'data' | 'settings';
 
 // 메뉴 아이템 인터페이스
 export interface NavigationItem {
@@ -40,41 +32,28 @@ export interface NavigationGroup {
   items: NavigationItem[];
 }
 
-// 전체 네비게이션 설정
+// 전체 네비게이션 설정 (GTD 워크플로우 제거, 단순화)
 export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
-  start: {
-    id: 'start',
-    label: '영역 관리',
-    icon: Home,
-    items: [
-      { id: 'areas-resources', label: '책임/자원', icon: Target, href: '/second-brain/areas-resources' },
-      { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
-      { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/second-brain/projects' },
-    ]
-  },
-  routine: {
-    id: 'routine',
-    label: 'GTD 워크플로우',
-    icon: CheckSquare,
-    items: [
-      { id: 'inbox', label: '수집', icon: Inbox, href: '/second-brain/inbox' },
-      { id: 'clarify', label: '명료화', icon: Search, href: '/second-brain/clarify' },
-      { id: 'plan', label: '계획', icon: CheckSquare, href: '/second-brain/plan' },
-      { id: 'review', label: '점검', icon: Target, href: '/second-brain/review' },
-    ]
-  },
   productivity: {
     id: 'productivity',
-    label: '생산성/뷰',
+    label: '뷰',
     icon: Target,
     items: [
       { id: 'graph-view', label: '그래프 뷰', icon: Network, href: '/' },
       { id: 'timeline', label: '타임라인', icon: Clock, href: '/timeline' },
       { id: 'calendar', label: '달력', icon: Calendar, href: '/second-brain/calendar' },
-      { id: 'goal-compass', label: '목표 나침반', icon: Compass, href: '/second-brain/goal-compass' },
       { id: 'notes', label: '노트', icon: FileText, href: '/second-brain/notes' },
-      { id: 'archive', label: '아카이브', icon: Archive, href: '/second-brain/archive' },
       { id: 'pomodoro', label: '포모도로', icon: Timer, href: '/second-brain/pomodoro' },
+    ]
+  },
+  data: {
+    id: 'data',
+    label: '내 데이터',
+    icon: Database,
+    items: [
+      { id: 'areas-resources', label: '책임/자원', icon: Target, href: '/second-brain/areas-resources' },
+      { id: 'goals', label: '목표', icon: Compass, href: '/second-brain/goals' },
+      { id: 'projects', label: '프로젝트', icon: FolderOpen, href: '/second-brain/projects' },
     ]
   },
   settings: {
@@ -85,16 +64,15 @@ export const NAVIGATION_GROUPS: Record<NavigationGroupType, NavigationGroup> = {
   }
 } as const;
 
-// 하단 네비게이션 메인 탭 배열 (순서 중요)
+// 하단 네비게이션 메인 탭 배열 (순서 중요) - GTD 워크플로우 제거
 export const MAIN_TABS: Array<{
   id: NavigationGroupType;
   label: string;
   icon: LucideIcon;
   groupType: NavigationGroupType;
 }> = [
-  { id: 'start', label: '시작', icon: Home, groupType: 'start' },
-  { id: 'routine', label: '워크플로우', icon: CheckSquare, groupType: 'routine' },
-  { id: 'productivity', label: '생산성', icon: Target, groupType: 'productivity' },
+  { id: 'productivity', label: '뷰', icon: Home, groupType: 'productivity' },
+  { id: 'data', label: '데이터', icon: Database, groupType: 'data' },
   { id: 'settings', label: '설정', icon: Settings, groupType: 'settings' },
 ];
 
@@ -109,7 +87,6 @@ export const getGroupPaths = (groupType: NavigationGroupType): string[] => {
  */
 const findNavItemByPath = (pathname: string, items: NavigationItem[]): NavigationItem | null => {
   // 경로 길이 내림차순 정렬 (긴 경로부터 검사)
-  // This ensures /second-brain/areas is checked before /
   const sortedItems = [...items].sort((a, b) => b.href.length - a.href.length);
 
   for (const item of sortedItems) {

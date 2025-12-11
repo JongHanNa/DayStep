@@ -134,8 +134,8 @@ function KakaoCallbackContent() {
 
         console.log("카카오 로그인 성공!");
 
-        // 성공 시 Areas 페이지로 리다이렉트
-        router.push("/second-brain/areas");
+        // 성공 시 메인 페이지로 리다이렉트
+        router.push("/");
       } catch (error) {
         console.error("Kakao 콜백 처리 오류:", error);
         router.push("/login?error=callback_failed");

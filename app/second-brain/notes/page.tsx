@@ -9,8 +9,9 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
-import NoteTabs, { type NoteTabType } from '@/components/second-brain/notes/NoteTabs';
-import AreaResourceSubTabs, { type SubTabType } from '@/components/second-brain/notes/AreaResourceSubTabs';
+// 탭 타입 정의 (이전 NoteTabs, AreaResourceSubTabs 컴포넌트에서 이동)
+type NoteTabType = 'inbox' | 'read_later' | 'draft' | 'area_resource';
+type SubTabType = 'areas' | 'resources';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { Plus, Pin, Inbox, BookmarkCheck, FileText, FolderOpen } from 'lucide-react';
@@ -325,21 +326,67 @@ export default function NotesPage() {
               </button>
             </div>
 
-            {/* 메인 탭 */}
-            <NoteTabs
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              counts={tabCounts}
-            />
+            {/* 메인 탭 (인라인 구현) */}
+            <div className="flex gap-1 overflow-x-auto pb-1">
+              {([
+                { id: 'inbox' as const, label: '수집함', icon: Inbox },
+                { id: 'read_later' as const, label: '나중에', icon: BookmarkCheck },
+                { id: 'draft' as const, label: '원고', icon: FileText },
+                { id: 'area_resource' as const, label: '영역·자원', icon: FolderOpen },
+              ]).map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                const count = tabCounts[tab.id];
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                      isActive
+                        ? 'bg-primary text-primary-content'
+                        : 'bg-base-100 hover:bg-base-300'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                    {count > 0 && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        isActive ? 'bg-primary-content/20' : 'bg-base-300'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
             {/* 영역·자원 서브탭 (해당 탭일 때만 표시) */}
             {activeTab === 'area_resource' && (
-              <div className="mt-3">
-                <AreaResourceSubTabs
-                  activeSubTab={activeSubTab}
-                  onSubTabChange={setActiveSubTab}
-                  counts={subTabCounts}
-                />
+              <div className="mt-3 flex gap-2">
+                {([
+                  { id: 'areas' as const, label: '영역' },
+                  { id: 'resources' as const, label: '자원' },
+                ]).map((subTab) => {
+                  const isActive = activeSubTab === subTab.id;
+                  const count = subTabCounts[subTab.id];
+                  return (
+                    <button
+                      key={subTab.id}
+                      onClick={() => setActiveSubTab(subTab.id)}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                        isActive
+                          ? 'bg-base-content text-base-100'
+                          : 'bg-base-100 hover:bg-base-300'
+                      }`}
+                    >
+                      {subTab.label}
+                      {count > 0 && (
+                        <span className="ml-1 text-xs opacity-70">({count})</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

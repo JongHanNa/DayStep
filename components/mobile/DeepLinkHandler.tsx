@@ -56,8 +56,8 @@ export const DeepLinkHandler: React.FC = () => {
           break;
 
         default:
-          // 기본적으로 Areas 페이지로 이동
-          router.push("/second-brain/areas");
+          // 기본적으로 메인 페이지로 이동
+          router.push("/");
           break;
       }
     };

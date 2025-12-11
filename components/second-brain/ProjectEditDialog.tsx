@@ -22,7 +22,6 @@ import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAuth } from '@/app/context/AuthContext';
 import TodoEditModal from './TodoEditModal';
-import TodoListModal from './TodoListModal';
 import { updateTodoProjects } from '@/lib/supabase/todo-projects';
 import { updateTodoNotes } from '@/lib/supabase/todo-notes';
 import { getProjectNotes } from '@/lib/supabase/project-notes';
@@ -281,14 +280,6 @@ export default function ProjectEditDialog({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarView, setCalendarView] = useState<'week' | 'month' | 'completed'>('week');
 
-  // 할일 목록 모달 상태
-  const [selectedDateTodos, setSelectedDateTodos] = useState<TodoItem[]>([]);
-  const [selectedDateForList, setSelectedDateForList] = useState<Date | null>(null);
-  const [showTodoListModal, setShowTodoListModal] = useState(false);
-
-  // 할일 편집 모달 상태 (TodoListModal에서 할일 클릭 시 사용)
-  const [todoFromList, setTodoFromList] = useState<TodoItem | null>(null);
-  const [showTodoEditFromList, setShowTodoEditFromList] = useState(false);
 
   // useDndKit Hook
   const { sensors, activeItem: activeTodo, handleDragStart, handleDragEnd: handleDndEnd, dndContextProps, dragOverlayProps } = useDndKit<TodoItem>({
@@ -836,131 +827,6 @@ export default function ProjectEditDialog({
     }
   };
 
-  // 프로젝트 즉시 저장 핸들러 (todoFromList용)
-  const handleProjectImmediateSaveFromList = async (projectIds: string[]) => {
-    if (!todoFromList?.id || !userId) return;
-
-    try {
-      await updateTodoProjects(todoFromList.id, projectIds, userId);
-      // 로컬 상태도 업데이트
-      setTodoFromList({ ...todoFromList, projectIds });
-      setTodos(todos.map(t => t.id === todoFromList.id ? { ...t, projectIds } : t));
-    } catch (error) {
-      console.error('프로젝트 연결 저장 실패:', error);
-      throw error;
-    }
-  };
-
-  // 노트 즉시 저장 핸들러 (todoFromList용)
-  const handleNoteImmediateSaveFromList = async (noteIds: string[]) => {
-    if (!todoFromList?.id || !userId) return;
-
-    try {
-      await updateTodoNotes(todoFromList.id, noteIds, userId);
-      // 로컬 상태도 업데이트
-      setTodoFromList({ ...todoFromList, noteIds });
-      setTodos(todos.map(t => t.id === todoFromList.id ? { ...t, noteIds } : t));
-    } catch (error) {
-      console.error('노트 연결 저장 실패:', error);
-      throw error;
-    }
-  };
-
-  // 할일 목록 모달 열기
-  const handleOpenTodoListModal = (date: Date, todosForDate: TodoItem[]) => {
-    setSelectedDateForList(date);
-    setSelectedDateTodos(todosForDate);
-    setShowTodoListModal(true);
-  };
-
-  // 할일 목록 모달 닫기
-  const handleCloseTodoListModal = () => {
-    setShowTodoListModal(false);
-    setSelectedDateForList(null);
-    setSelectedDateTodos([]);
-  };
-
-  // 할일 목록 모달에서 할일 클릭 시 (TodoEditModal 열기)
-  const handleTodoClickFromList = (todo: TodoItem) => {
-    handleCloseTodoListModal();
-    setTodoFromList(todo);
-    setShowTodoEditFromList(true);
-  };
-
-  // TodoEditModal 닫기
-  const handleCloseTodoEditFromList = () => {
-    setShowTodoEditFromList(false);
-    setTodoFromList(null);
-  };
-
-  // TodoEditModal에서 저장
-  const handleSaveTodoFromList = async (updatedTodo: TodoFormData) => {
-    if (!todoFromList) return;
-
-    // 로컬 state 업데이트
-    const updatedTodoData = { ...todoFromList, ...updatedTodo };
-    const updatedTodos = todos.map((t) =>
-      t.id === todoFromList.id ? updatedTodoData : t
-    );
-    setTodos(updatedTodos);
-
-    // DB 업데이트 추가
-    if (userId) {
-      try {
-        // 🔧 Fix: TodoStore에 할일이 없을 수 있으므로, 먼저 전역 상태에 추가
-        useTodoStore.setState((state) => {
-          const existingIndex = state.todos.findIndex((t) => t.id === todoFromList.id);
-          if (existingIndex === -1) {
-            // 할일이 TodoStore에 없으면 추가
-            return {
-              ...state,
-              todos: [
-                ...state.todos,
-                {
-                  ...todoFromList,
-                  userId: userId,
-                  scheduleType: todoFromList.scheduledDate ? 'timed' : 'anytime',
-                  startTime: updatedTodo.scheduledDate?.toISOString(),
-                  recurrencePattern: 'none',
-                } as any,
-              ],
-            };
-          }
-          return state;
-        });
-
-        await updateTodo(todoFromList.id, {
-          title: updatedTodo.title,
-          icon: updatedTodo.icon,
-          color: updatedTodo.color,
-          clarification: updatedTodo.clarification as any,
-          next_action_context_ids: updatedTodo.nextActionContextIds || null,
-          // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
-          // start_time을 scheduledDate + startTime 조합으로 설정
-          start_time: updatedTodo.scheduledDate
-            ? (updatedTodo.includeTime && updatedTodo.startTime
-                ? new Date(updatedTodo.scheduledDate.toDateString() + ' ' + updatedTodo.startTime).toISOString()
-                : updatedTodo.scheduledDate.toISOString())
-            : undefined,
-          end_time: updatedTodo.includeEndDate && updatedTodo.endDate
-            ? (updatedTodo.includeTime && updatedTodo.endTime
-                ? new Date(updatedTodo.endDate.toDateString() + ' ' + updatedTodo.endTime).toISOString()
-                : updatedTodo.endDate.toISOString())
-            : undefined,
-          is_today_highlight: updatedTodo.isHighlight,
-          completed: updatedTodo.completed,
-          project_ids: updatedTodo.projectIds,
-          note_ids: updatedTodo.noteIds,
-        });
-      } catch (error) {
-        console.error('할일 저장 실패:', error);
-        alert('할일 저장에 실패했습니다.');
-      }
-    }
-
-    handleCloseTodoEditFromList();
-  };
-
   if (!open || !editingProject) return null;
 
   // Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor
@@ -1455,30 +1321,6 @@ export default function ProjectEditDialog({
         onNoteImmediateSave={handleNoteImmediateSave}
       />
 
-      {/* 할일 목록 모달 */}
-      <TodoListModal
-        open={showTodoListModal}
-        date={selectedDateForList}
-        todos={selectedDateTodos}
-        project={editingProject}
-        onClose={handleCloseTodoListModal}
-        onTodoClick={handleTodoClickFromList}
-        onToggleComplete={handleToggleTodo}
-      />
-
-      {/* TodoListModal에서 클릭한 할일 편집 모달 */}
-      <TodoEditModal
-        open={showTodoEditFromList}
-        todo={todoFromList}
-        onClose={handleCloseTodoEditFromList}
-        onSave={handleSaveTodoFromList}
-        onDelete={todoFromList ? () => handleRemoveTodo(todoFromList.id) : undefined}
-        onChange={(updated) => setTodoFromList(todoFromList ? { ...todoFromList, ...updated } : null)}
-        todoId={todoFromList?.id}
-        userId={appUser?.id}
-        onProjectImmediateSave={handleProjectImmediateSaveFromList}
-        onNoteImmediateSave={handleNoteImmediateSaveFromList}
-      />
     </>
   );
 }

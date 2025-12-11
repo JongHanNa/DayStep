@@ -74,7 +74,7 @@ export default function LandingNav() {
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      router.push('/second-brain/areas');
+      router.push('/');
     } else {
       router.push('/login');
     }
@@ -128,7 +128,7 @@ export default function LandingNav() {
                     </button>
                   </>
                 ) : (
-                  <Link href="/second-brain/areas" className="btn btn-primary btn-sm rounded-full">
+                  <Link href="/" className="btn btn-primary btn-sm rounded-full">
                     무료로 시작하기
                   </Link>
                 )}
@@ -190,7 +190,7 @@ export default function LandingNav() {
                   </>
                 ) : (
                   <Link
-                    href="/second-brain/areas"
+                    href="/"
                     className="block w-full btn btn-primary"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
