@@ -299,11 +299,11 @@ export class CherishedPeopleService {
       };
 
       const todoResult = await createWithJWT('todos', todoData);
-      if (!todoResult || todoResult.length === 0) {
+      if (!todoResult || !todoResult.id) {
         throw new Error('할일 생성 실패');
       }
 
-      const todoId = todoResult[0].id;
+      const todoId = todoResult.id;
 
       // 2. 관심 기록 생성 (todo_id 연결)
       const interactionData = {
@@ -319,7 +319,7 @@ export class CherishedPeopleService {
       };
 
       const interactionResult = await createWithJWT('care_interactions', interactionData);
-      if (!interactionResult || interactionResult.length === 0) {
+      if (!interactionResult || !interactionResult.id) {
         throw new Error('관심 기록 생성 실패');
       }
 
@@ -328,7 +328,7 @@ export class CherishedPeopleService {
 
       console.log('💝 관심 기록 + 할일 연결 저장:', todoTitle);
       return {
-        interaction: interactionResult[0],
+        interaction: interactionResult,
         todoId,
       };
     } catch (error) {
