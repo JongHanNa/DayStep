@@ -130,6 +130,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [isRestoringSession, setIsRestoringSession] = useState(true); // 세션 복원 확인 전까지 추천 로드 지연
   const [editingCompletedTodoId, setEditingCompletedTodoId] = useState<string | null>(null); // 완료 할일 편집 중인 ID
   const [editingCompletedTodoTitle, setEditingCompletedTodoTitle] = useState(''); // 완료 할일 편집 중인 제목
+  const [isCreatingTodo, setIsCreatingTodo] = useState(false); // 할일 생성 중 플래그 (race condition 방지)
 
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
@@ -496,6 +497,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   // 포모도로 완료 후 → 기록 화면으로 (또는 바로 완료)
   const handleAdhocTimerComplete = async () => {
+    // 할일 생성 중이면 잠시 대기 후 재시도 (race condition 방지)
+    if (isCreatingTodo) {
+      console.log('⏳ 할일 생성 중 - 완료 처리 대기');
+      setTimeout(() => handleAdhocTimerComplete(), 100);
+      return;
+    }
+
     const { sessionId, linkedTodoId } = executionMode.adhocMode;
 
     // DB 세션 완료 처리
@@ -528,20 +536,28 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       }
     }
 
+    // 기록 화면으로 전환 전, 입력 필드 초기화 (중복 생성 방지)
+    setInlineTodoInput('');
     // 연결된 할일이 없으면 기록 화면으로
     setViewState('adhoc-capture');
   };
 
   // 타이머 진행 중 미완료 할일 생성
   const handleCreateInlineTodo = async () => {
-    if (!inlineTodoInput.trim() || !userId) return;
+    // 이미 생성 중이면 중복 호출 방지
+    if (!inlineTodoInput.trim() || !userId || isCreatingTodo) return;
 
     const { sessionId } = executionMode.adhocMode;
+    const titleToSave = inlineTodoInput.trim();
+
+    // 입력 필드 즉시 초기화 (race condition 방지)
+    setInlineTodoInput('');
+    setIsCreatingTodo(true);
 
     try {
       // 미완료 할일 생성
       const newTodo = await createTodo({
-        title: inlineTodoInput.trim(),
+        title: titleToSave,
         completed: false,
         clarification: 'next_action',
         schedule_type: 'anytime',
@@ -551,13 +567,14 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       // 세션에 연결
       if (sessionId && newTodo?.id) {
         await PomodoroSessionService.linkTodo(sessionId, newTodo.id);
-        setLinkedTodo(newTodo.id, inlineTodoInput.trim());
+        setLinkedTodo(newTodo.id, titleToSave);
       }
 
-      setInlineTodoInput('');
       console.log('✅ 미완료 할일 생성:', newTodo?.id);
     } catch (error) {
       console.error('❌ 미완료 할일 생성 실패:', error);
+    } finally {
+      setIsCreatingTodo(false);
     }
   };
 
@@ -594,19 +611,31 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     setIsAnimating(true);
 
-    // 완료된 할일로 저장
-    await createTodo({
-      title: adhocCaptureTitle.trim(),
-      completed: true,
-      clarification: 'next_action',
-      schedule_type: 'anytime',
-      user_id: userId,
-    });
+    // 이미 연결된 할일이 있으면 새로 생성하지 않고 완료 처리만 (최종 방어선)
+    const { linkedTodoId } = executionMode.adhocMode;
+    if (linkedTodoId) {
+      console.log('⚠️ 이미 연결된 할일 존재 - 완료 처리만 수행:', linkedTodoId);
+      try {
+        await updateTodo(linkedTodoId, { completed: true });
+      } catch (error) {
+        console.error('❌ 기존 할일 완료 처리 실패:', error);
+      }
+    } else {
+      // 연결된 할일이 없을 때만 새로 생성
+      await createTodo({
+        title: adhocCaptureTitle.trim(),
+        completed: true,
+        clarification: 'next_action',
+        schedule_type: 'anytime',
+        user_id: userId,
+      });
+    }
 
     // 정리
     setAdhocCaptureTitle('');
     stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
+    setLinkedTodo(null, null); // 연결 해제
     markCompleted('adhoc', 'direct'); // 세션 완료 수 증가
 
     setTimeout(() => {
