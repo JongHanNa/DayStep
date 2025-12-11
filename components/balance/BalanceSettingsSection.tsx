@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Sun, Moon, Scale, Bell, BookOpen, Heart, Users, ChevronRight } from 'lucide-react';
+import { Moon, Scale, Bell, BookOpen, Heart, Users, ChevronRight } from 'lucide-react';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useAuth } from '@/app/context/AuthContext';
@@ -10,7 +10,7 @@ import type { BalanceSettings } from '@/services/balance-journal.service';
 import { CherishedPeopleList } from '@/components/cherished';
 
 // 설정 필드 키 타입
-type SettingsKey = 'morning_prompt_enabled' | 'evening_prompt_enabled' | 'balance_check_enabled' | 'journal_reminder_frequency';
+type SettingsKey = 'evening_prompt_enabled' | 'balance_check_enabled' | 'journal_reminder_frequency';
 
 /**
  * 균형 설정 섹션 컴포넌트
@@ -79,7 +79,6 @@ export default function BalanceSettingsSection() {
   ];
 
   // 기본값 (설정이 아직 로드되지 않은 경우)
-  const morningEnabled = settings?.morning_prompt_enabled ?? true;
   const eveningEnabled = settings?.evening_prompt_enabled ?? true;
   const balanceEnabled = settings?.balance_check_enabled ?? true;
   const frequency = settings?.journal_reminder_frequency ?? 3;
@@ -124,16 +123,6 @@ export default function BalanceSettingsSection() {
 
       {/* 설정 목록 */}
       <div className="space-y-4">
-        {/* 하루 시작 질문 */}
-        <SettingItem
-          icon={<Sun className="w-5 h-5 text-amber-500" />}
-          title="하루 시작 질문"
-          description="실행 모드 진입 시 오늘의 관계 목표를 물어봐요"
-          checked={morningEnabled}
-          onChange={(value) => handleToggle('morning_prompt_enabled', value)}
-          disabled={isLoading}
-        />
-
         {/* 하루 마무리 리뷰 */}
         <SettingItem
           icon={<Moon className="w-5 h-5 text-indigo-500" />}

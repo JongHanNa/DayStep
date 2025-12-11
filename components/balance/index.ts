@@ -1,7 +1,6 @@
 // Balance 컴포넌트 exports
 export { default as BalanceJournalSetup } from './BalanceJournalSetup';
 export { default as JournalReminderModal } from './JournalReminderModal';
-export { default as MorningIntentionPrompt } from './MorningIntentionPrompt';
 export { default as EveningReviewPrompt } from './EveningReviewPrompt';
 
 // 관계 태그 및 균형 체크 컴포넌트

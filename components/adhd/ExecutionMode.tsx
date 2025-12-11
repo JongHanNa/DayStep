@@ -33,7 +33,6 @@ import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import {
-  MorningIntentionPrompt,
   EveningReviewPrompt,
   RelationshipTagBadge,
   BalanceCheckBanner,
@@ -115,9 +114,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const {
     loadSettings: loadBalanceSettings,
     loadTodayReflections,
-    checkAndShowMorningPrompt,
     checkAndShowEveningPrompt,
-    showMorningPrompt,
     showEveningPrompt,
   } = useBalanceStore();
 
@@ -242,13 +239,10 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       // 설정 및 오늘 리플렉션 로드
       await loadBalanceSettings(userId);
       await loadTodayReflections(userId);
-
-      // 아침 프롬프트 조건 확인 (오늘 아직 설정 안 했으면 표시)
-      await checkAndShowMorningPrompt(userId);
     };
 
     initBalance();
-  }, [userId, loadBalanceSettings, loadTodayReflections, checkAndShowMorningPrompt]);
+  }, [userId, loadBalanceSettings, loadTodayReflections]);
 
   // 초기 추천 로드 (skip 로딩 완료 + 세션 복원 확인 완료 후)
   useEffect(() => {
@@ -935,14 +929,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             <button onClick={() => setShowStopConfirmModal(false)}>close</button>
           </form>
         </dialog>
-      )}
-
-      {/* 아침 의도 설정 프롬프트 */}
-      {userId && (
-        <MorningIntentionPrompt
-          userId={userId}
-          isOpen={showMorningPrompt}
-        />
       )}
 
       {/* 저녁 리뷰 프롬프트 */}

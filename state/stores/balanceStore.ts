@@ -32,7 +32,6 @@ interface BalanceState {
   // Daily Reflection 상태
   todayMorningIntention: DailyReflection | null;
   todayEveningReview: DailyReflection | null;
-  showMorningPrompt: boolean;
   showEveningPrompt: boolean;
 
   // 현재 사용자 ID
@@ -85,9 +84,7 @@ interface BalanceState {
     actualAction: string | null,
     connectionRating: number
   ) => Promise<DailyReflection | null>;
-  checkAndShowMorningPrompt: (userId: string) => Promise<boolean>;
   checkAndShowEveningPrompt: (userId: string) => Promise<boolean>;
-  hideMorningPrompt: () => void;
   hideEveningPrompt: () => void;
 
   // === 유틸리티 ===
@@ -109,7 +106,6 @@ const DEFAULT_STATE = {
   showReminderModal: false,
   todayMorningIntention: null,
   todayEveningReview: null,
-  showMorningPrompt: false,
   showEveningPrompt: false,
   currentUserId: null,
 };
@@ -322,7 +318,6 @@ export const useBalanceStore = create<BalanceState>()(
             if (intention) {
               set({
                 todayMorningIntention: intention,
-                showMorningPrompt: false,
               });
               console.log('🌅 아침 의도 저장 완료');
             }
@@ -357,30 +352,6 @@ export const useBalanceStore = create<BalanceState>()(
           }
         },
 
-        checkAndShowMorningPrompt: async (userId: string) => {
-          try {
-            const settings = get().settings;
-
-            // 설정 비활성화 확인
-            if (settings && !settings.morning_prompt_enabled) {
-              return false;
-            }
-
-            // 이미 오늘 설정했는지 확인
-            const hasIntention = await DailyReflectionService.hasTodayMorningIntention(userId);
-
-            if (!hasIntention) {
-              set({ showMorningPrompt: true });
-              return true;
-            }
-
-            return false;
-          } catch (error) {
-            console.error('❌ 아침 프롬프트 확인 오류:', error);
-            return false;
-          }
-        },
-
         checkAndShowEveningPrompt: async (userId: string) => {
           try {
             const settings = get().settings;
@@ -403,10 +374,6 @@ export const useBalanceStore = create<BalanceState>()(
             console.error('❌ 저녁 프롬프트 확인 오류:', error);
             return false;
           }
-        },
-
-        hideMorningPrompt: () => {
-          set({ showMorningPrompt: false });
         },
 
         hideEveningPrompt: () => {
