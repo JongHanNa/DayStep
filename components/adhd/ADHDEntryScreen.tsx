@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle } from 'lucide-react';
+import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Heart } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 
@@ -13,6 +13,7 @@ interface ADHDEntryScreenProps {
   onCare: () => void;
   onRelationshipInsights: () => void;
   onTaskOrganize: () => void;
+  onMindCare: () => void;
 }
 
 /**
@@ -22,7 +23,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize, onMindCare }: ADHDEntryScreenProps) {
   const { awakeningSentence } = useADHDModeStore();
   const [showDescriptions, setShowDescriptions] = useState(false);
 
@@ -72,6 +73,26 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
 
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
+          {/* 나의 마음 챙기기 버튼 */}
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onMindCare}
+              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-rose-400 to-pink-500 text-white border-none hover:from-rose-500 hover:to-pink-600"
+            >
+              <Heart className="w-7 h-7" />
+              <span className="text-xl font-semibold">나의 마음 챙기기</span>
+            </motion.button>
+            {showDescriptions && (
+              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                하루를 성찰하고, 위로받은 순간을 기록하고,
+                <br />
+                감사한 것들을 떠올려보세요.
+              </p>
+            )}
+          </div>
+
           {/* 소중한 사람 챙기기 버튼 */}
           <div>
             <motion.button
@@ -173,7 +194,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
           )}
         </div>
       </motion.div>
-
     </div>
   );
 }

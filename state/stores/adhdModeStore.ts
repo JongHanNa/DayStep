@@ -8,7 +8,7 @@ import { ADHDPatternsService, ADHDUserPatterns } from '@/services/adhd-patterns.
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'mind-care' | null;
 
 export type SkipReason =
   | 'not_now'      // 지금 상황에 안 맞아
@@ -51,6 +51,21 @@ interface CareModeState {
   linkedTodoId: string | null;          // 연결된 할일 ID
 }
 
+// 나의 마음 챙기기 모드 상태
+export type MindCareViewState = 'select-type' | 'timer-running' | 'capture' | 'completed' | 'history';
+export type MindCareEntryType = 'reflection' | 'comfort' | 'gratitude';
+
+interface MindCareModeState {
+  isActive: boolean;
+  startedAt: Date | null;
+  viewState: MindCareViewState;
+  selectedEntryType: MindCareEntryType | null;
+  // 타이머 중 입력한 내용 임시 저장
+  draftContent: string;
+  draftSourceText: string;
+  draftSourceReference: string;
+}
+
 // DB에서 로드한 패턴 (캐시용)
 interface CachedPatterns {
   completedKeywords: Record<string, number>;
@@ -75,6 +90,9 @@ interface ADHDModeState {
 
   // 마음 전해보기 모드 상태
   careMode: CareModeState;
+
+  // 나의 마음 챙기기 모드 상태
+  mindCareMode: MindCareModeState;
 
   // 사용자 설정
   awakeningSentence: string | null;
@@ -120,6 +138,14 @@ interface ADHDModeState {
 
   // === 할일 정리 모드 Actions ===
   enterTaskOrganizeMode: (userId: string) => void;
+
+  // === 나의 마음 챙기기 모드 Actions ===
+  enterMindCareMode: (userId: string) => void;
+  setMindCareViewState: (viewState: MindCareViewState) => void;
+  setMindCareEntryType: (entryType: MindCareEntryType) => void;
+  setMindCareDraft: (draft: { content?: string; sourceText?: string; sourceReference?: string }) => void;
+  resetMindCareDraft: () => void;
+  endMindCareMode: () => void;
 
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
@@ -188,6 +214,16 @@ const DEFAULT_CARE_MODE: CareModeState = {
   linkedTodoId: null,
 };
 
+const DEFAULT_MIND_CARE_MODE: MindCareModeState = {
+  isActive: false,
+  startedAt: null,
+  viewState: 'select-type',
+  selectedEntryType: null,
+  draftContent: '',
+  draftSourceText: '',
+  draftSourceReference: '',
+};
+
 // ============================================
 // Store 생성
 // ============================================
@@ -201,6 +237,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
+        mindCareMode: DEFAULT_MIND_CARE_MODE,
         awakeningSentence: null,
         cachedPatterns: null,
         isLoadingPatterns: false,
@@ -277,6 +314,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             executionMode: DEFAULT_EXECUTION_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
             careMode: DEFAULT_CARE_MODE,
+            mindCareMode: DEFAULT_MIND_CARE_MODE,
             currentUserId: null,
           });
         },
@@ -498,6 +536,74 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set({
             currentMode: 'task-organize',
             currentUserId: userId,
+          });
+        },
+
+        // === 나의 마음 챙기기 모드 Actions ===
+        enterMindCareMode: (userId: string) => {
+          console.log('💝 ADHD: 나의 마음 챙기기 모드 진입');
+          set({
+            currentMode: 'mind-care',
+            currentUserId: userId,
+            mindCareMode: {
+              isActive: true,
+              startedAt: new Date(),
+              viewState: 'select-type',
+              selectedEntryType: null,
+              draftContent: '',
+              draftSourceText: '',
+              draftSourceReference: '',
+            }
+          });
+        },
+
+        setMindCareViewState: (viewState: MindCareViewState) => {
+          console.log('💝 ADHD: 마음 챙기기 뷰 상태 변경', viewState);
+          set((state) => ({
+            mindCareMode: {
+              ...state.mindCareMode,
+              viewState,
+            }
+          }));
+        },
+
+        setMindCareEntryType: (entryType: MindCareEntryType) => {
+          console.log('💝 ADHD: 마음 챙기기 유형 선택', entryType);
+          set((state) => ({
+            mindCareMode: {
+              ...state.mindCareMode,
+              selectedEntryType: entryType,
+            }
+          }));
+        },
+
+        setMindCareDraft: (draft) => {
+          set((state) => ({
+            mindCareMode: {
+              ...state.mindCareMode,
+              ...(draft.content !== undefined && { draftContent: draft.content }),
+              ...(draft.sourceText !== undefined && { draftSourceText: draft.sourceText }),
+              ...(draft.sourceReference !== undefined && { draftSourceReference: draft.sourceReference }),
+            }
+          }));
+        },
+
+        resetMindCareDraft: () => {
+          set((state) => ({
+            mindCareMode: {
+              ...state.mindCareMode,
+              draftContent: '',
+              draftSourceText: '',
+              draftSourceReference: '',
+            }
+          }));
+        },
+
+        endMindCareMode: () => {
+          console.log('💝 ADHD: 나의 마음 챙기기 모드 종료');
+          set({
+            currentMode: 'entry',
+            mindCareMode: DEFAULT_MIND_CARE_MODE,
           });
         },
 

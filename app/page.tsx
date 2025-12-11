@@ -9,6 +9,7 @@ import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import ExecutionMode from '@/components/adhd/ExecutionMode';
 import OrganizeModeWrapper from '@/components/adhd/OrganizeModeWrapper';
 import CareMode from '@/components/adhd/CareMode';
+import MindCareMode from '@/components/adhd/MindCareMode';
 import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights';
 import { TaskOrganizeMode } from '@/components/adhd/TaskOrganize/TaskOrganizeMode';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -31,7 +32,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, enterEntryMode, enterExecuteMode, enterOrganizeMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, exitMode } = useADHDModeStore();
+  const { currentMode, enterEntryMode, enterExecuteMode, enterOrganizeMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterMindCareMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -111,6 +112,12 @@ export default function HomePage() {
     }
   };
 
+  const handleMindCare = () => {
+    if (user?.id) {
+      enterMindCareMode(user.id);
+    }
+  };
+
   const handleExitExecutionMode = () => {
     enterEntryMode(); // 진입 화면으로 돌아가기
   };
@@ -140,6 +147,11 @@ export default function HomePage() {
     return <TaskOrganizeMode onExit={handleExitExecutionMode} />;
   }
 
+  // 나의 마음 챙기기 모드
+  if (currentMode === 'mind-care') {
+    return <MindCareMode onExit={handleExitExecutionMode} />;
+  }
+
   // 진입 화면 (기본)
   return (
     <ADHDEntryScreen
@@ -149,6 +161,7 @@ export default function HomePage() {
       onCare={handleCare}
       onRelationshipInsights={handleRelationshipInsights}
       onTaskOrganize={handleTaskOrganize}
+      onMindCare={handleMindCare}
     />
   );
 }
