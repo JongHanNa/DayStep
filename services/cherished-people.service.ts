@@ -489,6 +489,201 @@ export class CherishedPeopleService {
   }
 
   // ============================================
+  // 관계 인사이트 (히스토리, 감사, 소식, 통계, 기분)
+  // ============================================
+
+  /**
+   * 전체 관심 기록 조회 (사람 정보 포함)
+   */
+  static async getAllInteractionsWithPerson(
+    userId: string,
+    personId?: string,
+    limit: number = 50
+  ): Promise<(CareInteraction & { person?: CherishedPerson })[]> {
+    try {
+      const filters: any[] = [
+        { column: 'user_id', operator: 'eq', value: userId },
+      ];
+      if (personId) {
+        filters.push({ column: 'person_id', operator: 'eq', value: personId });
+      }
+
+      const interactions = await queryRLSTableWithJWT('care_interactions', filters, {
+        order: 'interaction_date.desc',
+        limit,
+      });
+
+      // 사람 정보 조인
+      const people = await this.getPeople(userId);
+      const peopleMap = new Map(people.map(p => [p.id, p]));
+
+      return (interactions || []).map((interaction: CareInteraction) => ({
+        ...interaction,
+        person: peopleMap.get(interaction.person_id),
+      }));
+    } catch (error) {
+      console.error('❌ 전체 관심 기록 조회 오류:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 감사 노트만 조회
+   */
+  static async getGratitudeNotes(
+    userId: string,
+    personId?: string
+  ): Promise<{ interaction: CareInteraction; person?: CherishedPerson }[]> {
+    try {
+      const allInteractions = await this.getAllInteractionsWithPerson(userId, personId, 100);
+      return allInteractions
+        .filter(i => i.gratitude_note && i.gratitude_note.trim() !== '')
+        .map(i => ({ interaction: i, person: i.person }));
+    } catch (error) {
+      console.error('❌ 감사 노트 조회 오류:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 소식 메모만 조회
+   */
+  static async getRecentNewsNotes(
+    userId: string,
+    personId?: string
+  ): Promise<{ interaction: CareInteraction; person?: CherishedPerson }[]> {
+    try {
+      const allInteractions = await this.getAllInteractionsWithPerson(userId, personId, 100);
+      return allInteractions
+        .filter(i => i.recent_news && i.recent_news.trim() !== '')
+        .map(i => ({ interaction: i, person: i.person }));
+    } catch (error) {
+      console.error('❌ 소식 메모 조회 오류:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 기분 패턴 분석 (사람별 평균 기분)
+   */
+  static async getMoodPatterns(
+    userId: string
+  ): Promise<{ person: CherishedPerson; avgMood: number; totalCount: number; moodHistory: number[] }[]> {
+    try {
+      const allInteractions = await this.getAllInteractionsWithPerson(userId, undefined, 200);
+      const people = await this.getPeople(userId);
+
+      // 사람별 기분 데이터 집계
+      const moodByPerson = new Map<string, number[]>();
+      allInteractions.forEach(i => {
+        if (i.feeling_rating) {
+          const moods = moodByPerson.get(i.person_id) || [];
+          moods.push(i.feeling_rating);
+          moodByPerson.set(i.person_id, moods);
+        }
+      });
+
+      // 결과 생성
+      return people
+        .filter(p => moodByPerson.has(p.id))
+        .map(person => {
+          const moods = moodByPerson.get(person.id) || [];
+          const avgMood = moods.reduce((a, b) => a + b, 0) / moods.length;
+          return {
+            person,
+            avgMood: Math.round(avgMood * 10) / 10,
+            totalCount: moods.length,
+            moodHistory: moods.slice(0, 10), // 최근 10개
+          };
+        })
+        .sort((a, b) => b.avgMood - a.avgMood);
+    } catch (error) {
+      console.error('❌ 기분 패턴 조회 오류:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 상세 통계 (연락 방식별, 월별, TOP 연락 등)
+   */
+  static async getDetailedStats(userId: string): Promise<{
+    totalInteractions: number;
+    thisMonthCount: number;
+    interactionTypeStats: Record<string, number>;
+    topContacts: { person: CherishedPerson; count: number }[];
+    monthlyTrend: { month: string; count: number }[];
+  }> {
+    try {
+      const allInteractions = await this.getAllInteractionsWithPerson(userId, undefined, 500);
+      const people = await this.getPeople(userId);
+      const peopleMap = new Map(people.map(p => [p.id, p]));
+
+      // 이번 달 시작
+      const now = new Date();
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // 연락 방식별 집계
+      const typeStats: Record<string, number> = {};
+      const personCountMap = new Map<string, number>();
+      const monthlyMap = new Map<string, number>();
+
+      let thisMonthCount = 0;
+
+      allInteractions.forEach(i => {
+        // 연락 방식
+        typeStats[i.interaction_type] = (typeStats[i.interaction_type] || 0) + 1;
+
+        // 사람별 카운트
+        personCountMap.set(i.person_id, (personCountMap.get(i.person_id) || 0) + 1);
+
+        // 이번 달 카운트
+        const interactionDate = new Date(i.interaction_date);
+        if (interactionDate >= thisMonthStart) {
+          thisMonthCount++;
+        }
+
+        // 월별 트렌드
+        const monthKey = `${interactionDate.getFullYear()}-${String(interactionDate.getMonth() + 1).padStart(2, '0')}`;
+        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + 1);
+      });
+
+      // TOP 연락 (상위 5명)
+      const topContacts = Array.from(personCountMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([personId, count]) => ({
+          person: peopleMap.get(personId)!,
+          count,
+        }))
+        .filter(item => item.person);
+
+      // 월별 트렌드 (최근 6개월)
+      const monthlyTrend = Array.from(monthlyMap.entries())
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .slice(0, 6)
+        .reverse()
+        .map(([month, count]) => ({ month, count }));
+
+      return {
+        totalInteractions: allInteractions.length,
+        thisMonthCount,
+        interactionTypeStats: typeStats,
+        topContacts,
+        monthlyTrend,
+      };
+    } catch (error) {
+      console.error('❌ 상세 통계 조회 오류:', error);
+      return {
+        totalInteractions: 0,
+        thisMonthCount: 0,
+        interactionTypeStats: {},
+        topContacts: [],
+        monthlyTrend: [],
+      };
+    }
+  }
+
+  // ============================================
   // 유틸리티
   // ============================================
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, Heart, MessageCircle } from 'lucide-react';
+import { Target, ListTodo, Heart, MessageCircle, BookHeart } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import { JournalReminderModal } from '@/components/balance';
@@ -13,6 +13,7 @@ interface ADHDEntryScreenProps {
   onExecute: () => void;
   onOrganize: () => void;
   onCare: () => void;
+  onRelationshipInsights: () => void;
 }
 
 /**
@@ -22,7 +23,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights }: ADHDEntryScreenProps) {
   const { awakeningSentence } = useADHDModeStore();
   const {
     checkAndShowReminder,
@@ -118,6 +119,17 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare 
           >
             <ListTodo className="w-7 h-7" />
             <span className="text-xl font-semibold">정리하기</span>
+          </motion.button>
+
+          {/* 관계 기록 보기 버튼 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onRelationshipInsights}
+            className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
+          >
+            <BookHeart className="w-7 h-7" />
+            <span className="text-xl font-semibold">관계 기록 보기</span>
           </motion.button>
         </div>
 
