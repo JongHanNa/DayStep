@@ -33,7 +33,6 @@ import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import {
-  EveningReviewPrompt,
   RelationshipTagBadge,
   BalanceCheckBanner,
 } from '@/components/balance';
@@ -114,8 +113,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const {
     loadSettings: loadBalanceSettings,
     loadTodayReflections,
-    checkAndShowEveningPrompt,
-    showEveningPrompt,
   } = useBalanceStore();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
@@ -786,8 +783,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               key="completed-all"
               completedCount={completedInSession}
               onExit={onExit}
-              userId={userId}
-              onShowEveningPrompt={() => checkAndShowEveningPrompt(userId)}
               completedTodos={todos.filter(t => t.completed).map(t => ({
                 title: t.title,
                 isRelationshipTask: t.isRelationshipTask
@@ -960,13 +955,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         </dialog>
       )}
 
-      {/* 저녁 리뷰 프롬프트 */}
-      {userId && (
-        <EveningReviewPrompt
-          userId={userId}
-          isOpen={showEveningPrompt}
-        />
-      )}
     </div>
   );
 }
@@ -1187,27 +1175,10 @@ interface CompletedTodoForBalance {
 interface CompletedAllViewProps {
   completedCount: number;
   onExit: () => void;
-  userId: string;
-  onShowEveningPrompt: () => void;
   completedTodos: CompletedTodoForBalance[];
 }
 
-function CompletedAllView({ completedCount, onExit, userId, onShowEveningPrompt, completedTodos }: CompletedAllViewProps) {
-  const { todayEveningReview } = useBalanceStore();
-  const hasReviewedToday = !!todayEveningReview;
-
-  // 저녁 프롬프트 표시
-  useEffect(() => {
-    if (hasReviewedToday) return;
-
-    // 약간의 딜레이 후 저녁 프롬프트 표시 (축하 메시지 먼저 보여주고)
-    const timer = setTimeout(() => {
-      onShowEveningPrompt();
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [hasReviewedToday, onShowEveningPrompt]);
-
+function CompletedAllView({ completedCount, onExit, completedTodos }: CompletedAllViewProps) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
