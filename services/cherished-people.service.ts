@@ -288,10 +288,7 @@ export class CherishedPeopleService {
           { column: 'id', operator: 'eq', value: interactionId },
           { column: 'user_id', operator: 'eq', value: userId },
         ],
-        {
-          ...updates,
-          updated_at: new Date().toISOString(),
-        }
+        updates
       );
       console.log('✏️ 관심 기록 수정:', interactionId);
       return true;
