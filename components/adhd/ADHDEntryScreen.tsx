@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, Heart, MessageCircle, BookHeart } from 'lucide-react';
+import { Target, ListTodo, Heart, MessageCircle, BookHeart, HelpCircle } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import { JournalReminderModal } from '@/components/balance';
@@ -34,6 +34,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
   } = useBalanceStore();
 
   const [showJournalSetup, setShowJournalSetup] = useState(false);
+  const [showDescriptions, setShowDescriptions] = useState(false);
 
   // 앱 시작 시 저널 데이터 로드 및 상기 체크
   useEffect(() => {
@@ -86,51 +87,88 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
 
         {!awakeningSentence && <div className="mb-8" />}
 
+        {/* 설명 보기 토글 버튼 */}
+        <button
+          onClick={() => setShowDescriptions(!showDescriptions)}
+          className="flex items-center justify-center gap-1 text-xs text-base-content/50 hover:text-base-content/70 mb-4 mx-auto"
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+          <span>{showDescriptions ? '설명 숨기기' : '각 버튼 설명 보기'}</span>
+        </button>
+
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
           {/* 마음 전해보기 버튼 */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onCare}
-            className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white border-none hover:from-pink-600 hover:to-purple-600"
-          >
-            <MessageCircle className="w-7 h-7" />
-            <span className="text-xl font-semibold">마음 전해보기</span>
-          </motion.button>
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onCare}
+              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white border-none hover:from-pink-600 hover:to-purple-600"
+            >
+              <MessageCircle className="w-7 h-7" />
+              <span className="text-xl font-semibold">마음 전해보기</span>
+            </motion.button>
+            {showDescriptions && (
+              <p className="text-xs text-base-content/50 mt-1 text-center">
+                소중한 사람에게 안부 전하기
+              </p>
+            )}
+          </div>
 
           {/* 실행하기 버튼 */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onExecute}
-            className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
-          >
-            <Target className="w-7 h-7" />
-            <span className="text-xl font-semibold">실행하기</span>
-          </motion.button>
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onExecute}
+              className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
+            >
+              <Target className="w-7 h-7" />
+              <span className="text-xl font-semibold">실행하기</span>
+            </motion.button>
+            {showDescriptions && (
+              <p className="text-xs text-base-content/50 mt-1 text-center">
+                지금 할 수 있는 가장 작은 것 하나
+              </p>
+            )}
+          </div>
 
           {/* 정리하기 버튼 */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onOrganize}
-            className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
-          >
-            <ListTodo className="w-7 h-7" />
-            <span className="text-xl font-semibold">정리하기</span>
-          </motion.button>
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onOrganize}
+              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
+            >
+              <ListTodo className="w-7 h-7" />
+              <span className="text-xl font-semibold">정리하기</span>
+            </motion.button>
+            {showDescriptions && (
+              <p className="text-xs text-base-content/50 mt-1 text-center">
+                할 일 정리하고 우선순위 잡기
+              </p>
+            )}
+          </div>
 
           {/* 관계 기록 보기 버튼 */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onRelationshipInsights}
-            className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
-          >
-            <BookHeart className="w-7 h-7" />
-            <span className="text-xl font-semibold">관계 기록 보기</span>
-          </motion.button>
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onRelationshipInsights}
+              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
+            >
+              <BookHeart className="w-7 h-7" />
+              <span className="text-xl font-semibold">관계 기록 보기</span>
+            </motion.button>
+            {showDescriptions && (
+              <p className="text-xs text-base-content/50 mt-1 text-center">
+                연락 기록과 감사 일기 모아보기
+              </p>
+            )}
+          </div>
         </div>
 
         {/* 하단 힌트 */}
