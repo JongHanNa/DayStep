@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, Sun, Moon } from 'lucide-react';
+import { Menu, Sun, Moon, Clock, X } from 'lucide-react';
 import { useSidebarStore } from '@/state/stores/sidebarStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -9,15 +10,65 @@ import { getPageTitleFromPath } from '@/config/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/app/context/AuthContext';
 
+/** 기본 정리 모드 시간 (초) - 5분 */
+const ORGANIZE_DURATION_SECONDS = 5 * 60;
+
 export default function AppHeader() {
   const pathname = usePathname();
   const { open } = useSidebarStore();
   const currentMode = useADHDModeStore(state => state.currentMode);
+  const organizeStartTime = useADHDModeStore(state => state.organizeMode.startTime);
+  const enterEntryMode = useADHDModeStore(state => state.enterEntryMode);
+  const resetOrganizeMode = useADHDModeStore(state => state.resetOrganizeMode);
   const { adhdModeEnabled } = useSettingsStore();
   const { resolvedTheme, setTheme } = useTheme();
   const { isAuthenticated, loading } = useAuth();
 
   const pageTitle = getPageTitleFromPath(pathname);
+
+  // 정리 모드 타이머 상태
+  const [remainingSeconds, setRemainingSeconds] = useState(ORGANIZE_DURATION_SECONDS);
+
+  // 정리 모드 타이머 로직
+  useEffect(() => {
+    if (currentMode !== 'organize' || !organizeStartTime) {
+      setRemainingSeconds(ORGANIZE_DURATION_SECONDS);
+      return;
+    }
+
+    // startTime 기준으로 남은 시간 계산
+    const calculateRemaining = () => {
+      const elapsed = Math.floor((Date.now() - new Date(organizeStartTime).getTime()) / 1000);
+      return Math.max(0, ORGANIZE_DURATION_SECONDS - elapsed);
+    };
+
+    setRemainingSeconds(calculateRemaining());
+
+    const interval = setInterval(() => {
+      const remaining = calculateRemaining();
+      setRemainingSeconds(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        // 타이머 종료 시 진입 화면으로 (인터럽트 모달은 OrganizeModeWrapper에서 처리)
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentMode, organizeStartTime]);
+
+  // 시간 포맷팅 (MM:SS)
+  const formatTime = useCallback((seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
+  // 정리 모드 종료
+  const handleExitOrganize = useCallback(() => {
+    resetOrganizeMode();
+    enterEntryMode();
+  }, [resetOrganizeMode, enterEntryMode]);
 
   // pathname의 trailing slash 제거 (일관된 비교를 위해)
   const normalizedPathname = pathname.endsWith('/') && pathname !== '/'
@@ -75,23 +126,43 @@ export default function AppHeader() {
             <Menu className="w-6 h-6" />
           </button>
 
-          {/* 중앙: 페이지 제목 */}
-          <h1 className="text-lg font-semibold text-base-content">
-            {pageTitle}
-          </h1>
+          {/* 중앙: 페이지 제목 또는 정리 모드 타이머 */}
+          {currentMode === 'organize' ? (
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-base-content/60" />
+              <span className="text-sm text-base-content/70">정리 중...</span>
+              <span className="text-lg font-bold text-base-content tabular-nums">
+                {formatTime(remainingSeconds)}
+              </span>
+            </div>
+          ) : (
+            <h1 className="text-lg font-semibold text-base-content">
+              {pageTitle}
+            </h1>
+          )}
 
-          {/* 오른쪽: 라이트/다크 모드 토글 */}
-          <button
-            onClick={toggleTheme}
-            className="btn btn-ghost btn-circle"
-            aria-label={resolvedTheme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
-          >
-            {resolvedTheme === 'light' ? (
-              <Moon className="w-5 h-5" />
-            ) : (
-              <Sun className="w-5 h-5" />
-            )}
-          </button>
+          {/* 오른쪽: 정리 모드 종료 버튼 또는 테마 토글 */}
+          {currentMode === 'organize' ? (
+            <button
+              onClick={handleExitOrganize}
+              className="btn btn-ghost btn-circle"
+              aria-label="정리 모드 종료"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={toggleTheme}
+              className="btn btn-ghost btn-circle"
+              aria-label={resolvedTheme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
+            >
+              {resolvedTheme === 'light' ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
+            </button>
+          )}
         </div>
       </header>
 
