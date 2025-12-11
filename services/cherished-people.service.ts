@@ -68,7 +68,7 @@ export class CherishedPeopleService {
     try {
       const data = await createWithJWT('cherished_people', personData);
       console.log('➕ 소중한 사람 추가:', input.name);
-      return data[0];
+      return data;
     } catch (error) {
       console.error('❌ 소중한 사람 추가 오류:', error);
       return null;
