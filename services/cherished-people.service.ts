@@ -274,6 +274,34 @@ export class CherishedPeopleService {
   }
 
   /**
+   * 관심 기록 수정
+   */
+  static async updateInteraction(
+    interactionId: string,
+    userId: string,
+    updates: Partial<CareInteractionInput>
+  ): Promise<boolean> {
+    try {
+      await updateWithJWT(
+        'care_interactions',
+        [
+          { column: 'id', operator: 'eq', value: interactionId },
+          { column: 'user_id', operator: 'eq', value: userId },
+        ],
+        {
+          ...updates,
+          updated_at: new Date().toISOString(),
+        }
+      );
+      console.log('✏️ 관심 기록 수정:', interactionId);
+      return true;
+    } catch (error) {
+      console.error('❌ 관심 기록 수정 오류:', error);
+      return false;
+    }
+  }
+
+  /**
    * 관심 기록 + 할일 연결 저장 (CareMode에서 사용)
    *
    * 1. todos 테이블에 완료된 할일 생성

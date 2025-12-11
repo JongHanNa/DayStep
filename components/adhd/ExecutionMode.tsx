@@ -183,6 +183,27 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     });
   }, [todos]);
 
+  // 할일이 없을 때 바로 포모도로 시작 (getNextRecommendation에서 호출)
+  const startAdhocForEmptyState = useCallback(async () => {
+    if (!userId) return;
+
+    setRestoredStartTime(null);
+    setRestoredDuration(null);
+
+    startAdhocMode();
+    const duration = pomodoroSettings.pomodoroDuration * 60 * 1000;
+
+    try {
+      const sessionId = await PomodoroSessionService.createSession(userId, duration);
+      setSessionId(sessionId);
+    } catch (error) {
+      console.error('❌ 세션 생성 실패:', error);
+    }
+
+    startPomodoroTimer(duration, 'POMODORO');
+    setViewState('adhoc-timer');
+  }, [userId, pomodoroSettings.pomodoroDuration, startAdhocMode, setSessionId, startPomodoroTimer]);
+
   // 다음 추천 할일 가져오기
   const getNextRecommendation = useCallback(() => {
     // 이미 타이머 실행 중이면 추천 건너뛰기 (세션 복원 후 덮어쓰기 방지)
@@ -203,9 +224,14 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     );
 
     if (candidates.length === 0) {
-      // 세션 중 완료한 할일이 있으면 축하 화면, 없으면 빈 상태 안내
       const { completedInSession } = useADHDModeStore.getState().executionMode;
-      setViewState(completedInSession > 0 ? 'completed-all' : 'empty-state');
+      if (completedInSession > 0) {
+        // 세션 중 완료한 할일이 있으면 축하 화면
+        setViewState('completed-all');
+      } else {
+        // 할일 없으면 바로 포모도로 타이머 시작
+        startAdhocForEmptyState();
+      }
       setCurrentRecommendation(null);
       return;
     }
@@ -220,7 +246,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     setCurrentRecommendation(scored[0].todo);
     setViewState('recommendation');
-  }, [getTodayTodos, calculateRecommendationScore, setCurrentRecommendation]);
+  }, [getTodayTodos, calculateRecommendationScore, setCurrentRecommendation, startAdhocForEmptyState]);
 
   // 다음행동 상황 데이터 로드
   useEffect(() => {

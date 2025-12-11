@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
-import type { CareInteraction, CherishedPerson } from '@/types/cherished-people';
-import { Clock, User } from 'lucide-react';
+import type { CareInteraction, CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
+import { Clock, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
 
 interface TimelineViewProps {
   userId: string;
@@ -16,9 +16,31 @@ export function TimelineView({ userId }: TimelineViewProps) {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 편집/삭제 상태
+  const [editingInteraction, setEditingInteraction] = useState<(CareInteraction & { person?: CherishedPerson }) | null>(null);
+  const [deletingInteraction, setDeletingInteraction] = useState<CareInteraction | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 편집 폼 상태
+  const [editForm, setEditForm] = useState<Partial<CareInteractionInput>>({});
+
+  // 모달 refs
+  const editDialogRef = useRef<HTMLDialogElement>(null);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+
   useEffect(() => {
     loadData();
   }, [userId, selectedPersonId]);
+
+  // 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!openMenuId) return;
+
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -46,6 +68,72 @@ export function TimelineView({ userId }: TimelineViewProps) {
     if (diffDays < 7) return `${diffDays}일 전`;
 
     return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  };
+
+  // 편집 시작
+  const handleEdit = (interaction: CareInteraction & { person?: CherishedPerson }) => {
+    setEditingInteraction(interaction);
+    setEditForm({
+      interaction_type: interaction.interaction_type,
+      gratitude_note: interaction.gratitude_note || '',
+      recent_news: interaction.recent_news || '',
+      description: interaction.description || '',
+      feeling_rating: interaction.feeling_rating || undefined,
+    });
+    setOpenMenuId(null);
+    editDialogRef.current?.showModal();
+  };
+
+  // 편집 저장
+  const handleSaveEdit = async () => {
+    if (!editingInteraction) return;
+
+    setIsSaving(true);
+    try {
+      const success = await CherishedPeopleService.updateInteraction(
+        editingInteraction.id,
+        userId,
+        editForm
+      );
+      if (success) {
+        await loadData();
+        editDialogRef.current?.close();
+        setEditingInteraction(null);
+      }
+    } catch (error) {
+      console.error('편집 저장 오류:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 삭제 시작
+  const handleDeleteClick = (interaction: CareInteraction) => {
+    setDeletingInteraction(interaction);
+    setOpenMenuId(null);
+    deleteDialogRef.current?.showModal();
+  };
+
+  // 삭제 확인
+  const handleConfirmDelete = async () => {
+    if (!deletingInteraction) return;
+
+    setIsSaving(true);
+    try {
+      const success = await CherishedPeopleService.deleteInteraction(
+        deletingInteraction.id,
+        userId
+      );
+      if (success) {
+        await loadData();
+        deleteDialogRef.current?.close();
+        setDeletingInteraction(null);
+      }
+    } catch (error) {
+      console.error('삭제 오류:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -85,7 +173,9 @@ export function TimelineView({ userId }: TimelineViewProps) {
         <div className="space-y-3">
           {interactions.map((interaction) => {
             const typeInfo = INTERACTION_TYPE_LABELS[interaction.interaction_type];
-            const feelingInfo = interaction.feeling_rating ? FEELING_RATINGS[interaction.feeling_rating] : null;
+            const feelingInfo = interaction.feeling_rating
+              ? FEELING_RATINGS.find(f => f.value === interaction.feeling_rating)
+              : null;
 
             return (
               <div
@@ -105,13 +195,43 @@ export function TimelineView({ userId }: TimelineViewProps) {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     {feelingInfo && (
                       <span title={feelingInfo.label}>{feelingInfo.emoji}</span>
                     )}
                     <span className="text-xs text-base-content/60">
                       {formatDate(interaction.interaction_date)}
                     </span>
+                    {/* 더보기 메뉴 */}
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === interaction.id ? null : interaction.id);
+                        }}
+                        className="btn btn-ghost btn-circle btn-sm"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      {openMenuId === interaction.id && (
+                        <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[100px]">
+                          <button
+                            onClick={() => handleEdit(interaction)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            편집
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(interaction)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left text-error"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            삭제
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -139,6 +259,146 @@ export function TimelineView({ userId }: TimelineViewProps) {
           })}
         </div>
       )}
+
+      {/* 편집 모달 */}
+      <dialog ref={editDialogRef} className="modal z-[110]">
+        <div className="modal-box max-w-md">
+          {/* 헤더 */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => editDialogRef.current?.close()}
+              className="btn btn-ghost btn-sm rounded-full"
+            >
+              취소
+            </button>
+            <h3 className="font-bold text-lg">기록 편집</h3>
+            <button
+              onClick={handleSaveEdit}
+              disabled={isSaving}
+              className="btn btn-primary btn-sm rounded-full"
+            >
+              {isSaving ? <span className="loading loading-spinner loading-xs"></span> : '저장'}
+            </button>
+          </div>
+
+          {/* 편집 폼 */}
+          <div className="space-y-4">
+            {/* 상호작용 유형 */}
+            <div>
+              <label className="label">
+                <span className="label-text font-medium">연락 방식</span>
+              </label>
+              <select
+                value={editForm.interaction_type || ''}
+                onChange={(e) => setEditForm({ ...editForm, interaction_type: e.target.value as InteractionType })}
+                className="select select-bordered w-full"
+              >
+                {Object.entries(INTERACTION_TYPE_LABELS).map(([key, { label, emoji }]) => (
+                  <option key={key} value={key}>
+                    {emoji} {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 감사한 점 */}
+            <div>
+              <label className="label">
+                <span className="label-text font-medium text-pink-500">감사한 점</span>
+              </label>
+              <textarea
+                value={editForm.gratitude_note || ''}
+                onChange={(e) => setEditForm({ ...editForm, gratitude_note: e.target.value })}
+                placeholder="어떤 점이 감사했나요?"
+                className="textarea textarea-bordered w-full h-20"
+              />
+            </div>
+
+            {/* 소식 */}
+            <div>
+              <label className="label">
+                <span className="label-text font-medium text-blue-500">소식</span>
+              </label>
+              <textarea
+                value={editForm.recent_news || ''}
+                onChange={(e) => setEditForm({ ...editForm, recent_news: e.target.value })}
+                placeholder="어떤 소식을 들었나요?"
+                className="textarea textarea-bordered w-full h-20"
+              />
+            </div>
+
+            {/* 해드리고 싶은 것 */}
+            <div>
+              <label className="label">
+                <span className="label-text font-medium text-green-500">해드리고 싶은 것</span>
+              </label>
+              <textarea
+                value={editForm.description || ''}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                placeholder="무엇을 해드리고 싶나요?"
+                className="textarea textarea-bordered w-full h-20"
+              />
+            </div>
+
+            {/* 느낀 감정 */}
+            <div>
+              <label className="label">
+                <span className="label-text font-medium">느낀 감정</span>
+              </label>
+              <div className="flex justify-between">
+                {FEELING_RATINGS.map(({ value, emoji, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setEditForm({ ...editForm, feeling_rating: value })}
+                    className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                      editForm.feeling_rating === value
+                        ? 'bg-primary/20 ring-2 ring-primary'
+                        : 'hover:bg-base-200'
+                    }`}
+                    title={label}
+                  >
+                    <span className="text-2xl">{emoji}</span>
+                    <span className="text-xs mt-1 text-base-content/60">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      {/* 삭제 확인 모달 */}
+      <dialog ref={deleteDialogRef} className="modal z-[110]">
+        <div className="modal-box max-w-sm">
+          <h3 className="font-bold text-lg mb-4">기록 삭제</h3>
+          <p className="text-base-content/70">
+            이 기록을 삭제하시겠습니까?<br />
+            삭제된 기록은 복구할 수 없습니다.
+          </p>
+          <div className="modal-action">
+            <button
+              onClick={() => deleteDialogRef.current?.close()}
+              className="btn btn-ghost rounded-full"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              disabled={isSaving}
+              className="btn btn-error rounded-full"
+            >
+              {isSaving ? <span className="loading loading-spinner loading-xs"></span> : '삭제'}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   );
 }
