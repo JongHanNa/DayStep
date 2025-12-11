@@ -126,31 +126,24 @@ export default function AppHeader() {
             <Menu className="w-6 h-6" />
           </button>
 
-          {/* 중앙: 페이지 제목 또는 정리 모드 타이머 */}
-          {currentMode === 'organize' ? (
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-base-content/60" />
-              <span className="text-sm text-base-content/70">정리 중...</span>
-              <span className="text-lg font-bold text-base-content tabular-nums">
-                {formatTime(remainingSeconds)}
-              </span>
-            </div>
-          ) : (
+          {/* 중앙: 페이지 제목 (+ 정리 모드 타이머) */}
+          <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold text-base-content">
               {pageTitle}
             </h1>
-          )}
+            {currentMode === 'organize' && (
+              <>
+                <span className="text-base-content/30">|</span>
+                <Clock className="w-4 h-4 text-base-content/60" />
+                <span className="text-lg font-bold text-base-content tabular-nums">
+                  {formatTime(remainingSeconds)}
+                </span>
+              </>
+            )}
+          </div>
 
-          {/* 오른쪽: 정리 모드 종료 버튼 또는 테마 토글 */}
-          {currentMode === 'organize' ? (
-            <button
-              onClick={handleExitOrganize}
-              className="btn btn-ghost btn-circle"
-              aria-label="정리 모드 종료"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          ) : (
+          {/* 오른쪽: 테마 토글 (+ 정리 모드 종료 버튼) */}
+          <div className="flex items-center">
             <button
               onClick={toggleTheme}
               className="btn btn-ghost btn-circle"
@@ -162,7 +155,16 @@ export default function AppHeader() {
                 <Sun className="w-5 h-5" />
               )}
             </button>
-          )}
+            {currentMode === 'organize' && (
+              <button
+                onClick={handleExitOrganize}
+                className="btn btn-ghost btn-circle"
+                aria-label="정리 모드 종료"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
