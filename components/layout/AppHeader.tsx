@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Menu, Sun, Moon } from 'lucide-react';
 import { useSidebarStore } from '@/state/stores/sidebarStore';
+import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 import { getPageTitleFromPath } from '@/config/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/app/context/AuthContext';
@@ -10,6 +11,7 @@ import { useAuth } from '@/app/context/AuthContext';
 export default function AppHeader() {
   const pathname = usePathname();
   const { open } = useSidebarStore();
+  const currentMode = useADHDModeStore(state => state.currentMode);
   const { resolvedTheme, setTheme } = useTheme();
   const { isAuthenticated, loading } = useAuth();
 
@@ -34,8 +36,15 @@ export default function AppHeader() {
   // - /login, /landing, /second-brain/onboarding: 항상 숨김
   // - /: 비인증 시 숨김 (LandingPage), 인증 시 표시 (GraphView)
   const alwaysHiddenPaths = ['/login', '/landing', '/second-brain/onboarding'];
+
+  // ADHD 모드에서 헤더 숨김 (entry, execute, care)
+  // organize 모드와 null 상태는 헤더 표시
+  const headerHiddenModes: ADHDMode[] = ['entry', 'execute', 'care'];
+  const shouldHideForADHDMode = currentMode !== null && headerHiddenModes.includes(currentMode);
+
   const shouldHide = alwaysHiddenPaths.some(path => normalizedPathname === path) ||
-                     (normalizedPathname === '/' && !isAuthenticated);
+                     (normalizedPathname === '/' && !isAuthenticated) ||
+                     shouldHideForADHDMode;
 
   // CSS 로딩 실패 대비 인라인 스타일로 완전 숨김
   if (shouldHide) {
