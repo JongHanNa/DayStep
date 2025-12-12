@@ -93,11 +93,13 @@ export class MindCareService {
   ): Promise<MindCareEntry | null> {
     const entryData = {
       user_id: userId,
-      entry_type: input.entry_type,
+      entry_type: input.entry_type || 'reflection', // 통합 폼: 기본값 'reflection'
       content: input.content.trim(),
       source_text: input.source_text?.trim() || null,
       source_reference: input.source_reference?.trim() || null,
       insight: input.insight?.trim() || null,
+      experience: input.experience?.trim() || null,      // 오늘의 경험
+      commitment: input.commitment?.trim() || null,      // 실천 다짐
       entry_date: input.entry_date,
       mood_rating: input.mood_rating || null,
       tags: input.tags || null,

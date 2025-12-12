@@ -18,10 +18,12 @@ export interface MindCareEntry {
   entry_type: MindCareEntryType;
 
   // 내용
-  content: string;
-  source_text: string | null;      // 읽은 글/인용문
-  source_reference: string | null; // 출처
-  insight: string | null;          // 깨달은 점
+  content: string;                   // 나의 생각
+  source_text: string | null;        // 마음에 닿은 글
+  source_reference: string | null;   // 출처
+  insight: string | null;            // 깨달은 점 (레거시)
+  experience: string | null;         // 오늘의 경험
+  commitment: string | null;         // 실천 다짐
 
   // 메타데이터
   entry_date: string;              // YYYY-MM-DD
@@ -41,11 +43,13 @@ export interface MindCareEntry {
 
 /** 마음 기록 입력 */
 export interface MindCareEntryInput {
-  entry_type: MindCareEntryType;
+  entry_type?: MindCareEntryType;  // 옵셔널 (기본값: 'reflection')
   content: string;
   source_text?: string;
   source_reference?: string;
   insight?: string;
+  experience?: string;             // 오늘의 경험
+  commitment?: string;             // 실천 다짐
   entry_date: string;
   mood_rating?: MoodLevel;
   tags?: string[];
@@ -59,6 +63,8 @@ export interface MindCareEntryUpdate {
   source_text?: string | null;
   source_reference?: string | null;
   insight?: string | null;
+  experience?: string | null;      // 오늘의 경험
+  commitment?: string | null;      // 실천 다짐
   entry_date?: string;
   mood_rating?: MoodLevel | null;
   tags?: string[] | null;
@@ -154,12 +160,22 @@ export const MOOD_LABELS: Array<{ value: MoodLevel; emoji: string; label: string
   { value: 5, emoji: '🥰', label: '감사해요' },
 ];
 
-/** 기본 태그 제안 */
+/** 기본 태그 제안 (레거시 - 유형별) */
 export const SUGGESTED_TAGS: Record<MindCareEntryType, string[]> = {
   reflection: ['책', '영상', '강연', '성찰', '일상', '관계', '성장'],
   comfort: ['위로', '격려', '희망', '용기', '평안', '치유', '감동'],
   gratitude: ['가족', '건강', '일상', '관계', '성장', '자연', '음식'],
 };
+
+/** 통합 태그 목록 (유형 구분 없이) */
+export const UNIFIED_TAGS = [
+  // 성찰/깨달음
+  '깨달음', '성장', '도전', '배움', '결심',
+  // 위로/격려
+  '위로', '희망', '평안', '격려', '감동',
+  // 감사
+  '감사', '가족', '친구', '건강', '일상', '자연',
+];
 
 /** 성찰 타이머 시간 옵션 (분) */
 export const REFLECTION_TIMER_OPTIONS = [5, 10, 15, 20] as const;

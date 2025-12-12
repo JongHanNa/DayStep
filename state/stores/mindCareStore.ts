@@ -137,10 +137,14 @@ export const useMindCareStore = create<MindCareState>()(
         const tempEntry: MindCareEntry = {
           id: tempId,
           user_id: userId,
-          ...input,
+          entry_type: input.entry_type || 'reflection', // 통합 폼: 기본값 'reflection'
+          content: input.content,
+          entry_date: input.entry_date,
           source_text: input.source_text || null,
           source_reference: input.source_reference || null,
           insight: input.insight || null,
+          experience: input.experience || null,
+          commitment: input.commitment || null,
           mood_rating: input.mood_rating || null,
           tags: input.tags || null,
           is_favorite: input.is_favorite || false,

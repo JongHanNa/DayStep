@@ -18,7 +18,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore, MindCareViewState, MindCareEntryType } from '@/state/stores/adhdModeStore';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import type { MoodLevel } from '@/types/mind-care';
 import { useMindCareStore } from '@/state/stores/mindCareStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
@@ -41,37 +41,12 @@ const MOOD_EMOJIS = [
   { value: 5 as const, emoji: '🥰', label: '행복해요' },
 ];
 
-// 태그 옵션
-const TAG_OPTIONS: Record<MindCareEntryType, string[]> = {
-  reflection: ['성장', '깨달음', '도전', '배움', '결심'],
-  comfort: ['위로', '희망', '평안', '격려', '감동'],
-  gratitude: ['가족', '친구', '건강', '일상', '자연'],
-};
-
-// 유형별 아이콘 및 색상
-const ENTRY_TYPE_CONFIG: Record<MindCareEntryType, { icon: React.ElementType; color: string; bgColor: string; label: string; question: string }> = {
-  reflection: {
-    icon: BookOpen,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-100',
-    label: '마음 기록',
-    question: '오늘 마음에 닿은 것이 있나요?',
-  },
-  comfort: {
-    icon: Heart,
-    color: 'text-pink-500',
-    bgColor: 'bg-pink-100',
-    label: '위로의 순간',
-    question: '어떤 글이 마음에 위로가 되었나요?',
-  },
-  gratitude: {
-    icon: Sparkles,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-100',
-    label: '감사 일기',
-    question: '오늘 감사한 것은 무엇인가요?',
-  },
-};
+// 통합 태그 옵션 (entry_type을 태그로 대체)
+const UNIFIED_TAGS = [
+  '깨달음', '성장', '도전', '배움', '결심',
+  '위로', '희망', '평안', '격려', '감동',
+  '감사', '가족', '친구', '건강', '일상',
+];
 
 /**
  * 나의 마음 챙기기 모드
@@ -86,7 +61,6 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   const {
     mindCareMode,
     setMindCareViewState,
-    setMindCareEntryType,
     setMindCareDraft,
     resetMindCareDraft,
     endMindCareMode,
@@ -118,9 +92,8 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   const [moodRating, setMoodRating] = useState<MoodLevel | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [historyFilter, setHistoryFilter] = useState<MindCareEntryType | 'all'>('all');
 
-  const { viewState, selectedEntryType, draftContent, draftSourceText, draftSourceReference } = mindCareMode;
+  const { viewState, draftContent, draftSourceText, draftSourceReference, draftExperience, draftCommitment } = mindCareMode;
 
   // 데이터 로드
   useEffect(() => {
@@ -132,20 +105,16 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   // history 뷰일 때 기록 로드
   useEffect(() => {
     if (userId && viewState === 'history') {
-      if (historyFilter === 'all') {
-        loadEntries(userId);
-      } else {
-        loadEntries(userId, historyFilter);
-      }
+      loadEntries(userId);
     }
-  }, [userId, viewState, historyFilter, loadEntries]);
+  }, [userId, viewState, loadEntries]);
 
-  // 유형 선택 시 질문 로드
+  // 타이머 시작 시 질문 로드 (통합 폼이므로 reflection 타입의 질문 사용)
   useEffect(() => {
-    if (selectedEntryType) {
-      loadRandomPrompt(selectedEntryType);
+    if (viewState === 'timer-running') {
+      loadRandomPrompt('reflection');
     }
-  }, [selectedEntryType, loadRandomPrompt]);
+  }, [viewState, loadRandomPrompt]);
 
   // 타이머 완료 감지
   useEffect(() => {
@@ -154,9 +123,8 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     }
   }, [timerState.status, viewState]);
 
-  // 유형 선택 후 타이머 시작
-  const handleSelectType = (type: MindCareEntryType) => {
-    setMindCareEntryType(type);
+  // 타이머 시작
+  const handleStartTimer = () => {
     setMindCareViewState('timer-running');
     startPomodoroTimer(selectedDuration * 60 * 1000);
   };
@@ -177,7 +145,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   const handleStopTimer = () => {
     stopTimer();
     resetMindCareDraft();
-    setMindCareViewState('select-type');
+    setMindCareViewState('select-duration');
   };
 
   // 시간 조정
@@ -187,15 +155,17 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
   // 기록 저장
   const handleSave = async () => {
-    if (!userId || !selectedEntryType || !draftContent.trim()) return;
+    if (!userId || !draftContent.trim()) return;
 
     setIsSaving(true);
     try {
       await addEntry(userId, {
-        entry_type: selectedEntryType,
+        entry_type: 'reflection', // 통합 폼: 기본값 'reflection'
         content: draftContent.trim(),
         source_text: draftSourceText.trim() || undefined,
         source_reference: draftSourceReference.trim() || undefined,
+        experience: draftExperience.trim() || undefined,
+        commitment: draftCommitment.trim() || undefined,
         entry_date: format(new Date(), 'yyyy-MM-dd'),
         mood_rating: moodRating || undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
@@ -231,7 +201,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
         setMindCareViewState('timer-running');
         break;
       case 'history':
-        setMindCareViewState('select-type');
+        setMindCareViewState('select-duration');
         break;
       case 'completed':
         endMindCareMode();
@@ -267,8 +237,8 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   // 뷰 렌더링
   // ============================================
 
-  // 유형 선택 화면
-  const renderSelectTypeView = () => (
+  // 타이머 시간 선택 화면 (통합 폼 - 유형 선택 제거)
+  const renderSelectDurationView = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -291,45 +261,43 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
         </div>
       )}
 
-      {/* 타이머 시간 선택 */}
-      <div className="mb-6">
-        <p className="text-sm text-base-content/60 mb-2">타이머 시간</p>
-        <div className="flex gap-2">
-          {TIMER_OPTIONS.map(min => (
-            <button
-              key={min}
-              onClick={() => setSelectedDuration(min)}
-              className={`btn btn-sm flex-1 ${selectedDuration === min ? 'btn-primary' : 'btn-ghost'}`}
-            >
-              {min}분
-            </button>
-          ))}
+      {/* 안내 문구 */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-6">
+          <Heart className="w-10 h-10 text-purple-500" />
         </div>
-      </div>
+        <h2 className="text-xl font-semibold mb-2">마음 돌봄 시간</h2>
+        <p className="text-base-content/60 mb-6">
+          타이머와 함께 깨달음, 위로, 감사를<br />
+          자유롭게 기록해보세요
+        </p>
 
-      {/* 유형 선택 */}
-      <p className="text-sm text-base-content/60 mb-3">어떤 기록을 남길까요?</p>
-      <div className="flex flex-col gap-3 flex-1">
-        {(Object.entries(ENTRY_TYPE_CONFIG) as [MindCareEntryType, typeof ENTRY_TYPE_CONFIG['reflection']][]).map(([type, config]) => {
-          const Icon = config.icon;
-          return (
-            <motion.button
-              key={type}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleSelectType(type)}
-              className={`flex items-center gap-4 p-4 rounded-2xl ${config.bgColor} hover:opacity-90 transition-opacity`}
-            >
-              <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center ${config.color}`}>
-                <Icon className="w-6 h-6" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-base-content">{config.label}</p>
-                <p className="text-sm text-base-content/60">{config.question}</p>
-              </div>
-            </motion.button>
-          );
-        })}
+        {/* 타이머 시간 선택 */}
+        <div className="w-full max-w-xs mb-6">
+          <p className="text-sm text-base-content/60 mb-3">타이머 시간</p>
+          <div className="flex gap-2">
+            {TIMER_OPTIONS.map(min => (
+              <button
+                key={min}
+                onClick={() => setSelectedDuration(min)}
+                className={`btn btn-sm flex-1 ${selectedDuration === min ? 'btn-primary' : 'btn-ghost'}`}
+              >
+                {min}분
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 시작 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleStartTimer}
+          className="btn btn-primary btn-lg gap-2 rounded-full px-8"
+        >
+          <Play className="w-5 h-5" />
+          시작하기
+        </motion.button>
       </div>
 
       {/* 과거 기록 보기 */}
@@ -343,12 +311,8 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     </motion.div>
   );
 
-  // 타이머 + 기록 화면
+  // 타이머 + 통합 기록 화면
   const renderTimerRunningView = () => {
-    if (!selectedEntryType) return null;
-    const config = ENTRY_TYPE_CONFIG[selectedEntryType];
-    const Icon = config.icon;
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -361,10 +325,10 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           <button onClick={handleStopTimer} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center ${config.color}`}>
-            <Icon className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-500">
+            <Heart className="w-4 h-4" />
           </div>
-          <h1 className="text-lg font-bold">{config.label}</h1>
+          <h1 className="text-lg font-bold">나의 마음 챙기기</h1>
         </div>
 
         {/* 오늘의 질문 */}
@@ -392,13 +356,12 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
                 cy="80"
                 r="70"
                 fill="none"
-                stroke={config.color.replace('text-', '#').replace('-500', '')}
+                stroke="#8b5cf6"
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeDasharray={2 * Math.PI * 70}
                 strokeDashoffset={2 * Math.PI * 70 * (1 - progress / 100)}
                 className="transition-all duration-300"
-                style={{ stroke: selectedEntryType === 'reflection' ? '#3b82f6' : selectedEntryType === 'comfort' ? '#ec4899' : '#f97316' }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -430,49 +393,71 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           타이머가 끝나면 기록을 저장할 수 있어요
         </p>
 
-        {/* 기록 입력 폼 */}
+        {/* 통합 기록 입력 폼 - 5개 필드 */}
         <div className="flex-1 space-y-4">
-          {/* 마음에 닿은 글 (comfort, reflection) */}
-          {(selectedEntryType === 'comfort' || selectedEntryType === 'reflection') && (
-            <div>
-              <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                마음에 닿은 글
-              </label>
-              <textarea
-                value={draftSourceText}
-                onChange={(e) => setMindCareDraft({ sourceText: e.target.value })}
-                placeholder="읽은 글이나 인용문을 적어주세요..."
-                className="textarea textarea-bordered w-full h-20 resize-none"
-              />
-            </div>
-          )}
-
-          {/* 출처 (comfort, reflection) */}
-          {(selectedEntryType === 'comfort' || selectedEntryType === 'reflection') && (
-            <div>
-              <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                출처 (선택)
-              </label>
-              <input
-                type="text"
-                value={draftSourceReference}
-                onChange={(e) => setMindCareDraft({ sourceReference: e.target.value })}
-                placeholder="책 제목, 저자, 출처 등"
-                className="input input-bordered w-full"
-              />
-            </div>
-          )}
-
-          {/* 메인 내용 */}
+          {/* 1. 마음에 닿은 글 (선택) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {selectedEntryType === 'gratitude' ? '감사한 것' : '깨달은 점 / 나의 생각'}
+              마음에 닿은 글 <span className="text-base-content/40">(선택)</span>
+            </label>
+            <textarea
+              value={draftSourceText}
+              onChange={(e) => setMindCareDraft({ sourceText: e.target.value })}
+              placeholder="읽은 글, 들은 말, 영감을 준 내용..."
+              className="textarea textarea-bordered w-full h-20 resize-none"
+            />
+          </div>
+
+          {/* 2. 출처 (선택) */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-1 block">
+              출처 <span className="text-base-content/40">(선택)</span>
+            </label>
+            <input
+              type="text"
+              value={draftSourceReference}
+              onChange={(e) => setMindCareDraft({ sourceReference: e.target.value })}
+              placeholder="책, 사람, 영상 등"
+              className="input input-bordered w-full"
+            />
+          </div>
+
+          {/* 3. 나의 생각 (필수) */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-1 block">
+              나의 생각 <span className="text-purple-500">*</span>
             </label>
             <textarea
               value={draftContent}
               onChange={(e) => setMindCareDraft({ content: e.target.value })}
-              placeholder={selectedEntryType === 'gratitude' ? '오늘 감사한 것을 적어주세요...' : '떠오르는 생각을 자유롭게 적어주세요...'}
+              placeholder="깨달음, 위로, 감사, 성찰 등 자유롭게..."
               className="textarea textarea-bordered w-full h-24 resize-none"
+            />
+          </div>
+
+          {/* 4. 오늘의 경험 (선택) */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-1 block">
+              오늘의 경험 <span className="text-base-content/40">(선택)</span>
+            </label>
+            <textarea
+              value={draftExperience}
+              onChange={(e) => setMindCareDraft({ experience: e.target.value })}
+              placeholder="오늘 마음에 와닿은 순간, 경험한 일..."
+              className="textarea textarea-bordered w-full h-20 resize-none"
+            />
+          </div>
+
+          {/* 5. 실천 다짐 (선택) */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-1 block">
+              실천 다짐 <span className="text-base-content/40">(선택)</span>
+            </label>
+            <textarea
+              value={draftCommitment}
+              onChange={(e) => setMindCareDraft({ commitment: e.target.value })}
+              placeholder="앞으로의 계획, 적용할 점..."
+              className="textarea textarea-bordered w-full h-20 resize-none"
             />
           </div>
         </div>
@@ -490,9 +475,6 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
   // 기록 저장 화면
   const renderCaptureView = () => {
-    if (!selectedEntryType) return null;
-    const tags = TAG_OPTIONS[selectedEntryType];
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -533,11 +515,11 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           </div>
         </div>
 
-        {/* 태그 선택 */}
+        {/* 통합 태그 선택 */}
         <div className="mb-6">
           <p className="text-sm font-medium text-base-content/70 mb-3">태그 선택 (선택)</p>
           <div className="flex flex-wrap gap-2">
-            {tags.map(tag => (
+            {UNIFIED_TAGS.map(tag => (
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
@@ -599,7 +581,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           <button
             onClick={() => {
               resetMindCareDraft();
-              setMindCareViewState('select-type');
+              setMindCareViewState('select-duration');
             }}
             className="btn btn-ghost"
           >
@@ -635,29 +617,10 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     >
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 border-b border-base-300">
-        <button onClick={() => setMindCareViewState('select-type')} className="btn btn-ghost btn-circle">
+        <button onClick={() => setMindCareViewState('select-duration')} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold">과거 기록</h1>
-      </div>
-
-      {/* 필터 탭 */}
-      <div className="flex gap-2 p-4 border-b border-base-300">
-        <button
-          onClick={() => setHistoryFilter('all')}
-          className={`btn btn-sm ${historyFilter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
-        >
-          전체
-        </button>
-        {(Object.entries(ENTRY_TYPE_CONFIG) as [MindCareEntryType, typeof ENTRY_TYPE_CONFIG['reflection']][]).map(([type, config]) => (
-          <button
-            key={type}
-            onClick={() => setHistoryFilter(type)}
-            className={`btn btn-sm ${historyFilter === type ? 'btn-primary' : 'btn-ghost'}`}
-          >
-            {config.label}
-          </button>
-        ))}
       </div>
 
       {/* 기록 목록 */}
@@ -667,51 +630,46 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             아직 기록이 없어요
           </div>
         ) : (
-          entries.map(entry => {
-            const config = ENTRY_TYPE_CONFIG[entry.entry_type as MindCareEntryType];
-            const Icon = config?.icon || BookOpen;
-
-            return (
-              <motion.div
-                key={entry.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 bg-base-200 rounded-xl"
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-full ${config?.bgColor || 'bg-gray-100'} flex items-center justify-center ${config?.color || 'text-gray-500'}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-base-content/50">
-                        {format(new Date(entry.entry_date), 'M월 d일 (EEE)', { locale: ko })}
-                      </span>
-                      <button
-                        onClick={() => userId && toggleFavorite(entry, userId)}
-                        className={`btn btn-ghost btn-xs ${entry.is_favorite ? 'text-yellow-500' : 'text-base-content/30'}`}
-                      >
-                        <Star className="w-4 h-4" fill={entry.is_favorite ? 'currentColor' : 'none'} />
-                      </button>
-                    </div>
-                    {entry.source_text && (
-                      <p className="text-sm text-base-content/70 italic mb-1 line-clamp-2">
-                        &quot;{entry.source_text}&quot;
-                      </p>
-                    )}
-                    <p className="text-sm line-clamp-2">{entry.content}</p>
-                    {entry.tags && entry.tags.length > 0 && (
-                      <div className="flex gap-1 mt-2">
-                        {entry.tags.slice(0, 3).map(tag => (
-                          <span key={tag} className="badge badge-sm badge-ghost">#{tag}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+          entries.map(entry => (
+            <motion.div
+              key={entry.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-base-200 rounded-xl"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-500">
+                  <Heart className="w-4 h-4" />
                 </div>
-              </motion.div>
-            );
-          })
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-base-content/50">
+                      {format(new Date(entry.entry_date), 'M월 d일 (EEE)', { locale: ko })}
+                    </span>
+                    <button
+                      onClick={() => userId && toggleFavorite(entry, userId)}
+                      className={`btn btn-ghost btn-xs ${entry.is_favorite ? 'text-yellow-500' : 'text-base-content/30'}`}
+                    >
+                      <Star className="w-4 h-4" fill={entry.is_favorite ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
+                  {entry.source_text && (
+                    <p className="text-sm text-base-content/70 italic mb-1 line-clamp-2">
+                      &quot;{entry.source_text}&quot;
+                    </p>
+                  )}
+                  <p className="text-sm line-clamp-2">{entry.content}</p>
+                  {entry.tags && entry.tags.length > 0 && (
+                    <div className="flex gap-1 mt-2">
+                      {entry.tags.slice(0, 3).map(tag => (
+                        <span key={tag} className="badge badge-sm badge-ghost">#{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))
         )}
       </div>
     </motion.div>
@@ -720,7 +678,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   return (
     <div className="fixed inset-0 bg-base-100 z-50 flex flex-col">
       <AnimatePresence mode="wait">
-        {viewState === 'select-type' && renderSelectTypeView()}
+        {viewState === 'select-duration' && renderSelectDurationView()}
         {viewState === 'timer-running' && renderTimerRunningView()}
         {viewState === 'capture' && renderCaptureView()}
         {viewState === 'completed' && renderCompletedView()}
