@@ -4,11 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useEffect, useState } from 'react';
 import {
-  CheckCircle2,
-  Calendar,
-  Target,
-  Brain,
-  Sparkles,
+  Timer,
+  Heart,
+  BookOpen,
+  BarChart3,
+  MessageCircle,
   ArrowRight,
   Smartphone
 } from 'lucide-react';
@@ -18,7 +18,8 @@ import dynamic from 'next/dynamic';
 import LandingNav from '@/components/layout/LandingNav';
 import StatsSection from '@/components/landing/StatsSection';
 import SystemSection from '@/components/landing/SystemSection';
-import TestimonialsSection from '@/components/landing/TestimonialsSection';
+// TODO: 실제 사용자 후기 수집 후 활성화 예정
+// import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
 import ScrollColorTransition from '@/components/landing/ScrollColorTransition';
 
@@ -29,7 +30,8 @@ const ScrollProgressSection = dynamic(
 );
 
 // 컴포넌트 외부 상수 (리렌더링 시 참조 변경 방지)
-const FEATURES = ['타임라인 뷰', 'Second Brain', '목표 관리', '할일 관리', 'AI 추천'];
+// 현재 앱의 핵심 기능 기반 회전 텍스트
+const FEATURES = ['실행과 집중', '소중한 사람 챙기기', '배움에서 계획까지', '기록과 통계', '관계 기록'];
 
 /**
  * 마케팅 랜딩 페이지 (/landing)
@@ -126,9 +128,9 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="text-6xl sm:text-7xl font-semibold text-white flex flex-col items-center">
-              <span className="mb-2">하루를 체계적으로 관리하는</span>
-              <div className="relative min-h-[6rem] sm:min-h-[7.5rem] w-full flex items-center justify-center overflow-hidden">
+            <div className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-white flex flex-col items-center">
+              <span className="mb-2">집중이 어려운 당신을 위한</span>
+              <div className="relative min-h-[5rem] sm:min-h-[6rem] lg:min-h-[7rem] w-full flex items-center justify-center overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={currentFeatureIndex}
@@ -136,7 +138,7 @@ export default function LandingPage() {
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="text-white text-6xl sm:text-7xl"
+                    className="text-white text-4xl sm:text-5xl lg:text-6xl"
                   >
                     {FEATURES[currentFeatureIndex]}
                   </motion.span>
@@ -152,8 +154,9 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            타임라인으로 하루를 시각화하고, Second Brain으로 생각을 정리하며,
-            목표를 향해 한 걸음씩 나아가세요.
+            ADHD 성향이 있어도 괜찮아요.
+            <br />
+            복잡하지 않은 도구로 오늘 하루를 함께 관리해요.
           </motion.p>
 
           {/* Dual CTA Buttons */}
@@ -195,16 +198,16 @@ export default function LandingPage() {
             transition={{ duration: 1, delay: 1 }}
           >
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-white">간편</div>
-              <p className="text-sm text-white/80">직관적인 인터페이스</p>
+              <div className="text-3xl font-bold text-white">간단하게</div>
+              <p className="text-sm text-white/80">복잡하지 않은 인터페이스</p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-white">체계적</div>
-              <p className="text-sm text-white/80">Second Brain 시스템</p>
+              <div className="text-3xl font-bold text-white">바로 실행</div>
+              <p className="text-sm text-white/80">시작 장벽을 낮춰요</p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-white">효율적</div>
-              <p className="text-sm text-white/80">타임라인 뷰</p>
+              <div className="text-3xl font-bold text-white">함께 관리</div>
+              <p className="text-sm text-white/80">일과 사람 모두 챙겨요</p>
             </div>
           </motion.div>
         </div>
@@ -227,10 +230,10 @@ export default function LandingPage() {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-4xl font-bold text-white mb-4">
-              주요 기능
+              &quot;지금 뭐 할 거야?&quot;
             </h2>
             <p className="text-lg text-white/90">
-              생산성을 높이는 강력한 도구들
+              복잡하지 않아요. 필요한 것만 담았어요.
             </p>
           </motion.div>
 
@@ -241,99 +244,83 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={bidirectionalViewportOptions}
           >
-            {/* Feature 1 */}
+            {/* Feature 1 - 실행과 집중 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-primary" />
+                <Timer className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                타임라인 뷰
+                실행과 집중
               </h3>
               <p className="text-base-content/70">
-                하루 일정을 시각적으로 관리하고 시간대별로 할일을 배치하세요.
+                계획된 일과 떠오른 일을 바로 타이머 켜고 실행할 수 있어요. 시작이 어려울 때 도움이 돼요.
               </p>
             </motion.div>
 
-            {/* Feature 2 */}
+            {/* Feature 2 - 소중한 사람 챙기기 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
-                <Brain className="w-6 h-6 text-accent" />
+                <Heart className="w-6 h-6 text-accent" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                Second Brain
+                소중한 사람 챙기기
               </h3>
               <p className="text-base-content/70">
-                생각을 수집하고, 명료화하며, 체계적으로 정리하는 시스템.
+                일에 몰입하다 보면 소중한 사람들을 놓치기 쉬워요. 주기적으로 안부를 챙길 수 있게 도와줘요.
               </p>
             </motion.div>
 
-            {/* Feature 3 */}
+            {/* Feature 3 - 배움→과제→계획 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
-                <Target className="w-6 h-6 text-secondary" />
+                <BookOpen className="w-6 h-6 text-secondary" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                목표 관리
+                배움→과제→계획
               </h3>
               <p className="text-base-content/70">
-                장기 목표를 설정하고 단계별로 달성해 나가세요.
+                배우면서, 또는 배운 것을 기록하고, 과제를 도출하고, 할일을 계획하세요.
               </p>
             </motion.div>
 
-            {/* Feature 4 */}
+            {/* Feature 4 - 기록/일정/통계 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-info" />
+                <BarChart3 className="w-6 h-6 text-info" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                할일 관리
+                기록/일정/통계
               </h3>
               <p className="text-base-content/70">
-                프로젝트별로 할일을 정리하고 우선순위를 관리하세요.
+                지난 기록을 확인하고, 일정을 관리하고, 통계로 성장을 확인하세요.
               </p>
             </motion.div>
 
-            {/* Feature 5 */}
+            {/* Feature 5 - 관계 기록 보기 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
             >
               <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-success" />
+                <MessageCircle className="w-6 h-6 text-success" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                AI 추천
+                관계 기록 보기
               </h3>
               <p className="text-base-content/70">
-                상황에 맞는 동기부여 문구와 추천 할일을 제공합니다.
-              </p>
-            </motion.div>
-
-            {/* Feature 6 */}
-            <motion.div
-              variants={featureContainerVariants.item}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-warning" />
-              </div>
-              <h3 className="text-xl font-semibold text-base-content">
-                반복 일정
-              </h3>
-              <p className="text-base-content/70">
-                매일, 매주, 매월 반복되는 일정을 자동으로 생성하세요.
+                누구에게 뭘 들었는지 기억하기 어렵죠. 대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.
               </p>
             </motion.div>
           </motion.div>
@@ -343,8 +330,13 @@ export default function LandingPage() {
       {/* System Section */}
       <SystemSection />
 
-      {/* Testimonials Section */}
-      <TestimonialsSection />
+      {/*
+        TODO: 실제 사용자 후기 수집 후 활성화 예정
+        현재는 임시 데이터이므로 숨김 처리
+        - 추후 실제 후기 연동 시 TestimonialsSection 컴포넌트 활성화
+        - 후기 데이터는 DB에서 가져오도록 리팩토링 예정
+        <TestimonialsSection />
+      */}
 
       {/* FAQ Section */}
       <FAQSection />
@@ -358,11 +350,15 @@ export default function LandingPage() {
         viewport={bidirectionalViewportOptions}
       >
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h2 className="text-4xl font-bold text-white">
-            지금 바로 시작하세요
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+            집중이 어려운 하루,
+            <br />
+            DayStep과 함께 시작하세요
           </h2>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            무료로 시작하고, 생산성을 높이는 첫 걸음을 내딛으세요.
+            완벽하지 않아도 괜찮아요.
+            <br />
+            오늘 하루, 한 걸음부터 함께해요.
           </p>
           <button
             onClick={handleGetStarted}
@@ -382,7 +378,7 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">DayStep</h3>
               <p className="text-sm text-white/80">
-                하루를 체계적으로 관리하는 생산성 앱
+                집중이 어려운 당신을 위한 하루 관리 앱
               </p>
             </div>
 
