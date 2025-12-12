@@ -98,24 +98,25 @@ export default function PriorityReminderBanner({
 
             <div className="flex-1 pr-4">
               {/* 메인 메시지 */}
-              <p className="text-sm text-base-content font-medium">
+              <p className="text-sm text-gray-800 font-medium">
                 {daysSince === -1 ? (
                   <>
                     <span className="text-pink-600 font-semibold">{personName}</span>
-                    님께 아직 연락한 적이 없어요
+                    <span className="text-gray-800">님께 아직 연락한 적이 없어요</span>
                   </>
                 ) : (
                   <>
                     <span className="text-pink-600 font-semibold">{personName}</span>
-                    님께 마지막 연락한 지{' '}
-                    <span className="text-pink-600 font-semibold">{daysSince}일</span>이 지났어요
+                    <span className="text-gray-800">님께 마지막 연락한 지{' '}</span>
+                    <span className="text-pink-600 font-semibold">{daysSince}일</span>
+                    <span className="text-gray-800">이 지났어요</span>
                   </>
                 )}
               </p>
 
               {/* 성찰 메시지 */}
               {reminderMessage && (
-                <p className="text-xs text-base-content/60 mt-1 italic">
+                <p className="text-xs text-gray-600 mt-1 italic">
                   &ldquo;{reminderMessage}&rdquo;
                 </p>
               )}

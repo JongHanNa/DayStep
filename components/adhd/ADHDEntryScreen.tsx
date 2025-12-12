@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck } from 'lucide-react';
+import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 
@@ -26,9 +27,28 @@ interface ADHDEntryScreenProps {
 export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize, onMindCare }: ADHDEntryScreenProps) {
   const { awakeningSentence } = useADHDModeStore();
   const [showDescriptions, setShowDescriptions] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-base-100 px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-base-100 px-6 relative">
+      {/* 테마 토글 버튼 (우측 상단) */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        <button
+          onClick={() => setTheme('light')}
+          className={`btn btn-circle btn-sm ${resolvedTheme === 'light' ? 'btn-primary' : 'btn-ghost'}`}
+          aria-label="라이트 테마"
+        >
+          <Sun className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setTheme('dark')}
+          className={`btn btn-circle btn-sm ${resolvedTheme === 'dark' ? 'btn-primary' : 'btn-ghost'}`}
+          aria-label="다크 테마"
+        >
+          <Moon className="w-4 h-4" />
+        </button>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
