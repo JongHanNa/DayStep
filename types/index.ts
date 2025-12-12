@@ -501,6 +501,11 @@ export interface Project {
   created_at: string;
   updated_at: string;
 
+  // 배움→과제 플로우 필드
+  expected_outcome: string | null;        // 기대 효과
+  preparation: string | null;             // 준비할 것
+  source_reflection_id: string | null;    // 연결된 배움 기록 ID
+
   // Relations
   goal?: Goal;
   area_resource?: AreaResource;
@@ -522,6 +527,10 @@ export interface ProjectInsert {
   end_date?: string | null;
   completed_at?: string | null;
   order_index?: number;
+  // 배움→과제 플로우 필드
+  expected_outcome?: string | null;
+  preparation?: string | null;
+  source_reflection_id?: string | null;
 }
 
 export interface ProjectUpdate extends Partial<ProjectInsert> {

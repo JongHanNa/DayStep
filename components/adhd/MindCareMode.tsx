@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -16,10 +16,23 @@ import {
   Plus,
   History,
   Star,
+  Lightbulb,
+  FolderPlus,
+  ListTodo,
+  ChevronRight,
+  Calendar,
+  X,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import type { MoodLevel } from '@/types/mind-care';
+import type { MoodLevel, TodoDraft } from '@/types/mind-care';
+import { LEARNING_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS } from '@/types/mind-care';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
+import { useTodoStore } from '@/state/stores/todoStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import type { Project } from '@/types/second-brain';
+import type { Goal } from '@/types/second-brain';
 import { useMindCareStore } from '@/state/stores/mindCareStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { format } from 'date-fns';
@@ -93,14 +106,39 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const { viewState, draftContent, draftSourceText, draftSourceReference, draftExperience, draftCommitment } = mindCareMode;
+  const {
+    viewState,
+    draftContent,
+    draftSourceText,
+    draftSourceReference,
+    draftExperience,
+    draftCommitment,
+    // 과제 도출 필드
+    selectedProjectId,
+    newProjectTitle,
+    newProjectExpectedOutcome,
+    selectedGoalId,
+    // 할일 계획 필드
+    newProjectPreparation,
+    todosDraft,
+  } = mindCareMode;
+
+  // 프로젝트/할일/목표 스토어
+  const { projects, fetchProjects, createProject } = useProjectStore();
+  const { goals, fetchGoals } = useGoalStore();
+  const { createTodo } = useTodoStore();
 
   // 데이터 로드
   useEffect(() => {
     if (userId) {
       loadStats(userId);
+      fetchProjects(userId);
+      fetchGoals(userId);
     }
-  }, [userId, loadStats]);
+  }, [userId, loadStats, fetchProjects, fetchGoals]);
+
+  // 타이머 없이 바로 시작
+  const [skipTimer, setSkipTimer] = useState(false);
 
   // history 뷰일 때 기록 로드
   useEffect(() => {
@@ -111,23 +149,182 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
   // 타이머 시작 시 질문 로드 (통합 폼이므로 reflection 타입의 질문 사용)
   useEffect(() => {
-    if (viewState === 'timer-running') {
+    if (viewState === 'reflection-input') {
       loadRandomPrompt('reflection');
     }
   }, [viewState, loadRandomPrompt]);
 
   // 타이머 완료 감지
   useEffect(() => {
-    if (timerState.status === 'completed' && viewState === 'timer-running') {
+    if (timerState.status === 'completed' && viewState === 'reflection-input') {
       handleTimerComplete();
     }
   }, [timerState.status, viewState]);
 
   // 타이머 시작
   const handleStartTimer = () => {
-    setMindCareViewState('timer-running');
-    startPomodoroTimer(selectedDuration * 60 * 1000);
+    setMindCareViewState('reflection-input');
+    if (!skipTimer) {
+      startPomodoroTimer(selectedDuration * 60 * 1000);
+    }
   };
+
+  // 타이머 없이 시작
+  const handleStartWithoutTimer = () => {
+    setSkipTimer(true);
+    setMindCareViewState('reflection-input');
+  };
+
+  // 과제 도출로 이동
+  const handleGoToProjectDerive = () => {
+    stopTimer();
+    setMindCareViewState('project-derive');
+  };
+
+  // 배움만 기록하고 끝내기
+  const handleFinishWithLearningOnly = () => {
+    stopTimer();
+    setMindCareViewState('capture');
+  };
+
+  // 할일 계획으로 이동
+  const handleGoToTodoPlanning = () => {
+    setMindCareViewState('todo-planning');
+  };
+
+  // 과제 없이 끝내기
+  const handleFinishWithoutProject = async () => {
+    await saveEntry(null);
+    setMindCareViewState('completed');
+  };
+
+  // 할일 없이 끝내기
+  const handleFinishWithoutTodos = async () => {
+    await saveEntryAndProject();
+    setMindCareViewState('completed');
+  };
+
+  // 전체 완료 (할일까지)
+  const handleCompleteAll = async () => {
+    await saveEntryAndProjectAndTodos();
+    setMindCareViewState('completed');
+  };
+
+  // 할일 초안 추가
+  const handleAddTodoDraft = () => {
+    const newTodo: TodoDraft = {
+      id: `draft-${Date.now()}`,
+      title: '',
+      scheduledDate: format(new Date(), 'yyyy-MM-dd'),
+      scheduledTime: null,
+    };
+    setMindCareDraft({ todosDraft: [...todosDraft, newTodo] });
+  };
+
+  // 할일 초안 수정
+  const handleUpdateTodoDraft = (id: string, updates: Partial<TodoDraft>) => {
+    setMindCareDraft({
+      todosDraft: todosDraft.map(t => t.id === id ? { ...t, ...updates } : t),
+    });
+  };
+
+  // 할일 초안 삭제
+  const handleRemoveTodoDraft = (id: string) => {
+    setMindCareDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
+  };
+
+  // 배움 기록 저장 (프로젝트 연결 없이)
+  const saveEntry = async (projectId: string | null) => {
+    if (!userId || !draftContent.trim()) return null;
+
+    const entry = await addEntry(userId, {
+      entry_type: 'reflection',
+      content: draftContent.trim(),
+      source_text: draftSourceText.trim() || undefined,
+      source_reference: draftSourceReference.trim() || undefined,
+      experience: draftExperience.trim() || undefined,
+      commitment: draftCommitment.trim() || undefined,
+      entry_date: format(new Date(), 'yyyy-MM-dd'),
+      mood_rating: moodRating || undefined,
+      tags: selectedTags.length > 0 ? selectedTags : undefined,
+      project_id: projectId || undefined,
+    });
+    return entry;
+  };
+
+  // 배움 + 프로젝트 저장
+  const saveEntryAndProject = async () => {
+    if (!userId) return;
+
+    let projectId = selectedProjectId;
+
+    // 새 프로젝트 생성
+    if (!selectedProjectId && newProjectTitle.trim()) {
+      const newProject = await createProject(userId, {
+        title: newProjectTitle.trim(),
+        expected_outcome: newProjectExpectedOutcome.trim() || undefined,
+        preparation: newProjectPreparation.trim() || undefined,
+        goal_id: selectedGoalId || undefined,
+        color: '#6366f1', // 기본 인디고 색상
+        order_index: 0,
+        status: 'not_started',
+      });
+      if (newProject) {
+        projectId = newProject.id;
+      }
+    }
+
+    await saveEntry(projectId);
+    loadStats(userId);
+  };
+
+  // 배움 + 프로젝트 + 할일 저장
+  const saveEntryAndProjectAndTodos = async () => {
+    if (!userId) return;
+
+    let projectId = selectedProjectId;
+
+    // 새 프로젝트 생성
+    if (!selectedProjectId && newProjectTitle.trim()) {
+      const newProject = await createProject(userId, {
+        title: newProjectTitle.trim(),
+        expected_outcome: newProjectExpectedOutcome.trim() || undefined,
+        preparation: newProjectPreparation.trim() || undefined,
+        goal_id: selectedGoalId || undefined,
+        color: '#6366f1', // 기본 인디고 색상
+        order_index: 0,
+        status: 'not_started',
+      });
+      if (newProject) {
+        projectId = newProject.id;
+      }
+    }
+
+    // 할일 저장
+    for (const draft of todosDraft) {
+      if (draft.title.trim()) {
+        await createTodo({
+          title: draft.title.trim(),
+          user_id: userId,
+          schedule_type: 'anytime',
+          project_ids: projectId ? [projectId] : undefined,
+        });
+      }
+    }
+
+    await saveEntry(projectId);
+    loadStats(userId);
+    setMindCareViewState('completed');  // 완료 화면으로 전환
+  };
+
+  // 생성된 프로젝트 이름 (완료 화면용)
+  const createdProjectName = useMemo(() => {
+    if (selectedProjectId) {
+      const project = projects.find(p => p.id === selectedProjectId);
+      return project?.title || '';
+    }
+    return newProjectTitle;
+  }, [selectedProjectId, newProjectTitle, projects]);
 
   // 타이머 완료 처리
   const handleTimerComplete = useCallback(() => {
@@ -194,11 +391,17 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   // 뒤로가기 처리
   const handleBack = () => {
     switch (viewState) {
-      case 'timer-running':
+      case 'reflection-input':
         handleStopTimer();
         break;
+      case 'project-derive':
+        setMindCareViewState('reflection-input');
+        break;
+      case 'todo-planning':
+        setMindCareViewState('project-derive');
+        break;
       case 'capture':
-        setMindCareViewState('timer-running');
+        setMindCareViewState('reflection-input');
         break;
       case 'history':
         setMindCareViewState('select-duration');
@@ -237,7 +440,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   // 뷰 렌더링
   // ============================================
 
-  // 타이머 시간 선택 화면 (통합 폼 - 유형 선택 제거)
+  // 타이머 시간 선택 화면 (배움→과제→계획)
   const renderSelectDurationView = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -250,12 +453,12 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
         <button onClick={handleBack} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold">나의 마음 챙기기</h1>
+        <h1 className="text-xl font-bold">배움 → 과제 → 계획</h1>
       </div>
 
       {/* 연속 기록 */}
       {stats && stats.currentStreak > 0 && (
-        <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl">
+        <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl">
           <span className="text-2xl">🔥</span>
           <span className="font-medium">연속 {stats.currentStreak}일째 기록 중!</span>
         </div>
@@ -263,28 +466,37 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
       {/* 안내 문구 */}
       <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-6">
-          <Heart className="w-10 h-10 text-purple-500" />
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-6">
+          <Lightbulb className="w-10 h-10 text-amber-600" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">마음 돌봄 시간</h2>
+        <h2 className="text-xl font-semibold mb-2">오늘의 배움 기록</h2>
         <p className="text-base-content/60 mb-6">
-          타이머와 함께 깨달음, 위로, 감사를<br />
-          자유롭게 기록해보세요
+          오늘 배운 것을 기록하고, 과제를 도출하고,<br />
+          할일을 계획하세요.
         </p>
 
         {/* 타이머 시간 선택 */}
-        <div className="w-full max-w-xs mb-6">
-          <p className="text-sm text-base-content/60 mb-3">타이머 시간</p>
-          <div className="flex gap-2">
+        <div className="w-full max-w-xs mb-4">
+          <p className="text-sm text-base-content/60 mb-3">타이머 시간 (선택)</p>
+          <div className="flex gap-2 flex-wrap justify-center">
             {TIMER_OPTIONS.map(min => (
               <button
                 key={min}
-                onClick={() => setSelectedDuration(min)}
-                className={`btn btn-sm flex-1 ${selectedDuration === min ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => {
+                  setSelectedDuration(min);
+                  setSkipTimer(false);
+                }}
+                className={`btn btn-sm ${selectedDuration === min && !skipTimer ? 'btn-primary' : 'btn-ghost'}`}
               >
                 {min}분
               </button>
             ))}
+            <button
+              onClick={() => setSkipTimer(true)}
+              className={`btn btn-sm ${skipTimer ? 'btn-primary' : 'btn-ghost'}`}
+            >
+              타이머 없이
+            </button>
           </div>
         </div>
 
@@ -292,7 +504,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={handleStartTimer}
+          onClick={skipTimer ? handleStartWithoutTimer : handleStartTimer}
           className="btn btn-primary btn-lg gap-2 rounded-full px-8"
         >
           <Play className="w-5 h-5" />
@@ -311,8 +523,10 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     </motion.div>
   );
 
-  // 타이머 + 통합 기록 화면
+  // 배움 기록 화면 (reflection-input)
   const renderTimerRunningView = () => {
+    const showTimer = !skipTimer && timerState.duration > 0;
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -325,85 +539,86 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           <button onClick={handleStopTimer} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-500">
-            <Heart className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+            <BookOpen className="w-4 h-4" />
           </div>
-          <h1 className="text-lg font-bold">나의 마음 챙기기</h1>
+          <h1 className="text-lg font-bold">오늘의 배움</h1>
         </div>
 
         {/* 오늘의 질문 */}
         {currentPrompt && (
           <div className="p-3 bg-base-200 rounded-xl mb-4">
-            <p className="text-sm text-base-content/60 mb-1">오늘의 질문</p>
+            <p className="text-sm text-base-content/60 mb-1">💡 오늘의 질문</p>
             <p className="font-medium">{currentPrompt.prompt_text}</p>
           </div>
         )}
 
-        {/* 원형 타이머 */}
-        <div className="flex justify-center mb-4">
-          <div className="relative w-40 h-40">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="#e5e7eb"
-                strokeWidth="8"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="#8b5cf6"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 70}
-                strokeDashoffset={2 * Math.PI * 70 * (1 - progress / 100)}
-                className="transition-all duration-300"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold">{formatTime(timerState.remainingTime)}</span>
+        {/* 원형 타이머 (타이머 선택 시만 표시) */}
+        {showTimer && (
+          <>
+            <div className="flex justify-center mb-4">
+              <div className="relative w-32 h-32">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    strokeWidth="6"
+                  />
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 56}
+                    strokeDashoffset={2 * Math.PI * 56 * (1 - progress / 100)}
+                    className="transition-all duration-300"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold">{formatTime(timerState.remainingTime)}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* 타이머 컨트롤 */}
-        <div className="flex justify-center items-center gap-4 mb-4">
-          <button onClick={() => handleAdjustTime(-1)} className="btn btn-ghost btn-sm">
-            <Minus className="w-4 h-4" /> 1분
-          </button>
-          {timerState.isRunning ? (
-            <button onClick={pauseTimer} className="btn btn-primary btn-circle btn-lg">
-              <Pause className="w-6 h-6" />
-            </button>
-          ) : (
-            <button onClick={resumeTimer} className="btn btn-primary btn-circle btn-lg">
-              <Play className="w-6 h-6" />
-            </button>
-          )}
-          <button onClick={() => handleAdjustTime(1)} className="btn btn-ghost btn-sm">
-            <Plus className="w-4 h-4" /> 1분
-          </button>
-        </div>
+            {/* 타이머 컨트롤 */}
+            <div className="flex justify-center items-center gap-4 mb-4">
+              <button onClick={() => handleAdjustTime(-1)} className="btn btn-ghost btn-xs">
+                <Minus className="w-3 h-3" /> 1분
+              </button>
+              {timerState.isRunning ? (
+                <button onClick={pauseTimer} className="btn btn-warning btn-circle">
+                  <Pause className="w-5 h-5" />
+                </button>
+              ) : (
+                <button onClick={resumeTimer} className="btn btn-warning btn-circle">
+                  <Play className="w-5 h-5" />
+                </button>
+              )}
+              <button onClick={() => handleAdjustTime(1)} className="btn btn-ghost btn-xs">
+                <Plus className="w-3 h-3" /> 1분
+              </button>
+            </div>
+          </>
+        )}
 
-        <p className="text-center text-sm text-base-content/50 mb-4">
-          타이머가 끝나면 기록을 저장할 수 있어요
-        </p>
-
-        {/* 통합 기록 입력 폼 - 5개 필드 */}
+        {/* 배움 기록 입력 폼 - 새 라벨 */}
         <div className="flex-1 space-y-4">
-          {/* 1. 마음에 닿은 글 (선택) */}
+          {/* 1. 영감을 준 내용 (선택) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              마음에 닿은 글 <span className="text-base-content/40">(선택)</span>
+              {LEARNING_FIELD_LABELS.sourceText.label}{' '}
+              {!LEARNING_FIELD_LABELS.sourceText.required && <span className="text-base-content/40">(선택)</span>}
             </label>
             <textarea
               value={draftSourceText}
               onChange={(e) => setMindCareDraft({ sourceText: e.target.value })}
-              placeholder="읽은 글, 들은 말, 영감을 준 내용..."
+              placeholder={LEARNING_FIELD_LABELS.sourceText.placeholder}
               className="textarea textarea-bordered w-full h-20 resize-none"
             />
           </div>
@@ -411,26 +626,28 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           {/* 2. 출처 (선택) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              출처 <span className="text-base-content/40">(선택)</span>
+              {LEARNING_FIELD_LABELS.sourceReference.label}{' '}
+              {!LEARNING_FIELD_LABELS.sourceReference.required && <span className="text-base-content/40">(선택)</span>}
             </label>
             <input
               type="text"
               value={draftSourceReference}
               onChange={(e) => setMindCareDraft({ sourceReference: e.target.value })}
-              placeholder="책, 사람, 영상 등"
+              placeholder={LEARNING_FIELD_LABELS.sourceReference.placeholder}
               className="input input-bordered w-full"
             />
           </div>
 
-          {/* 3. 나의 생각 (필수) */}
+          {/* 3. 나의 깨달음 (필수) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              나의 생각 <span className="text-purple-500">*</span>
+              {LEARNING_FIELD_LABELS.content.label}{' '}
+              {LEARNING_FIELD_LABELS.content.required && <span className="text-amber-500">*</span>}
             </label>
             <textarea
               value={draftContent}
               onChange={(e) => setMindCareDraft({ content: e.target.value })}
-              placeholder="깨달음, 위로, 감사, 성찰 등 자유롭게..."
+              placeholder={LEARNING_FIELD_LABELS.content.placeholder}
               className="textarea textarea-bordered w-full h-24 resize-none"
             />
           </div>
@@ -438,12 +655,13 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           {/* 4. 오늘의 경험 (선택) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              오늘의 경험 <span className="text-base-content/40">(선택)</span>
+              {LEARNING_FIELD_LABELS.experience.label}{' '}
+              {!LEARNING_FIELD_LABELS.experience.required && <span className="text-base-content/40">(선택)</span>}
             </label>
             <textarea
               value={draftExperience}
               onChange={(e) => setMindCareDraft({ experience: e.target.value })}
-              placeholder="오늘 마음에 와닿은 순간, 경험한 일..."
+              placeholder={LEARNING_FIELD_LABELS.experience.placeholder}
               className="textarea textarea-bordered w-full h-20 resize-none"
             />
           </div>
@@ -451,24 +669,36 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           {/* 5. 실천 다짐 (선택) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              실천 다짐 <span className="text-base-content/40">(선택)</span>
+              {LEARNING_FIELD_LABELS.commitment.label}{' '}
+              {!LEARNING_FIELD_LABELS.commitment.required && <span className="text-base-content/40">(선택)</span>}
             </label>
             <textarea
               value={draftCommitment}
               onChange={(e) => setMindCareDraft({ commitment: e.target.value })}
-              placeholder="앞으로의 계획, 적용할 점..."
+              placeholder={LEARNING_FIELD_LABELS.commitment.placeholder}
               className="textarea textarea-bordered w-full h-20 resize-none"
             />
           </div>
         </div>
 
-        {/* 완료 버튼 (타이머 실행 중에도 바로 완료 가능) */}
-        <button
-          onClick={handleDragComplete}
-          className="btn btn-outline btn-sm mt-4"
-        >
-          바로 완료하기
-        </button>
+        {/* 하단 버튼 */}
+        <div className="mt-4 space-y-2">
+          <button
+            onClick={handleGoToProjectDerive}
+            disabled={!draftContent.trim()}
+            className="btn btn-primary w-full gap-2"
+          >
+            다음: 과제 도출하기
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleFinishWithLearningOnly}
+            disabled={!draftContent.trim()}
+            className="btn btn-ghost btn-sm w-full"
+          >
+            배움만 기록하고 끝내기
+          </button>
+        </div>
       </motion.div>
     );
   };
@@ -484,7 +714,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
       >
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setMindCareViewState('timer-running')} className="btn btn-ghost btn-circle">
+          <button onClick={() => setMindCareViewState('reflection-input')} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-xl font-bold">마음 돌봄 완료!</h1>
@@ -553,59 +783,383 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     );
   };
 
-  // 완료 화면
-  const renderCompletedView = () => (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="flex flex-col items-center justify-center h-full p-4"
-    >
-      <div className="text-center">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', delay: 0.2 }}
-          className="text-6xl mb-4"
-        >
-          🎉
-        </motion.div>
-        <h2 className="text-2xl font-bold mb-2">오늘도 마음을 돌봤어요!</h2>
-        {stats && stats.currentStreak > 0 && (
-          <p className="text-base-content/60 mb-6">
-            연속 {stats.currentStreak}일째 기록 중 🔥
-          </p>
-        )}
+  // 과제 도출 화면
+  const renderProjectDeriveView = () => {
+    const filteredProjects = projects.filter((p: Project) => p.status !== 'completed');
 
-        <div className="flex gap-3">
+    return (
+      <motion.div
+        key="project-derive"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 p-4 border-b border-base-300">
+          <button onClick={() => setMindCareViewState('reflection-input')} className="btn btn-ghost btn-circle">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold">과제 도출</h1>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* 깨달음 미리보기 */}
+          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-medium text-amber-700">나의 깨달음</span>
+            </div>
+            <p className="text-sm text-base-content/80 line-clamp-3">
+              {draftContent || '(작성된 내용이 없습니다)'}
+            </p>
+          </div>
+
+          {/* 기존 프로젝트에 연결 */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-2 block">
+              기존 과제에 연결
+            </label>
+            <select
+              value={selectedProjectId || ''}
+              onChange={(e) => {
+                setMindCareDraft({ selectedProjectId: e.target.value || null, newProjectTitle: '' });
+              }}
+              className="select select-bordered w-full"
+            >
+              <option value="">선택 안 함 (새 과제 만들기)</option>
+              {filteredProjects.map(p => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 구분선 */}
+          {!selectedProjectId && (
+            <>
+              <div className="divider text-base-content/40">또는</div>
+
+              {/* 새 과제 만들기 */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-base-content/70 mb-2 block">
+                    <FolderPlus className="w-4 h-4 inline mr-1" />
+                    {PROJECT_DERIVE_LABELS.title.label}
+                  </label>
+                  <input
+                    type="text"
+                    value={newProjectTitle}
+                    onChange={(e) => setMindCareDraft({ newProjectTitle: e.target.value })}
+                    placeholder={PROJECT_DERIVE_LABELS.title.placeholder}
+                    className="input input-bordered w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-base-content/70 mb-2 block">
+                    {PROJECT_DERIVE_LABELS.expectedOutcome.label}
+                  </label>
+                  <textarea
+                    value={newProjectExpectedOutcome}
+                    onChange={(e) => setMindCareDraft({ newProjectExpectedOutcome: e.target.value })}
+                    placeholder={PROJECT_DERIVE_LABELS.expectedOutcome.placeholder}
+                    rows={2}
+                    className="textarea textarea-bordered w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-base-content/70 mb-2 block">
+                    {PROJECT_DERIVE_LABELS.goalConnection.label}
+                  </label>
+                  <select
+                    value={selectedGoalId || ''}
+                    onChange={(e) => setMindCareDraft({ selectedGoalId: e.target.value || null })}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="">목표 없이 진행</option>
+                    {goals.filter((g: Goal) => g.status !== 'completed').map((g: Goal) => (
+                      <option key={g.id} value={g.id}>{g.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="p-4 border-t border-base-300 space-y-3">
           <button
-            onClick={() => {
-              resetMindCareDraft();
-              setMindCareViewState('select-duration');
+            onClick={handleGoToTodoPlanning}
+            disabled={!selectedProjectId && !newProjectTitle.trim()}
+            className="btn btn-primary w-full gap-2"
+          >
+            다음: 할일 계획하기 <ChevronRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={async () => {
+              // 과제 없이 배움만 저장
+              await saveEntry(null);
+              setMindCareViewState('completed');
             }}
-            className="btn btn-ghost"
+            className="btn btn-ghost w-full"
           >
-            처음으로
+            과제 없이 끝내기
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // 할일 계획 화면
+  const renderTodoPlanningView = () => {
+    const projectName = selectedProjectId
+      ? projects.find(p => p.id === selectedProjectId)?.title
+      : newProjectTitle;
+
+    return (
+      <motion.div
+        key="todo-planning"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 p-4 border-b border-base-300">
+          <button onClick={() => setMindCareViewState('project-derive')} className="btn btn-ghost btn-circle">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold">할일 계획</h1>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* 과제 정보 */}
+          <div className="p-3 bg-base-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <FolderPlus className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">&quot;{projectName}&quot;을 위한 할일</span>
+            </div>
+          </div>
+
+          {/* 준비할 것 */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-2 block">
+              {TODO_PLANNING_LABELS.preparation.label}
+            </label>
+            <textarea
+              value={newProjectPreparation}
+              onChange={(e) => setMindCareDraft({ newProjectPreparation: e.target.value })}
+              placeholder={TODO_PLANNING_LABELS.preparation.placeholder}
+              rows={2}
+              className="textarea textarea-bordered w-full"
+            />
+          </div>
+
+          {/* 할일 목록 */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-base-content/70">
+                <ListTodo className="w-4 h-4 inline mr-1" />
+                {TODO_PLANNING_LABELS.todoTitle.label}
+              </label>
+              <button
+                onClick={handleAddTodoDraft}
+                className="btn btn-ghost btn-xs gap-1"
+              >
+                <Plus className="w-3 h-3" /> 추가
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {todosDraft.length === 0 ? (
+                <div className="text-center text-base-content/50 py-4">
+                  <ListTodo className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">할일을 추가해보세요</p>
+                </div>
+              ) : (
+                todosDraft.map((todo, index) => (
+                  <div key={todo.id} className="p-3 bg-base-200 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-base-content/50">#{index + 1}</span>
+                      <input
+                        type="text"
+                        value={todo.title}
+                        onChange={(e) => handleUpdateTodoDraft(todo.id, { title: e.target.value })}
+                        placeholder={TODO_PLANNING_LABELS.todoTitle.placeholder}
+                        className="input input-bordered input-sm flex-1"
+                      />
+                      <button
+                        onClick={() => handleRemoveTodoDraft(todo.id)}
+                        className="btn btn-ghost btn-xs btn-circle text-error"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="text-xs text-base-content/50 mb-1 block">
+                          <Calendar className="w-3 h-3 inline mr-1" />날짜
+                        </label>
+                        <input
+                          type="date"
+                          value={todo.scheduledDate || ''}
+                          onChange={(e) => handleUpdateTodoDraft(todo.id, { scheduledDate: e.target.value || null })}
+                          className="input input-bordered input-xs w-full"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs text-base-content/50 mb-1 block">
+                          <Clock className="w-3 h-3 inline mr-1" />시간
+                        </label>
+                        <input
+                          type="time"
+                          value={todo.scheduledTime || ''}
+                          onChange={(e) => handleUpdateTodoDraft(todo.id, { scheduledTime: e.target.value || null })}
+                          className="input input-bordered input-xs w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="p-4 border-t border-base-300 space-y-3">
+          <button
+            onClick={saveEntryAndProjectAndTodos}
+            disabled={isSaving}
+            className="btn btn-primary w-full gap-2"
+          >
+            {isSaving ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <>완료하기 <Check className="w-4 h-4" /></>
+            )}
           </button>
           <button
-            onClick={() => setMindCareViewState('history')}
-            className="btn btn-outline"
+            onClick={async () => {
+              // 할일 없이 배움+과제만 저장
+              await saveEntryAndProject();
+              setMindCareViewState('completed');
+            }}
+            disabled={isSaving}
+            className="btn btn-ghost w-full"
           >
-            과거 기록 보기
+            할일 없이 끝내기
           </button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // 완료 화면
+  const renderCompletedView = () => {
+    const projectName = selectedProjectId
+      ? projects.find(p => p.id === selectedProjectId)?.title
+      : newProjectTitle;
+    const hasTodos = todosDraft.filter(t => t.title.trim()).length > 0;
+    const todoCount = todosDraft.filter(t => t.title.trim()).length;
+
+    return (
+      <motion.div
+        key="completed"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="flex flex-col h-full p-4"
+      >
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', delay: 0.2 }}
+            className="text-6xl mb-4"
+          >
+            ✨
+          </motion.div>
+          <h2 className="text-2xl font-bold mb-2 text-center">
+            {projectName ? '오늘의 배움이 계획이 되었어요!' : '오늘의 배움을 기록했어요!'}
+          </h2>
+          {stats && stats.currentStreak > 0 && (
+            <p className="text-base-content/60 mb-6">
+              🔥 연속 {stats.currentStreak}일째 기록 중
+            </p>
+          )}
+
+          {/* 요약 카드들 */}
+          <div className="w-full max-w-sm space-y-3 mb-6">
+            {/* 배움 요약 */}
+            <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+              <div className="flex items-center gap-2 mb-1">
+                <Lightbulb className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-medium text-amber-700">배움</span>
+              </div>
+              <p className="text-sm text-base-content/80 line-clamp-2">
+                {draftContent || '(내용 없음)'}
+              </p>
+            </div>
+
+            {/* 과제 요약 */}
+            {projectName && (
+              <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <FolderPlus className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-medium text-blue-700">과제</span>
+                </div>
+                <p className="text-sm text-base-content/80">{projectName}</p>
+              </div>
+            )}
+
+            {/* 할일 요약 */}
+            {hasTodos && (
+              <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                <div className="flex items-center gap-2">
+                  <ListTodo className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-medium text-green-700">할일</span>
+                  <span className="ml-auto badge badge-sm badge-success">{todoCount}개 추가됨</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                resetMindCareDraft();
+                setMindCareViewState('select-duration');
+              }}
+              className="btn btn-ghost flex-1"
+            >
+              처음으로
+            </button>
+            <button
+              onClick={() => setMindCareViewState('history')}
+              className="btn btn-outline flex-1"
+            >
+              과거 기록 보기
+            </button>
+          </div>
           <button
             onClick={() => {
               endMindCareMode();
               onExit();
             }}
-            className="btn btn-primary"
+            className="btn btn-primary w-full"
           >
             완료
           </button>
         </div>
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  };
 
   // 과거 기록 화면
   const renderHistoryView = () => (
@@ -679,7 +1233,9 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     <div className="fixed inset-0 bg-base-100 z-50 flex flex-col">
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
-        {viewState === 'timer-running' && renderTimerRunningView()}
+        {viewState === 'reflection-input' && renderTimerRunningView()}
+        {viewState === 'project-derive' && renderProjectDeriveView()}
+        {viewState === 'todo-planning' && renderTodoPlanningView()}
         {viewState === 'capture' && renderCaptureView()}
         {viewState === 'completed' && renderCompletedView()}
         {viewState === 'history' && renderHistoryView()}

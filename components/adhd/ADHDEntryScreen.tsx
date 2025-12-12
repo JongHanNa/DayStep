@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Heart } from 'lucide-react';
+import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 
@@ -73,22 +73,22 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
 
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
-          {/* 나의 마음 챙기기 버튼 */}
+          {/* 배움→과제→계획 버튼 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onMindCare}
-              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-rose-400 to-pink-500 text-white border-none hover:from-rose-500 hover:to-pink-600"
+              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white border-none hover:from-amber-500 hover:to-orange-600"
             >
-              <Heart className="w-7 h-7" />
-              <span className="text-xl font-semibold">나의 마음 챙기기</span>
+              <Lightbulb className="w-7 h-7" />
+              <span className="text-xl font-semibold">배움→과제→계획</span>
             </motion.button>
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                하루를 성찰하고, 위로받은 순간을 기록하고,
+                오늘 배운 것을 기록하고, 과제를 도출하고,
                 <br />
-                감사한 것들을 떠올려보세요.
+                할일을 계획하세요.
               </p>
             )}
           </div>
@@ -133,7 +133,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
           </div>
 
-          {/* 할 일 정리하기 버튼 */}
+          {/* 기록/일정/통계 버튼 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -141,14 +141,14 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               onClick={onTaskOrganize}
               className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
             >
-              <ListTodo className="w-7 h-7" />
-              <span className="text-xl font-semibold">할 일 정리하기</span>
+              <CalendarCheck className="w-7 h-7" />
+              <span className="text-xl font-semibold">기록/일정/통계</span>
             </motion.button>
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                머릿속이 복잡할 때 우선순위 정하기 어렵죠.
+                지난 기록을 확인하고, 일정을 관리하고,
                 <br />
-                할 일들을 한눈에 보고 정리할 수 있어요.
+                통계로 성장을 확인하세요.
               </p>
             )}
           </div>

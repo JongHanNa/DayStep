@@ -51,20 +51,32 @@ interface CareModeState {
   linkedTodoId: string | null;          // 연결된 할일 ID
 }
 
-// 나의 마음 챙기기 모드 상태
-export type MindCareViewState = 'select-duration' | 'timer-running' | 'capture' | 'completed' | 'history';
+// 배움→과제→계획 모드 상태 (구 나의 마음 챙기기)
+import type { MindCareViewState, TodoDraft } from '@/types/mind-care';
+export type { MindCareViewState };
 export type MindCareEntryType = 'reflection' | 'comfort' | 'gratitude';
 
 interface MindCareModeState {
   isActive: boolean;
   startedAt: Date | null;
   viewState: MindCareViewState;
-  // 타이머 중 입력한 내용 임시 저장 (5개 필드)
-  draftContent: string;        // 나의 생각 (필수)
-  draftSourceText: string;     // 마음에 닿은 글
-  draftSourceReference: string; // 출처
-  draftExperience: string;     // 오늘의 경험
-  draftCommitment: string;     // 실천 다짐
+
+  // 배움 기록 필드
+  draftContent: string;           // 나의 깨달음 (필수)
+  draftSourceText: string;        // 영감을 준 내용
+  draftSourceReference: string;   // 출처
+  draftExperience: string;        // 오늘의 경험
+  draftCommitment: string;        // 실천 다짐
+
+  // 과제 도출 필드 (신규)
+  selectedProjectId: string | null;      // 기존 프로젝트 선택 시
+  newProjectTitle: string;               // 새 과제 이름
+  newProjectExpectedOutcome: string;     // 기대 효과
+  selectedGoalId: string | null;         // 연결할 목표
+
+  // 할일 계획 필드 (신규)
+  newProjectPreparation: string;         // 준비할 것
+  todosDraft: TodoDraft[];               // 할일 초안 목록
 }
 
 // DB에서 로드한 패턴 (캐시용)
@@ -143,7 +155,22 @@ interface ADHDModeState {
   // === 나의 마음 챙기기 모드 Actions ===
   enterMindCareMode: (userId: string) => void;
   setMindCareViewState: (viewState: MindCareViewState) => void;
-  setMindCareDraft: (draft: { content?: string; sourceText?: string; sourceReference?: string; experience?: string; commitment?: string }) => void;
+  setMindCareDraft: (draft: {
+    // 배움 기록 필드
+    content?: string;
+    sourceText?: string;
+    sourceReference?: string;
+    experience?: string;
+    commitment?: string;
+    // 과제 도출 필드
+    selectedProjectId?: string | null;
+    newProjectTitle?: string;
+    newProjectExpectedOutcome?: string;
+    selectedGoalId?: string | null;
+    // 할일 계획 필드
+    newProjectPreparation?: string;
+    todosDraft?: TodoDraft[];
+  }) => void;
   resetMindCareDraft: () => void;
   endMindCareMode: () => void;
 
@@ -218,11 +245,20 @@ const DEFAULT_MIND_CARE_MODE: MindCareModeState = {
   isActive: false,
   startedAt: null,
   viewState: 'select-duration',
+  // 배움 기록 필드
   draftContent: '',
   draftSourceText: '',
   draftSourceReference: '',
   draftExperience: '',
   draftCommitment: '',
+  // 과제 도출 필드
+  selectedProjectId: null,
+  newProjectTitle: '',
+  newProjectExpectedOutcome: '',
+  selectedGoalId: null,
+  // 할일 계획 필드
+  newProjectPreparation: '',
+  todosDraft: [],
 };
 
 // ============================================
@@ -542,7 +578,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
 
         // === 나의 마음 챙기기 모드 Actions ===
         enterMindCareMode: (userId: string) => {
-          console.log('💝 ADHD: 나의 마음 챙기기 모드 진입');
+          console.log('💡 ADHD: 배움→과제→계획 모드 진입');
           set({
             currentMode: 'mind-care',
             currentUserId: userId,
@@ -550,11 +586,20 @@ export const useADHDModeStore = create<ADHDModeState>()(
               isActive: true,
               startedAt: new Date(),
               viewState: 'select-duration',
+              // 배움 기록 필드
               draftContent: '',
               draftSourceText: '',
               draftSourceReference: '',
               draftExperience: '',
               draftCommitment: '',
+              // 과제 도출 필드
+              selectedProjectId: null,
+              newProjectTitle: '',
+              newProjectExpectedOutcome: '',
+              selectedGoalId: null,
+              // 할일 계획 필드
+              newProjectPreparation: '',
+              todosDraft: [],
             }
           });
         },
@@ -583,11 +628,20 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set((state) => ({
             mindCareMode: {
               ...state.mindCareMode,
+              // 배움 기록 필드
               ...(draft.content !== undefined && { draftContent: draft.content }),
               ...(draft.sourceText !== undefined && { draftSourceText: draft.sourceText }),
               ...(draft.sourceReference !== undefined && { draftSourceReference: draft.sourceReference }),
               ...(draft.experience !== undefined && { draftExperience: draft.experience }),
               ...(draft.commitment !== undefined && { draftCommitment: draft.commitment }),
+              // 과제 도출 필드
+              ...(draft.selectedProjectId !== undefined && { selectedProjectId: draft.selectedProjectId }),
+              ...(draft.newProjectTitle !== undefined && { newProjectTitle: draft.newProjectTitle }),
+              ...(draft.newProjectExpectedOutcome !== undefined && { newProjectExpectedOutcome: draft.newProjectExpectedOutcome }),
+              ...(draft.selectedGoalId !== undefined && { selectedGoalId: draft.selectedGoalId }),
+              // 할일 계획 필드
+              ...(draft.newProjectPreparation !== undefined && { newProjectPreparation: draft.newProjectPreparation }),
+              ...(draft.todosDraft !== undefined && { todosDraft: draft.todosDraft }),
             }
           }));
         },
@@ -596,11 +650,20 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set((state) => ({
             mindCareMode: {
               ...state.mindCareMode,
+              // 배움 기록 필드 초기화
               draftContent: '',
               draftSourceText: '',
               draftSourceReference: '',
               draftExperience: '',
               draftCommitment: '',
+              // 과제 도출 필드 초기화
+              selectedProjectId: null,
+              newProjectTitle: '',
+              newProjectExpectedOutcome: '',
+              selectedGoalId: null,
+              // 할일 계획 필드 초기화
+              newProjectPreparation: '',
+              todosDraft: [],
             }
           }));
         },

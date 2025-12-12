@@ -1,6 +1,17 @@
 // ============================================
-// 나의 마음 챙기기 시스템 타입 정의
+// 배움→과제→계획 시스템 타입 정의
+// (구 나의 마음 챙기기)
 // ============================================
+
+/** 마음 챙기기 뷰 상태 */
+export type MindCareViewState =
+  | 'select-duration'    // 시작 화면 (타이머 선택)
+  | 'reflection-input'   // 배움 기록
+  | 'project-derive'     // 과제 도출 (신규)
+  | 'todo-planning'      // 할일 계획 (신규)
+  | 'capture'            // 기분/태그 (배움만 기록 시)
+  | 'completed'          // 완료
+  | 'history';           // 과거 기록
 
 /** 기록 유형 */
 export type MindCareEntryType =
@@ -37,6 +48,9 @@ export interface MindCareEntry {
   last_reminded_at: string | null;
   reminder_count: number;
 
+  // 프로젝트 연결 (배움→과제 플로우)
+  project_id: string | null;
+
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +69,7 @@ export interface MindCareEntryInput {
   tags?: string[];
   is_favorite?: boolean;
   reminder_enabled?: boolean;
+  project_id?: string;           // 프로젝트 연결
 }
 
 /** 마음 기록 업데이트 */
@@ -71,6 +86,7 @@ export interface MindCareEntryUpdate {
   is_favorite?: boolean;
   is_pinned?: boolean;
   reminder_enabled?: boolean;
+  project_id?: string | null;   // 프로젝트 연결
 }
 
 /** 마음 챙기기 설정 */
@@ -180,3 +196,77 @@ export const UNIFIED_TAGS = [
 /** 성찰 타이머 시간 옵션 (분) */
 export const REFLECTION_TIMER_OPTIONS = [5, 10, 15, 20] as const;
 export type ReflectionTimerDuration = typeof REFLECTION_TIMER_OPTIONS[number];
+
+// ============================================
+// 배움→과제→계획 플로우 라벨 (비신앙인 친화적)
+// ============================================
+
+/** 배움 기록 필드 라벨 */
+export const LEARNING_FIELD_LABELS = {
+  sourceText: {
+    label: '영감을 준 내용',
+    placeholder: '책, 영상, 대화에서 인상 깊었던 내용을 적어보세요',
+    required: false,
+  },
+  sourceReference: {
+    label: '출처',
+    placeholder: '어디서 배웠나요? (책 제목, 영상 링크 등)',
+    required: false,
+  },
+  content: {
+    label: '나의 깨달음',
+    placeholder: '무엇을 깨달았나요? 어떤 생각이 드나요?',
+    required: true,
+  },
+  experience: {
+    label: '오늘의 경험',
+    placeholder: '이 배움과 관련된 오늘의 경험이 있나요?',
+    required: false,
+  },
+  commitment: {
+    label: '실천 다짐',
+    placeholder: '앞으로 어떻게 할까요?',
+    required: false,
+  },
+} as const;
+
+/** 과제 도출 필드 라벨 */
+export const PROJECT_DERIVE_LABELS = {
+  title: {
+    label: '과제 이름',
+    placeholder: '예: 재물 관리 습관 만들기',
+    required: true,
+  },
+  expectedOutcome: {
+    label: '기대 효과',
+    placeholder: '이 과제를 완료하면 어떤 변화가 있을까요?',
+    required: false,
+  },
+  goalConnection: {
+    label: '연결할 목표',
+    placeholder: '기존 목표에 연결하거나 새로 만들기',
+    required: false,
+  },
+} as const;
+
+/** 할일 계획 필드 라벨 */
+export const TODO_PLANNING_LABELS = {
+  preparation: {
+    label: '준비할 것',
+    placeholder: '시작 전에 필요한 것들 (선택)',
+    required: false,
+  },
+  todoTitle: {
+    label: '할 일',
+    placeholder: '구체적인 할일을 적어보세요',
+    required: true,
+  },
+} as const;
+
+/** 할일 초안 타입 */
+export interface TodoDraft {
+  id: string;           // 임시 ID (클라이언트 생성)
+  title: string;
+  scheduledDate: string | null;  // YYYY-MM-DD
+  scheduledTime: string | null;  // HH:mm
+}

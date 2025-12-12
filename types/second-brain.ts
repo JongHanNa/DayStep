@@ -100,6 +100,11 @@ export interface Project {
   completed_todos: number;
   progress: number; // 0-100 (%)
 
+  // 배움→과제→계획 플로우 (신규)
+  expected_outcome?: string;      // 기대 효과
+  preparation?: string;           // 준비할 것
+  source_reflection_id?: string;  // 연결된 배움 기록 ID
+
   // 연결된 노트 (파생 데이터, project_notes junction table을 통해 로드)
   notes?: Note[];
 
