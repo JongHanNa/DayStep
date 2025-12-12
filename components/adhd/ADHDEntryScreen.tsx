@@ -142,7 +142,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
             >
               <Target className="w-7 h-7" />
-              <span className="text-xl font-semibold">작은 것 하나 실행</span>
+              <span className="text-xl font-semibold">계획된 일 또는 떠오른 일 실행</span>
             </motion.button>
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
