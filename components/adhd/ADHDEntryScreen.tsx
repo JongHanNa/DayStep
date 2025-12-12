@@ -142,13 +142,13 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
             >
               <Target className="w-7 h-7" />
-              <span className="text-xl font-semibold">계획된 일 또는 떠오른 일 실행</span>
+              <span className="text-xl font-semibold">실행과 집중</span>
             </motion.button>
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                할 일이 많으면 뭐부터 해야 할지 막막하죠.
+                계획된 일과 떠오른 일을
                 <br />
-                오늘 할 일 중 하나를 추천받거나, 바로 타이머 켜고 실행할 수 있어요.
+                바로 타이머 켜고 실행할 수 있어요.
               </p>
             )}
           </div>
