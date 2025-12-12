@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform, MotionValue } from 'framer-motion';
-import { Calendar, Brain, Target, CheckCircle2, Sparkles, Clock, LucideIcon } from 'lucide-react';
+import { Timer, Heart, BookOpen, BarChart3, MessageCircle, LucideIcon } from 'lucide-react';
 import { getBidirectionalViewportOptions } from '@/lib/animations/scrollAnimations';
 import { useRef } from 'react';
 import { useWindowSize } from '@/hooks/useWindowSize';
@@ -133,14 +133,13 @@ export default function ScrollProgressSection() {
     offset: ["start end", "end start"] // 섹션 시작~끝
   });
 
-  // 이미지 태그 데이터
+  // 이미지 태그 데이터 - ADHD 친화적 기능
   const featureTags: FeatureTag[] = [
-    { icon: Calendar, label: '타임라인', color: 'bg-primary' },
-    { icon: Brain, label: 'Second Brain', color: 'bg-accent' },
-    { icon: Target, label: '목표', color: 'bg-secondary' },
-    { icon: CheckCircle2, label: '할일', color: 'bg-info' },
-    { icon: Sparkles, label: 'AI', color: 'bg-success' },
-    { icon: Clock, label: '루틴', color: 'bg-warning' },
+    { icon: Timer, label: '실행과 집중', color: 'bg-primary' },
+    { icon: Heart, label: '소중한 사람 챙기기', color: 'bg-accent' },
+    { icon: BookOpen, label: '배움→과제→계획', color: 'bg-secondary' },
+    { icon: BarChart3, label: '기록/일정/통계', color: 'bg-info' },
+    { icon: MessageCircle, label: '관계 기록', color: 'bg-success' },
   ];
 
   return (
@@ -155,10 +154,11 @@ export default function ScrollProgressSection() {
           transition={{ duration: 0.8 }}
         >
           <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
-            모든 기능이 하나로
+            일상의 어려움, 함께 해결해요
           </h2>
           <p className="text-xl text-white/90 max-w-2xl mx-auto">
-            DayStep은 생산성 향상에 필요한 모든 도구를 하나의 앱에 담았습니다
+            집중이 어려운 날에도 괜찮아요.<br className="hidden sm:block" />
+            DayStep이 옆에서 함께할게요.
           </p>
         </motion.div>
 
@@ -194,12 +194,12 @@ export default function ScrollProgressSection() {
           transition={{ duration: 0.8, delay: 0.8 }}
         >
           <p className="text-lg text-white/90 max-w-3xl mx-auto leading-relaxed">
-            <strong className="text-primary">타임라인 뷰</strong>로 하루를 시각화하고,{' '}
-            <strong className="text-accent">Second Brain</strong>으로 생각을 정리하며,{' '}
-            <strong className="text-secondary">목표 관리</strong>로 꿈을 실현하세요.
+            <strong className="text-primary">즉시 실행</strong>으로 시작의 어려움을 덜고,{' '}
+            <strong className="text-accent">관계 챙기기</strong>로 소중한 사람을 놓치지 않으며,{' '}
+            <strong className="text-secondary">기록과 통계</strong>로 나를 이해해가요.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
-            {['직관적', '체계적', '효율적'].map((keyword, index) => (
+            {['간단하게', '바로 실행', '함께 관리'].map((keyword, index) => (
               <motion.span
                 key={index}
                 className="px-6 py-2 bg-white/80 backdrop-blur-sm rounded-full text-base-content font-medium border border-base-300"
