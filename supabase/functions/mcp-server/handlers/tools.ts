@@ -50,7 +50,6 @@ import {
   deleteTodo,
   completeTodo,
   rescheduleTodo,
-  setTodoClarification,
 } from '../tools/todos.ts';
 
 import {
@@ -359,7 +358,6 @@ const TOOLS: McpTool[] = [
             count: { type: 'number', description: '반복 횟수' },
           },
         },
-        clarification: { type: 'string', enum: ['none', 'reminder', 'someday', 'waiting', 'next_action', 'schedule_clear'], description: '명료화 상태' },
         is_today_highlight: { type: 'boolean', description: '오늘 하이라이트 여부' },
         icon: { type: 'string', description: '아이콘' },
         color: { type: 'string', description: '색상' },
@@ -384,7 +382,6 @@ const TOOLS: McpTool[] = [
         },
         completed: { type: 'boolean', description: '완료 여부 필터' },
         priority: { type: 'string', enum: ['low', 'medium', 'high'], description: '우선순위 필터' },
-        clarification: { type: 'string', enum: ['none', 'reminder', 'someday', 'waiting', 'next_action', 'schedule_clear'], description: '명료화 필터' },
         project_id: { type: 'string', description: '프로젝트 ID 필터' },
         schedule_type: { type: 'string', enum: ['all_day', 'timed', 'anytime', 'none'], description: '일정 타입 필터' },
         limit: { type: 'number', description: '최대 개수' },
@@ -417,7 +414,6 @@ const TOOLS: McpTool[] = [
         end_time: { type: ['string', 'null'], description: '종료 시간' },
         priority: { type: 'string', enum: ['low', 'medium', 'high'], description: '우선순위' },
         completed: { type: 'boolean', description: '완료 여부' },
-        clarification: { type: 'string', enum: ['none', 'reminder', 'someday', 'waiting', 'next_action', 'schedule_clear'], description: '명료화' },
         is_today_highlight: { type: 'boolean', description: '오늘 하이라이트' },
         icon: { type: 'string', description: '아이콘' },
         color: { type: 'string', description: '색상' },
@@ -466,19 +462,6 @@ const TOOLS: McpTool[] = [
       required: ['id', 'start_time'],
     },
   },
-  {
-    name: 'set_todo_clarification',
-    description: '할일의 명료화 상태를 변경합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-        clarification: { type: 'string', enum: ['none', 'reminder', 'someday', 'waiting', 'next_action', 'schedule_clear'], description: '명료화 상태' },
-      },
-      required: ['id', 'clarification'],
-    },
-  },
-
   // ========== Relations & Special ==========
   {
     name: 'link_todo_to_project',
@@ -693,8 +676,6 @@ export async function handleToolsCall(
         return await completeTodo(supabase, userId, args, dateContext);
       case 'reschedule_todo':
         return await rescheduleTodo(supabase, userId, args, dateContext);
-      case 'set_todo_clarification':
-        return await setTodoClarification(supabase, userId, args, dateContext);
 
       // Relations & Special
       case 'link_todo_to_project':

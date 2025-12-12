@@ -39,21 +39,6 @@ interface NoteItem extends NoteFormData {
   id: string;
 }
 
-// 명료화 레이블 변환 헬퍼 함수
-function getClarificationLabel(clarification?: string): string {
-  if (!clarification || clarification === 'none') return '선택 안함';
-
-  const labelMap: Record<string, string> = {
-    'reminder': '다시알림',
-    'someday': '언젠가',
-    'waiting': '대기중',
-    'next_action': '다음행동',
-    'schedule_clear': '일정',
-  };
-
-  return labelMap[clarification] || clarification;
-}
-
 // InboxItem 확장 타입 (end_date 필드 추가)
 type InboxItemWithEndDate = any & {
   end_date?: string | null;
@@ -68,7 +53,6 @@ function convertTodoItemToInboxItem(todoItem: TodoItem): InboxItemWithEndDate {
     schedule_type: todoItem.scheduleType || 'none',
     is_completed: todoItem.completed,
     is_highlight: todoItem.isHighlight,
-    clarification: todoItem.clarification,
     color: todoItem.color,
     icon: todoItem.icon,
     created_at: new Date().toISOString(),
@@ -168,9 +152,6 @@ export default function ProjectEditDialog({
                 ? new Date(todo.scheduledDate || todo.startTime)
                 : undefined,
               displayOrder: todo.displayOrder || todo.orderIndex || 0,
-              clarification: todo.clarification,
-              nextActionStatuses: todo.nextActionStatuses,
-              nextActionContextIds: todo.nextActionContextIds || todo.next_action_context_ids || [],
               // ✅ Fix: scheduleType 필드 매핑 ('none' → undefined 변환)
               scheduleType: todo.scheduleType === 'none' ? undefined : todo.scheduleType,
               // ✅ Fix: DB start_time에서 includeTime 계산 (시간 정보 있으면 true)
@@ -333,11 +314,6 @@ export default function ProjectEditDialog({
           ? Math.max(...sameDateTodos.map((t) => t.displayOrder || 0))
           : 0;
 
-        // clarification, schedule_type 자동 설정 로직
-        const shouldUpdateClarification = draggedTodo.clarification === 'none' && draggedTodo.scheduleType === 'none';
-        const updatedClarification = shouldUpdateClarification ? 'schedule_clear' : draggedTodo.clarification;
-        const updatedScheduleType = shouldUpdateClarification ? 'anytime' : draggedTodo.scheduleType;
-
         // 로컬 state 업데이트
         setTodos(
           todos.map((todo) =>
@@ -347,8 +323,6 @@ export default function ProjectEditDialog({
                   scheduledDate,
                   endDate: newEndDate,
                   displayOrder: maxOrder + 1,
-                  clarification: updatedClarification,
-                  scheduleType: updatedScheduleType,
                 }
               : todo
           )
@@ -356,19 +330,11 @@ export default function ProjectEditDialog({
 
         // todoStore 업데이트
         if (userId) {
-          const updateFields: any = {
+          await updateTodo(todoId, {
             start_time: utcStart.toISOString(),
             end_time: utcEndDate ? utcEndDate.toISOString() : undefined,
             order_index: maxOrder + 1,
-          };
-
-          // none + none 조건일 때만 clarification, schedule_type 업데이트
-          if (shouldUpdateClarification) {
-            updateFields.clarification = 'schedule_clear';
-            updateFields.schedule_type = 'anytime';
-          }
-
-          await updateTodo(todoId, updateFields);
+          });
         }
 
         return;
@@ -478,11 +444,6 @@ export default function ProjectEditDialog({
           ? Math.max(...sameDateTodos.map((t) => t.displayOrder || 0))
           : 0;
 
-        // clarification, schedule_type 자동 설정 로직
-        const shouldUpdateClarification = draggedTodo.clarification === 'none' && draggedTodo.scheduleType === 'none';
-        const updatedClarification = shouldUpdateClarification ? 'schedule_clear' : draggedTodo.clarification;
-        const updatedScheduleType = shouldUpdateClarification ? 'anytime' : draggedTodo.scheduleType;
-
         // 로컬 state 업데이트
         setTodos(
           todos.map((todo) =>
@@ -492,8 +453,6 @@ export default function ProjectEditDialog({
                   scheduledDate,
                   endDate: newEndDate,
                   displayOrder: maxOrder + 1,
-                  clarification: updatedClarification,
-                  scheduleType: updatedScheduleType,
                 }
               : todo
           )
@@ -501,19 +460,11 @@ export default function ProjectEditDialog({
 
         // todoStore 업데이트
         if (userId) {
-          const updateFields: any = {
+          await updateTodo(todoId, {
             start_time: utcStart.toISOString(),
             end_time: utcEndDate ? utcEndDate.toISOString() : undefined,
             order_index: maxOrder + 1,
-          };
-
-          // none + none 조건일 때만 clarification, schedule_type 업데이트
-          if (shouldUpdateClarification) {
-            updateFields.clarification = 'schedule_clear';
-            updateFields.schedule_type = 'anytime';
-          }
-
-          await updateTodo(todoId, updateFields);
+          });
         }
 
         return;
@@ -762,8 +713,6 @@ export default function ProjectEditDialog({
           title: updatedTodo.title,
           icon: updatedTodo.icon,
           color: updatedTodo.color,
-          clarification: updatedTodo.clarification as any,
-          next_action_context_ids: updatedTodo.nextActionContextIds || null,
           // ✅ Fix: scheduled_date 컬럼 제거 (DB에 존재하지 않음)
           // start_time을 scheduledDate + startTime 조합으로 설정
           start_time: updatedTodo.scheduledDate
@@ -1217,7 +1166,6 @@ export default function ProjectEditDialog({
                     onTodoClick={(todo) => handleToggleTodo(todo.id)}
                     onTodoDateChange={handleTodoDateChange}
                     project={editingProject}
-                    showClarification={false}
                     enableDragDrop={true}
                     compact={false}
                     enableSpanning={true}
@@ -1231,7 +1179,6 @@ export default function ProjectEditDialog({
                     onDateChange={setSelectedDate}
                     onTodoClick={(todo) => handleToggleTodo(todo.id)}
                     onTodoDateChange={handleTodoDateChange}
-                    showClarification={false}
                     compact={false}
                   />
                 )}
@@ -1369,25 +1316,17 @@ function TodoDraggableItem({
           {todo.isHighlight && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
         </div>
 
-        {(todo.clarification || (todo.nextActionStatuses && todo.nextActionStatuses.length > 0) || todo.scheduledDate) && (
+        {todo.scheduledDate && (
           <div className="space-y-1 text-xs text-base-content/60">
-            {todo.clarification && (
-              <p className="line-clamp-2">{getClarificationLabel(todo.clarification)}</p>
-            )}
-            {todo.nextActionStatuses && todo.nextActionStatuses.length > 0 && (
-              <p>다음행동: {todo.nextActionStatuses.join(', ')}</p>
-            )}
-            {todo.scheduledDate && (
-              <p>
-                <Calendar className="w-3 h-3 inline mr-1" />
-                {format(todo.scheduledDate, 'yyyy-MM-dd')}
-                {todo.includeTime && todo.startTime && ` ${todo.startTime}`}
-                {todo.includeEndDate && todo.endDate && (
-                  <> ~ {format(todo.endDate, 'yyyy-MM-dd')}
-                  {todo.endTime && ` ${todo.endTime}`}</>
-                )}
-              </p>
-            )}
+            <p>
+              <Calendar className="w-3 h-3 inline mr-1" />
+              {format(todo.scheduledDate, 'yyyy-MM-dd')}
+              {todo.includeTime && todo.startTime && ` ${todo.startTime}`}
+              {todo.includeEndDate && todo.endDate && (
+                <> ~ {format(todo.endDate, 'yyyy-MM-dd')}
+                {todo.endTime && ` ${todo.endTime}`}</>
+              )}
+            </p>
           </div>
         )}
       </div>
@@ -1445,11 +1384,6 @@ function CompletedView({
                 <p className="font-medium line-through text-base-content/50">
                   {todo.title}
                 </p>
-                {todo.clarification && (
-                  <p className="text-sm text-base-content/60 mt-1">
-                    {getClarificationLabel(todo.clarification)}
-                  </p>
-                )}
                 {todo.scheduledDate && (
                   <p className="text-xs text-base-content/40 mt-1">
                     {format(todo.scheduledDate, 'yyyy-MM-dd')}

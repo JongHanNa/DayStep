@@ -463,8 +463,6 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           project_ids: (todoData as any).project_ids,
           note_ids: (todoData as any).note_ids,
           // ✅ Second Brain System 필드 추가
-          clarification: (todoData as any).clarification,
-          next_action_context_ids: (todoData as any).next_action_context_ids,
           is_today_highlight: (todoData as any).is_today_highlight,
           assigned_to: (todoData as any).assigned_to,
           assigned_date: (todoData as any).assigned_date,

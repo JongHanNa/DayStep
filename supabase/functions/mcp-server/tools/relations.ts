@@ -164,7 +164,7 @@ export async function getTodaySummary(
   // 오늘 할일 조회
   let query = supabase
     .from('todos')
-    .select('id, title, completed, start_time, schedule_type, clarification')
+    .select('id, title, completed, start_time, schedule_type')
     .eq('user_id', userId)
     .gte('start_time', todayStart)
     .lte('start_time', todayEnd)

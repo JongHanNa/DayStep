@@ -358,8 +358,6 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
             start_time: startTime?.toISOString(),
             end_time: endTime?.toISOString(),
             priority: 'medium',
-            // 일정 유형일 때 명료화 속성 설정
-            clarification: 'schedule_clear',
             // 반복 패턴 필드
             recurrence_pattern: recurrence?.pattern ?? 'none',
             recurrence_interval: recurrence?.interval ?? 1,

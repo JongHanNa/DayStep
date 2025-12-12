@@ -25,7 +25,6 @@ import {
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
@@ -83,8 +82,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setCurrentRecommendation,
     markCompleted,
     markSkipped,
-    learnFromCompletion,
-    learnFromSkip,
     startAdhocMode,
     endAdhocMode,
     enterOrganizeMode,
@@ -107,7 +104,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const { settings: pomodoroSettings } = usePomodoroStore();
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
-  const { contexts, loadContexts } = useNextActionContextStore();
 
   // 균형 시스템 훅
   const {
@@ -132,9 +128,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // 로딩 상태
   const isLoadingSkips = executionMode.isLoadingSkips;
 
-  // 추천 가능한 명료화 유형: 일정(schedule_clear), 다음행동(next_action)
-  const EXECUTABLE_CLARIFICATIONS = ['schedule_clear', 'next_action'];
-
   // 오늘 실행 가능한 할일만 필터링
   // useLatestState: true면 getState()로 최신 상태 조회, false면 렌더링 상태 사용
   const getTodayTodos = useCallback((useLatestState: boolean = false) => {
@@ -149,13 +142,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     return currentTodos.filter(todo => {
       if (todo.completed) return false;
 
-      // 명료화 유형 필터: schedule_clear, next_action만 추천
-      if (!EXECUTABLE_CLARIFICATIONS.includes(todo.clarification)) return false;
-
-      // next_action은 날짜 무관하게 항상 추천
-      if (todo.clarification === 'next_action') return true;
-
-      // schedule_clear: 오늘 날짜 또는 anytime
+      // 오늘 날짜 또는 anytime인 할일만 추천
       if (todo.startTime) {
         const todoDate = new Date(todo.startTime);
         return todoDate >= today && todoDate < tomorrow;
@@ -248,13 +235,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setViewState('recommendation');
   }, [getTodayTodos, calculateRecommendationScore, setCurrentRecommendation, startAdhocForEmptyState]);
 
-  // 다음행동 상황 데이터 로드
-  useEffect(() => {
-    if (userId && contexts.length === 0) {
-      loadContexts(userId);
-    }
-  }, [userId, contexts.length, loadContexts]);
-
   // 균형 시스템 초기화 및 아침 프롬프트 체크
   useEffect(() => {
     if (!userId) return;
@@ -342,9 +322,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     // 할일 완료 처리
     await toggleTodo(currentTodo.id);
 
-    // ADHD Store 업데이트 및 학습 (DB 연동, fire and forget)
+    // ADHD Store 업데이트 (fire and forget)
     markCompleted(currentTodo.id, method);
-    learnFromCompletion(currentTodo, method, userId);
 
     // 애니메이션 후 다음 추천
     setTimeout(() => {
@@ -371,9 +350,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       await markSkipped(currentTodo.id, reason, userId);
       await deleteTodo(currentTodo.id);
     } else {
-      // 기존 로직: 건너뛰기 + 학습 (DB 연동, fire and forget)
+      // 기존 로직: 건너뛰기 (fire and forget)
       await markSkipped(currentTodo.id, reason, userId);
-      learnFromSkip(currentTodo, reason, userId);
     }
 
     // 다음 추천
@@ -582,7 +560,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       const newTodo = await createTodo({
         title: titleToSave,
         completed: false,
-        clarification: 'next_action',
         schedule_type: 'anytime',
         user_id: userId,
       });
@@ -648,7 +625,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       await createTodo({
         title: adhocCaptureTitle.trim(),
         completed: true,
-        clarification: 'next_action',
         schedule_type: 'anytime',
         user_id: userId,
       });
@@ -744,22 +720,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               >
                 <ul className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
                   {getTodayTodos().map(todo => {
-                    // 다음행동 상황 이름 가져오기
-                    const contextNames = todo.nextActionContextIds
-                      ?.map(id => contexts.find(c => c.id === id)?.title)
-                      .filter(Boolean)
-                      .join(', ') || '';
-
                     // 쿨다운 남은 시간
                     const cooldown = getRemainingCooldown(todo.id, executionMode.skipCooldowns);
 
                     return (
                       <li key={todo.id} className="truncate">
                         • {todo.title}
-                        {todo.clarification === 'next_action' && contextNames && (
-                          <span className="text-info text-base-content/50"> @{contextNames}</span>
-                        )}
-                        {todo.clarification === 'schedule_clear' && todo.scheduleType && (
+                        {todo.scheduleType && (
                           <span className="text-base-content/50"> {getScheduleTypeLabel(todo.scheduleType)}</span>
                         )}
                         {cooldown && (
@@ -783,7 +750,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             <RecommendationView
               key="recommendation"
               todo={currentRecommendation}
-              contexts={contexts}
               awakeningSentence={awakeningSentence}
               isAnimating={isAnimating}
               onComplete={() => handleComplete('direct')}
@@ -989,14 +955,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 // 서브 컴포넌트들
 // ============================================
 
-interface NextActionContextItem {
-  id: string;
-  title: string;
-}
-
 interface RecommendationViewProps {
   todo: Todo;
-  contexts: NextActionContextItem[];
   awakeningSentence: string | null;
   isAnimating: boolean;
   onComplete: () => void;
@@ -1008,7 +968,6 @@ interface RecommendationViewProps {
 
 function RecommendationView({
   todo,
-  contexts,
   awakeningSentence,
   isAnimating,
   onComplete,
@@ -1017,14 +976,6 @@ function RecommendationView({
   onDelete,
   onStartAdhoc,
 }: RecommendationViewProps) {
-  // 다음행동 상황 이름 가져오기
-  const getContextNames = (contextIds: string[] | null): string => {
-    if (!contextIds || contextIds.length === 0) return '';
-    return contextIds
-      .map(id => contexts.find(c => c.id === id)?.title)
-      .filter(Boolean)
-      .join(', ');
-  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -1054,18 +1005,12 @@ function RecommendationView({
           )}
         </div>
 
-        {/* 속성 정보: 다음행동 상황 또는 일정 유형 */}
-        {(todo.clarification === 'next_action' && todo.nextActionContextIds) ||
-         (todo.clarification === 'schedule_clear' && todo.scheduleType) ? (
+        {/* 속성 정보: 일정 유형 */}
+        {todo.scheduleType && (
           <div className="text-sm text-base-content/60 mt-3 flex items-center justify-center gap-2">
-            {todo.clarification === 'next_action' && todo.nextActionContextIds && (
-              <span>@{getContextNames(todo.nextActionContextIds)}</span>
-            )}
-            {todo.clarification === 'schedule_clear' && todo.scheduleType && (
-              <span>{getScheduleTypeLabel(todo.scheduleType)}</span>
-            )}
+            <span>{getScheduleTypeLabel(todo.scheduleType)}</span>
           </div>
-        ) : null}
+        )}
       </motion.div>
 
       {/* 버튼들 */}

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useTodoStore } from '@/state/stores/todoStore';
-import type { Clarification } from '@/types';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
 import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
@@ -25,9 +24,6 @@ const getEmptyTodoForm = (scheduledDate?: Date): TodoFormData => {
 
   return {
     title: '',
-    clarification: 'schedule_clear', // "일정"으로 고정
-    nextActionStatuses: [],
-    nextActionContextIds: [],
     scheduledDate: scheduledDate || new Date(),
     isHighlight: false,
     completed: false,
@@ -92,7 +88,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       await createTodo({
         user_id: user.id,
         title: formData.title,
-        clarification: formData.clarification as Clarification | undefined,
         schedule_type: formData.scheduleType || 'anytime',
         start_time: finalDateTime?.toISOString(),
         end_time: finalEndDateTime,
@@ -101,7 +96,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         project_ids: formData.projectIds,
         icon: formData.icon,
         color: formData.color,
-        next_action_context_ids: formData.nextActionContextIds,
         // 반복 설정 필드
         recurrence_pattern: (formData.recurrencePattern || 'none') as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
         recurrence_interval: formData.recurrenceInterval || 1,
@@ -139,7 +133,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         </Button>
       </div>
 
-      {/* 할일 추가 모달 - 명료화 페이지 스타일 */}
+      {/* 할일 추가 모달 */}
       <TodoEditModal
         open={todoModalOpen}
         todo={todoForm}
@@ -153,7 +147,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         showScheduledDate={true}
         showHighlight={true}
         showProjects={true}
-        showClarification={false}
       />
     </>
   );

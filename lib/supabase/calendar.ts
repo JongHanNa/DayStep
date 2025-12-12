@@ -10,7 +10,6 @@ import type { Todo } from '@/types';
  *
  * - start_time이 있는 모든 할일
  * - 완료 여부 무관 (완료된 할일도 표시)
- * - clarification 필터 없음 (달력 페이지에서 필터링)
  */
 export async function fetchScheduledTodos(userId: string): Promise<Todo[]> {
   console.log('📅 달력 할일 조회:', { userId });

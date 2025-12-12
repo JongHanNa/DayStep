@@ -39,11 +39,8 @@ export interface TodoFormContentProps {
 
   /** 플레이스홀더 */
   titlePlaceholder?: string;
-  clarificationPlaceholder?: string;
 
   /** 섹션 표시 여부 제어 (기본값: true) */
-  showClarification?: boolean;
-  showNextActionStatus?: boolean;
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
@@ -70,9 +67,6 @@ export default function TodoFormContent({
   onNoteClick,
   onProjectClick,
   titlePlaceholder,
-  clarificationPlaceholder,
-  showClarification = true,
-  showNextActionStatus = true,
   showScheduledDate = true,
   showHighlight = true,
   showCompleted = true,
@@ -87,7 +81,6 @@ export default function TodoFormContent({
       todo={formData}
       onChange={onChange}
       titlePlaceholder={titlePlaceholder}
-      clarificationPlaceholder={clarificationPlaceholder}
       projects={projects}
       notes={notes}
       onNoteClick={onNoteClick}
@@ -98,8 +91,6 @@ export default function TodoFormContent({
       onCreateNote={onCreateNote}
       onUpdateNote={onUpdateNote}
       onDeleteNote={onDeleteNote}
-      showClarification={showClarification}
-      showNextActionStatus={showNextActionStatus}
       showScheduledDate={showScheduledDate}
       showHighlight={showHighlight}
       showCompleted={showCompleted}

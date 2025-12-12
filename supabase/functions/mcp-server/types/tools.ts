@@ -11,7 +11,6 @@
 export type ProgressStatus = 'not_started' | 'in_progress' | 'paused' | 'completed';
 export type ScheduleType = 'all_day' | 'timed' | 'anytime' | 'none';
 export type RecurrencePattern = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
-export type Clarification = 'none' | 'reminder' | 'someday' | 'waiting' | 'next_action' | 'schedule_clear';
 export type Priority = 'low' | 'medium' | 'high';
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
 export type AreaResourceStatus = 'area' | 'resource' | 'archived';
@@ -194,7 +193,6 @@ export interface CreateTodoInput {
   priority?: Priority;
   project_ids?: string[];
   recurrence?: RecurrenceConfig;
-  clarification?: Clarification;
   is_today_highlight?: boolean;
   icon?: string;
   color?: string;
@@ -209,7 +207,6 @@ export interface ListTodosInput {
   };
   completed?: boolean;
   priority?: Priority;
-  clarification?: Clarification;
   project_id?: string;
   schedule_type?: ScheduleType;
   limit?: number;
@@ -229,7 +226,6 @@ export interface UpdateTodoInput {
   end_time?: string | null;
   priority?: Priority;
   completed?: boolean;
-  clarification?: Clarification;
   is_today_highlight?: boolean;
   icon?: string;
   color?: string;
@@ -253,11 +249,6 @@ export interface RescheduleTodoInput {
   start_time: string | DynamicDate;
   end_time?: string;
   schedule_type?: ScheduleType;
-}
-
-export interface SetTodoClarificationInput {
-  id: string;
-  clarification: Clarification;
 }
 
 // ============================================================================

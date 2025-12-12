@@ -24,10 +24,6 @@ export function convertToTodoFormData(values: TodoFormStateValues): TodoFormData
     icon: values.selectedIcon,
     color: values.selectedColor,
 
-    // 명료화 상태 사용 (기본값: 일정)
-    clarification: values.clarification || 'schedule_clear',
-    nextActionStatuses: [],
-
     // 스케줄 관련
     scheduleType: values.scheduleType,
     scheduledDate,
@@ -74,10 +70,6 @@ export function getTodoFormDataChanges(updated: TodoFormData): Partial<TodoFormS
 
   if (updated.color !== undefined) {
     changes.selectedColor = updated.color;
-  }
-
-  if (updated.clarification !== undefined) {
-    changes.clarification = updated.clarification;
   }
 
   if (updated.scheduleType !== undefined) {

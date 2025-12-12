@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { Todo } from '@/entities/todo/Todo';
 import { TodoSkipsService } from '@/services/todo-skips.service';
-import { ADHDPatternsService, ADHDUserPatterns } from '@/services/adhd-patterns.service';
 
 // ============================================
 // 타입 정의
@@ -179,14 +178,6 @@ interface ADHDModeState {
 
   // === 추천 알고리즘 ===
   calculateRecommendationScore: (todo: Todo) => number;
-
-  // === 패턴 학습 Actions (DB 연동) ===
-  learnFromCompletion: (todo: Todo, method: 'direct' | 'alternative', userId: string) => Promise<void>;
-  learnFromSkip: (todo: Todo, reason: SkipReason, userId: string) => Promise<void>;
-  loadUserPatterns: (userId: string) => Promise<void>;
-
-  // === 유틸리티 ===
-  resetPatterns: (userId: string) => Promise<void>;
 }
 
 // ============================================
@@ -328,9 +319,6 @@ export const useADHDModeStore = create<ADHDModeState>()(
               }
             }));
           }
-
-          // 패턴 데이터도 로드
-          get().loadUserPatterns(userId);
         },
 
         enterOrganizeMode: () => {
@@ -735,66 +723,6 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
 
           return score;
-        },
-
-        // === 패턴 학습 Actions (DB 연동) ===
-        learnFromCompletion: async (todo, method, userId) => {
-          console.log('📊 ADHD: 완료 패턴 학습', { todoTitle: todo.title, method });
-
-          // 백그라운드로 DB 업데이트 (실패해도 UX에 영향 없음)
-          try {
-            await ADHDPatternsService.updateCompletionPattern(userId, todo, method);
-
-            // 캐시 갱신
-            const patterns = await ADHDPatternsService.getPatternsForScoring(userId);
-            set({ cachedPatterns: patterns });
-          } catch (error) {
-            console.error('❌ 완료 패턴 학습 실패:', error);
-          }
-        },
-
-        learnFromSkip: async (todo, reason, userId) => {
-          // not_needed는 학습 대상 아님
-          if (reason === 'not_needed') return;
-
-          console.log('📊 ADHD: 스킵 패턴 학습', { todoTitle: todo.title, reason });
-
-          try {
-            await ADHDPatternsService.updateSkipPattern(userId, todo, reason);
-
-            // 캐시 갱신
-            const patterns = await ADHDPatternsService.getPatternsForScoring(userId);
-            set({ cachedPatterns: patterns });
-          } catch (error) {
-            console.error('❌ 스킵 패턴 학습 실패:', error);
-          }
-        },
-
-        loadUserPatterns: async (userId: string) => {
-          set({ isLoadingPatterns: true });
-
-          try {
-            const patterns = await ADHDPatternsService.getPatternsForScoring(userId);
-            set({
-              cachedPatterns: patterns,
-              isLoadingPatterns: false
-            });
-            console.log('📥 ADHD 패턴 데이터 로드 완료');
-          } catch (error) {
-            console.error('❌ 패턴 데이터 로드 실패:', error);
-            set({ isLoadingPatterns: false });
-          }
-        },
-
-        // === 유틸리티 ===
-        resetPatterns: async (userId: string) => {
-          console.log('🔄 ADHD: 패턴 데이터 초기화');
-          try {
-            await ADHDPatternsService.resetPatterns(userId);
-            set({ cachedPatterns: DEFAULT_CACHED_PATTERNS });
-          } catch (error) {
-            console.error('❌ 패턴 초기화 실패:', error);
-          }
         },
       }),
       {

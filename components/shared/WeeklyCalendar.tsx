@@ -24,7 +24,6 @@ interface WeeklyCalendarProps {
   onTodoDateChange?: (todoId: string, newDate: Date) => Promise<void>; // 드래그로 날짜 변경
   onOpenTodoListModal?: (date: Date, todos: UnifiedTodoItem[]) => void;
   project?: (Project & { isNew?: boolean; paraSelection?: string }) | null;
-  showClarification?: boolean; // 명료화 라벨 표시 여부
   enableSpanning?: boolean; // 스패닝 카드 지원 여부 (기본: false)
   enableDragDrop?: boolean; // 드래그앤드롭 활성화 여부 (기본: true)
   compact?: boolean; // 컴팩트 모드 (높이 줄임)
@@ -54,7 +53,6 @@ export default function WeeklyCalendar({
   onTodoDateChange,
   onOpenTodoListModal,
   project,
-  showClarification = false,
   enableSpanning = false,
   enableDragDrop = true,
   compact = false,
@@ -85,8 +83,6 @@ export default function WeeklyCalendar({
     todos.forEach((todo) => {
       // InboxItem만 처리
       if (!todo.scheduled_date) return;
-      // 언젠가(someday) 명료화 속성은 제외
-      if (todo.clarification === 'someday') return;
 
       const scheduledDate = new Date(todo.scheduled_date);
 
@@ -186,7 +182,6 @@ export default function WeeklyCalendar({
                 onToggleTodo={onToggleTodo}
                 project={project}
                 onOpenTodoListModal={onOpenTodoListModal}
-                showClarification={showClarification}
                 enableDragDrop={enableDragDrop}
                 compact={compact}
                 spanningCardCount={spanningCardsForDay.length}
@@ -256,7 +251,6 @@ interface WeekDayColumnProps {
   onToggleTodo?: (todoId: string) => void;
   project?: (Project & { isNew?: boolean; paraSelection?: string }) | null;
   onOpenTodoListModal?: (date: Date, todos: UnifiedTodoItem[]) => void;
-  showClarification?: boolean;
   enableDragDrop?: boolean;
   compact?: boolean;
   spanningCardCount?: number;
@@ -272,7 +266,6 @@ function WeekDayColumn({
   onToggleTodo,
   project,
   onOpenTodoListModal,
-  showClarification,
   enableDragDrop,
   compact,
   spanningCardCount = 0,

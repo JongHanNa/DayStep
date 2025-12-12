@@ -38,16 +38,13 @@ function todoToInboxItem(todo: TodoWithRecurrenceInstance): InboxItem {
     user_id: todo.user_id,
     content: todo.title,
     item_type: 'todo',
-    status: (todo.clarification || 'inbox') as GTDStatus, // clarification을 GTDStatus로 매핑
+    status: 'inbox' as GTDStatus,
     created_at: todo.created_at,
     updated_at: todo.updated_at,
     scheduled_date: todo.start_time ?? undefined,
     schedule_type: todo.schedule_type || 'none',
-    clarification: todo.clarification || 'none',
     is_completed: todo.completed || false,
     is_highlight: todo.is_today_highlight || false,
-    next_action_status: '', // 레거시 필드, next_action_context_ids 사용
-    next_action_context_ids: todo.next_action_context_ids || [],
     project_id: todo.project_id,
     icon: todo.icon ?? undefined,
     color: todo.color ?? '',
@@ -90,8 +87,6 @@ export default function CalendarPage() {
   // 할일 폼 데이터
   const [todoForm, setTodoForm] = useState<TodoFormData>({
     title: '',
-    clarification: '',
-    nextActionStatuses: [],
     scheduledDate: undefined,
     isHighlight: false,
     completed: false,
@@ -163,15 +158,10 @@ export default function CalendarPage() {
 
     switch (selectedTab) {
       case 'week-schedule':
-        // 주간 일정: 명료화 = "일정"만 (반복 인스턴스 제외)
-        return scheduledItems.filter((item: InboxItem) =>
-          item.clarification === 'schedule_clear' && !item.is_recurrence_instance
-        );
-
       case 'week-plan':
-        // 주간 계획: "일정" + 기타 (언젠가만 제외, 반복 인스턴스 제외)
+        // 주간 일정/계획: 반복 인스턴스 제외한 모든 할일
         return scheduledItems.filter((item: InboxItem) =>
-          item.clarification !== 'someday' && !item.is_recurrence_instance
+          !item.is_recurrence_instance
         );
 
       case 'week-routine':
@@ -181,15 +171,10 @@ export default function CalendarPage() {
         );
 
       case 'month-schedule':
-        // 월간 일정: 명료화 = "일정"만 (반복 인스턴스 제외)
-        return scheduledItems.filter((item: InboxItem) =>
-          item.clarification === 'schedule_clear' && !item.is_recurrence_instance
-        );
-
       case 'month-plan':
-        // 월간 계획: "일정" + 기타 (언젠가만 제외, 반복 인스턴스 제외)
+        // 월간 일정/계획: 반복 인스턴스 제외한 모든 할일
         return scheduledItems.filter((item: InboxItem) =>
-          item.clarification !== 'someday' && !item.is_recurrence_instance
+          !item.is_recurrence_instance
         );
 
       case 'month-routine':
@@ -207,16 +192,6 @@ export default function CalendarPage() {
   const handleTodoClick = (item: InboxItem) => {
     setEditingItem(item);
 
-    // next_action_status가 JSON 배열 문자열이면 파싱, 아니면 빈 배열
-    let nextActionStatuses: string[] = [];
-    if (item.next_action_status) {
-      try {
-        nextActionStatuses = JSON.parse(item.next_action_status);
-      } catch {
-        nextActionStatuses = [];
-      }
-    }
-
     // start_time에서 HH:mm 포맷 추출 (시간지정일 때만)
     let startTime: string | undefined;
     if (item.schedule_type === 'timed' && item.scheduled_date) {
@@ -226,9 +201,6 @@ export default function CalendarPage() {
 
     setTodoForm({
       title: item.content,
-      clarification: item.clarification || '',
-      nextActionStatuses,
-      nextActionContextIds: item.next_action_context_ids || [],
       scheduledDate: item.scheduled_date ? new Date(item.scheduled_date) : undefined,
       scheduleType: item.schedule_type || 'none',
       startTime,
@@ -304,8 +276,6 @@ export default function CalendarPage() {
       // DB 직접 업데이트
       await updateInboxTodo(appUser.id, editingItem.id, {
         title: todoForm.title,
-        clarification: todoForm.clarification,
-        next_action_context_ids: todoForm.nextActionContextIds,
         scheduled_date: finalDateTime?.toISOString(),
         schedule_type: todoForm.scheduleType,
         is_today_highlight: todoForm.isHighlight,
@@ -438,7 +408,6 @@ export default function CalendarPage() {
 
       await createInboxItem(appUser.id, {
         content: '새 할일',
-        clarification: 'schedule_clear',
         schedule_type: 'anytime',
         scheduled_date: koreaDate.toISOString(),
         status: 'schedule_clear',
@@ -535,7 +504,6 @@ export default function CalendarPage() {
   // 달력 컴포넌트 렌더링
   const renderCalendar = () => {
     const isWeekly = selectedTab === 'week-schedule' || selectedTab === 'week-plan' || selectedTab === 'week-routine';
-    const showClarification = selectedTab === 'week-plan' || selectedTab === 'month-plan';
     const isRoutineTab = selectedTab === 'week-routine' || selectedTab === 'month-routine';
 
     if (isWeekly) {
@@ -547,7 +515,6 @@ export default function CalendarPage() {
           onTodoClick={handleTodoClick}
           onToggleTodo={handleToggleTodo}
           onTodoDateChange={handleTodoDateChange}
-          showClarification={showClarification}
           enableSpanning={!isRoutineTab}
           enableDragDrop={true}
           onCreateTodo={handleQuickCreateTodo}
@@ -562,7 +529,6 @@ export default function CalendarPage() {
           onTodoClick={handleTodoClick}
           onToggleTodo={handleToggleTodo}
           onTodoDateChange={handleTodoDateChange}
-          showClarification={showClarification}
           enableSpanning={!isRoutineTab}
           onCreateTodo={handleQuickCreateTodo}
         />
@@ -643,8 +609,6 @@ export default function CalendarPage() {
             notes={notes}
             onCreateProject={handleCreateProject}
             onCreateNote={handleCreateNote}
-            showClarification={true}
-            showNextActionStatus={true}
             showScheduledDate={true}
             showHighlight={true}
             showCompleted={true}

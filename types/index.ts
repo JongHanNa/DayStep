@@ -299,8 +299,6 @@ export interface CreateTodoInput {
   parent_todo_id?: string;
 
   // Second Brain System fields
-  clarification?: Clarification;
-  next_action_context_ids?: string[] | null; // 다음행동상황 ID 배열
   is_today_highlight?: boolean;
   assigned_to?: string | null;
   assigned_date?: string | null;
@@ -392,18 +390,6 @@ export type {
 export type AreaResourceStatus = 'area' | 'resource' | 'archived';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'paused';
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
-export type Clarification = 'none' | 'reminder' | 'someday' | 'waiting' | 'next_action' | 'schedule_clear';
-export type NextActionContext =
-  | 'creativity'
-  | 'simple_work'
-  | 'low_battery'
-  | 'smartphone'
-  | 'computer'
-  | 'home'
-  | 'outside'
-  | 'anywhere'
-  | 'office'
-  | 'read_later';
 export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference';
 
 // Area/Resource types
@@ -539,8 +525,6 @@ export interface ProjectUpdate extends Partial<ProjectInsert> {
 
 // Extended Todo type with new fields (기존 Todo 타입을 확장하지 않고 새 필드만 문서화)
 export interface TodoExtendedFields {
-  clarification: Clarification;
-  next_action_context_ids: string[] | null;
   is_today_highlight: boolean;
   assigned_to: string | null;
   assigned_date: string | null;
@@ -581,35 +565,3 @@ export interface AreaResourceNoteCount {
   note_count: number;
 }
 
-// ============================================
-// Next Action Context Types (DB-based)
-// ============================================
-
-/**
- * 다음행동상황 항목 (사용자별 DB 저장)
- */
-export interface NextActionContextItem {
-  id: string;
-  user_id: string;
-  title: string;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-/**
- * 다음행동상황 생성 입력
- */
-export interface CreateNextActionContextInput {
-  title: string;
-  display_order?: number;
-}
-
-/**
- * 다음행동상황 수정 입력
- */
-export interface UpdateNextActionContextInput {
-  id: string;
-  title?: string;
-  display_order?: number;
-}

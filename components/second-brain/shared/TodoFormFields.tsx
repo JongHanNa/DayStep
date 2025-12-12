@@ -5,10 +5,9 @@ import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock,
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
-import type { RecurrencePattern, NextActionContextItem } from '@/types';
+import type { RecurrencePattern } from '@/types';
 import CollapsibleProjectSection from './CollapsibleProjectSection';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
-import CollapsibleNextActionSection from './CollapsibleNextActionSection';
 import RecurrenceSettings from '@/components/todos/form/RecurrenceSettings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -16,8 +15,6 @@ import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
-import { useNextActionContextStore } from '@/state/stores/secondBrain/nextActionContextStore';
-import { updateTodoNextActionContextIds } from '@/lib/supabase/next-action-contexts';
 import { RelationshipTagToggle } from '@/components/balance';
 
 /**
@@ -28,9 +25,6 @@ export interface TodoFormData {
   title: string;
   icon?: string; // 아이콘 키 (UnifiedIconKey)
   color?: string; // 색상 hex 값
-  clarification?: string;
-  nextActionStatuses?: string[]; // 다중 선택 (레거시 - 영어 키)
-  nextActionContextIds?: string[]; // 다중 선택 (새로운 - UUID)
   scheduledDate?: Date;
   isHighlight: boolean;
   completed: boolean;
@@ -69,8 +63,6 @@ interface TodoFormFieldsProps {
   todo: TodoFormData;
   onChange: (updatedTodo: TodoFormData) => void;
   titlePlaceholder?: string;
-  clarificationPlaceholder?: string;
-  nextActionStatusPlaceholder?: string;
   projects?: Project[]; // 프로젝트 목록
   notes?: Note[]; // 노트 목록
   onNoteClick?: (note: Note) => void; // 노트 클릭 핸들러 (편집 모달 열기)
@@ -82,8 +74,6 @@ interface TodoFormFieldsProps {
   onUpdateNote?: (id: string, title: string) => Promise<void>; // 노트 수정
   onDeleteNote?: (id: string) => Promise<void>; // 노트 삭제
   // 섹션 표시 여부 제어 (기본값: true)
-  showClarification?: boolean;
-  showNextActionStatus?: boolean;
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
@@ -93,7 +83,6 @@ interface TodoFormFieldsProps {
   userId?: string;
   onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
-  onNextActionContextImmediateSave?: (contextIds: string[]) => Promise<void>;
 }
 
 /**
@@ -105,7 +94,6 @@ export default function TodoFormFields({
   todo,
   onChange,
   titlePlaceholder = '예: 요구사항 정리',
-  clarificationPlaceholder = '할일에 대한 자세한 설명을 입력하세요',
   projects = [],
   notes = [],
   onNoteClick,
@@ -116,8 +104,6 @@ export default function TodoFormFields({
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
-  showClarification = true,
-  showNextActionStatus = true,
   showScheduledDate = true,
   showHighlight = true,
   showCompleted = true,
@@ -126,24 +112,7 @@ export default function TodoFormFields({
   userId,
   onProjectImmediateSave,
   onNoteImmediateSave,
-  onNextActionContextImmediateSave,
 }: TodoFormFieldsProps) {
-  // 다음행동상황 스토어
-  const {
-    contexts: nextActionContexts,
-    loadContexts,
-    createContext,
-    updateContext,
-    deleteContext,
-  } = useNextActionContextStore();
-
-  // userId가 있으면 다음행동상황 목록 로드
-  useEffect(() => {
-    if (userId) {
-      loadContexts(userId);
-    }
-  }, [userId, loadContexts]);
-
   // 타이핑 효과를 위한 플레이스홀더 텍스트
   const placeholderTexts = [
     "예: 요구사항 정리",
@@ -216,30 +185,6 @@ export default function TodoFormFields({
   const handleColorChange = (colorId: string) => {
     const color = getColorById(colorId).hex;
     onChange({ ...todo, color });
-  };
-
-  // 다음행동상황 핸들러들
-  const handleNextActionContextCreate = async (title: string) => {
-    if (!userId) return null;
-    return await createContext(userId, title);
-  };
-
-  const handleNextActionContextUpdate = async (id: string, title: string) => {
-    return await updateContext(id, title);
-  };
-
-  const handleNextActionContextDelete = async (id: string) => {
-    if (!userId) return false;
-    return await deleteContext(id, userId);
-  };
-
-  const handleNextActionContextImmediateSave = async (contextIds: string[]) => {
-    if (onNextActionContextImmediateSave) {
-      await onNextActionContextImmediateSave(contextIds);
-    } else if (todoId) {
-      // 기본 즉시 저장 로직
-      await updateTodoNextActionContextIds(todoId, contextIds);
-    }
   };
 
   return (
@@ -319,48 +264,6 @@ export default function TodoFormFields({
         </div>
       </div>
 
-      {/* 명료화 */}
-      {showClarification && (
-        <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <Target className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-            명료화
-          </label>
-
-          <div className="p-0 rounded-lg bg-base-200">
-            <select
-              value={todo.clarification || ''}
-              onChange={(e) => {
-                const clarification = e.target.value;
-                const updates: any = { clarification };
-
-                // 일정으로 선택 시 scheduleType 자동 초기화
-                if (clarification === 'schedule_clear') {
-                  if (!todo.scheduleType || todo.scheduleType === 'none') {
-                    updates.scheduleType = 'anytime';
-                    updates.scheduledDate = new Date(); // 오늘 날짜
-                    updates.includeEndDate = false;
-                    updates.includeTime = false;
-                  }
-                }
-
-                onChange({ ...todo, ...updates });
-              }}
-              className="select select-bordered w-full bg-base-100"
-            >
-              <option value="">선택 안 함(수집함으로 이동됨)</option>
-              {/* 임시 숨김: 다시알림 옵션
-              <option value="reminder">⏰ 다시알림 · 특정 날짜 또는 시간에 알림 (시간 설정 시 수집함에서 사라짐)</option>
-              */}
-              <option value="someday">⏳ 언젠가 · 당장은 실행할 수 없음 (즉시 수집함에서 사라짐)</option>
-              <option value="waiting">⏸️ 대기중 · 타인에게 위임, 응답 대기 중. 당장은 날짜나 시간을 넣기에 불명확하지만 나중에 계획 페이지에서 날짜를 지정해줄 수 있음 (즉시 수집함에서 사라짐)</option>
-              <option value="next_action">⚡ 다음행동 · 특정 행동상황이 되면 할 일. 당장은 날짜나 시간을 넣기에 불명확하지만 나중에 계획 페이지에서 날짜를 지정해줄 수 있음 (다음행동상황 선택 시 수집함에서 사라짐)</option>
-              <option value="schedule_clear">📅 일정 · 당장 날짜나 시간을 넣기에 명확한 할일 (날짜 설정 시 수집함에서 사라짐)</option>
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* 반복 할일 원본 날짜 (일정 섹션 상단, 반복 할일 편집 시에만) */}
       {todo.originalStartDate && todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
         <div className="my-4">
@@ -374,7 +277,7 @@ export default function TodoFormFields({
       )}
 
       {/* 일정 유형 */}
-      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'schedule_clear') && (
+      {showScheduledDate && (
         <div className="my-4">
           <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
             <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
@@ -418,9 +321,7 @@ export default function TodoFormFields({
             }}
             className="select select-bordered w-full bg-base-100"
           >
-            {todo.clarification !== 'schedule_clear' && (
-              <option value="none">📝 선택 안함 · 일정 없음</option>
-            )}
+            <option value="none">📝 선택 안함 · 일정 없음</option>
             <option value="anytime">⏰ 언제든지 · 특정 날짜에 타임라인에서 언제든지 바로 시작하거나 추후 계획 페이지에서 시간 지정해서 사용 가능(이때 시간 지정하면 일정유형이 시간지정으로 변경됨)</option>
             <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
             <option value="all_day">📅 종일 · 하루 종일</option>
@@ -428,27 +329,8 @@ export default function TodoFormFields({
         </div>
       )}
 
-      {/* 다음행동상황 (다중 선택) - DB 기반 */}
-      {showNextActionStatus && todo.clarification === 'next_action' && (
-        <div>
-          {/* CollapsibleNextActionSection 컴포넌트 - DB 기반 */}
-          <CollapsibleNextActionSection
-            selectedContextIds={todo.nextActionContextIds || []}
-            allContexts={nextActionContexts}
-            onChange={(contextIds) => onChange({ ...todo, nextActionContextIds: contextIds })}
-            onCreateContext={handleNextActionContextCreate}
-            onUpdateContext={handleNextActionContextUpdate}
-            onDeleteContext={handleNextActionContextDelete}
-            todoColor={todo.color || '#808080'}
-            todoId={todoId}
-            userId={userId}
-            onImmediateSave={handleNextActionContextImmediateSave}
-          />
-        </div>
-      )}
-
       {/* 날짜 */}
-      {showScheduledDate && (todo.clarification === 'reminder' || todo.clarification === 'schedule_clear') && todo.scheduleType !== 'none' && (
+      {showScheduledDate && todo.scheduleType !== 'none' && (
         <>
           {/* 시작 날짜 */}
           <div className="my-4">

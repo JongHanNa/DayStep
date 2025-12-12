@@ -479,7 +479,6 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
         priority: values.priority,
         icon: values.selectedIcon,
         color: getColorById(values.selectedColor).hex,
-        clarification: values.clarification || 'schedule_clear', // ✅ 명료화 상태 추가
         schedule_type: values.scheduleType,
       };
 

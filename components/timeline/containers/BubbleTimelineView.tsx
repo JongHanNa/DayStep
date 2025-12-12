@@ -8,7 +8,7 @@ import { TimelineItem } from '@/types/timeline-view';
 import { BubbleTimelineItem } from '../items/BubbleTimelineItem';
 import { useCurrentTime } from '@/lib/hooks/useCurrentTime';
 import { isRecurringTodo } from '@/lib/utils/recurring';
-import { Todo as DbTodo, Clarification } from '@/types';
+import { Todo as DbTodo } from '@/types';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { useAuth } from '@/app/context/AuthContext';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
@@ -657,9 +657,6 @@ export const BubbleTimelineView: React.FC = () => {
 
     return {
       title: dbTodo.title || '',
-      clarification: dbTodo.clarification || '',
-      nextActionStatuses: [],
-      nextActionContextIds: dbTodo.next_action_context_ids || [],
       scheduledDate: dbTodo.start_time ? new Date(dbTodo.start_time) : new Date(),
       isHighlight: dbTodo.is_today_highlight || false,
       completed: dbTodo.completed || false,
@@ -734,7 +731,6 @@ export const BubbleTimelineView: React.FC = () => {
 
       await updateTodo(originalTodoId, {
         title: formData.title,
-        clarification: formData.clarification as Clarification | undefined,
         schedule_type: formData.scheduleType,
         start_time: finalDateTime,
         end_time: finalEndTime,
@@ -743,7 +739,6 @@ export const BubbleTimelineView: React.FC = () => {
         project_ids: formData.projectIds,
         icon: formData.icon,
         color: formData.color,
-        next_action_context_ids: formData.nextActionContextIds,
         // 반복 설정 필드
         recurrence_pattern: (formData.recurrencePattern || 'none') as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
         recurrence_interval: formData.recurrenceInterval || 1,
@@ -878,9 +873,6 @@ export const BubbleTimelineView: React.FC = () => {
   // 빈 폼 데이터 초기화 (FloatingActionButton과 동일)
   const getEmptyTodoForm = useCallback((scheduledDate?: Date): TodoFormData => ({
     title: '',
-    clarification: 'schedule_clear',
-    nextActionStatuses: [],
-    nextActionContextIds: [],
     scheduledDate: scheduledDate || new Date(),
     isHighlight: false,
     completed: false,
@@ -930,7 +922,6 @@ export const BubbleTimelineView: React.FC = () => {
       await createTodo({
         user_id: user.id,
         title: formData.title,
-        clarification: formData.clarification as Clarification | undefined,
         schedule_type: formData.scheduleType || 'anytime',
         start_time: finalDateTime?.toISOString(),
         end_time: finalEndDateTime,
@@ -939,7 +930,6 @@ export const BubbleTimelineView: React.FC = () => {
         project_ids: formData.projectIds,
         icon: formData.icon,
         color: formData.color,
-        next_action_context_ids: formData.nextActionContextIds,
         // 반복 설정 필드
         recurrence_pattern: (formData.recurrencePattern || 'none') as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
         recurrence_interval: formData.recurrenceInterval || 1,
@@ -1221,8 +1211,6 @@ export const BubbleTimelineView: React.FC = () => {
                             parent_todo_id: originalTodo.parent_todo_id || originalTodo.parentTodoId || null,
                             anytime_duration: originalTodo.anytime_duration || null,
                             // Second Brain 필드들 추가
-                            clarification: originalTodo.clarification || 'none',
-                            next_action_context_ids: originalTodo.next_action_context_ids || null,
                             is_today_highlight: originalTodo.is_today_highlight || false,
                             assigned_to: originalTodo.assigned_to || null,
                             assigned_date: (() => {
@@ -1232,6 +1220,7 @@ export const BubbleTimelineView: React.FC = () => {
                               if (date instanceof Date) { return date.toISOString(); }
                               try { return new Date(date).toISOString(); } catch { return null; }
                             })(),
+                            is_relationship_task: originalTodo.is_relationship_task || null,
                             _instanceInfo: {
                               instanceId: timelineItem.id,
                               instanceDate: (timelineItem.data as any).recurrence_occurrence_date,
@@ -1258,8 +1247,6 @@ export const BubbleTimelineView: React.FC = () => {
                       if (timelineItem.data) {
                         const updatedTodoData = {
                           ...timelineItem.data,
-                          // ✅ clarification 명시적 보존 (매핑 누락 방지)
-                          clarification: (timelineItem.data as any)?.clarification || '',
                           schedule_type: timelineItem.data?.schedule_type ||
                                         (timelineItem.data as any)?.scheduleType ||
                                         (timelineItem.startTime ? 'timed' : 'anytime'),
@@ -1387,7 +1374,6 @@ export const BubbleTimelineView: React.FC = () => {
           showScheduledDate={true}
           showHighlight={true}
           showProjects={true}
-          showClarification={false}
         />
       )}
 

@@ -305,7 +305,6 @@ export const mockProjectTodos = [
     scheduledDate: new Date('2025-10-29').toISOString(),
     displayOrder: 3,
     isHighlight: false,
-    clarification: '일정',
   },
   {
     id: 'project-todo-8',
@@ -315,7 +314,6 @@ export const mockProjectTodos = [
     scheduledDate: new Date('2025-11-05').toISOString(),
     displayOrder: 4,
     isHighlight: false,
-    clarification: '일정',
   },
 ];
 
@@ -410,7 +408,6 @@ export const mockInboxItems: InboxItem[] = [
     project_id: 'project-2',
     is_completed: false,
     scheduled_date: new Date('2025-10-29').toISOString(),
-    clarification: '일정',
     created_at: new Date('2025-10-01').toISOString(),
     updated_at: new Date('2025-10-25').toISOString(),
   },
@@ -423,7 +420,6 @@ export const mockInboxItems: InboxItem[] = [
     project_id: 'project-2',
     is_completed: false,
     scheduled_date: new Date('2025-11-05').toISOString(),
-    clarification: '일정',
     created_at: new Date('2025-10-01').toISOString(),
     updated_at: new Date('2025-10-25').toISOString(),
   },

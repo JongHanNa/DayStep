@@ -311,23 +311,16 @@ export async function resetChecklistBySection(
 }
 
 /**
- * 명료화 속성별 할일 조회 (점검 페이지 전용)
+ * 점검 페이지 할일 조회
  */
-export async function fetchReviewTodos(
-  userId: string,
-  clarifyType?: string
-): Promise<any[]> {
+export async function fetchReviewTodos(userId: string): Promise<any[]> {
   try {
     const conditions: QueryCondition[] = [
       { column: 'user_id', operator: 'eq', value: userId },
-      { column: 'item_type', operator: 'eq', value: 'todo' },
+      { column: 'recurrence_pattern', operator: 'eq', value: 'none' },
     ];
 
-    if (clarifyType) {
-      conditions.push({ column: 'clarification', operator: 'eq', value: clarifyType });
-    }
-
-    const data = await queryRLSTableWithJWT('inbox_items', conditions, {
+    const data = await queryRLSTableWithJWT('todos', conditions, {
       order: 'created_at.desc',
     });
 

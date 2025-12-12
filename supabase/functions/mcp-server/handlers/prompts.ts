@@ -452,14 +452,12 @@ async function getInboxProcessingPrompt(
 - 📅 **일정**: 특정 날짜에 배정
 - 📁 **정리**: 프로젝트에 연결
 - 🗑️ **삭제**: 더 이상 필요 없음
-- 📌 **명료화**: 다음 행동이 불명확
 
 ## 추천 액션
 
 - \`get_inbox_items\`: 인박스 항목 확인
 - \`link_todo_to_project\`: 프로젝트에 연결
 - \`reschedule_todo\`: 일정 변경
-- \`set_todo_clarification\`: 명료화 상태 설정
 - \`delete_todo\`: 불필요한 항목 삭제
 
 깔끔한 인박스로 마음의 여유를 찾으세요! 🧘`;

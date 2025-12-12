@@ -1,4 +1,4 @@
-import { Todo as DatabaseTodo, ScheduleType, RecurrencePattern, Clarification } from '@/types';
+import { Todo as DatabaseTodo, ScheduleType, RecurrencePattern } from '@/types';
 
 /**
  * Todo Domain Entity
@@ -41,12 +41,6 @@ export class Todo {
     public readonly areaId: string | null = null,
     public readonly resourceId: string | null = null,
 
-    // 명료화 필드
-    public readonly clarification: Clarification = 'none',
-
-    // 다음행동상황 필드
-    public readonly nextActionContextIds: string[] | null = null,
-
     // 관계 할일 필드
     public readonly isRelationshipTask: boolean = false
   ) {}
@@ -84,12 +78,6 @@ export class Todo {
     const goalId = record.goalId ?? record.goal_id;
     const areaId = record.areaId ?? record.area_id;
     const resourceId = record.resourceId ?? record.resource_id;
-
-    // 명료화 필드
-    const clarification = record.clarification ?? 'none';
-
-    // 다음행동상황 필드
-    const nextActionContextIds = record.nextActionContextIds ?? record.next_action_context_ids ?? null;
 
     // 관계 할일 필드
     const isRelationshipTask = record.isRelationshipTask ?? record.is_relationship_task ?? false;
@@ -134,12 +122,6 @@ export class Todo {
       goalId || null,
       areaId || null,
       resourceId || null,
-
-      // 명료화 필드
-      clarification as Clarification,
-
-      // 다음행동상황 필드
-      Array.isArray(nextActionContextIds) ? nextActionContextIds : null,
 
       // 관계 할일 필드
       isRelationshipTask
@@ -444,8 +426,6 @@ export class Todo {
       this.goalId,
       this.areaId,
       this.resourceId,
-      this.clarification,
-      this.nextActionContextIds,
       this.isRelationshipTask
     );
   }
@@ -494,8 +474,6 @@ export class Todo {
       this.goalId,
       this.areaId,
       this.resourceId,
-      this.clarification,
-      this.nextActionContextIds,
       this.isRelationshipTask
     );
   }
@@ -563,10 +541,6 @@ export class Todo {
 
       // Second Brain 관계 필드들 (DB에는 project_id만 존재)
       project_id: this.projectId,
-
-      // 명료화 및 다음행동상황 필드
-      clarification: this.clarification,
-      next_action_context_ids: this.nextActionContextIds,
 
       // 관계 태그
       is_relationship_task: this.isRelationshipTask,

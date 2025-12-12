@@ -12,10 +12,6 @@ import { filterInboxProjects } from '@/lib/helpers/projectFilters';
  *
  * DB 레벨 필터링 조건:
  *   - recurrence_pattern = 'none' (반복 할일 제외)
- *   - clarification != 'waiting' (대기중: 무조건 제외)
- *   - clarification != 'someday' (언젠가: 무조건 제외)
- *   - NOT (clarification = 'schedule_clear' AND start_time IS NOT NULL) (일정+날짜: 제외)
- *   - NOT (clarification = 'next_action' AND next_action_context_ids.length > 0) (다음행동+상황: 제외)
  *
  * ✅ 변경 사항: Materialized View 대신 todos 테이블 직접 조회 (실시간 데이터)
  */
@@ -24,20 +20,11 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
 
   try {
     // ✅ todos 테이블 직접 조회 (Materialized View 대신)
-    const path = `/todos?user_id=eq.${userId}&recurrence_pattern=eq.none&clarification=neq.waiting&clarification=neq.someday&select=*&order=created_at.desc`;
+    const path = `/todos?user_id=eq.${userId}&recurrence_pattern=eq.none&select=*&order=created_at.desc`;
     const todos = await fetchWithJWT(path);
 
-    // 클라이언트 필터링: scheduled + 날짜, next_action + 상황 제외
-    const filteredTodos = todos?.filter((todo: any) => {
-      // schedule_clear + start_time 있으면 제외
-      if (todo.clarification === 'schedule_clear' && todo.start_time) return false;
-      // next_action + context_ids 있으면 제외
-      if (todo.clarification === 'next_action' && todo.next_action_context_ids?.length > 0) return false;
-      return true;
-    }) || [];
-
-    console.log('✅ 수집함 할일 조회 성공:', { count: filteredTodos.length });
-    return filteredTodos;
+    console.log('✅ 수집함 할일 조회 성공:', { count: todos?.length || 0 });
+    return todos || [];
   } catch (error) {
     console.error('❌ 수집함 할일 조회 실패:', error);
     return [];
@@ -49,49 +36,19 @@ export async function fetchInboxTodos(userId: string): Promise<any[]> {
  *
  * DB 레벨 필터링 조건:
  *   - recurrence_pattern = 'none' (반복 할일 제외)
- *   - clarification != 'someday' (언젠가: 무조건 제외)
- *
- * 클라이언트 필터링 조건:
- *   - NOT (clarification = 'next_action' AND next_action_context_ids.length > 0) (다음행동+상황: 제외)
- *
- * ✅ fetchInboxTodos와의 차이점:
- *   - schedule_clear + start_time 필터 제거 (계획 페이지에 표시)
- *   - waiting 데이터도 포함 (클라이언트에서 탭별로 분류)
  */
 export async function fetchPlanTodos(userId: string): Promise<any[]> {
   console.log('📅 계획 페이지 할일 조회:', { userId });
 
   try {
-    // ✅ todos 테이블 직접 조회 (waiting 데이터도 포함, todo_projects LEFT JOIN)
-    const path = `/todos?user_id=eq.${userId}&recurrence_pattern=eq.none&clarification=neq.someday&select=*,todo_projects(project_id)&order=created_at.desc`;
+    // ✅ todos 테이블 직접 조회 (todo_projects LEFT JOIN)
+    const path = `/todos?user_id=eq.${userId}&recurrence_pattern=eq.none&select=*,todo_projects(project_id)&order=created_at.desc`;
     const todos = await fetchWithJWT(path);
 
-    // ✅ 계획 페이지에서는 모든 next_action 데이터 표시 (contexts 여부 무관)
-    const filteredTodos = todos || [];
-
-    console.log('✅ 계획 페이지 할일 조회 성공:', { count: filteredTodos.length });
-    return filteredTodos;
-  } catch (error) {
-    console.error('❌ 계획 페이지 할일 조회 실패:', error);
-    return [];
-  }
-}
-
-/**
- * 언젠가 할일 목록 조회 (todos 테이블 직접 조회)
- * - clarification = 'someday'인 할일만 조회
- */
-export async function fetchSomedayTodos(userId: string): Promise<any[]> {
-  console.log('📅 언젠가 할일 조회:', { userId });
-
-  try {
-    const path = `/todos?user_id=eq.${userId}&clarification=eq.someday&select=*,todo_projects(project_id)&order=created_at.desc`;
-    const todos = await fetchWithJWT(path);
-
-    console.log('✅ 언젠가 할일 조회 성공:', { count: todos?.length || 0 });
+    console.log('✅ 계획 페이지 할일 조회 성공:', { count: todos?.length || 0 });
     return todos || [];
   } catch (error) {
-    console.error('❌ 언젠가 할일 조회 실패:', error);
+    console.error('❌ 계획 페이지 할일 조회 실패:', error);
     return [];
   }
 }
@@ -153,13 +110,11 @@ export async function fetchInboxNotes(userId: string): Promise<any[]> {
  */
 export async function createInboxTodo(userId: string, data: {
   title: string;
-  clarification?: string;
   scheduled_date?: string;
   schedule_type?: string;
   is_today_highlight?: boolean;
   completed?: boolean;
   project_id?: string;
-  next_action_context_ids?: string[];
 }): Promise<any> {
   console.log('📝 수집함 할일 생성:', { userId, data });
 
@@ -167,13 +122,11 @@ export async function createInboxTodo(userId: string, data: {
     const todoData = {
       user_id: userId,
       title: data.title,
-      clarification: data.clarification || 'none',
       start_time: data.scheduled_date,
       is_today_highlight: data.is_today_highlight || false,
       completed: data.completed || false,
       project_id: data.project_id,
-      next_action_context_ids: data.next_action_context_ids || null,
-      schedule_type: data.schedule_type || 'none', // 전달받은 값 사용, 없으면 기본값 'none'
+      schedule_type: data.schedule_type || 'none',
       recurrence_pattern: 'none',
       icon: null,
       color: '#DBAC6C',
@@ -230,13 +183,11 @@ export async function updateInboxTodo(
   todoId: string,
   data: {
     title?: string;
-    clarification?: string;
     scheduled_date?: string;
     is_today_highlight?: boolean;
     completed?: boolean;
     project_id?: string;
-    next_action_context_ids?: string[] | null; // 다음행동상황 ID 배열
-    schedule_type?: string; // 일정 유형 필드
+    schedule_type?: string;
   }
 ): Promise<any> {
   console.log('✏️ 수집함 할일 수정:', { userId, todoId, data });
@@ -245,12 +196,10 @@ export async function updateInboxTodo(
     const updateData: Record<string, any> = {};
 
     if (data.title !== undefined) updateData.title = data.title;
-    if (data.clarification !== undefined) updateData.clarification = data.clarification;
     if (data.scheduled_date !== undefined) updateData.start_time = data.scheduled_date;
     if (data.is_today_highlight !== undefined) updateData.is_today_highlight = data.is_today_highlight;
     if (data.completed !== undefined) updateData.completed = data.completed;
     if (data.project_id !== undefined) updateData.project_id = data.project_id;
-    if (data.next_action_context_ids !== undefined) updateData.next_action_context_ids = data.next_action_context_ids;
     if (data.schedule_type !== undefined) updateData.schedule_type = data.schedule_type;
 
     const result = await updateWithJWT('todos', { column: 'id', operator: 'eq', value: todoId }, updateData);

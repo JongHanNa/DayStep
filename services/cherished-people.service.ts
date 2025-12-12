@@ -317,7 +317,6 @@ export class CherishedPeopleService {
         title: todoTitle,
         completed: true,
         is_relationship_task: true,
-        clarification: 'next_action',
         schedule_type: 'anytime',
         start_time: new Date().toISOString(),
         updated_at: new Date().toISOString(),

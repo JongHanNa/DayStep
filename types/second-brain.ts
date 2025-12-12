@@ -250,9 +250,6 @@ export interface InboxItem {
   delegated_at?: string;
 
   // 할일 타입 전용 필드
-  clarification?: string; // 명료화
-  next_action_status?: string; // 다음행동상황 (레거시)
-  next_action_context_ids?: string[]; // 다음행동상황 ID 배열
   scheduled_date?: string; // 예정 날짜 (ISO date string)
   schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none'; // 일정 유형
   is_highlight?: boolean; // 오늘의 하이라이트
@@ -273,9 +270,6 @@ export interface InboxItem {
   note_category?: '중간 작업물' | '나중에 보기' | '레퍼런스'; // 노트 분류
   is_pinned?: boolean; // 고정 여부
   linked_area_or_resource?: string; // 영역/자원 연결 ('area-{id}' 또는 'resource-{id}')
-
-  // 메타데이터
-  clarified_at?: string;
 
   // Junction 관계 (N:N) - DB JOIN으로 채워짐
   projects?: Project[]; // project_notes junction table

@@ -3,7 +3,6 @@
  */
 
 import { fetchWithJWT, queryRLSTableWithJWT, QueryOptions, createWithJWT } from './core';
-import { ensureDefaultNextActionContexts } from './next-action-contexts';
 
 /**
  * JWT 방식으로 사용자 정보 조회 (타임아웃 및 재시도 최적화)
@@ -73,15 +72,6 @@ export async function ensureUserExists(
 
     const createdUser = await createWithJWT('users', newUserData);
     console.log('✅ public.users 생성 완료:', createdUser.id);
-
-    // 3. 신규 사용자에게 기본 다음행동상황 항목 생성
-    try {
-      await ensureDefaultNextActionContexts(userId);
-      console.log('✅ 기본 다음행동상황 항목 생성 완료');
-    } catch (contextError) {
-      // 다음행동상황 생성 실패해도 사용자 생성은 성공으로 처리
-      console.warn('⚠️ 기본 다음행동상황 항목 생성 실패 (무시):', contextError);
-    }
 
     return createdUser;
 

@@ -30,7 +30,6 @@ interface MonthlyCalendarProps {
   onTodoClick?: (item: InboxItemWithEndDate) => void;
   onToggleTodo?: (todoId: string) => void;
   onTodoDateChange?: (todoId: string, newDate: Date) => Promise<void>; // 드래그로 날짜 변경
-  showClarification?: boolean; // 명료화 라벨 표시 여부
   compact?: boolean; // 컴팩트 모드 (높이 줄임)
   onCreateTodo?: (date: Date) => Promise<void>; // 즉시 할일 생성
   enableSpanning?: boolean; // 스패닝 카드 표시 여부 (기본: true)
@@ -44,7 +43,6 @@ export default function MonthlyCalendar({
   onTodoClick,
   onToggleTodo,
   onTodoDateChange,
-  showClarification = false,
   compact = false,
   onCreateTodo,
   enableSpanning = true,
@@ -96,8 +94,6 @@ export default function MonthlyCalendar({
   // 할일 분류 (스패닝 vs 단일 날짜)
   todos.forEach((todo) => {
     if (!todo.scheduled_date) return;
-    // 언젠가(someday) 명료화 속성은 제외
-    if (todo.clarification === 'someday') return;
 
     const startDate = new Date(todo.scheduled_date);
 
@@ -239,7 +235,6 @@ export default function MonthlyCalendar({
               todos={dayTodos}
               onTodoClick={onTodoClick}
               onToggleTodo={onToggleTodo}
-              showClarification={showClarification}
               compact={compact}
               onCreateTodo={onCreateTodo}
               spanningCard={spanningCard?.todo}
@@ -264,7 +259,6 @@ interface MonthDayCellProps {
   todos: InboxItemWithEndDate[];
   onTodoClick?: (item: InboxItemWithEndDate) => void;
   onToggleTodo?: (todoId: string) => void;
-  showClarification?: boolean;
   compact?: boolean;
   onCreateTodo?: (date: Date) => Promise<void>;
   spanningCard?: InboxItemWithEndDate;
@@ -281,7 +275,6 @@ function MonthDayCell({
   todos,
   onTodoClick,
   onToggleTodo,
-  showClarification,
   compact,
   onCreateTodo,
   spanningCard,

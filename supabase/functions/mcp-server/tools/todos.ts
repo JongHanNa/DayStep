@@ -14,7 +14,6 @@ import type {
   DeleteTodoInput,
   CompleteTodoInput,
   RescheduleTodoInput,
-  SetTodoClarificationInput,
   RecurrenceConfig,
 } from '../types/tools.ts';
 import type { DateContext } from '../utils/date.ts';
@@ -42,7 +41,6 @@ interface TodoRow {
   start_time?: string;
   priority?: string;
   recurrence_pattern: string;
-  clarification: string;
 }
 
 function formatTodo(todo: TodoRow): string {
@@ -103,7 +101,6 @@ export async function createTodo(
     priority,
     project_ids,
     recurrence,
-    clarification,
     is_today_highlight,
     icon,
     color,
@@ -163,7 +160,6 @@ export async function createTodo(
       start_time: resolvedStartTime,
       end_time: resolvedEndTime,
       priority: priority || 'medium',
-      clarification: clarification || 'none',
       is_today_highlight: is_today_highlight || false,
       icon: icon || null,
       color: color || '#DBAC6C',
@@ -210,7 +206,7 @@ export async function listTodos(
   input: ListTodosInput,
   dateContext: DateContext
 ): Promise<McpToolCallResult> {
-  const { date, date_range, completed, priority, clarification, project_id, schedule_type, limit = 50, offset = 0 } = input;
+  const { date, date_range, completed, priority, project_id, schedule_type, limit = 50, offset = 0 } = input;
 
   let query = supabase
     .from('todos')
@@ -243,9 +239,6 @@ export async function listTodos(
   }
   if (priority) {
     query = query.eq('priority', priority);
-  }
-  if (clarification) {
-    query = query.eq('clarification', clarification);
   }
   if (schedule_type) {
     query = query.eq('schedule_type', schedule_type);
@@ -345,7 +338,6 @@ export async function getTodo(
 일정 타입: ${data.schedule_type}
 시작 시간: ${formatDateKorean(data.start_time)} ${data.start_time ? formatTimeKorean(data.start_time) : ''}
 종료 시간: ${formatDateKorean(data.end_time)} ${data.end_time ? formatTimeKorean(data.end_time) : ''}
-명료화: ${getStatusEmoji(data.clarification)} ${data.clarification}
 오늘 하이라이트: ${data.is_today_highlight ? '예' : '아니오'}${recurrence}${projectsStr}
 아이콘: ${data.icon || '없음'}
 색상: ${data.color}
@@ -393,7 +385,6 @@ export async function updateTodo(
   if (updates.schedule_type !== undefined) validUpdates.schedule_type = updates.schedule_type;
   if (updates.priority !== undefined) validUpdates.priority = updates.priority;
   if (updates.completed !== undefined) validUpdates.completed = updates.completed;
-  if (updates.clarification !== undefined) validUpdates.clarification = updates.clarification;
   if (updates.is_today_highlight !== undefined) validUpdates.is_today_highlight = updates.is_today_highlight;
   if (updates.icon !== undefined) validUpdates.icon = updates.icon;
   if (updates.color !== undefined) validUpdates.color = updates.color;
@@ -624,58 +615,4 @@ export async function rescheduleTodo(
   }
 
   return createSuccessResult(`"${existing.title}"의 일정이 ${formatDateKorean(resolvedStartTime)}(으)로 변경되었습니다.`);
-}
-
-/**
- * 할일 명료화 상태 변경
- */
-export async function setTodoClarification(
-  supabase: SupabaseClient,
-  userId: string,
-  input: SetTodoClarificationInput,
-  _dateContext: DateContext
-): Promise<McpToolCallResult> {
-  const { id, clarification } = input;
-
-  if (!id || !clarification) {
-    return createErrorResult('id와 clarification은 필수입니다.');
-  }
-
-  const validClarifications = ['none', 'reminder', 'someday', 'waiting', 'next_action', 'schedule_clear'];
-  if (!validClarifications.includes(clarification)) {
-    return createErrorResult(`유효하지 않은 명료화 상태입니다. 가능한 값: ${validClarifications.join(', ')}`);
-  }
-
-  // 기존 데이터 확인
-  const { data: existing, error: fetchError } = await supabase
-    .from('todos')
-    .select('title')
-    .eq('id', id)
-    .eq('user_id', userId)
-    .single();
-
-  if (fetchError || !existing) {
-    return createErrorResult('할일을 찾을 수 없습니다.');
-  }
-
-  const { error } = await supabase
-    .from('todos')
-    .update({ clarification, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('user_id', userId);
-
-  if (error) {
-    return createErrorResult(`명료화 변경 실패: ${error.message}`);
-  }
-
-  const clarificationLabels: Record<string, string> = {
-    none: '없음',
-    reminder: '리마인더',
-    someday: '언젠가',
-    waiting: '대기 중',
-    next_action: '다음 행동',
-    schedule_clear: '일정 확정',
-  };
-
-  return createSuccessResult(`"${existing.title}"의 명료화가 "${clarificationLabels[clarification]}"(으)로 변경되었습니다.`);
 }

@@ -60,7 +60,6 @@ import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import type { Project, Goal, AreaResource, Note } from '@/types/second-brain';
 import type { SecondBrainItemType } from '@/types/settings';
-import type { Clarification } from '@/types';
 import type { GraphNode } from '@/types/graph';
 
 export default function GraphView() {
@@ -724,12 +723,10 @@ export default function GraphView() {
 
                   await updateTodo(editingNode.id, {
                     title: editingTodoData.title,
-                    clarification: editingTodoData.clarification as Clarification | undefined,
                     schedule_type: editingTodoData.scheduleType || 'none',
                     start_time: startTimeISO,
                     completed: editingTodoData.completed,
                     is_today_highlight: editingTodoData.isHighlight,
-                    next_action_context_ids: editingTodoData.nextActionContextIds,
                     color: editingTodoData.color,
                     icon: editingTodoData.icon,
                   });

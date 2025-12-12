@@ -96,7 +96,6 @@ export default function NoteEditModal({
     setEditingTodo(todo);
     setTodoForm({
       title: todo.title,
-      clarification: todo.clarification,
       completed: todo.completed || false,
       isHighlight: false,
       scheduledDate: todo.start_time ? new Date(todo.start_time) : undefined,

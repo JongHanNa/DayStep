@@ -37,12 +37,9 @@ interface TodoEditModalProps {
   onUpdateNote?: (id: string) => Promise<void>;
   onDeleteNote?: (id: string) => Promise<void>;
   titlePlaceholder?: string;
-  clarificationPlaceholder?: string;
   additionalContent?: React.ReactNode;
   headerTitle?: string; // 모달 헤더 제목 (기본값: "할일 편집")
   // 섹션 표시 여부 제어
-  showClarification?: boolean;
-  showNextActionStatus?: boolean;
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
@@ -74,11 +71,8 @@ export default function TodoEditModal({
   onUpdateNote,
   onDeleteNote,
   titlePlaceholder,
-  clarificationPlaceholder,
   additionalContent,
   headerTitle = '할일 편집',
-  showClarification,
-  showNextActionStatus,
   showScheduledDate,
   showHighlight,
   showCompleted,
@@ -269,7 +263,6 @@ export default function TodoEditModal({
             formData={todo}
             onChange={onChange}
             titlePlaceholder={titlePlaceholder}
-            clarificationPlaceholder={clarificationPlaceholder}
             projects={projects}
             notes={notes}
             onNoteClick={handleNoteClick}
@@ -280,8 +273,6 @@ export default function TodoEditModal({
             onCreateNote={onCreateNote}
             onUpdateNote={onUpdateNote}
             onDeleteNote={onDeleteNote}
-            showClarification={showClarification}
-            showNextActionStatus={showNextActionStatus}
             todoId={todoId}
             userId={userId}
             onProjectImmediateSave={onProjectImmediateSave}
