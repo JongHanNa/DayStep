@@ -90,7 +90,7 @@ export default function AwakeningSentenceSetup({
         <textarea
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="예: 정리하다 하루 다 가면, 그건 섬김이 아니야"
+          placeholder="예: 정리만 하다 하루 다 갈 수 있어요."
           className="textarea textarea-bordered w-full h-24 text-base resize-none"
           maxLength={100}
         />
