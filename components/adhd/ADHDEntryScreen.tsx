@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon } from 'lucide-react';
+import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
@@ -25,13 +26,14 @@ interface ADHDEntryScreenProps {
  * - 정리하기: 기존 GraphView로 진입
  */
 export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize, onMindCare }: ADHDEntryScreenProps) {
+  const router = useRouter();
   const { awakeningSentence } = useADHDModeStore();
   const [showDescriptions, setShowDescriptions] = useState(true);
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-base-100 px-6 relative">
-      {/* 테마 토글 버튼 (우측 상단) */}
+      {/* 테마 토글 및 설정 버튼 (우측 상단) */}
       <div className="absolute top-4 right-4 flex gap-2">
         <button
           onClick={() => setTheme('light')}
@@ -46,6 +48,13 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
           aria-label="다크 테마"
         >
           <Moon className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => router.push('/settings')}
+          className="btn btn-circle btn-sm btn-ghost"
+          aria-label="설정"
+        >
+          <Settings className="w-4 h-4" />
         </button>
       </div>
 

@@ -12,7 +12,8 @@ import {
   CheckCircle,
   Layers,
   Settings,
-  Crown
+  Crown,
+  ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -63,11 +64,20 @@ function SettingsPageContent() {
       {/* 페이지 헤더 */}
       <header className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">설정</h1>
-            <p className="text-sm text-muted-foreground">
-              앱 설정과 계정 정보를 관리하세요
-            </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.back()}
+              className="btn btn-circle btn-ghost btn-sm"
+              aria-label="뒤로 가기"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">설정</h1>
+              <p className="text-sm text-muted-foreground">
+                앱 설정과 계정 정보를 관리하세요
+              </p>
+            </div>
           </div>
           {/* 동기화 상태 표시 */}
           <SyncStatusIndicator />
