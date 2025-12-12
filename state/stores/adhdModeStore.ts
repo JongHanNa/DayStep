@@ -62,7 +62,7 @@ interface LearningReflectionModeState {
 
   // 배움 기록 필드
   draftContent: string;           // 나의 깨달음 (필수)
-  draftSourceText: string;        // 영감을 준 내용
+  draftSourceText: string;        // 배운 내용
   draftSourceReference: string;   // 출처
   draftExperience: string;        // 오늘의 경험
   draftCommitment: string;        // 실천 다짐

@@ -609,7 +609,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
         {/* 배움 기록 입력 폼 - 새 라벨 */}
         <div className="flex-1 space-y-4">
-          {/* 1. 영감을 준 내용 (선택) */}
+          {/* 1. 배운 내용 (선택) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
               {LEARNING_FIELD_LABELS.sourceText.label}{' '}

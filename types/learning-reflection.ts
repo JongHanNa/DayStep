@@ -204,18 +204,18 @@ export type ReflectionTimerDuration = typeof REFLECTION_TIMER_OPTIONS[number];
 /** 배움 기록 필드 라벨 */
 export const LEARNING_FIELD_LABELS = {
   sourceText: {
-    label: '영감을 준 내용',
-    placeholder: '책, 영상, 대화에서 인상 깊었던 내용을 적어보세요',
+    label: '배운 내용',
+    placeholder: '책, 영상, 강의, 대화 등 에서 배운 내용을 적어보세요',
     required: false,
   },
   sourceReference: {
     label: '출처',
-    placeholder: '어디서 배웠나요? (책 제목, 영상 링크 등)',
+    placeholder: '어디서 배웠나요? (책 제목, 영상, 강의 링크 등)',
     required: false,
   },
   content: {
-    label: '나의 깨달음',
-    placeholder: '무엇을 깨달았나요? 어떤 생각이 드나요?',
+    label: '깨달음, 알게된 점',
+    placeholder: '무엇을 깨달았나요? 어떤 것을 알게 됐나요?',
     required: true,
   },
   experience: {
