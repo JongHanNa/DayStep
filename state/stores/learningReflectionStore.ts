@@ -1,37 +1,37 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { MindCareService } from '@/services/mind-care.service';
+import { LearningReflectionService } from '@/services/learning-reflection.service';
 import type {
-  MindCareEntry,
-  MindCareEntryInput,
-  MindCareEntryUpdate,
-  MindCareEntryType,
-  MindCareSettings,
-  MindCarePrompt,
-  MindCareStats,
+  LearningReflectionEntry,
+  LearningReflectionEntryInput,
+  LearningReflectionEntryUpdate,
+  LearningReflectionEntryType,
+  LearningReflectionSettings,
+  LearningReflectionPrompt,
+  LearningReflectionStats,
   ComfortReminder,
-} from '@/types/mind-care';
+} from '@/types/learning-reflection';
 import { format } from 'date-fns';
 
 // ============================================
 // 상태 인터페이스
 // ============================================
 
-interface MindCareState {
+interface LearningReflectionState {
   // 데이터
-  entries: MindCareEntry[];
+  entries: LearningReflectionEntry[];
   isLoadingEntries: boolean;
 
-  stats: MindCareStats | null;
+  stats: LearningReflectionStats | null;
   isLoadingStats: boolean;
 
-  settings: MindCareSettings | null;
+  settings: LearningReflectionSettings | null;
 
   // 현재 탭
-  currentTab: MindCareEntryType | 'timer';
+  currentTab: LearningReflectionEntryType | 'timer';
 
   // 성찰 질문
-  currentPrompt: MindCarePrompt | null;
+  currentPrompt: LearningReflectionPrompt | null;
 
   // 위로 리마인더
   comfortReminder: ComfortReminder | null;
@@ -39,27 +39,27 @@ interface MindCareState {
 
   // 기록 추가/편집 모달
   showAddEntryModal: boolean;
-  editingEntry: MindCareEntry | null;
-  defaultEntryType: MindCareEntryType;
+  editingEntry: LearningReflectionEntry | null;
+  defaultEntryType: LearningReflectionEntryType;
 
   // 기록 상세 시트
   showEntryDetailSheet: boolean;
-  selectedEntry: MindCareEntry | null;
+  selectedEntry: LearningReflectionEntry | null;
 
   // Actions - 데이터
-  loadEntries: (userId: string, entryType?: MindCareEntryType) => Promise<void>;
-  addEntry: (userId: string, input: MindCareEntryInput) => Promise<MindCareEntry | null>;
-  updateEntry: (entryId: string, userId: string, updates: MindCareEntryUpdate) => Promise<boolean>;
+  loadEntries: (userId: string, entryType?: LearningReflectionEntryType) => Promise<void>;
+  addEntry: (userId: string, input: LearningReflectionEntryInput) => Promise<LearningReflectionEntry | null>;
+  updateEntry: (entryId: string, userId: string, updates: LearningReflectionEntryUpdate) => Promise<boolean>;
   deleteEntry: (entryId: string, userId: string) => Promise<boolean>;
-  toggleFavorite: (entry: MindCareEntry, userId: string) => Promise<void>;
-  togglePinned: (entry: MindCareEntry, userId: string) => Promise<void>;
+  toggleFavorite: (entry: LearningReflectionEntry, userId: string) => Promise<void>;
+  togglePinned: (entry: LearningReflectionEntry, userId: string) => Promise<void>;
 
   loadStats: (userId: string) => Promise<void>;
   loadSettings: (userId: string) => Promise<void>;
-  updateSettings: (userId: string, updates: Partial<MindCareSettings>) => Promise<void>;
+  updateSettings: (userId: string, updates: Partial<LearningReflectionSettings>) => Promise<void>;
 
   // Actions - 성찰 질문
-  loadRandomPrompt: (entryType: MindCareEntryType) => Promise<void>;
+  loadRandomPrompt: (entryType: LearningReflectionEntryType) => Promise<void>;
 
   // Actions - 위로 리마인더
   loadComfortReminder: (userId: string) => Promise<void>;
@@ -67,13 +67,13 @@ interface MindCareState {
   markReminderShown: (userId: string) => Promise<void>;
 
   // Actions - 탭
-  setCurrentTab: (tab: MindCareEntryType | 'timer') => void;
+  setCurrentTab: (tab: LearningReflectionEntryType | 'timer') => void;
 
   // Actions - 모달
-  openAddEntryModal: (entryType?: MindCareEntryType, entry?: MindCareEntry) => void;
+  openAddEntryModal: (entryType?: LearningReflectionEntryType, entry?: LearningReflectionEntry) => void;
   closeAddEntryModal: () => void;
 
-  openEntryDetailSheet: (entry: MindCareEntry) => void;
+  openEntryDetailSheet: (entry: LearningReflectionEntry) => void;
   closeEntryDetailSheet: () => void;
 
   reset: () => void;
@@ -92,7 +92,7 @@ const initialState = {
 
   settings: null,
 
-  currentTab: 'reflection' as MindCareEntryType | 'timer',
+  currentTab: 'reflection' as LearningReflectionEntryType | 'timer',
 
   currentPrompt: null,
 
@@ -101,7 +101,7 @@ const initialState = {
 
   showAddEntryModal: false,
   editingEntry: null,
-  defaultEntryType: 'reflection' as MindCareEntryType,
+  defaultEntryType: 'reflection' as LearningReflectionEntryType,
 
   showEntryDetailSheet: false,
   selectedEntry: null,
@@ -111,7 +111,7 @@ const initialState = {
 // 스토어 생성
 // ============================================
 
-export const useMindCareStore = create<MindCareState>()(
+export const useLearningReflectionStore = create<LearningReflectionState>()(
   devtools(
     (set, get) => ({
       ...initialState,
@@ -120,10 +120,10 @@ export const useMindCareStore = create<MindCareState>()(
       // 데이터 로드
       // ============================================
 
-      loadEntries: async (userId: string, entryType?: MindCareEntryType) => {
+      loadEntries: async (userId: string, entryType?: LearningReflectionEntryType) => {
         set({ isLoadingEntries: true });
         try {
-          const entries = await MindCareService.getEntries(userId, { entryType });
+          const entries = await LearningReflectionService.getEntries(userId, { entryType });
           set({ entries, isLoadingEntries: false });
         } catch (error) {
           console.error('❌ 마음 기록 로드 오류:', error);
@@ -131,10 +131,10 @@ export const useMindCareStore = create<MindCareState>()(
         }
       },
 
-      addEntry: async (userId: string, input: MindCareEntryInput) => {
+      addEntry: async (userId: string, input: LearningReflectionEntryInput) => {
         // Optimistic Update
         const tempId = `temp-${Date.now()}`;
-        const tempEntry: MindCareEntry = {
+        const tempEntry: LearningReflectionEntry = {
           id: tempId,
           user_id: userId,
           entry_type: input.entry_type || 'reflection', // 통합 폼: 기본값 'reflection'
@@ -162,7 +162,7 @@ export const useMindCareStore = create<MindCareState>()(
         }));
 
         try {
-          const newEntry = await MindCareService.addEntry(userId, input);
+          const newEntry = await LearningReflectionService.addEntry(userId, input);
           if (newEntry) {
             // 임시 항목을 실제 항목으로 교체
             set((state) => ({
@@ -184,7 +184,7 @@ export const useMindCareStore = create<MindCareState>()(
         return null;
       },
 
-      updateEntry: async (entryId: string, userId: string, updates: MindCareEntryUpdate) => {
+      updateEntry: async (entryId: string, userId: string, updates: LearningReflectionEntryUpdate) => {
         const previousEntries = get().entries;
 
         // Optimistic Update
@@ -195,7 +195,7 @@ export const useMindCareStore = create<MindCareState>()(
         }));
 
         try {
-          const success = await MindCareService.updateEntry(entryId, userId, updates);
+          const success = await LearningReflectionService.updateEntry(entryId, userId, updates);
           if (!success) {
             set({ entries: previousEntries });
           }
@@ -216,7 +216,7 @@ export const useMindCareStore = create<MindCareState>()(
         }));
 
         try {
-          const success = await MindCareService.deleteEntry(entryId, userId);
+          const success = await LearningReflectionService.deleteEntry(entryId, userId);
           if (!success) {
             set({ entries: previousEntries });
           } else {
@@ -230,7 +230,7 @@ export const useMindCareStore = create<MindCareState>()(
         }
       },
 
-      toggleFavorite: async (entry: MindCareEntry, userId: string) => {
+      toggleFavorite: async (entry: LearningReflectionEntry, userId: string) => {
         const previousEntries = get().entries;
         const newValue = !entry.is_favorite;
 
@@ -242,7 +242,7 @@ export const useMindCareStore = create<MindCareState>()(
         }));
 
         try {
-          const success = await MindCareService.toggleFavorite(entry.id, userId, entry.is_favorite);
+          const success = await LearningReflectionService.toggleFavorite(entry.id, userId, entry.is_favorite);
           if (!success) {
             set({ entries: previousEntries });
           }
@@ -252,7 +252,7 @@ export const useMindCareStore = create<MindCareState>()(
         }
       },
 
-      togglePinned: async (entry: MindCareEntry, userId: string) => {
+      togglePinned: async (entry: LearningReflectionEntry, userId: string) => {
         const previousEntries = get().entries;
         const newValue = !entry.is_pinned;
 
@@ -264,7 +264,7 @@ export const useMindCareStore = create<MindCareState>()(
         }));
 
         try {
-          const success = await MindCareService.togglePinned(entry.id, userId, entry.is_pinned);
+          const success = await LearningReflectionService.togglePinned(entry.id, userId, entry.is_pinned);
           if (!success) {
             set({ entries: previousEntries });
           }
@@ -277,7 +277,7 @@ export const useMindCareStore = create<MindCareState>()(
       loadStats: async (userId: string) => {
         set({ isLoadingStats: true });
         try {
-          const stats = await MindCareService.getStats(userId);
+          const stats = await LearningReflectionService.getStats(userId);
           set({ stats, isLoadingStats: false });
         } catch (error) {
           console.error('❌ 통계 로드 오류:', error);
@@ -287,23 +287,23 @@ export const useMindCareStore = create<MindCareState>()(
 
       loadSettings: async (userId: string) => {
         try {
-          const settings = await MindCareService.getSettings(userId);
+          const settings = await LearningReflectionService.getSettings(userId);
           set({ settings });
         } catch (error) {
           console.error('❌ 설정 로드 오류:', error);
         }
       },
 
-      updateSettings: async (userId: string, updates: Partial<MindCareSettings>) => {
+      updateSettings: async (userId: string, updates: Partial<LearningReflectionSettings>) => {
         const previousSettings = get().settings;
 
         // Optimistic Update
         if (previousSettings) {
-          set({ settings: { ...previousSettings, ...updates } as MindCareSettings });
+          set({ settings: { ...previousSettings, ...updates } as LearningReflectionSettings });
         }
 
         try {
-          await MindCareService.updateSettings(userId, updates);
+          await LearningReflectionService.updateSettings(userId, updates);
         } catch (error) {
           console.error('❌ 설정 업데이트 오류:', error);
           set({ settings: previousSettings });
@@ -314,9 +314,9 @@ export const useMindCareStore = create<MindCareState>()(
       // 성찰 질문
       // ============================================
 
-      loadRandomPrompt: async (entryType: MindCareEntryType) => {
+      loadRandomPrompt: async (entryType: LearningReflectionEntryType) => {
         try {
-          const prompt = await MindCareService.getRandomPrompt(entryType);
+          const prompt = await LearningReflectionService.getRandomPrompt(entryType);
           set({ currentPrompt: prompt });
         } catch (error) {
           console.error('❌ 성찰 질문 로드 오류:', error);
@@ -329,7 +329,7 @@ export const useMindCareStore = create<MindCareState>()(
 
       loadComfortReminder: async (userId: string) => {
         try {
-          const reminder = await MindCareService.getComfortReminder(userId);
+          const reminder = await LearningReflectionService.getComfortReminder(userId);
           if (reminder) {
             set({ comfortReminder: reminder, showComfortReminderBanner: true });
           }
@@ -345,7 +345,7 @@ export const useMindCareStore = create<MindCareState>()(
       markReminderShown: async (userId: string) => {
         const { comfortReminder } = get();
         if (comfortReminder) {
-          await MindCareService.markReminderShown(comfortReminder.entry.id, userId);
+          await LearningReflectionService.markReminderShown(comfortReminder.entry.id, userId);
         }
       },
 
@@ -353,7 +353,7 @@ export const useMindCareStore = create<MindCareState>()(
       // 탭
       // ============================================
 
-      setCurrentTab: (tab: MindCareEntryType | 'timer') => {
+      setCurrentTab: (tab: LearningReflectionEntryType | 'timer') => {
         set({ currentTab: tab });
         // 탭 전환 시 해당 유형의 질문 로드
         if (tab !== 'timer') {
@@ -365,7 +365,7 @@ export const useMindCareStore = create<MindCareState>()(
       // 모달 Actions
       // ============================================
 
-      openAddEntryModal: (entryType?: MindCareEntryType, entry?: MindCareEntry) => {
+      openAddEntryModal: (entryType?: LearningReflectionEntryType, entry?: LearningReflectionEntry) => {
         set({
           showAddEntryModal: true,
           editingEntry: entry || null,
@@ -380,7 +380,7 @@ export const useMindCareStore = create<MindCareState>()(
         });
       },
 
-      openEntryDetailSheet: (entry: MindCareEntry) => {
+      openEntryDetailSheet: (entry: LearningReflectionEntry) => {
         set({
           showEntryDetailSheet: true,
           selectedEntry: entry,
@@ -398,6 +398,6 @@ export const useMindCareStore = create<MindCareState>()(
         set(initialState);
       },
     }),
-    { name: 'mind-care-store' }
+    { name: 'learning-reflection-store' }
   )
 );

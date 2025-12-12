@@ -3,15 +3,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Trash2, Check } from 'lucide-react';
-import { useMindCareStore } from '@/state/stores/mindCareStore';
+import { useLearningReflectionStore } from '@/state/stores/learningReflectionStore';
 import { useAuth } from '@/app/context/AuthContext';
 import {
   ENTRY_TYPE_LABELS,
   MOOD_LABELS,
   SUGGESTED_TAGS,
-  type MindCareEntryType,
+  type LearningReflectionEntryType,
   type MoodLevel,
-} from '@/types/mind-care';
+} from '@/types/learning-reflection';
 import { format } from 'date-fns';
 
 export default function AddEntryModal() {
@@ -25,10 +25,10 @@ export default function AddEntryModal() {
     updateEntry,
     deleteEntry,
     loadEntries,
-  } = useMindCareStore();
+  } = useLearningReflectionStore();
 
   // 폼 상태
-  const [entryType, setEntryType] = useState<MindCareEntryType>(defaultEntryType);
+  const [entryType, setEntryType] = useState<LearningReflectionEntryType>(defaultEntryType);
   const [content, setContent] = useState('');
   const [sourceText, setSourceText] = useState('');
   const [sourceReference, setSourceReference] = useState('');
@@ -185,7 +185,7 @@ export default function AddEntryModal() {
               유형
             </label>
             <div className="flex gap-2">
-              {(['reflection', 'comfort', 'gratitude'] as MindCareEntryType[]).map((type) => {
+              {(['reflection', 'comfort', 'gratitude'] as LearningReflectionEntryType[]).map((type) => {
                 const typeInfo = ENTRY_TYPE_LABELS[type];
                 return (
                   <button

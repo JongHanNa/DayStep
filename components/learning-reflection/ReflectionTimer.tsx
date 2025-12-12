@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Check, Sparkles } from 'lucide-react';
 import { usePomodoro } from '@/hooks/usePomodoro';
-import { REFLECTION_TIMER_OPTIONS, type ReflectionTimerDuration } from '@/types/mind-care';
+import { REFLECTION_TIMER_OPTIONS, type ReflectionTimerDuration } from '@/types/learning-reflection';
 import CircularProgress from '@/components/pomodoro/CircularProgress';
 
 interface ReflectionTimerProps {

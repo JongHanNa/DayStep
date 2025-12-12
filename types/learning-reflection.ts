@@ -4,7 +4,7 @@
 // ============================================
 
 /** 마음 챙기기 뷰 상태 */
-export type MindCareViewState =
+export type LearningReflectionViewState =
   | 'select-duration'    // 시작 화면 (타이머 선택)
   | 'reflection-input'   // 배움 기록
   | 'project-derive'     // 과제 도출 (신규)
@@ -14,7 +14,7 @@ export type MindCareViewState =
   | 'history';           // 과거 기록
 
 /** 기록 유형 */
-export type MindCareEntryType =
+export type LearningReflectionEntryType =
   | 'reflection'   // 마음 기록
   | 'comfort'      // 위로의 순간
   | 'gratitude';   // 감사 일기
@@ -23,10 +23,10 @@ export type MindCareEntryType =
 export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 
 /** 마음 기록 엔트리 */
-export interface MindCareEntry {
+export interface LearningReflectionEntry {
   id: string;
   user_id: string;
-  entry_type: MindCareEntryType;
+  entry_type: LearningReflectionEntryType;
 
   // 내용
   content: string;                   // 나의 생각
@@ -56,8 +56,8 @@ export interface MindCareEntry {
 }
 
 /** 마음 기록 입력 */
-export interface MindCareEntryInput {
-  entry_type?: MindCareEntryType;  // 옵셔널 (기본값: 'reflection')
+export interface LearningReflectionEntryInput {
+  entry_type?: LearningReflectionEntryType;  // 옵셔널 (기본값: 'reflection')
   content: string;
   source_text?: string;
   source_reference?: string;
@@ -73,7 +73,7 @@ export interface MindCareEntryInput {
 }
 
 /** 마음 기록 업데이트 */
-export interface MindCareEntryUpdate {
+export interface LearningReflectionEntryUpdate {
   content?: string;
   source_text?: string | null;
   source_reference?: string | null;
@@ -90,7 +90,7 @@ export interface MindCareEntryUpdate {
 }
 
 /** 마음 챙기기 설정 */
-export interface MindCareSettings {
+export interface LearningReflectionSettings {
   id: string;
   user_id: string;
 
@@ -107,9 +107,9 @@ export interface MindCareSettings {
 }
 
 /** 성찰 질문 */
-export interface MindCarePrompt {
+export interface LearningReflectionPrompt {
   id: string;
-  prompt_type: MindCareEntryType;
+  prompt_type: LearningReflectionEntryType;
   prompt_text: string;
   prompt_key: string;
   display_weight: number;
@@ -118,7 +118,7 @@ export interface MindCarePrompt {
 }
 
 /** 마음 돌봄 통계 */
-export interface MindCareStats {
+export interface LearningReflectionStats {
   totalEntries: number;
   reflectionCount: number;
   comfortCount: number;
@@ -132,7 +132,7 @@ export interface MindCareStats {
 
 /** 위로 리마인더 (홈 화면 배너용) */
 export interface ComfortReminder {
-  entry: MindCareEntry;
+  entry: LearningReflectionEntry;
   daysSinceCreated: number;
 }
 
@@ -141,7 +141,7 @@ export interface ComfortReminder {
 // ============================================
 
 /** 기록 유형 라벨 */
-export const ENTRY_TYPE_LABELS: Record<MindCareEntryType, {
+export const ENTRY_TYPE_LABELS: Record<LearningReflectionEntryType, {
   label: string;
   emoji: string;
   description: string;
@@ -177,7 +177,7 @@ export const MOOD_LABELS: Array<{ value: MoodLevel; emoji: string; label: string
 ];
 
 /** 기본 태그 제안 (레거시 - 유형별) */
-export const SUGGESTED_TAGS: Record<MindCareEntryType, string[]> = {
+export const SUGGESTED_TAGS: Record<LearningReflectionEntryType, string[]> = {
   reflection: ['책', '영상', '강연', '성찰', '일상', '관계', '성장'],
   comfort: ['위로', '격려', '희망', '용기', '평안', '치유', '감동'],
   gratitude: ['가족', '건강', '일상', '관계', '성장', '자연', '음식'],

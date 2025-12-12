@@ -441,7 +441,7 @@ export type Database = {
           },
         ]
       }
-      mind_care_entries: {
+      learning_reflection_entries: {
         Row: {
           commitment: string | null
           content: string
@@ -525,7 +525,7 @@ export type Database = {
           },
         ]
       }
-      mind_care_prompts: {
+      learning_reflection_prompts: {
         Row: {
           created_at: string | null
           display_weight: number | null
@@ -555,7 +555,7 @@ export type Database = {
         }
         Relationships: []
       }
-      mind_care_settings: {
+      learning_reflection_settings: {
         Row: {
           comfort_reminder_enabled: boolean | null
           comfort_reminder_frequency: number | null
@@ -975,7 +975,7 @@ export type Database = {
             foreignKeyName: "projects_source_reflection_id_fkey"
             columns: ["source_reflection_id"]
             isOneToOne: false
-            referencedRelation: "mind_care_entries"
+            referencedRelation: "learning_reflection_entries"
             referencedColumns: ["id"]
           },
         ]

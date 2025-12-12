@@ -6,15 +6,15 @@ import {
 } from '@/lib/supabaseWebViewHelper';
 import type { QueryCondition } from '@/lib/supabase/core';
 import type {
-  MindCareEntry,
-  MindCareEntryInput,
-  MindCareEntryUpdate,
-  MindCareEntryType,
-  MindCareSettings,
-  MindCarePrompt,
-  MindCareStats,
+  LearningReflectionEntry,
+  LearningReflectionEntryInput,
+  LearningReflectionEntryUpdate,
+  LearningReflectionEntryType,
+  LearningReflectionSettings,
+  LearningReflectionPrompt,
+  LearningReflectionStats,
   ComfortReminder,
-} from '@/types/mind-care';
+} from '@/types/learning-reflection';
 import { format, subDays, startOfWeek, startOfMonth, differenceInDays, parseISO } from 'date-fns';
 
 // ============================================
@@ -25,7 +25,7 @@ import { format, subDays, startOfWeek, startOfMonth, differenceInDays, parseISO 
  * 마음 챙기기 서비스
  * 성찰, 위로, 감사 기록 관리
  */
-export class MindCareService {
+export class LearningReflectionService {
 
   // ============================================
   // 마음 기록 CRUD
@@ -37,11 +37,11 @@ export class MindCareService {
   static async getEntries(
     userId: string,
     options?: {
-      entryType?: MindCareEntryType;
+      entryType?: LearningReflectionEntryType;
       limit?: number;
       offset?: number;
     }
-  ): Promise<MindCareEntry[]> {
+  ): Promise<LearningReflectionEntry[]> {
     try {
       const filters: QueryCondition[] = [
         { column: 'user_id', operator: 'eq', value: userId },
@@ -51,7 +51,7 @@ export class MindCareService {
         filters.push({ column: 'entry_type', operator: 'eq', value: options.entryType });
       }
 
-      const data = await queryRLSTableWithJWT('mind_care_entries', filters, {
+      const data = await queryRLSTableWithJWT('learning_reflection_entries', filters, {
         order: 'is_pinned.desc,entry_date.desc,created_at.desc',
         limit: options?.limit,
       });
@@ -70,9 +70,9 @@ export class MindCareService {
   static async getEntriesByDate(
     userId: string,
     date: string
-  ): Promise<MindCareEntry[]> {
+  ): Promise<LearningReflectionEntry[]> {
     try {
-      const data = await queryRLSTableWithJWT('mind_care_entries', [
+      const data = await queryRLSTableWithJWT('learning_reflection_entries', [
         { column: 'user_id', operator: 'eq', value: userId },
         { column: 'entry_date', operator: 'eq', value: date },
       ], { order: 'created_at.desc' });
@@ -89,8 +89,8 @@ export class MindCareService {
    */
   static async addEntry(
     userId: string,
-    input: MindCareEntryInput
-  ): Promise<MindCareEntry | null> {
+    input: LearningReflectionEntryInput
+  ): Promise<LearningReflectionEntry | null> {
     const entryData = {
       user_id: userId,
       entry_type: input.entry_type || 'reflection', // 통합 폼: 기본값 'reflection'
@@ -110,7 +110,7 @@ export class MindCareService {
     };
 
     try {
-      const data = await createWithJWT('mind_care_entries', entryData);
+      const data = await createWithJWT('learning_reflection_entries', entryData);
       console.log('➕ 마음 기록 추가:', input.entry_type);
       return data;
     } catch (error) {
@@ -125,11 +125,11 @@ export class MindCareService {
   static async updateEntry(
     entryId: string,
     userId: string,
-    updates: MindCareEntryUpdate
+    updates: LearningReflectionEntryUpdate
   ): Promise<boolean> {
     try {
       await updateWithJWT(
-        'mind_care_entries',
+        'learning_reflection_entries',
         [
           { column: 'id', operator: 'eq', value: entryId },
           { column: 'user_id', operator: 'eq', value: userId },
@@ -149,7 +149,7 @@ export class MindCareService {
    */
   static async deleteEntry(entryId: string, userId: string): Promise<boolean> {
     try {
-      await deleteWithJWT('mind_care_entries', [
+      await deleteWithJWT('learning_reflection_entries', [
         { column: 'id', operator: 'eq', value: entryId },
         { column: 'user_id', operator: 'eq', value: userId },
       ]);
@@ -191,10 +191,10 @@ export class MindCareService {
    * 랜덤 성찰 질문 가져오기 (가중치 기반)
    */
   static async getRandomPrompt(
-    entryType: MindCareEntryType
-  ): Promise<MindCarePrompt | null> {
+    entryType: LearningReflectionEntryType
+  ): Promise<LearningReflectionPrompt | null> {
     try {
-      const data = await queryRLSTableWithJWT('mind_care_prompts', [
+      const data = await queryRLSTableWithJWT('learning_reflection_prompts', [
         { column: 'prompt_type', operator: 'eq', value: entryType },
         { column: 'is_active', operator: 'eq', value: true },
       ]);
@@ -202,7 +202,7 @@ export class MindCareService {
       if (!data || data.length === 0) return null;
 
       // 가중치 기반 랜덤 선택
-      const totalWeight = data.reduce((sum: number, p: MindCarePrompt) => sum + p.display_weight, 0);
+      const totalWeight = data.reduce((sum: number, p: LearningReflectionPrompt) => sum + p.display_weight, 0);
       let random = Math.random() * totalWeight;
 
       for (const prompt of data) {
@@ -227,7 +227,7 @@ export class MindCareService {
    */
   static async getComfortReminder(userId: string): Promise<ComfortReminder | null> {
     try {
-      const data = await queryRLSTableWithJWT('mind_care_entries', [
+      const data = await queryRLSTableWithJWT('learning_reflection_entries', [
         { column: 'user_id', operator: 'eq', value: userId },
         { column: 'entry_type', operator: 'eq', value: 'comfort' },
         { column: 'reminder_enabled', operator: 'eq', value: true },
@@ -236,14 +236,14 @@ export class MindCareService {
       if (!data || data.length === 0) return null;
 
       // 랜덤 선택 (오래된 것일수록 가중치 높게)
-      const withWeights = data.map((entry: MindCareEntry) => {
+      const withWeights = data.map((entry: LearningReflectionEntry) => {
         const daysSince = differenceInDays(new Date(), parseISO(entry.created_at));
         const reminderPenalty = entry.reminder_count * 2; // 자주 보여준 건 가중치 낮게
         const weight = Math.max(1, daysSince - reminderPenalty);
         return { entry, weight };
       });
 
-      const totalWeight = withWeights.reduce((sum: number, item: { entry: MindCareEntry; weight: number }) => sum + item.weight, 0);
+      const totalWeight = withWeights.reduce((sum: number, item: { entry: LearningReflectionEntry; weight: number }) => sum + item.weight, 0);
       let random = Math.random() * totalWeight;
 
       for (const item of withWeights) {
@@ -272,14 +272,14 @@ export class MindCareService {
   static async markReminderShown(entryId: string, userId: string): Promise<void> {
     try {
       // 현재 reminder_count 조회
-      const entries = await queryRLSTableWithJWT('mind_care_entries', [
+      const entries = await queryRLSTableWithJWT('learning_reflection_entries', [
         { column: 'id', operator: 'eq', value: entryId },
         { column: 'user_id', operator: 'eq', value: userId },
       ]);
 
       if (entries && entries.length > 0) {
         await updateWithJWT(
-          'mind_care_entries',
+          'learning_reflection_entries',
           [
             { column: 'id', operator: 'eq', value: entryId },
             { column: 'user_id', operator: 'eq', value: userId },
@@ -302,9 +302,9 @@ export class MindCareService {
   /**
    * 마음 돌봄 통계 조회
    */
-  static async getStats(userId: string): Promise<MindCareStats> {
+  static async getStats(userId: string): Promise<LearningReflectionStats> {
     try {
-      const allEntries = await queryRLSTableWithJWT('mind_care_entries', [
+      const allEntries = await queryRLSTableWithJWT('learning_reflection_entries', [
         { column: 'user_id', operator: 'eq', value: userId },
       ]);
 
@@ -327,16 +327,16 @@ export class MindCareService {
       const monthStart = startOfMonth(today);
 
       // 유형별 카운트
-      const reflectionCount = allEntries.filter((e: MindCareEntry) => e.entry_type === 'reflection').length;
-      const comfortCount = allEntries.filter((e: MindCareEntry) => e.entry_type === 'comfort').length;
-      const gratitudeCount = allEntries.filter((e: MindCareEntry) => e.entry_type === 'gratitude').length;
-      const favoriteCount = allEntries.filter((e: MindCareEntry) => e.is_favorite).length;
+      const reflectionCount = allEntries.filter((e: LearningReflectionEntry) => e.entry_type === 'reflection').length;
+      const comfortCount = allEntries.filter((e: LearningReflectionEntry) => e.entry_type === 'comfort').length;
+      const gratitudeCount = allEntries.filter((e: LearningReflectionEntry) => e.entry_type === 'gratitude').length;
+      const favoriteCount = allEntries.filter((e: LearningReflectionEntry) => e.is_favorite).length;
 
       // 이번 주/이번 달 카운트
-      const thisWeekCount = allEntries.filter((e: MindCareEntry) =>
+      const thisWeekCount = allEntries.filter((e: LearningReflectionEntry) =>
         parseISO(e.entry_date) >= weekStart
       ).length;
-      const thisMonthCount = allEntries.filter((e: MindCareEntry) =>
+      const thisMonthCount = allEntries.filter((e: LearningReflectionEntry) =>
         parseISO(e.entry_date) >= monthStart
       ).length;
 
@@ -373,7 +373,7 @@ export class MindCareService {
   /**
    * 연속 기록일 계산
    */
-  private static calculateStreaks(entries: MindCareEntry[]): {
+  private static calculateStreaks(entries: LearningReflectionEntry[]): {
     currentStreak: number;
     longestStreak: number;
   } {
@@ -435,9 +435,9 @@ export class MindCareService {
   /**
    * 설정 조회 (없으면 생성)
    */
-  static async getSettings(userId: string): Promise<MindCareSettings | null> {
+  static async getSettings(userId: string): Promise<LearningReflectionSettings | null> {
     try {
-      const data = await queryRLSTableWithJWT('mind_care_settings', [
+      const data = await queryRLSTableWithJWT('learning_reflection_settings', [
         { column: 'user_id', operator: 'eq', value: userId },
       ]);
 
@@ -455,7 +455,7 @@ export class MindCareService {
         show_streak: true,
       };
 
-      const created = await createWithJWT('mind_care_settings', defaultSettings);
+      const created = await createWithJWT('learning_reflection_settings', defaultSettings);
       return created;
     } catch (error) {
       console.error('❌ 설정 조회 오류:', error);
@@ -468,11 +468,11 @@ export class MindCareService {
    */
   static async updateSettings(
     userId: string,
-    updates: Partial<Omit<MindCareSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+    updates: Partial<Omit<LearningReflectionSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
   ): Promise<boolean> {
     try {
       await updateWithJWT(
-        'mind_care_settings',
+        'learning_reflection_settings',
         [{ column: 'user_id', operator: 'eq', value: userId }],
         { ...updates, updated_at: new Date().toISOString() }
       );

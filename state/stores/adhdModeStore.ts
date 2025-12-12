@@ -7,7 +7,7 @@ import { TodoSkipsService } from '@/services/todo-skips.service';
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'mind-care' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'learning-reflection' | null;
 
 export type SkipReason =
   | 'not_now'      // 지금 상황에 안 맞아
@@ -51,14 +51,14 @@ interface CareModeState {
 }
 
 // 배움→과제→계획 모드 상태 (구 나의 마음 챙기기)
-import type { MindCareViewState, TodoDraft } from '@/types/mind-care';
-export type { MindCareViewState };
-export type MindCareEntryType = 'reflection' | 'comfort' | 'gratitude';
+import type { LearningReflectionViewState, TodoDraft } from '@/types/learning-reflection';
+export type { LearningReflectionViewState };
+export type LearningReflectionEntryType = 'reflection' | 'comfort' | 'gratitude';
 
-interface MindCareModeState {
+interface LearningReflectionModeState {
   isActive: boolean;
   startedAt: Date | null;
-  viewState: MindCareViewState;
+  viewState: LearningReflectionViewState;
 
   // 배움 기록 필드
   draftContent: string;           // 나의 깨달음 (필수)
@@ -103,8 +103,8 @@ interface ADHDModeState {
   // 마음 전해보기 모드 상태
   careMode: CareModeState;
 
-  // 나의 마음 챙기기 모드 상태
-  mindCareMode: MindCareModeState;
+  // 배움→과제→계획 모드 상태
+  learningReflectionMode: LearningReflectionModeState;
 
   // 사용자 설정
   awakeningSentence: string | null;
@@ -151,10 +151,10 @@ interface ADHDModeState {
   // === 할일 정리 모드 Actions ===
   enterTaskOrganizeMode: (userId: string) => void;
 
-  // === 나의 마음 챙기기 모드 Actions ===
-  enterMindCareMode: (userId: string) => void;
-  setMindCareViewState: (viewState: MindCareViewState) => void;
-  setMindCareDraft: (draft: {
+  // === 배움→과제→계획 모드 Actions ===
+  enterLearningReflectionMode: (userId: string) => void;
+  setLearningReflectionViewState: (viewState: LearningReflectionViewState) => void;
+  setLearningReflectionDraft: (draft: {
     // 배움 기록 필드
     content?: string;
     sourceText?: string;
@@ -170,8 +170,8 @@ interface ADHDModeState {
     newProjectPreparation?: string;
     todosDraft?: TodoDraft[];
   }) => void;
-  resetMindCareDraft: () => void;
-  endMindCareMode: () => void;
+  resetLearningReflectionDraft: () => void;
+  endLearningReflectionMode: () => void;
 
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
@@ -232,7 +232,7 @@ const DEFAULT_CARE_MODE: CareModeState = {
   linkedTodoId: null,
 };
 
-const DEFAULT_MIND_CARE_MODE: MindCareModeState = {
+const DEFAULT_LEARNING_REFLECTION_MODE: LearningReflectionModeState = {
   isActive: false,
   startedAt: null,
   viewState: 'select-duration',
@@ -265,7 +265,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
-        mindCareMode: DEFAULT_MIND_CARE_MODE,
+        learningReflectionMode: DEFAULT_LEARNING_REFLECTION_MODE,
         awakeningSentence: null,
         cachedPatterns: null,
         isLoadingPatterns: false,
@@ -339,7 +339,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             executionMode: DEFAULT_EXECUTION_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
             careMode: DEFAULT_CARE_MODE,
-            mindCareMode: DEFAULT_MIND_CARE_MODE,
+            learningReflectionMode: DEFAULT_LEARNING_REFLECTION_MODE,
             currentUserId: null,
           });
         },
@@ -564,13 +564,13 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
         },
 
-        // === 나의 마음 챙기기 모드 Actions ===
-        enterMindCareMode: (userId: string) => {
+        // === 배움→과제→계획 모드 Actions ===
+        enterLearningReflectionMode: (userId: string) => {
           console.log('💡 ADHD: 배움→과제→계획 모드 진입');
           set({
-            currentMode: 'mind-care',
+            currentMode: 'learning-reflection',
             currentUserId: userId,
-            mindCareMode: {
+            learningReflectionMode: {
               isActive: true,
               startedAt: new Date(),
               viewState: 'select-duration',
@@ -592,30 +592,30 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
         },
 
-        setMindCareViewState: (viewState: MindCareViewState) => {
-          console.log('💝 ADHD: 마음 챙기기 뷰 상태 변경', viewState);
+        setLearningReflectionViewState: (viewState: LearningReflectionViewState) => {
+          console.log('💡 ADHD: 배움→과제→계획 뷰 상태 변경', viewState);
           set((state) => ({
-            mindCareMode: {
-              ...state.mindCareMode,
+            learningReflectionMode: {
+              ...state.learningReflectionMode,
               viewState,
             }
           }));
         },
 
-        setMindCareEntryType: (entryType: MindCareEntryType) => {
-          console.log('💝 ADHD: 마음 챙기기 유형 선택', entryType);
+        setLearningReflectionEntryType: (entryType: LearningReflectionEntryType) => {
+          console.log('💡 ADHD: 배움→과제→계획 유형 선택', entryType);
           set((state) => ({
-            mindCareMode: {
-              ...state.mindCareMode,
+            learningReflectionMode: {
+              ...state.learningReflectionMode,
               selectedEntryType: entryType,
             }
           }));
         },
 
-        setMindCareDraft: (draft) => {
+        setLearningReflectionDraft: (draft) => {
           set((state) => ({
-            mindCareMode: {
-              ...state.mindCareMode,
+            learningReflectionMode: {
+              ...state.learningReflectionMode,
               // 배움 기록 필드
               ...(draft.content !== undefined && { draftContent: draft.content }),
               ...(draft.sourceText !== undefined && { draftSourceText: draft.sourceText }),
@@ -634,10 +634,10 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        resetMindCareDraft: () => {
+        resetLearningReflectionDraft: () => {
           set((state) => ({
-            mindCareMode: {
-              ...state.mindCareMode,
+            learningReflectionMode: {
+              ...state.learningReflectionMode,
               // 배움 기록 필드 초기화
               draftContent: '',
               draftSourceText: '',
@@ -656,11 +656,11 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        endMindCareMode: () => {
-          console.log('💝 ADHD: 나의 마음 챙기기 모드 종료');
+        endLearningReflectionMode: () => {
+          console.log('💡 ADHD: 배움→과제→계획 모드 종료');
           set({
             currentMode: 'entry',
-            mindCareMode: DEFAULT_MIND_CARE_MODE,
+            learningReflectionMode: DEFAULT_LEARNING_REFLECTION_MODE,
           });
         },
 

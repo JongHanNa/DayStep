@@ -26,19 +26,19 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import type { MoodLevel, TodoDraft } from '@/types/mind-care';
-import { LEARNING_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS } from '@/types/mind-care';
+import type { MoodLevel, TodoDraft } from '@/types/learning-reflection';
+import { LEARNING_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS } from '@/types/learning-reflection';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import type { Project } from '@/types/second-brain';
 import type { Goal } from '@/types/second-brain';
-import { useMindCareStore } from '@/state/stores/mindCareStore';
+import { useLearningReflectionStore } from '@/state/stores/learningReflectionStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-interface MindCareModeProps {
+interface LearningReflectionModeProps {
   onExit: () => void;
 }
 
@@ -62,21 +62,21 @@ const UNIFIED_TAGS = [
 ];
 
 /**
- * 나의 마음 챙기기 모드
+ * 배움→과제→계획 모드
  *
- * ExecutionMode처럼 타이머와 함께 마음 돌봄 시간을 갖습니다.
- * 타이머 진행 중에 기록을 작성하고, 완료 시 저장합니다.
+ * ExecutionMode처럼 타이머와 함께 배움 기록 시간을 갖습니다.
+ * 타이머 진행 중에 기록을 작성하고, 과제를 도출하고, 할일을 계획합니다.
  */
-export default function MindCareMode({ onExit }: MindCareModeProps) {
+export default function LearningReflectionMode({ onExit }: LearningReflectionModeProps) {
   const { user } = useAuth();
   const userId = user?.id;
 
   const {
-    mindCareMode,
-    setMindCareViewState,
-    setMindCareDraft,
-    resetMindCareDraft,
-    endMindCareMode,
+    learningReflectionMode,
+    setLearningReflectionViewState,
+    setLearningReflectionDraft,
+    resetLearningReflectionDraft,
+    endLearningReflectionMode,
   } = useADHDModeStore();
 
   const {
@@ -88,7 +88,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     loadRandomPrompt,
     addEntry,
     toggleFavorite,
-  } = useMindCareStore();
+  } = useLearningReflectionStore();
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
@@ -121,7 +121,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     // 할일 계획 필드
     newProjectPreparation,
     todosDraft,
-  } = mindCareMode;
+  } = learningReflectionMode;
 
   // 프로젝트/할일/목표 스토어
   const { projects, fetchProjects, createProject } = useProjectStore();
@@ -163,7 +163,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
   // 타이머 시작
   const handleStartTimer = () => {
-    setMindCareViewState('reflection-input');
+    setLearningReflectionViewState('reflection-input');
     if (!skipTimer) {
       startPomodoroTimer(selectedDuration * 60 * 1000);
     }
@@ -172,42 +172,42 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   // 타이머 없이 시작
   const handleStartWithoutTimer = () => {
     setSkipTimer(true);
-    setMindCareViewState('reflection-input');
+    setLearningReflectionViewState('reflection-input');
   };
 
   // 과제 도출로 이동
   const handleGoToProjectDerive = () => {
     stopTimer();
-    setMindCareViewState('project-derive');
+    setLearningReflectionViewState('project-derive');
   };
 
   // 배움만 기록하고 끝내기
   const handleFinishWithLearningOnly = () => {
     stopTimer();
-    setMindCareViewState('capture');
+    setLearningReflectionViewState('capture');
   };
 
   // 할일 계획으로 이동
   const handleGoToTodoPlanning = () => {
-    setMindCareViewState('todo-planning');
+    setLearningReflectionViewState('todo-planning');
   };
 
   // 과제 없이 끝내기
   const handleFinishWithoutProject = async () => {
     await saveEntry(null);
-    setMindCareViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 할일 없이 끝내기
   const handleFinishWithoutTodos = async () => {
     await saveEntryAndProject();
-    setMindCareViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 전체 완료 (할일까지)
   const handleCompleteAll = async () => {
     await saveEntryAndProjectAndTodos();
-    setMindCareViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 할일 초안 추가
@@ -218,19 +218,19 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
       scheduledDate: format(new Date(), 'yyyy-MM-dd'),
       scheduledTime: null,
     };
-    setMindCareDraft({ todosDraft: [...todosDraft, newTodo] });
+    setLearningReflectionDraft({ todosDraft: [...todosDraft, newTodo] });
   };
 
   // 할일 초안 수정
   const handleUpdateTodoDraft = (id: string, updates: Partial<TodoDraft>) => {
-    setMindCareDraft({
+    setLearningReflectionDraft({
       todosDraft: todosDraft.map(t => t.id === id ? { ...t, ...updates } : t),
     });
   };
 
   // 할일 초안 삭제
   const handleRemoveTodoDraft = (id: string) => {
-    setMindCareDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
+    setLearningReflectionDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
   };
 
   // 배움 기록 저장 (프로젝트 연결 없이)
@@ -314,7 +314,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
     await saveEntry(projectId);
     loadStats(userId);
-    setMindCareViewState('completed');  // 완료 화면으로 전환
+    setLearningReflectionViewState('completed');  // 완료 화면으로 전환
   };
 
   // 생성된 프로젝트 이름 (완료 화면용)
@@ -329,20 +329,20 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
   // 타이머 완료 처리
   const handleTimerComplete = useCallback(() => {
     stopTimer();
-    setMindCareViewState('capture');
-  }, [stopTimer, setMindCareViewState]);
+    setLearningReflectionViewState('capture');
+  }, [stopTimer, setLearningReflectionViewState]);
 
   // 타이머 드래그로 완료
   const handleDragComplete = () => {
     stopTimer();
-    setMindCareViewState('capture');
+    setLearningReflectionViewState('capture');
   };
 
   // 타이머 중지 (뒤로가기)
   const handleStopTimer = () => {
     stopTimer();
-    resetMindCareDraft();
-    setMindCareViewState('select-duration');
+    resetLearningReflectionDraft();
+    setLearningReflectionViewState('select-duration');
   };
 
   // 시간 조정
@@ -368,10 +368,10 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
         tags: selectedTags.length > 0 ? selectedTags : undefined,
       });
 
-      resetMindCareDraft();
+      resetLearningReflectionDraft();
       setMoodRating(null);
       setSelectedTags([]);
-      setMindCareViewState('completed');
+      setLearningReflectionViewState('completed');
       loadStats(userId); // 통계 갱신
     } catch (error) {
       console.error('기록 저장 실패:', error);
@@ -382,10 +382,10 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
   // 저장 건너뛰기
   const handleSkipSave = () => {
-    resetMindCareDraft();
+    resetLearningReflectionDraft();
     setMoodRating(null);
     setSelectedTags([]);
-    setMindCareViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 뒤로가기 처리
@@ -395,23 +395,23 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
         handleStopTimer();
         break;
       case 'project-derive':
-        setMindCareViewState('reflection-input');
+        setLearningReflectionViewState('reflection-input');
         break;
       case 'todo-planning':
-        setMindCareViewState('project-derive');
+        setLearningReflectionViewState('project-derive');
         break;
       case 'capture':
-        setMindCareViewState('reflection-input');
+        setLearningReflectionViewState('reflection-input');
         break;
       case 'history':
-        setMindCareViewState('select-duration');
+        setLearningReflectionViewState('select-duration');
         break;
       case 'completed':
-        endMindCareMode();
+        endLearningReflectionMode();
         onExit();
         break;
       default:
-        endMindCareMode();
+        endLearningReflectionMode();
         onExit();
     }
   };
@@ -514,7 +514,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
 
       {/* 과거 기록 보기 */}
       <button
-        onClick={() => setMindCareViewState('history')}
+        onClick={() => setLearningReflectionViewState('history')}
         className="btn btn-ghost gap-2 mt-4"
       >
         <History className="w-5 h-5" />
@@ -617,7 +617,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             </label>
             <textarea
               value={draftSourceText}
-              onChange={(e) => setMindCareDraft({ sourceText: e.target.value })}
+              onChange={(e) => setLearningReflectionDraft({ sourceText: e.target.value })}
               placeholder={LEARNING_FIELD_LABELS.sourceText.placeholder}
               className="textarea textarea-bordered w-full h-20 resize-none"
             />
@@ -632,7 +632,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             <input
               type="text"
               value={draftSourceReference}
-              onChange={(e) => setMindCareDraft({ sourceReference: e.target.value })}
+              onChange={(e) => setLearningReflectionDraft({ sourceReference: e.target.value })}
               placeholder={LEARNING_FIELD_LABELS.sourceReference.placeholder}
               className="input input-bordered w-full"
             />
@@ -646,7 +646,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             </label>
             <textarea
               value={draftContent}
-              onChange={(e) => setMindCareDraft({ content: e.target.value })}
+              onChange={(e) => setLearningReflectionDraft({ content: e.target.value })}
               placeholder={LEARNING_FIELD_LABELS.content.placeholder}
               className="textarea textarea-bordered w-full h-24 resize-none"
             />
@@ -660,7 +660,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             </label>
             <textarea
               value={draftExperience}
-              onChange={(e) => setMindCareDraft({ experience: e.target.value })}
+              onChange={(e) => setLearningReflectionDraft({ experience: e.target.value })}
               placeholder={LEARNING_FIELD_LABELS.experience.placeholder}
               className="textarea textarea-bordered w-full h-20 resize-none"
             />
@@ -674,7 +674,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             </label>
             <textarea
               value={draftCommitment}
-              onChange={(e) => setMindCareDraft({ commitment: e.target.value })}
+              onChange={(e) => setLearningReflectionDraft({ commitment: e.target.value })}
               placeholder={LEARNING_FIELD_LABELS.commitment.placeholder}
               className="textarea textarea-bordered w-full h-20 resize-none"
             />
@@ -714,7 +714,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
       >
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setMindCareViewState('reflection-input')} className="btn btn-ghost btn-circle">
+          <button onClick={() => setLearningReflectionViewState('reflection-input')} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-xl font-bold">마음 돌봄 완료!</h1>
@@ -797,7 +797,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
       >
         {/* 헤더 */}
         <div className="flex items-center gap-3 p-4 border-b border-base-300">
-          <button onClick={() => setMindCareViewState('reflection-input')} className="btn btn-ghost btn-circle">
+          <button onClick={() => setLearningReflectionViewState('reflection-input')} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-xl font-bold">과제 도출</h1>
@@ -823,7 +823,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             <select
               value={selectedProjectId || ''}
               onChange={(e) => {
-                setMindCareDraft({ selectedProjectId: e.target.value || null, newProjectTitle: '' });
+                setLearningReflectionDraft({ selectedProjectId: e.target.value || null, newProjectTitle: '' });
               }}
               className="select select-bordered w-full"
             >
@@ -849,7 +849,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
                   <input
                     type="text"
                     value={newProjectTitle}
-                    onChange={(e) => setMindCareDraft({ newProjectTitle: e.target.value })}
+                    onChange={(e) => setLearningReflectionDraft({ newProjectTitle: e.target.value })}
                     placeholder={PROJECT_DERIVE_LABELS.title.placeholder}
                     className="input input-bordered w-full"
                   />
@@ -861,7 +861,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
                   </label>
                   <textarea
                     value={newProjectExpectedOutcome}
-                    onChange={(e) => setMindCareDraft({ newProjectExpectedOutcome: e.target.value })}
+                    onChange={(e) => setLearningReflectionDraft({ newProjectExpectedOutcome: e.target.value })}
                     placeholder={PROJECT_DERIVE_LABELS.expectedOutcome.placeholder}
                     rows={2}
                     className="textarea textarea-bordered w-full"
@@ -874,7 +874,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
                   </label>
                   <select
                     value={selectedGoalId || ''}
-                    onChange={(e) => setMindCareDraft({ selectedGoalId: e.target.value || null })}
+                    onChange={(e) => setLearningReflectionDraft({ selectedGoalId: e.target.value || null })}
                     className="select select-bordered w-full"
                   >
                     <option value="">목표 없이 진행</option>
@@ -901,7 +901,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             onClick={async () => {
               // 과제 없이 배움만 저장
               await saveEntry(null);
-              setMindCareViewState('completed');
+              setLearningReflectionViewState('completed');
             }}
             className="btn btn-ghost w-full"
           >
@@ -928,7 +928,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
       >
         {/* 헤더 */}
         <div className="flex items-center gap-3 p-4 border-b border-base-300">
-          <button onClick={() => setMindCareViewState('project-derive')} className="btn btn-ghost btn-circle">
+          <button onClick={() => setLearningReflectionViewState('project-derive')} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-xl font-bold">할일 계획</h1>
@@ -950,7 +950,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             </label>
             <textarea
               value={newProjectPreparation}
-              onChange={(e) => setMindCareDraft({ newProjectPreparation: e.target.value })}
+              onChange={(e) => setLearningReflectionDraft({ newProjectPreparation: e.target.value })}
               placeholder={TODO_PLANNING_LABELS.preparation.placeholder}
               rows={2}
               className="textarea textarea-bordered w-full"
@@ -1045,7 +1045,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
             onClick={async () => {
               // 할일 없이 배움+과제만 저장
               await saveEntryAndProject();
-              setMindCareViewState('completed');
+              setLearningReflectionViewState('completed');
             }}
             disabled={isSaving}
             className="btn btn-ghost w-full"
@@ -1133,15 +1133,15 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           <div className="flex gap-3">
             <button
               onClick={() => {
-                resetMindCareDraft();
-                setMindCareViewState('select-duration');
+                resetLearningReflectionDraft();
+                setLearningReflectionViewState('select-duration');
               }}
               className="btn btn-ghost flex-1"
             >
               처음으로
             </button>
             <button
-              onClick={() => setMindCareViewState('history')}
+              onClick={() => setLearningReflectionViewState('history')}
               className="btn btn-outline flex-1"
             >
               과거 기록 보기
@@ -1149,7 +1149,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
           </div>
           <button
             onClick={() => {
-              endMindCareMode();
+              endLearningReflectionMode();
               onExit();
             }}
             className="btn btn-primary w-full"
@@ -1171,7 +1171,7 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
     >
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 border-b border-base-300">
-        <button onClick={() => setMindCareViewState('select-duration')} className="btn btn-ghost btn-circle">
+        <button onClick={() => setLearningReflectionViewState('select-duration')} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold">과거 기록</h1>
