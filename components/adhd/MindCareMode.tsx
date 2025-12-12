@@ -469,10 +469,10 @@ export default function MindCareMode({ onExit }: MindCareModeProps) {
         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-6">
           <Lightbulb className="w-10 h-10 text-amber-600" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">오늘의 배움 기록</h2>
+        <h2 className="text-xl font-semibold mb-2">배움 기록</h2>
         <p className="text-base-content/60 mb-6">
-          오늘 배운 것을 기록하고, 과제를 도출하고,<br />
-          할일을 계획하세요.
+          배우면서, 또는 배운 것을 기록하고,<br />
+          과제를 도출하고, 할일을 계획하세요.
         </p>
 
         {/* 타이머 시간 선택 */}

@@ -115,9 +115,9 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             </motion.button>
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                오늘 배운 것을 기록하고, 과제를 도출하고,
+                배우면서, 또는 배운 것을 기록하고,
                 <br />
-                할일을 계획하세요.
+                과제를 도출하고, 할일을 계획하세요.
               </p>
             )}
           </div>
