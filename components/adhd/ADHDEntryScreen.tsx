@@ -26,7 +26,7 @@ interface ADHDEntryScreenProps {
  */
 export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize, onMindCare }: ADHDEntryScreenProps) {
   const { awakeningSentence } = useADHDModeStore();
-  const [showDescriptions, setShowDescriptions] = useState(false);
+  const [showDescriptions, setShowDescriptions] = useState(true);
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
