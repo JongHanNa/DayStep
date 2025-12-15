@@ -34,7 +34,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
   return (
     <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
       {/* 테마 토글 및 설정 버튼 (우측 상단) */}
-      <div className="absolute top-0 pt-4 right-4 flex gap-2 safe-area-top z-20 bg-base-100/80 backdrop-blur-sm rounded-full px-2 py-1">
+      <div className="fixed top-0 pt-4 right-4 flex gap-2 safe-area-top z-50">
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className="btn btn-circle btn-sm btn-ghost"
@@ -55,7 +55,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-sm text-center pt-14 safe-area-top"
+        className="w-full max-w-sm text-center mt-24 sm:mt-16 safe-area-top"
       >
         {/* 우선순위 상기 배너 */}
         {userId && (
