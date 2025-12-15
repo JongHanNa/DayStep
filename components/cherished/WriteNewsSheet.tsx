@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, Plus, Clock, Heart, Gift, MessageCircle } from 'lucide-react';
+import { X, ChevronLeft, Plus, Clock, Heart, Gift, MessageCircle, Search } from 'lucide-react';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
@@ -37,9 +37,27 @@ export default function WriteNewsSheet({ userId, isOpen, onClose }: WriteNewsShe
   const [selectedPerson, setSelectedPerson] = useState<CherishedPerson | null>(null);
   const [reminderMessage, setReminderMessage] = useState<string>('');
 
-  // 새 사람 추가 모드
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newPersonName, setNewPersonName] = useState('');
+  // 검색+생성 통합
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 필터링 로직
+  const filteredPeople = useMemo(() => {
+    if (!searchQuery.trim()) return people;
+    const query = searchQuery.toLowerCase();
+    return people.filter(person =>
+      person.name.toLowerCase().includes(query)
+    );
+  }, [people, searchQuery]);
+
+  // 검색어와 정확히 일치하는 사람이 있는지 확인
+  const exactMatchExists = useMemo(() => {
+    return people.some(
+      person => person.name.toLowerCase() === searchQuery.toLowerCase().trim()
+    );
+  }, [people, searchQuery]);
+
+  // 새 사람 추가 가능 여부 (검색어 있고 + 정확히 일치 없음)
+  const canCreateNew = searchQuery.trim() && !exactMatchExists;
 
   // 소식 작성 폼
   const [interactionType, setInteractionType] = useState<InteractionType>('message');
@@ -70,8 +88,7 @@ export default function WriteNewsSheet({ userId, isOpen, onClose }: WriteNewsShe
   const handleClose = () => {
     setStep('select-person');
     setSelectedPerson(null);
-    setIsAddingNew(false);
-    setNewPersonName('');
+    setSearchQuery('');
     resetForm();
     onClose();
   };
@@ -91,15 +108,14 @@ export default function WriteNewsSheet({ userId, isOpen, onClose }: WriteNewsShe
     setStep('write-news');
   };
 
-  // 새 사람 추가
-  const handleAddNewPerson = async () => {
-    if (!newPersonName.trim()) return;
+  // 검색어로 새 사람 추가
+  const handleAddNewPersonFromSearch = async () => {
+    if (!searchQuery.trim()) return;
 
-    const person = await addPerson(userId, { name: newPersonName.trim() });
+    const person = await addPerson(userId, { name: searchQuery.trim() });
     if (person) {
       setSelectedPerson(person);
-      setIsAddingNew(false);
-      setNewPersonName('');
+      setSearchQuery('');
       setStep('write-news');
     }
   };
@@ -191,93 +207,106 @@ export default function WriteNewsSheet({ userId, isOpen, onClose }: WriteNewsShe
                   </div>
                 )}
 
-                {/* 질문 프롬프트 */}
-                <p className="text-center text-base-content/70 mb-4">
-                  요즘 누구의 소식이 궁금하세요?
-                </p>
-
-                {/* 추천 섹션 (7일 이상 연락 안 한 사람) */}
-                {recommendations.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs text-base-content/50 mb-2 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      오래 연락 안 한 분들
-                    </p>
-                    <div className="space-y-2">
-                      {recommendations.slice(0, 3).map((rec) => (
-                        <button
-                          key={rec.person.id}
-                          onClick={() => handleSelectPerson(rec.person)}
-                          className="w-full p-3 rounded-xl bg-amber-50 border border-amber-200 text-left hover:bg-amber-100 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{rec.person.name}</span>
-                            <span className="text-xs text-amber-600">
-                              {CherishedPeopleService.formatDaysSince(rec.daysSinceLastContact)}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 전체 목록 */}
-                <div className="space-y-2">
-                  {people.map((person) => (
+                {/* 검색 입력란 */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="이름을 검색하거나 새로 추가하세요"
+                    className="w-full h-10 pl-10 pr-10 rounded-lg bg-base-200 border-0 text-sm placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                  {searchQuery && (
                     <button
-                      key={person.id}
-                      onClick={() => handleSelectPerson(person)}
-                      className={`w-full p-3 rounded-xl text-left transition-colors flex items-center justify-between ${
-                        isOverdue(person)
-                          ? 'bg-base-200 hover:bg-base-300'
-                          : 'bg-base-200 hover:bg-base-300'
-                      }`}
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-base-300"
                     >
-                      <span className="font-medium">{person.name}</span>
-                      {isOverdue(person) && (
-                        <span className="badge badge-warning badge-sm">오래됨</span>
-                      )}
-                    </button>
-                  ))}
-
-                  {/* 새 사람 추가 */}
-                  {isAddingNew ? (
-                    <div className="p-3 rounded-xl bg-base-200 space-y-3">
-                      <input
-                        type="text"
-                        value={newPersonName}
-                        onChange={(e) => setNewPersonName(e.target.value)}
-                        placeholder="이름을 입력하세요"
-                        className="input input-bordered w-full"
-                        autoFocus
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setIsAddingNew(false)}
-                          className="btn btn-ghost flex-1"
-                        >
-                          취소
-                        </button>
-                        <button
-                          onClick={handleAddNewPerson}
-                          disabled={!newPersonName.trim()}
-                          className="btn btn-primary flex-1"
-                        >
-                          추가
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setIsAddingNew(true)}
-                      className="w-full p-3 rounded-xl border-2 border-dashed border-base-300 text-base-content/60 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      새로운 소중한 사람 추가
+                      <X className="w-4 h-4 text-base-content/40" />
                     </button>
                   )}
                 </div>
+
+                {/* 새 사람 추가 버튼 (검색어가 있고, 정확히 일치하는 사람이 없을 때) */}
+                {canCreateNew && (
+                  <button
+                    onClick={handleAddNewPersonFromSearch}
+                    className="w-full p-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-left transition-colors flex items-center gap-2 mb-3"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>&quot;{searchQuery}&quot;</span> 새로 추가
+                  </button>
+                )}
+
+                {/* 검색 결과 또는 추천/전체 목록 */}
+                {searchQuery.trim() ? (
+                  // 검색어가 있을 때: 필터링된 목록
+                  <div className="space-y-2">
+                    {filteredPeople.length > 0 ? (
+                      filteredPeople.map((person) => (
+                        <button
+                          key={person.id}
+                          onClick={() => handleSelectPerson(person)}
+                          className="w-full p-3 rounded-xl bg-base-200 hover:bg-base-300 text-left transition-colors flex items-center justify-between"
+                        >
+                          <span className="font-medium">{person.name}</span>
+                          {isOverdue(person) && (
+                            <span className="badge badge-warning badge-sm">오래됨</span>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="text-center text-base-content/50 py-4">
+                        검색 결과가 없습니다
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  // 검색어 없을 때: 추천 섹션 + 전체 목록
+                  <>
+                    {/* 추천 섹션 (7일 이상 연락 안 한 사람) */}
+                    {recommendations.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs text-base-content/50 mb-2 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          오래 연락 안 한 분들
+                        </p>
+                        <div className="space-y-2">
+                          {recommendations.slice(0, 3).map((rec) => (
+                            <button
+                              key={rec.person.id}
+                              onClick={() => handleSelectPerson(rec.person)}
+                              className="w-full p-3 rounded-xl bg-amber-50 border border-amber-200 text-left hover:bg-amber-100 transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{rec.person.name}</span>
+                                <span className="text-xs text-amber-600">
+                                  {CherishedPeopleService.formatDaysSince(rec.daysSinceLastContact)}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 전체 목록 */}
+                    <div className="space-y-2">
+                      {people.map((person) => (
+                        <button
+                          key={person.id}
+                          onClick={() => handleSelectPerson(person)}
+                          className="w-full p-3 rounded-xl bg-base-200 hover:bg-base-300 text-left transition-colors flex items-center justify-between"
+                        >
+                          <span className="font-medium">{person.name}</span>
+                          {isOverdue(person) && (
+                            <span className="badge badge-warning badge-sm">오래됨</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </motion.div>
             ) : (
               <motion.div
