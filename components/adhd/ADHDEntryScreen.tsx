@@ -36,18 +36,11 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
       {/* 테마 토글 및 설정 버튼 (우측 상단) */}
       <div className="absolute top-0 pt-4 right-4 flex gap-2 safe-area-top">
         <button
-          onClick={() => setTheme('light')}
-          className={`btn btn-circle btn-sm ${resolvedTheme === 'light' ? 'btn-primary' : 'btn-ghost'}`}
-          aria-label="라이트 테마"
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          className="btn btn-circle btn-sm btn-ghost"
+          aria-label="테마 전환"
         >
-          <Sun className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => setTheme('dark')}
-          className={`btn btn-circle btn-sm ${resolvedTheme === 'dark' ? 'btn-primary' : 'btn-ghost'}`}
-          aria-label="다크 테마"
-        >
-          <Moon className="w-4 h-4" />
+          {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
         <button
           onClick={() => router.push('/settings')}
@@ -102,26 +95,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
 
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
-          {/* 배움→과제→계획 버튼 */}
-          <div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onLearningReflection}
-              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white border-none hover:from-amber-500 hover:to-orange-600"
-            >
-              <Lightbulb className="w-7 h-7" />
-              <span className="text-xl font-semibold">배움→과제→계획</span>
-            </motion.button>
-            {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                배우면서, 또는 배운 것을 기록하고,
-                <br />
-                과제를 도출하고, 할일을 계획하세요.
-              </p>
-            )}
-          </div>
-
           {/* 소중한 사람 챙기기 버튼 */}
           <div>
             <motion.button
@@ -142,7 +115,47 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
           </div>
 
-          {/* 작은 것 하나 실행 버튼 */}
+          {/* 관계 기록 보기 버튼 */}
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onRelationshipInsights}
+              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
+            >
+              <BookHeart className="w-7 h-7" />
+              <span className="text-xl font-semibold">관계 기록 보기</span>
+            </motion.button>
+            {showDescriptions && (
+              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                누구에게 뭘 들었는지 기억하기 어렵죠.
+                <br />
+                대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.
+              </p>
+            )}
+          </div>
+
+          {/* 기록→과제→계획 버튼 */}
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onLearningReflection}
+              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white border-none hover:from-amber-500 hover:to-orange-600"
+            >
+              <Lightbulb className="w-7 h-7" />
+              <span className="text-xl font-semibold">기록→과제→계획</span>
+            </motion.button>
+            {showDescriptions && (
+              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
+                생각이나 배운 것을 기록하고,
+                <br />
+                과제를 도출하고, 할일을 계획하세요.
+              </p>
+            )}
+          </div>
+
+          {/* 실행과 집중 버튼 */}
           <div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -178,26 +191,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
                 지난 기록을 확인하고, 일정을 관리하고,
                 <br />
                 통계로 성장을 확인하세요.
-              </p>
-            )}
-          </div>
-
-          {/* 관계 기록 보기 버튼 */}
-          <div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onRelationshipInsights}
-              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
-            >
-              <BookHeart className="w-7 h-7" />
-              <span className="text-xl font-semibold">관계 기록 보기</span>
-            </motion.button>
-            {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                누구에게 뭘 들었는지 기억하기 어렵죠.
-                <br />
-                대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.
               </p>
             )}
           </div>
