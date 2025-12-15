@@ -16,6 +16,19 @@ import {
   Users,
   Search,
   X,
+  Newspaper,
+  Phone,
+  Home,
+  Utensils,
+  Mail,
+  HandHelping,
+  Sparkles,
+  Frown,
+  Meh,
+  Smile,
+  SmilePlus,
+  HeartHandshake,
+  type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -31,6 +44,28 @@ interface CareModeProps {
 }
 
 type ViewState = 'select-person' | 'care-timer' | 'write-news' | 'completed';
+type QuickRecordMode = 'news' | 'thanks' | 'gift' | null;
+
+// Lucide 아이콘 매핑 객체
+const INTERACTION_ICONS: Record<string, LucideIcon> = {
+  Phone,
+  MessageCircle,
+  Home,
+  Utensils,
+  Gift,
+  Mail,
+  HandHelping,
+  Heart,
+  Sparkles,
+};
+
+const FEELING_ICONS: Record<string, LucideIcon> = {
+  Frown,
+  Meh,
+  Smile,
+  SmilePlus,
+  HeartHandshake,
+};
 
 /**
  * 마음 전해보기 모드
@@ -72,6 +107,7 @@ export default function CareMode({ onExit }: CareModeProps) {
 
   const [viewState, setViewState] = useState<ViewState>('select-person');
   const [reminderMessage, setReminderMessage] = useState<string>('');
+  const [quickRecordMode, setQuickRecordMode] = useState<QuickRecordMode>(null);
 
   // 검색+생성 통합
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,9 +181,17 @@ export default function CareMode({ onExit }: CareModeProps) {
     setViewState('write-news');
   }, [stopTimer]);
 
-  // 타이머 드래그로 완료
+  // 타이머 드래그로 완료 (마음 전했어요)
   const handleDragComplete = () => {
     stopTimer();
+    setQuickRecordMode(null); // 전체 화면 표시
+    setViewState('write-news');
+  };
+
+  // 빠른 기록 (소식/감사/선물)
+  const handleQuickRecord = (mode: QuickRecordMode) => {
+    stopTimer();
+    setQuickRecordMode(mode);
     setViewState('write-news');
   };
 
@@ -261,7 +305,7 @@ export default function CareMode({ onExit }: CareModeProps) {
         )}
         <h1 className="text-xl font-bold text-pink-700 flex items-center gap-2">
           <Heart className="w-5 h-5" fill="currentColor" />
-          마음 전해보기
+          소식을 기록하거나 마음 전해보기
         </h1>
         <div className="w-10" />
       </div>
@@ -476,6 +520,15 @@ export default function CareMode({ onExit }: CareModeProps) {
               </button>
             </div>
 
+            {/* 소식만 기록 버튼 */}
+            <button
+              onClick={() => handleQuickRecord('news')}
+              className="btn btn-sm btn-soft gap-1"
+            >
+              <Newspaper className="w-4 h-4" />
+              소식, 감사했던 점, 선물 계획만 기록할게요.
+            </button>
+
             {/* 완료/건너뛰기 버튼 */}
             <div className="flex flex-col gap-3 w-full max-w-xs">
               <button
@@ -512,31 +565,38 @@ export default function CareMode({ onExit }: CareModeProps) {
               </p>
             </div>
 
-            {/* 어떻게 연락했나요? */}
-            <div>
-              <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-primary" />
-                어떻게 마음을 전했나요?
-              </p>
-              <div className="grid grid-cols-4 gap-2">
-                {(Object.entries(INTERACTION_TYPE_LABELS) as [InteractionType, { label: string; emoji: string }][]).map(
-                  ([type, { label, emoji }]) => (
-                    <button
-                      key={type}
-                      onClick={() => setInteractionType(type)}
-                      className={`p-2 rounded-lg text-center transition-all ${
-                        interactionType === type
-                          ? 'bg-pink-500 text-white scale-105'
-                          : 'bg-base-200 hover:bg-base-300'
-                      }`}
-                    >
-                      <div className="text-lg">{emoji}</div>
-                      <div className="text-xs mt-1">{label}</div>
-                    </button>
-                  )
-                )}
+            {/* 어떻게 연락했나요? - quickRecordMode가 null일 때만 표시 */}
+            {!quickRecordMode && (
+              <div>
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-primary" />
+                  어떻게 마음을 전했나요?
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {(Object.entries(INTERACTION_TYPE_LABELS) as [InteractionType, { label: string; icon: string }][]).map(
+                    ([type, { label, icon }]) => {
+                      const IconComponent = INTERACTION_ICONS[icon];
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => setInteractionType(type)}
+                          className={`p-2 rounded-lg text-center transition-all ${
+                            interactionType === type
+                              ? 'bg-pink-500 text-white scale-105'
+                              : 'bg-base-200 hover:bg-base-300'
+                          }`}
+                        >
+                          <div className="flex justify-center">
+                            {IconComponent && <IconComponent className="w-5 h-5" />}
+                          </div>
+                          <div className="text-xs mt-1">{label}</div>
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 들은 소식 */}
             <div>
@@ -586,20 +646,23 @@ export default function CareMode({ onExit }: CareModeProps) {
             <div>
               <p className="text-sm font-medium mb-2">오늘 기분은 어때요?</p>
               <div className="flex justify-between">
-                {FEELING_RATINGS.map(({ value, emoji, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => setFeelingRating(value)}
-                    className={`flex flex-col items-center p-2 rounded-lg transition-all ${
-                      feelingRating === value
-                        ? 'bg-pink-100 scale-110'
-                        : 'hover:bg-base-200'
-                    }`}
-                  >
-                    <span className="text-2xl">{emoji}</span>
-                    <span className="text-xs mt-1 text-base-content/60">{label}</span>
-                  </button>
-                ))}
+                {FEELING_RATINGS.map(({ value, icon, label }) => {
+                  const IconComponent = FEELING_ICONS[icon];
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setFeelingRating(value)}
+                      className={`flex flex-col items-center p-2 rounded-lg transition-all ${
+                        feelingRating === value
+                          ? 'bg-pink-100 scale-110'
+                          : 'hover:bg-base-200'
+                      }`}
+                    >
+                      {IconComponent && <IconComponent className="w-6 h-6" />}
+                      <span className="text-xs mt-1 text-base-content/60">{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

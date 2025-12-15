@@ -4,7 +4,16 @@ import { useState, useEffect } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 import type { CherishedPerson, InteractionType } from '@/types/cherished-people';
-import { BarChart3, TrendingUp, Users, Calendar, Award } from 'lucide-react';
+import {
+  BarChart3, TrendingUp, Users, Calendar, Award,
+  Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
+
+// Lucide 아이콘 매핑
+const INTERACTION_ICONS: Record<string, LucideIcon> = {
+  Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
+};
 
 interface StatsDashboardViewProps {
   userId: string;
@@ -67,7 +76,7 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
       return {
         type,
         label: INTERACTION_TYPE_LABELS[typeKey]?.label || type,
-        emoji: INTERACTION_TYPE_LABELS[typeKey]?.emoji || '💬',
+        icon: INTERACTION_TYPE_LABELS[typeKey]?.icon || 'MessageCircle',
         count,
       };
     })
@@ -131,22 +140,26 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
             <h3 className="font-semibold">연락 방식</h3>
           </div>
           <div className="space-y-3">
-            {typeStatsArray.map((item) => (
-              <div key={item.type} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span>
-                    {item.emoji} {item.label}
-                  </span>
-                  <span className="text-base-content/60">{item.count}회</span>
+            {typeStatsArray.map((item) => {
+              const IconComponent = INTERACTION_ICONS[item.icon];
+              return (
+                <div key={item.type} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1">
+                      {IconComponent && <IconComponent className="w-4 h-4" />}
+                      {item.label}
+                    </span>
+                    <span className="text-base-content/60">{item.count}회</span>
+                  </div>
+                  <div className="h-2 bg-base-300 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{ width: `${(item.count / maxTypeCount) * 100}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 bg-base-300 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all duration-500"
-                    style={{ width: `${(item.count / maxTypeCount) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

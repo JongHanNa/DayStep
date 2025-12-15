@@ -4,7 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
 import type { CareInteraction, CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
-import { Clock, MoreVertical, Pencil, Trash2, X } from 'lucide-react';
+import {
+  Clock, MoreVertical, Pencil, Trash2, X,
+  Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
+  Frown, Meh, Smile, SmilePlus, HeartHandshake,
+  type LucideIcon,
+} from 'lucide-react';
+
+// Lucide 아이콘 매핑
+const INTERACTION_ICONS: Record<string, LucideIcon> = {
+  Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
+};
+
+const FEELING_ICONS: Record<string, LucideIcon> = {
+  Frown, Meh, Smile, SmilePlus, HeartHandshake,
+};
 
 interface TimelineViewProps {
   userId: string;
@@ -173,9 +187,11 @@ export function TimelineView({ userId }: TimelineViewProps) {
         <div className="space-y-3">
           {interactions.map((interaction) => {
             const typeInfo = INTERACTION_TYPE_LABELS[interaction.interaction_type];
+            const TypeIcon = typeInfo?.icon ? INTERACTION_ICONS[typeInfo.icon] : MessageCircle;
             const feelingInfo = interaction.feeling_rating
               ? FEELING_RATINGS.find(f => f.value === interaction.feeling_rating)
               : null;
+            const FeelingIcon = feelingInfo?.icon ? FEELING_ICONS[feelingInfo.icon] : null;
 
             return (
               <div
@@ -186,7 +202,7 @@ export function TimelineView({ userId }: TimelineViewProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm">{typeInfo?.emoji || '💬'}</span>
+                      {TypeIcon && <TypeIcon className="w-4 h-4 text-primary" />}
                     </div>
                     <div>
                       <span className="font-medium">{interaction.person?.name || '알 수 없음'}</span>
@@ -196,8 +212,10 @@ export function TimelineView({ userId }: TimelineViewProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {feelingInfo && (
-                      <span title={feelingInfo.label}>{feelingInfo.emoji}</span>
+                    {FeelingIcon && (
+                      <span title={feelingInfo?.label}>
+                        <FeelingIcon className="w-4 h-4" />
+                      </span>
                     )}
                     <span className="text-xs text-base-content/60">
                       {formatDate(interaction.interaction_date)}
@@ -293,9 +311,9 @@ export function TimelineView({ userId }: TimelineViewProps) {
                 onChange={(e) => setEditForm({ ...editForm, interaction_type: e.target.value as InteractionType })}
                 className="select select-bordered w-full"
               >
-                {Object.entries(INTERACTION_TYPE_LABELS).map(([key, { label, emoji }]) => (
+                {Object.entries(INTERACTION_TYPE_LABELS).map(([key, { label }]) => (
                   <option key={key} value={key}>
-                    {emoji} {label}
+                    {label}
                   </option>
                 ))}
               </select>
@@ -346,22 +364,25 @@ export function TimelineView({ userId }: TimelineViewProps) {
                 <span className="label-text font-medium">느낀 감정</span>
               </label>
               <div className="flex justify-between">
-                {FEELING_RATINGS.map(({ value, emoji, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setEditForm({ ...editForm, feeling_rating: value })}
-                    className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-                      editForm.feeling_rating === value
-                        ? 'bg-primary/20 ring-2 ring-primary'
-                        : 'hover:bg-base-200'
-                    }`}
-                    title={label}
-                  >
-                    <span className="text-2xl">{emoji}</span>
-                    <span className="text-xs mt-1 text-base-content/60">{label}</span>
-                  </button>
-                ))}
+                {FEELING_RATINGS.map(({ value, icon, label }) => {
+                  const IconComponent = FEELING_ICONS[icon];
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, feeling_rating: value })}
+                      className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                        editForm.feeling_rating === value
+                          ? 'bg-primary/20 ring-2 ring-primary'
+                          : 'hover:bg-base-200'
+                      }`}
+                      title={label}
+                    >
+                      {IconComponent && <IconComponent className="w-6 h-6" />}
+                      <span className="text-xs mt-1 text-base-content/60">{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

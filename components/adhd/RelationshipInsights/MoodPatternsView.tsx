@@ -4,7 +4,16 @@ import { useState, useEffect } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { FEELING_RATINGS } from '@/types/cherished-people';
 import type { CherishedPerson } from '@/types/cherished-people';
-import { Smile, User, Sparkles } from 'lucide-react';
+import {
+  Smile, User, Sparkles,
+  Frown, Meh, SmilePlus, HeartHandshake,
+  type LucideIcon,
+} from 'lucide-react';
+
+// Lucide 아이콘 매핑
+const FEELING_ICONS: Record<string, LucideIcon> = {
+  Frown, Meh, Smile, SmilePlus, HeartHandshake,
+};
 
 interface MoodPatternsViewProps {
   userId: string;
@@ -37,9 +46,13 @@ export function MoodPatternsView({ userId }: MoodPatternsViewProps) {
     }
   };
 
-  const getMoodEmoji = (rating: number) => {
+  // rating에 해당하는 아이콘 컴포넌트 반환
+  const getMoodIcon = (rating: number): LucideIcon => {
     const rounded = Math.round(rating);
-    return FEELING_RATINGS[rounded]?.emoji || '😐';
+    // FEELING_RATINGS는 value 1-5, 배열 인덱스는 0-4
+    const feelingInfo = FEELING_RATINGS.find(f => f.value === rounded);
+    const iconName = feelingInfo?.icon || 'Meh';
+    return FEELING_ICONS[iconName] || Meh;
   };
 
   const getMoodLabel = (rating: number) => {
@@ -90,7 +103,12 @@ export function MoodPatternsView({ userId }: MoodPatternsViewProps) {
     <div className="p-4 space-y-6">
       {/* 전체 요약 */}
       <div className="bg-gradient-to-br from-rose-100 to-amber-50 rounded-xl p-5 text-center">
-        <div className="text-4xl mb-2">{getMoodEmoji(overallAvg)}</div>
+        <div className="flex justify-center mb-2">
+          {(() => {
+            const OverallIcon = getMoodIcon(overallAvg);
+            return <OverallIcon className="w-10 h-10" />;
+          })()}
+        </div>
         <p className="text-lg font-semibold text-base-content">
           전체 평균: {overallAvg.toFixed(1)}점
         </p>
@@ -117,53 +135,58 @@ export function MoodPatternsView({ userId }: MoodPatternsViewProps) {
       {/* 사람별 기분 패턴 */}
       <div className="space-y-3">
         <h3 className="font-semibold text-base-content/80">사람별 기분 패턴</h3>
-        {patterns.map((pattern) => (
-          <div
-            key={pattern.person.id}
-            className={`${getMoodBgColor(pattern.avgMood)} rounded-xl p-4`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center">
-                <span className="text-2xl">{getMoodEmoji(pattern.avgMood)}</span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">{pattern.person.name}</span>
-                  <span className={`font-bold ${getMoodColor(pattern.avgMood)}`}>
-                    {pattern.avgMood.toFixed(1)}
-                  </span>
+        {patterns.map((pattern) => {
+          const PatternIcon = getMoodIcon(pattern.avgMood);
+          return (
+            <div
+              key={pattern.person.id}
+              className={`${getMoodBgColor(pattern.avgMood)} rounded-xl p-4`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center">
+                  <PatternIcon className="w-6 h-6" />
                 </div>
-                <p className="text-sm text-base-content/60 mt-0.5">
-                  {getMoodLabel(pattern.avgMood)} ({pattern.totalCount}회 기록)
-                </p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">{pattern.person.name}</span>
+                    <span className={`font-bold ${getMoodColor(pattern.avgMood)}`}>
+                      {pattern.avgMood.toFixed(1)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-base-content/60 mt-0.5">
+                    {getMoodLabel(pattern.avgMood)} ({pattern.totalCount}회 기록)
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* 최근 기분 히스토리 */}
-            {pattern.moodHistory.length > 1 && (
-              <div className="flex items-center gap-1 mt-3 pl-15">
-                <span className="text-xs text-base-content/50 mr-2">최근:</span>
-                {pattern.moodHistory.slice(0, 7).map((mood, idx) => (
-                  <span key={idx} className="text-sm">
-                    {FEELING_RATINGS[mood]?.emoji || '😐'}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+              {/* 최근 기분 히스토리 */}
+              {pattern.moodHistory.length > 1 && (
+                <div className="flex items-center gap-1 mt-3 pl-15">
+                  <span className="text-xs text-base-content/50 mr-2">최근:</span>
+                  {pattern.moodHistory.slice(0, 7).map((mood, idx) => {
+                    const HistoryIcon = getMoodIcon(mood);
+                    return <HistoryIcon key={idx} className="w-4 h-4" />;
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* 기분 점수 설명 */}
       <div className="bg-base-200 rounded-xl p-4">
         <h4 className="text-sm font-medium text-base-content/70 mb-3">기분 점수 안내</h4>
         <div className="grid grid-cols-5 gap-2 text-center">
-          {Object.entries(FEELING_RATINGS).map(([score, info]) => (
-            <div key={score} className="space-y-1">
-              <span className="text-xl">{info.emoji}</span>
-              <p className="text-xs text-base-content/60">{score}점</p>
-            </div>
-          ))}
+          {FEELING_RATINGS.map(({ value, icon, label }) => {
+            const IconComponent = FEELING_ICONS[icon];
+            return (
+              <div key={value} className="space-y-1">
+                {IconComponent && <IconComponent className="w-5 h-5 mx-auto" />}
+                <p className="text-xs text-base-content/60">{value}점</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

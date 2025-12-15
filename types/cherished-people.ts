@@ -126,17 +126,17 @@ export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
   other: '기타',
 };
 
-/** 관심 표현 방식 라벨 */
-export const INTERACTION_TYPE_LABELS: Record<InteractionType, { label: string; emoji: string }> = {
-  call: { label: '전화', emoji: '📞' },
-  message: { label: '문자/카톡', emoji: '💬' },
-  visit: { label: '방문', emoji: '🏠' },
-  meal: { label: '식사', emoji: '🍽️' },
-  gift: { label: '선물', emoji: '🎁' },
-  letter: { label: '편지/카드', emoji: '✉️' },
-  help: { label: '도움', emoji: '🤝' },
-  prayer: { label: '마음으로 응원', emoji: '💝' },  // 비신앙인 자연스러운 표현
-  other: { label: '기타', emoji: '💫' },
+/** 관심 표현 방식 라벨 (Lucide 아이콘 이름 사용) */
+export const INTERACTION_TYPE_LABELS: Record<InteractionType, { label: string; icon: string }> = {
+  call: { label: '전화', icon: 'Phone' },
+  message: { label: '문자/카톡', icon: 'MessageCircle' },
+  visit: { label: '방문', icon: 'Home' },
+  meal: { label: '식사', icon: 'Utensils' },
+  gift: { label: '선물', icon: 'Gift' },
+  letter: { label: '편지/카드', icon: 'Mail' },
+  help: { label: '도움', icon: 'HandHelping' },
+  prayer: { label: '마음으로 응원', icon: 'Heart' },
+  other: { label: '기타', icon: 'Sparkles' },
 };
 
 /** 중요도 라벨 */
@@ -146,13 +146,13 @@ export const PRIORITY_LABELS: Record<number, { label: string; color: string }> =
   2: { label: '매우 중요', color: 'text-error' },
 };
 
-/** 느낌 평가 라벨 */
-export const FEELING_RATINGS: Array<{ value: number; emoji: string; label: string }> = [
-  { value: 1, emoji: '😔', label: '아쉬워요' },
-  { value: 2, emoji: '😐', label: '그저 그래요' },
-  { value: 3, emoji: '🙂', label: '괜찮아요' },
-  { value: 4, emoji: '😊', label: '좋았어요' },
-  { value: 5, emoji: '🥰', label: '감사해요' },
+/** 느낌 평가 라벨 (Lucide 아이콘 이름 사용) */
+export const FEELING_RATINGS: Array<{ value: number; icon: string; label: string }> = [
+  { value: 1, icon: 'Frown', label: '아쉬워요' },
+  { value: 2, icon: 'Meh', label: '그저 그래요' },
+  { value: 3, icon: 'Smile', label: '괜찮아요' },
+  { value: 4, icon: 'SmilePlus', label: '좋았어요' },
+  { value: 5, icon: 'HeartHandshake', label: '감사해요' },
 ];
 
 /** 추천 우선순위 라벨 */
