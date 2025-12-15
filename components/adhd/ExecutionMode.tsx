@@ -668,7 +668,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const todayCompletedTodos = getTodayCompletedTodos();
 
   return (
-    <div className="min-h-screen flex flex-col bg-base-100">
+    <div className="min-h-screen flex flex-col bg-base-100 safe-area-top">
       {/* 헤더 */}
       <header className="p-4 flex items-center justify-between">
         <button

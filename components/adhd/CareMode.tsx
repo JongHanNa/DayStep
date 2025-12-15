@@ -221,7 +221,7 @@ export default function CareMode({ onExit }: CareModeProps) {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-base-100 p-4 safe-area-inset">
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-base-100 p-4 safe-area-top">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         {viewState !== 'completed' && viewState !== 'select-person' && (

@@ -55,7 +55,7 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
   };
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col">
+    <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-200">
         <div className="flex items-center gap-3 p-4">

@@ -73,7 +73,7 @@ export default function OrganizeModeWrapper({ onExit }: OrganizeModeWrapperProps
   }, []);
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen safe-area-top">
       {/* GraphView (기존 정리 화면) */}
       <GraphView />
 

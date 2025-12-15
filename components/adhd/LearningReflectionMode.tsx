@@ -1230,7 +1230,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   );
 
   return (
-    <div className="fixed inset-0 bg-base-100 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-base-100 z-50 flex flex-col safe-area-top">
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
         {viewState === 'reflection-input' && renderTimerRunningView()}
