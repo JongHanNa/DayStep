@@ -34,7 +34,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
   return (
     <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
       {/* 테마 토글 및 설정 버튼 (우측 상단) */}
-      <div className="fixed top-0 pt-4 right-4 flex gap-2 safe-area-top z-50">
+      <div className="absolute top-0 pt-4 right-4 flex gap-2 safe-area-top">
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className="btn btn-circle btn-sm btn-ghost"
