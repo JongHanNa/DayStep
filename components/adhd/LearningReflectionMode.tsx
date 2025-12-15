@@ -446,80 +446,83 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col h-full p-4"
+      className="flex flex-col h-full"
     >
-      {/* 헤더 */}
-      <div className="flex items-center gap-3 mb-6">
+      {/* 헤더 - 고정 영역 */}
+      <div className="flex items-center gap-3 p-4">
         <button onClick={handleBack} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold">배움 → 과제 → 계획</h1>
       </div>
 
-      {/* 연속 기록 */}
-      {stats && stats.currentStreak > 0 && (
-        <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl">
-          <span className="text-2xl">🔥</span>
-          <span className="font-medium">연속 {stats.currentStreak}일째 기록 중!</span>
-        </div>
-      )}
-
-      {/* 안내 문구 */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-6">
-          <Lightbulb className="w-10 h-10 text-amber-600" />
-        </div>
-        <h2 className="text-xl font-semibold mb-2">배움 기록</h2>
-        <p className="text-base-content/60 mb-6">
-          배우면서, 또는 배운 것을 기록하고,<br />
-          과제를 도출하고, 할일을 계획하세요.
-        </p>
-
-        {/* 타이머 시간 선택 */}
-        <div className="w-full max-w-xs mb-4">
-          <p className="text-sm text-base-content/60 mb-3">타이머 시간 (선택)</p>
-          <div className="flex gap-2 flex-wrap justify-center">
-            {TIMER_OPTIONS.map(min => (
-              <button
-                key={min}
-                onClick={() => {
-                  setSelectedDuration(min);
-                  setSkipTimer(false);
-                }}
-                className={`btn btn-sm ${selectedDuration === min && !skipTimer ? 'btn-primary' : 'btn-ghost'}`}
-              >
-                {min}분
-              </button>
-            ))}
-            <button
-              onClick={() => setSkipTimer(true)}
-              className={`btn btn-sm ${skipTimer ? 'btn-primary' : 'btn-ghost'}`}
-            >
-              타이머 없이
-            </button>
+      {/* 콘텐츠 - 스크롤 영역 */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 mobile-container">
+        {/* 연속 기록 */}
+        {stats && stats.currentStreak > 0 && (
+          <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl">
+            <span className="text-2xl">🔥</span>
+            <span className="font-medium">연속 {stats.currentStreak}일째 기록 중!</span>
           </div>
+        )}
+
+        {/* 안내 문구 */}
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 min-h-[60vh]">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-6">
+            <Lightbulb className="w-10 h-10 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">배움 기록</h2>
+          <p className="text-base-content/60 mb-6">
+            배우면서, 또는 배운 것을 기록하고,<br />
+            과제를 도출하고, 할일을 계획하세요.
+          </p>
+
+          {/* 타이머 시간 선택 */}
+          <div className="w-full max-w-xs mb-4">
+            <p className="text-sm text-base-content/60 mb-3">타이머 시간 (선택)</p>
+            <div className="flex gap-2 flex-wrap justify-center">
+              {TIMER_OPTIONS.map(min => (
+                <button
+                  key={min}
+                  onClick={() => {
+                    setSelectedDuration(min);
+                    setSkipTimer(false);
+                  }}
+                  className={`btn btn-sm ${selectedDuration === min && !skipTimer ? 'btn-primary' : 'btn-ghost'}`}
+                >
+                  {min}분
+                </button>
+              ))}
+              <button
+                onClick={() => setSkipTimer(true)}
+                className={`btn btn-sm ${skipTimer ? 'btn-primary' : 'btn-ghost'}`}
+              >
+                타이머 없이
+              </button>
+            </div>
+          </div>
+
+          {/* 시작 버튼 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={skipTimer ? handleStartWithoutTimer : handleStartTimer}
+            className="btn btn-primary btn-lg gap-2 rounded-full px-8"
+          >
+            <Play className="w-5 h-5" />
+            시작하기
+          </motion.button>
         </div>
 
-        {/* 시작 버튼 */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={skipTimer ? handleStartWithoutTimer : handleStartTimer}
-          className="btn btn-primary btn-lg gap-2 rounded-full px-8"
+        {/* 과거 기록 보기 */}
+        <button
+          onClick={() => setLearningReflectionViewState('history')}
+          className="btn btn-ghost gap-2 mt-4 w-full"
         >
-          <Play className="w-5 h-5" />
-          시작하기
-        </motion.button>
+          <History className="w-5 h-5" />
+          과거 기록 보기
+        </button>
       </div>
-
-      {/* 과거 기록 보기 */}
-      <button
-        onClick={() => setLearningReflectionViewState('history')}
-        className="btn btn-ghost gap-2 mt-4"
-      >
-        <History className="w-5 h-5" />
-        과거 기록 보기
-      </button>
     </motion.div>
   );
 
@@ -532,7 +535,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="flex flex-col h-full p-4 overflow-y-auto"
+        className="flex flex-col h-full p-4 overflow-y-auto mobile-container"
       >
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-4">
@@ -803,7 +806,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <h1 className="text-xl font-bold">과제 도출</h1>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 mobile-container">
           {/* 깨달음 미리보기 */}
           <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
             <div className="flex items-center gap-2 mb-2">
@@ -934,7 +937,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <h1 className="text-xl font-bold">할일 계획</h1>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 mobile-container">
           {/* 과제 정보 */}
           <div className="p-3 bg-base-200 rounded-lg">
             <div className="flex items-center gap-2">
@@ -1178,7 +1181,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
       </div>
 
       {/* 기록 목록 */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 mobile-container">
         {entries.length === 0 ? (
           <div className="text-center text-base-content/50 py-10">
             아직 기록이 없어요
@@ -1230,7 +1233,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   );
 
   return (
-    <div className="fixed inset-0 bg-base-100 z-50 flex flex-col safe-area-top">
+    <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
         {viewState === 'reflection-input' && renderTimerRunningView()}
