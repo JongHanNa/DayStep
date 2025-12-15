@@ -19,6 +19,7 @@
 		A40C70A92E70097F007BB2F4 /* ContactPickerPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40C70A72E70097F007BB2F4 /* ContactPickerPlugin.swift */; };
 		A40C74FE2E7A9F10007BB2F4 /* ContactGroupsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40C74FD2E7A9F10007BB2F4 /* ContactGroupsPlugin.swift */; };
 		A40C74FF2E7A9F10007BB2F4 /* ContactGroupsPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A40C74FC2E7A9F10007BB2F4 /* ContactGroupsPlugin.m */; };
+		A40C75012E7BA000007BB2F4 /* CustomWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40C75002E7BA000007BB2F4 /* CustomWebViewController.swift */; };
 		A42C07862E5D414C0004F8C8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A42C07852E5D414C0004F8C8 /* WidgetKit.framework */; };
 		A42C07882E5D414C0004F8C8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A42C07872E5D414C0004F8C8 /* SwiftUI.framework */; };
 		A42C07992E5D414E0004F8C8 /* DayStepWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A42C07842E5D414C0004F8C8 /* DayStepWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -62,6 +63,7 @@
 		A40C70A72E70097F007BB2F4 /* ContactPickerPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPickerPlugin.swift; sourceTree = "<group>"; };
 		A40C74FC2E7A9F10007BB2F4 /* ContactGroupsPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ContactGroupsPlugin.m; sourceTree = "<group>"; };
 		A40C74FD2E7A9F10007BB2F4 /* ContactGroupsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactGroupsPlugin.swift; sourceTree = "<group>"; };
+		A40C75002E7BA000007BB2F4 /* CustomWebViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWebViewController.swift; sourceTree = "<group>"; };
 		A42C07842E5D414C0004F8C8 /* DayStepWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A42C07852E5D414C0004F8C8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A42C07872E5D414C0004F8C8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -160,6 +162,7 @@
 				A42C07A32E5D459B0004F8C8 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				A40C75002E7BA000007BB2F4 /* CustomWebViewController.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -335,6 +338,7 @@
 				A40C74FE2E7A9F10007BB2F4 /* ContactGroupsPlugin.swift in Sources */,
 				A40C74FF2E7A9F10007BB2F4 /* ContactGroupsPlugin.m in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				A40C75012E7BA000007BB2F4 /* CustomWebViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

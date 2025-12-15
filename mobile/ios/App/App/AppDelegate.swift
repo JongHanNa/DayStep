@@ -36,6 +36,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+
+        // iOS 고무줄 효과(bounce scrolling) 활성화
+        if let rootVC = window?.rootViewController as? CAPBridgeViewController {
+            rootVC.webView?.scrollView.bounces = true
+            rootVC.webView?.scrollView.alwaysBounceVertical = true
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
