@@ -32,9 +32,9 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
   const { resolvedTheme, setTheme } = useTheme();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-base-100 px-6 relative">
+    <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
       {/* 테마 토글 및 설정 버튼 (우측 상단) */}
-      <div className="absolute top-0 pt-4 right-4 flex gap-2 safe-area-top z-20">
+      <div className="absolute top-0 pt-4 right-4 flex gap-2 safe-area-top z-20 bg-base-100/80 backdrop-blur-sm rounded-full px-2 py-1">
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className="btn btn-circle btn-sm btn-ghost"
@@ -51,24 +51,19 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
         </button>
       </div>
 
-      {/* 배너 - 헤더 아래 별도 영역 */}
-      {userId && (
-        <div className="absolute top-14 left-6 right-6 safe-area-top z-10">
-          <PriorityReminderBanner
-            userId={userId}
-            onContactClick={onCare}
-          />
-        </div>
-      )}
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-sm text-center"
+        className="w-full max-w-sm text-center pt-14 safe-area-top"
       >
-        {/* 배너 공간 확보용 spacer */}
-        {userId && <div className="h-56 safe-area-top" />}
+        {/* 우선순위 상기 배너 */}
+        {userId && (
+          <PriorityReminderBanner
+            userId={userId}
+            onContactClick={onCare}
+          />
+        )}
 
         {/* 메인 질문 */}
         <h1 className="text-2xl font-bold text-base-content mb-2">
