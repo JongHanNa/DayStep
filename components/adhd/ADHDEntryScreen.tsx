@@ -55,7 +55,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-sm text-center mt-24 sm:mt-16 safe-area-top"
+        className="w-full max-w-sm text-center mt-16 safe-area-top"
       >
         {/* 우선순위 상기 배너 */}
         {userId && (
