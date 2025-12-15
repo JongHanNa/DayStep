@@ -453,9 +453,9 @@ export default function CareMode({ onExit }: CareModeProps) {
 
             {/* 안내 메시지 */}
             <p className="text-center text-base-content/70 max-w-xs">
-              마음을 전할 시간이에요.<br/>
-              전화, 문자, 선물 계획 등<br/>
-              무엇이든 좋아요.
+              소중한 사람을 떠올려보세요.<br/>
+              마음을 전하거나,<br/>
+              소식을 기록해보세요.
             </p>
 
             {/* 원형 타이머 */}
