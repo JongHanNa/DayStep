@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Heart, MessageCircle, BarChart3, Smile } from 'lucide-react';
+import { ArrowLeft, Clock, Heart, MessageCircle, BarChart3, Smile, Sun, Moon } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
 import { TimelineView } from './TimelineView';
 import { GratitudeJournalView } from './GratitudeJournalView';
 import { NewsMemosView } from './NewsMemosView';
@@ -28,6 +29,7 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
   const [activeTab, setActiveTab] = useState<TabType>('timeline');
   const { user } = useAuth();
   const userId = user?.id;
+  const { resolvedTheme, setTheme } = useTheme();
 
   const renderContent = () => {
     if (!userId) {
@@ -65,7 +67,14 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold">관계 기록</h1>
+          <h1 className="text-lg font-bold flex-1">관계 기록</h1>
+          <button
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="btn btn-circle btn-sm btn-ghost"
+            aria-label="테마 전환"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* 탭 네비게이션 */}

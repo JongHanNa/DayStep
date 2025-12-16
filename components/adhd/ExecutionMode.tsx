@@ -20,13 +20,16 @@ import {
   Play,
   Pause,
   Square,
-  Timer
+  Timer,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
+import { useTheme } from '@/hooks/useTheme';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
@@ -110,6 +113,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     loadSettings: loadBalanceSettings,
     loadTodayReflections,
   } = useBalanceStore();
+
+  const { resolvedTheme, setTheme } = useTheme();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -689,7 +694,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
           </motion.div>
         )}
 
-        <div className="w-10" /> {/* 균형을 위한 빈 공간 */}
+        <button
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          className="btn btn-circle btn-sm btn-ghost"
+          aria-label="테마 전환"
+        >
+          {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </header>
 
       {/* 개발환경 디버그 패널 (아코디언) */}

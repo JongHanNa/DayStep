@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Clock, Calendar, Inbox, BarChart3, Network } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Inbox, BarChart3, Network, Sun, Moon } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
+import { useTheme } from '@/hooks/useTheme';
 import { TodoTimelineView } from './TodoTimelineView';
 import { TodayPlanView } from './TodayPlanView';
 import { OrganizeNeededView } from './OrganizeNeededView';
@@ -38,6 +39,7 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
   const [activeTab, setActiveTab] = useState<TabType>('plan');
   const { user } = useAuth();
   const userId = user?.id;
+  const { resolvedTheme, setTheme } = useTheme();
 
   const renderContent = () => {
     if (!userId) {
@@ -75,7 +77,14 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold">할일 정리</h1>
+          <h1 className="text-lg font-bold flex-1">할일 정리</h1>
+          <button
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="btn btn-circle btn-sm btn-ghost"
+            aria-label="테마 전환"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* 탭 네비게이션 */}

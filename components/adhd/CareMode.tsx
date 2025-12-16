@@ -28,6 +28,8 @@ import {
   Smile,
   SmilePlus,
   HeartHandshake,
+  Sun,
+  Moon,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
@@ -36,6 +38,7 @@ import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useBalanceStore } from '@/state/stores/balanceStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { usePomodoro } from '@/hooks/usePomodoro';
+import { useTheme } from '@/hooks/useTheme';
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
 
@@ -94,6 +97,8 @@ export default function CareMode({ onExit }: CareModeProps) {
   } = useCherishedPeopleStore();
 
   const { settings } = useBalanceStore();
+
+  const { resolvedTheme, setTheme } = useTheme();
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
@@ -307,7 +312,13 @@ export default function CareMode({ onExit }: CareModeProps) {
           <Heart className="w-5 h-5" fill="currentColor" />
           소식을 기록하거나 마음 전해보기
         </h1>
-        <div className="w-10" />
+        <button
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          className="btn btn-circle btn-sm btn-ghost"
+          aria-label="테마 전환"
+        >
+          {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </div>
 
       <AnimatePresence mode="wait">

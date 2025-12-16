@@ -23,6 +23,8 @@ import {
   Calendar,
   X,
   Trash2,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -35,6 +37,7 @@ import type { Project } from '@/types/second-brain';
 import type { Goal } from '@/types/second-brain';
 import { useLearningReflectionStore } from '@/state/stores/learningReflectionStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
+import { useTheme } from '@/hooks/useTheme';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -99,6 +102,8 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     stopTimer,
     adjustTime,
   } = usePomodoro();
+
+  const { resolvedTheme, setTheme } = useTheme();
 
   // 로컬 상태
   const [selectedDuration, setSelectedDuration] = useState(10); // 기본 10분
@@ -453,7 +458,14 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         <button onClick={handleBack} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold">배움 → 과제 → 계획</h1>
+        <h1 className="text-xl font-bold flex-1">배움 → 과제 → 계획</h1>
+        <button
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          className="btn btn-circle btn-sm btn-ghost"
+          aria-label="테마 전환"
+        >
+          {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* 콘텐츠 - 스크롤 영역 */}
