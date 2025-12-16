@@ -20,18 +20,18 @@ export const FEATURE_FLAGS = {
   /**
    * Pro 월간 구독 가격 (표시용)
    */
-  PRO_MONTHLY_PRICE: process.env.NEXT_PUBLIC_PRO_MONTHLY_PRICE || '₩5,900',
+  PRO_MONTHLY_PRICE: process.env.NEXT_PUBLIC_PRO_MONTHLY_PRICE || '₩5,500',
 
   /**
    * Pro 연간 구독 가격 (표시용)
    */
-  PRO_YEARLY_PRICE: process.env.NEXT_PUBLIC_PRO_YEARLY_PRICE || '₩49,000',
+  PRO_YEARLY_PRICE: process.env.NEXT_PUBLIC_PRO_YEARLY_PRICE || '₩44,000',
 
   /**
    * Pro 연간 구독 할인율 (%)
    */
   PRO_YEARLY_DISCOUNT_PERCENTAGE: parseInt(
-    process.env.NEXT_PUBLIC_PRO_YEARLY_DISCOUNT_PERCENTAGE || '30',
+    process.env.NEXT_PUBLIC_PRO_YEARLY_DISCOUNT_PERCENTAGE || '33',
     10
   ),
 
@@ -51,6 +51,26 @@ export const FEATURE_FLAGS = {
  * Paywall에서 표시할 잠금 기능
  */
 export const PRO_FEATURES = [
+  // 관계 관리 기능 (핵심)
+  {
+    id: 'unlimited_cherished_people',
+    name: '무제한 소중한 사람',
+    description: '소중한 사람을 무제한으로 등록하고 관리',
+    path: null,
+  },
+  {
+    id: 'unlimited_care_interactions',
+    name: '무제한 관심 기록',
+    description: '관심 표현 기록을 무제한으로 저장',
+    path: null,
+  },
+  {
+    id: 'relationship_insights',
+    name: '관계 인사이트 & 통계',
+    description: '관계 패턴 분석 및 상세 통계 대시보드',
+    path: null,
+  },
+  // 기존 기능들
   {
     id: 'goal_compass',
     name: '목표 나침반',
@@ -116,6 +136,10 @@ export const FREE_TIER_LIMITS = {
   MAX_GOALS: 6,
   MAX_AREAS_RESOURCES: 10,
 
+  // 관계 관리 기능 제한
+  MAX_CHERISHED_PEOPLE: 10, // 소중한 사람
+  MAX_CARE_INTERACTIONS: 30, // 관심 기록
+
   // 경고 임계값 (%)
   WARNING_THRESHOLD: 80,
 } as const;
@@ -130,7 +154,9 @@ export type UsageEntityType =
   | 'goal'
   | 'note'
   | 'area_resource'
-  | 'contact';
+  | 'contact'
+  | 'cherished_people'
+  | 'care_interaction';
 
 /**
  * 엔티티별 제한값 매핑
@@ -143,6 +169,8 @@ export const ENTITY_LIMIT_MAP: Record<UsageEntityType, number> = {
   note: FREE_TIER_LIMITS.MAX_NOTES,
   area_resource: FREE_TIER_LIMITS.MAX_AREAS_RESOURCES,
   contact: FREE_TIER_LIMITS.MAX_CONTACTS,
+  cherished_people: FREE_TIER_LIMITS.MAX_CHERISHED_PEOPLE,
+  care_interaction: FREE_TIER_LIMITS.MAX_CARE_INTERACTIONS,
 };
 
 /**
@@ -156,4 +184,6 @@ export const ENTITY_DISPLAY_NAME: Record<UsageEntityType, string> = {
   note: '노트',
   area_resource: '영역/자원',
   contact: '연락처',
+  cherished_people: '소중한 사람',
+  care_interaction: '관심 기록',
 };

@@ -39,6 +39,8 @@ import { useBalanceStore } from '@/state/stores/balanceStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useTheme } from '@/hooks/useTheme';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
 
@@ -99,6 +101,7 @@ export default function CareMode({ onExit }: CareModeProps) {
   const { settings } = useBalanceStore();
 
   const { resolvedTheme, setTheme } = useTheme();
+  const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
@@ -216,33 +219,37 @@ export default function CareMode({ onExit }: CareModeProps) {
   const handleSave = async () => {
     if (!careMode.selectedPersonId || !userId) return;
 
-    setIsSaving(true);
-    try {
-      const input: CareInteractionInput = {
-        person_id: careMode.selectedPersonId,
-        interaction_type: interactionType,
-        interaction_date: CherishedPeopleService.getTodayDateString(),
-        description: giftPlan.trim() || undefined,
-        gratitude_note: gratitudeNote.trim() || undefined,
-        recent_news: recentNews.trim() || undefined,
-        feeling_rating: feelingRating ?? undefined,
-      };
+    const input: CareInteractionInput = {
+      person_id: careMode.selectedPersonId,
+      interaction_type: interactionType,
+      interaction_date: CherishedPeopleService.getTodayDateString(),
+      description: giftPlan.trim() || undefined,
+      gratitude_note: gratitudeNote.trim() || undefined,
+      recent_news: recentNews.trim() || undefined,
+      feeling_rating: feelingRating ?? undefined,
+    };
 
-      // todos 제목 생성
-      const todoTitle = `${careMode.selectedPersonName}님께 마음 전하기`;
+    // todos 제목 생성
+    const todoTitle = `${careMode.selectedPersonName}님께 마음 전하기`;
 
-      // addInteractionWithTodo로 저장 (todos + care_interactions 연결)
-      const result = await addInteractionWithTodo(userId, input, todoTitle);
+    // 용량 체크 후 저장
+    await checkAndProceed('care_interaction', async () => {
+      setIsSaving(true);
+      try {
+        // addInteractionWithTodo로 저장 (todos + care_interactions 연결)
+        const result = await addInteractionWithTodo(userId, input, todoTitle);
 
-      if (result) {
-        setCareModeLinkedTodo(result.todoId);
-        setViewState('completed');
+        if (result) {
+          onCreateSuccess('care_interaction');
+          setCareModeLinkedTodo(result.todoId);
+          setViewState('completed');
+        }
+      } catch (error) {
+        console.error('소식 저장 실패:', error);
+      } finally {
+        setIsSaving(false);
       }
-    } catch (error) {
-      console.error('소식 저장 실패:', error);
-    } finally {
-      setIsSaving(false);
-    }
+    });
   };
 
   // 완료 후 종료
@@ -735,6 +742,15 @@ export default function CareMode({ onExit }: CareModeProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 용량 제한 모달 */}
+      {limitResult && (
+        <UsageLimitModal
+          isOpen={isLimitModalOpen}
+          onClose={closeLimitModal}
+          result={limitResult}
+        />
+      )}
     </div>
   );
 }

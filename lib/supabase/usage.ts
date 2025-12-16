@@ -20,6 +20,8 @@ export interface UserUsageStats {
   noteCount: number;
   areaResourceCount: number;
   contactCount: number;
+  cherishedPeopleCount: number;
+  careInteractionCount: number;
   lastCalculatedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +41,8 @@ function mapDbRowToUsageStats(row: any): UserUsageStats {
     noteCount: row.note_count,
     areaResourceCount: row.area_resource_count,
     contactCount: row.contact_count,
+    cherishedPeopleCount: row.cherished_people_count ?? 0,
+    careInteractionCount: row.care_interaction_count ?? 0,
     lastCalculatedAt: row.last_calculated_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -134,6 +138,8 @@ export async function getOrInitializeUserUsageStats(userId: string): Promise<Use
         noteCount: 0,
         areaResourceCount: 0,
         contactCount: 0,
+        cherishedPeopleCount: 0,
+        careInteractionCount: 0,
         lastCalculatedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -155,6 +161,8 @@ export async function getOrInitializeUserUsageStats(userId: string): Promise<Use
       noteCount: 0,
       areaResourceCount: 0,
       contactCount: 0,
+      cherishedPeopleCount: 0,
+      careInteractionCount: 0,
       lastCalculatedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

@@ -55,6 +55,8 @@ const entityToStatsField: Record<UsageEntityType, keyof UserUsageStats> = {
   note: 'noteCount',
   area_resource: 'areaResourceCount',
   contact: 'contactCount',
+  cherished_people: 'cherishedPeopleCount',
+  care_interaction: 'careInteractionCount',
 };
 
 /**
@@ -183,6 +185,8 @@ export function useUsageStats() {
       'note',
       'area_resource',
       'contact',
+      'cherished_people',
+      'care_interaction',
     ];
 
     return entities

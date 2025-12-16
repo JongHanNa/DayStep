@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
+import { PaywallGuard } from '@/components/subscription/Paywall';
 import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 import type { CherishedPerson, InteractionType } from '@/types/cherished-people';
 import {
@@ -87,6 +88,7 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
   const maxMonthCount = Math.max(...stats.monthlyTrend.map(m => m.count), 1);
 
   return (
+    <PaywallGuard featureId="relationship_insights">
     <div className="p-4 space-y-6">
       {/* 요약 카드 */}
       <div className="grid grid-cols-2 gap-3">
@@ -196,5 +198,6 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
         </div>
       )}
     </div>
+    </PaywallGuard>
   );
 }

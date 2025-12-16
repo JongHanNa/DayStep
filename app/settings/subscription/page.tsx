@@ -373,7 +373,7 @@ export default function SubscriptionPage() {
                 ) : (
                   <CreditCard className="w-4 h-4 mr-2" />
                 )}
-                월간 ₩1,100
+                월간 ₩5,500
               </Button>
               <Button
                 onClick={() => openPaddleCheckout('yearly')}
@@ -385,11 +385,11 @@ export default function SubscriptionPage() {
                 ) : (
                   <CreditCard className="w-4 h-4 mr-2" />
                 )}
-                연간 ₩9,900
+                연간 ₩44,000
               </Button>
             </div>
             <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
-              연간 구독 시 25% 할인 (월 ₩825)
+              연간 구독 시 33% 할인 (월 ₩3,667)
             </p>
           </CardContent>
         </Card>

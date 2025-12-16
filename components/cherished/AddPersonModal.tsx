@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import {
   RELATIONSHIP_LABELS,
   PRIORITY_LABELS,
@@ -26,6 +28,7 @@ export default function AddPersonModal({
   editingPerson,
 }: AddPersonModalProps) {
   const { addPerson, updatePerson, deactivatePerson } = useCherishedPeopleStore();
+  const { checkAndProceed, limitResult, isModalOpen, closeModal, onCreateSuccess, onDeleteSuccess } = useUsageLimitCheck();
 
   // 폼 상태
   const [name, setName] = useState('');
@@ -63,28 +66,41 @@ export default function AddPersonModal({
   const handleSave = async () => {
     if (!name.trim()) return;
 
-    setIsSaving(true);
-    try {
-      const input: CherishedPersonInput = {
-        name: name.trim(),
-        nickname: nickname.trim() || undefined,
-        relationship: relationship || undefined,
-        priority,
-        notes: notes.trim() || undefined,
-      };
+    const input: CherishedPersonInput = {
+      name: name.trim(),
+      nickname: nickname.trim() || undefined,
+      relationship: relationship || undefined,
+      priority,
+      notes: notes.trim() || undefined,
+    };
 
-      if (editingPerson) {
+    // 새로 추가하는 경우에만 용량 체크
+    if (!editingPerson) {
+      await checkAndProceed('cherished_people', async () => {
+        setIsSaving(true);
+        try {
+          await addPerson(userId, input);
+          onCreateSuccess('cherished_people');
+          onClose();
+          resetForm();
+        } catch (error) {
+          console.error('저장 실패:', error);
+        } finally {
+          setIsSaving(false);
+        }
+      });
+    } else {
+      // 편집은 용량 체크 없이 바로 저장
+      setIsSaving(true);
+      try {
         await updatePerson(editingPerson.id, userId, input);
-      } else {
-        await addPerson(userId, input);
+        onClose();
+        resetForm();
+      } catch (error) {
+        console.error('저장 실패:', error);
+      } finally {
+        setIsSaving(false);
       }
-
-      onClose();
-      resetForm();
-    } catch (error) {
-      console.error('저장 실패:', error);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -95,6 +111,7 @@ export default function AddPersonModal({
     setIsSaving(true);
     try {
       await deactivatePerson(editingPerson.id, userId);
+      onDeleteSuccess('cherished_people');
       onClose();
       resetForm();
     } catch (error) {
@@ -257,6 +274,15 @@ export default function AddPersonModal({
       <form method="dialog" className="modal-backdrop">
         <button onClick={onClose}>close</button>
       </form>
+
+      {/* 용량 제한 모달 */}
+      {limitResult && (
+        <UsageLimitModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          result={limitResult}
+        />
+      )}
     </dialog>
   );
 }
