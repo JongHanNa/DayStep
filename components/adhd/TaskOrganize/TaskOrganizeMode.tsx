@@ -1,20 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Clock, Calendar, Inbox, BarChart3, Network, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Inbox, BarChart3, Network, Sun, Moon, Circle } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { TodoTimelineView } from './TodoTimelineView';
+import { BubbleTimelineView } from '@/components/timeline/containers/BubbleTimelineView';
 import { TodayPlanView } from './TodayPlanView';
 import { OrganizeNeededView } from './OrganizeNeededView';
 import { TodoStatsView } from './TodoStatsView';
 import { GraphTabView } from './GraphTabView';
 
-type TabType = 'timeline' | 'plan' | 'organize' | 'stats' | 'graph';
+type TabType = 'timeline' | 'bubble' | 'plan' | 'organize' | 'stats' | 'graph';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
+  { id: 'bubble', label: '타임라인 버블뷰', icon: <Circle className="w-4 h-4" /> },
   { id: 'plan', label: '계획', icon: <Calendar className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
@@ -53,6 +55,8 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
     switch (activeTab) {
       case 'timeline':
         return <TodoTimelineView userId={userId} />;
+      case 'bubble':
+        return <BubbleTimelineView />;
       case 'plan':
         return <TodayPlanView userId={userId} />;
       case 'organize':
