@@ -1,8 +1,7 @@
 'use client';
 
 import { ArrowLeft, Clock } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -11,6 +10,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 export default function TimeFormatPage() {
+  const router = useRouter();
   const { timeFormat, setTimeFormat } = useSettingsStore();
   const now = new Date();
 
@@ -45,11 +45,12 @@ export default function TimeFormatPage() {
     <div className="container max-w-2xl mx-auto p-4 space-y-6">
       {/* 상단 네비게이션 */}
       <div className="flex items-center gap-3">
-        <Link href="/settings">
-          <Button variant="ghost" size="sm" className="p-2">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </Link>
+        <button
+          onClick={() => router.back()}
+          className="btn btn-circle btn-ghost btn-sm"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">시간 표기법</h1>
           <p className="text-muted-foreground">타임라인에서 사용할 시간 형식을 설정하세요</p>

@@ -1,8 +1,6 @@
 'use client';
 
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -33,11 +31,12 @@ export default function TodosPage() {
     <div className="container max-w-2xl mx-auto p-4 space-y-6">
       {/* 상단 네비게이션 */}
       <div className="flex items-center gap-3">
-        <Link href="/settings">
-          <Button variant="ghost" size="sm" className="p-2">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </Link>
+        <button
+          onClick={() => router.back()}
+          className="btn btn-circle btn-ghost btn-sm"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">할일 완료 설정</h1>
           <p className="text-muted-foreground">할일 완료와 관련된 설정을 관리하세요</p>

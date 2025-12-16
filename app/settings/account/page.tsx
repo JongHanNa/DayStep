@@ -1,7 +1,6 @@
 'use client';
 
 import { ArrowLeft, User, LogOut, Shield, Calendar, Database, AlertTriangle } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/app/context/AuthContext';
@@ -70,11 +69,12 @@ export default function AccountPage() {
     <div className="container max-w-2xl mx-auto p-4 space-y-6">
       {/* 상단 네비게이션 */}
       <div className="flex items-center gap-3">
-        <Link href="/settings">
-          <Button variant="ghost" size="sm" className="p-2">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </Link>
+        <button
+          onClick={() => router.back()}
+          className="btn btn-circle btn-ghost btn-sm"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">계정 관리</h1>
           <p className="text-muted-foreground">계정 정보와 관리 옵션을 확인하세요</p>
