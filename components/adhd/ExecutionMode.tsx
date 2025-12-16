@@ -493,7 +493,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setRestoredStartTime(null);
     setRestoredDuration(null);
 
-    getNextRecommendation();
+    onExit();  // 실행 모드 완전 종료
   };
 
   // 포모도로 완료 후 → 기록 화면으로 (또는 바로 완료)
