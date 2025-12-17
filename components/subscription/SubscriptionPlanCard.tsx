@@ -1,6 +1,6 @@
 'use client';
 
-import { Crown, Check, Loader2 } from 'lucide-react';
+import { Crown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
@@ -73,13 +73,6 @@ export function SubscriptionPlanCard({
     }
   };
 
-  // 주요 기능 미리보기 (상위 3개)
-  const previewFeatures = [
-    '무제한 소중한 사람 등록',
-    '무제한 관심 기록 저장',
-    '관계 인사이트 & 통계',
-  ];
-
   return (
     <Card
       className={`relative transition-all ${
@@ -124,20 +117,6 @@ export function SubscriptionPlanCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* 주요 기능 미리보기 */}
-        <div className="space-y-2">
-          {previewFeatures.map((feature, index) => (
-            <div key={index} className="flex items-center gap-2 text-sm">
-              <Check className="w-4 h-4 text-primary flex-shrink-0" />
-              <span className="text-foreground">{feature}</span>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Check className="w-4 h-4 flex-shrink-0" />
-            <span>그 외 모든 Pro 기능</span>
-          </div>
-        </div>
-
         {/* 구매 버튼 */}
         {disabled ? (
           <div className="text-center">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Crown, RefreshCw, Calendar, AlertCircle, Wrench, XCircle, CheckCircle, Globe, CreditCard } from 'lucide-react';
+import { ArrowLeft, Crown, RefreshCw, Calendar, AlertCircle, Wrench, XCircle, CheckCircle, Globe, CreditCard, Check } from 'lucide-react';
 import Script from 'next/script';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -399,6 +399,26 @@ export default function SubscriptionPage() {
       {!hasActiveSubscription && (
         <div>
           <h2 className="text-xl font-bold text-foreground mb-4">구독 플랜</h2>
+
+          {/* Pro 기능 안내 */}
+          <div className="bg-base-200 rounded-xl p-4 mb-4">
+            <h3 className="font-semibold mb-3">Pro 기능</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>무제한 소중한 사람 등록</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>무제한 관심 기록 저장</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>관계 인사이트 & 통계</span>
+              </div>
+            </div>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-4">
             <SubscriptionPlanCard
               plan="monthly"
