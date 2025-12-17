@@ -75,9 +75,9 @@ export function SubscriptionPlanCard({
 
   // 주요 기능 미리보기 (상위 3개)
   const previewFeatures = [
-    '목표 나침반 & 프로젝트 관리',
-    '무제한 노트 & 할일',
-    'Google Calendar 동기화',
+    '무제한 소중한 사람 등록',
+    '무제한 관심 기록 저장',
+    '관계 인사이트 & 통계',
   ];
 
   return (
