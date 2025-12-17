@@ -4,10 +4,8 @@ import { useAuth } from '@/app/context/AuthContext';
 import {
   User,
   Bell,
-  Clock,
   Type,
   Users,
-  Moon,
   Calendar,
   CheckCircle,
   Layers,
@@ -18,19 +16,17 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { useSettingsStore } from '@/state/stores/settingsStore';
-import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { SyncStatusIndicator } from '@/components/ui/pull-to-refresh';
 import { useContacts } from '@/lib/contacts/useContacts';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { useSubscription } from '@/hooks/useSubscription';
-import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import ADHDSettingsSection from '@/components/settings/ADHDSettingsSection';
+
+// 개발 환경 체크
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 function SettingsPageContent() {
   const { user, isAuthenticated, loading } = useAuth();
-  const { timeFormat } = useSettingsStore();
-  const { showDayStartGap, showPastGaps } = useTimelineViewStore();
   const { contacts, isAvailable } = useContacts();
   const { hasActiveSubscription, isInTrial, paymentsEnabled } = useSubscription();
   const router = useRouter();
@@ -116,28 +112,10 @@ function SettingsPageContent() {
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-4">앱 설정</h3>
           <div className="bg-card border border-border rounded-xl divide-y divide-border">
-            {/* 테마 설정 */}
-            <Link href="/settings/theme" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
-                role="button"
-                aria-label="테마 설정 - 라이트/다크 모드 변경"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Moon className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">테마</h4>
-                  <p className="text-xs text-muted-foreground">라이트/다크 모드</p>
-                </div>
-              </div>
-            </Link>
-
             {/* 글꼴 설정 */}
             <Link href="/settings/font" className="group">
               <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
                 role="button"
                 aria-label="글꼴 설정 - 읽기 편한 글꼴 선택"
                 tabIndex={0}
@@ -148,46 +126,6 @@ function SettingsPageContent() {
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-foreground">글꼴</h4>
                   <p className="text-xs text-muted-foreground">읽기 편한 글꼴 선택</p>
-                </div>
-              </div>
-            </Link>
-
-            {/* 시간 표기법 설정 */}
-            <Link href="/settings/time-format" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="시간 표기법 설정 - 12시간 또는 24시간 형식"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">시간 표기</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {timeFormat === '12h' ? '12시간 형식' : '24시간 형식'}
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* 타임라인 표시 설정 */}
-            <Link href="/settings/timeline" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="타임라인 표시 설정 - 타임라인 보기 옵션"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">타임라인</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {(showDayStartGap && showPastGaps) ? '전체 표시 모드' : '압축 표시 모드'}
-                  </p>
                 </div>
               </div>
             </Link>
@@ -203,7 +141,7 @@ function SettingsPageContent() {
             {/* 할일 완료 설정 */}
             <Link href="/settings/todos" className="group">
               <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
                 role="button"
                 aria-label="할일 완료 설정 - 축하 효과 및 알림"
                 tabIndex={0}
@@ -218,79 +156,84 @@ function SettingsPageContent() {
               </div>
             </Link>
 
-            {/* 알림 설정 */}
-            <Link href="/settings/notifications" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="알림 설정 - 푸시 알림 관리"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">알림</h4>
-                  <p className="text-xs text-muted-foreground">푸시 알림 관리</p>
-                </div>
-              </div>
-            </Link>
+            {/* 개발 환경에서만 노출되는 미완성 기능들 */}
+            {isDevelopment && (
+              <>
+                {/* 알림 설정 */}
+                <Link href="/settings/notifications" className="group">
+                  <div
+                    className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    role="button"
+                    aria-label="알림 설정 - 푸시 알림 관리"
+                    tabIndex={0}
+                  >
+                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-foreground">알림</h4>
+                      <p className="text-xs text-muted-foreground">푸시 알림 관리</p>
+                    </div>
+                  </div>
+                </Link>
 
-            {/* 위젯 설정 */}
-            <Link href="/settings/widgets" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="위젯 설정 - 홈 화면 위젯"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Layers className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">위젯</h4>
-                  <p className="text-xs text-muted-foreground">홈 화면 위젯</p>
-                </div>
-              </div>
-            </Link>
+                {/* 위젯 설정 */}
+                <Link href="/settings/widgets" className="group">
+                  <div
+                    className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    role="button"
+                    aria-label="위젯 설정 - 홈 화면 위젯"
+                    tabIndex={0}
+                  >
+                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                      <Layers className="w-5 h-5 text-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-foreground">위젯</h4>
+                      <p className="text-xs text-muted-foreground">홈 화면 위젯</p>
+                    </div>
+                  </div>
+                </Link>
 
-            {/* 구글 캘린더 연동 설정 */}
-            <Link href="/settings/google-calendar" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="구글 캘린더 연동 설정"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">구글 캘린더</h4>
-                  <p className="text-xs text-muted-foreground">캘린더 이벤트 가져오기</p>
-                </div>
-              </div>
-            </Link>
+                {/* 구글 캘린더 연동 설정 */}
+                <Link href="/settings/google-calendar" className="group">
+                  <div
+                    className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    role="button"
+                    aria-label="구글 캘린더 연동 설정"
+                    tabIndex={0}
+                  >
+                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-foreground">구글 캘린더</h4>
+                      <p className="text-xs text-muted-foreground">캘린더 이벤트 가져오기</p>
+                    </div>
+                  </div>
+                </Link>
 
-            {/* 연락처 연동 설정 */}
-            <Link href="/settings/contacts" className="group">
-              <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                role="button"
-                aria-label="연락처 연동 설정"
-                tabIndex={0}
-              >
-                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-foreground">연락처 연동</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {isAvailable ? `${contacts.length}명 동기화됨` : '웹에서 사용 불가'}
-                  </p>
-                </div>
-              </div>
-            </Link>
+                {/* 연락처 연동 설정 */}
+                <Link href="/settings/contacts" className="group">
+                  <div
+                    className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    role="button"
+                    aria-label="연락처 연동 설정"
+                    tabIndex={0}
+                  >
+                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                      <Users className="w-5 h-5 text-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-foreground">연락처 연동</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {isAvailable ? `${contacts.length}명 동기화됨` : '웹에서 사용 불가'}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
