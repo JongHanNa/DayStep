@@ -177,3 +177,50 @@ export async function saveTimelineDisplayPreferencesWithJWT(
     return false;
   }
 }
+
+/**
+ * JWT 방식으로 앱 설정 로드
+ */
+export async function loadAppSettingsWithJWT(userId: string): Promise<any | null> {
+  console.log('⚙️ JWT 방식으로 앱 설정 로드:', { userId });
+
+  try {
+    const preferences = await loadUserPreferencesWithJWT(userId, 'app_settings');
+
+    if (preferences) {
+      console.log('✅ 앱 설정 로드 성공:', { hasData: true });
+      return preferences;
+    }
+
+    console.log('🔧 앱 설정 없음, 기본값 사용');
+    return null;
+  } catch (error) {
+    console.error('❌ 앱 설정 로드 실패:', error);
+    return null;
+  }
+}
+
+/**
+ * JWT 방식으로 앱 설정 저장
+ */
+export async function saveAppSettingsWithJWT(
+  userId: string,
+  settings: any
+): Promise<boolean> {
+  console.log('💾 JWT 방식으로 앱 설정 저장:', {
+    userId,
+    settingsKeys: Object.keys(settings)
+  });
+
+  try {
+    const settingsData = {
+      ...settings,
+      _lastSyncedAt: new Date().toISOString()
+    };
+
+    return await saveUserPreferencesWithJWT(userId, 'app_settings', settingsData);
+  } catch (error) {
+    console.error('❌ 앱 설정 저장 실패:', error);
+    return false;
+  }
+}

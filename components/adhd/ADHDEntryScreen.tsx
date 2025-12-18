@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ADHDEntryScreenProps {
   userId?: string;
@@ -29,11 +30,36 @@ interface ADHDEntryScreenProps {
 export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize, onLearningReflection }: ADHDEntryScreenProps) {
   const router = useRouter();
   const { awakeningSentence } = useADHDModeStore();
-  const [showDescriptions, setShowDescriptions] = useState(true);
+  const { showDescriptions, setShowDescriptions } = useSettingsStore();
   const { resolvedTheme, setTheme } = useTheme();
   const { hasActiveSubscription } = useSubscription();
 
+  // 버튼 설명 데이터
+  const buttonDescriptions = {
+    care: {
+      title: '소중한 사람 챙기기',
+      description: '일에 몰입하다 보면 소중한 사람들을 놓치기 쉬워요.\n주기적으로 안부를 챙길 수 있게 도와줘요.'
+    },
+    insights: {
+      title: '관계 기록 보기',
+      description: '누구에게 뭘 들었는지 기억하기 어렵죠.\n대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.'
+    },
+    learning: {
+      title: '기록→과제→계획',
+      description: '생각이나 배운 것을 기록하고,\n과제를 도출하고, 할일을 계획하세요.'
+    },
+    execute: {
+      title: '실행과 집중',
+      description: '계획된 일과 떠오른 일을\n바로 타이머 켜고 실행할 수 있어요.'
+    },
+    organize: {
+      title: '기록/일정/통계',
+      description: '지난 기록을 확인하고, 일정을 관리하고,\n통계로 성장을 확인하세요.'
+    }
+  };
+
   return (
+    <TooltipProvider delayDuration={100}>
     <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
       {/* 구독 상태 배지, 테마 토글 및 설정 버튼 (우측 상단) */}
       <div className="absolute top-0 pt-4 right-4 flex items-center gap-2 safe-area-top">
@@ -117,7 +143,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
           {/* 소중한 사람 챙기기 버튼 */}
-          <div>
+          <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -127,6 +153,18 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <MessageCircle className="w-7 h-7" />
               <span className="text-xl font-semibold">소중한 사람 챙기기</span>
             </motion.button>
+            {!showDescriptions && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+                    <HelpCircle className="w-4 h-4 text-white/80" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                  {buttonDescriptions.care.description}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
                 일에 몰입하다 보면 소중한 사람들을 놓치기 쉬워요.
@@ -137,7 +175,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
           </div>
 
           {/* 관계 기록 보기 버튼 */}
-          <div>
+          <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -147,6 +185,18 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <BookHeart className="w-7 h-7" />
               <span className="text-xl font-semibold">관계 기록 보기</span>
             </motion.button>
+            {!showDescriptions && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="absolute top-2 right-2 p-1 rounded-full bg-base-300 hover:bg-base-content/20 transition-colors">
+                    <HelpCircle className="w-4 h-4 text-base-content/60" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                  {buttonDescriptions.insights.description}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
                 누구에게 뭘 들었는지 기억하기 어렵죠.
@@ -157,7 +207,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
           </div>
 
           {/* 기록→과제→계획 버튼 */}
-          <div>
+          <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -167,6 +217,18 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <Lightbulb className="w-7 h-7" />
               <span className="text-xl font-semibold">기록→과제→계획</span>
             </motion.button>
+            {!showDescriptions && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+                    <HelpCircle className="w-4 h-4 text-white/80" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                  {buttonDescriptions.learning.description}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
                 생각이나 배운 것을 기록하고,
@@ -177,7 +239,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
           </div>
 
           {/* 실행과 집중 버튼 */}
-          <div>
+          <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -187,6 +249,18 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <Target className="w-7 h-7" />
               <span className="text-xl font-semibold">실행과 집중</span>
             </motion.button>
+            {!showDescriptions && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
+                    <HelpCircle className="w-4 h-4 text-white/80" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                  {buttonDescriptions.execute.description}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
                 계획된 일과 떠오른 일을
@@ -197,7 +271,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
           </div>
 
           {/* 기록/일정/통계 버튼 */}
-          <div>
+          <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -207,6 +281,18 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <CalendarCheck className="w-7 h-7" />
               <span className="text-xl font-semibold">기록/일정/통계</span>
             </motion.button>
+            {!showDescriptions && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="absolute top-2 right-2 p-1 rounded-full bg-base-300 hover:bg-base-content/20 transition-colors">
+                    <HelpCircle className="w-4 h-4 text-base-content/60" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                  {buttonDescriptions.organize.description}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
                 지난 기록을 확인하고, 일정을 관리하고,
@@ -238,5 +324,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
         </div>
       </motion.div>
     </div>
+    </TooltipProvider>
   );
 }

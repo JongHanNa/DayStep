@@ -16,27 +16,24 @@ export type BubbleShape = 'circle' | 'square' | 'arrow'; // 타임라인 버블 
 
 export type { ColorTheme } from '@/lib/color-themes';
 
-interface SettingsState {
-  // 시간 표기법 설정
+// DB 동기화용 설정 타입 (persist 대상만)
+export interface AppSettings {
   timeFormat: TimeFormat;
-
-  // 글꼴 설정
   fontFamily: FontFamily;
   wordSpacing: WordSpacing;
   letterSpacing: LetterSpacing;
   fontSize: FontSize;
-
-  // 타임라인 설정
   bubbleShape: BubbleShape;
-
-  // 할일 완료 설정
   todoCompletion: TodoCompletionSettings;
-
-  // 컬러 테마 설정
   colorTheme: ColorTheme;
-
-  // ADHD 모드 설정
   adhdModeEnabled: boolean;
+  showDescriptions: boolean;
+  _lastSyncedAt: string | null;
+}
+
+interface SettingsState extends AppSettings {
+  // DB 동기화 상태
+  _isSyncing: boolean;
 
   // Actions
   setTimeFormat: (format: TimeFormat) => void;
@@ -50,6 +47,11 @@ interface SettingsState {
   setCompletedItemsOpacity: (opacity: number) => void;
   setColorTheme: (theme: ColorTheme) => void;
   setAdhdModeEnabled: (enabled: boolean) => void;
+  setShowDescriptions: (show: boolean) => void;
+
+  // DB 동기화 액션
+  loadFromDB: (settings: Partial<AppSettings>) => void;
+  setIsSyncing: (syncing: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -82,6 +84,13 @@ export const useSettingsStore = create<SettingsState>()(
 
         // 기본값: ADHD 모드 활성화
         adhdModeEnabled: true,
+
+        // 기본값: 설명 표시
+        showDescriptions: true,
+
+        // DB 동기화 상태
+        _lastSyncedAt: null,
+        _isSyncing: false,
 
         // Actions
         setTimeFormat: (format: TimeFormat) => {
@@ -153,6 +162,24 @@ export const useSettingsStore = create<SettingsState>()(
           console.log('⚙️ ADHD 모드 설정 변경:', enabled);
           set({ adhdModeEnabled: enabled });
         },
+
+        setShowDescriptions: (show: boolean) => {
+          console.log('⚙️ 설명 표시 설정 변경:', show);
+          set({ showDescriptions: show });
+        },
+
+        // DB 동기화 액션
+        loadFromDB: (settings: Partial<AppSettings>) => {
+          console.log('⚙️ DB에서 설정 로드:', settings);
+          set((state) => ({
+            ...state,
+            ...settings,
+          }));
+        },
+
+        setIsSyncing: (syncing: boolean) => {
+          set({ _isSyncing: syncing });
+        },
       }),
       {
         name: 'settings-store',
@@ -166,6 +193,8 @@ export const useSettingsStore = create<SettingsState>()(
           todoCompletion: state.todoCompletion,
           colorTheme: state.colorTheme,
           adhdModeEnabled: state.adhdModeEnabled,
+          showDescriptions: state.showDescriptions,
+          _lastSyncedAt: state._lastSyncedAt,
         }),
       }
     ),
@@ -174,3 +203,23 @@ export const useSettingsStore = create<SettingsState>()(
     }
   )
 );
+
+/**
+ * DB 동기화를 위해 현재 설정을 추출하는 유틸리티 함수
+ */
+export function getSettingsForSync(): AppSettings {
+  const state = useSettingsStore.getState();
+  return {
+    timeFormat: state.timeFormat,
+    fontFamily: state.fontFamily,
+    wordSpacing: state.wordSpacing,
+    letterSpacing: state.letterSpacing,
+    fontSize: state.fontSize,
+    bubbleShape: state.bubbleShape,
+    todoCompletion: state.todoCompletion,
+    colorTheme: state.colorTheme,
+    adhdModeEnabled: state.adhdModeEnabled,
+    showDescriptions: state.showDescriptions,
+    _lastSyncedAt: state._lastSyncedAt,
+  };
+}

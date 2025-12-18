@@ -23,6 +23,7 @@ import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useSettingsSync } from '@/hooks/useSettingsSync';
 
 // 환경 감지 (실제 Capacitor 환경에서만 모바일로 감지)
 const isMobileEnvironment = (() => {
@@ -93,6 +94,9 @@ export function AuthProvider({
 
   // Capacitor 환경에서 자동 토큰 갱신 활성화
   useCapacitorAutoTokenRefresh();
+
+  // 설정 DB 동기화 (로그인 시 DB에서 설정 로드, 설정 변경 시 DB에 저장)
+  useSettingsSync(user?.id);
 
   // 하이드레이션 완료 체크
   useEffect(() => {
