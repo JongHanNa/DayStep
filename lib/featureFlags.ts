@@ -72,12 +72,6 @@ export const PRO_FEATURES = [
   },
   // 기존 기능들
   {
-    id: 'goal_compass',
-    name: '목표 나침반',
-    description: '목표 진척도 시각화 및 프로젝트 관리',
-    path: '/second-brain/goal-compass',
-  },
-  {
     id: 'unlimited_projects',
     name: '무제한 프로젝트',
     description: '프로젝트 개수 제한 없이 관리',
@@ -96,27 +90,9 @@ export const PRO_FEATURES = [
     path: '/statistics',
   },
   {
-    id: 'google_calendar_sync',
-    name: 'Google Calendar 동기화',
-    description: 'Google Calendar 양방향 동기화',
-    path: '/settings/integrations',
-  },
-  {
     id: 'unlimited_contacts',
     name: '무제한 연락처 연결',
     description: '할일에 무제한 연락처 연결',
-    path: null,
-  },
-  {
-    id: 'custom_themes',
-    name: '커스텀 테마 & 색상',
-    description: '나만의 색상 테마 설정',
-    path: '/settings/appearance',
-  },
-  {
-    id: 'advanced_markdown',
-    name: '고급 Markdown 기능',
-    description: 'Mermaid 다이어그램, 코드 하이라이팅 등',
     path: null,
   },
 ] as const;

@@ -72,7 +72,7 @@ export function Paywall({
   }
 
   return (
-    <div className={isModal ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/50' : ''}>
+    <div className={isModal ? 'fixed inset-0 z-50 flex items-center justify-center bg-base-100' : ''}>
       <Card className={isModal ? 'w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto' : 'w-full'}>
         <CardHeader>
           {isModal && onClose && (
