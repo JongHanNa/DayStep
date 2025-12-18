@@ -1,6 +1,6 @@
 ext {
-    javaVersion = JavaVersion.VERSION_1_8
-    compileSdkVersion = 34
+    javaVersion = JavaVersion.VERSION_17
+    compileSdkVersion = 35
     minSdkVersion = 22
     targetSdkVersion = 34
     androidxAppCompatVersion = '1.6.1'
@@ -15,7 +15,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.1'
+        classpath 'com.android.tools.build:gradle:8.7.3'
     }
 }
 
@@ -26,10 +26,10 @@ android {
     compileSdkVersion project.ext.compileSdkVersion
     
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-    
+
     defaultConfig {
         minSdkVersion project.ext.minSdkVersion
         targetSdkVersion project.ext.targetSdkVersion
@@ -47,11 +47,6 @@ android {
     
     lintOptions {
         abortOnError false
-    }
-    
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
