@@ -122,7 +122,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onCare}
-              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white border-none hover:from-pink-600 hover:to-purple-600"
+              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-pink-500 text-white border-none hover:bg-pink-600"
             >
               <MessageCircle className="w-7 h-7" />
               <span className="text-xl font-semibold">소중한 사람 챙기기</span>
@@ -162,7 +162,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onLearningReflection}
-              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white border-none hover:from-amber-500 hover:to-orange-600"
+              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-orange-500 text-white border-none hover:bg-orange-600"
             >
               <Lightbulb className="w-7 h-7" />
               <span className="text-xl font-semibold">기록→과제→계획</span>
