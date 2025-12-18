@@ -8,7 +8,7 @@ import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ADHDEntryScreenProps {
   userId?: string;
@@ -59,7 +59,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
   };
 
   return (
-    <TooltipProvider delayDuration={100}>
     <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
       {/* 구독 상태 배지, 테마 토글 및 설정 버튼 (우측 상단) */}
       <div className="absolute top-0 pt-4 right-4 flex items-center gap-2 safe-area-top">
@@ -154,16 +153,16 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <span className="text-xl font-semibold">소중한 사람 챙기기</span>
             </motion.button>
             {!showDescriptions && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
                   <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
                     <HelpCircle className="w-4 h-4 text-white/80" />
                   </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                </PopoverTrigger>
+                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
                   {buttonDescriptions.care.description}
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
@@ -186,16 +185,16 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <span className="text-xl font-semibold">관계 기록 보기</span>
             </motion.button>
             {!showDescriptions && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
                   <button className="absolute top-2 right-2 p-1 rounded-full bg-base-300 hover:bg-base-content/20 transition-colors">
                     <HelpCircle className="w-4 h-4 text-base-content/60" />
                   </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                </PopoverTrigger>
+                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
                   {buttonDescriptions.insights.description}
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
@@ -218,16 +217,16 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <span className="text-xl font-semibold">기록→과제→계획</span>
             </motion.button>
             {!showDescriptions && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
                   <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
                     <HelpCircle className="w-4 h-4 text-white/80" />
                   </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                </PopoverTrigger>
+                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
                   {buttonDescriptions.learning.description}
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
@@ -250,16 +249,16 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <span className="text-xl font-semibold">실행과 집중</span>
             </motion.button>
             {!showDescriptions && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
                   <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
                     <HelpCircle className="w-4 h-4 text-white/80" />
                   </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                </PopoverTrigger>
+                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
                   {buttonDescriptions.execute.description}
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
@@ -282,16 +281,16 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               <span className="text-xl font-semibold">기록/일정/통계</span>
             </motion.button>
             {!showDescriptions && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
                   <button className="absolute top-2 right-2 p-1 rounded-full bg-base-300 hover:bg-base-content/20 transition-colors">
                     <HelpCircle className="w-4 h-4 text-base-content/60" />
                   </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-[200px] text-center whitespace-pre-line">
+                </PopoverTrigger>
+                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
                   {buttonDescriptions.organize.description}
-                </TooltipContent>
-              </Tooltip>
+                </PopoverContent>
+              </Popover>
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
@@ -324,6 +323,5 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
         </div>
       </motion.div>
     </div>
-    </TooltipProvider>
   );
 }
