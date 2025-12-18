@@ -45,7 +45,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
       description: '누구에게 뭘 들었는지 기억하기 어렵죠.\n대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.'
     },
     learning: {
-      title: '기록→과제→계획',
+      title: '수집→명료화→계획',
       description: '생각이나 배운 것을 기록하고,\n과제를 도출하고, 할일을 계획하세요.'
     },
     execute: {
@@ -53,7 +53,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
       description: '계획된 일과 떠오른 일을\n바로 타이머 켜고 실행할 수 있어요.'
     },
     organize: {
-      title: '기록/일정/통계',
+      title: '일정/통계',
       description: '지난 기록을 확인하고, 일정을 관리하고,\n통계로 성장을 확인하세요.'
     }
   };
@@ -205,7 +205,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
           </div>
 
-          {/* 기록→과제→계획 버튼 */}
+          {/* 수집→명료화→계획 버튼 */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -214,7 +214,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-orange-500 text-white border-none hover:bg-orange-600"
             >
               <Lightbulb className="w-7 h-7" />
-              <span className="text-xl font-semibold">기록→과제→계획</span>
+              <span className="text-xl font-semibold">수집→명료화→계획</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>
@@ -269,7 +269,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
           </div>
 
-          {/* 기록/일정/통계 버튼 */}
+          {/* 일정/통계 버튼 */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -278,7 +278,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
             >
               <CalendarCheck className="w-7 h-7" />
-              <span className="text-xl font-semibold">기록/일정/통계</span>
+              <span className="text-xl font-semibold">일정/통계</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>

@@ -88,7 +88,7 @@ const solutions = [
   },
   {
     challenge: '과집중해요',
-    solution: '기록/일정/통계',
+    solution: '일정/통계',
     description: '기록과 통계로 내 시간 사용을 확인하고 균형을 찾아요.',
     icon: BarChart3,
     color: 'success',

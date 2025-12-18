@@ -292,7 +292,7 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            {/* Feature 4 - 기록/일정/통계 */}
+            {/* Feature 4 - 일정/통계 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
@@ -301,7 +301,7 @@ export default function LandingPage() {
                 <BarChart3 className="w-6 h-6 text-info" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                기록/일정/통계
+                일정/통계
               </h3>
               <p className="text-base-content/70">
                 지난 기록을 확인하고, 일정을 관리하고, 통계로 성장을 확인하세요.

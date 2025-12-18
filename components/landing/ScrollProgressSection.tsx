@@ -138,7 +138,7 @@ export default function ScrollProgressSection() {
     { icon: Timer, label: '실행과 집중', color: 'bg-primary' },
     { icon: Heart, label: '소중한 사람 챙기기', color: 'bg-accent' },
     { icon: BookOpen, label: '배움→과제→계획', color: 'bg-secondary' },
-    { icon: BarChart3, label: '기록/일정/통계', color: 'bg-info' },
+    { icon: BarChart3, label: '일정/통계', color: 'bg-info' },
     { icon: MessageCircle, label: '관계 기록', color: 'bg-success' },
   ];
 
