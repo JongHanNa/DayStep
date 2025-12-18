@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings } from 'lucide-react';
+import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useSubscription } from '@/hooks/useSubscription';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 
 interface ADHDEntryScreenProps {
@@ -30,11 +31,31 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
   const { awakeningSentence } = useADHDModeStore();
   const [showDescriptions, setShowDescriptions] = useState(true);
   const { resolvedTheme, setTheme } = useTheme();
+  const { hasActiveSubscription } = useSubscription();
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
-      {/* 테마 토글 및 설정 버튼 (우측 상단) */}
-      <div className="absolute top-0 pt-4 right-4 flex gap-2 safe-area-top">
+      {/* 구독 상태 배지, 테마 토글 및 설정 버튼 (우측 상단) */}
+      <div className="absolute top-0 pt-4 right-4 flex items-center gap-2 safe-area-top">
+        {/* 구독 상태 배지 */}
+        <button
+          onClick={() => router.push('/settings/subscription')}
+          className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
+            hasActiveSubscription
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
+              : 'bg-base-200 text-base-content/60'
+          }`}
+          aria-label="구독 관리"
+        >
+          {hasActiveSubscription ? (
+            <>
+              <Crown className="w-3 h-3" />
+              Pro
+            </>
+          ) : (
+            'Free'
+          )}
+        </button>
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className="btn btn-circle btn-sm btn-ghost"
