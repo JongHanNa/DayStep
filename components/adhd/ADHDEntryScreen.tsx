@@ -142,7 +142,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onRelationshipInsights}
-              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
+              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
             >
               <BookHeart className="w-7 h-7" />
               <span className="text-xl font-semibold">관계 기록 보기</span>
@@ -202,7 +202,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onTaskOrganize}
-              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300"
+              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
             >
               <CalendarCheck className="w-7 h-7" />
               <span className="text-xl font-semibold">기록/일정/통계</span>
