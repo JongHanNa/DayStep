@@ -38,6 +38,9 @@ import type { Goal } from '@/types/second-brain';
 import { useLearningReflectionStore } from '@/state/stores/learningReflectionStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useTheme } from '@/hooks/useTheme';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
+import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -104,6 +107,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   } = usePomodoro();
 
   const { resolvedTheme, setTheme } = useTheme();
+  const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 로컬 상태
   const [selectedDuration, setSelectedDuration] = useState(10); // 기본 10분
@@ -287,6 +291,25 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   const saveEntryAndProjectAndTodos = async () => {
     if (!userId) return;
 
+    // 할일 생성이 필요한지 확인
+    const validTodos = todosDraft.filter(draft => draft.title.trim());
+    const needsTodoCreation = validTodos.length > 0;
+
+    // 할일 생성이 필요한 경우 용량 체크
+    if (needsTodoCreation) {
+      await checkAndProceed('todo', async () => {
+        await executeEntryAndProjectAndTodos();
+      });
+    } else {
+      // 할일 없이 프로젝트와 기록만 저장
+      await executeEntryAndProjectAndTodosWithoutTodos();
+    }
+  };
+
+  // 실제 저장 로직 (할일 포함)
+  const executeEntryAndProjectAndTodos = async () => {
+    if (!userId) return;
+
     let projectId = selectedProjectId;
 
     // 새 프로젝트 생성
@@ -314,12 +337,40 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           schedule_type: 'anytime',
           project_ids: projectId ? [projectId] : undefined,
         });
+        onCreateSuccess('todo');
       }
     }
 
     await saveEntry(projectId);
     loadStats(userId);
-    setLearningReflectionViewState('completed');  // 완료 화면으로 전환
+    setLearningReflectionViewState('completed');
+  };
+
+  // 할일 없이 저장 (프로젝트 + 기록만)
+  const executeEntryAndProjectAndTodosWithoutTodos = async () => {
+    if (!userId) return;
+
+    let projectId = selectedProjectId;
+
+    // 새 프로젝트 생성
+    if (!selectedProjectId && newProjectTitle.trim()) {
+      const newProject = await createProject(userId, {
+        title: newProjectTitle.trim(),
+        expected_outcome: newProjectExpectedOutcome.trim() || undefined,
+        preparation: newProjectPreparation.trim() || undefined,
+        goal_id: selectedGoalId || undefined,
+        color: '#6366f1',
+        order_index: 0,
+        status: 'not_started',
+      });
+      if (newProject) {
+        projectId = newProject.id;
+      }
+    }
+
+    await saveEntry(projectId);
+    loadStats(userId);
+    setLearningReflectionViewState('completed');
   };
 
   // 생성된 프로젝트 이름 (완료 화면용)
@@ -470,6 +521,12 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
       {/* 콘텐츠 - 스크롤 영역 */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 mobile-container">
+        {/* 용량 경고 배너 */}
+        <UsageWarningBanner
+          entities={['todo']}
+          className="mb-4"
+        />
+
         {/* 연속 기록 */}
         {stats && stats.currentStreak > 0 && (
           <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl">
@@ -1255,6 +1312,15 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         {viewState === 'completed' && renderCompletedView()}
         {viewState === 'history' && renderHistoryView()}
       </AnimatePresence>
+
+      {/* 용량 제한 모달 */}
+      {limitResult && (
+        <UsageLimitModal
+          isOpen={isLimitModalOpen}
+          onClose={closeLimitModal}
+          result={limitResult}
+        />
+      )}
     </div>
   );
 }

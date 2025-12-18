@@ -212,6 +212,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           subscriptionInfo: state.subscriptionInfo,
           // customerInfo는 민감 정보이므로 persist에서 제외
         }),
+        // persist 복원 완료 후 계산된 상태 업데이트
+        // hasActiveSubscription 등은 persist에 저장되지 않으므로 복원 후 재계산 필요
+        onRehydrateStorage: () => (state) => {
+          if (state) {
+            console.log('💳 구독 Store hydration 완료 - 계산된 상태 업데이트');
+            state.updateComputedStates();
+          }
+        },
       }
     ),
     {

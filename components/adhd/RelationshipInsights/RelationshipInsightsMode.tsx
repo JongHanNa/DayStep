@@ -5,6 +5,8 @@ import { ArrowLeft, Clock, Heart, MessageCircle, BarChart3, Smile, Sun, Moon } f
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Paywall } from '@/components/subscription/Paywall';
 import { TimelineView } from './TimelineView';
 import { GratitudeJournalView } from './GratitudeJournalView';
 import { NewsMemosView } from './NewsMemosView';
@@ -30,6 +32,43 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
   const { user } = useAuth();
   const userId = user?.id;
   const { resolvedTheme, setTheme } = useTheme();
+  const { hasActiveSubscription } = useSubscription();
+
+  // Pro 전용 기능 - 무료 사용자는 Paywall 표시
+  if (!hasActiveSubscription) {
+    return (
+      <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
+        {/* 헤더 */}
+        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-200">
+          <div className="flex items-center gap-3 p-4">
+            <button
+              onClick={onExit}
+              className="btn btn-ghost btn-circle btn-sm"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-bold flex-1">관계 기록</h1>
+            <button
+              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+              className="btn btn-circle btn-sm btn-ghost"
+              aria-label="테마 전환"
+            >
+              {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Paywall */}
+        <div className="flex-1 px-4 py-6">
+          <Paywall
+            featureId="relationship_insights"
+            title="관계 인사이트"
+            description="관계 패턴 분석과 통계를 확인하세요"
+          />
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     if (!userId) {

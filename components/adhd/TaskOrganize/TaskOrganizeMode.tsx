@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Clock, Calendar, Inbox, BarChart3, Network, Sun, Moon, Circle } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Inbox, BarChart3, Network, Sun, Moon, Circle, Lock } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Paywall } from '@/components/subscription/Paywall';
 import { TodoTimelineView } from './TodoTimelineView';
 import { BubbleTimelineView } from '@/components/timeline/containers/BubbleTimelineView';
 import { TodayPlanView } from './TodayPlanView';
@@ -39,9 +41,20 @@ interface TaskOrganizeModeProps {
  */
 export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
   const [activeTab, setActiveTab] = useState<TabType>('plan');
+  const [showPaywall, setShowPaywall] = useState(false);
   const { user } = useAuth();
   const userId = user?.id;
   const { resolvedTheme, setTheme } = useTheme();
+  const { hasActiveSubscription } = useSubscription();
+
+  // 탭 클릭 핸들러 - 통계 탭은 Pro 전용
+  const handleTabClick = (tabId: TabType) => {
+    if (tabId === 'stats' && !hasActiveSubscription) {
+      setShowPaywall(true);
+      return;
+    }
+    setActiveTab(tabId);
+  };
 
   const renderContent = () => {
     if (!userId) {
@@ -93,20 +106,24 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
 
         {/* 탭 네비게이션 */}
         <div className="flex overflow-x-auto px-2 pb-2 gap-1 scrollbar-hide">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-primary text-primary-content'
-                  : 'bg-base-200 text-base-content hover:bg-base-300'
-              }`}
-            >
-              {tab.icon}
-              <span className="text-sm font-medium">{tab.label}</span>
-            </button>
-          ))}
+          {TABS.map((tab) => {
+            const isProLocked = tab.id === 'stats' && !hasActiveSubscription;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-content'
+                    : 'bg-base-200 text-base-content hover:bg-base-300'
+                }`}
+              >
+                {tab.icon}
+                <span className="text-sm font-medium">{tab.label}</span>
+                {isProLocked && <Lock className="w-3 h-3 ml-0.5 opacity-60" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -114,6 +131,17 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
       <div className="flex-1 overflow-y-auto">
         {renderContent()}
       </div>
+
+      {/* 통계 탭 Pro 잠금 Paywall 모달 */}
+      {showPaywall && (
+        <Paywall
+          isModal={true}
+          onClose={() => setShowPaywall(false)}
+          featureId="statistics"
+          title="통계 & 인사이트"
+          description="생산성 통계와 패턴 분석을 확인하세요"
+        />
+      )}
     </div>
   );
 }

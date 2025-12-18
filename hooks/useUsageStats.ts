@@ -12,6 +12,12 @@ import { getOrInitializeUserUsageStats, type UserUsageStats } from '@/lib/supaba
 import { FEATURE_FLAGS, FREE_TIER_LIMITS, ENTITY_LIMIT_MAP, ENTITY_DISPLAY_NAME, type UsageEntityType } from '@/lib/featureFlags';
 
 /**
+ * 캐시 만료 시간 (5분)
+ * persist된 데이터가 있어도 만료되면 새로 fetch
+ */
+const CACHE_EXPIRY_MS = 5 * 60 * 1000;
+
+/**
  * 생성 가능 여부 결과
  */
 export interface CanCreateResult {
@@ -97,7 +103,7 @@ export function useUsageStats() {
   }, [user?.id, setStats, setLoading, setError]);
 
   /**
-   * 로그인 시 자동 조회 + 사용자 변경 시 캐시 무효화
+   * 로그인 시 자동 조회 + 사용자 변경 시 캐시 무효화 + 캐시 만료 시 재조회
    */
   useEffect(() => {
     if (!user?.id) return;
@@ -105,8 +111,13 @@ export function useUsageStats() {
     // 사용자가 변경되면 캐시 무효화
     const invalidated = invalidateIfUserChanged(user.id);
 
-    // 캐시가 없거나 무효화되면 새로 fetch
-    if (!stats || invalidated) {
+    // 캐시 만료 체크 - persist된 데이터가 있어도 만료되면 새로 fetch
+    const lastFetched = useUsageStore.getState().lastFetchedAt;
+    const isExpired = !lastFetched ||
+      (Date.now() - new Date(lastFetched).getTime()) > CACHE_EXPIRY_MS;
+
+    // 캐시가 없거나, 무효화되었거나, 만료되었으면 새로 fetch
+    if (!stats || invalidated || isExpired) {
       fetchStats();
     }
   }, [user?.id, stats, fetchStats, invalidateIfUserChanged]);

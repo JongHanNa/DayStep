@@ -41,6 +41,7 @@ import { usePomodoro } from '@/hooks/usePomodoro';
 import { useTheme } from '@/hooks/useTheme';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
+import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
 
@@ -172,15 +173,19 @@ export default function CareMode({ onExit }: CareModeProps) {
     startPomodoroTimer(5 * 60 * 1000);
   };
 
-  // 검색어로 새 사람 추가
+  // 검색어로 새 사람 추가 (용량 체크 포함)
   const handleAddNewPersonFromSearch = async () => {
     if (!searchQuery.trim() || !userId) return;
 
-    const person = await addPerson(userId, { name: searchQuery.trim() });
-    if (person) {
-      handleSelectPerson(person);
-      setSearchQuery('');
-    }
+    // 소중한 사람 용량 체크 후 추가
+    await checkAndProceed('cherished_people', async () => {
+      const person = await addPerson(userId, { name: searchQuery.trim() });
+      if (person) {
+        onCreateSuccess('cherished_people');
+        handleSelectPerson(person);
+        setSearchQuery('');
+      }
+    });
   };
 
   // 타이머 완료 처리
@@ -338,6 +343,11 @@ export default function CareMode({ onExit }: CareModeProps) {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
+            {/* 용량 경고 배너 */}
+            <UsageWarningBanner
+              entities={['cherished_people', 'care_interaction']}
+            />
+
             {/* 성찰 메시지 */}
             {reminderMessage && (
               <div className="p-4 rounded-xl bg-pink-100 border border-pink-200">
