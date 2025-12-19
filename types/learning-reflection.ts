@@ -1,15 +1,15 @@
 // ============================================
-// 배움→과제→계획 시스템 타입 정의
+// 수집→명료화→계획 시스템 타입 정의
 // (구 나의 마음 챙기기)
 // ============================================
 
 /** 마음 챙기기 뷰 상태 */
 export type LearningReflectionViewState =
   | 'select-duration'    // 시작 화면 (타이머 선택)
-  | 'reflection-input'   // 배움 기록
+  | 'reflection-input'   // 수집
   | 'project-derive'     // 과제 도출 (신규)
   | 'todo-planning'      // 할일 계획 (신규)
-  | 'capture'            // 기분/태그 (배움만 기록 시)
+  | 'capture'            // 기분/태그 (수집만 기록 시)
   | 'completed'          // 완료
   | 'history';           // 과거 기록
 
@@ -48,7 +48,7 @@ export interface LearningReflectionEntry {
   last_reminded_at: string | null;
   reminder_count: number;
 
-  // 프로젝트 연결 (배움→과제 플로우)
+  // 프로젝트 연결 (수집→과제 플로우)
   project_id: string | null;
 
   created_at: string;
@@ -186,7 +186,7 @@ export const SUGGESTED_TAGS: Record<LearningReflectionEntryType, string[]> = {
 /** 통합 태그 목록 (유형 구분 없이) */
 export const UNIFIED_TAGS = [
   // 성찰/깨달음
-  '깨달음', '성장', '도전', '배움', '결심',
+  '깨달음', '성장', '도전', '수집', '결심',
   // 위로/격려
   '위로', '희망', '평안', '격려', '감동',
   // 감사
@@ -198,10 +198,10 @@ export const REFLECTION_TIMER_OPTIONS = [5, 10, 15, 20] as const;
 export type ReflectionTimerDuration = typeof REFLECTION_TIMER_OPTIONS[number];
 
 // ============================================
-// 배움→과제→계획 플로우 라벨 (비신앙인 친화적)
+// 수집→명료화→계획 플로우 라벨 (비신앙인 친화적)
 // ============================================
 
-/** 배움 기록 필드 라벨 */
+/** 수집 필드 라벨 */
 export const LEARNING_FIELD_LABELS = {
   sourceText: {
     label: '배운 내용',
@@ -220,7 +220,7 @@ export const LEARNING_FIELD_LABELS = {
   },
   experience: {
     label: '오늘의 경험',
-    placeholder: '이 배움과 관련된 오늘의 경험이 있나요?',
+    placeholder: '이 수집과 관련된 오늘의 경험이 있나요?',
     required: false,
   },
   commitment: {

@@ -147,7 +147,7 @@ export default function HomePage() {
     return <TaskOrganizeMode onExit={handleExitExecutionMode} />;
   }
 
-  // 배움→과제→계획 모드
+  // 수집→명료화→계획 모드
   if (currentMode === 'learning-reflection') {
     return <LearningReflectionMode onExit={handleExitExecutionMode} />;
   }

@@ -50,7 +50,7 @@ interface CareModeState {
   linkedTodoId: string | null;          // 연결된 할일 ID
 }
 
-// 배움→과제→계획 모드 상태 (구 나의 마음 챙기기)
+// 수집→명료화→계획 모드 상태 (구 나의 마음 챙기기)
 import type { LearningReflectionViewState, TodoDraft } from '@/types/learning-reflection';
 export type { LearningReflectionViewState };
 export type LearningReflectionEntryType = 'reflection' | 'comfort' | 'gratitude';
@@ -60,7 +60,7 @@ interface LearningReflectionModeState {
   startedAt: Date | null;
   viewState: LearningReflectionViewState;
 
-  // 배움 기록 필드
+  // 수집 필드
   draftContent: string;           // 나의 깨달음 (필수)
   draftSourceText: string;        // 배운 내용
   draftSourceReference: string;   // 출처
@@ -103,7 +103,7 @@ interface ADHDModeState {
   // 마음 전해보기 모드 상태
   careMode: CareModeState;
 
-  // 배움→과제→계획 모드 상태
+  // 수집→명료화→계획 모드 상태
   learningReflectionMode: LearningReflectionModeState;
 
   // 사용자 설정
@@ -151,11 +151,11 @@ interface ADHDModeState {
   // === 할일 정리 모드 Actions ===
   enterTaskOrganizeMode: (userId: string) => void;
 
-  // === 배움→과제→계획 모드 Actions ===
+  // === 수집→명료화→계획 모드 Actions ===
   enterLearningReflectionMode: (userId: string) => void;
   setLearningReflectionViewState: (viewState: LearningReflectionViewState) => void;
   setLearningReflectionDraft: (draft: {
-    // 배움 기록 필드
+    // 수집 필드
     content?: string;
     sourceText?: string;
     sourceReference?: string;
@@ -236,7 +236,7 @@ const DEFAULT_LEARNING_REFLECTION_MODE: LearningReflectionModeState = {
   isActive: false,
   startedAt: null,
   viewState: 'select-duration',
-  // 배움 기록 필드
+  // 수집 필드
   draftContent: '',
   draftSourceText: '',
   draftSourceReference: '',
@@ -564,9 +564,9 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
         },
 
-        // === 배움→과제→계획 모드 Actions ===
+        // === 수집→명료화→계획 모드 Actions ===
         enterLearningReflectionMode: (userId: string) => {
-          console.log('💡 ADHD: 배움→과제→계획 모드 진입');
+          console.log('💡 ADHD: 수집→명료화→계획 모드 진입');
           set({
             currentMode: 'learning-reflection',
             currentUserId: userId,
@@ -574,7 +574,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
               isActive: true,
               startedAt: new Date(),
               viewState: 'select-duration',
-              // 배움 기록 필드
+              // 수집 필드
               draftContent: '',
               draftSourceText: '',
               draftSourceReference: '',
@@ -593,7 +593,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         setLearningReflectionViewState: (viewState: LearningReflectionViewState) => {
-          console.log('💡 ADHD: 배움→과제→계획 뷰 상태 변경', viewState);
+          console.log('💡 ADHD: 수집→명료화→계획 뷰 상태 변경', viewState);
           set((state) => ({
             learningReflectionMode: {
               ...state.learningReflectionMode,
@@ -603,7 +603,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         setLearningReflectionEntryType: (entryType: LearningReflectionEntryType) => {
-          console.log('💡 ADHD: 배움→과제→계획 유형 선택', entryType);
+          console.log('💡 ADHD: 수집→명료화→계획 유형 선택', entryType);
           set((state) => ({
             learningReflectionMode: {
               ...state.learningReflectionMode,
@@ -616,7 +616,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set((state) => ({
             learningReflectionMode: {
               ...state.learningReflectionMode,
-              // 배움 기록 필드
+              // 수집 필드
               ...(draft.content !== undefined && { draftContent: draft.content }),
               ...(draft.sourceText !== undefined && { draftSourceText: draft.sourceText }),
               ...(draft.sourceReference !== undefined && { draftSourceReference: draft.sourceReference }),
@@ -638,7 +638,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set((state) => ({
             learningReflectionMode: {
               ...state.learningReflectionMode,
-              // 배움 기록 필드 초기화
+              // 수집 필드 초기화
               draftContent: '',
               draftSourceText: '',
               draftSourceReference: '',
@@ -657,7 +657,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         endLearningReflectionMode: () => {
-          console.log('💡 ADHD: 배움→과제→계획 모드 종료');
+          console.log('💡 ADHD: 수집→명료화→계획 모드 종료');
           set({
             currentMode: 'entry',
             learningReflectionMode: DEFAULT_LEARNING_REFLECTION_MODE,

@@ -46,7 +46,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
     },
     learning: {
       title: '수집→명료화→계획',
-      description: '생각이나 배운 것을 기록하고,\n과제를 도출하고, 할일을 계획하세요.'
+      description: '생각과 정보를 수집하고,\n명료화하고, 할일을 계획하세요.'
     },
     execute: {
       title: '실행과 집중',
@@ -230,9 +230,9 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                생각이나 배운 것을 기록하고,
+                생각과 정보를 수집하고,
                 <br />
-                과제를 도출하고, 할일을 계획하세요.
+                명료화하고, 할일을 계획하세요.
               </p>
             )}
           </div>

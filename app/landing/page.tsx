@@ -276,7 +276,7 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            {/* Feature 3 - 배움→과제→계획 */}
+            {/* Feature 3 - 수집→명료화→계획 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
@@ -285,10 +285,10 @@ export default function LandingPage() {
                 <BookOpen className="w-6 h-6 text-secondary" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                배움→과제→계획
+                수집→명료화→계획
               </h3>
               <p className="text-base-content/70">
-                배우면서, 또는 배운 것을 기록하고, 과제를 도출하고, 할일을 계획하세요.
+                생각이나 정보를 수집하고, 명료화하고, 할일을 계획하세요.
               </p>
             </motion.div>
 

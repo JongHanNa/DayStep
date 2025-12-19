@@ -62,16 +62,16 @@ const MOOD_EMOJIS = [
 
 // 통합 태그 옵션 (entry_type을 태그로 대체)
 const UNIFIED_TAGS = [
-  '깨달음', '성장', '도전', '배움', '결심',
+  '깨달음', '성장', '도전', '수집', '결심',
   '위로', '희망', '평안', '격려', '감동',
   '감사', '가족', '친구', '건강', '일상',
 ];
 
 /**
- * 배움→과제→계획 모드
+ * 수집→명료화→계획 모드
  *
- * ExecutionMode처럼 타이머와 함께 배움 기록 시간을 갖습니다.
- * 타이머 진행 중에 기록을 작성하고, 과제를 도출하고, 할일을 계획합니다.
+ * ExecutionMode처럼 타이머와 함께 기록 시간을 갖습니다.
+ * 타이머 진행 중에 생각을 수집하고, 명료화하고, 할일을 계획합니다.
  */
 export default function LearningReflectionMode({ onExit }: LearningReflectionModeProps) {
   const { user } = useAuth();
@@ -190,7 +190,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setLearningReflectionViewState('project-derive');
   };
 
-  // 배움만 기록하고 끝내기
+  // 수집만 기록하고 끝내기
   const handleFinishWithLearningOnly = () => {
     stopTimer();
     setLearningReflectionViewState('capture');
@@ -242,7 +242,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setLearningReflectionDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
   };
 
-  // 배움 기록 저장 (프로젝트 연결 없이)
+  // 수집 저장 (프로젝트 연결 없이)
   const saveEntry = async (projectId: string | null) => {
     if (!userId || !draftContent.trim()) return null;
 
@@ -261,7 +261,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     return entry;
   };
 
-  // 배움 + 프로젝트 저장
+  // 수집 + 프로젝트 저장
   const saveEntryAndProject = async () => {
     if (!userId) return;
 
@@ -287,7 +287,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     loadStats(userId);
   };
 
-  // 배움 + 프로젝트 + 할일 저장
+  // 수집 + 프로젝트 + 할일 저장
   const saveEntryAndProjectAndTodos = async () => {
     if (!userId) return;
 
@@ -496,7 +496,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   // 뷰 렌더링
   // ============================================
 
-  // 타이머 시간 선택 화면 (배움→과제→계획)
+  // 타이머 시간 선택 화면 (수집→명료화→계획)
   const renderSelectDurationView = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -509,7 +509,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         <button onClick={handleBack} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold flex-1">배움 → 과제 → 계획</h1>
+        <h1 className="text-xl font-bold flex-1">수집 → 명료화 → 계획</h1>
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className="btn btn-circle btn-sm btn-ghost"
@@ -540,10 +540,10 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-6">
             <Lightbulb className="w-10 h-10 text-amber-600" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">배움 기록</h2>
+          <h2 className="text-xl font-semibold mb-2">수집→명료화→계획</h2>
           <p className="text-base-content/60 mb-6">
-            배우면서, 또는 배운 것을 기록하고,<br />
-            과제를 도출하고, 할일을 계획하세요.
+            생각이나 정보를 수집하고,<br />
+            명료화하고, 할일을 계획하세요.
           </p>
 
           {/* 타이머 시간 선택 */}
@@ -595,7 +595,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     </motion.div>
   );
 
-  // 배움 기록 화면 (reflection-input)
+  // 수집 화면 (reflection-input)
   const renderTimerRunningView = () => {
     const showTimer = !skipTimer && timerState.duration > 0;
 
@@ -614,7 +614,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
             <BookOpen className="w-4 h-4" />
           </div>
-          <h1 className="text-lg font-bold">오늘의 배움</h1>
+          <h1 className="text-lg font-bold">수집</h1>
         </div>
 
         {/* 오늘의 질문 */}
@@ -679,7 +679,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           </>
         )}
 
-        {/* 배움 기록 입력 폼 - 새 라벨 */}
+        {/* 수집 입력 폼 - 새 라벨 */}
         <div className="flex-1 space-y-4">
           {/* 1. 배운 내용 (선택) */}
           <div>
@@ -768,7 +768,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
             disabled={!draftContent.trim()}
             className="btn btn-ghost btn-sm w-full"
           >
-            배움만 기록하고 끝내기
+            수집만 기록하고 끝내기
           </button>
         </div>
       </motion.div>
@@ -971,7 +971,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           </button>
           <button
             onClick={async () => {
-              // 과제 없이 배움만 저장
+              // 과제 없이 수집만 저장
               await saveEntry(null);
               setLearningReflectionViewState('completed');
             }}
@@ -1115,7 +1115,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           </button>
           <button
             onClick={async () => {
-              // 할일 없이 배움+과제만 저장
+              // 할일 없이 수집+과제만 저장
               await saveEntryAndProject();
               setLearningReflectionViewState('completed');
             }}
@@ -1155,7 +1155,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
             ✨
           </motion.div>
           <h2 className="text-2xl font-bold mb-2 text-center">
-            {projectName ? '오늘의 배움이 계획이 되었어요!' : '오늘의 배움을 기록했어요!'}
+            {projectName ? '오늘의 생각,정보가 계획이 되었어요!' : '오늘의 생각,정보를 수집했어요!'}
           </h2>
           {stats && stats.currentStreak > 0 && (
             <p className="text-base-content/60 mb-6">
@@ -1165,11 +1165,11 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
           {/* 요약 카드들 */}
           <div className="w-full max-w-sm space-y-3 mb-6">
-            {/* 배움 요약 */}
+            {/* 수집 요약 */}
             <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
               <div className="flex items-center gap-2 mb-1">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium text-amber-700">배움</span>
+                <span className="text-sm font-medium text-amber-700">수집</span>
               </div>
               <p className="text-sm text-base-content/80 line-clamp-2">
                 {draftContent || '(내용 없음)'}

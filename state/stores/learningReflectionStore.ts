@@ -152,7 +152,7 @@ export const useLearningReflectionStore = create<LearningReflectionState>()(
           reminder_enabled: input.reminder_enabled || false,
           last_reminded_at: null,
           reminder_count: 0,
-          project_id: input.project_id || null,  // 배움→과제 플로우
+          project_id: input.project_id || null,  // 수집→과제 플로우
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
