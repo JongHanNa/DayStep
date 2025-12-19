@@ -9,7 +9,7 @@ import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import ExecutionMode from '@/components/adhd/ExecutionMode';
 import OrganizeModeWrapper from '@/components/adhd/OrganizeModeWrapper';
 import CareMode from '@/components/adhd/CareMode';
-import LearningReflectionMode from '@/components/adhd/LearningReflectionMode';
+import InboxMode from '@/components/adhd/InboxMode';
 import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights';
 import { TaskOrganizeMode } from '@/components/adhd/TaskOrganize/TaskOrganizeMode';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -32,7 +32,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, enterEntryMode, enterExecuteMode, enterOrganizeMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterLearningReflectionMode, exitMode } = useADHDModeStore();
+  const { currentMode, enterEntryMode, enterExecuteMode, enterOrganizeMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterInboxMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -112,9 +112,9 @@ export default function HomePage() {
     }
   };
 
-  const handleLearningReflection = () => {
+  const handleInbox = () => {
     if (user?.id) {
-      enterLearningReflectionMode(user.id);
+      enterInboxMode(user.id);
     }
   };
 
@@ -147,9 +147,9 @@ export default function HomePage() {
     return <TaskOrganizeMode onExit={handleExitExecutionMode} />;
   }
 
-  // 수집→명료화→계획 모드
-  if (currentMode === 'learning-reflection') {
-    return <LearningReflectionMode onExit={handleExitExecutionMode} />;
+  // 수집→명료화→계획 모드 (Inbox)
+  if (currentMode === 'inbox') {
+    return <InboxMode onExit={handleExitExecutionMode} />;
   }
 
   // 진입 화면 (기본)
@@ -161,7 +161,7 @@ export default function HomePage() {
       onCare={handleCare}
       onRelationshipInsights={handleRelationshipInsights}
       onTaskOrganize={handleTaskOrganize}
-      onLearningReflection={handleLearningReflection}
+      onInbox={handleInbox}
     />
   );
 }

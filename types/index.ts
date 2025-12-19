@@ -100,7 +100,7 @@ export interface NoteTagLinkInsert {
 }
 
 // Note types (manually defined until Supabase types are updated)
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'capture';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'inbox';
 
 export interface Note {
   id: string;
@@ -398,7 +398,7 @@ export type {
 export type AreaResourceStatus = 'area' | 'resource' | 'archived';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'paused';
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
-// NoteCategory는 위쪽 Note 타입 근처에서 정의됨 (capture 포함)
+// NoteCategory는 위쪽 Note 타입 근처에서 정의됨 (inbox 포함)
 
 // Area/Resource types
 export interface AreaResource {

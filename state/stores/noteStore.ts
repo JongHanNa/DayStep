@@ -20,7 +20,7 @@ import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } f
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 
 // Note 카테고리 타입
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'capture';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'inbox';
 
 // Note 타입 정의
 export interface Note {
@@ -40,10 +40,10 @@ export interface Note {
   // Second Brain fields
   area_resource_id?: string | null;
   note_category?: NoteCategory;
-  // Capture fields (수집 기능용)
+  // Inbox fields (수집 기능용)
   source_text?: string | null;
   source_reference?: string | null;
-  is_processed?: boolean; // 할일로 변환 여부 (capture 노트용)
+  is_processed?: boolean; // 할일로 변환 여부 (inbox 노트용)
 }
 
 // Note 생성 입력 타입
@@ -61,10 +61,10 @@ export interface CreateNoteInput {
   // Second Brain fields
   area_resource_id?: string | null;
   note_category?: NoteCategory;
-  // Capture fields (수집 기능용)
+  // Inbox fields (수집 기능용)
   source_text?: string | null;
   source_reference?: string | null;
-  is_processed?: boolean; // 할일로 변환 여부 (capture 노트용)
+  is_processed?: boolean; // 할일로 변환 여부 (inbox 노트용)
 }
 
 // Note 업데이트 입력 타입
@@ -187,10 +187,10 @@ interface NoteStoreActions {
   reset: () => void;
   refresh: (userId: string) => Promise<void>;
 
-  // Capture 기능 (수집→명료화→계획)
-  getCaptureNotes: (userId: string) => Promise<Note[]>;
-  createCaptureNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
-  getUnprocessedCaptureNotes: () => Note[];
+  // Inbox 기능 (수집→명료화→계획)
+  getInboxNotes: (userId: string) => Promise<Note[]>;
+  createInboxNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
+  getUnprocessedInboxNotes: () => Note[];
   markNoteAsProcessed: (noteId: string) => Promise<void>;
 }
 
@@ -1259,11 +1259,11 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         // ============================================
-        // Capture 기능 (수집→명료화→계획)
+        // Inbox 기능 (수집→명료화→계획)
         // ============================================
 
-        getCaptureNotes: async (userId: string) => {
-          console.log('📝 NoteStore.getCaptureNotes:', userId);
+        getInboxNotes: async (userId: string) => {
+          console.log('📝 NoteStore.getInboxNotes:', userId);
 
           try {
             set({ loading: true, error: null });
@@ -1276,42 +1276,42 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               order: 'created_at.desc'
             });
 
-            // note_category가 'capture'인 노트만 필터링
-            const captureNotes = (notes || []).filter(
-              (note: Note) => note.note_category === 'capture'
+            // note_category가 'inbox'인 노트만 필터링
+            const inboxNotes = (notes || []).filter(
+              (note: Note) => note.note_category === 'inbox'
             );
 
-            set({ notes: captureNotes, loading: false });
-            console.log('✅ Capture 노트 조회 완료:', captureNotes.length);
-            return captureNotes;
+            set({ notes: inboxNotes, loading: false });
+            console.log('✅ Inbox 노트 조회 완료:', inboxNotes.length);
+            return inboxNotes;
           } catch (error) {
             set({
               loading: false,
-              error: error instanceof Error ? error.message : 'Capture 노트 조회 실패',
+              error: error instanceof Error ? error.message : 'Inbox 노트 조회 실패',
             });
             throw error;
           }
         },
 
-        createCaptureNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
-          console.log('📝 NoteStore.createCaptureNote:', input);
+        createInboxNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
+          console.log('📝 NoteStore.createInboxNote:', input);
 
-          // note_category를 'capture'로 강제 설정
-          const captureInput: CreateNoteInput = {
+          // note_category를 'inbox'로 강제 설정
+          const inboxInput: CreateNoteInput = {
             ...input,
-            note_category: 'capture',
+            note_category: 'inbox',
             // title이 없으면 content 앞 50자를 title로 사용
             title: input.title || input.content.substring(0, 50),
           };
 
-          return get().createNote(captureInput);
+          return get().createNote(inboxInput);
         },
 
-        getUnprocessedCaptureNotes: () => {
+        getUnprocessedInboxNotes: () => {
           const { notes } = get();
-          // note_category가 'capture'인 노트 중 할일로 변환되지 않은 것들
+          // note_category가 'inbox'인 노트 중 할일로 변환되지 않은 것들
           return notes.filter(note =>
-            note.note_category === 'capture' && !note.is_processed
+            note.note_category === 'inbox' && !note.is_processed
           );
         },
 

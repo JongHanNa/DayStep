@@ -4,15 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Check, Sparkles } from 'lucide-react';
 import { usePomodoro } from '@/hooks/usePomodoro';
-import { REFLECTION_TIMER_OPTIONS, type ReflectionTimerDuration } from '@/types/learning-reflection';
+import { INBOX_TIMER_OPTIONS, type InboxTimerDuration } from '@/types/inbox';
 import CircularProgress from '@/components/pomodoro/CircularProgress';
 
-interface ReflectionTimerProps {
+interface InboxTimerProps {
   onComplete: () => void;
 }
 
-export default function ReflectionTimer({ onComplete }: ReflectionTimerProps) {
-  const [selectedDuration, setSelectedDuration] = useState<ReflectionTimerDuration>(10);
+export default function InboxTimer({ onComplete }: InboxTimerProps) {
+  const [selectedDuration, setSelectedDuration] = useState<InboxTimerDuration>(10);
   const [isCompleted, setIsCompleted] = useState(false);
 
   const {
@@ -38,7 +38,7 @@ export default function ReflectionTimer({ onComplete }: ReflectionTimerProps) {
   const handleStart = useCallback(() => {
     if (!isWorkerReady) return;
     setIsCompleted(false);
-    startTimer(selectedDuration * 60 * 1000, 'POMODORO', `reflection-${Date.now()}`);
+    startTimer(selectedDuration * 60 * 1000, 'POMODORO', `inbox-${Date.now()}`);
   }, [isWorkerReady, selectedDuration, startTimer]);
 
   // 일시정지/재개
@@ -71,7 +71,7 @@ export default function ReflectionTimer({ onComplete }: ReflectionTimerProps) {
     <div className="flex flex-col items-center py-4">
       {/* 안내 문구 */}
       <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold mb-1">성찰 타이머</h3>
+        <h3 className="text-lg font-semibold mb-1">수집 타이머</h3>
         <p className="text-sm text-base-content/60">
           조용히 마음을 돌보는 시간을 가져보세요
         </p>
@@ -80,7 +80,7 @@ export default function ReflectionTimer({ onComplete }: ReflectionTimerProps) {
       {/* 시간 선택 (타이머 비활성 상태에서만) */}
       {!isRunning && !isPaused && !isCompleted && (
         <div className="flex gap-2 mb-6">
-          {REFLECTION_TIMER_OPTIONS.map((mins) => (
+          {INBOX_TIMER_OPTIONS.map((mins) => (
             <button
               key={mins}
               onClick={() => setSelectedDuration(mins)}
@@ -213,7 +213,7 @@ export default function ReflectionTimer({ onComplete }: ReflectionTimerProps) {
           animate={{ opacity: 1, y: 0 }}
           className="text-sm text-base-content/60 mt-4 text-center"
         >
-          방금 성찰한 내용을 기록해볼까요?
+          방금 수집한 내용을 기록해볼까요?
         </motion.p>
       )}
 

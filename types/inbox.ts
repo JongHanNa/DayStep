@@ -1,13 +1,13 @@
 // ============================================
-// 수집→명료화→계획 시스템 UI 타입 정의
-// (DB는 notes 테이블 사용, note_category='capture')
+// Inbox 시스템 UI 타입 정의
+// (DB는 notes 테이블 사용, note_category='inbox')
 // ============================================
 
 /** 기분 레벨 (UI용, DB에 저장하지 않음) */
 export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 
-/** 수집→명료화→계획 뷰 상태 */
-export type LearningReflectionViewState =
+/** Inbox 뷰 상태 */
+export type InboxViewState =
   | 'select-duration'    // 허브 화면 (시작점)
   | 'reflection-input'   // 수집
   | 'action-choice'      // 선택지: 지금 할래? 언제 할래? 저장만?
@@ -17,16 +17,16 @@ export type LearningReflectionViewState =
   | 'completed'          // 완료
   | 'history';           // 과거 기록
 
-/** 성찰 타이머 시간 옵션 (분) */
-export const REFLECTION_TIMER_OPTIONS = [5, 10, 15, 20] as const;
-export type ReflectionTimerDuration = typeof REFLECTION_TIMER_OPTIONS[number];
+/** Inbox 타이머 시간 옵션 (분) */
+export const INBOX_TIMER_OPTIONS = [5, 10, 15, 20] as const;
+export type InboxTimerDuration = typeof INBOX_TIMER_OPTIONS[number];
 
 // ============================================
-// 수집 필드 라벨 (비신앙인 친화적)
+// 수집 필드 라벨
 // ============================================
 
 /** 수집 필드 라벨 */
-export const LEARNING_FIELD_LABELS = {
+export const INBOX_FIELD_LABELS = {
   // 메인 필드 (필수)
   content: {
     label: '떠오른 것',
@@ -94,11 +94,11 @@ export interface TodoDraft {
 }
 
 // ============================================
-// Capture 노트 인터페이스 (notes 테이블 기반)
+// Inbox 노트 인터페이스 (notes 테이블 기반)
 // ============================================
 
-/** Capture 노트 입력 타입 */
-export interface CaptureNoteInput {
+/** Inbox 노트 입력 타입 */
+export interface InboxNoteInput {
   content: string;
   source_text?: string | null;
   source_reference?: string | null;
@@ -106,8 +106,8 @@ export interface CaptureNoteInput {
   is_pinned?: boolean;
 }
 
-/** Capture 노트 업데이트 타입 */
-export interface CaptureNoteUpdate {
+/** Inbox 노트 업데이트 타입 */
+export interface InboxNoteUpdate {
   content?: string;
   source_text?: string | null;
   source_reference?: string | null;

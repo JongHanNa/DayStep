@@ -7,10 +7,6 @@ import {
   JournalType,
   JOURNAL_PROMPTS
 } from '@/services/balance-journal.service';
-import {
-  DailyReflectionService,
-  DailyReflection,
-} from '@/services/daily-reflection.service';
 
 // ============================================
 // 타입 정의
@@ -28,11 +24,6 @@ interface BalanceState {
   // 상기 모달 상태
   reminderJournal: BalanceJournal | null;
   showReminderModal: boolean;
-
-  // Daily Reflection 상태
-  todayMorningIntention: DailyReflection | null;
-  todayEveningReview: DailyReflection | null;
-  showEveningPrompt: boolean;
 
   // 현재 사용자 ID
   currentUserId: string | null;
@@ -72,21 +63,6 @@ interface BalanceState {
   hideReminder: () => void;
   recordReminderShown: (userId: string) => Promise<void>;
 
-  // === Daily Reflection Actions ===
-  loadTodayReflections: (userId: string) => Promise<void>;
-  saveMorningIntention: (
-    userId: string,
-    targetPerson: string,
-    plannedAction?: string
-  ) => Promise<DailyReflection | null>;
-  saveEveningReview: (
-    userId: string,
-    actualAction: string | null,
-    connectionRating: number
-  ) => Promise<DailyReflection | null>;
-  checkAndShowEveningPrompt: (userId: string) => Promise<boolean>;
-  hideEveningPrompt: () => void;
-
   // === 유틸리티 ===
   hasJournals: () => boolean;
   getJournalsByType: (type: JournalType) => BalanceJournal[];
@@ -104,9 +80,6 @@ const DEFAULT_STATE = {
   isLoadingSettings: false,
   reminderJournal: null,
   showReminderModal: false,
-  todayMorningIntention: null,
-  todayEveningReview: null,
-  showEveningPrompt: false,
   currentUserId: null,
 };
 
@@ -286,98 +259,6 @@ export const useBalanceStore = create<BalanceState>()(
           } catch (error) {
             console.error('❌ 상기 기록 실패:', error);
           }
-        },
-
-        // === Daily Reflection Actions ===
-        loadTodayReflections: async (userId: string) => {
-          try {
-            const [morning, evening] = await Promise.all([
-              DailyReflectionService.getTodayMorningIntention(userId),
-              DailyReflectionService.getTodayEveningReview(userId),
-            ]);
-
-            set({
-              todayMorningIntention: morning,
-              todayEveningReview: evening,
-            });
-
-            console.log('📅 오늘 리플렉션 로드 완료:', { morning: !!morning, evening: !!evening });
-          } catch (error) {
-            console.error('❌ 리플렉션 로드 실패:', error);
-          }
-        },
-
-        saveMorningIntention: async (userId, targetPerson, plannedAction) => {
-          try {
-            const intention = await DailyReflectionService.saveMorningIntention(
-              userId,
-              targetPerson,
-              plannedAction
-            );
-
-            if (intention) {
-              set({
-                todayMorningIntention: intention,
-              });
-              console.log('🌅 아침 의도 저장 완료');
-            }
-
-            return intention;
-          } catch (error) {
-            console.error('❌ 아침 의도 저장 실패:', error);
-            return null;
-          }
-        },
-
-        saveEveningReview: async (userId, actualAction, connectionRating) => {
-          try {
-            const review = await DailyReflectionService.saveEveningReview(
-              userId,
-              actualAction,
-              connectionRating
-            );
-
-            if (review) {
-              set({
-                todayEveningReview: review,
-                showEveningPrompt: false,
-              });
-              console.log('🌙 저녁 리뷰 저장 완료');
-            }
-
-            return review;
-          } catch (error) {
-            console.error('❌ 저녁 리뷰 저장 실패:', error);
-            return null;
-          }
-        },
-
-        checkAndShowEveningPrompt: async (userId: string) => {
-          try {
-            const settings = get().settings;
-
-            // 설정 비활성화 확인
-            if (settings && !settings.evening_prompt_enabled) {
-              return false;
-            }
-
-            // 이미 오늘 리뷰했는지 확인
-            const hasReview = await DailyReflectionService.hasTodayEveningReview(userId);
-
-            if (!hasReview) {
-              set({ showEveningPrompt: true });
-              return true;
-            }
-
-            return false;
-          } catch (error) {
-            console.error('❌ 저녁 프롬프트 확인 오류:', error);
-            return false;
-          }
-        },
-
-        hideEveningPrompt: () => {
-          set({ showEveningPrompt: false });
         },
 
         // === 유틸리티 ===

@@ -160,9 +160,9 @@ export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 
 /**
  * 노트 카테고리 (DB note_category 컬럼과 일치)
- * - capture: 아이디어 수집 기능에서 생성된 노트
+ * - inbox: 아이디어 수집 기능에서 생성된 노트
  */
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'capture';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'inbox';
 
 /**
  * 노트 (Note) - PARA 구조로 분류되는 노트

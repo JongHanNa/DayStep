@@ -7,7 +7,7 @@ import { TodoSkipsService } from '@/services/todo-skips.service';
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'learning-reflection' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'inbox' | null;
 
 export type SkipReason =
   | 'not_now'      // 지금 상황에 안 맞아
@@ -51,14 +51,14 @@ interface CareModeState {
 }
 
 // 수집→명료화→계획 모드 상태 (구 나의 마음 챙기기)
-import type { LearningReflectionViewState, TodoDraft } from '@/types/learning-reflection';
-export type { LearningReflectionViewState };
-export type LearningReflectionEntryType = 'reflection' | 'comfort' | 'gratitude';
+import type { InboxViewState, TodoDraft } from '@/types/inbox';
+export type { InboxViewState };
+export type InboxEntryType = 'reflection' | 'comfort' | 'gratitude';
 
-interface LearningReflectionModeState {
+interface InboxModeState {
   isActive: boolean;
   startedAt: Date | null;
-  viewState: LearningReflectionViewState;
+  viewState: InboxViewState;
 
   // 수집 필드
   draftContent: string;           // 나의 깨달음 (필수)
@@ -104,7 +104,7 @@ interface ADHDModeState {
   careMode: CareModeState;
 
   // 수집→명료화→계획 모드 상태
-  learningReflectionMode: LearningReflectionModeState;
+  inboxMode: InboxModeState;
 
   // 사용자 설정
   awakeningSentence: string | null;
@@ -152,9 +152,9 @@ interface ADHDModeState {
   enterTaskOrganizeMode: (userId: string) => void;
 
   // === 수집→명료화→계획 모드 Actions ===
-  enterLearningReflectionMode: (userId: string) => void;
-  setLearningReflectionViewState: (viewState: LearningReflectionViewState) => void;
-  setLearningReflectionDraft: (draft: {
+  enterInboxMode: (userId: string) => void;
+  setInboxViewState: (viewState: InboxViewState) => void;
+  setInboxDraft: (draft: {
     // 수집 필드
     content?: string;
     sourceText?: string;
@@ -170,8 +170,8 @@ interface ADHDModeState {
     newProjectPreparation?: string;
     todosDraft?: TodoDraft[];
   }) => void;
-  resetLearningReflectionDraft: () => void;
-  endLearningReflectionMode: () => void;
+  resetInboxDraft: () => void;
+  endInboxMode: () => void;
 
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
@@ -232,7 +232,7 @@ const DEFAULT_CARE_MODE: CareModeState = {
   linkedTodoId: null,
 };
 
-const DEFAULT_LEARNING_REFLECTION_MODE: LearningReflectionModeState = {
+const DEFAULT_INBOX_MODE: InboxModeState = {
   isActive: false,
   startedAt: null,
   viewState: 'select-duration',
@@ -265,7 +265,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
-        learningReflectionMode: DEFAULT_LEARNING_REFLECTION_MODE,
+        inboxMode: DEFAULT_INBOX_MODE,
         awakeningSentence: null,
         cachedPatterns: null,
         isLoadingPatterns: false,
@@ -339,7 +339,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             executionMode: DEFAULT_EXECUTION_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
             careMode: DEFAULT_CARE_MODE,
-            learningReflectionMode: DEFAULT_LEARNING_REFLECTION_MODE,
+            inboxMode: DEFAULT_INBOX_MODE,
             currentUserId: null,
           });
         },
@@ -565,12 +565,12 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         // === 수집→명료화→계획 모드 Actions ===
-        enterLearningReflectionMode: (userId: string) => {
+        enterInboxMode: (userId: string) => {
           console.log('💡 ADHD: 수집→명료화→계획 모드 진입');
           set({
-            currentMode: 'learning-reflection',
+            currentMode: 'inbox',
             currentUserId: userId,
-            learningReflectionMode: {
+            inboxMode: {
               isActive: true,
               startedAt: new Date(),
               viewState: 'select-duration',
@@ -592,30 +592,30 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
         },
 
-        setLearningReflectionViewState: (viewState: LearningReflectionViewState) => {
+        setInboxViewState: (viewState: InboxViewState) => {
           console.log('💡 ADHD: 수집→명료화→계획 뷰 상태 변경', viewState);
           set((state) => ({
-            learningReflectionMode: {
-              ...state.learningReflectionMode,
+            inboxMode: {
+              ...state.inboxMode,
               viewState,
             }
           }));
         },
 
-        setLearningReflectionEntryType: (entryType: LearningReflectionEntryType) => {
+        setInboxEntryType: (entryType: InboxEntryType) => {
           console.log('💡 ADHD: 수집→명료화→계획 유형 선택', entryType);
           set((state) => ({
-            learningReflectionMode: {
-              ...state.learningReflectionMode,
+            inboxMode: {
+              ...state.inboxMode,
               selectedEntryType: entryType,
             }
           }));
         },
 
-        setLearningReflectionDraft: (draft) => {
+        setInboxDraft: (draft) => {
           set((state) => ({
-            learningReflectionMode: {
-              ...state.learningReflectionMode,
+            inboxMode: {
+              ...state.inboxMode,
               // 수집 필드
               ...(draft.content !== undefined && { draftContent: draft.content }),
               ...(draft.sourceText !== undefined && { draftSourceText: draft.sourceText }),
@@ -634,10 +634,10 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        resetLearningReflectionDraft: () => {
+        resetInboxDraft: () => {
           set((state) => ({
-            learningReflectionMode: {
-              ...state.learningReflectionMode,
+            inboxMode: {
+              ...state.inboxMode,
               // 수집 필드 초기화
               draftContent: '',
               draftSourceText: '',
@@ -656,11 +656,11 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        endLearningReflectionMode: () => {
+        endInboxMode: () => {
           console.log('💡 ADHD: 수집→명료화→계획 모드 종료');
           set({
             currentMode: 'entry',
-            learningReflectionMode: DEFAULT_LEARNING_REFLECTION_MODE,
+            inboxMode: DEFAULT_INBOX_MODE,
           });
         },
 

@@ -111,7 +111,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   // 균형 시스템 훅
   const {
     loadSettings: loadBalanceSettings,
-    loadTodayReflections,
   } = useBalanceStore();
 
   const { resolvedTheme, setTheme } = useTheme();
@@ -240,18 +239,16 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setViewState('recommendation');
   }, [getTodayTodos, calculateRecommendationScore, setCurrentRecommendation, startAdhocForEmptyState]);
 
-  // 균형 시스템 초기화 및 아침 프롬프트 체크
+  // 균형 시스템 초기화
   useEffect(() => {
     if (!userId) return;
 
     const initBalance = async () => {
-      // 설정 및 오늘 리플렉션 로드
       await loadBalanceSettings(userId);
-      await loadTodayReflections(userId);
     };
 
     initBalance();
-  }, [userId, loadBalanceSettings, loadTodayReflections]);
+  }, [userId, loadBalanceSettings]);
 
   // 초기 추천 로드 (skip 로딩 완료 + 세션 복원 확인 완료 후)
   useEffect(() => {
