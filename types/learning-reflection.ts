@@ -3,13 +3,14 @@
 // (구 나의 마음 챙기기)
 // ============================================
 
-/** 마음 챙기기 뷰 상태 */
+/** 수집→명료화→계획 뷰 상태 */
 export type LearningReflectionViewState =
   | 'select-duration'    // 시작 화면 (타이머 선택)
   | 'reflection-input'   // 수집
-  | 'project-derive'     // 과제 도출 (신규)
-  | 'todo-planning'      // 할일 계획 (신규)
-  | 'capture'            // 기분/태그 (수집만 기록 시)
+  | 'action-choice'      // 선택지: 지금 할래? 언제 할래? 저장만?
+  | 'quick-todo'         // 지금 바로 할래 (할일 입력 → ExecutionMode)
+  | 'scheduled-todo'     // 언제 할지 정할래 (날짜/시간 선택)
+  | 'capture'            // 기분/태그 (저장만 선택 시)
   | 'completed'          // 완료
   | 'history';           // 과거 기록
 
@@ -203,29 +204,27 @@ export type ReflectionTimerDuration = typeof REFLECTION_TIMER_OPTIONS[number];
 
 /** 수집 필드 라벨 */
 export const LEARNING_FIELD_LABELS = {
-  sourceText: {
-    label: '배운 내용',
-    placeholder: '책, 영상, 강의, 대화 등 에서 배운 내용을 적어보세요',
-    required: false,
-  },
-  sourceReference: {
-    label: '출처',
-    placeholder: '어디서 배웠나요? (책 제목, 영상, 강의 링크 등)',
-    required: false,
-  },
+  // 메인 필드 (필수)
   content: {
-    label: '깨달음, 알게된 점',
-    placeholder: '무엇을 깨달았나요? 어떤 것을 알게 됐나요?',
+    label: '떠오른 것',
+    placeholder: '생각이든, 본 것이든, 들은 것이든 적어보세요',
     required: true,
   },
-  experience: {
-    label: '오늘의 경험',
-    placeholder: '이 수집과 관련된 오늘의 경험이 있나요?',
+  // 출처 (선택)
+  sourceReference: {
+    label: '출처',
+    placeholder: '어디서 얻었나요?',
     required: false,
   },
-  commitment: {
-    label: '실천 다짐',
-    placeholder: '앞으로 어떻게 할까요?',
+  // --- 더 적기 (펼침) ---
+  sourceText: {
+    label: '상세 내용',
+    placeholder: '더 자세히 적고 싶다면 여기에',
+    required: false,
+  },
+  experience: {
+    label: '관련 경험',
+    placeholder: '이것과 관련된 경험이 있나요?',
     required: false,
   },
 } as const;

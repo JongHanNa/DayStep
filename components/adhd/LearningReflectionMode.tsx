@@ -21,6 +21,8 @@ import {
   ListTodo,
   ChevronRight,
   Calendar,
+  CalendarClock,
+  Save,
   X,
   Trash2,
   Sun,
@@ -83,6 +85,8 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setLearningReflectionDraft,
     resetLearningReflectionDraft,
     endLearningReflectionMode,
+    setCurrentRecommendation,
+    enterExecuteMode,
   } = useADHDModeStore();
 
   const {
@@ -114,6 +118,10 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   const [moodRating, setMoodRating] = useState<MoodLevel | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [quickTodoTitle, setQuickTodoTitle] = useState(''); // 빠른 할일 제목
+  const [scheduledTodoTitle, setScheduledTodoTitle] = useState(''); // 예약 할일 제목
+  const [scheduledDate, setScheduledDate] = useState(''); // 예약 날짜
+  const [scheduledTime, setScheduledTime] = useState(''); // 예약 시간
 
   const {
     viewState,
@@ -184,21 +192,106 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setLearningReflectionViewState('reflection-input');
   };
 
-  // 과제 도출로 이동
-  const handleGoToProjectDerive = () => {
+  // 선택지 화면으로 이동 (수집 후)
+  const handleGoToActionChoice = () => {
     stopTimer();
-    setLearningReflectionViewState('project-derive');
+    setLearningReflectionViewState('action-choice');
   };
 
-  // 수집만 기록하고 끝내기
-  const handleFinishWithLearningOnly = () => {
-    stopTimer();
-    setLearningReflectionViewState('capture');
+  // 지금 바로 할래 → 할일 입력 화면
+  const handleQuickTodo = () => {
+    setLearningReflectionViewState('quick-todo');
   };
 
-  // 할일 계획으로 이동
-  const handleGoToTodoPlanning = () => {
-    setLearningReflectionViewState('todo-planning');
+  // 언제 할지 정할래 → 예약 할일 화면
+  const handleScheduledTodo = () => {
+    setLearningReflectionViewState('scheduled-todo');
+  };
+
+  // 저장만 할래 → 바로 저장 후 completed 화면
+  const handleSaveOnly = async () => {
+    if (!userId || !draftContent.trim()) return;
+
+    setIsSaving(true);
+    try {
+      // 기분/태그 없이 바로 저장
+      await saveEntry(null);
+      loadStats(userId);
+      setLearningReflectionViewState('completed');
+    } catch (error) {
+      console.error('저장 실패:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 지금 바로 할래 → 수집 저장 + 할일 생성 + ExecutionMode로 이동
+  const handleStartQuickTodo = async () => {
+    if (!userId || !quickTodoTitle.trim()) return;
+
+    setIsSaving(true);
+    try {
+      // 1. 수집 저장 (프로젝트 연결 없이)
+      await saveEntry(null);
+
+      // 2. 할일 생성 (오늘 날짜, anytime)
+      const today = new Date();
+      // 한국 시간 자정을 UTC로 변환
+      const startTime = new Date(`${today.toISOString().split('T')[0]}T00:00:00+09:00`).toISOString();
+      const newTodo = await createTodo({
+        user_id: userId,
+        title: quickTodoTitle.trim(),
+        start_time: startTime,
+        schedule_type: 'anytime' as const,
+        is_today_highlight: true, // 오늘의 하이라이트로 설정
+      });
+
+      if (newTodo) {
+        // 3. ExecutionMode에 할일 설정
+        setCurrentRecommendation(newTodo);
+
+        // 4. ExecutionMode로 전환
+        await enterExecuteMode(userId);
+      }
+    } catch (error) {
+      console.error('빠른 할일 생성 실패:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 예약 할일 저장 → 수집 저장 + 할일 생성 (날짜/시간 포함)
+  const handleSaveScheduledTodo = async () => {
+    if (!userId || !scheduledTodoTitle.trim() || !scheduledDate) return;
+
+    setIsSaving(true);
+    try {
+      // 1. 수집 저장
+      await saveEntry(null);
+
+      // 2. 할일 생성 (예약된 날짜/시간)
+      // 시간이 있으면 해당 시간, 없으면 자정으로 설정
+      let startTime: string;
+      if (scheduledTime) {
+        startTime = new Date(`${scheduledDate}T${scheduledTime}:00+09:00`).toISOString();
+      } else {
+        startTime = new Date(`${scheduledDate}T00:00:00+09:00`).toISOString();
+      }
+
+      await createTodo({
+        user_id: userId,
+        title: scheduledTodoTitle.trim(),
+        start_time: startTime,
+        schedule_type: scheduledTime ? 'timed' as const : 'anytime' as const,
+      });
+
+      // 3. 완료 화면으로 이동
+      setLearningReflectionViewState('completed');
+    } catch (error) {
+      console.error('예약 할일 생성 실패:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // 과제 없이 끝내기
@@ -450,14 +543,15 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
       case 'reflection-input':
         handleStopTimer();
         break;
-      case 'project-derive':
+      case 'action-choice':
         setLearningReflectionViewState('reflection-input');
         break;
-      case 'todo-planning':
-        setLearningReflectionViewState('project-derive');
+      case 'quick-todo':
+      case 'scheduled-todo':
+        setLearningReflectionViewState('action-choice');
         break;
       case 'capture':
-        setLearningReflectionViewState('reflection-input');
+        setLearningReflectionViewState('action-choice');
         break;
       case 'history':
         setLearningReflectionViewState('select-duration');
@@ -617,10 +711,10 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <h1 className="text-lg font-bold">수집</h1>
         </div>
 
-        {/* 오늘의 질문 */}
+        {/* 오늘의 힌트 */}
         {currentPrompt && (
           <div className="p-3 bg-base-200 rounded-xl mb-4">
-            <p className="text-sm text-base-content/60 mb-1">💡 오늘의 질문</p>
+            <p className="text-sm text-base-content/60 mb-1">💡 오늘의 힌트</p>
             <p className="font-medium">{currentPrompt.prompt_text}</p>
           </div>
         )}
@@ -679,19 +773,20 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           </>
         )}
 
-        {/* 수집 입력 폼 - 새 라벨 */}
+        {/* 수집 입력 폼 - 단순화 (2개 필드 + 더 적기) */}
         <div className="flex-1 space-y-4">
-          {/* 1. 배운 내용 (선택) */}
+          {/* 1. 떠오른 것 (필수) - 메인 필드 */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {LEARNING_FIELD_LABELS.sourceText.label}{' '}
-              {!LEARNING_FIELD_LABELS.sourceText.required && <span className="text-base-content/40">(선택)</span>}
+              {LEARNING_FIELD_LABELS.content.label}{' '}
+              {LEARNING_FIELD_LABELS.content.required && <span className="text-amber-500">*</span>}
             </label>
             <textarea
-              value={draftSourceText}
-              onChange={(e) => setLearningReflectionDraft({ sourceText: e.target.value })}
-              placeholder={LEARNING_FIELD_LABELS.sourceText.placeholder}
-              className="textarea textarea-bordered w-full h-20 resize-none"
+              value={draftContent}
+              onChange={(e) => setLearningReflectionDraft({ content: e.target.value })}
+              placeholder={LEARNING_FIELD_LABELS.content.placeholder}
+              className="textarea textarea-bordered w-full h-32 resize-none"
+              autoFocus
             />
           </div>
 
@@ -699,7 +794,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
               {LEARNING_FIELD_LABELS.sourceReference.label}{' '}
-              {!LEARNING_FIELD_LABELS.sourceReference.required && <span className="text-base-content/40">(선택)</span>}
+              <span className="text-base-content/40">(선택)</span>
             </label>
             <input
               type="text"
@@ -710,65 +805,285 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
             />
           </div>
 
-          {/* 3. 나의 깨달음 (필수) */}
+          {/* 더 적기 (펼침) */}
+          <details className="collapse collapse-arrow bg-base-200 rounded-lg">
+            <summary className="collapse-title text-sm font-medium min-h-0 py-2 px-3">
+              더 적기
+            </summary>
+            <div className="collapse-content space-y-3 px-3 pb-3">
+              {/* 상세 내용 */}
+              <div>
+                <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                  {LEARNING_FIELD_LABELS.sourceText.label}
+                </label>
+                <textarea
+                  value={draftSourceText}
+                  onChange={(e) => setLearningReflectionDraft({ sourceText: e.target.value })}
+                  placeholder={LEARNING_FIELD_LABELS.sourceText.placeholder}
+                  className="textarea textarea-bordered w-full h-20 resize-none"
+                />
+              </div>
+
+              {/* 관련 경험 */}
+              <div>
+                <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                  {LEARNING_FIELD_LABELS.experience.label}
+                </label>
+                <textarea
+                  value={draftExperience}
+                  onChange={(e) => setLearningReflectionDraft({ experience: e.target.value })}
+                  placeholder={LEARNING_FIELD_LABELS.experience.placeholder}
+                  className="textarea textarea-bordered w-full h-20 resize-none"
+                />
+              </div>
+            </div>
+          </details>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="mt-4">
+          <button
+            onClick={handleGoToActionChoice}
+            disabled={!draftContent.trim()}
+            className="btn btn-primary w-full gap-2"
+          >
+            이걸로 뭐 할래?
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // 선택지 화면 (action-choice)
+  const renderActionChoiceView = () => {
+    return (
+      <motion.div
+        key="action-choice"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full p-4"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setLearningReflectionViewState('reflection-input')}
+            className="btn btn-ghost btn-circle"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold">이걸로 뭐 할래?</h1>
+        </div>
+
+        {/* 수집한 내용 미리보기 */}
+        <div className="bg-base-200 rounded-xl p-4 mb-6">
+          <p className="text-sm text-base-content/60 mb-1">수집한 내용</p>
+          <p className="text-base-content line-clamp-3">{draftContent}</p>
+        </div>
+
+        {/* 선택지 버튼들 */}
+        <div className="flex-1 flex flex-col gap-4">
+          {/* 지금 바로 할래 - 가장 눈에 띄게 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleQuickTodo}
+            className="btn btn-primary btn-lg w-full h-20 flex items-center justify-center gap-3 shadow-lg"
+          >
+            <Play className="w-7 h-7" />
+            <span className="text-xl font-semibold">지금 바로 할래</span>
+          </motion.button>
+
+          {/* 언제 할지 정할래 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleScheduledTodo}
+            className="btn btn-ghost btn-lg w-full h-16 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
+          >
+            <CalendarClock className="w-6 h-6" />
+            <span className="text-lg font-semibold">언제 할지 정할래</span>
+          </motion.button>
+
+          {/* 일단 저장만 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSaveOnly}
+            disabled={isSaving}
+            className="btn btn-ghost btn-md w-full flex items-center justify-center gap-2 text-base-content/60"
+          >
+            {isSaving ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
+            <span>{isSaving ? '저장 중...' : '일단 저장만'}</span>
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // 빠른 할일 화면 (quick-todo)
+  const renderQuickTodoView = () => {
+    return (
+      <motion.div
+        key="quick-todo"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full p-4"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setLearningReflectionViewState('action-choice')}
+            className="btn btn-ghost btn-circle"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold">지금 바로 할래</h1>
+        </div>
+
+        {/* 수집한 내용 미리보기 */}
+        <div className="bg-base-200 rounded-xl p-4 mb-6">
+          <p className="text-sm text-base-content/60 mb-1">수집한 내용</p>
+          <p className="text-base-content line-clamp-2">{draftContent}</p>
+        </div>
+
+        {/* 할일 제목 입력 */}
+        <div className="flex-1">
+          <label className="text-sm font-medium text-base-content/70 mb-2 block">
+            이걸로 뭘 할까?
+          </label>
+          <input
+            type="text"
+            value={quickTodoTitle}
+            onChange={(e) => setQuickTodoTitle(e.target.value)}
+            placeholder="가장 작은 것 하나만"
+            className="input input-bordered w-full text-lg"
+            autoFocus
+          />
+          <p className="text-xs text-base-content/50 mt-2">
+            작게 시작하면 더 쉬워요
+          </p>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="mt-auto">
+          <button
+            onClick={handleStartQuickTodo}
+            disabled={!quickTodoTitle.trim() || isSaving}
+            className="btn btn-primary btn-lg w-full gap-2"
+          >
+            {isSaving ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <>
+                <Play className="w-5 h-5" />
+                타이머 켜고 시작
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // 예약 할일 화면 (scheduled-todo)
+  const renderScheduledTodoView = () => {
+    // 기본 날짜를 오늘로 설정
+    const today = new Date().toISOString().split('T')[0];
+
+    return (
+      <motion.div
+        key="scheduled-todo"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full p-4"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setLearningReflectionViewState('action-choice')}
+            className="btn btn-ghost btn-circle"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold">언제 할지 정할래</h1>
+        </div>
+
+        {/* 수집한 내용 미리보기 */}
+        <div className="bg-base-200 rounded-xl p-4 mb-6">
+          <p className="text-sm text-base-content/60 mb-1">수집한 내용</p>
+          <p className="text-base-content line-clamp-2">{draftContent}</p>
+        </div>
+
+        {/* 할일 입력 */}
+        <div className="space-y-4 flex-1">
+          {/* 할일 제목 */}
           <div>
-            <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {LEARNING_FIELD_LABELS.content.label}{' '}
-              {LEARNING_FIELD_LABELS.content.required && <span className="text-amber-500">*</span>}
+            <label className="text-sm font-medium text-base-content/70 mb-2 block">
+              이걸로 뭘 할까?
             </label>
-            <textarea
-              value={draftContent}
-              onChange={(e) => setLearningReflectionDraft({ content: e.target.value })}
-              placeholder={LEARNING_FIELD_LABELS.content.placeholder}
-              className="textarea textarea-bordered w-full h-24 resize-none"
+            <input
+              type="text"
+              value={scheduledTodoTitle}
+              onChange={(e) => setScheduledTodoTitle(e.target.value)}
+              placeholder="할일을 적어주세요"
+              className="input input-bordered w-full"
+              autoFocus
             />
           </div>
 
-          {/* 4. 오늘의 경험 (선택) */}
+          {/* 날짜 선택 */}
           <div>
-            <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {LEARNING_FIELD_LABELS.experience.label}{' '}
-              {!LEARNING_FIELD_LABELS.experience.required && <span className="text-base-content/40">(선택)</span>}
+            <label className="text-sm font-medium text-base-content/70 mb-2 block">
+              <Calendar className="w-4 h-4 inline mr-1" />
+              언제 할래?
             </label>
-            <textarea
-              value={draftExperience}
-              onChange={(e) => setLearningReflectionDraft({ experience: e.target.value })}
-              placeholder={LEARNING_FIELD_LABELS.experience.placeholder}
-              className="textarea textarea-bordered w-full h-20 resize-none"
+            <input
+              type="date"
+              value={scheduledDate || today}
+              onChange={(e) => setScheduledDate(e.target.value)}
+              min={today}
+              className="input input-bordered w-full"
             />
           </div>
 
-          {/* 5. 실천 다짐 (선택) */}
+          {/* 시간 선택 (선택) */}
           <div>
-            <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {LEARNING_FIELD_LABELS.commitment.label}{' '}
-              {!LEARNING_FIELD_LABELS.commitment.required && <span className="text-base-content/40">(선택)</span>}
+            <label className="text-sm font-medium text-base-content/70 mb-2 block">
+              <Clock className="w-4 h-4 inline mr-1" />
+              몇 시에? <span className="text-base-content/40">(선택)</span>
             </label>
-            <textarea
-              value={draftCommitment}
-              onChange={(e) => setLearningReflectionDraft({ commitment: e.target.value })}
-              placeholder={LEARNING_FIELD_LABELS.commitment.placeholder}
-              className="textarea textarea-bordered w-full h-20 resize-none"
+            <input
+              type="time"
+              value={scheduledTime}
+              onChange={(e) => setScheduledTime(e.target.value)}
+              className="input input-bordered w-full"
             />
           </div>
         </div>
 
         {/* 하단 버튼 */}
-        <div className="mt-4 space-y-2">
+        <div className="mt-auto">
           <button
-            onClick={handleGoToProjectDerive}
-            disabled={!draftContent.trim()}
-            className="btn btn-primary w-full gap-2"
+            onClick={handleSaveScheduledTodo}
+            disabled={!scheduledTodoTitle.trim() || !scheduledDate || isSaving}
+            className="btn btn-primary btn-lg w-full gap-2"
           >
-            다음: 과제 도출하기
-            <ChevronRight className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleFinishWithLearningOnly}
-            disabled={!draftContent.trim()}
-            className="btn btn-ghost btn-sm w-full"
-          >
-            수집만 기록하고 끝내기
+            {isSaving ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <>
+                <CalendarClock className="w-5 h-5" />
+                등록하기
+              </>
+            )}
           </button>
         </div>
       </motion.div>
@@ -849,280 +1164,6 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
             className="btn btn-primary flex-1"
           >
             {isSaving ? <span className="loading loading-spinner loading-sm" /> : '저장하기'}
-          </button>
-        </div>
-      </motion.div>
-    );
-  };
-
-  // 과제 도출 화면
-  const renderProjectDeriveView = () => {
-    const filteredProjects = projects.filter((p: Project) => p.status !== 'completed');
-
-    return (
-      <motion.div
-        key="project-derive"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="flex flex-col h-full"
-      >
-        {/* 헤더 */}
-        <div className="flex items-center gap-3 p-4 border-b border-base-300">
-          <button onClick={() => setLearningReflectionViewState('reflection-input')} className="btn btn-ghost btn-circle">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-bold">과제 도출</h1>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 mobile-container">
-          {/* 깨달음 미리보기 */}
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Lightbulb className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-medium text-amber-700">나의 깨달음</span>
-            </div>
-            <p className="text-sm text-base-content/80 line-clamp-3">
-              {draftContent || '(작성된 내용이 없습니다)'}
-            </p>
-          </div>
-
-          {/* 기존 프로젝트에 연결 */}
-          <div>
-            <label className="text-sm font-medium text-base-content/70 mb-2 block">
-              기존 과제에 연결
-            </label>
-            <select
-              value={selectedProjectId || ''}
-              onChange={(e) => {
-                setLearningReflectionDraft({ selectedProjectId: e.target.value || null, newProjectTitle: '' });
-              }}
-              className="select select-bordered w-full"
-            >
-              <option value="">선택 안 함 (새 과제 만들기)</option>
-              {filteredProjects.map(p => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* 구분선 */}
-          {!selectedProjectId && (
-            <>
-              <div className="divider text-base-content/40">또는</div>
-
-              {/* 새 과제 만들기 */}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-base-content/70 mb-2 block">
-                    <FolderPlus className="w-4 h-4 inline mr-1" />
-                    {PROJECT_DERIVE_LABELS.title.label}
-                  </label>
-                  <input
-                    type="text"
-                    value={newProjectTitle}
-                    onChange={(e) => setLearningReflectionDraft({ newProjectTitle: e.target.value })}
-                    placeholder={PROJECT_DERIVE_LABELS.title.placeholder}
-                    className="input input-bordered w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-base-content/70 mb-2 block">
-                    {PROJECT_DERIVE_LABELS.expectedOutcome.label}
-                  </label>
-                  <textarea
-                    value={newProjectExpectedOutcome}
-                    onChange={(e) => setLearningReflectionDraft({ newProjectExpectedOutcome: e.target.value })}
-                    placeholder={PROJECT_DERIVE_LABELS.expectedOutcome.placeholder}
-                    rows={2}
-                    className="textarea textarea-bordered w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-base-content/70 mb-2 block">
-                    {PROJECT_DERIVE_LABELS.goalConnection.label}
-                  </label>
-                  <select
-                    value={selectedGoalId || ''}
-                    onChange={(e) => setLearningReflectionDraft({ selectedGoalId: e.target.value || null })}
-                    className="select select-bordered w-full"
-                  >
-                    <option value="">목표 없이 진행</option>
-                    {goals.filter((g: Goal) => g.status !== 'completed').map((g: Goal) => (
-                      <option key={g.id} value={g.id}>{g.title}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* 하단 버튼 */}
-        <div className="p-4 border-t border-base-300 space-y-3">
-          <button
-            onClick={handleGoToTodoPlanning}
-            disabled={!selectedProjectId && !newProjectTitle.trim()}
-            className="btn btn-primary w-full gap-2"
-          >
-            다음: 할일 계획하기 <ChevronRight className="w-4 h-4" />
-          </button>
-          <button
-            onClick={async () => {
-              // 과제 없이 수집만 저장
-              await saveEntry(null);
-              setLearningReflectionViewState('completed');
-            }}
-            className="btn btn-ghost w-full"
-          >
-            과제 없이 끝내기
-          </button>
-        </div>
-      </motion.div>
-    );
-  };
-
-  // 할일 계획 화면
-  const renderTodoPlanningView = () => {
-    const projectName = selectedProjectId
-      ? projects.find(p => p.id === selectedProjectId)?.title
-      : newProjectTitle;
-
-    return (
-      <motion.div
-        key="todo-planning"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="flex flex-col h-full"
-      >
-        {/* 헤더 */}
-        <div className="flex items-center gap-3 p-4 border-b border-base-300">
-          <button onClick={() => setLearningReflectionViewState('project-derive')} className="btn btn-ghost btn-circle">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-bold">할일 계획</h1>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 mobile-container">
-          {/* 과제 정보 */}
-          <div className="p-3 bg-base-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <FolderPlus className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">&quot;{projectName}&quot;을 위한 할일</span>
-            </div>
-          </div>
-
-          {/* 준비할 것 */}
-          <div>
-            <label className="text-sm font-medium text-base-content/70 mb-2 block">
-              {TODO_PLANNING_LABELS.preparation.label}
-            </label>
-            <textarea
-              value={newProjectPreparation}
-              onChange={(e) => setLearningReflectionDraft({ newProjectPreparation: e.target.value })}
-              placeholder={TODO_PLANNING_LABELS.preparation.placeholder}
-              rows={2}
-              className="textarea textarea-bordered w-full"
-            />
-          </div>
-
-          {/* 할일 목록 */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-base-content/70">
-                <ListTodo className="w-4 h-4 inline mr-1" />
-                {TODO_PLANNING_LABELS.todoTitle.label}
-              </label>
-              <button
-                onClick={handleAddTodoDraft}
-                className="btn btn-ghost btn-xs gap-1"
-              >
-                <Plus className="w-3 h-3" /> 추가
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {todosDraft.length === 0 ? (
-                <div className="text-center text-base-content/50 py-4">
-                  <ListTodo className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">할일을 추가해보세요</p>
-                </div>
-              ) : (
-                todosDraft.map((todo, index) => (
-                  <div key={todo.id} className="p-3 bg-base-200 rounded-lg space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-base-content/50">#{index + 1}</span>
-                      <input
-                        type="text"
-                        value={todo.title}
-                        onChange={(e) => handleUpdateTodoDraft(todo.id, { title: e.target.value })}
-                        placeholder={TODO_PLANNING_LABELS.todoTitle.placeholder}
-                        className="input input-bordered input-sm flex-1"
-                      />
-                      <button
-                        onClick={() => handleRemoveTodoDraft(todo.id)}
-                        className="btn btn-ghost btn-xs btn-circle text-error"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <label className="text-xs text-base-content/50 mb-1 block">
-                          <Calendar className="w-3 h-3 inline mr-1" />날짜
-                        </label>
-                        <input
-                          type="date"
-                          value={todo.scheduledDate || ''}
-                          onChange={(e) => handleUpdateTodoDraft(todo.id, { scheduledDate: e.target.value || null })}
-                          className="input input-bordered input-xs w-full"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-xs text-base-content/50 mb-1 block">
-                          <Clock className="w-3 h-3 inline mr-1" />시간
-                        </label>
-                        <input
-                          type="time"
-                          value={todo.scheduledTime || ''}
-                          onChange={(e) => handleUpdateTodoDraft(todo.id, { scheduledTime: e.target.value || null })}
-                          className="input input-bordered input-xs w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 하단 버튼 */}
-        <div className="p-4 border-t border-base-300 space-y-3">
-          <button
-            onClick={saveEntryAndProjectAndTodos}
-            disabled={isSaving}
-            className="btn btn-primary w-full gap-2"
-          >
-            {isSaving ? (
-              <span className="loading loading-spinner loading-sm" />
-            ) : (
-              <>완료하기 <Check className="w-4 h-4" /></>
-            )}
-          </button>
-          <button
-            onClick={async () => {
-              // 할일 없이 수집+과제만 저장
-              await saveEntryAndProject();
-              setLearningReflectionViewState('completed');
-            }}
-            disabled={isSaving}
-            className="btn btn-ghost w-full"
-          >
-            할일 없이 끝내기
           </button>
         </div>
       </motion.div>
@@ -1306,8 +1347,9 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
         {viewState === 'reflection-input' && renderTimerRunningView()}
-        {viewState === 'project-derive' && renderProjectDeriveView()}
-        {viewState === 'todo-planning' && renderTodoPlanningView()}
+        {viewState === 'action-choice' && renderActionChoiceView()}
+        {viewState === 'quick-todo' && renderQuickTodoView()}
+        {viewState === 'scheduled-todo' && renderScheduledTodoView()}
         {viewState === 'capture' && renderCaptureView()}
         {viewState === 'completed' && renderCompletedView()}
         {viewState === 'history' && renderHistoryView()}
