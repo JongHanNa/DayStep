@@ -113,4 +113,5 @@ export interface CaptureNoteUpdate {
   source_reference?: string | null;
   linked_date?: string | null;
   is_pinned?: boolean;
+  is_processed?: boolean; // 할일로 변환 여부
 }

@@ -43,6 +43,7 @@ export interface Note {
   // Capture fields (수집 기능용)
   source_text?: string | null;
   source_reference?: string | null;
+  is_processed?: boolean; // 할일로 변환 여부 (capture 노트용)
 }
 
 // Note 생성 입력 타입
@@ -63,6 +64,7 @@ export interface CreateNoteInput {
   // Capture fields (수집 기능용)
   source_text?: string | null;
   source_reference?: string | null;
+  is_processed?: boolean; // 할일로 변환 여부 (capture 노트용)
 }
 
 // Note 업데이트 입력 타입
@@ -189,6 +191,7 @@ interface NoteStoreActions {
   getCaptureNotes: (userId: string) => Promise<Note[]>;
   createCaptureNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
   getUnprocessedCaptureNotes: () => Note[];
+  markNoteAsProcessed: (noteId: string) => Promise<void>;
 }
 
 /**
@@ -1278,7 +1281,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               (note: Note) => note.note_category === 'capture'
             );
 
-            set({ loading: false });
+            set({ notes: captureNotes, loading: false });
             console.log('✅ Capture 노트 조회 완료:', captureNotes.length);
             return captureNotes;
           } catch (error) {
@@ -1307,8 +1310,25 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         getUnprocessedCaptureNotes: () => {
           const { notes } = get();
           // note_category가 'capture'인 노트 중 할일로 변환되지 않은 것들
-          // (현재는 단순히 capture 노트만 반환, 추후 할일 연결 로직 추가 가능)
-          return notes.filter(note => note.note_category === 'capture');
+          return notes.filter(note =>
+            note.note_category === 'capture' && !note.is_processed
+          );
+        },
+
+        markNoteAsProcessed: async (noteId: string) => {
+          console.log('📝 NoteStore.markNoteAsProcessed:', noteId);
+
+          try {
+            // 기존 updateNote 함수 사용 (optimistic update 포함)
+            await get().updateNote({
+              id: noteId,
+              is_processed: true,
+            });
+            console.log('✅ 노트 처리됨으로 표시 완료:', noteId);
+          } catch (error) {
+            console.error('❌ 노트 처리됨 표시 실패:', error);
+            throw error;
+          }
         },
       };
     },

@@ -97,6 +97,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     getCaptureNotes,
     createCaptureNote,
     getUnprocessedCaptureNotes,
+    markNoteAsProcessed,
     pinNote,
     unpinNote,
     loading: notesLoading,
@@ -130,6 +131,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   const [scheduledTodoTitle, setScheduledTodoTitle] = useState(''); // 예약 할일 제목
   const [scheduledDate, setScheduledDate] = useState(''); // 예약 날짜
   const [scheduledTime, setScheduledTime] = useState(''); // 예약 시간
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null); // 기존 수집에서 할일 만들기 시 해당 노트 ID
 
   const {
     viewState,
@@ -249,10 +251,16 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
       });
 
       if (newTodo) {
-        // 3. ExecutionMode에 할일 설정
+        // 3. 기존 수집에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
+        if (selectedNoteId) {
+          await markNoteAsProcessed(selectedNoteId);
+          setSelectedNoteId(null); // 초기화
+        }
+
+        // 4. ExecutionMode에 할일 설정
         setCurrentRecommendation(newTodo);
 
-        // 4. ExecutionMode로 전환
+        // 5. ExecutionMode로 전환
         await enterExecuteMode(userId);
       }
     } catch (error) {
@@ -287,7 +295,13 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         schedule_type: scheduledTime ? 'timed' as const : 'anytime' as const,
       });
 
-      // 3. 완료 화면으로 이동
+      // 3. 기존 수집에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
+      if (selectedNoteId) {
+        await markNoteAsProcessed(selectedNoteId);
+        setSelectedNoteId(null); // 초기화
+      }
+
+      // 4. 완료 화면으로 이동
       setLearningReflectionViewState('completed');
     } catch (error) {
       console.error('예약 할일 생성 실패:', error);
@@ -571,10 +585,9 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   // ============================================
 
   // 타이머 시간 선택 화면 (수집→명료화→계획)
-  // 미처리 수집 목록 (저장만 하고 할일로 전환하지 않은 것들)
-  // Note: Capture 노트는 모두 미처리로 간주 (할일 연결 여부는 별도 추적 필요 시 구현)
+  // 미처리 수집 목록 (is_processed가 false인 것만 전체 표시)
   const unprocessedEntries = useMemo(() => {
-    return captureNotes.slice(0, 5); // 최대 5개만 표시
+    return captureNotes.filter(note => !note.is_processed);
   }, [captureNotes]);
 
   // "실행과 집중으로 가기" 핸들러
@@ -593,6 +606,8 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
   // 미처리 수집에서 "할일 만들기" 핸들러
   const handleCreateTodoFromEntry = useCallback((note: Note) => {
+    // 해당 수집의 노트 ID 저장 (할일 생성 후 처리됨으로 표시하기 위해)
+    setSelectedNoteId(note.id);
     // 해당 수집의 내용을 draft에 로드
     setLearningReflectionDraft({
       content: note.content,

@@ -187,6 +187,7 @@ export interface Note {
   // Capture 기능 필드 (수집 기능에서 사용)
   source_text?: string | null; // 상세 내용
   source_reference?: string | null; // 출처
+  is_processed?: boolean; // 할일로 변환 여부 (capture 노트용)
 
   // 메타데이터
   is_pinned: boolean;
