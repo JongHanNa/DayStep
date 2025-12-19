@@ -1,30 +1,18 @@
 /**
- * useGraphData Hook - 그래프 뷰 데이터 변환
- * 기존 스토어 데이터를 GraphNode/GraphLink 형식으로 변환
+ * useGraphData Hook - 그래프 뷰 데이터 변환 (Todos + Notes)
+ * todoStore와 noteStore 데이터를 GraphNode 형식으로 변환
  */
 
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import { useAuth } from '@/app/context/AuthContext';
-import { fetchAllGraphRelations } from '@/lib/supabase/graph-relations';
-import type { GraphNode, GraphLink, GraphData, GraphRelations } from '@/types/graph';
-import {
-  areaToGraphNode,
-  resourceToGraphNode,
-  goalToGraphNode,
-  projectToGraphNode,
-  todoToGraphNode,
-  noteToGraphNode,
-  createHierarchyLink,
-  createReferenceLink,
-} from '@/lib/graph-utils';
+import { fetchTodoNoteRelations, fetchNoteNoteRelations } from '@/lib/supabase/graph-relations';
+import type { GraphNode, GraphLink, GraphData, TodoNoteRelation, NoteNoteRelation } from '@/types/graph';
+import type { Note as SecondBrainNote } from '@/types/second-brain';
+import { todoToGraphNode, noteToGraphNode, createReferenceLink } from '@/lib/graph-utils';
 
 interface UseGraphDataReturn {
   graphData: GraphData;
@@ -33,70 +21,71 @@ interface UseGraphDataReturn {
   refetch: () => Promise<void>;
 }
 
+// 노트 관계 데이터 타입
+interface NoteRelations {
+  todoNotes: TodoNoteRelation[];
+  noteNotes: NoteNoteRelation[];
+}
+
 export function useGraphData(): UseGraphDataReturn {
   const { user } = useAuth();
   const userId = user?.id;
 
-  // 스토어 데이터
-  const { areas, fetchAreas, loading: areasLoading } = useAreaStore();
-  const { resources, fetchResources, loading: resourcesLoading } = useResourceStore();
-  const { goals, fetchGoals, loading: goalsLoading } = useGoalStore();
-  const { projects, fetchProjects, loading: projectsLoading } = useProjectStore();
+  // todoStore 데이터
   const { todos, fetchAllTodos } = useTodoStore();
-  const { notes, fetchNotes, loading: notesLoading } = useNoteStore();
+
+  // noteStore 데이터
+  const { notes, getNotes, loading: notesLoading } = useNoteStore();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // 관계 데이터 상태
-  const [relations, setRelations] = useState<GraphRelations>({
-    todoProjects: [],
+  const [relations, setRelations] = useState<NoteRelations>({
     todoNotes: [],
-    projectNotes: [],
     noteNotes: [],
   });
   const [relationsLoading, setRelationsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // 초기 데이터 로딩 - userId 변경 시 항상 새로 로드 (캐시 의존성 제거)
+  // 초기 데이터 로딩
   useEffect(() => {
     if (!userId) return;
 
-    const loadAllData = async () => {
+    const loadData = async () => {
+      setLoading(true);
       try {
-        // userId가 변경되면 항상 새로 로드 (캐시 체크 제거)
         await Promise.all([
-          fetchAreas(userId),
-          fetchResources(userId),
-          fetchGoals(userId),
-          fetchProjects(userId),
           fetchAllTodos(),
-          fetchNotes(userId),
+          getNotes(userId),
         ]);
       } catch (err) {
         console.error('❌ 그래프 데이터 로딩 실패:', err);
         setError(err instanceof Error ? err.message : '데이터 로딩 실패');
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadAllData();
-  }, [userId, fetchAreas, fetchResources, fetchGoals, fetchProjects, fetchAllTodos, fetchNotes]);
+    loadData();
+  }, [userId, fetchAllTodos, getNotes]);
 
-  // 관계 데이터 로딩 (프로젝트와 노트가 로드된 후)
+  // 관계 데이터 로딩 (노트가 로드된 후)
   useEffect(() => {
-    if (!userId || projects.length === 0) return;
+    if (!userId || notes.length === 0) return;
 
     const loadRelations = async () => {
       // temp ID 필터링 (optimistic update 대기)
-      const validProjects = projects.filter((p) => !p.id.startsWith('temp-'));
       const validNotes = notes.filter((n) => !n.id.startsWith('temp-'));
-
-      // 유효한 프로젝트가 없으면 스킵
-      if (validProjects.length === 0) return;
+      if (validNotes.length === 0) return;
 
       setRelationsLoading(true);
       try {
-        const projectIds = validProjects.map((p) => p.id);
         const noteIds = validNotes.map((n) => n.id);
-        const graphRelations = await fetchAllGraphRelations(userId, projectIds, noteIds);
-        setRelations(graphRelations);
+        const [todoNotes, noteNotes] = await Promise.all([
+          fetchTodoNoteRelations(userId),
+          fetchNoteNoteRelations(noteIds),
+        ]);
+        setRelations({ todoNotes, noteNotes });
       } catch (err) {
         console.error('❌ 관계 데이터 로딩 실패:', err);
         setError(err instanceof Error ? err.message : '관계 데이터 로딩 실패');
@@ -106,31 +95,11 @@ export function useGraphData(): UseGraphDataReturn {
     };
 
     loadRelations();
-  }, [userId, projects.length, notes.length]);
+  }, [userId, notes.length]);
 
   // 노드 변환
   const nodes: GraphNode[] = useMemo(() => {
     const allNodes: GraphNode[] = [];
-
-    // Area 노드
-    areas.forEach((area) => {
-      allNodes.push(areaToGraphNode(area));
-    });
-
-    // Resource 노드
-    resources.forEach((resource) => {
-      allNodes.push(resourceToGraphNode(resource));
-    });
-
-    // Goal 노드
-    goals.forEach((goal) => {
-      allNodes.push(goalToGraphNode(goal));
-    });
-
-    // Project 노드
-    projects.forEach((project) => {
-      allNodes.push(projectToGraphNode(project));
-    });
 
     // Todo 노드
     todos.forEach((todo) => {
@@ -139,69 +108,36 @@ export function useGraphData(): UseGraphDataReturn {
 
     // Note 노드
     notes.forEach((note) => {
-      allNodes.push(noteToGraphNode(note));
+      // NoteStoreNote를 SecondBrainNote로 변환하여 noteToGraphNode에 전달
+      allNodes.push(noteToGraphNode({
+        ...note,
+        title: note.title || '',
+        note_category: note.note_category || 'none',
+      } as SecondBrainNote));
     });
 
     console.log('📊 그래프 노드 생성:', {
-      areas: areas.length,
-      resources: resources.length,
-      goals: goals.length,
-      projects: projects.length,
       todos: todos.length,
       notes: notes.length,
       total: allNodes.length,
     });
 
     return allNodes;
-  }, [areas, resources, goals, projects, todos, notes]);
+  }, [todos, notes]);
 
   // 링크 생성
   const links: GraphLink[] = useMemo(() => {
     const allLinks: GraphLink[] = [];
     const nodeIdSet = new Set(nodes.map((n) => n.id));
 
-    // Goal → Area/Resource 링크 (계층)
-    // Note: Goal has area_id and resource_id instead of area_resource_id
-    goals.forEach((goal) => {
-      const areaOrResourceId = goal.area_id || goal.resource_id;
-      if (areaOrResourceId && nodeIdSet.has(areaOrResourceId)) {
-        allLinks.push(createHierarchyLink(areaOrResourceId, goal.id));
-      }
-    });
-
-    // Project → Goal 링크 (계층)
-    projects.forEach((project) => {
-      if (project.goal_id && nodeIdSet.has(project.goal_id)) {
-        allLinks.push(createHierarchyLink(project.goal_id, project.id));
-      }
-      // Goal이 없는 프로젝트 → Area/Resource 직접 연결
-      if (!project.goal_id && project.area_resource_id && nodeIdSet.has(project.area_resource_id)) {
-        allLinks.push(createHierarchyLink(project.area_resource_id, project.id));
-      }
-    });
-
-    // Todo → Project 링크 (todo_projects 테이블)
-    relations.todoProjects.forEach((rel) => {
-      if (nodeIdSet.has(rel.todo_id) && nodeIdSet.has(rel.project_id)) {
-        allLinks.push(createHierarchyLink(rel.project_id, rel.todo_id));
-      }
-    });
-
-    // Todo → Note 링크 (todo_notes 테이블) - reference 타입
+    // Todo → Note 링크 (reference 타입)
     relations.todoNotes.forEach((rel) => {
       if (nodeIdSet.has(rel.todo_id) && nodeIdSet.has(rel.note_id)) {
         allLinks.push(createReferenceLink(rel.todo_id, rel.note_id));
       }
     });
 
-    // Project → Note 링크 (project_notes 테이블) - hierarchy 타입
-    relations.projectNotes.forEach((rel) => {
-      if (nodeIdSet.has(rel.project_id) && nodeIdSet.has(rel.note_id)) {
-        allLinks.push(createHierarchyLink(rel.project_id, rel.note_id));
-      }
-    });
-
-    // Note → Note 링크 (note_notes 테이블) - reference 타입
+    // Note → Note 링크 (reference 타입)
     relations.noteNotes.forEach((rel) => {
       if (nodeIdSet.has(rel.source_note_id) && nodeIdSet.has(rel.target_note_id)) {
         allLinks.push(createReferenceLink(rel.source_note_id, rel.target_note_id));
@@ -209,50 +145,46 @@ export function useGraphData(): UseGraphDataReturn {
     });
 
     console.log('🔗 그래프 링크 생성:', {
-      goalToArea: goals.filter((g) => g.area_id || g.resource_id).length,
-      projectToGoal: projects.filter((p) => p.goal_id).length,
-      projectToArea: projects.filter((p) => !p.goal_id && p.area_resource_id).length,
-      todoProjects: relations.todoProjects.length,
       todoNotes: relations.todoNotes.length,
-      projectNotes: relations.projectNotes.length,
       noteNotes: relations.noteNotes.length,
       total: allLinks.length,
     });
 
     return allLinks;
-  }, [nodes, goals, projects, relations]);
+  }, [nodes, relations]);
 
   // 데이터 새로고침
   const refetch = useCallback(async () => {
     if (!userId) return;
 
     setError(null);
+    setLoading(true);
     try {
       await Promise.all([
-        fetchAreas(userId),
-        fetchResources(userId),
-        fetchGoals(userId),
-        fetchProjects(userId),
         fetchAllTodos(),
-        fetchNotes(userId),
+        getNotes(userId),
       ]);
 
-      // temp ID 필터링
-      const validProjects = projects.filter((p) => !p.id.startsWith('temp-'));
+      // 관계 데이터도 새로고침
       const validNotes = notes.filter((n) => !n.id.startsWith('temp-'));
-
-      const projectIds = validProjects.map((p) => p.id);
-      const noteIds = validNotes.map((n) => n.id);
-      const graphRelations = await fetchAllGraphRelations(userId, projectIds, noteIds);
-      setRelations(graphRelations);
+      if (validNotes.length > 0) {
+        const noteIds = validNotes.map((n) => n.id);
+        const [todoNotes, noteNotes] = await Promise.all([
+          fetchTodoNoteRelations(userId),
+          fetchNoteNoteRelations(noteIds),
+        ]);
+        setRelations({ todoNotes, noteNotes });
+      }
     } catch (err) {
       console.error('❌ 그래프 데이터 새로고침 실패:', err);
       setError(err instanceof Error ? err.message : '새로고침 실패');
+    } finally {
+      setLoading(false);
     }
-  }, [userId, projects, notes, fetchAreas, fetchResources, fetchGoals, fetchProjects, fetchAllTodos, fetchNotes]);
+  }, [userId, fetchAllTodos, getNotes, notes]);
 
   // 로딩 상태 통합
-  const loading = areasLoading || resourcesLoading || goalsLoading || projectsLoading || notesLoading || relationsLoading;
+  const isLoading = loading || notesLoading || relationsLoading;
 
   // 그래프 데이터 반환
   const graphData: GraphData = useMemo(() => ({
@@ -262,7 +194,7 @@ export function useGraphData(): UseGraphDataReturn {
 
   return {
     graphData,
-    loading,
+    loading: isLoading,
     error,
     refetch,
   };

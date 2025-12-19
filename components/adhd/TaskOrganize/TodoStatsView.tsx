@@ -5,8 +5,6 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } f
 import { ko } from 'date-fns/locale';
 import { BarChart3, TrendingUp, Clock, Target } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
-import type { Goal } from '@/types/second-brain';
 
 interface TodoStatsViewProps {
   userId: string;
@@ -22,20 +20,19 @@ interface TodoStatsViewProps {
  */
 export function TodoStatsView({ userId }: TodoStatsViewProps) {
   const { todos, fetchAllTodos } = useTodoStore();
-  const { goals, fetchGoals } = useGoalStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // 목표 관련 기능 제거됨 - 빈 배열로 대체
+  const goals: never[] = [];
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchAllTodos(),
-        fetchGoals(userId),
-      ]);
+      await fetchAllTodos();
       setIsLoading(false);
     };
     loadData();
-  }, [userId, fetchAllTodos, fetchGoals]);
+  }, [userId, fetchAllTodos]);
 
   // 이번 주 날짜 범위
   const thisWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // 월요일 시작
@@ -82,24 +79,8 @@ export function TodoStatsView({ userId }: TodoStatsViewProps) {
     return hourlyPattern.indexOf(maxCount);
   }, [hourlyPattern]);
 
-  // 목표별 진행률
-  const goalProgress = useMemo(() => {
-    return goals.filter((goal: Goal) => goal.status !== 'completed').map((goal: Goal) => {
-      const goalTodos = todos.filter(t => t.goalId === goal.id);
-      const completedTodos = goalTodos.filter(t => t.completed);
-      const progressRate = goalTodos.length > 0
-        ? Math.round((completedTodos.length / goalTodos.length) * 100)
-        : 0;
-
-      return {
-        id: goal.id,
-        title: goal.title,
-        totalTodos: goalTodos.length,
-        completedTodos: completedTodos.length,
-        progressRate,
-      };
-    }).filter((g: { totalTodos: number }) => g.totalTodos > 0);
-  }, [goals, todos]);
+  // 목표별 진행률 - 목표 기능 제거됨
+  const goalProgress: never[] = [];
 
   // 최대 일일 완료 수 (차트 스케일링용)
   const maxDailyCount = Math.max(...dailyCompletionCount, 1);

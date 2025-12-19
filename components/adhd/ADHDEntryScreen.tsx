@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Target, ListTodo, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings, Crown } from 'lucide-react';
+import { Target, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -13,7 +13,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 interface ADHDEntryScreenProps {
   userId?: string;
   onExecute: () => void;
-  onOrganize: () => void;
   onCare: () => void;
   onRelationshipInsights: () => void;
   onTaskOrganize: () => void;
@@ -27,7 +26,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare, onRelationshipInsights, onTaskOrganize, onInbox }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelationshipInsights, onTaskOrganize, onInbox }: ADHDEntryScreenProps) {
   const router = useRouter();
   const { awakeningSentence } = useADHDModeStore();
   const { showDescriptions, setShowDescriptions } = useSettingsStore();
@@ -301,25 +300,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onOrganize, onCare,
             )}
           </div>
 
-          {/* 예전 시스템 보기 버튼 - 개발 환경에서만 표시 */}
-          {process.env.NODE_ENV === 'development' && (
-            <div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onOrganize}
-                className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 border-dashed opacity-60"
-              >
-                <ListTodo className="w-7 h-7" />
-                <span className="text-xl font-semibold">예전 시스템 보기</span>
-              </motion.button>
-              {showDescriptions && (
-                <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                  개발자용: 이전 버전의 시스템입니다.
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </motion.div>
     </div>

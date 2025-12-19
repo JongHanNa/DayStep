@@ -1,27 +1,21 @@
 /**
- * 일괄 생성 훅
+ * 일괄 생성 훅 (Todos 전용)
  *
- * 선택된 추천 항목들을 한 번에 생성
+ * 선택된 Todo 추천 항목들을 한 번에 생성
  */
 
 import { useState, useCallback, useMemo } from 'react';
 import { addDays, format, setHours, setMinutes } from 'date-fns';
 import { useAuth } from '@/app/context/AuthContext';
-import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import type { GraphNodeType } from '@/types/graph';
 import type { RecommendationItem } from './RecommendationData';
 import { getAllSetItems } from './RecommendationData';
 import { NODE_TYPE_COLORS } from '@/lib/graph-utils';
-import { addTodoProject } from '@/lib/supabase/todo-projects';
-import { linkProjectNote } from '@/lib/supabase/project-notes';
 import { useGraphFocus } from '@/state/stores/graphStore';
-import { useUsageStats, type CanCreateResult } from '@/hooks/useUsageStats';
-import { type UsageEntityType, ENTITY_DISPLAY_NAME } from '@/lib/featureFlags';
+import { useUsageStats } from '@/hooks/useUsageStats';
+import { type UsageEntityType } from '@/lib/featureFlags';
 
 /** 제한 초과 엔티티 정보 */
 export interface ExceededEntity {
@@ -77,38 +71,23 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 스토어 액션들
-  const { createArea } = useAreaStore();
-  const { createResource } = useResourceStore();
-  const { createGoal } = useGoalStore();
-  const { createProject } = useProjectStore();
+  // Todo 스토어 액션
   const { createTodo } = useTodoStore();
+  // Note 스토어 액션
   const { createNote } = useNoteStore();
   const { setFocusNodeId } = useGraphFocus();
 
   // 사용량 통계
   const { canCreate, hasActiveSubscription } = useUsageStats();
 
-  // GraphNodeType을 UsageEntityType으로 매핑
+  // GraphNodeType을 UsageEntityType으로 매핑 (Todo + Note)
   const nodeTypeToEntityType = useCallback((nodeType: GraphNodeType): UsageEntityType | null => {
-    switch (nodeType) {
-      case 'area':
-      case 'resource':
-        return 'area_resource';
-      case 'goal':
-        return 'goal';
-      case 'project':
-        return 'project';
-      case 'todo':
-        return 'todo';
-      case 'note':
-        return 'note';
-      default:
-        return null;
-    }
+    if (nodeType === 'todo') return 'todo';
+    if (nodeType === 'note') return 'note';
+    return null;
   }, []);
 
-  // 선택된 항목들의 제한 체크
+  // 선택된 항목들의 제한 체크 (Todo + Note)
   const limitCheck = useMemo((): LimitCheckResult => {
     // Pro 사용자는 무제한
     if (hasActiveSubscription) {
@@ -117,35 +96,24 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
 
     // 선택된 항목 가져오기
     const allItems = getAllSetItems();
-    const selectedItems = allItems.filter((item) => selectedIds.has(item.id));
+    const selectedTodos = allItems.filter((item) => selectedIds.has(item.id) && item.type === 'todo');
+    const selectedNotes = allItems.filter((item) => selectedIds.has(item.id) && item.type === 'note');
 
-    if (selectedItems.length === 0) {
+    if (selectedTodos.length === 0 && selectedNotes.length === 0) {
       return { canCreate: true, exceededEntities: [] };
     }
 
-    // 타입별 카운트
-    const typeCounts: Record<string, number> = {};
-    selectedItems.forEach((item) => {
-      const entityType = nodeTypeToEntityType(item.type);
-      if (entityType) {
-        typeCounts[entityType] = (typeCounts[entityType] || 0) + 1;
-      }
-    });
-
-    // 제한 초과 엔티티 확인
     const exceededEntities: ExceededEntity[] = [];
-    const entityTypes: UsageEntityType[] = ['area_resource', 'goal', 'project', 'todo', 'note'];
 
-    entityTypes.forEach((entityType) => {
-      const willAdd = typeCounts[entityType] || 0;
-      if (willAdd === 0) return;
-
-      const result = canCreate(entityType);
+    // Todo 개수 체크
+    if (selectedTodos.length > 0) {
+      const willAdd = selectedTodos.length;
+      const result = canCreate('todo');
       const total = result.current + willAdd;
 
       if (total > result.limit) {
         exceededEntities.push({
-          entity: entityType,
+          entity: 'todo',
           displayName: result.displayName,
           current: result.current,
           limit: result.limit,
@@ -153,13 +121,31 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
           total,
         });
       }
-    });
+    }
+
+    // Note 개수 체크
+    if (selectedNotes.length > 0) {
+      const willAdd = selectedNotes.length;
+      const result = canCreate('note');
+      const total = result.current + willAdd;
+
+      if (total > result.limit) {
+        exceededEntities.push({
+          entity: 'note',
+          displayName: result.displayName,
+          current: result.current,
+          limit: result.limit,
+          willAdd,
+          total,
+        });
+      }
+    }
 
     return {
       canCreate: exceededEntities.length === 0,
       exceededEntities,
     };
-  }, [selectedIds, hasActiveSubscription, canCreate, nodeTypeToEntityType]);
+  }, [selectedIds, hasActiveSubscription, canCreate]);
 
   const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -222,180 +208,90 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
   );
 
   /**
-   * 항목 생성 (관계 설정 포함)
-   * @param item - 추천 항목
+   * Todo 항목 생성
+   * @param item - 추천 항목 (Todo만)
    * @param userId - 사용자 ID
-   * @param parentDbId - 부모의 실제 DB ID (없으면 연결 없이 생성)
-   * @param parentType - 부모의 타입 (area, resource, goal, project)
-   * @returns 생성된 항목의 ID
+   * @returns 생성된 Todo ID
    */
-  const createItemWithRelation = useCallback(
-    async (
-      item: RecommendationItem,
-      userId: string,
-      parentDbId?: string,
-      parentType?: GraphNodeType
-    ): Promise<string> => {
-      const color = NODE_TYPE_COLORS[item.type];
-
-      switch (item.type) {
-        case 'area': {
-          const area = await createArea(userId, {
-            title: item.title,
-            color: color,
-            is_pinned: false,
-            order_index: 0,
-          });
-          return area.id;
-        }
-
-        case 'resource': {
-          const resource = await createResource(userId, {
-            title: item.title,
-            color: color,
-            is_pinned: false,
-            order_index: 0,
-          });
-          return resource.id;
-        }
-
-        case 'goal': {
-          // 날짜 계산
-          const dateConfig = item.dateConfig;
-          const startDate = dateConfig?.startOffset !== undefined
-            ? format(addDays(new Date(), dateConfig.startOffset), 'yyyy-MM-dd')
-            : undefined;
-          const endDate = dateConfig?.endOffset !== undefined
-            ? format(addDays(new Date(), dateConfig.endOffset), 'yyyy-MM-dd')
-            : undefined;
-
-          // 연간/분기 목표: 종료일 기준 계산 (종료일 없으면 현재 날짜)
-          const targetDate = dateConfig?.endOffset !== undefined
-            ? addDays(new Date(), dateConfig.endOffset)
-            : new Date();
-          const yearGoal = targetDate.getFullYear();
-
-          // 분기 목표: 종료일 기준 분기 계산
-          const getQuarter = (date: Date): 'Q1' | 'Q2' | 'Q3' | 'Q4' => {
-            const month = date.getMonth();
-            if (month < 3) return 'Q1';
-            if (month < 6) return 'Q2';
-            if (month < 9) return 'Q3';
-            return 'Q4';
-          };
-          const quarterGoal = getQuarter(targetDate);
-
-          // Goal → Area 또는 Resource 연결
-          const goal = await createGoal(userId, {
-            title: item.title,
-            color: color,
-            status: 'not_started',
-            start_date: startDate,
-            end_date: endDate,
-            year_goal: yearGoal,
-            quarter_goal: quarterGoal,
-            ...(parentType === 'area' && parentDbId ? { area_id: parentDbId } : {}),
-            ...(parentType === 'resource' && parentDbId ? { resource_id: parentDbId } : {}),
-          });
-          return goal.id;
-        }
-
-        case 'project': {
-          // 날짜 계산
-          const dateConfig = item.dateConfig;
-          const startDate = dateConfig?.startOffset !== undefined
-            ? format(addDays(new Date(), dateConfig.startOffset), 'yyyy-MM-dd')
-            : undefined;
-          const endDate = dateConfig?.endOffset !== undefined
-            ? format(addDays(new Date(), dateConfig.endOffset), 'yyyy-MM-dd')
-            : undefined;
-
-          // Project → Goal 또는 Area/Resource 연결
-          const project = await createProject(userId, {
-            title: item.title,
-            color: color,
-            status: 'not_started',
-            order_index: 0,
-            start_date: startDate,
-            end_date: endDate,
-            ...(parentType === 'goal' && parentDbId ? { goal_id: parentDbId } : {}),
-            ...((parentType === 'area' || parentType === 'resource') && parentDbId
-              ? { area_resource_id: parentDbId }
-              : {}),
-          });
-          return project.id;
-        }
-
-        case 'todo': {
-          // 날짜/시간 설정 처리
-          const dateConfig = item.dateConfig;
-          const recurrence = item.recurrenceConfig;
-
-          // start_time 계산
-          let startTime: Date | null = null;
-          let endTime: Date | null = null;
-          if (dateConfig?.startOffset !== undefined) {
-            startTime = addDays(new Date(), dateConfig.startOffset);
-            if (dateConfig.time) {
-              const [hours, minutes] = dateConfig.time.split(':').map(Number);
-              startTime = setHours(setMinutes(startTime, minutes), hours);
-              // end_time은 start_time + 1시간 (기본 duration)
-              endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-            }
-          }
-
-          // schedule_type 결정 (시간 설정이 있으면 'timed', 없으면 'anytime')
-          const scheduleType = dateConfig?.time ? 'timed' : 'anytime';
-
-          // 반복 종료일 계산
-          const recurrenceEndDate = recurrence?.endOffset
-            ? addDays(new Date(), recurrence.endOffset)
-            : null;
-
-          const todo = await createTodo({
-            title: item.title,
-            schedule_type: scheduleType,
-            start_time: startTime?.toISOString(),
-            end_time: endTime?.toISOString(),
-            priority: 'medium',
-            // 반복 패턴 필드
-            recurrence_pattern: recurrence?.pattern ?? 'none',
-            recurrence_interval: recurrence?.interval ?? 1,
-            recurrence_days_of_week: recurrence?.daysOfWeek,
-            recurrence_day_of_month: recurrence?.dayOfMonth,
-            recurrence_end_date: recurrenceEndDate
-              ? format(recurrenceEndDate, 'yyyy-MM-dd')
-              : undefined,
-          });
-          if (!todo) {
-            throw new Error('Todo 생성에 실패했습니다.');
-          }
-          // Todo → Project 연결 (junction 테이블)
-          if (parentType === 'project' && parentDbId && todo.id) {
-            await addTodoProject(todo.id, parentDbId, userId);
-          }
-          return todo.id;
-        }
-
-        case 'note': {
-          const note = await createNote(userId, {
-            title: item.title,
-            content: '',
-            note_category: 'none',
-            is_pinned: false,
-          });
-          // Note → Project 연결 (junction 테이블)
-          if (parentType === 'project' && parentDbId && note.id) {
-            await linkProjectNote(parentDbId, note.id);
-          }
-          return note.id;
-        }
-
-        default:
-          return '';
+  const createTodoItem = useCallback(
+    async (item: RecommendationItem, userId: string): Promise<string> => {
+      if (item.type !== 'todo') {
+        throw new Error('Todo 타입만 생성할 수 있습니다.');
       }
+
+      // 날짜/시간 설정 처리
+      const dateConfig = item.dateConfig;
+      const recurrence = item.recurrenceConfig;
+
+      // start_time 계산
+      let startTime: Date | null = null;
+      let endTime: Date | null = null;
+      if (dateConfig?.startOffset !== undefined) {
+        startTime = addDays(new Date(), dateConfig.startOffset);
+        if (dateConfig.time) {
+          const [hours, minutes] = dateConfig.time.split(':').map(Number);
+          startTime = setHours(setMinutes(startTime, minutes), hours);
+          // end_time은 start_time + 1시간 (기본 duration)
+          endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+        }
+      }
+
+      // schedule_type 결정 (시간 설정이 있으면 'timed', 없으면 'anytime')
+      const scheduleType = dateConfig?.time ? 'timed' : 'anytime';
+
+      // 반복 종료일 계산
+      const recurrenceEndDate = recurrence?.endOffset
+        ? addDays(new Date(), recurrence.endOffset)
+        : null;
+
+      const todo = await createTodo({
+        title: item.title,
+        schedule_type: scheduleType,
+        start_time: startTime?.toISOString(),
+        end_time: endTime?.toISOString(),
+        priority: 'medium',
+        // 반복 패턴 필드
+        recurrence_pattern: recurrence?.pattern ?? 'none',
+        recurrence_interval: recurrence?.interval ?? 1,
+        recurrence_days_of_week: recurrence?.daysOfWeek,
+        recurrence_day_of_month: recurrence?.dayOfMonth,
+        recurrence_end_date: recurrenceEndDate
+          ? format(recurrenceEndDate, 'yyyy-MM-dd')
+          : undefined,
+      });
+
+      if (!todo) {
+        throw new Error('Todo 생성에 실패했습니다.');
+      }
+
+      return todo.id;
     },
-    [createArea, createResource, createGoal, createProject, createTodo, createNote]
+    [createTodo]
+  );
+
+  /**
+   * Note 항목 생성
+   * @param item - 추천 항목 (Note만)
+   * @param userId - 사용자 ID
+   * @returns 생성된 Note ID
+   */
+  const createNoteItem = useCallback(
+    async (item: RecommendationItem, userId: string): Promise<string> => {
+      if (item.type !== 'note') {
+        throw new Error('Note 타입만 생성할 수 있습니다.');
+      }
+
+      const note = await createNote({
+        title: item.title,
+        content: '',
+        note_category: 'none',
+        is_pinned: false,
+        user_id: userId,
+      });
+
+      return note.id;
+    },
+    [createNote]
   );
 
   const createSelected = useCallback(
@@ -415,60 +311,39 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
       setError(null);
 
       try {
-        // 선택된 항목 필터링
-        const itemsToCreate = allItems.filter((item) => selectedIds.has(item.id));
+        // 선택된 Todo/Note 항목 필터링
+        const todosToCreate = allItems.filter(
+          (item) => selectedIds.has(item.id) && item.type === 'todo'
+        );
+        const notesToCreate = allItems.filter(
+          (item) => selectedIds.has(item.id) && item.type === 'note'
+        );
 
-        // recommendationId → 실제 DB ID 매핑
-        const idMap = new Map<string, string>();
+        const createdIds: string[] = [];
 
-        // 부모 항목 찾기 헬퍼 함수
-        const findParentItem = (parentId: string) =>
-          allItems.find((item) => item.id === parentId);
+        // Todo 생성
+        for (const item of todosToCreate) {
+          const createdId = await createTodoItem(item, userId);
+          createdIds.push(createdId);
+        }
 
-        // 계층 순서대로 생성 (area/resource → goal → project → todo → note)
-        const typeOrder: GraphNodeType[] = ['area', 'resource', 'goal', 'project', 'todo', 'note'];
-
-        for (const type of typeOrder) {
-          const typeItems = itemsToCreate.filter((item) => item.type === type);
-
-          for (const item of typeItems) {
-            // 부모 ID와 타입 확인
-            let parentDbId: string | undefined;
-            let parentType: GraphNodeType | undefined;
-
-            if (item.parentId) {
-              const parentItem = findParentItem(item.parentId);
-
-              if (parentItem) {
-                // 부모가 선택되어 생성되었는지 확인
-                parentDbId = idMap.get(item.parentId);
-                parentType = parentItem.type;
-              }
-            }
-
-            // 항목 생성 (관계 포함)
-            const createdId = await createItemWithRelation(
-              item,
-              userId,
-              parentDbId,
-              parentType
-            );
-
-            // ID 매핑 저장
-            idMap.set(item.id, createdId);
-          }
+        // Note 생성
+        for (const item of notesToCreate) {
+          const createdId = await createNoteItem(item, userId);
+          createdIds.push(createdId);
         }
 
         console.log('✅ 일괄 생성 완료:', {
-          total: itemsToCreate.length,
-          relations: Array.from(idMap.entries()),
+          todos: todosToCreate.length,
+          notes: notesToCreate.length,
+          total: createdIds.length,
+          ids: createdIds,
         });
 
         // 성공 시 선택 초기화
         clearSelection();
 
         // 생성된 첫 번째 노드로 포커스 (줌 + 중앙 이동)
-        const createdIds = Array.from(idMap.values());
         if (createdIds.length > 0) {
           setTimeout(() => {
             setFocusNodeId(createdIds[0]);
@@ -489,7 +364,8 @@ export function useBatchCreate(options?: UseBatchCreateOptions): UseBatchCreateR
     [
       user?.id,
       selectedIds,
-      createItemWithRelation,
+      createTodoItem,
+      createNoteItem,
       clearSelection,
       setFocusNodeId,
       options?.onComplete,

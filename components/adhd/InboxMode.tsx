@@ -34,11 +34,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import type { MoodLevel, TodoDraft } from '@/types/inbox';
 import { INBOX_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS } from '@/types/inbox';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
-import type { Project } from '@/types/second-brain';
-import type { Goal } from '@/types/second-brain';
 import { useNoteStore, type Note } from '@/state/stores/noteStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useTheme } from '@/hooks/useTheme';
@@ -150,18 +146,14 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     todosDraft,
   } = inboxMode;
 
-  // 프로젝트/할일/목표 스토어
-  const { projects, fetchProjects, createProject } = useProjectStore();
-  const { goals, fetchGoals } = useGoalStore();
+  // 할일 스토어
   const { createTodo } = useTodoStore();
 
-  // 데이터 로드
-  useEffect(() => {
-    if (userId) {
-      fetchProjects(userId);
-      fetchGoals(userId);
-    }
-  }, [userId, fetchProjects, fetchGoals]);
+  // 프로젝트/목표 관련 기능 제거됨 - 빈 배열/빈 함수로 대체
+  const projects: { id: string; title: string }[] = [];
+  const goals: { id: string; title: string }[] = [];
+  // eslint-disable-next-line
+  const createProject = async (_userId: string, _data: Record<string, unknown>): Promise<{ id: string } | null> => null;
 
   // 타이머 없이 바로 시작
   const [skipTimer, setSkipTimer] = useState(false);

@@ -5,8 +5,6 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { CheckCircle2, Plus, Clock } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 
 interface TodoTimelineViewProps {
   userId: string;
@@ -30,22 +28,20 @@ interface TimelineItem {
  */
 export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { todos, fetchAllTodos } = useTodoStore();
-  const { projects, fetchProjects } = useProjectStore();
-  const { goals, fetchGoals } = useGoalStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
+  const projects: { id: string; title: string }[] = [];
+  const goals: { id: string; title: string }[] = [];
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchAllTodos(),
-        fetchProjects(userId),
-        fetchGoals(userId),
-      ]);
+      await fetchAllTodos();
       setIsLoading(false);
     };
     loadData();
-  }, [userId, fetchAllTodos, fetchProjects, fetchGoals]);
+  }, [userId, fetchAllTodos]);
 
   // 프로젝트/목표 매핑 생성
   const projectMap = useMemo(() => {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
-import type { Project, Note } from '@/types/second-brain';
+import type { Note } from '@/types/second-brain';
 
 /**
  * 할일 폼 콘텐츠 공통 컴포넌트
@@ -21,21 +21,15 @@ export interface TodoFormContentProps {
   onChange: (updates: TodoFormData) => void;
 
   /** 선택적 데이터 */
-  projects?: Project[];
   notes?: Note[];
 
   /** 생성/수정/삭제 핸들러 */
-  onCreateProject?: (title: string) => Promise<Project>;
-  onUpdateProject?: (id: string, title: string) => Promise<void>;
-  onDeleteProject?: (id: string) => Promise<void>;
   onCreateNote?: (title: string) => Promise<Note>;
   onUpdateNote?: (id: string) => Promise<void>;
   onDeleteNote?: (id: string) => Promise<void>;
 
   /** 노트 클릭 핸들러 (편집 모달 열기) */
   onNoteClick?: (note: Note) => void;
-  /** 프로젝트 클릭 핸들러 (편집 모달 열기) */
-  onProjectClick?: (project: Project) => void;
 
   /** 플레이스홀더 */
   titlePlaceholder?: string;
@@ -44,36 +38,27 @@ export interface TodoFormContentProps {
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
-  showProjects?: boolean;
 
   /** 즉시 DB 저장을 위한 props */
   todoId?: string;
   userId?: string;
-  onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
 export default function TodoFormContent({
   formData,
   onChange,
-  projects,
   notes,
-  onCreateProject,
-  onUpdateProject,
-  onDeleteProject,
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
   onNoteClick,
-  onProjectClick,
   titlePlaceholder,
   showScheduledDate = true,
   showHighlight = true,
   showCompleted = true,
-  showProjects = true,
   todoId,
   userId,
-  onProjectImmediateSave,
   onNoteImmediateSave,
 }: TodoFormContentProps) {
   return (
@@ -81,23 +66,16 @@ export default function TodoFormContent({
       todo={formData}
       onChange={onChange}
       titlePlaceholder={titlePlaceholder}
-      projects={projects}
       notes={notes}
       onNoteClick={onNoteClick}
-      onProjectClick={onProjectClick}
-      onCreateProject={onCreateProject}
-      onUpdateProject={onUpdateProject}
-      onDeleteProject={onDeleteProject}
       onCreateNote={onCreateNote}
       onUpdateNote={onUpdateNote}
       onDeleteNote={onDeleteNote}
       showScheduledDate={showScheduledDate}
       showHighlight={showHighlight}
       showCompleted={showCompleted}
-      showProjects={showProjects}
       todoId={todoId}
       userId={userId}
-      onProjectImmediateSave={onProjectImmediateSave}
       onNoteImmediateSave={onNoteImmediateSave}
     />
   );

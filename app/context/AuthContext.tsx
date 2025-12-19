@@ -17,12 +17,7 @@ import {
 import { useCapacitorAutoTokenRefresh } from '@/lib/auth/useAutoTokenRefresh';
 import { useAuthStore } from '@/state/stores/authStore';
 import { clearLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
-import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useSettingsSync } from '@/hooks/useSettingsSync';
 
 // 환경 감지 (실제 Capacitor 환경에서만 모바일로 감지)
@@ -702,14 +697,9 @@ export function AuthProvider({
       await clearLastVisitedRoute();
 
       // ✅ 모든 Zustand 스토어 초기화
-      console.log('[Auth] Clearing all Zustand stores...');
-      useAreaStore.getState().clearAreas();
-      useResourceStore.getState().clearResources();
-      useGoalStore.getState().clearGoals();
-      useProjectStore.getState().clearProjects();
+      console.log('[Auth] Clearing Zustand stores...');
       useTodoStore.getState().clearTodos();
-      useNoteStore.getState().clearNotes();
-      console.log('[Auth] All stores cleared');
+      console.log('[Auth] Stores cleared');
 
     } catch (globalError) {
       console.error('[Auth] Sign out error:', globalError);

@@ -1,11 +1,11 @@
 /**
- * GraphView - 그래프 뷰 메인 컨테이너
+ * GraphView - 그래프 뷰 메인 컨테이너 (Todos + Notes)
  * 옵시디언 스타일의 물리 시뮬레이션 기반 그래프 시각화
  */
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Network, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useGraphData } from './hooks/useGraphData';
@@ -18,49 +18,31 @@ import { GraphCreateModal } from './GraphCreateModal';
 import { GraphNodeActionMenu } from './GraphNodeActionMenu';
 import { GraphEmptyState } from './GraphEmptyState';
 import { GraphMultiSelectBar } from './GraphMultiSelectBar';
-import { useGraphStore, useGraphEditModal, useGraphPopover, useGraphActionMenu } from '@/state/stores/graphStore';
-
-// 팝오버 컴포넌트들
-import {
-  TitleEditPopover,
-  AreaResourceSelectPopover,
-  ProjectLinkPopover,
-  TodoLinkPopover,
-  NoteLinkPopover,
-} from './popover';
-import ContentEditorModal from '@/components/second-brain/ContentEditorModal';
+import { useGraphStore, useGraphEditModal, useGraphActionMenu } from '@/state/stores/graphStore';
 
 // 편집 모달들
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
-import ProjectEditDialog from '@/components/second-brain/ProjectEditDialog';
-import GoalEditDialog from '@/components/second-brain/GoalEditDialog';
-import AreaResourceEditModal from '@/components/ui/AreaResourceEditModal';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import { mapNoteToNoteForm } from '@/lib/helpers/noteDataMapper';
 
 // Store들
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
-import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
-import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useNoteStore, type Note as NoteStoreNote } from '@/state/stores/noteStore';
 
 // 유틸리티
 import { updateNoteNotes } from '@/lib/supabase/note-notes';
-import { updateNoteProjects } from '@/lib/supabase/project-notes';
+import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 
 // 구독/용량 관련
 import { UsageBanner } from '@/components/subscription/UsageBanner';
 import { useUsageStats } from '@/hooks/useUsageStats';
-import { updateNoteTodos } from '@/lib/supabase/todo-notes';
 
 // 타입
 import type { TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
-import type { Project, Goal, AreaResource, Note } from '@/types/second-brain';
-import type { SecondBrainItemType } from '@/types/settings';
 import type { GraphNode } from '@/types/graph';
+import type { Note as SecondBrainNote } from '@/types/second-brain';
+import type { Todo } from '@/types';
 
 export default function GraphView() {
   const { user, loading: authLoading } = useAuth();
@@ -70,7 +52,6 @@ export default function GraphView() {
   const [shouldZoomToFit, setShouldZoomToFit] = useState(false);
   const { isOpen: isEditModalOpen, node: editingNode } = useGraphEditModal();
   const { closeEditModal, closeActionMenu, openEditModal } = useGraphStore();
-  const { activePopover, position: popoverPosition, closePopover } = useGraphPopover();
   const { node: actionMenuNode } = useGraphActionMenu();
 
   // Store 데이터 및 액션 가져오기
@@ -80,12 +61,8 @@ export default function GraphView() {
   const deleteTodo = useTodoStore((state) => state.deleteTodo);
 
   // Entity Todo를 database Todo 형식으로 변환 (NoteEditModal용)
-  const todos = entityTodos.map(todo => todo.toDatabase() as any);
+  const todos = entityTodos.map(todo => todo.toDatabase() as Todo);
 
-  const { projects, createProject, updateProject, deleteProject } = useProjectStore();
-  const { goals, updateGoal, deleteGoal } = useGoalStore();
-  const { areas, updateArea, deleteArea } = useAreaStore();
-  const { resources, updateResource, deleteResource } = useResourceStore();
   const { notes, createNote, updateNote, deleteNote } = useNoteStore();
 
   // 용량 체크
@@ -94,22 +71,8 @@ export default function GraphView() {
   // Todo 편집 상태
   const [editingTodoData, setEditingTodoData] = useState<TodoFormData | null>(null);
 
-  // 내용 편집 모달 상태
-  const [contentEditorContent, setContentEditorContent] = useState('');
-
-  // Project 편집 상태
-  const [editingProjectData, setEditingProjectData] = useState<(Project & { isNew?: boolean; paraSelection?: string }) | null>(null);
-
-  // Goal 편집 상태
-  const [editingGoalData, setEditingGoalData] = useState<(Goal & { isNew?: boolean; paraSelection?: string }) | null>(null);
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
-
-  // Area/Resource 편집 상태
-  const [editingAreaResourceData, setEditingAreaResourceData] = useState<(AreaResource & { isNew?: boolean }) | null>(null);
-  const [areaResourceItemType, setAreaResourceItemType] = useState<SecondBrainItemType>('area');
-
   // Note 편집 상태 (NoteEditModal용)
-  const [editingNoteForModal, setEditingNoteForModal] = useState<Note | null>(null);
+  const [editingNoteForModal, setEditingNoteForModal] = useState<NoteStoreNote | null>(null);
   const [noteFormData, setNoteFormData] = useState<NoteFormData | null>(null);
 
   // 새로고침 핸들러 (데이터 리페치 후 zoomToFit 트리거)
@@ -122,37 +85,25 @@ export default function GraphView() {
   const handleCloseEditModal = useCallback(() => {
     closeEditModal();
     setEditingTodoData(null);
-    setEditingProjectData(null);
-    setEditingGoalData(null);
-    setEditingAreaResourceData(null);
   }, [closeEditModal]);
 
-  // 팝오버 닫기 핸들러
-  const handleClosePopover = useCallback(() => {
-    closePopover();
-  }, [closePopover]);
+  // 노트 편집 모달 닫기 핸들러
+  const handleCloseNoteEditModal = useCallback(() => {
+    setEditingNoteForModal(null);
+    setNoteFormData(null);
+  }, []);
 
-  // content 팝오버가 열릴 때 현재 노트의 content 설정
-  useEffect(() => {
-    if (activePopover === 'content' && actionMenuNode?.originalData) {
-      setContentEditorContent(actionMenuNode.originalData.content || '');
-    }
-  }, [activePopover, actionMenuNode]);
-
-  // 노트 삭제 핸들러 (액션 메뉴용)
-  const handleNoteDelete = useCallback(async (node: GraphNode) => {
-    if (userId) {
-      await deleteNote(node.id, userId);
-      refetch();
-    }
-  }, [deleteNote, userId, refetch]);
-
-  // 노트 편집 모달 열기 핸들러 (액션 메뉴용)
+  // 노트 편집 핸들러 (액션 메뉴용)
   const handleNoteEdit = useCallback((node: GraphNode) => {
-    const note = node.originalData as Note;
+    const note = node.originalData as NoteStoreNote;
     setEditingNoteForModal(note);
-    setNoteFormData(mapNoteToNoteForm(note, areas));
-  }, [areas]);
+    // NoteStoreNote를 SecondBrainNote로 변환하여 mapNoteToNoteForm에 전달
+    setNoteFormData(mapNoteToNoteForm({
+      ...note,
+      title: note.title || '',
+      note_category: note.note_category || 'none',
+    } as SecondBrainNote, []));
+  }, []);
 
   // 통합 편집 핸들러 (모든 노드 타입)
   const handleNodeEdit = useCallback((node: GraphNode) => {
@@ -166,93 +117,20 @@ export default function GraphView() {
     }
   }, [closeActionMenu, openEditModal, handleNoteEdit]);
 
-  // 프로젝트 추가 핸들러 (GoalEditDialog 내에서 호출)
-  const handleAddProjectInGoal = useCallback(async () => {
-    if (!editingNode || editingNode.type !== 'goal' || !userId) return;
-
-    setIsCreatingProject(true);
-    try {
-      await createProject(userId, {
-        title: '새 프로젝트',
-        icon: 'lucide-FolderOpen',
-        color: '#A8DADC',
-        status: 'not_started',
-        goal_id: editingNode.id,
-        order_index: projects.length,
-      });
-      refetch();
-    } catch (error) {
-      console.error('프로젝트 생성 실패:', error);
-      alert('프로젝트 생성에 실패했습니다.');
-    } finally {
-      setIsCreatingProject(false);
-    }
-  }, [editingNode, userId, createProject, projects.length, refetch]);
-
-  // 프로젝트 편집 핸들러 (GoalEditDialog 내에서 호출)
-  const handleEditProjectInGoal = useCallback((project: Project) => {
-    let paraSelection = '';
-    if (project.goal_id) {
-      paraSelection = `goal-${project.goal_id}`;
-    }
-    setEditingProjectData({ ...project, paraSelection, isNew: false });
-    // GoalEditDialog를 닫고 ProjectEditDialog 열기
-    closeEditModal();
-    // 약간의 지연 후 프로젝트 편집 모달 열기
-    setTimeout(() => {
-      const projectNode: GraphNode = {
-        id: project.id,
-        type: 'project',
-        title: project.title,
-        color: project.color,
-        icon: project.icon || null,
-        originalData: project,
-      };
-      openEditModal(projectNode);
-    }, 100);
-  }, [closeEditModal, openEditModal]);
-
-  // 프로젝트 삭제 핸들러 (GoalEditDialog 내에서 호출)
-  const handleDeleteProjectInGoal = useCallback(async (project: Project) => {
-    if (!userId) return;
-
-    if (confirm('정말로 이 프로젝트를 삭제하시겠습니까?')) {
-      try {
-        await deleteProject(userId, project.id);
-        refetch();
-      } catch (error) {
-        console.error('프로젝트 삭제 실패:', error);
-        alert('프로젝트 삭제에 실패했습니다.');
-      }
-    }
-  }, [userId, deleteProject, refetch]);
-
-  // 통합 삭제 핸들러 (모든 노드 타입)
+  // 통합 삭제 핸들러 (Todo + Note)
   const handleNodeDelete = useCallback(async (node: GraphNode) => {
     if (!userId) return;
 
     switch (node.type) {
       case 'note':
-        await deleteNote(node.id, userId);
+        await deleteNote(node.id);
         break;
       case 'todo':
         await deleteTodo(node.id);
         break;
-      case 'project':
-        await deleteProject(userId, node.id);
-        break;
-      case 'goal':
-        await deleteGoal(userId, node.id);
-        break;
-      case 'area':
-        await deleteArea(userId, node.id);
-        break;
-      case 'resource':
-        await deleteResource(userId, node.id);
-        break;
     }
     refetch();
-  }, [userId, deleteNote, deleteTodo, deleteProject, deleteGoal, deleteArea, deleteResource, refetch]);
+  }, [userId, deleteNote, deleteTodo, refetch]);
 
   // 일괄 삭제 핸들러 (다중 선택된 노드들)
   const handleBulkDelete = useCallback(async (nodeIds: string[]) => {
@@ -266,64 +144,35 @@ export default function GraphView() {
       nodesToDelete.map(async (node) => {
         switch (node.type) {
           case 'note':
-            await deleteNote(node.id, userId);
+            await deleteNote(node.id);
             break;
           case 'todo':
             await deleteTodo(node.id);
-            break;
-          case 'project':
-            await deleteProject(userId, node.id);
-            break;
-          case 'goal':
-            await deleteGoal(userId, node.id);
-            break;
-          case 'area':
-            await deleteArea(userId, node.id);
-            break;
-          case 'resource':
-            await deleteResource(userId, node.id);
             break;
         }
       })
     );
 
     refetch();
-  }, [userId, filteredData.nodes, deleteNote, deleteTodo, deleteProject, deleteGoal, deleteArea, deleteResource, refetch]);
-
-  // 노트 편집 모달 닫기 핸들러
-  const handleCloseNoteEditModal = useCallback(() => {
-    setEditingNoteForModal(null);
-    setNoteFormData(null);
-  }, []);
+  }, [userId, filteredData.nodes, deleteNote, deleteTodo, refetch]);
 
   // 노트 편집 모달 저장 핸들러
   const handleNoteEditModalSave = useCallback(async () => {
     if (!editingNoteForModal || !noteFormData || !userId) return;
 
     try {
-      // linkedAreaOrResource를 area_resource_id로 변환
-      let area_resource_id: string | undefined;
-      if (noteFormData.linkedAreaOrResource) {
-        area_resource_id = noteFormData.linkedAreaOrResource.replace(/^(area|resource)-/, '');
-      }
-
       // 노트 기본 정보 저장
-      await updateNote(editingNoteForModal.id, userId, {
+      await updateNote({
+        id: editingNoteForModal.id,
         title: noteFormData.title,
         content: noteFormData.content,
         note_category: noteFormData.note_category,
         is_pinned: noteFormData.isPinned,
-        area_resource_id,
       });
 
       // 할일 연결 저장
       if (noteFormData.todoIds !== undefined) {
         await updateNoteTodos(editingNoteForModal.id, noteFormData.todoIds, userId);
-      }
-
-      // 프로젝트 연결 저장
-      if (noteFormData.projectIds !== undefined) {
-        await updateNoteProjects(editingNoteForModal.id, noteFormData.projectIds, userId);
       }
 
       // 노트-노트 연결 저장
@@ -338,94 +187,8 @@ export default function GraphView() {
     }
   }, [editingNoteForModal, noteFormData, userId, updateNote, refetch, handleCloseNoteEditModal]);
 
-  // === 팝오버 저장 핸들러들 ===
-
-  // 제목 저장
-  const handleTitleSave = useCallback(async (title: string) => {
-    if (!actionMenuNode || !userId) return;
-    await updateNote(actionMenuNode.id, userId, { title });
-    refetch();
-  }, [actionMenuNode, userId, updateNote, refetch]);
-
-  // 영역/자원 저장
-  const handleAreaResourceSave = useCallback(async (linkedId: string | undefined) => {
-    if (!actionMenuNode || !userId) return;
-    // linkedId: 'area-xxx' | 'resource-xxx' | undefined → area_resource_id 추출
-    let areaResourceId: string | undefined;
-    if (linkedId) {
-      const [, id] = linkedId.split('-');
-      areaResourceId = id;
-    }
-    await updateNote(actionMenuNode.id, userId, { area_resource_id: areaResourceId });
-    refetch();
-  }, [actionMenuNode, userId, updateNote, refetch]);
-
-  // 프로젝트 연결 토글
-  const handleProjectToggle = useCallback(async (projectId: string, isSelected: boolean) => {
-    if (!actionMenuNode || !userId) return;
-    const noteData = actionMenuNode.originalData as Note;
-    const currentIds = noteData.projects?.map(p => p.id) || [];
-    const newIds = isSelected
-      ? [...currentIds, projectId]
-      : currentIds.filter(id => id !== projectId);
-    await updateNoteProjects(actionMenuNode.id, newIds, userId);
-    refetch();
-  }, [actionMenuNode, userId, refetch]);
-
-  // 할일 연결 토글
-  const handleTodoToggle = useCallback(async (todoId: string, isSelected: boolean) => {
-    if (!actionMenuNode || !userId) return;
-    const noteData = actionMenuNode.originalData as Note;
-    const currentIds = noteData.todos?.map(t => t.id) || [];
-    const newIds = isSelected
-      ? [...currentIds, todoId]
-      : currentIds.filter(id => id !== todoId);
-    await updateNoteTodos(actionMenuNode.id, newIds, userId);
-    refetch();
-  }, [actionMenuNode, userId, refetch]);
-
-  // 노트 연결 토글
-  const handleNoteToggle = useCallback(async (noteId: string, isSelected: boolean) => {
-    if (!actionMenuNode || !userId) return;
-    const noteData = actionMenuNode.originalData as Note;
-    const currentIds = noteData.connectedNotes?.map(n => n.id) || [];
-    const newIds = isSelected
-      ? [...currentIds, noteId]
-      : currentIds.filter(id => id !== noteId);
-    await updateNoteNotes(actionMenuNode.id, newIds, userId);
-    refetch();
-  }, [actionMenuNode, userId, refetch]);
-
-  // 내용 저장
-  const handleContentSave = useCallback(async (content: string) => {
-    if (!actionMenuNode || !userId) return;
-    await updateNote(actionMenuNode.id, userId, { content });
-    refetch();
-  }, [actionMenuNode, userId, updateNote, refetch]);
-
-  // 프로젝트 생성 핸들러 (노트 편집 모달용)
-  const handleCreateProject = useCallback(async (title: string): Promise<Project> => {
-    if (!userId) {
-      throw new Error('사용자 정보가 없습니다.');
-    }
-    // 용량 체크
-    const result = canCreate('project');
-    if (result.blocked) {
-      throw new Error(`프로젝트 한도에 도달했습니다. (${result.current}/${result.limit})`);
-    }
-    const newProject = await createProject(userId, {
-      title,
-      description: '',
-      status: 'not_started',
-      color: '#808080',
-      order_index: 0,
-    });
-    incrementCount('project');
-    return newProject;
-  }, [userId, createProject, canCreate, incrementCount]);
-
   // 노트 생성 핸들러 (노트 편집 모달용)
-  const handleCreateNote = useCallback(async (title: string): Promise<Note> => {
+  const handleCreateNote = useCallback(async (title: string): Promise<SecondBrainNote> => {
     if (!userId) {
       throw new Error('사용자 정보가 없습니다.');
     }
@@ -434,14 +197,20 @@ export default function GraphView() {
     if (result.blocked) {
       throw new Error(`노트 한도에 도달했습니다. (${result.current}/${result.limit})`);
     }
-    const newNote = await createNote(userId, {
+    const newNote = await createNote({
       title,
       content: '',
       note_category: 'work_in_progress',
       is_pinned: false,
+      user_id: userId,
     });
     incrementCount('note');
-    return newNote;
+    // NoteStoreNote를 SecondBrainNote로 변환
+    return {
+      ...newNote,
+      title: newNote.title || '',
+      note_category: newNote.note_category || 'none',
+    } as SecondBrainNote;
   }, [userId, createNote, canCreate, incrementCount]);
 
   // 노트-노트 즉시 저장 핸들러 (노트 편집 모달용)
@@ -459,11 +228,11 @@ export default function GraphView() {
   }, [editingNoteForModal?.id, userId, refetch]);
 
   // 할일 생성 핸들러 (노트 편집 모달용)
-  const handleCreateTodo = useCallback(async (title: string) => {
+  const handleCreateTodo = useCallback(async (title: string): Promise<Todo> => {
     if (!userId) {
       throw new Error('사용자 정보가 없습니다.');
     }
-    // 용량 체크 (기본: todo, 반복 패턴 있으면 habit)
+    // 용량 체크
     const result = canCreate('todo');
     if (result.blocked) {
       throw new Error(`할일 한도에 도달했습니다. (${result.current}/${result.limit})`);
@@ -479,7 +248,7 @@ export default function GraphView() {
     }
     incrementCount('todo');
     // Database Todo 형식으로 반환 (NoteEditModal 타입 호환)
-    return newEntityTodo.toDatabase() as any;
+    return newEntityTodo.toDatabase() as Todo;
   }, [userId, createTodo, canCreate, incrementCount]);
 
   // 인증 대기
@@ -580,105 +349,11 @@ export default function GraphView() {
       {/* 생성 모달 */}
       <GraphCreateModal />
 
-      {/* 노드 액션 메뉴 (모든 노드 타입) */}
+      {/* 노드 액션 메뉴 */}
       <GraphNodeActionMenu
         onDelete={handleNodeDelete}
         onEdit={handleNodeEdit}
       />
-
-      {/* 노트 섹션 팝오버들 */}
-      {actionMenuNode && popoverPosition && userId && (
-        <>
-          {/* 제목 편집 팝오버 */}
-          {activePopover === 'title' && (
-            <TitleEditPopover
-              position={popoverPosition}
-              initialTitle={(actionMenuNode.originalData as Note)?.title || ''}
-              onSave={async (title) => {
-                await handleTitleSave(title);
-                handleClosePopover();
-              }}
-              onClose={handleClosePopover}
-            />
-          )}
-
-          {/* 내용 편집 모달 */}
-          {activePopover === 'content' && (
-            <ContentEditorModal
-              open={true}
-              onClose={handleClosePopover}
-              title="내용 편집"
-              content={contentEditorContent}
-              onChange={setContentEditorContent}
-              enableAutoSave={true}
-              onAutoSave={async (content: string) => {
-                await handleContentSave(content);
-              }}
-              placeholder="내용을 입력하세요..."
-            />
-          )}
-
-          {/* 영역/자원 선택 팝오버 */}
-          {activePopover === 'areaResource' && (
-            <AreaResourceSelectPopover
-              position={popoverPosition}
-              selectedId={
-                (actionMenuNode.originalData as Note)?.area_resource_id
-                  ? (() => {
-                      const arId = (actionMenuNode.originalData as Note).area_resource_id;
-                      const isArea = areas.some(a => a.id === arId);
-                      return isArea ? `area-${arId}` : `resource-${arId}`;
-                    })()
-                  : undefined
-              }
-              areas={areas}
-              resources={resources}
-              onSelect={async (linkedId) => {
-                await handleAreaResourceSave(linkedId);
-                handleClosePopover();
-              }}
-              onClose={handleClosePopover}
-            />
-          )}
-
-          {/* 프로젝트 연결 팝오버 */}
-          {activePopover === 'project' && (
-            <ProjectLinkPopover
-              position={popoverPosition}
-              selectedProjectIds={(actionMenuNode.originalData as Note)?.projects?.map(p => p.id) || []}
-              allProjects={projects}
-              onToggle={handleProjectToggle}
-              onCreateProject={handleCreateProject}
-              onClose={handleClosePopover}
-            />
-          )}
-
-          {/* 할일 연결 팝오버 */}
-          {activePopover === 'todo' && (
-            <TodoLinkPopover
-              position={popoverPosition}
-              selectedTodoIds={(actionMenuNode.originalData as Note)?.todos?.map(t => t.id) || []}
-              allTodos={todos}
-              onToggle={handleTodoToggle}
-              onCreateTodo={handleCreateTodo}
-              onClose={handleClosePopover}
-            />
-          )}
-
-          {/* 노트 연결 팝오버 */}
-          {activePopover === 'note' && (
-            <NoteLinkPopover
-              position={popoverPosition}
-              currentNoteId={actionMenuNode.id}
-              selectedNoteIds={(actionMenuNode.originalData as Note)?.connectedNotes?.map(n => n.id) || []}
-              allNotes={notes}
-              onToggle={handleNoteToggle}
-              onCreateNote={handleCreateNote}
-              onClose={handleClosePopover}
-            />
-          )}
-        </>
-      )}
 
       {/* 로딩 인디케이터 (데이터 새로고침 시) */}
       {loading && graphData.nodes.length > 0 && (
@@ -699,167 +374,67 @@ export default function GraphView() {
         <RefreshCw className="w-4 h-4" />
       </button>
 
-      {/* 노드 편집 모달 - 타입별 분기 */}
-      {isEditModalOpen && editingNode && userId && (
-        <>
-          {/* Todo 편집 */}
-          {editingNode.type === 'todo' && (
-            <TodoEditModal
-              open={true}
-              todo={editingTodoData || editingNode.originalData}
-              onClose={handleCloseEditModal}
-              onSave={async () => {
-                if (editingTodoData) {
-                  // TodoFormData → CreateTodoInput 변환
-                  let startTimeISO: string | undefined;
-                  if (editingTodoData.scheduledDate) {
-                    const date = new Date(editingTodoData.scheduledDate);
-                    if (editingTodoData.scheduleType === 'timed' && editingTodoData.startTime) {
-                      const [hours, minutes] = editingTodoData.startTime.split(':');
-                      date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                    }
-                    startTimeISO = date.toISOString();
-                  }
-
-                  await updateTodo(editingNode.id, {
-                    title: editingTodoData.title,
-                    schedule_type: editingTodoData.scheduleType || 'none',
-                    start_time: startTimeISO,
-                    completed: editingTodoData.completed,
-                    is_today_highlight: editingTodoData.isHighlight,
-                    color: editingTodoData.color,
-                    icon: editingTodoData.icon,
-                  });
+      {/* Todo 편집 모달 */}
+      {isEditModalOpen && editingNode && userId && editingNode.type === 'todo' && (
+        <TodoEditModal
+          open={true}
+          todo={editingTodoData || editingNode.originalData}
+          onClose={handleCloseEditModal}
+          onSave={async () => {
+            if (editingTodoData) {
+              // TodoFormData → CreateTodoInput 변환
+              let startTimeISO: string | undefined;
+              if (editingTodoData.scheduledDate) {
+                const date = new Date(editingTodoData.scheduledDate);
+                if (editingTodoData.scheduleType === 'timed' && editingTodoData.startTime) {
+                  const [hours, minutes] = editingTodoData.startTime.split(':');
+                  date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
                 }
-                handleCloseEditModal();
-                refetch();
-              }}
-              onChange={(data) => setEditingTodoData(data)}
-              onDelete={async () => {
-                await deleteTodo(editingNode.id);
-                handleCloseEditModal();
-                refetch();
-              }}
-            />
-          )}
+                startTimeISO = date.toISOString();
+              }
 
-          {/* Project 편집 */}
-          {editingNode.type === 'project' && (
-            <ProjectEditDialog
-              open={true}
-              editingProject={editingProjectData || editingNode.originalData}
-              onSave={async (data) => {
-                await updateProject(userId, editingNode.id, data);
-                handleCloseEditModal();
-                refetch();
-              }}
-              onCancel={handleCloseEditModal}
-              onDelete={async () => {
-                await deleteProject(userId, editingNode.id);
-                handleCloseEditModal();
-                refetch();
-              }}
-              onProjectChange={(project) => setEditingProjectData(project)}
-            />
-          )}
-
-          {/* Goal 편집 */}
-          {editingNode.type === 'goal' && (
-            <GoalEditDialog
-              open={true}
-              editingGoal={editingGoalData || editingNode.originalData}
-              areas={areas}
-              resources={resources}
-              projects={projects}
-              onSave={async (data) => {
-                await updateGoal(userId, editingNode.id, data);
-                handleCloseEditModal();
-                refetch();
-              }}
-              onCancel={handleCloseEditModal}
-              onDelete={async () => {
-                await deleteGoal(userId, editingNode.id);
-                handleCloseEditModal();
-                refetch();
-              }}
-              onGoalChange={(goal) => setEditingGoalData(goal)}
-              onAddProject={handleAddProjectInGoal}
-              onEditProject={handleEditProjectInGoal}
-              onDeleteProject={handleDeleteProjectInGoal}
-              isCreatingProject={isCreatingProject}
-            />
-          )}
-
-          {/* Area 편집 */}
-          {editingNode.type === 'area' && (
-            <AreaResourceEditModal
-              open={true}
-              editingItem={editingAreaResourceData || editingNode.originalData}
-              itemType={areaResourceItemType}
-              pageType="area"
-              onCancel={handleCloseEditModal}
-              onSave={async () => {
-                if (editingAreaResourceData) {
-                  const { title, color, icon, is_pinned } = editingAreaResourceData;
-                  await updateArea(userId, editingNode.id, { title, color, icon, is_pinned });
-                }
-                handleCloseEditModal();
-                refetch();
-              }}
-              onDelete={async () => {
-                await deleteArea(userId, editingNode.id);
-                handleCloseEditModal();
-                refetch();
-              }}
-              onItemChange={(item) => setEditingAreaResourceData(item)}
-              onItemTypeChange={(type) => setAreaResourceItemType(type)}
-            />
-          )}
-
-          {/* Resource 편집 */}
-          {editingNode.type === 'resource' && (
-            <AreaResourceEditModal
-              open={true}
-              editingItem={editingAreaResourceData || editingNode.originalData}
-              itemType={areaResourceItemType}
-              pageType="resource"
-              onCancel={handleCloseEditModal}
-              onSave={async () => {
-                if (editingAreaResourceData) {
-                  const { title, color, icon, is_pinned } = editingAreaResourceData;
-                  await updateResource(userId, editingNode.id, { title, color, icon, is_pinned });
-                }
-                handleCloseEditModal();
-                refetch();
-              }}
-              onDelete={async () => {
-                await deleteResource(userId, editingNode.id);
-                handleCloseEditModal();
-                refetch();
-              }}
-              onItemChange={(item) => setEditingAreaResourceData(item)}
-              onItemTypeChange={(type) => setAreaResourceItemType(type)}
-            />
-          )}
-
-        </>
+              await updateTodo(editingNode.id, {
+                title: editingTodoData.title,
+                schedule_type: editingTodoData.scheduleType || 'none',
+                start_time: startTimeISO,
+                completed: editingTodoData.completed,
+                is_today_highlight: editingTodoData.isHighlight,
+                color: editingTodoData.color,
+                icon: editingTodoData.icon,
+              });
+            }
+            handleCloseEditModal();
+            refetch();
+          }}
+          onChange={(data) => setEditingTodoData(data)}
+          onDelete={async () => {
+            await deleteTodo(editingNode.id);
+            handleCloseEditModal();
+            refetch();
+          }}
+        />
       )}
 
-      {/* 노트 편집 모달 (액션 메뉴에서 편집 클릭 시) */}
-      {editingNoteForModal && noteFormData && (
+      {/* Note 편집 모달 */}
+      {editingNoteForModal && noteFormData && userId && (
         <NoteEditModal
-          open={!!editingNoteForModal}
+          open={true}
           note={noteFormData}
-          onClose={handleCloseNoteEditModal}
-          onChange={setNoteFormData}
-          onSave={handleNoteEditModalSave}
-          areas={areas}
-          resources={resources}
-          projects={projects}
           todos={todos}
-          notes={notes}
+          notes={notes.map(n => ({
+            ...n,
+            title: n.title || '',
+            note_category: n.note_category || 'none',
+          })) as SecondBrainNote[]}
+          onClose={handleCloseNoteEditModal}
+          onSave={handleNoteEditModalSave}
+          onChange={setNoteFormData}
+          onDelete={async () => {
+            await deleteNote(editingNoteForModal.id);
+            handleCloseNoteEditModal();
+            refetch();
+          }}
           onCreateTodo={handleCreateTodo}
-          onCreateProject={handleCreateProject}
           onCreateNote={handleCreateNote}
           onNoteNoteImmediateSave={handleNoteNoteImmediateSave}
         />

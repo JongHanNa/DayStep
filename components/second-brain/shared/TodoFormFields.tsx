@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Star, Folder, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, Repeat } from 'lucide-react';
+import { Star, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import type { Project, Note, UpdateProjectInput, UpdateNoteInput } from '@/types/second-brain';
+import type { Note } from '@/types/second-brain';
 import type { RecurrencePattern } from '@/types';
-import CollapsibleProjectSection from './CollapsibleProjectSection';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
 import RecurrenceSettings from '@/components/todos/form/RecurrenceSettings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
@@ -63,13 +62,8 @@ interface TodoFormFieldsProps {
   todo: TodoFormData;
   onChange: (updatedTodo: TodoFormData) => void;
   titlePlaceholder?: string;
-  projects?: Project[]; // 프로젝트 목록
   notes?: Note[]; // 노트 목록
   onNoteClick?: (note: Note) => void; // 노트 클릭 핸들러 (편집 모달 열기)
-  onProjectClick?: (project: Project) => void; // 프로젝트 클릭 핸들러 (편집 모달 열기)
-  onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
-  onUpdateProject?: (id: string, title: string) => Promise<void>; // 프로젝트 수정
-  onDeleteProject?: (id: string) => Promise<void>; // 프로젝트 삭제
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onUpdateNote?: (id: string, title: string) => Promise<void>; // 노트 수정
   onDeleteNote?: (id: string) => Promise<void>; // 노트 삭제
@@ -77,11 +71,9 @@ interface TodoFormFieldsProps {
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
-  showProjects?: boolean;
   // 즉시 DB 저장을 위한 props
   todoId?: string;
   userId?: string;
-  onProjectImmediateSave?: (projectIds: string[]) => Promise<void>;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
@@ -94,23 +86,16 @@ export default function TodoFormFields({
   todo,
   onChange,
   titlePlaceholder = '예: 요구사항 정리',
-  projects = [],
   notes = [],
   onNoteClick,
-  onProjectClick,
-  onCreateProject,
-  onUpdateProject,
-  onDeleteProject,
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
   showScheduledDate = true,
   showHighlight = true,
   showCompleted = true,
-  showProjects = true,
   todoId,
   userId,
-  onProjectImmediateSave,
   onNoteImmediateSave,
 }: TodoFormFieldsProps) {
   // 타이핑 효과를 위한 플레이스홀더 텍스트
@@ -533,21 +518,6 @@ export default function TodoFormFields({
           showAutoDetectHint={true}
         />
       </div>
-
-      {/* 프로젝트 추가 (다중 선택) - onCreateProject prop이 있고 showProjects가 true일 때만 표시 */}
-      {onCreateProject && showProjects && (
-        <CollapsibleProjectSection
-          selectedProjectIds={todo.projectIds || []}
-          allProjects={projects}
-          onChange={(projectIds) => onChange({ ...todo, projectIds })}
-          onCreateProject={onCreateProject}
-          onProjectClick={onProjectClick}
-          todoColor={todo.color}
-          todoId={todoId}
-          userId={userId}
-          onImmediateSave={onProjectImmediateSave}
-        />
-      )}
 
       {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (

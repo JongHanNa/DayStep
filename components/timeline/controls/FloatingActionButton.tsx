@@ -7,9 +7,6 @@ import { Button } from '@/components/ui/button';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { useAuth } from '@/app/context/AuthContext';
 
 interface FloatingActionButtonProps {
@@ -47,9 +44,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 
   const { user } = useAuth();
   const { createTodo } = useTodoStore();
-  const { projects } = useProjectStore();
-  const { areas } = useAreaStore();
-  const { resources } = useResourceStore();
 
   const handleAddTodo = () => {
     // 모달 열 때 폼 초기화 (현재 날짜로)
@@ -140,13 +134,9 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         onClose={handleClose}
         onSave={handleSave}
         onChange={handleChange}
-        projects={projects}
-        areas={areas}
-        resources={resources}
         headerTitle="할일 추가"
         showScheduledDate={true}
         showHighlight={true}
-        showProjects={true}
       />
     </>
   );

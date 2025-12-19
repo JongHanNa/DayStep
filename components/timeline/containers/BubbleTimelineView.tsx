@@ -14,11 +14,8 @@ import { useAuth } from '@/app/context/AuthContext';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
 import LastInstanceDeleteDialog from '@/components/todos/LastInstanceDeleteDialog';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { calculateRemainingInstances } from '@/lib/recurrence-utils';
 import { queryTodoExclusionsWithJWT } from '@/lib/supabaseWebViewHelper';
-import { useAreaStore } from '@/state/stores/secondBrain/areaStore';
-import { useResourceStore } from '@/state/stores/secondBrain/resourceStore';
 import { format } from 'date-fns';
 
 /**
@@ -46,11 +43,6 @@ export const BubbleTimelineView: React.FC = () => {
   const todos = useTodoStore(state => state.todos);
   const currentTime = useCurrentTime();
   const { user } = useAuth();
-
-  // Second Brain stores
-  const { projects } = useProjectStore();
-  const { areas } = useAreaStore();
-  const { resources } = useResourceStore();
 
   // 드래그 상태
   const [isDragging, setIsDragging] = useState(false);
@@ -1367,13 +1359,9 @@ export const BubbleTimelineView: React.FC = () => {
           onClose={handleGapClose}
           onSave={handleGapSave}
           onChange={handleGapChange}
-          projects={projects}
-          areas={areas}
-          resources={resources}
           headerTitle="할일 추가"
           showScheduledDate={true}
           showHighlight={true}
-          showProjects={true}
         />
       )}
 
@@ -1391,12 +1379,8 @@ export const BubbleTimelineView: React.FC = () => {
         onDelete={() => handleDeleteTodo()}
         onRecurringDelete={(deleteType) => handleDeleteTodo(deleteType)}
         todoId={originalTodoId || undefined}
-        projects={projects}
-        areas={areas}
-        resources={resources}
         showScheduledDate={true}
         showHighlight={true}
-        showProjects={true}
       />
     </div>
   );

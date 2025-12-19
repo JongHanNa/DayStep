@@ -3,7 +3,6 @@
  */
 
 import { fetchWithJWT, queryRLSTableWithJWT, createWithJWT, updateWithJWT, deleteWithJWT, getMaxOrderIndexWithJWT, QueryOptions } from './core';
-import { updateTodoProjects, getTodoProjects } from './todo-projects';
 import { updateTodoNotes } from './todo-notes';
 
 /**
@@ -97,11 +96,10 @@ export async function createTodoWithJWT(todoData: Record<string, any>, userId?: 
   console.log('📋 JWT 방식으로 할일 생성:', { todoData, userId });
 
   try {
-    // projectIds/project_ids, noteIds/note_ids는 별도로 처리하기 위해 분리
-    const { projectIds, project_ids, noteIds, note_ids, ...todoDataWithoutRelations } = todoData;
+    // noteIds/note_ids는 별도로 처리하기 위해 분리
+    const { noteIds, note_ids, projectIds, project_ids, ...todoDataWithoutRelations } = todoData;
 
     // camelCase/snake_case 모두 지원
-    const finalProjectIds = projectIds || project_ids;
     const finalNoteIds = noteIds || note_ids;
 
     // ✅ RLS 정책 통과를 위해 user_id 추가
@@ -114,12 +112,8 @@ export async function createTodoWithJWT(todoData: Record<string, any>, userId?: 
     const result = await createWithJWT('todos', dataWithUserId);
     console.log('✅ JWT 할일 생성 성공:', { result });
 
-    // 할일 ID가 있으면 프로젝트/노트 관계 저장
+    // 할일 ID가 있으면 노트 관계 저장
     if (result && result.id && userId) {
-      if (finalProjectIds && Array.isArray(finalProjectIds)) {
-        console.log('🔗 프로젝트 연결 저장:', { todoId: result.id, projectIds: finalProjectIds });
-        await updateTodoProjects(result.id, finalProjectIds, userId);
-      }
       if (finalNoteIds && Array.isArray(finalNoteIds)) {
         await updateTodoNotes(result.id, finalNoteIds, userId);
       }
@@ -139,7 +133,7 @@ export async function updateTodoWithJWT(todoId: string, todoData: Record<string,
   console.log('📋 JWT 방식으로 할일 업데이트:', { todoId, todoData });
 
   try {
-    // projectIds, noteIds는 별도로 처리하기 위해 분리
+    // noteIds는 별도로 처리하기 위해 분리 (projectIds는 무시)
     const { projectIds, noteIds, ...todoDataWithoutRelations } = todoData;
 
     // 할일 업데이트
@@ -149,11 +143,8 @@ export async function updateTodoWithJWT(todoId: string, todoData: Record<string,
       value: todoId
     }, todoDataWithoutRelations);
 
-    // 프로젝트/노트 관계 업데이트
+    // 노트 관계 업데이트
     if (userId) {
-      if (projectIds !== undefined && Array.isArray(projectIds)) {
-        await updateTodoProjects(todoId, projectIds, userId);
-      }
       if (noteIds !== undefined && Array.isArray(noteIds)) {
         await updateTodoNotes(todoId, noteIds, userId);
       }
@@ -209,26 +200,15 @@ export async function fetchAllTodosWithJWT(
       ...options
     });
 
-    // 각 할일에 대해 연결된 프로젝트 ID 목록 조회
-    const todosWithProjects = await Promise.all(
-      (todos || []).map(async (rawTodo: any) => {
-        const projectIds = await getTodoProjects(rawTodo.id);
-        return {
-          ...rawTodo,
-          project_ids: projectIds
-        };
-      })
-    );
-
     // Todo.fromDatabase()로 camelCase 변환
     const { Todo } = await import('../../entities/todo/Todo');
-    const transformedTodos = todosWithProjects.map((rawTodo: any) =>
+    const transformedTodos = (todos || []).map((rawTodo: any) =>
       Todo.fromDatabase(rawTodo)
     );
 
     console.log('✅ JWT 모든 할일 조회 성공:', {
       todosCount: transformedTodos.length,
-      sample: transformedTodos[0]?.id ? { id: transformedTodos[0].id, title: transformedTodos[0].title, projectId: transformedTodos[0].projectId } : null
+      sample: transformedTodos[0]?.id ? { id: transformedTodos[0].id, title: transformedTodos[0].title } : null
     });
 
     return transformedTodos;

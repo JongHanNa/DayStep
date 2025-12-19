@@ -32,7 +32,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, enterEntryMode, enterExecuteMode, enterOrganizeMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterInboxMode, exitMode } = useADHDModeStore();
+  const { currentMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterInboxMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -88,10 +88,6 @@ export default function HomePage() {
     if (user?.id) {
       enterExecuteMode(user.id);
     }
-  };
-
-  const handleOrganize = () => {
-    enterOrganizeMode();
   };
 
   const handleCare = () => {
@@ -157,7 +153,6 @@ export default function HomePage() {
     <ADHDEntryScreen
       userId={user?.id}
       onExecute={handleExecute}
-      onOrganize={handleOrganize}
       onCare={handleCare}
       onRelationshipInsights={handleRelationshipInsights}
       onTaskOrganize={handleTaskOrganize}

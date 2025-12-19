@@ -98,9 +98,6 @@ export {
 // ================================
 // Second Brain System
 // ================================
-export * from './areas-resources';
-export * from './goals';
-export * from './projects';
 export * from './statistics';
 export * from './inbox';
 

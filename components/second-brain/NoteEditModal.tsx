@@ -8,7 +8,7 @@ import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFiel
 import { useModalStore } from '@/state/stores/modalStore';
 import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
 import { useAuth } from '@/app/context/AuthContext';
-import type { AreaResource as Area, AreaResource as Resource, Project, Note } from '@/types/second-brain';
+import type { Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
 interface NoteEditModalProps {
@@ -18,20 +18,13 @@ interface NoteEditModalProps {
   onSave: () => void;
   onChange: (note: NoteFormData) => void;
   onDelete?: () => void;
-  areas: Area[];
-  resources: Resource[];
-  projects?: Project[];
   todos?: Todo[];
   notes?: Note[]; // 선택 가능한 노트 목록
   onNoteClick?: (note: Note) => void; // 노트 클릭 시 콜백
-  onProjectClick?: (project: Project) => void; // 프로젝트 클릭 시 콜백
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onCreateTodo?: (title: string) => Promise<Todo>; // 새 할일 생성
-  onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
   onUpdateTodo?: (id: string) => Promise<void>; // 할일 업데이트
-  onUpdateProject?: (id: string, title: string) => Promise<void>; // 프로젝트 업데이트
   onDeleteTodo?: (id: string) => Promise<void>; // 할일 삭제
-  onDeleteProject?: (id: string) => Promise<void>; // 프로젝트 삭제
   onNoteNoteImmediateSave?: (noteIds: string[]) => Promise<void>; // 노트-노트 즉시 저장
   titlePlaceholder?: string;
   contentPlaceholder?: string;
@@ -44,20 +37,13 @@ export default function NoteEditModal({
   onSave,
   onChange,
   onDelete,
-  areas,
-  resources,
-  projects = [],
   todos = [],
   notes = [],
   onNoteClick,
-  onProjectClick,
   onCreateNote,
   onCreateTodo,
-  onCreateProject,
   onUpdateTodo,
-  onUpdateProject,
   onDeleteTodo,
-  onDeleteProject,
   onNoteNoteImmediateSave,
   titlePlaceholder = '',
   contentPlaceholder = '',
@@ -173,18 +159,13 @@ export default function NoteEditModal({
               <NoteFormFields
                 note={note}
                 onChange={onChange}
-                areas={areas}
-                resources={resources}
-                projects={projects}
                 todos={todos}
                 notes={notes}
                 currentNoteId={note.id}
                 onNoteClick={onNoteClick}
                 onTodoClick={handleTodoClick}
-                onProjectClick={onProjectClick}
                 onCreateNote={onCreateNote}
                 onCreateTodo={onCreateTodo}
-                onCreateProject={onCreateProject}
                 titlePlaceholder={titlePlaceholder}
                 contentPlaceholder={contentPlaceholder}
                 onContentClick={handleContentClick}
@@ -227,10 +208,7 @@ export default function NoteEditModal({
           setEditingTodo(null);
           setTodoForm(null);
         }}
-        projects={projects}
         notes={notes}
-        areas={areas}
-        resources={resources}
         todos={todos}
       />
     </dialog>

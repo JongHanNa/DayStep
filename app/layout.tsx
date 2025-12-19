@@ -8,7 +8,6 @@ import { generateSEO } from "@/lib/seo";
 import { AuthProvider, AuthState } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import AppHeader from "@/components/layout/AppHeader";
-import SidebarMenu from "@/components/layout/SidebarMenu";
 import { openDyslexic } from "@/lib/fonts";
 import { FontProvider } from "@/components/providers/FontProvider";
 // 성능 모니터링 비활성화
@@ -55,10 +54,8 @@ export default function RootLayout({
               <SubscriptionSyncProvider>
                 <RealtimeSyncProvider>
                   <ReminderProvider>
-                  {/* 상단 헤더 바 (햄버거 메뉴 + 페이지 제목 + 테마 버튼) */}
+                  {/* 상단 헤더 바 */}
                   <AppHeader />
-                  {/* 사이드바 메뉴 */}
-                  <SidebarMenu />
                   <main
                     className={`scrollbar-hide ${safeAreaBackground} ${darkSafeArea}`}
                   >

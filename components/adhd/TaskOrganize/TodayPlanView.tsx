@@ -5,8 +5,6 @@ import { format, isToday, isTomorrow, startOfDay, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Calendar, GripVertical, ChevronRight } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { Todo } from '@/entities/todo/Todo';
 
 interface TodayPlanViewProps {
@@ -23,23 +21,21 @@ interface TodayPlanViewProps {
  */
 export function TodayPlanView({ userId }: TodayPlanViewProps) {
   const { todos, fetchAllTodos, updateTodo } = useTodoStore();
-  const { projects, fetchProjects } = useProjectStore();
-  const { goals, fetchGoals } = useGoalStore();
   const [isLoading, setIsLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<'today' | 'tomorrow' | null>('today');
+
+  // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
+  const projects: { id: string; title: string }[] = [];
+  const goals: { id: string; title: string }[] = [];
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchAllTodos(),
-        fetchProjects(userId),
-        fetchGoals(userId),
-      ]);
+      await fetchAllTodos();
       setIsLoading(false);
     };
     loadData();
-  }, [userId, fetchAllTodos, fetchProjects, fetchGoals]);
+  }, [userId, fetchAllTodos]);
 
   // 프로젝트/목표 매핑 생성
   const projectMap = useMemo(() => {

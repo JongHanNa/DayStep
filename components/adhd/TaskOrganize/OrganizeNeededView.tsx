@@ -3,10 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Inbox, FolderOpen, Target, AlertCircle } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
-import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import { Todo } from '@/entities/todo/Todo';
-import type { Project, Goal } from '@/types/second-brain';
 
 interface OrganizeNeededViewProps {
   userId: string;
@@ -22,22 +19,20 @@ interface OrganizeNeededViewProps {
  */
 export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
   const { todos, fetchAllTodos } = useTodoStore();
-  const { projects, fetchProjects } = useProjectStore();
-  const { goals, fetchGoals } = useGoalStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
+  const projects: { id: string; title: string }[] = [];
+  const goals: { id: string; title: string }[] = [];
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchAllTodos(),
-        fetchProjects(userId),
-        fetchGoals(userId),
-      ]);
+      await fetchAllTodos();
       setIsLoading(false);
     };
     loadData();
-  }, [userId, fetchAllTodos, fetchProjects, fetchGoals]);
+  }, [userId, fetchAllTodos]);
 
   // 프로젝트/목표 매핑 생성
   const projectMap = useMemo(() => {
@@ -58,21 +53,11 @@ export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
     return todos.filter(todo => !todo.completed && !todo.startTime);
   }, [todos]);
 
-  // 목표 없는 프로젝트 (완료되지 않은 것만)
-  const orphanProjects = useMemo(() => {
-    return projects.filter((project: Project) =>
-      !project.completed_at && !project.goal_id
-    );
-  }, [projects]);
+  // 목표 없는 프로젝트 (완료되지 않은 것만) - 프로젝트 기능 제거됨
+  const orphanProjects: { id: string; title: string }[] = [];
 
-  // 할일 없는 프로젝트 (완료되지 않은 것만)
-  const emptyProjects = useMemo(() => {
-    return projects.filter((project: Project) => {
-      if (project.completed_at) return false;
-      const projectTodos = todos.filter(t => t.projectId === project.id && !t.completed);
-      return projectTodos.length === 0;
-    });
-  }, [projects, todos]);
+  // 할일 없는 프로젝트 (완료되지 않은 것만) - 프로젝트 기능 제거됨
+  const emptyProjects: { id: string; title: string; goal_id?: string }[] = [];
 
   if (isLoading) {
     return (
@@ -177,7 +162,7 @@ export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
             <span className="badge badge-sm badge-secondary">{orphanProjects.length}</span>
           </div>
           <div className="p-4 space-y-2 max-h-48 overflow-y-auto">
-            {orphanProjects.slice(0, 10).map((project: Project) => (
+            {orphanProjects.slice(0, 10).map((project) => (
               <div key={project.id} className="flex items-center gap-2 p-2 bg-base-200 rounded-lg">
                 <span className="text-sm truncate flex-1">{project.title}</span>
               </div>
@@ -200,7 +185,7 @@ export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
             <span className="badge badge-sm">{emptyProjects.length}</span>
           </div>
           <div className="p-4 space-y-2 max-h-48 overflow-y-auto">
-            {emptyProjects.slice(0, 10).map((project: Project) => {
+            {emptyProjects.slice(0, 10).map((project) => {
               const goal = project.goal_id ? goalMap.get(project.goal_id) : undefined;
               return (
                 <div key={project.id} className="flex items-center gap-2 p-2 bg-base-200 rounded-lg">

@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, Sun, Moon, Clock, X } from 'lucide-react';
-import { useSidebarStore } from '@/state/stores/sidebarStore';
+import { Sun, Moon, Clock, X } from 'lucide-react';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
-import { getPageTitleFromPath } from '@/config/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/app/context/AuthContext';
 
@@ -16,7 +14,6 @@ const ORGANIZE_DURATION_SECONDS = 5 * 60;
 export default function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { open } = useSidebarStore();
   const currentMode = useADHDModeStore(state => state.currentMode);
   const organizeStartTime = useADHDModeStore(state => state.organizeMode.startTime);
   const enterEntryMode = useADHDModeStore(state => state.enterEntryMode);
@@ -25,7 +22,8 @@ export default function AppHeader() {
   const { resolvedTheme, setTheme } = useTheme();
   const { isAuthenticated, loading } = useAuth();
 
-  const pageTitle = getPageTitleFromPath(pathname);
+  // 사이드바 제거로 인해 페이지 제목은 정리 모드에서만 표시
+  const pageTitle = '그래프 뷰';
 
   // 정리 모드 타이머 상태
   const [remainingSeconds, setRemainingSeconds] = useState(ORGANIZE_DURATION_SECONDS);
@@ -119,14 +117,8 @@ export default function AppHeader() {
     <>
       <header className="fixed top-0 left-0 right-0 z-40 bg-base-300 safe-area-top">
         <div className="flex items-center justify-between h-14 px-4">
-          {/* 왼쪽: 햄버거 메뉴 버튼 */}
-          <button
-            onClick={open}
-            className="btn btn-ghost btn-circle"
-            aria-label="메뉴 열기"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+          {/* 왼쪽: 빈 공간 (레이아웃 유지) */}
+          <div className="w-12" />
 
           {/* 중앙: 페이지 제목 (+ 정리 모드 타이머) */}
           <div className="flex items-center gap-2">
