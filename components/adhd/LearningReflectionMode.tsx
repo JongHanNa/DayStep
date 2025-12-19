@@ -27,6 +27,8 @@ import {
   Trash2,
   Sun,
   Moon,
+  Target,
+  PenLine,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -591,6 +593,38 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   // ============================================
 
   // 타이머 시간 선택 화면 (수집→명료화→계획)
+  // 미처리 수집 목록 (저장만 하고 할일로 전환하지 않은 것들)
+  const unprocessedEntries = useMemo(() => {
+    return entries.filter(entry => !entry.project_id).slice(0, 5); // 최대 5개만 표시
+  }, [entries]);
+
+  // "실행과 집중으로 가기" 핸들러
+  const handleGoToExecute = useCallback(() => {
+    if (!userId) return;
+    endLearningReflectionMode();
+    enterExecuteMode(userId);
+  }, [userId, endLearningReflectionMode, enterExecuteMode]);
+
+  // "새로 수집하기" 핸들러 (기본 10분 타이머로 바로 시작)
+  const handleStartNewCollection = useCallback(() => {
+    setSelectedDuration(10); // 기본 10분
+    setSkipTimer(false);
+    handleStartTimer();
+  }, [handleStartTimer]);
+
+  // 미처리 수집에서 "할일 만들기" 핸들러
+  const handleCreateTodoFromEntry = useCallback((entry: typeof entries[0]) => {
+    // 해당 수집의 내용을 draft에 로드
+    setLearningReflectionDraft({
+      content: entry.content,
+      sourceText: entry.source_text || '',
+      sourceReference: entry.source_reference || '',
+      experience: entry.experience || '',
+    });
+    // action-choice 화면으로 이동
+    setLearningReflectionViewState('action-choice');
+  }, [setLearningReflectionDraft, setLearningReflectionViewState]);
+
   const renderSelectDurationView = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -623,67 +657,77 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
         {/* 연속 기록 */}
         {stats && stats.currentStreak > 0 && (
-          <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl">
+          <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-xl">
             <span className="text-2xl">🔥</span>
             <span className="font-medium">연속 {stats.currentStreak}일째 기록 중!</span>
           </div>
         )}
 
-        {/* 안내 문구 */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 min-h-[60vh]">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mb-6">
-            <Lightbulb className="w-10 h-10 text-amber-600" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">수집→명료화→계획</h2>
-          <p className="text-base-content/60 mb-6">
-            생각이나 정보를 수집하고,<br />
-            명료화하고, 할일을 계획하세요.
-          </p>
-
-          {/* 타이머 시간 선택 */}
-          <div className="w-full max-w-xs mb-4">
-            <p className="text-sm text-base-content/60 mb-3">타이머 시간 (선택)</p>
-            <div className="flex gap-2 flex-wrap justify-center">
-              {TIMER_OPTIONS.map(min => (
-                <button
-                  key={min}
-                  onClick={() => {
-                    setSelectedDuration(min);
-                    setSkipTimer(false);
-                  }}
-                  className={`btn btn-sm ${selectedDuration === min && !skipTimer ? 'btn-primary' : 'btn-ghost'}`}
-                >
-                  {min}분
-                </button>
-              ))}
-              <button
-                onClick={() => setSkipTimer(true)}
-                className={`btn btn-sm ${skipTimer ? 'btn-primary' : 'btn-ghost'}`}
-              >
-                타이머 없이
-              </button>
-            </div>
-          </div>
-
-          {/* 시작 버튼 */}
+        {/* 메인 액션 버튼들 */}
+        <div className="flex flex-col gap-3 mb-6">
+          {/* 실행과 집중으로 가기 */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={skipTimer ? handleStartWithoutTimer : handleStartTimer}
-            className="btn btn-primary btn-lg gap-2 rounded-full px-8"
+            onClick={handleGoToExecute}
+            className="btn btn-primary btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg"
           >
-            <Play className="w-5 h-5" />
-            시작하기
+            <Target className="w-6 h-6" />
+            <span className="text-lg font-semibold">실행과 집중으로 가기</span>
+          </motion.button>
+
+          {/* 새로 수집하기 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleStartNewCollection}
+            className="btn btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg bg-orange-500 text-white border-none hover:bg-orange-600"
+          >
+            <PenLine className="w-6 h-6" />
+            <span className="text-lg font-semibold">새로 수집하기</span>
           </motion.button>
         </div>
 
-        {/* 과거 기록 보기 */}
+        {/* 미처리 수집 목록 */}
+        {unprocessedEntries.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-medium text-base-content/70">미처리 수집</span>
+              <span className="text-xs text-base-content/50">({unprocessedEntries.length}개)</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {unprocessedEntries.map(entry => (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 p-3 bg-base-200 rounded-xl"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{entry.content}</p>
+                    <p className="text-xs text-base-content/50">
+                      {format(new Date(entry.created_at), 'M/d', { locale: ko })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleCreateTodoFromEntry(entry)}
+                    className="btn btn-sm btn-ghost text-primary"
+                  >
+                    <ListTodo className="w-4 h-4" />
+                    <span className="hidden sm:inline">할일 만들기</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 전체 기록 보기 */}
         <button
           onClick={() => setLearningReflectionViewState('history')}
-          className="btn btn-ghost gap-2 mt-4 w-full"
+          className="btn btn-ghost gap-2 w-full"
         >
           <History className="w-5 h-5" />
-          과거 기록 보기
+          전체 기록 보기
         </button>
       </div>
     </motion.div>
