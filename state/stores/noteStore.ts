@@ -19,10 +19,14 @@ import { supabase } from '@/lib/supabase';
 import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } from '@/types';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 
+// Note 카테고리 타입
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'capture';
+
 // Note 타입 정의
 export interface Note {
   id: string;
   user_id: string;
+  title?: string;
   content: string;
   linked_date?: string | null; // 반복 할일의 특정 날짜
   linked_timeline_task_id?: string | null; // 타임라인 작업 직접 연결
@@ -33,10 +37,17 @@ export interface Note {
   updated_at: string;
   is_recurring?: boolean; // 반복 노트 여부
   recurrence_type?: 'single' | 'recurring' | 'instance'; // 노트 반복 타입
+  // Second Brain fields
+  area_resource_id?: string | null;
+  note_category?: NoteCategory;
+  // Capture fields (수집 기능용)
+  source_text?: string | null;
+  source_reference?: string | null;
 }
 
 // Note 생성 입력 타입
 export interface CreateNoteInput {
+  title?: string;
   content: string;
   linked_date?: string | null;
   linked_timeline_task_id?: string | null;
@@ -46,6 +57,12 @@ export interface CreateNoteInput {
   user_id?: string;
   is_recurring?: boolean;
   recurrence_type?: 'single' | 'recurring' | 'instance';
+  // Second Brain fields
+  area_resource_id?: string | null;
+  note_category?: NoteCategory;
+  // Capture fields (수집 기능용)
+  source_text?: string | null;
+  source_reference?: string | null;
 }
 
 // Note 업데이트 입력 타입
@@ -167,6 +184,11 @@ interface NoteStoreActions {
   initialize: (userId: string) => Promise<void>;
   reset: () => void;
   refresh: (userId: string) => Promise<void>;
+
+  // Capture 기능 (수집→명료화→계획)
+  getCaptureNotes: (userId: string) => Promise<Note[]>;
+  createCaptureNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
+  getUnprocessedCaptureNotes: () => Note[];
 }
 
 /**
@@ -1231,6 +1253,62 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             console.error('❌ 노트 인스턴스 upsert 실패:', error);
             throw error;
           }
+        },
+
+        // ============================================
+        // Capture 기능 (수집→명료화→계획)
+        // ============================================
+
+        getCaptureNotes: async (userId: string) => {
+          console.log('📝 NoteStore.getCaptureNotes:', userId);
+
+          try {
+            set({ loading: true, error: null });
+
+            const notes = await queryRLSTableWithJWT('notes', {
+              column: 'user_id',
+              operator: 'eq',
+              value: userId
+            }, {
+              order: 'created_at.desc'
+            });
+
+            // note_category가 'capture'인 노트만 필터링
+            const captureNotes = (notes || []).filter(
+              (note: Note) => note.note_category === 'capture'
+            );
+
+            set({ loading: false });
+            console.log('✅ Capture 노트 조회 완료:', captureNotes.length);
+            return captureNotes;
+          } catch (error) {
+            set({
+              loading: false,
+              error: error instanceof Error ? error.message : 'Capture 노트 조회 실패',
+            });
+            throw error;
+          }
+        },
+
+        createCaptureNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
+          console.log('📝 NoteStore.createCaptureNote:', input);
+
+          // note_category를 'capture'로 강제 설정
+          const captureInput: CreateNoteInput = {
+            ...input,
+            note_category: 'capture',
+            // title이 없으면 content 앞 50자를 title로 사용
+            title: input.title || input.content.substring(0, 50),
+          };
+
+          return get().createNote(captureInput);
+        },
+
+        getUnprocessedCaptureNotes: () => {
+          const { notes } = get();
+          // note_category가 'capture'인 노트 중 할일로 변환되지 않은 것들
+          // (현재는 단순히 capture 노트만 반환, 추후 할일 연결 로직 추가 가능)
+          return notes.filter(note => note.note_category === 'capture');
         },
       };
     },

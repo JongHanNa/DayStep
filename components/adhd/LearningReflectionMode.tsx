@@ -39,7 +39,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
 import type { Project } from '@/types/second-brain';
 import type { Goal } from '@/types/second-brain';
-import { useLearningReflectionStore } from '@/state/stores/learningReflectionStore';
+import { useNoteStore, type Note } from '@/state/stores/noteStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useTheme } from '@/hooks/useTheme';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
@@ -91,16 +91,22 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     enterExecuteMode,
   } = useADHDModeStore();
 
+  // Capture 노트 관리 (noteStore 사용)
   const {
-    entries,
-    stats,
-    currentPrompt,
-    loadEntries,
-    loadStats,
-    loadRandomPrompt,
-    addEntry,
-    toggleFavorite,
-  } = useLearningReflectionStore();
+    notes,
+    getCaptureNotes,
+    createCaptureNote,
+    getUnprocessedCaptureNotes,
+    pinNote,
+    unpinNote,
+    loading: notesLoading,
+  } = useNoteStore();
+
+  // Capture 노트만 필터링 (entries 대신 사용)
+  const captureNotes = useMemo(() =>
+    notes.filter(note => note.note_category === 'capture'),
+    [notes]
+  );
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
@@ -150,28 +156,23 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   // 데이터 로드
   useEffect(() => {
     if (userId) {
-      loadStats(userId);
       fetchProjects(userId);
       fetchGoals(userId);
     }
-  }, [userId, loadStats, fetchProjects, fetchGoals]);
+  }, [userId, fetchProjects, fetchGoals]);
 
   // 타이머 없이 바로 시작
   const [skipTimer, setSkipTimer] = useState(false);
 
-  // history 뷰일 때 기록 로드
+  // 허브 화면 또는 history 뷰일 때 기록 로드
   useEffect(() => {
-    if (userId && viewState === 'history') {
-      loadEntries(userId);
+    if (userId && (viewState === 'history' || viewState === 'select-duration')) {
+      getCaptureNotes(userId);
     }
-  }, [userId, viewState, loadEntries]);
+  }, [userId, viewState, getCaptureNotes]);
 
-  // 타이머 시작 시 질문 로드 (통합 폼이므로 reflection 타입의 질문 사용)
-  useEffect(() => {
-    if (viewState === 'reflection-input') {
-      loadRandomPrompt('reflection');
-    }
-  }, [viewState, loadRandomPrompt]);
+  // 타이머 시작 시 - 질문 기능 제거됨 (DB 테이블 삭제)
+  // 이전: loadRandomPrompt('reflection')
 
   // 타이머 완료 감지
   useEffect(() => {
@@ -217,8 +218,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setIsSaving(true);
     try {
       // 기분/태그 없이 바로 저장
-      await saveEntry(null);
-      loadStats(userId);
+      await saveEntry();
       setLearningReflectionViewState('completed');
     } catch (error) {
       console.error('저장 실패:', error);
@@ -234,7 +234,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setIsSaving(true);
     try {
       // 1. 수집 저장 (프로젝트 연결 없이)
-      await saveEntry(null);
+      await saveEntry();
 
       // 2. 할일 생성 (오늘 날짜, anytime)
       const today = new Date();
@@ -269,7 +269,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setIsSaving(true);
     try {
       // 1. 수집 저장
-      await saveEntry(null);
+      await saveEntry();
 
       // 2. 할일 생성 (예약된 날짜/시간)
       // 시간이 있으면 해당 시간, 없으면 자정으로 설정
@@ -298,7 +298,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
   // 과제 없이 끝내기
   const handleFinishWithoutProject = async () => {
-    await saveEntry(null);
+    await saveEntry();
     setLearningReflectionViewState('completed');
   };
 
@@ -337,34 +337,27 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     setLearningReflectionDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
   };
 
-  // 수집 저장 (프로젝트 연결 없이)
-  const saveEntry = async (projectId: string | null) => {
+  // 수집 저장 (notes 테이블에 capture로 저장)
+  const saveEntry = async () => {
     if (!userId || !draftContent.trim()) return null;
 
-    const entry = await addEntry(userId, {
-      entry_type: 'reflection',
+    const note = await createCaptureNote({
       content: draftContent.trim(),
-      source_text: draftSourceText.trim() || undefined,
-      source_reference: draftSourceReference.trim() || undefined,
-      experience: draftExperience.trim() || undefined,
-      commitment: draftCommitment.trim() || undefined,
-      entry_date: format(new Date(), 'yyyy-MM-dd'),
-      mood_rating: moodRating || undefined,
-      tags: selectedTags.length > 0 ? selectedTags : undefined,
-      project_id: projectId || undefined,
+      source_text: draftSourceText.trim() || null,
+      source_reference: draftSourceReference.trim() || null,
+      linked_date: format(new Date(), 'yyyy-MM-dd'),
+      is_pinned: false,
     });
-    return entry;
+    return note;
   };
 
   // 수집 + 프로젝트 저장
   const saveEntryAndProject = async () => {
     if (!userId) return;
 
-    let projectId = selectedProjectId;
-
     // 새 프로젝트 생성
     if (!selectedProjectId && newProjectTitle.trim()) {
-      const newProject = await createProject(userId, {
+      await createProject(userId, {
         title: newProjectTitle.trim(),
         expected_outcome: newProjectExpectedOutcome.trim() || undefined,
         preparation: newProjectPreparation.trim() || undefined,
@@ -373,13 +366,9 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         order_index: 0,
         status: 'not_started',
       });
-      if (newProject) {
-        projectId = newProject.id;
-      }
     }
 
-    await saveEntry(projectId);
-    loadStats(userId);
+    await saveEntry();
   };
 
   // 수집 + 프로젝트 + 할일 저장
@@ -436,8 +425,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
       }
     }
 
-    await saveEntry(projectId);
-    loadStats(userId);
+    await saveEntry();
     setLearningReflectionViewState('completed');
   };
 
@@ -445,11 +433,9 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   const executeEntryAndProjectAndTodosWithoutTodos = async () => {
     if (!userId) return;
 
-    let projectId = selectedProjectId;
-
     // 새 프로젝트 생성
     if (!selectedProjectId && newProjectTitle.trim()) {
-      const newProject = await createProject(userId, {
+      await createProject(userId, {
         title: newProjectTitle.trim(),
         expected_outcome: newProjectExpectedOutcome.trim() || undefined,
         preparation: newProjectPreparation.trim() || undefined,
@@ -458,13 +444,9 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         order_index: 0,
         status: 'not_started',
       });
-      if (newProject) {
-        projectId = newProject.id;
-      }
     }
 
-    await saveEntry(projectId);
-    loadStats(userId);
+    await saveEntry();
     setLearningReflectionViewState('completed');
   };
 
@@ -501,29 +483,25 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
     adjustTime(minutes * 60 * 1000);
   };
 
-  // 기록 저장
+  // 기록 저장 (capture 화면에서 기분/태그 선택 후 저장 - 현재는 거의 사용 안함)
   const handleSave = async () => {
     if (!userId || !draftContent.trim()) return;
 
     setIsSaving(true);
     try {
-      await addEntry(userId, {
-        entry_type: 'reflection', // 통합 폼: 기본값 'reflection'
+      await createCaptureNote({
+        user_id: userId,
         content: draftContent.trim(),
-        source_text: draftSourceText.trim() || undefined,
-        source_reference: draftSourceReference.trim() || undefined,
-        experience: draftExperience.trim() || undefined,
-        commitment: draftCommitment.trim() || undefined,
-        entry_date: format(new Date(), 'yyyy-MM-dd'),
-        mood_rating: moodRating || undefined,
-        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        source_text: draftSourceText.trim() || null,
+        source_reference: draftSourceReference.trim() || null,
+        linked_date: format(new Date(), 'yyyy-MM-dd'),
+        is_pinned: false,
       });
 
       resetLearningReflectionDraft();
       setMoodRating(null);
       setSelectedTags([]);
       setLearningReflectionViewState('completed');
-      loadStats(userId); // 통계 갱신
     } catch (error) {
       console.error('기록 저장 실패:', error);
     } finally {
@@ -594,9 +572,10 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
   // 타이머 시간 선택 화면 (수집→명료화→계획)
   // 미처리 수집 목록 (저장만 하고 할일로 전환하지 않은 것들)
+  // Note: Capture 노트는 모두 미처리로 간주 (할일 연결 여부는 별도 추적 필요 시 구현)
   const unprocessedEntries = useMemo(() => {
-    return entries.filter(entry => !entry.project_id).slice(0, 5); // 최대 5개만 표시
-  }, [entries]);
+    return captureNotes.slice(0, 5); // 최대 5개만 표시
+  }, [captureNotes]);
 
   // "실행과 집중으로 가기" 핸들러
   const handleGoToExecute = useCallback(() => {
@@ -613,13 +592,13 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
   }, [handleStartTimer]);
 
   // 미처리 수집에서 "할일 만들기" 핸들러
-  const handleCreateTodoFromEntry = useCallback((entry: typeof entries[0]) => {
+  const handleCreateTodoFromEntry = useCallback((note: Note) => {
     // 해당 수집의 내용을 draft에 로드
     setLearningReflectionDraft({
-      content: entry.content,
-      sourceText: entry.source_text || '',
-      sourceReference: entry.source_reference || '',
-      experience: entry.experience || '',
+      content: note.content,
+      sourceText: note.source_text || '',
+      sourceReference: note.source_reference || '',
+      experience: '', // Note에는 experience 필드가 없음
     });
     // action-choice 화면으로 이동
     setLearningReflectionViewState('action-choice');
@@ -655,13 +634,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           className="mb-4"
         />
 
-        {/* 연속 기록 */}
-        {stats && stats.currentStreak > 0 && (
-          <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-xl">
-            <span className="text-2xl">🔥</span>
-            <span className="font-medium">연속 {stats.currentStreak}일째 기록 중!</span>
-          </div>
-        )}
+        {/* TODO: 연속 기록 기능은 notes 테이블 기반으로 재구현 필요 */}
 
         {/* 메인 액션 버튼들 */}
         <div className="flex flex-col gap-3 mb-6">
@@ -755,13 +728,11 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <h1 className="text-lg font-bold">수집</h1>
         </div>
 
-        {/* 오늘의 힌트 */}
-        {currentPrompt && (
-          <div className="p-3 bg-base-200 rounded-xl mb-4">
-            <p className="text-sm text-base-content/60 mb-1">💡 오늘의 힌트</p>
-            <p className="font-medium">{currentPrompt.prompt_text}</p>
-          </div>
-        )}
+        {/* 오늘의 힌트 (정적 프롬프트) */}
+        <div className="p-3 bg-base-200 rounded-xl mb-4">
+          <p className="text-sm text-base-content/60 mb-1">💡 오늘의 힌트</p>
+          <p className="font-medium">지금 떠오르는 게 뭐야?</p>
+        </div>
 
         {/* 원형 타이머 (타이머 선택 시만 표시) */}
         {showTimer && (
@@ -1242,11 +1213,6 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
           <h2 className="text-2xl font-bold mb-2 text-center">
             {projectName ? '오늘의 생각,정보가 계획이 되었어요!' : '오늘의 생각,정보를 수집했어요!'}
           </h2>
-          {stats && stats.currentStreak > 0 && (
-            <p className="text-base-content/60 mb-6">
-              🔥 연속 {stats.currentStreak}일째 기록 중
-            </p>
-          )}
 
           {/* 요약 카드들 */}
           <div className="w-full max-w-sm space-y-3 mb-6">
@@ -1336,14 +1302,14 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
 
       {/* 기록 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 mobile-container">
-        {entries.length === 0 ? (
+        {captureNotes.length === 0 ? (
           <div className="text-center text-base-content/50 py-10">
             아직 기록이 없어요
           </div>
         ) : (
-          entries.map(entry => (
+          captureNotes.map(note => (
             <motion.div
-              key={entry.id}
+              key={note.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="p-4 bg-base-200 rounded-xl"
@@ -1355,28 +1321,28 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-base-content/50">
-                      {format(new Date(entry.entry_date), 'M월 d일 (EEE)', { locale: ko })}
+                      {format(new Date(note.linked_date || note.created_at), 'M월 d일 (EEE)', { locale: ko })}
                     </span>
                     <button
-                      onClick={() => userId && toggleFavorite(entry, userId)}
-                      className={`btn btn-ghost btn-xs ${entry.is_favorite ? 'text-yellow-500' : 'text-base-content/30'}`}
+                      onClick={() => {
+                        if (!userId) return;
+                        if (note.is_pinned) {
+                          unpinNote(note.id);
+                        } else {
+                          pinNote(note.id);
+                        }
+                      }}
+                      className={`btn btn-ghost btn-xs ${note.is_pinned ? 'text-yellow-500' : 'text-base-content/30'}`}
                     >
-                      <Star className="w-4 h-4" fill={entry.is_favorite ? 'currentColor' : 'none'} />
+                      <Star className="w-4 h-4" fill={note.is_pinned ? 'currentColor' : 'none'} />
                     </button>
                   </div>
-                  {entry.source_text && (
+                  {note.source_text && (
                     <p className="text-sm text-base-content/70 italic mb-1 line-clamp-2">
-                      &quot;{entry.source_text}&quot;
+                      &quot;{note.source_text}&quot;
                     </p>
                   )}
-                  <p className="text-sm line-clamp-2">{entry.content}</p>
-                  {entry.tags && entry.tags.length > 0 && (
-                    <div className="flex gap-1 mt-2">
-                      {entry.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="badge badge-sm badge-ghost">#{tag}</span>
-                      ))}
-                    </div>
-                  )}
+                  <p className="text-sm line-clamp-2">{note.content}</p>
                 </div>
               </div>
             </motion.div>

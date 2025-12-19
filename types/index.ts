@@ -100,6 +100,8 @@ export interface NoteTagLinkInsert {
 }
 
 // Note types (manually defined until Supabase types are updated)
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'capture';
+
 export interface Note {
   id: string;
   user_id: string;
@@ -115,6 +117,12 @@ export interface Note {
   recurrence_type?: 'single' | 'recurring';
   // Tags are loaded separately for performance
   tags?: NoteTag[];
+  // Second Brain fields
+  area_resource_id?: string | null;
+  note_category?: NoteCategory;
+  // Capture fields (수집 기능용)
+  source_text?: string | null;
+  source_reference?: string | null;
 }
 
 // Note instance types (manually defined until Supabase types are updated)
@@ -390,7 +398,7 @@ export type {
 export type AreaResourceStatus = 'area' | 'resource' | 'archived';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'paused';
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference';
+// NoteCategory는 위쪽 Note 타입 근처에서 정의됨 (capture 포함)
 
 // Area/Resource types
 export interface AreaResource {

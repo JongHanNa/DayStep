@@ -160,8 +160,9 @@ export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 
 /**
  * 노트 카테고리 (DB note_category 컬럼과 일치)
+ * - capture: 아이디어 수집 기능에서 생성된 노트
  */
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'capture';
 
 /**
  * 노트 (Note) - PARA 구조로 분류되는 노트
@@ -182,6 +183,10 @@ export interface Note {
 
   // 노트 간 연결 (N:N, note_connections junction table을 통해 로드)
   connectedNotes?: Note[];
+
+  // Capture 기능 필드 (수집 기능에서 사용)
+  source_text?: string | null; // 상세 내용
+  source_reference?: string | null; // 출처
 
   // 메타데이터
   is_pinned: boolean;

@@ -1,205 +1,28 @@
 // ============================================
-// 수집→명료화→계획 시스템 타입 정의
-// (구 나의 마음 챙기기)
+// 수집→명료화→계획 시스템 UI 타입 정의
+// (DB는 notes 테이블 사용, note_category='capture')
 // ============================================
+
+/** 기분 레벨 (UI용, DB에 저장하지 않음) */
+export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 
 /** 수집→명료화→계획 뷰 상태 */
 export type LearningReflectionViewState =
-  | 'select-duration'    // 시작 화면 (타이머 선택)
+  | 'select-duration'    // 허브 화면 (시작점)
   | 'reflection-input'   // 수집
   | 'action-choice'      // 선택지: 지금 할래? 언제 할래? 저장만?
   | 'quick-todo'         // 지금 바로 할래 (할일 입력 → ExecutionMode)
   | 'scheduled-todo'     // 언제 할지 정할래 (날짜/시간 선택)
-  | 'capture'            // 기분/태그 (저장만 선택 시)
+  | 'capture'            // 기분/태그 (저장만 선택 시) - 레거시, 현재는 바로 저장
   | 'completed'          // 완료
   | 'history';           // 과거 기록
-
-/** 기록 유형 */
-export type LearningReflectionEntryType =
-  | 'reflection'   // 마음 기록
-  | 'comfort'      // 위로의 순간
-  | 'gratitude';   // 감사 일기
-
-/** 기분 레벨 (1-5) */
-export type MoodLevel = 1 | 2 | 3 | 4 | 5;
-
-/** 마음 기록 엔트리 */
-export interface LearningReflectionEntry {
-  id: string;
-  user_id: string;
-  entry_type: LearningReflectionEntryType;
-
-  // 내용
-  content: string;                   // 나의 생각
-  source_text: string | null;        // 마음에 닿은 글
-  source_reference: string | null;   // 출처
-  insight: string | null;            // 깨달은 점 (레거시)
-  experience: string | null;         // 오늘의 경험
-  commitment: string | null;         // 실천 다짐
-
-  // 메타데이터
-  entry_date: string;              // YYYY-MM-DD
-  mood_rating: MoodLevel | null;
-  tags: string[] | null;
-  is_favorite: boolean;
-  is_pinned: boolean;
-
-  // 리마인더
-  reminder_enabled: boolean;
-  last_reminded_at: string | null;
-  reminder_count: number;
-
-  // 프로젝트 연결 (수집→과제 플로우)
-  project_id: string | null;
-
-  created_at: string;
-  updated_at: string;
-}
-
-/** 마음 기록 입력 */
-export interface LearningReflectionEntryInput {
-  entry_type?: LearningReflectionEntryType;  // 옵셔널 (기본값: 'reflection')
-  content: string;
-  source_text?: string;
-  source_reference?: string;
-  insight?: string;
-  experience?: string;             // 오늘의 경험
-  commitment?: string;             // 실천 다짐
-  entry_date: string;
-  mood_rating?: MoodLevel;
-  tags?: string[];
-  is_favorite?: boolean;
-  reminder_enabled?: boolean;
-  project_id?: string;           // 프로젝트 연결
-}
-
-/** 마음 기록 업데이트 */
-export interface LearningReflectionEntryUpdate {
-  content?: string;
-  source_text?: string | null;
-  source_reference?: string | null;
-  insight?: string | null;
-  experience?: string | null;      // 오늘의 경험
-  commitment?: string | null;      // 실천 다짐
-  entry_date?: string;
-  mood_rating?: MoodLevel | null;
-  tags?: string[] | null;
-  is_favorite?: boolean;
-  is_pinned?: boolean;
-  reminder_enabled?: boolean;
-  project_id?: string | null;   // 프로젝트 연결
-}
-
-/** 마음 챙기기 설정 */
-export interface LearningReflectionSettings {
-  id: string;
-  user_id: string;
-
-  comfort_reminder_enabled: boolean;
-  comfort_reminder_frequency: number;  // 일 단위
-
-  gratitude_reminder_enabled: boolean;
-  gratitude_reminder_time: string;     // HH:MM
-
-  show_streak: boolean;
-
-  created_at: string;
-  updated_at: string;
-}
-
-/** 성찰 질문 */
-export interface LearningReflectionPrompt {
-  id: string;
-  prompt_type: LearningReflectionEntryType;
-  prompt_text: string;
-  prompt_key: string;
-  display_weight: number;
-  is_active: boolean;
-  created_at: string;
-}
-
-/** 마음 돌봄 통계 */
-export interface LearningReflectionStats {
-  totalEntries: number;
-  reflectionCount: number;
-  comfortCount: number;
-  gratitudeCount: number;
-  currentStreak: number;          // 연속 기록일
-  longestStreak: number;          // 최장 연속 기록
-  favoriteCount: number;
-  thisWeekCount: number;
-  thisMonthCount: number;
-}
-
-/** 위로 리마인더 (홈 화면 배너용) */
-export interface ComfortReminder {
-  entry: LearningReflectionEntry;
-  daysSinceCreated: number;
-}
-
-// ============================================
-// 라벨 및 상수
-// ============================================
-
-/** 기록 유형 라벨 */
-export const ENTRY_TYPE_LABELS: Record<LearningReflectionEntryType, {
-  label: string;
-  emoji: string;
-  description: string;
-  color: string;
-}> = {
-  reflection: {
-    label: '마음 기록',
-    emoji: '📝',
-    description: '오늘 읽은 글과 성찰한 내용을 기록해요',
-    color: 'text-blue-500',
-  },
-  comfort: {
-    label: '위로의 순간',
-    emoji: '💝',
-    description: '마음에 닿은 문장이나 경험을 저장해요',
-    color: 'text-pink-500',
-  },
-  gratitude: {
-    label: '감사 일기',
-    emoji: '🙏',
-    description: '오늘 감사한 것들을 적어요',
-    color: 'text-amber-500',
-  },
-};
-
-/** 기분 레벨 라벨 */
-export const MOOD_LABELS: Array<{ value: MoodLevel; emoji: string; label: string }> = [
-  { value: 1, emoji: '😔', label: '힘들어요' },
-  { value: 2, emoji: '😐', label: '그저 그래요' },
-  { value: 3, emoji: '🙂', label: '괜찮아요' },
-  { value: 4, emoji: '😊', label: '좋아요' },
-  { value: 5, emoji: '🥰', label: '감사해요' },
-];
-
-/** 기본 태그 제안 (레거시 - 유형별) */
-export const SUGGESTED_TAGS: Record<LearningReflectionEntryType, string[]> = {
-  reflection: ['책', '영상', '강연', '성찰', '일상', '관계', '성장'],
-  comfort: ['위로', '격려', '희망', '용기', '평안', '치유', '감동'],
-  gratitude: ['가족', '건강', '일상', '관계', '성장', '자연', '음식'],
-};
-
-/** 통합 태그 목록 (유형 구분 없이) */
-export const UNIFIED_TAGS = [
-  // 성찰/깨달음
-  '깨달음', '성장', '도전', '수집', '결심',
-  // 위로/격려
-  '위로', '희망', '평안', '격려', '감동',
-  // 감사
-  '감사', '가족', '친구', '건강', '일상', '자연',
-];
 
 /** 성찰 타이머 시간 옵션 (분) */
 export const REFLECTION_TIMER_OPTIONS = [5, 10, 15, 20] as const;
 export type ReflectionTimerDuration = typeof REFLECTION_TIMER_OPTIONS[number];
 
 // ============================================
-// 수집→명료화→계획 플로우 라벨 (비신앙인 친화적)
+// 수집 필드 라벨 (비신앙인 친화적)
 // ============================================
 
 /** 수집 필드 라벨 */
@@ -229,7 +52,7 @@ export const LEARNING_FIELD_LABELS = {
   },
 } as const;
 
-/** 과제 도출 필드 라벨 */
+/** 과제 도출 필드 라벨 - 레거시, 현재는 사용 안함 */
 export const PROJECT_DERIVE_LABELS = {
   title: {
     label: '과제 이름',
@@ -268,4 +91,26 @@ export interface TodoDraft {
   title: string;
   scheduledDate: string | null;  // YYYY-MM-DD
   scheduledTime: string | null;  // HH:mm
+}
+
+// ============================================
+// Capture 노트 인터페이스 (notes 테이블 기반)
+// ============================================
+
+/** Capture 노트 입력 타입 */
+export interface CaptureNoteInput {
+  content: string;
+  source_text?: string | null;
+  source_reference?: string | null;
+  linked_date?: string | null;
+  is_pinned?: boolean;
+}
+
+/** Capture 노트 업데이트 타입 */
+export interface CaptureNoteUpdate {
+  content?: string;
+  source_text?: string | null;
+  source_reference?: string | null;
+  linked_date?: string | null;
+  is_pinned?: boolean;
 }
