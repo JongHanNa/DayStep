@@ -119,48 +119,6 @@ export type Database = {
         }
         Relationships: []
       }
-      daily_reflections: {
-        Row: {
-          actual_action: string | null
-          connection_rating: number | null
-          created_at: string | null
-          id: string
-          planned_action: string | null
-          reflection_date: string
-          reflection_note: string | null
-          reflection_type: string
-          target_person: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          actual_action?: string | null
-          connection_rating?: number | null
-          created_at?: string | null
-          id?: string
-          planned_action?: string | null
-          reflection_date: string
-          reflection_note?: string | null
-          reflection_type: string
-          target_person?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          actual_action?: string | null
-          connection_rating?: number | null
-          created_at?: string | null
-          id?: string
-          planned_action?: string | null
-          reflection_date?: string
-          reflection_note?: string | null
-          reflection_type?: string
-          target_person?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       note_instances: {
         Row: {
           content: string
