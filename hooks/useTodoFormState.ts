@@ -5,7 +5,6 @@ import type { Todo, ScheduleType, RecurrencePattern } from '@/types';
 import { UnifiedIconKey } from '@/lib/icon-collection';
 import { DEFAULT_COLOR, getColorByHex, getColorById } from '@/lib/color-palette';
 import type { MemoData } from '@/components/todos/form/NoteInput';
-import type { Contact } from '@/types/contacts';
 
 export interface TodoFormStateValues {
   // 기본 필드
@@ -42,8 +41,8 @@ export interface TodoFormStateValues {
   // 노트 관련 상태
   memos: MemoData[];
 
-  // 연락처 관련 상태
-  selectedContacts: Contact[];
+  // 연락처 관련 상태 (연락처 기능 제거됨 - 레거시 호환용)
+  selectedContacts: unknown[];
 }
 
 export interface TodoFormStateActions {
@@ -69,7 +68,7 @@ export interface TodoFormStateActions {
   setRecurrenceEndType: (type: 'never' | 'date' | 'count') => void;
   setSelectedDaysOfWeek: (days: number[]) => void;
   setMemos: (memos: MemoData[]) => void;
-  setSelectedContacts: (contacts: Contact[]) => void;
+  setSelectedContacts: (contacts: unknown[]) => void;
 }
 
 export interface TodoFormStateConfig {
@@ -116,8 +115,8 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   // 노트 관련 상태
   const [memos, setMemos] = useState<MemoData[]>([]);
   
-  // 연락처 관련 상태
-  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
+  // 연락처 관련 상태 (연락처 기능 제거됨 - 레거시 호환용)
+  const [selectedContacts, setSelectedContacts] = useState<unknown[]>([]);
 
   // UI 상태
   const [iconBrowserOpen, setIconBrowserOpen] = useState(false);

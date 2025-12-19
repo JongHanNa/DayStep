@@ -5,7 +5,6 @@ import {
   User,
   Bell,
   Type,
-  Users,
   Calendar,
   CheckCircle,
   Layers,
@@ -17,7 +16,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SyncStatusIndicator } from '@/components/ui/pull-to-refresh';
-import { useContacts } from '@/lib/contacts/useContacts';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { useSubscription } from '@/hooks/useSubscription';
 import ADHDSettingsSection from '@/components/settings/ADHDSettingsSection';
@@ -27,7 +25,6 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 function SettingsPageContent() {
   const { user, isAuthenticated, loading } = useAuth();
-  const { contacts, isAvailable } = useContacts();
   const { hasActiveSubscription, isInTrial, paymentsEnabled } = useSubscription();
   const router = useRouter();
 
@@ -213,25 +210,6 @@ function SettingsPageContent() {
                   </div>
                 </Link>
 
-                {/* 연락처 연동 설정 */}
-                <Link href="/settings/contacts" className="group">
-                  <div
-                    className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    role="button"
-                    aria-label="연락처 연동 설정"
-                    tabIndex={0}
-                  >
-                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                      <Users className="w-5 h-5 text-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-foreground">연락처 연동</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {isAvailable ? `${contacts.length}명 동기화됨` : '웹에서 사용 불가'}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
               </>
             )}
           </div>

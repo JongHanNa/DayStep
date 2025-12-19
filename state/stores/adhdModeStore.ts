@@ -1,19 +1,12 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { Todo } from '@/entities/todo/Todo';
-import { TodoSkipsService } from '@/services/todo-skips.service';
 
 // ============================================
 // 타입 정의
 // ============================================
 
 export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'inbox' | null;
-
-export type SkipReason =
-  | 'not_now'      // 지금 상황에 안 맞아
-  | 'too_big'      // 너무 큰 일이야
-  | 'not_feeling'  // 기분이 안 나
-  | 'not_needed';  // 필요 없는 할일이야 (삭제)
 
 // 즉흥 모드 상태 (지금 떠오른 거 할래)
 interface AdhocModeState {
@@ -27,10 +20,8 @@ interface AdhocModeState {
 // 실행 모드 상태
 interface ExecutionModeState {
   currentRecommendation: Todo | null;
-  skippedTodoIds: string[];           // 쿨다운 중인 할일 ID (DB 기반)
-  skipCooldowns: Record<string, string>; // 쿨다운 종료 시간 { todoId: cooldown_until }
+  skippedTodoIds: string[];           // 세션 내 스킵된 할일 ID (로컬 상태)
   completedInSession: number;          // 현재 세션 완료 수
-  isLoadingSkips: boolean;             // Skip 로딩 상태
   adhocMode: AdhocModeState;          // 즉흥 포모도로 모드
 }
 
@@ -125,8 +116,7 @@ interface ADHDModeState {
   // === 실행 모드 Actions ===
   setCurrentRecommendation: (todo: Todo | null) => void;
   markCompleted: (todoId: string, method: 'direct' | 'alternative') => void;
-  markSkipped: (todoId: string, reason: SkipReason, userId: string) => Promise<void>;
-  loadActiveSkips: (userId: string) => Promise<void>;
+  markSkipped: (todoId: string) => void;  // 단순 스킵 (DB 기록 없음)
   resetSession: () => void;
 
   // === 즉흥 모드 Actions (지금 떠오른 거 할래) ===
@@ -212,9 +202,7 @@ const DEFAULT_ADHOC_MODE: AdhocModeState = {
 const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
   currentRecommendation: null,
   skippedTodoIds: [],
-  skipCooldowns: {},
   completedInSession: 0,
-  isLoadingSkips: false,
   adhocMode: DEFAULT_ADHOC_MODE,
 };
 
@@ -283,42 +271,8 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set({
             currentMode: 'execute',
             currentUserId: userId,
-            executionMode: {
-              ...DEFAULT_EXECUTION_MODE,
-              isLoadingSkips: true,
-            }
+            executionMode: DEFAULT_EXECUTION_MODE,
           });
-
-          // DB에서 쿨다운 중인 skip 로드 (전체 정보 포함)
-          try {
-            const activeSkips = await TodoSkipsService.getActiveSkips(userId);
-            const skippedTodoIds = activeSkips.map(skip => skip.todo_id);
-            const skipCooldowns: Record<string, string> = {};
-            activeSkips.forEach(skip => {
-              skipCooldowns[skip.todo_id] = skip.cooldown_until;
-            });
-
-            set((state) => ({
-              executionMode: {
-                ...state.executionMode,
-                skippedTodoIds,
-                skipCooldowns,
-                isLoadingSkips: false,
-              }
-            }));
-            console.log(`📥 쿨다운 중인 Skip ${skippedTodoIds.length}개 로드`);
-          } catch (error: any) {
-            // AbortError는 React 재렌더링으로 인한 정상적인 취소이므로 무시
-            if (error?.name !== 'AbortError') {
-              console.error('❌ Skip 로드 실패:', error);
-            }
-            set((state) => ({
-              executionMode: {
-                ...state.executionMode,
-                isLoadingSkips: false,
-              }
-            }));
-          }
         },
 
         enterOrganizeMode: () => {
@@ -364,68 +318,16 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        markSkipped: async (todoId, reason, userId) => {
-          console.log(`⏭️ ADHD: 할일 건너뛰기 (${reason})`, todoId);
+        markSkipped: (todoId) => {
+          console.log('⏭️ ADHD: 할일 건너뛰기', todoId);
 
-          // 쿨다운 종료 시간 계산 (30분 후)
-          const cooldownUntil = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-
-          // 1. 즉시 로컬 상태 업데이트 (낙관적 업데이트)
+          // 세션 내 스킵 상태만 업데이트 (DB 기록 없음)
           set((state) => ({
             executionMode: {
               ...state.executionMode,
               skippedTodoIds: [...state.executionMode.skippedTodoIds, todoId],
-              skipCooldowns: {
-                ...state.executionMode.skipCooldowns,
-                [todoId]: cooldownUntil,
-              },
             }
           }));
-
-          // 2. not_needed가 아닌 경우만 DB에 저장 (not_needed는 삭제이므로)
-          if (reason !== 'not_needed') {
-            try {
-              await TodoSkipsService.recordSkip(todoId, userId, reason);
-            } catch (error) {
-              console.error('❌ Skip DB 저장 실패:', error);
-              // 실패해도 로컬 상태는 유지 (UX 우선)
-            }
-          }
-        },
-
-        loadActiveSkips: async (userId: string) => {
-          set((state) => ({
-            executionMode: {
-              ...state.executionMode,
-              isLoadingSkips: true,
-            }
-          }));
-
-          try {
-            const activeSkips = await TodoSkipsService.getActiveSkips(userId);
-            const skippedTodoIds = activeSkips.map(skip => skip.todo_id);
-            const skipCooldowns: Record<string, string> = {};
-            activeSkips.forEach(skip => {
-              skipCooldowns[skip.todo_id] = skip.cooldown_until;
-            });
-
-            set((state) => ({
-              executionMode: {
-                ...state.executionMode,
-                skippedTodoIds,
-                skipCooldowns,
-                isLoadingSkips: false,
-              }
-            }));
-          } catch (error) {
-            console.error('❌ Active Skips 로드 실패:', error);
-            set((state) => ({
-              executionMode: {
-                ...state.executionMode,
-                isLoadingSkips: false,
-              }
-            }));
-          }
         },
 
         resetSession: () => {

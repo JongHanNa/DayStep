@@ -14,7 +14,6 @@ import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
-import { RelationshipTagToggle } from '@/components/balance';
 
 /**
  * 할일 폼 필드 타입
@@ -508,16 +507,6 @@ export default function TodoFormFields({
           </label>
         </div>
       )}
-
-      {/* 관계 할일 태그 */}
-      <div className="my-4">
-        <RelationshipTagToggle
-          isRelationshipTask={todo.isRelationshipTask || false}
-          onChange={(value) => onChange({ ...todo, isRelationshipTask: value })}
-          title={todo.title}
-          showAutoDetectHint={true}
-        />
-      </div>
 
       {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (

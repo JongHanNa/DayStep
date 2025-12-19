@@ -35,7 +35,6 @@ import {
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
-import { useBalanceStore } from '@/state/stores/balanceStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useTheme } from '@/hooks/useTheme';
@@ -98,8 +97,6 @@ export default function CareMode({ onExit }: CareModeProps) {
     addPerson,
     addInteractionWithTodo,
   } = useCherishedPeopleStore();
-
-  const { settings } = useBalanceStore();
 
   const { resolvedTheme, setTheme } = useTheme();
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
@@ -660,7 +657,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                 해드리고 싶은 것이 있나요?
               </p>
               <p className="text-xs text-base-content/50 mb-2">
-                {settings?.gift_hint_message || '커피 한 잔의 마음도 좋아요'}
+                커피 한 잔의 마음도 좋아요
               </p>
               <textarea
                 value={giftPlan}

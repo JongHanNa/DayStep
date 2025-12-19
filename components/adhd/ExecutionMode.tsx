@@ -6,9 +6,6 @@ import {
   Check,
   ArrowLeft,
   ArrowRight,
-  Ban,
-  Package,
-  Frown,
   PartyPopper,
   Trash2,
   Loader2,
@@ -25,7 +22,7 @@ import {
   Moon
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
-import { useADHDModeStore, SkipReason } from '@/state/stores/adhdModeStore';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
@@ -33,11 +30,6 @@ import { useTheme } from '@/hooks/useTheme';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
-import { useBalanceStore } from '@/state/stores/balanceStore';
-import {
-  RelationshipTagBadge,
-  BalanceCheckBanner,
-} from '@/components/balance';
 import { RelationshipDetectorService } from '@/services/relationship-detector.service';
 
 // 헬퍼 함수: 일정 유형 라벨
@@ -48,18 +40,6 @@ const getScheduleTypeLabel = (scheduleType: string): string => {
     'all_day': '종일',
   };
   return labelMap[scheduleType] || scheduleType;
-};
-
-// 헬퍼 함수: 쿨다운 남은 시간 계산
-const getRemainingCooldown = (todoId: string, skipCooldowns: Record<string, string>): string | null => {
-  const cooldownUntil = skipCooldowns[todoId];
-  if (!cooldownUntil) return null;
-
-  const remaining = new Date(cooldownUntil).getTime() - Date.now();
-  if (remaining <= 0) return null;
-
-  const minutes = Math.ceil(remaining / 60000);
-  return `${minutes}분`;
 };
 
 interface ExecutionModeProps {
@@ -108,11 +88,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
 
-  // 균형 시스템 훅
-  const {
-    loadSettings: loadBalanceSettings,
-  } = useBalanceStore();
-
   const { resolvedTheme, setTheme } = useTheme();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
@@ -129,8 +104,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [editingCompletedTodoTitle, setEditingCompletedTodoTitle] = useState(''); // 완료 할일 편집 중인 제목
   const [isCreatingTodo, setIsCreatingTodo] = useState(false); // 할일 생성 중 플래그 (race condition 방지)
 
-  // 로딩 상태
-  const isLoadingSkips = executionMode.isLoadingSkips;
+  // 로딩 상태 (Skip DB 제거로 항상 false)
 
   // 오늘 실행 가능한 할일만 필터링
   // useLatestState: true면 getState()로 최신 상태 조회, false면 렌더링 상태 사용
@@ -239,24 +213,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setViewState('recommendation');
   }, [getTodayTodos, calculateRecommendationScore, setCurrentRecommendation, startAdhocForEmptyState]);
 
-  // 균형 시스템 초기화
-  useEffect(() => {
-    if (!userId) return;
-
-    const initBalance = async () => {
-      await loadBalanceSettings(userId);
-    };
-
-    initBalance();
-  }, [userId, loadBalanceSettings]);
-
-  // 초기 추천 로드 (skip 로딩 완료 + 세션 복원 확인 완료 후)
+  // 초기 추천 로드 (세션 복원 확인 완료 후)
   useEffect(() => {
     // 세션 복원 확인이 끝난 후에만 추천 로드
-    if (!isLoadingSkips && !isRestoringSession) {
+    if (!isRestoringSession) {
       getNextRecommendation();
     }
-  }, [isLoadingSkips, isRestoringSession]);
+  }, [isRestoringSession]);
 
   // 활성 세션 복원 (뒤로가기 후 다시 진입 시)
   // Worker 준비 완료 후에만 실행 (Worker 미준비 시 startPomodoroTimer 무시됨)
@@ -334,27 +297,29 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     }, 500);
   };
 
-  // "다른 거 추천해줘" 클릭
+  // "다른 거 추천해줘" 클릭 - 바로 다음 할일로 이동
   const handleSkipClick = () => {
-    setViewState('skip-reason');
-  };
-
-  // 사유 선택
-  const handleSkipReason = async (reason: SkipReason) => {
     const currentTodo = executionMode.currentRecommendation;
-    if (!currentTodo || isAnimating || !userId) return;
+    if (!currentTodo || isAnimating) return;
 
     setIsAnimating(true);
+    markSkipped(currentTodo.id);
 
-    // "필요 없는 할일"이면 삭제
-    if (reason === 'not_needed') {
-      // skippedTodoIds에 추가하여 즉시 추천 목록에서 제외
-      await markSkipped(currentTodo.id, reason, userId);
-      await deleteTodo(currentTodo.id);
-    } else {
-      // 기존 로직: 건너뛰기 (fire and forget)
-      await markSkipped(currentTodo.id, reason, userId);
-    }
+    // 다음 추천
+    setTimeout(() => {
+      setIsAnimating(false);
+      getNextRecommendation();
+    }, 300);
+  };
+
+  // "필요 없는 할일이야" 삭제
+  const handleDelete = async () => {
+    const currentTodo = executionMode.currentRecommendation;
+    if (!currentTodo || isAnimating) return;
+
+    setIsAnimating(true);
+    markSkipped(currentTodo.id);
+    await deleteTodo(currentTodo.id);
 
     // 다음 추천
     setTimeout(() => {
@@ -727,22 +692,14 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
                 className="overflow-hidden"
               >
                 <ul className="px-3 pb-3 space-y-1 max-h-40 overflow-y-auto">
-                  {getTodayTodos().map(todo => {
-                    // 쿨다운 남은 시간
-                    const cooldown = getRemainingCooldown(todo.id, executionMode.skipCooldowns);
-
-                    return (
-                      <li key={todo.id} className="truncate">
-                        • {todo.title}
-                        {todo.scheduleType && (
-                          <span className="text-base-content/50"> {getScheduleTypeLabel(todo.scheduleType)}</span>
-                        )}
-                        {cooldown && (
-                          <span className="text-warning ml-1">⏳{cooldown}</span>
-                        )}
-                      </li>
-                    );
-                  })}
+                  {getTodayTodos().map(todo => (
+                    <li key={todo.id} className="truncate">
+                      • {todo.title}
+                      {todo.scheduleType && (
+                        <span className="text-base-content/50"> {getScheduleTypeLabel(todo.scheduleType)}</span>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               </motion.div>
             )}
@@ -763,17 +720,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onComplete={() => handleComplete('direct')}
               onStartPomodoroWithTodo={handleStartPomodoroWithTodo}
               onSkip={handleSkipClick}
-              onDelete={() => handleSkipReason('not_needed')}
+              onDelete={handleDelete}
               onStartAdhoc={handleStartAdhoc}
-            />
-          )}
-
-          {/* 사유 선택 화면 */}
-          {viewState === 'skip-reason' && (
-            <SkipReasonView
-              key="skip-reason"
-              onSelect={handleSkipReason}
-              onCancel={() => setViewState('recommendation')}
             />
           )}
 
@@ -1007,10 +955,6 @@ function RecommendationView({
           <h2 className="text-2xl font-bold text-base-content leading-relaxed">
             {todo.title}
           </h2>
-          {/* 관계 할일 배지 */}
-          {RelationshipDetectorService.isRelationshipTodo(todo.title, todo.isRelationshipTask) && (
-            <RelationshipTagBadge size="md" />
-          )}
         </div>
 
         {/* 속성 정보: 일정 유형 */}
@@ -1098,54 +1042,6 @@ function RecommendationView({
   );
 }
 
-interface SkipReasonViewProps {
-  onSelect: (reason: SkipReason) => void;
-  onCancel: () => void;
-}
-
-function SkipReasonView({ onSelect, onCancel }: SkipReasonViewProps) {
-  const reasons: { reason: SkipReason; icon: React.ReactNode; label: string }[] = [
-    { reason: 'not_now', icon: <Ban className="w-5 h-5" />, label: '지금 상황에 안 맞아' },
-    { reason: 'too_big', icon: <Package className="w-5 h-5" />, label: '너무 큰 일이야' },
-    { reason: 'not_feeling', icon: <Frown className="w-5 h-5" />, label: '기분이 안 나' },
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="w-full max-w-sm"
-    >
-      <h3 className="text-lg font-semibold text-center mb-6">
-        왜 다른 거 할래?
-      </h3>
-
-      <div className="flex flex-col gap-3">
-        {reasons.map(({ reason, icon, label }) => (
-          <motion.button
-            key={reason}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onSelect(reason)}
-            className="btn btn-ghost btn-lg w-full rounded-2xl justify-start gap-3 border border-base-300"
-          >
-            {icon}
-            {label}
-          </motion.button>
-        ))}
-
-        <button
-          onClick={onCancel}
-          className="btn btn-ghost btn-sm mt-4 text-base-content/50"
-        >
-          취소
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
 interface CompletedTodoForBalance {
   title: string;
   isRelationshipTask?: boolean | null;
@@ -1177,17 +1073,11 @@ function CompletedAllView({ completedCount, onExit, completedTodos }: CompletedA
         대단해요!
       </h2>
 
-      <p className="text-base-content/60 mb-4">
+      <p className="text-base-content/60 mb-6">
         {completedCount > 0
           ? `오늘 ${completedCount}개를 실행했어요.`
           : '오늘 할 일을 모두 처리했어요!'}
       </p>
-
-      {/* 균형 체크 배너 */}
-      <BalanceCheckBanner
-        completedTodos={completedTodos}
-        className="mb-6 text-left"
-      />
 
       <button
         onClick={onExit}
