@@ -631,7 +631,7 @@ export default function LearningReflectionMode({ onExit }: LearningReflectionMod
         <button onClick={handleBack} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold flex-1">수집 → 명료화 → 계획</h1>
+        <h1 className="text-xl font-bold flex-1">쉬운 정리 패턴</h1>
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className="btn btn-circle btn-sm btn-ghost"
