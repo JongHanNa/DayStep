@@ -98,6 +98,6 @@
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>CFBundleDisplayName</key>
-    <string>DayStep</string>
+    <string>DevDayStep</string>
   </dict>
 </plist>

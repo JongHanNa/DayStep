@@ -30,8 +30,10 @@ import {
   HeartHandshake,
   Sun,
   Moon,
+  MoreVertical,
   type LucideIcon,
 } from 'lucide-react';
+import AddPersonModal from '../cherished/AddPersonModal';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
@@ -96,6 +98,11 @@ export default function CareMode({ onExit }: CareModeProps) {
     loadRecommendations,
     addPerson,
     addInteractionWithTodo,
+    showAddPersonModal,
+    closeAddPersonModal,
+    editingPerson,
+    openAddPersonModal,
+    deactivatePerson,
   } = useCherishedPeopleStore();
 
   const { resolvedTheme, setTheme } = useTheme();
@@ -114,6 +121,7 @@ export default function CareMode({ onExit }: CareModeProps) {
   const [viewState, setViewState] = useState<ViewState>('select-person');
   const [reminderMessage, setReminderMessage] = useState<string>('');
   const [quickRecordMode, setQuickRecordMode] = useState<QuickRecordMode>(null);
+  const [personToDelete, setPersonToDelete] = useState<CherishedPerson | null>(null);
 
   // 검색+생성 통합
   const [searchQuery, setSearchQuery] = useState('');
@@ -183,6 +191,15 @@ export default function CareMode({ onExit }: CareModeProps) {
         setSearchQuery('');
       }
     });
+  };
+
+  // 사람 삭제
+  const handleDeletePerson = async (person: CherishedPerson) => {
+    if (!userId) return;
+    await deactivatePerson(person.id, userId);
+    setPersonToDelete(null);
+    loadPeople(userId);
+    loadRecommendations(userId, 7);
   };
 
   // 타이머 완료 처리
@@ -419,18 +436,48 @@ export default function CareMode({ onExit }: CareModeProps) {
                       오래 연락 안 한 분들
                     </p>
                     {recommendations.slice(0, 3).map((rec) => (
-                      <button
+                      <div
                         key={rec.person.id}
-                        onClick={() => handleSelectPerson(rec.person)}
-                        className="w-full p-4 rounded-xl bg-amber-50 border border-amber-200 text-left hover:bg-amber-100 transition-colors"
+                        className="w-full p-4 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-lg">{rec.person.name}</span>
-                          <span className="text-sm text-amber-600">
-                            {CherishedPeopleService.formatDaysSince(rec.daysSinceLastContact)}
-                          </span>
+                          <button
+                            onClick={() => handleSelectPerson(rec.person)}
+                            className="flex-1 text-left"
+                          >
+                            <span className="font-medium text-lg">{rec.person.name}</span>
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-amber-600">
+                              {CherishedPeopleService.formatDaysSince(rec.daysSinceLastContact)}
+                            </span>
+                            <div className="dropdown dropdown-end">
+                              <button
+                                tabIndex={0}
+                                onClick={(e) => e.stopPropagation()}
+                                className="btn btn-ghost btn-xs btn-circle"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
+                                <li>
+                                  <button onClick={() => openAddPersonModal(rec.person)}>
+                                    수정
+                                  </button>
+                                </li>
+                                <li>
+                                  <button
+                                    onClick={() => setPersonToDelete(rec.person)}
+                                    className="text-error"
+                                  >
+                                    삭제
+                                  </button>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -442,16 +489,48 @@ export default function CareMode({ onExit }: CareModeProps) {
                     소중한 사람들
                   </p>
                   {people.map((person) => (
-                    <button
+                    <div
                       key={person.id}
-                      onClick={() => handleSelectPerson(person)}
-                      className="w-full p-4 rounded-xl bg-base-200 text-left hover:bg-base-300 transition-colors flex items-center justify-between"
+                      className="w-full p-4 rounded-xl bg-base-200 hover:bg-base-300 transition-colors"
                     >
-                      <span className="font-medium">{person.name}</span>
-                      {isOverdue(person) && (
-                        <span className="badge badge-warning badge-sm">오래됨</span>
-                      )}
-                    </button>
+                      <div className="flex items-center justify-between">
+                        <button
+                          onClick={() => handleSelectPerson(person)}
+                          className="flex-1 text-left"
+                        >
+                          <span className="font-medium">{person.name}</span>
+                        </button>
+                        <div className="flex items-center gap-2">
+                          {isOverdue(person) && (
+                            <span className="badge badge-warning badge-sm">오래됨</span>
+                          )}
+                          <div className="dropdown dropdown-end">
+                            <button
+                              tabIndex={0}
+                              onClick={(e) => e.stopPropagation()}
+                              className="btn btn-ghost btn-xs btn-circle"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
+                              <li>
+                                <button onClick={() => openAddPersonModal(person)}>
+                                  수정
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  onClick={() => setPersonToDelete(person)}
+                                  className="text-error"
+                                >
+                                  삭제
+                                </button>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </>
@@ -757,6 +836,45 @@ export default function CareMode({ onExit }: CareModeProps) {
           onClose={closeLimitModal}
           result={limitResult}
         />
+      )}
+
+      {/* 사람 추가/편집 모달 */}
+      {showAddPersonModal && userId && (
+        <AddPersonModal
+          userId={userId}
+          isOpen={showAddPersonModal}
+          onClose={closeAddPersonModal}
+          editingPerson={editingPerson}
+        />
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {personToDelete && (
+        <dialog open className="modal z-[130]">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">삭제 확인</h3>
+            <p className="py-4">
+              &quot;{personToDelete.name}&quot;님을 목록에서 삭제하시겠습니까?
+            </p>
+            <div className="modal-action">
+              <button
+                className="btn"
+                onClick={() => setPersonToDelete(null)}
+              >
+                취소
+              </button>
+              <button
+                className="btn btn-error"
+                onClick={() => handleDeletePerson(personToDelete)}
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setPersonToDelete(null)}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );
