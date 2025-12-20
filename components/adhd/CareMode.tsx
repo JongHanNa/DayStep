@@ -315,7 +315,7 @@ export default function CareMode({ onExit }: CareModeProps) {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-base-100 p-4 safe-area-top">
+    <div className="min-h-screen bg-base-100 p-4 safe-area-top">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         {viewState !== 'completed' && viewState !== 'select-person' && (
@@ -334,7 +334,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             <ArrowLeft className="w-5 h-5" />
           </button>
         )}
-        <h1 className="text-xl font-bold text-pink-700 flex items-center gap-2">
+        <h1 className="text-xl font-bold text-primary flex items-center gap-2">
           <Heart className="w-5 h-5" fill="currentColor" />
           소식을 기록하거나 마음 전해보기
         </h1>
@@ -364,8 +364,8 @@ export default function CareMode({ onExit }: CareModeProps) {
 
             {/* 성찰 메시지 */}
             {reminderMessage && (
-              <div className="p-4 rounded-xl bg-pink-100 border border-pink-200">
-                <p className="text-sm text-pink-700 text-center italic">
+              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                <p className="text-sm text-primary text-center italic">
                   &ldquo;{reminderMessage}&rdquo;
                 </p>
               </div>
@@ -379,7 +379,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="이름을 검색하거나 새로 추가하세요"
-                className="w-full h-12 pl-10 pr-10 rounded-xl bg-base-200 border-0 text-base placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                className="w-full h-12 pl-10 pr-10 rounded-xl bg-base-200 border-0 text-base placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               {searchQuery && (
                 <button
@@ -395,7 +395,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             {canCreateNew && (
               <button
                 onClick={handleAddNewPersonFromSearch}
-                className="w-full p-4 rounded-xl bg-pink-100 hover:bg-pink-200 text-pink-700 text-left transition-colors flex items-center gap-2"
+                className="w-full p-4 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-left transition-colors flex items-center gap-2"
               >
                 <Plus className="w-5 h-5" />
                 <span>&quot;{searchQuery}&quot;</span> 새로 추가
@@ -438,7 +438,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                     {recommendations.slice(0, 3).map((rec) => (
                       <div
                         key={rec.person.id}
-                        className="w-full p-4 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                        className="w-full p-4 rounded-xl bg-base-200 border border-warning/30 hover:bg-base-300 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <button
@@ -448,7 +448,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                             <span className="font-medium text-lg">{rec.person.name}</span>
                           </button>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-amber-600">
+                            <span className="text-sm text-base-content/60">
                               {CherishedPeopleService.formatDaysSince(rec.daysSinceLastContact)}
                             </span>
                             <div className="dropdown dropdown-end">
@@ -550,7 +550,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             {/* 선택한 사람 표시 */}
             <div className="text-center">
               <p className="text-base-content/60 text-sm">지금 생각하는 분</p>
-              <p className="text-2xl font-bold text-pink-700">
+              <p className="text-2xl font-bold text-primary">
                 {careMode.selectedPersonName}
               </p>
             </div>
@@ -571,7 +571,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                   cy="128"
                   r="120"
                   fill="none"
-                  stroke="#f3f4f6"
+                  className="stroke-base-300"
                   strokeWidth="12"
                 />
                 {/* 진행 원 */}
@@ -580,17 +580,16 @@ export default function CareMode({ onExit }: CareModeProps) {
                   cy="128"
                   r="120"
                   fill="none"
-                  stroke="#ec4899"
+                  className="stroke-primary transition-all duration-200"
                   strokeWidth="12"
                   strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 120}
                   strokeDashoffset={2 * Math.PI * 120 * (1 - progress)}
-                  className="transition-all duration-200"
                 />
               </svg>
               {/* 시간 표시 */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-bold text-pink-600">
+                <span className="text-5xl font-bold text-primary">
                   {formatTime(timerState.remainingTime)}
                 </span>
                 <span className="text-sm text-base-content/50 mt-2">
@@ -664,7 +663,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             {/* 헤더 */}
             <div className="text-center mb-6">
               <p className="text-sm text-base-content/60">기록하기</p>
-              <p className="text-xl font-bold text-pink-700">
+              <p className="text-xl font-bold text-primary">
                 {careMode.selectedPersonName}님과의 시간
               </p>
             </div>
@@ -758,7 +757,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                       onClick={() => setFeelingRating(value)}
                       className={`flex flex-col items-center p-2 rounded-lg transition-all ${
                         feelingRating === value
-                          ? 'bg-pink-100 scale-110'
+                          ? 'bg-primary/20 scale-110'
                           : 'hover:bg-base-200'
                       }`}
                     >
@@ -797,13 +796,13 @@ export default function CareMode({ onExit }: CareModeProps) {
             className="flex flex-col items-center justify-center min-h-[60vh] space-y-6"
           >
             {/* 완료 아이콘 */}
-            <div className="w-24 h-24 rounded-full bg-pink-100 flex items-center justify-center">
-              <Heart className="w-12 h-12 text-pink-500" fill="currentColor" />
+            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
+              <Heart className="w-12 h-12 text-primary" fill="currentColor" />
             </div>
 
             {/* 완료 메시지 */}
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-pink-700 mb-2">
+              <h2 className="text-2xl font-bold text-primary mb-2">
                 따뜻한 마음을 전했어요!
               </h2>
               <p className="text-base-content/70">
@@ -812,8 +811,8 @@ export default function CareMode({ onExit }: CareModeProps) {
             </div>
 
             {/* 성찰 메시지 */}
-            <div className="p-4 rounded-xl bg-pink-50 border border-pink-200 max-w-xs">
-              <p className="text-sm text-pink-700 text-center">
+            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 max-w-xs">
+              <p className="text-sm text-primary text-center">
                 관계에 투자한 시간은 절대 낭비가 아닙니다
               </p>
             </div>
