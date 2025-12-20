@@ -125,6 +125,13 @@ function runMobileBuild() {
 
       if (code === 0) {
         console.log('\n✅ 모바일 빌드가 완료되었습니다!');
+
+        // Bundle ID와 Display Name을 개발 환경용으로 업데이트
+        console.log('\n📝 Bundle Identifier 및 Display Name 업데이트 중...');
+        const { updateBundleId } = require('./update-bundle-id.js');
+        updateBundleId('com.daystep.app.dev', 'DevDayStep');
+        console.log('✅ 앱 이름이 "DevDayStep"으로 설정되었습니다.');
+
         resolve();
       } else {
         console.log('\n❌ 모바일 빌드가 실패했습니다.');
