@@ -438,7 +438,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                     {recommendations.slice(0, 3).map((rec) => (
                       <div
                         key={rec.person.id}
-                        className="w-full p-4 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950 dark:hover:bg-amber-900 transition-colors"
+                        className="w-full p-4 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <button
