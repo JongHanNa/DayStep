@@ -187,7 +187,7 @@ interface NoteStoreActions {
   reset: () => void;
   refresh: (userId: string) => Promise<void>;
 
-  // Inbox 기능 (수집→명료화→계획)
+  // Inbox 기능 (쉬운 정리 패턴)
   getInboxNotes: (userId: string) => Promise<Note[]>;
   createInboxNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
   getUnprocessedInboxNotes: () => Note[];
@@ -1259,7 +1259,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         // ============================================
-        // Inbox 기능 (수집→명료화→계획)
+        // Inbox 기능 (쉬운 정리 패턴)
         // ============================================
 
         getInboxNotes: async (userId: string) => {

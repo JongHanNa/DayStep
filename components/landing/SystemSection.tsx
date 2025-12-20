@@ -81,7 +81,7 @@ const solutions = [
   },
   {
     challenge: '기억하기 어려워요',
-    solution: '수집→명료화→계획',
+    solution: '쉬운 정리 패턴',
     description: '생각과 정보를 수집하고, 핵심을 명료화하고, 할일로 계획하세요.',
     icon: BookOpen,
     color: 'info',

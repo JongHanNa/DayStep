@@ -100,7 +100,7 @@ export interface Project {
   completed_todos: number;
   progress: number; // 0-100 (%)
 
-  // 수집→명료화→계획 플로우 (신규)
+  // 쉬운 정리 패턴 플로우 (신규)
   expected_outcome?: string;      // 기대 효과
   preparation?: string;           // 준비할 것
   source_reflection_id?: string;  // 연결된 수집 ID

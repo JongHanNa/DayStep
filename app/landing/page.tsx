@@ -276,7 +276,7 @@ export default function LandingPage() {
               </p>
             </motion.div>
 
-            {/* Feature 3 - 수집→명료화→계획 */}
+            {/* Feature 3 - 쉬운 정리 패턴 */}
             <motion.div
               variants={featureContainerVariants.item}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 space-y-4 hover:shadow-lg transition-shadow"
@@ -285,7 +285,7 @@ export default function LandingPage() {
                 <BookOpen className="w-6 h-6 text-secondary" />
               </div>
               <h3 className="text-xl font-semibold text-base-content">
-                수집→명료화→계획
+                쉬운 정리 패턴
               </h3>
               <p className="text-base-content/70">
                 생각이나 정보를 수집하고, 명료화하고, 할일을 계획하세요.

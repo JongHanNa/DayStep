@@ -41,7 +41,7 @@ interface CareModeState {
   linkedTodoId: string | null;          // 연결된 할일 ID
 }
 
-// 수집→명료화→계획 모드 상태 (구 나의 마음 챙기기)
+// 쉬운 정리 패턴 모드 상태 (구 나의 마음 챙기기)
 import type { InboxViewState, TodoDraft } from '@/types/inbox';
 export type { InboxViewState };
 export type InboxEntryType = 'reflection' | 'comfort' | 'gratitude';
@@ -94,7 +94,7 @@ interface ADHDModeState {
   // 마음 전해보기 모드 상태
   careMode: CareModeState;
 
-  // 수집→명료화→계획 모드 상태
+  // 쉬운 정리 패턴 모드 상태
   inboxMode: InboxModeState;
 
   // 사용자 설정
@@ -141,7 +141,7 @@ interface ADHDModeState {
   // === 할일 정리 모드 Actions ===
   enterTaskOrganizeMode: (userId: string) => void;
 
-  // === 수집→명료화→계획 모드 Actions ===
+  // === 쉬운 정리 패턴 모드 Actions ===
   enterInboxMode: (userId: string) => void;
   setInboxViewState: (viewState: InboxViewState) => void;
   setInboxDraft: (draft: {
@@ -466,9 +466,9 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
         },
 
-        // === 수집→명료화→계획 모드 Actions ===
+        // === 쉬운 정리 패턴 모드 Actions ===
         enterInboxMode: (userId: string) => {
-          console.log('💡 ADHD: 수집→명료화→계획 모드 진입');
+          console.log('💡 ADHD: 쉬운 정리 패턴 모드 진입');
           set({
             currentMode: 'inbox',
             currentUserId: userId,
@@ -495,7 +495,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         setInboxViewState: (viewState: InboxViewState) => {
-          console.log('💡 ADHD: 수집→명료화→계획 뷰 상태 변경', viewState);
+          console.log('💡 ADHD: 쉬운 정리 패턴 뷰 상태 변경', viewState);
           set((state) => ({
             inboxMode: {
               ...state.inboxMode,
@@ -505,7 +505,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         setInboxEntryType: (entryType: InboxEntryType) => {
-          console.log('💡 ADHD: 수집→명료화→계획 유형 선택', entryType);
+          console.log('💡 ADHD: 쉬운 정리 패턴 유형 선택', entryType);
           set((state) => ({
             inboxMode: {
               ...state.inboxMode,
@@ -559,7 +559,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         endInboxMode: () => {
-          console.log('💡 ADHD: 수집→명료화→계획 모드 종료');
+          console.log('💡 ADHD: 쉬운 정리 패턴 모드 종료');
           set({
             currentMode: 'entry',
             inboxMode: DEFAULT_INBOX_MODE,

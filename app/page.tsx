@@ -143,7 +143,7 @@ export default function HomePage() {
     return <TaskOrganizeMode onExit={handleExitExecutionMode} />;
   }
 
-  // 수집→명료화→계획 모드 (Inbox)
+  // 쉬운 정리 패턴 모드 (Inbox)
   if (currentMode === 'inbox') {
     return <InboxMode onExit={handleExitExecutionMode} />;
   }

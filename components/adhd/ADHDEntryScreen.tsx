@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Target, MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings, Crown } from 'lucide-react';
+import { MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -44,12 +44,8 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
       description: '누구에게 뭘 들었는지 기억하기 어렵죠.\n대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.'
     },
     learning: {
-      title: '수집→명료화→계획',
-      description: '생각과 정보를 수집하고,\n명료화하고, 할일을 계획하세요.'
-    },
-    execute: {
-      title: '실행과 집중',
-      description: '계획된 일과 떠오른 일을\n바로 타이머 켜고 실행할 수 있어요.'
+      title: '쉬운 정리 패턴',
+      description: '머릿속 생각을 수집하고,\n단순한 패턴으로 할일을 정리해요.'
     },
     organize: {
       title: '일정/통계',
@@ -204,16 +200,16 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             )}
           </div>
 
-          {/* 수집→명료화→계획 버튼 */}
+          {/* 쉬운 정리 패턴 버튼 */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onInbox}
-              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-orange-500 text-white border-none hover:bg-orange-600"
+              className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
             >
               <Lightbulb className="w-7 h-7" />
-              <span className="text-xl font-semibold">수집→명료화→계획</span>
+              <span className="text-xl font-semibold">쉬운 정리 패턴</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>
@@ -229,41 +225,9 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                생각과 정보를 수집하고,
+                머릿속 생각을 수집하고,
                 <br />
-                명료화하고, 할일을 계획하세요.
-              </p>
-            )}
-          </div>
-
-          {/* 실행과 집중 버튼 */}
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onExecute}
-              className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
-            >
-              <Target className="w-7 h-7" />
-              <span className="text-xl font-semibold">실행과 집중</span>
-            </motion.button>
-            {!showDescriptions && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
-                    <HelpCircle className="w-4 h-4 text-white/80" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
-                  {buttonDescriptions.execute.description}
-                </PopoverContent>
-              </Popover>
-            )}
-            {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                계획된 일과 떠오른 일을
-                <br />
-                바로 타이머 켜고 실행할 수 있어요.
+                단순한 패턴으로 할일을 정리해요.
               </p>
             )}
           </div>

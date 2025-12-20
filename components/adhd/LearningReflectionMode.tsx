@@ -32,9 +32,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import type { MoodLevel, TodoDraft } from '@/types/inbox';
-import { INBOX_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS } from '@/types/inbox';
+import type { MoodLevel, TodoDraft } from '@/types/learning-reflection';
+import { LEARNING_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS } from '@/types/learning-reflection';
+import { useProjectStore } from '@/state/stores/secondBrain/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useGoalStore } from '@/state/stores/secondBrain/goalStore';
+import type { Project } from '@/types/second-brain';
+import type { Goal } from '@/types/second-brain';
 import { useNoteStore, type Note } from '@/state/stores/noteStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useTheme } from '@/hooks/useTheme';
@@ -44,7 +48,7 @@ import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-interface InboxModeProps {
+interface LearningReflectionModeProps {
   onExit: () => void;
 }
 
@@ -68,40 +72,40 @@ const UNIFIED_TAGS = [
 ];
 
 /**
- * 쉬운 정리 패턴 모드 (Inbox Mode)
+ * 쉬운 정리 패턴 모드
  *
  * ExecutionMode처럼 타이머와 함께 기록 시간을 갖습니다.
  * 타이머 진행 중에 생각을 수집하고, 명료화하고, 할일을 계획합니다.
  */
-export default function InboxMode({ onExit }: InboxModeProps) {
+export default function LearningReflectionMode({ onExit }: LearningReflectionModeProps) {
   const { user } = useAuth();
   const userId = user?.id;
 
   const {
-    inboxMode,
-    setInboxViewState,
-    setInboxDraft,
-    resetInboxDraft,
-    endInboxMode,
+    learningReflectionMode,
+    setLearningReflectionViewState,
+    setLearningReflectionDraft,
+    resetLearningReflectionDraft,
+    endLearningReflectionMode,
     setCurrentRecommendation,
     enterExecuteMode,
   } = useADHDModeStore();
 
-  // Inbox 노트 관리 (noteStore 사용)
+  // Capture 노트 관리 (noteStore 사용)
   const {
     notes,
-    getInboxNotes,
-    createInboxNote,
-    getUnprocessedInboxNotes,
+    getCaptureNotes,
+    createCaptureNote,
+    getUnprocessedCaptureNotes,
     markNoteAsProcessed,
     pinNote,
     unpinNote,
     loading: notesLoading,
   } = useNoteStore();
 
-  // Inbox 노트만 필터링 (entries 대신 사용)
-  const inboxNotes = useMemo(() =>
-    notes.filter(note => note.note_category === 'inbox'),
+  // Capture 노트만 필터링 (entries 대신 사용)
+  const captureNotes = useMemo(() =>
+    notes.filter(note => note.note_category === 'capture'),
     [notes]
   );
 
@@ -144,16 +148,20 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     // 할일 계획 필드
     newProjectPreparation,
     todosDraft,
-  } = inboxMode;
+  } = learningReflectionMode;
 
-  // 할일 스토어
+  // 프로젝트/할일/목표 스토어
+  const { projects, fetchProjects, createProject } = useProjectStore();
+  const { goals, fetchGoals } = useGoalStore();
   const { createTodo } = useTodoStore();
 
-  // 프로젝트/목표 관련 기능 제거됨 - 빈 배열/빈 함수로 대체
-  const projects: { id: string; title: string }[] = [];
-  const goals: { id: string; title: string }[] = [];
-  // eslint-disable-next-line
-  const createProject = async (_userId: string, _data: Record<string, unknown>): Promise<{ id: string } | null> => null;
+  // 데이터 로드
+  useEffect(() => {
+    if (userId) {
+      fetchProjects(userId);
+      fetchGoals(userId);
+    }
+  }, [userId, fetchProjects, fetchGoals]);
 
   // 타이머 없이 바로 시작
   const [skipTimer, setSkipTimer] = useState(false);
@@ -161,9 +169,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 허브 화면 또는 history 뷰일 때 기록 로드
   useEffect(() => {
     if (userId && (viewState === 'history' || viewState === 'select-duration')) {
-      getInboxNotes(userId);
+      getCaptureNotes(userId);
     }
-  }, [userId, viewState, getInboxNotes]);
+  }, [userId, viewState, getCaptureNotes]);
 
   // 타이머 시작 시 - 질문 기능 제거됨 (DB 테이블 삭제)
   // 이전: loadRandomPrompt('reflection')
@@ -177,7 +185,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
   // 타이머 시작
   const handleStartTimer = () => {
-    setInboxViewState('reflection-input');
+    setLearningReflectionViewState('reflection-input');
     if (!skipTimer) {
       startPomodoroTimer(selectedDuration * 60 * 1000);
     }
@@ -186,23 +194,23 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 타이머 없이 시작
   const handleStartWithoutTimer = () => {
     setSkipTimer(true);
-    setInboxViewState('reflection-input');
+    setLearningReflectionViewState('reflection-input');
   };
 
   // 선택지 화면으로 이동 (수집 후)
   const handleGoToActionChoice = () => {
     stopTimer();
-    setInboxViewState('action-choice');
+    setLearningReflectionViewState('action-choice');
   };
 
   // 지금 바로 할래 → 할일 입력 화면
   const handleQuickTodo = () => {
-    setInboxViewState('quick-todo');
+    setLearningReflectionViewState('quick-todo');
   };
 
   // 언제 할지 정할래 → 예약 할일 화면
   const handleScheduledTodo = () => {
-    setInboxViewState('scheduled-todo');
+    setLearningReflectionViewState('scheduled-todo');
   };
 
   // 저장만 할래 → 바로 저장 후 completed 화면
@@ -213,7 +221,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     try {
       // 기분/태그 없이 바로 저장
       await saveEntry();
-      setInboxViewState('completed');
+      setLearningReflectionViewState('completed');
     } catch (error) {
       console.error('저장 실패:', error);
     } finally {
@@ -294,7 +302,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       }
 
       // 4. 완료 화면으로 이동
-      setInboxViewState('completed');
+      setLearningReflectionViewState('completed');
     } catch (error) {
       console.error('예약 할일 생성 실패:', error);
     } finally {
@@ -305,19 +313,19 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 과제 없이 끝내기
   const handleFinishWithoutProject = async () => {
     await saveEntry();
-    setInboxViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 할일 없이 끝내기
   const handleFinishWithoutTodos = async () => {
     await saveEntryAndProject();
-    setInboxViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 전체 완료 (할일까지)
   const handleCompleteAll = async () => {
     await saveEntryAndProjectAndTodos();
-    setInboxViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 할일 초안 추가
@@ -328,26 +336,26 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       scheduledDate: format(new Date(), 'yyyy-MM-dd'),
       scheduledTime: null,
     };
-    setInboxDraft({ todosDraft: [...todosDraft, newTodo] });
+    setLearningReflectionDraft({ todosDraft: [...todosDraft, newTodo] });
   };
 
   // 할일 초안 수정
   const handleUpdateTodoDraft = (id: string, updates: Partial<TodoDraft>) => {
-    setInboxDraft({
+    setLearningReflectionDraft({
       todosDraft: todosDraft.map(t => t.id === id ? { ...t, ...updates } : t),
     });
   };
 
   // 할일 초안 삭제
   const handleRemoveTodoDraft = (id: string) => {
-    setInboxDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
+    setLearningReflectionDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
   };
 
-  // 수집 저장 (notes 테이블에 inbox로 저장)
+  // 수집 저장 (notes 테이블에 capture로 저장)
   const saveEntry = async () => {
     if (!userId || !draftContent.trim()) return null;
 
-    const note = await createInboxNote({
+    const note = await createCaptureNote({
       content: draftContent.trim(),
       source_text: draftSourceText.trim() || null,
       source_reference: draftSourceReference.trim() || null,
@@ -432,7 +440,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     }
 
     await saveEntry();
-    setInboxViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 할일 없이 저장 (프로젝트 + 기록만)
@@ -453,7 +461,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     }
 
     await saveEntry();
-    setInboxViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 생성된 프로젝트 이름 (완료 화면용)
@@ -468,20 +476,20 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 타이머 완료 처리
   const handleTimerComplete = useCallback(() => {
     stopTimer();
-    setInboxViewState('capture');
-  }, [stopTimer, setInboxViewState]);
+    setLearningReflectionViewState('capture');
+  }, [stopTimer, setLearningReflectionViewState]);
 
   // 타이머 드래그로 완료
   const handleDragComplete = () => {
     stopTimer();
-    setInboxViewState('capture');
+    setLearningReflectionViewState('capture');
   };
 
   // 타이머 중지 (뒤로가기)
   const handleStopTimer = () => {
     stopTimer();
-    resetInboxDraft();
-    setInboxViewState('select-duration');
+    resetLearningReflectionDraft();
+    setLearningReflectionViewState('select-duration');
   };
 
   // 시간 조정
@@ -495,7 +503,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
     setIsSaving(true);
     try {
-      await createInboxNote({
+      await createCaptureNote({
         user_id: userId,
         content: draftContent.trim(),
         source_text: draftSourceText.trim() || null,
@@ -504,10 +512,10 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         is_pinned: false,
       });
 
-      resetInboxDraft();
+      resetLearningReflectionDraft();
       setMoodRating(null);
       setSelectedTags([]);
-      setInboxViewState('completed');
+      setLearningReflectionViewState('completed');
     } catch (error) {
       console.error('기록 저장 실패:', error);
     } finally {
@@ -517,10 +525,10 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
   // 저장 건너뛰기
   const handleSkipSave = () => {
-    resetInboxDraft();
+    resetLearningReflectionDraft();
     setMoodRating(null);
     setSelectedTags([]);
-    setInboxViewState('completed');
+    setLearningReflectionViewState('completed');
   };
 
   // 뒤로가기 처리
@@ -530,24 +538,24 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         handleStopTimer();
         break;
       case 'action-choice':
-        setInboxViewState('reflection-input');
+        setLearningReflectionViewState('reflection-input');
         break;
       case 'quick-todo':
       case 'scheduled-todo':
-        setInboxViewState('action-choice');
+        setLearningReflectionViewState('action-choice');
         break;
       case 'capture':
-        setInboxViewState('action-choice');
+        setLearningReflectionViewState('action-choice');
         break;
       case 'history':
-        setInboxViewState('select-duration');
+        setLearningReflectionViewState('select-duration');
         break;
       case 'completed':
-        endInboxMode();
+        endLearningReflectionMode();
         onExit();
         break;
       default:
-        endInboxMode();
+        endLearningReflectionMode();
         onExit();
     }
   };
@@ -579,15 +587,15 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 타이머 시간 선택 화면 (쉬운 정리 패턴)
   // 미처리 수집 목록 (is_processed가 false인 것만 전체 표시)
   const unprocessedEntries = useMemo(() => {
-    return inboxNotes.filter(note => !note.is_processed);
-  }, [inboxNotes]);
+    return captureNotes.filter(note => !note.is_processed);
+  }, [captureNotes]);
 
   // "실행과 집중으로 가기" 핸들러
   const handleGoToExecute = useCallback(() => {
     if (!userId) return;
-    endInboxMode();
+    endLearningReflectionMode();
     enterExecuteMode(userId);
-  }, [userId, endInboxMode, enterExecuteMode]);
+  }, [userId, endLearningReflectionMode, enterExecuteMode]);
 
   // "새로 수집하기" 핸들러 (기본 10분 타이머로 바로 시작)
   const handleStartNewCollection = useCallback(() => {
@@ -601,15 +609,15 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     // 해당 수집의 노트 ID 저장 (할일 생성 후 처리됨으로 표시하기 위해)
     setSelectedNoteId(note.id);
     // 해당 수집의 내용을 draft에 로드
-    setInboxDraft({
+    setLearningReflectionDraft({
       content: note.content,
       sourceText: note.source_text || '',
       sourceReference: note.source_reference || '',
       experience: '', // Note에는 experience 필드가 없음
     });
     // action-choice 화면으로 이동
-    setInboxViewState('action-choice');
-  }, [setInboxDraft, setInboxViewState]);
+    setLearningReflectionViewState('action-choice');
+  }, [setLearningReflectionDraft, setLearningReflectionViewState]);
 
   const renderSelectDurationView = () => (
     <motion.div
@@ -703,7 +711,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
         {/* 전체 기록 보기 */}
         <button
-          onClick={() => setInboxViewState('history')}
+          onClick={() => setLearningReflectionViewState('history')}
           className="btn btn-ghost gap-2 w-full"
         >
           <History className="w-5 h-5" />
@@ -800,13 +808,13 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           {/* 1. 떠오른 것 (필수) - 메인 필드 */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {INBOX_FIELD_LABELS.content.label}{' '}
-              {INBOX_FIELD_LABELS.content.required && <span className="text-amber-500">*</span>}
+              {LEARNING_FIELD_LABELS.content.label}{' '}
+              {LEARNING_FIELD_LABELS.content.required && <span className="text-amber-500">*</span>}
             </label>
             <textarea
               value={draftContent}
-              onChange={(e) => setInboxDraft({ content: e.target.value })}
-              placeholder={INBOX_FIELD_LABELS.content.placeholder}
+              onChange={(e) => setLearningReflectionDraft({ content: e.target.value })}
+              placeholder={LEARNING_FIELD_LABELS.content.placeholder}
               className="textarea textarea-bordered w-full h-32 resize-none"
               autoFocus
             />
@@ -815,14 +823,14 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           {/* 2. 출처 (선택) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {INBOX_FIELD_LABELS.sourceReference.label}{' '}
+              {LEARNING_FIELD_LABELS.sourceReference.label}{' '}
               <span className="text-base-content/40">(선택)</span>
             </label>
             <input
               type="text"
               value={draftSourceReference}
-              onChange={(e) => setInboxDraft({ sourceReference: e.target.value })}
-              placeholder={INBOX_FIELD_LABELS.sourceReference.placeholder}
+              onChange={(e) => setLearningReflectionDraft({ sourceReference: e.target.value })}
+              placeholder={LEARNING_FIELD_LABELS.sourceReference.placeholder}
               className="input input-bordered w-full"
             />
           </div>
@@ -836,12 +844,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
               {/* 상세 내용 */}
               <div>
                 <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                  {INBOX_FIELD_LABELS.sourceText.label}
+                  {LEARNING_FIELD_LABELS.sourceText.label}
                 </label>
                 <textarea
                   value={draftSourceText}
-                  onChange={(e) => setInboxDraft({ sourceText: e.target.value })}
-                  placeholder={INBOX_FIELD_LABELS.sourceText.placeholder}
+                  onChange={(e) => setLearningReflectionDraft({ sourceText: e.target.value })}
+                  placeholder={LEARNING_FIELD_LABELS.sourceText.placeholder}
                   className="textarea textarea-bordered w-full h-20 resize-none"
                 />
               </div>
@@ -849,12 +857,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
               {/* 관련 경험 */}
               <div>
                 <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                  {INBOX_FIELD_LABELS.experience.label}
+                  {LEARNING_FIELD_LABELS.experience.label}
                 </label>
                 <textarea
                   value={draftExperience}
-                  onChange={(e) => setInboxDraft({ experience: e.target.value })}
-                  placeholder={INBOX_FIELD_LABELS.experience.placeholder}
+                  onChange={(e) => setLearningReflectionDraft({ experience: e.target.value })}
+                  placeholder={LEARNING_FIELD_LABELS.experience.placeholder}
                   className="textarea textarea-bordered w-full h-20 resize-none"
                 />
               </div>
@@ -890,7 +898,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setInboxViewState('reflection-input')}
+            onClick={() => setLearningReflectionViewState('reflection-input')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -961,7 +969,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setInboxViewState('action-choice')}
+            onClick={() => setLearningReflectionViewState('action-choice')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1030,7 +1038,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setInboxViewState('action-choice')}
+            onClick={() => setLearningReflectionViewState('action-choice')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1123,7 +1131,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       >
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setInboxViewState('reflection-input')} className="btn btn-ghost btn-circle">
+          <button onClick={() => setLearningReflectionViewState('reflection-input')} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-xl font-bold">마음 돌봄 완료!</h1>
@@ -1263,15 +1271,15 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           <div className="flex gap-3">
             <button
               onClick={() => {
-                resetInboxDraft();
-                setInboxViewState('select-duration');
+                resetLearningReflectionDraft();
+                setLearningReflectionViewState('select-duration');
               }}
               className="btn btn-ghost flex-1"
             >
               처음으로
             </button>
             <button
-              onClick={() => setInboxViewState('history')}
+              onClick={() => setLearningReflectionViewState('history')}
               className="btn btn-outline flex-1"
             >
               과거 기록 보기
@@ -1279,7 +1287,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           </div>
           <button
             onClick={() => {
-              endInboxMode();
+              endLearningReflectionMode();
               onExit();
             }}
             className="btn btn-primary w-full"
@@ -1301,7 +1309,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     >
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 border-b border-base-300">
-        <button onClick={() => setInboxViewState('select-duration')} className="btn btn-ghost btn-circle">
+        <button onClick={() => setLearningReflectionViewState('select-duration')} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold">과거 기록</h1>
@@ -1309,12 +1317,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
       {/* 기록 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 mobile-container">
-        {inboxNotes.length === 0 ? (
+        {captureNotes.length === 0 ? (
           <div className="text-center text-base-content/50 py-10">
             아직 기록이 없어요
           </div>
         ) : (
-          inboxNotes.map(note => (
+          captureNotes.map(note => (
             <motion.div
               key={note.id}
               initial={{ opacity: 0, y: 10 }}
