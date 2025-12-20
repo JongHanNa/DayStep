@@ -29,6 +29,8 @@ import {
   Moon,
   Target,
   PenLine,
+  MoreVertical,
+  Pencil,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -96,6 +98,8 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     markNoteAsProcessed,
     pinNote,
     unpinNote,
+    updateNote,
+    deleteNote,
     loading: notesLoading,
   } = useNoteStore();
 
@@ -128,6 +132,13 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   const [scheduledDate, setScheduledDate] = useState(''); // 예약 날짜
   const [scheduledTime, setScheduledTime] = useState(''); // 예약 시간
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null); // 기존 수집에서 할일 만들기 시 해당 노트 ID
+
+  // 편집/삭제 모달 상태
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [editSourceText, setEditSourceText] = useState('');
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const {
     viewState,
@@ -306,6 +317,71 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   const handleFinishWithoutProject = async () => {
     await saveEntry();
     setInboxViewState('completed');
+  };
+
+  // ============================================
+  // 노트 편집/삭제 핸들러
+  // ============================================
+
+  // 편집 모달 열기
+  const handleOpenEditModal = (note: Note) => {
+    setEditingNote(note);
+    setEditContent(note.content || '');
+    setEditSourceText(note.source_text || '');
+    setOpenDropdownId(null);
+  };
+
+  // 편집 저장
+  const handleSaveEdit = async () => {
+    if (!editingNote || !editContent.trim()) return;
+
+    try {
+      await updateNote({
+        id: editingNote.id,
+        content: editContent.trim(),
+        source_text: editSourceText.trim() || null,
+      });
+      setEditingNote(null);
+      setEditContent('');
+      setEditSourceText('');
+    } catch (error) {
+      console.error('노트 수정 실패:', error);
+    }
+  };
+
+  // 편집 모달 닫기
+  const handleCloseEditModal = () => {
+    setEditingNote(null);
+    setEditContent('');
+    setEditSourceText('');
+  };
+
+  // 삭제 확인 모달 열기
+  const handleOpenDeleteModal = (noteId: string) => {
+    setDeletingNoteId(noteId);
+    setOpenDropdownId(null);
+  };
+
+  // 삭제 실행
+  const handleConfirmDelete = async () => {
+    if (!deletingNoteId) return;
+
+    try {
+      await deleteNote(deletingNoteId);
+      setDeletingNoteId(null);
+    } catch (error) {
+      console.error('노트 삭제 실패:', error);
+    }
+  };
+
+  // 삭제 모달 닫기
+  const handleCloseDeleteModal = () => {
+    setDeletingNoteId(null);
+  };
+
+  // 드롭다운 토글
+  const handleToggleDropdown = (noteId: string) => {
+    setOpenDropdownId(prev => prev === noteId ? null : noteId);
   };
 
   // 할일 없이 끝내기
@@ -695,6 +771,33 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                     <ListTodo className="w-4 h-4" />
                     <span className="hidden sm:inline">할일 만들기</span>
                   </button>
+                  {/* 드롭다운 메뉴 */}
+                  <div className="relative">
+                    <button
+                      onClick={() => handleToggleDropdown(entry.id)}
+                      className="btn btn-sm btn-ghost btn-circle"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                    {openDropdownId === entry.id && (
+                      <div className="absolute right-0 top-full mt-1 w-32 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
+                        <button
+                          onClick={() => handleOpenEditModal(entry)}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
+                        >
+                          <Pencil className="w-4 h-4" />
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleOpenDeleteModal(entry.id)}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-b-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          삭제
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1330,19 +1433,48 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                     <span className="text-xs text-base-content/50">
                       {format(new Date(note.linked_date || note.created_at), 'M월 d일 (EEE)', { locale: ko })}
                     </span>
-                    <button
-                      onClick={() => {
-                        if (!userId) return;
-                        if (note.is_pinned) {
-                          unpinNote(note.id);
-                        } else {
-                          pinNote(note.id);
-                        }
-                      }}
-                      className={`btn btn-ghost btn-xs ${note.is_pinned ? 'text-yellow-500' : 'text-base-content/30'}`}
-                    >
-                      <Star className="w-4 h-4" fill={note.is_pinned ? 'currentColor' : 'none'} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          if (!userId) return;
+                          if (note.is_pinned) {
+                            unpinNote(note.id);
+                          } else {
+                            pinNote(note.id);
+                          }
+                        }}
+                        className={`btn btn-ghost btn-xs ${note.is_pinned ? 'text-yellow-500' : 'text-base-content/30'}`}
+                      >
+                        <Star className="w-4 h-4" fill={note.is_pinned ? 'currentColor' : 'none'} />
+                      </button>
+                      {/* 드롭다운 메뉴 */}
+                      <div className="relative">
+                        <button
+                          onClick={() => handleToggleDropdown(note.id)}
+                          className="btn btn-ghost btn-xs"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                        {openDropdownId === note.id && (
+                          <div className="absolute right-0 top-full mt-1 w-32 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
+                            <button
+                              onClick={() => handleOpenEditModal(note)}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
+                            >
+                              <Pencil className="w-4 h-4" />
+                              수정
+                            </button>
+                            <button
+                              onClick={() => handleOpenDeleteModal(note.id)}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-b-lg"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   {note.source_text && (
                     <p className="text-sm text-base-content/70 italic mb-1 line-clamp-2">
@@ -1379,6 +1511,87 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           onClose={closeLimitModal}
           result={limitResult}
         />
+      )}
+
+      {/* 편집 모달 */}
+      {editingNote && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">수집 수정</h3>
+              <button
+                onClick={handleCloseEditModal}
+                className="btn btn-ghost btn-circle btn-sm"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                  떠오른 것 <span className="text-amber-500">*</span>
+                </label>
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="textarea textarea-bordered w-full h-24"
+                  placeholder="내용을 입력하세요"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                  상세 내용
+                </label>
+                <textarea
+                  value={editSourceText}
+                  onChange={(e) => setEditSourceText(e.target.value)}
+                  className="textarea textarea-bordered w-full h-20"
+                  placeholder="상세 내용 (선택)"
+                />
+              </div>
+            </div>
+            <div className="modal-action">
+              <button onClick={handleCloseEditModal} className="btn btn-ghost">
+                취소
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={!editContent.trim()}
+                className="btn btn-primary"
+              >
+                저장
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={handleCloseEditModal}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {deletingNoteId && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-sm">
+            <h3 className="font-bold text-lg mb-2">삭제 확인</h3>
+            <p className="text-base-content/70">
+              이 수집을 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-error">삭제된 수집은 복구할 수 없습니다.</span>
+            </p>
+            <div className="modal-action">
+              <button onClick={handleCloseDeleteModal} className="btn btn-ghost">
+                취소
+              </button>
+              <button onClick={handleConfirmDelete} className="btn btn-error">
+                삭제
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={handleCloseDeleteModal}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );
