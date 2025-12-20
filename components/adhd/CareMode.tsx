@@ -364,8 +364,8 @@ export default function CareMode({ onExit }: CareModeProps) {
 
             {/* 성찰 메시지 */}
             {reminderMessage && (
-              <div className="p-4 rounded-xl bg-base-200">
-                <p className="text-sm text-base-content/80 text-center italic">
+              <div className="p-4 rounded-xl bg-sky-50 dark:bg-sky-950">
+                <p className="text-sm text-sky-700 dark:text-sky-300 text-center italic">
                   &ldquo;{reminderMessage}&rdquo;
                 </p>
               </div>
@@ -395,7 +395,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             {canCreateNew && (
               <button
                 onClick={handleAddNewPersonFromSearch}
-                className="w-full p-4 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-left transition-colors flex items-center gap-2"
+                className="w-full p-4 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950 dark:hover:bg-sky-900 text-sky-700 dark:text-sky-300 text-left transition-colors flex items-center gap-2"
               >
                 <Plus className="w-5 h-5" />
                 <span>&quot;{searchQuery}&quot;</span> 새로 추가
@@ -438,7 +438,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                     {recommendations.slice(0, 3).map((rec) => (
                       <div
                         key={rec.person.id}
-                        className="w-full p-4 rounded-xl bg-base-200 hover:bg-base-300 transition-colors"
+                        className="w-full p-4 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950 dark:hover:bg-amber-900 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <button
