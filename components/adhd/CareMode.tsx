@@ -364,8 +364,8 @@ export default function CareMode({ onExit }: CareModeProps) {
 
             {/* 성찰 메시지 */}
             {reminderMessage && (
-              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-                <p className="text-sm text-primary text-center italic">
+              <div className="p-4 rounded-xl bg-base-200">
+                <p className="text-sm text-base-content/80 text-center italic">
                   &ldquo;{reminderMessage}&rdquo;
                 </p>
               </div>
@@ -438,7 +438,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                     {recommendations.slice(0, 3).map((rec) => (
                       <div
                         key={rec.person.id}
-                        className="w-full p-4 rounded-xl bg-base-200 border border-warning/30 hover:bg-base-300 transition-colors"
+                        className="w-full p-4 rounded-xl bg-base-200 hover:bg-base-300 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <button
@@ -770,7 +770,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             </div>
 
             {/* 저장 버튼 */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-base-100 to-transparent">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-base-100">
               <button
                 onClick={handleSave}
                 disabled={isSaving}
@@ -811,8 +811,8 @@ export default function CareMode({ onExit }: CareModeProps) {
             </div>
 
             {/* 성찰 메시지 */}
-            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 max-w-xs">
-              <p className="text-sm text-primary text-center">
+            <div className="p-4 rounded-xl bg-base-200 max-w-xs">
+              <p className="text-sm text-base-content/80 text-center">
                 관계에 투자한 시간은 절대 낭비가 아닙니다
               </p>
             </div>
