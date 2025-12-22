@@ -194,8 +194,8 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
       </div>
 
       {/* 안내 문구 */}
-      <div className="bg-blue-50 rounded-lg p-3 mb-4">
-        <p className="text-sm text-blue-700">
+      <div className="bg-info/10 rounded-lg p-3 mb-4">
+        <p className="text-sm text-info">
           다음 연락 시 대화 소재로 활용해보세요
         </p>
       </div>
@@ -210,9 +210,9 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
         // 특정 사람 선택 시
         <div className="space-y-3">
           {notes.map(({ interaction, person }) => (
-            <div key={interaction.id} className="bg-blue-50 rounded-xl p-4">
+            <div key={interaction.id} className="bg-info/10 rounded-xl p-4">
               <div className="flex items-start gap-3">
-                <MessageCircle className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                <MessageCircle className="w-5 h-5 text-info mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-base-content">{interaction.recent_news}</p>
                   <p className="text-xs text-base-content/60 mt-2">
@@ -265,8 +265,8 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
                 onClick={() => setSelectedPersonId(personId)}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-full bg-info/20 flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-info" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
@@ -317,7 +317,7 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
                       {latestNote.interaction.recent_news}
                     </p>
                     {personNotes.length > 1 && (
-                      <p className="text-xs text-blue-600 mt-2">
+                      <p className="text-xs text-info mt-2">
                         +{personNotes.length - 1}개의 소식 더 있음
                       </p>
                     )}
