@@ -8,10 +8,10 @@ const ThemeBridge = registerPlugin<ThemeBridgePlugin>('ThemeBridge', {
 export * from './definitions';
 export { ThemeBridge };
 
-// 테마별 배경색 상수
+// 테마별 배경색 상수 (globals.css의 --color-base-100과 일치)
 export const THEME_BACKGROUND_COLORS = {
-  light: '#f5f5f7', // bg-base-200 라이트모드
-  dark: '#121212',  // bg-base-200 다크모드 (--color-base-200)
+  light: '#ffffff', // bg-base-100 라이트모드
+  dark: '#121212',  // bg-base-100 다크모드
 } as const;
 
 /**
