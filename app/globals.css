@@ -181,6 +181,12 @@ html, body {
   @apply bg-base-200;
 }
 
+/* 다크모드 배경색 - iOS Capacitor overscroll(고무줄 효과) 대응 */
+html.dark,
+[data-theme="dark"] {
+  background-color: #121212 !important; /* --color-base-200 다크모드 값 */
+}
+
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;  /* Chrome/Safari/Opera */

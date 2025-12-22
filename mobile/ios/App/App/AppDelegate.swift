@@ -37,10 +37,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
 
-        // iOS 고무줄 효과(bounce scrolling) 활성화
+        // iOS 고무줄 효과(bounce scrolling) 활성화 + 배경색 초기화
         if let rootVC = window?.rootViewController as? CAPBridgeViewController {
             rootVC.webView?.scrollView.bounces = true
             rootVC.webView?.scrollView.alwaysBounceVertical = true
+
+            // 다크모드 overscroll 대응: 초기 배경색 설정
+            // 실제 테마는 JavaScript에서 ThemeBridgePlugin을 통해 업데이트됨
+            // 여기서는 시스템 다크모드를 기준으로 초기값 설정 (깜빡임 방지)
+            if #available(iOS 13.0, *) {
+                let isDark = UITraitCollection.current.userInterfaceStyle == .dark
+                let bgColor = isDark
+                    ? UIColor(red: 0.071, green: 0.071, blue: 0.071, alpha: 1) // #121212
+                    : UIColor(red: 0.961, green: 0.961, blue: 0.965, alpha: 1) // #f5f5f7
+                rootVC.webView?.backgroundColor = bgColor
+                rootVC.webView?.scrollView.backgroundColor = bgColor
+            }
         }
     }
 

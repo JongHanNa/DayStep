@@ -3,6 +3,7 @@
 import { ThemeContext, Theme, ThemeContextType } from '@/hooks/useTheme';
 import { useEffect, useState } from 'react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
+import { syncWebViewBackgroundColor } from '@/lib/capacitor/theme-bridge';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -50,6 +51,9 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
     root.classList.remove('light', 'dark');
     root.classList.add(effectiveTheme);
     root.setAttribute('data-theme', effectiveTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
+
+    // iOS Capacitor: WebView 배경색 동기화 (overscroll 고무줄 효과 대응)
+    syncWebViewBackgroundColor(effectiveTheme);
   }, [theme]);
 
   // 컬러 테마 적용
@@ -73,6 +77,9 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
       root.classList.remove('light', 'dark');
       root.classList.add(systemTheme);
       root.setAttribute('data-theme', systemTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
+
+      // iOS Capacitor: WebView 배경색 동기화
+      syncWebViewBackgroundColor(systemTheme);
     };
 
     mediaQuery.addEventListener('change', handleChange);

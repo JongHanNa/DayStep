@@ -17,6 +17,7 @@ def capacitor_pods
   pod 'CapacitorCommunityContacts', :path => '../../../node_modules/@capacitor-community/contacts'
   pod 'DaystepWidgetBridge', :path => '../../../plugins/widget-bridge'
   pod 'DaystepContactGroups', :path => '../../../plugins/contact-groups'
+  pod 'DaystepThemeBridge', :path => '../../../plugins/theme-bridge'
   pod 'RevenuecatPurchasesCapacitor', :path => '../../../node_modules/@revenuecat/purchases-capacitor'
 end
 

@@ -27,6 +27,8 @@ PODS:
     - GoogleSignIn (~> 9.0.0)
   - DaystepContactGroups (1.0.0):
     - Capacitor
+  - DaystepThemeBridge (1.0.0):
+    - Capacitor
   - DaystepWidgetBridge (1.0.0):
     - Capacitor
   - FBAEMKit (18.0.0):
@@ -71,6 +73,7 @@ DEPENDENCIES:
   - "CapacitorPreferences (from `../../../node_modules/@capacitor/preferences`)"
   - "CapgoCapacitorSocialLogin (from `../../../node_modules/@capgo/capacitor-social-login`)"
   - DaystepContactGroups (from `../../../plugins/contact-groups`)
+  - DaystepThemeBridge (from `../../../plugins/theme-bridge`)
   - DaystepWidgetBridge (from `../../../plugins/widget-bridge`)
   - "RevenuecatPurchasesCapacitor (from `../../../node_modules/@revenuecat/purchases-capacitor`)"
 
@@ -106,6 +109,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/@capgo/capacitor-social-login"
   DaystepContactGroups:
     :path: "../../../plugins/contact-groups"
+  DaystepThemeBridge:
+    :path: "../../../plugins/theme-bridge"
   DaystepWidgetBridge:
     :path: "../../../plugins/widget-bridge"
   RevenuecatPurchasesCapacitor:
@@ -122,6 +127,7 @@ SPEC CHECKSUMS:
   CapacitorPreferences: 65107ed7437d96ee72583df5763985e3c0ff2bc2
   CapgoCapacitorSocialLogin: 69da761a79fedeff6583fcf0bf7543e9c10ad622
   DaystepContactGroups: a011a2485160d95f6526be712f6105f463772a93
+  DaystepThemeBridge: 9dbb8559fb4d8166d93c7585b3540d424f1fbcd4
   DaystepWidgetBridge: aa48b1c8c994c9e9f210c8605a8228568b2b4c27
   FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
   FBSDKCoreKit: d3f479a69127acebb1c6aad91c1a33907bcf6c2f
@@ -136,6 +142,6 @@ SPEC CHECKSUMS:
   RevenueCat: 1e61140a343a77dc286f171b3ffab99ca09a4b57
   RevenuecatPurchasesCapacitor: 2c14f8cccaa2100a8585e75bec5984a62ccae52c
 
-PODFILE CHECKSUM: 32caec9381cbdec34687dfae4951445bc31030ea
+PODFILE CHECKSUM: 206a9bc96cd4ac162988133e3666fe7ac72ddc22
 
 COCOAPODS: 1.16.2

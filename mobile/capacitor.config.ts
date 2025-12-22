@@ -85,6 +85,7 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     "@capacitor-community/contacts",
     "@daystep/widget-bridge",
     "@daystep/contact-groups",
+    "@daystep/theme-bridge", // 다크모드 WebView 배경색 동기화
     "@revenuecat/purchases-capacitor" // Revenue Cat 구독 결제 플러그인
   ],
   // 커뮤니티 연락처 플러그인 + 로컬 ContactGroups 플러그인 + Revenue Cat 동시 사용
@@ -95,7 +96,8 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     "ContactsPlugin",
     "WidgetBridgePlugin",
     "ContactGroupsPlugin",
-    "PurchasesPlugin" // Revenue Cat 클래스
+    "PurchasesPlugin", // Revenue Cat 클래스
+    "ThemeBridgePlugin" // 다크모드 WebView 배경색 동기화
   ],
 };
 
