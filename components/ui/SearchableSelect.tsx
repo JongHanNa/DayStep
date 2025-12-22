@@ -102,7 +102,7 @@ export function SearchableSelect({
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg z-50 overflow-hidden">
           {/* 검색 입력 */}
-          <div className="p-2 border-b border-base-200">
+          <div className="p-2 border-b border-base-300">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
               <input

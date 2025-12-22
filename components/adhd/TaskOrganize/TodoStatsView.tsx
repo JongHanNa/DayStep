@@ -113,7 +113,7 @@ export function TodoStatsView({ userId }: TodoStatsViewProps) {
       </div>
 
       {/* 요일별 완료 차트 */}
-      <div className="bg-base-100 rounded-xl border border-base-200 p-4">
+      <div className="bg-base-200 rounded-xl border border-base-300 p-4">
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="w-5 h-5 text-info" />
           <span className="font-semibold">요일별 완료</span>
@@ -149,7 +149,7 @@ export function TodoStatsView({ userId }: TodoStatsViewProps) {
       </div>
 
       {/* 시간대별 패턴 */}
-      <div className="bg-base-100 rounded-xl border border-base-200 p-4">
+      <div className="bg-base-200 rounded-xl border border-base-300 p-4">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="w-5 h-5 text-warning" />
           <span className="font-semibold">시간대별 패턴</span>
@@ -187,7 +187,7 @@ export function TodoStatsView({ userId }: TodoStatsViewProps) {
 
       {/* 목표별 진행률 */}
       {goalProgress.length > 0 && (
-        <div className="bg-base-100 rounded-xl border border-base-200 p-4">
+        <div className="bg-base-200 rounded-xl border border-base-300 p-4">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-5 h-5 text-success" />
             <span className="font-semibold">목표별 진행률</span>

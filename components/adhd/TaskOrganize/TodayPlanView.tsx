@@ -167,7 +167,7 @@ export function TodayPlanView({ userId }: TodayPlanViewProps) {
   return (
     <div className="p-4 space-y-4">
       {/* 오늘 섹션 */}
-      <div className="bg-base-100 rounded-xl border border-base-200">
+      <div className="bg-base-200 rounded-xl border border-base-300">
         <button
           onClick={() => setExpandedSection(expandedSection === 'today' ? null : 'today')}
           className="w-full flex items-center justify-between p-4"
@@ -196,7 +196,7 @@ export function TodayPlanView({ userId }: TodayPlanViewProps) {
       </div>
 
       {/* 내일 섹션 */}
-      <div className="bg-base-100 rounded-xl border border-base-200">
+      <div className="bg-base-200 rounded-xl border border-base-300">
         <button
           onClick={() => setExpandedSection(expandedSection === 'tomorrow' ? null : 'tomorrow')}
           className="w-full flex items-center justify-between p-4"

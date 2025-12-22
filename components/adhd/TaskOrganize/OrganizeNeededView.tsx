@@ -100,8 +100,8 @@ export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
 
       {/* 프로젝트 없는 할일 */}
       {orphanTodos.length > 0 && (
-        <div className="bg-base-100 rounded-xl border border-base-200">
-          <div className="flex items-center gap-2 p-4 border-b border-base-200">
+        <div className="bg-base-200 rounded-xl border border-base-300">
+          <div className="flex items-center gap-2 p-4 border-b border-base-300">
             <FolderOpen className="w-5 h-5 text-info" />
             <span className="font-semibold">프로젝트 없는 할일</span>
             <span className="badge badge-sm badge-info">{orphanTodos.length}</span>
@@ -124,8 +124,8 @@ export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
 
       {/* 날짜 없는 할일 */}
       {undatedTodos.length > 0 && (
-        <div className="bg-base-100 rounded-xl border border-base-200">
-          <div className="flex items-center gap-2 p-4 border-b border-base-200">
+        <div className="bg-base-200 rounded-xl border border-base-300">
+          <div className="flex items-center gap-2 p-4 border-b border-base-300">
             <Inbox className="w-5 h-5 text-warning" />
             <span className="font-semibold">날짜 없는 할일</span>
             <span className="badge badge-sm badge-warning">{undatedTodos.length}</span>
@@ -155,8 +155,8 @@ export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
 
       {/* 목표 없는 프로젝트 */}
       {orphanProjects.length > 0 && (
-        <div className="bg-base-100 rounded-xl border border-base-200">
-          <div className="flex items-center gap-2 p-4 border-b border-base-200">
+        <div className="bg-base-200 rounded-xl border border-base-300">
+          <div className="flex items-center gap-2 p-4 border-b border-base-300">
             <Target className="w-5 h-5 text-secondary" />
             <span className="font-semibold">목표 없는 프로젝트</span>
             <span className="badge badge-sm badge-secondary">{orphanProjects.length}</span>
@@ -178,8 +178,8 @@ export function OrganizeNeededView({ userId }: OrganizeNeededViewProps) {
 
       {/* 할일 없는 프로젝트 */}
       {emptyProjects.length > 0 && (
-        <div className="bg-base-100 rounded-xl border border-base-200">
-          <div className="flex items-center gap-2 p-4 border-b border-base-200">
+        <div className="bg-base-200 rounded-xl border border-base-300">
+          <div className="flex items-center gap-2 p-4 border-b border-base-300">
             <FolderOpen className="w-5 h-5 text-base-content/50" />
             <span className="font-semibold">할일 없는 프로젝트</span>
             <span className="badge badge-sm">{emptyProjects.length}</span>

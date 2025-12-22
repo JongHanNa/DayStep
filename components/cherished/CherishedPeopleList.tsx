@@ -67,7 +67,7 @@ export default function CherishedPeopleList({
       <dialog open className="modal z-[110]">
         <div className="modal-box max-w-md max-h-[90vh] p-0 overflow-hidden">
           {/* 헤더 */}
-          <div className="sticky top-0 z-10 bg-base-100 px-4 pt-4 pb-3 border-b border-base-200">
+          <div className="sticky top-0 z-10 bg-base-100 px-4 pt-4 pb-3 border-b border-base-300">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Heart className="w-5 h-5 text-pink-500" />
