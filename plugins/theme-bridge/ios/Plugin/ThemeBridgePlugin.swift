@@ -10,6 +10,32 @@ import UIKit
 @objc(ThemeBridgePlugin)
 public class ThemeBridgePlugin: CAPPlugin {
 
+    // 마지막으로 설정된 색상 저장 (포그라운드 복귀 시 재설정용)
+    private var lastColor: UIColor?
+
+    // 플러그인 로드 시 앱 활성화 알림 구독
+    public override func load() {
+        // didBecomeActiveNotification 사용 (willEnterForeground보다 늦은 시점)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    // 앱 활성화 시 배경색 재설정 (100ms 지연)
+    @objc private func handleAppDidBecomeActive() {
+        guard let color = lastColor else { return }
+
+        // WebView 복원이 완료된 후 배경색 설정 (100ms 지연)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let webView = self?.bridge?.webView else { return }
+            webView.backgroundColor = color
+            webView.scrollView.backgroundColor = color
+        }
+    }
+
     /**
      * WebView의 scrollView 배경색을 설정합니다.
      *
@@ -29,6 +55,9 @@ public class ThemeBridgePlugin: CAPPlugin {
 
             let color = UIColor(hex: colorHex) ?? UIColor.white
 
+            // 마지막 색상 저장 (포그라운드 복귀 시 재설정용)
+            self?.lastColor = color
+
             // WebView 배경색 설정
             webView.backgroundColor = color
             webView.scrollView.backgroundColor = color
@@ -39,6 +68,10 @@ public class ThemeBridgePlugin: CAPPlugin {
                 "color": colorHex
             ])
         }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 

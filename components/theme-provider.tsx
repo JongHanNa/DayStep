@@ -86,6 +86,28 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
+  // 앱 포그라운드 복귀 시 WebView 배경색 재동기화 (iOS에서 리셋되는 문제 대응)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        // Capacitor 네이티브 환경에서만 실행
+        try {
+          const { Capacitor } = await import('@capacitor/core');
+          if (Capacitor.isNativePlatform()) {
+            syncWebViewBackgroundColor(resolvedTheme);
+          }
+        } catch {
+          // 웹 환경에서는 무시
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [resolvedTheme]);
+
   const updateTheme = (newTheme: Theme) => {
     setTheme(newTheme);
     if (typeof window !== 'undefined') {
