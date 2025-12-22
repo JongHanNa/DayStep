@@ -176,6 +176,33 @@ export const BubbleTimelineView: React.FC = () => {
     draggedItemIdRef.current = draggedItemId;
   }, [draggedItemId]);
 
+  // 🎯 데이터 로딩 useEffect (TaskOrganizeMode에서 단독 사용 시)
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user?.id) return;
+
+      // storeItems가 이미 있으면 스킵 (TimelineContainer에서 이미 로드됨)
+      if (storeItems.length > 0) return;
+
+      console.log('🔄 [BubbleTimelineView] 데이터 로딩 시작 (단독 사용 모드)');
+
+      // todoStore에서 데이터 fetch
+      const { fetchAllTodos } = useTodoStore.getState();
+      await fetchAllTodos();
+
+      // 최신 todos 가져오기
+      const { todos } = useTodoStore.getState();
+
+      // timelineViewStore에 데이터 로드
+      const { loadItemsFromSources } = useTimelineViewStore.getState();
+      await loadItemsFromSources(todos, []);
+
+      console.log('✅ [BubbleTimelineView] 데이터 로딩 완료:', { todosCount: todos.length });
+    };
+
+    loadData();
+  }, [user?.id, storeItems.length]);
+
   // 🎯 자동 스크롤 실행 useEffect
   useEffect(() => {
     const autoScrollDirection = autoScrollDirectionRef.current;
