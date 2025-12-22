@@ -178,13 +178,18 @@ html, body {
   -ms-overflow-style: none;  /* IE/Edge */
 
   /* Pull-to-refresh 시 헤더 뒤 영역 배경색 (DaisyUI 테마 연동) */
-  @apply bg-base-200;
+  @apply bg-base-100;
+}
+
+/* 라이트모드 배경색 - overscroll(고무줄 효과) 대응 */
+html {
+  background-color: #ffffff !important; /* --color-base-100 라이트모드 값 */
 }
 
 /* 다크모드 배경색 - iOS Capacitor overscroll(고무줄 효과) 대응 */
 html.dark,
 [data-theme="dark"] {
-  background-color: #121212 !important; /* --color-base-200 다크모드 값 */
+  background-color: #121212 !important; /* --color-base-100 다크모드 값 */
 }
 
 html::-webkit-scrollbar,
@@ -223,7 +228,7 @@ body::-webkit-scrollbar {
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  /* background 제거 - html,body의 @apply bg-base-100 사용 */
   font-family: var(--current-font-family);
   font-weight: 900; /* 모든 텍스트를 최대 굵기로 처리하여 가독성 향상 */
   font-size: var(--current-font-size, 16px); /* 동적 글자 크기 적용 */
