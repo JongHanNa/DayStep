@@ -91,7 +91,8 @@ const AllDayItemsSection = memo(() => {
 });
 AllDayItemsSection.displayName = 'AllDayItemsSection';
 
-const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className }) => {
+// v7: memo 제거 - Zustand store 변경 시 리렌더링 필요
+const TimelineContainer: React.FC<TimelineContainerProps> = ({ className }) => {
   if (process.env.NODE_ENV === 'development') {
     logger.timeline('TimelineContainer 컴포넌트 렌더링 시작', { timestamp: new Date().toISOString() });
   }
@@ -183,6 +184,13 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
 
   // currentDate를 문자열로 변환 (useEffect 의존성용)
   const currentDateString = currentDate.toISOString();
+
+  // 🔍 v6: 렌더링 시점 확인 로그
+  console.log('🔄 TimelineContainer 리렌더링:', {
+    currentDateString: currentDateString.slice(0, 10),
+    isAuthenticated,
+    authLoading
+  });
 
   // Load data from all sources - memoized selectors for performance
   const todos = useTodoStore(state => state.todos);
@@ -278,7 +286,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
     
   }, [isAuthenticated, authLoading, appUser, todos]);
 
-  // 데이터 변경 시 타임라인 업데이트
+  // 데이터 변경 시 타임라인 업데이트 (todos 변경만 debounce)
   useEffect(() => {
     if (!isAuthenticated || authLoading) {
       return;
@@ -300,6 +308,29 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
       clearTimeout(debounceTimeoutId);
     };
   }, [todos, isAuthenticated, authLoading]);
+
+  // 🔧 v6: 날짜 변경 시 즉시 반복 할일 인스턴스 재생성 (디버깅 로그 추가)
+  useEffect(() => {
+    console.log('🔍 v6 useEffect 트리거됨:', {
+      currentDateString: currentDateString.slice(0, 10),
+      isAuthenticated,
+      authLoading
+    });
+
+    if (!isAuthenticated || authLoading) {
+      console.log('⚠️ early return - 인증 상태:', { isAuthenticated, authLoading });
+      return;
+    }
+
+    console.log('📅 날짜 변경 감지 - 반복 할일 인스턴스 재생성:', {
+      currentDateString: currentDateString.slice(0, 10)
+    });
+
+    const { loadItemsFromSources } = useTimelineViewStore.getState();
+    loadItemsFromSources(useTodoStore.getState().todos, []).catch(error => {
+      console.error('❌ loadItemsFromSources 실행 중 오류:', error);
+    });
+  }, [currentDateString, isAuthenticated, authLoading]);
 
   // 이전 중복 날짜별 로드 로직 제거됨 - 위의 최적화된 로직으로 통합
   
@@ -666,7 +697,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = memo(({ className })
       </TimelineDndProvider>
     </ToastProvider>
   );
-});
+};
 
 TimelineContainer.displayName = 'TimelineContainer';
 

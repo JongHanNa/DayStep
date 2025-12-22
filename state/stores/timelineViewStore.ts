@@ -238,10 +238,27 @@ export const useTimelineViewStore = create<TimelineViewState>()(
           state.computeViewData();
         }),
 
-        setCurrentDate: (date) => set((state) => {
-          state.currentDate = date;
-          state.computeViewData();
-        }),
+        setCurrentDate: (date) => {
+          // 🔧 v8: 날짜 변경 시 데이터 해시 리셋 → loadItemsFromSources 호출 시 반복 인스턴스 재생성 보장
+          lastDataHash = '';
+
+          set((state) => {
+            state.currentDate = date;
+            state.computeViewData();
+          });
+
+          // todoStore에서 todos 가져와서 loadItemsFromSources 호출 (순환 의존성 방지를 위해 동적 require)
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { useTodoStore } = require('./todoStore');
+          const todos = useTodoStore.getState().todos;
+
+          console.log('📅 v8: setCurrentDate에서 loadItemsFromSources 호출:', {
+            date: date.toISOString().slice(0, 10),
+            todosCount: todos.length
+          });
+
+          get().loadItemsFromSources(todos, []);
+        },
 
         navigateNext: () => {
           const store = get();
@@ -297,10 +314,26 @@ export const useTimelineViewStore = create<TimelineViewState>()(
           get().computeViewData();
         },
 
-        navigateToToday: () => set((state) => {
-          state.currentDate = navigateToToday();
-          state.computeViewData();
-        }),
+        navigateToToday: () => {
+          // 🔧 v9: 날짜 변경 시 데이터 해시 리셋 → loadItemsFromSources 호출 시 반복 인스턴스 재생성 보장
+          lastDataHash = '';
+
+          set((state) => {
+            state.currentDate = navigateToToday();
+            state.computeViewData();
+          });
+
+          // todoStore에서 todos 가져와서 loadItemsFromSources 호출 (순환 의존성 방지를 위해 동적 require)
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { useTodoStore } = require('./todoStore');
+          const todos = useTodoStore.getState().todos;
+
+          console.log('📅 v9: navigateToToday에서 loadItemsFromSources 호출:', {
+            todosCount: todos.length
+          });
+
+          get().loadItemsFromSources(todos, []);
+        },
 
         // Data actions
         setItems: (items) => set((state) => {
@@ -971,15 +1004,9 @@ export const useTimelineViewStore = create<TimelineViewState>()(
               // ✅ 조건 1: startTime이 범위에 속함 (일반 할일)
               const startInRange = itemStartTime >= rangeStartTime && itemStartTime <= rangeEndTime;
 
-              // ✅ 조건 2: 크로스데이 할일 - endTime이 범위에 속함 (전날 시작 → 오늘 종료)
-              let endInRange = false;
-              if (item.endTime) {
-                const itemEndDate = new Date(item.endTime);
-                const itemEndTime = itemEndDate.getTime();
-                endInRange = itemEndTime >= rangeStartTime && itemEndTime <= rangeEndTime;
-              }
-
-              const isInRange = startInRange || endInRange;
+              // 크로스데이 할일은 시작일에서만 표시 (중복 방지 및 일관된 +1 표시)
+              // endInRange 조건 제거 - 종료일에서 표시 시 -1 플래그 문제 발생
+              const isInRange = startInRange;
 
               console.log(`🔍 시간 지정 할일 날짜 확인: ${item.title.substring(0, 20)}`, {
                 itemId: item.id.substring(0, 8),
@@ -989,7 +1016,6 @@ export const useTimelineViewStore = create<TimelineViewState>()(
                 rangeStartTime: rangeStartTime,
                 rangeEndTime: rangeEndTime,
                 startInRange,
-                endInRange,
                 isInRange
               });
 
@@ -1262,9 +1288,14 @@ export const useTimelineViewStore = create<TimelineViewState>()(
             const str = localStorage.getItem(name);
             if (!str) return null;
             const parsed = JSON.parse(str);
-            // Date 객체 복원
+            // Date 객체 복원 + 로컬 타임존 자정으로 정규화
+            // (반복 할일 인스턴스 생성 방식과 동일하게 처리하여 isPreviousDay 계산 일치)
             if (parsed.state?.currentDate) {
-              parsed.state.currentDate = new Date(parsed.state.currentDate);
+              const restoredDate = new Date(parsed.state.currentDate);
+              const year = restoredDate.getFullYear();
+              const month = restoredDate.getMonth();
+              const date = restoredDate.getDate();
+              parsed.state.currentDate = new Date(year, month, date, 0, 0, 0, 0);
             }
             return parsed;
           },
