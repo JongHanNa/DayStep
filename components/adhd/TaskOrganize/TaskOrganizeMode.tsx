@@ -9,6 +9,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { TodoTimelineView } from './TodoTimelineView';
 import { BubbleTimelineView } from '@/components/timeline/containers/BubbleTimelineView';
+import TimelineHeader from '@/components/timeline/controls/TimelineHeader';
 import { TodayPlanView } from './TodayPlanView';
 import { OrganizeNeededView } from './OrganizeNeededView';
 import { TodoStatsView } from './TodoStatsView';
@@ -69,7 +70,12 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
       case 'timeline':
         return <TodoTimelineView userId={userId} />;
       case 'bubble':
-        return <BubbleTimelineView />;
+        return (
+          <>
+            <TimelineHeader />
+            <BubbleTimelineView />
+          </>
+        );
       case 'plan':
         return <TodayPlanView userId={userId} />;
       case 'organize':
