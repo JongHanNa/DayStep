@@ -1,22 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Heart, MessageCircle, BarChart3, Smile, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, BarChart3, Smile, Sun, Moon } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
-import { TimelineView } from './TimelineView';
 import { GratitudeJournalView } from './GratitudeJournalView';
 import { NewsMemosView } from './NewsMemosView';
 import { StatsDashboardView } from './StatsDashboardView';
 import { MoodPatternsView } from './MoodPatternsView';
 
-type TabType = 'timeline' | 'gratitude' | 'news' | 'stats' | 'mood';
+type TabType = 'gratitude' | 'news' | 'stats' | 'mood';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
-  { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
   { id: 'gratitude', label: '감사', icon: <Heart className="w-4 h-4" /> },
   { id: 'news', label: '소식', icon: <MessageCircle className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
@@ -28,7 +26,7 @@ interface RelationshipInsightsModeProps {
 }
 
 export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModeProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('timeline');
+  const [activeTab, setActiveTab] = useState<TabType>('gratitude');
   const { user } = useAuth();
   const userId = user?.id;
   const { resolvedTheme, setTheme } = useTheme();
@@ -80,8 +78,6 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
     }
 
     switch (activeTab) {
-      case 'timeline':
-        return <TimelineView userId={userId} />;
       case 'gratitude':
         return <GratitudeJournalView userId={userId} />;
       case 'news':

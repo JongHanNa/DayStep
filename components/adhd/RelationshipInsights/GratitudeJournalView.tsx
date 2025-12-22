@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import type { CareInteraction, CherishedPerson } from '@/types/cherished-people';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Heart, User } from 'lucide-react';
 
 interface GratitudeJournalViewProps {
@@ -58,22 +59,23 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
     );
   }
 
+  // SearchableSelect용 옵션 변환
+  const peopleOptions = people.map((person) => ({
+    id: person.id,
+    label: person.name,
+  }));
+
   return (
     <div className="p-4">
-      {/* 사람 필터 */}
+      {/* 사람 필터 (검색 가능) */}
       <div className="mb-4">
-        <select
-          value={selectedPersonId || ''}
-          onChange={(e) => setSelectedPersonId(e.target.value || null)}
-          className="select select-bordered w-full max-w-xs"
-        >
-          <option value="">모든 사람</option>
-          {people.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.name}
-            </option>
-          ))}
-        </select>
+        <SearchableSelect
+          options={peopleOptions}
+          value={selectedPersonId}
+          onChange={setSelectedPersonId}
+          allOptionLabel="모든 사람"
+          className="w-full max-w-xs"
+        />
       </div>
 
       {notes.length === 0 ? (
