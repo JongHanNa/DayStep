@@ -252,11 +252,6 @@ export const useTimelineViewStore = create<TimelineViewState>()(
           const { useTodoStore } = require('./todoStore');
           const todos = useTodoStore.getState().todos;
 
-          console.log('📅 v8: setCurrentDate에서 loadItemsFromSources 호출:', {
-            date: date.toISOString().slice(0, 10),
-            todosCount: todos.length
-          });
-
           get().loadItemsFromSources(todos, []);
         },
 
@@ -327,10 +322,6 @@ export const useTimelineViewStore = create<TimelineViewState>()(
           // eslint-disable-next-line @typescript-eslint/no-require-imports
           const { useTodoStore } = require('./todoStore');
           const todos = useTodoStore.getState().todos;
-
-          console.log('📅 v9: navigateToToday에서 loadItemsFromSources 호출:', {
-            todosCount: todos.length
-          });
 
           get().loadItemsFromSources(todos, []);
         },
