@@ -15,8 +15,8 @@ import { MoodPatternsView } from './MoodPatternsView';
 type TabType = 'gratitude' | 'news' | 'stats' | 'mood';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
-  { id: 'gratitude', label: '감사', icon: <Heart className="w-4 h-4" /> },
   { id: 'news', label: '소식', icon: <MessageCircle className="w-4 h-4" /> },
+  { id: 'gratitude', label: '감사', icon: <Heart className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
   { id: 'mood', label: '기분', icon: <Smile className="w-4 h-4" /> },
 ];
@@ -26,7 +26,7 @@ interface RelationshipInsightsModeProps {
 }
 
 export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModeProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('gratitude');
+  const [activeTab, setActiveTab] = useState<TabType>('news');
   const { user } = useAuth();
   const userId = user?.id;
   const { resolvedTheme, setTheme } = useTheme();
