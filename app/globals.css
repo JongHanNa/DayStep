@@ -104,7 +104,7 @@ dialog::backdrop {
   /* 🎨 DaisyUI 5.x 전용 CSS 변수 - Light 모드 (data-theme 필수) */
   --color-primary: #9061C5;
   --color-primary-content: oklch(100% 0% 68deg);
-  --color-base-100: oklch(96% 1% 289deg);  /* 이전 base-200 */
+  --color-base-100: #f5f5f7;  /* 이전 base-200 - HEX (iOS 호환) */
   --color-base-200: #ffffff;  /* 이전 base-100 */
   --color-base-300: #eae8ed;
 

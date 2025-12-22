@@ -32,8 +32,20 @@ const FALLBACK_COLORS = {
 } as const;
 
 /**
+ * RGB 문자열을 HEX로 변환합니다.
+ * 예: "rgb(245, 245, 247)" → "#f5f5f7"
+ */
+function rgbToHex(rgb: string): string | null {
+  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!match) return null;
+  const [, r, g, b] = match;
+  return '#' + [r, g, b].map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * CSS 변수에서 테마 배경색을 동적으로 가져옵니다.
- * globals.css의 --color-base-100 값을 읽어옵니다.
+ * globals.css의 --color-base-100 값을 읽고 HEX로 변환합니다.
+ * (iOS Swift는 HEX만 파싱 가능, oklch 형식 지원 안함)
  */
 function getThemeBackgroundColor(theme: 'light' | 'dark'): string {
   if (typeof window === 'undefined') {
@@ -43,16 +55,23 @@ function getThemeBackgroundColor(theme: 'light' | 'dark'): string {
   const root = document.documentElement;
   const currentTheme = root.getAttribute('data-theme');
 
-  // 요청된 테마로 임시 전환하여 CSS 변수 읽기
+  // 요청된 테마로 임시 전환
   root.setAttribute('data-theme', theme);
-  const color = getComputedStyle(root).getPropertyValue('--color-base-100').trim();
+
+  // Tailwind 클래스로 계산된 색상 얻기
+  const temp = document.createElement('div');
+  temp.className = 'bg-base-100';
+  document.body.appendChild(temp);
+  const computedColor = getComputedStyle(temp).backgroundColor;
+  document.body.removeChild(temp);
 
   // 원래 테마로 복원
   if (currentTheme) {
     root.setAttribute('data-theme', currentTheme);
   }
 
-  return color || FALLBACK_COLORS[theme];
+  // RGB → HEX 변환 (iOS Swift용)
+  return rgbToHex(computedColor) || FALLBACK_COLORS[theme];
 }
 
 /**
