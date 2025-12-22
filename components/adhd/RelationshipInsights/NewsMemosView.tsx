@@ -210,7 +210,7 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
         // 특정 사람 선택 시
         <div className="space-y-3">
           {notes.map(({ interaction, person }) => (
-            <div key={interaction.id} className="bg-info/10 rounded-xl p-4">
+            <div key={interaction.id} className="bg-base-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <MessageCircle className="w-5 h-5 text-info mt-0.5 flex-shrink-0" />
                 <div className="flex-1">

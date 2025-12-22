@@ -203,7 +203,7 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
         // 특정 사람 선택 시 리스트로 표시
         <div className="space-y-3">
           {notes.map(({ interaction, person }) => (
-            <div key={interaction.id} className="bg-primary/10 rounded-xl p-4">
+            <div key={interaction.id} className="bg-base-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <Heart className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
@@ -260,7 +260,7 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
               </div>
               <div className="space-y-2 pl-10">
                 {personNotes.slice(0, 5).map(({ interaction }) => (
-                  <div key={interaction.id} className="bg-primary/10 rounded-lg p-3">
+                  <div key={interaction.id} className="bg-base-200 rounded-lg p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <p className="text-sm">{interaction.gratitude_note}</p>
