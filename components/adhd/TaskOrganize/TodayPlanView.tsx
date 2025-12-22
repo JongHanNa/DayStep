@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { format, isToday, isTomorrow, startOfDay, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Calendar, GripVertical, ChevronRight } from 'lucide-react';
+import { Calendar, GripVertical, ChevronRight, Trash2, ArrowRight, ArrowLeft, Check, Circle } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { Todo } from '@/entities/todo/Todo';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 
 interface TodayPlanViewProps {
   userId: string;
@@ -20,9 +22,16 @@ interface TodayPlanViewProps {
  * - 우선순위 조정 가능
  */
 export function TodayPlanView({ userId }: TodayPlanViewProps) {
-  const { todos, fetchAllTodos, updateTodo } = useTodoStore();
+  const { todos, fetchAllTodos, updateTodo, deleteTodo } = useTodoStore();
   const [isLoading, setIsLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<'today' | 'tomorrow' | null>('today');
+
+  // 편집 모달 상태
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [editFormData, setEditFormData] = useState<TodoFormData | null>(null);
+
+  // 삭제 확인 상태
+  const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
@@ -80,32 +89,144 @@ export function TodayPlanView({ userId }: TodayPlanViewProps) {
     });
   }, [todos]);
 
-  const handlePriorityChange = async (todo: Todo, newPriority: 'high' | 'medium' | 'low') => {
+  // 우선순위 변경
+  const handlePriorityChange = useCallback(async (todo: Todo, newPriority: 'high' | 'medium' | 'low') => {
     await updateTodo(todo.id, { priority: newPriority });
-  };
+  }, [updateTodo]);
 
-  const renderTodoItem = (todo: Todo) => {
+  // 완료 토글
+  const handleToggleComplete = useCallback(async (todo: Todo) => {
+    await updateTodo(todo.id, { completed: !todo.completed });
+  }, [updateTodo]);
+
+  // 오늘로 이동
+  const handleMoveToToday = useCallback(async (todoId: string) => {
+    const targetDate = new Date();
+    targetDate.setHours(0, 0, 0, 0);
+    await updateTodo(todoId, {
+      start_time: targetDate.toISOString(),
+      schedule_type: 'anytime',
+    });
+  }, [updateTodo]);
+
+  // 내일로 이동
+  const handleMoveToTomorrow = useCallback(async (todoId: string) => {
+    const targetDate = addDays(new Date(), 1);
+    targetDate.setHours(0, 0, 0, 0);
+    await updateTodo(todoId, {
+      start_time: targetDate.toISOString(),
+      schedule_type: 'anytime',
+    });
+  }, [updateTodo]);
+
+  // 삭제 처리
+  const handleDelete = useCallback(async (todoId: string) => {
+    await deleteTodo(todoId);
+    setDeletingTodoId(null);
+  }, [deleteTodo]);
+
+  // Todo → TodoFormData 변환
+  const todoToFormData = useCallback((todo: Todo): TodoFormData => {
+    return {
+      title: todo.title,
+      icon: todo.icon || undefined,
+      color: todo.color || undefined,
+      scheduledDate: todo.startTime ? new Date(todo.startTime) : undefined,
+      isHighlight: false,
+      completed: todo.completed,
+      projectIds: todo.projectId ? [todo.projectId] : [],
+      noteIds: [],
+      displayOrder: todo.orderIndex,
+      includeTime: todo.scheduleType === 'timed',
+      includeEndDate: !!todo.endTime,
+      startTime: todo.startTime ? new Date(todo.startTime).toTimeString().slice(0, 5) : undefined,
+      endDate: todo.endTime ? new Date(todo.endTime) : undefined,
+      endTime: todo.endTime ? new Date(todo.endTime).toTimeString().slice(0, 5) : undefined,
+      scheduleType: todo.scheduleType || 'none',
+      anytimeDuration: undefined,
+      recurrencePattern: todo.recurrencePattern,
+      recurrenceInterval: todo.recurrenceInterval,
+      recurrenceEndType: todo.recurrenceEndDate ? 'date' : (todo.recurrenceCount ? 'count' : 'never'),
+      recurrenceEndDate: todo.recurrenceEndDate ? new Date(todo.recurrenceEndDate) : undefined,
+      recurrenceCount: todo.recurrenceCount || undefined,
+      selectedDaysOfWeek: todo.recurrenceDaysOfWeek || undefined,
+    };
+  }, []);
+
+  // 편집 모달 열기
+  const handleEditClick = useCallback((todo: Todo) => {
+    setEditingTodo(todo);
+    setEditFormData(todoToFormData(todo));
+  }, [todoToFormData]);
+
+  // 편집 저장
+  const handleEditSave = useCallback(async (formData: TodoFormData) => {
+    if (!editingTodo) return;
+
+    await updateTodo(editingTodo.id, {
+      title: formData.title,
+      icon: formData.icon,
+      color: formData.color,
+      start_time: formData.scheduledDate?.toISOString(),
+      schedule_type: formData.scheduleType,
+      completed: formData.completed,
+      recurrence_pattern: formData.recurrencePattern as any,
+      recurrence_interval: formData.recurrenceInterval,
+      recurrence_end_date: formData.recurrenceEndDate?.toISOString().split('T')[0],
+      recurrence_count: formData.recurrenceCount,
+      recurrence_days_of_week: formData.selectedDaysOfWeek,
+    });
+
+    setEditingTodo(null);
+    setEditFormData(null);
+  }, [editingTodo, updateTodo]);
+
+  // 편집 삭제
+  const handleEditDelete = useCallback(async () => {
+    if (!editingTodo) return;
+    await deleteTodo(editingTodo.id);
+    setEditingTodo(null);
+    setEditFormData(null);
+  }, [editingTodo, deleteTodo]);
+
+  const renderTodoItem = (todo: Todo, section: 'today' | 'tomorrow') => {
     const projectName = todo.projectId ? projectMap.get(todo.projectId) : undefined;
     const goalName = todo.goalId ? goalMap.get(todo.goalId) : undefined;
 
     return (
       <div
         key={todo.id}
-        className="flex items-center gap-3 p-3 bg-base-200 rounded-lg"
+        className="flex items-center gap-2 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
       >
         {/* 드래그 핸들 (향후 드래그앤드롭 구현용) */}
-        <GripVertical className="w-4 h-4 text-base-content/30 cursor-grab" />
+        <GripVertical className="w-4 h-4 text-base-content/30 cursor-grab flex-shrink-0" />
+
+        {/* 완료 체크박스 */}
+        <button
+          onClick={() => handleToggleComplete(todo)}
+          className="btn btn-ghost btn-xs btn-circle flex-shrink-0"
+          title={todo.completed ? '미완료로 변경' : '완료로 변경'}
+        >
+          {todo.completed ? (
+            <Check className="w-4 h-4 text-success" />
+          ) : (
+            <Circle className="w-4 h-4 text-base-content/40" />
+          )}
+        </button>
 
         {/* 우선순위 인디케이터 */}
         <div
-          className={`w-2 h-2 rounded-full ${
+          className={`w-2 h-2 rounded-full flex-shrink-0 ${
             todo.priority === 'high' ? 'bg-error' :
             todo.priority === 'medium' ? 'bg-warning' : 'bg-base-300'
           }`}
         />
 
-        {/* 내용 */}
-        <div className="flex-1 min-w-0">
+        {/* 내용 (클릭 시 편집) */}
+        <button
+          onClick={() => handleEditClick(todo)}
+          className="flex-1 min-w-0 text-left"
+        >
           <p className="text-sm truncate">{todo.title}</p>
 
           {/* 맥락 배지 */}
@@ -126,7 +247,35 @@ export function TodayPlanView({ userId }: TodayPlanViewProps) {
               </span>
             )}
           </div>
-        </div>
+        </button>
+
+        {/* 날짜 이동 버튼 */}
+        {section === 'today' ? (
+          <button
+            onClick={() => handleMoveToTomorrow(todo.id)}
+            className="btn btn-ghost btn-xs rounded-full text-info"
+            title="내일로 이동"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <button
+            onClick={() => handleMoveToToday(todo.id)}
+            className="btn btn-ghost btn-xs rounded-full text-primary"
+            title="오늘로 이동"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* 삭제 버튼 */}
+        <button
+          onClick={() => setDeletingTodoId(todo.id)}
+          className="btn btn-ghost btn-xs rounded-full text-error"
+          title="삭제"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
 
         {/* 우선순위 드롭다운 */}
         <div className="dropdown dropdown-end">
@@ -189,7 +338,7 @@ export function TodayPlanView({ userId }: TodayPlanViewProps) {
                 오늘 할 일이 없어요
               </p>
             ) : (
-              todayTodos.map(renderTodoItem)
+              todayTodos.map(todo => renderTodoItem(todo, 'today'))
             )}
           </div>
         )}
@@ -218,7 +367,7 @@ export function TodayPlanView({ userId }: TodayPlanViewProps) {
                 내일 할 일이 없어요
               </p>
             ) : (
-              tomorrowTodos.map(renderTodoItem)
+              tomorrowTodos.map(todo => renderTodoItem(todo, 'tomorrow'))
             )}
           </div>
         )}
@@ -228,6 +377,48 @@ export function TodayPlanView({ userId }: TodayPlanViewProps) {
       <div className="text-center text-sm text-base-content/50 mt-6">
         오늘 {todayTodos.length}개, 내일 {tomorrowTodos.length}개의 할일이 있어요
       </div>
+
+      {/* 편집 모달 */}
+      <TodoEditModal
+        open={editingTodo !== null && editFormData !== null}
+        todo={editFormData}
+        onClose={() => {
+          setEditingTodo(null);
+          setEditFormData(null);
+        }}
+        onSave={handleEditSave}
+        onChange={setEditFormData}
+        onDelete={handleEditDelete}
+        headerTitle="할일 편집"
+      />
+
+      {/* 삭제 확인 다이얼로그 */}
+      {deletingTodoId && (
+        <dialog open className="modal modal-open z-[110]">
+          <div className="modal-box bg-base-100 max-w-sm">
+            <h3 className="font-bold text-lg mb-4">할일 삭제</h3>
+            <p className="text-base-content/70 mb-2">정말로 이 할일을 삭제하시겠습니까?</p>
+            <p className="text-sm font-medium mb-6 break-words">
+              &ldquo;{todos.find(t => t.id === deletingTodoId)?.title}&rdquo;
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingTodoId(null)}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => handleDelete(deletingTodoId)}
+                className="btn btn-error btn-sm rounded-full"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop bg-black/50" onClick={() => setDeletingTodoId(null)} />
+        </dialog>
+      )}
     </div>
   );
 }

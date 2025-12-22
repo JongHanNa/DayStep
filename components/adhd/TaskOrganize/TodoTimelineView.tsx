@@ -1,22 +1,16 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Plus, Clock } from 'lucide-react';
+import { CheckCircle2, Plus, Clock, Trash2, Circle } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { Todo } from '@/entities/todo/Todo';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 
 interface TodoTimelineViewProps {
   userId: string;
-}
-
-interface TimelineItem {
-  id: string;
-  title: string;
-  completed: boolean;
-  createdAt: Date;
-  projectName?: string;
-  goalName?: string;
 }
 
 /**
@@ -27,8 +21,15 @@ interface TimelineItem {
  * - 맥락: 프로젝트/목표 배지로 어떤 목표를 위한 건지 표시
  */
 export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
-  const { todos, fetchAllTodos } = useTodoStore();
+  const { todos, fetchAllTodos, updateTodo, deleteTodo } = useTodoStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // 편집 모달 상태
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [editFormData, setEditFormData] = useState<TodoFormData | null>(null);
+
+  // 삭제 확인 상태
+  const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
@@ -52,20 +53,88 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     return new Map(goals.map(g => [g.id, g.title]));
   }, [goals]);
 
+  // 완료 토글
+  const handleToggleComplete = useCallback(async (todo: Todo) => {
+    await updateTodo(todo.id, { completed: !todo.completed });
+  }, [updateTodo]);
+
+  // 삭제 처리
+  const handleDelete = useCallback(async (todoId: string) => {
+    await deleteTodo(todoId);
+    setDeletingTodoId(null);
+  }, [deleteTodo]);
+
+  // Todo → TodoFormData 변환
+  const todoToFormData = useCallback((todo: Todo): TodoFormData => {
+    return {
+      title: todo.title,
+      icon: todo.icon || undefined,
+      color: todo.color || undefined,
+      scheduledDate: todo.startTime ? new Date(todo.startTime) : undefined,
+      isHighlight: false,
+      completed: todo.completed,
+      projectIds: todo.projectId ? [todo.projectId] : [],
+      noteIds: [],
+      displayOrder: todo.orderIndex,
+      includeTime: todo.scheduleType === 'timed',
+      includeEndDate: !!todo.endTime,
+      startTime: todo.startTime ? new Date(todo.startTime).toTimeString().slice(0, 5) : undefined,
+      endDate: todo.endTime ? new Date(todo.endTime) : undefined,
+      endTime: todo.endTime ? new Date(todo.endTime).toTimeString().slice(0, 5) : undefined,
+      scheduleType: todo.scheduleType || 'none',
+      anytimeDuration: undefined,
+      recurrencePattern: todo.recurrencePattern,
+      recurrenceInterval: todo.recurrenceInterval,
+      recurrenceEndType: todo.recurrenceEndDate ? 'date' : (todo.recurrenceCount ? 'count' : 'never'),
+      recurrenceEndDate: todo.recurrenceEndDate ? new Date(todo.recurrenceEndDate) : undefined,
+      recurrenceCount: todo.recurrenceCount || undefined,
+      selectedDaysOfWeek: todo.recurrenceDaysOfWeek || undefined,
+    };
+  }, []);
+
+  // 편집 모달 열기
+  const handleEditClick = useCallback((todo: Todo) => {
+    setEditingTodo(todo);
+    setEditFormData(todoToFormData(todo));
+  }, [todoToFormData]);
+
+  // 편집 저장
+  const handleEditSave = useCallback(async (formData: TodoFormData) => {
+    if (!editingTodo) return;
+
+    await updateTodo(editingTodo.id, {
+      title: formData.title,
+      icon: formData.icon,
+      color: formData.color,
+      start_time: formData.scheduledDate?.toISOString(),
+      schedule_type: formData.scheduleType,
+      completed: formData.completed,
+      recurrence_pattern: formData.recurrencePattern as any,
+      recurrence_interval: formData.recurrenceInterval,
+      recurrence_end_date: formData.recurrenceEndDate?.toISOString().split('T')[0],
+      recurrence_count: formData.recurrenceCount,
+      recurrence_days_of_week: formData.selectedDaysOfWeek,
+    });
+
+    setEditingTodo(null);
+    setEditFormData(null);
+  }, [editingTodo, updateTodo]);
+
+  // 편집 삭제
+  const handleEditDelete = useCallback(async () => {
+    if (!editingTodo) return;
+    await deleteTodo(editingTodo.id);
+    setEditingTodo(null);
+    setEditFormData(null);
+  }, [editingTodo, deleteTodo]);
+
   // 타임라인 아이템 생성 (최근 생성된 할일)
-  const timelineItems: TimelineItem[] = useMemo(() => {
+  const timelineItems = useMemo(() => {
     return todos
-      .map(todo => ({
-        id: todo.id,
-        title: todo.title,
-        completed: todo.completed,
-        createdAt: todo.createdAt,
-        projectName: todo.projectId ? projectMap.get(todo.projectId) : undefined,
-        goalName: todo.goalId ? goalMap.get(todo.goalId) : undefined,
-      }))
+      .slice()
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 50); // 최근 50개만
-  }, [todos, projectMap, goalMap]);
+  }, [todos]);
 
   // 날짜별 그룹핑
   const groupedByDate = useMemo(() => {
@@ -86,7 +155,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       }
       acc[dateKey].push(item);
       return acc;
-    }, {} as Record<string, TimelineItem[]>);
+    }, {} as Record<string, Todo[]>);
   }, [timelineItems]);
 
   if (isLoading) {
@@ -118,54 +187,117 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
           {/* 타임라인 아이템들 */}
           <div className="space-y-2">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-3 p-3 bg-base-200 rounded-lg"
-              >
-                {/* 아이콘 */}
-                <div className={`mt-0.5 ${
-                  item.completed ? 'text-success' : 'text-info'
-                }`}>
-                  {item.completed ? (
-                    <CheckCircle2 className="w-5 h-5" />
-                  ) : (
-                    <Plus className="w-5 h-5" />
-                  )}
-                </div>
+            {items.map((todo) => {
+              const projectName = todo.projectId ? projectMap.get(todo.projectId) : undefined;
+              const goalName = todo.goalId ? goalMap.get(todo.goalId) : undefined;
 
-                {/* 내용 */}
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${
-                    item.completed ? 'line-through text-base-content/60' : ''
-                  }`}>
-                    {item.title}
-                  </p>
-
-                  {/* 맥락 배지 */}
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {item.goalName && (
-                      <span className="badge badge-xs badge-ghost">
-                        {item.goalName}
-                      </span>
+              return (
+                <div
+                  key={todo.id}
+                  className="flex items-start gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+                >
+                  {/* 완료 토글 아이콘 */}
+                  <button
+                    onClick={() => handleToggleComplete(todo)}
+                    className={`mt-0.5 btn btn-ghost btn-xs btn-circle ${
+                      todo.completed ? 'text-success' : 'text-info'
+                    }`}
+                    title={todo.completed ? '미완료로 변경' : '완료로 변경'}
+                  >
+                    {todo.completed ? (
+                      <CheckCircle2 className="w-5 h-5" />
+                    ) : (
+                      <Circle className="w-5 h-5" />
                     )}
-                    {item.projectName && (
-                      <span className="badge badge-xs badge-ghost">
-                        {item.projectName}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                  </button>
 
-                {/* 시간 */}
-                <span className="text-xs text-base-content/40">
-                  {format(item.createdAt, 'HH:mm')}
-                </span>
-              </div>
-            ))}
+                  {/* 내용 (클릭 시 편집) */}
+                  <button
+                    onClick={() => handleEditClick(todo)}
+                    className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                  >
+                    <p className={`text-sm ${
+                      todo.completed ? 'line-through text-base-content/60' : ''
+                    }`}>
+                      {todo.title}
+                    </p>
+
+                    {/* 맥락 배지 */}
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {goalName && (
+                        <span className="badge badge-xs badge-ghost">
+                          {goalName}
+                        </span>
+                      )}
+                      {projectName && (
+                        <span className="badge badge-xs badge-ghost">
+                          {projectName}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* 삭제 버튼 */}
+                  <button
+                    onClick={() => setDeletingTodoId(todo.id)}
+                    className="btn btn-ghost btn-xs rounded-full text-error"
+                    title="삭제"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* 시간 */}
+                  <span className="text-xs text-base-content/40">
+                    {format(todo.createdAt, 'HH:mm')}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
+
+      {/* 편집 모달 */}
+      <TodoEditModal
+        open={editingTodo !== null && editFormData !== null}
+        todo={editFormData}
+        onClose={() => {
+          setEditingTodo(null);
+          setEditFormData(null);
+        }}
+        onSave={handleEditSave}
+        onChange={setEditFormData}
+        onDelete={handleEditDelete}
+        headerTitle="할일 편집"
+      />
+
+      {/* 삭제 확인 다이얼로그 */}
+      {deletingTodoId && (
+        <dialog open className="modal modal-open z-[110]">
+          <div className="modal-box bg-base-100 max-w-sm">
+            <h3 className="font-bold text-lg mb-4">할일 삭제</h3>
+            <p className="text-base-content/70 mb-2">정말로 이 할일을 삭제하시겠습니까?</p>
+            <p className="text-sm font-medium mb-6 break-words">
+              &ldquo;{todos.find(t => t.id === deletingTodoId)?.title}&rdquo;
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingTodoId(null)}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => handleDelete(deletingTodoId)}
+                className="btn btn-error btn-sm rounded-full"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop bg-black/50" onClick={() => setDeletingTodoId(null)} />
+        </dialog>
+      )}
     </div>
   );
 }
