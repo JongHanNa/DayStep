@@ -19,11 +19,13 @@ type TabType = 'timeline' | 'bubble' | 'plan' | 'organize' | 'stats' | 'graph';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
-  { id: 'bubble', label: '타임라인 버블뷰', icon: <Circle className="w-4 h-4" /> },
+  // TODO: 타임라인 버블뷰 탭 임시 숨김 처리 - 추후 활성화
+  // { id: 'bubble', label: '타임라인 버블뷰', icon: <Circle className="w-4 h-4" /> },
   { id: 'plan', label: '계획', icon: <Calendar className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
-  { id: 'graph', label: '그래프', icon: <Network className="w-4 h-4" /> },
+  // TODO: 그래프 탭 임시 숨김 처리 - 추후 활성화
+  // { id: 'graph', label: '그래프', icon: <Network className="w-4 h-4" /> },
 ];
 
 interface TaskOrganizeModeProps {
