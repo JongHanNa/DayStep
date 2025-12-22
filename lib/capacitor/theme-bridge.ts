@@ -25,11 +25,35 @@ const ThemeBridge = registerPlugin<ThemeBridgePlugin>('ThemeBridge', {
 
 export default ThemeBridge;
 
-// 테마별 배경색 상수 (globals.css의 --color-base-100과 일치)
-export const THEME_BACKGROUND_COLORS = {
-  light: '#ffffff', // bg-base-100 라이트모드
-  dark: '#121212',  // bg-base-100 다크모드
+// 테마별 배경색 폴백 (SSR 환경용)
+const FALLBACK_COLORS = {
+  light: '#ffffff',
+  dark: '#121212',
 } as const;
+
+/**
+ * CSS 변수에서 테마 배경색을 동적으로 가져옵니다.
+ * globals.css의 --color-base-100 값을 읽어옵니다.
+ */
+function getThemeBackgroundColor(theme: 'light' | 'dark'): string {
+  if (typeof window === 'undefined') {
+    return FALLBACK_COLORS[theme];
+  }
+
+  const root = document.documentElement;
+  const currentTheme = root.getAttribute('data-theme');
+
+  // 요청된 테마로 임시 전환하여 CSS 변수 읽기
+  root.setAttribute('data-theme', theme);
+  const color = getComputedStyle(root).getPropertyValue('--color-base-100').trim();
+
+  // 원래 테마로 복원
+  if (currentTheme) {
+    root.setAttribute('data-theme', currentTheme);
+  }
+
+  return color || FALLBACK_COLORS[theme];
+}
 
 /**
  * iOS WebView 배경색을 테마에 맞게 업데이트합니다.
@@ -43,7 +67,8 @@ export async function syncWebViewBackgroundColor(theme: 'light' | 'dark'): Promi
     const { Capacitor } = await import('@capacitor/core');
     if (!Capacitor.isNativePlatform()) return;
 
-    const color = THEME_BACKGROUND_COLORS[theme];
+    // CSS 변수에서 동적으로 색상 읽기 (globals.css와 자동 동기화)
+    const color = getThemeBackgroundColor(theme);
     await ThemeBridge.setScrollViewBackgroundColor({ color });
 
     console.log(`[ThemeBridge] WebView 배경색 변경: ${color}`);
