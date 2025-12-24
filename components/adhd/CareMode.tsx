@@ -12,7 +12,6 @@ import {
   Check,
   Play,
   Pause,
-  Square,
   Users,
   Search,
   X,
@@ -23,11 +22,6 @@ import {
   Mail,
   HandHelping,
   Sparkles,
-  Frown,
-  Meh,
-  Smile,
-  SmilePlus,
-  HeartHandshake,
   Sun,
   Moon,
   MoreVertical,
@@ -44,7 +38,7 @@ import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
-import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
+import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 
 interface CareModeProps {
   onExit: () => void;
@@ -66,13 +60,6 @@ const INTERACTION_ICONS: Record<string, LucideIcon> = {
   Sparkles,
 };
 
-const FEELING_ICONS: Record<string, LucideIcon> = {
-  Frown,
-  Meh,
-  Smile,
-  SmilePlus,
-  HeartHandshake,
-};
 
 /**
  * 마음 전해보기 모드
@@ -146,11 +133,13 @@ export default function CareMode({ onExit }: CareModeProps) {
   const canCreateNew = searchQuery.trim() && !exactMatchExists;
 
   // 소식 작성 폼
-  const [interactionType, setInteractionType] = useState<InteractionType>('message');
+  const [interactionType, setInteractionType] = useState<InteractionType | null>(null);
+  const [skipInteractionType, setSkipInteractionType] = useState(false); // 소식만 기록할게요
   const [recentNews, setRecentNews] = useState('');
   const [gratitudeNote, setGratitudeNote] = useState('');
   const [giftPlan, setGiftPlan] = useState('');
-  const [feelingRating, setFeelingRating] = useState<number | null>(null);
+  const [createGiftTodo, setCreateGiftTodo] = useState(false); // 할일로 추가하기
+  const [giftTodoDate, setGiftTodoDate] = useState(''); // 할일 날짜
   const [isSaving, setIsSaving] = useState(false);
 
   // 데이터 로드
@@ -170,12 +159,10 @@ export default function CareMode({ onExit }: CareModeProps) {
     }
   };
 
-  // 사람 선택
+  // 사람 선택 - 타이머 없이 바로 소식 입력으로 이동
   const handleSelectPerson = (person: CherishedPerson) => {
     setCareModePerson(person.id, person.name);
-    setViewState('care-timer');
-    // 5분 기본 타이머 시작
-    startPomodoroTimer(5 * 60 * 1000);
+    setViewState('write-news');
   };
 
   // 검색어로 새 사람 추가 (용량 체크 포함)
@@ -240,16 +227,15 @@ export default function CareMode({ onExit }: CareModeProps) {
 
     const input: CareInteractionInput = {
       person_id: careMode.selectedPersonId,
-      interaction_type: interactionType,
+      interaction_type: skipInteractionType ? 'other' : (interactionType || 'other'),
       interaction_date: CherishedPeopleService.getTodayDateString(),
       description: giftPlan.trim() || undefined,
       gratitude_note: gratitudeNote.trim() || undefined,
       recent_news: recentNews.trim() || undefined,
-      feeling_rating: feelingRating ?? undefined,
     };
 
     // todos 제목 생성
-    const todoTitle = `${careMode.selectedPersonName}님께 마음 전하기`;
+    const todoTitle = `${careMode.selectedPersonName}님 소식 기록`;
 
     // 용량 체크 후 저장
     await checkAndProceed('care_interaction', async () => {
@@ -261,6 +247,20 @@ export default function CareMode({ onExit }: CareModeProps) {
         if (result) {
           onCreateSuccess('care_interaction');
           setCareModeLinkedTodo(result.todoId);
+
+          // 해드리고 싶은 것 할일로 추가
+          if (createGiftTodo && giftPlan.trim()) {
+            const { useTodoStore } = await import('@/state/stores/todoStore');
+            const todoStore = useTodoStore.getState();
+            const giftTodoTitle = `${careMode.selectedPersonName}님께: ${giftPlan.trim().slice(0, 30)}${giftPlan.length > 30 ? '...' : ''}`;
+            await todoStore.createTodo({
+              user_id: userId,
+              title: giftTodoTitle,
+              schedule_type: giftTodoDate ? 'anytime' : 'none',
+              start_time: giftTodoDate ? new Date(`${giftTodoDate}T00:00:00+09:00`).toISOString() : undefined,
+            });
+          }
+
           setViewState('completed');
         }
       } catch (error) {
@@ -277,14 +277,11 @@ export default function CareMode({ onExit }: CareModeProps) {
     onExit();
   };
 
-  // 뒤로가기
+  // 뒤로가기 - 소식 입력에서 바로 선택 화면으로
   const handleBack = () => {
     if (viewState === 'write-news') {
-      setViewState('care-timer');
-      // 타이머 재시작
-      startPomodoroTimer(5 * 60 * 1000);
-    } else if (viewState === 'care-timer') {
-      handleStopTimer();
+      setCareModePerson(null as any, null as any);
+      setViewState('select-person');
     }
   };
 
@@ -668,40 +665,7 @@ export default function CareMode({ onExit }: CareModeProps) {
               </p>
             </div>
 
-            {/* 어떻게 연락했나요? - quickRecordMode가 null일 때만 표시 */}
-            {!quickRecordMode && (
-              <div>
-                <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-primary" />
-                  어떻게 마음을 전했나요?
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {(Object.entries(INTERACTION_TYPE_LABELS) as [InteractionType, { label: string; icon: string }][]).map(
-                    ([type, { label, icon }]) => {
-                      const IconComponent = INTERACTION_ICONS[icon];
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setInteractionType(type)}
-                          className={`p-2 rounded-lg text-center transition-all ${
-                            interactionType === type
-                              ? 'bg-pink-500 text-white scale-105'
-                              : 'bg-base-200 hover:bg-base-300'
-                          }`}
-                        >
-                          <div className="flex justify-center">
-                            {IconComponent && <IconComponent className="w-5 h-5" />}
-                          </div>
-                          <div className="text-xs mt-1">{label}</div>
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 들은 소식 */}
+            {/* 1. 들은 소식 - 최상단 */}
             <div>
               <p className="text-sm font-medium mb-2">
                 요즘 그분은 어떻게 지내고 계세요?
@@ -714,7 +678,55 @@ export default function CareMode({ onExit }: CareModeProps) {
               />
             </div>
 
-            {/* 감사했던 점 */}
+            {/* 2. 어떻게 연락했나요? - quickRecordMode가 null일 때만 표시 */}
+            {!quickRecordMode && (
+              <div>
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-primary" />
+                  어떻게 마음을 전했나요?
+                </p>
+                {/* 소식만 기록할게요 옵션 */}
+                <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={skipInteractionType}
+                    onChange={(e) => {
+                      setSkipInteractionType(e.target.checked);
+                      if (e.target.checked) setInteractionType(null);
+                    }}
+                    className="checkbox checkbox-sm checkbox-primary"
+                  />
+                  <span className="text-sm text-base-content/70">소식만 기록할게요</span>
+                </label>
+                {!skipInteractionType && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {(Object.entries(INTERACTION_TYPE_LABELS) as [InteractionType, { label: string; icon: string }][]).map(
+                      ([type, { label, icon }]) => {
+                        const IconComponent = INTERACTION_ICONS[icon];
+                        return (
+                          <button
+                            key={type}
+                            onClick={() => setInteractionType(type)}
+                            className={`p-2 rounded-lg text-center transition-all ${
+                              interactionType === type
+                                ? 'bg-pink-500 text-white scale-105'
+                                : 'bg-base-200 hover:bg-base-300'
+                            }`}
+                          >
+                            <div className="flex justify-center">
+                              {IconComponent && <IconComponent className="w-5 h-5" />}
+                            </div>
+                            <div className="text-xs mt-1">{label}</div>
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. 감사했던 점 */}
             <div>
               <p className="text-sm font-medium mb-2 flex items-center gap-2">
                 <Heart className="w-4 h-4 text-pink-500" />
@@ -728,7 +740,7 @@ export default function CareMode({ onExit }: CareModeProps) {
               />
             </div>
 
-            {/* 선물/도움 계획 */}
+            {/* 4. 선물/도움 계획 + 할일 연동 */}
             <div>
               <p className="text-sm font-medium mb-2 flex items-center gap-2">
                 <Gift className="w-4 h-4 text-amber-500" />
@@ -743,30 +755,29 @@ export default function CareMode({ onExit }: CareModeProps) {
                 placeholder="작은 선물, 도움, 함께하는 시간..."
                 className="textarea textarea-bordered w-full h-20 resize-none"
               />
-            </div>
-
-            {/* 느낌 */}
-            <div>
-              <p className="text-sm font-medium mb-2">오늘 기분은 어때요?</p>
-              <div className="flex justify-between">
-                {FEELING_RATINGS.map(({ value, icon, label }) => {
-                  const IconComponent = FEELING_ICONS[icon];
-                  return (
-                    <button
-                      key={value}
-                      onClick={() => setFeelingRating(value)}
-                      className={`flex flex-col items-center p-2 rounded-lg transition-all ${
-                        feelingRating === value
-                          ? 'bg-primary/20 scale-110'
-                          : 'hover:bg-base-200'
-                      }`}
-                    >
-                      {IconComponent && <IconComponent className="w-6 h-6" />}
-                      <span className="text-xs mt-1 text-base-content/60">{label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {/* 할일로 추가 옵션 */}
+              {giftPlan.trim() && (
+                <div className="mt-3 p-3 rounded-lg bg-base-200">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createGiftTodo}
+                      onChange={(e) => setCreateGiftTodo(e.target.checked)}
+                      className="checkbox checkbox-sm checkbox-primary"
+                    />
+                    <span className="text-sm">할일로 추가하기</span>
+                  </label>
+                  {createGiftTodo && (
+                    <input
+                      type="date"
+                      value={giftTodoDate}
+                      onChange={(e) => setGiftTodoDate(e.target.value)}
+                      className="input input-sm input-bordered w-full mt-2"
+                      placeholder="날짜 선택 (선택사항)"
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 저장 버튼 */}
@@ -779,7 +790,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                 {isSaving ? (
                   <span className="loading loading-spinner loading-sm" />
                 ) : (
-                  '마음 전하기 완료'
+                  '작성 완료'
                 )}
               </button>
             </div>
