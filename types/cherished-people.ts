@@ -37,8 +37,8 @@ export interface CherishedPerson {
   user_id: string;
   name: string;
   nickname: string | null;
-  relationship: RelationshipType | null;
-  priority: number;           // 0: 일반, 1: 중요, 2: 매우 중요
+  relationships: string[];    // 복수 관계 (배열) - 자유 입력
+  roles: string[];            // 역할/직분 (배열) - 자유 입력
   is_active: boolean;
   last_interaction_at: string | null;
   interaction_count: number;
@@ -46,14 +46,17 @@ export interface CherishedPerson {
   tags: string[] | null;
   created_at: string;
   updated_at: string;
+  // deprecated - 하위 호환용
+  relationship?: RelationshipType | null;
+  priority?: number;
 }
 
 /** 소중한 사람 입력 폼 */
 export interface CherishedPersonInput {
   name: string;
   nickname?: string;
-  relationship?: RelationshipType;
-  priority?: number;
+  relationships?: string[];   // 복수 관계 (배열)
+  roles?: string[];           // 역할/직분 (배열)
   notes?: string;
   tags?: string[];
 }
@@ -161,3 +164,19 @@ export const RECOMMENDATION_PRIORITY_LABELS: Record<ContactRecommendation['prior
   medium: { label: '연락해보세요', color: 'text-warning', bgColor: 'bg-warning/10' },
   normal: { label: '연락 추천', color: 'text-info', bgColor: 'bg-info/10' },
 };
+
+// ============================================
+// 자동완성 기본 추천 목록
+// ============================================
+
+/** 기본 관계 추천 목록 */
+export const DEFAULT_RELATIONSHIP_SUGGESTIONS = [
+  '가족', '친구', '동료', '멘토', '선배', '후배',
+  '모임', '이웃', '거래처', '고객',
+];
+
+/** 기본 역할/직분 추천 목록 */
+export const DEFAULT_ROLE_SUGGESTIONS = [
+  '팀장', '부장',
+  '임원', '대표', '담당자', '선생님', '코치',
+];

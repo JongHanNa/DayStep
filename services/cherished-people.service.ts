@@ -36,7 +36,7 @@ export class CherishedPeopleService {
       const data = await queryRLSTableWithJWT('cherished_people', [
         { column: 'user_id', operator: 'eq', value: userId },
         { column: 'is_active', operator: 'eq', value: true },
-      ], { order: 'priority.desc,name.asc' });
+      ], { order: 'name.asc' });
 
       console.log('👥 소중한 사람 목록 조회:', data?.length || 0, '명');
       return data || [];
@@ -57,8 +57,8 @@ export class CherishedPeopleService {
       user_id: userId,
       name: input.name.trim(),
       nickname: input.nickname?.trim() || null,
-      relationship: input.relationship || null,
-      priority: input.priority ?? 0,
+      relationships: input.relationships || [],
+      roles: input.roles || [],
       notes: input.notes?.trim() || null,
       tags: input.tags || null,
       is_active: true,
@@ -393,11 +393,11 @@ export class CherishedPeopleService {
           // 마지막 관심 기록 조회
           const lastInteractions = await this.getInteractionsByPerson(userId, person.id, 1);
 
-          // 우선순위 결정
+          // 우선순위 결정 (연락 안 한 기간 기준)
           let priority: 'high' | 'medium' | 'normal' = 'normal';
-          if (person.priority >= 2 || daysSinceLastContact >= 30 || daysSinceLastContact === -1) {
+          if (daysSinceLastContact >= 30 || daysSinceLastContact === -1) {
             priority = 'high';
-          } else if (person.priority >= 1 || daysSinceLastContact >= 14) {
+          } else if (daysSinceLastContact >= 14) {
             priority = 'medium';
           }
 
@@ -732,5 +732,57 @@ export class CherishedPeopleService {
     if (days < 30) return `${Math.floor(days / 7)}주 전`;
     if (days < 60) return '한 달 전';
     return `${Math.floor(days / 30)}개월 전`;
+  }
+
+  // ============================================
+  // 자동완성 추천 목록
+  // ============================================
+
+  /**
+   * 관계 추천 목록 조회 (자동완성용)
+   * 기본 추천 목록 + 사용자가 입력한 기존 값들
+   */
+  static async getRelationshipSuggestions(userId: string): Promise<string[]> {
+    const { DEFAULT_RELATIONSHIP_SUGGESTIONS } = await import('@/types/cherished-people');
+
+    try {
+      const people = await this.getPeople(userId);
+      const allRelationships = people.flatMap((p) => p.relationships || []);
+      const uniqueRelationships = [...new Set(allRelationships)].filter(Boolean);
+
+      // 기본 추천 목록과 병합 (중복 제거)
+      const combined = [
+        ...new Set([...DEFAULT_RELATIONSHIP_SUGGESTIONS, ...uniqueRelationships]),
+      ];
+
+      return combined.sort();
+    } catch (error) {
+      console.error('❌ 관계 추천 조회 오류:', error);
+      return DEFAULT_RELATIONSHIP_SUGGESTIONS;
+    }
+  }
+
+  /**
+   * 역할/직분 추천 목록 조회 (자동완성용)
+   * 기본 추천 목록 + 사용자가 입력한 기존 값들
+   */
+  static async getRoleSuggestions(userId: string): Promise<string[]> {
+    const { DEFAULT_ROLE_SUGGESTIONS } = await import('@/types/cherished-people');
+
+    try {
+      const people = await this.getPeople(userId);
+      const allRoles = people.flatMap((p) => p.roles || []);
+      const uniqueRoles = [...new Set(allRoles)].filter(Boolean);
+
+      // 기본 추천 목록과 병합 (중복 제거)
+      const combined = [
+        ...new Set([...DEFAULT_ROLE_SUGGESTIONS, ...uniqueRoles]),
+      ];
+
+      return combined.sort();
+    } catch (error) {
+      console.error('❌ 역할 추천 조회 오류:', error);
+      return DEFAULT_ROLE_SUGGESTIONS;
+    }
   }
 }

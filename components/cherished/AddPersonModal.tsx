@@ -5,11 +5,8 @@ import { X, Trash2 } from 'lucide-react';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
-import {
-  RELATIONSHIP_LABELS,
-  PRIORITY_LABELS,
-} from '@/types/cherished-people';
-import type { CherishedPerson, CherishedPersonInput, RelationshipType } from '@/types/cherished-people';
+import { TagInput } from '@/components/ui/TagInput';
+import type { CherishedPerson, CherishedPersonInput } from '@/types/cherished-people';
 
 interface AddPersonModalProps {
   userId: string;
@@ -27,25 +24,39 @@ export default function AddPersonModal({
   onClose,
   editingPerson,
 }: AddPersonModalProps) {
-  const { addPerson, updatePerson, deactivatePerson } = useCherishedPeopleStore();
+  const {
+    addPerson,
+    updatePerson,
+    deactivatePerson,
+    loadSuggestions,
+    relationshipSuggestions,
+    roleSuggestions,
+  } = useCherishedPeopleStore();
   const { checkAndProceed, limitResult, isModalOpen, closeModal, onCreateSuccess, onDeleteSuccess } = useUsageLimitCheck();
 
   // 폼 상태
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
-  const [relationship, setRelationship] = useState<RelationshipType | ''>('');
-  const [priority, setPriority] = useState(0);
+  const [relationships, setRelationships] = useState<string[]>([]);
+  const [roles, setRoles] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // 모달 열릴 때 추천 목록 로드
+  useEffect(() => {
+    if (isOpen && userId) {
+      loadSuggestions(userId);
+    }
+  }, [isOpen, userId, loadSuggestions]);
 
   // 편집 모드일 때 데이터 로드
   useEffect(() => {
     if (editingPerson) {
       setName(editingPerson.name);
       setNickname(editingPerson.nickname || '');
-      setRelationship(editingPerson.relationship || '');
-      setPriority(editingPerson.priority);
+      setRelationships(editingPerson.relationships || []);
+      setRoles(editingPerson.roles || []);
       setNotes(editingPerson.notes || '');
     } else {
       resetForm();
@@ -56,8 +67,8 @@ export default function AddPersonModal({
   const resetForm = () => {
     setName('');
     setNickname('');
-    setRelationship('');
-    setPriority(0);
+    setRelationships([]);
+    setRoles([]);
     setNotes('');
     setShowDeleteConfirm(false);
   };
@@ -69,8 +80,8 @@ export default function AddPersonModal({
     const input: CherishedPersonInput = {
       name: name.trim(),
       nickname: nickname.trim() || undefined,
-      relationship: relationship || undefined,
-      priority,
+      relationships,
+      roles,
       notes: notes.trim() || undefined,
     };
 
@@ -188,48 +199,22 @@ export default function AddPersonModal({
           </div>
 
           {/* 관계 */}
-          <div>
-            <label className="text-sm font-medium block mb-2">관계</label>
-            <div className="flex flex-wrap gap-2">
-              {(Object.entries(RELATIONSHIP_LABELS) as [RelationshipType, string][]).map(
-                ([type, label]) => (
-                  <button
-                    key={type}
-                    onClick={() => setRelationship(type)}
-                    className={`btn btn-sm rounded-full ${
-                      relationship === type
-                        ? 'btn-primary'
-                        : 'btn-ghost border border-base-300'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
+          <TagInput
+            label="관계"
+            value={relationships}
+            onChange={setRelationships}
+            suggestions={relationshipSuggestions}
+            placeholder="관계를 입력하세요 (예: 가족, 친구)"
+          />
 
-          {/* 중요도 */}
-          <div>
-            <label className="text-sm font-medium block mb-2">중요도</label>
-            <div className="flex gap-2">
-              {[0, 1, 2].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPriority(p)}
-                  className={`flex-1 btn btn-sm rounded-full ${
-                    priority === p
-                      ? 'btn-primary'
-                      : 'btn-ghost border border-base-300'
-                  }`}
-                >
-                  <span className={priority === p ? '' : PRIORITY_LABELS[p].color}>
-                    {PRIORITY_LABELS[p].label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* 역할/직분 */}
+          <TagInput
+            label="역할/직분 (선택)"
+            value={roles}
+            onChange={setRoles}
+            suggestions={roleSuggestions}
+            placeholder="역할을 입력하세요 (예: 팀장, 교구장)"
+          />
 
           {/* 메모 */}
           <div>

@@ -29,6 +29,11 @@ interface CherishedPeopleState {
   selectedPersonInteractions: CareInteraction[];
   isLoadingInteractions: boolean;
 
+  // 자동완성 추천 목록
+  relationshipSuggestions: string[];
+  roleSuggestions: string[];
+  isLoadingSuggestions: boolean;
+
   // 우선순위 상기 모달
   currentReminder: PriorityReminder | null;
   showPriorityReminderModal: boolean;
@@ -53,6 +58,7 @@ interface CherishedPeopleState {
 
   loadRecommendations: (userId: string, thresholdDays?: number) => Promise<void>;
   loadStats: (userId: string) => Promise<void>;
+  loadSuggestions: (userId: string) => Promise<void>;
 
   loadPersonInteractions: (userId: string, personId: string) => Promise<void>;
   addInteraction: (userId: string, input: CareInteractionInput) => Promise<CareInteraction | null>;
@@ -87,6 +93,9 @@ const DEFAULT_STATE = {
   stats: null,
   selectedPersonInteractions: [],
   isLoadingInteractions: false,
+  relationshipSuggestions: [],
+  roleSuggestions: [],
+  isLoadingSuggestions: false,
   currentReminder: null,
   showPriorityReminderModal: false,
   showInteractionModal: false,
@@ -202,6 +211,24 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           set({ stats });
         } catch (error) {
           console.error('❌ 통계 로드 실패:', error);
+        }
+      },
+
+      loadSuggestions: async (userId) => {
+        set({ isLoadingSuggestions: true });
+        try {
+          const [relationships, roles] = await Promise.all([
+            CherishedPeopleService.getRelationshipSuggestions(userId),
+            CherishedPeopleService.getRoleSuggestions(userId),
+          ]);
+          set({
+            relationshipSuggestions: relationships,
+            roleSuggestions: roles,
+            isLoadingSuggestions: false,
+          });
+        } catch (error) {
+          console.error('❌ 추천 목록 로드 실패:', error);
+          set({ isLoadingSuggestions: false });
         }
       },
 

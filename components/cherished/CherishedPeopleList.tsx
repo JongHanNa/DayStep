@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, User, ChevronRight, Clock, Heart } from 'lucide-react';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
-import { RELATIONSHIP_LABELS, PRIORITY_LABELS } from '@/types/cherished-people';
-import type { CherishedPerson, RelationshipType } from '@/types/cherished-people';
+import type { CherishedPerson } from '@/types/cherished-people';
 import AddPersonModal from './AddPersonModal';
 
 interface CherishedPeopleListProps {
@@ -120,17 +119,17 @@ export default function CherishedPeopleList({
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="font-semibold">{person.name}</span>
-                                {person.priority > 0 && (
-                                  <span className={`text-xs ${PRIORITY_LABELS[person.priority].color}`}>
-                                    {PRIORITY_LABELS[person.priority].label}
-                                  </span>
-                                )}
                               </div>
 
-                              <div className="flex items-center gap-2 mt-1">
-                                {person.relationship && (
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                {person.relationships && person.relationships.length > 0 && (
                                   <span className="text-xs text-base-content/50">
-                                    {RELATIONSHIP_LABELS[person.relationship as RelationshipType]}
+                                    {person.relationships.join(', ')}
+                                  </span>
+                                )}
+                                {person.roles && person.roles.length > 0 && (
+                                  <span className="text-xs text-primary/70">
+                                    {person.roles.join(', ')}
                                   </span>
                                 )}
                                 {person.last_interaction_at && (
