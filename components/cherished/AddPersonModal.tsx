@@ -28,6 +28,7 @@ export default function AddPersonModal({
     addPerson,
     updatePerson,
     deactivatePerson,
+    loadPeople,
     loadSuggestions,
     relationshipSuggestions,
     roleSuggestions,
@@ -105,6 +106,7 @@ export default function AddPersonModal({
       setIsSaving(true);
       try {
         await updatePerson(editingPerson.id, userId, input);
+        await loadPeople(userId); // 최신 데이터 리로드
         onClose();
         resetForm();
       } catch (error) {
@@ -213,7 +215,7 @@ export default function AddPersonModal({
             value={roles}
             onChange={setRoles}
             suggestions={roleSuggestions}
-            placeholder="역할을 입력하세요 (예: 팀장, 교구장)"
+            placeholder="역할을 입력하세요 (예: 팀장, 부장)"
           />
 
           {/* 메모 */}

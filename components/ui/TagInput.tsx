@@ -106,6 +106,14 @@ export function TagInput({
     }
   };
 
+  // 포커스 잃을 때 입력 중인 값 자동 추가
+  const handleBlur = () => {
+    if (inputValue.trim()) {
+      addTag(inputValue);
+    }
+    setShowSuggestions(false);
+  };
+
   return (
     <div ref={containerRef} className="relative">
       {label && (
@@ -143,6 +151,7 @@ export function TagInput({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onFocus={handleFocus}
+          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={value.length === 0 ? placeholder : ''}
           className="flex-1 min-w-[100px] bg-transparent outline-none text-sm"

@@ -683,7 +683,7 @@ export default function CareMode({ onExit }: CareModeProps) {
               <div>
                 <p className="text-sm font-medium mb-2 flex items-center gap-2">
                   <MessageCircle className="w-4 h-4 text-primary" />
-                  어떻게 마음을 전했나요?
+                  마음을 전했다면, 기록으로 남겨보세요. 어떻게 마음을 전했나요?
                 </p>
                 {/* 소식만 기록할게요 옵션 */}
                 <label className="flex items-center gap-2 mb-3 cursor-pointer">
@@ -790,7 +790,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                 {isSaving ? (
                   <span className="loading loading-spinner loading-sm" />
                 ) : (
-                  '작성 완료'
+                  '저장'
                 )}
               </button>
             </div>
