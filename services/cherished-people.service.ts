@@ -678,17 +678,13 @@ export class CherishedPeopleService {
   }
 
   /**
-   * 일수를 친근한 표현으로 변환
+   * 일수를 정확한 숫자로 표시
    */
   static formatDaysSince(days: number): string {
     if (days === -1) return '아직 연락한 적 없어요';
     if (days === 0) return '오늘';
     if (days === 1) return '어제';
-    if (days < 7) return `${days}일 전`;
-    if (days < 14) return '일주일 전';
-    if (days < 30) return `${Math.floor(days / 7)}주 전`;
-    if (days < 60) return '한 달 전';
-    return `${Math.floor(days / 30)}개월 전`;
+    return `${days}일 전`;
   }
 
   // ============================================

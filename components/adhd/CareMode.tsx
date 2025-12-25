@@ -442,7 +442,7 @@ export default function CareMode({ onExit }: CareModeProps) {
                       <Clock className="w-3 h-3" />
                       오래 연락 안 한 분들
                     </p>
-                    {recommendations.slice(0, 3).map((rec) => (
+                    {recommendations.map((rec) => (
                       <div
                         key={rec.person.id}
                         className="w-full p-4 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"

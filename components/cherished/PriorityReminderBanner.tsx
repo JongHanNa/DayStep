@@ -34,11 +34,12 @@ export default function PriorityReminderBanner({
     }
   }, [userId, loadRecommendations]);
 
-  // 추천 데이터 처리
+  // 추천 데이터 처리 - 랜덤 선택
   useEffect(() => {
     if (recommendations.length > 0) {
-      // 가장 오래 연락 안 한 사람 또는 우선순위가 높은 사람 선택
-      const top = recommendations[0];
+      // 오래 연락 안 한 사람 중 랜덤 선택
+      const randomIndex = Math.floor(Math.random() * recommendations.length);
+      const top = recommendations[randomIndex];
       setTopRecommendation(top);
     } else {
       setTopRecommendation(null);
@@ -113,6 +114,13 @@ export default function PriorityReminderBanner({
                   </>
                 )}
               </p>
+
+              {/* 최근 소식 (있을 때만 표시) */}
+              {topRecommendation.lastInteraction?.recent_news && (
+                <p className="text-xs text-gray-700 mt-1 bg-white/50 rounded px-2 py-1">
+                  최근 소식: {topRecommendation.lastInteraction.recent_news}
+                </p>
+              )}
 
               {/* 성찰 메시지 */}
               {reminderMessage && (
