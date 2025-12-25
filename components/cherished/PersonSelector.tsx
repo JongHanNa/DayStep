@@ -104,10 +104,10 @@ export function PersonSelector({
         shortLabel: '기쁘게 할 분들',
         placeholder: '기쁘게 할 분을 선택하세요',
         iconColor: 'text-pink-500',
-        bgColor: 'bg-pink-50',
-        borderColor: 'border-pink-200',
-        chipBg: 'bg-pink-100',
-        chipText: 'text-pink-700',
+        bgColor: 'bg-pink-500/10',
+        borderColor: 'border-pink-500/30',
+        chipBg: 'bg-pink-500/20',
+        chipText: 'text-pink-600 dark:text-pink-400',
       };
     } else {
       return {
@@ -116,10 +116,10 @@ export function PersonSelector({
         shortLabel: '부끄러운 분들',
         placeholder: '부끄러운 분을 선택하세요',
         iconColor: 'text-amber-500',
-        bgColor: 'bg-amber-50',
-        borderColor: 'border-amber-200',
-        chipBg: 'bg-amber-100',
-        chipText: 'text-amber-700',
+        bgColor: 'bg-amber-500/10',
+        borderColor: 'border-amber-500/30',
+        chipBg: 'bg-amber-500/20',
+        chipText: 'text-amber-600 dark:text-amber-400',
       };
     }
   };
