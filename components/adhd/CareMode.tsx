@@ -301,7 +301,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             await todoStore.createTodo({
               user_id: userId,
               title: giftTodoTitle,
-              schedule_type: giftTodoDate ? 'anytime' : 'none',
+              schedule_type: giftTodoDate ? 'timed' : 'none',
               start_time: giftTodoDate ? new Date(`${giftTodoDate}T00:00:00+09:00`).toISOString() : undefined,
             });
           }
@@ -913,7 +913,16 @@ export default function CareMode({ onExit }: CareModeProps) {
                     <input
                       type="checkbox"
                       checked={createGiftTodo}
-                      onChange={(e) => setCreateGiftTodo(e.target.checked)}
+                      onChange={(e) => {
+                      setCreateGiftTodo(e.target.checked);
+                      if (e.target.checked && !giftTodoDate) {
+                        const today = new Date();
+                        const yyyy = today.getFullYear();
+                        const mm = String(today.getMonth() + 1).padStart(2, '0');
+                        const dd = String(today.getDate()).padStart(2, '0');
+                        setGiftTodoDate(`${yyyy}-${mm}-${dd}`);
+                      }
+                    }}
                       className="checkbox checkbox-sm checkbox-primary"
                     />
                     <span className="text-sm">할일로 추가하기</span>
