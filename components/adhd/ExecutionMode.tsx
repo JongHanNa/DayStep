@@ -273,13 +273,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               }
             }
 
-            // 연결된 인물 복원
-            if (activeSession.joyful_people_ids?.length > 0 || activeSession.shameful_people_ids?.length > 0) {
-              setLinkedPeople(
-                activeSession.joyful_people_ids || [],
-                activeSession.shameful_people_ids || []
-              );
-            }
           } else {
             // 시간 초과된 세션은 자동 완료 처리 (getActiveSession에서 처리됨)
             console.log('⏰ 만료된 세션 발견, 이미 처리됨');
@@ -500,34 +493,50 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     const { sessionId, linkedTodoId } = executionMode.adhocMode;
 
-    // DB 세션 완료 처리
-    if (sessionId) {
-      try {
-        await PomodoroSessionService.completeSession(sessionId);
-      } catch (error) {
-        console.error('❌ 세션 완료 처리 실패:', error);
-      }
-    }
+    // 세션 시작/종료 시간 계산
+    const sessionStartTime = restoredStartTime || new Date(Date.now() - timerState.duration + timerState.remainingTime);
+    const sessionEndTime = new Date();
 
-    // 연결된 할일이 있으면 완료 처리하고 바로 종료
+    // 연결된 할일이 있으면 시간/인물 정보 포함하여 완료 처리
     if (linkedTodoId) {
       try {
-        await updateTodo(linkedTodoId, { completed: true });
-        console.log('✅ 연결된 할일 완료 처리:', linkedTodoId);
-
-        // 정리 및 다음으로
-        stopPomodoroTimer();
-        endAdhocMode();
-        setSessionId(null);
-        setLinkedTodo(null, null);
-        setRestoredStartTime(null);
-        setRestoredDuration(null);
-        markCompleted('adhoc', 'direct');
-        getNextRecommendation();
-        return;
+        await updateTodo(linkedTodoId, {
+          completed: true,
+          schedule_type: 'timed',
+          start_time: sessionStartTime.toISOString(),
+          end_time: sessionEndTime.toISOString(),
+          joyful_people_ids: joyfulPeopleIds,
+          shameful_people_ids: shamefulPeopleIds,
+        });
+        console.log('✅ 연결된 할일 완료 처리 (시간/인물 포함):', linkedTodoId);
       } catch (error) {
         console.error('❌ 할일 완료 처리 실패:', error);
       }
+    }
+
+    // 세션 삭제 (is_completed=true 대신 완전 삭제)
+    if (sessionId) {
+      try {
+        await PomodoroSessionService.deleteSession(sessionId);
+        console.log('🗑️ 세션 삭제 완료:', sessionId);
+      } catch (error) {
+        console.error('❌ 세션 삭제 실패:', error);
+      }
+    }
+
+    // linkedTodoId가 있으면 바로 다음으로, 없으면 기록 화면으로
+    if (linkedTodoId) {
+      // 정리 및 다음으로
+      stopPomodoroTimer();
+      endAdhocMode();
+      setSessionId(null);
+      setLinkedTodo(null, null);
+      clearLinkedPeople();
+      setRestoredStartTime(null);
+      setRestoredDuration(null);
+      markCompleted('adhoc', 'direct');
+      getNextRecommendation();
+      return;
     }
 
     // 기록 화면으로 전환 전, 입력 필드 초기화 (중복 생성 방지)
@@ -604,12 +613,23 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     setIsAnimating(true);
 
-    // 이미 연결된 할일이 있으면 새로 생성하지 않고 완료 처리만 (최종 방어선)
+    // 세션 시작 시간 (복원된 시간 또는 타이머 시작 시점)
+    const sessionStartTime = restoredStartTime || new Date(Date.now() - timerState.duration + timerState.remainingTime);
+    const sessionEndTime = new Date();
+
+    // 이미 연결된 할일이 있으면 새로 생성하지 않고 완료 처리 + 시간/인물 정보 업데이트
     const { linkedTodoId, sessionId } = executionMode.adhocMode;
     if (linkedTodoId) {
-      console.log('⚠️ 이미 연결된 할일 존재 - 완료 처리만 수행:', linkedTodoId);
+      console.log('⚠️ 이미 연결된 할일 존재 - 완료 처리 + 정보 업데이트:', linkedTodoId);
       try {
-        await updateTodo(linkedTodoId, { completed: true });
+        await updateTodo(linkedTodoId, {
+          completed: true,
+          schedule_type: 'timed',
+          start_time: sessionStartTime.toISOString(),
+          end_time: sessionEndTime.toISOString(),
+          joyful_people_ids: joyfulPeopleIds,
+          shameful_people_ids: shamefulPeopleIds,
+        });
       } catch (error) {
         console.error('❌ 기존 할일 완료 처리 실패:', error);
       }
@@ -618,21 +638,21 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       await createTodo({
         title: adhocCaptureTitle.trim(),
         completed: true,
-        schedule_type: 'anytime',
+        schedule_type: 'timed',
+        start_time: sessionStartTime.toISOString(),
+        end_time: sessionEndTime.toISOString(),
+        joyful_people_ids: joyfulPeopleIds,
+        shameful_people_ids: shamefulPeopleIds,
         user_id: userId,
       });
     }
 
-    // 세션에 인물 정보 저장 (세션이 있는 경우)
+    // 세션 삭제 (is_completed=true 대신 완전 삭제)
     if (sessionId) {
       try {
-        await PomodoroSessionService.completeSessionWithPeople(
-          sessionId,
-          joyfulPeopleIds,
-          shamefulPeopleIds
-        );
+        await PomodoroSessionService.deleteSession(sessionId);
       } catch (error) {
-        console.error('❌ 세션 완료 처리 실패:', error);
+        console.error('❌ 세션 삭제 실패:', error);
       }
     }
 

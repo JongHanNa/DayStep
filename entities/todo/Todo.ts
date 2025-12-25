@@ -42,7 +42,11 @@ export class Todo {
     public readonly resourceId: string | null = null,
 
     // 관계 할일 필드
-    public readonly isRelationshipTask: boolean = false
+    public readonly isRelationshipTask: boolean = false,
+
+    // 소중한 사람 연결 필드
+    public readonly joyfulPeopleIds: string[] = [],
+    public readonly shamefulPeopleIds: string[] = []
   ) {}
 
   /**
@@ -81,6 +85,10 @@ export class Todo {
 
     // 관계 할일 필드
     const isRelationshipTask = record.isRelationshipTask ?? record.is_relationship_task ?? false;
+
+    // 소중한 사람 연결 필드
+    const joyfulPeopleIds = record.joyfulPeopleIds ?? record.joyful_people_ids ?? [];
+    const shamefulPeopleIds = record.shamefulPeopleIds ?? record.shameful_people_ids ?? [];
 
     // title 필드
     const title = data.title;
@@ -124,7 +132,11 @@ export class Todo {
       resourceId || null,
 
       // 관계 할일 필드
-      isRelationshipTask
+      isRelationshipTask,
+
+      // 소중한 사람 연결 필드
+      joyfulPeopleIds || [],
+      shamefulPeopleIds || []
     );
   }
 
@@ -544,6 +556,10 @@ export class Todo {
 
       // 관계 태그
       is_relationship_task: this.isRelationshipTask,
+
+      // 소중한 사람 연결 필드
+      joyful_people_ids: this.joyfulPeopleIds,
+      shameful_people_ids: this.shamefulPeopleIds,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),
