@@ -236,7 +236,19 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                     <MoreVertical className="w-4 h-4" />
                   </button>
                   {openMenuId === interaction.id && (
-                    <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[100px]">
+                    <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[130px]">
+                      {person && (
+                        <button
+                          onClick={() => {
+                            handleOpenPersonModal(person);
+                            setOpenMenuId(null);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
+                        >
+                          <User className="w-4 h-4" />
+                          인물 정보 수정
+                        </button>
+                      )}
                       <button
                         onClick={() => handleEdit(interaction, person)}
                         className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
@@ -267,10 +279,7 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                   <User className="w-4 h-4 text-primary" />
                 </div>
-                <button
-                  className="flex-1 text-left hover:opacity-70 transition-opacity"
-                  onClick={() => person && handleOpenPersonModal(person)}
-                >
+                <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{personName}님께 감사한 점들</h3>
                     <span className="text-xs text-base-content/60">({personNotes.length})</span>
@@ -288,7 +297,7 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                       )}
                     </div>
                   )}
-                </button>
+                </div>
               </div>
               <div className="space-y-2 pl-10">
                 {personNotes.slice(0, 5).map(({ interaction }) => (
@@ -312,7 +321,20 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                           <MoreVertical className="w-3 h-3" />
                         </button>
                         {openMenuId === interaction.id && (
-                          <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[100px]">
+                          <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[130px]">
+                            {person && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenPersonModal(person);
+                                  setOpenMenuId(null);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
+                              >
+                                <User className="w-4 h-4" />
+                                인물 정보 수정
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

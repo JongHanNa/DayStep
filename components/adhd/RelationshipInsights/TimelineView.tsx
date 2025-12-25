@@ -5,10 +5,11 @@ import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 import type { CareInteraction, CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import {
-  Clock, MoreVertical, Pencil, Trash2,
+  Clock, MoreVertical, Pencil, Trash2, User,
   Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
+import AddPersonModal from '@/components/cherished/AddPersonModal';
 
 // Lucide 아이콘 매핑
 const INTERACTION_ICONS: Record<string, LucideIcon> = {
@@ -37,6 +38,10 @@ export function TimelineView({ userId }: TimelineViewProps) {
   // 모달 refs
   const editDialogRef = useRef<HTMLDialogElement>(null);
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
+
+  // 인물 수정 모달 상태
+  const [editingPerson, setEditingPerson] = useState<CherishedPerson | null>(null);
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -144,6 +149,20 @@ export function TimelineView({ userId }: TimelineViewProps) {
     }
   };
 
+  // 인물 수정 모달 열기
+  const handleOpenPersonModal = (person: CherishedPerson) => {
+    setEditingPerson(person);
+    setIsPersonModalOpen(true);
+    setOpenMenuId(null);
+  };
+
+  // 인물 수정 모달 닫기
+  const handleClosePersonModal = () => {
+    setIsPersonModalOpen(false);
+    setEditingPerson(null);
+    loadData(); // 데이터 새로고침
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -217,7 +236,16 @@ export function TimelineView({ userId }: TimelineViewProps) {
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       {openMenuId === interaction.id && (
-                        <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[100px]">
+                        <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[130px]">
+                          {interaction.person && (
+                            <button
+                              onClick={() => handleOpenPersonModal(interaction.person!)}
+                              className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
+                            >
+                              <User className="w-4 h-4" />
+                              인물 정보 수정
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEdit(interaction)}
                             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
@@ -377,6 +405,14 @@ export function TimelineView({ userId }: TimelineViewProps) {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* 인물 수정 모달 */}
+      <AddPersonModal
+        userId={userId}
+        isOpen={isPersonModalOpen}
+        onClose={handleClosePersonModal}
+        editingPerson={editingPerson}
+      />
     </div>
   );
 }

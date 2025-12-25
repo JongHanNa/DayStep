@@ -7,7 +7,7 @@ import AddPersonModal from '@/components/cherished/AddPersonModal';
 import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 import type { CherishedPerson, InteractionType } from '@/types/cherished-people';
 import {
-  BarChart3, TrendingUp, Users, Calendar, Award,
+  BarChart3, TrendingUp, Users, Calendar, Award, MoreVertical, User,
   Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
   type LucideIcon,
 } from 'lucide-react';
@@ -37,9 +37,21 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
   const [editingPerson, setEditingPerson] = useState<CherishedPerson | null>(null);
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
 
+  // 더보기 메뉴 상태
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
   useEffect(() => {
     loadStats();
   }, [userId]);
+
+  // 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!openMenuId) return;
+
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   const loadStats = async () => {
     setIsLoading(true);
@@ -144,10 +156,7 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
                 }`}>
                   {index + 1}
                 </div>
-                <button
-                  className="flex-1 min-w-0 text-left hover:opacity-70 transition-opacity"
-                  onClick={() => handleOpenPersonModal(item.person)}
-                >
+                <div className="flex-1 min-w-0">
                   <span className="font-medium">{item.person.name}</span>
                   {(item.person.relationships?.length > 0 || item.person.departments?.length > 0 || item.person.roles?.length > 0) && (
                     <div className="flex items-center gap-1.5 flex-wrap text-xs">
@@ -162,8 +171,34 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
                       )}
                     </div>
                   )}
-                </button>
+                </div>
                 <span className="text-sm text-base-content/60 flex-shrink-0">{item.count}회</span>
+                {/* 더보기 메뉴 */}
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(openMenuId === item.person.id ? null : item.person.id);
+                    }}
+                    className="btn btn-ghost btn-circle btn-xs"
+                  >
+                    <MoreVertical className="w-3 h-3" />
+                  </button>
+                  {openMenuId === item.person.id && (
+                    <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[130px]">
+                      <button
+                        onClick={() => {
+                          handleOpenPersonModal(item.person);
+                          setOpenMenuId(null);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
+                      >
+                        <User className="w-4 h-4" />
+                        인물 정보 수정
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

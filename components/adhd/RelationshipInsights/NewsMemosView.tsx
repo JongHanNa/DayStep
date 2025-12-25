@@ -243,7 +243,19 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
                     <MoreVertical className="w-4 h-4" />
                   </button>
                   {openMenuId === interaction.id && (
-                    <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[100px]">
+                    <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[130px]">
+                      {person && (
+                        <button
+                          onClick={() => {
+                            handleOpenPersonModal(person);
+                            setOpenMenuId(null);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
+                        >
+                          <User className="w-4 h-4" />
+                          인물 정보 수정
+                        </button>
+                      )}
                       <button
                         onClick={() => handleEdit(interaction, person)}
                         className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
@@ -282,13 +294,7 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <button
-                        className="min-w-0 text-left hover:opacity-70 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (person) handleOpenPersonModal(person);
-                        }}
-                      >
+                      <div className="min-w-0">
                         <h3 className="font-semibold truncate">{personName}</h3>
                         {person && (person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
                           <div className="flex items-center gap-1.5 flex-wrap text-xs">
@@ -303,7 +309,7 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
                             )}
                           </div>
                         )}
-                      </button>
+                      </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-base-content/60">
                           {formatDate(latestNote.interaction.interaction_date)}
@@ -320,7 +326,20 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
                             <MoreVertical className="w-3 h-3" />
                           </button>
                           {openMenuId === latestNote.interaction.id && (
-                            <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[100px]">
+                            <div className="absolute right-0 top-full mt-1 bg-base-100 rounded-lg shadow-lg border border-base-300 py-1 z-50 min-w-[130px]">
+                              {person && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenPersonModal(person);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-base-200 w-full text-left"
+                                >
+                                  <User className="w-4 h-4" />
+                                  인물 정보 수정
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
