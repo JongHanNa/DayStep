@@ -224,25 +224,27 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     onClick={() => handleEditClick(todo)}
                     className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                   >
-                    <p className={`text-sm ${
+                    <span className={`text-sm ${
                       todo.completed ? 'line-through text-base-content/60' : ''
                     }`}>
                       {todo.title}
-                    </p>
+                    </span>
 
-                    {/* 맥락 배지 */}
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {goalName && (
-                        <span className="badge badge-xs badge-ghost">
-                          {goalName}
-                        </span>
-                      )}
-                      {projectName && (
-                        <span className="badge badge-xs badge-ghost">
-                          {projectName}
-                        </span>
-                      )}
-                    </div>
+                    {/* 맥락 배지 (있을 때만 렌더링) */}
+                    {(goalName || projectName) && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {goalName && (
+                          <span className="badge badge-xs badge-ghost">
+                            {goalName}
+                          </span>
+                        )}
+                        {projectName && (
+                          <span className="badge badge-xs badge-ghost">
+                            {projectName}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </button>
 
                   {/* 삭제 버튼 */}
