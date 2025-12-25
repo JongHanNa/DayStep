@@ -128,18 +128,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setEditFormData(null);
   }, [editingTodo, deleteTodo]);
 
-  // 할일의 표시 날짜 결정 (timed 할일은 startTime, 그 외는 createdAt)
+  // 할일의 표시 날짜 결정 (startTime 기준)
   const getDisplayDate = (todo: Todo): Date => {
-    if (todo.scheduleType === 'timed' && todo.startTime) {
-      return todo.startTime;
-    }
-    return todo.createdAt;
+    // 타임라인은 startTime 있는 할일만 표시하므로 항상 startTime 사용
+    return todo.startTime || todo.createdAt;
   };
 
-  // 타임라인 아이템 생성 (표시 날짜 기준 정렬)
+  // 타임라인 아이템 생성 (startTime 있는 할일만, 표시 날짜 기준 정렬)
   const timelineItems = useMemo(() => {
     return todos
-      .slice()
+      .filter(todo => todo.startTime !== null)  // startTime 있는 것만 표시
       .sort((a, b) => getDisplayDate(b).getTime() - getDisplayDate(a).getTime())
       .slice(0, 50); // 최근 50개만
   }, [todos]);
