@@ -60,7 +60,6 @@ export class CherishedPeopleService {
       relationships: input.relationships || [],
       roles: input.roles || [],
       notes: input.notes?.trim() || null,
-      tags: input.tags || null,
       is_active: true,
       interaction_count: 0,
     };

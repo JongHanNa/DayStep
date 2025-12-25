@@ -2,16 +2,6 @@
 // 소중한 사람 관리 시스템 타입 정의
 // ============================================
 
-/** 관계 유형 */
-export type RelationshipType =
-  | 'family'      // 가족
-  | 'friend'      // 친구
-  | 'colleague'   // 동료
-  | 'mentor'      // 멘토/선배
-  | 'community'   // 커뮤니티/모임
-  | 'neighbor'    // 이웃
-  | 'other';      // 기타
-
 /** 관심 표현 방식 */
 export type InteractionType =
   | 'call'        // 전화
@@ -43,12 +33,8 @@ export interface CherishedPerson {
   last_interaction_at: string | null;
   interaction_count: number;
   notes: string | null;
-  tags: string[] | null;
   created_at: string;
   updated_at: string;
-  // deprecated - 하위 호환용
-  relationship?: RelationshipType | null;
-  priority?: number;
 }
 
 /** 소중한 사람 입력 폼 */
@@ -58,7 +44,6 @@ export interface CherishedPersonInput {
   relationships?: string[];   // 복수 관계 (배열)
   roles?: string[];           // 역할/직분 (배열)
   notes?: string;
-  tags?: string[];
 }
 
 /** 관심 기록 */
@@ -118,17 +103,6 @@ export interface RelationshipStats {
 // 라벨 및 상수
 // ============================================
 
-/** 관계 유형 라벨 */
-export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
-  family: '가족',
-  friend: '친구',
-  colleague: '동료',
-  mentor: '멘토/선배',
-  community: '모임/커뮤니티',
-  neighbor: '이웃',
-  other: '기타',
-};
-
 /** 관심 표현 방식 라벨 (Lucide 아이콘 이름 사용) */
 export const INTERACTION_TYPE_LABELS: Record<InteractionType, { label: string; icon: string }> = {
   call: { label: '전화', icon: 'Phone' },
@@ -140,13 +114,6 @@ export const INTERACTION_TYPE_LABELS: Record<InteractionType, { label: string; i
   help: { label: '도움', icon: 'HandHelping' },
   prayer: { label: '마음으로 응원', icon: 'Heart' },
   other: { label: '기타', icon: 'Sparkles' },
-};
-
-/** 중요도 라벨 */
-export const PRIORITY_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: '일반', color: 'text-base-content/60' },
-  1: { label: '중요', color: 'text-warning' },
-  2: { label: '매우 중요', color: 'text-error' },
 };
 
 /** 느낌 평가 라벨 (Lucide 아이콘 이름 사용) */
