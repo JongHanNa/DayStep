@@ -254,17 +254,17 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* 시간 (timed 할일은 startTime - endTime 표시) */}
-                  <span className="text-xs text-base-content/40">
-                    {todo.scheduleType === 'timed' && todo.startTime ? (
-                      <>
-                        {format(todo.startTime, 'HH:mm')}
-                        {todo.endTime && ` - ${format(todo.endTime, 'HH:mm')}`}
-                      </>
-                    ) : (
-                      format(todo.createdAt, 'HH:mm')
-                    )}
-                  </span>
+                  {/* 시간 (timed: startTime - endTime, anytime: 시간 없음) */}
+                  {todo.scheduleType === 'timed' && todo.startTime ? (
+                    <span className="text-xs text-base-content/40">
+                      {format(todo.startTime, 'HH:mm')}
+                      {todo.endTime && ` - ${format(todo.endTime, 'HH:mm')}`}
+                    </span>
+                  ) : todo.scheduleType !== 'anytime' ? (
+                    <span className="text-xs text-base-content/40">
+                      {format(todo.createdAt, 'HH:mm')}
+                    </span>
+                  ) : null}
                 </div>
               );
             })}
