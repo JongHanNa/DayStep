@@ -15,6 +15,8 @@ interface AdhocModeState {
   sessionId: string | null;        // DB 세션 ID (영속화용)
   linkedTodoId: string | null;     // 연결된 미완료 할일 ID
   linkedTodoTitle: string | null;  // 연결된 할일 제목 (표시용)
+  joyfulPeopleIds: string[];       // 기쁘게 할 분들 ID
+  shamefulPeopleIds: string[];     // 부끄러운 분들 ID (이 분들 앞에서 부끄러운 행동)
 }
 
 // 실행 모드 상태
@@ -124,6 +126,13 @@ interface ADHDModeState {
   endAdhocMode: () => void;
   setSessionId: (sessionId: string | null) => void;
   setLinkedTodo: (todoId: string | null, title: string | null) => void;
+  // 인물 연결 Actions
+  setLinkedPeople: (joyfulIds: string[], shamefulIds: string[]) => void;
+  addJoyfulPerson: (personId: string) => void;
+  removeJoyfulPerson: (personId: string) => void;
+  addShamefulPerson: (personId: string) => void;
+  removeShamefulPerson: (personId: string) => void;
+  clearLinkedPeople: () => void;
 
   // === 정리 모드 Actions ===
   recordTodoAddition: () => void;
@@ -197,6 +206,8 @@ const DEFAULT_ADHOC_MODE: AdhocModeState = {
   sessionId: null,
   linkedTodoId: null,
   linkedTodoTitle: null,
+  joyfulPeopleIds: [],
+  shamefulPeopleIds: [],
 };
 
 const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
@@ -381,6 +392,87 @@ export const useADHDModeStore = create<ADHDModeState>()(
                 ...state.executionMode.adhocMode,
                 linkedTodoId: todoId,
                 linkedTodoTitle: title,
+              },
+            }
+          }));
+        },
+
+        // === 인물 연결 Actions ===
+        setLinkedPeople: (joyfulIds, shamefulIds) => {
+          console.log('👥 ADHD: 연결된 인물 설정', { joyfulIds, shamefulIds });
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                joyfulPeopleIds: joyfulIds,
+                shamefulPeopleIds: shamefulIds,
+              },
+            }
+          }));
+        },
+
+        addJoyfulPerson: (personId) => {
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                joyfulPeopleIds: state.executionMode.adhocMode.joyfulPeopleIds.includes(personId)
+                  ? state.executionMode.adhocMode.joyfulPeopleIds
+                  : [...state.executionMode.adhocMode.joyfulPeopleIds, personId],
+              },
+            }
+          }));
+        },
+
+        removeJoyfulPerson: (personId) => {
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                joyfulPeopleIds: state.executionMode.adhocMode.joyfulPeopleIds.filter(id => id !== personId),
+              },
+            }
+          }));
+        },
+
+        addShamefulPerson: (personId) => {
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                shamefulPeopleIds: state.executionMode.adhocMode.shamefulPeopleIds.includes(personId)
+                  ? state.executionMode.adhocMode.shamefulPeopleIds
+                  : [...state.executionMode.adhocMode.shamefulPeopleIds, personId],
+              },
+            }
+          }));
+        },
+
+        removeShamefulPerson: (personId) => {
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                shamefulPeopleIds: state.executionMode.adhocMode.shamefulPeopleIds.filter(id => id !== personId),
+              },
+            }
+          }));
+        },
+
+        clearLinkedPeople: () => {
+          console.log('🗑️ ADHD: 연결된 인물 초기화');
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                joyfulPeopleIds: [],
+                shamefulPeopleIds: [],
               },
             }
           }));

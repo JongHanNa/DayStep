@@ -31,6 +31,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import { RelationshipDetectorService } from '@/services/relationship-detector.service';
+import { PersonSelector, PersonLinksPreview } from '@/components/cherished/PersonSelector';
+import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 
 // 헬퍼 함수: 일정 유형 라벨
 const getScheduleTypeLabel = (scheduleType: string): string => {
@@ -70,7 +72,16 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     enterOrganizeMode,
     setSessionId,
     setLinkedTodo,
+    setLinkedPeople,
+    clearLinkedPeople,
   } = useADHDModeStore();
+
+  // 소중한 사람 스토어
+  const { loadPeople } = useCherishedPeopleStore();
+
+  // 인물 연결 상태
+  const joyfulPeopleIds = executionMode.adhocMode.joyfulPeopleIds;
+  const shamefulPeopleIds = executionMode.adhocMode.shamefulPeopleIds;
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
@@ -261,6 +272,14 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
                 setLinkedTodo(linkedTodo.id, linkedTodo.title);
               }
             }
+
+            // 연결된 인물 복원
+            if (activeSession.joyful_people_ids?.length > 0 || activeSession.shameful_people_ids?.length > 0) {
+              setLinkedPeople(
+                activeSession.joyful_people_ids || [],
+                activeSession.shameful_people_ids || []
+              );
+            }
           } else {
             // 시간 초과된 세션은 자동 완료 처리 (getActiveSession에서 처리됨)
             console.log('⏰ 만료된 세션 발견, 이미 처리됨');
@@ -276,6 +295,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     restoreActiveSession();
   }, [userId, isWorkerReady]);
+
+  // 소중한 사람 목록 로드
+  useEffect(() => {
+    if (userId) {
+      loadPeople(userId);
+    }
+  }, [userId, loadPeople]);
 
   // "했어" 클릭
   const handleComplete = async (method: 'direct' | 'alternative') => {
@@ -579,7 +605,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setIsAnimating(true);
 
     // 이미 연결된 할일이 있으면 새로 생성하지 않고 완료 처리만 (최종 방어선)
-    const { linkedTodoId } = executionMode.adhocMode;
+    const { linkedTodoId, sessionId } = executionMode.adhocMode;
     if (linkedTodoId) {
       console.log('⚠️ 이미 연결된 할일 존재 - 완료 처리만 수행:', linkedTodoId);
       try {
@@ -597,11 +623,25 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       });
     }
 
+    // 세션에 인물 정보 저장 (세션이 있는 경우)
+    if (sessionId) {
+      try {
+        await PomodoroSessionService.completeSessionWithPeople(
+          sessionId,
+          joyfulPeopleIds,
+          shamefulPeopleIds
+        );
+      } catch (error) {
+        console.error('❌ 세션 완료 처리 실패:', error);
+      }
+    }
+
     // 정리
     setAdhocCaptureTitle('');
     stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
     setLinkedTodo(null, null); // 연결 해제
+    clearLinkedPeople(); // 인물 연결 초기화
     markCompleted('adhoc', 'direct'); // 세션 완료 수 증가
 
     setTimeout(() => {
@@ -615,6 +655,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setAdhocCaptureTitle('');
     stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
+    clearLinkedPeople(); // 인물 연결 초기화
     getNextRecommendation();
   };
 
@@ -765,6 +806,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onUpdateLinkedTodoTitle={handleUpdateLinkedTodoTitle}
               originalStartTime={restoredStartTime || undefined}
               originalDuration={restoredDuration || undefined}
+              joyfulPeopleIds={joyfulPeopleIds}
+              shamefulPeopleIds={shamefulPeopleIds}
+              onLinkedPeopleChange={setLinkedPeople}
             />
           )}
 
@@ -777,6 +821,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onCapture={handleCaptureAdhocTodo}
               onSkip={handleSkipAdhocCapture}
               isAnimating={isAnimating}
+              joyfulPeopleIds={joyfulPeopleIds}
+              shamefulPeopleIds={shamefulPeopleIds}
+              onLinkedPeopleChange={setLinkedPeople}
             />
           )}
         </AnimatePresence>
@@ -1388,6 +1435,10 @@ interface AdhocTimerViewProps {
   originalStartTime?: Date;
   // 세션 복원 시 원본 duration (없으면 timerState.duration 사용)
   originalDuration?: number;
+  // 인물 연결 props
+  joyfulPeopleIds: string[];
+  shamefulPeopleIds: string[];
+  onLinkedPeopleChange: (joyfulIds: string[], shamefulIds: string[]) => void;
 }
 
 function AdhocTimerView({
@@ -1405,10 +1456,14 @@ function AdhocTimerView({
   onUpdateLinkedTodoTitle,
   originalStartTime,
   originalDuration,
+  joyfulPeopleIds,
+  shamefulPeopleIds,
+  onLinkedPeopleChange,
 }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [showPersonSelector, setShowPersonSelector] = useState(false);
 
   // 타이머 시작 시점 (세션 복원 시 원본 시간 사용, 아니면 현재 시간)
   const [startedAt] = useState(() => originalStartTime || new Date());
@@ -1607,13 +1662,38 @@ function AdhocTimerView({
       )}
 
       {/* 안내 문구 */}
-      <p className="text-sm text-base-content/50 mb-8">
+      <p className="text-sm text-base-content/50 mb-4">
         {linkedTodoId ? (
           <>원을 드래그해서 바로 끝낼 수도 있어요</>
         ) : (
           <>지금 기록안해도 끝나면 뭐 했는지 물어볼게요<br />원을 드래그해서 바로 끝낼 수도 있어요</>
         )}
       </p>
+
+      {/* 인물 연결 미리보기 */}
+      <div className="w-full max-w-xs mb-6 mx-auto">
+        <PersonLinksPreview
+          joyfulPeopleIds={joyfulPeopleIds}
+          shamefulPeopleIds={shamefulPeopleIds}
+          onEdit={() => setShowPersonSelector(!showPersonSelector)}
+        />
+
+        {/* 인물 선택 UI */}
+        {showPersonSelector && (
+          <div className="mt-3 space-y-3">
+            <PersonSelector
+              selectedPeopleIds={joyfulPeopleIds}
+              onSelectionChange={(ids) => onLinkedPeopleChange(ids, shamefulPeopleIds)}
+              linkType="joyful"
+            />
+            <PersonSelector
+              selectedPeopleIds={shamefulPeopleIds}
+              onSelectionChange={(ids) => onLinkedPeopleChange(joyfulPeopleIds, ids)}
+              linkType="shameful"
+            />
+          </div>
+        )}
+      </div>
 
       {/* 중단 버튼 */}
       <motion.button
@@ -1639,6 +1719,10 @@ interface AdhocCaptureViewProps {
   onCapture: () => void;
   onSkip: () => void;
   isAnimating: boolean;
+  // 인물 연결 props
+  joyfulPeopleIds: string[];
+  shamefulPeopleIds: string[];
+  onLinkedPeopleChange: (joyfulIds: string[], shamefulIds: string[]) => void;
 }
 
 function AdhocCaptureView({
@@ -1647,6 +1731,9 @@ function AdhocCaptureView({
   onCapture,
   onSkip,
   isAnimating,
+  joyfulPeopleIds,
+  shamefulPeopleIds,
+  onLinkedPeopleChange,
 }: AdhocCaptureViewProps) {
   return (
     <motion.div
@@ -1671,7 +1758,7 @@ function AdhocCaptureView({
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
         placeholder="방금 한 일을 한 줄로"
-        className="input input-bordered w-full rounded-xl mb-6 text-center"
+        className="input input-bordered w-full rounded-xl mb-4 text-center"
         autoFocus
         onKeyDown={(e) => {
           if (e.key === 'Enter' && title.trim()) {
@@ -1679,6 +1766,22 @@ function AdhocCaptureView({
           }
         }}
       />
+
+      {/* 인물 연결 섹션 */}
+      <div className="space-y-2 mb-6">
+        <PersonSelector
+          selectedPeopleIds={joyfulPeopleIds}
+          onSelectionChange={(ids) => onLinkedPeopleChange(ids, shamefulPeopleIds)}
+          linkType="joyful"
+          compact
+        />
+        <PersonSelector
+          selectedPeopleIds={shamefulPeopleIds}
+          onSelectionChange={(ids) => onLinkedPeopleChange(joyfulPeopleIds, ids)}
+          linkType="shameful"
+          compact
+        />
+      </div>
 
       <div className="flex flex-col gap-3">
         {/* 기록할게 버튼 */}

@@ -14,6 +14,8 @@ export interface PomodoroSessionData {
   is_completed: boolean;
   break_duration: number | null;
   linked_todo_id: string | null;
+  joyful_people_ids: string[];    // 기쁘게 할 분들
+  shameful_people_ids: string[];  // 부끄러운 분들 (이 분들 앞에서 부끄러운 행동)
   created_at: string;
   updated_at: string;
 }
@@ -210,6 +212,62 @@ export class PomodoroSessionService {
     } catch (error) {
       console.error('❌ 세션 조회 오류:', error);
       return null;
+    }
+  }
+
+  /**
+   * 세션에 연결된 인물 업데이트
+   * @param sessionId 세션 ID
+   * @param joyfulIds 기쁘게 할 분들 ID 배열
+   * @param shamefulIds 부끄러운 분들 ID 배열
+   */
+  static async updateLinkedPeople(
+    sessionId: string,
+    joyfulIds: string[],
+    shamefulIds: string[]
+  ): Promise<void> {
+    try {
+      await updateWithJWT('pomodoro_sessions', [
+        { column: 'id', operator: 'eq', value: sessionId }
+      ], {
+        joyful_people_ids: joyfulIds,
+        shameful_people_ids: shamefulIds,
+        updated_at: new Date().toISOString()
+      });
+
+      console.log('👥 세션에 인물 연결:', { sessionId, joyfulIds, shamefulIds });
+    } catch (error) {
+      console.error('❌ 인물 연결 업데이트 오류:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 세션 완료 처리 (인물 정보 포함)
+   * @param sessionId 세션 ID
+   * @param joyfulIds 기쁘게 할 분들 ID 배열
+   * @param shamefulIds 부끄러운 분들 ID 배열
+   */
+  static async completeSessionWithPeople(
+    sessionId: string,
+    joyfulIds: string[],
+    shamefulIds: string[]
+  ): Promise<void> {
+    try {
+      await updateWithJWT('pomodoro_sessions', [
+        { column: 'id', operator: 'eq', value: sessionId }
+      ], {
+        is_completed: true,
+        end_time: new Date().toISOString(),
+        joyful_people_ids: joyfulIds,
+        shameful_people_ids: shamefulIds,
+        updated_at: new Date().toISOString()
+      });
+
+      console.log('✅ 포모도로 세션 완료 (인물 포함):', { sessionId, joyfulIds, shamefulIds });
+    } catch (error) {
+      console.error('❌ 세션 완료 처리 오류:', error);
+      throw error;
     }
   }
 
