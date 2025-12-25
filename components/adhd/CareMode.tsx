@@ -25,6 +25,7 @@ import {
   Sun,
   Moon,
   MoreVertical,
+  Pencil,
   type LucideIcon,
 } from 'lucide-react';
 import AddPersonModal from '../cherished/AddPersonModal';
@@ -442,7 +443,23 @@ export default function CareMode({ onExit }: CareModeProps) {
                             onClick={() => handleSelectPerson(rec.person)}
                             className="flex-1 text-left"
                           >
-                            <span className="font-medium text-lg">{rec.person.name}</span>
+                            <div>
+                              <span className="font-medium text-lg">{rec.person.name}</span>
+                              {(rec.person.relationships?.length > 0 || rec.person.roles?.length > 0) && (
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                  {rec.person.relationships?.length > 0 && (
+                                    <span className="text-xs text-base-content/50">
+                                      {rec.person.relationships.join(', ')}
+                                    </span>
+                                  )}
+                                  {rec.person.roles?.length > 0 && (
+                                    <span className="text-xs text-primary/70">
+                                      {rec.person.roles.join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </button>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-base-content/60">
@@ -495,7 +512,23 @@ export default function CareMode({ onExit }: CareModeProps) {
                           onClick={() => handleSelectPerson(person)}
                           className="flex-1 text-left"
                         >
-                          <span className="font-medium">{person.name}</span>
+                          <div>
+                            <span className="font-medium">{person.name}</span>
+                            {(person.relationships?.length > 0 || person.roles?.length > 0) && (
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {person.relationships?.length > 0 && (
+                                  <span className="text-xs text-base-content/50">
+                                    {person.relationships.join(', ')}
+                                  </span>
+                                )}
+                                {person.roles?.length > 0 && (
+                                  <span className="text-xs text-primary/70">
+                                    {person.roles.join(', ')}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </button>
                         <div className="flex items-center gap-2">
                           {isOverdue(person) && (
@@ -660,9 +693,23 @@ export default function CareMode({ onExit }: CareModeProps) {
             {/* 헤더 */}
             <div className="text-center mb-6">
               <p className="text-sm text-base-content/60">기록하기</p>
-              <p className="text-xl font-bold text-primary">
-                {careMode.selectedPersonName}님과의 시간
-              </p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-xl font-bold text-primary">
+                  {careMode.selectedPersonName}님과의 시간
+                </p>
+                <button
+                  onClick={() => {
+                    const selectedPerson = people.find(p => p.id === careMode.selectedPersonId);
+                    if (selectedPerson) {
+                      openAddPersonModal(selectedPerson);
+                    }
+                  }}
+                  className="btn btn-ghost btn-xs btn-circle"
+                  title="인물 정보 수정"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* 1. 들은 소식 - 최상단 */}
