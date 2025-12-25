@@ -84,6 +84,13 @@ export function TagInput({
     onChange(value.filter((tag) => tag !== tagToRemove));
   };
 
+  // 태그 편집 (클릭 시 입력 필드로 이동)
+  const editTag = (tag: string) => {
+    removeTag(tag);
+    setInputValue(tag);
+    inputRef.current?.focus();
+  };
+
   // Enter 키 처리
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // 한글 IME 조합 중이면 무시
@@ -133,7 +140,18 @@ export function TagInput({
             key={tag}
             className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/20 text-primary text-sm"
           >
-            {tag}
+            {/* 텍스트 클릭 시 편집 */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                editTag(tag);
+              }}
+              className="hover:underline"
+            >
+              {tag}
+            </button>
+            {/* X 버튼 - 삭제 */}
             <button
               type="button"
               onClick={(e) => {
