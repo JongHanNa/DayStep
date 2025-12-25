@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Search, X, Heart, AlertCircle, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Search, X, Heart, AlertCircle, ChevronDown, ChevronUp, Check, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
+import { useAuth } from '@/app/context/AuthContext';
 import type { CherishedPerson } from '@/types/cherished-people';
 
 export type PersonLinkType = 'joyful' | 'shameful';
@@ -29,11 +30,13 @@ export function PersonSelector({
   compact = false,
   className = '',
 }: PersonSelectorProps) {
-  const { people } = useCherishedPeopleStore();
+  const { people, addPerson } = useCherishedPeopleStore();
+  const { user } = useAuth();
 
   // UI 상태
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   // 필터 상태
   const [filterRelationship, setFilterRelationship] = useState<string | null>(null);
@@ -93,6 +96,21 @@ export function PersonSelector({
   // 인물 제거
   const removePerson = (personId: string) => {
     onSelectionChange(selectedPeopleIds.filter(id => id !== personId));
+  };
+
+  // 새 인물 생성
+  const handleCreatePerson = async () => {
+    if (!user || !searchQuery.trim() || isCreating) return;
+    setIsCreating(true);
+    try {
+      const newPerson = await addPerson(user.id, { name: searchQuery.trim() });
+      if (newPerson) {
+        onSelectionChange([...selectedPeopleIds, newPerson.id]);
+        setSearchQuery('');
+      }
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   // 스타일 설정
@@ -261,9 +279,24 @@ export function PersonSelector({
               {/* 인물 목록 */}
               <div className="max-h-48 overflow-y-auto space-y-1">
                 {filteredPeople.length === 0 ? (
-                  <p className="text-sm text-base-content/50 text-center py-4">
-                    {searchQuery ? '검색 결과가 없습니다' : '등록된 소중한 사람이 없습니다'}
-                  </p>
+                  <div className="text-center py-4">
+                    {searchQuery.trim() ? (
+                      <button
+                        onClick={handleCreatePerson}
+                        disabled={isCreating}
+                        className="btn btn-sm btn-ghost gap-1"
+                      >
+                        {isCreating ? (
+                          <span className="loading loading-spinner loading-xs" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                        '{searchQuery}'님 추가
+                      </button>
+                    ) : (
+                      <p className="text-sm text-base-content/50">등록된 소중한 사람이 없습니다</p>
+                    )}
+                  </div>
                 ) : (
                   filteredPeople.map(person => {
                     const isSelected = selectedPeopleIds.includes(person.id);
