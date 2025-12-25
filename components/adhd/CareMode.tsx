@@ -26,6 +26,7 @@ import {
   Moon,
   MoreVertical,
   Pencil,
+  ChevronDown,
   type LucideIcon,
 } from 'lucide-react';
 import AddPersonModal from '../cherished/AddPersonModal';
@@ -114,14 +115,14 @@ export default function CareMode({ onExit }: CareModeProps) {
   // 검색+생성 통합
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 필터링 로직
-  const filteredPeople = useMemo(() => {
-    if (!searchQuery.trim()) return people;
-    const query = searchQuery.toLowerCase();
-    return people.filter(person =>
-      person.name.toLowerCase().includes(query)
-    );
-  }, [people, searchQuery]);
+  // 아코디언 상태
+  const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(true);
+  const [isPeopleOpen, setIsPeopleOpen] = useState(true);
+
+  // 필터링 상태
+  const [filterRelationship, setFilterRelationship] = useState<string | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
+  const [filterRole, setFilterRole] = useState<string | null>(null);
 
   // 검색어와 정확히 일치하는 사람이 있는지 확인
   const exactMatchExists = useMemo(() => {
@@ -132,6 +133,40 @@ export default function CareMode({ onExit }: CareModeProps) {
 
   // 새 사람 추가 가능 여부 (검색어 있고 + 정확히 일치 없음)
   const canCreateNew = searchQuery.trim() && !exactMatchExists;
+
+  // 고유값 추출 (필터 드롭다운용)
+  const uniqueRelationships = useMemo(() =>
+    [...new Set(people.flatMap(p => p.relationships || []))].filter(Boolean).sort(), [people]);
+  const uniqueDepartments = useMemo(() =>
+    [...new Set(people.flatMap(p => p.departments || []))].filter(Boolean).sort(), [people]);
+  const uniqueRoles = useMemo(() =>
+    [...new Set(people.flatMap(p => p.roles || []))].filter(Boolean).sort(), [people]);
+
+  // 필터 함수
+  const matchesFilter = useCallback((person: CherishedPerson) => {
+    if (filterRelationship && !person.relationships?.includes(filterRelationship)) return false;
+    if (filterDepartment && !person.departments?.includes(filterDepartment)) return false;
+    if (filterRole && !person.roles?.includes(filterRole)) return false;
+    return true;
+  }, [filterRelationship, filterDepartment, filterRole]);
+
+  // 필터링된 추천 목록 (오래 연락 안한 분들)
+  const filteredRecommendations = useMemo(() =>
+    recommendations.filter(rec => matchesFilter(rec.person)),
+    [recommendations, matchesFilter]);
+
+  // 필터링된 전체 목록 (소중한 사람들) - 검색 + 카테고리 필터 적용
+  const filteredPeopleByCategory = useMemo(() => {
+    let result = people;
+    // 검색어 필터
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(person => person.name.toLowerCase().includes(query));
+    }
+    // 카테고리 필터
+    result = result.filter(matchesFilter);
+    return result;
+  }, [people, searchQuery, matchesFilter]);
 
   // 소식 작성 폼
   const [interactionType, setInteractionType] = useState<InteractionType | null>(null);
@@ -295,12 +330,6 @@ export default function CareMode({ onExit }: CareModeProps) {
     }
   };
 
-  // 7일 이상 연락 안 한 사람인지 확인
-  const isOverdue = (person: CherishedPerson) => {
-    const rec = recommendations.find(r => r.person.id === person.id);
-    return rec && (rec.daysSinceLastContact >= 7 || rec.daysSinceLastContact === -1);
-  };
-
   // 시간 포맷팅 (mm:ss)
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -398,6 +427,42 @@ export default function CareMode({ onExit }: CareModeProps) {
               )}
             </div>
 
+            {/* 필터 드롭다운 */}
+            {(uniqueRelationships.length > 0 || uniqueDepartments.length > 0 || uniqueRoles.length > 0) && (
+              <div className="flex gap-2 flex-wrap">
+                {uniqueRelationships.length > 0 && (
+                  <select
+                    value={filterRelationship || ''}
+                    onChange={(e) => setFilterRelationship(e.target.value || null)}
+                    className="select select-xs select-bordered bg-base-200"
+                  >
+                    <option value="">관계 전체</option>
+                    {uniqueRelationships.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                )}
+                {uniqueDepartments.length > 0 && (
+                  <select
+                    value={filterDepartment || ''}
+                    onChange={(e) => setFilterDepartment(e.target.value || null)}
+                    className="select select-xs select-bordered bg-base-200"
+                  >
+                    <option value="">부서 전체</option>
+                    {uniqueDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                )}
+                {uniqueRoles.length > 0 && (
+                  <select
+                    value={filterRole || ''}
+                    onChange={(e) => setFilterRole(e.target.value || null)}
+                    className="select select-xs select-bordered bg-base-200"
+                  >
+                    <option value="">역할 전체</option>
+                    {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                )}
+              </div>
+            )}
+
             {/* 새 사람 추가 버튼 (검색어가 있고, 정확히 일치하는 사람이 없을 때) */}
             {canCreateNew && (
               <button
@@ -413,19 +478,25 @@ export default function CareMode({ onExit }: CareModeProps) {
             {searchQuery.trim() ? (
               // 검색어가 있을 때: 필터링된 목록
               <div className="space-y-2">
-                {filteredPeople.length > 0 ? (
-                  filteredPeople.map((person) => (
-                    <button
-                      key={person.id}
-                      onClick={() => handleSelectPerson(person)}
-                      className="w-full p-4 rounded-xl bg-base-200 text-left hover:bg-base-300 transition-colors flex items-center justify-between"
-                    >
-                      <span className="font-medium">{person.name}</span>
-                      {isOverdue(person) && (
-                        <span className="badge badge-warning badge-sm">오래됨</span>
-                      )}
-                    </button>
-                  ))
+                {filteredPeopleByCategory.length > 0 ? (
+                  filteredPeopleByCategory.map((person) => {
+                    const rec = recommendations.find(r => r.person.id === person.id);
+                    const days = rec?.daysSinceLastContact;
+                    return (
+                      <button
+                        key={person.id}
+                        onClick={() => handleSelectPerson(person)}
+                        className="w-full p-4 rounded-xl bg-base-200 text-left hover:bg-base-300 transition-colors flex items-center justify-between"
+                      >
+                        <span className="font-medium">{person.name}</span>
+                        {days !== undefined && (days === -1 || days >= 7) && (
+                          <span className="badge badge-warning badge-sm">
+                            {days === -1 ? '미연락' : `${days}일 전`}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })
                 ) : (
                   <p className="text-center text-base-content/50 py-4">
                     검색 결과가 없습니다
@@ -435,14 +506,18 @@ export default function CareMode({ onExit }: CareModeProps) {
             ) : (
               // 검색어 없을 때: 추천 섹션 + 전체 목록
               <>
-                {/* 추천 섹션 (7일 이상 연락 안 한 사람) */}
-                {recommendations.length > 0 && (
+                {/* 추천 섹션 (7일 이상 연락 안 한 사람) - 아코디언 */}
+                {filteredRecommendations.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-xs text-base-content/50 flex items-center gap-1">
+                    <button
+                      onClick={() => setIsRecommendationsOpen(!isRecommendationsOpen)}
+                      className="text-xs text-base-content/50 flex items-center gap-1 w-full hover:text-base-content/70 transition-colors"
+                    >
+                      <ChevronDown className={`w-3 h-3 transition-transform ${!isRecommendationsOpen ? '-rotate-90' : ''}`} />
                       <Clock className="w-3 h-3" />
-                      오래 연락 안 한 분들
-                    </p>
-                    {recommendations.map((rec) => (
+                      오래 연락 안 한 분들 ({filteredRecommendations.length})
+                    </button>
+                    {isRecommendationsOpen && filteredRecommendations.map((rec) => (
                       <div
                         key={rec.person.id}
                         className="w-full p-4 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors"
@@ -510,77 +585,87 @@ export default function CareMode({ onExit }: CareModeProps) {
                   </div>
                 )}
 
-                {/* 전체 목록 */}
+                {/* 전체 목록 - 아코디언 */}
                 <div className="space-y-2">
-                  <p className="text-xs text-base-content/50 flex items-center gap-1">
+                  <button
+                    onClick={() => setIsPeopleOpen(!isPeopleOpen)}
+                    className="text-xs text-base-content/50 flex items-center gap-1 w-full hover:text-base-content/70 transition-colors"
+                  >
+                    <ChevronDown className={`w-3 h-3 transition-transform ${!isPeopleOpen ? '-rotate-90' : ''}`} />
                     <Users className="w-3 h-3" />
-                    소중한 사람들
-                  </p>
-                  {people.map((person) => (
-                    <div
-                      key={person.id}
-                      className="w-full p-4 rounded-xl bg-base-200 hover:bg-base-300 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <button
-                          onClick={() => handleSelectPerson(person)}
-                          className="flex-1 text-left"
-                        >
-                          <div>
-                            <span className="font-medium">{person.name}</span>
-                            {(person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
-                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                {person.relationships?.length > 0 && (
-                                  <span className="text-xs text-base-content/50">
-                                    {person.relationships.join(', ')}
-                                  </span>
-                                )}
-                                {person.departments?.length > 0 && (
-                                  <span className="text-xs text-secondary/70">
-                                    {person.departments.join(', ')}
-                                  </span>
-                                )}
-                                {person.roles?.length > 0 && (
-                                  <span className="text-xs text-primary/70">
-                                    {person.roles.join(', ')}
-                                  </span>
-                                )}
-                              </div>
+                    소중한 사람들 ({filteredPeopleByCategory.length})
+                  </button>
+                  {isPeopleOpen && filteredPeopleByCategory.map((person) => {
+                    const rec = recommendations.find(r => r.person.id === person.id);
+                    const days = rec?.daysSinceLastContact;
+                    return (
+                      <div
+                        key={person.id}
+                        className="w-full p-4 rounded-xl bg-base-200 hover:bg-base-300 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={() => handleSelectPerson(person)}
+                            className="flex-1 text-left"
+                          >
+                            <div>
+                              <span className="font-medium">{person.name}</span>
+                              {(person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                  {person.relationships?.length > 0 && (
+                                    <span className="text-xs text-base-content/50">
+                                      {person.relationships.join(', ')}
+                                    </span>
+                                  )}
+                                  {person.departments?.length > 0 && (
+                                    <span className="text-xs text-secondary/70">
+                                      {person.departments.join(', ')}
+                                    </span>
+                                  )}
+                                  {person.roles?.length > 0 && (
+                                    <span className="text-xs text-primary/70">
+                                      {person.roles.join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                          <div className="flex items-center gap-2">
+                            {days !== undefined && (days === -1 || days >= 7) && (
+                              <span className="badge badge-warning badge-sm">
+                                {days === -1 ? '미연락' : `${days}일 전`}
+                              </span>
                             )}
-                          </div>
-                        </button>
-                        <div className="flex items-center gap-2">
-                          {isOverdue(person) && (
-                            <span className="badge badge-warning badge-sm">오래됨</span>
-                          )}
-                          <div className="dropdown dropdown-end">
-                            <button
-                              tabIndex={0}
-                              onClick={(e) => e.stopPropagation()}
-                              className="btn btn-ghost btn-xs btn-circle"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
-                            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
-                              <li>
-                                <button onClick={() => openAddPersonModal(person)}>
-                                  수정
-                                </button>
-                              </li>
-                              <li>
-                                <button
-                                  onClick={() => setPersonToDelete(person)}
-                                  className="text-error"
-                                >
-                                  삭제
-                                </button>
-                              </li>
-                            </ul>
+                            <div className="dropdown dropdown-end">
+                              <button
+                                tabIndex={0}
+                                onClick={(e) => e.stopPropagation()}
+                                className="btn btn-ghost btn-xs btn-circle"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
+                                <li>
+                                  <button onClick={() => openAddPersonModal(person)}>
+                                    수정
+                                  </button>
+                                </li>
+                                <li>
+                                  <button
+                                    onClick={() => setPersonToDelete(person)}
+                                    className="text-error"
+                                  >
+                                    삭제
+                                  </button>
+                                </li>
+                              </ul>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
