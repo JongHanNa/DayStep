@@ -86,6 +86,9 @@ export function TagInput({
 
   // Enter 키 처리
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // 한글 IME 조합 중이면 무시
+    if (e.nativeEvent.isComposing) return;
+
     if (e.key === 'Enter') {
       e.preventDefault();
       if (inputValue.trim()) {

@@ -190,6 +190,15 @@ export default function CareMode({ onExit }: CareModeProps) {
     loadRecommendations(userId, 7);
   };
 
+  // 모달 닫을 때 데이터 리로드
+  const handleCloseAddPersonModal = async () => {
+    closeAddPersonModal();
+    if (userId) {
+      await loadPeople(userId);
+      await loadRecommendations(userId, 7);
+    }
+  };
+
   // 타이머 완료 처리
   const handleTimerComplete = useCallback(() => {
     stopTimer();
@@ -900,7 +909,7 @@ export default function CareMode({ onExit }: CareModeProps) {
         <AddPersonModal
           userId={userId}
           isOpen={showAddPersonModal}
-          onClose={closeAddPersonModal}
+          onClose={handleCloseAddPersonModal}
           editingPerson={editingPerson}
         />
       )}
