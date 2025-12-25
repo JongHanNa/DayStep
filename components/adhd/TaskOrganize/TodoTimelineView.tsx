@@ -254,6 +254,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
 
+                  {/* 일정 유형 배지 */}
+                  <span className={`badge badge-xs ${
+                    todo.scheduleType === 'timed' ? 'badge-info' : 'badge-ghost'
+                  }`}>
+                    {todo.scheduleType === 'timed' ? '시간' : '하루'}
+                  </span>
+
                   {/* 시간 (timed: startTime - endTime, anytime: 시간 없음) */}
                   {todo.scheduleType === 'timed' && todo.startTime ? (
                     <span className="text-xs text-base-content/40">
