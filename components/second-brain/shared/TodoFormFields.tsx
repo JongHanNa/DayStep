@@ -14,6 +14,7 @@ import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
+import { PersonSelector } from '@/components/cherished/PersonSelector';
 
 /**
  * 할일 폼 필드 타입
@@ -55,6 +56,10 @@ export interface TodoFormData {
 
   // 관계 균형 관련
   isRelationshipTask?: boolean; // 관계 할일 여부
+
+  // 소중한 사람 연결 필드
+  joyfulPeopleIds?: string[];
+  shamefulPeopleIds?: string[];
 }
 
 interface TodoFormFieldsProps {
@@ -507,6 +512,20 @@ export default function TodoFormFields({
           </label>
         </div>
       )}
+
+      {/* 소중한 사람 연결 섹션 */}
+      <div className="my-4 space-y-3">
+        <PersonSelector
+          selectedPeopleIds={todo.joyfulPeopleIds || []}
+          onSelectionChange={(ids) => onChange({ ...todo, joyfulPeopleIds: ids })}
+          linkType="joyful"
+        />
+        <PersonSelector
+          selectedPeopleIds={todo.shamefulPeopleIds || []}
+          onSelectionChange={(ids) => onChange({ ...todo, shamefulPeopleIds: ids })}
+          linkType="shameful"
+        />
+      </div>
 
       {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (

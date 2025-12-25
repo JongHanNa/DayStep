@@ -3,8 +3,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Plus, Clock, Trash2, Circle } from 'lucide-react';
+import { CheckCircle2, Plus, Clock, Trash2, Circle, Heart, AlertCircle } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { Todo } from '@/entities/todo/Todo';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
@@ -22,6 +23,7 @@ interface TodoTimelineViewProps {
  */
 export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { todos, fetchAllTodos, updateTodo, deleteTodo } = useTodoStore();
+  const { people } = useCherishedPeopleStore();
   const [isLoading, setIsLoading] = useState(true);
 
   // 편집 모달 상태
@@ -89,6 +91,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       recurrenceEndDate: todo.recurrenceEndDate ? new Date(todo.recurrenceEndDate) : undefined,
       recurrenceCount: todo.recurrenceCount || undefined,
       selectedDaysOfWeek: todo.recurrenceDaysOfWeek || undefined,
+      // 소중한 사람 연결 필드
+      joyfulPeopleIds: todo.joyfulPeopleIds || [],
+      shamefulPeopleIds: todo.shamefulPeopleIds || [],
     };
   }, []);
 
@@ -114,6 +119,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       recurrence_end_date: formData.recurrenceEndDate?.toISOString().split('T')[0],
       recurrence_count: formData.recurrenceCount,
       recurrence_days_of_week: formData.selectedDaysOfWeek,
+      // 소중한 사람 연결 필드
+      joyful_people_ids: formData.joyfulPeopleIds,
+      shameful_people_ids: formData.shamefulPeopleIds,
     });
 
     setEditingTodo(null);
@@ -243,6 +251,27 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                         )}
                       </div>
                     )}
+
+                    {/* 소중한 사람 표시 */}
+                    {(() => {
+                      const joyfulPeople = people.filter(p => todo.joyfulPeopleIds.includes(p.id));
+                      const shamefulPeople = people.filter(p => todo.shamefulPeopleIds.includes(p.id));
+                      if (joyfulPeople.length === 0 && shamefulPeople.length === 0) return null;
+                      return (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {joyfulPeople.map(p => (
+                            <span key={p.id} className="badge badge-xs bg-pink-500/20 text-pink-600 dark:text-pink-400 gap-0.5">
+                              <Heart className="w-2.5 h-2.5" />{p.name}
+                            </span>
+                          ))}
+                          {shamefulPeople.map(p => (
+                            <span key={p.id} className="badge badge-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 gap-0.5">
+                              <AlertCircle className="w-2.5 h-2.5" />{p.name}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </button>
 
                   {/* 삭제 버튼 */}
@@ -254,12 +283,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* 일정 유형 배지 */}
-                  <span className={`badge badge-xs ${
-                    todo.scheduleType === 'timed' ? 'badge-info' : 'badge-ghost'
-                  }`}>
-                    {todo.scheduleType === 'timed' ? '시간' : '하루'}
-                  </span>
+                  {/* 일정 유형 배지 (anytime만 표시, timed는 시간으로 충분) */}
+                  {todo.scheduleType === 'anytime' && (
+                    <span className="badge badge-xs badge-ghost">언제든지</span>
+                  )}
 
                   {/* 시간 (timed: startTime - endTime, anytime: 시간 없음) */}
                   {todo.scheduleType === 'timed' && todo.startTime ? (
