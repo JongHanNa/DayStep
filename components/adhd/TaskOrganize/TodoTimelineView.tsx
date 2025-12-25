@@ -128,18 +128,26 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setEditFormData(null);
   }, [editingTodo, deleteTodo]);
 
-  // 타임라인 아이템 생성 (최근 생성된 할일)
+  // 할일의 표시 날짜 결정 (timed 할일은 startTime, 그 외는 createdAt)
+  const getDisplayDate = (todo: Todo): Date => {
+    if (todo.scheduleType === 'timed' && todo.startTime) {
+      return todo.startTime;
+    }
+    return todo.createdAt;
+  };
+
+  // 타임라인 아이템 생성 (표시 날짜 기준 정렬)
   const timelineItems = useMemo(() => {
     return todos
       .slice()
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort((a, b) => getDisplayDate(b).getTime() - getDisplayDate(a).getTime())
       .slice(0, 50); // 최근 50개만
   }, [todos]);
 
-  // 날짜별 그룹핑
+  // 날짜별 그룹핑 (timed 할일은 startTime 기준)
   const groupedByDate = useMemo(() => {
     return timelineItems.reduce((acc, item) => {
-      const date = item.createdAt;
+      const date = getDisplayDate(item);
       let dateKey: string;
 
       if (isToday(date)) {
@@ -194,12 +202,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
               return (
                 <div
                   key={todo.id}
-                  className="flex items-start gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
                 >
                   {/* 완료 토글 아이콘 */}
                   <button
                     onClick={() => handleToggleComplete(todo)}
-                    className={`mt-0.5 btn btn-ghost btn-xs btn-circle ${
+                    className={`btn btn-ghost btn-xs btn-circle ${
                       todo.completed ? 'text-success' : 'text-info'
                     }`}
                     title={todo.completed ? '미완료로 변경' : '완료로 변경'}
@@ -246,9 +254,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
 
-                  {/* 시간 */}
+                  {/* 시간 (timed 할일은 startTime - endTime 표시) */}
                   <span className="text-xs text-base-content/40">
-                    {format(todo.createdAt, 'HH:mm')}
+                    {todo.scheduleType === 'timed' && todo.startTime ? (
+                      <>
+                        {format(todo.startTime, 'HH:mm')}
+                        {todo.endTime && ` - ${format(todo.endTime, 'HH:mm')}`}
+                      </>
+                    ) : (
+                      format(todo.createdAt, 'HH:mm')
+                    )}
                   </span>
                 </div>
               );
