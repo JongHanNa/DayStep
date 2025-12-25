@@ -558,11 +558,22 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setIsCreatingTodo(true);
 
     try {
+      // 날짜 전용 저장 패턴: 오늘 00:00 KST → 15:00 UTC
+      const today = new Date();
+      const todayKSTMidnight = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        0, 0, 0
+      );
+      todayKSTMidnight.setHours(todayKSTMidnight.getHours() - 9); // KST → UTC
+
       // 미완료 할일 생성
       const newTodo = await createTodo({
         title: titleToSave,
         completed: false,
         schedule_type: 'anytime',
+        start_time: todayKSTMidnight.toISOString(),
         user_id: userId,
       });
 
