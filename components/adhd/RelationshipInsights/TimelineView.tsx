@@ -2,22 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
-import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
+import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 import type { CareInteraction, CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import {
-  Clock, MoreVertical, Pencil, Trash2, X,
+  Clock, MoreVertical, Pencil, Trash2,
   Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
-  Frown, Meh, Smile, SmilePlus, HeartHandshake,
   type LucideIcon,
 } from 'lucide-react';
 
 // Lucide 아이콘 매핑
 const INTERACTION_ICONS: Record<string, LucideIcon> = {
   Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
-};
-
-const FEELING_ICONS: Record<string, LucideIcon> = {
-  Frown, Meh, Smile, SmilePlus, HeartHandshake,
 };
 
 interface TimelineViewProps {
@@ -92,7 +87,6 @@ export function TimelineView({ userId }: TimelineViewProps) {
       gratitude_note: interaction.gratitude_note || '',
       recent_news: interaction.recent_news || '',
       description: interaction.description || '',
-      feeling_rating: interaction.feeling_rating || undefined,
     });
     setOpenMenuId(null);
     editDialogRef.current?.showModal();
@@ -188,10 +182,6 @@ export function TimelineView({ userId }: TimelineViewProps) {
           {interactions.map((interaction) => {
             const typeInfo = INTERACTION_TYPE_LABELS[interaction.interaction_type];
             const TypeIcon = typeInfo?.icon ? INTERACTION_ICONS[typeInfo.icon] : MessageCircle;
-            const feelingInfo = interaction.feeling_rating
-              ? FEELING_RATINGS.find(f => f.value === interaction.feeling_rating)
-              : null;
-            const FeelingIcon = feelingInfo?.icon ? FEELING_ICONS[feelingInfo.icon] : null;
 
             return (
               <div
@@ -212,11 +202,6 @@ export function TimelineView({ userId }: TimelineViewProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {FeelingIcon && (
-                      <span title={feelingInfo?.label}>
-                        <FeelingIcon className="w-4 h-4" />
-                      </span>
-                    )}
                     <span className="text-xs text-base-content/60">
                       {formatDate(interaction.interaction_date)}
                     </span>
@@ -356,34 +341,6 @@ export function TimelineView({ userId }: TimelineViewProps) {
                 placeholder="무엇을 해드리고 싶나요?"
                 className="textarea textarea-bordered w-full h-20"
               />
-            </div>
-
-            {/* 느낀 감정 */}
-            <div>
-              <label className="label">
-                <span className="label-text font-medium">느낀 감정</span>
-              </label>
-              <div className="flex justify-between">
-                {FEELING_RATINGS.map(({ value, icon, label }) => {
-                  const IconComponent = FEELING_ICONS[icon];
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setEditForm({ ...editForm, feeling_rating: value })}
-                      className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-                        editForm.feeling_rating === value
-                          ? 'bg-primary/20 ring-2 ring-primary'
-                          : 'hover:bg-base-200'
-                      }`}
-                      title={label}
-                    >
-                      {IconComponent && <IconComponent className="w-6 h-6" />}
-                      <span className="text-xs mt-1 text-base-content/60">{label}</span>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           </div>
         </div>

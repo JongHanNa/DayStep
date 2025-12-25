@@ -161,7 +161,6 @@ export class CherishedPeopleService {
       description: input.description?.trim() || null,
       gratitude_note: input.gratitude_note?.trim() || null,
       recent_news: input.recent_news?.trim() || null,
-      feeling_rating: input.feeling_rating || null,
     };
 
     try {
@@ -337,7 +336,6 @@ export class CherishedPeopleService {
         description: input.description?.trim() || null,
         gratitude_note: input.gratitude_note?.trim() || null,
         recent_news: input.recent_news?.trim() || null,
-        feeling_rating: input.feeling_rating || null,
         todo_id: todoId,
       };
 
@@ -582,46 +580,6 @@ export class CherishedPeopleService {
         .map(i => ({ interaction: i, person: i.person }));
     } catch (error) {
       console.error('❌ 소식 메모 조회 오류:', error);
-      return [];
-    }
-  }
-
-  /**
-   * 기분 패턴 분석 (사람별 평균 기분)
-   */
-  static async getMoodPatterns(
-    userId: string
-  ): Promise<{ person: CherishedPerson; avgMood: number; totalCount: number; moodHistory: number[] }[]> {
-    try {
-      const allInteractions = await this.getAllInteractionsWithPerson(userId, undefined, 200);
-      const people = await this.getPeople(userId);
-
-      // 사람별 기분 데이터 집계
-      const moodByPerson = new Map<string, number[]>();
-      allInteractions.forEach(i => {
-        if (i.feeling_rating) {
-          const moods = moodByPerson.get(i.person_id) || [];
-          moods.push(i.feeling_rating);
-          moodByPerson.set(i.person_id, moods);
-        }
-      });
-
-      // 결과 생성
-      return people
-        .filter(p => moodByPerson.has(p.id))
-        .map(person => {
-          const moods = moodByPerson.get(person.id) || [];
-          const avgMood = moods.reduce((a, b) => a + b, 0) / moods.length;
-          return {
-            person,
-            avgMood: Math.round(avgMood * 10) / 10,
-            totalCount: moods.length,
-            moodHistory: moods.slice(0, 10), // 최근 10개
-          };
-        })
-        .sort((a, b) => b.avgMood - a.avgMood);
-    } catch (error) {
-      console.error('❌ 기분 패턴 조회 오류:', error);
       return [];
     }
   }

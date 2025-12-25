@@ -2,23 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
-import { INTERACTION_TYPE_LABELS, FEELING_RATINGS } from '@/types/cherished-people';
+import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 import type { CareInteraction, CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import AddPersonModal from '@/components/cherished/AddPersonModal';
 import {
   Heart, User, MoreVertical, Pencil, Trash2,
   Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Sparkles,
-  Frown, Meh, Smile, SmilePlus, HeartHandshake,
   type LucideIcon,
 } from 'lucide-react';
 
 // Lucide 아이콘 매핑
 const INTERACTION_ICONS: Record<string, LucideIcon> = {
   Phone, MessageCircle, Home, Utensils, Gift, Mail, HandHelping, Heart, Sparkles,
-};
-
-const FEELING_ICONS: Record<string, LucideIcon> = {
-  Frown, Meh, Smile, SmilePlus, HeartHandshake,
 };
 
 interface GratitudeJournalViewProps {
@@ -43,6 +39,10 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
   // 모달 refs
   const editDialogRef = useRef<HTMLDialogElement>(null);
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
+
+  // 인물 수정 모달 상태
+  const [editingPerson, setEditingPerson] = useState<CherishedPerson | null>(null);
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -93,7 +93,6 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
       gratitude_note: interaction.gratitude_note || '',
       recent_news: interaction.recent_news || '',
       description: interaction.description || '',
-      feeling_rating: interaction.feeling_rating || undefined,
     });
     setOpenMenuId(null);
     editDialogRef.current?.showModal();
@@ -149,6 +148,19 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // 인물 수정 모달 열기
+  const handleOpenPersonModal = (person: CherishedPerson) => {
+    setEditingPerson(person);
+    setIsPersonModalOpen(true);
+  };
+
+  // 인물 수정 모달 닫기
+  const handleClosePersonModal = () => {
+    setIsPersonModalOpen(false);
+    setEditingPerson(null);
+    loadData(); // 데이터 새로고침
   };
 
   // 사람별로 그룹화
@@ -255,7 +267,10 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                   <User className="w-4 h-4 text-primary" />
                 </div>
-                <div className="flex-1">
+                <button
+                  className="flex-1 text-left hover:opacity-70 transition-opacity"
+                  onClick={() => person && handleOpenPersonModal(person)}
+                >
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{personName}님께 감사한 점들</h3>
                     <span className="text-xs text-base-content/60">({personNotes.length})</span>
@@ -273,7 +288,7 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                       )}
                     </div>
                   )}
-                </div>
+                </button>
               </div>
               <div className="space-y-2 pl-10">
                 {personNotes.slice(0, 5).map(({ interaction }) => (
@@ -417,34 +432,6 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                 className="textarea textarea-bordered w-full h-20"
               />
             </div>
-
-            {/* 느낀 감정 */}
-            <div>
-              <label className="label">
-                <span className="label-text font-medium">느낀 감정</span>
-              </label>
-              <div className="flex justify-between">
-                {FEELING_RATINGS.map(({ value, icon, label }) => {
-                  const IconComponent = FEELING_ICONS[icon];
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setEditForm({ ...editForm, feeling_rating: value })}
-                      className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-                        editForm.feeling_rating === value
-                          ? 'bg-primary/20 ring-2 ring-primary'
-                          : 'hover:bg-base-200'
-                      }`}
-                      title={label}
-                    >
-                      {IconComponent && <IconComponent className="w-6 h-6" />}
-                      <span className="text-xs mt-1 text-base-content/60">{label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
@@ -480,6 +467,14 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* 인물 수정 모달 */}
+      <AddPersonModal
+        userId={userId}
+        isOpen={isPersonModalOpen}
+        onClose={handleClosePersonModal}
+        editingPerson={editingPerson}
+      />
     </div>
   );
 }

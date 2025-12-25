@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Heart, MessageCircle, BarChart3, Smile, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, BarChart3, Sun, Moon } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,15 +10,13 @@ import { Paywall } from '@/components/subscription/Paywall';
 import { GratitudeJournalView } from './GratitudeJournalView';
 import { NewsMemosView } from './NewsMemosView';
 import { StatsDashboardView } from './StatsDashboardView';
-import { MoodPatternsView } from './MoodPatternsView';
 
-type TabType = 'gratitude' | 'news' | 'stats' | 'mood';
+type TabType = 'gratitude' | 'news' | 'stats';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'news', label: '소식', icon: <MessageCircle className="w-4 h-4" /> },
   { id: 'gratitude', label: '감사', icon: <Heart className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
-  { id: 'mood', label: '기분', icon: <Smile className="w-4 h-4" /> },
 ];
 
 interface RelationshipInsightsModeProps {
@@ -84,8 +82,6 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
         return <NewsMemosView userId={userId} />;
       case 'stats':
         return <StatsDashboardView userId={userId} />;
-      case 'mood':
-        return <MoodPatternsView userId={userId} />;
       default:
         return null;
     }

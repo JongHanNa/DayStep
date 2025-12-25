@@ -56,7 +56,6 @@ export interface CareInteraction {
   description: string | null;
   gratitude_note: string | null;
   recent_news: string | null;
-  feeling_rating: number | null;  // 1-5
   todo_id: string | null;         // 연결된 할일 ID
   created_at: string;
 }
@@ -69,7 +68,6 @@ export interface CareInteractionInput {
   description?: string;
   gratitude_note?: string;
   recent_news?: string;
-  feeling_rating?: number;
 }
 
 /** 우선순위 상기 메시지 */
@@ -115,15 +113,6 @@ export const INTERACTION_TYPE_LABELS: Record<InteractionType, { label: string; i
   prayer: { label: '마음으로 응원', icon: 'Heart' },
   other: { label: '기타', icon: 'Sparkles' },
 };
-
-/** 느낌 평가 라벨 (Lucide 아이콘 이름 사용) */
-export const FEELING_RATINGS: Array<{ value: number; icon: string; label: string }> = [
-  { value: 1, icon: 'Frown', label: '아쉬워요' },
-  { value: 2, icon: 'Meh', label: '그저 그래요' },
-  { value: 3, icon: 'Smile', label: '괜찮아요' },
-  { value: 4, icon: 'SmilePlus', label: '좋았어요' },
-  { value: 5, icon: 'HeartHandshake', label: '감사해요' },
-];
 
 /** 추천 우선순위 라벨 */
 export const RECOMMENDATION_PRIORITY_LABELS: Record<ContactRecommendation['priority'], { label: string; color: string; bgColor: string }> = {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { PaywallGuard } from '@/components/subscription/Paywall';
+import AddPersonModal from '@/components/cherished/AddPersonModal';
 import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 import type { CherishedPerson, InteractionType } from '@/types/cherished-people';
 import {
@@ -32,6 +33,10 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
   const [stats, setStats] = useState<DetailedStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 인물 수정 모달 상태
+  const [editingPerson, setEditingPerson] = useState<CherishedPerson | null>(null);
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+
   useEffect(() => {
     loadStats();
   }, [userId]);
@@ -51,6 +56,19 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
   const formatMonth = (monthStr: string) => {
     const [year, month] = monthStr.split('-');
     return `${parseInt(month)}월`;
+  };
+
+  // 인물 수정 모달 열기
+  const handleOpenPersonModal = (person: CherishedPerson) => {
+    setEditingPerson(person);
+    setIsPersonModalOpen(true);
+  };
+
+  // 인물 수정 모달 닫기
+  const handleClosePersonModal = () => {
+    setIsPersonModalOpen(false);
+    setEditingPerson(null);
+    loadStats(); // 통계 새로고침
   };
 
   if (isLoading) {
@@ -126,7 +144,10 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
                 }`}>
                   {index + 1}
                 </div>
-                <div className="flex-1 min-w-0">
+                <button
+                  className="flex-1 min-w-0 text-left hover:opacity-70 transition-opacity"
+                  onClick={() => handleOpenPersonModal(item.person)}
+                >
                   <span className="font-medium">{item.person.name}</span>
                   {(item.person.relationships?.length > 0 || item.person.departments?.length > 0 || item.person.roles?.length > 0) && (
                     <div className="flex items-center gap-1.5 flex-wrap text-xs">
@@ -141,7 +162,7 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
                       )}
                     </div>
                   )}
-                </div>
+                </button>
                 <span className="text-sm text-base-content/60 flex-shrink-0">{item.count}회</span>
               </div>
             ))}
@@ -212,6 +233,14 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
           <p className="text-sm mt-1">마음을 전하면 통계가 쌓여요</p>
         </div>
       )}
+
+      {/* 인물 수정 모달 */}
+      <AddPersonModal
+        userId={userId}
+        isOpen={isPersonModalOpen}
+        onClose={handleClosePersonModal}
+        editingPerson={editingPerson}
+      />
     </div>
     </PaywallGuard>
   );
