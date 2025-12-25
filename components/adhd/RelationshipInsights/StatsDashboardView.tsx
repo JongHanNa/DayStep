@@ -118,7 +118,7 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
           <div className="space-y-3">
             {stats.topContacts.map((item, index) => (
               <div key={item.person.id} className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
                   index === 0 ? 'bg-amber-100 text-amber-700' :
                   index === 1 ? 'bg-gray-200 text-gray-600' :
                   index === 2 ? 'bg-orange-100 text-orange-700' :
@@ -126,8 +126,23 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
                 }`}>
                   {index + 1}
                 </div>
-                <span className="flex-1 font-medium">{item.person.name}</span>
-                <span className="text-sm text-base-content/60">{item.count}회</span>
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium">{item.person.name}</span>
+                  {(item.person.relationships?.length > 0 || item.person.departments?.length > 0 || item.person.roles?.length > 0) && (
+                    <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                      {item.person.relationships?.length > 0 && (
+                        <span className="text-base-content/50">{item.person.relationships.join(', ')}</span>
+                      )}
+                      {item.person.departments?.length > 0 && (
+                        <span className="text-secondary/70">{item.person.departments.join(', ')}</span>
+                      )}
+                      {item.person.roles?.length > 0 && (
+                        <span className="text-primary/70">{item.person.roles.join(', ')}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <span className="text-sm text-base-content/60 flex-shrink-0">{item.count}회</span>
               </div>
             ))}
           </div>

@@ -255,8 +255,25 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                   <User className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold">{personName}님께 감사한 점들</h3>
-                <span className="text-xs text-base-content/60">({personNotes.length})</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{personName}님께 감사한 점들</h3>
+                    <span className="text-xs text-base-content/60">({personNotes.length})</span>
+                  </div>
+                  {person && (person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
+                    <div className="flex items-center gap-1.5 flex-wrap text-xs mt-0.5">
+                      {person.relationships?.length > 0 && (
+                        <span className="text-base-content/50">{person.relationships.join(', ')}</span>
+                      )}
+                      {person.departments?.length > 0 && (
+                        <span className="text-secondary/70">{person.departments.join(', ')}</span>
+                      )}
+                      {person.roles?.length > 0 && (
+                        <span className="text-primary/70">{person.roles.join(', ')}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2 pl-10">
                 {personNotes.slice(0, 5).map(({ interaction }) => (

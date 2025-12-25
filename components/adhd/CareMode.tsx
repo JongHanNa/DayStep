@@ -454,11 +454,16 @@ export default function CareMode({ onExit }: CareModeProps) {
                           >
                             <div>
                               <span className="font-medium text-lg">{rec.person.name}</span>
-                              {(rec.person.relationships?.length > 0 || rec.person.roles?.length > 0) && (
+                              {(rec.person.relationships?.length > 0 || rec.person.departments?.length > 0 || rec.person.roles?.length > 0) && (
                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   {rec.person.relationships?.length > 0 && (
                                     <span className="text-xs text-base-content/50">
                                       {rec.person.relationships.join(', ')}
+                                    </span>
+                                  )}
+                                  {rec.person.departments?.length > 0 && (
+                                    <span className="text-xs text-secondary/70">
+                                      {rec.person.departments.join(', ')}
                                     </span>
                                   )}
                                   {rec.person.roles?.length > 0 && (
@@ -523,11 +528,16 @@ export default function CareMode({ onExit }: CareModeProps) {
                         >
                           <div>
                             <span className="font-medium">{person.name}</span>
-                            {(person.relationships?.length > 0 || person.roles?.length > 0) && (
+                            {(person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 {person.relationships?.length > 0 && (
                                   <span className="text-xs text-base-content/50">
                                     {person.relationships.join(', ')}
+                                  </span>
+                                )}
+                                {person.departments?.length > 0 && (
+                                  <span className="text-xs text-secondary/70">
+                                    {person.departments.join(', ')}
                                   </span>
                                 )}
                                 {person.roles?.length > 0 && (
