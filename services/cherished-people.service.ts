@@ -59,7 +59,7 @@ export class CherishedPeopleService {
       nickname: input.nickname?.trim() || null,
       relationships: input.relationships || [],
       roles: input.roles || [],
-      notes: input.notes?.trim() || null,
+      departments: input.departments || [],
       is_active: true,
       interaction_count: 0,
     };
@@ -782,6 +782,30 @@ export class CherishedPeopleService {
     } catch (error) {
       console.error('❌ 역할 추천 조회 오류:', error);
       return DEFAULT_ROLE_SUGGESTIONS;
+    }
+  }
+
+  /**
+   * 부서/소속 추천 목록 조회 (자동완성용)
+   * 기본 추천 목록 + 사용자가 입력한 기존 값들
+   */
+  static async getDepartmentSuggestions(userId: string): Promise<string[]> {
+    const { DEFAULT_DEPARTMENT_SUGGESTIONS } = await import('@/types/cherished-people');
+
+    try {
+      const people = await this.getPeople(userId);
+      const allDepartments = people.flatMap((p) => p.departments || []);
+      const uniqueDepartments = [...new Set(allDepartments)].filter(Boolean);
+
+      // 기본 추천 목록과 병합 (중복 제거)
+      const combined = [
+        ...new Set([...DEFAULT_DEPARTMENT_SUGGESTIONS, ...uniqueDepartments]),
+      ];
+
+      return combined.sort();
+    } catch (error) {
+      console.error('❌ 부서/소속 추천 조회 오류:', error);
+      return DEFAULT_DEPARTMENT_SUGGESTIONS;
     }
   }
 }

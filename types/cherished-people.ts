@@ -29,10 +29,10 @@ export interface CherishedPerson {
   nickname: string | null;
   relationships: string[];    // 복수 관계 (배열) - 자유 입력
   roles: string[];            // 역할/직분 (배열) - 자유 입력
+  departments: string[];      // 부서/소속 (배열) - 자유 입력
   is_active: boolean;
   last_interaction_at: string | null;
   interaction_count: number;
-  notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,7 +43,7 @@ export interface CherishedPersonInput {
   nickname?: string;
   relationships?: string[];   // 복수 관계 (배열)
   roles?: string[];           // 역할/직분 (배열)
-  notes?: string;
+  departments?: string[];     // 부서/소속 (배열)
 }
 
 /** 관심 기록 */
@@ -146,4 +146,10 @@ export const DEFAULT_RELATIONSHIP_SUGGESTIONS = [
 export const DEFAULT_ROLE_SUGGESTIONS = [
   '팀장', '부장',
   '임원', '대표', '담당자', '선생님', '코치',
+];
+
+/** 기본 부서/소속 추천 목록 */
+export const DEFAULT_DEPARTMENT_SUGGESTIONS = [
+  '회사', '학교', '교회', '동아리', '동호회',
+  '봉사단체', '스터디', '프로젝트',
 ];

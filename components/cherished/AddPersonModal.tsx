@@ -32,6 +32,7 @@ export default function AddPersonModal({
     loadSuggestions,
     relationshipSuggestions,
     roleSuggestions,
+    departmentSuggestions,
   } = useCherishedPeopleStore();
   const { checkAndProceed, limitResult, isModalOpen, closeModal, onCreateSuccess, onDeleteSuccess } = useUsageLimitCheck();
 
@@ -40,7 +41,7 @@ export default function AddPersonModal({
   const [nickname, setNickname] = useState('');
   const [relationships, setRelationships] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
-  const [notes, setNotes] = useState('');
+  const [departments, setDepartments] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -58,7 +59,7 @@ export default function AddPersonModal({
       setNickname(editingPerson.nickname || '');
       setRelationships(editingPerson.relationships || []);
       setRoles(editingPerson.roles || []);
-      setNotes(editingPerson.notes || '');
+      setDepartments(editingPerson.departments || []);
     } else {
       resetForm();
     }
@@ -70,7 +71,7 @@ export default function AddPersonModal({
     setNickname('');
     setRelationships([]);
     setRoles([]);
-    setNotes('');
+    setDepartments([]);
     setShowDeleteConfirm(false);
   };
 
@@ -83,7 +84,7 @@ export default function AddPersonModal({
       nickname: nickname.trim() || undefined,
       relationships,
       roles,
-      notes: notes.trim() || undefined,
+      departments,
     };
 
     // 새로 추가하는 경우에만 용량 체크
@@ -209,6 +210,15 @@ export default function AddPersonModal({
             placeholder="관계를 입력하세요 (예: 가족, 친구)"
           />
 
+          {/* 부서/소속 */}
+          <TagInput
+            label="부서/소속 (선택)"
+            value={departments}
+            onChange={setDepartments}
+            suggestions={departmentSuggestions}
+            placeholder="소속을 입력하세요 (예: 회사, 학교)"
+          />
+
           {/* 역할/직분 */}
           <TagInput
             label="역할/직분 (선택)"
@@ -217,17 +227,6 @@ export default function AddPersonModal({
             suggestions={roleSuggestions}
             placeholder="역할을 입력하세요 (예: 팀장, 부장)"
           />
-
-          {/* 메모 */}
-          <div>
-            <label className="text-sm font-medium block mb-2">메모 (선택)</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="기억해두고 싶은 것들..."
-              className="textarea textarea-bordered w-full h-24 resize-none"
-            />
-          </div>
         </div>
 
         {/* 삭제 확인 */}
