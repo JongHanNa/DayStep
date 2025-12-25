@@ -132,24 +132,3 @@ export const RECOMMENDATION_PRIORITY_LABELS: Record<ContactRecommendation['prior
   normal: { label: '연락 추천', color: 'text-info', bgColor: 'bg-info/10' },
 };
 
-// ============================================
-// 자동완성 기본 추천 목록
-// ============================================
-
-/** 기본 관계 추천 목록 */
-export const DEFAULT_RELATIONSHIP_SUGGESTIONS = [
-  '가족', '친구', '동료', '멘토', '선배', '후배',
-  '모임', '이웃', '거래처', '고객',
-];
-
-/** 기본 역할/직분 추천 목록 */
-export const DEFAULT_ROLE_SUGGESTIONS = [
-  '팀장', '부장',
-  '임원', '대표', '담당자', '선생님', '코치',
-];
-
-/** 기본 부서/소속 추천 목록 */
-export const DEFAULT_DEPARTMENT_SUGGESTIONS = [
-  '회사', '학교', '교회', '동아리', '동호회',
-  '봉사단체', '스터디', '프로젝트',
-];

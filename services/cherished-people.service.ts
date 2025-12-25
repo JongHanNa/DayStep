@@ -739,73 +739,49 @@ export class CherishedPeopleService {
 
   /**
    * 관계 추천 목록 조회 (자동완성용)
-   * 기본 추천 목록 + 사용자가 입력한 기존 값들
+   * 사용자가 입력한 기존 값들만 반환
    */
   static async getRelationshipSuggestions(userId: string): Promise<string[]> {
-    const { DEFAULT_RELATIONSHIP_SUGGESTIONS } = await import('@/types/cherished-people');
-
     try {
       const people = await this.getPeople(userId);
       const allRelationships = people.flatMap((p) => p.relationships || []);
       const uniqueRelationships = [...new Set(allRelationships)].filter(Boolean);
-
-      // 기본 추천 목록과 병합 (중복 제거)
-      const combined = [
-        ...new Set([...DEFAULT_RELATIONSHIP_SUGGESTIONS, ...uniqueRelationships]),
-      ];
-
-      return combined.sort();
+      return uniqueRelationships.sort();
     } catch (error) {
       console.error('❌ 관계 추천 조회 오류:', error);
-      return DEFAULT_RELATIONSHIP_SUGGESTIONS;
+      return [];
     }
   }
 
   /**
    * 역할/직분 추천 목록 조회 (자동완성용)
-   * 기본 추천 목록 + 사용자가 입력한 기존 값들
+   * 사용자가 입력한 기존 값들만 반환
    */
   static async getRoleSuggestions(userId: string): Promise<string[]> {
-    const { DEFAULT_ROLE_SUGGESTIONS } = await import('@/types/cherished-people');
-
     try {
       const people = await this.getPeople(userId);
       const allRoles = people.flatMap((p) => p.roles || []);
       const uniqueRoles = [...new Set(allRoles)].filter(Boolean);
-
-      // 기본 추천 목록과 병합 (중복 제거)
-      const combined = [
-        ...new Set([...DEFAULT_ROLE_SUGGESTIONS, ...uniqueRoles]),
-      ];
-
-      return combined.sort();
+      return uniqueRoles.sort();
     } catch (error) {
       console.error('❌ 역할 추천 조회 오류:', error);
-      return DEFAULT_ROLE_SUGGESTIONS;
+      return [];
     }
   }
 
   /**
    * 부서/소속 추천 목록 조회 (자동완성용)
-   * 기본 추천 목록 + 사용자가 입력한 기존 값들
+   * 사용자가 입력한 기존 값들만 반환
    */
   static async getDepartmentSuggestions(userId: string): Promise<string[]> {
-    const { DEFAULT_DEPARTMENT_SUGGESTIONS } = await import('@/types/cherished-people');
-
     try {
       const people = await this.getPeople(userId);
       const allDepartments = people.flatMap((p) => p.departments || []);
       const uniqueDepartments = [...new Set(allDepartments)].filter(Boolean);
-
-      // 기본 추천 목록과 병합 (중복 제거)
-      const combined = [
-        ...new Set([...DEFAULT_DEPARTMENT_SUGGESTIONS, ...uniqueDepartments]),
-      ];
-
-      return combined.sort();
+      return uniqueDepartments.sort();
     } catch (error) {
       console.error('❌ 부서/소속 추천 조회 오류:', error);
-      return DEFAULT_DEPARTMENT_SUGGESTIONS;
+      return [];
     }
   }
 }

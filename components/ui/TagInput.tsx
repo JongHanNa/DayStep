@@ -187,7 +187,10 @@ export function TagInput({
             <button
               key={suggestion}
               type="button"
-              onClick={() => addTag(suggestion)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                addTag(suggestion);
+              }}
               className="w-full px-4 py-2 text-left hover:bg-base-200 transition-colors text-sm"
             >
               {suggestion}
