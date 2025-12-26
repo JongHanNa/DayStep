@@ -43,7 +43,7 @@ interface TaskOrganizeModeProps {
  * - 그래프: 전체 구조 시각화
  */
 export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('plan');
+  const [activeTab, setActiveTab] = useState<TabType>('timeline');
   const [showPaywall, setShowPaywall] = useState(false);
   const { user } = useAuth();
   const userId = user?.id;

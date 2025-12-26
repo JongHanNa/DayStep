@@ -23,7 +23,7 @@ interface TodoTimelineViewProps {
  */
 export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { todos, fetchAllTodos, updateTodo, deleteTodo } = useTodoStore();
-  const { people } = useCherishedPeopleStore();
+  const { people, loadPeople } = useCherishedPeopleStore();
   const [isLoading, setIsLoading] = useState(true);
 
   // 편집 모달 상태
@@ -40,11 +40,14 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await fetchAllTodos();
+      await Promise.all([
+        fetchAllTodos(),
+        loadPeople(userId)  // 소중한 사람 데이터도 함께 로딩
+      ]);
       setIsLoading(false);
     };
     loadData();
-  }, [userId, fetchAllTodos]);
+  }, [userId, fetchAllTodos, loadPeople]);
 
   // 프로젝트/목표 매핑 생성
   const projectMap = useMemo(() => {
