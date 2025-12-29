@@ -19,7 +19,8 @@ import {
   Square,
   Timer,
   Sun,
-  Moon
+  Moon,
+  PictureInPicture2,
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -27,6 +28,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { usePomodoroLiveActivity } from '@/hooks/usePomodoroLiveActivity';
+import { usePiPTimer } from '@/hooks/usePiPTimer';
 import { useTheme } from '@/hooks/useTheme';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
@@ -103,6 +105,16 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     timerState,
     todoName: executionMode.adhocMode.linkedTodoTitle || executionMode.currentRecommendation?.title,
     enabled: true,
+  });
+
+  // iOS PiP 타이머 연동
+  const { startPiP, stopPiP, isActive: isPiPActive, isAvailable: isPiPAvailable } = usePiPTimer({
+    onTimerComplete: () => {
+      console.log('[PiP] Timer completed');
+    },
+    onPiPStopped: () => {
+      console.log('[PiP] Stopped');
+    },
   });
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
@@ -848,6 +860,10 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               joyfulPeopleIds={joyfulPeopleIds}
               shamefulPeopleIds={shamefulPeopleIds}
               onLinkedPeopleChange={setLinkedPeople}
+              isPiPAvailable={isPiPAvailable}
+              isPiPActive={isPiPActive}
+              onStartPiP={startPiP}
+              onStopPiP={stopPiP}
             />
           )}
 
@@ -1478,6 +1494,11 @@ interface AdhocTimerViewProps {
   joyfulPeopleIds: string[];
   shamefulPeopleIds: string[];
   onLinkedPeopleChange: (joyfulIds: string[], shamefulIds: string[]) => void;
+  // PiP 타이머 props (iOS 15+)
+  isPiPAvailable: boolean;
+  isPiPActive: boolean;
+  onStartPiP: (durationMs: number, title?: string) => Promise<boolean>;
+  onStopPiP: () => Promise<boolean>;
 }
 
 function AdhocTimerView({
@@ -1498,6 +1519,10 @@ function AdhocTimerView({
   joyfulPeopleIds,
   shamefulPeopleIds,
   onLinkedPeopleChange,
+  isPiPAvailable,
+  isPiPActive,
+  onStartPiP,
+  onStopPiP,
 }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -1638,7 +1663,7 @@ function AdhocTimerView({
         </span>
       </div>
 
-      {/* 타이머 컨트롤 버튼 (-1분, 재생/중지, +1분) */}
+      {/* 타이머 컨트롤 버튼 (-1분, 재생/중지, +1분, PiP) */}
       <div className="flex items-center justify-center gap-4 mb-4">
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -1667,6 +1692,27 @@ function AdhocTimerView({
         >
           +1분
         </motion.button>
+
+        {/* PiP 타이머 버튼 (iOS 15+) */}
+        {isPiPAvailable && (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              if (isPiPActive) {
+                onStopPiP();
+              } else {
+                onStartPiP(
+                  timerState.remainingTime,
+                  linkedTodoTitle || '포커스'
+                );
+              }
+            }}
+            className={`btn btn-circle btn-ghost ${isPiPActive ? 'text-primary' : 'text-base-content/70'}`}
+            title={isPiPActive ? 'PiP 종료' : 'PiP 타이머로 보기'}
+          >
+            <PictureInPicture2 className="w-5 h-5" />
+          </motion.button>
+        )}
       </div>
 
       {/* 미완료 할일 입력 (제목 없을 때만) */}

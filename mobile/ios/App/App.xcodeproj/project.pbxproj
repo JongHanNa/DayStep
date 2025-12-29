@@ -23,6 +23,10 @@
 		A42C07862E5D414C0004F8C8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A42C07852E5D414C0004F8C8 /* WidgetKit.framework */; };
 		A42C07882E5D414C0004F8C8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A42C07872E5D414C0004F8C8 /* SwiftUI.framework */; };
 		A42C07992E5D414E0004F8C8 /* DayStepWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A42C07842E5D414C0004F8C8 /* DayStepWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A433B7A12F0228390076182D /* CustomBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A433B7A02F0228390076182D /* CustomBridgeViewController.swift */; };
+		A4655BD82F021704004F9DB4 /* PiPTimerPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4655BD62F021704004F9DB4 /* PiPTimerPlugin.swift */; };
+		A4655BD92F021704004F9DB4 /* PiPTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4655BD72F021704004F9DB4 /* PiPTimerView.swift */; };
+		A4655BDA2F021704004F9DB4 /* PiPTimerPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = A4655BD52F021704004F9DB4 /* PiPTimerPlugin.m */; };
 		A49DE1C82EF993F80032A92A /* capacitor.plugins.json in Resources */ = {isa = PBXBuildFile; fileRef = A49DE1C72EF993F80032A92A /* capacitor.plugins.json */; };
 /* End PBXBuildFile section */
 
@@ -71,6 +75,10 @@
 		A42C07A32E5D459B0004F8C8 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		A42C07A42E5D45C50004F8C8 /* DayStepWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DayStepWidgetExtension.entitlements; sourceTree = "<group>"; };
 		A42C080B2E5D79080004F8C8 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
+		A433B7A02F0228390076182D /* CustomBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBridgeViewController.swift; sourceTree = "<group>"; };
+		A4655BD52F021704004F9DB4 /* PiPTimerPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PiPTimerPlugin.m; sourceTree = "<group>"; };
+		A4655BD62F021704004F9DB4 /* PiPTimerPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPTimerPlugin.swift; sourceTree = "<group>"; };
+		A4655BD72F021704004F9DB4 /* PiPTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPTimerView.swift; sourceTree = "<group>"; };
 		A49DE1C72EF993F80032A92A /* capacitor.plugins.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = capacitor.plugins.json; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
@@ -157,6 +165,10 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				A433B7A02F0228390076182D /* CustomBridgeViewController.swift */,
+				A4655BD52F021704004F9DB4 /* PiPTimerPlugin.m */,
+				A4655BD62F021704004F9DB4 /* PiPTimerPlugin.swift */,
+				A4655BD72F021704004F9DB4 /* PiPTimerView.swift */,
 				A49DE1C72EF993F80032A92A /* capacitor.plugins.json */,
 				A40C74FC2E7A9F10007BB2F4 /* ContactGroupsPlugin.m */,
 				A40C74FD2E7A9F10007BB2F4 /* ContactGroupsPlugin.swift */,
@@ -244,7 +256,6 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1630;
-						ProvisioningStyle = Automatic;
 					};
 					A42C07832E5D414C0004F8C8 = {
 						CreatedOnToolsVersion = 16.3;
@@ -339,10 +350,14 @@
 			files = (
 				A40C70A82E70097F007BB2F4 /* ContactPickerPlugin.m in Sources */,
 				A40C70A92E70097F007BB2F4 /* ContactPickerPlugin.swift in Sources */,
+				A433B7A12F0228390076182D /* CustomBridgeViewController.swift in Sources */,
 				A40C74FE2E7A9F10007BB2F4 /* ContactGroupsPlugin.swift in Sources */,
 				A40C74FF2E7A9F10007BB2F4 /* ContactGroupsPlugin.m in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				A40C75012E7BA000007BB2F4 /* CustomWebViewController.swift in Sources */,
+				A4655BD82F021704004F9DB4 /* PiPTimerPlugin.swift in Sources */,
+				A4655BD92F021704004F9DB4 /* PiPTimerView.swift in Sources */,
+				A4655BDA2F021704004F9DB4 /* PiPTimerPlugin.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -504,6 +519,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
@@ -518,6 +534,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev";
 				PRODUCT_NAME = DayStep;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OBJC_BRIDGING_HEADER = "App/App-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -533,6 +550,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
@@ -546,6 +564,7 @@
 				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.daystep.app.dev";
 				PRODUCT_NAME = DayStep;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "App/App-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

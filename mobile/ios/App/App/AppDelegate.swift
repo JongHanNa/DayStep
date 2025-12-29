@@ -53,6 +53,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                 rootVC.webView?.backgroundColor = bgColor
                 rootVC.webView?.scrollView.backgroundColor = bgColor
             }
+
+            // 🆕 PiP 타이머 플러그인 수동 등록 (한 번만 실행)
+            if rootVC.bridge?.plugin(withName: "PiPTimer") == nil {
+                rootVC.bridge?.registerPluginInstance(PiPTimerPlugin())
+                print("[AppDelegate] ✅ PiPTimerPlugin registered")
+            }
         }
     }
 

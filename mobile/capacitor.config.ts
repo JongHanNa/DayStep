@@ -98,7 +98,8 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     "WidgetBridgePlugin",
     "ContactGroupsPlugin",
     "PurchasesPlugin", // Revenue Cat 클래스
-    "ThemeBridgePlugin" // 다크모드 WebView 배경색 동기화
+    "ThemeBridgePlugin", // 다크모드 WebView 배경색 동기화
+    "PiPTimerPlugin" // PiP 타이머 (홈 화면 플로팅)
   ],
 };
 
