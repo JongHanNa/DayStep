@@ -15,6 +15,8 @@ PODS:
   - CapacitorCommunityContacts (7.0.0):
     - Capacitor
   - CapacitorCordova (7.4.4)
+  - CapacitorLiveActivity (7.1.0):
+    - Capacitor
   - CapacitorLocalNotifications (7.0.3):
     - Capacitor
   - CapacitorPreferences (7.0.2):
@@ -69,6 +71,7 @@ DEPENDENCIES:
   - "Capacitor (from `../../../node_modules/@capacitor/ios`)"
   - "CapacitorCommunityContacts (from `../../../node_modules/@capacitor-community/contacts`)"
   - "CapacitorCordova (from `../../../node_modules/@capacitor/ios`)"
+  - CapacitorLiveActivity (from `../../../node_modules/capacitor-live-activity`)
   - "CapacitorLocalNotifications (from `../../../node_modules/@capacitor/local-notifications`)"
   - "CapacitorPreferences (from `../../../node_modules/@capacitor/preferences`)"
   - "CapgoCapacitorSocialLogin (from `../../../node_modules/@capgo/capacitor-social-login`)"
@@ -101,6 +104,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/@capacitor-community/contacts"
   CapacitorCordova:
     :path: "../../../node_modules/@capacitor/ios"
+  CapacitorLiveActivity:
+    :path: "../../../node_modules/capacitor-live-activity"
   CapacitorLocalNotifications:
     :path: "../../../node_modules/@capacitor/local-notifications"
   CapacitorPreferences:
@@ -123,6 +128,7 @@ SPEC CHECKSUMS:
   Capacitor: 358dd1c3fdd71d969547b17e159fd8a7736cb45f
   CapacitorCommunityContacts: aaa9f95f2da72b5de15d5fa935d736d07c644db2
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
+  CapacitorLiveActivity: 0f49747a5e52aef9fbf2f9b04b71fca6bbed7f17
   CapacitorLocalNotifications: 0811aef56ab2e5f7f9ae72f47d3473ab50c29038
   CapacitorPreferences: 65107ed7437d96ee72583df5763985e3c0ff2bc2
   CapgoCapacitorSocialLogin: 69da761a79fedeff6583fcf0bf7543e9c10ad622
@@ -142,6 +148,6 @@ SPEC CHECKSUMS:
   RevenueCat: 1e61140a343a77dc286f171b3ffab99ca09a4b57
   RevenuecatPurchasesCapacitor: 2c14f8cccaa2100a8585e75bec5984a62ccae52c
 
-PODFILE CHECKSUM: 206a9bc96cd4ac162988133e3666fe7ac72ddc22
+PODFILE CHECKSUM: 5d8eff70edb14792461c5048ca761d218abc480f
 
 COCOAPODS: 1.16.2

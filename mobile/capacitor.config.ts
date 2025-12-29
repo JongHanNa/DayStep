@@ -86,7 +86,8 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     "@daystep/widget-bridge",
     "@daystep/contact-groups",
     "@daystep/theme-bridge", // 다크모드 WebView 배경색 동기화
-    "@revenuecat/purchases-capacitor" // Revenue Cat 구독 결제 플러그인
+    "@revenuecat/purchases-capacitor", // Revenue Cat 구독 결제 플러그인
+    "capacitor-live-activity" // Live Activities (포모도로 타이머)
   ],
   // 커뮤니티 연락처 플러그인 + 로컬 ContactGroups 플러그인 + Revenue Cat 동시 사용
   packageClassList: [

@@ -12,8 +12,9 @@ import SwiftUI
 struct DayStepWidgetBundle: WidgetBundle {
     var body: some Widget {
         DayStepWidget()
-        // 나중에 추가할 다른 위젯들
-        // DayStepWidgetControl()
-        // DayStepWidgetLiveActivity()
+        // Pomodoro Timer Live Activity (Dynamic Island + Lock Screen)
+        if #available(iOS 16.2, *) {
+            PomodoroLiveActivity()
+        }
     }
 }

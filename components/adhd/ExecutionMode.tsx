@@ -26,6 +26,7 @@ import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
+import { usePomodoroLiveActivity } from '@/hooks/usePomodoroLiveActivity';
 import { useTheme } from '@/hooks/useTheme';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
@@ -96,6 +97,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   // 포모도로 설정은 스토어에서
   const { settings: pomodoroSettings } = usePomodoroStore();
+
+  // iOS Live Activity 연동
+  usePomodoroLiveActivity({
+    timerState,
+    todoName: executionMode.adhocMode.linkedTodoTitle || executionMode.currentRecommendation?.title,
+    enabled: true,
+  });
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
 

@@ -19,6 +19,7 @@ def capacitor_pods
   pod 'DaystepContactGroups', :path => '../../../plugins/contact-groups'
   pod 'DaystepThemeBridge', :path => '../../../plugins/theme-bridge'
   pod 'RevenuecatPurchasesCapacitor', :path => '../../../node_modules/@revenuecat/purchases-capacitor'
+  pod 'CapacitorLiveActivity', :path => '../../../node_modules/capacitor-live-activity'
 end
 
 target 'App' do

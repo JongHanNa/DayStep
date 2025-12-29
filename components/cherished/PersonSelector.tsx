@@ -291,7 +291,7 @@ export function PersonSelector({
                         ) : (
                           <Plus className="w-4 h-4" />
                         )}
-                        '{searchQuery}'님 추가
+                        &apos;{searchQuery}&apos;님 추가
                       </button>
                     ) : (
                       <p className="text-sm text-base-content/50">등록된 소중한 사람이 없습니다</p>

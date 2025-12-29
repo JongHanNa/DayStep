@@ -6,6 +6,7 @@ import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { useAudio } from '@/hooks/useAudio';
 import { useNotifications } from '@/hooks/useNotifications';
+import { usePomodoroLiveActivity } from '@/hooks/usePomodoroLiveActivity';
 import { CircularProgress } from './CircularProgress';
 import { TimerDisplay } from './TimerDisplay';
 import { AudioSettings } from './AudioSettings';
@@ -26,10 +27,10 @@ interface PomodoroTimerProps {
   className?: string;
 }
 
-export const PomodoroTimer = React.memo(function PomodoroTimer({ 
-  todoId, 
-  onSessionComplete, 
-  className = '' 
+export const PomodoroTimer = React.memo(function PomodoroTimer({
+  todoId,
+  onSessionComplete,
+  className = ''
 }: PomodoroTimerProps) {
   // Store hooks
   const {
@@ -39,6 +40,7 @@ export const PomodoroTimer = React.memo(function PomodoroTimer({
     isSettingsOpen,
     isStatsOpen,
     connectedTodoId,
+    currentSession,
     updateSettings,
     setSettingsOpen,
     setStatsOpen,
@@ -76,6 +78,14 @@ export const PomodoroTimer = React.memo(function PomodoroTimer({
     showNotification,
     state: notificationState,
   } = useNotifications();
+
+  // Live Activity 연동 (iOS Dynamic Island & Lock Screen)
+  usePomodoroLiveActivity({
+    timerState: workerTimerState,
+    todoName: connectedTodoId ? `할일 #${connectedTodoId.slice(0, 8)}` : undefined, // TODO: 실제 할일 이름으로 교체
+    startTimeMs: currentSession?.startTime,
+    enabled: true,
+  });
 
   // 로컬 상태
   const [sessionCount, setSessionCount] = useState(0);

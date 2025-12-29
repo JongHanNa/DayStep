@@ -97,6 +97,8 @@
     </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
     <key>CFBundleDisplayName</key>
     <string>DevDayStep</string>
   </dict>
