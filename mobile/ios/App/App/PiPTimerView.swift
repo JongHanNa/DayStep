@@ -23,7 +23,6 @@ public class PiPTimerView: UIView {
         return layer as! AVSampleBufferDisplayLayer
     }
 
-    private var displayLink: CADisplayLink?
     private var remainingSeconds: Int = 0
     private var timerTitle: String = ""
     private var controlTimebase: CMTimebase?
@@ -83,9 +82,6 @@ public class PiPTimerView: UIView {
 
         // 첫 프레임 렌더링
         renderFrame()
-
-        // Display link 시작 (주기적 업데이트)
-        startDisplayLink()
     }
 
     func updateTimer(remaining: Int) {
@@ -95,26 +91,6 @@ public class PiPTimerView: UIView {
 
     func stopTimer() {
         isRunning = false
-        stopDisplayLink()
-    }
-
-    // MARK: - Display Link
-
-    private func startDisplayLink() {
-        stopDisplayLink()
-        displayLink = CADisplayLink(target: self, selector: #selector(displayLinkTick))
-        displayLink?.preferredFramesPerSecond = 1 // 1 FPS (타이머는 초 단위)
-        displayLink?.add(to: .main, forMode: .common)
-    }
-
-    private func stopDisplayLink() {
-        displayLink?.invalidate()
-        displayLink = nil
-    }
-
-    @objc private func displayLinkTick() {
-        guard isRunning else { return }
-        renderFrame()
     }
 
     // MARK: - Rendering
@@ -311,6 +287,6 @@ public class PiPTimerView: UIView {
     }
 
     deinit {
-        stopDisplayLink()
+        // Cleanup handled by stopTimer()
     }
 }
