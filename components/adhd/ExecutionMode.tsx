@@ -943,11 +943,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onStartPiP={startPiP}
               onStopPiP={stopPiP}
               timerDisplayMode={timerDisplayMode}
-              onToggleDisplayMode={() => {
-                setTimerDisplayMode(prev =>
-                  prev === 'both' ? 'elapsed' : prev === 'elapsed' ? 'remaining' : 'both'
-                );
-              }}
+              onSetDisplayMode={setTimerDisplayMode}
             />
           )}
 
@@ -1588,7 +1584,7 @@ interface AdhocTimerViewProps {
   onStopPiP: () => Promise<boolean>;
   // 타이머 표시 모드
   timerDisplayMode: TimerDisplayMode;
-  onToggleDisplayMode: () => void;
+  onSetDisplayMode: (mode: TimerDisplayMode) => void;
 }
 
 function AdhocTimerView({
@@ -1615,7 +1611,7 @@ function AdhocTimerView({
   onStartPiP,
   onStopPiP,
   timerDisplayMode,
-  onToggleDisplayMode,
+  onSetDisplayMode,
 }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -1756,26 +1752,56 @@ function AdhocTimerView({
         </motion.div>
       </div>
 
-      {/* 시간 표시 - 원 아래 (클릭하면 모드 전환: 둘다 → 경과만 → 남은만 → 둘다) */}
-      <div className="text-center mb-4 cursor-pointer select-none" onClick={onToggleDisplayMode}>
+      {/* 시간 표시 - 레이블 포함 */}
+      <div className="text-center mb-2">
         {timerDisplayMode === 'both' ? (
           /* 둘다 보기: 가로 배치 (경과시간/남은시간) */
-          <div className="flex items-center justify-center gap-1 text-4xl font-bold text-base-content">
-            <span>{formatTime(timerState.elapsed)}</span>
-            <span className="text-base-content/40">/</span>
-            <span>{formatTime(timerState.remainingTime)}</span>
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-base-content/60 mb-1">경과</span>
+              <span className="text-3xl font-bold text-base-content">{formatTime(timerState.elapsed)}</span>
+            </div>
+            <span className="text-2xl text-base-content/40">/</span>
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-base-content/60 mb-1">남은</span>
+              <span className="text-3xl font-bold text-base-content">{formatTime(timerState.remainingTime)}</span>
+            </div>
           </div>
-        ) : timerDisplayMode === 'elapsed' ? (
-          /* 경과시간만 */
-          <span className="text-4xl font-bold text-base-content">
-            {formatTime(timerState.elapsed)}
-          </span>
         ) : (
-          /* 남은시간만 */
-          <span className="text-4xl font-bold text-base-content">
-            {formatTime(timerState.remainingTime)}
-          </span>
+          /* 단독 모드: 경과 또는 남은 */
+          <div className="flex flex-col items-center">
+            <span className="text-xs text-base-content/60 mb-1">
+              {timerDisplayMode === 'elapsed' ? '경과' : '남은'}
+            </span>
+            <span className="text-4xl font-bold text-base-content">
+              {timerDisplayMode === 'elapsed'
+                ? formatTime(timerState.elapsed)
+                : formatTime(timerState.remainingTime)}
+            </span>
+          </div>
         )}
+      </div>
+
+      {/* 모드 전환 탭 버튼 */}
+      <div className="flex justify-center gap-1 mb-4">
+        <button
+          className={`btn btn-xs rounded-full ${timerDisplayMode === 'elapsed' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => onSetDisplayMode('elapsed')}
+        >
+          경과
+        </button>
+        <button
+          className={`btn btn-xs rounded-full ${timerDisplayMode === 'remaining' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => onSetDisplayMode('remaining')}
+        >
+          남은
+        </button>
+        <button
+          className={`btn btn-xs rounded-full ${timerDisplayMode === 'both' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => onSetDisplayMode('both')}
+        >
+          둘다
+        </button>
       </div>
 
       {/* 타이머 컨트롤 버튼 (-1분, 재생/중지, +1분, PiP) */}
