@@ -1608,6 +1608,9 @@ function AdhocTimerView({
   // 종료 예정 시간 계산 (남은 시간 기반 - 시간 조정 및 일시정지 반영)
   const endTime = new Date(Date.now() + timerState.remainingTime);
 
+  // 시간 간격 계산 (분 단위)
+  const durationMinutes = Math.round((endTime.getTime() - startedAt.getTime()) / (60 * 1000));
+
   // 진행률 계산 (0-1) - 원본 duration 기준으로 계산
   const progress = effectiveDuration > 0
     ? (effectiveDuration - timerState.remainingTime) / effectiveDuration
@@ -1684,9 +1687,9 @@ function AdhocTimerView({
         <h2 className="text-2xl font-bold text-base-content mb-1">포커스</h2>
       )}
 
-      {/* 시작 → 종료 시간 */}
+      {/* 시작 → 종료 시간 (간격 포함) */}
       <p className="text-base text-base-content/60 mb-6">
-        {formatTimeHHMM(startedAt)} → {formatTimeHHMM(endTime)}
+        {formatTimeHHMM(startedAt)} → {formatTimeHHMM(endTime)} ({durationMinutes}분)
       </p>
 
       {/* 타이머 원형 디스플레이 (280px, 1.4배 확대) */}
