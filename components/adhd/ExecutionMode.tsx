@@ -1756,8 +1756,11 @@ function AdhocTimerView({
         </motion.div>
       </div>
 
-      {/* 시간 표시 - 게이지 색상으로 구분 */}
-      <div className="text-center mb-2">
+      {/* 시간 표시 - 게이지 색상으로 구분, 클릭하면 모드 전환 */}
+      <div
+        className="text-center mb-4 cursor-pointer"
+        onClick={onToggleDisplayMode}
+      >
         {timerDisplayMode === 'both' ? (
           /* 둘다 보기: 배경색으로 구분 */
           <div className="flex items-center justify-center gap-3">
@@ -1781,16 +1784,6 @@ function AdhocTimerView({
               : formatTime(timerState.remainingTime)}
           </span>
         )}
-      </div>
-
-      {/* 모드 전환 토글 버튼 */}
-      <div className="flex justify-center mb-4">
-        <button
-          className="btn btn-xs btn-soft rounded-full"
-          onClick={onToggleDisplayMode}
-        >
-          {timerDisplayMode === 'elapsed' ? '경과기간' : timerDisplayMode === 'remaining' ? '남은시간' : '경과 / 남은'}
-        </button>
       </div>
 
       {/* 타이머 컨트롤 버튼 (-1분, 재생/중지, +1분, PiP) */}
