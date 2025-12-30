@@ -1758,16 +1758,20 @@ function AdhocTimerView({
 
       {/* 시간 표시 - 원 아래 (클릭하면 모드 전환: 둘다 → 경과만 → 남은만 → 둘다) */}
       <div className="text-center mb-4 cursor-pointer select-none" onClick={onToggleDisplayMode}>
-        {/* 경과 시간 (Worker에서 DB 기준으로 계산) */}
-        {(timerDisplayMode === 'elapsed' || timerDisplayMode === 'both') && (
-          <div className={timerDisplayMode === 'both' ? 'text-sm text-base-content/60 mb-1' : 'text-4xl font-bold text-base-content'}>
-            {formatTime(timerState.elapsed)}
-            {timerDisplayMode === 'both' && ' 경과'}
+        {timerDisplayMode === 'both' ? (
+          /* 둘다 보기: 가로 배치 (경과시간/남은시간) */
+          <div className="flex items-center justify-center gap-1 text-4xl font-bold text-base-content">
+            <span>{formatTime(timerState.elapsed)}</span>
+            <span className="text-base-content/40">/</span>
+            <span>{formatTime(timerState.remainingTime)}</span>
           </div>
-        )}
-
-        {/* 남은 시간 */}
-        {(timerDisplayMode === 'remaining' || timerDisplayMode === 'both') && (
+        ) : timerDisplayMode === 'elapsed' ? (
+          /* 경과시간만 */
+          <span className="text-4xl font-bold text-base-content">
+            {formatTime(timerState.elapsed)}
+          </span>
+        ) : (
+          /* 남은시간만 */
           <span className="text-4xl font-bold text-base-content">
             {formatTime(timerState.remainingTime)}
           </span>
