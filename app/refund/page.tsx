@@ -182,28 +182,69 @@ export default function RefundPage() {
           <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-200 pb-2 mb-4">
             5. 환불 절차
           </h2>
-          <p className="text-gray-600 mb-4">환불을 요청하시려면 다음 방법 중 하나를 이용해 주세요.</p>
+          <p className="text-gray-600 mb-4">
+            결제 플랫폼에 따라 환불 절차가 다릅니다. 해당 플랫폼의 고객 지원을 통해 환불을 요청해 주세요.
+          </p>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
-            방법 1: 이메일 환불 요청
+            웹에서 결제한 경우 (Paddle)
           </h3>
           <p className="text-gray-600 mb-2">
-            아래 정보와 함께 <strong>skwhdgks@gmail.com</strong>으로 이메일을 보내주세요.
+            Paddle 고객 지원을 통해 환불을 요청하실 수 있습니다.
           </p>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
-            <li>등록된 이메일 주소</li>
-            <li>결제일 (영수증에 표시된 날짜)</li>
-            <li>환불 요청 사유 (선택사항)</li>
+            <li>결제 시 수신한 영수증 이메일에서 &quot;Manage Subscription&quot; 또는 &quot;Contact Support&quot; 링크 클릭</li>
+            <li>또는 Paddle 고객 포털에서 직접 환불 요청</li>
           </ul>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
-            방법 2: Paddle 고객 지원
+            iOS 앱에서 결제한 경우 (App Store)
           </h3>
-          <p className="text-gray-600">
-            결제 관련 문의는 Paddle 고객 지원을 통해서도 가능합니다. 결제 시
-            수신한 영수증 이메일에서 &quot;Manage Subscription&quot; 또는
-            &quot;Contact Support&quot; 링크를 이용하실 수 있습니다.
+          <p className="text-gray-600 mb-2">
+            Apple을 통해 환불을 요청하실 수 있습니다.
           </p>
+          <ul className="list-disc list-inside text-gray-600 space-y-2">
+            <li>
+              <a
+                href="https://reportaproblem.apple.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                reportaproblem.apple.com
+              </a>
+              에서 환불 요청
+            </li>
+            <li>또는 Apple 지원팀에 직접 문의</li>
+          </ul>
+
+          <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
+            Android 앱에서 결제한 경우 (Google Play)
+          </h3>
+          <p className="text-gray-600 mb-2">
+            Google을 통해 환불을 요청하실 수 있습니다.
+          </p>
+          <ul className="list-disc list-inside text-gray-600 space-y-2">
+            <li>
+              <a
+                href="https://play.google.com/store/account/subscriptions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Google Play 구독 관리
+              </a>
+              에서 환불 요청
+            </li>
+            <li>또는 Google Play 고객센터에 직접 문의</li>
+          </ul>
+
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-6">
+            <p className="text-gray-700">
+              <strong>참고:</strong> 각 플랫폼의 환불 정책이 적용되며,
+              환불 승인 여부는 해당 플랫폼의 재량에 따라 결정됩니다.
+            </p>
+          </div>
         </section>
 
         {/* 제6조 */}
@@ -336,15 +377,26 @@ export default function RefundPage() {
           <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-200 pb-2 mb-4">
             9. 문의처
           </h2>
+
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <p className="text-gray-700">
+              <strong>환불 문의:</strong> 환불은 결제한 플랫폼(Paddle, App Store, Google Play)을 통해
+              직접 처리됩니다. 위 &quot;5. 환불 절차&quot;를 참고해 주세요.
+            </p>
+          </div>
+
           <p className="text-gray-600 mb-4">
-            환불 관련 문의사항이 있으시면 아래로 연락해 주세요.
+            앱 기능, 버그 신고, 또는 일반적인 문의사항이 있으시면 아래로 연락해 주세요.
           </p>
 
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">고객 지원</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">앱 관련 문의</h3>
             <ul className="text-gray-600 space-y-1">
               <li>
                 <strong>이메일:</strong> skwhdgks@gmail.com
+              </li>
+              <li>
+                <strong>문의 범위:</strong> 앱 기능, 버그 신고, 계정 문제, 기타 문의
               </li>
               <li>
                 <strong>응답 시간:</strong> 영업일 기준 1-2일 이내
