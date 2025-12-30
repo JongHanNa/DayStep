@@ -137,6 +137,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [editingCompletedTodoTitle, setEditingCompletedTodoTitle] = useState(''); // 완료 할일 편집 중인 제목
   const [isCreatingTodo, setIsCreatingTodo] = useState(false); // 할일 생성 중 플래그 (race condition 방지)
   const [pausedAt, setPausedAt] = useState<number | null>(null); // 일시정지 시점 (DB 동기화용)
+  const [totalDuration, setTotalDuration] = useState<number | null>(null); // 화면 endTime 계산용 (DB와 동기화)
 
   // 로딩 상태 (Skip DB 제거로 항상 false)
 
@@ -191,6 +192,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     startAdhocMode();
     const duration = pomodoroSettings.pomodoroDuration * 60 * 1000;
+    setTotalDuration(duration); // 화면 endTime 계산용
 
     try {
       const sessionId = await PomodoroSessionService.createSession(userId, duration);
@@ -282,6 +284,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             // 원본 시작 시간 및 duration 저장 (AdhocTimerView에서 사용)
             setRestoredStartTime(originalStartTime);
             setRestoredDuration(activeSession.duration);
+            setTotalDuration(activeSession.duration); // 화면 endTime 계산용 (DB 값 그대로)
             // 세션 상태 복원
             setSessionId(activeSession.id);
             startAdhocMode();
@@ -410,6 +413,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     startAdhocMode();
     const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
+    setTotalDuration(duration); // 화면 endTime 계산용
 
     // DB에 세션 생성
     try {
@@ -435,6 +439,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     startAdhocMode();
     const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
+    setTotalDuration(duration); // 화면 endTime 계산용
 
     // DB에 세션 생성
     try {
@@ -633,14 +638,17 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     }
   };
 
-  // 타이머 시간 조정 (-1분/+1분) - Worker + DB 동시 업데이트
+  // 타이머 시간 조정 (-1분/+1분) - Worker + DB + 화면 동시 업데이트
   const handleAdjustTime = useCallback(async (deltaMs: number) => {
     // 1. Worker에 시간 조정 메시지 전송
     adjustTime(deltaMs);
 
+    // 2. 화면 endTime 업데이트 (DB와 동기화)
+    setTotalDuration(d => (d ?? 0) + deltaMs);
+
     const { sessionId, linkedTodoId } = executionMode.adhocMode;
 
-    // 2. DB에서 현재 세션 조회 후 duration 업데이트
+    // 3. DB에서 현재 세션 조회 후 duration 업데이트
     if (sessionId) {
       const session = await PomodoroSessionService.getSession(sessionId);
       if (!session) return;
@@ -648,7 +656,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       const newDuration = session.duration + deltaMs;  // DB 값 기준으로 계산
       await PomodoroSessionService.updateDuration(sessionId, newDuration);
 
-      // 3. 연결된 할일의 end_time 업데이트 (Supabase 직접)
+      // 4. 연결된 할일의 end_time 업데이트 (Supabase 직접)
       if (linkedTodoId) {
         const startMs = new Date(session.start_time).getTime();
         const newEndTime = new Date(startMs + newDuration).toISOString();
@@ -666,12 +674,17 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     pauseTimer();
   }, [pauseTimer]);
 
-  // 재생 래퍼 - DB 업데이트 (정지 시간만큼 duration 증가)
+  // 재생 래퍼 - 화면 + DB 업데이트 (정지 시간만큼 duration 증가)
+  // Worker는 resumeTimer()로 자동 복원됨 (startTime 조정)
   const handleResume = useCallback(async () => {
-    resumeTimer();
-
     if (pausedAt) {
       const pausedDuration = Date.now() - pausedAt;
+
+      // 화면 endTime 업데이트 (DB와 동기화)
+      // Worker의 adjustTime은 호출하지 않음 - Worker는 자체적으로 일시정지 처리함
+      setTotalDuration(d => (d ?? 0) + pausedDuration);
+
+      // DB 업데이트
       const { sessionId, linkedTodoId } = executionMode.adhocMode;
 
       if (sessionId) {
@@ -693,6 +706,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       }
       setPausedAt(null);
     }
+
+    resumeTimer();
   }, [resumeTimer, pausedAt, executionMode.adhocMode]);
 
   // 할일 기록하기
@@ -914,6 +929,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onUpdateLinkedTodoTitle={handleUpdateLinkedTodoTitle}
               originalStartTime={restoredStartTime || undefined}
               originalDuration={restoredDuration || undefined}
+              totalDuration={totalDuration}
               joyfulPeopleIds={joyfulPeopleIds}
               shamefulPeopleIds={shamefulPeopleIds}
               onLinkedPeopleChange={setLinkedPeople}
@@ -1547,6 +1563,8 @@ interface AdhocTimerViewProps {
   originalStartTime?: Date;
   // 세션 복원 시 원본 duration (없으면 timerState.duration 사용)
   originalDuration?: number;
+  // 화면 endTime 계산용 totalDuration (DB와 동기화)
+  totalDuration: number | null;
   // 인물 연결 props
   joyfulPeopleIds: string[];
   shamefulPeopleIds: string[];
@@ -1573,6 +1591,7 @@ function AdhocTimerView({
   onUpdateLinkedTodoTitle,
   originalStartTime,
   originalDuration,
+  totalDuration,
   joyfulPeopleIds,
   shamefulPeopleIds,
   onLinkedPeopleChange,
@@ -1605,11 +1624,14 @@ function AdhocTimerView({
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  // 종료 예정 시간 계산 (남은 시간 기반 - 시간 조정 및 일시정지 반영)
-  const endTime = new Date(Date.now() + timerState.remainingTime);
+  // 종료 예정 시간 계산 (DB와 동일한 방식: startedAt + totalDuration)
+  // totalDuration이 있으면 DB 기반, 없으면 Worker 기반 (fallback)
+  const endTime = totalDuration !== null
+    ? new Date(startedAt.getTime() + totalDuration)
+    : new Date(Date.now() + timerState.remainingTime);
 
   // 시간 간격 계산 (분 단위)
-  const durationMinutes = Math.round((endTime.getTime() - startedAt.getTime()) / (60 * 1000));
+  const durationMinutes = Math.round((totalDuration ?? effectiveDuration) / (60 * 1000));
 
   // 진행률 계산 (0-1) - 원본 duration 기준으로 계산
   const progress = effectiveDuration > 0
