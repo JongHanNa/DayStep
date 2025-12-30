@@ -1756,24 +1756,26 @@ function AdhocTimerView({
         </motion.div>
       </div>
 
-      {/* 시간 표시 */}
+      {/* 시간 표시 - 게이지 색상으로 구분 */}
       <div className="text-center mb-2">
         {timerDisplayMode === 'both' ? (
-          /* 둘다 보기: 레이블 + 가로 배치 */
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex flex-col items-center">
-              <span className="text-xs text-base-content/60 mb-1">경과</span>
-              <span className="text-3xl font-bold text-base-content">{formatTime(timerState.elapsed)}</span>
-            </div>
-            <span className="text-2xl text-base-content/40">/</span>
-            <div className="flex flex-col items-center">
-              <span className="text-xs text-base-content/60 mb-1">남은</span>
-              <span className="text-3xl font-bold text-base-content">{formatTime(timerState.remainingTime)}</span>
-            </div>
+          /* 둘다 보기: 배경색으로 구분 */
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-2xl font-bold bg-[#8b5cf6] text-white px-4 py-1 rounded-full">
+              {formatTime(timerState.elapsed)}
+            </span>
+            <span className="text-xl text-base-content/40">/</span>
+            <span className="text-2xl font-bold bg-[#e0e7ff] text-gray-700 px-4 py-1 rounded-full">
+              {formatTime(timerState.remainingTime)}
+            </span>
           </div>
         ) : (
-          /* 단독 모드: 시간만 크게 표시 (레이블 없음) */
-          <span className="text-4xl font-bold text-base-content">
+          /* 단독 모드: 해당 색상 배경 */
+          <span className={`text-3xl font-bold px-6 py-2 rounded-full ${
+            timerDisplayMode === 'elapsed'
+              ? 'bg-[#8b5cf6] text-white'
+              : 'bg-[#e0e7ff] text-gray-700'
+          }`}>
             {timerDisplayMode === 'elapsed'
               ? formatTime(timerState.elapsed)
               : formatTime(timerState.remainingTime)}
@@ -1787,7 +1789,7 @@ function AdhocTimerView({
           className="btn btn-xs btn-soft rounded-full"
           onClick={onToggleDisplayMode}
         >
-          {timerDisplayMode === 'elapsed' ? '경과' : timerDisplayMode === 'remaining' ? '남은' : '둘다'}
+          {timerDisplayMode === 'elapsed' ? '경과기간' : timerDisplayMode === 'remaining' ? '남은시간' : '경과 / 남은'}
         </button>
       </div>
 
