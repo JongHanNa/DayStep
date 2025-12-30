@@ -60,12 +60,14 @@ export interface TimerStartPayload {
   duration: number;
   timerType: TimerType;
   sessionId: string;
+  startTime?: number;  // 세션 복원용 DB 시작 시간 (ms timestamp)
 }
 
 export interface TimerTickPayload {
   remainingTime: number;
   elapsed: number;
   progress: number;
+  duration: number;   // DB 기준 총 시간
   timestamp: number;
 }
 

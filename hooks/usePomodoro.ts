@@ -67,6 +67,7 @@ export function usePomodoro() {
               remainingTime: tickPayload.remainingTime,
               elapsed: tickPayload.elapsed,
               progress: Math.min(tickPayload.progress, 1),
+              duration: tickPayload.duration,  // DB 기준 총 시간 동기화
             }));
             break;
 
@@ -76,6 +77,8 @@ export function usePomodoro() {
               isPaused: true,
               status: 'paused',
               remainingTime: payload.remainingTime,
+              elapsed: payload.elapsed,
+              duration: payload.duration,
             }));
             break;
 
@@ -85,6 +88,8 @@ export function usePomodoro() {
               isPaused: false,
               status: 'running',
               remainingTime: payload.remainingTime,
+              elapsed: payload.elapsed,
+              duration: payload.duration,
             }));
             break;
 
@@ -119,6 +124,7 @@ export function usePomodoro() {
               ...prev,
               duration: payload.duration,
               remainingTime: payload.remainingTime,
+              elapsed: payload.elapsed,
             }));
             break;
 
@@ -165,12 +171,14 @@ export function usePomodoro() {
   const startTimer = useCallback((
     duration: number,
     timerType: TimerType = 'POMODORO',
-    sessionId?: string
+    sessionId?: string,
+    dbStartTime?: number  // 세션 복원용 DB 시작 시간 (ms timestamp)
   ) => {
     const payload: TimerStartPayload = {
       duration,
       timerType,
       sessionId: sessionId || crypto.randomUUID(),
+      startTime: dbStartTime,  // 세션 복원 시에만 전달
     };
     sendWorkerMessage('START_TIMER', payload);
   }, [sendWorkerMessage]);

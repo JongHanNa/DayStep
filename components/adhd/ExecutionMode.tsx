@@ -280,8 +280,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         const activeSession = await PomodoroSessionService.getActiveSession(userId);
         if (activeSession && !activeSession.is_completed) {
           const originalStartTime = new Date(activeSession.start_time);
-          const startTime = originalStartTime.getTime();
-          const remaining = activeSession.duration - (Date.now() - startTime);
+          const dbStartTime = originalStartTime.getTime();
+          const remaining = activeSession.duration - (Date.now() - dbStartTime);
 
           if (remaining > 0) {
             console.log('🔄 활성 세션 복원:', { sessionId: activeSession.id, remaining });
@@ -292,7 +292,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             // 세션 상태 복원
             setSessionId(activeSession.id);
             startAdhocMode();
-            startPomodoroTimer(remaining, 'POMODORO');
+            // Worker에 DB duration과 시작 시간 전달 (Worker가 경과/남은 시간 직접 계산)
+            startPomodoroTimer(activeSession.duration, 'POMODORO', undefined, dbStartTime);
             setViewState('adhoc-timer');
 
             // 연결된 할일 복원
@@ -1757,10 +1758,10 @@ function AdhocTimerView({
 
       {/* 시간 표시 - 원 아래 (클릭하면 모드 전환: 둘다 → 경과만 → 남은만 → 둘다) */}
       <div className="text-center mb-4 cursor-pointer select-none" onClick={onToggleDisplayMode}>
-        {/* 경과 시간 (totalDuration - remainingTime으로 계산: 세션 복원/+1분 버튼 대응) */}
+        {/* 경과 시간 (Worker에서 DB 기준으로 계산) */}
         {(timerDisplayMode === 'elapsed' || timerDisplayMode === 'both') && (
           <div className={timerDisplayMode === 'both' ? 'text-sm text-base-content/60 mb-1' : 'text-4xl font-bold text-base-content'}>
-            {formatTime(Math.max(0, (totalDuration ?? effectiveDuration) - timerState.remainingTime))}
+            {formatTime(timerState.elapsed)}
             {timerDisplayMode === 'both' && ' 경과'}
           </div>
         )}
