@@ -1757,10 +1757,10 @@ function AdhocTimerView({
 
       {/* 시간 표시 - 원 아래 (클릭하면 모드 전환: 둘다 → 경과만 → 남은만 → 둘다) */}
       <div className="text-center mb-4 cursor-pointer select-none" onClick={onToggleDisplayMode}>
-        {/* 경과 시간 */}
+        {/* 경과 시간 (totalDuration - remainingTime으로 계산: 세션 복원/+1분 버튼 대응) */}
         {(timerDisplayMode === 'elapsed' || timerDisplayMode === 'both') && (
           <div className={timerDisplayMode === 'both' ? 'text-sm text-base-content/60 mb-1' : 'text-4xl font-bold text-base-content'}>
-            {formatTime(timerState.elapsed)}
+            {formatTime(Math.max(0, (totalDuration ?? effectiveDuration) - timerState.remainingTime))}
             {timerDisplayMode === 'both' && ' 경과'}
           </div>
         )}
