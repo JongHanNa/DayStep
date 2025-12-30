@@ -136,6 +136,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [editingCompletedTodoId, setEditingCompletedTodoId] = useState<string | null>(null); // 완료 할일 편집 중인 ID
   const [editingCompletedTodoTitle, setEditingCompletedTodoTitle] = useState(''); // 완료 할일 편집 중인 제목
   const [isCreatingTodo, setIsCreatingTodo] = useState(false); // 할일 생성 중 플래그 (race condition 방지)
+  const [pausedAt, setPausedAt] = useState<number | null>(null); // 일시정지 시점 (DB 동기화용)
 
   // 로딩 상태 (Skip DB 제거로 항상 false)
 
@@ -659,6 +660,41 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     }
   }, [adjustTime, executionMode.adhocMode]);
 
+  // 일시정지 래퍼 - 정지 시점 기록
+  const handlePause = useCallback(() => {
+    setPausedAt(Date.now());
+    pauseTimer();
+  }, [pauseTimer]);
+
+  // 재생 래퍼 - DB 업데이트 (정지 시간만큼 duration 증가)
+  const handleResume = useCallback(async () => {
+    resumeTimer();
+
+    if (pausedAt) {
+      const pausedDuration = Date.now() - pausedAt;
+      const { sessionId, linkedTodoId } = executionMode.adhocMode;
+
+      if (sessionId) {
+        const session = await PomodoroSessionService.getSession(sessionId);
+        if (session) {
+          const newDuration = session.duration + pausedDuration;
+          await PomodoroSessionService.updateDuration(sessionId, newDuration);
+
+          // 연결된 할일의 end_time 업데이트
+          if (linkedTodoId) {
+            const startMs = new Date(session.start_time).getTime();
+            const newEndTime = new Date(startMs + newDuration).toISOString();
+            await updateWithJWT('todos',
+              { column: 'id', operator: 'eq', value: linkedTodoId },
+              { end_time: newEndTime }
+            );
+          }
+        }
+      }
+      setPausedAt(null);
+    }
+  }, [resumeTimer, pausedAt, executionMode.adhocMode]);
+
   // 할일 기록하기
   const handleCaptureAdhocTodo = async () => {
     if (!adhocCaptureTitle.trim() || !userId) return;
@@ -867,8 +903,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               timerState={timerState}
               onStop={handleStopAdhoc}
               onComplete={handleAdhocTimerComplete}
-              onPause={pauseTimer}
-              onResume={resumeTimer}
+              onPause={handlePause}
+              onResume={handleResume}
               onAdjustTime={handleAdjustTime}
               linkedTodoId={executionMode.adhocMode.linkedTodoId}
               linkedTodoTitle={executionMode.adhocMode.linkedTodoTitle}
