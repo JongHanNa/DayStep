@@ -38,6 +38,9 @@ import { updateWithJWT } from '@/lib/supabase/core';
 import { PersonSelector, PersonLinksPreview } from '@/components/cherished/PersonSelector';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 
+// 타이머 표시 모드 타입
+type TimerDisplayMode = 'elapsed' | 'remaining' | 'both';
+
 // 헬퍼 함수: 일정 유형 라벨
 const getScheduleTypeLabel = (scheduleType: string): string => {
   const labelMap: Record<string, string> = {
@@ -138,6 +141,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [isCreatingTodo, setIsCreatingTodo] = useState(false); // 할일 생성 중 플래그 (race condition 방지)
   const [pausedAt, setPausedAt] = useState<number | null>(null); // 일시정지 시점 (DB 동기화용)
   const [totalDuration, setTotalDuration] = useState<number | null>(null); // 화면 endTime 계산용 (DB와 동기화)
+  const [timerDisplayMode, setTimerDisplayMode] = useState<TimerDisplayMode>('both'); // 경과/남은/둘다 표시 모드
 
   // 로딩 상태 (Skip DB 제거로 항상 false)
 
@@ -937,6 +941,12 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               isPiPActive={isPiPActive}
               onStartPiP={startPiP}
               onStopPiP={stopPiP}
+              timerDisplayMode={timerDisplayMode}
+              onToggleDisplayMode={() => {
+                setTimerDisplayMode(prev =>
+                  prev === 'both' ? 'elapsed' : prev === 'elapsed' ? 'remaining' : 'both'
+                );
+              }}
             />
           )}
 
@@ -1544,6 +1554,7 @@ interface AdhocTimerViewProps {
   timerState: {
     status: 'idle' | 'running' | 'paused' | 'completed';
     remainingTime: number;
+    elapsed: number;
     duration: number;
   };
   onStop: () => void;
@@ -1574,6 +1585,9 @@ interface AdhocTimerViewProps {
   isPiPActive: boolean;
   onStartPiP: (startTimeMs: number, durationMs: number, title?: string) => Promise<boolean>;
   onStopPiP: () => Promise<boolean>;
+  // 타이머 표시 모드
+  timerDisplayMode: TimerDisplayMode;
+  onToggleDisplayMode: () => void;
 }
 
 function AdhocTimerView({
@@ -1599,6 +1613,8 @@ function AdhocTimerView({
   isPiPActive,
   onStartPiP,
   onStopPiP,
+  timerDisplayMode,
+  onToggleDisplayMode,
 }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -1739,11 +1755,22 @@ function AdhocTimerView({
         </motion.div>
       </div>
 
-      {/* 시간 표시 - 원 아래 */}
-      <div className="text-center mb-4">
-        <span className="text-4xl font-bold text-base-content">
-          {formatTime(timerState.remainingTime)}
-        </span>
+      {/* 시간 표시 - 원 아래 (클릭하면 모드 전환: 둘다 → 경과만 → 남은만 → 둘다) */}
+      <div className="text-center mb-4 cursor-pointer select-none" onClick={onToggleDisplayMode}>
+        {/* 경과 시간 */}
+        {(timerDisplayMode === 'elapsed' || timerDisplayMode === 'both') && (
+          <div className={timerDisplayMode === 'both' ? 'text-sm text-base-content/60 mb-1' : 'text-4xl font-bold text-base-content'}>
+            {formatTime(timerState.elapsed)}
+            {timerDisplayMode === 'both' && ' 경과'}
+          </div>
+        )}
+
+        {/* 남은 시간 */}
+        {(timerDisplayMode === 'remaining' || timerDisplayMode === 'both') && (
+          <span className="text-4xl font-bold text-base-content">
+            {formatTime(timerState.remainingTime)}
+          </span>
+        )}
       </div>
 
       {/* 타이머 컨트롤 버튼 (-1분, 재생/중지, +1분, PiP) */}
