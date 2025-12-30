@@ -1498,7 +1498,7 @@ interface AdhocTimerViewProps {
   // PiP 타이머 props (iOS 15+)
   isPiPAvailable: boolean;
   isPiPActive: boolean;
-  onStartPiP: (durationMs: number, title?: string) => Promise<boolean>;
+  onStartPiP: (startTimeMs: number, durationMs: number, title?: string) => Promise<boolean>;
   onStopPiP: () => Promise<boolean>;
 }
 
@@ -1702,8 +1702,10 @@ function AdhocTimerView({
               if (isPiPActive) {
                 onStopPiP();
               } else {
+                // 시작 시간 기반 동기화: startTimeMs와 durationMs 전달
                 onStartPiP(
-                  timerState.remainingTime,
+                  startedAt.getTime(),        // 시작 시간 (Unix timestamp, ms)
+                  effectiveDuration,           // 총 시간 (ms)
                   linkedTodoTitle || '포커스'
                 );
               }

@@ -28,8 +28,11 @@ public class PiPTimerPlugin: CAPPlugin {
     private var timerView: UIView?  // PiPTimerView (iOS 15+)
     private var containerViewController: UIViewController?
 
-    private var remainingSeconds: Int = 0
+    // 시작 시간 기반 동기화 (JavaScript와 완벽 동기화)
+    private var startTimeMs: Double = 0
+    private var durationMs: Double = 0
     private var timerTitle: String = ""
+    private var internalTimer: Timer?
 
     // Delegate wrapper for iOS 15+
     private var delegateWrapper: NSObject?
@@ -60,13 +63,16 @@ public class PiPTimerPlugin: CAPPlugin {
             return
         }
 
-        let duration = call.getInt("duration") ?? 0
+        // 시작 시간 기반 동기화: startTimeMs와 durationMs를 받음
+        let startTime = call.getDouble("startTimeMs") ?? (Date().timeIntervalSince1970 * 1000)
+        let duration = call.getDouble("durationMs") ?? Double((call.getInt("duration") ?? 0) * 1000)
         let title = call.getString("title") ?? ""
 
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
 
-            self.remainingSeconds = duration
+            self.startTimeMs = startTime
+            self.durationMs = duration
             self.timerTitle = title
 
             // 기존 PiP 정리
@@ -104,6 +110,8 @@ public class PiPTimerPlugin: CAPPlugin {
 
                     if pipController.isPictureInPicturePossible {
                         pipController.startPictureInPicture()
+                        // 자체 타이머 시작 (시스템 시계 기반 계산)
+                        self.startInternalTimer()
                         call.resolve(["started": true])
                     } else {
                         call.reject("Failed to start PiP - not possible after delay")
@@ -115,17 +123,66 @@ public class PiPTimerPlugin: CAPPlugin {
         }
     }
 
-    /// 타이머 업데이트
+    /// 타이머 업데이트 (일시정지/재개 시 시작 시간 보정용)
     @objc func updateTimer(_ call: CAPPluginCall) {
-        let remaining = call.getInt("remaining") ?? 0
+        // 시작 시간 보정 (일시정지 후 재개 시)
+        if let newStartTimeMs = call.getDouble("startTimeMs") {
+            self.startTimeMs = newStartTimeMs
+        }
 
         DispatchQueue.main.async { [weak self] in
-            self?.remainingSeconds = remaining
+            guard let self = self else {
+                call.resolve(["updated": true])
+                return
+            }
+
+            // 즉시 렌더링 (현재 시스템 시계 기준)
             if #available(iOS 15.0, *) {
-                (self?.timerView as? PiPTimerView)?.updateTimer(remaining: remaining)
+                let remaining = self.calculateRemainingSeconds()
+                (self.timerView as? PiPTimerView)?.updateTimer(remaining: remaining)
             }
             call.resolve(["updated": true])
         }
+    }
+
+    // MARK: - Internal Timer (시스템 시계 기반)
+
+    private func startInternalTimer() {
+        stopInternalTimer()
+
+        // 1초마다 시스템 시계 기준으로 남은 시간 계산하여 렌더링
+        internalTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+
+            let remaining = self.calculateRemainingSeconds()
+
+            if #available(iOS 15.0, *) {
+                (self.timerView as? PiPTimerView)?.updateTimer(remaining: remaining)
+            }
+
+            // 타이머 완료
+            if remaining <= 0 {
+                self.stopInternalTimer()
+            }
+        }
+
+        // RunLoop에 등록 (스크롤 중에도 동작)
+        if let timer = internalTimer {
+            RunLoop.main.add(timer, forMode: .common)
+        }
+    }
+
+    private func stopInternalTimer() {
+        internalTimer?.invalidate()
+        internalTimer = nil
+    }
+
+    /// 시스템 시계 기준 남은 시간 계산 (JavaScript와 동일 계산 로직)
+    private func calculateRemainingSeconds() -> Int {
+        let now = Date().timeIntervalSince1970 * 1000  // 현재 시간 (ms)
+        let elapsed = now - startTimeMs                 // 경과 시간 (ms)
+        let remaining = durationMs - elapsed            // 남은 시간 (ms)
+        return max(0, Int(remaining / 1000))            // 초로 변환
     }
 
     /// PiP 종료
@@ -152,7 +209,9 @@ public class PiPTimerPlugin: CAPPlugin {
     private func setupTimerView() {
         let viewSize = CGSize(width: 480, height: 270)
         let pipView = PiPTimerView(frame: CGRect(origin: .zero, size: viewSize))
-        pipView.startTimer(duration: remainingSeconds, title: timerTitle)
+        // 시작 시간 기반으로 초기 남은 시간 계산
+        let initialRemaining = calculateRemainingSeconds()
+        pipView.startTimer(duration: initialRemaining, title: timerTitle)
         timerView = pipView
 
         // 컨테이너 뷰 컨트롤러 생성 (화면 밖에 배치)
@@ -190,6 +249,8 @@ public class PiPTimerPlugin: CAPPlugin {
     }
 
     func cleanupPiP() {
+        // 내부 타이머 정리
+        stopInternalTimer()
 
         if let pipController = pipController, pipController.isPictureInPictureActive {
             pipController.stopPictureInPicture()

@@ -115,20 +115,20 @@ export function usePiPTimer(options: UsePiPTimerOptions = {}) {
   }, []); // 빈 의존성 배열 - 마운트 시 한 번만 실행
 
   /**
-   * PiP 타이머 시작
+   * PiP 타이머 시작 (시작 시간 기반 완벽 동기화)
    * ⚠️ 반드시 사용자 인터랙션(버튼 클릭 등)으로 호출해야 함
    *
-   * @param durationMs - 타이머 시간 (밀리초)
+   * @param startTimeMs - 시작 시간 (Unix timestamp, ms)
+   * @param durationMs - 총 시간 (ms)
    * @param title - 타이머 제목 (선택)
    */
-  const startPiP = useCallback(async (durationMs: number, title?: string) => {
+  const startPiP = useCallback(async (startTimeMs: number, durationMs: number, title?: string) => {
     if (!isAvailable) {
       console.warn('[usePiPTimer] PiP not available');
       return false;
     }
 
-    const durationSeconds = Math.ceil(durationMs / 1000);
-    const started = await PiPTimerService.start(durationSeconds, title);
+    const started = await PiPTimerService.start(startTimeMs, durationMs, title);
 
     if (started) {
       isActiveRef.current = true;
@@ -139,14 +139,12 @@ export function usePiPTimer(options: UsePiPTimerOptions = {}) {
   }, [isAvailable]);
 
   /**
-   * 타이머 업데이트 (남은 시간)
-   * @param remainingMs - 남은 시간 (밀리초)
+   * 시작 시간 보정 (일시정지 후 재개 시)
+   * @param startTimeMs - 새 시작 시간 (Unix timestamp, ms)
    */
-  const updatePiP = useCallback(async (remainingMs: number) => {
+  const updateStartTime = useCallback(async (startTimeMs: number) => {
     if (!isActiveRef.current) return false;
-
-    const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-    return await PiPTimerService.update(remainingSeconds);
+    return await PiPTimerService.updateStartTime(startTimeMs);
   }, []);
 
   /**
@@ -165,16 +163,8 @@ export function usePiPTimer(options: UsePiPTimerOptions = {}) {
     return stopped;
   }, []);
 
-  // timerState 변경 시 PiP 자동 업데이트 (JavaScript Single Source of Truth)
-  useEffect(() => {
-    if (!timerState || !isActiveRef.current) return;
-    if (!timerState.isRunning || timerState.isPaused) return;
-    if (Capacitor.getPlatform() !== 'ios') return;
-
-    // PiP 타이머 업데이트
-    PiPTimerService.update(Math.max(0, Math.ceil(timerState.remainingTime / 1000)))
-      .catch(console.error);
-  }, [timerState?.remainingTime, timerState?.isRunning, timerState?.isPaused]);
+  // 시작 시간 기반 동기화: Swift가 자체적으로 시스템 시계 기준으로 계산하므로
+  // 매초 업데이트가 필요 없음 (완벽 동기화)
 
   // 타이머 완료 시 PiP 종료
   useEffect(() => {
@@ -200,10 +190,10 @@ export function usePiPTimer(options: UsePiPTimerOptions = {}) {
   }, []);
 
   return {
-    /** PiP 타이머 시작 (사용자 인터랙션 필요) */
+    /** PiP 타이머 시작 (시작 시간 기반, 사용자 인터랙션 필요) */
     startPiP,
-    /** 타이머 업데이트 */
-    updatePiP,
+    /** 시작 시간 보정 (일시정지/재개 시) */
+    updateStartTime,
     /** PiP 타이머 종료 */
     stopPiP,
     /** PiP 현재 활성 상태 */

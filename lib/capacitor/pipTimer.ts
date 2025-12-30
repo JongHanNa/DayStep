@@ -12,8 +12,12 @@ import { Capacitor, registerPlugin, PluginListenerHandle } from '@capacitor/core
 // Plugin interface
 interface PiPTimerPlugin {
   isPiPAvailable(): Promise<{ available: boolean }>;
-  startPiP(options: { duration: number; title?: string }): Promise<{ started: boolean }>;
-  updateTimer(options: { remaining: number }): Promise<{ updated: boolean }>;
+  startPiP(options: {
+    startTimeMs: number;   // 시작 시간 (Unix timestamp, ms)
+    durationMs: number;    // 총 시간 (ms)
+    title?: string
+  }): Promise<{ started: boolean }>;
+  updateTimer(options: { startTimeMs?: number }): Promise<{ updated: boolean }>;
   stopPiP(): Promise<{ stopped: boolean }>;
   addListener(
     eventName: 'pipStarted' | 'pipStopped' | 'pipRestoreUI' | 'timerComplete',
@@ -49,21 +53,23 @@ export const PiPTimerService = {
   },
 
   /**
-   * PiP 타이머 시작
-   * @param durationSeconds - 타이머 시간 (초)
+   * PiP 타이머 시작 (시작 시간 기반 동기화)
+   * @param startTimeMs - 시작 시간 (Unix timestamp, ms)
+   * @param durationMs - 총 시간 (ms)
    * @param title - 타이머 제목 (선택)
    */
-  async start(durationSeconds: number, title?: string): Promise<boolean> {
+  async start(startTimeMs: number, durationMs: number, title?: string): Promise<boolean> {
     if (Capacitor.getPlatform() !== 'ios') {
       return false;
     }
 
     try {
       const { started } = await PiPTimer.startPiP({
-        duration: durationSeconds,
+        startTimeMs,
+        durationMs,
         title: title || '',
       });
-      console.log('[PiPTimer] Started:', started);
+      console.log('[PiPTimer] Started:', started, 'startTimeMs:', startTimeMs, 'durationMs:', durationMs);
       return started;
     } catch (error) {
       console.error('[PiPTimer] Failed to start:', error);
@@ -72,17 +78,17 @@ export const PiPTimerService = {
   },
 
   /**
-   * 타이머 업데이트
-   * @param remainingSeconds - 남은 시간 (초)
+   * 시작 시간 보정 (일시정지/재개 시)
+   * @param startTimeMs - 새 시작 시간 (Unix timestamp, ms)
    */
-  async update(remainingSeconds: number): Promise<boolean> {
+  async updateStartTime(startTimeMs: number): Promise<boolean> {
     if (Capacitor.getPlatform() !== 'ios') {
       return false;
     }
 
     try {
       const { updated } = await PiPTimer.updateTimer({
-        remaining: remainingSeconds,
+        startTimeMs,
       });
       return updated;
     } catch (error) {
