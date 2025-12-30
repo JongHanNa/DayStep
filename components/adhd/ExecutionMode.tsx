@@ -1633,11 +1633,11 @@ function AdhocTimerView({
   // 시간 간격 계산 (분 단위)
   const durationMinutes = Math.round((totalDuration ?? effectiveDuration) / (60 * 1000));
 
-  // 진행률 계산 (0-1) - 원본 duration 기준으로 계산
-  // Math.max(0, ...) 로 clamp: +1분으로 remainingTime > effectiveDuration 되어도 음수 방지
+  // 진행률 계산 (0.01-1) - 원본 duration 기준으로 계산
+  // Math.max(0.01, ...) 로 clamp: 최소 1% 게이지 항상 표시 + 음수 방지
   const progress = effectiveDuration > 0
-    ? Math.max(0, Math.min(1, (effectiveDuration - timerState.remainingTime) / effectiveDuration))
-    : 0;
+    ? Math.max(0.01, Math.min(1, (effectiveDuration - timerState.remainingTime) / effectiveDuration))
+    : 0.01;
 
   // 타이머 자연 완료 감지
   useEffect(() => {
