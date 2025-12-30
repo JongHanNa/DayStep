@@ -34,6 +34,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import { RelationshipDetectorService } from '@/services/relationship-detector.service';
+import { updateWithJWT } from '@/lib/supabase/core';
 import { PersonSelector, PersonLinksPreview } from '@/components/cherished/PersonSelector';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 
@@ -579,22 +580,27 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setIsCreatingTodo(true);
 
     try {
-      // 날짜 전용 저장 패턴: 오늘 00:00 KST → 15:00 UTC
-      const today = new Date();
-      const todayKSTMidnight = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate(),
-        0, 0, 0
-      );
-      todayKSTMidnight.setHours(todayKSTMidnight.getHours() - 9); // KST → UTC
+      // 포모도로 세션 정보 조회하여 시간 설정
+      let startTime = new Date().toISOString();
+      let endTime = startTime;
+
+      if (sessionId) {
+        const session = await PomodoroSessionService.getSession(sessionId);
+        if (session) {
+          startTime = session.start_time;
+          // end_time = start_time + duration (ms)
+          const startMs = new Date(session.start_time).getTime();
+          endTime = new Date(startMs + session.duration).toISOString();
+        }
+      }
 
       // 미완료 할일 생성
       const newTodo = await createTodo({
         title: titleToSave,
         completed: false,
-        schedule_type: 'anytime',
-        start_time: todayKSTMidnight.toISOString(),
+        schedule_type: 'timed',
+        start_time: startTime,
+        end_time: endTime,
         user_id: userId,
       });
 
@@ -631,13 +637,27 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     // 1. Worker에 시간 조정 메시지 전송
     adjustTime(deltaMs);
 
-    // 2. DB에 새 duration 저장
-    const { sessionId } = executionMode.adhocMode;
+    const { sessionId, linkedTodoId } = executionMode.adhocMode;
+
+    // 2. DB에서 현재 세션 조회 후 duration 업데이트
     if (sessionId) {
-      const newDuration = timerState.duration + deltaMs;
+      const session = await PomodoroSessionService.getSession(sessionId);
+      if (!session) return;
+
+      const newDuration = session.duration + deltaMs;  // DB 값 기준으로 계산
       await PomodoroSessionService.updateDuration(sessionId, newDuration);
+
+      // 3. 연결된 할일의 end_time 업데이트 (Supabase 직접)
+      if (linkedTodoId) {
+        const startMs = new Date(session.start_time).getTime();
+        const newEndTime = new Date(startMs + newDuration).toISOString();
+        await updateWithJWT('todos',
+          { column: 'id', operator: 'eq', value: linkedTodoId },
+          { end_time: newEndTime }
+        );
+      }
     }
-  }, [adjustTime, executionMode.adhocMode, timerState.duration]);
+  }, [adjustTime, executionMode.adhocMode]);
 
   // 할일 기록하기
   const handleCaptureAdhocTodo = async () => {
