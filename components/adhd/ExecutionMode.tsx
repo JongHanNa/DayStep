@@ -943,7 +943,11 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               onStartPiP={startPiP}
               onStopPiP={stopPiP}
               timerDisplayMode={timerDisplayMode}
-              onSetDisplayMode={setTimerDisplayMode}
+              onToggleDisplayMode={() => {
+                setTimerDisplayMode(prev =>
+                  prev === 'elapsed' ? 'remaining' : prev === 'remaining' ? 'both' : 'elapsed'
+                );
+              }}
             />
           )}
 
@@ -1584,7 +1588,7 @@ interface AdhocTimerViewProps {
   onStopPiP: () => Promise<boolean>;
   // 타이머 표시 모드
   timerDisplayMode: TimerDisplayMode;
-  onSetDisplayMode: (mode: TimerDisplayMode) => void;
+  onToggleDisplayMode: () => void;
 }
 
 function AdhocTimerView({
@@ -1611,7 +1615,7 @@ function AdhocTimerView({
   onStartPiP,
   onStopPiP,
   timerDisplayMode,
-  onSetDisplayMode,
+  onToggleDisplayMode,
 }: AdhocTimerViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -1752,10 +1756,10 @@ function AdhocTimerView({
         </motion.div>
       </div>
 
-      {/* 시간 표시 - 레이블 포함 */}
+      {/* 시간 표시 */}
       <div className="text-center mb-2">
         {timerDisplayMode === 'both' ? (
-          /* 둘다 보기: 가로 배치 (경과시간/남은시간) */
+          /* 둘다 보기: 레이블 + 가로 배치 */
           <div className="flex items-center justify-center gap-4">
             <div className="flex flex-col items-center">
               <span className="text-xs text-base-content/60 mb-1">경과</span>
@@ -1768,39 +1772,23 @@ function AdhocTimerView({
             </div>
           </div>
         ) : (
-          /* 단독 모드: 경과 또는 남은 */
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-base-content/60 mb-1">
-              {timerDisplayMode === 'elapsed' ? '경과' : '남은'}
-            </span>
-            <span className="text-4xl font-bold text-base-content">
-              {timerDisplayMode === 'elapsed'
-                ? formatTime(timerState.elapsed)
-                : formatTime(timerState.remainingTime)}
-            </span>
-          </div>
+          /* 단독 모드: 시간만 크게 표시 (레이블 없음) */
+          <span className="text-4xl font-bold text-base-content">
+            {timerDisplayMode === 'elapsed'
+              ? formatTime(timerState.elapsed)
+              : formatTime(timerState.remainingTime)}
+          </span>
         )}
       </div>
 
-      {/* 모드 전환 탭 버튼 */}
-      <div className="flex justify-center gap-1 mb-4">
+      {/* 모드 전환 토글 버튼 */}
+      <div className="flex justify-center mb-4">
         <button
-          className={`btn btn-xs rounded-full ${timerDisplayMode === 'elapsed' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => onSetDisplayMode('elapsed')}
+          className="btn btn-xs btn-ghost rounded-full gap-1"
+          onClick={onToggleDisplayMode}
         >
-          경과
-        </button>
-        <button
-          className={`btn btn-xs rounded-full ${timerDisplayMode === 'remaining' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => onSetDisplayMode('remaining')}
-        >
-          남은
-        </button>
-        <button
-          className={`btn btn-xs rounded-full ${timerDisplayMode === 'both' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => onSetDisplayMode('both')}
-        >
-          둘다
+          {timerDisplayMode === 'elapsed' ? '경과' : timerDisplayMode === 'remaining' ? '남은' : '둘다'}
+          <span className="text-base-content/40">▾</span>
         </button>
       </div>
 
