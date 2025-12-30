@@ -1634,8 +1634,9 @@ function AdhocTimerView({
   const durationMinutes = Math.round((totalDuration ?? effectiveDuration) / (60 * 1000));
 
   // 진행률 계산 (0-1) - 원본 duration 기준으로 계산
+  // Math.max(0, ...) 로 clamp: +1분으로 remainingTime > effectiveDuration 되어도 음수 방지
   const progress = effectiveDuration > 0
-    ? (effectiveDuration - timerState.remainingTime) / effectiveDuration
+    ? Math.max(0, Math.min(1, (effectiveDuration - timerState.remainingTime) / effectiveDuration))
     : 0;
 
   // 타이머 자연 완료 감지
