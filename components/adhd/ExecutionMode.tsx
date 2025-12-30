@@ -1784,11 +1784,10 @@ function AdhocTimerView({
       {/* 모드 전환 토글 버튼 */}
       <div className="flex justify-center mb-4">
         <button
-          className="btn btn-xs btn-ghost rounded-full gap-1"
+          className="btn btn-xs btn-ghost rounded-full"
           onClick={onToggleDisplayMode}
         >
           {timerDisplayMode === 'elapsed' ? '경과' : timerDisplayMode === 'remaining' ? '남은' : '둘다'}
-          <span className="text-base-content/40">▾</span>
         </button>
       </div>
 
