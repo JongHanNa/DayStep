@@ -107,8 +107,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     enabled: true,
   });
 
-  // iOS PiP 타이머 연동
+  // iOS PiP 타이머 연동 (timerState로 자동 동기화)
   const { startPiP, stopPiP, isActive: isPiPActive, isAvailable: isPiPAvailable } = usePiPTimer({
+    timerState,  // JavaScript 타이머를 Single Source of Truth로 사용
     onTimerComplete: () => {
       console.log('[PiP] Timer completed');
     },

@@ -10,8 +10,11 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { PiPTimerService } from '@/lib/capacitor/pipTimer';
+import type { TimerState } from '@/types/pomodoro';
 
 interface UsePiPTimerOptions {
+  /** 포모도로 타이머 상태 (자동 동기화용) */
+  timerState?: TimerState;
   /** PiP 종료 시 콜백 */
   onPiPStopped?: () => void;
   /** 타이머 완료 시 콜백 */
@@ -36,7 +39,7 @@ interface UsePiPTimerOptions {
  * ```
  */
 export function usePiPTimer(options: UsePiPTimerOptions = {}) {
-  const { onPiPStopped, onTimerComplete, onRestoreUI } = options;
+  const { timerState, onPiPStopped, onTimerComplete, onRestoreUI } = options;
 
   // 상태
   const [isActive, setIsActive] = useState(false);
@@ -161,6 +164,31 @@ export function usePiPTimer(options: UsePiPTimerOptions = {}) {
 
     return stopped;
   }, []);
+
+  // timerState 변경 시 PiP 자동 업데이트 (JavaScript Single Source of Truth)
+  useEffect(() => {
+    if (!timerState || !isActiveRef.current) return;
+    if (!timerState.isRunning || timerState.isPaused) return;
+    if (Capacitor.getPlatform() !== 'ios') return;
+
+    // PiP 타이머 업데이트
+    PiPTimerService.update(Math.max(0, Math.ceil(timerState.remainingTime / 1000)))
+      .catch(console.error);
+  }, [timerState?.remainingTime, timerState?.isRunning, timerState?.isPaused]);
+
+  // 타이머 완료 시 PiP 종료
+  useEffect(() => {
+    if (!timerState || !isActiveRef.current) return;
+    if (timerState.status === 'completed' || timerState.status === 'idle') {
+      // PiP 종료 (timerComplete 이벤트는 Swift에서 발송하지 않으므로 여기서 처리)
+      if (timerState.status === 'completed') {
+        callbacksRef.current.onTimerComplete?.();
+      }
+      PiPTimerService.stop().catch(console.error);
+      isActiveRef.current = false;
+      setIsActive(false);
+    }
+  }, [timerState?.status]);
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {

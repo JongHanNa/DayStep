@@ -30,7 +30,6 @@ public class PiPTimerPlugin: CAPPlugin {
 
     private var remainingSeconds: Int = 0
     private var timerTitle: String = ""
-    private var internalTimer: Timer?
 
     // Delegate wrapper for iOS 15+
     private var delegateWrapper: NSObject?
@@ -105,7 +104,6 @@ public class PiPTimerPlugin: CAPPlugin {
 
                     if pipController.isPictureInPicturePossible {
                         pipController.startPictureInPicture()
-                        self.startInternalTimer()
                         call.resolve(["started": true])
                     } else {
                         call.reject("Failed to start PiP - not possible after delay")
@@ -191,32 +189,7 @@ public class PiPTimerPlugin: CAPPlugin {
         }
     }
 
-    private func startInternalTimer() {
-        stopInternalTimer()
-
-        internalTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-
-            if self.remainingSeconds > 0 {
-                self.remainingSeconds -= 1
-                if #available(iOS 15.0, *) {
-                    (self.timerView as? PiPTimerView)?.updateTimer(remaining: self.remainingSeconds)
-                }
-            } else {
-                self.cleanupPiP()
-                // 타이머 완료 이벤트 발송
-                self.notifyListeners("timerComplete", data: [:])
-            }
-        }
-    }
-
-    private func stopInternalTimer() {
-        internalTimer?.invalidate()
-        internalTimer = nil
-    }
-
     func cleanupPiP() {
-        stopInternalTimer()
 
         if let pipController = pipController, pipController.isPictureInPictureActive {
             pipController.stopPictureInPicture()
