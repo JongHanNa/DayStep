@@ -87,7 +87,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
       <div className="space-y-4 p-4 rounded-lg bg-base-100">
 
       <div>
-        <Label style={{ color: '#666666', marginBottom: '8px', display: 'block' }}>반복 패턴</Label>
+        <Label className="text-sm font-medium block mb-2">반복 패턴</Label>
         <ToggleButtonGroup
           options={[
             { value: "none", label: "반복 안함" },
@@ -105,7 +105,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
       {recurrencePattern !== 'none' && (
         <>
           <div>
-            <Label style={{ color: '#666666', marginBottom: '8px', display: 'block' }}>반복 간격</Label>
+            <Label className="text-sm font-medium block mb-2">반복 간격</Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -121,7 +121,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
 
           {recurrencePattern === 'weekly' && (
             <div>
-              <Label style={{ color: '#666666', marginBottom: '8px', display: 'block' }}>반복 요일</Label>
+              <Label className="text-sm font-medium block mb-2">반복 요일</Label>
               <div className="grid grid-cols-7 gap-1">
                 {weekDays.map((day) => {
                   const isSelected = selectedDaysOfWeek.includes(day.value);
@@ -133,7 +133,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
                       className={`h-10 w-10 text-sm font-medium rounded-full transition-all duration-200 border-0 shadow-none hover:opacity-80 flex items-center justify-center ${!isSelected ? 'bg-base-100' : ''}`}
                       style={{
                         backgroundColor: isSelected ? accentColor : undefined,
-                        color: isSelected ? 'white' : '#999999',
+                        color: isSelected ? 'white' : undefined,
                       }}
                     >
                       {day.label}
@@ -145,7 +145,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
           )}
 
           <div>
-            <Label style={{ color: '#666666', marginBottom: '8px', display: 'block' }}>반복 종료</Label>
+            <Label className="text-sm font-medium block mb-2">반복 종료</Label>
             <ToggleButtonGroup
               options={[
                 { value: "never", label: "종료 없음" },

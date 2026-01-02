@@ -37,11 +37,11 @@ export function ToggleButtonGroup({
             variant="ghost"
             onClick={() => onValueChange(option.value)}
             className={cn(
-              "flex-1 h-8 px-4 py-1.5 font-medium rounded-lg transition-all duration-200",
+              "flex-1 h-8 px-4 py-1.5 text-sm font-medium rounded-lg transition-all duration-200",
               "border-0 shadow-none",
               isSelected
-                ? "text-white text-base"
-                : "text-sm bg-transparent hover:bg-gray-50"
+                ? "text-white"
+                : "bg-transparent hover:bg-gray-50"
             )}
             style={{
               ...(isSelected
@@ -49,9 +49,7 @@ export function ToggleButtonGroup({
                     backgroundColor: accentColor,
                     color: 'white'
                   }
-                : {
-                    color: '#b9b9b9'
-                  })
+                : {})
             }}
           >
             {option.icon && <span className="mr-1.5">{option.icon}</span>}
