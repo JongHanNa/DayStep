@@ -23,6 +23,7 @@ import {
   PictureInPicture2,
   Lightbulb,
   Plus,
+  Fuel,
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -245,6 +246,10 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       const { completedInSession } = useADHDModeStore.getState().executionMode;
       if (completedInSession > 0) {
         // 세션 중 완료한 할일이 있으면 축하 화면
+        // 실행 연료 목록 로드
+        if (userId) {
+          getInboxNotes(userId);
+        }
         setViewState('completed-all');
       } else {
         // 할일 없으면 바로 포모도로 타이머 시작
@@ -862,6 +867,37 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     getNextRecommendation();
   };
 
+  // 완료 화면에서 실행 연료 연결 처리
+  const handleConnectNoteFromCompleted = async (
+    todoId: string,
+    noteId: string | null,
+    newContent?: string
+  ) => {
+    if (!userId) return;
+
+    try {
+      if (noteId) {
+        // 기존 연료(노트) 연결
+        await addTodoNote(todoId, noteId, userId);
+        console.log('✅ 실행 연료 연결:', { todoId, noteId });
+      } else if (newContent?.trim()) {
+        // 새 연료(노트) 생성 후 연결
+        const newNote = await createInboxNote({
+          content: newContent.trim(),
+          linked_date: null,
+          is_pinned: false,
+        });
+
+        if (newNote) {
+          await addTodoNote(todoId, newNote.id, userId);
+          console.log('✅ 새 실행 연료 생성 및 연결:', { todoId, noteId: newNote.id });
+        }
+      }
+    } catch (error) {
+      console.error('❌ 실행 연료 연결 실패:', error);
+    }
+  };
+
   // 정리하기 모드로 이동
   const handleGoToOrganize = () => {
     enterOrganizeMode();
@@ -976,9 +1012,19 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               completedCount={completedInSession}
               onExit={onExit}
               completedTodos={todayCompletedTodos.map(t => ({
+                id: t.id,
                 title: t.title,
                 isRelationshipTask: t.isRelationshipTask
               }))}
+              notes={allNotes.filter(n => n.note_category === 'inbox')}
+              onConnectNote={handleConnectNoteFromCompleted}
+              lastCompletedTodoId={
+                todayCompletedTodos.length > 0
+                  ? [...todayCompletedTodos].sort((a, b) =>
+                      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+                    )[0]?.id
+                  : undefined
+              }
             />
           )}
 
@@ -1321,6 +1367,7 @@ function RecommendationView({
 }
 
 interface CompletedTodoForBalance {
+  id: string;
   title: string;
   isRelationshipTask?: boolean | null;
 }
@@ -1329,9 +1376,50 @@ interface CompletedAllViewProps {
   completedCount: number;
   onExit: () => void;
   completedTodos: CompletedTodoForBalance[];
+  // 실행 연료 기록용
+  notes: Note[];
+  onConnectNote: (todoId: string, noteId: string | null, newContent?: string) => Promise<void>;
+  lastCompletedTodoId?: string;
 }
 
-function CompletedAllView({ completedCount, onExit, completedTodos }: CompletedAllViewProps) {
+function CompletedAllView({
+  completedCount,
+  onExit,
+  completedTodos,
+  notes,
+  onConnectNote,
+  lastCompletedTodoId,
+}: CompletedAllViewProps) {
+  // 연료 기록 섹션 상태
+  const [showFuelSection, setShowFuelSection] = useState(false);
+  const [fuelMode, setFuelMode] = useState<'select' | 'create'>('select');
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  // 연결 버튼 활성화 조건
+  const canConnect = fuelMode === 'select' ? !!selectedNoteId : newNoteContent.trim().length > 0;
+
+  // 연료 연결 처리
+  const handleConnectFuel = async () => {
+    if (!lastCompletedTodoId || !canConnect) return;
+
+    setIsConnecting(true);
+    try {
+      if (fuelMode === 'select' && selectedNoteId) {
+        await onConnectNote(lastCompletedTodoId, selectedNoteId);
+      } else if (fuelMode === 'create' && newNoteContent.trim()) {
+        await onConnectNote(lastCompletedTodoId, null, newNoteContent.trim());
+      }
+      // 연결 후 섹션 닫기
+      setShowFuelSection(false);
+      setSelectedNoteId(null);
+      setNewNoteContent('');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -1356,6 +1444,111 @@ function CompletedAllView({ completedCount, onExit, completedTodos }: CompletedA
           ? `오늘 ${completedCount}개를 실행했어요.`
           : '오늘 할 일을 모두 처리했어요!'}
       </p>
+
+      {/* 실행 연료 기록 섹션 (접이식) */}
+      {lastCompletedTodoId && (
+        <div className="mb-6">
+          <button
+            onClick={() => setShowFuelSection(!showFuelSection)}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+          >
+            <Fuel className="w-5 h-5" />
+            <span className="text-sm font-medium">이 실행을 도운 무언가 기록하기</span>
+            <span className="text-xs text-amber-500 dark:text-amber-400">(선택)</span>
+            {showFuelSection ? (
+              <ChevronUp className="w-4 h-4 ml-auto" />
+            ) : (
+              <ChevronDown className="w-4 h-4 ml-auto" />
+            )}
+          </button>
+
+          <AnimatePresence>
+            {showFuelSection && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 p-4 bg-base-200 rounded-xl text-left">
+                  {/* 모드 선택 탭 */}
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={() => setFuelMode('select')}
+                      className={`flex-1 btn btn-sm rounded-full ${
+                        fuelMode === 'select' ? 'btn-primary' : 'btn-ghost border border-base-300'
+                      }`}
+                    >
+                      기존 연료 선택
+                    </button>
+                    <button
+                      onClick={() => setFuelMode('create')}
+                      className={`flex-1 btn btn-sm rounded-full ${
+                        fuelMode === 'create' ? 'btn-primary' : 'btn-ghost border border-base-300'
+                      }`}
+                    >
+                      새로 기록
+                    </button>
+                  </div>
+
+                  {/* 기존 연료 선택 모드 */}
+                  {fuelMode === 'select' && (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {notes.length > 0 ? (
+                        notes.map(note => (
+                          <button
+                            key={note.id}
+                            onClick={() => setSelectedNoteId(selectedNoteId === note.id ? null : note.id)}
+                            className={`w-full text-left p-3 rounded-lg transition-colors ${
+                              selectedNoteId === note.id
+                                ? 'bg-primary/20 border-2 border-primary'
+                                : 'bg-base-100 hover:bg-base-300 border border-base-300'
+                            }`}
+                          >
+                            <p className="text-sm line-clamp-2">{note.content}</p>
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-sm text-base-content/50 text-center py-4">
+                          아직 기록된 실행 연료가 없어요
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 새로 기록 모드 */}
+                  {fuelMode === 'create' && (
+                    <textarea
+                      value={newNoteContent}
+                      onChange={(e) => setNewNoteContent(e.target.value)}
+                      placeholder="이 실행을 가능하게 해준 연료가 뭐였나요?"
+                      className="w-full p-3 rounded-lg bg-base-100 border border-base-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      rows={3}
+                    />
+                  )}
+
+                  {/* 액션 버튼 */}
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={handleConnectFuel}
+                      disabled={!canConnect || isConnecting}
+                      className="flex-1 btn btn-primary btn-sm rounded-full"
+                    >
+                      {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : '연결할게'}
+                    </button>
+                    <button
+                      onClick={() => setShowFuelSection(false)}
+                      className="btn btn-ghost btn-sm rounded-full text-base-content/50"
+                    >
+                      건너뛰기
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       <button
         onClick={onExit}
@@ -2151,14 +2344,14 @@ function AdhocNoteConnectionView({
       exit={{ opacity: 0, y: -20 }}
       className="w-full max-w-sm text-center"
     >
-      <Lightbulb className="w-16 h-16 mx-auto text-amber-400 mb-4" />
+      <Fuel className="w-16 h-16 mx-auto text-amber-400 mb-4" />
 
       <h2 className="text-xl font-bold text-base-content mb-2">
-        영감 노트와 연결할까요?
+        이 실행을 도운 연료가 있었나요?
       </h2>
 
       <p className="text-base-content/60 mb-6">
-        방금 한 일과 관련된 영감을 연결해두면 나중에 도움이 돼요
+        실행을 도운 연료를 기록해두면 나중에 힘이 돼요
       </p>
 
       {/* 모드 선택 탭 */}
@@ -2169,7 +2362,7 @@ function AdhocNoteConnectionView({
             mode === 'select' ? 'btn-primary' : 'btn-ghost border border-base-300'
           }`}
         >
-          기존 노트 선택
+          기존 연료 선택
         </button>
         <button
           onClick={() => onModeChange('create')}
@@ -2178,7 +2371,7 @@ function AdhocNoteConnectionView({
           }`}
         >
           <Plus className="w-4 h-4" />
-          새로 작성
+          새로 기록
         </button>
       </div>
 
@@ -2204,26 +2397,26 @@ function AdhocNoteConnectionView({
           ) : (
             <div className="p-6 bg-base-200 rounded-lg">
               <p className="text-base-content/50 text-sm">
-                아직 저장된 영감 노트가 없어요
+                아직 기록된 실행 연료가 없어요
               </p>
               <button
                 onClick={() => onModeChange('create')}
                 className="btn btn-ghost btn-sm mt-2"
               >
-                새로 작성하기
+                새로 기록하기
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* 새로 작성 모드 */}
+      {/* 새로 기록 모드 */}
       {mode === 'create' && (
         <div className="mb-6">
           <textarea
             value={newNoteContent}
             onChange={(e) => onNewNoteContentChange(e.target.value)}
-            placeholder="떠오른 영감을 적어보세요"
+            placeholder="이 실행을 가능하게 해준 연료가 뭐였나요?"
             className="textarea textarea-bordered w-full rounded-xl min-h-[120px] resize-none"
             autoFocus
           />
