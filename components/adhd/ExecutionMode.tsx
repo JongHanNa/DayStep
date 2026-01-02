@@ -21,11 +21,15 @@ import {
   Sun,
   Moon,
   PictureInPicture2,
+  Lightbulb,
+  Plus,
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useNoteStore, Note } from '@/state/stores/noteStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
+import { addTodoNote } from '@/lib/supabase/todo-notes';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { usePomodoroLiveActivity } from '@/hooks/usePomodoroLiveActivity';
 import { usePiPTimer } from '@/hooks/usePiPTimer';
@@ -55,7 +59,7 @@ interface ExecutionModeProps {
   onExit: () => void;
 }
 
-type ViewState = 'recommendation' | 'skip-reason' | 'completed-all' | 'empty-state' | 'adhoc-timer' | 'adhoc-capture';
+type ViewState = 'recommendation' | 'skip-reason' | 'completed-all' | 'empty-state' | 'adhoc-timer' | 'adhoc-capture' | 'adhoc-note-connection';
 
 /**
  * ADHD 실행 모드 화면
@@ -85,6 +89,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   // 소중한 사람 스토어
   const { loadPeople } = useCherishedPeopleStore();
+
+  // 노트 스토어 (영감 노트 연결용)
+  const { getInboxNotes, createInboxNote, notes: allNotes } = useNoteStore();
 
   // 인물 연결 상태
   const joyfulPeopleIds = executionMode.adhocMode.joyfulPeopleIds;
@@ -142,6 +149,12 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [pausedAt, setPausedAt] = useState<number | null>(null); // 일시정지 시점 (DB 동기화용)
   const [totalDuration, setTotalDuration] = useState<number | null>(null); // 화면 endTime 계산용 (DB와 동기화)
   const [timerDisplayMode, setTimerDisplayMode] = useState<TimerDisplayMode>('both'); // 경과/남은/둘다 표시 모드
+
+  // 영감 노트 연결 상태
+  const [completedTodoIdForNote, setCompletedTodoIdForNote] = useState<string | null>(null); // 영감 노트를 연결할 할일 ID
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null); // 선택한 기존 노트 ID
+  const [newNoteContent, setNewNoteContent] = useState(''); // 새로 작성할 노트 내용
+  const [noteConnectionMode, setNoteConnectionMode] = useState<'select' | 'create'>('select'); // 기존 선택 / 새로 작성
 
   // 로딩 상태 (Skip DB 제거로 항상 false)
 
@@ -727,6 +740,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     // 이미 연결된 할일이 있으면 새로 생성하지 않고 완료 처리 + 시간/인물 정보 업데이트
     const { linkedTodoId, sessionId } = executionMode.adhocMode;
+    let todoIdForNote: string | null = null;
+
     if (linkedTodoId) {
       console.log('⚠️ 이미 연결된 할일 존재 - 완료 처리 + 정보 업데이트:', linkedTodoId);
       try {
@@ -738,12 +753,13 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
           joyful_people_ids: joyfulPeopleIds,
           shameful_people_ids: shamefulPeopleIds,
         });
+        todoIdForNote = linkedTodoId;
       } catch (error) {
         console.error('❌ 기존 할일 완료 처리 실패:', error);
       }
     } else {
       // 연결된 할일이 없을 때만 새로 생성
-      await createTodo({
+      const newTodo = await createTodo({
         title: adhocCaptureTitle.trim(),
         completed: true,
         schedule_type: 'timed',
@@ -753,6 +769,9 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         shameful_people_ids: shamefulPeopleIds,
         user_id: userId,
       });
+      if (newTodo) {
+        todoIdForNote = newTodo.id;
+      }
     }
 
     // 세션 삭제 (is_completed=true 대신 완전 삭제)
@@ -774,7 +793,18 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     setTimeout(() => {
       setIsAnimating(false);
-      getNextRecommendation();
+      // 할일 ID가 있으면 영감 노트 연결 화면으로 이동
+      if (todoIdForNote) {
+        setCompletedTodoIdForNote(todoIdForNote);
+        setSelectedNoteId(null);
+        setNewNoteContent('');
+        setNoteConnectionMode('select');
+        // 영감 노트 목록 로드
+        getInboxNotes(userId);
+        setViewState('adhoc-note-connection');
+      } else {
+        getNextRecommendation();
+      }
     }, 300);
   };
 
@@ -784,6 +814,53 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
     clearLinkedPeople(); // 인물 연결 초기화
+    getNextRecommendation();
+  };
+
+  // 영감 노트 연결 처리
+  const handleConnectNote = async () => {
+    if (!completedTodoIdForNote || !userId) return;
+
+    try {
+      if (noteConnectionMode === 'select' && selectedNoteId) {
+        // 기존 노트 선택
+        await addTodoNote(completedTodoIdForNote, selectedNoteId, userId);
+        console.log('✅ 기존 노트 연결:', { todoId: completedTodoIdForNote, noteId: selectedNoteId });
+      } else if (noteConnectionMode === 'create' && newNoteContent.trim()) {
+        // 새 노트 생성 후 연결
+        const newNote = await createInboxNote({
+          content: newNoteContent.trim(),
+          source_text: null,
+          source_reference: null,
+          linked_date: null,
+          is_pinned: false,
+        });
+
+        if (newNote) {
+          await addTodoNote(completedTodoIdForNote, newNote.id, userId);
+          console.log('✅ 새 노트 생성 및 연결:', { todoId: completedTodoIdForNote, noteId: newNote.id });
+        }
+      }
+    } catch (error) {
+      console.error('❌ 노트 연결 실패:', error);
+    }
+
+    // 정리 및 다음으로
+    setCompletedTodoIdForNote(null);
+    setSelectedNoteId(null);
+    setNewNoteContent('');
+    setRestoredStartTime(null);
+    setRestoredDuration(null);
+    getNextRecommendation();
+  };
+
+  // 영감 노트 연결 스킵
+  const handleSkipNoteConnection = () => {
+    setCompletedTodoIdForNote(null);
+    setSelectedNoteId(null);
+    setNewNoteContent('');
+    setRestoredStartTime(null);
+    setRestoredDuration(null);
     getNextRecommendation();
   };
 
@@ -963,6 +1040,23 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
               joyfulPeopleIds={joyfulPeopleIds}
               shamefulPeopleIds={shamefulPeopleIds}
               onLinkedPeopleChange={setLinkedPeople}
+            />
+          )}
+
+          {/* 영감 노트 연결 화면 */}
+          {viewState === 'adhoc-note-connection' && (
+            <AdhocNoteConnectionView
+              key="adhoc-note-connection"
+              notes={allNotes.filter(n => n.note_category === 'inbox')}
+              selectedNoteId={selectedNoteId}
+              onSelectNote={setSelectedNoteId}
+              newNoteContent={newNoteContent}
+              onNewNoteContentChange={setNewNoteContent}
+              mode={noteConnectionMode}
+              onModeChange={setNoteConnectionMode}
+              onConnect={handleConnectNote}
+              onSkip={handleSkipNoteConnection}
+              isAnimating={isAnimating}
             />
           )}
         </AnimatePresence>
@@ -2014,6 +2108,156 @@ function AdhocCaptureView({
           className="btn btn-ghost btn-sm w-full rounded-full text-base-content/50"
         >
           그냥 넘어갈게
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// 영감 노트 연결 화면
+// ============================================
+
+interface AdhocNoteConnectionViewProps {
+  notes: Note[];
+  selectedNoteId: string | null;
+  onSelectNote: (noteId: string | null) => void;
+  newNoteContent: string;
+  onNewNoteContentChange: (content: string) => void;
+  mode: 'select' | 'create';
+  onModeChange: (mode: 'select' | 'create') => void;
+  onConnect: () => void;
+  onSkip: () => void;
+  isAnimating: boolean;
+}
+
+function AdhocNoteConnectionView({
+  notes,
+  selectedNoteId,
+  onSelectNote,
+  newNoteContent,
+  onNewNoteContentChange,
+  mode,
+  onModeChange,
+  onConnect,
+  onSkip,
+  isAnimating,
+}: AdhocNoteConnectionViewProps) {
+  // 연결 버튼 활성화 조건
+  const canConnect = mode === 'select' ? !!selectedNoteId : newNoteContent.trim().length > 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="w-full max-w-sm text-center"
+    >
+      <Lightbulb className="w-16 h-16 mx-auto text-amber-400 mb-4" />
+
+      <h2 className="text-xl font-bold text-base-content mb-2">
+        영감 노트와 연결할까요?
+      </h2>
+
+      <p className="text-base-content/60 mb-6">
+        방금 한 일과 관련된 영감을 연결해두면 나중에 도움이 돼요
+      </p>
+
+      {/* 모드 선택 탭 */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => onModeChange('select')}
+          className={`flex-1 btn btn-sm rounded-full ${
+            mode === 'select' ? 'btn-primary' : 'btn-ghost border border-base-300'
+          }`}
+        >
+          기존 노트 선택
+        </button>
+        <button
+          onClick={() => onModeChange('create')}
+          className={`flex-1 btn btn-sm rounded-full ${
+            mode === 'create' ? 'btn-primary' : 'btn-ghost border border-base-300'
+          }`}
+        >
+          <Plus className="w-4 h-4" />
+          새로 작성
+        </button>
+      </div>
+
+      {/* 기존 노트 선택 모드 */}
+      {mode === 'select' && (
+        <div className="mb-6">
+          {notes.length > 0 ? (
+            <div className="max-h-48 overflow-y-auto space-y-2 text-left">
+              {notes.slice(0, 10).map((note) => (
+                <button
+                  key={note.id}
+                  onClick={() => onSelectNote(selectedNoteId === note.id ? null : note.id)}
+                  className={`w-full p-3 rounded-lg text-left transition-colors ${
+                    selectedNoteId === note.id
+                      ? 'bg-primary/10 border-2 border-primary'
+                      : 'bg-base-200 border border-base-300 hover:bg-base-300'
+                  }`}
+                >
+                  <p className="text-sm line-clamp-2">{note.content}</p>
+                  {note.source_reference && (
+                    <p className="text-xs text-base-content/50 mt-1 truncate">
+                      출처: {note.source_reference}
+                    </p>
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 bg-base-200 rounded-lg">
+              <p className="text-base-content/50 text-sm">
+                아직 저장된 영감 노트가 없어요
+              </p>
+              <button
+                onClick={() => onModeChange('create')}
+                className="btn btn-ghost btn-sm mt-2"
+              >
+                새로 작성하기
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 새로 작성 모드 */}
+      {mode === 'create' && (
+        <div className="mb-6">
+          <textarea
+            value={newNoteContent}
+            onChange={(e) => onNewNoteContentChange(e.target.value)}
+            placeholder="떠오른 영감을 적어보세요"
+            className="textarea textarea-bordered w-full rounded-xl min-h-[120px] resize-none"
+            autoFocus
+          />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3">
+        {/* 연결 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onConnect}
+          disabled={!canConnect || isAnimating}
+          className="btn btn-primary btn-lg w-full rounded-full"
+        >
+          {mode === 'select' ? '연결하기' : '저장하고 연결하기'}
+        </motion.button>
+
+        {/* 스킵 버튼 */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onSkip}
+          disabled={isAnimating}
+          className="btn btn-ghost btn-sm w-full rounded-full text-base-content/50"
+        >
+          넘어갈게
         </motion.button>
       </div>
     </motion.div>

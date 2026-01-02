@@ -19,12 +19,20 @@ interface AdhocModeState {
   shamefulPeopleIds: string[];     // 부끄러운 분들 ID (이 분들 앞에서 부끄러운 행동)
 }
 
+// 포모도로 완료 후 노트 연결 대기 상태
+interface PendingNoteConnection {
+  todoId: string;                      // 연결할 할일 ID
+  linkedNoteId: string | null;         // 기존 노트 선택 시 ID
+  newNoteContent: string | null;       // 새로 작성할 노트 내용
+}
+
 // 실행 모드 상태
 interface ExecutionModeState {
   currentRecommendation: Todo | null;
   skippedTodoIds: string[];           // 세션 내 스킵된 할일 ID (로컬 상태)
   completedInSession: number;          // 현재 세션 완료 수
   adhocMode: AdhocModeState;          // 즉흥 포모도로 모드
+  pendingNoteConnection: PendingNoteConnection | null;  // 포모도로 완료 후 노트 연결 대기
 }
 
 // 정리 모드 상태
@@ -134,6 +142,10 @@ interface ADHDModeState {
   removeShamefulPerson: (personId: string) => void;
   clearLinkedPeople: () => void;
 
+  // 포모도로 완료 후 노트 연결 Actions
+  setPendingNoteConnection: (data: { todoId: string; linkedNoteId?: string | null; newNoteContent?: string | null } | null) => void;
+  clearPendingNoteConnection: () => void;
+
   // === 정리 모드 Actions ===
   recordTodoAddition: () => void;
   resetOrganizeMode: () => void;
@@ -215,6 +227,7 @@ const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
   skippedTodoIds: [],
   completedInSession: 0,
   adhocMode: DEFAULT_ADHOC_MODE,
+  pendingNoteConnection: null,
 };
 
 const DEFAULT_ORGANIZE_MODE: OrganizeModeState = {
@@ -474,6 +487,31 @@ export const useADHDModeStore = create<ADHDModeState>()(
                 joyfulPeopleIds: [],
                 shamefulPeopleIds: [],
               },
+            }
+          }));
+        },
+
+        // === 포모도로 완료 후 노트 연결 Actions ===
+        setPendingNoteConnection: (data) => {
+          console.log('📝 ADHD: 노트 연결 대기 설정', data);
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              pendingNoteConnection: data ? {
+                todoId: data.todoId,
+                linkedNoteId: data.linkedNoteId ?? null,
+                newNoteContent: data.newNoteContent ?? null,
+              } : null,
+            }
+          }));
+        },
+
+        clearPendingNoteConnection: () => {
+          console.log('🗑️ ADHD: 노트 연결 대기 초기화');
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              pendingNoteConnection: null,
             }
           }));
         },

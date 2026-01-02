@@ -665,12 +665,59 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     enterExecuteMode(userId);
   }, [userId, endInboxMode, enterExecuteMode]);
 
-  // "새로 수집하기" 핸들러 (기본 10분 타이머로 바로 시작)
+  // "새로 수집하기" 핸들러 (기본 10분 타이머로 바로 시작) - 레거시
   const handleStartNewCollection = useCallback(() => {
     setSelectedDuration(10); // 기본 10분
     setSkipTimer(false);
     handleStartTimer();
   }, [handleStartTimer]);
+
+  // "수집→실행" 핸들러 (영감 노트 입력 화면으로 이동)
+  const handleStartCollectToExecute = useCallback(() => {
+    resetInboxDraft();  // 기존 draft 초기화
+    setInboxViewState('inspiration-input');
+  }, [resetInboxDraft, setInboxViewState]);
+
+  // ============================================
+  // 영감 노트 플로우 핸들러들
+  // ============================================
+
+  // 영감 노트 저장 후 "지금 바로 할래"
+  const handleInspirationQuickTodo = useCallback(() => {
+    // quick-todo 화면으로 이동 (기존 플로우 재사용)
+    setInboxViewState('quick-todo');
+  }, [setInboxViewState]);
+
+  // 영감 노트 저장 후 "언제 할지 정할래"
+  const handleInspirationScheduledTodo = useCallback(() => {
+    // scheduled-todo 화면으로 이동 (기존 플로우 재사용)
+    setInboxViewState('scheduled-todo');
+  }, [setInboxViewState]);
+
+  // 영감 노트 "일단 저장만"
+  const handleInspirationSaveOnly = useCallback(async () => {
+    if (!userId || !draftContent.trim()) return;
+
+    setIsSaving(true);
+    try {
+      // 영감 노트 저장
+      await createInboxNote({
+        user_id: userId,
+        content: draftContent.trim(),
+        source_text: draftSourceText || null,
+        source_reference: draftSourceReference || null,
+        linked_date: format(new Date(), 'yyyy-MM-dd'),
+        is_pinned: false,
+      });
+
+      // 완료 화면으로 이동
+      setInboxViewState('completed');
+    } catch (error) {
+      console.error('영감 노트 저장 실패:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [userId, draftContent, draftSourceText, draftSourceReference, createInboxNote, setInboxViewState]);
 
   // 미처리 수집에서 "할일 만들기" 핸들러
   const handleCreateTodoFromEntry = useCallback((note: Note) => {
@@ -721,7 +768,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
         {/* 메인 액션 버튼들 */}
         <div className="flex flex-col gap-3 mb-6">
-          {/* 실행과 집중으로 가기 */}
+          {/* 실행→수집 */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -729,18 +776,18 @@ export default function InboxMode({ onExit }: InboxModeProps) {
             className="btn btn-primary btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg"
           >
             <Target className="w-6 h-6" />
-            <span className="text-lg font-semibold">실행과 집중으로 가기</span>
+            <span className="text-lg font-semibold">실행→수집</span>
           </motion.button>
 
-          {/* 새로 수집하기 */}
+          {/* 수집→실행 */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleStartNewCollection}
+            onClick={handleStartCollectToExecute}
             className="btn btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg bg-orange-500 text-white border-none hover:bg-orange-600"
           >
             <PenLine className="w-6 h-6" />
-            <span className="text-lg font-semibold">새로 수집하기</span>
+            <span className="text-lg font-semibold">수집→실행</span>
           </motion.button>
         </div>
 
@@ -1036,6 +1083,190 @@ export default function InboxMode({ onExit }: InboxModeProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSaveOnly}
+            disabled={isSaving}
+            className="btn btn-ghost btn-md w-full flex items-center justify-center gap-2 text-base-content/60"
+          >
+            {isSaving ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
+            <span>{isSaving ? '저장 중...' : '일단 저장만'}</span>
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // ============================================
+  // 영감 노트 입력 화면 (inspiration-input) - "수집→실행" 플로우
+  // ============================================
+  const renderInspirationInputView = () => {
+    return (
+      <motion.div
+        key="inspiration-input"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full p-4"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => setInboxViewState('select-duration')}
+            className="btn btn-ghost btn-circle"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold">영감 기록하기</h1>
+        </div>
+
+        {/* 안내 문구 */}
+        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-4">
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            💡 기쁨, 감사, 감동, 각성, 결단을 준 문장이나 생각을 기록해보세요
+          </p>
+        </div>
+
+        {/* 타이머 사용 토글 */}
+        <div className="flex items-center justify-between bg-base-200 rounded-xl p-3 mb-4">
+          <span className="text-sm font-medium">타이머와 함께 기록하기</span>
+          <input
+            type="checkbox"
+            checked={!skipTimer}
+            onChange={(e) => setSkipTimer(!e.target.checked)}
+            className="toggle toggle-primary"
+          />
+        </div>
+
+        {/* 영감 입력 폼 */}
+        <div className="flex-1 space-y-4 overflow-y-auto">
+          {/* 1. 영감 내용 (필수) */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-1 block">
+              영감을 준 내용 <span className="text-amber-500">*</span>
+            </label>
+            <textarea
+              value={draftContent}
+              onChange={(e) => setInboxDraft({ content: e.target.value })}
+              placeholder="문장이든, 노래 가사든, 떠오른 생각이든 적어보세요"
+              className="textarea textarea-bordered w-full h-32 resize-none"
+              autoFocus
+            />
+          </div>
+
+          {/* 2. 출처 (선택) */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-1 block">
+              출처 <span className="text-base-content/40">(선택)</span>
+            </label>
+            <input
+              type="text"
+              value={draftSourceReference}
+              onChange={(e) => setInboxDraft({ sourceReference: e.target.value })}
+              placeholder="책, 영상, 노래, 사람 등"
+              className="input input-bordered w-full"
+            />
+          </div>
+
+          {/* 더 적기 (펼침) */}
+          <details className="collapse collapse-arrow bg-base-200 rounded-lg">
+            <summary className="collapse-title text-sm font-medium min-h-0 py-2 px-3">
+              더 적기
+            </summary>
+            <div className="collapse-content space-y-3 px-3 pb-3">
+              {/* 상세 내용 */}
+              <div>
+                <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                  상세 내용
+                </label>
+                <textarea
+                  value={draftSourceText}
+                  onChange={(e) => setInboxDraft({ sourceText: e.target.value })}
+                  placeholder="더 자세히 적고 싶다면 여기에"
+                  className="textarea textarea-bordered w-full h-20 resize-none"
+                />
+              </div>
+            </div>
+          </details>
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="mt-4">
+          <button
+            onClick={() => setInboxViewState('inspiration-choice')}
+            disabled={!draftContent.trim()}
+            className="btn btn-primary w-full gap-2"
+          >
+            다 적었어
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // ============================================
+  // 영감 노트 선택 화면 (inspiration-choice) - "수집→실행" 플로우
+  // ============================================
+  const renderInspirationChoiceView = () => {
+    return (
+      <motion.div
+        key="inspiration-choice"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full p-4"
+      >
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setInboxViewState('inspiration-input')}
+            className="btn btn-ghost btn-circle"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold">이걸로 뭐 할래?</h1>
+        </div>
+
+        {/* 영감 내용 미리보기 */}
+        <div className="bg-base-200 rounded-xl p-4 mb-6">
+          <p className="text-sm text-base-content/60 mb-1">기록한 영감</p>
+          <p className="text-base-content line-clamp-3">{draftContent}</p>
+          {draftSourceReference && (
+            <p className="text-sm text-base-content/50 mt-2">출처: {draftSourceReference}</p>
+          )}
+        </div>
+
+        {/* 선택지 버튼들 */}
+        <div className="flex-1 flex flex-col gap-4">
+          {/* 지금 바로 할래 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleInspirationQuickTodo}
+            className="btn btn-primary btn-lg w-full h-20 flex items-center justify-center gap-3 shadow-lg"
+          >
+            <Play className="w-7 h-7" />
+            <span className="text-xl font-semibold">지금 바로 할래</span>
+          </motion.button>
+
+          {/* 언제 할지 정할래 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleInspirationScheduledTodo}
+            className="btn btn-ghost btn-lg w-full h-16 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
+          >
+            <CalendarClock className="w-6 h-6" />
+            <span className="text-lg font-semibold">언제 할지 정할래</span>
+          </motion.button>
+
+          {/* 일단 저장만 */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleInspirationSaveOnly}
             disabled={isSaving}
             className="btn btn-ghost btn-md w-full flex items-center justify-center gap-2 text-base-content/60"
           >
@@ -1495,6 +1726,8 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
+        {viewState === 'inspiration-input' && renderInspirationInputView()}
+        {viewState === 'inspiration-choice' && renderInspirationChoiceView()}
         {viewState === 'reflection-input' && renderTimerRunningView()}
         {viewState === 'action-choice' && renderActionChoiceView()}
         {viewState === 'quick-todo' && renderQuickTodoView()}

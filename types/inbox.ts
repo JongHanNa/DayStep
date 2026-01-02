@@ -9,6 +9,8 @@ export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 /** Inbox 뷰 상태 */
 export type InboxViewState =
   | 'select-duration'    // 허브 화면 (시작점)
+  | 'inspiration-input'  // 영감 노트 입력 ("수집→실행" 플로우)
+  | 'inspiration-choice' // 영감 노트 저장 후 선택
   | 'reflection-input'   // 수집
   | 'action-choice'      // 선택지: 지금 할래? 언제 할래? 저장만?
   | 'quick-todo'         // 지금 바로 할래 (할일 입력 → ExecutionMode)
