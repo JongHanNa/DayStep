@@ -1479,7 +1479,7 @@ function CompletedAllView({
                         fuelMode === 'select' ? 'btn-primary' : 'btn-ghost border border-base-300'
                       }`}
                     >
-                      기존 연료 선택
+                      기존 기록 선택
                     </button>
                     <button
                       onClick={() => setFuelMode('create')}
@@ -1491,7 +1491,7 @@ function CompletedAllView({
                     </button>
                   </div>
 
-                  {/* 기존 연료 선택 모드 */}
+                  {/* 기존 기록 선택 모드 */}
                   {fuelMode === 'select' && (
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {notes.length > 0 ? (
@@ -1510,7 +1510,7 @@ function CompletedAllView({
                         ))
                       ) : (
                         <p className="text-sm text-base-content/50 text-center py-4">
-                          아직 기록된 실행 연료가 없어요
+                          아직 기존 기록이 없어요
                         </p>
                       )}
                     </div>
@@ -2362,7 +2362,7 @@ function AdhocNoteConnectionView({
             mode === 'select' ? 'btn-primary' : 'btn-ghost border border-base-300'
           }`}
         >
-          기존 연료 선택
+          기존 기록 선택
         </button>
         <button
           onClick={() => onModeChange('create')}
@@ -2375,7 +2375,7 @@ function AdhocNoteConnectionView({
         </button>
       </div>
 
-      {/* 기존 노트 선택 모드 */}
+      {/* 기존 기록 선택 모드 */}
       {mode === 'select' && (
         <div className="mb-6">
           {notes.length > 0 ? (
@@ -2397,7 +2397,7 @@ function AdhocNoteConnectionView({
           ) : (
             <div className="p-6 bg-base-200 rounded-lg">
               <p className="text-base-content/50 text-sm">
-                아직 기록된 실행 연료가 없어요
+                아직 기존 기록이 없어요
               </p>
               <button
                 onClick={() => onModeChange('create')}

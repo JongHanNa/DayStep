@@ -16,7 +16,9 @@ import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
 import LastInstanceDeleteDialog from '@/components/todos/LastInstanceDeleteDialog';
 import { calculateRemainingInstances } from '@/lib/recurrence-utils';
 import { queryTodoExclusionsWithJWT } from '@/lib/supabaseWebViewHelper';
+import { fetchNotesWithJWT } from '@/lib/supabase/notes';
 import { format } from 'date-fns';
+import type { Note } from '@/types/second-brain';
 
 /**
  * 버블 스타일 타임라인 뷰 컴포넌트
@@ -110,6 +112,26 @@ export const BubbleTimelineView: React.FC = () => {
     todoTitle: string;
   } | null>(null);
   const [isLastInstanceDeleting, setIsLastInstanceDeleting] = useState(false);
+
+  // 연결된 실행 연료를 위한 inbox 노트 상태
+  const [inboxNotes, setInboxNotes] = useState<Note[]>([]);
+
+  // inbox 노트 로드 (편집 모달에서 연결된 연료 표시용)
+  useEffect(() => {
+    const loadInboxNotes = async () => {
+      if (!user?.id) return;
+
+      try {
+        const allNotes = await fetchNotesWithJWT(user.id);
+        const inbox = allNotes.filter(n => n.note_category === 'inbox');
+        setInboxNotes(inbox);
+      } catch (error) {
+        console.error('Inbox 노트 로드 실패:', error);
+      }
+    };
+
+    loadInboxNotes();
+  }, [user?.id]);
 
   // 필터링된 아이템 (currentDate 변경 시에도 갱신)
   const items = useMemo(() => {
@@ -1406,8 +1428,11 @@ export const BubbleTimelineView: React.FC = () => {
         onDelete={() => handleDeleteTodo()}
         onRecurringDelete={(deleteType) => handleDeleteTodo(deleteType)}
         todoId={originalTodoId || undefined}
+        userId={user?.id}
         showScheduledDate={true}
         showHighlight={true}
+        inboxNotes={inboxNotes}
+        showLinkedFuels={true}
       />
     </div>
   );

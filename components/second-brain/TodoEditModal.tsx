@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import TodoFormContent from '@/components/todos/TodoFormContent';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import RecurringDeleteDialog from '@/components/todos/RecurringDeleteDialog';
+import LinkedFuelsSection from '@/components/second-brain/shared/LinkedFuelsSection';
 import { useModalStore } from '@/state/stores/modalStore';
+import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
+import { useNoteStore } from '@/state/stores/noteStore';
 import type { Note } from '@/types/second-brain';
 import type { Todo } from '@/types';
 
@@ -36,6 +39,9 @@ interface TodoEditModalProps {
   todoId?: string;
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
+  // 연결된 실행 연료 섹션용 props
+  inboxNotes?: Note[]; // inbox 카테고리 노트 (실행 연료)
+  showLinkedFuels?: boolean; // 연결된 연료 섹션 표시 여부 (기본값: true)
 }
 
 export default function TodoEditModal({
@@ -60,8 +66,11 @@ export default function TodoEditModal({
   todoId,
   userId,
   onNoteImmediateSave,
+  inboxNotes = [],
+  showLinkedFuels = true,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
+  const { createInboxNote } = useNoteStore();
 
   // 삭제 확인 다이얼로그 상태
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -71,6 +80,98 @@ export default function TodoEditModal({
   // 노트 편집 모달 상태
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
+
+  // 연결된 실행 연료 상태
+  const [linkedNotes, setLinkedNotes] = useState<Note[]>([]);
+  const [isLoadingLinkedNotes, setIsLoadingLinkedNotes] = useState(false);
+
+  // 연결된 노트 조회
+  const loadLinkedNotes = useCallback(async () => {
+    if (!todoId || !open) return;
+
+    setIsLoadingLinkedNotes(true);
+    try {
+      const noteIds = await getTodoNotes(todoId);
+      if (noteIds.length > 0) {
+        // inboxNotes에서 연결된 노트 찾기
+        const linked = inboxNotes.filter(n => noteIds.includes(n.id));
+        setLinkedNotes(linked);
+      } else {
+        setLinkedNotes([]);
+      }
+    } catch (error) {
+      console.error('연결된 노트 조회 실패:', error);
+      setLinkedNotes([]);
+    } finally {
+      setIsLoadingLinkedNotes(false);
+    }
+  }, [todoId, open, inboxNotes]);
+
+  // 모달 열릴 때 연결된 노트 조회
+  useEffect(() => {
+    if (open && todoId && showLinkedFuels) {
+      loadLinkedNotes();
+    }
+  }, [open, todoId, showLinkedFuels, loadLinkedNotes]);
+
+  // 노트 연결 해제
+  const handleUnlinkNote = async (noteId: string) => {
+    if (!todoId) return;
+
+    try {
+      await removeTodoNote(todoId, noteId);
+      setLinkedNotes(prev => prev.filter(n => n.id !== noteId));
+    } catch (error) {
+      console.error('노트 연결 해제 실패:', error);
+    }
+  };
+
+  // 기존 노트 연결
+  const handleLinkNote = async (noteId: string) => {
+    if (!todoId || !userId) return;
+
+    try {
+      await addTodoNote(todoId, noteId, userId);
+      const note = inboxNotes.find(n => n.id === noteId);
+      if (note) {
+        setLinkedNotes(prev => [...prev, note]);
+      }
+    } catch (error) {
+      console.error('노트 연결 실패:', error);
+    }
+  };
+
+  // 새 노트 생성 및 연결
+  const handleCreateAndLinkNote = async (content: string) => {
+    if (!todoId || !userId) return;
+
+    try {
+      const newNote = await createInboxNote({
+        content: content.trim(),
+        linked_date: null,
+        is_pinned: false,
+      });
+
+      if (newNote) {
+        await addTodoNote(todoId, newNote.id, userId);
+        // 타입 호환성을 위해 새 노트 형식으로 변환하여 추가
+        const noteForList: Note = {
+          id: newNote.id,
+          user_id: userId,
+          title: newNote.title || content.trim().slice(0, 50),
+          content: newNote.content || content.trim(),
+          note_category: 'inbox',
+          is_pinned: false,
+          created_at: newNote.created_at || new Date().toISOString(),
+          updated_at: newNote.updated_at || new Date().toISOString(),
+        };
+        setLinkedNotes(prev => [...prev, noteForList]);
+      }
+    } catch (error) {
+      console.error('노트 생성 및 연결 실패:', error);
+      throw error;
+    }
+  };
 
   // 모달 열림/닫힘 상태 관리
   useEffect(() => {
@@ -116,14 +217,14 @@ export default function TodoEditModal({
   // 부모 컨테이너의 overflow 영향을 받지 않도록 함 (Capacitor WebView 호환성)
   const modalContent = (
     <dialog open className="modal modal-open z-[110]">
-      <div className={`modal-box bg-base-200 w-full max-w-7xl h-screen flex flex-col overflow-hidden p-[10px] ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-        {/* 헤더 (취소-제목-삭제-저장) */}
-        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-4 sticky top-0 bg-base-200 z-10`}>
-          <button onClick={onClose} className="btn btn-primary btn-sm rounded-full">
+      <div className="modal-box max-w-md">
+        {/* 헤더 (취소-제목-삭제-저장) - 관계 기록 모달 스타일과 통일 */}
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={onClose} className="btn btn-ghost btn-sm rounded-full">
             취소
           </button>
-          <h3 className="text-lg font-semibold">{headerTitle}</h3>
-          <div className="flex gap-2">
+          <h3 className="text-lg font-bold">{headerTitle}</h3>
+          <div className="flex items-center gap-2">
             {(onDelete || onRecurringDelete) && (
               <button
                 onClick={() => {
@@ -135,9 +236,11 @@ export default function TodoEditModal({
                     setShowDeleteConfirm(true);
                   }
                 }}
-                className="btn btn-ghost btn-sm text-error rounded-full"
+                className="btn btn-ghost btn-sm btn-circle text-error"
               >
-                삭제
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </button>
             )}
             <button onClick={() => onSave(todo)} className="btn btn-primary btn-sm rounded-full">
@@ -147,7 +250,7 @@ export default function TodoEditModal({
         </div>
 
         {/* 콘텐츠 영역 */}
-        <div className="flex-1 overflow-y-auto px-2">
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
           <TodoFormContent
             formData={todo}
             onChange={onChange}
@@ -165,15 +268,31 @@ export default function TodoEditModal({
             showCompleted={showCompleted}
           />
 
+          {/* 연결된 실행 연료 섹션 */}
+          {showLinkedFuels && todoId && userId && (
+            <LinkedFuelsSection
+              todoId={todoId}
+              linkedNotes={linkedNotes}
+              allNotes={inboxNotes}
+              onUnlink={handleUnlinkNote}
+              onLink={handleLinkNote}
+              onCreateAndLink={handleCreateAndLinkNote}
+              isLoading={isLoadingLinkedNotes}
+              todoColor={todo?.color}
+            />
+          )}
+
           {/* 추가 콘텐츠 영역 */}
           {additionalContent && (
-            <div className="mt-6 px-4 pb-4">
+            <div className="mt-6">
               {additionalContent}
             </div>
           )}
         </div>
       </div>
-      <div className="modal-backdrop" onClick={onClose} />
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
 
       {/* 노트 편집 모달 */}
       <NoteEditModal
