@@ -830,8 +830,6 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
         // 새 노트 생성 후 연결
         const newNote = await createInboxNote({
           content: newNoteContent.trim(),
-          source_text: null,
-          source_reference: null,
           linked_date: null,
           is_pinned: false,
         });
@@ -2200,11 +2198,6 @@ function AdhocNoteConnectionView({
                   }`}
                 >
                   <p className="text-sm line-clamp-2">{note.content}</p>
-                  {note.source_reference && (
-                    <p className="text-xs text-base-content/50 mt-1 truncate">
-                      출처: {note.source_reference}
-                    </p>
-                  )}
                 </button>
               ))}
             </div>

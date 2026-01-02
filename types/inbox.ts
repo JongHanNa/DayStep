@@ -35,23 +35,6 @@ export const INBOX_FIELD_LABELS = {
     placeholder: '생각이든, 본 것이든, 들은 것이든 적어보세요',
     required: true,
   },
-  // 출처 (선택)
-  sourceReference: {
-    label: '출처',
-    placeholder: '어디서 얻었나요?',
-    required: false,
-  },
-  // --- 더 적기 (펼침) ---
-  sourceText: {
-    label: '상세 내용',
-    placeholder: '더 자세히 적고 싶다면 여기에',
-    required: false,
-  },
-  experience: {
-    label: '관련 경험',
-    placeholder: '이것과 관련된 경험이 있나요?',
-    required: false,
-  },
 } as const;
 
 /** 과제 도출 필드 라벨 - 레거시, 현재는 사용 안함 */
@@ -102,8 +85,6 @@ export interface TodoDraft {
 /** Inbox 노트 입력 타입 */
 export interface InboxNoteInput {
   content: string;
-  source_text?: string | null;
-  source_reference?: string | null;
   linked_date?: string | null;
   is_pinned?: boolean;
 }
@@ -111,8 +92,6 @@ export interface InboxNoteInput {
 /** Inbox 노트 업데이트 타입 */
 export interface InboxNoteUpdate {
   content?: string;
-  source_text?: string | null;
-  source_reference?: string | null;
   linked_date?: string | null;
   is_pinned?: boolean;
   is_processed?: boolean; // 할일로 변환 여부

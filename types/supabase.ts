@@ -18,7 +18,6 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
-          feeling_rating: number | null
           gratitude_note: string | null
           id: string
           interaction_date: string
@@ -31,7 +30,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
-          feeling_rating?: number | null
           gratitude_note?: string | null
           id?: string
           interaction_date: string
@@ -44,7 +42,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
-          feeling_rating?: number | null
           gratitude_note?: string | null
           id?: string
           interaction_date?: string
@@ -74,46 +71,43 @@ export type Database = {
       cherished_people: {
         Row: {
           created_at: string | null
+          departments: string[] | null
           id: string
           interaction_count: number | null
           is_active: boolean | null
           last_interaction_at: string | null
           name: string
           nickname: string | null
-          notes: string | null
-          priority: number | null
-          relationship: string | null
-          tags: string[] | null
+          relationships: string[] | null
+          roles: string[] | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          departments?: string[] | null
           id?: string
           interaction_count?: number | null
           is_active?: boolean | null
           last_interaction_at?: string | null
           name: string
           nickname?: string | null
-          notes?: string | null
-          priority?: number | null
-          relationship?: string | null
-          tags?: string[] | null
+          relationships?: string[] | null
+          roles?: string[] | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
+          departments?: string[] | null
           id?: string
           interaction_count?: number | null
           is_active?: boolean | null
           last_interaction_at?: string | null
           name?: string
           nickname?: string | null
-          notes?: string | null
-          priority?: number | null
-          relationship?: string | null
-          tags?: string[] | null
+          relationships?: string[] | null
+          roles?: string[] | null
           updated_at?: string | null
           user_id?: string
         }
@@ -219,8 +213,6 @@ export type Database = {
             | null
           position: number
           recurrence_type: string | null
-          source_reference: string | null
-          source_text: string | null
           title: string | null
           updated_at: string
           user_id: string
@@ -241,8 +233,6 @@ export type Database = {
             | null
           position?: number
           recurrence_type?: string | null
-          source_reference?: string | null
-          source_text?: string | null
           title?: string | null
           updated_at?: string
           user_id: string
@@ -263,8 +253,6 @@ export type Database = {
             | null
           position?: number
           recurrence_type?: string | null
-          source_reference?: string | null
-          source_text?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
@@ -279,7 +267,9 @@ export type Database = {
           end_time: string | null
           id: string
           is_completed: boolean | null
+          joyful_people_ids: string[] | null
           linked_todo_id: string | null
+          shameful_people_ids: string[] | null
           start_time: string
           updated_at: string
           user_id: string
@@ -291,7 +281,9 @@ export type Database = {
           end_time?: string | null
           id?: string
           is_completed?: boolean | null
+          joyful_people_ids?: string[] | null
           linked_todo_id?: string | null
+          shameful_people_ids?: string[] | null
           start_time: string
           updated_at?: string
           user_id: string
@@ -303,7 +295,9 @@ export type Database = {
           end_time?: string | null
           id?: string
           is_completed?: boolean | null
+          joyful_people_ids?: string[] | null
           linked_todo_id?: string | null
+          shameful_people_ids?: string[] | null
           start_time?: string
           updated_at?: string
           user_id?: string
@@ -643,6 +637,7 @@ export type Database = {
           id: string
           is_relationship_task: boolean | null
           is_today_highlight: boolean
+          joyful_people_ids: string[] | null
           order_index: number
           parent_todo_id: string | null
           priority: string | null
@@ -653,6 +648,7 @@ export type Database = {
           recurrence_interval: number | null
           recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type: Database["public"]["Enums"]["schedule_type_enum"]
+          shameful_people_ids: string[] | null
           start_time: string | null
           title: string
           updated_at: string
@@ -672,6 +668,7 @@ export type Database = {
           id?: string
           is_relationship_task?: boolean | null
           is_today_highlight?: boolean
+          joyful_people_ids?: string[] | null
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null
@@ -682,6 +679,7 @@ export type Database = {
           recurrence_interval?: number | null
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
+          shameful_people_ids?: string[] | null
           start_time?: string | null
           title: string
           updated_at?: string
@@ -701,6 +699,7 @@ export type Database = {
           id?: string
           is_relationship_task?: boolean | null
           is_today_highlight?: boolean
+          joyful_people_ids?: string[] | null
           order_index?: number
           parent_todo_id?: string | null
           priority?: string | null
@@ -711,6 +710,7 @@ export type Database = {
           recurrence_interval?: number | null
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
+          shameful_people_ids?: string[] | null
           start_time?: string | null
           title?: string
           updated_at?: string

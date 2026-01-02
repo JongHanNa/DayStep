@@ -120,9 +120,6 @@ export interface Note {
   // Second Brain fields
   area_resource_id?: string | null;
   note_category?: NoteCategory;
-  // Capture fields (수집 기능용)
-  source_text?: string | null;
-  source_reference?: string | null;
 }
 
 // Note instance types (manually defined until Supabase types are updated)

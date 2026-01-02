@@ -136,15 +136,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 편집/삭제 모달 상태
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [editSourceText, setEditSourceText] = useState('');
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const {
     viewState,
     draftContent,
-    draftSourceText,
-    draftSourceReference,
     draftExperience,
     draftCommitment,
     // 과제 도출 필드
@@ -327,7 +324,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   const handleOpenEditModal = (note: Note) => {
     setEditingNote(note);
     setEditContent(note.content || '');
-    setEditSourceText(note.source_text || '');
     setOpenDropdownId(null);
   };
 
@@ -339,11 +335,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       await updateNote({
         id: editingNote.id,
         content: editContent.trim(),
-        source_text: editSourceText.trim() || null,
       });
       setEditingNote(null);
       setEditContent('');
-      setEditSourceText('');
     } catch (error) {
       console.error('노트 수정 실패:', error);
     }
@@ -353,7 +347,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   const handleCloseEditModal = () => {
     setEditingNote(null);
     setEditContent('');
-    setEditSourceText('');
   };
 
   // 삭제 확인 모달 열기
@@ -425,8 +418,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
     const note = await createInboxNote({
       content: draftContent.trim(),
-      source_text: draftSourceText.trim() || null,
-      source_reference: draftSourceReference.trim() || null,
       linked_date: format(new Date(), 'yyyy-MM-dd'),
       is_pinned: false,
     });
@@ -572,10 +563,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     setIsSaving(true);
     try {
       await createInboxNote({
-        user_id: userId,
         content: draftContent.trim(),
-        source_text: draftSourceText.trim() || null,
-        source_reference: draftSourceReference.trim() || null,
         linked_date: format(new Date(), 'yyyy-MM-dd'),
         is_pinned: false,
       });
@@ -702,10 +690,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     try {
       // 영감 노트 저장
       await createInboxNote({
-        user_id: userId,
         content: draftContent.trim(),
-        source_text: draftSourceText || null,
-        source_reference: draftSourceReference || null,
         linked_date: format(new Date(), 'yyyy-MM-dd'),
         is_pinned: false,
       });
@@ -717,7 +702,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [userId, draftContent, draftSourceText, draftSourceReference, createInboxNote, setInboxViewState]);
+  }, [userId, draftContent, createInboxNote, setInboxViewState]);
 
   // 미처리 수집에서 "할일 만들기" 핸들러
   const handleCreateTodoFromEntry = useCallback((note: Note) => {
@@ -726,9 +711,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     // 해당 수집의 내용을 draft에 로드
     setInboxDraft({
       content: note.content,
-      sourceText: note.source_text || '',
-      sourceReference: note.source_reference || '',
-      experience: '', // Note에는 experience 필드가 없음
     });
     // action-choice 화면으로 이동
     setInboxViewState('action-choice');
@@ -945,9 +927,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           </>
         )}
 
-        {/* 수집 입력 폼 - 단순화 (2개 필드 + 더 적기) */}
+        {/* 수집 입력 폼 - 단순화 */}
         <div className="flex-1 space-y-4">
-          {/* 1. 떠오른 것 (필수) - 메인 필드 */}
+          {/* 떠오른 것 (필수) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
               {INBOX_FIELD_LABELS.content.label}{' '}
@@ -961,55 +943,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
               autoFocus
             />
           </div>
-
-          {/* 2. 출처 (선택) */}
-          <div>
-            <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {INBOX_FIELD_LABELS.sourceReference.label}{' '}
-              <span className="text-base-content/40">(선택)</span>
-            </label>
-            <input
-              type="text"
-              value={draftSourceReference}
-              onChange={(e) => setInboxDraft({ sourceReference: e.target.value })}
-              placeholder={INBOX_FIELD_LABELS.sourceReference.placeholder}
-              className="input input-bordered w-full"
-            />
-          </div>
-
-          {/* 더 적기 (펼침) */}
-          <details className="collapse collapse-arrow bg-base-200 rounded-lg">
-            <summary className="collapse-title text-sm font-medium min-h-0 py-2 px-3">
-              더 적기
-            </summary>
-            <div className="collapse-content space-y-3 px-3 pb-3">
-              {/* 상세 내용 */}
-              <div>
-                <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                  {INBOX_FIELD_LABELS.sourceText.label}
-                </label>
-                <textarea
-                  value={draftSourceText}
-                  onChange={(e) => setInboxDraft({ sourceText: e.target.value })}
-                  placeholder={INBOX_FIELD_LABELS.sourceText.placeholder}
-                  className="textarea textarea-bordered w-full h-20 resize-none"
-                />
-              </div>
-
-              {/* 관련 경험 */}
-              <div>
-                <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                  {INBOX_FIELD_LABELS.experience.label}
-                </label>
-                <textarea
-                  value={draftExperience}
-                  onChange={(e) => setInboxDraft({ experience: e.target.value })}
-                  placeholder={INBOX_FIELD_LABELS.experience.placeholder}
-                  className="textarea textarea-bordered w-full h-20 resize-none"
-                />
-              </div>
-            </div>
-          </details>
         </div>
 
         {/* 하단 버튼 */}
@@ -1154,41 +1087,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
               autoFocus
             />
           </div>
-
-          {/* 2. 출처 (선택) */}
-          <div>
-            <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              출처 <span className="text-base-content/40">(선택)</span>
-            </label>
-            <input
-              type="text"
-              value={draftSourceReference}
-              onChange={(e) => setInboxDraft({ sourceReference: e.target.value })}
-              placeholder="책, 영상, 노래, 사람 등"
-              className="input input-bordered w-full"
-            />
-          </div>
-
-          {/* 더 적기 (펼침) */}
-          <details className="collapse collapse-arrow bg-base-200 rounded-lg">
-            <summary className="collapse-title text-sm font-medium min-h-0 py-2 px-3">
-              더 적기
-            </summary>
-            <div className="collapse-content space-y-3 px-3 pb-3">
-              {/* 상세 내용 */}
-              <div>
-                <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                  상세 내용
-                </label>
-                <textarea
-                  value={draftSourceText}
-                  onChange={(e) => setInboxDraft({ sourceText: e.target.value })}
-                  placeholder="더 자세히 적고 싶다면 여기에"
-                  className="textarea textarea-bordered w-full h-20 resize-none"
-                />
-              </div>
-            </div>
-          </details>
         </div>
 
         {/* 하단 버튼 */}
@@ -1233,9 +1131,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         <div className="bg-base-200 rounded-xl p-4 mb-6">
           <p className="text-sm text-base-content/60 mb-1">기록한 영감</p>
           <p className="text-base-content line-clamp-3">{draftContent}</p>
-          {draftSourceReference && (
-            <p className="text-sm text-base-content/50 mt-2">출처: {draftSourceReference}</p>
-          )}
         </div>
 
         {/* 선택지 버튼들 */}
@@ -1707,11 +1602,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                       </div>
                     </div>
                   </div>
-                  {note.source_text && (
-                    <p className="text-sm text-base-content/70 italic mb-1 line-clamp-2">
-                      &quot;{note.source_text}&quot;
-                    </p>
-                  )}
                   <p className="text-sm line-clamp-2">{note.content}</p>
                 </div>
               </div>
@@ -1769,17 +1659,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                   onChange={(e) => setEditContent(e.target.value)}
                   className="textarea textarea-bordered w-full h-24"
                   placeholder="내용을 입력하세요"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                  상세 내용
-                </label>
-                <textarea
-                  value={editSourceText}
-                  onChange={(e) => setEditSourceText(e.target.value)}
-                  className="textarea textarea-bordered w-full h-20"
-                  placeholder="상세 내용 (선택)"
                 />
               </div>
             </div>

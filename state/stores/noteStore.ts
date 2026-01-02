@@ -41,8 +41,6 @@ export interface Note {
   area_resource_id?: string | null;
   note_category?: NoteCategory;
   // Inbox fields (수집 기능용)
-  source_text?: string | null;
-  source_reference?: string | null;
   is_processed?: boolean; // 할일로 변환 여부 (inbox 노트용)
 }
 
@@ -62,8 +60,6 @@ export interface CreateNoteInput {
   area_resource_id?: string | null;
   note_category?: NoteCategory;
   // Inbox fields (수집 기능용)
-  source_text?: string | null;
-  source_reference?: string | null;
   is_processed?: boolean; // 할일로 변환 여부 (inbox 노트용)
 }
 
