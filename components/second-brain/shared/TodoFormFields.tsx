@@ -178,13 +178,24 @@ export default function TodoFormFields({
 
   return (
     <>
-      {/* 아이콘 및 제목 - 통합 섹션 */}
+      {/* 제목 섹션 */}
       <div className="my-2">
-        <label className="text-sm font-medium block mb-2">아이콘 및 제목</label>
+        <label className="text-sm font-medium block mb-2">제목</label>
+        <input
+          type="text"
+          value={todo.title}
+          onChange={(e) => onChange({ ...todo, title: e.target.value })}
+          placeholder={typingPlaceholder}
+          className="input input-bordered w-full"
+          required
+        />
+      </div>
 
+      {/* 아이콘 선택기 - 임시 숨김
+      <div className="my-2">
+        <label className="text-sm font-medium block mb-2">아이콘</label>
         <div className="p-3 rounded-lg bg-base-100">
           <div className="flex items-center gap-3">
-            {/* 아이콘 버튼 */}
             <div className="relative">
               <button
                 type="button"
@@ -201,8 +212,6 @@ export default function TodoFormFields({
                   />;
                 })()}
               </button>
-
-              {/* 색상 인디케이터 */}
               <div
                 className="absolute -bottom-1 left-0 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
                 style={{
@@ -213,42 +222,10 @@ export default function TodoFormFields({
                 <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
               </div>
             </div>
-
-            {/* 제목 입력 - iOS WebView scale 문제 해결 */}
-            <div className="flex-1">
-              <div className="input-scale-wrapper" style={{
-                transform: 'scale(1.6)',
-                transformOrigin: 'left bottom',
-                WebkitTransform: 'scale(1.6)',
-                WebkitTransformOrigin: 'left bottom',
-                width: '80%',
-                height: '44px',
-                position: 'relative'
-              }}>
-                <input
-                  type="text"
-                  value={todo.title}
-                  onChange={(e) => onChange({ ...todo, title: e.target.value })}
-                  placeholder={typingPlaceholder}
-                  className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
-                  style={{
-                    fontSize: '20px',
-                    outline: 'none',
-                    boxShadow: 'none',
-                    fontWeight: '600',
-                    height: '44px',
-                    lineHeight: '0.9',
-                    paddingTop: '16px',
-                    paddingBottom: '0px',
-                    width: '100%',
-                  }}
-                  required
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
+      */}
 
       {/* 반복 할일 원본 날짜 (일정 섹션 상단, 반복 할일 편집 시에만) */}
       {todo.originalStartDate && todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
