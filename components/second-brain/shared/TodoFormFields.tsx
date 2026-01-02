@@ -185,7 +185,7 @@ export default function TodoFormFields({
           아이콘 및 제목
         </label>
 
-        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
           <div className="flex items-center gap-3">
             {/* 아이콘 버튼 */}
             <div className="relative">
@@ -233,7 +233,7 @@ export default function TodoFormFields({
                   value={todo.title}
                   onChange={(e) => onChange({ ...todo, title: e.target.value })}
                   placeholder={typingPlaceholder}
-                  className="bg-base-200 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
+                  className="bg-base-100 border-0 border-b-2 border-base-300 rounded-none focus:outline-none transition-none text-base-content"
                   style={{
                     fontSize: '20px',
                     outline: 'none',
