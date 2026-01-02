@@ -1,7 +1,6 @@
 'use client';
 
 import React, { memo, useCallback, useMemo } from 'react';
-import { Repeat } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -83,10 +82,7 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
 
   return (
     <div className="my-2">
-      <Label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
-        <Repeat className="w-5 h-5" style={{ color: accentColor }} />
-        반복 설정
-      </Label>
+      <Label className="text-sm font-medium block mb-2">반복 설정</Label>
 
       <div className="space-y-4 p-4 rounded-lg bg-base-100">
 

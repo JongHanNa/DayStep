@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Fuel, X, Plus, FileText, Check } from 'lucide-react';
+import { X, Plus, FileText, Check } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Note } from '@/types/second-brain';
 
@@ -66,10 +66,7 @@ export default function LinkedFuelsSection({
   return (
     <div className="my-4">
       {/* 섹션 헤더 */}
-      <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-        <Fuel className="h-5 w-5" style={{ color: todoColor }} />
-        연결된 실행 연료
-      </label>
+      <label className="text-sm font-medium block mb-2">연결된 실행 연료</label>
 
       {/* 연결된 노트 목록 */}
       <div className="p-3 rounded-lg bg-base-100 border border-base-300">
