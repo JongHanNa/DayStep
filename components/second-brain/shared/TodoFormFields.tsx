@@ -185,7 +185,7 @@ export default function TodoFormFields({
           아이콘 및 제목
         </label>
 
-        <div className="p-3 rounded-lg bg-base-100 border border-base-300">
+        <div className="p-3 rounded-lg bg-base-100">
           <div className="flex items-center gap-3">
             {/* 아이콘 버튼 */}
             <div className="relative">
@@ -207,7 +207,7 @@ export default function TodoFormFields({
 
               {/* 색상 인디케이터 */}
               <div
-                className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
+                className="absolute -bottom-1 left-0 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
                 style={{
                   backgroundColor: todo.color || '#DBAC6C',
                   border: '2px solid white'
