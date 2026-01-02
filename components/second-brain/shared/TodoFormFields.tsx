@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Star, StickyNote, Tag, Calendar, CheckCircle2, Sparkles, Clock, Target, Palette, Repeat } from 'lucide-react';
+import { Star, StickyNote, CheckCircle2, Sparkles, Target, Palette, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { Note } from '@/types/second-brain';
@@ -180,10 +180,7 @@ export default function TodoFormFields({
     <>
       {/* 아이콘 및 제목 - 통합 섹션 */}
       <div className="my-2">
-        <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#808080' }}>
-          <Tag className="h-5 w-5" style={{ color: todo.color || '#DBAC6C' }} />
-          아이콘 및 제목
-        </label>
+        <label className="text-sm font-medium block mb-2">아이콘 및 제목</label>
 
         <div className="p-3 rounded-lg bg-base-100">
           <div className="flex items-center gap-3">
@@ -268,10 +265,7 @@ export default function TodoFormFields({
       {/* 일정 유형 */}
       {showScheduledDate && (
         <div className="my-4">
-          <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-            <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-            일정 유형
-          </label>
+          <label className="text-sm font-medium block mb-2">일정 유형</label>
 
           <select
             value={todo.scheduleType || 'anytime'}
@@ -323,11 +317,10 @@ export default function TodoFormFields({
         <>
           {/* 시작 날짜 */}
           <div className="my-4">
-            <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-              <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+            <label className="text-sm font-medium block mb-2">
               날짜
               {todo.isRecurrenceInstance && (
-                <span className="text-xs text-info font-normal">(반복 인스턴스)</span>
+                <span className="text-xs text-info font-normal ml-2">(반복 인스턴스)</span>
               )}
             </label>
 
@@ -348,10 +341,7 @@ export default function TodoFormFields({
           {/* 시작 시간 (시간 포함 ON일 때만) */}
           {todo.includeTime && (
             <div className="my-4">
-              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-                시작 시간
-              </label>
+              <label className="text-sm font-medium block mb-2">시작 시간</label>
 
               <input
                 type="time"
@@ -366,11 +356,10 @@ export default function TodoFormFields({
           {todo.includeEndDate && (
             <>
               <div className="my-4">
-                <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                  <Calendar className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
+                <label className="text-sm font-medium block mb-2">
                   종료 날짜
                   {todo.isRecurrenceInstance && (
-                    <span className="text-xs text-info font-normal">(반복 인스턴스)</span>
+                    <span className="text-xs text-info font-normal ml-2">(반복 인스턴스)</span>
                   )}
                 </label>
 
@@ -391,10 +380,7 @@ export default function TodoFormFields({
               {/* 종료 시간 (종료일 ON + 시간 포함 ON일 때만) */}
               {todo.includeTime && (
                 <div className="my-4">
-                  <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                    <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-                    종료 시간
-                  </label>
+                  <label className="text-sm font-medium block mb-2">종료 시간</label>
 
                   <input
                     type="time"
@@ -429,10 +415,7 @@ export default function TodoFormFields({
           {/* 예상 소요 시간 (언제든지일 때만) */}
           {(!todo.scheduleType || todo.scheduleType === 'anytime') && (
             <div className="my-4">
-              <label className="flex items-center gap-3 text-lg font-semibold mb-3" style={{ color: '#666666' }}>
-                <Clock className="h-5 w-5" style={{ color: todo.color || '#808080' }} />
-                예상 소요 시간
-              </label>
+              <label className="text-sm font-medium block mb-2">예상 소요 시간</label>
 
               <div className="p-3 rounded-lg bg-base-100 border border-base-300">
                 <ScrollDurationPicker
