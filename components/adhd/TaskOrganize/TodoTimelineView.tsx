@@ -9,6 +9,8 @@ import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { Todo } from '@/entities/todo/Todo';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import { fetchNotesWithJWT } from '@/lib/supabase/notes';
+import type { Note } from '@/types/second-brain';
 
 interface TodoTimelineViewProps {
   userId: string;
@@ -33,6 +35,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 삭제 확인 상태
   const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
 
+  // 연결된 실행 연료를 위한 inbox 노트 상태
+  const [inboxNotes, setInboxNotes] = useState<Note[]>([]);
+
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
   const goals: { id: string; title: string }[] = [];
@@ -48,6 +53,22 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     };
     loadData();
   }, [userId, fetchAllTodos, loadPeople]);
+
+  // inbox 노트 로드 (편집 모달에서 연결된 연료 표시용)
+  useEffect(() => {
+    const loadInboxNotes = async () => {
+      if (!userId) return;
+
+      try {
+        const allNotes = await fetchNotesWithJWT(userId);
+        const inbox = allNotes.filter(n => n.note_category === 'inbox');
+        setInboxNotes(inbox);
+      } catch (error) {
+        console.error('inbox 노트 로드 실패:', error);
+      }
+    };
+    loadInboxNotes();
+  }, [userId]);
 
   // 프로젝트/목표 매핑 생성
   const projectMap = useMemo(() => {
@@ -321,6 +342,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         onChange={setEditFormData}
         onDelete={handleEditDelete}
         headerTitle="할일 편집"
+        todoId={editingTodo?.id}
+        userId={userId}
+        showLinkedFuels={true}
+        inboxNotes={inboxNotes}
       />
 
       {/* 삭제 확인 다이얼로그 */}

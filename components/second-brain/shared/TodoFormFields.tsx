@@ -185,14 +185,14 @@ export default function TodoFormFields({
           아이콘 및 제목
         </label>
 
-        <div className="rounded-lg bg-base-200 overflow-visible">
-          <div className="flex items-center gap-3 pl-0 pr-16 pt-2 pb-3">
+        <div className="p-3 rounded-lg bg-base-200 border border-base-300">
+          <div className="flex items-center gap-3">
             {/* 아이콘 버튼 */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIconBrowserOpen(true)}
-                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-base-100"
+                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-[#f3f4f6]"
                 title="아이콘 변경하기"
               >
                 {(() => {
