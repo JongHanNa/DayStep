@@ -35,7 +35,7 @@ import {
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import type { MoodLevel, TodoDraft } from '@/types/inbox';
-import { INBOX_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS } from '@/types/inbox';
+import { INBOX_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS, FUEL_MESSAGES } from '@/types/inbox';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore, type Note } from '@/state/stores/noteStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
@@ -107,6 +107,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   const inboxNotes = useMemo(() =>
     notes.filter(note => note.note_category === 'inbox'),
     [notes]
+  );
+
+  // 실행 연료 안내 메시지 (랜덤 선택)
+  const fuelMessage = useMemo(() =>
+    FUEL_MESSAGES[Math.floor(Math.random() * FUEL_MESSAGES.length)],
+    []
   );
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
@@ -1051,38 +1057,27 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-bold">영감 기록하기</h1>
+          <h1 className="text-xl font-bold">실행 연료 채우기</h1>
         </div>
 
-        {/* 안내 문구 */}
+        {/* 안내 문구 (랜덤) */}
         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-4">
           <p className="text-sm text-amber-700 dark:text-amber-300">
-            💡 기쁨, 감사, 감동, 각성, 결단을 준 문장이나 생각을 기록해보세요
+            ⛽ {fuelMessage}
           </p>
         </div>
 
-        {/* 타이머 사용 토글 */}
-        <div className="flex items-center justify-between bg-base-200 rounded-xl p-3 mb-4">
-          <span className="text-sm font-medium">타이머와 함께 기록하기</span>
-          <input
-            type="checkbox"
-            checked={!skipTimer}
-            onChange={(e) => setSkipTimer(!e.target.checked)}
-            className="toggle toggle-primary"
-          />
-        </div>
-
-        {/* 영감 입력 폼 */}
+        {/* 실행 연료 입력 폼 */}
         <div className="flex-1 space-y-4 overflow-y-auto">
-          {/* 1. 영감 내용 (필수) */}
+          {/* 1. 실행 연료 내용 (필수) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              영감을 준 내용 <span className="text-amber-500">*</span>
+              {INBOX_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
             </label>
             <textarea
               value={draftContent}
               onChange={(e) => setInboxDraft({ content: e.target.value })}
-              placeholder="문장이든, 노래 가사든, 떠오른 생각이든 적어보세요"
+              placeholder={INBOX_FIELD_LABELS.content.placeholder}
               className="textarea textarea-bordered w-full h-32 resize-none"
               autoFocus
             />
@@ -1124,12 +1119,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-bold">이걸로 뭐 할래?</h1>
+          <h1 className="text-xl font-bold">이 연료로 뭘 해볼까?</h1>
         </div>
 
-        {/* 영감 내용 미리보기 */}
+        {/* 연료 내용 미리보기 */}
         <div className="bg-base-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-base-content/60 mb-1">기록한 영감</p>
+          <p className="text-sm text-base-content/60 mb-1">채운 연료</p>
           <p className="text-base-content line-clamp-3">{draftContent}</p>
         </div>
 

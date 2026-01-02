@@ -31,11 +31,20 @@ export type InboxTimerDuration = typeof INBOX_TIMER_OPTIONS[number];
 export const INBOX_FIELD_LABELS = {
   // 메인 필드 (필수)
   content: {
-    label: '떠오른 것',
-    placeholder: '생각이든, 본 것이든, 들은 것이든 적어보세요',
+    label: '실행 연료가 될 무언가',
+    placeholder: '마음에 불을 붙여줄 무언가를 적어보세요',
     required: true,
   },
 } as const;
+
+/** 실행 연료 안내 메시지 (랜덤 표시) */
+export const FUEL_MESSAGES = [
+  '실행하게 만드는 마음의 연료를 기록하세요',
+  '계획은 있는데 실행이 안 될 때, 마음에 불을 붙여줄 무언가를 기록하세요',
+  '마음에 기쁨, 감사, 감동, 결단을 주는 무언가를 기록하면 마음에 실행력이 생겨요',
+  '머리로는 알지만 몸이 안 움직일 때, 마음에 연료를 채워보세요',
+  '"해야지"가 아닌 "하고 싶다"로 바꿔줄 무언가를 기록하세요',
+] as const;
 
 /** 과제 도출 필드 라벨 - 레거시, 현재는 사용 안함 */
 export const PROJECT_DERIVE_LABELS = {
