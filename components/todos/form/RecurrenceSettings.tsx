@@ -30,7 +30,6 @@ export interface RecurrenceSettingsProps {
   onRecurrenceCountChange: (count?: number) => void;
   onRecurrenceEndTypeChange: (type: 'never' | 'date' | 'count') => void;
   onDayOfWeekToggle: (dayValue: number) => void;
-  selectedColor?: string;
 }
 
 const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
@@ -47,7 +46,6 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
   onRecurrenceCountChange,
   onRecurrenceEndTypeChange,
   onDayOfWeekToggle,
-  selectedColor,
 }) => {
   const weekDays = useMemo(() => [
     { label: '월', value: 1 },
@@ -77,8 +75,8 @@ const RecurrenceSettings: React.FC<RecurrenceSettingsProps> = ({
     onRecurrenceCountChange(parseInt(e.target.value) || undefined);
   }, [onRecurrenceCountChange]);
 
-  // 선택된 색상 정보 가져오기 - hex 값으로 직접 사용
-  const accentColor = selectedColor || '#DBAC6C';
+  // 프라이머리 색상 사용 (CSS 변수)
+  const accentColor = 'var(--color-primary)';
 
   return (
     <div className="my-2">

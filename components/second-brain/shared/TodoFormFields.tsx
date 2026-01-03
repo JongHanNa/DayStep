@@ -432,7 +432,6 @@ export default function TodoFormFields({
                 onChange({ ...todo, selectedDaysOfWeek: [...currentDays, day].sort() });
               }
             }}
-            selectedColor={todo.color}
           />
         </>
       )}
