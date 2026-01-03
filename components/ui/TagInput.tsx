@@ -175,7 +175,7 @@ export function TagInput({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={value.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[100px] bg-transparent outline-none text-sm"
+          className="flex-1 min-w-[100px] bg-transparent outline-none text-base"
           disabled={value.length >= maxTags}
         />
       </div>
