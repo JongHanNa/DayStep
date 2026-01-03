@@ -1262,6 +1262,8 @@ export const BubbleTimelineView: React.FC = () => {
                               try { return new Date(date).toISOString(); } catch { return null; }
                             })(),
                             is_relationship_task: originalTodo.is_relationship_task || null,
+                            joyful_people_ids: originalTodo.joyful_people_ids || null,
+                            shameful_people_ids: originalTodo.shameful_people_ids || null,
                             _instanceInfo: {
                               instanceId: timelineItem.id,
                               instanceDate: (timelineItem.data as any).recurrence_occurrence_date,
