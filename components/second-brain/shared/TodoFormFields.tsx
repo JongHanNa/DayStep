@@ -401,7 +401,7 @@ export default function TodoFormFields({
                   onDurationChange={(hours, minutes) => {
                     onChange({ ...todo, anytimeDuration: hours * 60 + minutes });
                   }}
-                  accentColor={todo.color}
+                  accentColor="var(--color-primary)"
                   className="py-2"
                 />
               </div>
