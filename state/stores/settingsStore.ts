@@ -12,7 +12,6 @@ export type FontFamily = 'system' | 'opendyslexic';
 export type WordSpacing = number; // -0.5 ~ 0.5 범위의 em 단위
 export type LetterSpacing = number; // -0.2 ~ 0.3 범위의 em 단위
 export type FontSize = number; // 12 ~ 24 범위의 px 단위
-export type BubbleShape = 'circle' | 'square' | 'arrow'; // 타임라인 버블 아이콘 형태
 
 export type { ColorTheme } from '@/lib/color-themes';
 
@@ -23,7 +22,6 @@ export interface AppSettings {
   wordSpacing: WordSpacing;
   letterSpacing: LetterSpacing;
   fontSize: FontSize;
-  bubbleShape: BubbleShape;
   todoCompletion: TodoCompletionSettings;
   colorTheme: ColorTheme;
   adhdModeEnabled: boolean;
@@ -41,7 +39,6 @@ interface SettingsState extends AppSettings {
   setWordSpacing: (spacing: WordSpacing) => void;
   setLetterSpacing: (spacing: LetterSpacing) => void;
   setFontSize: (size: FontSize) => void;
-  setBubbleShape: (shape: BubbleShape) => void;
   setCompletionBehavior: (behavior: CompletionBehavior) => void;
   setShowCompletedItems: (show: boolean) => void;
   setCompletedItemsOpacity: (opacity: number) => void;
@@ -72,9 +69,6 @@ export const useSettingsStore = create<SettingsState>()(
 
         // 기본값: 기본 글자 크기 (16px)
         fontSize: 16,
-
-        // 기본값: 원형 버블
-        bubbleShape: 'circle',
 
         // 할일 완료 설정 기본값
         todoCompletion: DEFAULT_TODO_COMPLETION_SETTINGS,
@@ -116,11 +110,6 @@ export const useSettingsStore = create<SettingsState>()(
         setFontSize: (size: FontSize) => {
           console.log('⚙️ 글자 크기 설정 변경:', size);
           set({ fontSize: size });
-        },
-
-        setBubbleShape: (shape: BubbleShape) => {
-          console.log('⚙️ 버블 형태 설정 변경:', shape);
-          set({ bubbleShape: shape });
         },
 
         setCompletionBehavior: (behavior: CompletionBehavior) => {
@@ -189,7 +178,6 @@ export const useSettingsStore = create<SettingsState>()(
           wordSpacing: state.wordSpacing,
           letterSpacing: state.letterSpacing,
           fontSize: state.fontSize,
-          bubbleShape: state.bubbleShape,
           todoCompletion: state.todoCompletion,
           colorTheme: state.colorTheme,
           adhdModeEnabled: state.adhdModeEnabled,
@@ -215,7 +203,6 @@ export function getSettingsForSync(): AppSettings {
     wordSpacing: state.wordSpacing,
     letterSpacing: state.letterSpacing,
     fontSize: state.fontSize,
-    bubbleShape: state.bubbleShape,
     todoCompletion: state.todoCompletion,
     colorTheme: state.colorTheme,
     adhdModeEnabled: state.adhdModeEnabled,

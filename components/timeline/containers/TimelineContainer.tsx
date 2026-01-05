@@ -4,9 +4,6 @@ import React, { useEffect, useRef, useMemo, useDeferredValue, memo, Suspense, us
 import { usePathname } from 'next/navigation';
 import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { cn } from '@/lib/utils';
-import TimelineWeekView from './TimelineWeekView';
-import TimelineMonthView from './TimelineMonthView';
-import { BubbleTimelineView } from './BubbleTimelineView';
 import { TimelineDndProvider } from '../dnd';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { OptimisticIndicator } from '@/components/ui/optimistic-indicator';
@@ -492,30 +489,10 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({ className }) => {
     return;
   }, [deferredViewMode, deferredCurrentDate, restoreScrollPosition, scrollHandler, isAuthenticated, authLoading, appUser]);
 
-  // Memoized view renderer with Suspense boundaries
+  // Memoized view renderer - 뷰모드 렌더링 제거됨
   const renderView = useMemo(() => {
-    switch (deferredViewMode) {
-      case 'daily':
-        return (
-          <Suspense fallback={<TimelineLoadingFallback />}>
-            <BubbleTimelineView />
-          </Suspense>
-        );
-      case 'weekly':
-        return (
-          <Suspense fallback={<TimelineLoadingFallback />}>
-            <TimelineWeekView />
-          </Suspense>
-        );
-      case 'monthly':
-        return (
-          <Suspense fallback={<TimelineLoadingFallback />}>
-            <TimelineMonthView />
-          </Suspense>
-        );
-      default:
-        return null;
-    }
+    // daily/weekly/monthly 뷰모드 컴포넌트 삭제됨
+    return null;
   }, [deferredViewMode]);
 
   // Optimistic UI handlers
