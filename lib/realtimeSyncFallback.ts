@@ -2,7 +2,6 @@
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 
 // 스마트 폴링 상태 관리
 let pollInterval: NodeJS.Timeout | null = null;
@@ -88,12 +87,11 @@ function setupAppStateListener() {
 async function performSyncAndReschedule() {
   try {
     const todoStore = useTodoStore.getState();
-    const timelineViewStore = useTimelineViewStore.getState();
-    const currentDate = timelineViewStore.currentDate;
-    
+    const currentDate = new Date(); // 현재 날짜 사용
+
     // 조용한 모드로 데이터 조회
     (globalThis as any).__POLLING_MODE__ = true;
-    
+
     const { convertKstDateToUtcRange } = await import('@/lib/date-utils');
     const { utcStart, utcEnd } = convertKstDateToUtcRange(currentDate);
     

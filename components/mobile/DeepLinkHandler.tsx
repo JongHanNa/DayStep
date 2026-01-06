@@ -39,11 +39,11 @@ export const DeepLinkHandler: React.FC = () => {
       switch (section) {
         case "todos":
           if (todoId) {
-            // 특정 할일로 이동 (타임라인에서 모달 열기)
-            router.push(`/timeline?todo=${todoId}`);
+            // 특정 할일로 이동
+            router.push(`/second-brain/todos?id=${todoId}`);
           } else {
-            // 타임라인 페이지로 이동
-            router.push("/timeline");
+            // 할일 목록 페이지로 이동
+            router.push("/second-brain/todos");
           }
           break;
 

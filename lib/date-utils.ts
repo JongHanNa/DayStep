@@ -39,7 +39,6 @@ import {
   getDay
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { TimelineViewMode } from '@/types/timeline-view';
 
 // 한국 시간대 설정
 export const KOREA_TIMEZONE = 'Asia/Seoul';
@@ -57,60 +56,10 @@ export const DATE_FORMATS = {
   ISO_DATETIME: "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
 } as const;
 
-// 뷰 모드별 날짜 범위 계산
+// 날짜 범위 인터페이스
 export interface DateRange {
   start: Date;
   end: Date;
-}
-
-/**
- * 뷰 모드에 따른 날짜 범위를 계산합니다
- */
-export function getDateRangeForViewMode(
-  date: Date, 
-  viewMode: TimelineViewMode
-): DateRange {
-  switch (viewMode) {
-    case 'daily':
-      return {
-        start: startOfDay(date),
-        end: endOfDay(date)
-      };
-    case 'weekly':
-      return {
-        start: startOfWeek(date, { weekStartsOn: 0, locale: DEFAULT_LOCALE }),
-        end: endOfWeek(date, { weekStartsOn: 0, locale: DEFAULT_LOCALE })
-      };
-    case 'monthly':
-      return {
-        start: startOfMonth(date),
-        end: endOfMonth(date)
-      };
-    default:
-      throw new Error(`Invalid view mode: ${viewMode}`);
-  }
-}
-
-/**
- * 뷰 모드에 따른 날짜 네비게이션 계산
- */
-export function navigateDate(
-  currentDate: Date,
-  viewMode: TimelineViewMode,
-  direction: 'next' | 'previous'
-): Date {
-  const multiplier = direction === 'next' ? 1 : -1;
-  
-  switch (viewMode) {
-    case 'daily':
-      return addDays(currentDate, multiplier);
-    case 'weekly':
-      return addWeeks(currentDate, multiplier);
-    case 'monthly':
-      return addMonths(currentDate, multiplier);
-    default:
-      throw new Error(`Invalid view mode: ${viewMode}`);
-  }
 }
 
 /**
@@ -126,30 +75,6 @@ export function navigateToToday(): Date {
 }
 
 /**
- * 뷰 모드에 따른 날짜 표시 형식
- */
-export function formatDateForViewMode(
-  date: Date,
-  viewMode: TimelineViewMode
-): string {
-  switch (viewMode) {
-    case 'daily':
-      return format(date, DATE_FORMATS.FULL_DATE, { locale: DEFAULT_LOCALE });
-    case 'weekly': {
-      const weekStart = startOfWeek(date, { weekStartsOn: 0, locale: DEFAULT_LOCALE });
-      const weekEnd = endOfWeek(date, { weekStartsOn: 0, locale: DEFAULT_LOCALE });
-      const startStr = format(weekStart, DATE_FORMATS.SHORT_DATE, { locale: DEFAULT_LOCALE });
-      const endStr = format(weekEnd, DATE_FORMATS.SHORT_DATE, { locale: DEFAULT_LOCALE });
-      return `${startStr} - ${endStr}`;
-    }
-    case 'monthly':
-      return format(date, DATE_FORMATS.MONTH_YEAR, { locale: DEFAULT_LOCALE });
-    default:
-      return '';
-  }
-}
-
-/**
  * 시간 포맷팅 (24시간 또는 12시간 형식)
  */
 export function formatTime(
@@ -158,41 +83,6 @@ export function formatTime(
 ): string {
   const formatStr = format24h ? DATE_FORMATS.TIME_24H : DATE_FORMATS.TIME_12H;
   return format(date, formatStr, { locale: DEFAULT_LOCALE });
-}
-
-/**
- * 날짜가 현재 뷰 범위에 있는지 확인
- */
-export function isDateInViewRange(
-  date: Date,
-  viewDate: Date,
-  viewMode: TimelineViewMode
-): boolean {
-  switch (viewMode) {
-    case 'daily':
-      return isSameDay(date, viewDate);
-    case 'weekly':
-      return isSameWeek(date, viewDate, { weekStartsOn: 0, locale: DEFAULT_LOCALE });
-    case 'monthly':
-      return isSameMonth(date, viewDate);
-    default:
-      return false;
-  }
-}
-
-/**
- * 현재 뷰에서 오늘인지 확인 (클라이언트 전용)
- */
-export function isTodayInViewRange(
-  viewDate: Date,
-  viewMode: TimelineViewMode
-): boolean {
-  // SSR에서는 false 반환, 클라이언트에서만 실제 체크
-  if (typeof window === 'undefined') {
-    return false;
-  }
-  const today = new Date();
-  return isDateInViewRange(today, viewDate, viewMode);
 }
 
 /**
@@ -468,40 +358,6 @@ export function convertKstDateToUtcRange(kstDate: Date): {
 export function convertUtcToKst(utcDate: Date): Date {
   // UTC에 9시간을 더하면 KST
   return new Date(utcDate.getTime() + (9 * 60 * 60 * 1000));
-}
-
-/**
- * 뷰 모드 변경시 날짜 조정
- */
-export function adjustDateForViewMode(
-  currentDate: Date,
-  newViewMode: TimelineViewMode,
-  oldViewMode?: TimelineViewMode
-): Date {
-  // 같은 뷰 모드면 변경하지 않음
-  if (newViewMode === oldViewMode) return currentDate;
-  
-  // 일간 → 주간: 해당 주의 시작일로
-  if (newViewMode === 'weekly') {
-    return startOfWeek(currentDate, { weekStartsOn: 0, locale: DEFAULT_LOCALE });
-  }
-  
-  // 일간/주간 → 월간: 해당 월의 1일로
-  if (newViewMode === 'monthly') {
-    return startOfMonth(currentDate);
-  }
-  
-  // 주간/월간 → 일간: 현재 날짜 유지 또는 오늘로
-  if (newViewMode === 'daily') {
-    // 현재 뷰 범위에 오늘이 포함되어 있으면 오늘로, 아니면 현재 날짜 유지
-    const today = new Date();
-    if (oldViewMode && isDateInViewRange(today, currentDate, oldViewMode)) {
-      return today;
-    }
-    return currentDate;
-  }
-  
-  return currentDate;
 }
 
 /**

@@ -370,27 +370,6 @@ export interface UpdateTodoInput extends Partial<CreateTodoInput> {
   id: string;
 }
 
-// Timeline view types
-export type {
-  TimelineViewMode,
-  TimelineItemType,
-  BaseTimelineItem,
-  TodoTimelineItem,
-  TimelineTaskItem,
-  TimelineItem,
-  TimelineGroup,
-  TimelineHourSlot,
-  TimelineDayData,
-  TimelineWeekData,
-  TimelineMonthData,
-  TimelineViewport,
-  TimelineViewFilters,
-  TimelineViewSortOptions,
-  TimelineScrollState,
-  TimelineItemDimensions,
-  TimelineAnimationState,
-} from "./timeline-view";
-
 // ============================================
 // Second Brain System Types
 // ============================================

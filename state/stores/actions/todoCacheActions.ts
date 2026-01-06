@@ -1,6 +1,5 @@
 import { Todo } from "@/entities/todo/Todo";
 import { fetchTodosForDateRange } from "@/lib/supabaseWebViewHelper";
-import { useTimelineViewStore } from "@/state/stores/timelineViewStore";
 import {
   createAsyncAction,
   logStoreAction,
@@ -16,10 +15,9 @@ import {
 export const fetchTodosForCurrentViewAction = createAsyncAction(async (userId: string) => {
   logStoreAction("TodoStore", "fetchTodosForCurrentView");
 
-  // 현재 뷰의 날짜 범위 계산 (최적화: 선택된 날짜 기준 일일 로딩)
-  const timelineStore = useTimelineViewStore.getState();
-  const currentDate = timelineStore.currentDate || new Date();
-  
+  // 현재 날짜 기준 일일 로딩
+  const currentDate = new Date();
+
   // UTC 기준으로 날짜 범위 계산 (KST +9시간 보정)
   const utcStart = new Date(currentDate);
   utcStart.setUTCHours(0, 0, 0, 0);
@@ -37,7 +35,7 @@ export const fetchTodosForCurrentViewAction = createAsyncAction(async (userId: s
 
   try {
     const todos = await fetchTodosForDateRange(userId, utcStart, utcEnd);
-    
+
     console.log("✅ fetchTodosForCurrentView 완료:", {
       todosCount: todos.length,
       hasInitiallyLoaded: true,
@@ -61,7 +59,7 @@ export const fetchTodosForDateAction = async (userId: string, utcStart: Date, ut
 
   try {
     const todos = await fetchTodosForDateRange(userId, utcStart, utcEnd);
-    
+
     console.log("✅ fetchTodosForDate 완료:", {
       dateRange: `${utcStart.toISOString().split('T')[0]} ~ ${utcEnd.toISOString().split('T')[0]}`,
       todosCount: todos.length,

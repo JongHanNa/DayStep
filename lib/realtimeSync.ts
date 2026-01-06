@@ -1,7 +1,6 @@
 // lib/realtimeSync.ts - Supabase Realtime 실시간 동기화 시스템 (스마트 폴백 포함)
 import { supabase } from './supabase';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useTimelineViewStore } from '@/state/stores/timelineViewStore';
 import { Todo } from '@/entities/todo/Todo';
 import { Capacitor } from '@capacitor/core';
 import { startCapacitorPolling, stopCapacitorPolling } from './realtimeSyncFallback';
@@ -47,7 +46,6 @@ export function setupRealtimeSync() {
 
   // 스토어 인스턴스 가져오기
   const todoStore = useTodoStore.getState();
-  const timelineStore = useTimelineViewStore.getState();
 
   // 할일 테이블 실시간 구독 (Capacitor 환경 최적화)
   const todosChannelName = isNative ? 'todos-mobile-sync' : 'todos-web-sync';
