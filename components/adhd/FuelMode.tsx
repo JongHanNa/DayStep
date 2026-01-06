@@ -1258,7 +1258,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             disabled={!draftContent.trim()}
             className="btn btn-primary w-full gap-2"
           >
-            다 적었어
+            다음
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
