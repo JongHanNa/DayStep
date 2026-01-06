@@ -47,6 +47,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
+import MarkdownEditor from '@/components/notes/MarkdownEditor';
 
 interface FuelModeProps {
   onExit: () => void;
@@ -158,6 +159,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
 
   const {
     viewState,
+    draftTitle,
     draftContent,
     draftExperience,
     draftCommitment,
@@ -524,6 +526,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     if (!userId || !draftContent.trim()) return null;
 
     const note = await createFuelNote({
+      title: draftTitle.trim() || undefined,
       content: draftContent.trim(),
       linked_date: format(new Date(), 'yyyy-MM-dd'),
       is_pinned: false,
@@ -670,6 +673,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     setIsSaving(true);
     try {
       await createFuelNote({
+        title: draftTitle.trim() || undefined,
         content: draftContent.trim(),
         linked_date: format(new Date(), 'yyyy-MM-dd'),
         is_pinned: false,
@@ -806,6 +810,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     try {
       // 영감 노트 저장
       await createFuelNote({
+        title: draftTitle.trim() || undefined,
         content: draftContent.trim(),
         linked_date: format(new Date(), 'yyyy-MM-dd'),
         is_pinned: false,
@@ -818,7 +823,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [userId, draftContent, createFuelNote, setFuelViewState]);
+  }, [userId, draftTitle, draftContent, createFuelNote, setFuelViewState]);
 
   // 미처리 수집에서 "할일 만들기" 핸들러
   const handleCreateTodoFromEntry = useCallback((note: Note) => {
@@ -1218,17 +1223,30 @@ export default function FuelMode({ onExit }: FuelModeProps) {
 
         {/* 실행 연료 입력 폼 */}
         <div className="flex-1 space-y-4 overflow-y-auto">
+          {/* 제목 입력 (선택) */}
+          <div>
+            <label className="text-sm font-medium text-base-content/70 mb-1 block">
+              제목 (선택)
+            </label>
+            <input
+              type="text"
+              value={draftTitle}
+              onChange={(e) => setFuelDraft({ title: e.target.value })}
+              placeholder="제목을 입력하세요 (없으면 내용에서 자동 생성)"
+              className="input input-bordered w-full"
+            />
+          </div>
+
           {/* 1. 실행 연료 내용 (필수) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
               {FUEL_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
             </label>
-            <textarea
+            <MarkdownEditor
               value={draftContent}
-              onChange={(e) => setFuelDraft({ content: e.target.value })}
+              onChange={(value) => setFuelDraft({ content: value })}
               placeholder={FUEL_FIELD_LABELS.content.placeholder}
-              className="textarea textarea-bordered w-full h-32 resize-none"
-              autoFocus
+              minHeight={150}
             />
           </div>
         </div>

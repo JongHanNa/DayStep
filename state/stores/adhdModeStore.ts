@@ -67,6 +67,7 @@ interface FuelModeState {
   viewState: FuelViewState;
 
   // 수집 필드
+  draftTitle: string;             // 제목 (선택)
   draftContent: string;           // 나의 깨달음 (필수)
   draftSourceText: string;        // 배운 내용
   draftSourceReference: string;   // 출처
@@ -172,6 +173,7 @@ interface ADHDModeState {
   setFuelViewState: (viewState: FuelViewState) => void;
   setFuelDraft: (draft: {
     // 수집 필드
+    title?: string;
     content?: string;
     sourceText?: string;
     sourceReference?: string;
@@ -265,6 +267,7 @@ const DEFAULT_FUEL_MODE: FuelModeState = {
   startedAt: null,
   viewState: 'select-duration',
   // 수집 필드
+  draftTitle: '',
   draftContent: '',
   draftSourceText: '',
   draftSourceReference: '',
@@ -623,6 +626,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
               startedAt: new Date(),
               viewState: 'select-duration',
               // 수집 필드
+              draftTitle: '',
               draftContent: '',
               draftSourceText: '',
               draftSourceReference: '',
@@ -665,6 +669,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             fuelMode: {
               ...state.fuelMode,
               // 수집 필드
+              ...(draft.title !== undefined && { draftTitle: draft.title }),
               ...(draft.content !== undefined && { draftContent: draft.content }),
               ...(draft.sourceText !== undefined && { draftSourceText: draft.sourceText }),
               ...(draft.sourceReference !== undefined && { draftSourceReference: draft.sourceReference }),
@@ -687,6 +692,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             fuelMode: {
               ...state.fuelMode,
               // 수집 필드 초기화
+              draftTitle: '',
               draftContent: '',
               draftSourceText: '',
               draftSourceReference: '',
