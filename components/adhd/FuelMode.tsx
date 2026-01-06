@@ -1251,80 +1251,38 @@ export default function FuelMode({ onExit }: FuelModeProps) {
           </div>
         </div>
 
-        {/* 하단 버튼 */}
-        <div className="mt-4">
-          <button
-            onClick={() => setFuelViewState('inspiration-choice')}
-            disabled={!draftContent.trim()}
-            className="btn btn-primary w-full gap-2"
-          >
-            다음
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </motion.div>
-    );
-  };
-
-  // ============================================
-  // 영감 노트 선택 화면 (inspiration-choice) - "수집->실행" 플로우
-  // ============================================
-  const renderInspirationChoiceView = () => {
-    return (
-      <motion.div
-        key="inspiration-choice"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="flex flex-col h-full p-4"
-      >
-        {/* 헤더 */}
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            onClick={() => setFuelViewState('inspiration-input')}
-            className="btn btn-ghost btn-circle"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-bold">이 원동력으로 뭘 해볼까?</h1>
-        </div>
-
-        {/* 원동력 내용 미리보기 */}
-        <div className="bg-base-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-base-content/60 mb-1">채운 원동력</p>
-          <p className="text-base-content line-clamp-3">{draftContent}</p>
-        </div>
-
-        {/* 선택지 버튼들 */}
-        <div className="flex-1 flex flex-col gap-4">
+        {/* 하단 액션 버튼들 - 내용 입력 시 활성화 */}
+        <div className="mt-4 flex flex-col gap-3">
           {/* 지금 바로 할래 */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: draftContent.trim() ? 1.02 : 1 }}
+            whileTap={{ scale: draftContent.trim() ? 0.98 : 1 }}
             onClick={handleInspirationQuickTodo}
-            className="btn btn-primary btn-lg w-full h-20 flex items-center justify-center gap-3 shadow-lg"
+            disabled={!draftContent.trim()}
+            className="btn btn-primary btn-lg w-full h-16 flex items-center justify-center gap-3 shadow-lg"
           >
-            <Play className="w-7 h-7" />
-            <span className="text-xl font-semibold">지금 바로 할래</span>
+            <Play className="w-6 h-6" />
+            <span className="text-lg font-semibold">지금 바로 할래</span>
           </motion.button>
 
           {/* 언제 할지 정할래 */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: draftContent.trim() ? 1.02 : 1 }}
+            whileTap={{ scale: draftContent.trim() ? 0.98 : 1 }}
             onClick={handleInspirationScheduledTodo}
-            className="btn btn-ghost btn-lg w-full h-16 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
+            disabled={!draftContent.trim()}
+            className="btn btn-ghost btn-lg w-full h-14 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
           >
-            <CalendarClock className="w-6 h-6" />
-            <span className="text-lg font-semibold">언제 할지 정할래</span>
+            <CalendarClock className="w-5 h-5" />
+            <span className="text-base font-semibold">언제 할지 정할래</span>
           </motion.button>
 
           {/* 일단 저장만 */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: draftContent.trim() && !isSaving ? 1.02 : 1 }}
+            whileTap={{ scale: draftContent.trim() && !isSaving ? 0.98 : 1 }}
             onClick={handleInspirationSaveOnly}
-            disabled={isSaving}
+            disabled={!draftContent.trim() || isSaving}
             className="btn btn-ghost btn-md w-full flex items-center justify-center gap-2 text-base-content/60"
           >
             {isSaving ? (
@@ -1778,7 +1736,6 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
         {viewState === 'inspiration-input' && renderInspirationInputView()}
-        {viewState === 'inspiration-choice' && renderInspirationChoiceView()}
         {viewState === 'reflection-input' && renderTimerRunningView()}
         {viewState === 'action-choice' && renderActionChoiceView()}
         {viewState === 'quick-todo' && renderQuickTodoView()}
