@@ -73,10 +73,18 @@ export default function LandingPage() {
     html.classList.remove('bg-base-200');
     body.classList.remove('bg-base-200');
 
+    // 인라인 배경색을 투명으로 설정 (globals.css의 !important 오버라이드)
+    const originalHtmlBg = html.style.backgroundColor;
+    const originalBodyBg = body.style.backgroundColor;
+    html.style.setProperty('background-color', 'transparent', 'important');
+    body.style.setProperty('background-color', 'transparent', 'important');
+
     // 언마운트 시 원복
     return () => {
       html.className = htmlClasses;
       body.className = bodyClasses;
+      html.style.backgroundColor = originalHtmlBg;
+      body.style.backgroundColor = originalBodyBg;
     };
   }, []);
 
