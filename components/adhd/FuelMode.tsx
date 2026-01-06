@@ -1253,6 +1253,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
 
         {/* 하단 액션 버튼들 - 내용 입력 시 활성화 */}
         <div className="mt-4 flex flex-col gap-3">
+          {/* 섹션 라벨 */}
+          <p className="text-base font-semibold text-base-content/80 mb-1">
+            이걸로 뭐 할래?
+          </p>
           {/* 지금 바로 할래 */}
           <motion.button
             whileHover={{ scale: draftContent.trim() ? 1.02 : 1 }}
@@ -1310,7 +1314,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setFuelViewState('action-choice')}
+            onClick={() => setFuelViewState('inspiration-input')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1379,7 +1383,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setFuelViewState('action-choice')}
+            onClick={() => setFuelViewState('inspiration-input')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
