@@ -48,7 +48,7 @@ import { ko } from 'date-fns/locale';
 import { addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 
-interface InboxModeProps {
+interface FuelModeProps {
   onExit: () => void;
 }
 
@@ -72,12 +72,12 @@ const UNIFIED_TAGS = [
 ];
 
 /**
- * 쉬운 정리 패턴 모드 (Inbox Mode)
+ * 쉬운 정리 패턴 모드 (Fuel Mode)
  *
  * ExecutionMode처럼 타이머와 함께 기록 시간을 갖습니다.
  * 타이머 진행 중에 생각을 수집하고, 명료화하고, 할일을 계획합니다.
  */
-export default function InboxMode({ onExit }: InboxModeProps) {
+export default function FuelMode({ onExit }: FuelModeProps) {
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -1024,7 +1024,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
         {/* 오늘의 힌트 (정적 프롬프트) */}
         <div className="p-3 bg-base-200 rounded-xl mb-4">
-          <p className="text-sm text-base-content/60 mb-1">💡 오늘의 힌트</p>
+          <p className="text-sm text-base-content/60 mb-1">오늘의 힌트</p>
           <p className="font-medium">지금 떠오르는 게 뭐야?</p>
         </div>
 
@@ -1187,7 +1187,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   };
 
   // ============================================
-  // 영감 노트 입력 화면 (inspiration-input) - "수집→실행" 플로우
+  // 영감 노트 입력 화면 (inspiration-input) - "수집->실행" 플로우
   // ============================================
   const renderInspirationInputView = () => {
     return (
@@ -1212,7 +1212,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 안내 문구 (랜덤) */}
         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-4">
           <p className="text-sm text-amber-700 dark:text-amber-300">
-            ⛽ {fuelMessage}
+            {fuelMessage}
           </p>
         </div>
 
@@ -1249,7 +1249,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   };
 
   // ============================================
-  // 영감 노트 선택 화면 (inspiration-choice) - "수집→실행" 플로우
+  // 영감 노트 선택 화면 (inspiration-choice) - "수집->실행" 플로우
   // ============================================
   const renderInspirationChoiceView = () => {
     return (
@@ -1588,7 +1588,6 @@ export default function InboxMode({ onExit }: InboxModeProps) {
             transition={{ type: 'spring', delay: 0.2 }}
             className="text-6xl mb-4"
           >
-            ✨
           </motion.div>
           <h2 className="text-2xl font-bold mb-2 text-center">
             {projectName ? '오늘의 생각,정보가 계획이 되었어요!' : '오늘의 원동력을 채웠어요!'}

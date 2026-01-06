@@ -7,11 +7,11 @@ import { usePomodoro } from '@/hooks/usePomodoro';
 import { FUEL_TIMER_OPTIONS, type FuelTimerDuration } from '@/types/fuel';
 import CircularProgress from '@/components/pomodoro/CircularProgress';
 
-interface InboxTimerProps {
+interface FuelTimerProps {
   onComplete: () => void;
 }
 
-export default function InboxTimer({ onComplete }: InboxTimerProps) {
+export default function FuelTimer({ onComplete }: FuelTimerProps) {
   const [selectedDuration, setSelectedDuration] = useState<FuelTimerDuration>(10);
   const [isCompleted, setIsCompleted] = useState(false);
 
@@ -38,7 +38,7 @@ export default function InboxTimer({ onComplete }: InboxTimerProps) {
   const handleStart = useCallback(() => {
     if (!isWorkerReady) return;
     setIsCompleted(false);
-    startTimer(selectedDuration * 60 * 1000, 'POMODORO', `inbox-${Date.now()}`);
+    startTimer(selectedDuration * 60 * 1000, 'POMODORO', `fuel-${Date.now()}`);
   }, [isWorkerReady, selectedDuration, startTimer]);
 
   // 일시정지/재개
@@ -71,7 +71,7 @@ export default function InboxTimer({ onComplete }: InboxTimerProps) {
     <div className="flex flex-col items-center py-4">
       {/* 안내 문구 */}
       <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold mb-1">수집 타이머</h3>
+        <h3 className="text-lg font-semibold mb-1">원동력 타이머</h3>
         <p className="text-sm text-base-content/60">
           조용히 마음을 돌보는 시간을 가져보세요
         </p>
@@ -225,7 +225,7 @@ export default function InboxTimer({ onComplete }: InboxTimerProps) {
           className="mt-6 p-4 bg-base-200 rounded-xl text-center max-w-xs"
         >
           <p className="text-sm text-base-content/70">
-            💭 조용히 눈을 감고
+            조용히 눈을 감고
             <br />
             오늘 있었던 일들을 떠올려보세요
           </p>
