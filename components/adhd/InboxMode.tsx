@@ -45,6 +45,8 @@ import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { addTodoNote } from '@/lib/supabase/todo-notes';
+import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 
 interface InboxModeProps {
   onExit: () => void;
@@ -87,6 +89,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     endInboxMode,
     setCurrentRecommendation,
     enterExecuteMode,
+    startAdhocMode,
+    setSessionId,
+    setLinkedTodo,
   } = useADHDModeStore();
 
   // Inbox 노트 관리 (noteStore 사용)
@@ -235,14 +240,14 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     }
   };
 
-  // 지금 바로 할래 → 수집 저장 + 할일 생성 + ExecutionMode로 이동
+  // 지금 바로 할래 → 원동력 저장 + 할일 생성 + 타이머 시작 + ExecutionMode로 이동
   const handleStartQuickTodo = async () => {
     if (!userId || !quickTodoTitle.trim()) return;
 
     setIsSaving(true);
     try {
-      // 1. 수집 저장 (프로젝트 연결 없이)
-      await saveEntry();
+      // 1. 원동력(노트) 저장
+      const savedNote = await saveEntry();
 
       // 2. 할일 생성 (오늘 날짜, anytime)
       const today = new Date();
@@ -257,16 +262,29 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       });
 
       if (newTodo) {
-        // 3. 기존 수집에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
+        // 3. 노트-할일 연결 (todo_notes)
+        if (savedNote) {
+          await addTodoNote(newTodo.id, savedNote.id, userId);
+        }
+
+        // 4. 기존 노트에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
         if (selectedNoteId) {
           await markNoteAsProcessed(selectedNoteId);
           setSelectedNoteId(null); // 초기화
         }
 
-        // 4. ExecutionMode에 할일 설정
+        // 5. DB 세션 생성 (기본 25분) + 할일 연결
+        const duration = 25 * 60 * 1000; // 25분
+        const sessionId = await PomodoroSessionService.createSession(userId, duration);
+        await PomodoroSessionService.linkTodo(sessionId, newTodo.id);
+
+        // 6. adhoc 모드 활성화 + 할일 연결
+        startAdhocMode();
+        setSessionId(sessionId);
+        setLinkedTodo(newTodo.id, newTodo.title);
         setCurrentRecommendation(newTodo);
 
-        // 5. ExecutionMode로 전환
+        // 7. ExecutionMode로 전환 (세션 복원 로직이 자동으로 타이머 시작)
         await enterExecuteMode(userId);
       }
     } catch (error) {
@@ -276,14 +294,14 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     }
   };
 
-  // 예약 할일 저장 → 수집 저장 + 할일 생성 (날짜/시간 포함)
+  // 예약 할일 저장 → 원동력 저장 + 할일 생성 (날짜/시간 포함)
   const handleSaveScheduledTodo = async () => {
     if (!userId || !scheduledTodoTitle.trim() || !scheduledDate) return;
 
     setIsSaving(true);
     try {
-      // 1. 수집 저장
-      await saveEntry();
+      // 1. 원동력(노트) 저장
+      const savedNote = await saveEntry();
 
       // 2. 할일 생성 (예약된 날짜/시간)
       // 시간이 있으면 해당 시간, 없으면 자정으로 설정
@@ -294,20 +312,25 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         startTime = new Date(`${scheduledDate}T00:00:00+09:00`).toISOString();
       }
 
-      await createTodo({
+      const newTodo = await createTodo({
         user_id: userId,
         title: scheduledTodoTitle.trim(),
         start_time: startTime,
         schedule_type: scheduledTime ? 'timed' as const : 'anytime' as const,
       });
 
-      // 3. 기존 수집에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
+      // 3. 노트-할일 연결 (todo_notes)
+      if (newTodo && savedNote) {
+        await addTodoNote(newTodo.id, savedNote.id, userId);
+      }
+
+      // 4. 기존 노트에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
       if (selectedNoteId) {
         await markNoteAsProcessed(selectedNoteId);
         setSelectedNoteId(null); // 초기화
       }
 
-      // 4. 완료 화면으로 이동
+      // 5. 완료 화면으로 이동 (예약이므로 타이머 시작 안함)
       setInboxViewState('completed');
     } catch (error) {
       console.error('예약 할일 생성 실패:', error);
@@ -756,7 +779,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
         {/* 메인 액션 버튼들 */}
         <div className="flex flex-col gap-3 mb-6">
-          {/* 실행→수집 */}
+          {/* 먼저 실행 후 원동력 적기 */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -764,10 +787,10 @@ export default function InboxMode({ onExit }: InboxModeProps) {
             className="btn btn-primary btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg"
           >
             <Target className="w-6 h-6" />
-            <span className="text-lg font-semibold">실행→수집</span>
+            <span className="text-lg font-semibold">먼저 실행 후 원동력 적기</span>
           </motion.button>
 
-          {/* 수집→실행 */}
+          {/* 원동력 부터 적고 실행 */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -775,16 +798,16 @@ export default function InboxMode({ onExit }: InboxModeProps) {
             className="btn btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg bg-orange-500 text-white border-none hover:bg-orange-600"
           >
             <PenLine className="w-6 h-6" />
-            <span className="text-lg font-semibold">수집→실행</span>
+            <span className="text-lg font-semibold">원동력 부터 적고 실행</span>
           </motion.button>
         </div>
 
-        {/* 미처리 수집 목록 */}
+        {/* 미처리 원동력 목록 */}
         {unprocessedEntries.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Lightbulb className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-medium text-base-content/70">미처리 수집</span>
+              <span className="text-sm font-medium text-base-content/70">미처리 원동력</span>
               <span className="text-xs text-base-content/50">({unprocessedEntries.length}개)</span>
             </div>
             <div className="flex flex-col gap-2">
@@ -870,7 +893,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
             <BookOpen className="w-4 h-4" />
           </div>
-          <h1 className="text-lg font-bold">수집</h1>
+          <h1 className="text-lg font-bold">원동력 채우기</h1>
         </div>
 
         {/* 오늘의 힌트 (정적 프롬프트) */}
@@ -989,7 +1012,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
         {/* 수집한 내용 미리보기 */}
         <div className="bg-base-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-base-content/60 mb-1">수집한 내용</p>
+          <p className="text-sm text-base-content/60 mb-1">채운 원동력</p>
           <p className="text-base-content line-clamp-3">{draftContent}</p>
         </div>
 
@@ -1057,7 +1080,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-bold">실행 연료 채우기</h1>
+          <h1 className="text-xl font-bold">원동력 채우기</h1>
         </div>
 
         {/* 안내 문구 (랜덤) */}
@@ -1119,12 +1142,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-bold">이 연료로 뭘 해볼까?</h1>
+          <h1 className="text-xl font-bold">이 원동력으로 뭘 해볼까?</h1>
         </div>
 
-        {/* 연료 내용 미리보기 */}
+        {/* 원동력 내용 미리보기 */}
         <div className="bg-base-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-base-content/60 mb-1">채운 연료</p>
+          <p className="text-sm text-base-content/60 mb-1">채운 원동력</p>
           <p className="text-base-content line-clamp-3">{draftContent}</p>
         </div>
 
@@ -1195,7 +1218,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
         {/* 수집한 내용 미리보기 */}
         <div className="bg-base-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-base-content/60 mb-1">수집한 내용</p>
+          <p className="text-sm text-base-content/60 mb-1">채운 원동력</p>
           <p className="text-base-content line-clamp-2">{draftContent}</p>
         </div>
 
@@ -1264,7 +1287,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
         {/* 수집한 내용 미리보기 */}
         <div className="bg-base-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-base-content/60 mb-1">수집한 내용</p>
+          <p className="text-sm text-base-content/60 mb-1">채운 원동력</p>
           <p className="text-base-content line-clamp-2">{draftContent}</p>
         </div>
 
@@ -1442,16 +1465,16 @@ export default function InboxMode({ onExit }: InboxModeProps) {
             ✨
           </motion.div>
           <h2 className="text-2xl font-bold mb-2 text-center">
-            {projectName ? '오늘의 생각,정보가 계획이 되었어요!' : '오늘의 생각,정보를 수집했어요!'}
+            {projectName ? '오늘의 생각,정보가 계획이 되었어요!' : '오늘의 원동력을 채웠어요!'}
           </h2>
 
           {/* 요약 카드들 */}
           <div className="w-full max-w-sm space-y-3 mb-6">
-            {/* 수집 요약 */}
+            {/* 원동력 요약 */}
             <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
               <div className="flex items-center gap-2 mb-1">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium text-amber-700">수집</span>
+                <span className="text-sm font-medium text-amber-700">원동력</span>
               </div>
               <p className="text-sm text-base-content/80 line-clamp-2">
                 {draftContent || '(내용 없음)'}
@@ -1636,7 +1659,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         <dialog open className="modal z-[110]">
           <div className="modal-box max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">수집 수정</h3>
+              <h3 className="font-bold text-lg">원동력 수정</h3>
               <button
                 onClick={handleCloseEditModal}
                 className="btn btn-ghost btn-circle btn-sm"
@@ -1682,9 +1705,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           <div className="modal-box max-w-sm">
             <h3 className="font-bold text-lg mb-2">삭제 확인</h3>
             <p className="text-base-content/70">
-              이 수집을 삭제하시겠습니까?
+              이 원동력을 삭제하시겠습니까?
               <br />
-              <span className="text-sm text-error">삭제된 수집은 복구할 수 없습니다.</span>
+              <span className="text-sm text-error">삭제된 원동력은 복구할 수 없습니다.</span>
             </p>
             <div className="modal-action">
               <button onClick={handleCloseDeleteModal} className="btn btn-ghost">
