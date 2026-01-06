@@ -14,7 +14,6 @@ import {
   Clock,
   Minus,
   Plus,
-  History,
   Star,
   Lightbulb,
   FolderPlus,
@@ -831,7 +830,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{entry.content}</p>
                     <p className="text-xs text-base-content/50">
-                      {format(new Date(entry.created_at), 'M/d', { locale: ko })}
+                      {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
                     </p>
                   </div>
                   <button
@@ -903,22 +902,13 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                     </div>
                   )}
                   <p className="text-xs text-base-content/40 mt-1">
-                    {format(new Date(entry.created_at), 'M/d', { locale: ko })}
+                    {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
                   </p>
                 </div>
               ))}
             </div>
           </div>
         )}
-
-        {/* 전체 기록 보기 */}
-        <button
-          onClick={() => setInboxViewState('history')}
-          className="btn btn-ghost gap-2 w-full"
-        >
-          <History className="w-5 h-5" />
-          전체 기록 보기
-        </button>
       </div>
     </motion.div>
   );
