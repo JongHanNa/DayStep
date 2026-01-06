@@ -42,6 +42,9 @@ export interface Note {
   note_category?: NoteCategory;
   // Inbox fields (수집 기능용)
   is_processed?: boolean; // 할일로 변환 여부 (inbox 노트용)
+  // JOIN으로 가져오는 연결 데이터
+  todos?: { id: string; title: string }[];
+  connectedNotes?: { id: string; title: string }[];
 }
 
 // Note 생성 입력 타입
@@ -1264,16 +1267,28 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           try {
             set({ loading: true, error: null });
 
-            const notes = await queryRLSTableWithJWT('notes', {
+            // todo_notes JOIN으로 연결된 할일 정보도 가져옴
+            const rawNotes = await queryRLSTableWithJWT('notes', {
               column: 'user_id',
               operator: 'eq',
               value: userId
             }, {
+              select: '*,todo_notes(todo_id,todos(id,title))',
               order: 'created_at.desc'
             });
 
+            // todo_notes를 todos 배열로 변환
+            const notesWithTodos = (rawNotes || []).map((note: any) => {
+              const todos = (note.todo_notes || [])
+                .map((link: any) => link.todos)
+                .filter(Boolean);
+
+              const { todo_notes, ...rest } = note;
+              return { ...rest, todos };
+            });
+
             // note_category가 'inbox'인 노트만 필터링
-            const inboxNotes = (notes || []).filter(
+            const inboxNotes = notesWithTodos.filter(
               (note: Note) => note.note_category === 'inbox'
             );
 

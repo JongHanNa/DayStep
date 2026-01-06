@@ -31,6 +31,7 @@ import {
   PenLine,
   MoreVertical,
   Pencil,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -262,13 +263,14 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       });
 
       if (newTodo) {
-        // 3. 노트-할일 연결 (todo_notes)
+        // 3. 노트-할일 연결 (todo_notes) + 처리됨 표시
         if (savedNote) {
           await addTodoNote(newTodo.id, savedNote.id, userId);
+          await markNoteAsProcessed(savedNote.id);
         }
 
-        // 4. 기존 노트에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
-        if (selectedNoteId) {
+        // 4. 기존 노트에서 할일 만들기였으면 해당 노트도 처리됨으로 표시
+        if (selectedNoteId && selectedNoteId !== savedNote?.id) {
           await markNoteAsProcessed(selectedNoteId);
           setSelectedNoteId(null); // 초기화
         }
@@ -319,13 +321,14 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         schedule_type: scheduledTime ? 'timed' as const : 'anytime' as const,
       });
 
-      // 3. 노트-할일 연결 (todo_notes)
+      // 3. 노트-할일 연결 (todo_notes) + 처리됨 표시
       if (newTodo && savedNote) {
         await addTodoNote(newTodo.id, savedNote.id, userId);
+        await markNoteAsProcessed(savedNote.id);
       }
 
-      // 4. 기존 노트에서 할일 만들기였으면 해당 노트를 처리됨으로 표시
-      if (selectedNoteId) {
+      // 4. 기존 노트에서 할일 만들기였으면 해당 노트도 처리됨으로 표시
+      if (selectedNoteId && selectedNoteId !== savedNote?.id) {
         await markNoteAsProcessed(selectedNoteId);
         setSelectedNoteId(null); // 초기화
       }
@@ -670,9 +673,18 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // ============================================
 
   // 타이머 시간 선택 화면 (쉬운 정리 패턴)
-  // 미처리 수집 목록 (is_processed가 false인 것만 전체 표시)
+  // 미처리 원동력 목록: is_processed가 false이고 연결된 할일이 없는 것
   const unprocessedEntries = useMemo(() => {
-    return inboxNotes.filter(note => !note.is_processed);
+    return inboxNotes.filter(note =>
+      !note.is_processed && (note.todos?.length ?? 0) === 0
+    );
+  }, [inboxNotes]);
+
+  // 처리된 원동력 목록: is_processed가 true이거나 연결된 할일이 있는 것
+  const processedEntries = useMemo(() => {
+    return inboxNotes.filter(note =>
+      note.is_processed === true || (note.todos?.length ?? 0) > 0
+    );
   }, [inboxNotes]);
 
   // "실행과 집중으로 가기" 핸들러
@@ -856,6 +868,43 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                       </div>
                     )}
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 처리된 원동력 목록 */}
+        {processedEntries.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle2 className="w-4 h-4 text-success" />
+              <span className="text-sm font-medium text-base-content/70">처리된 원동력</span>
+              <span className="text-xs text-base-content/50">({processedEntries.length}개)</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {processedEntries.map(entry => (
+                <div
+                  key={entry.id}
+                  className="p-3 bg-base-200/50 rounded-xl"
+                >
+                  <p className="text-sm text-base-content/70 line-clamp-2">{entry.content}</p>
+                  {/* 연결된 할일 표시 */}
+                  {entry.todos && entry.todos.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {entry.todos.map((todo) => (
+                        <span
+                          key={todo.id}
+                          className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                        >
+                          {todo.title}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-base-content/40 mt-1">
+                    {format(new Date(entry.created_at), 'M/d', { locale: ko })}
+                  </p>
                 </div>
               ))}
             </div>
