@@ -40,7 +40,7 @@ interface TodoEditModalProps {
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
   // 연결된 실행 연료 섹션용 props
-  inboxNotes?: Note[]; // inbox 카테고리 노트 (실행 연료)
+  fuelNotes?: Note[]; // fuel 카테고리 노트 (실행 연료)
   showLinkedFuels?: boolean; // 연결된 연료 섹션 표시 여부 (기본값: true)
 }
 
@@ -66,11 +66,11 @@ export default function TodoEditModal({
   todoId,
   userId,
   onNoteImmediateSave,
-  inboxNotes = [],
+  fuelNotes = [],
   showLinkedFuels = true,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
-  const { createInboxNote } = useNoteStore();
+  const { createFuelNote } = useNoteStore();
 
   // 삭제 확인 다이얼로그 상태
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -93,8 +93,8 @@ export default function TodoEditModal({
     try {
       const noteIds = await getTodoNotes(todoId);
       if (noteIds.length > 0) {
-        // inboxNotes에서 연결된 노트 찾기
-        const linked = inboxNotes.filter(n => noteIds.includes(n.id));
+        // fuelNotes에서 연결된 노트 찾기
+        const linked = fuelNotes.filter(n => noteIds.includes(n.id));
         setLinkedNotes(linked);
       } else {
         setLinkedNotes([]);
@@ -105,7 +105,7 @@ export default function TodoEditModal({
     } finally {
       setIsLoadingLinkedNotes(false);
     }
-  }, [todoId, open, inboxNotes]);
+  }, [todoId, open, fuelNotes]);
 
   // 모달 열릴 때 연결된 노트 조회
   useEffect(() => {
@@ -132,7 +132,7 @@ export default function TodoEditModal({
 
     try {
       await addTodoNote(todoId, noteId, userId);
-      const note = inboxNotes.find(n => n.id === noteId);
+      const note = fuelNotes.find(n => n.id === noteId);
       if (note) {
         setLinkedNotes(prev => [...prev, note]);
       }
@@ -146,7 +146,7 @@ export default function TodoEditModal({
     if (!todoId || !userId) return;
 
     try {
-      const newNote = await createInboxNote({
+      const newNote = await createFuelNote({
         content: content.trim(),
         linked_date: null,
         is_pinned: false,
@@ -160,7 +160,7 @@ export default function TodoEditModal({
           user_id: userId,
           title: newNote.title || content.trim().slice(0, 50),
           content: newNote.content || content.trim(),
-          note_category: 'inbox',
+          note_category: 'fuel',
           is_pinned: false,
           created_at: newNote.created_at || new Date().toISOString(),
           updated_at: newNote.updated_at || new Date().toISOString(),
@@ -273,7 +273,7 @@ export default function TodoEditModal({
             <LinkedFuelsSection
               todoId={todoId}
               linkedNotes={linkedNotes}
-              allNotes={inboxNotes}
+              allNotes={fuelNotes}
               onUnlink={handleUnlinkNote}
               onLink={handleLinkNote}
               onCreateAndLink={handleCreateAndLinkNote}

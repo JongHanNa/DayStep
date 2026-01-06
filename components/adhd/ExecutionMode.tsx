@@ -1016,7 +1016,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
                 title: t.title,
                 isRelationshipTask: t.isRelationshipTask
               }))}
-              notes={allNotes.filter(n => n.note_category === 'inbox')}
+              notes={allNotes.filter(n => n.note_category === 'fuel')}
               onConnectNote={handleConnectNoteFromCompleted}
               lastCompletedTodoId={
                 todayCompletedTodos.length > 0
@@ -1091,7 +1091,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
           {viewState === 'adhoc-note-connection' && (
             <AdhocNoteConnectionView
               key="adhoc-note-connection"
-              notes={allNotes.filter(n => n.note_category === 'inbox')}
+              notes={allNotes.filter(n => n.note_category === 'fuel')}
               selectedNoteId={selectedNoteId}
               onSelectNote={setSelectedNoteId}
               newNoteContent={newNoteContent}

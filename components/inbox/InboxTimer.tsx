@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Check, Sparkles } from 'lucide-react';
 import { usePomodoro } from '@/hooks/usePomodoro';
-import { INBOX_TIMER_OPTIONS, type InboxTimerDuration } from '@/types/inbox';
+import { FUEL_TIMER_OPTIONS, type FuelTimerDuration } from '@/types/fuel';
 import CircularProgress from '@/components/pomodoro/CircularProgress';
 
 interface InboxTimerProps {
@@ -12,7 +12,7 @@ interface InboxTimerProps {
 }
 
 export default function InboxTimer({ onComplete }: InboxTimerProps) {
-  const [selectedDuration, setSelectedDuration] = useState<InboxTimerDuration>(10);
+  const [selectedDuration, setSelectedDuration] = useState<FuelTimerDuration>(10);
   const [isCompleted, setIsCompleted] = useState(false);
 
   const {
@@ -80,7 +80,7 @@ export default function InboxTimer({ onComplete }: InboxTimerProps) {
       {/* 시간 선택 (타이머 비활성 상태에서만) */}
       {!isRunning && !isPaused && !isCompleted && (
         <div className="flex gap-2 mb-6">
-          {INBOX_TIMER_OPTIONS.map((mins) => (
+          {FUEL_TIMER_OPTIONS.map((mins) => (
             <button
               key={mins}
               onClick={() => setSelectedDuration(mins)}

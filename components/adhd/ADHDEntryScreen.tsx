@@ -16,7 +16,7 @@ interface ADHDEntryScreenProps {
   onCare: () => void;
   onRelationshipInsights: () => void;
   onTaskOrganize: () => void;
-  onInbox: () => void;
+  onFuel: () => void;
 }
 
 /**
@@ -26,7 +26,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelationshipInsights, onTaskOrganize, onInbox }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelationshipInsights, onTaskOrganize, onFuel }: ADHDEntryScreenProps) {
   const router = useRouter();
   const { awakeningSentence } = useADHDModeStore();
   const { showDescriptions, setShowDescriptions } = useSettingsStore();
@@ -205,7 +205,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={onInbox}
+              onClick={onFuel}
               className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
             >
               <Lightbulb className="w-7 h-7" />

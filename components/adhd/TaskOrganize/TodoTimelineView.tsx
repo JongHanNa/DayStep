@@ -35,8 +35,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 삭제 확인 상태
   const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
 
-  // 연결된 실행 연료를 위한 inbox 노트 상태
-  const [inboxNotes, setInboxNotes] = useState<Note[]>([]);
+  // 연결된 실행 연료를 위한 fuel 노트 상태
+  const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
@@ -54,20 +54,20 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     loadData();
   }, [userId, fetchAllTodos, loadPeople]);
 
-  // inbox 노트 로드 (편집 모달에서 연결된 연료 표시용)
+  // fuel 노트 로드 (편집 모달에서 연결된 연료 표시용)
   useEffect(() => {
-    const loadInboxNotes = async () => {
+    const loadFuelNotes = async () => {
       if (!userId) return;
 
       try {
         const allNotes = await fetchNotesWithJWT(userId);
-        const inbox = allNotes.filter(n => n.note_category === 'inbox');
-        setInboxNotes(inbox);
+        const fuel = allNotes.filter(n => n.note_category === 'fuel');
+        setFuelNotes(fuel);
       } catch (error) {
-        console.error('inbox 노트 로드 실패:', error);
+        console.error('fuel 노트 로드 실패:', error);
       }
     };
-    loadInboxNotes();
+    loadFuelNotes();
   }, [userId]);
 
   // 프로젝트/목표 매핑 생성
@@ -345,7 +345,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         todoId={editingTodo?.id}
         userId={userId}
         showLinkedFuels={true}
-        inboxNotes={inboxNotes}
+        fuelNotes={fuelNotes}
       />
 
       {/* 삭제 확인 다이얼로그 */}

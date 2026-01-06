@@ -93,7 +93,7 @@ export default function AppHeader() {
   // ADHD 모드에서 헤더 숨김 (entry, execute, care, relationship-insights)
   // organize 모드는 헤더 표시 (그래프 뷰 표시)
   // currentMode가 null이어도 adhdModeEnabled가 true면 entry 화면이므로 숨김
-  const headerHiddenModes: ADHDMode[] = ['entry', 'execute', 'care', 'relationship-insights', 'task-organize', 'inbox'];
+  const headerHiddenModes: ADHDMode[] = ['entry', 'execute', 'care', 'relationship-insights', 'task-organize', 'fuel'];
   const shouldHideForADHDMode = adhdModeEnabled && (currentMode === null || headerHiddenModes.includes(currentMode));
 
   const shouldHide = alwaysHiddenPaths.some(path => normalizedPathname === path) ||

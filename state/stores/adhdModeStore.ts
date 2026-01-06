@@ -6,7 +6,7 @@ import { Todo } from '@/entities/todo/Todo';
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'inbox' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | null;
 
 // 즉흥 모드 상태 (지금 떠오른 거 할래)
 interface AdhocModeState {
@@ -52,14 +52,19 @@ interface CareModeState {
 }
 
 // 쉬운 정리 패턴 모드 상태 (구 나의 마음 챙기기)
-import type { InboxViewState, TodoDraft } from '@/types/inbox';
-export type { InboxViewState };
-export type InboxEntryType = 'reflection' | 'comfort' | 'gratitude';
+import type { FuelViewState, TodoDraft } from '@/types/fuel';
+export type { FuelViewState };
+export type FuelEntryType = 'reflection' | 'comfort' | 'gratitude';
 
-interface InboxModeState {
+/** @deprecated Use FuelViewState instead */
+export type InboxViewState = FuelViewState;
+/** @deprecated Use FuelEntryType instead */
+export type InboxEntryType = FuelEntryType;
+
+interface FuelModeState {
   isActive: boolean;
   startedAt: Date | null;
-  viewState: InboxViewState;
+  viewState: FuelViewState;
 
   // 수집 필드
   draftContent: string;           // 나의 깨달음 (필수)
@@ -105,7 +110,7 @@ interface ADHDModeState {
   careMode: CareModeState;
 
   // 쉬운 정리 패턴 모드 상태
-  inboxMode: InboxModeState;
+  fuelMode: FuelModeState;
 
   // 사용자 설정
   awakeningSentence: string | null;
@@ -163,9 +168,9 @@ interface ADHDModeState {
   enterTaskOrganizeMode: (userId: string) => void;
 
   // === 쉬운 정리 패턴 모드 Actions ===
-  enterInboxMode: (userId: string) => void;
-  setInboxViewState: (viewState: InboxViewState) => void;
-  setInboxDraft: (draft: {
+  enterFuelMode: (userId: string) => void;
+  setFuelViewState: (viewState: FuelViewState) => void;
+  setFuelDraft: (draft: {
     // 수집 필드
     content?: string;
     sourceText?: string;
@@ -181,7 +186,18 @@ interface ADHDModeState {
     newProjectPreparation?: string;
     todosDraft?: TodoDraft[];
   }) => void;
+  resetFuelDraft: () => void;
+  endFuelMode: () => void;
+
+  /** @deprecated Use enterFuelMode instead */
+  enterInboxMode: (userId: string) => void;
+  /** @deprecated Use setFuelViewState instead */
+  setInboxViewState: (viewState: FuelViewState) => void;
+  /** @deprecated Use setFuelDraft instead */
+  setInboxDraft: (draft: any) => void;
+  /** @deprecated Use resetFuelDraft instead */
   resetInboxDraft: () => void;
+  /** @deprecated Use endFuelMode instead */
   endInboxMode: () => void;
 
   // === 설정 Actions ===
@@ -244,7 +260,7 @@ const DEFAULT_CARE_MODE: CareModeState = {
   linkedTodoId: null,
 };
 
-const DEFAULT_INBOX_MODE: InboxModeState = {
+const DEFAULT_FUEL_MODE: FuelModeState = {
   isActive: false,
   startedAt: null,
   viewState: 'select-duration',
@@ -277,7 +293,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
-        inboxMode: DEFAULT_INBOX_MODE,
+        fuelMode: DEFAULT_FUEL_MODE,
         awakeningSentence: null,
         cachedPatterns: null,
         isLoadingPatterns: false,
@@ -317,7 +333,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             executionMode: DEFAULT_EXECUTION_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
             careMode: DEFAULT_CARE_MODE,
-            inboxMode: DEFAULT_INBOX_MODE,
+            fuelMode: DEFAULT_FUEL_MODE,
             currentUserId: null,
           });
         },
@@ -597,12 +613,12 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         // === 쉬운 정리 패턴 모드 Actions ===
-        enterInboxMode: (userId: string) => {
-          console.log('💡 ADHD: 쉬운 정리 패턴 모드 진입');
+        enterFuelMode: (userId: string) => {
+          console.log('💡 ADHD: 원동력 모드 진입');
           set({
-            currentMode: 'inbox',
+            currentMode: 'fuel',
             currentUserId: userId,
-            inboxMode: {
+            fuelMode: {
               isActive: true,
               startedAt: new Date(),
               viewState: 'select-duration',
@@ -624,30 +640,30 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
         },
 
-        setInboxViewState: (viewState: InboxViewState) => {
-          console.log('💡 ADHD: 쉬운 정리 패턴 뷰 상태 변경', viewState);
+        setFuelViewState: (viewState: FuelViewState) => {
+          console.log('💡 ADHD: 원동력 뷰 상태 변경', viewState);
           set((state) => ({
-            inboxMode: {
-              ...state.inboxMode,
+            fuelMode: {
+              ...state.fuelMode,
               viewState,
             }
           }));
         },
 
-        setInboxEntryType: (entryType: InboxEntryType) => {
-          console.log('💡 ADHD: 쉬운 정리 패턴 유형 선택', entryType);
+        setFuelEntryType: (entryType: FuelEntryType) => {
+          console.log('💡 ADHD: 원동력 유형 선택', entryType);
           set((state) => ({
-            inboxMode: {
-              ...state.inboxMode,
+            fuelMode: {
+              ...state.fuelMode,
               selectedEntryType: entryType,
             }
           }));
         },
 
-        setInboxDraft: (draft) => {
+        setFuelDraft: (draft) => {
           set((state) => ({
-            inboxMode: {
-              ...state.inboxMode,
+            fuelMode: {
+              ...state.fuelMode,
               // 수집 필드
               ...(draft.content !== undefined && { draftContent: draft.content }),
               ...(draft.sourceText !== undefined && { draftSourceText: draft.sourceText }),
@@ -666,10 +682,10 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        resetInboxDraft: () => {
+        resetFuelDraft: () => {
           set((state) => ({
-            inboxMode: {
-              ...state.inboxMode,
+            fuelMode: {
+              ...state.fuelMode,
               // 수집 필드 초기화
               draftContent: '',
               draftSourceText: '',
@@ -688,12 +704,43 @@ export const useADHDModeStore = create<ADHDModeState>()(
           }));
         },
 
-        endInboxMode: () => {
-          console.log('💡 ADHD: 쉬운 정리 패턴 모드 종료');
+        endFuelMode: () => {
+          console.log('💡 ADHD: 원동력 모드 종료');
           set({
             currentMode: 'entry',
-            inboxMode: DEFAULT_INBOX_MODE,
+            fuelMode: DEFAULT_FUEL_MODE,
           });
+        },
+
+        // === 하위 호환성을 위한 별칭 (deprecated) ===
+        /** @deprecated Use enterFuelMode instead */
+        enterInboxMode: (userId: string) => {
+          console.warn('⚠️ enterInboxMode는 deprecated입니다. enterFuelMode를 사용하세요.');
+          get().enterFuelMode(userId);
+        },
+
+        /** @deprecated Use setFuelViewState instead */
+        setInboxViewState: (viewState: FuelViewState) => {
+          console.warn('⚠️ setInboxViewState는 deprecated입니다. setFuelViewState를 사용하세요.');
+          get().setFuelViewState(viewState);
+        },
+
+        /** @deprecated Use setFuelDraft instead */
+        setInboxDraft: (draft: any) => {
+          console.warn('⚠️ setInboxDraft는 deprecated입니다. setFuelDraft를 사용하세요.');
+          get().setFuelDraft(draft);
+        },
+
+        /** @deprecated Use resetFuelDraft instead */
+        resetInboxDraft: () => {
+          console.warn('⚠️ resetInboxDraft는 deprecated입니다. resetFuelDraft를 사용하세요.');
+          get().resetFuelDraft();
+        },
+
+        /** @deprecated Use endFuelMode instead */
+        endInboxMode: () => {
+          console.warn('⚠️ endInboxMode는 deprecated입니다. endFuelMode를 사용하세요.');
+          get().endFuelMode();
         },
 
         // === 설정 Actions ===

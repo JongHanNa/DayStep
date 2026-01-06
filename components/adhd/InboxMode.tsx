@@ -34,8 +34,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import type { MoodLevel, TodoDraft } from '@/types/inbox';
-import { INBOX_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS, FUEL_MESSAGES } from '@/types/inbox';
+import type { MoodLevel, TodoDraft } from '@/types/fuel';
+import { FUEL_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS, FUEL_MESSAGES } from '@/types/fuel';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore, type Note } from '@/state/stores/noteStore';
 import { usePomodoro } from '@/hooks/usePomodoro';
@@ -45,7 +45,7 @@ import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { addTodoNote } from '@/lib/supabase/todo-notes';
+import { addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 
 interface InboxModeProps {
@@ -82,11 +82,11 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   const userId = user?.id;
 
   const {
-    inboxMode,
-    setInboxViewState,
-    setInboxDraft,
-    resetInboxDraft,
-    endInboxMode,
+    fuelMode,
+    setFuelViewState,
+    setFuelDraft,
+    resetFuelDraft,
+    endFuelMode,
     setCurrentRecommendation,
     enterExecuteMode,
     startAdhocMode,
@@ -94,12 +94,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     setLinkedTodo,
   } = useADHDModeStore();
 
-  // Inbox 노트 관리 (noteStore 사용)
+  // Fuel 노트 관리 (noteStore 사용)
   const {
     notes,
-    getInboxNotes,
-    createInboxNote,
-    getUnprocessedInboxNotes,
+    getFuelNotes,
+    createFuelNote,
+    getUnprocessedFuelNotes,
     markNoteAsProcessed,
     pinNote,
     unpinNote,
@@ -108,9 +108,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     loading: notesLoading,
   } = useNoteStore();
 
-  // Inbox 노트만 필터링 (entries 대신 사용)
-  const inboxNotes = useMemo(() =>
-    notes.filter(note => note.note_category === 'inbox'),
+  // Fuel 노트만 필터링 (entries 대신 사용)
+  const fuelNotes = useMemo(() =>
+    notes.filter(note => note.note_category === 'fuel'),
     [notes]
   );
 
@@ -144,11 +144,17 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   const [scheduledTime, setScheduledTime] = useState(''); // 예약 시간
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null); // 기존 수집에서 할일 만들기 시 해당 노트 ID
 
-  // 편집/삭제 모달 상태
+  // 노트 편집/삭제 모달 상태
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [editContent, setEditContent] = useState('');
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  // 할일 편집/삭제 모달 상태
+  const [editingTodo, setEditingTodo] = useState<{ id: string; title: string; noteId: string } | null>(null);
+  const [editTodoTitle, setEditTodoTitle] = useState('');
+  const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
+  const [deletingTodoNoteId, setDeletingTodoNoteId] = useState<string | null>(null);
 
   const {
     viewState,
@@ -163,10 +169,10 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     // 할일 계획 필드
     newProjectPreparation,
     todosDraft,
-  } = inboxMode;
+  } = fuelMode;
 
   // 할일 스토어
-  const { createTodo } = useTodoStore();
+  const { createTodo, updateTodo, deleteTodo } = useTodoStore();
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열/빈 함수로 대체
   const projects: { id: string; title: string }[] = [];
@@ -180,9 +186,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 허브 화면 또는 history 뷰일 때 기록 로드
   useEffect(() => {
     if (userId && (viewState === 'history' || viewState === 'select-duration')) {
-      getInboxNotes(userId);
+      getFuelNotes(userId);
     }
-  }, [userId, viewState, getInboxNotes]);
+  }, [userId, viewState, getFuelNotes]);
 
   // 타이머 시작 시 - 질문 기능 제거됨 (DB 테이블 삭제)
   // 이전: loadRandomPrompt('reflection')
@@ -196,7 +202,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
   // 타이머 시작
   const handleStartTimer = () => {
-    setInboxViewState('reflection-input');
+    setFuelViewState('reflection-input');
     if (!skipTimer) {
       startPomodoroTimer(selectedDuration * 60 * 1000);
     }
@@ -205,23 +211,23 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 타이머 없이 시작
   const handleStartWithoutTimer = () => {
     setSkipTimer(true);
-    setInboxViewState('reflection-input');
+    setFuelViewState('reflection-input');
   };
 
   // 선택지 화면으로 이동 (수집 후)
   const handleGoToActionChoice = () => {
     stopTimer();
-    setInboxViewState('action-choice');
+    setFuelViewState('action-choice');
   };
 
   // 지금 바로 할래 → 할일 입력 화면
   const handleQuickTodo = () => {
-    setInboxViewState('quick-todo');
+    setFuelViewState('quick-todo');
   };
 
   // 언제 할지 정할래 → 예약 할일 화면
   const handleScheduledTodo = () => {
-    setInboxViewState('scheduled-todo');
+    setFuelViewState('scheduled-todo');
   };
 
   // 저장만 할래 → 바로 저장 후 completed 화면
@@ -232,7 +238,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     try {
       // 기분/태그 없이 바로 저장
       await saveEntry();
-      setInboxViewState('completed');
+      setFuelViewState('completed');
     } catch (error) {
       console.error('저장 실패:', error);
     } finally {
@@ -333,7 +339,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       }
 
       // 5. 완료 화면으로 이동 (예약이므로 타이머 시작 안함)
-      setInboxViewState('completed');
+      setFuelViewState('completed');
     } catch (error) {
       console.error('예약 할일 생성 실패:', error);
     } finally {
@@ -344,7 +350,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 과제 없이 끝내기
   const handleFinishWithoutProject = async () => {
     await saveEntry();
-    setInboxViewState('completed');
+    setFuelViewState('completed');
   };
 
   // ============================================
@@ -408,16 +414,86 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     setOpenDropdownId(prev => prev === noteId ? null : noteId);
   };
 
+  // ============================================
+  // 할일 편집/삭제 핸들러
+  // ============================================
+
+  // 할일 편집 모달 열기
+  const handleOpenTodoEditModal = (todoId: string, todoTitle: string, noteId: string) => {
+    setEditingTodo({ id: todoId, title: todoTitle, noteId });
+    setEditTodoTitle(todoTitle);
+  };
+
+  // 할일 편집 저장
+  const handleSaveTodoEdit = async () => {
+    if (!editingTodo || !editTodoTitle.trim()) return;
+
+    try {
+      await updateTodo(editingTodo.id, {
+        title: editTodoTitle.trim(),
+      });
+      setEditingTodo(null);
+      setEditTodoTitle('');
+      // 노트 목록 새로고침 (연결된 할일 정보 갱신)
+      if (userId) {
+        await getFuelNotes(userId);
+      }
+    } catch (error) {
+      console.error('할일 수정 실패:', error);
+    }
+  };
+
+  // 할일 편집 모달 닫기
+  const handleCloseTodoEditModal = () => {
+    setEditingTodo(null);
+    setEditTodoTitle('');
+  };
+
+  // 할일 삭제/연결해제 모달 열기
+  const handleOpenTodoDeleteModal = (todoId: string, noteId: string) => {
+    setDeletingTodoId(todoId);
+    setDeletingTodoNoteId(noteId);
+  };
+
+  // 할일 삭제 실행 (연결 해제 또는 완전 삭제)
+  const handleConfirmTodoDelete = async (deleteCompletely: boolean = false) => {
+    if (!deletingTodoId || !deletingTodoNoteId || !userId) return;
+
+    try {
+      if (deleteCompletely) {
+        // 할일 완전 삭제
+        await deleteTodo(deletingTodoId);
+      } else {
+        // 연결만 해제 (할일은 유지)
+        await removeTodoNote(deletingTodoId, deletingTodoNoteId);
+      }
+
+      setDeletingTodoId(null);
+      setDeletingTodoNoteId(null);
+
+      // 노트 목록 새로고침
+      await getFuelNotes(userId);
+    } catch (error) {
+      console.error('할일 처리 실패:', error);
+    }
+  };
+
+  // 할일 삭제 모달 닫기
+  const handleCloseTodoDeleteModal = () => {
+    setDeletingTodoId(null);
+    setDeletingTodoNoteId(null);
+  };
+
   // 할일 없이 끝내기
   const handleFinishWithoutTodos = async () => {
     await saveEntryAndProject();
-    setInboxViewState('completed');
+    setFuelViewState('completed');
   };
 
   // 전체 완료 (할일까지)
   const handleCompleteAll = async () => {
     await saveEntryAndProjectAndTodos();
-    setInboxViewState('completed');
+    setFuelViewState('completed');
   };
 
   // 할일 초안 추가
@@ -428,26 +504,26 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       scheduledDate: format(new Date(), 'yyyy-MM-dd'),
       scheduledTime: null,
     };
-    setInboxDraft({ todosDraft: [...todosDraft, newTodo] });
+    setFuelDraft({ todosDraft: [...todosDraft, newTodo] });
   };
 
   // 할일 초안 수정
   const handleUpdateTodoDraft = (id: string, updates: Partial<TodoDraft>) => {
-    setInboxDraft({
+    setFuelDraft({
       todosDraft: todosDraft.map(t => t.id === id ? { ...t, ...updates } : t),
     });
   };
 
   // 할일 초안 삭제
   const handleRemoveTodoDraft = (id: string) => {
-    setInboxDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
+    setFuelDraft({ todosDraft: todosDraft.filter(t => t.id !== id) });
   };
 
-  // 수집 저장 (notes 테이블에 inbox로 저장)
+  // 수집 저장 (notes 테이블에 fuel로 저장)
   const saveEntry = async () => {
     if (!userId || !draftContent.trim()) return null;
 
-    const note = await createInboxNote({
+    const note = await createFuelNote({
       content: draftContent.trim(),
       linked_date: format(new Date(), 'yyyy-MM-dd'),
       is_pinned: false,
@@ -530,7 +606,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     }
 
     await saveEntry();
-    setInboxViewState('completed');
+    setFuelViewState('completed');
   };
 
   // 할일 없이 저장 (프로젝트 + 기록만)
@@ -551,7 +627,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     }
 
     await saveEntry();
-    setInboxViewState('completed');
+    setFuelViewState('completed');
   };
 
   // 생성된 프로젝트 이름 (완료 화면용)
@@ -566,20 +642,20 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 타이머 완료 처리
   const handleTimerComplete = useCallback(() => {
     stopTimer();
-    setInboxViewState('capture');
-  }, [stopTimer, setInboxViewState]);
+    setFuelViewState('capture');
+  }, [stopTimer, setFuelViewState]);
 
   // 타이머 드래그로 완료
   const handleDragComplete = () => {
     stopTimer();
-    setInboxViewState('capture');
+    setFuelViewState('capture');
   };
 
   // 타이머 중지 (뒤로가기)
   const handleStopTimer = () => {
     stopTimer();
-    resetInboxDraft();
-    setInboxViewState('select-duration');
+    resetFuelDraft();
+    setFuelViewState('select-duration');
   };
 
   // 시간 조정
@@ -593,16 +669,16 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
     setIsSaving(true);
     try {
-      await createInboxNote({
+      await createFuelNote({
         content: draftContent.trim(),
         linked_date: format(new Date(), 'yyyy-MM-dd'),
         is_pinned: false,
       });
 
-      resetInboxDraft();
+      resetFuelDraft();
       setMoodRating(null);
       setSelectedTags([]);
-      setInboxViewState('completed');
+      setFuelViewState('completed');
     } catch (error) {
       console.error('기록 저장 실패:', error);
     } finally {
@@ -612,10 +688,10 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
   // 저장 건너뛰기
   const handleSkipSave = () => {
-    resetInboxDraft();
+    resetFuelDraft();
     setMoodRating(null);
     setSelectedTags([]);
-    setInboxViewState('completed');
+    setFuelViewState('completed');
   };
 
   // 뒤로가기 처리
@@ -625,24 +701,24 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         handleStopTimer();
         break;
       case 'action-choice':
-        setInboxViewState('reflection-input');
+        setFuelViewState('reflection-input');
         break;
       case 'quick-todo':
       case 'scheduled-todo':
-        setInboxViewState('action-choice');
+        setFuelViewState('action-choice');
         break;
       case 'capture':
-        setInboxViewState('action-choice');
+        setFuelViewState('action-choice');
         break;
       case 'history':
-        setInboxViewState('select-duration');
+        setFuelViewState('select-duration');
         break;
       case 'completed':
-        endInboxMode();
+        endFuelMode();
         onExit();
         break;
       default:
-        endInboxMode();
+        endFuelMode();
         onExit();
     }
   };
@@ -674,24 +750,24 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 타이머 시간 선택 화면 (쉬운 정리 패턴)
   // 미처리 원동력 목록: is_processed가 false이고 연결된 할일이 없는 것
   const unprocessedEntries = useMemo(() => {
-    return inboxNotes.filter(note =>
+    return fuelNotes.filter(note =>
       !note.is_processed && (note.todos?.length ?? 0) === 0
     );
-  }, [inboxNotes]);
+  }, [fuelNotes]);
 
   // 처리된 원동력 목록: is_processed가 true이거나 연결된 할일이 있는 것
   const processedEntries = useMemo(() => {
-    return inboxNotes.filter(note =>
+    return fuelNotes.filter(note =>
       note.is_processed === true || (note.todos?.length ?? 0) > 0
     );
-  }, [inboxNotes]);
+  }, [fuelNotes]);
 
   // "실행과 집중으로 가기" 핸들러
   const handleGoToExecute = useCallback(() => {
     if (!userId) return;
-    endInboxMode();
+    endFuelMode();
     enterExecuteMode(userId);
-  }, [userId, endInboxMode, enterExecuteMode]);
+  }, [userId, endFuelMode, enterExecuteMode]);
 
   // "새로 수집하기" 핸들러 (기본 10분 타이머로 바로 시작) - 레거시
   const handleStartNewCollection = useCallback(() => {
@@ -702,9 +778,9 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
   // "수집→실행" 핸들러 (영감 노트 입력 화면으로 이동)
   const handleStartCollectToExecute = useCallback(() => {
-    resetInboxDraft();  // 기존 draft 초기화
-    setInboxViewState('inspiration-input');
-  }, [resetInboxDraft, setInboxViewState]);
+    resetFuelDraft();  // 기존 draft 초기화
+    setFuelViewState('inspiration-input');
+  }, [resetFuelDraft, setFuelViewState]);
 
   // ============================================
   // 영감 노트 플로우 핸들러들
@@ -713,14 +789,14 @@ export default function InboxMode({ onExit }: InboxModeProps) {
   // 영감 노트 저장 후 "지금 바로 할래"
   const handleInspirationQuickTodo = useCallback(() => {
     // quick-todo 화면으로 이동 (기존 플로우 재사용)
-    setInboxViewState('quick-todo');
-  }, [setInboxViewState]);
+    setFuelViewState('quick-todo');
+  }, [setFuelViewState]);
 
   // 영감 노트 저장 후 "언제 할지 정할래"
   const handleInspirationScheduledTodo = useCallback(() => {
     // scheduled-todo 화면으로 이동 (기존 플로우 재사용)
-    setInboxViewState('scheduled-todo');
-  }, [setInboxViewState]);
+    setFuelViewState('scheduled-todo');
+  }, [setFuelViewState]);
 
   // 영감 노트 "일단 저장만"
   const handleInspirationSaveOnly = useCallback(async () => {
@@ -729,32 +805,32 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     setIsSaving(true);
     try {
       // 영감 노트 저장
-      await createInboxNote({
+      await createFuelNote({
         content: draftContent.trim(),
         linked_date: format(new Date(), 'yyyy-MM-dd'),
         is_pinned: false,
       });
 
       // 완료 화면으로 이동
-      setInboxViewState('completed');
+      setFuelViewState('completed');
     } catch (error) {
       console.error('영감 노트 저장 실패:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [userId, draftContent, createInboxNote, setInboxViewState]);
+  }, [userId, draftContent, createFuelNote, setFuelViewState]);
 
   // 미처리 수집에서 "할일 만들기" 핸들러
   const handleCreateTodoFromEntry = useCallback((note: Note) => {
     // 해당 수집의 노트 ID 저장 (할일 생성 후 처리됨으로 표시하기 위해)
     setSelectedNoteId(note.id);
     // 해당 수집의 내용을 draft에 로드
-    setInboxDraft({
+    setFuelDraft({
       content: note.content,
     });
     // action-choice 화면으로 이동
-    setInboxViewState('action-choice');
-  }, [setInboxDraft, setInboxViewState]);
+    setFuelViewState('action-choice');
+  }, [setFuelDraft, setFuelViewState]);
 
   const renderSelectDurationView = () => (
     <motion.div
@@ -892,12 +968,23 @@ export default function InboxMode({ onExit }: InboxModeProps) {
                   {entry.todos && entry.todos.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {entry.todos.map((todo) => (
-                        <span
-                          key={todo.id}
-                          className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full"
-                        >
-                          {todo.title}
-                        </span>
+                        <div key={todo.id} className="group flex items-center">
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-l-full">
+                            {todo.title}
+                          </span>
+                          <button
+                            onClick={() => handleOpenTodoEditModal(todo.id, todo.title, entry.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 hover:bg-primary/20"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenTodoDeleteModal(todo.id, entry.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-r-full hover:bg-error/20 hover:text-error"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -1000,13 +1087,13 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           {/* 떠오른 것 (필수) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {INBOX_FIELD_LABELS.content.label}{' '}
-              {INBOX_FIELD_LABELS.content.required && <span className="text-amber-500">*</span>}
+              {FUEL_FIELD_LABELS.content.label}{' '}
+              {FUEL_FIELD_LABELS.content.required && <span className="text-amber-500">*</span>}
             </label>
             <textarea
               value={draftContent}
-              onChange={(e) => setInboxDraft({ content: e.target.value })}
-              placeholder={INBOX_FIELD_LABELS.content.placeholder}
+              onChange={(e) => setFuelDraft({ content: e.target.value })}
+              placeholder={FUEL_FIELD_LABELS.content.placeholder}
               className="textarea textarea-bordered w-full h-32 resize-none"
               autoFocus
             />
@@ -1041,7 +1128,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setInboxViewState('reflection-input')}
+            onClick={() => setFuelViewState('reflection-input')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1114,7 +1201,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-4">
           <button
-            onClick={() => setInboxViewState('select-duration')}
+            onClick={() => setFuelViewState('select-duration')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1134,12 +1221,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           {/* 1. 실행 연료 내용 (필수) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
-              {INBOX_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
+              {FUEL_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
             </label>
             <textarea
               value={draftContent}
-              onChange={(e) => setInboxDraft({ content: e.target.value })}
-              placeholder={INBOX_FIELD_LABELS.content.placeholder}
+              onChange={(e) => setFuelDraft({ content: e.target.value })}
+              placeholder={FUEL_FIELD_LABELS.content.placeholder}
               className="textarea textarea-bordered w-full h-32 resize-none"
               autoFocus
             />
@@ -1149,7 +1236,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 하단 버튼 */}
         <div className="mt-4">
           <button
-            onClick={() => setInboxViewState('inspiration-choice')}
+            onClick={() => setFuelViewState('inspiration-choice')}
             disabled={!draftContent.trim()}
             className="btn btn-primary w-full gap-2"
           >
@@ -1176,7 +1263,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setInboxViewState('inspiration-input')}
+            onClick={() => setFuelViewState('inspiration-input')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1247,7 +1334,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setInboxViewState('action-choice')}
+            onClick={() => setFuelViewState('action-choice')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1316,7 +1403,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setInboxViewState('action-choice')}
+            onClick={() => setFuelViewState('action-choice')}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -1409,7 +1496,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
       >
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => setInboxViewState('reflection-input')} className="btn btn-ghost btn-circle">
+          <button onClick={() => setFuelViewState('reflection-input')} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-xl font-bold">마음 돌봄 완료!</h1>
@@ -1549,15 +1636,15 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           <div className="flex gap-3">
             <button
               onClick={() => {
-                resetInboxDraft();
-                setInboxViewState('select-duration');
+                resetFuelDraft();
+                setFuelViewState('select-duration');
               }}
               className="btn btn-ghost flex-1"
             >
               처음으로
             </button>
             <button
-              onClick={() => setInboxViewState('history')}
+              onClick={() => setFuelViewState('history')}
               className="btn btn-outline flex-1"
             >
               과거 기록 보기
@@ -1565,7 +1652,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           </div>
           <button
             onClick={() => {
-              endInboxMode();
+              endFuelMode();
               onExit();
             }}
             className="btn btn-primary w-full"
@@ -1587,7 +1674,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
     >
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 border-b border-base-300">
-        <button onClick={() => setInboxViewState('select-duration')} className="btn btn-ghost btn-circle">
+        <button onClick={() => setFuelViewState('select-duration')} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold">과거 기록</h1>
@@ -1595,12 +1682,12 @@ export default function InboxMode({ onExit }: InboxModeProps) {
 
       {/* 기록 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 mobile-container">
-        {inboxNotes.length === 0 ? (
+        {fuelNotes.length === 0 ? (
           <div className="text-center text-base-content/50 py-10">
             아직 기록이 없어요
           </div>
         ) : (
-          inboxNotes.map(note => (
+          fuelNotes.map(note => (
             <motion.div
               key={note.id}
               initial={{ opacity: 0, y: 10 }}
@@ -1738,7 +1825,7 @@ export default function InboxMode({ onExit }: InboxModeProps) {
         </dialog>
       )}
 
-      {/* 삭제 확인 모달 */}
+      {/* 노트 삭제 확인 모달 */}
       {deletingNoteId && (
         <dialog open className="modal z-[110]">
           <div className="modal-box max-w-sm">
@@ -1759,6 +1846,80 @@ export default function InboxMode({ onExit }: InboxModeProps) {
           </div>
           <form method="dialog" className="modal-backdrop">
             <button onClick={handleCloseDeleteModal}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* 할일 편집 모달 */}
+      {editingTodo && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">할일 수정</h3>
+              <button
+                onClick={handleCloseTodoEditModal}
+                className="btn btn-ghost btn-circle btn-sm"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <input
+              type="text"
+              value={editTodoTitle}
+              onChange={(e) => setEditTodoTitle(e.target.value)}
+              className="input input-bordered w-full"
+              placeholder="할일 제목"
+              autoFocus
+            />
+            <div className="modal-action">
+              <button onClick={handleCloseTodoEditModal} className="btn btn-ghost rounded-full">
+                취소
+              </button>
+              <button
+                onClick={handleSaveTodoEdit}
+                disabled={!editTodoTitle.trim()}
+                className="btn btn-primary rounded-full"
+              >
+                저장
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={handleCloseTodoEditModal}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* 할일 삭제/연결해제 모달 */}
+      {deletingTodoId && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-sm">
+            <h3 className="font-bold text-lg mb-4">할일 처리</h3>
+            <p className="text-sm text-base-content/70 mb-4">
+              이 할일을 어떻게 처리하시겠습니까?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => handleConfirmTodoDelete(false)}
+                className="btn btn-outline rounded-full"
+              >
+                연결만 해제 (할일은 유지)
+              </button>
+              <button
+                onClick={() => handleConfirmTodoDelete(true)}
+                className="btn btn-error rounded-full"
+              >
+                할일 완전 삭제
+              </button>
+            </div>
+            <div className="modal-action">
+              <button onClick={handleCloseTodoDeleteModal} className="btn btn-ghost rounded-full">
+                취소
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={handleCloseTodoDeleteModal}>close</button>
           </form>
         </dialog>
       )}

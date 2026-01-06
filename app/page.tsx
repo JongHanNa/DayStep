@@ -32,7 +32,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterInboxMode, exitMode } = useADHDModeStore();
+  const { currentMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterFuelMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -108,9 +108,9 @@ export default function HomePage() {
     }
   };
 
-  const handleInbox = () => {
+  const handleFuel = () => {
     if (user?.id) {
-      enterInboxMode(user.id);
+      enterFuelMode(user.id);
     }
   };
 
@@ -143,8 +143,8 @@ export default function HomePage() {
     return <TaskOrganizeMode onExit={handleExitExecutionMode} />;
   }
 
-  // 쉬운 정리 패턴 모드 (Inbox)
-  if (currentMode === 'inbox') {
+  // 쉬운 정리 패턴 모드 (Fuel/원동력)
+  if (currentMode === 'fuel') {
     return <InboxMode onExit={handleExitExecutionMode} />;
   }
 
@@ -156,7 +156,7 @@ export default function HomePage() {
       onCare={handleCare}
       onRelationshipInsights={handleRelationshipInsights}
       onTaskOrganize={handleTaskOrganize}
-      onInbox={handleInbox}
+      onFuel={handleFuel}
     />
   );
 }

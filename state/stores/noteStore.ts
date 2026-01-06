@@ -20,7 +20,7 @@ import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } f
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 
 // Note 카테고리 타입
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'inbox';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
 
 // Note 타입 정의
 export interface Note {
@@ -40,8 +40,8 @@ export interface Note {
   // Second Brain fields
   area_resource_id?: string | null;
   note_category?: NoteCategory;
-  // Inbox fields (수집 기능용)
-  is_processed?: boolean; // 할일로 변환 여부 (inbox 노트용)
+  // Fuel fields (원동력 기능용)
+  is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)
   // JOIN으로 가져오는 연결 데이터
   todos?: { id: string; title: string }[];
   connectedNotes?: { id: string; title: string }[];
@@ -62,8 +62,8 @@ export interface CreateNoteInput {
   // Second Brain fields
   area_resource_id?: string | null;
   note_category?: NoteCategory;
-  // Inbox fields (수집 기능용)
-  is_processed?: boolean; // 할일로 변환 여부 (inbox 노트용)
+  // Fuel fields (원동력 기능용)
+  is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)
 }
 
 // Note 업데이트 입력 타입
@@ -186,11 +186,18 @@ interface NoteStoreActions {
   reset: () => void;
   refresh: (userId: string) => Promise<void>;
 
-  // Inbox 기능 (쉬운 정리 패턴)
-  getInboxNotes: (userId: string) => Promise<Note[]>;
-  createInboxNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
-  getUnprocessedInboxNotes: () => Note[];
+  // Fuel 기능 (원동력/쉬운 정리 패턴)
+  getFuelNotes: (userId: string) => Promise<Note[]>;
+  createFuelNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
+  getUnprocessedFuelNotes: () => Note[];
   markNoteAsProcessed: (noteId: string) => Promise<void>;
+
+  /** @deprecated Use getFuelNotes instead */
+  getInboxNotes: (userId: string) => Promise<Note[]>;
+  /** @deprecated Use createFuelNote instead */
+  createInboxNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
+  /** @deprecated Use getUnprocessedFuelNotes instead */
+  getUnprocessedInboxNotes: () => Note[];
 }
 
 /**
@@ -1258,11 +1265,11 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         // ============================================
-        // Inbox 기능 (쉬운 정리 패턴)
+        // Fuel 기능 (원동력/쉬운 정리 패턴)
         // ============================================
 
-        getInboxNotes: async (userId: string) => {
-          console.log('📝 NoteStore.getInboxNotes:', userId);
+        getFuelNotes: async (userId: string) => {
+          console.log('📝 NoteStore.getFuelNotes:', userId);
 
           try {
             set({ loading: true, error: null });
@@ -1287,43 +1294,62 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               return { ...rest, todos };
             });
 
-            // note_category가 'inbox'인 노트만 필터링
-            const inboxNotes = notesWithTodos.filter(
-              (note: Note) => note.note_category === 'inbox'
+            // note_category가 'fuel'인 노트만 필터링
+            const fuelNotes = notesWithTodos.filter(
+              (note: Note) => note.note_category === 'fuel'
             );
 
-            set({ notes: inboxNotes, loading: false });
-            console.log('✅ Inbox 노트 조회 완료:', inboxNotes.length);
-            return inboxNotes;
+            set({ notes: fuelNotes, loading: false });
+            console.log('✅ Fuel 노트 조회 완료:', fuelNotes.length);
+            return fuelNotes;
           } catch (error) {
             set({
               loading: false,
-              error: error instanceof Error ? error.message : 'Inbox 노트 조회 실패',
+              error: error instanceof Error ? error.message : 'Fuel 노트 조회 실패',
             });
             throw error;
           }
         },
 
-        createInboxNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
-          console.log('📝 NoteStore.createInboxNote:', input);
+        createFuelNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
+          console.log('📝 NoteStore.createFuelNote:', input);
 
-          // note_category를 'inbox'로 강제 설정
-          const inboxInput: CreateNoteInput = {
+          // note_category를 'fuel'로 강제 설정
+          const fuelInput: CreateNoteInput = {
             ...input,
-            note_category: 'inbox',
+            note_category: 'fuel',
             // title이 없으면 content 앞 50자를 title로 사용
             title: input.title || input.content.substring(0, 50),
           };
 
-          return get().createNote(inboxInput);
+          return get().createNote(fuelInput);
         },
 
-        getUnprocessedInboxNotes: () => {
+        getUnprocessedFuelNotes: () => {
           const { notes } = get();
-          // note_category가 'inbox'인 노트 중 할일로 변환되지 않은 것들
+          // note_category가 'fuel'인 노트 중 할일로 변환되지 않은 것들
           return notes.filter(note =>
-            note.note_category === 'inbox' && !note.is_processed
+            note.note_category === 'fuel' && !note.is_processed
           );
+        },
+
+        // === 하위 호환성을 위한 별칭 (deprecated) ===
+        /** @deprecated Use getFuelNotes instead */
+        getInboxNotes: async (userId: string) => {
+          console.warn('⚠️ getInboxNotes는 deprecated입니다. getFuelNotes를 사용하세요.');
+          return get().getFuelNotes(userId);
+        },
+
+        /** @deprecated Use createFuelNote instead */
+        createInboxNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
+          console.warn('⚠️ createInboxNote는 deprecated입니다. createFuelNote를 사용하세요.');
+          return get().createFuelNote(input);
+        },
+
+        /** @deprecated Use getUnprocessedFuelNotes instead */
+        getUnprocessedInboxNotes: () => {
+          console.warn('⚠️ getUnprocessedInboxNotes는 deprecated입니다. getUnprocessedFuelNotes를 사용하세요.');
+          return get().getUnprocessedFuelNotes();
         },
 
         markNoteAsProcessed: async (noteId: string) => {
