@@ -47,7 +47,8 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
-import MarkdownEditor from '@/components/notes/MarkdownEditor';
+import ContentEditorModal from '@/components/second-brain/ContentEditorModal';
+import MarkdownViewer from '@/components/notes/MarkdownViewer';
 
 interface FuelModeProps {
   onExit: () => void;
@@ -184,6 +185,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
 
   // 타이머 없이 바로 시작
   const [skipTimer, setSkipTimer] = useState(false);
+  const [isContentEditorOpen, setIsContentEditorOpen] = useState(false);
 
   // 허브 화면 또는 history 뷰일 때 기록 로드
   useEffect(() => {
@@ -1242,14 +1244,25 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
               {FUEL_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
             </label>
-            <div className="bg-base-200 rounded-lg [&_.cm-editor]:!bg-transparent">
-              <MarkdownEditor
-                value={draftContent}
-                onChange={(value) => setFuelDraft({ content: value })}
-                placeholder={FUEL_FIELD_LABELS.content.placeholder}
-                minHeight={150}
-              />
+            <div
+              className="p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors min-h-[100px]"
+              onClick={() => setIsContentEditorOpen(true)}
+            >
+              {draftContent ? (
+                <MarkdownViewer content={draftContent} className="prose prose-sm max-w-none" />
+              ) : (
+                <p className="text-base-content/50">{FUEL_FIELD_LABELS.content.placeholder}</p>
+              )}
             </div>
+
+            <ContentEditorModal
+              open={isContentEditorOpen}
+              content={draftContent}
+              onClose={() => setIsContentEditorOpen(false)}
+              onChange={(content) => setFuelDraft({ content })}
+              placeholder={FUEL_FIELD_LABELS.content.placeholder}
+              enableAutoSave={false}
+            />
           </div>
         </div>
 
