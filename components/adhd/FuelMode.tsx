@@ -911,7 +911,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                   className="flex items-center gap-3 p-3 bg-base-200 rounded-xl"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{entry.content}</p>
+                    {entry.title && (
+                      <p className="text-sm font-semibold truncate mb-0.5">{entry.title}</p>
+                    )}
+                    <p className="text-sm text-base-content/80 truncate">{entry.content}</p>
                     <p className="text-xs text-base-content/50">
                       {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
                     </p>
@@ -968,36 +971,68 @@ export default function FuelMode({ onExit }: FuelModeProps) {
               {processedEntries.map(entry => (
                 <div
                   key={entry.id}
-                  className="p-3 bg-base-200/50 rounded-xl"
+                  className="flex items-start gap-3 p-3 bg-base-200 rounded-xl"
                 >
-                  <p className="text-sm text-base-content/70 line-clamp-2">{entry.content}</p>
-                  {/* 연결된 할일 표시 */}
-                  {entry.todos && entry.todos.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {entry.todos.map((todo) => (
-                        <div key={todo.id} className="group flex items-center">
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-l-full">
-                            {todo.title}
-                          </span>
-                          <button
-                            onClick={() => handleOpenTodoEditModal(todo.id, todo.title, entry.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 hover:bg-primary/20"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleOpenTodoDeleteModal(todo.id, entry.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-r-full hover:bg-error/20 hover:text-error"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-xs text-base-content/40 mt-1">
-                    {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    {entry.title && (
+                      <p className="text-sm font-semibold truncate mb-0.5">{entry.title}</p>
+                    )}
+                    <p className="text-sm text-base-content/70 line-clamp-2">{entry.content}</p>
+                    {/* 연결된 할일 표시 */}
+                    {entry.todos && entry.todos.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {entry.todos.map((todo) => (
+                          <div key={todo.id} className="group flex items-center">
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-l-full">
+                              {todo.title}
+                            </span>
+                            <button
+                              onClick={() => handleOpenTodoEditModal(todo.id, todo.title, entry.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 hover:bg-primary/20"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenTodoDeleteModal(todo.id, entry.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-r-full hover:bg-error/20 hover:text-error"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-base-content/40 mt-1">
+                      {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
+                    </p>
+                  </div>
+                  {/* 드롭다운 메뉴 */}
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={() => handleToggleDropdown(entry.id)}
+                      className="btn btn-sm btn-ghost btn-circle"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                    {openDropdownId === entry.id && (
+                      <div className="absolute right-0 top-full mt-1 w-32 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
+                        <button
+                          onClick={() => handleOpenEditModal(entry)}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
+                        >
+                          <Pencil className="w-4 h-4" />
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleOpenDeleteModal(entry.id)}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-b-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          삭제
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
