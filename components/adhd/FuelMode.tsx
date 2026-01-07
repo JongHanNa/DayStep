@@ -1233,7 +1233,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
               value={draftTitle}
               onChange={(e) => setFuelDraft({ title: e.target.value })}
               placeholder="제목을 입력하세요 (없으면 내용에서 자동 생성)"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full bg-base-200"
             />
           </div>
 
@@ -1242,12 +1242,14 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
               {FUEL_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
             </label>
-            <MarkdownEditor
-              value={draftContent}
-              onChange={(value) => setFuelDraft({ content: value })}
-              placeholder={FUEL_FIELD_LABELS.content.placeholder}
-              minHeight={150}
-            />
+            <div className="bg-base-200 rounded-lg [&_.cm-editor]:!bg-transparent">
+              <MarkdownEditor
+                value={draftContent}
+                onChange={(value) => setFuelDraft({ content: value })}
+                placeholder={FUEL_FIELD_LABELS.content.placeholder}
+                minHeight={150}
+              />
+            </div>
           </div>
         </div>
 
