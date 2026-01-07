@@ -27,6 +27,9 @@ import {
   MoreVertical,
   Pencil,
   ChevronDown,
+  ArrowDownLeft,
+  ArrowUpRight,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 import AddPersonModal from '../cherished/AddPersonModal';
@@ -170,9 +173,12 @@ export default function CareMode({ onExit }: CareModeProps) {
 
   // 소식 작성 폼
   const [interactionType, setInteractionType] = useState<InteractionType | null>(null);
-  const [skipInteractionType, setSkipInteractionType] = useState(false); // 소식만 기록할게요
+  const [skipInteractionType, setSkipInteractionType] = useState(true); // 소식만 기록할게요 (기본 체크)
   const [recentNews, setRecentNews] = useState('');
   const [gratitudeNote, setGratitudeNote] = useState('');
+  const [requestFromThem, setRequestFromThem] = useState(''); // 상대방이 나에게 한 부탁
+  const [requestToThem, setRequestToThem] = useState(''); // 내가 상대방에게 한 부탁
+  const [meetingNote, setMeetingNote] = useState(''); // 회의 내용
   const [giftPlan, setGiftPlan] = useState('');
   const [createGiftTodo, setCreateGiftTodo] = useState(false); // 할일로 추가하기
   const [giftTodoDate, setGiftTodoDate] = useState(''); // 할일 날짜
@@ -277,6 +283,9 @@ export default function CareMode({ onExit }: CareModeProps) {
       description: giftPlan.trim() || undefined,
       gratitude_note: gratitudeNote.trim() || undefined,
       recent_news: recentNews.trim() || undefined,
+      request_from_them: requestFromThem.trim() || undefined,
+      request_to_them: requestToThem.trim() || undefined,
+      meeting_note: meetingNote.trim() || undefined,
     };
 
     // todos 제목 생성
@@ -891,7 +900,49 @@ export default function CareMode({ onExit }: CareModeProps) {
               />
             </div>
 
-            {/* 4. 선물/도움 계획 + 할일 연동 */}
+            {/* 4. 받은 부탁 (상대방 → 나) */}
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                <ArrowDownLeft className="w-4 h-4 text-blue-500" />
+                받은 부탁이 있나요?
+              </p>
+              <textarea
+                value={requestFromThem}
+                onChange={(e) => setRequestFromThem(e.target.value)}
+                placeholder="상대방이 나에게 부탁한 내용 (선택사항)"
+                className="textarea textarea-bordered w-full h-20 resize-none"
+              />
+            </div>
+
+            {/* 5. 한 부탁 (나 → 상대방) */}
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                <ArrowUpRight className="w-4 h-4 text-green-500" />
+                부탁한 것이 있나요?
+              </p>
+              <textarea
+                value={requestToThem}
+                onChange={(e) => setRequestToThem(e.target.value)}
+                placeholder="내가 상대방에게 부탁한 내용 (선택사항)"
+                className="textarea textarea-bordered w-full h-20 resize-none"
+              />
+            </div>
+
+            {/* 6. 회의 내용 */}
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-purple-500" />
+                회의 내용이 있나요?
+              </p>
+              <textarea
+                value={meetingNote}
+                onChange={(e) => setMeetingNote(e.target.value)}
+                placeholder="회의/미팅에서 나온 주요 내용 (선택사항)"
+                className="textarea textarea-bordered w-full h-20 resize-none"
+              />
+            </div>
+
+            {/* 7. 선물/도움 계획 + 할일 연동 */}
             <div>
               <p className="text-sm font-medium mb-2 flex items-center gap-2">
                 <Gift className="w-4 h-4 text-amber-500" />
@@ -971,13 +1022,15 @@ export default function CareMode({ onExit }: CareModeProps) {
               <Heart className="w-12 h-12 text-primary" fill="currentColor" />
             </div>
 
-            {/* 완료 메시지 */}
+            {/* 완료 메시지 - 소식만 기록 vs 마음 전함 구분 */}
             <div className="text-center">
               <h2 className="text-2xl font-bold text-primary mb-2">
-                따뜻한 마음을 전했어요!
+                {skipInteractionType ? '소식을 기록했어요!' : '따뜻한 마음을 전했어요!'}
               </h2>
               <p className="text-base-content/70">
-                {careMode.selectedPersonName}님이 기뻐하실 거예요
+                {skipInteractionType
+                  ? `${careMode.selectedPersonName}님의 소식을 잊지 않을게요`
+                  : `${careMode.selectedPersonName}님이 기뻐하실 거예요`}
               </p>
             </div>
 

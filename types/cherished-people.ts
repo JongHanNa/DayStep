@@ -59,7 +59,10 @@ export interface CareInteraction {
   description: string | null;
   gratitude_note: string | null;
   recent_news: string | null;
-  todo_id: string | null;         // 연결된 할일 ID
+  request_from_them: string | null;  // 상대방이 나에게 한 부탁
+  request_to_them: string | null;    // 내가 상대방에게 한 부탁
+  meeting_note: string | null;       // 회의 내용
+  todo_id: string | null;            // 연결된 할일 ID
   created_at: string;
 }
 
@@ -71,6 +74,9 @@ export interface CareInteractionInput {
   description?: string;
   gratitude_note?: string;
   recent_news?: string;
+  request_from_them?: string;  // 상대방이 나에게 한 부탁
+  request_to_them?: string;    // 내가 상대방에게 한 부탁
+  meeting_note?: string;       // 회의 내용
 }
 
 /** 우선순위 상기 메시지 */

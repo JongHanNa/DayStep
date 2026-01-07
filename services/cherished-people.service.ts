@@ -336,6 +336,9 @@ export class CherishedPeopleService {
         description: input.description?.trim() || null,
         gratitude_note: input.gratitude_note?.trim() || null,
         recent_news: input.recent_news?.trim() || null,
+        request_from_them: input.request_from_them?.trim() || null,
+        request_to_them: input.request_to_them?.trim() || null,
+        meeting_note: input.meeting_note?.trim() || null,
         todo_id: todoId,
       };
 
