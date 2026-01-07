@@ -58,22 +58,29 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
 
     lines.forEach((line, index) => {
       let processedLine = line;
+      let isBlockElement = false;
 
-      // 헤더 파싱 (# ~ ######)
+      // 헤더 파싱 (# ~ ######) - 블록 요소
       if (/^### /.test(processedLine)) {
         processedLine = processedLine.replace(/^### (.*$)/, '<h3>$1</h3>');
+        isBlockElement = true;
       } else if (/^## /.test(processedLine)) {
         processedLine = processedLine.replace(/^## (.*$)/, '<h2>$1</h2>');
+        isBlockElement = true;
       } else if (/^# /.test(processedLine)) {
         processedLine = processedLine.replace(/^# (.*$)/, '<h1>$1</h1>');
+        isBlockElement = true;
       } else if (/^#### /.test(processedLine)) {
         processedLine = processedLine.replace(/^#### (.*$)/, '<h4>$1</h4>');
+        isBlockElement = true;
       } else if (/^##### /.test(processedLine)) {
         processedLine = processedLine.replace(/^##### (.*$)/, '<h5>$1</h5>');
+        isBlockElement = true;
       } else if (/^###### /.test(processedLine)) {
         processedLine = processedLine.replace(/^###### (.*$)/, '<h6>$1</h6>');
+        isBlockElement = true;
       }
-      // 체크박스 파싱 (인터랙티브)
+      // 체크박스 파싱 (인터랙티브) - 블록 요소
       else if (/^- \[ \] /.test(processedLine)) {
         const text = processedLine.replace(/^- \[ \] /, '');
         processedLine = `<div class="cm-checkbox-line">
@@ -82,6 +89,7 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
                 data-checked="false">☐</span>
           <span class="cm-checkbox-content">${text}</span>
         </div>`;
+        isBlockElement = true;
       } else if (/^- \[x\] /.test(processedLine)) {
         const text = processedLine.replace(/^- \[x\] /, '');
         processedLine = `<div class="cm-checkbox-line">
@@ -90,10 +98,12 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
                 data-checked="true">☑</span>
           <span class="cm-checkbox-checked-content">${text}</span>
         </div>`;
+        isBlockElement = true;
       }
-      // 인용구 파싱
+      // 인용구 파싱 - 블록 요소
       else if (/^> /.test(processedLine)) {
         processedLine = processedLine.replace(/^> (.*$)/, '<blockquote class="cm-quote-content">$1</blockquote>');
+        isBlockElement = true;
       }
 
       // 굵은 텍스트 (**bold** 또는 __bold__)
@@ -117,7 +127,8 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
       processedLine = processedLine.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary underline" target="_blank" rel="noopener noreferrer">$1</a>');
 
       html += processedLine;
-      if (index < lines.length - 1) {
+      // 블록 요소는 자체적으로 줄바꿈을 하므로 <br> 추가 불필요
+      if (index < lines.length - 1 && !isBlockElement) {
         html += '<br>';
       }
     });
@@ -183,12 +194,12 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
     <>
       <style>
         {`
-          .markdown-viewer h1 { font-size: 1.75em; font-weight: 700; margin: 0.3em 0; line-height: 1.3; }
-          .markdown-viewer h2 { font-size: 1.5em; font-weight: 600; margin: 0.25em 0; line-height: 1.3; }
-          .markdown-viewer h3 { font-size: 1.25em; font-weight: 600; margin: 0.2em 0; line-height: 1.3; }
-          .markdown-viewer h4 { font-size: 1.1em; font-weight: 600; margin: 0.15em 0; line-height: 1.3; }
-          .markdown-viewer h5 { font-size: 1em; font-weight: 600; margin: 0.1em 0; line-height: 1.3; }
-          .markdown-viewer h6 { font-size: 0.9em; font-weight: 600; margin: 0.1em 0; line-height: 1.3; }
+          .markdown-viewer h1 { font-size: 1.75em; font-weight: 700; margin: 0; line-height: 1.6; }
+          .markdown-viewer h2 { font-size: 1.5em; font-weight: 600; margin: 0; line-height: 1.6; }
+          .markdown-viewer h3 { font-size: 1.25em; font-weight: 600; margin: 0; line-height: 1.6; }
+          .markdown-viewer h4 { font-size: 1.1em; font-weight: 600; margin: 0; line-height: 1.6; }
+          .markdown-viewer h5 { font-size: 1em; font-weight: 600; margin: 0; line-height: 1.6; }
+          .markdown-viewer h6 { font-size: 0.9em; font-weight: 600; margin: 0; line-height: 1.6; }
         `}
       </style>
       <div
