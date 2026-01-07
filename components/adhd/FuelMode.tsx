@@ -1255,9 +1255,9 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         <div className="mt-4 flex flex-col gap-3">
           {/* 섹션 라벨 */}
           <p className="text-base font-semibold text-base-content/80 mb-1">
-            이걸로 뭐 할래?
+          이 원동력으로
           </p>
-          {/* 지금 바로 할래 */}
+          {/* 지금 시작하기 */}
           <motion.button
             whileHover={{ scale: draftContent.trim() ? 1.02 : 1 }}
             whileTap={{ scale: draftContent.trim() ? 0.98 : 1 }}
@@ -1266,10 +1266,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             className="btn btn-primary btn-lg w-full h-16 flex items-center justify-center gap-3 shadow-lg"
           >
             <Play className="w-6 h-6" />
-            <span className="text-lg font-semibold">지금 바로 할래</span>
+            <span className="text-lg font-semibold">지금 시작하기</span>
           </motion.button>
 
-          {/* 언제 할지 정할래 */}
+          {/* 일정 잡기 */}
           <motion.button
             whileHover={{ scale: draftContent.trim() ? 1.02 : 1 }}
             whileTap={{ scale: draftContent.trim() ? 0.98 : 1 }}
@@ -1278,10 +1278,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             className="btn btn-ghost btn-lg w-full h-14 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
           >
             <CalendarClock className="w-5 h-5" />
-            <span className="text-base font-semibold">언제 할지 정할래</span>
+            <span className="text-base font-semibold">일정 잡기</span>
           </motion.button>
 
-          {/* 일단 저장만 */}
+          {/* 저장하기 */}
           <motion.button
             whileHover={{ scale: draftContent.trim() && !isSaving ? 1.02 : 1 }}
             whileTap={{ scale: draftContent.trim() && !isSaving ? 0.98 : 1 }}
@@ -1294,7 +1294,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             ) : (
               <Save className="w-5 h-5" />
             )}
-            <span>{isSaving ? '저장 중...' : '일단 저장만'}</span>
+            <span>{isSaving ? '저장 중...' : '저장하기'}</span>
           </motion.button>
         </div>
       </motion.div>
