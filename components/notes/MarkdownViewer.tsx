@@ -180,19 +180,31 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
   }, [interactive, handleCheckboxClick]);
 
   return (
-    <div
-      className={`markdown-viewer ${className}`}
-      dangerouslySetInnerHTML={{ __html: parsedContent }}
-      onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      style={{
-        // CodeMirror의 마크다운 스타일 재사용
-        lineHeight: '1.6',
-        fontSize: '14px',
-        color: 'hsl(var(--foreground))',
-      }}
-    />
+    <>
+      <style>
+        {`
+          .markdown-viewer h1 { font-size: 1.75em; font-weight: 700; margin: 0.3em 0; line-height: 1.3; }
+          .markdown-viewer h2 { font-size: 1.5em; font-weight: 600; margin: 0.25em 0; line-height: 1.3; }
+          .markdown-viewer h3 { font-size: 1.25em; font-weight: 600; margin: 0.2em 0; line-height: 1.3; }
+          .markdown-viewer h4 { font-size: 1.1em; font-weight: 600; margin: 0.15em 0; line-height: 1.3; }
+          .markdown-viewer h5 { font-size: 1em; font-weight: 600; margin: 0.1em 0; line-height: 1.3; }
+          .markdown-viewer h6 { font-size: 0.9em; font-weight: 600; margin: 0.1em 0; line-height: 1.3; }
+        `}
+      </style>
+      <div
+        className={`markdown-viewer ${className}`}
+        dangerouslySetInnerHTML={{ __html: parsedContent }}
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          // CodeMirror의 마크다운 스타일 재사용
+          lineHeight: '1.6',
+          fontSize: '14px',
+          color: 'hsl(var(--foreground))',
+        }}
+      />
+    </>
   );
 };
 
