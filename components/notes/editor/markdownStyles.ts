@@ -703,19 +703,23 @@ export function createEditorTheme(minHeight: number) {
     '.cm-editor': {
       backgroundColor: 'transparent',
       padding: '0',
+      minHeight: `${minHeight}px`,
+      height: '100%',
     },
     '.cm-scroller': {
       scrollbarWidth: 'none',
       msOverflowStyle: 'none',
       padding: '0',
+      minHeight: `${minHeight}px`,
+      height: '100%',
       '&::-webkit-scrollbar': {
         display: 'none',
       },
     },
     '.cm-content': {
       padding: '0',
-      paddingBottom: '200px', // 하단 추가 여백 (스크롤 시 마지막 줄 편안하게 보기)
       minHeight: `${minHeight}px`,
+      height: '100%',
     },
     // 모바일 환경에서만 포커스 제거
     '[data-platform="mobile"] .cm-focused .cm-content': {

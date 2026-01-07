@@ -393,15 +393,41 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
       // 포커스 보장
       editorView.focus();
     } else {
-      console.log('📝 [Editor] 유효하지 않은 클릭 위치 (pos:', pos, '), 일반 포커스만 수행');
+      console.log('📝 [Editor] 빈 영역 클릭 - 문서 끝으로 커서 이동');
+      // 빈 영역 클릭 시 문서 끝으로 커서 이동
+      editorView.dispatch({
+        selection: { anchor: editorView.state.doc.length },
+        scrollIntoView: true,
+      });
       editorView.focus();
     }
   }, [platform]);
+
+  // 빈 영역 클릭 시 mousedown 단계에서 포커스 처리 (mousedown은 빈 영역에서도 캡처됨)
+  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    const editorView = editorRef.current?.view;
+    if (!editorView) return;
+
+    // 클릭한 위치가 실제 텍스트 영역인지 확인
+    const pos = editorView.posAtCoords({ x: event.clientX, y: event.clientY });
+
+    if (typeof pos !== 'number' || pos < 0) {
+      // 빈 영역 클릭 → 문서 끝으로 커서 이동 + 포커스
+      editorView.dispatch({
+        selection: { anchor: editorView.state.doc.length },
+        scrollIntoView: true,
+      });
+      editorView.focus();
+      event.preventDefault();
+    }
+  }, []);
 
   return (
     <div
       className={`advanced-markdown-editor-container ${className}`}
       data-platform={platform}
+      onClick={handleWebMouseClick}
+      onMouseDown={handleMouseDown}
     >
       {showToolbar && (
         <MarkdownToolbar
@@ -422,7 +448,8 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
         style={{
           touchAction: 'pan-y',
           WebkitTouchCallout: 'none',
-          WebkitTapHighlightColor: 'transparent'
+          WebkitTapHighlightColor: 'transparent',
+          minHeight: `${minHeight}px`,
         }}
       >
         <CodeMirror
