@@ -116,7 +116,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     [notes]
   );
 
-  // 실행 연료 안내 메시지 (랜덤 선택)
+  // 실행 원동력 안내 메시지 (랜덤 선택)
   const fuelMessage = useMemo(() =>
     FUEL_MESSAGES[Math.floor(Math.random() * FUEL_MESSAGES.length)],
     []
@@ -1258,7 +1258,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
           </p>
         </div>
 
-        {/* 실행 연료 입력 폼 */}
+        {/* 실행 원동력 입력 폼 */}
         <div className="flex-1 space-y-4 overflow-y-auto">
           {/* 제목 입력 (선택) */}
           <div>
@@ -1274,7 +1274,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             />
           </div>
 
-          {/* 1. 실행 연료 내용 (필수) */}
+          {/* 1. 실행 원동력 내용 (필수) */}
           <div>
             <label className="text-sm font-medium text-base-content/70 mb-1 block">
               {FUEL_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>

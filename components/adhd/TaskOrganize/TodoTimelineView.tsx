@@ -35,7 +35,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 삭제 확인 상태
   const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
 
-  // 연결된 실행 연료를 위한 fuel 노트 상태
+  // 연결된 실행 원동력을 위한 fuel 노트 상태
   const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
@@ -54,7 +54,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     loadData();
   }, [userId, fetchAllTodos, loadPeople]);
 
-  // fuel 노트 로드 (편집 모달에서 연결된 연료 표시용)
+  // fuel 노트 로드 (편집 모달에서 연결된 원동력 표시용)
   useEffect(() => {
     const loadFuelNotes = async () => {
       if (!userId) return;

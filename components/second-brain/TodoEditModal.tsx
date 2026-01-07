@@ -39,9 +39,9 @@ interface TodoEditModalProps {
   todoId?: string;
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
-  // 연결된 실행 연료 섹션용 props
-  fuelNotes?: Note[]; // fuel 카테고리 노트 (실행 연료)
-  showLinkedFuels?: boolean; // 연결된 연료 섹션 표시 여부 (기본값: true)
+  // 연결된 실행 원동력 섹션용 props
+  fuelNotes?: Note[]; // fuel 카테고리 노트 (실행 원동력)
+  showLinkedFuels?: boolean; // 연결된 원동력 섹션 표시 여부 (기본값: true)
 }
 
 export default function TodoEditModal({
@@ -81,7 +81,7 @@ export default function TodoEditModal({
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteForm, setNoteForm] = useState<NoteFormData | null>(null);
 
-  // 연결된 실행 연료 상태
+  // 연결된 실행 원동력 상태
   const [linkedNotes, setLinkedNotes] = useState<Note[]>([]);
   const [isLoadingLinkedNotes, setIsLoadingLinkedNotes] = useState(false);
 
@@ -268,7 +268,7 @@ export default function TodoEditModal({
             showCompleted={showCompleted}
           />
 
-          {/* 연결된 실행 연료 섹션 */}
+          {/* 연결된 실행 원동력 섹션 */}
           {showLinkedFuels && todoId && userId && (
             <LinkedFuelsSection
               todoId={todoId}
