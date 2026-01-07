@@ -119,9 +119,16 @@ export default function FuelSelector({
                   {showNoteIcon && (
                     <FileText className="h-4 w-4 text-info flex-shrink-0" />
                   )}
-                  <span className="text-sm truncate flex-1">
-                    {note.content || note.title}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    {note.title && (
+                      <p className="text-sm font-medium truncate">{note.title}</p>
+                    )}
+                    {note.content && (
+                      <p className={`text-sm truncate ${note.title ? 'text-base-content/60' : ''}`}>
+                        {note.content}
+                      </p>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
