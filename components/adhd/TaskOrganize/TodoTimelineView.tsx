@@ -920,7 +920,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   return (
                                     <div className="flex flex-wrap gap-1 mt-1.5">
                                       {linkedFuels.map(fuel => {
-                                        const text = fuel.title || fuel.content;
+                                        // 제목 + 내용 함께 표시
+                                        const text = fuel.title && fuel.content
+                                          ? `${fuel.title} - ${fuel.content}`
+                                          : fuel.title || fuel.content;
                                         const isExpanded = expandedFuelId === fuel.id;
 
                                         return (
@@ -931,7 +934,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                               setExpandedFuelId(isExpanded ? null : fuel.id);
                                             }}
                                             className={`badge badge-sm bg-orange-500/20 text-orange-600 dark:text-orange-400 gap-0.5 cursor-pointer hover:bg-orange-500/30 transition-all text-left ${
-                                              isExpanded ? 'whitespace-normal max-w-full' : 'max-w-[180px] sm:max-w-[280px]'
+                                              isExpanded ? 'whitespace-normal' : ''
                                             }`}
                                           >
                                             <Zap className="w-2.5 h-2.5 flex-shrink-0" />
