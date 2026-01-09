@@ -106,11 +106,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
           />
         )}
 
-        {/* 메인 질문 */}
-        <h1 className="text-2xl font-bold text-base-content mb-2">
-          지금 뭐 할 거야?
-        </h1>
-
         {/* 각성 문장 (설정된 경우) */}
         {awakeningSentence && (
           <motion.p
