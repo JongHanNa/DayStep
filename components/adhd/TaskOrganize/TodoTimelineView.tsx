@@ -3,13 +3,14 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat } from 'lucide-react';
+import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { Todo } from '@/entities/todo/Todo';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { fetchNotesWithJWT } from '@/lib/supabase/notes';
+import { getTodoNotes } from '@/lib/supabase/todo-notes';
 import type { Note } from '@/types/second-brain';
 import { generateAllRecurrenceInstances, applyCompletionStatusToInstances, isRecurringTodo } from '@/lib/recurrence-utils';
 import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
@@ -85,6 +86,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 연결된 실행 원동력을 위한 fuel 노트 상태
   const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
+
+  // Todo별 연결된 fuel note_ids 매핑
+  const [todoFuelMap, setTodoFuelMap] = useState<Record<string, string[]>>({});
 
   // 월별 섹션 참조 (스크롤 이동용)
   const monthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -226,6 +230,35 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     loadFuelNotes();
   }, [userId]);
 
+  // Todo별 연결된 fuel 정보 로드
+  useEffect(() => {
+    const loadTodoFuelLinks = async () => {
+      if (!userId || todos.length === 0) return;
+
+      try {
+        // 모든 todo ID 수집 (반복 할일 포함)
+        const allTodoIds = todos.map(todo => todo.id);
+
+        // 각 todo의 연결된 fuel 조회
+        const map: Record<string, string[]> = {};
+        await Promise.all(
+          allTodoIds.map(async (todoId) => {
+            const noteIds = await getTodoNotes(todoId);
+            if (noteIds.length > 0) {
+              map[todoId] = noteIds;
+            }
+          })
+        );
+
+        setTodoFuelMap(map);
+      } catch (error) {
+        console.error('Todo-Fuel 연결 정보 로드 실패:', error);
+      }
+    };
+
+    loadTodoFuelLinks();
+  }, [userId, todos]);
+
   // 프로젝트/목표 매핑 생성
   const projectMap = useMemo(() => {
     return new Map(projects.map(p => [p.id, p.title]));
@@ -234,6 +267,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const goalMap = useMemo(() => {
     return new Map(goals.map(g => [g.id, g.title]));
   }, [goals]);
+
+  // 연결된 fuel 노트 가져오기
+  const getLinkedFuels = useCallback((item: TimelineItem): Note[] => {
+    // 반복 인스턴스는 원본 Todo의 연결 정보 사용
+    const todoId = item.isRecurrenceInstance ? item.recurrenceSourceId : item.id;
+    if (!todoId) return [];
+
+    const noteIds = todoFuelMap[todoId] || [];
+    return fuelNotes.filter(note => noteIds.includes(note.id));
+  }, [todoFuelMap, fuelNotes]);
 
   // 완료 토글 (일반 할일 vs 반복 인스턴스 분기)
   const handleToggleComplete = useCallback(async (item: TimelineItem) => {
@@ -836,6 +879,27 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                       {shamefulPeople.map(p => (
                                         <span key={p.id} className="badge badge-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 gap-0.5">
                                           <AlertCircle className="w-2.5 h-2.5" />{p.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
+
+                                {/* 연결된 실행 원동력 표시 */}
+                                {(() => {
+                                  const linkedFuels = getLinkedFuels(item);
+                                  if (linkedFuels.length === 0) return null;
+
+                                  return (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {linkedFuels.map(fuel => (
+                                        <span
+                                          key={fuel.id}
+                                          className="badge badge-xs bg-orange-500/20 text-orange-600 dark:text-orange-400 gap-0.5"
+                                        >
+                                          <Zap className="w-2.5 h-2.5" />
+                                          {(fuel.title || fuel.content).substring(0, 15)}
+                                          {(fuel.title || fuel.content).length > 15 && '...'}
                                         </span>
                                       ))}
                                     </div>
