@@ -67,9 +67,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
   const [isLoading, setIsLoading] = useState(true);
 
-  // 펼친 fuel 배지 상태
-  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
-
   // 날짜 범위 상태 (과거/미래 개월 수)
   const [pastMonthsLoaded, setPastMonthsLoaded] = useState(3);
   const [futureMonthsLoaded, setFutureMonthsLoaded] = useState(3);
@@ -924,23 +921,14 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         const text = fuel.title && fuel.content
                                           ? `${fuel.title} - ${fuel.content}`
                                           : fuel.title || fuel.content;
-                                        const isExpanded = expandedFuelId === fuel.id;
 
                                         return (
                                           <span
                                             key={fuel.id}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setExpandedFuelId(isExpanded ? null : fuel.id);
-                                            }}
-                                            className={`badge badge-sm bg-orange-500/20 text-orange-600 dark:text-orange-400 gap-0.5 cursor-pointer hover:bg-orange-500/30 transition-all text-left ${
-                                              isExpanded ? 'whitespace-normal' : ''
-                                            }`}
+                                            className="badge badge-sm bg-orange-500/20 text-orange-600 dark:text-orange-400 gap-0.5 text-left whitespace-normal break-words max-w-full h-auto py-1"
                                           >
-                                            <Zap className="w-2.5 h-2.5 flex-shrink-0" />
-                                            <span className={isExpanded ? '' : 'truncate'}>
-                                              {text}
-                                            </span>
+                                            <Zap className="w-2.5 h-2.5 flex-shrink-0 self-start mt-0.5" />
+                                            <span>{text}</span>
                                           </span>
                                         );
                                       })}
