@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { format, isToday, isYesterday, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
+import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -14,6 +14,7 @@ import type { Note } from '@/types/second-brain';
 import { generateAllRecurrenceInstances, applyCompletionStatusToInstances, isRecurringTodo } from '@/lib/recurrence-utils';
 import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
+import { MonthNavigator } from './MonthNavigator';
 
 interface TodoTimelineViewProps {
   userId: string;
@@ -48,6 +49,9 @@ interface TimelineItem {
   originalTodo?: Todo;
 }
 
+// 요일 약자
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+
 /**
  * 타임라인 탭 - 할일 생성 기록 시간순
  *
@@ -65,6 +69,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const [futureMonthsLoaded, setFutureMonthsLoaded] = useState(3);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // 현재 네비게이션 월 (MonthNavigator 연동)
+  const [navigatedMonth, setNavigatedMonth] = useState<Date>(new Date());
+
   // 반복 인스턴스 및 완료 상태
   const [recurrenceInstances, setRecurrenceInstances] = useState<TimelineItem[]>([]);
   const [completions, setCompletions] = useState<{ todo_id: string; completion_date: string }[]>([]);
@@ -79,10 +86,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 연결된 실행 원동력을 위한 fuel 노트 상태
   const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
 
-  // 오늘 날짜 섹션 참조 (첫 로드 시 스크롤 위치 설정용)
+  // 월별 섹션 참조 (스크롤 이동용)
+  const monthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const todaySectionRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
-  const [isScrollReady, setIsScrollReady] = useState(false); // 스크롤 완료 후 표시
+  const [isScrollReady, setIsScrollReady] = useState(false);
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
@@ -354,9 +362,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   }, []);
 
   // 할일의 표시 날짜 결정 (startTime 기준)
-  const getDisplayDate = (item: TimelineItem): Date => {
+  const getDisplayDate = useCallback((item: TimelineItem): Date => {
     return item.startTime || item.createdAt;
-  };
+  }, []);
 
   // 타임라인 아이템 생성 (일반 할일 + 반복 인스턴스 병합)
   const timelineItems = useMemo(() => {
@@ -395,33 +403,127 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         originalTodo: todo
       }));
 
-    // 병합 및 정렬
+    // 병합 및 정렬 (오래된 것 → 최신 순, 날짜 오름차순)
     const allItems = [...nonRecurringItems, ...recurrenceInstances];
 
-    return allItems.sort((a, b) => getDisplayDate(b).getTime() - getDisplayDate(a).getTime());
-  }, [todos, recurrenceInstances, dateRange.rangeStart, dateRange.rangeEnd]);
+    return allItems.sort((a, b) => getDisplayDate(a).getTime() - getDisplayDate(b).getTime());
+  }, [todos, recurrenceInstances, dateRange.rangeStart, dateRange.rangeEnd, getDisplayDate]);
 
-  // 날짜별 그룹핑
-  const groupedByDate = useMemo(() => {
-    return timelineItems.reduce((acc, item) => {
+  // 월별 > 날짜별 그룹핑
+  const groupedByMonth = useMemo(() => {
+    const monthGroups: Record<string, Record<string, { date: Date; items: TimelineItem[] }>> = {};
+
+    timelineItems.forEach(item => {
       const date = getDisplayDate(item);
-      let dateKey: string;
+      const monthKey = format(date, 'yyyy년 M월', { locale: ko });
+      const dayNumber = getDate(date);
+      const dayOfWeek = DAY_NAMES[getDay(date)];
+      const dayKey = `${dayNumber}_${dayOfWeek}`; // "1_목", "2_금" 형태로 정렬 가능하게
 
-      if (isToday(date)) {
-        dateKey = '오늘';
-      } else if (isYesterday(date)) {
-        dateKey = '어제';
-      } else {
-        dateKey = format(date, 'M월 d일 (EEE)', { locale: ko });
+      if (!monthGroups[monthKey]) {
+        monthGroups[monthKey] = {};
       }
+      if (!monthGroups[monthKey][dayKey]) {
+        monthGroups[monthKey][dayKey] = { date, items: [] };
+      }
+      monthGroups[monthKey][dayKey].items.push(item);
+    });
 
-      if (!acc[dateKey]) {
-        acc[dateKey] = [];
+    return monthGroups;
+  }, [timelineItems, getDisplayDate]);
+
+  // 월별 키 목록 (정렬됨)
+  const sortedMonthKeys = useMemo(() => {
+    return Object.keys(groupedByMonth).sort((a, b) => {
+      // "2026년 1월" 형태에서 날짜 추출하여 비교
+      const parseMonthKey = (key: string) => {
+        const match = key.match(/(\d+)년 (\d+)월/);
+        if (match) {
+          return new Date(parseInt(match[1]), parseInt(match[2]) - 1);
+        }
+        return new Date();
+      };
+      return parseMonthKey(a).getTime() - parseMonthKey(b).getTime();
+    });
+  }, [groupedByMonth]);
+
+  // 특정 월로 스크롤
+  const scrollToMonth = useCallback((date: Date) => {
+    const monthKey = format(date, 'yyyy년 M월', { locale: ko });
+    const ref = monthSectionRefs.current[monthKey];
+
+    if (ref) {
+      const scrollContainer = ref.closest('.overflow-y-auto') as HTMLElement | null;
+      if (scrollContainer) {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const sectionRect = ref.getBoundingClientRect();
+        const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+        scrollContainer.scrollTop = scrollOffset;
       }
-      acc[dateKey].push(item);
-      return acc;
-    }, {} as Record<string, TimelineItem[]>);
-  }, [timelineItems]);
+    }
+    setNavigatedMonth(date);
+  }, []);
+
+  // 오늘로 스크롤
+  const handleTodayClick = useCallback(() => {
+    const today = new Date();
+    scrollToMonth(today);
+
+    // 오늘 날짜 섹션으로 스크롤
+    setTimeout(() => {
+      if (todaySectionRef.current) {
+        const scrollContainer = todaySectionRef.current.closest('.overflow-y-auto') as HTMLElement | null;
+        if (scrollContainer) {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const sectionRect = todaySectionRef.current.getBoundingClientRect();
+          const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+          scrollContainer.scrollTop = scrollOffset;
+        }
+      }
+    }, 100);
+  }, [scrollToMonth]);
+
+  // 월 변경 핸들러 (MonthNavigator에서 호출)
+  const handleMonthChange = useCallback((date: Date) => {
+    scrollToMonth(date);
+  }, [scrollToMonth]);
+
+  // 첫 로드 시 오늘 날짜로 스크롤
+  useEffect(() => {
+    if (isLoading || hasScrolledToToday || timelineItems.length === 0) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      // 오늘이 포함된 월로 이동
+      const today = new Date();
+      const todayMonthKey = format(today, 'yyyy년 M월', { locale: ko });
+      const monthRef = monthSectionRefs.current[todayMonthKey];
+
+      if (monthRef) {
+        const scrollContainer = monthRef.closest('.overflow-y-auto') as HTMLElement | null;
+        if (scrollContainer) {
+          // 오늘 날짜 섹션이 있으면 그곳으로, 없으면 월 섹션으로
+          if (todaySectionRef.current) {
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const sectionRect = todaySectionRef.current.getBoundingClientRect();
+            const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+            scrollContainer.scrollTop = scrollOffset;
+          } else {
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const sectionRect = monthRef.getBoundingClientRect();
+            const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+            scrollContainer.scrollTop = scrollOffset;
+          }
+        }
+      }
+      setNavigatedMonth(today);
+      setHasScrolledToToday(true);
+      setIsScrollReady(true);
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isLoading, hasScrolledToToday, timelineItems.length]);
 
   // 현재 범위 정보 텍스트
   const rangeInfoText = useMemo(() => {
@@ -429,32 +531,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     const endText = format(dateRange.rangeEnd, 'yyyy년 M월');
     return `${startText} ~ ${endText}`;
   }, [dateRange]);
-
-  // 첫 로드 시 오늘 날짜로 스크롤 (스크롤 완료 전까지 컨텐츠 숨김)
-  useEffect(() => {
-    if (isLoading || hasScrolledToToday || timelineItems.length === 0) {
-      return;
-    }
-
-    // 짧은 딜레이 후 스크롤 (DOM 렌더링 완료 대기)
-    const timer = setTimeout(() => {
-      if (todaySectionRef.current) {
-        // 부모 스크롤 컨테이너 찾기 (TaskOrganizeMode의 overflow-y-auto)
-        const scrollContainer = todaySectionRef.current.closest('.overflow-y-auto') as HTMLElement | null;
-        if (scrollContainer) {
-          // 오늘 섹션의 상대 위치 계산 후 scrollTop 설정
-          const containerRect = scrollContainer.getBoundingClientRect();
-          const sectionRect = todaySectionRef.current.getBoundingClientRect();
-          const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
-          scrollContainer.scrollTop = scrollOffset;
-        }
-      }
-      setHasScrolledToToday(true);
-      setIsScrollReady(true); // 스크롤 완료 후 컨텐츠 표시
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [isLoading, hasScrolledToToday, timelineItems.length]);
 
   if (isLoading) {
     return (
@@ -466,199 +542,263 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   if (timelineItems.length === 0) {
     return (
-      <div className="p-4">
-        {/* 과거 더 보기 버튼 */}
-        <button
-          onClick={handleLoadMorePast}
-          disabled={isLoadingMore}
-          className="w-full py-3 mb-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
-        >
-          <ChevronUp className="w-4 h-4" />
-          과거 6개월 더 보기
-        </button>
-
-        <div className="flex flex-col items-center justify-center h-48 text-base-content/60">
-          <Clock className="w-12 h-12 mb-4 opacity-50" />
-          <p>이 기간에 할일이 없어요</p>
-          <p className="text-sm text-base-content/40 mt-1">{rangeInfoText}</p>
+      <div>
+        {/* MonthNavigator - 상단 고정 */}
+        <div className="sticky top-0 z-10 bg-base-100">
+          <MonthNavigator
+            currentDate={navigatedMonth}
+            onMonthChange={handleMonthChange}
+            onTodayClick={handleTodayClick}
+          />
         </div>
 
-        {/* 미래 더 보기 버튼 */}
-        <button
-          onClick={handleLoadMoreFuture}
-          disabled={isLoadingMore}
-          className="w-full py-3 mt-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
-        >
-          <ChevronDown className="w-4 h-4" />
-          미래 6개월 더 보기
-        </button>
+        <div className="p-4">
+          {/* 과거 더 보기 버튼 */}
+          <button
+            onClick={handleLoadMorePast}
+            disabled={isLoadingMore}
+            className="w-full py-3 mb-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+          >
+            <ChevronUp className="w-4 h-4" />
+            과거 6개월 더 보기
+          </button>
+
+          <div className="flex flex-col items-center justify-center h-48 text-base-content/60">
+            <Clock className="w-12 h-12 mb-4 opacity-50" />
+            <p>이 기간에 할일이 없어요</p>
+            <p className="text-sm text-base-content/40 mt-1">{rangeInfoText}</p>
+          </div>
+
+          {/* 미래 더 보기 버튼 */}
+          <button
+            onClick={handleLoadMoreFuture}
+            disabled={isLoadingMore}
+            className="w-full py-3 mt-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+          >
+            <ChevronDown className="w-4 h-4" />
+            미래 6개월 더 보기
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`p-4 space-y-6 transition-opacity duration-100 ${isScrollReady ? 'opacity-100' : 'opacity-0'}`}>
-      {/* 과거 더 보기 버튼 (상단) */}
-      <button
-        onClick={handleLoadMorePast}
-        disabled={isLoadingMore}
-        className="w-full py-3 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
-      >
-        {isLoadingMore ? (
-          <span className="loading loading-spinner loading-sm" />
-        ) : (
-          <>
-            <ChevronUp className="w-4 h-4" />
-            과거 6개월 더 보기
-          </>
-        )}
-      </button>
-
-      {/* 현재 표시 범위 정보 */}
-      <div className="text-center text-xs text-base-content/40">
-        {rangeInfoText}
+    <div>
+      {/* MonthNavigator - 상단 고정 */}
+      <div className="sticky top-0 z-10 bg-base-100">
+        <MonthNavigator
+          currentDate={navigatedMonth}
+          onMonthChange={handleMonthChange}
+          onTodayClick={handleTodayClick}
+        />
       </div>
 
-      {Object.entries(groupedByDate).map(([dateKey, items]) => (
-        <div
-          key={dateKey}
-          ref={dateKey === '오늘' ? todaySectionRef : undefined}
+      <div className={`p-4 space-y-8 transition-opacity duration-100 ${isScrollReady ? 'opacity-100' : 'opacity-0'}`}>
+        {/* 과거 더 보기 버튼 (상단) */}
+        <button
+          onClick={handleLoadMorePast}
+          disabled={isLoadingMore}
+          className="w-full py-3 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
         >
-          {/* 날짜 헤더 */}
-          <h3 className="text-sm font-semibold text-base-content/60 mb-3">
-            {dateKey}
-          </h3>
+          {isLoadingMore ? (
+            <span className="loading loading-spinner loading-sm" />
+          ) : (
+            <>
+              <ChevronUp className="w-4 h-4" />
+              과거 6개월 더 보기
+            </>
+          )}
+        </button>
 
-          {/* 타임라인 아이템들 */}
-          <div className="space-y-2">
-            {items.map((item) => {
-              const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
-              const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
+        {/* 월별 섹션 */}
+        {sortedMonthKeys.map(monthKey => {
+          const dayGroups = groupedByMonth[monthKey];
+          const sortedDayKeys = Object.keys(dayGroups).sort((a, b) => {
+            // "1_목" 형태에서 숫자 추출
+            const numA = parseInt(a.split('_')[0]);
+            const numB = parseInt(b.split('_')[0]);
+            return numA - numB;
+          });
 
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
-                >
-                  {/* 완료 토글 아이콘 */}
-                  <button
-                    onClick={() => handleToggleComplete(item)}
-                    className={`btn btn-ghost btn-xs btn-circle ${
-                      item.completed ? 'text-success' : 'text-info'
-                    }`}
-                    title={item.completed ? '미완료로 변경' : '완료로 변경'}
-                  >
-                    {item.completed ? (
-                      <CheckCircle2 className="w-5 h-5" />
-                    ) : (
-                      <Circle className="w-5 h-5" />
-                    )}
-                  </button>
+          return (
+            <div
+              key={monthKey}
+              ref={el => { monthSectionRefs.current[monthKey] = el; }}
+            >
+              {/* 월 헤더 */}
+              <h2 className="text-xl font-bold mb-6 text-base-content">{monthKey}</h2>
 
-                  {/* 내용 (클릭 시 편집) */}
-                  <button
-                    onClick={() => handleEditClick(item)}
-                    className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
-                  >
-                    <div className="flex items-center gap-1">
-                      {/* 반복 아이콘 */}
-                      {item.isRecurrenceInstance && (
-                        <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
-                      )}
-                      <span className={`text-sm ${
-                        item.completed ? 'line-through text-base-content/60' : ''
-                      }`}>
-                        {item.title}
-                      </span>
-                    </div>
+              {/* 날짜별 그룹 */}
+              <div className="space-y-6">
+                {sortedDayKeys.map(dayKey => {
+                  const { date, items } = dayGroups[dayKey];
+                  const [dayNumber, dayOfWeek] = dayKey.split('_');
+                  const isTodayDate = isToday(date);
 
-                    {/* 맥락 배지 (있을 때만 렌더링) */}
-                    {(goalName || projectName) && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {goalName && (
-                          <span className="badge badge-xs badge-ghost">
-                            {goalName}
-                          </span>
-                        )}
-                        {projectName && (
-                          <span className="badge badge-xs badge-ghost">
-                            {projectName}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 소중한 사람 표시 */}
-                    {(() => {
-                      const joyfulPeople = people.filter(p => item.joyfulPeopleIds.includes(p.id));
-                      const shamefulPeople = people.filter(p => item.shamefulPeopleIds.includes(p.id));
-                      if (joyfulPeople.length === 0 && shamefulPeople.length === 0) return null;
-                      return (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {joyfulPeople.map(p => (
-                            <span key={p.id} className="badge badge-xs bg-pink-500/20 text-pink-600 dark:text-pink-400 gap-0.5">
-                              <Heart className="w-2.5 h-2.5" />{p.name}
-                            </span>
-                          ))}
-                          {shamefulPeople.map(p => (
-                            <span key={p.id} className="badge badge-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 gap-0.5">
-                              <AlertCircle className="w-2.5 h-2.5" />{p.name}
-                            </span>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </button>
-
-                  {/* 삭제 버튼 (반복 인스턴스는 삭제 불가) */}
-                  {!item.isRecurrenceInstance && (
-                    <button
-                      onClick={() => setDeletingTodoId(item.id)}
-                      className="btn btn-ghost btn-xs rounded-full text-error"
-                      title="삭제"
+                  return (
+                    <div
+                      key={dayKey}
+                      ref={isTodayDate ? todaySectionRef : undefined}
+                      className="flex gap-4"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                      {/* 날짜 헤더 (왼쪽 고정) */}
+                      <div className="w-12 flex-shrink-0 pt-1">
+                        <div className={`text-2xl font-bold ${isTodayDate ? 'text-primary' : 'text-base-content'}`}>
+                          {dayNumber}
+                        </div>
+                        <div className={`text-sm ${isTodayDate ? 'text-primary' : 'text-base-content/60'}`}>
+                          {dayOfWeek}
+                        </div>
+                      </div>
 
-                  {/* 일정 유형 배지 (anytime만 표시, timed는 시간으로 충분) */}
-                  {item.scheduleType === 'anytime' && (
-                    <span className="badge badge-xs badge-ghost">언제든지</span>
-                  )}
+                      {/* 할일 목록 (오른쪽) */}
+                      <div className="flex-1 space-y-2">
+                        {items.map((item) => {
+                          const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
+                          const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
 
-                  {/* 시간 (timed: startTime - endTime, anytime: 시간 없음) */}
-                  {item.scheduleType === 'timed' && item.startTime ? (
-                    <span className="text-xs text-base-content/40">
-                      {format(item.startTime, 'HH:mm')}
-                      {item.endTime && ` - ${format(item.endTime, 'HH:mm')}`}
-                    </span>
-                  ) : item.scheduleType !== 'anytime' ? (
-                    <span className="text-xs text-base-content/40">
-                      {format(item.createdAt, 'HH:mm')}
-                    </span>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                          // 배경색: 항상 bg-base-200
+                          const bgColor = 'bg-base-200';
 
-      {/* 미래 더 보기 버튼 (하단) */}
-      <button
-        onClick={handleLoadMoreFuture}
-        disabled={isLoadingMore}
-        className="w-full py-3 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
-      >
-        {isLoadingMore ? (
-          <span className="loading loading-spinner loading-sm" />
-        ) : (
-          <>
-            <ChevronDown className="w-4 h-4" />
-            미래 6개월 더 보기
-          </>
-        )}
-      </button>
+                          // 왼쪽 보더 색상
+                          const borderColor = item.completed
+                            ? 'border-l-success'
+                            : item.color
+                              ? `border-l-[${item.color}]`
+                              : 'border-l-primary';
+
+                          return (
+                            <div
+                              key={item.id}
+                              className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} hover:opacity-90 transition-opacity`}
+                            >
+                              {/* 시간/날짜 표시 */}
+                              <div className="w-14 flex-shrink-0 text-xs text-base-content/50 pt-0.5">
+                                {item.scheduleType === 'timed' && item.startTime ? (
+                                  <span>{format(item.startTime, 'HH:mm')}</span>
+                                ) : item.scheduleType === 'anytime' ? (
+                                  <span>{format(date, 'MM-dd')}</span>
+                                ) : (
+                                  <span>{format(date, 'MM-dd')}</span>
+                                )}
+                              </div>
+
+                              {/* 완료 토글 아이콘 */}
+                              <button
+                                onClick={() => handleToggleComplete(item)}
+                                className={`flex-shrink-0 ${
+                                  item.completed ? 'text-success' : 'text-base-content/40'
+                                }`}
+                                title={item.completed ? '미완료로 변경' : '완료로 변경'}
+                              >
+                                {item.completed ? (
+                                  <CheckCircle2 className="w-5 h-5" />
+                                ) : (
+                                  <Circle className="w-5 h-5" />
+                                )}
+                              </button>
+
+                              {/* 내용 (클릭 시 편집) */}
+                              <button
+                                onClick={() => handleEditClick(item)}
+                                className="flex-1 min-w-0 text-left"
+                              >
+                                {/* 시간 범위 (timed만) */}
+                                {item.scheduleType === 'timed' && item.startTime && item.endTime && (
+                                  <div className="text-xs text-base-content/50 mb-1">
+                                    {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-1.5">
+                                  {/* 반복 아이콘 */}
+                                  {item.isRecurrenceInstance && (
+                                    <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
+                                  )}
+                                  <span className={`text-sm ${
+                                    item.completed ? 'line-through text-base-content/50' : 'text-base-content'
+                                  }`}>
+                                    {item.title}
+                                  </span>
+                                </div>
+
+                                {/* 맥락 배지 */}
+                                {(goalName || projectName) && (
+                                  <div className="flex flex-wrap gap-1 mt-1.5">
+                                    {goalName && (
+                                      <span className="badge badge-xs badge-ghost">
+                                        {goalName}
+                                      </span>
+                                    )}
+                                    {projectName && (
+                                      <span className="badge badge-xs badge-ghost">
+                                        {projectName}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* 소중한 사람 표시 */}
+                                {(() => {
+                                  const joyfulPeople = people.filter(p => item.joyfulPeopleIds.includes(p.id));
+                                  const shamefulPeople = people.filter(p => item.shamefulPeopleIds.includes(p.id));
+                                  if (joyfulPeople.length === 0 && shamefulPeople.length === 0) return null;
+                                  return (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {joyfulPeople.map(p => (
+                                        <span key={p.id} className="badge badge-xs bg-pink-500/20 text-pink-600 dark:text-pink-400 gap-0.5">
+                                          <Heart className="w-2.5 h-2.5" />{p.name}
+                                        </span>
+                                      ))}
+                                      {shamefulPeople.map(p => (
+                                        <span key={p.id} className="badge badge-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 gap-0.5">
+                                          <AlertCircle className="w-2.5 h-2.5" />{p.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
+                              </button>
+
+                              {/* 삭제 버튼 (반복 인스턴스는 삭제 불가) */}
+                              {!item.isRecurrenceInstance && (
+                                <button
+                                  onClick={() => setDeletingTodoId(item.id)}
+                                  className="btn btn-ghost btn-xs rounded-full text-error opacity-0 group-hover:opacity-100"
+                                  title="삭제"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* 미래 더 보기 버튼 (하단) */}
+        <button
+          onClick={handleLoadMoreFuture}
+          disabled={isLoadingMore}
+          className="w-full py-3 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+        >
+          {isLoadingMore ? (
+            <span className="loading loading-spinner loading-sm" />
+          ) : (
+            <>
+              <ChevronDown className="w-4 h-4" />
+              미래 6개월 더 보기
+            </>
+          )}
+        </button>
+      </div>
 
       {/* 편집 모달 */}
       <TodoEditModal
