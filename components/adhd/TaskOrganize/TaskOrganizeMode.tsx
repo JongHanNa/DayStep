@@ -81,7 +81,7 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
+    <div className="h-screen bg-base-100 flex flex-col overflow-hidden safe-area-top">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className="flex items-center gap-3 p-4">

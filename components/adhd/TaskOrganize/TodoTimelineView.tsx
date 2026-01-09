@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { format, isToday, isYesterday } from 'date-fns';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { format, isToday, isYesterday, startOfMonth, endOfMonth, subMonths, addMonths } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Plus, Clock, Trash2, Circle, Heart, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { Todo } from '@/entities/todo/Todo';
@@ -11,9 +11,41 @@ import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import { fetchNotesWithJWT } from '@/lib/supabase/notes';
 import type { Note } from '@/types/second-brain';
+import { generateAllRecurrenceInstances, applyCompletionStatusToInstances, isRecurringTodo } from '@/lib/recurrence-utils';
+import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
+import { TodoCompletionsService } from '@/services/todo-completions.service';
 
 interface TodoTimelineViewProps {
   userId: string;
+}
+
+// 타임라인 아이템 타입 (일반 할일 + 반복 인스턴스 통합)
+interface TimelineItem {
+  id: string;
+  title: string;
+  completed: boolean;
+  startTime: Date | null;
+  endTime: Date | null;
+  scheduleType: string;
+  createdAt: Date;
+  projectId?: string | null;
+  goalId?: string | null;
+  icon?: string | null;
+  color?: string | null;
+  orderIndex: number;
+  recurrencePattern?: string | null;
+  recurrenceInterval?: number | null;
+  recurrenceEndDate?: Date | null;
+  recurrenceCount?: number | null;
+  recurrenceDaysOfWeek?: number[] | null;
+  joyfulPeopleIds: string[];
+  shamefulPeopleIds: string[];
+  // 반복 인스턴스 전용 필드
+  isRecurrenceInstance?: boolean;
+  recurrenceSourceId?: string;
+  recurrenceOccurrenceDate?: string;
+  // 원본 Todo 참조 (편집 모달용)
+  originalTodo?: Todo;
 }
 
 /**
@@ -28,6 +60,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { people, loadPeople } = useCherishedPeopleStore();
   const [isLoading, setIsLoading] = useState(true);
 
+  // 날짜 범위 상태 (과거/미래 개월 수)
+  const [pastMonthsLoaded, setPastMonthsLoaded] = useState(3);
+  const [futureMonthsLoaded, setFutureMonthsLoaded] = useState(3);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // 반복 인스턴스 및 완료 상태
+  const [recurrenceInstances, setRecurrenceInstances] = useState<TimelineItem[]>([]);
+  const [completions, setCompletions] = useState<{ todo_id: string; completion_date: string }[]>([]);
+
   // 편집 모달 상태
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [editFormData, setEditFormData] = useState<TodoFormData | null>(null);
@@ -38,21 +79,123 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 연결된 실행 원동력을 위한 fuel 노트 상태
   const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
 
+  // 오늘 날짜 섹션 참조 (첫 로드 시 스크롤 위치 설정용)
+  const todaySectionRef = useRef<HTMLDivElement>(null);
+  const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
+
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
   const goals: { id: string; title: string }[] = [];
 
+  // 날짜 범위 계산
+  const dateRange = useMemo(() => {
+    const today = new Date();
+    const currentMonthStart = startOfMonth(today);
+
+    const rangeStart = subMonths(currentMonthStart, pastMonthsLoaded);
+    const rangeEnd = endOfMonth(addMonths(currentMonthStart, futureMonthsLoaded - 1));
+
+    return { rangeStart, rangeEnd };
+  }, [pastMonthsLoaded, futureMonthsLoaded]);
+
+  // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       await Promise.all([
         fetchAllTodos(),
-        loadPeople(userId)  // 소중한 사람 데이터도 함께 로딩
+        loadPeople(userId)
       ]);
       setIsLoading(false);
     };
     loadData();
   }, [userId, fetchAllTodos, loadPeople]);
+
+  // 반복 인스턴스 생성 및 완료 상태 로드
+  useEffect(() => {
+    const loadRecurrenceData = async () => {
+      if (!userId || todos.length === 0) {
+        setRecurrenceInstances([]);
+        setCompletions([]);
+        return;
+      }
+
+      try {
+        // 반복 할일 필터링
+        const recurringTodos = todos.filter(todo => isRecurringTodo(todo));
+
+        if (recurringTodos.length === 0) {
+          setRecurrenceInstances([]);
+          // 완료 상태는 여전히 로드 (비반복 할일에도 필요할 수 있음)
+          const loadedCompletions = await loadCompletionsForDateRange(
+            dateRange.rangeStart,
+            dateRange.rangeEnd,
+            userId
+          );
+          setCompletions(loadedCompletions);
+          return;
+        }
+
+        // 병렬로 인스턴스 생성 및 완료 상태 로드
+        const [instances, loadedCompletions] = await Promise.all([
+          generateAllRecurrenceInstances(
+            recurringTodos,
+            dateRange.rangeStart,
+            dateRange.rangeEnd,
+            userId
+          ),
+          loadCompletionsForDateRange(
+            dateRange.rangeStart,
+            dateRange.rangeEnd,
+            userId
+          )
+        ]);
+
+        // 완료 상태 적용
+        const instancesWithCompletion = applyCompletionStatusToInstances(instances, loadedCompletions);
+
+        // TimelineItem 형식으로 변환
+        const timelineInstances: TimelineItem[] = instancesWithCompletion.map(instance => {
+          const data = instance.data;
+          const originalTodo = recurringTodos.find(t => t.id === instance.originalId);
+
+          return {
+            id: instance.id,
+            title: data.title || data.content,
+            completed: data.completed || false,
+            startTime: data.start_time ? new Date(data.start_time) : null,
+            endTime: data.end_time ? new Date(data.end_time) : null,
+            scheduleType: data.schedule_type || 'timed',
+            createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+            projectId: data.project_id,
+            goalId: data.goal_id,
+            icon: data.icon,
+            color: data.color,
+            orderIndex: data.order_index || 0,
+            recurrencePattern: data.recurrence_pattern,
+            recurrenceInterval: data.recurrence_interval,
+            recurrenceEndDate: data.recurrence_end_date ? new Date(data.recurrence_end_date) : undefined,
+            recurrenceCount: data.recurrence_count,
+            recurrenceDaysOfWeek: data.recurrence_days_of_week,
+            joyfulPeopleIds: data.joyful_people_ids || [],
+            shamefulPeopleIds: data.shameful_people_ids || [],
+            isRecurrenceInstance: true,
+            recurrenceSourceId: instance.originalId,
+            recurrenceOccurrenceDate: data.recurrence_occurrence_date,
+            originalTodo: originalTodo
+          };
+        });
+
+        setRecurrenceInstances(timelineInstances);
+        setCompletions(loadedCompletions);
+      } catch (error) {
+        console.error('반복 인스턴스 로드 실패:', error);
+        setRecurrenceInstances([]);
+      }
+    };
+
+    loadRecurrenceData();
+  }, [userId, todos, dateRange.rangeStart, dateRange.rangeEnd]);
 
   // fuel 노트 로드 (편집 모달에서 연결된 원동력 표시용)
   useEffect(() => {
@@ -79,10 +222,46 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     return new Map(goals.map(g => [g.id, g.title]));
   }, [goals]);
 
-  // 완료 토글
-  const handleToggleComplete = useCallback(async (todo: Todo) => {
-    await updateTodo(todo.id, { completed: !todo.completed });
-  }, [updateTodo]);
+  // 완료 토글 (일반 할일 vs 반복 인스턴스 분기)
+  const handleToggleComplete = useCallback(async (item: TimelineItem) => {
+    if (item.isRecurrenceInstance && item.recurrenceSourceId && item.recurrenceOccurrenceDate) {
+      // 반복 인스턴스: todo_completions 테이블 사용
+      try {
+        await TodoCompletionsService.toggleCompletion(
+          item.recurrenceSourceId,
+          userId,
+          new Date(item.recurrenceOccurrenceDate),
+          item.completed
+        );
+
+        // 로컬 상태 업데이트
+        if (item.completed) {
+          // 완료 취소 → completions에서 제거
+          setCompletions(prev => prev.filter(c =>
+            !(c.todo_id === item.recurrenceSourceId && c.completion_date === item.recurrenceOccurrenceDate)
+          ));
+        } else {
+          // 완료 → completions에 추가
+          setCompletions(prev => [...prev, {
+            todo_id: item.recurrenceSourceId!,
+            completion_date: item.recurrenceOccurrenceDate!
+          }]);
+        }
+
+        // 인스턴스 상태 업데이트
+        setRecurrenceInstances(prev => prev.map(inst =>
+          inst.id === item.id
+            ? { ...inst, completed: !inst.completed }
+            : inst
+        ));
+      } catch (error) {
+        console.error('반복 인스턴스 완료 토글 실패:', error);
+      }
+    } else if (item.originalTodo) {
+      // 일반 할일: completed 필드 토글
+      await updateTodo(item.originalTodo.id, { completed: !item.completed });
+    }
+  }, [userId, updateTodo]);
 
   // 삭제 처리
   const handleDelete = useCallback(async (todoId: string) => {
@@ -115,16 +294,17 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       recurrenceEndDate: todo.recurrenceEndDate ? new Date(todo.recurrenceEndDate) : undefined,
       recurrenceCount: todo.recurrenceCount || undefined,
       selectedDaysOfWeek: todo.recurrenceDaysOfWeek || undefined,
-      // 소중한 사람 연결 필드
       joyfulPeopleIds: todo.joyfulPeopleIds || [],
       shamefulPeopleIds: todo.shamefulPeopleIds || [],
     };
   }, []);
 
   // 편집 모달 열기
-  const handleEditClick = useCallback((todo: Todo) => {
-    setEditingTodo(todo);
-    setEditFormData(todoToFormData(todo));
+  const handleEditClick = useCallback((item: TimelineItem) => {
+    if (item.originalTodo) {
+      setEditingTodo(item.originalTodo);
+      setEditFormData(todoToFormData(item.originalTodo));
+    }
   }, [todoToFormData]);
 
   // 편집 저장
@@ -143,7 +323,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       recurrence_end_date: formData.recurrenceEndDate?.toISOString().split('T')[0],
       recurrence_count: formData.recurrenceCount,
       recurrence_days_of_week: formData.selectedDaysOfWeek,
-      // 소중한 사람 연결 필드
       joyful_people_ids: formData.joyfulPeopleIds,
       shameful_people_ids: formData.shamefulPeopleIds,
     });
@@ -160,21 +339,68 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setEditFormData(null);
   }, [editingTodo, deleteTodo]);
 
+  // "더 보기" 핸들러
+  const handleLoadMorePast = useCallback(async () => {
+    setIsLoadingMore(true);
+    setPastMonthsLoaded(prev => prev + 6);
+    setIsLoadingMore(false);
+  }, []);
+
+  const handleLoadMoreFuture = useCallback(async () => {
+    setIsLoadingMore(true);
+    setFutureMonthsLoaded(prev => prev + 6);
+    setIsLoadingMore(false);
+  }, []);
+
   // 할일의 표시 날짜 결정 (startTime 기준)
-  const getDisplayDate = (todo: Todo): Date => {
-    // 타임라인은 startTime 있는 할일만 표시하므로 항상 startTime 사용
-    return todo.startTime || todo.createdAt;
+  const getDisplayDate = (item: TimelineItem): Date => {
+    return item.startTime || item.createdAt;
   };
 
-  // 타임라인 아이템 생성 (startTime 있는 할일만, 표시 날짜 기준 정렬)
+  // 타임라인 아이템 생성 (일반 할일 + 반복 인스턴스 병합)
   const timelineItems = useMemo(() => {
-    return todos
-      .filter(todo => todo.startTime !== null)  // startTime 있는 것만 표시
-      .sort((a, b) => getDisplayDate(b).getTime() - getDisplayDate(a).getTime())
-      .slice(0, 50); // 최근 50개만
-  }, [todos]);
+    // 일반 할일 (반복이 아닌 것 + 범위 내)
+    const nonRecurringItems: TimelineItem[] = todos
+      .filter(todo => {
+        // 반복 할일 제외
+        if (isRecurringTodo(todo)) return false;
+        // startTime 있는 것만
+        if (!todo.startTime) return false;
+        // 날짜 범위 체크
+        const todoDate = new Date(todo.startTime);
+        return todoDate >= dateRange.rangeStart && todoDate <= dateRange.rangeEnd;
+      })
+      .map(todo => ({
+        id: todo.id,
+        title: todo.title,
+        completed: todo.completed,
+        startTime: todo.startTime,
+        endTime: todo.endTime,
+        scheduleType: todo.scheduleType || 'timed',
+        createdAt: todo.createdAt,
+        projectId: todo.projectId,
+        goalId: todo.goalId,
+        icon: todo.icon,
+        color: todo.color,
+        orderIndex: todo.orderIndex,
+        recurrencePattern: todo.recurrencePattern,
+        recurrenceInterval: todo.recurrenceInterval,
+        recurrenceEndDate: todo.recurrenceEndDate,
+        recurrenceCount: todo.recurrenceCount,
+        recurrenceDaysOfWeek: todo.recurrenceDaysOfWeek,
+        joyfulPeopleIds: todo.joyfulPeopleIds || [],
+        shamefulPeopleIds: todo.shamefulPeopleIds || [],
+        isRecurrenceInstance: false,
+        originalTodo: todo
+      }));
 
-  // 날짜별 그룹핑 (timed 할일은 startTime 기준)
+    // 병합 및 정렬
+    const allItems = [...nonRecurringItems, ...recurrenceInstances];
+
+    return allItems.sort((a, b) => getDisplayDate(b).getTime() - getDisplayDate(a).getTime());
+  }, [todos, recurrenceInstances, dateRange.rangeStart, dateRange.rangeEnd]);
+
+  // 날짜별 그룹핑
   const groupedByDate = useMemo(() => {
     return timelineItems.reduce((acc, item) => {
       const date = getDisplayDate(item);
@@ -193,8 +419,40 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       }
       acc[dateKey].push(item);
       return acc;
-    }, {} as Record<string, Todo[]>);
+    }, {} as Record<string, TimelineItem[]>);
   }, [timelineItems]);
+
+  // 현재 범위 정보 텍스트
+  const rangeInfoText = useMemo(() => {
+    const startText = format(dateRange.rangeStart, 'yyyy년 M월');
+    const endText = format(dateRange.rangeEnd, 'yyyy년 M월');
+    return `${startText} ~ ${endText}`;
+  }, [dateRange]);
+
+  // 첫 로드 시 오늘 날짜로 스크롤
+  useEffect(() => {
+    if (isLoading || hasScrolledToToday || timelineItems.length === 0) {
+      return;
+    }
+
+    // 약간의 딜레이 후 스크롤 (DOM 렌더링 완료 대기)
+    const timer = setTimeout(() => {
+      if (todaySectionRef.current) {
+        // 부모 스크롤 컨테이너 찾기 (TaskOrganizeMode의 overflow-y-auto)
+        const scrollContainer = todaySectionRef.current.closest('.overflow-y-auto') as HTMLElement | null;
+        if (scrollContainer) {
+          // 오늘 섹션의 상대 위치 계산 후 scrollTop 설정
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const sectionRect = todaySectionRef.current.getBoundingClientRect();
+          const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+          scrollContainer.scrollTop = scrollOffset;
+        }
+      }
+      setHasScrolledToToday(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isLoading, hasScrolledToToday, timelineItems.length]);
 
   if (isLoading) {
     return (
@@ -206,18 +464,64 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   if (timelineItems.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-base-content/60">
-        <Clock className="w-12 h-12 mb-4 opacity-50" />
-        <p>아직 기록이 없어요</p>
-        <p className="text-sm">할일을 만들면 여기에 표시됩니다</p>
+      <div className="p-4">
+        {/* 과거 더 보기 버튼 */}
+        <button
+          onClick={handleLoadMorePast}
+          disabled={isLoadingMore}
+          className="w-full py-3 mb-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+        >
+          <ChevronUp className="w-4 h-4" />
+          과거 6개월 더 보기
+        </button>
+
+        <div className="flex flex-col items-center justify-center h-48 text-base-content/60">
+          <Clock className="w-12 h-12 mb-4 opacity-50" />
+          <p>이 기간에 할일이 없어요</p>
+          <p className="text-sm text-base-content/40 mt-1">{rangeInfoText}</p>
+        </div>
+
+        {/* 미래 더 보기 버튼 */}
+        <button
+          onClick={handleLoadMoreFuture}
+          disabled={isLoadingMore}
+          className="w-full py-3 mt-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+        >
+          <ChevronDown className="w-4 h-4" />
+          미래 6개월 더 보기
+        </button>
       </div>
     );
   }
 
   return (
     <div className="p-4 space-y-6">
+      {/* 과거 더 보기 버튼 (상단) */}
+      <button
+        onClick={handleLoadMorePast}
+        disabled={isLoadingMore}
+        className="w-full py-3 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+      >
+        {isLoadingMore ? (
+          <span className="loading loading-spinner loading-sm" />
+        ) : (
+          <>
+            <ChevronUp className="w-4 h-4" />
+            과거 6개월 더 보기
+          </>
+        )}
+      </button>
+
+      {/* 현재 표시 범위 정보 */}
+      <div className="text-center text-xs text-base-content/40">
+        {rangeInfoText}
+      </div>
+
       {Object.entries(groupedByDate).map(([dateKey, items]) => (
-        <div key={dateKey}>
+        <div
+          key={dateKey}
+          ref={dateKey === '오늘' ? todaySectionRef : undefined}
+        >
           {/* 날짜 헤더 */}
           <h3 className="text-sm font-semibold text-base-content/60 mb-3">
             {dateKey}
@@ -225,24 +529,24 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
           {/* 타임라인 아이템들 */}
           <div className="space-y-2">
-            {items.map((todo) => {
-              const projectName = todo.projectId ? projectMap.get(todo.projectId) : undefined;
-              const goalName = todo.goalId ? goalMap.get(todo.goalId) : undefined;
+            {items.map((item) => {
+              const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
+              const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
 
               return (
                 <div
-                  key={todo.id}
+                  key={item.id}
                   className="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
                 >
                   {/* 완료 토글 아이콘 */}
                   <button
-                    onClick={() => handleToggleComplete(todo)}
+                    onClick={() => handleToggleComplete(item)}
                     className={`btn btn-ghost btn-xs btn-circle ${
-                      todo.completed ? 'text-success' : 'text-info'
+                      item.completed ? 'text-success' : 'text-info'
                     }`}
-                    title={todo.completed ? '미완료로 변경' : '완료로 변경'}
+                    title={item.completed ? '미완료로 변경' : '완료로 변경'}
                   >
-                    {todo.completed ? (
+                    {item.completed ? (
                       <CheckCircle2 className="w-5 h-5" />
                     ) : (
                       <Circle className="w-5 h-5" />
@@ -251,14 +555,20 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                   {/* 내용 (클릭 시 편집) */}
                   <button
-                    onClick={() => handleEditClick(todo)}
+                    onClick={() => handleEditClick(item)}
                     className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                   >
-                    <span className={`text-sm ${
-                      todo.completed ? 'line-through text-base-content/60' : ''
-                    }`}>
-                      {todo.title}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {/* 반복 아이콘 */}
+                      {item.isRecurrenceInstance && (
+                        <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
+                      )}
+                      <span className={`text-sm ${
+                        item.completed ? 'line-through text-base-content/60' : ''
+                      }`}>
+                        {item.title}
+                      </span>
+                    </div>
 
                     {/* 맥락 배지 (있을 때만 렌더링) */}
                     {(goalName || projectName) && (
@@ -278,8 +588,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                     {/* 소중한 사람 표시 */}
                     {(() => {
-                      const joyfulPeople = people.filter(p => todo.joyfulPeopleIds.includes(p.id));
-                      const shamefulPeople = people.filter(p => todo.shamefulPeopleIds.includes(p.id));
+                      const joyfulPeople = people.filter(p => item.joyfulPeopleIds.includes(p.id));
+                      const shamefulPeople = people.filter(p => item.shamefulPeopleIds.includes(p.id));
                       if (joyfulPeople.length === 0 && shamefulPeople.length === 0) return null;
                       return (
                         <div className="flex flex-wrap gap-1 mt-1">
@@ -298,29 +608,31 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     })()}
                   </button>
 
-                  {/* 삭제 버튼 */}
-                  <button
-                    onClick={() => setDeletingTodoId(todo.id)}
-                    className="btn btn-ghost btn-xs rounded-full text-error"
-                    title="삭제"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {/* 삭제 버튼 (반복 인스턴스는 삭제 불가) */}
+                  {!item.isRecurrenceInstance && (
+                    <button
+                      onClick={() => setDeletingTodoId(item.id)}
+                      className="btn btn-ghost btn-xs rounded-full text-error"
+                      title="삭제"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
 
                   {/* 일정 유형 배지 (anytime만 표시, timed는 시간으로 충분) */}
-                  {todo.scheduleType === 'anytime' && (
+                  {item.scheduleType === 'anytime' && (
                     <span className="badge badge-xs badge-ghost">언제든지</span>
                   )}
 
                   {/* 시간 (timed: startTime - endTime, anytime: 시간 없음) */}
-                  {todo.scheduleType === 'timed' && todo.startTime ? (
+                  {item.scheduleType === 'timed' && item.startTime ? (
                     <span className="text-xs text-base-content/40">
-                      {format(todo.startTime, 'HH:mm')}
-                      {todo.endTime && ` - ${format(todo.endTime, 'HH:mm')}`}
+                      {format(item.startTime, 'HH:mm')}
+                      {item.endTime && ` - ${format(item.endTime, 'HH:mm')}`}
                     </span>
-                  ) : todo.scheduleType !== 'anytime' ? (
+                  ) : item.scheduleType !== 'anytime' ? (
                     <span className="text-xs text-base-content/40">
-                      {format(todo.createdAt, 'HH:mm')}
+                      {format(item.createdAt, 'HH:mm')}
                     </span>
                   ) : null}
                 </div>
@@ -329,6 +641,22 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           </div>
         </div>
       ))}
+
+      {/* 미래 더 보기 버튼 (하단) */}
+      <button
+        onClick={handleLoadMoreFuture}
+        disabled={isLoadingMore}
+        className="w-full py-3 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+      >
+        {isLoadingMore ? (
+          <span className="loading loading-spinner loading-sm" />
+        ) : (
+          <>
+            <ChevronDown className="w-4 h-4" />
+            미래 6개월 더 보기
+          </>
+        )}
+      </button>
 
       {/* 편집 모달 */}
       <TodoEditModal
