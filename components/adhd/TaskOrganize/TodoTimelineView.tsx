@@ -89,8 +89,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 월별 섹션 참조 (스크롤 이동용)
   const monthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const todaySectionRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [isScrollReady, setIsScrollReady] = useState(false);
+
+  // 프로그래밍적 스크롤 중인지 추적 (사용자 스크롤과 구분)
+  const isScrollingProgrammatically = useRef(false);
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
@@ -453,6 +457,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     const ref = monthSectionRefs.current[monthKey];
 
     if (ref) {
+      // 프로그래밍적 스크롤 시작 - IntersectionObserver 무시
+      isScrollingProgrammatically.current = true;
+
       const scrollContainer = ref.closest('.overflow-y-auto') as HTMLElement | null;
       if (scrollContainer) {
         const containerRect = scrollContainer.getBoundingClientRect();
@@ -460,6 +467,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
         scrollContainer.scrollTop = scrollOffset;
       }
+
+      // 스크롤 완료 후 다시 IntersectionObserver 활성화
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+      }, 300);
     }
     setNavigatedMonth(date);
   }, []);
@@ -467,6 +479,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 오늘로 스크롤
   const handleTodayClick = useCallback(() => {
     const today = new Date();
+
+    // 프로그래밍적 스크롤 시작
+    isScrollingProgrammatically.current = true;
+
     scrollToMonth(today);
 
     // 오늘 날짜 섹션으로 스크롤
@@ -480,6 +496,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           scrollContainer.scrollTop = scrollOffset;
         }
       }
+      // 스크롤 완료 후 IntersectionObserver 다시 활성화
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+      }, 200);
     }, 100);
   }, [scrollToMonth]);
 
@@ -524,6 +544,68 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
     return () => clearTimeout(timer);
   }, [isLoading, hasScrolledToToday, timelineItems.length]);
+
+  // IntersectionObserver로 스크롤 시 현재 보이는 월 감지
+  useEffect(() => {
+    if (!isScrollReady || sortedMonthKeys.length === 0) return;
+
+    // 현재 보이는 월 섹션들을 추적
+    const visibleMonths = new Map<string, number>(); // monthKey -> intersectionRatio
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // 프로그래밍적 스크롤 중이면 무시
+        if (isScrollingProgrammatically.current) return;
+
+        entries.forEach((entry) => {
+          const monthKey = entry.target.getAttribute('data-month-key');
+          if (!monthKey) return;
+
+          if (entry.isIntersecting) {
+            visibleMonths.set(monthKey, entry.intersectionRatio);
+          } else {
+            visibleMonths.delete(monthKey);
+          }
+        });
+
+        // 가장 위에 보이는 월 찾기 (sortedMonthKeys 순서 기준)
+        if (visibleMonths.size > 0) {
+          // 현재 보이는 월 중 가장 먼저 나오는 월 선택
+          for (const monthKey of sortedMonthKeys) {
+            if (visibleMonths.has(monthKey)) {
+              // monthKey에서 Date 추출
+              const match = monthKey.match(/(\d+)년 (\d+)월/);
+              if (match) {
+                const year = parseInt(match[1]);
+                const month = parseInt(match[2]) - 1;
+                const newDate = new Date(year, month, 1);
+                setNavigatedMonth(newDate);
+              }
+              break;
+            }
+          }
+        }
+      },
+      {
+        root: null, // viewport 기준
+        rootMargin: '-80px 0px -50% 0px', // 상단 80px(헤더 높이) 아래부터 화면 50%까지
+        threshold: [0, 0.1, 0.5, 1] // 여러 threshold로 정밀 감지
+      }
+    );
+
+    // 각 월 섹션에 observer 연결
+    sortedMonthKeys.forEach((monthKey) => {
+      const element = monthSectionRefs.current[monthKey];
+      if (element) {
+        element.setAttribute('data-month-key', monthKey);
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isScrollReady, sortedMonthKeys]);
 
   // 현재 범위 정보 텍스트
   const rangeInfoText = useMemo(() => {
