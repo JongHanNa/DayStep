@@ -26,6 +26,7 @@ export interface AppSettings {
   colorTheme: ColorTheme;
   adhdModeEnabled: boolean;
   showDescriptions: boolean;
+  showFuelBadges: boolean;
   _lastSyncedAt: string | null;
 }
 
@@ -45,6 +46,7 @@ interface SettingsState extends AppSettings {
   setColorTheme: (theme: ColorTheme) => void;
   setAdhdModeEnabled: (enabled: boolean) => void;
   setShowDescriptions: (show: boolean) => void;
+  setShowFuelBadges: (show: boolean) => void;
 
   // DB 동기화 액션
   loadFromDB: (settings: Partial<AppSettings>) => void;
@@ -81,6 +83,9 @@ export const useSettingsStore = create<SettingsState>()(
 
         // 기본값: 설명 표시
         showDescriptions: true,
+
+        // 기본값: Fuel 배지 표시
+        showFuelBadges: true,
 
         // DB 동기화 상태
         _lastSyncedAt: null,
@@ -157,6 +162,11 @@ export const useSettingsStore = create<SettingsState>()(
           set({ showDescriptions: show });
         },
 
+        setShowFuelBadges: (show: boolean) => {
+          console.log('⚙️ Fuel 배지 표시 설정 변경:', show);
+          set({ showFuelBadges: show });
+        },
+
         // DB 동기화 액션
         loadFromDB: (settings: Partial<AppSettings>) => {
           console.log('⚙️ DB에서 설정 로드:', settings);
@@ -182,6 +192,7 @@ export const useSettingsStore = create<SettingsState>()(
           colorTheme: state.colorTheme,
           adhdModeEnabled: state.adhdModeEnabled,
           showDescriptions: state.showDescriptions,
+          showFuelBadges: state.showFuelBadges,
           _lastSyncedAt: state._lastSyncedAt,
         }),
       }
@@ -207,6 +218,7 @@ export function getSettingsForSync(): AppSettings {
     colorTheme: state.colorTheme,
     adhdModeEnabled: state.adhdModeEnabled,
     showDescriptions: state.showDescriptions,
+    showFuelBadges: state.showFuelBadges,
     _lastSyncedAt: state._lastSyncedAt,
   };
 }

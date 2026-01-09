@@ -6,6 +6,7 @@ import { ko } from 'date-fns/locale';
 import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
+import { useSettingsStore } from '@/state/stores/settingsStore';
 import { Todo } from '@/entities/todo/Todo';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
@@ -63,7 +64,11 @@ const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { todos, fetchAllTodos, updateTodo, deleteTodo } = useTodoStore();
   const { people, loadPeople } = useCherishedPeopleStore();
+  const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
   const [isLoading, setIsLoading] = useState(true);
+
+  // 펼친 fuel 배지 상태
+  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
 
   // 날짜 범위 상태 (과거/미래 개월 수)
   const [pastMonthsLoaded, setPastMonthsLoaded] = useState(3);
@@ -670,11 +675,22 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       <div>
         {/* MonthNavigator - 상단 고정 */}
         <div className="sticky top-0 z-10 bg-base-100">
-          <MonthNavigator
-            currentDate={navigatedMonth}
-            onMonthChange={handleMonthChange}
-            onTodayClick={handleTodayClick}
-          />
+          <div className="flex items-center">
+            <div className="flex-1">
+              <MonthNavigator
+                currentDate={navigatedMonth}
+                onMonthChange={handleMonthChange}
+                onTodayClick={handleTodayClick}
+              />
+            </div>
+            <button
+              onClick={() => setShowFuelBadges(!showFuelBadges)}
+              className={`btn btn-ghost btn-sm btn-circle mr-2 ${showFuelBadges ? 'text-orange-500' : 'text-base-content/40'}`}
+              title={showFuelBadges ? '원동력 숨기기' : '원동력 표시'}
+            >
+              <Zap className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="p-4">
@@ -712,11 +728,22 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     <div>
       {/* MonthNavigator - 상단 고정 */}
       <div className="sticky top-0 z-10 bg-base-100">
-        <MonthNavigator
-          currentDate={navigatedMonth}
-          onMonthChange={handleMonthChange}
-          onTodayClick={handleTodayClick}
-        />
+        <div className="flex items-center">
+          <div className="flex-1">
+            <MonthNavigator
+              currentDate={navigatedMonth}
+              onMonthChange={handleMonthChange}
+              onTodayClick={handleTodayClick}
+            />
+          </div>
+          <button
+            onClick={() => setShowFuelBadges(!showFuelBadges)}
+            className={`btn btn-ghost btn-sm btn-circle mr-2 ${showFuelBadges ? 'text-orange-500' : 'text-base-content/40'}`}
+            title={showFuelBadges ? '원동력 숨기기' : '원동력 표시'}
+          >
+            <Zap className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <div className={`p-4 space-y-8 transition-opacity duration-100 ${isScrollReady ? 'opacity-100' : 'opacity-0'}`}>
@@ -886,22 +913,34 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 })()}
 
                                 {/* 연결된 실행 원동력 표시 */}
-                                {(() => {
+                                {showFuelBadges && (() => {
                                   const linkedFuels = getLinkedFuels(item);
                                   if (linkedFuels.length === 0) return null;
 
                                   return (
                                     <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {linkedFuels.map(fuel => (
-                                        <span
-                                          key={fuel.id}
-                                          className="badge badge-xs bg-orange-500/20 text-orange-600 dark:text-orange-400 gap-0.5"
-                                        >
-                                          <Zap className="w-2.5 h-2.5" />
-                                          {(fuel.title || fuel.content).substring(0, 15)}
-                                          {(fuel.title || fuel.content).length > 15 && '...'}
-                                        </span>
-                                      ))}
+                                      {linkedFuels.map(fuel => {
+                                        const text = fuel.title || fuel.content;
+                                        const isExpanded = expandedFuelId === fuel.id;
+
+                                        return (
+                                          <span
+                                            key={fuel.id}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setExpandedFuelId(isExpanded ? null : fuel.id);
+                                            }}
+                                            className={`badge badge-sm bg-orange-500/20 text-orange-600 dark:text-orange-400 gap-0.5 cursor-pointer hover:bg-orange-500/30 transition-all text-left ${
+                                              isExpanded ? 'whitespace-normal max-w-full' : 'max-w-[180px] sm:max-w-[280px]'
+                                            }`}
+                                          >
+                                            <Zap className="w-2.5 h-2.5 flex-shrink-0" />
+                                            <span className={isExpanded ? '' : 'truncate'}>
+                                              {text}
+                                            </span>
+                                          </span>
+                                        );
+                                      })}
                                     </div>
                                   );
                                 })()}
