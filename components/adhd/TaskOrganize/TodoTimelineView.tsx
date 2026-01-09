@@ -67,6 +67,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
   const [isLoading, setIsLoading] = useState(true);
 
+  // 펼친 fuel 배지 상태
+  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
+
   // 날짜 범위 상태 (과거/미래 개월 수)
   const [pastMonthsLoaded, setPastMonthsLoaded] = useState(3);
   const [futureMonthsLoaded, setFutureMonthsLoaded] = useState(3);
@@ -915,21 +918,26 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   if (linkedFuels.length === 0) return null;
 
                                   return (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                    <div className="flex flex-col gap-1 mt-1.5 overflow-hidden">
                                       {linkedFuels.map(fuel => {
                                         // 제목 + 내용 함께 표시
                                         const text = fuel.title && fuel.content
                                           ? `${fuel.title} - ${fuel.content}`
                                           : fuel.title || fuel.content;
+                                        const isExpanded = expandedFuelId === fuel.id;
 
                                         return (
-                                          <span
+                                          <div
                                             key={fuel.id}
-                                            className="badge badge-sm bg-orange-500/20 text-orange-600 dark:text-orange-400 gap-0.5 text-left whitespace-normal break-words max-w-full h-auto py-1"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setExpandedFuelId(isExpanded ? null : fuel.id);
+                                            }}
+                                            className="inline-flex items-start gap-0.5 px-2 py-0.5 rounded-full text-xs bg-orange-500/20 text-orange-600 dark:text-orange-400 cursor-pointer hover:bg-orange-500/30 transition-all"
                                           >
-                                            <Zap className="w-2.5 h-2.5 flex-shrink-0 self-start mt-0.5" />
-                                            <span>{text}</span>
-                                          </span>
+                                            <Zap className={`w-3 h-3 flex-shrink-0 ${isExpanded ? 'mt-0.5' : ''}`} />
+                                            <span className={isExpanded ? '' : 'line-clamp-1'}>{text}</span>
+                                          </div>
                                         );
                                       })}
                                     </div>
