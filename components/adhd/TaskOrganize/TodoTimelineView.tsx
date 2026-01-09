@@ -82,6 +82,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 오늘 날짜 섹션 참조 (첫 로드 시 스크롤 위치 설정용)
   const todaySectionRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
+  const [isScrollReady, setIsScrollReady] = useState(false); // 스크롤 완료 후 표시
 
   // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
   const projects: { id: string; title: string }[] = [];
@@ -429,13 +430,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     return `${startText} ~ ${endText}`;
   }, [dateRange]);
 
-  // 첫 로드 시 오늘 날짜로 스크롤
+  // 첫 로드 시 오늘 날짜로 스크롤 (스크롤 완료 전까지 컨텐츠 숨김)
   useEffect(() => {
     if (isLoading || hasScrolledToToday || timelineItems.length === 0) {
       return;
     }
 
-    // 약간의 딜레이 후 스크롤 (DOM 렌더링 완료 대기)
+    // 짧은 딜레이 후 스크롤 (DOM 렌더링 완료 대기)
     const timer = setTimeout(() => {
       if (todaySectionRef.current) {
         // 부모 스크롤 컨테이너 찾기 (TaskOrganizeMode의 overflow-y-auto)
@@ -449,7 +450,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         }
       }
       setHasScrolledToToday(true);
-    }, 100);
+      setIsScrollReady(true); // 스크롤 완료 후 컨텐츠 표시
+    }, 50);
 
     return () => clearTimeout(timer);
   }, [isLoading, hasScrolledToToday, timelineItems.length]);
@@ -495,7 +497,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className={`p-4 space-y-6 transition-opacity duration-100 ${isScrollReady ? 'opacity-100' : 'opacity-0'}`}>
       {/* 과거 더 보기 버튼 (상단) */}
       <button
         onClick={handleLoadMorePast}
