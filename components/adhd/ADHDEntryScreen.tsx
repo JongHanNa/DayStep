@@ -33,23 +33,23 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
   const { resolvedTheme, setTheme } = useTheme();
   const { hasActiveSubscription } = useSubscription();
 
-  // 버튼 설명 데이터
+  // 버튼 설명 데이터 (ADHD 어려움 → 해결책 구조)
   const buttonDescriptions = {
     care: {
-      title: '소중한 사람 챙기기',
-      description: '일에 몰입하다 보면 소중한 사람들을 놓치기 쉬워요.\n주기적으로 안부를 챙길 수 있게 도와줘요.'
+      title: '소중한 사람, 놓치지 않게',
+      description: '성인 ADHD의 어려움: 연락 깜빡함 → 오해 → 관계 악화\n해결책: 연락할 때가 되면 알려줘요'
     },
     insights: {
-      title: '관계 기록 보기',
-      description: '누구에게 뭘 들었는지 기억하기 어렵죠.\n대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.'
+      title: '대화 내용, 다시 찾을 수 있게',
+      description: '성인 ADHD의 어려움: 뭘 들었는지 기억 안 남 → 같은 질문 반복\n해결책: 기록해두면 언제든 찾을 수 있어요'
     },
     learning: {
-      title: '쉬운 정리 패턴',
-      description: '머릿속 생각을 수집하고,\n단순한 패턴으로 할일을 정리해요.'
+      title: '복잡한 머릿속, 정리해줄게',
+      description: '성인 ADHD의 어려움: 뭐부터 할지 모름 → 시작 못함 → 자책\n해결책: 하나씩 같이 정리해줄게요'
     },
     organize: {
-      title: '일정/통계',
-      description: '지난 기록을 확인하고, 일정을 관리하고,\n통계로 성장을 확인하세요.'
+      title: '한 일 확인하고, 나를 칭찬하기',
+      description: '성인 ADHD의 어려움: 뭐 했는지 모름 → 성취감 부족 → 무기력\n해결책: 한 일 보면서 스스로 칭찬해요'
     }
   };
 
@@ -131,7 +131,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
 
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
-          {/* 소중한 사람 챙기기 버튼 */}
+          {/* 소중한 사람, 놓치지 않게 버튼 */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -140,7 +140,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
               className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-pink-500 text-white border-none hover:bg-pink-600"
             >
               <MessageCircle className="w-7 h-7" />
-              <span className="text-xl font-semibold">소중한 사람 챙기기</span>
+              <span className="text-xl font-semibold">소중한 사람, 놓치지 않게</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>
@@ -156,14 +156,14 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                일에 몰입하다 보면 소중한 사람들을 놓치기 쉬워요.
+                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 연락 깜빡함 → 오해 → 관계 악화
                 <br />
-                주기적으로 안부를 챙길 수 있게 도와줘요.
+                <span className="text-base-content/70">해결책:</span> 연락할 때가 되면 알려줘요
               </p>
             )}
           </div>
 
-          {/* 관계 기록 보기 버튼 */}
+          {/* 대화 내용, 다시 찾을 수 있게 버튼 */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -172,7 +172,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
               className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
             >
               <BookHeart className="w-7 h-7" />
-              <span className="text-xl font-semibold">관계 기록 보기</span>
+              <span className="text-xl font-semibold">대화 내용, 다시 찾을 수 있게</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>
@@ -188,14 +188,14 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                누구에게 뭘 들었는지 기억하기 어렵죠.
+                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 뭘 들었는지 기억 안 남 → 같은 질문 반복
                 <br />
-                대화 내용과 감사한 점을 기록하고 다시 볼 수 있어요.
+                <span className="text-base-content/70">해결책:</span> 기록해두면 언제든 찾을 수 있어요
               </p>
             )}
           </div>
 
-          {/* 쉬운 정리 패턴 버튼 */}
+          {/* 복잡한 머릿속, 정리해줄게 버튼 */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -204,7 +204,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
               className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
             >
               <Lightbulb className="w-7 h-7" />
-              <span className="text-xl font-semibold">쉬운 정리 패턴</span>
+              <span className="text-xl font-semibold">복잡한 머릿속, 정리해줄게</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>
@@ -220,14 +220,14 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                머릿속 생각을 수집하고,
+                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 뭐부터 할지 모름 → 시작 못함 → 자책
                 <br />
-                단순한 패턴으로 할일을 정리해요.
+                <span className="text-base-content/70">해결책:</span> 하나씩 같이 정리해줄게요
               </p>
             )}
           </div>
 
-          {/* 일정/통계 버튼 */}
+          {/* 한 일 확인하고, 나를 칭찬하기 버튼 */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -236,7 +236,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
               className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
             >
               <CalendarCheck className="w-7 h-7" />
-              <span className="text-xl font-semibold">일정/통계</span>
+              <span className="text-xl font-semibold">한 일 확인하고, 나를 칭찬하기</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>
@@ -252,9 +252,9 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                지난 기록을 확인하고, 일정을 관리하고,
+                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 뭐 했는지 모름 → 성취감 부족 → 무기력
                 <br />
-                통계로 성장을 확인하세요.
+                <span className="text-base-content/70">해결책:</span> 한 일 보면서 스스로 칭찬해요
               </p>
             )}
           </div>
