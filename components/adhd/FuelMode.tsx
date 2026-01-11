@@ -46,7 +46,7 @@ import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
+import { addTodoNote, removeTodoNote, getNoteTodos } from '@/lib/supabase/todo-notes';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import ContentEditorModal from '@/components/second-brain/ContentEditorModal';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
@@ -502,6 +502,17 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       } else {
         // 연결만 해제 (할일은 유지)
         await removeTodoNote(deletingTodoId, deletingTodoNoteId);
+      }
+
+      // 해당 노트의 남은 연결 할일 확인
+      const remainingTodos = await getNoteTodos(deletingTodoNoteId);
+
+      // 연결된 할일이 없으면 미처리로 되돌리기
+      if (remainingTodos.length === 0) {
+        await updateNote({
+          id: deletingTodoNoteId,
+          is_processed: false,
+        });
       }
 
       setDeletingTodoId(null);
