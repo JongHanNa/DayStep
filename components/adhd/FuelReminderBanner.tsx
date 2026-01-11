@@ -23,6 +23,7 @@ export default function FuelReminderBanner({
 
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // 데이터 로드
   useEffect(() => {
@@ -60,7 +61,8 @@ export default function FuelReminderBanner({
   }
 
   // 컨텐츠 미리보기 (100자 제한)
-  const contentPreview = selectedNote.content.length > 100
+  const isLongContent = selectedNote.content.length > 100;
+  const contentPreview = isLongContent && !isExpanded
     ? selectedNote.content.substring(0, 100) + '...'
     : selectedNote.content;
 
@@ -94,7 +96,10 @@ export default function FuelReminderBanner({
               </p>
 
               {/* 내용 미리보기 */}
-              <p className="text-sm text-gray-800 font-medium line-clamp-2">
+              <p
+                className={`text-sm text-gray-800 font-medium ${isLongContent ? 'cursor-pointer' : ''} ${!isExpanded ? 'line-clamp-2' : ''}`}
+                onClick={isLongContent ? () => setIsExpanded(!isExpanded) : undefined}
+              >
                 {contentPreview}
               </p>
 
