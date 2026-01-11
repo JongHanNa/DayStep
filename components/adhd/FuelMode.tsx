@@ -750,7 +750,14 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         handleStopTimer();
         break;
       case 'action-choice':
-        setFuelViewState('reflection-input');
+        if (selectedNoteId) {
+          // 기존 노트에서 "할일 만들기"로 진입한 경우 → select-duration으로 돌아감
+          setSelectedNoteId(null);
+          setFuelViewState('select-duration');
+        } else {
+          // 타이머 수집 후 진입한 경우 → reflection-input으로 돌아감
+          setFuelViewState('reflection-input');
+        }
         break;
       case 'quick-todo':
       case 'scheduled-todo':
@@ -1227,7 +1234,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => setFuelViewState('reflection-input')}
+            onClick={handleBack}
             className="btn btn-ghost btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
