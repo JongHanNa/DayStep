@@ -31,6 +31,7 @@ import {
   MoreVertical,
   Pencil,
   CheckCircle2,
+  Pin,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -107,6 +108,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     unpinNote,
     updateNote,
     deleteNote,
+    setBannerPinned,
     loading: notesLoading,
   } = useNoteStore();
 
@@ -160,6 +162,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
 
   const {
     viewState,
+    selectedNoteId: selectedNoteIdFromStore,  // 배너에서 진입 시 선택된 노트
     draftTitle,
     draftContent,
     draftExperience,
@@ -203,6 +206,22 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       handleTimerComplete();
     }
   }, [timerState.status, viewState]);
+
+  // 배너에서 진입 시 선택된 노트로 자동 이동
+  useEffect(() => {
+    if (selectedNoteIdFromStore && fuelNotes.length > 0 && viewState === 'select-duration') {
+      const targetNote = fuelNotes.find(note => note.id === selectedNoteIdFromStore);
+      if (targetNote) {
+        // 해당 노트로 할일 만들기 화면으로 자동 이동
+        setSelectedNoteId(targetNote.id);
+        setFuelDraft({
+          title: targetNote.title || '',
+          content: targetNote.content,
+        });
+        setFuelViewState('action-choice');
+      }
+    }
+  }, [selectedNoteIdFromStore, fuelNotes, viewState, setFuelDraft, setFuelViewState]);
 
   // 타이머 시작
   const handleStartTimer = () => {
@@ -416,6 +435,16 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   // 드롭다운 토글
   const handleToggleDropdown = (noteId: string) => {
     setOpenDropdownId(prev => prev === noteId ? null : noteId);
+  };
+
+  // 배너 고정 토글
+  const handleToggleBannerPin = async (note: Note) => {
+    setOpenDropdownId(null);
+    try {
+      await setBannerPinned(note.id, !note.is_banner_pinned);
+    } catch (error) {
+      console.error('배너 고정 상태 변경 실패:', error);
+    }
   };
 
   // ============================================
@@ -935,13 +964,20 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                       <MoreVertical className="w-4 h-4" />
                     </button>
                     {openDropdownId === entry.id && (
-                      <div className="absolute right-0 top-full mt-1 w-32 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
+                      <div className="absolute right-0 top-full mt-1 w-36 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
                         <button
                           onClick={() => handleOpenEditModal(entry)}
                           className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
                         >
                           <Pencil className="w-4 h-4" />
                           수정
+                        </button>
+                        <button
+                          onClick={() => handleToggleBannerPin(entry)}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200"
+                        >
+                          <Pin className={`w-4 h-4 ${entry.is_banner_pinned ? 'text-primary fill-primary' : ''}`} />
+                          {entry.is_banner_pinned ? '배너 고정 해제' : '배너에 고정'}
                         </button>
                         <button
                           onClick={() => handleOpenDeleteModal(entry.id)}
@@ -1015,13 +1051,20 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                       <MoreVertical className="w-4 h-4" />
                     </button>
                     {openDropdownId === entry.id && (
-                      <div className="absolute right-0 top-full mt-1 w-32 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
+                      <div className="absolute right-0 top-full mt-1 w-36 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
                         <button
                           onClick={() => handleOpenEditModal(entry)}
                           className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
                         >
                           <Pencil className="w-4 h-4" />
                           수정
+                        </button>
+                        <button
+                          onClick={() => handleToggleBannerPin(entry)}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200"
+                        >
+                          <Pin className={`w-4 h-4 ${entry.is_banner_pinned ? 'text-primary fill-primary' : ''}`} />
+                          {entry.is_banner_pinned ? '배너 고정 해제' : '배너에 고정'}
                         </button>
                         <button
                           onClick={() => handleOpenDeleteModal(entry.id)}

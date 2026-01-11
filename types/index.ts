@@ -112,6 +112,7 @@ export interface Note {
   content: string;
   linked_date?: string | null;
   is_pinned: boolean;
+  is_banner_pinned?: boolean;  // 홈 배너에 고정 여부
   is_floating: boolean;
   position: number;
   created_at: string;

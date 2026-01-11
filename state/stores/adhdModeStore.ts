@@ -65,6 +65,7 @@ interface FuelModeState {
   isActive: boolean;
   startedAt: Date | null;
   viewState: FuelViewState;
+  selectedNoteId: string | null;  // 배너에서 진입 시 선택된 원동력 ID
 
   // 수집 필드
   draftTitle: string;             // 제목 (선택)
@@ -169,7 +170,7 @@ interface ADHDModeState {
   enterTaskOrganizeMode: (userId: string) => void;
 
   // === 쉬운 정리 패턴 모드 Actions ===
-  enterFuelMode: (userId: string) => void;
+  enterFuelMode: (userId: string, selectedNoteId?: string) => void;
   setFuelViewState: (viewState: FuelViewState) => void;
   setFuelDraft: (draft: {
     // 수집 필드
@@ -266,6 +267,7 @@ const DEFAULT_FUEL_MODE: FuelModeState = {
   isActive: false,
   startedAt: null,
   viewState: 'select-duration',
+  selectedNoteId: null,
   // 수집 필드
   draftTitle: '',
   draftContent: '',
@@ -616,8 +618,8 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         // === 쉬운 정리 패턴 모드 Actions ===
-        enterFuelMode: (userId: string) => {
-          console.log('💡 ADHD: 원동력 모드 진입');
+        enterFuelMode: (userId: string, selectedNoteId?: string) => {
+          console.log('💡 ADHD: 원동력 모드 진입', selectedNoteId ? `(선택된 노트: ${selectedNoteId})` : '');
           set({
             currentMode: 'fuel',
             currentUserId: userId,
@@ -625,6 +627,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
               isActive: true,
               startedAt: new Date(),
               viewState: 'select-duration',
+              selectedNoteId: selectedNoteId || null,
               // 수집 필드
               draftTitle: '',
               draftContent: '',

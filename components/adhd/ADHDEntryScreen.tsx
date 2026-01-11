@@ -8,6 +8,7 @@ import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
+import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ADHDEntryScreenProps {
@@ -16,7 +17,7 @@ interface ADHDEntryScreenProps {
   onCare: () => void;
   onRelationshipInsights: () => void;
   onTaskOrganize: () => void;
-  onFuel: () => void;
+  onFuel: (noteId?: string) => void;
 }
 
 /**
@@ -98,6 +99,14 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm text-center mt-16 safe-area-top"
       >
+        {/* 원동력 상기 배너 (고정된 원동력이 있을 때) */}
+        {userId && (
+          <FuelReminderBanner
+            userId={userId}
+            onFuelClick={(noteId) => onFuel(noteId)}
+          />
+        )}
+
         {/* 우선순위 상기 배너 */}
         {userId && (
           <PriorityReminderBanner
@@ -200,7 +209,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={onFuel}
+              onClick={() => onFuel()}
               className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
             >
               <Lightbulb className="w-7 h-7" />

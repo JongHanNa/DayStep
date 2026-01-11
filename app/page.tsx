@@ -108,9 +108,9 @@ export default function HomePage() {
     }
   };
 
-  const handleFuel = () => {
+  const handleFuel = (noteId?: string) => {
     if (user?.id) {
-      enterFuelMode(user.id);
+      enterFuelMode(user.id, noteId);
     }
   };
 

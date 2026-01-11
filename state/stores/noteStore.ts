@@ -42,6 +42,7 @@ export interface Note {
   note_category?: NoteCategory;
   // Fuel fields (원동력 기능용)
   is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)
+  is_banner_pinned?: boolean; // 홈 배너에 고정 여부
   // JOIN으로 가져오는 연결 데이터
   todos?: { id: string; title: string }[];
   connectedNotes?: { id: string; title: string }[];
@@ -64,6 +65,7 @@ export interface CreateNoteInput {
   note_category?: NoteCategory;
   // Fuel fields (원동력 기능용)
   is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)
+  is_banner_pinned?: boolean; // 홈 배너에 고정 여부
 }
 
 // Note 업데이트 입력 타입
@@ -191,6 +193,9 @@ interface NoteStoreActions {
   createFuelNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
   getUnprocessedFuelNotes: () => Note[];
   markNoteAsProcessed: (noteId: string) => Promise<void>;
+  // 배너 고정 기능
+  setBannerPinned: (noteId: string, isPinned: boolean) => Promise<void>;
+  getBannerPinnedFuelNotes: () => Note[];
 
   /** @deprecated Use getFuelNotes instead */
   getInboxNotes: (userId: string) => Promise<Note[]>;
@@ -1366,6 +1371,33 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             console.error('❌ 노트 처리됨 표시 실패:', error);
             throw error;
           }
+        },
+
+        // ============================================
+        // 배너 고정 기능
+        // ============================================
+
+        setBannerPinned: async (noteId: string, isPinned: boolean) => {
+          console.log('📌 NoteStore.setBannerPinned:', { noteId, isPinned });
+
+          try {
+            await get().updateNote({
+              id: noteId,
+              is_banner_pinned: isPinned,
+            });
+            console.log('✅ 배너 고정 상태 변경 완료:', { noteId, isPinned });
+          } catch (error) {
+            console.error('❌ 배너 고정 상태 변경 실패:', error);
+            throw error;
+          }
+        },
+
+        getBannerPinnedFuelNotes: () => {
+          const { notes } = get();
+          // note_category가 'fuel'이고 is_banner_pinned가 true인 노트들
+          return notes.filter(note =>
+            note.note_category === 'fuel' && note.is_banner_pinned === true
+          );
         },
       };
     },

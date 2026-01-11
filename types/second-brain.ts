@@ -189,6 +189,7 @@ export interface Note {
 
   // 메타데이터
   is_pinned: boolean;
+  is_banner_pinned?: boolean; // 홈 배너에 고정 여부
 
   created_at: string;
   updated_at: string;
