@@ -189,6 +189,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   // 타이머 없이 바로 시작
   const [skipTimer, setSkipTimer] = useState(false);
   const [isContentEditorOpen, setIsContentEditorOpen] = useState(false);
+  const [isEditContentEditorOpen, setIsEditContentEditorOpen] = useState(false);
 
   // 허브 화면 또는 history 뷰일 때 기록 로드
   useEffect(() => {
@@ -385,6 +386,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     setEditingNote(note);
     setEditContent(note.content || '');
     setOpenDropdownId(null);
+    setIsEditContentEditorOpen(true);
   };
 
   // 편집 저장
@@ -407,6 +409,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   const handleCloseEditModal = () => {
     setEditingNote(null);
     setEditContent('');
+    setIsEditContentEditorOpen(false);
   };
 
   // 삭제 확인 모달 열기
@@ -1851,49 +1854,20 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         />
       )}
 
-      {/* 편집 모달 */}
+      {/* 편집용 마크다운 에디터 모달 */}
       {editingNote && (
-        <dialog open className="modal z-[110]">
-          <div className="modal-box max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">원동력 수정</h3>
-              <button
-                onClick={handleCloseEditModal}
-                className="btn btn-ghost btn-circle btn-sm"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-base-content/70 mb-1 block">
-                  떠오른 것 <span className="text-amber-500">*</span>
-                </label>
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="textarea textarea-bordered w-full h-24"
-                  placeholder="내용을 입력하세요"
-                />
-              </div>
-            </div>
-            <div className="modal-action">
-              <button onClick={handleCloseEditModal} className="btn btn-ghost">
-                취소
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                disabled={!editContent.trim()}
-                className="btn btn-primary"
-              >
-                저장
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={handleCloseEditModal}>close</button>
-          </form>
-        </dialog>
+        <ContentEditorModal
+          open={isEditContentEditorOpen}
+          content={editContent}
+          onClose={async () => {
+            await handleSaveEdit();
+            setIsEditContentEditorOpen(false);
+          }}
+          onChange={(content) => setEditContent(content)}
+          placeholder="원동력 내용을 입력하세요"
+          title="원동력 수정"
+          enableAutoSave={false}
+        />
       )}
 
       {/* 노트 삭제 확인 모달 */}
