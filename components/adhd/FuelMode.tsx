@@ -804,18 +804,24 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   // ============================================
 
   // 타이머 시간 선택 화면 (복잡한 머릿속, 정리해줄게)
-  // 미처리 원동력 목록: is_processed가 false이고 연결된 할일이 없는 것
-  const unprocessedEntries = useMemo(() => {
-    return fuelNotes.filter(note =>
-      !note.is_processed && (note.todos?.length ?? 0) === 0
-    );
-  }, [fuelNotes]);
+  // 원동력 목록: 미처리 우선 정렬 (미처리 → 처리됨 순서)
+  const sortedFuelNotes = useMemo(() => {
+    // 처리 여부 판단: is_processed가 true이거나 연결된 할일이 있으면 처리됨
+    const isProcessed = (note: Note) =>
+      note.is_processed === true || (note.todos?.length ?? 0) > 0;
 
-  // 처리된 원동력 목록: is_processed가 true이거나 연결된 할일이 있는 것
-  const processedEntries = useMemo(() => {
-    return fuelNotes.filter(note =>
-      note.is_processed === true || (note.todos?.length ?? 0) > 0
-    );
+    return [...fuelNotes].sort((a, b) => {
+      const aProcessed = isProcessed(a);
+      const bProcessed = isProcessed(b);
+
+      // 미처리가 먼저 오도록 정렬
+      if (aProcessed !== bProcessed) {
+        return aProcessed ? 1 : -1;
+      }
+
+      // 같은 상태 내에서는 최신순
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   }, [fuelNotes]);
 
   // "실행과 집중으로 가기" 핸들러
@@ -946,159 +952,117 @@ export default function FuelMode({ onExit }: FuelModeProps) {
           </motion.button>
         </div>
 
-        {/* 미처리 원동력 목록 */}
-        {unprocessedEntries.length > 0 && (
+        {/* 원동력 목록 (미처리 우선 정렬) */}
+        {sortedFuelNotes.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <Lightbulb className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-medium text-base-content/70">미처리 원동력</span>
-              <span className="text-xs text-base-content/50">({unprocessedEntries.length}개)</span>
+              <span className="text-sm font-medium text-base-content/70">원동력</span>
+              <span className="text-xs text-base-content/50">({sortedFuelNotes.length}개)</span>
             </div>
             <div className="flex flex-col gap-2">
-              {unprocessedEntries.map(entry => (
-                <div
-                  key={entry.id}
-                  className="flex items-center gap-3 p-3 bg-base-200 rounded-xl"
-                >
-                  <div className="flex-1 min-w-0">
-                    {entry.title && (
-                      <p className="text-sm font-semibold truncate mb-0.5">{entry.title}</p>
-                    )}
-                    <p className="text-sm text-base-content/80 truncate">{entry.content}</p>
-                    <p className="text-xs text-base-content/50">
-                      {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleCreateTodoFromEntry(entry)}
-                    className="btn btn-sm btn-ghost text-primary"
-                  >
-                    <ListTodo className="w-4 h-4" />
-                    <span className="hidden sm:inline">할일 만들기</span>
-                  </button>
-                  {/* 드롭다운 메뉴 */}
-                  <div className="relative">
-                    <button
-                      onClick={() => handleToggleDropdown(entry.id)}
-                      className="btn btn-sm btn-ghost btn-circle"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                    {openDropdownId === entry.id && (
-                      <div className="absolute right-0 top-full mt-1 w-36 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
-                        <button
-                          onClick={() => handleOpenEditModal(entry)}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
-                        >
-                          <Pencil className="w-4 h-4" />
-                          수정
-                        </button>
-                        <button
-                          onClick={() => handleToggleBannerPin(entry)}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200"
-                        >
-                          <Pin className={`w-4 h-4 ${entry.is_banner_pinned ? 'text-primary fill-primary' : ''}`} />
-                          {entry.is_banner_pinned ? '배너 고정 해제' : '배너에 고정'}
-                        </button>
-                        <button
-                          onClick={() => handleOpenDeleteModal(entry.id)}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-b-lg"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          삭제
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+              {sortedFuelNotes.map(entry => {
+                // 처리 여부 판단
+                const isProcessed = entry.is_processed === true || (entry.todos?.length ?? 0) > 0;
 
-        {/* 처리된 원동력 목록 */}
-        {processedEntries.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle2 className="w-4 h-4 text-success" />
-              <span className="text-sm font-medium text-base-content/70">처리된 원동력</span>
-              <span className="text-xs text-base-content/50">({processedEntries.length}개)</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {processedEntries.map(entry => (
-                <div
-                  key={entry.id}
-                  className="flex items-start gap-3 p-3 bg-base-200 rounded-xl"
-                >
-                  <div className="flex-1 min-w-0">
-                    {entry.title && (
-                      <p className="text-sm font-semibold truncate mb-0.5">{entry.title}</p>
-                    )}
-                    <p className="text-sm text-base-content/70 line-clamp-2">{entry.content}</p>
-                    {/* 연결된 할일 표시 */}
-                    {entry.todos && entry.todos.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {entry.todos.map((todo) => (
-                          <div key={todo.id} className="group flex items-center">
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-l-full">
-                              {todo.title}
-                            </span>
-                            <button
-                              onClick={() => handleOpenTodoEditModal(todo.id, todo.title, entry.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 hover:bg-primary/20"
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenTodoDeleteModal(todo.id, entry.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-r-full hover:bg-error/20 hover:text-error"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
+                return (
+                  <div
+                    key={entry.id}
+                    className="flex items-start gap-3 p-3 bg-base-200 rounded-xl"
+                  >
+                    {/* 처리됨 표시 - 체크 아이콘 */}
+                    {isProcessed && (
+                      <div className="flex-shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-4 h-4 text-success" />
                       </div>
                     )}
-                    <p className="text-xs text-base-content/40 mt-1">
-                      {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
-                    </p>
-                  </div>
-                  {/* 드롭다운 메뉴 */}
-                  <div className="relative flex-shrink-0">
-                    <button
-                      onClick={() => handleToggleDropdown(entry.id)}
-                      className="btn btn-sm btn-ghost btn-circle"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                    {openDropdownId === entry.id && (
-                      <div className="absolute right-0 top-full mt-1 w-36 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
-                        <button
-                          onClick={() => handleOpenEditModal(entry)}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
-                        >
-                          <Pencil className="w-4 h-4" />
-                          수정
-                        </button>
-                        <button
-                          onClick={() => handleToggleBannerPin(entry)}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200"
-                        >
-                          <Pin className={`w-4 h-4 ${entry.is_banner_pinned ? 'text-primary fill-primary' : ''}`} />
-                          {entry.is_banner_pinned ? '배너 고정 해제' : '배너에 고정'}
-                        </button>
-                        <button
-                          onClick={() => handleOpenDeleteModal(entry.id)}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-b-lg"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          삭제
-                        </button>
-                      </div>
+
+                    <div className="flex-1 min-w-0">
+                      {entry.title && (
+                        <p className="text-sm font-semibold truncate mb-0.5">{entry.title}</p>
+                      )}
+                      <p className={`text-sm truncate ${isProcessed ? 'text-base-content/70' : 'text-base-content/80'}`}>
+                        {entry.content}
+                      </p>
+
+                      {/* 연결된 할일 표시 (처리된 경우) */}
+                      {isProcessed && entry.todos && entry.todos.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {entry.todos.map((todo) => (
+                            <div key={todo.id} className="group flex items-center">
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-l-full">
+                                {todo.title}
+                              </span>
+                              <button
+                                onClick={() => handleOpenTodoEditModal(todo.id, todo.title, entry.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 hover:bg-primary/20"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleOpenTodoDeleteModal(todo.id, entry.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-r-full hover:bg-error/20 hover:text-error"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <p className={`text-xs mt-1 ${isProcessed ? 'text-base-content/40' : 'text-base-content/50'}`}>
+                        {format(new Date(entry.created_at), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
+                      </p>
+                    </div>
+
+                    {/* 할일 만들기 버튼 (미처리인 경우만) */}
+                    {!isProcessed && (
+                      <button
+                        onClick={() => handleCreateTodoFromEntry(entry)}
+                        className="btn btn-sm btn-ghost text-primary flex-shrink-0"
+                      >
+                        <ListTodo className="w-4 h-4" />
+                        <span className="hidden sm:inline">할일 만들기</span>
+                      </button>
                     )}
+
+                    {/* 드롭다운 메뉴 */}
+                    <div className="relative flex-shrink-0">
+                      <button
+                        onClick={() => handleToggleDropdown(entry.id)}
+                        className="btn btn-sm btn-ghost btn-circle"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      {openDropdownId === entry.id && (
+                        <div className="absolute right-0 top-full mt-1 w-36 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
+                          <button
+                            onClick={() => handleOpenEditModal(entry)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            수정
+                          </button>
+                          <button
+                            onClick={() => handleToggleBannerPin(entry)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200"
+                          >
+                            <Pin className={`w-4 h-4 ${entry.is_banner_pinned ? 'text-primary fill-primary' : ''}`} />
+                            {entry.is_banner_pinned ? '배너 고정 해제' : '배너에 고정'}
+                          </button>
+                          <button
+                            onClick={() => handleOpenDeleteModal(entry.id)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-b-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            삭제
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
