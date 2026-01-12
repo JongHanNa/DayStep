@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap } from 'lucide-react';
+import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -17,6 +17,8 @@ import { generateAllRecurrenceInstances, applyCompletionStatusToInstances, isRec
 import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
 import { MonthNavigator } from './MonthNavigator';
+import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
+import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
 
 interface TodoTimelineViewProps {
   userId: string;
@@ -875,20 +877,41 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
                           const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
 
-                          // 배경색: 항상 bg-base-200
-                          const bgColor = 'bg-base-200';
+                          // 시간 상태 계산 (timed && endTime이 있는 경우만)
+                          const timeStatus: TimeStatusResult | null =
+                            item.scheduleType === 'timed' && item.startTime && item.endTime
+                              ? getTimeStatus(item.startTime, item.endTime, item.completed)
+                              : null;
+                          const timeStatusText = timeStatus ? getTimeStatusText(timeStatus) : null;
 
-                          // 왼쪽 보더 색상
-                          const borderColor = item.completed
-                            ? 'border-l-success'
-                            : item.color
-                              ? `border-l-[${item.color}]`
-                              : 'border-l-primary';
+                          // 배경색: 시간 상태에 따라 다르게
+                          const bgColor =
+                            timeStatus?.status === 'in_progress'
+                              ? 'bg-warning/10'
+                              : timeStatus?.status === 'missed'
+                                ? 'bg-error/10'
+                                : 'bg-base-200';
+
+                          // 왼쪽 보더 색상: 시간 상태에 따라 다르게
+                          const borderColor =
+                            item.completed
+                              ? 'border-l-success'
+                              : timeStatus?.status === 'in_progress'
+                                ? 'border-l-warning'
+                                : timeStatus?.status === 'missed'
+                                  ? 'border-l-error'
+                                  : item.color
+                                    ? `border-l-[${item.color}]`
+                                    : 'border-l-primary';
+
+                          // 펄스 애니메이션 (진행 중일 때만)
+                          const pulseAnimation =
+                            timeStatus?.status === 'in_progress' ? 'animate-pulse' : '';
 
                           return (
                             <div
                               key={item.id}
-                              className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} hover:opacity-90 transition-opacity`}
+                              className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} hover:opacity-90 transition-opacity`}
                             >
                               {/* 시간/날짜 표시 */}
                               <div className="w-14 flex-shrink-0 text-xs text-base-content/50 pt-0.5">
@@ -921,10 +944,19 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 onClick={() => handleEditClick(item)}
                                 className="flex-1 min-w-0 text-left"
                               >
-                                {/* 시간 범위 (timed만) */}
+                                {/* 시간 범위 + 놓침 배지 (timed만) */}
                                 {item.scheduleType === 'timed' && item.startTime && item.endTime && (
-                                  <div className="text-xs text-base-content/50 mb-1">
-                                    {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs text-base-content/50">
+                                      {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
+                                    </span>
+                                    {/* 놓침 배지 */}
+                                    {timeStatus?.status === 'missed' && (
+                                      <span className="badge badge-xs bg-error/20 text-error gap-0.5">
+                                        <AlertTriangle className="w-2.5 h-2.5" />
+                                        놓침
+                                      </span>
+                                    )}
                                   </div>
                                 )}
 
@@ -939,6 +971,38 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     {item.title}
                                   </span>
                                 </div>
+
+                                {/* 시간 상태 UI (진행 중/놓침) */}
+                                {timeStatus && (timeStatus.status === 'in_progress' || timeStatus.status === 'missed') && (
+                                  <div className="mt-2 space-y-1">
+                                    {/* 진행 중: 진행률 바 + 시간 텍스트 */}
+                                    {timeStatus.status === 'in_progress' && (
+                                      <>
+                                        <div className="flex items-center gap-2 text-xs text-warning">
+                                          <Clock className="w-3 h-3" />
+                                          <span>{timeStatusText?.primary}</span>
+                                        </div>
+                                        <TimeProgressBar
+                                          percent={timeStatus.progressPercent ?? 0}
+                                          variant="warning"
+                                          height="sm"
+                                          animated={true}
+                                        />
+                                        <div className="flex items-center gap-2 text-xs text-warning">
+                                          <Clock className="w-3 h-3" />
+                                          <span>{timeStatusText?.secondary}</span>
+                                        </div>
+                                      </>
+                                    )}
+                                    {/* 놓침: 경과 시간만 표시 */}
+                                    {timeStatus.status === 'missed' && (
+                                      <div className="flex items-center gap-2 text-xs text-error">
+                                        <AlertTriangle className="w-3 h-3" />
+                                        <span>{timeStatusText?.primary}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
 
                                 {/* 맥락 배지 */}
                                 {(goalName || projectName) && (

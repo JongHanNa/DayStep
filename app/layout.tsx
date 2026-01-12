@@ -20,6 +20,7 @@ import { AppLifecycleHandler } from "@/components/providers/AppLifecycleHandler"
 import { SubscriptionSyncProvider } from "@/components/providers/SubscriptionSyncProvider";
 import { STYLING, UI_LAYOUT } from "@/lib/constants";
 import { getTailwindClasses } from "@/lib/theme-colors";
+import { ActiveTodoBannerProvider } from "@/components/providers/ActiveTodoBannerProvider";
 export const metadata: Metadata = {
   ...generateSEO({}),
 };
@@ -56,6 +57,8 @@ export default function RootLayout({
                   <ReminderProvider>
                   {/* 상단 헤더 바 */}
                   <AppHeader />
+                  {/* 진행 중인 할일 배너 */}
+                  <ActiveTodoBannerProvider />
                   <main
                     className={`scrollbar-hide ${safeAreaBackground} ${darkSafeArea}`}
                   >
