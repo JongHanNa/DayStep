@@ -17,11 +17,14 @@ export interface TimeStatusResult {
   overdueMinutes?: number;
 }
 
+/** 종료 시간이 없는 할일의 기본 유예 시간 (분) */
+const DEFAULT_GRACE_PERIOD_MINUTES = 10;
+
 /**
  * 할일의 시간 상태를 계산합니다.
  *
  * @param startTime - 시작 시간
- * @param endTime - 종료 시간
+ * @param endTime - 종료 시간 (없을 경우 시작 후 10분이 지나면 놓침으로 처리)
  * @param completed - 완료 여부
  * @param now - 현재 시간 (테스트용, 기본값: new Date())
  * @returns 시간 상태 결과
@@ -37,19 +40,46 @@ export function getTimeStatus(
     return { status: 'completed' };
   }
 
-  // startTime 또는 endTime이 없으면 upcoming으로 처리
-  if (!startTime || !endTime) {
+  // startTime이 없으면 upcoming으로 처리
+  if (!startTime) {
     return { status: 'upcoming' };
   }
 
   const startMs = startTime.getTime();
-  const endMs = endTime.getTime();
   const nowMs = now.getTime();
 
   // 아직 시작 전
   if (nowMs < startMs) {
     return { status: 'upcoming' };
   }
+
+  // endTime이 없는 경우: 시작 후 10분이 지나면 놓침
+  if (!endTime) {
+    const gracePeriodMs = DEFAULT_GRACE_PERIOD_MINUTES * 60 * 1000;
+    const deadlineMs = startMs + gracePeriodMs;
+
+    if (nowMs < deadlineMs) {
+      // 10분 이내: 진행 중
+      const elapsed = nowMs - startMs;
+      const remaining = deadlineMs - nowMs;
+      return {
+        status: 'in_progress',
+        elapsedMinutes: Math.floor(elapsed / (1000 * 60)),
+        remainingMinutes: Math.floor(remaining / (1000 * 60)),
+        progressPercent: Math.min(100, Math.floor((elapsed / gracePeriodMs) * 100)),
+      };
+    }
+
+    // 10분 초과: 놓침
+    const overdue = nowMs - deadlineMs;
+    return {
+      status: 'missed',
+      overdueMinutes: Math.floor(overdue / (1000 * 60)),
+    };
+  }
+
+  // endTime이 있는 경우: 기존 로직
+  const endMs = endTime.getTime();
 
   // 진행 중
   if (nowMs >= startMs && nowMs < endMs) {

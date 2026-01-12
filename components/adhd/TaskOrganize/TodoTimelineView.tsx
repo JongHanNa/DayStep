@@ -877,10 +877,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
                           const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
 
-                          // 시간 상태 계산 (timed && endTime이 있는 경우만)
+                          // 시간 상태 계산 (timed && startTime이 있는 경우)
+                          // endTime이 없어도 시작 후 10분 지나면 놓침으로 표시
                           const timeStatus: TimeStatusResult | null =
-                            item.scheduleType === 'timed' && item.startTime && item.endTime
-                              ? getTimeStatus(item.startTime, item.endTime, item.completed)
+                            item.scheduleType === 'timed' && item.startTime
+                              ? getTimeStatus(item.startTime, item.endTime ?? null, item.completed)
                               : null;
                           const timeStatusText = timeStatus ? getTimeStatusText(timeStatus) : null;
 
@@ -944,7 +945,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 onClick={() => handleEditClick(item)}
                                 className="flex-1 min-w-0 text-left"
                               >
-                                {/* 시간 범위 + 놓침 배지 (timed만) */}
+                                {/* 시간 범위 표시 (시작+종료 시간 있는 경우만) */}
                                 {item.scheduleType === 'timed' && item.startTime && item.endTime && (
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className="text-xs text-base-content/50">
@@ -957,6 +958,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         놓침
                                       </span>
                                     )}
+                                  </div>
+                                )}
+                                {/* 놓침 배지만 (endTime 없는 경우) */}
+                                {item.scheduleType === 'timed' && item.startTime && !item.endTime && timeStatus?.status === 'missed' && (
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="badge badge-xs bg-error/20 text-error gap-0.5">
+                                      <AlertTriangle className="w-2.5 h-2.5" />
+                                      놓침
+                                    </span>
                                   </div>
                                 )}
 
