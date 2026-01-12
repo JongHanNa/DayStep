@@ -9,12 +9,11 @@ export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 /** Fuel 뷰 상태 */
 export type FuelViewState =
   | 'select-duration'      // 허브 화면 (시작점)
-  | 'distraction-plan'     // 방해 요소 계획 (타이머 시작 전)
+  | 'distraction-plan'     // 집중 환경 준비 (타이머 시작 전)
   | 'inspiration-input'    // 영감 노트 입력 ("수집→실행" 플로우)
   | 'inspiration-choice'   // 영감 노트 저장 후 선택
   | 'reflection-input'     // 수집
   | 'action-choice'        // 선택지: 지금 할래? 언제 할래? 저장만?
-  | 'review-distraction'   // 방해 요소 회고 (타이머 완료 후)
   | 'quick-todo'           // 지금 바로 할래 (할일 입력 → ExecutionMode)
   | 'scheduled-todo'       // 언제 할지 정할래 (날짜/시간 선택)
   | 'capture'              // 기분/태그 (저장만 선택 시) - 레거시, 현재는 바로 저장
