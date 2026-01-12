@@ -95,6 +95,13 @@ export default function FuelReminderBanner({
                 오늘의 원동력
               </p>
 
+              {/* 제목 */}
+              {selectedNote.title && (
+                <p className="text-base text-gray-900 font-semibold mb-1">
+                  {selectedNote.title}
+                </p>
+              )}
+
               {/* 내용 미리보기 */}
               <p
                 className={`text-sm text-gray-800 font-medium ${isLongContent ? 'cursor-pointer' : ''} ${!isExpanded ? 'line-clamp-2' : ''}`}
