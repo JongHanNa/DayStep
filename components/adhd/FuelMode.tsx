@@ -58,6 +58,9 @@ import { Paywall } from '@/components/subscription/Paywall';
 import { TodoTimelineView } from '@/components/adhd/TaskOrganize/TodoTimelineView';
 import { OrganizeNeededView } from '@/components/adhd/TaskOrganize/OrganizeNeededView';
 import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
+import { DistractionPlanView, DistractionReviewView } from '@/components/adhd/distraction';
+import { DistractionService } from '@/services/distraction.service';
+import type { DistractionPlan, DistractionReviewResult } from '@/types/distraction';
 
 // 탭 타입 정의
 type FuelTabType = 'fuel' | 'timeline' | 'organize' | 'stats';
@@ -113,6 +116,12 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     startAdhocMode,
     setSessionId,
     setLinkedTodo,
+    // 방해요소 관련
+    setDistractionPlan,
+    skipDistractionPlan,
+    loadDistractionData,
+    saveDistractionReview,
+    resetDistractionState,
   } = useADHDModeStore();
 
   // Fuel 노트 관리 (noteStore 사용)
@@ -198,6 +207,12 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     // 할일 계획 필드
     newProjectPreparation,
     todosDraft,
+    // 방해 요소 계획 필드
+    distractionPlan,
+    distractionSkipped,
+    distractionPresets,
+    distractionHistory,
+    isLoadingDistractionData,
   } = fuelMode;
 
   // 할일 스토어
@@ -247,23 +262,88 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     }
   }, [selectedNoteIdFromStore, fuelNotes, viewState, setFuelDraft, setFuelViewState]);
 
-  // 타이머 시작
+  // 방해요소 데이터 로드 (select-duration 진입 시)
+  useEffect(() => {
+    if (userId && viewState === 'select-duration') {
+      loadDistractionData(userId);
+    }
+  }, [userId, viewState, loadDistractionData]);
+
+  // 타이머 시작 버튼 클릭 → 방해요소 계획 화면으로
   const handleStartTimer = () => {
+    setFuelViewState('distraction-plan');
+  };
+
+  // 방해요소 계획 완료 후 실제 타이머 시작
+  const handleDistractionPlanNext = async (plan: DistractionPlan) => {
+    setDistractionPlan(plan);
+
+    // 히스토리에 추가
+    if (userId && plan.distraction && plan.response) {
+      try {
+        await DistractionService.addToHistory(userId, plan.distraction, plan.response);
+      } catch (error) {
+        console.error('히스토리 저장 실패:', error);
+      }
+    }
+
+    // 타이머 시작
     setFuelViewState('reflection-input');
     if (!skipTimer) {
       startPomodoroTimer(selectedDuration * 60 * 1000);
     }
   };
 
+  // 방해요소 계획 건너뛰기
+  const handleDistractionPlanSkip = () => {
+    skipDistractionPlan();
+    setFuelViewState('reflection-input');
+    if (!skipTimer) {
+      startPomodoroTimer(selectedDuration * 60 * 1000);
+    }
+  };
+
+  // 프리셋 저장
+  const handleSavePreset = async (distraction: string, response: string) => {
+    if (!userId) return;
+    await DistractionService.createPreset(userId, {
+      distraction_text: distraction,
+      response_text: response,
+    });
+    // 프리셋 목록 새로고침
+    loadDistractionData(userId);
+  };
+
   // 타이머 없이 시작
   const handleStartWithoutTimer = () => {
     setSkipTimer(true);
-    setFuelViewState('reflection-input');
+    setFuelViewState('distraction-plan');
   };
 
   // 선택지 화면으로 이동 (수집 후)
   const handleGoToActionChoice = () => {
     stopTimer();
+    // 방해요소 계획이 있으면 회고 화면으로, 없으면 바로 action-choice
+    if (distractionPlan && !distractionSkipped) {
+      setFuelViewState('review-distraction');
+    } else {
+      setFuelViewState('action-choice');
+    }
+  };
+
+  // 방해요소 회고 완료
+  const handleDistractionReviewSubmit = async (result: DistractionReviewResult) => {
+    saveDistractionReview(result);
+
+    // DB에도 저장 (세션 ID가 있는 경우)
+    // TODO: 현재 세션 ID를 어떻게 가져올지 결정 필요
+    // 일단 로컬 상태만 업데이트
+
+    setFuelViewState('action-choice');
+  };
+
+  // 방해요소 회고 건너뛰기
+  const handleDistractionReviewSkip = () => {
     setFuelViewState('action-choice');
   };
 
@@ -1892,9 +1972,26 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     <div className="h-screen bg-base-100 flex flex-col safe-area-top overflow-hidden">
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
+        {viewState === 'distraction-plan' && (
+          <DistractionPlanView
+            presets={distractionPresets}
+            history={distractionHistory}
+            isLoading={isLoadingDistractionData}
+            onNext={handleDistractionPlanNext}
+            onSkip={handleDistractionPlanSkip}
+            onSavePreset={handleSavePreset}
+          />
+        )}
         {viewState === 'inspiration-input' && renderInspirationInputView()}
         {viewState === 'reflection-input' && renderTimerRunningView()}
         {viewState === 'action-choice' && renderActionChoiceView()}
+        {viewState === 'review-distraction' && (
+          <DistractionReviewView
+            plan={distractionPlan}
+            onSubmit={handleDistractionReviewSubmit}
+            onSkip={handleDistractionReviewSkip}
+          />
+        )}
         {viewState === 'quick-todo' && renderQuickTodoView()}
         {viewState === 'scheduled-todo' && renderScheduledTodoView()}
         {viewState === 'capture' && renderCaptureView()}

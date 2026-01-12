@@ -43,6 +43,13 @@ import { updateWithJWT } from '@/lib/supabase/core';
 import { PersonSelector, PersonLinksPreview } from '@/components/cherished/PersonSelector';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import FuelSelector from '@/components/adhd/FuelSelector';
+import { DistractionPlanView, DistractionReviewView } from '@/components/adhd/distraction';
+import { DistractionService } from '@/services/distraction.service';
+import {
+  DistractionPlan,
+  DistractionPreset,
+  DistractionHistory,
+} from '@/types/distraction';
 
 // 타이머 표시 모드 타입
 type TimerDisplayMode = 'elapsed' | 'remaining' | 'both';
@@ -61,7 +68,7 @@ interface ExecutionModeProps {
   onExit: () => void;
 }
 
-type ViewState = 'recommendation' | 'skip-reason' | 'completed-all' | 'empty-state' | 'adhoc-timer' | 'adhoc-capture' | 'adhoc-note-connection';
+type ViewState = 'recommendation' | 'skip-reason' | 'completed-all' | 'empty-state' | 'distraction-plan' | 'adhoc-timer' | 'adhoc-capture' | 'adhoc-note-connection' | 'review-distraction';
 
 /**
  * ADHD 실행 모드 화면
@@ -158,6 +165,14 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [newNoteContent, setNewNoteContent] = useState(''); // 새로 작성할 노트 내용
   const [noteConnectionMode, setNoteConnectionMode] = useState<'select' | 'create'>('select'); // 기존 선택 / 새로 작성
 
+  // 방해 요소 계획 상태
+  const [distractionPlan, setDistractionPlan] = useState<DistractionPlan | null>(null);
+  const [distractionSkipped, setDistractionSkipped] = useState(false);
+  const [distractionPresets, setDistractionPresets] = useState<DistractionPreset[]>([]);
+  const [distractionHistory, setDistractionHistory] = useState<DistractionHistory | null>(null);
+  const [isLoadingDistractionData, setIsLoadingDistractionData] = useState(false);
+  const [pendingLinkedTodo, setPendingLinkedTodo] = useState<{ id: string; title: string } | null>(null); // 방해요소 계획 후 연결할 할일
+
   // 로딩 상태 (Skip DB 제거로 항상 false)
 
   // 오늘 실행 가능한 할일만 필터링
@@ -202,12 +217,39 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     });
   }, [todos]);
 
-  // 할일이 없을 때 바로 포모도로 시작 (getNextRecommendation에서 호출)
+  // 방해 요소 데이터 로드
+  const loadDistractionData = useCallback(async () => {
+    if (!userId) return;
+    setIsLoadingDistractionData(true);
+    try {
+      const [presets, history] = await Promise.all([
+        DistractionService.getPresets(userId),
+        DistractionService.getHistory(userId),
+      ]);
+      setDistractionPresets(presets);
+      setDistractionHistory(history);
+    } catch (error) {
+      console.error('❌ 방해요소 데이터 로드 실패:', error);
+    } finally {
+      setIsLoadingDistractionData(false);
+    }
+  }, [userId]);
+
+  // 할일이 없을 때 방해요소 계획 화면으로 이동 (getNextRecommendation에서 호출)
   const startAdhocForEmptyState = useCallback(async () => {
     if (!userId) return;
 
     setRestoredStartTime(null);
     setRestoredDuration(null);
+
+    // 방해요소 데이터 로드 후 계획 화면으로 이동
+    await loadDistractionData();
+    setViewState('distraction-plan');
+  }, [userId, loadDistractionData]);
+
+  // 실제 타이머 시작 (방해요소 계획 완료 후 호출)
+  const actuallyStartTimer = useCallback(async () => {
+    if (!userId) return;
 
     startAdhocMode();
     const duration = pomodoroSettings.pomodoroDuration * 60 * 1000;
@@ -216,13 +258,61 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     try {
       const sessionId = await PomodoroSessionService.createSession(userId, duration);
       setSessionId(sessionId);
+
+      // 연결된 할일이 있으면 처리
+      if (pendingLinkedTodo && sessionId) {
+        await PomodoroSessionService.linkTodo(sessionId, pendingLinkedTodo.id);
+        setLinkedTodo(pendingLinkedTodo.id, pendingLinkedTodo.title);
+        setPendingLinkedTodo(null); // 처리 완료 후 초기화
+      }
+
+      // 방해요소 계획을 세션에 저장
+      if (distractionPlan && !distractionSkipped) {
+        await DistractionService.saveSessionPlan(sessionId, distractionPlan);
+      }
     } catch (error) {
       console.error('❌ 세션 생성 실패:', error);
     }
 
     startPomodoroTimer(duration, 'POMODORO');
     setViewState('adhoc-timer');
-  }, [userId, pomodoroSettings.pomodoroDuration, startAdhocMode, setSessionId, startPomodoroTimer]);
+  }, [userId, pomodoroSettings.pomodoroDuration, startAdhocMode, setSessionId, startPomodoroTimer, distractionPlan, distractionSkipped, pendingLinkedTodo, setLinkedTodo]);
+
+  // 방해요소 계획 완료 핸들러
+  const handleDistractionPlanNext = useCallback(async (plan: DistractionPlan) => {
+    setDistractionPlan(plan);
+    setDistractionSkipped(false);
+
+    // 히스토리에 추가
+    if (userId && plan.distraction && plan.response) {
+      try {
+        await DistractionService.addToHistory(userId, plan.distraction, plan.response);
+      } catch (error) {
+        console.error('히스토리 저장 실패:', error);
+      }
+    }
+
+    // 타이머 시작
+    actuallyStartTimer();
+  }, [userId, actuallyStartTimer]);
+
+  // 방해요소 계획 건너뛰기 핸들러
+  const handleDistractionPlanSkip = useCallback(() => {
+    setDistractionPlan(null);
+    setDistractionSkipped(true);
+    actuallyStartTimer();
+  }, [actuallyStartTimer]);
+
+  // 프리셋 저장 핸들러
+  const handleSavePreset = useCallback(async (distraction: string, response: string) => {
+    if (!userId) return;
+    await DistractionService.createPreset(userId, {
+      distraction_text: distraction,
+      response_text: response,
+    });
+    // 프리셋 목록 새로고침
+    loadDistractionData();
+  }, [userId, loadDistractionData]);
 
   // 다음 추천 할일 가져오기
   const getNextRecommendation = useCallback(() => {
@@ -427,32 +517,21 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
   // === 즉흥 모드 핸들러 ===
 
-  // "지금 떠오른거 타이머 켜고 할래" 클릭
+  // "지금 떠오른거 타이머 켜고 할래" 클릭 → 방해요소 계획 화면으로
   const handleStartAdhoc = async () => {
     if (!userId) return;
 
     // 복원 상태 초기화 (새 세션이므로)
     setRestoredStartTime(null);
     setRestoredDuration(null);
+    setPendingLinkedTodo(null); // 연결된 할일 없음
 
-    startAdhocMode();
-    const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
-    setTotalDuration(duration); // 화면 endTime 계산용
-
-    // DB에 세션 생성
-    try {
-      const sessionId = await PomodoroSessionService.createSession(userId, duration);
-      setSessionId(sessionId);
-    } catch (error) {
-      console.error('❌ 세션 생성 실패:', error);
-      // 실패해도 타이머는 시작 (UX 우선)
-    }
-
-    startPomodoroTimer(duration, 'POMODORO');
-    setViewState('adhoc-timer');
+    // 방해요소 데이터 로드 후 계획 화면으로 이동
+    await loadDistractionData();
+    setViewState('distraction-plan');
   };
 
-  // "타이머 켜고 할래" 클릭 - 현재 추천된 할일과 연결된 포모도로 시작
+  // "타이머 켜고 할래" 클릭 - 현재 추천된 할일과 연결된 포모도로 시작 → 방해요소 계획 화면으로
   const handleStartPomodoroWithTodo = async () => {
     const currentTodo = executionMode.currentRecommendation;
     if (!userId || !currentTodo) return;
@@ -461,27 +540,12 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     setRestoredStartTime(null);
     setRestoredDuration(null);
 
-    startAdhocMode();
-    const duration = pomodoroSettings.pomodoroDuration * 60 * 1000; // 25분 → ms
-    setTotalDuration(duration); // 화면 endTime 계산용
+    // 연결할 할일 저장 (방해요소 계획 완료 후 연결)
+    setPendingLinkedTodo({ id: currentTodo.id, title: currentTodo.title });
 
-    // DB에 세션 생성
-    try {
-      const sessionId = await PomodoroSessionService.createSession(userId, duration);
-      setSessionId(sessionId);
-
-      // 현재 할일과 연결
-      if (sessionId) {
-        await PomodoroSessionService.linkTodo(sessionId, currentTodo.id);
-        setLinkedTodo(currentTodo.id, currentTodo.title);
-      }
-    } catch (error) {
-      console.error('❌ 세션 생성/연결 실패:', error);
-      // 실패해도 타이머는 시작 (UX 우선)
-    }
-
-    startPomodoroTimer(duration, 'POMODORO');
-    setViewState('adhoc-timer');
+    // 방해요소 데이터 로드 후 계획 화면으로 이동
+    await loadDistractionData();
+    setViewState('distraction-plan');
   };
 
   // 포모도로 중단 버튼 클릭
@@ -593,7 +657,33 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
 
     // 기록 화면으로 전환 전, 입력 필드 초기화 (중복 생성 방지)
     setInlineTodoInput('');
-    // 연결된 할일이 없으면 기록 화면으로
+    // 방해요소 계획이 있으면 회고 화면으로, 없으면 기록 화면으로
+    if (distractionPlan && !distractionSkipped) {
+      setViewState('review-distraction');
+    } else {
+      setViewState('adhoc-capture');
+    }
+  };
+
+  // 방해요소 회고 완료 핸들러
+  const handleDistractionReviewSubmit = async (result: DistractionPlan['review_result']) => {
+    const { sessionId } = executionMode.adhocMode;
+
+    // 회고 결과 저장
+    if (sessionId && result) {
+      try {
+        await DistractionService.saveSessionReview(sessionId, result);
+      } catch (error) {
+        console.error('회고 결과 저장 실패:', error);
+      }
+    }
+
+    // 기록 화면으로 이동
+    setViewState('adhoc-capture');
+  };
+
+  // 방해요소 회고 건너뛰기 핸들러
+  const handleDistractionReviewSkip = () => {
     setViewState('adhoc-capture');
   };
 
@@ -1038,6 +1128,19 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             />
           )}
 
+          {/* 방해요소 계획 화면 */}
+          {viewState === 'distraction-plan' && (
+            <DistractionPlanView
+              key="distraction-plan"
+              presets={distractionPresets}
+              history={distractionHistory}
+              isLoading={isLoadingDistractionData}
+              onNext={handleDistractionPlanNext}
+              onSkip={handleDistractionPlanSkip}
+              onSavePreset={handleSavePreset}
+            />
+          )}
+
           {/* 즉흥 포모도로 타이머 화면 */}
           {viewState === 'adhoc-timer' && (
             <AdhocTimerView
@@ -1070,6 +1173,16 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
                   prev === 'elapsed' ? 'remaining' : prev === 'remaining' ? 'both' : 'elapsed'
                 );
               }}
+            />
+          )}
+
+          {/* 방해요소 회고 화면 */}
+          {viewState === 'review-distraction' && (
+            <DistractionReviewView
+              key="review-distraction"
+              plan={distractionPlan}
+              onSubmit={handleDistractionReviewSubmit}
+              onSkip={handleDistractionReviewSkip}
             />
           )}
 
