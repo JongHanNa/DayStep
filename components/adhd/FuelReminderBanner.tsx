@@ -23,7 +23,7 @@ export default function FuelReminderBanner({
 
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // 데이터 로드
   useEffect(() => {
