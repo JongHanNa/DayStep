@@ -1889,7 +1889,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   );
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
+    <div className="h-screen bg-base-100 flex flex-col safe-area-top overflow-hidden">
       <AnimatePresence mode="wait">
         {viewState === 'select-duration' && renderSelectDurationView()}
         {viewState === 'inspiration-input' && renderInspirationInputView()}

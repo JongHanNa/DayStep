@@ -602,6 +602,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       return;
     }
 
+    // 타이머 200ms로 증가 (refs 설정 대기)
     const timer = setTimeout(() => {
       // 프로그래밍적 스크롤 시작 - IntersectionObserver 무시
       isScrollingProgrammatically.current = true;
@@ -614,27 +615,35 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       // 오늘 월에 데이터가 없으면 가장 가까운 월 찾기
       if (!monthRef) {
         const closestMonth = findClosestMonthWithData(today);
+        console.log('[Timeline] closestMonth:', closestMonth);
+        console.log('[Timeline] sortedMonthKeys:', sortedMonthKeys);
         if (closestMonth) {
           monthRef = monthSectionRefs.current[closestMonth];
+          console.log('[Timeline] monthRef found:', !!monthRef);
         }
       }
 
       if (monthRef) {
         const scrollContainer = monthRef.closest('.overflow-y-auto') as HTMLElement | null;
+        console.log('[Timeline] scrollContainer found:', !!scrollContainer);
         if (scrollContainer) {
           // 오늘 날짜 섹션이 있으면 그곳으로, 없으면 월 섹션으로
           if (todaySectionRef.current) {
             const containerRect = scrollContainer.getBoundingClientRect();
             const sectionRect = todaySectionRef.current.getBoundingClientRect();
             const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+            console.log('[Timeline] scrollOffset (today):', scrollOffset);
             scrollContainer.scrollTop = scrollOffset;
           } else {
             const containerRect = scrollContainer.getBoundingClientRect();
             const sectionRect = monthRef.getBoundingClientRect();
             const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+            console.log('[Timeline] scrollOffset (month):', scrollOffset);
             scrollContainer.scrollTop = scrollOffset;
           }
         }
+      } else {
+        console.log('[Timeline] monthRef is null, refs:', Object.keys(monthSectionRefs.current));
       }
       setNavigatedMonth(today);
       setHasScrolledToToday(true);
@@ -644,10 +653,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       setTimeout(() => {
         isScrollingProgrammatically.current = false;
       }, 300);
-    }, 50);
+    }, 200);
 
     return () => clearTimeout(timer);
-  }, [isLoading, hasScrolledToToday, timelineItems.length, findClosestMonthWithData]);
+  }, [isLoading, hasScrolledToToday, timelineItems.length, findClosestMonthWithData, sortedMonthKeys]);
 
   // IntersectionObserver로 스크롤 시 현재 보이는 월 감지
   useEffect(() => {
