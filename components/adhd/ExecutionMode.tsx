@@ -1044,6 +1044,7 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
             <DistractionPlanView
               key="distraction-plan"
               isLoading={false}
+              userId={userId}
               onNext={handleEnvironmentSetupComplete}
               onSkip={handleEnvironmentSetupSkip}
             />

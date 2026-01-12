@@ -1,38 +1,141 @@
 // ============================================
-// 집중 환경 세팅 시스템 타입 정의
-// "지금 바로" 체크리스트 기반 환경 준비
+// 집중 환경 세팅 시스템 타입 정의 (v3)
+// 계층적 구조: 카테고리(방해물/환경) → 방법(구체적 행동)
 // ============================================
 
 /**
- * 환경 체크 항목
+ * 구체적 방법
  */
-export interface EnvironmentCheckItem {
+export interface DistractionMethod {
   id: string;
-  text: string;           // "핸드폰을 금욕상자에 넣었다"
-  category: 'digital' | 'media' | 'workspace' | 'custom';
-  checked: boolean;
+  categoryId: string;
+  text: string;          // "금욕상자에 넣기", "다른 방에 두기"
+  isDefault: boolean;    // 기본 방법 여부
+  isSelected: boolean;   // 선택 여부
 }
 
 /**
- * 환경 세팅 (pomodoro_sessions.distraction_plan에 저장)
+ * 방해물/환경 카테고리
+ */
+export interface DistractionCategory {
+  id: string;
+  name: string;          // "핸드폰", "TV 리모컨", "책상"
+  iconName: string;      // 'Smartphone', 'Tv', 'Armchair' (Lucide 아이콘 이름)
+  type: 'digital' | 'media' | 'workspace' | 'custom';
+  isDefault: boolean;    // 기본 카테고리 여부
+  isExpanded: boolean;   // 펼침 상태
+  methods: DistractionMethod[];
+}
+
+/**
+ * 환경 세팅 결과 (pomodoro_sessions.distraction_plan에 저장)
  */
 export interface EnvironmentSetup {
-  items: EnvironmentCheckItem[];
+  selectedMethods: {
+    categoryId: string;
+    categoryName: string;
+    methodId: string;
+    methodText: string;
+  }[];
   completedAt: string | null;
 }
 
 // ============================================
-// 기본 체크 항목 (3개)
+// 기본 카테고리 및 방법 정의
 // ============================================
 
-export const DEFAULT_ENVIRONMENT_ITEMS: Omit<EnvironmentCheckItem, 'id' | 'checked'>[] = [
-  { text: '핸드폰을 금욕상자/다른 방에 넣었다', category: 'digital' },
-  { text: 'TV 리모컨을 서랍에 치웠다', category: 'media' },
-  { text: '책상 위를 정리했다', category: 'workspace' },
+export const DEFAULT_CATEGORIES: Omit<DistractionCategory, 'isExpanded'>[] = [
+  {
+    id: 'phone',
+    name: '핸드폰',
+    iconName: 'Smartphone',
+    type: 'digital',
+    isDefault: true,
+    methods: [
+      { id: 'phone-box', categoryId: 'phone', text: '금욕상자에 넣기', isDefault: true, isSelected: false },
+      { id: 'phone-room', categoryId: 'phone', text: '다른 방에 두기', isDefault: true, isSelected: false },
+    ]
+  },
+  {
+    id: 'remote',
+    name: 'TV 리모컨',
+    iconName: 'Tv',
+    type: 'media',
+    isDefault: true,
+    methods: [
+      { id: 'remote-drawer', categoryId: 'remote', text: '서랍에 넣기', isDefault: true, isSelected: false },
+    ]
+  },
+  {
+    id: 'desk',
+    name: '책상',
+    iconName: 'Armchair',
+    type: 'workspace',
+    isDefault: true,
+    methods: [
+      { id: 'desk-clean', categoryId: 'desk', text: '정리하기', isDefault: true, isSelected: false },
+    ]
+  },
 ];
 
 /**
- * 카테고리 아이콘
+ * 커스텀 데이터 (user_preferences에 저장)
+ */
+export interface CustomEnvironmentData {
+  customCategories: {
+    id: string;
+    name: string;
+    methods: { id: string; text: string; }[];
+  }[];
+  customMethods: {
+    categoryId: string;  // 기본 카테고리에 추가한 커스텀 방법
+    methods: { id: string; text: string; }[];
+  }[];
+}
+
+/** user_preferences 키 */
+export const ENVIRONMENT_CUSTOM_DATA_KEY = 'environment_custom_data_v3';
+
+// ============================================
+// 레거시 타입 (v2 호환성 유지)
+// ============================================
+
+/**
+ * @deprecated v3의 DistractionMethod 사용
+ */
+export interface EnvironmentCheckItem {
+  id: string;
+  text: string;
+  category: 'digital' | 'media' | 'workspace' | 'custom';
+  checked: boolean;
+  isDefault: boolean;
+}
+
+/**
+ * @deprecated v3의 DEFAULT_CATEGORIES 사용
+ */
+export const DEFAULT_ENVIRONMENT_ITEMS: Omit<EnvironmentCheckItem, 'id' | 'checked'>[] = [
+  { text: '핸드폰 치우기', category: 'digital', isDefault: true },
+  { text: 'TV 리모컨 치우기', category: 'media', isDefault: true },
+  { text: '책상 정리하기', category: 'workspace', isDefault: true },
+];
+
+/**
+ * @deprecated v3의 CustomEnvironmentData 사용
+ */
+export interface CustomEnvironmentItem {
+  id: string;
+  text: string;
+  createdAt: string;
+}
+
+/**
+ * @deprecated v3의 ENVIRONMENT_CUSTOM_DATA_KEY 사용
+ */
+export const ENVIRONMENT_CUSTOM_ITEMS_KEY = 'environment_custom_items';
+
+/**
+ * @deprecated v3는 Lucide 아이콘 사용
  */
 export const CATEGORY_ICONS: Record<EnvironmentCheckItem['category'], string> = {
   digital: '📱',

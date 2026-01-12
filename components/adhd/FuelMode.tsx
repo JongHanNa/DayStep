@@ -1919,6 +1919,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         {viewState === 'distraction-plan' && (
           <DistractionPlanView
             isLoading={false}
+            userId={userId}
             onNext={handleEnvironmentSetupComplete}
             onSkip={handleEnvironmentSetupSkip}
           />
