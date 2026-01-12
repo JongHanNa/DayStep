@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -929,12 +929,18 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                               <button
                                 onClick={() => handleToggleComplete(item)}
                                 className={`flex-shrink-0 ${
-                                  item.completed ? 'text-success' : 'text-base-content/40'
+                                  item.completed
+                                    ? 'text-success'
+                                    : timeStatus?.status === 'missed'
+                                      ? 'text-error'
+                                      : 'text-base-content/40'
                                 }`}
                                 title={item.completed ? '미완료로 변경' : '완료로 변경'}
                               >
                                 {item.completed ? (
                                   <CheckCircle2 className="w-5 h-5" />
+                                ) : timeStatus?.status === 'missed' ? (
+                                  <XCircle className="w-5 h-5" />
                                 ) : (
                                   <Circle className="w-5 h-5" />
                                 )}
