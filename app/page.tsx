@@ -143,7 +143,7 @@ export default function HomePage() {
     return <TaskOrganizeMode onExit={handleExitExecutionMode} />;
   }
 
-  // 쉬운 정리 패턴 모드 (Fuel/원동력)
+  // 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력)
   if (currentMode === 'fuel') {
     return <FuelMode onExit={handleExitExecutionMode} />;
   }

@@ -75,7 +75,7 @@ const UNIFIED_TAGS = [
 ];
 
 /**
- * 쉬운 정리 패턴 모드 (Fuel Mode)
+ * 복잡한 머릿속, 정리해줄게 모드 (Fuel Mode)
  *
  * ExecutionMode처럼 타이머와 함께 기록 시간을 갖습니다.
  * 타이머 진행 중에 생각을 수집하고, 명료화하고, 할일을 계획합니다.
@@ -803,7 +803,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   // 뷰 렌더링
   // ============================================
 
-  // 타이머 시간 선택 화면 (쉬운 정리 패턴)
+  // 타이머 시간 선택 화면 (복잡한 머릿속, 정리해줄게)
   // 미처리 원동력 목록: is_processed가 false이고 연결된 할일이 없는 것
   const unprocessedEntries = useMemo(() => {
     return fuelNotes.filter(note =>
@@ -901,7 +901,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         <button onClick={handleBack} className="btn btn-ghost btn-circle">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold flex-1">쉬운 정리 패턴</h1>
+        <h1 className="text-xl font-bold flex-1">복잡한 머릿속, 정리해줄게</h1>
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className="btn btn-circle btn-sm btn-ghost"

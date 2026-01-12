@@ -188,7 +188,7 @@ interface NoteStoreActions {
   reset: () => void;
   refresh: (userId: string) => Promise<void>;
 
-  // Fuel 기능 (원동력/쉬운 정리 패턴)
+  // Fuel 기능 (원동력/복잡한 머릿속, 정리해줄게)
   getFuelNotes: (userId: string) => Promise<Note[]>;
   createFuelNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
   getUnprocessedFuelNotes: () => Note[];
@@ -1270,7 +1270,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         // ============================================
-        // Fuel 기능 (원동력/쉬운 정리 패턴)
+        // Fuel 기능 (원동력/복잡한 머릿속, 정리해줄게)
         // ============================================
 
         getFuelNotes: async (userId: string) => {

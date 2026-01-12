@@ -51,7 +51,7 @@ interface CareModeState {
   linkedTodoId: string | null;          // 연결된 할일 ID
 }
 
-// 쉬운 정리 패턴 모드 상태 (구 나의 마음 챙기기)
+// 복잡한 머릿속, 정리해줄게 모드 상태 (구 나의 마음 챙기기)
 import type { FuelViewState, TodoDraft } from '@/types/fuel';
 export type { FuelViewState };
 export type FuelEntryType = 'reflection' | 'comfort' | 'gratitude';
@@ -111,7 +111,7 @@ interface ADHDModeState {
   // 마음 전해보기 모드 상태
   careMode: CareModeState;
 
-  // 쉬운 정리 패턴 모드 상태
+  // 복잡한 머릿속, 정리해줄게 모드 상태
   fuelMode: FuelModeState;
 
   // 사용자 설정
@@ -169,7 +169,7 @@ interface ADHDModeState {
   // === 할일 정리 모드 Actions ===
   enterTaskOrganizeMode: (userId: string) => void;
 
-  // === 쉬운 정리 패턴 모드 Actions ===
+  // === 복잡한 머릿속, 정리해줄게 모드 Actions ===
   enterFuelMode: (userId: string, selectedNoteId?: string) => void;
   setFuelViewState: (viewState: FuelViewState) => void;
   setFuelDraft: (draft: {
@@ -617,7 +617,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
         },
 
-        // === 쉬운 정리 패턴 모드 Actions ===
+        // === 복잡한 머릿속, 정리해줄게 모드 Actions ===
         enterFuelMode: (userId: string, selectedNoteId?: string) => {
           console.log('💡 ADHD: 원동력 모드 진입', selectedNoteId ? `(선택된 노트: ${selectedNoteId})` : '');
           set({

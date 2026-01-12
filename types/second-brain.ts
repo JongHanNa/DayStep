@@ -100,7 +100,7 @@ export interface Project {
   completed_todos: number;
   progress: number; // 0-100 (%)
 
-  // 쉬운 정리 패턴 플로우 (신규)
+  // 복잡한 머릿속, 정리해줄게 플로우 (신규)
   expected_outcome?: string;      // 기대 효과
   preparation?: string;           // 준비할 것
   source_reflection_id?: string;  // 연결된 수집 ID
@@ -160,7 +160,7 @@ export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 
 /**
  * 노트 카테고리 (DB note_category 컬럼과 일치)
- * - fuel: 원동력(쉬운 정리 패턴) 기능에서 생성된 노트
+ * - fuel: 원동력(복잡한 머릿속, 정리해줄게) 기능에서 생성된 노트
  */
 export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
 
