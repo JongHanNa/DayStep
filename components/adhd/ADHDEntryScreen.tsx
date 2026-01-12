@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MessageCircle, BookHeart, HelpCircle, Lightbulb, CalendarCheck, Sun, Moon, Settings, Crown } from 'lucide-react';
+import { MessageCircle, BookHeart, HelpCircle, Lightbulb, Sun, Moon, Settings, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -16,7 +16,6 @@ interface ADHDEntryScreenProps {
   onExecute: () => void;
   onCare: () => void;
   onRelationshipInsights: () => void;
-  onTaskOrganize: () => void;
   onFuel: (noteId?: string) => void;
 }
 
@@ -27,7 +26,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelationshipInsights, onTaskOrganize, onFuel }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
   const router = useRouter();
   const { awakeningSentence } = useADHDModeStore();
   const { showDescriptions, setShowDescriptions } = useSettingsStore();
@@ -47,10 +46,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
     learning: {
       title: '복잡한 머릿속, 정리해줄게',
       description: '성인 ADHD의 어려움: 뭐부터 할지 모름 → 시작 못함 → 자책\n해결책: 하나씩 같이 정리해줄게요'
-    },
-    organize: {
-      title: '한 일 확인하고, 나를 칭찬하기',
-      description: '성인 ADHD의 어려움: 뭐 했는지 모름 → 성취감 부족 → 무기력\n해결책: 한 일 보면서 스스로 칭찬해요'
     }
   };
 
@@ -232,38 +227,6 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
                 <span className="text-base-content/40">성인 ADHD의 어려움:</span> 뭐부터 할지 모름 → 시작 못함 → 자책
                 <br />
                 <span className="text-base-content/70">해결책:</span> 하나씩 같이 정리해줄게요
-              </p>
-            )}
-          </div>
-
-          {/* 한 일 확인하고, 나를 칭찬하기 버튼 */}
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onTaskOrganize}
-              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
-            >
-              <CalendarCheck className="w-7 h-7" />
-              <span className="text-xl font-semibold">한 일 확인하고, 나를 칭찬하기</span>
-            </motion.button>
-            {!showDescriptions && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="absolute top-2 right-2 p-1 rounded-full bg-base-300 hover:bg-base-content/20 transition-colors">
-                    <HelpCircle className="w-4 h-4 text-base-content/60" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
-                  {buttonDescriptions.organize.description}
-                </PopoverContent>
-              </Popover>
-            )}
-            {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 뭐 했는지 모름 → 성취감 부족 → 무기력
-                <br />
-                <span className="text-base-content/70">해결책:</span> 한 일 보면서 스스로 칭찬해요
               </p>
             )}
           </div>

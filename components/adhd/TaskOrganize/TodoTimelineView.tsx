@@ -499,10 +499,49 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     });
   }, [groupedByMonth]);
 
+  // 오늘 월에 데이터가 없을 때 가장 가까운 월 찾기
+  const findClosestMonthWithData = useCallback((targetDate: Date): string | null => {
+    if (sortedMonthKeys.length === 0) return null;
+
+    const targetMonthKey = format(targetDate, 'yyyy년 M월', { locale: ko });
+
+    // 오늘 월에 데이터가 있으면 그대로 반환
+    if (sortedMonthKeys.includes(targetMonthKey)) {
+      return targetMonthKey;
+    }
+
+    // 타겟 날짜를 기준으로 가장 가까운 월 찾기
+    const targetTime = targetDate.getTime();
+    let closestMonth: string | null = null;
+    let minDiff = Infinity;
+
+    for (const monthKey of sortedMonthKeys) {
+      const match = monthKey.match(/(\d+)년 (\d+)월/);
+      if (match) {
+        const monthDate = new Date(parseInt(match[1]), parseInt(match[2]) - 1, 1);
+        const diff = Math.abs(monthDate.getTime() - targetTime);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestMonth = monthKey;
+        }
+      }
+    }
+
+    return closestMonth;
+  }, [sortedMonthKeys]);
+
   // 특정 월로 스크롤
   const scrollToMonth = useCallback((date: Date) => {
     const monthKey = format(date, 'yyyy년 M월', { locale: ko });
-    const ref = monthSectionRefs.current[monthKey];
+    let ref = monthSectionRefs.current[monthKey];
+
+    // 해당 월에 데이터가 없으면 가장 가까운 월 찾기
+    if (!ref) {
+      const closestMonth = findClosestMonthWithData(date);
+      if (closestMonth) {
+        ref = monthSectionRefs.current[closestMonth];
+      }
+    }
 
     if (ref) {
       // 프로그래밍적 스크롤 시작 - IntersectionObserver 무시
@@ -521,8 +560,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         isScrollingProgrammatically.current = false;
       }, 300);
     }
+    // MonthNavigator는 항상 요청된 날짜로 설정
     setNavigatedMonth(date);
-  }, []);
+  }, [findClosestMonthWithData]);
 
   // 오늘로 스크롤
   const handleTodayClick = useCallback(() => {
@@ -563,10 +603,21 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     }
 
     const timer = setTimeout(() => {
+      // 프로그래밍적 스크롤 시작 - IntersectionObserver 무시
+      isScrollingProgrammatically.current = true;
+
       // 오늘이 포함된 월로 이동
       const today = new Date();
       const todayMonthKey = format(today, 'yyyy년 M월', { locale: ko });
-      const monthRef = monthSectionRefs.current[todayMonthKey];
+      let monthRef = monthSectionRefs.current[todayMonthKey];
+
+      // 오늘 월에 데이터가 없으면 가장 가까운 월 찾기
+      if (!monthRef) {
+        const closestMonth = findClosestMonthWithData(today);
+        if (closestMonth) {
+          monthRef = monthSectionRefs.current[closestMonth];
+        }
+      }
 
       if (monthRef) {
         const scrollContainer = monthRef.closest('.overflow-y-auto') as HTMLElement | null;
@@ -588,10 +639,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       setNavigatedMonth(today);
       setHasScrolledToToday(true);
       setIsScrollReady(true);
+
+      // 스크롤 완료 후 IntersectionObserver 다시 활성화
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+      }, 300);
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [isLoading, hasScrolledToToday, timelineItems.length]);
+  }, [isLoading, hasScrolledToToday, timelineItems.length, findClosestMonthWithData]);
 
   // IntersectionObserver로 스크롤 시 현재 보이는 월 감지
   useEffect(() => {

@@ -11,7 +11,6 @@ import OrganizeModeWrapper from '@/components/adhd/OrganizeModeWrapper';
 import CareMode from '@/components/adhd/CareMode';
 import FuelMode from '@/components/adhd/FuelMode';
 import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights';
-import { TaskOrganizeMode } from '@/components/adhd/TaskOrganize/TaskOrganizeMode';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
@@ -32,7 +31,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterTaskOrganizeMode, enterFuelMode, exitMode } = useADHDModeStore();
+  const { currentMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -102,12 +101,6 @@ export default function HomePage() {
     }
   };
 
-  const handleTaskOrganize = () => {
-    if (user?.id) {
-      enterTaskOrganizeMode(user.id);
-    }
-  };
-
   const handleFuel = (noteId?: string) => {
     if (user?.id) {
       enterFuelMode(user.id, noteId);
@@ -138,11 +131,6 @@ export default function HomePage() {
     return <RelationshipInsightsMode onExit={handleExitExecutionMode} />;
   }
 
-  // 할일 정리 모드
-  if (currentMode === 'task-organize') {
-    return <TaskOrganizeMode onExit={handleExitExecutionMode} />;
-  }
-
   // 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력)
   if (currentMode === 'fuel') {
     return <FuelMode onExit={handleExitExecutionMode} />;
@@ -155,7 +143,6 @@ export default function HomePage() {
       onExecute={handleExecute}
       onCare={handleCare}
       onRelationshipInsights={handleRelationshipInsights}
-      onTaskOrganize={handleTaskOrganize}
       onFuel={handleFuel}
     />
   );

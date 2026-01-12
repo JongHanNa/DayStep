@@ -32,6 +32,9 @@ import {
   Pencil,
   CheckCircle2,
   Pin,
+  Inbox,
+  BarChart3,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -50,6 +53,21 @@ import { addTodoNote, removeTodoNote, getNoteTodos } from '@/lib/supabase/todo-n
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import ContentEditorModal from '@/components/second-brain/ContentEditorModal';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Paywall } from '@/components/subscription/Paywall';
+import { TodoTimelineView } from '@/components/adhd/TaskOrganize/TodoTimelineView';
+import { OrganizeNeededView } from '@/components/adhd/TaskOrganize/OrganizeNeededView';
+import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
+
+// 탭 타입 정의
+type FuelTabType = 'fuel' | 'timeline' | 'organize' | 'stats';
+
+const FUEL_TABS: { id: FuelTabType; label: string; icon: React.ReactNode }[] = [
+  { id: 'fuel', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
+  { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
+  { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
+  { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
+];
 
 interface FuelModeProps {
   onExit: () => void;
@@ -136,6 +154,11 @@ export default function FuelMode({ onExit }: FuelModeProps) {
 
   const { resolvedTheme, setTheme } = useTheme();
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
+  const { hasActiveSubscription } = useSubscription();
+
+  // 탭 상태
+  const [activeTab, setActiveTab] = useState<FuelTabType>('fuel');
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // 로컬 상태
   const [selectedDuration, setSelectedDuration] = useState(10); // 기본 10분
@@ -824,6 +847,15 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     });
   }, [fuelNotes]);
 
+  // 탭 클릭 핸들러 - 통계 탭은 Pro 전용
+  const handleTabClick = useCallback((tabId: FuelTabType) => {
+    if (tabId === 'stats' && !hasActiveSubscription) {
+      setShowPaywall(true);
+      return;
+    }
+    setActiveTab(tabId);
+  }, [hasActiveSubscription]);
+
   // "실행과 집중으로 가기" 핸들러
   const handleGoToExecute = useCallback(() => {
     if (!userId) return;
@@ -903,21 +935,63 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       className="flex flex-col h-full"
     >
       {/* 헤더 - 고정 영역 */}
-      <div className="flex items-center gap-3 p-4">
-        <button onClick={handleBack} className="btn btn-ghost btn-circle">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-xl font-bold flex-1">복잡한 머릿속, 정리해줄게</h1>
-        <button
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="btn btn-circle btn-sm btn-ghost"
-          aria-label="테마 전환"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
+      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+        <div className="flex items-center gap-3 p-4">
+          <button onClick={handleBack} className="btn btn-ghost btn-circle">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-bold flex-1">복잡한 머릿속, 정리해줄게</h1>
+          <button
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            className="btn btn-circle btn-sm btn-ghost"
+            aria-label="테마 전환"
+          >
+            {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {/* 탭 네비게이션 */}
+        <div className="flex overflow-x-auto px-2 pb-2 gap-1 scrollbar-hide">
+          {FUEL_TABS.map((tab) => {
+            const isProLocked = tab.id === 'stats' && !hasActiveSubscription;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-content'
+                    : 'bg-base-200 text-base-content hover:bg-base-300'
+                }`}
+              >
+                {tab.icon}
+                <span className="text-sm font-medium">{tab.label}</span>
+                {isProLocked && <Lock className="w-3 h-3 ml-0.5 opacity-60" />}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* 콘텐츠 - 스크롤 영역 */}
+      {/* 콘텐츠 - 탭에 따라 분기 */}
+      {activeTab === 'timeline' && userId && (
+        <div className="flex-1 overflow-y-auto">
+          <TodoTimelineView userId={userId} />
+        </div>
+      )}
+      {activeTab === 'organize' && userId && (
+        <div className="flex-1 overflow-y-auto">
+          <OrganizeNeededView userId={userId} />
+        </div>
+      )}
+      {activeTab === 'stats' && userId && (
+        <div className="flex-1 overflow-y-auto">
+          <TodoStatsView userId={userId} />
+        </div>
+      )}
+
+      {/* 원동력 탭 콘텐츠 - 스크롤 영역 */}
+      {activeTab === 'fuel' && (
       <div className="flex-1 overflow-y-auto px-4 pb-4 mobile-container">
         {/* 용량 경고 배너 */}
         <UsageWarningBanner
@@ -1067,6 +1141,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
           </div>
         )}
       </div>
+      )}
     </motion.div>
   );
 
@@ -1826,6 +1901,17 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         {viewState === 'completed' && renderCompletedView()}
         {viewState === 'history' && renderHistoryView()}
       </AnimatePresence>
+
+      {/* 통계 탭 Pro 잠금 Paywall 모달 */}
+      {showPaywall && (
+        <Paywall
+          isModal={true}
+          onClose={() => setShowPaywall(false)}
+          featureId="statistics"
+          title="통계 & 인사이트"
+          description="생산성 통계와 패턴 분석을 확인하세요"
+        />
+      )}
 
       {/* 용량 제한 모달 */}
       {limitResult && (
