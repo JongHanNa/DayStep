@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { Todo } from '@/entities/todo/Todo';
-import { DistractionService } from '@/services/distraction.service';
 
 // ============================================
 // 타입 정의
@@ -54,12 +53,6 @@ interface CareModeState {
 
 // 복잡한 머릿속, 정리해줄게 모드 상태 (구 나의 마음 챙기기)
 import type { FuelViewState, TodoDraft } from '@/types/fuel';
-import type {
-  DistractionPreset,
-  DistractionPlan,
-  DistractionHistory,
-  DistractionReviewResult
-} from '@/types/distraction';
 export type { FuelViewState };
 export type FuelEntryType = 'reflection' | 'comfort' | 'gratitude';
 
@@ -91,13 +84,6 @@ interface FuelModeState {
   // 할일 계획 필드 (신규)
   newProjectPreparation: string;         // 준비할 것
   todosDraft: TodoDraft[];               // 할일 초안 목록
-
-  // 방해 요소 계획 필드
-  distractionPlan: DistractionPlan | null;     // 현재 세션의 방해요소 계획
-  distractionSkipped: boolean;                  // 방해요소 계획 건너뜀 여부
-  distractionPresets: DistractionPreset[];     // 프리셋 목록 (캐시)
-  distractionHistory: DistractionHistory | null; // 히스토리 (캐시)
-  isLoadingDistractionData: boolean;           // 로딩 상태
 }
 
 // DB에서 로드한 패턴 (캐시용)
@@ -217,16 +203,6 @@ interface ADHDModeState {
   /** @deprecated Use endFuelMode instead */
   endInboxMode: () => void;
 
-  // === 방해 요소 계획 Actions ===
-  setDistractionPlan: (plan: DistractionPlan | null) => void;
-  skipDistractionPlan: () => void;
-  setDistractionPresets: (presets: DistractionPreset[]) => void;
-  setDistractionHistory: (history: DistractionHistory | null) => void;
-  setLoadingDistractionData: (loading: boolean) => void;
-  loadDistractionData: (userId: string) => Promise<void>;
-  saveDistractionReview: (result: DistractionReviewResult) => void;
-  resetDistractionState: () => void;
-
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
 
@@ -307,12 +283,6 @@ const DEFAULT_FUEL_MODE: FuelModeState = {
   // 할일 계획 필드
   newProjectPreparation: '',
   todosDraft: [],
-  // 방해 요소 계획 필드
-  distractionPlan: null,
-  distractionSkipped: false,
-  distractionPresets: [],
-  distractionHistory: null,
-  isLoadingDistractionData: false,
 };
 
 // ============================================
@@ -673,12 +643,6 @@ export const useADHDModeStore = create<ADHDModeState>()(
               // 할일 계획 필드
               newProjectPreparation: '',
               todosDraft: [],
-              // 방해 요소 계획 필드
-              distractionPlan: null,
-              distractionSkipped: false,
-              distractionPresets: [],
-              distractionHistory: null,
-              isLoadingDistractionData: false,
             }
           });
         },
@@ -786,108 +750,6 @@ export const useADHDModeStore = create<ADHDModeState>()(
         endInboxMode: () => {
           console.warn('⚠️ endInboxMode는 deprecated입니다. endFuelMode를 사용하세요.');
           get().endFuelMode();
-        },
-
-        // === 방해 요소 계획 Actions ===
-        setDistractionPlan: (plan) => {
-          console.log('🎯 ADHD: 방해요소 계획 설정', plan);
-          set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
-              distractionPlan: plan,
-              distractionSkipped: false,
-            }
-          }));
-        },
-
-        skipDistractionPlan: () => {
-          console.log('⏭️ ADHD: 방해요소 계획 건너뛰기');
-          set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
-              distractionPlan: null,
-              distractionSkipped: true,
-            }
-          }));
-        },
-
-        setDistractionPresets: (presets) => {
-          set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
-              distractionPresets: presets,
-            }
-          }));
-        },
-
-        setDistractionHistory: (history) => {
-          set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
-              distractionHistory: history,
-            }
-          }));
-        },
-
-        setLoadingDistractionData: (loading) => {
-          set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
-              isLoadingDistractionData: loading,
-            }
-          }));
-        },
-
-        loadDistractionData: async (userId: string) => {
-          console.log('📥 ADHD: 방해요소 데이터 로드 시작');
-          get().setLoadingDistractionData(true);
-
-          try {
-            const [presets, history] = await Promise.all([
-              DistractionService.getPresets(userId),
-              DistractionService.getHistory(userId),
-            ]);
-
-            set((state) => ({
-              fuelMode: {
-                ...state.fuelMode,
-                distractionPresets: presets,
-                distractionHistory: history,
-                isLoadingDistractionData: false,
-              }
-            }));
-
-            console.log('✅ ADHD: 방해요소 데이터 로드 완료', {
-              presetsCount: presets.length,
-              hasHistory: !!history,
-            });
-          } catch (error) {
-            console.error('❌ ADHD: 방해요소 데이터 로드 실패', error);
-            get().setLoadingDistractionData(false);
-          }
-        },
-
-        saveDistractionReview: (result) => {
-          console.log('📊 ADHD: 방해요소 회고 결과 저장', result);
-          set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
-              distractionPlan: state.fuelMode.distractionPlan
-                ? { ...state.fuelMode.distractionPlan, review_result: result }
-                : null,
-            }
-          }));
-        },
-
-        resetDistractionState: () => {
-          console.log('🔄 ADHD: 방해요소 상태 초기화');
-          set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
-              distractionPlan: null,
-              distractionSkipped: false,
-            }
-          }));
         },
 
         // === 설정 Actions ===
