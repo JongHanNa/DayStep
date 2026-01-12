@@ -1,23 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Clock, Calendar, Inbox, BarChart3, Network, Sun, Moon, Lock } from 'lucide-react';
+import { ArrowLeft, Clock, Inbox, BarChart3, Network, Sun, Moon, Lock } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { TodoTimelineView } from './TodoTimelineView';
-import { TodayPlanView } from './TodayPlanView';
 import { OrganizeNeededView } from './OrganizeNeededView';
 import { TodoStatsView } from './TodoStatsView';
 import { GraphTabView } from './GraphTabView';
 
-type TabType = 'timeline' | 'plan' | 'organize' | 'stats' | 'graph';
+type TabType = 'timeline' | 'organize' | 'stats' | 'graph';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
-  { id: 'plan', label: '계획', icon: <Calendar className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
   // TODO: 그래프 탭 임시 숨김 처리 - 추후 활성화
@@ -31,12 +29,11 @@ interface TaskOrganizeModeProps {
 /**
  * 할일 정리 모드 - ADHD 친화적 할일 관리
  *
- * 5개 탭:
+ * 4개 탭:
  * - 타임라인: 할일 완료/생성 기록 시간순
- * - 계획: 오늘/내일 할 일 정리
  * - 정리: 미분류 할일들 정리
  * - 통계: 완료율, 패턴 분석
- * - 그래프: 전체 구조 시각화
+ * - 그래프: 전체 구조 시각화 (임시 숨김)
  */
 export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
   const [activeTab, setActiveTab] = useState<TabType>('timeline');
@@ -67,8 +64,6 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
     switch (activeTab) {
       case 'timeline':
         return <TodoTimelineView userId={userId} />;
-      case 'plan':
-        return <TodayPlanView userId={userId} />;
       case 'organize':
         return <OrganizeNeededView userId={userId} />;
       case 'stats':
