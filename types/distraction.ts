@@ -57,6 +57,16 @@ export const DEFAULT_CATEGORIES: Omit<DistractionCategory, 'isExpanded'>[] = [
     ]
   },
   {
+    id: 'laptop',
+    name: '노트북/PC',
+    iconName: 'Laptop',
+    type: 'digital',
+    isDefault: true,
+    methods: [
+      { id: 'laptop-detox', categoryId: 'laptop', text: '디지털 디톡스 앱 실행하기', isDefault: true, isSelected: false },
+    ]
+  },
+  {
     id: 'remote',
     name: 'TV 리모컨',
     iconName: 'Tv',

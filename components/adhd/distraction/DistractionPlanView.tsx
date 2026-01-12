@@ -10,6 +10,7 @@ import {
   Trash2,
   X,
   Smartphone,
+  Laptop,
   Tv,
   Armchair,
   Pencil,
@@ -31,6 +32,7 @@ import {
 // 아이콘 매핑
 const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   Smartphone,
+  Laptop,
   Tv,
   Armchair,
   Pencil,
