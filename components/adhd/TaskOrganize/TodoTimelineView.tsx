@@ -364,7 +364,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   }, [deleteTodo]);
 
   // Todo → TodoFormData 변환
-  const todoToFormData = useCallback((todo: Todo): TodoFormData => {
+  const todoToFormData = useCallback((todo: Todo, isInstance?: boolean): TodoFormData => {
     return {
       title: todo.title,
       icon: todo.icon || undefined,
@@ -390,6 +390,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       selectedDaysOfWeek: todo.recurrenceDaysOfWeek || undefined,
       joyfulPeopleIds: todo.joyfulPeopleIds || [],
       shamefulPeopleIds: todo.shamefulPeopleIds || [],
+      // 반복 인스턴스 정보
+      isRecurrenceInstance: isInstance ?? false,
+      originalStartDate: todo.startTime ? new Date(todo.startTime) : undefined,
     };
   }, []);
 
@@ -398,7 +401,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     if (item.originalTodo) {
       setEditingTodo(item.originalTodo);
       setEditingItem(item); // 반복 인스턴스 정보 저장
-      setEditFormData(todoToFormData(item.originalTodo));
+      setEditFormData(todoToFormData(item.originalTodo, item.isRecurrenceInstance));
     }
   }, [todoToFormData]);
 
