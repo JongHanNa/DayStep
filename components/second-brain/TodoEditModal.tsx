@@ -7,6 +7,7 @@ import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFiel
 import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
 import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import RecurringDeleteDialog from '@/components/todos/RecurringDeleteDialog';
+import RecurringTimeChangeDialog from '@/components/todos/RecurringTimeChangeDialog';
 import LinkedFuelsSection from '@/components/second-brain/shared/LinkedFuelsSection';
 import { useModalStore } from '@/state/stores/modalStore';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
@@ -22,6 +23,10 @@ interface TodoEditModalProps {
   onChange: (todo: TodoFormData) => void;
   onDelete?: () => void; // 일반 삭제 핸들러
   onRecurringDelete?: (deleteType: 'this' | 'future' | 'all') => void; // 반복 삭제 핸들러
+  onRecurringSave?: (todo: TodoFormData, updateType: 'this' | 'future' | 'all') => void; // 반복 시간 변경 핸들러
+  originalStartTime?: string; // 원본 시작 시간 (시간 변경 감지용)
+  originalEndTime?: string; // 원본 종료 시간 (시간 변경 감지용)
+  occurrenceDate?: string; // 반복 인스턴스의 날짜 (YYYY-MM-DD)
   // 선택적 props (수집 페이지 등에서 사용)
   notes?: Note[];
   todos?: Todo[]; // NoteEditModal을 위해 추가
@@ -52,6 +57,10 @@ export default function TodoEditModal({
   onChange,
   onDelete,
   onRecurringDelete,
+  onRecurringSave,
+  originalStartTime,
+  originalEndTime,
+  occurrenceDate,
   notes,
   todos = [],
   onCreateNote,
@@ -76,6 +85,51 @@ export default function TodoEditModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // 반복 삭제 다이얼로그 상태
   const [showRecurringDeleteDialog, setShowRecurringDeleteDialog] = useState(false);
+  // 반복 시간 변경 다이얼로그 상태
+  const [showTimeChangeDialog, setShowTimeChangeDialog] = useState(false);
+  // 저장 중 상태
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 시간 변경 여부 확인
+  const hasTimeChanged = useCallback(() => {
+    if (!originalStartTime || !todo?.startTime) return false;
+    // ISO 문자열에서 시간 부분만 비교
+    const originalStart = originalStartTime.slice(11, 16); // "HH:mm"
+    const currentStart = todo.startTime.slice(11, 16);
+    return originalStart !== currentStart;
+  }, [originalStartTime, todo?.startTime]);
+
+  // 저장 버튼 클릭 핸들러
+  const handleSaveClick = useCallback(() => {
+    if (!todo) return;
+
+    const isRecurring = todo.recurrencePattern && todo.recurrencePattern !== 'none';
+    const timeChanged = hasTimeChanged();
+
+    // 반복 할일이고 시간이 변경된 경우 → 다이얼로그 표시
+    if (isRecurring && timeChanged && onRecurringSave) {
+      setShowTimeChangeDialog(true);
+    } else {
+      // 일반 저장
+      onSave(todo);
+    }
+  }, [todo, hasTimeChanged, onRecurringSave, onSave]);
+
+  // 반복 시간 변경 확인 핸들러
+  const handleTimeChangeConfirm = useCallback(async (updateType: 'this' | 'future' | 'all') => {
+    if (!todo || !onRecurringSave) return;
+
+    setIsSaving(true);
+    try {
+      await onRecurringSave(todo, updateType);
+      setShowTimeChangeDialog(false);
+      onClose();
+    } catch (error) {
+      console.error('반복 시간 변경 실패:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [todo, onRecurringSave, onClose]);
 
   // 노트 편집 모달 상태
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -243,7 +297,7 @@ export default function TodoEditModal({
                 </svg>
               </button>
             )}
-            <button onClick={() => onSave(todo)} className="btn btn-primary btn-sm rounded-full">
+            <button onClick={handleSaveClick} className="btn btn-primary btn-sm rounded-full">
               저장
             </button>
           </div>
@@ -353,6 +407,29 @@ export default function TodoEditModal({
             recurrence_pattern: todo.recurrencePattern,
           } as any}
           isDeleting={false}
+        />
+      )}
+
+      {/* 반복 할일 시간 변경 다이얼로그 */}
+      {showTimeChangeDialog && todo && originalStartTime && (
+        <RecurringTimeChangeDialog
+          isOpen={showTimeChangeDialog}
+          onClose={() => setShowTimeChangeDialog(false)}
+          onConfirm={handleTimeChangeConfirm}
+          todo={{
+            id: todoId || '',
+            title: todo.title,
+            recurrence_pattern: todo.recurrencePattern,
+          } as any}
+          originalTime={{
+            start: originalStartTime,
+            end: originalEndTime || originalStartTime,
+          }}
+          newTime={{
+            start: todo.startTime || '',
+            end: todo.endTime || '',
+          }}
+          isUpdating={isSaving}
         />
       )}
     </dialog>

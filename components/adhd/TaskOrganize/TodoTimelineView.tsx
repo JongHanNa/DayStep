@@ -67,7 +67,7 @@ const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
  * - 맥락: 프로젝트/목표 배지로 어떤 목표를 위한 건지 표시
  */
 export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
-  const { todos, fetchAllTodos, updateTodo, deleteTodo } = useTodoStore();
+  const { todos, fetchAllTodos, updateTodo, deleteTodo, updateRecurringTodo } = useTodoStore();
   const { people, loadPeople } = useCherishedPeopleStore();
   const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -89,6 +89,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 편집 모달 상태
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [editingItem, setEditingItem] = useState<TimelineItem | null>(null); // 반복 인스턴스 정보 포함
   const [editFormData, setEditFormData] = useState<TodoFormData | null>(null);
 
   // 삭제 확인 상태
@@ -396,6 +397,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const handleEditClick = useCallback((item: TimelineItem) => {
     if (item.originalTodo) {
       setEditingTodo(item.originalTodo);
+      setEditingItem(item); // 반복 인스턴스 정보 저장
       setEditFormData(todoToFormData(item.originalTodo));
     }
   }, [todoToFormData]);
@@ -440,6 +442,44 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setEditingTodo(null);
     setEditFormData(null);
   }, [editingTodo, deleteTodo]);
+
+  // 반복 할일 시간 변경 저장
+  const handleRecurringSave = useCallback(async (
+    formData: TodoFormData,
+    updateType: 'this' | 'future' | 'all'
+  ) => {
+    if (!editingTodo || !editingItem) return;
+
+    // 반복 인스턴스인 경우 원본 ID와 발생 날짜 추출 (editingItem에서 가져옴)
+    const isInstance = editingItem.isRecurrenceInstance;
+    const sourceId = isInstance ? editingItem.recurrenceSourceId : editingTodo.id;
+    const occurrenceDate = isInstance && editingItem.recurrenceOccurrenceDate
+      ? new Date(editingItem.recurrenceOccurrenceDate)
+      : formData.scheduledDate || new Date();
+
+    if (!sourceId) {
+      console.error('반복 할일 ID를 찾을 수 없습니다.');
+      return;
+    }
+
+    await updateRecurringTodo(
+      sourceId,
+      {
+        title: formData.title,
+        icon: formData.icon,
+        color: formData.color,
+        start_time: formData.startTime,
+        end_time: formData.endTime,
+        schedule_type: formData.scheduleType,
+      },
+      updateType,
+      occurrenceDate
+    );
+
+    setEditingTodo(null);
+    setEditingItem(null);
+    setEditFormData(null);
+  }, [editingTodo, editingItem, updateRecurringTodo]);
 
   // "더 보기" 핸들러
   const handleLoadMorePast = useCallback(async () => {
@@ -1263,11 +1303,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         todo={editFormData}
         onClose={() => {
           setEditingTodo(null);
+          setEditingItem(null);
           setEditFormData(null);
         }}
         onSave={handleEditSave}
         onChange={setEditFormData}
         onDelete={handleEditDelete}
+        onRecurringSave={handleRecurringSave}
+        originalStartTime={editingItem?.startTime?.toISOString()}
+        originalEndTime={editingItem?.endTime?.toISOString()}
+        occurrenceDate={editingItem?.recurrenceOccurrenceDate}
         headerTitle="할일 편집"
         todoId={editingTodo?.id}
         userId={userId}
