@@ -50,6 +50,9 @@ export interface ScheduledReminder {
 export class ReminderScheduler {
   private static instance: ReminderScheduler;
   private isInitialized = false;
+  private isWebPlatform = false;
+  // 웹 플랫폼용 타이머 저장소
+  private webTimers: Map<string, NodeJS.Timeout> = new Map();
 
   static getInstance(): ReminderScheduler {
     if (!ReminderScheduler.instance) {
@@ -63,9 +66,9 @@ export class ReminderScheduler {
    */
   async initialize(): Promise<boolean> {
     try {
+      // 웹 플랫폼 체크
       if (!Capacitor.isNativePlatform()) {
-        console.log('Local notifications are only available on native platforms');
-        return false;
+        return await this.initializeWeb();
       }
 
       // 권한 요청
@@ -86,6 +89,102 @@ export class ReminderScheduler {
     } catch (error) {
       console.error('Failed to initialize reminder scheduler:', error);
       return false;
+    }
+  }
+
+  /**
+   * 웹 플랫폼 초기화 (Web Notification API)
+   */
+  private async initializeWeb(): Promise<boolean> {
+    try {
+      // Web Notification API 지원 확인
+      if (!('Notification' in window)) {
+        console.log('Web Notification API is not supported');
+        return false;
+      }
+
+      // 권한 확인/요청
+      let permission = Notification.permission;
+      if (permission === 'default') {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission !== 'granted') {
+        console.warn('Web notification permission not granted');
+        return false;
+      }
+
+      this.isWebPlatform = true;
+      this.isInitialized = true;
+      console.log('Web reminder scheduler initialized successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize web reminder scheduler:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 웹 알림 스케줄링 (setTimeout 사용)
+   */
+  private scheduleWebNotification(
+    todoId: string,
+    title: string,
+    body: string,
+    scheduledDate: Date,
+    reminderType: string
+  ): boolean {
+    const currentTime = new Date();
+    const delay = scheduledDate.getTime() - currentTime.getTime();
+
+    if (delay <= 0) {
+      return false;
+    }
+
+    const timerId = `${todoId}_${reminderType}`;
+
+    // 기존 타이머가 있으면 취소
+    const existingTimer = this.webTimers.get(timerId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    // 새 타이머 설정
+    const timer = setTimeout(() => {
+      this.showWebNotification(title, body, todoId);
+      this.webTimers.delete(timerId);
+    }, delay);
+
+    this.webTimers.set(timerId, timer);
+    console.log(`Web notification scheduled for ${title} at ${scheduledDate}`);
+    return true;
+  }
+
+  /**
+   * 웹 알림 표시
+   */
+  private showWebNotification(title: string, body: string, todoId: string): void {
+    try {
+      if (Notification.permission === 'granted') {
+        const notification = new Notification(title, {
+          body,
+          icon: '/icon-192x192.png',
+          badge: '/icon-192x192.png',
+          tag: todoId,
+          requireInteraction: false,
+        });
+
+        // 클릭 시 앱으로 포커스
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+
+        // 5초 후 자동 닫기
+        setTimeout(() => notification.close(), 5000);
+      }
+    } catch (error) {
+      console.error('Failed to show web notification:', error);
     }
   }
 
@@ -122,94 +221,114 @@ export class ReminderScheduler {
       // 알림 시간 계산 완료 (디버그 모드에서만 상세 로그)
 
       // 1. 작업 전 리마인더
-      
       if (settings.beforeWork.enabled) {
         const beforeReminderDate = new Date(scheduledDate.getTime() - (settings.beforeWork.minutes * 60 * 1000));
-        
         const currentTime = new Date();
-        // 작업 전 리마인더 시간 체크 완료
-        
-        if (beforeReminderDate > currentTime) {
-          const notificationId = Math.floor(Math.random() * 1000000);
-          
-          await LocalNotifications.schedule({
-            notifications: [{
-              title: '작업 준비 알림 📋',
-              body: `"${todo.title}" 작업이 ${settings.beforeWork.minutes}분 후에 시작돼요!`,
-              id: notificationId,
-              schedule: { at: beforeReminderDate },
-              actionTypeId: 'BEFORE_WORK_REMINDER',
-              extra: {
-                todoId: todo.id,
-                action: 'before_work',
-                type: 'before',
-                scheduledTime: scheduledTime
-              }
-            }]
-          });
 
-          await this.saveReminderSchedule(todo.id, beforeReminderDate, notificationId, 'before_work');
-          scheduledCount++;
+        if (beforeReminderDate > currentTime) {
+          const title = '작업 준비 알림 📋';
+          const body = `"${todo.title}" 작업이 ${settings.beforeWork.minutes}분 후에 시작돼요!`;
+
+          if (this.isWebPlatform) {
+            // 웹 알림 스케줄링
+            if (this.scheduleWebNotification(todo.id, title, body, beforeReminderDate, 'before_work')) {
+              scheduledCount++;
+            }
+          } else {
+            // 네이티브 알림 스케줄링
+            const notificationId = Math.floor(Math.random() * 1000000);
+            await LocalNotifications.schedule({
+              notifications: [{
+                title,
+                body,
+                id: notificationId,
+                schedule: { at: beforeReminderDate },
+                actionTypeId: 'BEFORE_WORK_REMINDER',
+                extra: {
+                  todoId: todo.id,
+                  action: 'before_work',
+                  type: 'before',
+                  scheduledTime: scheduledTime
+                }
+              }]
+            });
+            await this.saveReminderSchedule(todo.id, beforeReminderDate, notificationId, 'before_work');
+            scheduledCount++;
+          }
         }
       }
 
-      // 2. 작업 시작 알림 (시작 시점에 바로)
+      // 2. 작업 시작 알림 (시작 시점에 바로) - 부드러운 리마인더
       if (settings.workStart.enabled) {
         const currentTime = new Date();
-        // 작업 시작 리마인더 시간 체크 완료
-        
-        if (scheduledDate > currentTime) {
-          const notificationId = Math.floor(Math.random() * 1000000);
-          
-          await LocalNotifications.schedule({
-            notifications: [{
-              title: '작업 시작 알림 🚀',
-              body: `"${todo.title}" 작업을 시작할 시간이에요!`,
-              id: notificationId,
-              schedule: { at: scheduledDate },
-              actionTypeId: 'WORK_START_REMINDER',
-              extra: {
-                todoId: todo.id,
-                action: 'work_start',
-                type: 'start',
-                scheduledTime: scheduledTime
-              }
-            }]
-          });
 
-          await this.saveReminderSchedule(todo.id, scheduledDate, notificationId, 'work_start');
-          scheduledCount++;
+        if (scheduledDate > currentTime) {
+          const title = todo.title;
+          const body = `지금 ${todo.title} 시간이에요`;
+
+          if (this.isWebPlatform) {
+            // 웹 알림 스케줄링
+            if (this.scheduleWebNotification(todo.id, title, body, scheduledDate, 'work_start')) {
+              scheduledCount++;
+            }
+          } else {
+            // 네이티브 알림 스케줄링
+            const notificationId = Math.floor(Math.random() * 1000000);
+            await LocalNotifications.schedule({
+              notifications: [{
+                title,
+                body,
+                id: notificationId,
+                schedule: { at: scheduledDate },
+                actionTypeId: 'WORK_START_REMINDER',
+                extra: {
+                  todoId: todo.id,
+                  action: 'work_start',
+                  type: 'start',
+                  scheduledTime: scheduledTime
+                }
+              }]
+            });
+            await this.saveReminderSchedule(todo.id, scheduledDate, notificationId, 'work_start');
+            scheduledCount++;
+          }
         }
       }
 
       // 3. 작업 완료 알림 (예정 완료 시점에 바로)
       if (settings.workComplete.enabled) {
         const currentTime = new Date();
-        // 작업 완료 리마인더 시간 체크 완료
-        
-        // 완료 알림 조건 확인 완료
-        
-        if (endTime > scheduledDate && endTime > currentTime) {
-          const notificationId = Math.floor(Math.random() * 1000000);
-          
-          await LocalNotifications.schedule({
-            notifications: [{
-              title: '작업 완료 시간 ✅',
-              body: `"${todo.title}" 작업 완료 예정 시간이에요!`,
-              id: notificationId,
-              schedule: { at: endTime },
-              actionTypeId: 'WORK_COMPLETE_REMINDER',
-              extra: {
-                todoId: todo.id,
-                action: 'work_complete',
-                type: 'complete',
-                scheduledTime: scheduledTime
-              }
-            }]
-          });
 
-          await this.saveReminderSchedule(todo.id, endTime, notificationId, 'work_complete');
-          scheduledCount++;
+        if (endTime > scheduledDate && endTime > currentTime) {
+          const title = '작업 완료 시간 ✅';
+          const body = `"${todo.title}" 작업 완료 예정 시간이에요!`;
+
+          if (this.isWebPlatform) {
+            // 웹 알림 스케줄링
+            if (this.scheduleWebNotification(todo.id, title, body, endTime, 'work_complete')) {
+              scheduledCount++;
+            }
+          } else {
+            // 네이티브 알림 스케줄링
+            const notificationId = Math.floor(Math.random() * 1000000);
+            await LocalNotifications.schedule({
+              notifications: [{
+                title,
+                body,
+                id: notificationId,
+                schedule: { at: endTime },
+                actionTypeId: 'WORK_COMPLETE_REMINDER',
+                extra: {
+                  todoId: todo.id,
+                  action: 'work_complete',
+                  type: 'complete',
+                  scheduledTime: scheduledTime
+                }
+              }]
+            });
+            await this.saveReminderSchedule(todo.id, endTime, notificationId, 'work_complete');
+            scheduledCount++;
+          }
         }
       }
 
@@ -227,7 +346,22 @@ export class ReminderScheduler {
    */
   async cancelTodoReminder(todoId: string): Promise<void> {
     try {
-      // 스케줄된 리마인더 정보 조회
+      // 웹 플랫폼: 타이머 취소
+      if (this.isWebPlatform) {
+        const timerTypes = ['before_work', 'work_start', 'work_complete'];
+        timerTypes.forEach(type => {
+          const timerId = `${todoId}_${type}`;
+          const timer = this.webTimers.get(timerId);
+          if (timer) {
+            clearTimeout(timer);
+            this.webTimers.delete(timerId);
+          }
+        });
+        console.log(`Cancelled web timers for todo ${todoId}`);
+        return;
+      }
+
+      // 네이티브 플랫폼: 스케줄된 리마인더 정보 조회
       const { data: schedules } = await (supabase as any)
         .from('scheduled_reminders')
         .select('notification_id')
@@ -235,7 +369,7 @@ export class ReminderScheduler {
 
       if (schedules && schedules.length > 0) {
         const notificationIds = schedules.map((s: any) => s.notification_id);
-        
+
         await LocalNotifications.cancel({
           notifications: notificationIds.map((id: number) => ({ id }))
         });
@@ -258,7 +392,15 @@ export class ReminderScheduler {
    */
   async cancelAllReminders(): Promise<void> {
     try {
-      // ✅ 웹 환경에서는 아무 작업도 하지 않고 즉시 리턴
+      // 웹 플랫폼: 모든 타이머 취소
+      if (this.isWebPlatform) {
+        this.webTimers.forEach((timer) => clearTimeout(timer));
+        this.webTimers.clear();
+        console.log('All web timers cancelled');
+        return;
+      }
+
+      // 네이티브 플랫폼 체크
       if (!Capacitor.isNativePlatform()) {
         console.debug('cancelAllReminders skipped - not a native platform');
         return;

@@ -19,6 +19,9 @@ import { TodoCompletionsService } from '@/services/todo-completions.service';
 import { MonthNavigator } from './MonthNavigator';
 import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
 import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
+import { calculateTimeGaps, type TimeGap } from '@/lib/timeGapUtils';
+import QuickLogModal from '@/components/adhd/QuickLogModal';
+import { Plus } from 'lucide-react';
 
 interface TodoTimelineViewProps {
   userId: string;
@@ -90,6 +93,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 삭제 확인 상태
   const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
+
+  // 빈 시간 사후 기록 모달 상태
+  const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);
+  const [quickLogPrefillTime, setQuickLogPrefillTime] = useState<{ start: Date; end: Date } | null>(null);
+
+  // 빈 시간 로그 중복 방지용 ref
+  const loggedOngoingTasksRef = useRef<Set<string>>(new Set());
 
   // 연결된 실행 원동력을 위한 fuel 노트 상태
   const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
@@ -369,6 +379,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       setEditFormData(todoToFormData(item.originalTodo));
     }
   }, [todoToFormData]);
+
+  // 빈 시간 클릭 핸들러
+  const handleTimeGapClick = useCallback((gap: TimeGap) => {
+    setQuickLogPrefillTime({
+      start: gap.startTime,
+      end: gap.endTime
+    });
+    setIsQuickLogModalOpen(true);
+  }, []);
 
   // 편집 저장
   const handleEditSave = useCallback(async (formData: TodoFormData) => {
@@ -855,6 +874,26 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                   const [dayNumber, dayOfWeek] = dayKey.split('_');
                   const isTodayDate = isToday(date);
 
+                  // 빈 시간 계산 (timed 아이템만)
+                  const timedItems = items
+                    .filter(item => item.scheduleType === 'timed' && item.startTime)
+                    .map(item => ({
+                      id: item.id,
+                      title: item.title,
+                      startTime: item.startTime?.toISOString(),
+                      endTime: item.endTime?.toISOString(),
+                      type: 'todo'
+                    }));
+
+                  const timeGaps = calculateTimeGaps({
+                    timedItems,
+                    currentDate: date,
+                    isTodayDate,
+                    realTimeNow: new Date(),
+                    showPastGaps: true,
+                    loggedOngoingTasksRef
+                  }).filter(gap => gap.type === 'between-items'); // 할일 사이 간격만
+
                   return (
                     <div
                       key={dayKey}
@@ -873,6 +912,23 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                       {/* 할일 목록 (오른쪽) */}
                       <div className="flex-1 space-y-2">
+                        {/* 빈 시간 목록 (할일 사이 간격) */}
+                        {timeGaps.length > 0 && (
+                          <div className="space-y-1 mb-2">
+                            {timeGaps.map((gap, idx) => (
+                              <button
+                                key={`gap-${idx}`}
+                                onClick={() => handleTimeGapClick(gap)}
+                                className="w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed border-base-300 hover:border-primary hover:bg-primary/5 transition-colors text-base-content/50 hover:text-primary"
+                              >
+                                <Plus className="w-4 h-4" />
+                                <span className="text-xs">
+                                  {format(gap.startTime, 'HH:mm')} ~ {format(gap.endTime, 'HH:mm')} 이 시간에 뭐 했어요?
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         {items.map((item) => {
                           const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
                           const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
@@ -1174,6 +1230,17 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           <div className="modal-backdrop bg-black/50" onClick={() => setDeletingTodoId(null)} />
         </dialog>
       )}
+
+      {/* 빈 시간 사후 기록 모달 */}
+      <QuickLogModal
+        isOpen={isQuickLogModalOpen}
+        onClose={() => {
+          setIsQuickLogModalOpen(false);
+          setQuickLogPrefillTime(null);
+        }}
+        prefillStartTime={quickLogPrefillTime?.start}
+        prefillEndTime={quickLogPrefillTime?.end}
+      />
     </div>
   );
 }

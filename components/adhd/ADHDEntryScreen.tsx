@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, BookHeart, HelpCircle, Lightbulb, Sun, Moon, Settings, Crown } from 'lucide-react';
+import { MessageCircle, BookHeart, HelpCircle, Lightbulb, Sun, Moon, Settings, Crown, Zap } from 'lucide-react';
+import QuickLogModal from './QuickLogModal';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -32,6 +34,9 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
   const { showDescriptions, setShowDescriptions } = useSettingsStore();
   const { resolvedTheme, setTheme } = useTheme();
   const { hasActiveSubscription } = useSubscription();
+
+  // 사후 기록 모달 상태
+  const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);
 
   // 버튼 설명 데이터 (ADHD 어려움 → 해결책 구조)
   const buttonDescriptions = {
@@ -232,7 +237,32 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
           </div>
 
         </div>
+
+        {/* 사후 기록 섹션 - 구분선 */}
+        <div className="w-full border-t border-base-300 my-6" />
+
+        {/* 앱 없이 뭔가 했어요? 섹션 */}
+        <div className="w-full">
+          <p className="text-center text-base-content/60 text-sm mb-3">
+            앱 없이 뭔가 했어요?
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsQuickLogModalOpen(true)}
+            className="btn btn-outline btn-lg w-full rounded-2xl h-14 flex items-center justify-center gap-2 border-dashed border-2"
+          >
+            <Zap className="w-5 h-5" />
+            <span className="font-medium">방금 한 일 기록하기</span>
+          </motion.button>
+        </div>
       </motion.div>
+
+      {/* 사후 기록 모달 */}
+      <QuickLogModal
+        isOpen={isQuickLogModalOpen}
+        onClose={() => setIsQuickLogModalOpen(false)}
+      />
     </div>
   );
 }
