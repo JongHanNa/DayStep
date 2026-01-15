@@ -981,7 +981,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 <Plus className="w-4 h-4" />
                                 <span className="text-xs">
                                   {gap.startTime <= currentTime && currentTime <= gap.endTime
-                                    ? `현재 ${format(currentTime, 'HH:mm')} 뭐하는 중이세요?`
+                                    ? (() => {
+                                        const diffMs = gap.endTime.getTime() - currentTime.getTime();
+                                        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                                        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                        const remaining = hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+                                        return `현재 ${format(currentTime, 'HH:mm')} 뭐하는 중이세요? (다음 일정까지 ${remaining})`;
+                                      })()
                                     : `${format(gap.startTime, 'HH:mm')} ~ ${format(gap.endTime, 'HH:mm')} 이 시간에 뭐 했어요?`}
                                 </span>
                               </button>

@@ -539,26 +539,12 @@ export class ReminderScheduler {
 
   /**
    * 리마인더 설정 조회
+   * user_settings 테이블이 없으면 기본 설정 사용
    */
   private async getReminderSettings(): Promise<ReminderSettings> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return this.getDefaultSettings();
-      }
-
-      const { data } = await (supabase as any)
-        .from('user_settings')
-        .select('reminder_settings')
-        .eq('user_id', user.id)
-        .single();
-
-      const settings = data?.reminder_settings || this.getDefaultSettings();
-      return settings;
-    } catch (error) {
-      console.error('Error getting reminder settings:', error);
-      return this.getDefaultSettings();
-    }
+    // user_settings 테이블이 없으므로 기본 설정 반환
+    // 추후 사용자 설정 기능 추가 시 user_preferences 테이블 활용
+    return this.getDefaultSettings();
   }
 
   /**
