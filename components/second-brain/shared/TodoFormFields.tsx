@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Star, StickyNote, CheckCircle2, Sparkles, Target, Palette, Repeat } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Star, StickyNote, CheckCircle2, Sparkles, Target, Palette, Repeat, Calendar, Clock, Heart, AlertTriangle, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import type { Note } from '@/types/second-brain';
 import type { RecurrencePattern } from '@/types';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
@@ -15,6 +16,15 @@ import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
 import { PersonSelector } from '@/components/cherished/PersonSelector';
+import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
+
+// 요약 행 및 상세 모달 컴포넌트
+import TodoSummaryRow from '@/components/todos/form/TodoSummaryRow';
+import DateDetailModal from '@/components/todos/form/DateDetailModal';
+import TimeDetailModal from '@/components/todos/form/TimeDetailModal';
+import RecurrenceDetailModal from '@/components/todos/form/RecurrenceDetailModal';
+import PersonDetailModal from '@/components/todos/form/PersonDetailModal';
+import RecurringInstanceNoticeDialog from '@/components/todos/form/RecurringInstanceNoticeDialog';
 
 /**
  * 할일 폼 필드 타입
@@ -79,6 +89,8 @@ interface TodoFormFieldsProps {
   todoId?: string;
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
+  // 반복 인스턴스 날짜 (반복 할일 편집 시)
+  occurrenceDate?: string;
 }
 
 /**
@@ -101,6 +113,7 @@ export default function TodoFormFields({
   todoId,
   userId,
   onNoteImmediateSave,
+  occurrenceDate,
 }: TodoFormFieldsProps) {
   // 타이핑 효과를 위한 플레이스홀더 텍스트
   const placeholderTexts = [
@@ -117,6 +130,22 @@ export default function TodoFormFields({
     delayBetweenTexts: 2000,
     loop: true
   });
+
+  // 소중한 사람 store
+  const { people } = useCherishedPeopleStore();
+
+  // 상세 모달 상태
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
+  const [showJoyfulModal, setShowJoyfulModal] = useState(false);
+  const [showShamefulModal, setShowShamefulModal] = useState(false);
+
+  // 반복 인스턴스 안내 다이얼로그 상태
+  const [showRecurrenceNotice, setShowRecurrenceNotice] = useState(false);
+
+  // 아이콘 브라우저 모달
+  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
 
   // 시간 문자열을 분 단위로 변환
   const timeToMinutes = useCallback((time: string): number => {
@@ -138,33 +167,6 @@ export default function TodoFormFields({
     return gap <= 23 * 60 + 59; // 1439분 이하
   }, [timeToMinutes]);
 
-  // 시작 시간 변경 핸들러 (간격 검증 포함)
-  const handleStartTimeChange = useCallback((newStartTime: string) => {
-    // 반복 인스턴스이고 종료 시간이 있는 경우 간격 검증
-    if (todo.isRecurrenceInstance && todo.endTime) {
-      if (!validateTimeGap(newStartTime, todo.endTime)) {
-        toast.error('시작~종료 시간 간격은 최대 23시간 59분입니다');
-        return; // 변경 취소
-      }
-    }
-    onChange({ ...todo, startTime: newStartTime });
-  }, [todo, onChange, validateTimeGap]);
-
-  // 종료 시간 변경 핸들러 (간격 검증 포함)
-  const handleEndTimeChange = useCallback((newEndTime: string) => {
-    // 반복 인스턴스이고 시작 시간이 있는 경우 간격 검증
-    if (todo.isRecurrenceInstance && todo.startTime) {
-      if (!validateTimeGap(todo.startTime, newEndTime)) {
-        toast.error('시작~종료 시간 간격은 최대 23시간 59분입니다');
-        return; // 변경 취소
-      }
-    }
-    onChange({ ...todo, endTime: newEndTime });
-  }, [todo, onChange, validateTimeGap]);
-
-  // 아이콘 브라우저 모달
-  const [iconBrowserOpen, setIconBrowserOpen] = useState(false);
-
   // 아이콘 변경
   const handleIconChange = (iconKey: UnifiedIconKey) => {
     onChange({ ...todo, icon: iconKey });
@@ -176,313 +178,216 @@ export default function TodoFormFields({
     onChange({ ...todo, color });
   };
 
+  // 메인 화면에 표시할 날짜 결정
+  const displayDate = useMemo(() => {
+    if (todo.isRecurrenceInstance && occurrenceDate) {
+      // 반복 인스턴스: 인스턴스 날짜 표시
+      return new Date(occurrenceDate);
+    }
+    // 일반 할일: 실제 예정 날짜
+    return todo.scheduledDate;
+  }, [todo.isRecurrenceInstance, occurrenceDate, todo.scheduledDate]);
+
+  // 날짜 레이블 생성
+  const getDateLabel = (date: Date | undefined): string => {
+    if (!date) return '날짜 선택';
+
+    const formattedDate = format(date, 'yyyy년 M월 d일 (EEE)', { locale: ko });
+    return formattedDate;
+  };
+
+  // 날짜 상대적 표시 (오늘, 내일, 어제)
+  const getDateSuffix = (date: Date | undefined): string | undefined => {
+    if (!date) return undefined;
+
+    if (isToday(date)) return '오늘';
+    if (isTomorrow(date)) return '내일';
+    if (isYesterday(date)) return '어제';
+    return undefined;
+  };
+
+  // 시간 레이블 생성
+  const getTimeLabel = (): string => {
+    const scheduleType = todo.scheduleType || 'anytime';
+
+    if (scheduleType === 'all_day') return '종일';
+    if (scheduleType === 'anytime') {
+      const duration = todo.anytimeDuration || 30;
+      if (duration >= 60) {
+        const hours = Math.floor(duration / 60);
+        const mins = duration % 60;
+        return mins > 0 ? `언제든지 · ${hours}시간 ${mins}분` : `언제든지 · ${hours}시간`;
+      }
+      return `언제든지 · ${duration}분`;
+    }
+    if (scheduleType === 'timed') {
+      const start = todo.startTime || '00:00';
+      if (todo.includeEndDate && todo.endTime) {
+        return `${start} ~ ${todo.endTime}`;
+      }
+      return start;
+    }
+    return '시간 선택';
+  };
+
+  // 시간 서픽스 (소요 시간)
+  const getTimeSuffix = (): string | undefined => {
+    if (todo.scheduleType === 'timed' && todo.startTime && todo.endTime && todo.includeEndDate) {
+      const startMins = timeToMinutes(todo.startTime);
+      let endMins = timeToMinutes(todo.endTime);
+      if (endMins < startMins) endMins += 24 * 60;
+      const diff = endMins - startMins;
+
+      if (diff >= 60) {
+        const hours = Math.floor(diff / 60);
+        const mins = diff % 60;
+        return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
+      }
+      return `${diff}분`;
+    }
+    return undefined;
+  };
+
+  // 반복 레이블 생성
+  const getRecurrenceLabel = (): string => {
+    const pattern = (todo.recurrencePattern as RecurrencePattern) || 'none';
+    if (pattern === 'none') return '반복 안함';
+
+    const interval = todo.recurrenceInterval || 1;
+
+    switch (pattern) {
+      case 'daily':
+        return interval === 1 ? '매일' : `${interval}일마다`;
+      case 'weekly':
+        if (todo.selectedDaysOfWeek && todo.selectedDaysOfWeek.length > 0) {
+          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+          const days = todo.selectedDaysOfWeek.map(d => dayNames[d]).join(', ');
+          return interval === 1 ? `매주 ${days}` : `${interval}주마다 ${days}`;
+        }
+        return interval === 1 ? '매주' : `${interval}주마다`;
+      case 'monthly':
+        return interval === 1 ? '매월' : `${interval}개월마다`;
+      default:
+        return '반복 안함';
+    }
+  };
+
+  // 사람 수 레이블
+  const getPeopleCountLabel = (ids: string[] | undefined): string => {
+    const count = ids?.length || 0;
+    if (count === 0) return '선택 안함';
+    return `${count}명`;
+  };
+
+  // 날짜 행 클릭 핸들러
+  const handleDateRowClick = () => {
+    if (todo.isRecurrenceInstance) {
+      // 반복 인스턴스면 안내 다이얼로그 먼저 표시
+      setShowRecurrenceNotice(true);
+    } else {
+      // 일반 할일이면 바로 날짜 선택기 열기
+      setShowDateModal(true);
+    }
+  };
+
+  // 반복 안내 다이얼로그 확인 핸들러
+  const handleRecurrenceNoticeConfirm = () => {
+    setShowRecurrenceNotice(false);
+    setShowDateModal(true);
+  };
+
+  // 날짜 변경 핸들러
+  const handleDateChange = (date: Date) => {
+    onChange({ ...todo, scheduledDate: date });
+  };
+
+  // 일정 유형 없을 때 처리
+  const scheduleType = todo.scheduleType || 'none';
+  const hasSchedule = scheduleType !== 'none';
+
   return (
     <>
       {/* 제목 섹션 */}
       <div className="my-2">
-        <label className="text-sm font-medium block mb-2">제목</label>
         <input
           type="text"
           value={todo.title}
           onChange={(e) => onChange({ ...todo, title: e.target.value })}
           placeholder={typingPlaceholder}
-          className="input input-bordered w-full"
+          className="input input-bordered w-full text-lg font-semibold"
           required
         />
       </div>
 
-      {/* 아이콘 선택기 - 임시 숨김
-      <div className="my-2">
-        <label className="text-sm font-medium block mb-2">아이콘</label>
-        <div className="p-3 rounded-lg bg-base-100">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIconBrowserOpen(true)}
-                className="flex items-center justify-center w-12 h-12 rounded-lg hover:opacity-80 transition-opacity cursor-pointer group bg-[#f3f4f6]"
-                title="아이콘 변경하기"
-              >
-                {(() => {
-                  const IconComponent = getUnifiedIcon((todo.icon || 'CheckSquare') as UnifiedIconKey);
-                  return <IconComponent
-                    className="group-hover:scale-110 transition-transform"
-                    style={{ color: todo.color || '#DBAC6C' }}
-                    size={24}
-                  />;
-                })()}
-              </button>
-              <div
-                className="absolute -bottom-1 left-0 w-5 h-5 rounded-full flex items-center justify-center shadow-md"
-                style={{
-                  backgroundColor: todo.color || '#DBAC6C',
-                  border: '2px solid white'
-                }}
-              >
-                <Palette className="w-3 h-3 text-white" strokeWidth={2.5} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      */}
-
-      {/* 반복 할일 원본 날짜 (일정 섹션 상단, 반복 할일 편집 시에만) */}
-      {todo.originalStartDate && todo.recurrencePattern && todo.recurrencePattern !== 'none' && (
-        <div className="my-4">
-          <div className="p-3 rounded-lg bg-info/10 border border-info/20">
-            <span className="text-sm text-info flex items-center gap-2">
-              <Repeat className="h-4 w-4" />
-              원본 일정 날짜: {format(todo.originalStartDate, 'yyyy년 M월 d일')}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* 일정 유형 */}
+      {/* 요약 뷰 섹션 */}
       {showScheduledDate && (
-        <div className="my-4">
-          <label className="text-sm font-medium block mb-2">일정 유형</label>
-
-          <select
-            value={todo.scheduleType || 'anytime'}
-            onChange={(e) => {
-              const scheduleType = e.target.value as 'anytime' | 'timed' | 'all_day' | 'none';
-              const updates: any = { scheduleType };
-
-              // 자동 세팅
-              if (scheduleType === 'anytime' || scheduleType === 'all_day') {
-                updates.scheduledDate = new Date(); // 오늘
-                updates.includeEndDate = false;
-                updates.includeTime = false;
-              } else if (scheduleType === 'timed') {
-                updates.scheduledDate = new Date(); // 오늘
-                updates.includeTime = true;
-                updates.includeEndDate = true; // 종료일 토글 활성화
-                updates.endDate = new Date(); // 오늘 날짜로 기본 설정
-                const now = new Date();
-                updates.startTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                // 종료 시간은 시작 시간 + 30분
-                const endMinutes = now.getMinutes() + 30;
-                const endHour = endMinutes >= 60 ? (now.getHours() + 1) % 24 : now.getHours();
-                const endMin = endMinutes % 60;
-                updates.endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
-              } else if (scheduleType === 'none') {
-                // 선택 안함: 날짜/시간 정보 초기화
-                updates.scheduledDate = undefined;
-                updates.includeEndDate = false;
-                updates.includeTime = false;
-                updates.startTime = undefined;
-                updates.endDate = undefined;
-                updates.endTime = undefined;
-              }
-
-              onChange({ ...todo, ...updates });
-            }}
-            className="select select-bordered w-full bg-base-100"
-          >
-            <option value="none">📝 선택 안함 · 일정 없음</option>
-            <option value="anytime">⏰ 언제든지 · 특정 날짜에 타임라인에서 언제든지 바로 시작하거나 추후 계획 페이지에서 시간 지정해서 사용 가능(이때 시간 지정하면 일정유형이 시간지정으로 변경됨)</option>
-            <option value="timed">🕐 시간지정 · 특정 시간에 시작</option>
-            <option value="all_day">📅 종일 · 하루 종일</option>
-          </select>
-        </div>
-      )}
-
-      {/* 날짜 */}
-      {showScheduledDate && todo.scheduleType !== 'none' && (
-        <>
-          {/* 시작 날짜 */}
-          <div className="my-4">
-            <label className="text-sm font-medium block mb-2">
-              날짜
-              {todo.isRecurrenceInstance && (
-                <span className="text-xs text-info font-normal ml-2">(반복 인스턴스)</span>
-              )}
-            </label>
-
-            <input
-              type="date"
-              value={todo.scheduledDate ? format(todo.scheduledDate, 'yyyy-MM-dd') : ''}
-              onChange={(e) =>
-                onChange({
-                  ...todo,
-                  scheduledDate: e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined,
-                })
-              }
-              disabled={todo.isRecurrenceInstance}
-              className={`input input-bordered w-full bg-base-100 ${todo.isRecurrenceInstance ? 'opacity-60 cursor-not-allowed' : ''}`}
-            />
-          </div>
-
-          {/* 시작 시간 (시간 포함 ON일 때만) */}
-          {todo.includeTime && (
-            <div className="my-4">
-              <label className="text-sm font-medium block mb-2">시작 시간</label>
-
-              <input
-                type="time"
-                value={todo.startTime || '09:00'}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-                className="input input-bordered w-full bg-base-100"
-              />
-            </div>
-          )}
-
-          {/* 종료일 (종료일 토글 ON일 때만) */}
-          {todo.includeEndDate && (
-            <>
-              <div className="my-4">
-                <label className="text-sm font-medium block mb-2">
-                  종료 날짜
-                  {todo.isRecurrenceInstance && (
-                    <span className="text-xs text-info font-normal ml-2">(반복 인스턴스)</span>
-                  )}
-                </label>
-
-                <input
-                  type="date"
-                  value={todo.endDate ? format(todo.endDate, 'yyyy-MM-dd') : ''}
-                  onChange={(e) =>
-                    onChange({
-                      ...todo,
-                      endDate: e.target.value ? new Date(e.target.value) : undefined,
-                    })
-                  }
-                  disabled={todo.isRecurrenceInstance}
-                  className={`input input-bordered w-full bg-base-100 ${todo.isRecurrenceInstance ? 'opacity-60 cursor-not-allowed' : ''}`}
-                />
-              </div>
-
-              {/* 종료 시간 (종료일 ON + 시간 포함 ON일 때만) */}
-              {todo.includeTime && (
-                <div className="my-4">
-                  <label className="text-sm font-medium block mb-2">종료 시간</label>
-
-                  <input
-                    type="time"
-                    value={todo.endTime || '18:00'}
-                    onChange={(e) => handleEndTimeChange(e.target.value)}
-                    className="input input-bordered w-full bg-base-100"
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          {/* 종료일 토글 - 언제든지/종일일 때 숨김 */}
-          {todo.scheduleType && todo.scheduleType !== 'anytime' && todo.scheduleType !== 'all_day' && (
-            <div className="my-4">
-              <div className="p-3 rounded-lg bg-base-100 border border-base-300">
-                <label className="cursor-pointer flex items-center justify-between">
-                  <span className="label-text">종료일</span>
-                  <input
-                    type="checkbox"
-                    checked={todo.includeEndDate || false}
-                    onChange={(e) => onChange({ ...todo, includeEndDate: e.target.checked })}
-                    className="toggle toggle-primary"
-                  />
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* 시간 포함 토글 - 숨김 처리 (scheduleType으로 자동 결정됨) */}
-
-          {/* 예상 소요 시간 (언제든지일 때만) */}
-          {(!todo.scheduleType || todo.scheduleType === 'anytime') && (
-            <div className="my-4">
-              <label className="text-sm font-medium block mb-2">예상 소요 시간</label>
-
-              <div className="p-3 rounded-lg bg-base-100 border border-base-300">
-                <ScrollDurationPicker
-                  selectedHours={Math.floor((todo.anytimeDuration ?? 30) / 60)}
-                  selectedMinutes={(todo.anytimeDuration ?? 30) % 60}
-                  onDurationChange={(hours, minutes) => {
-                    onChange({ ...todo, anytimeDuration: hours * 60 + minutes });
-                  }}
-                  accentColor="var(--color-primary)"
-                  className="py-2"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* 반복 설정 */}
-          <RecurrenceSettings
-            showRecurrenceSettings={true}
-            recurrencePattern={(todo.recurrencePattern as RecurrencePattern) || 'none'}
-            recurrenceInterval={todo.recurrenceInterval || 1}
-            recurrenceEndDate={todo.recurrenceEndDate ? format(todo.recurrenceEndDate, 'yyyy-MM-dd') : ''}
-            recurrenceCount={todo.recurrenceCount}
-            recurrenceEndType={todo.recurrenceEndType || 'never'}
-            selectedDaysOfWeek={todo.selectedDaysOfWeek || []}
-            onRecurrencePatternChange={(pattern) => onChange({ ...todo, recurrencePattern: pattern })}
-            onRecurrenceIntervalChange={(interval) => onChange({ ...todo, recurrenceInterval: interval })}
-            onRecurrenceEndDateChange={(date) => onChange({ ...todo, recurrenceEndDate: date ? new Date(date) : undefined })}
-            onRecurrenceCountChange={(count) => onChange({ ...todo, recurrenceCount: count })}
-            onRecurrenceEndTypeChange={(type) => onChange({ ...todo, recurrenceEndType: type })}
-            onDayOfWeekToggle={(day) => {
-              const currentDays = todo.selectedDaysOfWeek || [];
-              if (currentDays.includes(day)) {
-                // 이미 선택된 요일이면 제거
-                onChange({ ...todo, selectedDaysOfWeek: currentDays.filter(d => d !== day) });
-              } else {
-                // 선택되지 않은 요일이면 추가하고 정렬
-                onChange({ ...todo, selectedDaysOfWeek: [...currentDays, day].sort() });
-              }
-            }}
+        <div className="my-4 space-y-1">
+          {/* 날짜 행 */}
+          <TodoSummaryRow
+            icon={<Calendar className="w-5 h-5" />}
+            label={getDateLabel(displayDate)}
+            suffix={getDateSuffix(displayDate)}
+            onClick={handleDateRowClick}
+            iconClassName="text-primary"
           />
-        </>
-      )}
 
-      {/* 오늘의 하이라이트 - 임시 숨김 */}
-      {/* {showHighlight && (
-        <div className="my-4">
-          <label className="cursor-pointer flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={todo.isHighlight}
-              onChange={(e) => onChange({ ...todo, isHighlight: e.target.checked })}
-              className="checkbox bg-base-100"
+          {/* 시간 행 - 날짜가 있을 때만 */}
+          {hasSchedule && (
+            <TodoSummaryRow
+              icon={<Clock className="w-5 h-5" />}
+              label={getTimeLabel()}
+              suffix={getTimeSuffix()}
+              onClick={() => setShowTimeModal(true)}
+              iconClassName="text-orange-500"
             />
-            <span className="label-text flex items-center gap-1">
-              <Star className="w-4 h-4" />
-              오늘의 하이라이트
-            </span>
-          </label>
+          )}
+
+          {/* 반복 행 - 날짜가 있을 때만 */}
+          {hasSchedule && (
+            <TodoSummaryRow
+              icon={<Repeat className="w-5 h-5" />}
+              label={getRecurrenceLabel()}
+              onClick={() => setShowRecurrenceModal(true)}
+              iconClassName="text-blue-500"
+            />
+          )}
         </div>
-      )} */}
+      )}
 
       {/* 완료 여부 */}
       {showCompleted && (
         <div className="my-4">
-          <label className="cursor-pointer flex items-center gap-2">
-            <span className="label-text flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4" />
-              완료됨
-            </span>
+          <label className="cursor-pointer flex items-center gap-3 p-3 rounded-lg bg-base-200 hover:bg-base-300 transition-colors">
+            <CheckCircle2 className="w-5 h-5 text-green-500" />
+            <span className="flex-1 font-medium">완료됨</span>
             <input
               type="checkbox"
               checked={todo.completed}
               onChange={(e) => onChange({ ...todo, completed: e.target.checked })}
-              className="checkbox bg-base-100"
+              className="checkbox checkbox-primary"
             />
           </label>
         </div>
       )}
 
       {/* 소중한 사람 연결 섹션 */}
-      <div className="my-4 space-y-3">
-        <PersonSelector
-          selectedPeopleIds={todo.joyfulPeopleIds || []}
-          onSelectionChange={(ids) => onChange({ ...todo, joyfulPeopleIds: ids })}
-          linkType="joyful"
+      <div className="my-4 space-y-1">
+        {/* 기쁜 분들 */}
+        <TodoSummaryRow
+          icon={<Heart className="w-5 h-5" />}
+          label="기쁜 분들"
+          suffix={getPeopleCountLabel(todo.joyfulPeopleIds)}
+          onClick={() => setShowJoyfulModal(true)}
+          iconClassName="text-pink-500"
         />
-        <PersonSelector
-          selectedPeopleIds={todo.shamefulPeopleIds || []}
-          onSelectionChange={(ids) => onChange({ ...todo, shamefulPeopleIds: ids })}
-          linkType="shameful"
+
+        {/* 부끄러운 행동 */}
+        <TodoSummaryRow
+          icon={<AlertTriangle className="w-5 h-5" />}
+          label="부끄러운 행동"
+          suffix={getPeopleCountLabel(todo.shamefulPeopleIds)}
+          onClick={() => setShowShamefulModal(true)}
+          iconClassName="text-amber-500"
         />
       </div>
 
@@ -500,6 +405,118 @@ export default function TodoFormFields({
           onImmediateSave={onNoteImmediateSave}
         />
       )}
+
+      {/* 상세 모달들 */}
+
+      {/* 날짜 상세 모달 */}
+      <DateDetailModal
+        isOpen={showDateModal}
+        onClose={() => setShowDateModal(false)}
+        date={displayDate}
+        onDateChange={handleDateChange}
+      />
+
+      {/* 시간 상세 모달 */}
+      <TimeDetailModal
+        isOpen={showTimeModal}
+        onClose={() => setShowTimeModal(false)}
+        scheduleType={scheduleType as 'none' | 'anytime' | 'timed' | 'all_day'}
+        startTime={todo.startTime}
+        endTime={todo.endTime}
+        includeEndDate={todo.includeEndDate}
+        anytimeDuration={todo.anytimeDuration}
+        onScheduleTypeChange={(type) => {
+          const updates: Partial<TodoFormData> = { scheduleType: type };
+
+          // 자동 세팅
+          if (type === 'anytime' || type === 'all_day') {
+            updates.scheduledDate = todo.scheduledDate || new Date();
+            updates.includeEndDate = false;
+            updates.includeTime = false;
+          } else if (type === 'timed') {
+            updates.scheduledDate = todo.scheduledDate || new Date();
+            updates.includeTime = true;
+            updates.includeEndDate = true;
+            updates.endDate = todo.scheduledDate || new Date();
+            const now = new Date();
+            updates.startTime = todo.startTime || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const endMinutes = now.getMinutes() + 30;
+            const endHour = endMinutes >= 60 ? (now.getHours() + 1) % 24 : now.getHours();
+            const endMin = endMinutes % 60;
+            updates.endTime = todo.endTime || `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+          } else if (type === 'none') {
+            updates.scheduledDate = undefined;
+            updates.includeEndDate = false;
+            updates.includeTime = false;
+            updates.startTime = undefined;
+            updates.endDate = undefined;
+            updates.endTime = undefined;
+          }
+
+          onChange({ ...todo, ...updates });
+        }}
+        onStartTimeChange={(time) => onChange({ ...todo, startTime: time })}
+        onEndTimeChange={(time) => onChange({ ...todo, endTime: time })}
+        onIncludeEndDateChange={(include) => onChange({ ...todo, includeEndDate: include })}
+        onAnytimeDurationChange={(duration) => onChange({ ...todo, anytimeDuration: duration })}
+      />
+
+      {/* 반복 상세 모달 */}
+      <RecurrenceDetailModal
+        isOpen={showRecurrenceModal}
+        onClose={() => setShowRecurrenceModal(false)}
+        recurrencePattern={(todo.recurrencePattern as RecurrencePattern) || 'none'}
+        recurrenceInterval={todo.recurrenceInterval || 1}
+        recurrenceEndDate={todo.recurrenceEndDate ? format(todo.recurrenceEndDate, 'yyyy-MM-dd') : ''}
+        recurrenceCount={todo.recurrenceCount}
+        recurrenceEndType={todo.recurrenceEndType || 'never'}
+        selectedDaysOfWeek={todo.selectedDaysOfWeek || []}
+        onRecurrencePatternChange={(pattern) => onChange({ ...todo, recurrencePattern: pattern })}
+        onRecurrenceIntervalChange={(interval) => onChange({ ...todo, recurrenceInterval: interval })}
+        onRecurrenceEndDateChange={(date) => onChange({ ...todo, recurrenceEndDate: date ? new Date(date) : undefined })}
+        onRecurrenceCountChange={(count) => onChange({ ...todo, recurrenceCount: count })}
+        onRecurrenceEndTypeChange={(type) => onChange({ ...todo, recurrenceEndType: type })}
+        onDayOfWeekToggle={(day) => {
+          const currentDays = todo.selectedDaysOfWeek || [];
+          if (currentDays.includes(day)) {
+            onChange({ ...todo, selectedDaysOfWeek: currentDays.filter(d => d !== day) });
+          } else {
+            onChange({ ...todo, selectedDaysOfWeek: [...currentDays, day].sort() });
+          }
+        }}
+        originalStartDate={todo.originalStartDate}
+        onOriginalStartDateChange={(date) => onChange({ ...todo, originalStartDate: date })}
+        isRecurrenceInstance={todo.isRecurrenceInstance}
+      />
+
+      {/* 기쁜 분들 상세 모달 */}
+      <PersonDetailModal
+        isOpen={showJoyfulModal}
+        onClose={() => setShowJoyfulModal(false)}
+        title="기쁜 분들"
+        description="이 일로 기뻐하실 분들을 선택하세요"
+        linkType="joyful"
+        selectedPeopleIds={todo.joyfulPeopleIds || []}
+        onSelectionChange={(ids) => onChange({ ...todo, joyfulPeopleIds: ids })}
+      />
+
+      {/* 부끄러운 행동 상세 모달 */}
+      <PersonDetailModal
+        isOpen={showShamefulModal}
+        onClose={() => setShowShamefulModal(false)}
+        title="부끄러운 행동"
+        description="이 분들 앞에선 부끄러운 행동"
+        linkType="shameful"
+        selectedPeopleIds={todo.shamefulPeopleIds || []}
+        onSelectionChange={(ids) => onChange({ ...todo, shamefulPeopleIds: ids })}
+      />
+
+      {/* 반복 인스턴스 안내 다이얼로그 */}
+      <RecurringInstanceNoticeDialog
+        isOpen={showRecurrenceNotice}
+        onClose={() => setShowRecurrenceNotice(false)}
+        onConfirm={handleRecurrenceNoticeConfirm}
+      />
 
       {/* 아이콘 브라우저 모달 */}
       <EnhancedIconBrowserModal

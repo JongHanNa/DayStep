@@ -43,6 +43,9 @@ export interface TodoFormContentProps {
   todoId?: string;
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
+
+  /** 반복 인스턴스 날짜 (반복 할일 편집 시) */
+  occurrenceDate?: string;
 }
 
 export default function TodoFormContent({
@@ -60,6 +63,7 @@ export default function TodoFormContent({
   todoId,
   userId,
   onNoteImmediateSave,
+  occurrenceDate,
 }: TodoFormContentProps) {
   return (
     <TodoFormFields
@@ -77,6 +81,7 @@ export default function TodoFormContent({
       todoId={todoId}
       userId={userId}
       onNoteImmediateSave={onNoteImmediateSave}
+      occurrenceDate={occurrenceDate}
     />
   );
 }

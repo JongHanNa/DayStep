@@ -320,6 +320,7 @@ export default function TodoEditModal({
             showScheduledDate={showScheduledDate}
             showHighlight={showHighlight}
             showCompleted={showCompleted}
+            occurrenceDate={occurrenceDate}
           />
 
           {/* 연결된 실행 원동력 섹션 */}
