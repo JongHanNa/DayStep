@@ -253,8 +253,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       if (!userId || todos.length === 0) return;
 
       try {
-        // 모든 todo ID 수집 (반복 할일 포함)
-        const allTodoIds = todos.map(todo => todo.id);
+        // UUID 형식 검증 함수
+        const isValidUUID = (id: string) => {
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          return uuidRegex.test(id);
+        };
+
+        // 모든 todo ID 수집 (반복 할일 포함, 임시 ID 제외)
+        const allTodoIds = todos
+          .map(todo => todo.id)
+          .filter(id => isValidUUID(id)); // 유효한 UUID만 필터링
 
         // 각 todo의 연결된 fuel 조회
         const map: Record<string, string[]> = {};
@@ -873,26 +881,62 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                   const { date, items } = dayGroups[dayKey];
                   const [dayNumber, dayOfWeek] = dayKey.split('_');
                   const isTodayDate = isToday(date);
+                  const now = new Date();
+                  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                  const isPastOrToday = itemDate.getTime() <= today.getTime();
 
-                  // 빈 시간 계산 (timed 아이템만)
-                  const timedItems = items
-                    .filter(item => item.scheduleType === 'timed' && item.startTime)
-                    .map(item => ({
-                      id: item.id,
-                      title: item.title,
-                      startTime: item.startTime?.toISOString(),
-                      endTime: item.endTime?.toISOString(),
-                      type: 'todo'
-                    }));
+                  // 빈 시간 계산 (timed 아이템만, 오늘 이전/오늘만)
+                  let timeGaps: TimeGap[] = [];
+                  if (isPastOrToday) {
+                    const timedItems = items
+                      .filter(item => item.scheduleType === 'timed' && item.startTime)
+                      .map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        startTime: item.startTime?.toISOString(),
+                        endTime: item.endTime?.toISOString(),
+                        type: 'todo'
+                      }));
 
-                  const timeGaps = calculateTimeGaps({
-                    timedItems,
-                    currentDate: date,
-                    isTodayDate,
-                    realTimeNow: new Date(),
-                    showPastGaps: true,
-                    loggedOngoingTasksRef
-                  }).filter(gap => gap.type === 'between-items'); // 할일 사이 간격만
+                    timeGaps = calculateTimeGaps({
+                      timedItems,
+                      currentDate: date,
+                      isTodayDate,
+                      realTimeNow: new Date(),
+                      showPastGaps: true,
+                      loggedOngoingTasksRef
+                    }).filter(gap => gap.type === 'between-items'); // 할일 사이 간격만
+                  }
+
+                  // 할일과 빈 시간을 시간순으로 병합
+                  type RenderItem =
+                    | { type: 'todo'; data: TimelineItem }
+                    | { type: 'gap'; data: TimeGap; index: number };
+
+                  const renderItems: RenderItem[] = [];
+
+                  // 할일 추가
+                  items.forEach(item => {
+                    renderItems.push({ type: 'todo', data: item });
+                  });
+
+                  // 빈 시간 추가
+                  timeGaps.forEach((gap, idx) => {
+                    renderItems.push({ type: 'gap', data: gap, index: idx });
+                  });
+
+                  // 시간순 정렬 (startTime 기준)
+                  renderItems.sort((a, b) => {
+                    const getStartTime = (item: RenderItem): Date => {
+                      if (item.type === 'todo') {
+                        return item.data.startTime || item.data.createdAt;
+                      } else {
+                        return item.data.startTime;
+                      }
+                    };
+                    return getStartTime(a).getTime() - getStartTime(b).getTime();
+                  });
 
                   return (
                     <div
@@ -912,12 +956,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                       {/* 할일 목록 (오른쪽) */}
                       <div className="flex-1 space-y-2">
-                        {/* 빈 시간 목록 (할일 사이 간격) */}
-                        {timeGaps.length > 0 && (
-                          <div className="space-y-1 mb-2">
-                            {timeGaps.map((gap, idx) => (
+                        {renderItems.map((renderItem) => {
+                          // 빈 시간 렌더링
+                          if (renderItem.type === 'gap') {
+                            const gap = renderItem.data;
+                            return (
                               <button
-                                key={`gap-${idx}`}
+                                key={`gap-${renderItem.index}`}
                                 onClick={() => handleTimeGapClick(gap)}
                                 className="w-full flex items-center gap-2 p-2 rounded-lg border-2 border-dashed border-base-300 hover:border-primary hover:bg-primary/5 transition-colors text-base-content/50 hover:text-primary"
                               >
@@ -926,10 +971,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   {format(gap.startTime, 'HH:mm')} ~ {format(gap.endTime, 'HH:mm')} 이 시간에 뭐 했어요?
                                 </span>
                               </button>
-                            ))}
-                          </div>
-                        )}
-                        {items.map((item) => {
+                            );
+                          }
+
+                          // 할일 렌더링
+                          const item = renderItem.data;
                           const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
                           const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
 
