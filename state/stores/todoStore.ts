@@ -431,7 +431,9 @@ export const useTodoStore = createStore<TodoStoreState>(
           optimisticManager.completeOperation(tempId);
 
           set((state: TodoStoreState) => {
-            state.todos = state.todos.filter((t: Todo) => t.id !== tempId);
+            // tempId와 newTodo.id 모두 제거 (중복 방지)
+            // fetchAllTodos가 먼저 완료되어 newTodo가 이미 추가된 경우를 대비
+            state.todos = state.todos.filter((t: Todo) => t.id !== tempId && t.id !== newTodo.id);
             state.todos.push(newTodo);
 
             // 반복 일정 그룹 관리 (기본 createTodo에서는 단일 아이템)

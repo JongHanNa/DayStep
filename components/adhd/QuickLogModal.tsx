@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, Zap, Check } from 'lucide-react';
+import { X, Clock, Zap, Check, CalendarPlus } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { CreateTodoInput } from '@/types';
 import { format, subMinutes } from 'date-fns';
@@ -17,15 +17,16 @@ interface QuickLogModalProps {
   prefillEndTime?: Date;
 }
 
-type ModalMode = 'select' | 'detailed' | 'quick';
+type ModalMode = 'select' | 'detailed' | 'quick' | 'new';
 type QuickDuration = 15 | 30 | 60;
 
 /**
- * 사후 기록 모달
+ * 빈 시간 기록/등록 모달
  *
- * 앱을 거치지 않고 완료한 일을 기록하는 모달
- * - 상세 입력: 제목, 시작 시간, 소요 시간 직접 입력
+ * 타임라인의 빈 시간을 클릭했을 때 열리는 모달
+ * - 상세 입력: 이미 완료한 일 기록 (제목, 시작 시간, 소요 시간)
  * - 간단 기록: "앱 없이 무언가 함" + 시간 선택 (15분/30분/1시간)
+ * - 새 일정: 앞으로 할 일 등록 (미완료 상태)
  */
 export default function QuickLogModal({
   isOpen,
@@ -126,6 +127,40 @@ export default function QuickLogModal({
     }
   };
 
+  // 새 일정/할일 등록으로 저장 (미완료 상태)
+  const handleNewSave = async () => {
+    if (!title.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const [hours, minutes] = startTime.split(':').map(Number);
+      const startDate = new Date();
+      startDate.setHours(hours, minutes, 0, 0);
+      const endDate = calculateEndTime(startTime, duration);
+
+      const todoInput: CreateTodoInput = {
+        title: title.trim(),
+        schedule_type: 'timed',
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+        completed: false, // 미완료 상태로 등록
+      };
+
+      await createTodo(todoInput);
+
+      // 성공 피드백
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        handleClose();
+      }, 1000);
+    } catch (error) {
+      console.error('새 일정 등록 실패:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // 모달 닫기 (상태 초기화)
   const handleClose = () => {
     setMode(prefillStartTime ? 'detailed' : 'select');
@@ -151,9 +186,10 @@ export default function QuickLogModal({
           {/* 헤더 */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold">
-              {mode === 'select' && '앱 없이 뭔가 했어요?'}
+              {mode === 'select' && '이 시간에 무엇을 하셨나요?'}
               {mode === 'detailed' && '방금 한 일 기록하기'}
               {mode === 'quick' && '간단하게 기록하기'}
+              {mode === 'new' && '새 일정 등록하기'}
             </h3>
             <button
               onClick={handleClose}
@@ -196,6 +232,16 @@ export default function QuickLogModal({
               >
                 <Zap className="w-5 h-5" />
                 <span className="font-semibold">간단하게 &apos;무언가 함&apos; 기록</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setMode('new')}
+                className="btn btn-lg w-full rounded-xl h-16 flex items-center justify-center gap-3 bg-accent text-accent-content"
+              >
+                <CalendarPlus className="w-5 h-5" />
+                <span className="font-semibold">새 일정/할일 등록하기</span>
               </motion.button>
             </div>
           )}
@@ -320,6 +366,85 @@ export default function QuickLogModal({
               >
                 뒤로
               </button>
+            </div>
+          )}
+
+          {/* 새 일정 등록 화면 */}
+          {mode === 'new' && !showSuccess && (
+            <div className="flex flex-col gap-4">
+              {/* 제목 입력 */}
+              <div>
+                <label className="label">
+                  <span className="label-text font-medium">무엇을 할 예정인가요?</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="예: 회의, 운동, 공부..."
+                  className="input input-bordered w-full"
+                  autoFocus
+                />
+              </div>
+
+              {/* 시작 시간 */}
+              <div>
+                <label className="label">
+                  <span className="label-text font-medium">시작 시간</span>
+                </label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="input input-bordered w-full"
+                />
+              </div>
+
+              {/* 소요 시간 */}
+              <div>
+                <label className="label">
+                  <span className="label-text font-medium">예상 소요 시간</span>
+                </label>
+                <div className="flex gap-2">
+                  {[15, 30, 45, 60, 90, 120].map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => setDuration(mins)}
+                      className={`btn btn-sm flex-1 ${
+                        duration === mins ? 'btn-accent' : 'btn-ghost bg-base-200'
+                      }`}
+                    >
+                      {mins < 60 ? `${mins}분` : `${mins / 60}시간`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 예상 시간 표시 */}
+              <div className="text-sm text-base-content/60 text-center">
+                {startTime} ~ {format(calculateEndTime(startTime, duration), 'HH:mm')} ({duration}분)
+              </div>
+
+              {/* 저장 버튼 */}
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => setMode('select')}
+                  className="btn btn-ghost flex-1"
+                >
+                  뒤로
+                </button>
+                <button
+                  onClick={handleNewSave}
+                  disabled={!title.trim() || isLoading}
+                  className="btn btn-accent flex-1"
+                >
+                  {isLoading ? (
+                    <span className="loading loading-spinner loading-sm" />
+                  ) : (
+                    '등록하기'
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </motion.div>
