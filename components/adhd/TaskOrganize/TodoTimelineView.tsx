@@ -107,6 +107,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // Todo별 연결된 fuel note_ids 매핑
   const [todoFuelMap, setTodoFuelMap] = useState<Record<string, string[]>>({});
 
+  // 현재 시간 (실시간 동기화)
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   // 월별 섹션 참조 (스크롤 이동용)
   const monthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const todaySectionRef = useRef<HTMLDivElement>(null);
@@ -131,6 +134,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
     return { rangeStart, rangeEnd };
   }, [pastMonthsLoaded, futureMonthsLoaded]);
+
+  // 현재 시간 실시간 동기화 (1분마다 갱신)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // 1분
+
+    return () => clearInterval(timer);
+  }, []);
 
   // 데이터 로드
   useEffect(() => {
@@ -968,7 +980,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                               >
                                 <Plus className="w-4 h-4" />
                                 <span className="text-xs">
-                                  {format(gap.startTime, 'HH:mm')} ~ {format(gap.endTime, 'HH:mm')} 이 시간에 뭐 했어요?
+                                  {gap.startTime <= currentTime && currentTime <= gap.endTime
+                                    ? `현재 ${format(currentTime, 'HH:mm')} 뭐하는 중이세요?`
+                                    : `${format(gap.startTime, 'HH:mm')} ~ ${format(gap.endTime, 'HH:mm')} 이 시간에 뭐 했어요?`}
                                 </span>
                               </button>
                             );
