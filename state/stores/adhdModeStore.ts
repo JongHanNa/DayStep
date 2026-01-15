@@ -101,6 +101,7 @@ interface CachedPatterns {
 interface ADHDModeState {
   // 모드 상태
   currentMode: ADHDMode;
+  previousMode: ADHDMode | null;  // 뒤로가기용 이전 모드 저장
 
   // 실행 모드 상태
   executionMode: ExecutionModeState;
@@ -295,6 +296,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
       (set, get) => ({
         // 초기 상태
         currentMode: null,
+        previousMode: null,
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
@@ -307,14 +309,16 @@ export const useADHDModeStore = create<ADHDModeState>()(
         // === 모드 전환 Actions ===
         enterEntryMode: () => {
           console.log('🎯 ADHD: 진입 화면 모드');
-          set({ currentMode: 'entry' });
+          set({ currentMode: 'entry', previousMode: null });
         },
 
         enterExecuteMode: async (userId: string) => {
           console.log('🎯 ADHD: 실행 모드 진입');
+          const currentMode = get().currentMode;  // 이전 모드 저장
 
           set({
             currentMode: 'execute',
+            previousMode: currentMode,  // 뒤로가기용 이전 모드 저장
             currentUserId: userId,
             executionMode: DEFAULT_EXECUTION_MODE,
           });

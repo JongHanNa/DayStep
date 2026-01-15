@@ -31,7 +31,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, exitMode } = useADHDModeStore();
+  const { currentMode, previousMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -108,7 +108,17 @@ export default function HomePage() {
   };
 
   const handleExitExecutionMode = () => {
-    enterEntryMode(); // 진입 화면으로 돌아가기
+    // 이전 모드가 fuel이면 FuelMode로 복귀, 아니면 진입 화면으로
+    if (previousMode === 'fuel' && user?.id) {
+      enterFuelMode(user.id);
+    } else {
+      enterEntryMode();
+    }
+  };
+
+  // FuelMode에서 뒤로가기 - 항상 홈으로
+  const handleExitFuelMode = () => {
+    enterEntryMode();
   };
 
   // 실행 모드
@@ -133,7 +143,7 @@ export default function HomePage() {
 
   // 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력)
   if (currentMode === 'fuel') {
-    return <FuelMode onExit={handleExitExecutionMode} />;
+    return <FuelMode onExit={handleExitFuelMode} />;
   }
 
   // 진입 화면 (기본)

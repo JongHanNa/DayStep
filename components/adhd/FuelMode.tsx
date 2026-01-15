@@ -881,11 +881,11 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   }, [hasActiveSubscription]);
 
   // "실행과 집중으로 가기" 핸들러
+  // endFuelMode() 제거 - ExecutionMode에서 뒤로가기 시 FuelMode로 복귀할 수 있도록
   const handleGoToExecute = useCallback(() => {
     if (!userId) return;
-    endFuelMode();
     enterExecuteMode(userId);
-  }, [userId, endFuelMode, enterExecuteMode]);
+  }, [userId, enterExecuteMode]);
 
   // "새로 수집하기" 핸들러 (기본 10분 타이머로 바로 시작) - 레거시
   const handleStartNewCollection = useCallback(() => {
