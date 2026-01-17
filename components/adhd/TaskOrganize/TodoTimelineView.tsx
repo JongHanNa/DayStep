@@ -1399,7 +1399,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <p className="text-xs text-base-content/60 mb-2">
-                                      어떻게 처리할까요?
+                                      어떻게 기록할까요?
                                     </p>
                                     <div className="flex flex-wrap gap-1">
                                       <button
