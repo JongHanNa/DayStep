@@ -1155,17 +1155,17 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                           // 완료/제외 상태 및 호버 효과
                           const itemHoverEffect = (item.completed || item.isSkipped)
-                            ? 'opacity-50 hover:opacity-70'  // 완료/제외: 50 → 호버 시 70
-                            : 'hover:bg-base-200';  // 일반: 호버 시 100% 배경
+                            ? 'opacity-50 hover:opacity-70 hover:shadow-md hover:-translate-y-0.5'  // 완료/제외: 흐릿 + 떠오르는 느낌
+                            : 'hover:shadow-md hover:-translate-y-0.5';  // 일반: 떠오르는 느낌
 
                           return (
                             <div
                               key={item.id}
                               className={`group relative flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} ${itemHoverEffect} transition-all`}
                             >
-                              {/* 일반 카드 차단 레이어 - 뒤 차단 + 80% 색상 */}
+                              {/* 일반 카드 차단 레이어 - bg-base-100 차단용 */}
                               {!item.completed && !item.isSkipped && (
-                                <div className="absolute inset-0 z-0 bg-base-200 opacity-65 pointer-events-none rounded-r-lg" />
+                                <div className="absolute inset-0 z-0 bg-base-200 pointer-events-none rounded-r-lg" />
                               )}
 
                               {/* 시간/날짜 표시 */}
