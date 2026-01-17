@@ -1222,17 +1222,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     </span>
                                         {/* 상태 배지 (완료/제외) */}
                                     {(item.isSkipped || item.completed) && (
-                                      <span className={`badge badge-xs gap-0.5 ${
+                                      <span className={`badge badge-xs ${
                                         item.completed ? 'bg-success/20 text-success' :
                                         item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
                                         item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                         'bg-base-300 text-base-content/50'
                                       }`}>
-                                        {item.completed ? <CheckCircle2 className="w-2.5 h-2.5" /> :
-                                         item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
-                                         item.exclusionReason === 'missed' ? <XCircle className="w-2.5 h-2.5" /> :
-                                         item.exclusionReason === 'not_needed' ? <MinusCircle className="w-2.5 h-2.5" /> :
-                                         <SkipForward className="w-2.5 h-2.5" />}
                                         {item.completed ? '완료' :
                                          item.exclusionReason === 'postponed' ? '미뤘음' :
                                          item.exclusionReason === 'missed' ? '놓침' :
@@ -1245,17 +1240,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 {/* 상태 배지 (endTime 없는 경우, 완료/제외) */}
                                 {item.scheduleType === 'timed' && item.startTime && !item.endTime && (item.isSkipped || item.completed) && (
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className={`badge badge-xs gap-0.5 ${
+                                    <span className={`badge badge-xs ${
                                       item.completed ? 'bg-success/20 text-success' :
                                       item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
                                       item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                       'bg-base-300 text-base-content/50'
                                     }`}>
-                                      {item.completed ? <CheckCircle2 className="w-2.5 h-2.5" /> :
-                                       item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
-                                       item.exclusionReason === 'missed' ? <XCircle className="w-2.5 h-2.5" /> :
-                                       item.exclusionReason === 'not_needed' ? <MinusCircle className="w-2.5 h-2.5" /> :
-                                       <SkipForward className="w-2.5 h-2.5" />}
                                       {item.completed ? '완료' :
                                        item.exclusionReason === 'postponed' ? '미뤘음' :
                                        item.exclusionReason === 'missed' ? '놓침' :
