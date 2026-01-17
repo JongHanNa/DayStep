@@ -1220,18 +1220,21 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     <span className="text-xs text-base-content/50">
                                       {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
                                     </span>
-                                        {/* 제외 사유별 배지 (상태 표시용) */}
-                                    {item.isSkipped && (
+                                        {/* 상태 배지 (완료/제외) */}
+                                    {(item.isSkipped || item.completed) && (
                                       <span className={`badge badge-xs gap-0.5 ${
+                                        item.completed ? 'bg-success/20 text-success' :
                                         item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
                                         item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                         'bg-base-300 text-base-content/50'
                                       }`}>
-                                        {item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
+                                        {item.completed ? <CheckCircle2 className="w-2.5 h-2.5" /> :
+                                         item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
                                          item.exclusionReason === 'missed' ? <XCircle className="w-2.5 h-2.5" /> :
                                          item.exclusionReason === 'not_needed' ? <MinusCircle className="w-2.5 h-2.5" /> :
                                          <SkipForward className="w-2.5 h-2.5" />}
-                                        {item.exclusionReason === 'postponed' ? '미뤘음' :
+                                        {item.completed ? '완료' :
+                                         item.exclusionReason === 'postponed' ? '미뤘음' :
                                          item.exclusionReason === 'missed' ? '놓침' :
                                          item.exclusionReason === 'not_needed' ? '필요없었음' :
                                          '건너뜀'}
@@ -1239,19 +1242,22 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     )}
                                   </div>
                                 )}
-                                {/* 제외 사유별 배지 (endTime 없는 경우, 상태 표시용) */}
-                                {item.scheduleType === 'timed' && item.startTime && !item.endTime && item.isSkipped && (
+                                {/* 상태 배지 (endTime 없는 경우, 완료/제외) */}
+                                {item.scheduleType === 'timed' && item.startTime && !item.endTime && (item.isSkipped || item.completed) && (
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className={`badge badge-xs gap-0.5 ${
+                                      item.completed ? 'bg-success/20 text-success' :
                                       item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
                                       item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                       'bg-base-300 text-base-content/50'
                                     }`}>
-                                      {item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
+                                      {item.completed ? <CheckCircle2 className="w-2.5 h-2.5" /> :
+                                       item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
                                        item.exclusionReason === 'missed' ? <XCircle className="w-2.5 h-2.5" /> :
                                        item.exclusionReason === 'not_needed' ? <MinusCircle className="w-2.5 h-2.5" /> :
                                        <SkipForward className="w-2.5 h-2.5" />}
-                                      {item.exclusionReason === 'postponed' ? '미뤘음' :
+                                      {item.completed ? '완료' :
+                                       item.exclusionReason === 'postponed' ? '미뤘음' :
                                        item.exclusionReason === 'missed' ? '놓침' :
                                        item.exclusionReason === 'not_needed' ? '필요없었음' :
                                        '건너뜀'}
