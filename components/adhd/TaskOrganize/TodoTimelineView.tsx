@@ -16,7 +16,7 @@ import type { Note } from '@/types/second-brain';
 import { generateAllRecurrenceInstances, applyCompletionStatusToInstances, isRecurringTodo } from '@/lib/recurrence-utils';
 import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
-import { createTodoExclusionWithJWT } from '@/lib/supabase/todo-exclusions';
+import { createTodoExclusionWithJWT, deleteTodoExclusionWithJWT } from '@/lib/supabase/todo-exclusions';
 import { MonthNavigator } from './MonthNavigator';
 import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
 import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
@@ -438,6 +438,32 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       ));
     } catch (error) {
       console.error('건너뛰기 실패:', error);
+    }
+  }, [userId]);
+
+  // 제외 상태 취소 핸들러
+  const handleCancelExclusion = useCallback(async (item: TimelineItem) => {
+    if (!item.isRecurrenceInstance || !item.recurrenceSourceId || !item.recurrenceOccurrenceDate) {
+      console.error('제외 취소 실패: 필수 정보 없음');
+      return;
+    }
+
+    try {
+      // DB에서 exclusion 삭제
+      await deleteTodoExclusionWithJWT(
+        item.recurrenceSourceId,
+        item.recurrenceOccurrenceDate,
+        userId
+      );
+
+      // 로컬 상태 업데이트: isSkipped 해제 + exclusionReason 초기화
+      setRecurrenceInstances(prev => prev.map(inst =>
+        inst.id === item.id
+          ? { ...inst, isSkipped: false, exclusionReason: undefined }
+          : inst
+      ));
+    } catch (error) {
+      console.error('제외 취소 실패:', error);
     }
   }, [userId]);
 
@@ -1098,7 +1124,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           // 배경색: 시간 상태에 따라 다르게
                           const bgColor =
                             item.isSkipped
-                              ? 'bg-base-200/50' // 건너뛴 아이템: 회색/반투명
+                              ? 'bg-base-200' // 제외된 아이템: 회색
                               : timeStatus?.status === 'in_progress'
                                 ? 'bg-amber-50'
                                 : timeStatus?.status === 'missed'
@@ -1139,20 +1165,19 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 )}
                               </div>
 
-                              {/* 완료 토글 아이콘 */}
+                              {/* 완료 토글 / 제외 취소 아이콘 */}
                               <button
-                                onClick={() => handleToggleComplete(item)}
+                                onClick={() => item.isSkipped ? handleCancelExclusion(item) : handleToggleComplete(item)}
                                 className={`flex-shrink-0 ${
                                   item.isSkipped
-                                    ? 'text-base-content/30' // 건너뛴 아이템: 연한 회색
+                                    ? 'text-base-content/50 hover:text-base-content/70' // 제외된 아이템: hover 효과 추가
                                     : item.completed
                                       ? 'text-success'
                                       : timeStatus?.status === 'missed'
                                         ? 'text-error'
                                         : 'text-base-content/40'
                                 }`}
-                                title={item.isSkipped ? '건너뜀' : item.completed ? '미완료로 변경' : '완료로 변경'}
-                                disabled={item.isSkipped} // 건너뛴 아이템은 토글 불가
+                                title={item.isSkipped ? '클릭하여 제외 취소' : item.completed ? '미완료로 변경' : '완료로 변경'}
                               >
                                 {item.isSkipped ? (
                                   <SkipForward className="w-5 h-5" /> // 건너뛴 아이템: 스킵 아이콘
@@ -1184,7 +1209,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     <span className="text-xs text-base-content/50">
                                       {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
                                     </span>
-                                        {/* 제외 사유별 배지 */}
+                                        {/* 제외 사유별 배지 (상태 표시용) */}
                                     {item.isSkipped && (
                                       <span className={`badge badge-xs gap-0.5 ${
                                         item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
@@ -1203,7 +1228,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     )}
                                   </div>
                                 )}
-                                {/* 제외 사유별 배지 (endTime 없는 경우) */}
+                                {/* 제외 사유별 배지 (endTime 없는 경우, 상태 표시용) */}
                                 {item.scheduleType === 'timed' && item.startTime && !item.endTime && item.isSkipped && (
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className={`badge badge-xs gap-0.5 ${
