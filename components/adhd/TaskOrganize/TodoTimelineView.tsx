@@ -1134,7 +1134,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           // 왼쪽 보더 색상: 시간 상태에 따라 다르게
                           const borderColor =
                             item.isSkipped
-                              ? 'border-l-base-300' // 건너뛴 아이템: 회색
+                              ? item.exclusionReason === 'postponed'
+                                ? 'border-l-amber-500' // 미뤘음: 진한 노란색
+                                : item.exclusionReason === 'missed'
+                                  ? 'border-l-error' // 놓침: 빨간색
+                                  : 'border-l-base-300' // 필요없었음/건너뜀: 회색
                               : item.completed
                                 ? 'border-l-success'
                                 : timeStatus?.status === 'in_progress'
@@ -1170,7 +1174,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 onClick={() => item.isSkipped ? handleCancelExclusion(item) : handleToggleComplete(item)}
                                 className={`flex-shrink-0 ${
                                   item.isSkipped
-                                    ? 'text-base-content/50 hover:text-base-content/70' // 제외된 아이템: hover 효과 추가
+                                    ? item.exclusionReason === 'postponed'
+                                      ? 'text-amber-600 hover:text-amber-700' // 미뤘음: 진한 노란색
+                                      : item.exclusionReason === 'missed'
+                                        ? 'text-error hover:text-error/80' // 놓침: 빨간색
+                                        : 'text-base-content/50 hover:text-base-content/70' // 필요없었음/건너뜀: 회색
                                     : item.completed
                                       ? 'text-success'
                                       : timeStatus?.status === 'missed'
@@ -1180,7 +1188,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 title={item.isSkipped ? '클릭하여 제외 취소' : item.completed ? '미완료로 변경' : '완료로 변경'}
                               >
                                 {item.isSkipped ? (
-                                  <SkipForward className="w-5 h-5" /> // 건너뛴 아이템: 스킵 아이콘
+                                  item.exclusionReason === 'postponed' ? <Pause className="w-5 h-5" /> :
+                                  item.exclusionReason === 'missed' ? <XCircle className="w-5 h-5" /> :
+                                  item.exclusionReason === 'not_needed' ? <MinusCircle className="w-5 h-5" /> :
+                                  <SkipForward className="w-5 h-5" />
                                 ) : item.completed ? (
                                   <CheckCircle2 className="w-5 h-5" />
                                 ) : timeStatus?.status === 'missed' ? (
@@ -1212,7 +1223,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         {/* 제외 사유별 배지 (상태 표시용) */}
                                     {item.isSkipped && (
                                       <span className={`badge badge-xs gap-0.5 ${
-                                        item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
+                                        item.exclusionReason === 'postponed' ? 'bg-amber-100 text-amber-600' :
                                         item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                         'bg-base-300 text-base-content/50'
                                       }`}>
@@ -1232,7 +1243,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 {item.scheduleType === 'timed' && item.startTime && !item.endTime && item.isSkipped && (
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className={`badge badge-xs gap-0.5 ${
-                                      item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
+                                      item.exclusionReason === 'postponed' ? 'bg-amber-100 text-amber-600' :
                                       item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                       'bg-base-300 text-base-content/50'
                                     }`}>
@@ -1264,8 +1275,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   </span>
                                 </div>
 
-                                {/* 시간 상태 UI (진행 중/놓침) - 건너뛴 아이템은 제외 */}
-                                {!item.isSkipped && timeStatus && (timeStatus.status === 'in_progress' || timeStatus.status === 'missed') && (
+                                {/* 시간 상태 UI (진행 중/놓침) - 제외 상태도 표시 */}
+                                {timeStatus && (timeStatus.status === 'in_progress' || timeStatus.status === 'missed') && (
                                   <div className="mt-2 space-y-1">
                                     {/* 진행 중: 진행률 바 + 시간 텍스트 */}
                                     {timeStatus.status === 'in_progress' && (
@@ -1393,7 +1404,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                               e.stopPropagation();
                                               handleSkipInstance(item, 'postponed');
                                             }}
-                                            className="btn btn-xs btn-ghost text-warning gap-1"
+                                            className="btn btn-xs btn-ghost text-amber-600 gap-1"
                                           >
                                             <Pause className="w-3 h-3" />
                                             미뤘음
