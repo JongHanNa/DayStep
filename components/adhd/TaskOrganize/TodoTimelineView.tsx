@@ -1135,7 +1135,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           const borderColor =
                             item.isSkipped
                               ? item.exclusionReason === 'postponed'
-                                ? 'border-l-amber-500' // 미뤘음: 진한 노란색
+                                ? 'border-l-warning' // 미뤘음: 연노랑
                                 : item.exclusionReason === 'missed'
                                   ? 'border-l-error' // 놓침: 빨간색
                                   : 'border-l-base-300' // 필요없었음/건너뜀: 회색
@@ -1175,7 +1175,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 className={`flex-shrink-0 ${
                                   item.isSkipped
                                     ? item.exclusionReason === 'postponed'
-                                      ? 'text-amber-600 hover:text-amber-700' // 미뤘음: 진한 노란색
+                                      ? 'text-warning hover:text-warning/80' // 미뤘음: 연노랑
                                       : item.exclusionReason === 'missed'
                                         ? 'text-error hover:text-error/80' // 놓침: 빨간색
                                         : 'text-base-content/50 hover:text-base-content/70' // 필요없었음/건너뜀: 회색
@@ -1195,7 +1195,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 ) : item.completed ? (
                                   <CheckCircle2 className="w-5 h-5" />
                                 ) : timeStatus?.status === 'missed' ? (
-                                  <XCircle className="w-5 h-5" />
+                                  <AlertTriangle className="w-5 h-5" />
                                 ) : (
                                   <Circle className="w-5 h-5" />
                                 )}
@@ -1223,7 +1223,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         {/* 제외 사유별 배지 (상태 표시용) */}
                                     {item.isSkipped && (
                                       <span className={`badge badge-xs gap-0.5 ${
-                                        item.exclusionReason === 'postponed' ? 'bg-amber-100 text-amber-600' :
+                                        item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
                                         item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                         'bg-base-300 text-base-content/50'
                                       }`}>
@@ -1243,7 +1243,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 {item.scheduleType === 'timed' && item.startTime && !item.endTime && item.isSkipped && (
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className={`badge badge-xs gap-0.5 ${
-                                      item.exclusionReason === 'postponed' ? 'bg-amber-100 text-amber-600' :
+                                      item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
                                       item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                       'bg-base-300 text-base-content/50'
                                     }`}>
@@ -1299,8 +1299,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     )}
                                     {/* 놓침: 경과 시간만 표시 */}
                                     {timeStatus.status === 'missed' && (
-                                      <div className="flex items-center gap-2 text-xs text-error">
-                                        <AlertTriangle className="w-3 h-3" />
+                                      <div className="text-xs text-error">
                                         <span>{timeStatusText?.primary}</span>
                                       </div>
                                     )}
@@ -1382,7 +1381,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     className="mt-2 p-2 bg-warning/10 rounded-lg border border-warning/20"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <p className="text-xs text-warning mb-2">
+                                    <p className="text-xs text-base-content/60 mb-2">
                                       어떻게 처리할까요?
                                     </p>
                                     <div className="flex flex-wrap gap-1">
@@ -1404,7 +1403,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                               e.stopPropagation();
                                               handleSkipInstance(item, 'postponed');
                                             }}
-                                            className="btn btn-xs btn-ghost text-amber-600 gap-1"
+                                            className="btn btn-xs btn-ghost text-warning gap-1"
                                           >
                                             <Pause className="w-3 h-3" />
                                             미뤘음
