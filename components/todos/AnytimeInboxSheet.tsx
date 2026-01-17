@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { unifiedIconsCollection } from '@/lib/icon-collection';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { AnytimeInboxItem } from '@/types';
@@ -22,6 +23,18 @@ import {
 } from '@/lib/supabase/todo-postpone';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
+
+// 아이콘 이름을 Lucide 컴포넌트로 변환
+const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null => {
+  if (!iconName) return null;
+
+  // 첫 글자 대문자 변환 (moon → Moon)
+  const capitalizedName = iconName.charAt(0).toUpperCase() + iconName.slice(1);
+  const iconKey = `lucide-${capitalizedName}`;
+
+  const iconData = unifiedIconsCollection[iconKey];
+  return iconData?.component || null;
+};
 
 interface AnytimeInboxSheetProps {
   isOpen: boolean;
@@ -210,11 +223,13 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
                   <div className="flex items-start gap-3">
                     {/* 아이콘 */}
                     <div className="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center flex-shrink-0">
-                      {item.icon ? (
-                        <span className="text-xl">{item.icon}</span>
-                      ) : (
-                        <Cloud className="w-5 h-5 text-base-content/40" />
-                      )}
+                      {(() => {
+                        const TodoIcon = getTodoIcon(item.icon);
+                        if (TodoIcon) {
+                          return <TodoIcon className="w-5 h-5 text-base-content/70" />;
+                        }
+                        return <Cloud className="w-5 h-5 text-base-content/40" />;
+                      })()}
                     </div>
 
                     {/* 정보 */}

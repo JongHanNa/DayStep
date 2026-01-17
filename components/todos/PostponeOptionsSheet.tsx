@@ -8,11 +8,25 @@ import {
   Cloud,
   Play,
   X,
-  Check
+  Check,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { unifiedIconsCollection } from '@/lib/icon-collection';
 import type { PostponeOptions, PostponeAction } from '@/types';
+
+// 아이콘 이름을 Lucide 컴포넌트로 변환
+const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null => {
+  if (!iconName) return null;
+
+  // 첫 글자 대문자 변환 (moon → Moon)
+  const capitalizedName = iconName.charAt(0).toUpperCase() + iconName.slice(1);
+  const iconKey = `lucide-${capitalizedName}`;
+
+  const iconData = unifiedIconsCollection[iconKey];
+  return iconData?.component || null;
+};
 
 // PostponeOptionsSheet에서 필요한 Todo 필드만 정의
 interface TodoForPostpone {
@@ -150,9 +164,17 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 border-b border-base-300">
           <div className="flex items-center gap-3">
-            {todo.icon && (
-              <span className="text-2xl">{todo.icon}</span>
-            )}
+            {(() => {
+              const TodoIcon = getTodoIcon(todo.icon);
+              if (TodoIcon) {
+                return (
+                  <div className="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center">
+                    <TodoIcon className="w-5 h-5 text-base-content/70" />
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <div>
               <h2 className="text-lg font-bold line-clamp-1">{todo.title}</h2>
               <p className="text-sm text-base-content/60">
