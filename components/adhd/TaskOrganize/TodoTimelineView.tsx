@@ -54,6 +54,7 @@ interface TimelineItem {
   recurrenceSourceId?: string;
   recurrenceOccurrenceDate?: string;
   isSkipped?: boolean; // 건너뛴 인스턴스 여부
+  exclusionReason?: 'deleted' | 'skipped' | 'postponed' | 'not_needed' | 'missed'; // 제외 사유
   // 원본 Todo 참조 (편집 모달용)
   originalTodo?: Todo;
 }
@@ -232,6 +233,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             recurrenceSourceId: instance.originalId,
             recurrenceOccurrenceDate: data.recurrence_occurrence_date,
             isSkipped: instance.isSkipped || data.is_skipped || false,
+            exclusionReason: instance.exclusionReason || data.exclusion_reason,
             originalTodo: originalTodo
           };
         });
@@ -428,10 +430,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         exclusion_reason: reason
       });
 
-      // 로컬 상태 업데이트: 해당 인스턴스를 isSkipped로 변경
+      // 로컬 상태 업데이트: 해당 인스턴스를 isSkipped로 변경 + 제외 사유 설정
       setRecurrenceInstances(prev => prev.map(inst =>
         inst.id === item.id
-          ? { ...inst, isSkipped: true }
+          ? { ...inst, isSkipped: true, exclusionReason: reason }
           : inst
       ));
     } catch (error) {
@@ -1182,21 +1184,41 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     <span className="text-xs text-base-content/50">
                                       {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
                                     </span>
-                                    {/* 건너뜀 배지 */}
+                                        {/* 제외 사유별 배지 */}
                                     {item.isSkipped && (
-                                      <span className="badge badge-xs bg-base-300 text-base-content/50 gap-0.5">
-                                        <SkipForward className="w-2.5 h-2.5" />
-                                        건너뜀
+                                      <span className={`badge badge-xs gap-0.5 ${
+                                        item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
+                                        item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
+                                        'bg-base-300 text-base-content/50'
+                                      }`}>
+                                        {item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
+                                         item.exclusionReason === 'missed' ? <XCircle className="w-2.5 h-2.5" /> :
+                                         item.exclusionReason === 'not_needed' ? <MinusCircle className="w-2.5 h-2.5" /> :
+                                         <SkipForward className="w-2.5 h-2.5" />}
+                                        {item.exclusionReason === 'postponed' ? '미뤘음' :
+                                         item.exclusionReason === 'missed' ? '놓침' :
+                                         item.exclusionReason === 'not_needed' ? '필요없었음' :
+                                         '건너뜀'}
                                       </span>
                                     )}
                                   </div>
                                 )}
-                                {/* 건너뜀 배지 (endTime 없는 경우) */}
+                                {/* 제외 사유별 배지 (endTime 없는 경우) */}
                                 {item.scheduleType === 'timed' && item.startTime && !item.endTime && item.isSkipped && (
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="badge badge-xs bg-base-300 text-base-content/50 gap-0.5">
-                                      <SkipForward className="w-2.5 h-2.5" />
-                                      건너뜀
+                                    <span className={`badge badge-xs gap-0.5 ${
+                                      item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
+                                      item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
+                                      'bg-base-300 text-base-content/50'
+                                    }`}>
+                                      {item.exclusionReason === 'postponed' ? <Pause className="w-2.5 h-2.5" /> :
+                                       item.exclusionReason === 'missed' ? <XCircle className="w-2.5 h-2.5" /> :
+                                       item.exclusionReason === 'not_needed' ? <MinusCircle className="w-2.5 h-2.5" /> :
+                                       <SkipForward className="w-2.5 h-2.5" />}
+                                      {item.exclusionReason === 'postponed' ? '미뤘음' :
+                                       item.exclusionReason === 'missed' ? '놓침' :
+                                       item.exclusionReason === 'not_needed' ? '필요없었음' :
+                                       '건너뜀'}
                                     </span>
                                   </div>
                                 )}
