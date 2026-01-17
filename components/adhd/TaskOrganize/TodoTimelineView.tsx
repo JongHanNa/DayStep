@@ -1153,10 +1153,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           const pulseAnimation =
                             timeStatus?.status === 'in_progress' && !item.isSkipped ? 'animate-pulse' : '';
 
+                          // 완료/제외 상태 opacity (호버 포함)
+                          const itemOpacity = (item.completed || item.isSkipped)
+                            ? 'opacity-50 hover:opacity-70'  // 완료/제외: 40 → 호버 시 50
+                            : 'hover:opacity-90';             // 일반: 호버 시 90
+
                           return (
                             <div
                               key={item.id}
-                              className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} hover:opacity-90 transition-opacity`}
+                              className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} ${itemOpacity} transition-opacity`}
                             >
                               {/* 시간/날짜 표시 */}
                               <div className="w-14 flex-shrink-0 text-xs text-base-content/50 pt-0.5">
