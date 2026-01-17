@@ -1129,7 +1129,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 ? 'bg-base-200' // 완료된 아이템
                                 : timeStatus?.status === 'in_progress'
                                   ? 'bg-amber-50' // 진행중
-                                  : 'bg-base-200'; // 일반: solid
+                                  : 'bg-transparent'; // 일반: 투명 (배경 div로 처리)
 
                           // 왼쪽 보더 색상: 시간 상태에 따라 다르게
                           const borderColor =
@@ -1156,16 +1156,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           // 완료/제외 상태 및 호버 효과
                           const itemHoverEffect = (item.completed || item.isSkipped)
                             ? 'opacity-50 hover:opacity-70'  // 완료/제외: 50 → 호버 시 70
-                            : '';  // 일반: 오버레이로 처리
+                            : 'hover:bg-base-200';  // 일반: 호버 시 100% 배경
 
                           return (
                             <div
                               key={item.id}
                               className={`group relative flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} ${itemHoverEffect} transition-all`}
                             >
-                              {/* 일반 카드 오버레이 - 평상시 밝게, 호버 시 사라짐 (콘텐츠 뒤에 위치) */}
+                              {/* 일반 카드 차단 레이어 - 뒤 차단 + 80% 색상 */}
                               {!item.completed && !item.isSkipped && (
-                                <div className="absolute inset-0 z-0 bg-white/20 group-hover:opacity-0 transition-opacity pointer-events-none rounded-r-lg" />
+                                <div className="absolute inset-0 z-0 bg-base-200 opacity-65 pointer-events-none rounded-r-lg" />
                               )}
 
                               {/* 시간/날짜 표시 */}
