@@ -508,7 +508,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setEditFormData(null);
   }, [editingTodo, deleteTodo]);
 
-  // 반복 할일 시간 변경 저장
+  // 반복 할일 변경 저장
   const handleRecurringSave = useCallback(async (
     formData: TodoFormData,
     updateType: 'this' | 'future' | 'all'
@@ -527,14 +527,25 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       return;
     }
 
+    // HH:mm 형식을 ISO timestamp로 변환
+    const formatTimeToISO = (timeStr: string | undefined, baseDate: Date): string | undefined => {
+      if (!timeStr) return undefined;
+      if (timeStr.includes('T')) return timeStr; // 이미 ISO
+
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const date = new Date(baseDate);
+      date.setHours(hours, minutes, 0, 0);
+      return date.toISOString();
+    };
+
     await updateRecurringTodo(
       sourceId,
       {
         title: formData.title,
         icon: formData.icon,
         color: formData.color,
-        start_time: formData.startTime,
-        end_time: formData.endTime,
+        start_time: formatTimeToISO(formData.startTime, occurrenceDate),
+        end_time: formatTimeToISO(formData.endTime, occurrenceDate),
         schedule_type: formData.scheduleType,
       },
       updateType,
@@ -1494,6 +1505,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         onChange={setEditFormData}
         onDelete={handleEditDelete}
         onRecurringSave={handleRecurringSave}
+        originalTitle={editingItem?.title}
         originalStartTime={editingItem?.startTime?.toISOString()}
         originalEndTime={editingItem?.endTime?.toISOString()}
         occurrenceDate={editingItem?.recurrenceOccurrenceDate}

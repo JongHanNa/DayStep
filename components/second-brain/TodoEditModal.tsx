@@ -23,7 +23,8 @@ interface TodoEditModalProps {
   onChange: (todo: TodoFormData) => void;
   onDelete?: () => void; // 일반 삭제 핸들러
   onRecurringDelete?: (deleteType: 'this' | 'future' | 'all') => void; // 반복 삭제 핸들러
-  onRecurringSave?: (todo: TodoFormData, updateType: 'this' | 'future' | 'all') => void; // 반복 시간 변경 핸들러
+  onRecurringSave?: (todo: TodoFormData, updateType: 'this' | 'future' | 'all') => void; // 반복 변경 핸들러
+  originalTitle?: string; // 원본 제목 (제목 변경 감지용)
   originalStartTime?: string; // 원본 시작 시간 (시간 변경 감지용)
   originalEndTime?: string; // 원본 종료 시간 (시간 변경 감지용)
   occurrenceDate?: string; // 반복 인스턴스의 날짜 (YYYY-MM-DD)
@@ -58,6 +59,7 @@ export default function TodoEditModal({
   onDelete,
   onRecurringDelete,
   onRecurringSave,
+  originalTitle,
   originalStartTime,
   originalEndTime,
   occurrenceDate,
@@ -85,18 +87,34 @@ export default function TodoEditModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // 반복 삭제 다이얼로그 상태
   const [showRecurringDeleteDialog, setShowRecurringDeleteDialog] = useState(false);
-  // 반복 시간 변경 다이얼로그 상태
+  // 반복 변경 다이얼로그 상태
   const [showTimeChangeDialog, setShowTimeChangeDialog] = useState(false);
+  // 변경된 필드 정보
+  const [changedFields, setChangedFields] = useState<{ title?: boolean; time?: boolean }>({});
   // 저장 중 상태
   const [isSaving, setIsSaving] = useState(false);
+
+  // 제목 변경 여부 확인
+  const hasTitleChanged = useCallback(() => {
+    if (!originalTitle || !todo?.title) return false;
+    return originalTitle !== todo.title;
+  }, [originalTitle, todo?.title]);
 
   // 시간 변경 여부 확인
   const hasTimeChanged = useCallback(() => {
     if (!originalStartTime || !todo?.startTime) return false;
-    // ISO 문자열에서 시간 부분만 비교
-    const originalStart = originalStartTime.slice(11, 16); // "HH:mm"
-    const currentStart = todo.startTime.slice(11, 16);
-    return originalStart !== currentStart;
+
+    // 시간만 추출 (HH:mm) - ISO와 HH:mm 형식 모두 처리
+    const getTimeOnly = (value: string): string => {
+      if (value.includes('T')) {
+        // ISO 형식: "2025-01-17T10:00:00.000Z" → "10:00"
+        return value.split('T')[1]?.slice(0, 5) || '';
+      }
+      // HH:mm 형식: "10:00" → "10:00"
+      return value.slice(0, 5);
+    };
+
+    return getTimeOnly(originalStartTime) !== getTimeOnly(todo.startTime);
   }, [originalStartTime, todo?.startTime]);
 
   // 저장 버튼 클릭 핸들러
@@ -104,16 +122,18 @@ export default function TodoEditModal({
     if (!todo) return;
 
     const isRecurring = todo.recurrencePattern && todo.recurrencePattern !== 'none';
+    const titleChanged = hasTitleChanged();
     const timeChanged = hasTimeChanged();
 
-    // 반복 할일이고 시간이 변경된 경우 → 다이얼로그 표시
-    if (isRecurring && timeChanged && onRecurringSave) {
+    // 반복 할일이고 제목 또는 시간이 변경된 경우 → 다이얼로그 표시
+    if (isRecurring && (titleChanged || timeChanged) && onRecurringSave) {
+      setChangedFields({ title: titleChanged, time: timeChanged });
       setShowTimeChangeDialog(true);
     } else {
       // 일반 저장
       onSave(todo);
     }
-  }, [todo, hasTimeChanged, onRecurringSave, onSave]);
+  }, [todo, hasTitleChanged, hasTimeChanged, onRecurringSave, onSave]);
 
   // 반복 시간 변경 확인 핸들러
   const handleTimeChangeConfirm = useCallback(async (updateType: 'this' | 'future' | 'all') => {
@@ -411,21 +431,24 @@ export default function TodoEditModal({
         />
       )}
 
-      {/* 반복 할일 시간 변경 다이얼로그 */}
-      {showTimeChangeDialog && todo && originalStartTime && (
+      {/* 반복 할일 변경 다이얼로그 */}
+      {showTimeChangeDialog && todo && (
         <RecurringTimeChangeDialog
           isOpen={showTimeChangeDialog}
           onClose={() => setShowTimeChangeDialog(false)}
           onConfirm={handleTimeChangeConfirm}
           todo={{
             id: todoId || '',
-            title: todo.title,
+            title: originalTitle || todo.title,
             recurrence_pattern: todo.recurrencePattern,
           } as any}
-          originalTime={{
+          changedFields={changedFields}
+          originalTitle={originalTitle}
+          newTitle={todo.title}
+          originalTime={originalStartTime ? {
             start: originalStartTime,
             end: originalEndTime || originalStartTime,
-          }}
+          } : undefined}
           newTime={{
             start: todo.startTime || '',
             end: todo.endTime || '',
