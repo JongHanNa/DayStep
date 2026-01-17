@@ -5,7 +5,8 @@ interface RecurringTodoOptions {
   originalTodo: any; // 원본 할일 데이터
   rangeStart: Date;  // 검색 시작 범위
   rangeEnd: Date;    // 검색 종료 범위
-  excludedDates?: string[]; // 제외할 날짜 목록 (YYYY-MM-DD 형식)
+  excludedDates?: string[]; // 제외할 날짜 목록 (YYYY-MM-DD 형식) - deleted 사유만
+  skippedDates?: string[]; // 건너뛴 날짜 목록 (YYYY-MM-DD 형식) - skipped 사유
   timeOverrides?: { [date: string]: { start_time?: string; end_time?: string; title?: string } }; // 시간/제목 override 목록
 }
 
@@ -14,6 +15,7 @@ interface GeneratedRecurrenceItem {
   originalId: string;
   occurrenceDate: Date;
   data: any;
+  isSkipped?: boolean; // 건너뛴 인스턴스 여부
 }
 
 /**
@@ -24,6 +26,7 @@ export function generateRecurrenceInstances({
   rangeStart,
   rangeEnd,
   excludedDates = [],
+  skippedDates = [],
   timeOverrides = {}
 }: RecurringTodoOptions): GeneratedRecurrenceItem[] {
   // 🔧 Todo 클래스 인스턴스와 DB 원본 데이터 모두 지원
@@ -195,6 +198,9 @@ export function generateRecurrenceInstances({
       // 🆕 제목 override 적용 - 인스턴스별 제목 변경 지원
       const instanceTitle = override?.title || originalTodo.title || originalTodo.content;
 
+      // 🆕 건너뛴 날짜인지 확인
+      const isSkipped = skippedDates.includes(dateString);
+
       const instanceData = {
         ...originalTodo,
         id: `${originalTodo.id}-recurrence-${format(occurrenceDate, 'yyyy-MM-dd')}-${index}`,
@@ -206,14 +212,16 @@ export function generateRecurrenceInstances({
         is_recurrence_instance: true,
         recurrence_source_id: originalTodo.id,
         recurrence_occurrence_date: format(occurrenceDate, 'yyyy-MM-dd'),
-        time_override: override || undefined // 🔧 override 정보 추가 (시간/제목 모두 포함)
+        time_override: override || undefined, // 🔧 override 정보 추가 (시간/제목 모두 포함)
+        is_skipped: isSkipped // 🆕 건너뛴 인스턴스 플래그
       };
 
       return {
         id: `${originalTodo.id}-recurrence-${format(occurrenceDate, 'yyyy-MM-dd')}-${index}`,
         originalId: originalTodo.id,
         occurrenceDate: instanceStartTime,
-        data: instanceData
+        data: instanceData,
+        isSkipped // 🆕 건너뛴 인스턴스 여부
       };
     });
 
@@ -236,8 +244,9 @@ export async function generateAllRecurrenceInstances(
 ): Promise<GeneratedRecurrenceItem[]> {
   const allInstances: GeneratedRecurrenceItem[] = [];
 
-  // 🚫 userId가 제공된 경우, 모든 할일의 제외 날짜를 미리 조회
-  const allExclusions: { [todoId: string]: string[] } = {};
+  // 🚫 userId가 제공된 경우, 모든 할일의 제외 날짜를 미리 조회 (deleted/skipped 구분)
+  const allExclusions: { [todoId: string]: string[] } = {}; // deleted 사유만
+  const allSkipped: { [todoId: string]: string[] } = {}; // skipped 사유만
   
   // 🆕 userId가 제공된 경우, 모든 할일의 시간 override를 미리 조회
   const allTimeOverrides: { [todoId: string]: { [date: string]: { start_time: string; end_time?: string } } } = {};
@@ -245,24 +254,31 @@ export async function generateAllRecurrenceInstances(
   if (userId && recurringTodos.length > 0) {
     try {
       // 동적 import로 순환 참조 방지
-      const { queryTodoExclusionsWithJWT, queryTimeOverridesWithJWT } = await import('@/lib/supabaseWebViewHelper');
-      
-      // 모든 반복 할일에 대한 제외 날짜를 병렬로 조회
+      const { queryTodoExclusionsDetailWithJWT, queryTimeOverridesWithJWT } = await import('@/lib/supabaseWebViewHelper');
+
+      // 모든 반복 할일에 대한 제외 날짜를 병렬로 조회 (deleted/skipped 구분)
       const exclusionPromises = recurringTodos.map(async (todo) => {
         const todoId = todo.id;
-        
+
         // 임시 ID (temp-숫자) 형식은 건너뛰기
         if (typeof todoId === 'string' && todoId.startsWith('temp-')) {
           console.log(`⚠️ 임시 ID ${todoId} 건너뛰기 - 아직 DB에 저장되지 않음`);
-          return { todoId, excludedDates: [] };
+          return { todoId, deletedDates: [], skippedDates: [] };
         }
-        
+
         try {
-          const excludedDates = await queryTodoExclusionsWithJWT(todoId, userId);
-          return { todoId, excludedDates };
+          const exclusionDetails = await queryTodoExclusionsDetailWithJWT(todoId, userId);
+          // deleted와 skipped 분리
+          const deletedDates = exclusionDetails
+            .filter(e => e.exclusion_reason === 'deleted')
+            .map(e => e.excluded_date);
+          const skippedDates = exclusionDetails
+            .filter(e => e.exclusion_reason === 'skipped')
+            .map(e => e.excluded_date);
+          return { todoId, deletedDates, skippedDates };
         } catch (error) {
           console.warn(`⚠️ 할일 ${todoId}의 제외 날짜 조회 실패:`, error);
-          return { todoId, excludedDates: [] };
+          return { todoId, deletedDates: [], skippedDates: [] };
         }
       });
       
@@ -303,40 +319,44 @@ export async function generateAllRecurrenceInstances(
         Promise.all(exclusionPromises),
         Promise.all(overridePromises)
       ]);
-      
-      // 결과를 객체로 변환
-      exclusionResults.forEach(({ todoId, excludedDates }) => {
-        allExclusions[todoId] = excludedDates;
+
+      // 결과를 객체로 변환 (deleted/skipped 분리)
+      exclusionResults.forEach(({ todoId, deletedDates, skippedDates }) => {
+        allExclusions[todoId] = deletedDates;
+        allSkipped[todoId] = skippedDates;
       });
-      
+
       overrideResults.forEach(({ todoId, overrides }) => {
         allTimeOverrides[todoId] = overrides;
       });
-      
+
     } catch (error) {
       console.warn('⚠️ 제외 날짜 및 시간 override 조회 중 오류 발생:', error);
     }
   }
 
   recurringTodos.forEach(todo => {
-    const excludedDates = allExclusions[todo.id] || [];
+    const excludedDates = allExclusions[todo.id] || []; // deleted 사유만 (인스턴스 생성 안 함)
+    const skippedDates = allSkipped[todo.id] || []; // skipped 사유 (인스턴스 생성 + 플래그)
     const timeOverrides = allTimeOverrides[todo.id] || {};
-    
+
     console.log(`🔄 [${todo.content?.substring(0, 20)}] 반복 할일 인스턴스 생성:`, {
       todoId: todo.id,
       pattern: todo.recurrence_pattern,
-      excludedCount: excludedDates.length,
+      deletedCount: excludedDates.length,
+      skippedCount: skippedDates.length,
       overrideCount: Object.keys(timeOverrides).length
     });
-    
+
     const instances = generateRecurrenceInstances({
       originalTodo: todo,
       rangeStart,
       rangeEnd,
       excludedDates,
+      skippedDates,
       timeOverrides
     });
-    
+
     allInstances.push(...instances);
   });
 

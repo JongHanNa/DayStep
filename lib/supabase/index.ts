@@ -59,9 +59,13 @@ export {
 export {
   // Todo Exclusions
   queryTodoExclusionsWithJWT,
+  queryTodoExclusionsDetailWithJWT,
+  querySkippedDatesWithJWT,
   createTodoExclusionWithJWT,
   deleteTodoExclusionWithJWT,
-  deleteAllTodoExclusionsWithJWT
+  deleteAllTodoExclusionsWithJWT,
+  type ExclusionReason,
+  type TodoExclusionInfo
 } from './todo-exclusions';
 
 export {

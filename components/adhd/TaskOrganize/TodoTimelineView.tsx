@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle, SkipForward, Pause, MinusCircle } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -16,6 +16,7 @@ import type { Note } from '@/types/second-brain';
 import { generateAllRecurrenceInstances, applyCompletionStatusToInstances, isRecurringTodo } from '@/lib/recurrence-utils';
 import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
+import { createTodoExclusionWithJWT } from '@/lib/supabase/todo-exclusions';
 import { MonthNavigator } from './MonthNavigator';
 import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
 import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
@@ -52,6 +53,7 @@ interface TimelineItem {
   isRecurrenceInstance?: boolean;
   recurrenceSourceId?: string;
   recurrenceOccurrenceDate?: string;
+  isSkipped?: boolean; // 건너뛴 인스턴스 여부
   // 원본 Todo 참조 (편집 모달용)
   originalTodo?: Todo;
 }
@@ -229,6 +231,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             isRecurrenceInstance: true,
             recurrenceSourceId: instance.originalId,
             recurrenceOccurrenceDate: data.recurrence_occurrence_date,
+            isSkipped: instance.isSkipped || data.is_skipped || false,
             originalTodo: originalTodo
           };
         });
@@ -404,6 +407,37 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       setEditFormData(todoToFormData(item.originalTodo, item.isRecurrenceInstance));
     }
   }, [todoToFormData]);
+
+  // 건너뛰기 처리 (반복 인스턴스)
+  // reason: 'postponed' (미뤘음) | 'not_needed' (필요없었음) | 'missed' (놓침)
+  const handleSkipInstance = useCallback(async (
+    item: TimelineItem,
+    reason: 'postponed' | 'not_needed' | 'missed' = 'not_needed'
+  ) => {
+    if (!item.isRecurrenceInstance || !item.recurrenceSourceId || !item.recurrenceOccurrenceDate) {
+      console.error('건너뛰기 실패: 필수 정보 없음');
+      return;
+    }
+
+    try {
+      // todo_exclusions에 사유와 함께 추가
+      await createTodoExclusionWithJWT({
+        parent_todo_id: item.recurrenceSourceId,
+        excluded_date: item.recurrenceOccurrenceDate,
+        user_id: userId,
+        exclusion_reason: reason
+      });
+
+      // 로컬 상태 업데이트: 해당 인스턴스를 isSkipped로 변경
+      setRecurrenceInstances(prev => prev.map(inst =>
+        inst.id === item.id
+          ? { ...inst, isSkipped: true }
+          : inst
+      ));
+    } catch (error) {
+      console.error('건너뛰기 실패:', error);
+    }
+  }, [userId]);
 
   // 빈 시간 클릭 핸들러
   const handleTimeGapClick = useCallback((gap: TimeGap) => {
@@ -1056,29 +1090,36 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                               : null;
                           const timeStatusText = timeStatus ? getTimeStatusText(timeStatus) : null;
 
+                          // 놓침 상태 확인 (시간 지났고 미완료 && 건너뛰지 않음)
+                          const isMissedNotSkipped = timeStatus?.status === 'missed' && !item.completed && !item.isSkipped;
+
                           // 배경색: 시간 상태에 따라 다르게
                           const bgColor =
-                            timeStatus?.status === 'in_progress'
-                              ? 'bg-warning/10'
-                              : timeStatus?.status === 'missed'
-                                ? 'bg-error/10'
-                                : 'bg-base-200';
+                            item.isSkipped
+                              ? 'bg-base-200/50' // 건너뛴 아이템: 회색/반투명
+                              : timeStatus?.status === 'in_progress'
+                                ? 'bg-warning/10'
+                                : timeStatus?.status === 'missed'
+                                  ? 'bg-error/10'
+                                  : 'bg-base-200';
 
                           // 왼쪽 보더 색상: 시간 상태에 따라 다르게
                           const borderColor =
-                            item.completed
-                              ? 'border-l-success'
-                              : timeStatus?.status === 'in_progress'
-                                ? 'border-l-warning'
-                                : timeStatus?.status === 'missed'
-                                  ? 'border-l-error'
-                                  : item.color
-                                    ? `border-l-[${item.color}]`
-                                    : 'border-l-primary';
+                            item.isSkipped
+                              ? 'border-l-base-300' // 건너뛴 아이템: 회색
+                              : item.completed
+                                ? 'border-l-success'
+                                : timeStatus?.status === 'in_progress'
+                                  ? 'border-l-warning'
+                                  : timeStatus?.status === 'missed'
+                                    ? 'border-l-error'
+                                    : item.color
+                                      ? `border-l-[${item.color}]`
+                                      : 'border-l-primary';
 
                           // 펄스 애니메이션 (진행 중일 때만)
                           const pulseAnimation =
-                            timeStatus?.status === 'in_progress' ? 'animate-pulse' : '';
+                            timeStatus?.status === 'in_progress' && !item.isSkipped ? 'animate-pulse' : '';
 
                           return (
                             <div
@@ -1100,15 +1141,20 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                               <button
                                 onClick={() => handleToggleComplete(item)}
                                 className={`flex-shrink-0 ${
-                                  item.completed
-                                    ? 'text-success'
-                                    : timeStatus?.status === 'missed'
-                                      ? 'text-error'
-                                      : 'text-base-content/40'
+                                  item.isSkipped
+                                    ? 'text-base-content/30' // 건너뛴 아이템: 연한 회색
+                                    : item.completed
+                                      ? 'text-success'
+                                      : timeStatus?.status === 'missed'
+                                        ? 'text-error'
+                                        : 'text-base-content/40'
                                 }`}
-                                title={item.completed ? '미완료로 변경' : '완료로 변경'}
+                                title={item.isSkipped ? '건너뜀' : item.completed ? '미완료로 변경' : '완료로 변경'}
+                                disabled={item.isSkipped} // 건너뛴 아이템은 토글 불가
                               >
-                                {item.completed ? (
+                                {item.isSkipped ? (
+                                  <SkipForward className="w-5 h-5" /> // 건너뛴 아이템: 스킵 아이콘
+                                ) : item.completed ? (
                                   <CheckCircle2 className="w-5 h-5" />
                                 ) : timeStatus?.status === 'missed' ? (
                                   <XCircle className="w-5 h-5" />
@@ -1117,10 +1163,18 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 )}
                               </button>
 
-                              {/* 내용 (클릭 시 편집) */}
-                              <button
+                              {/* 내용 (클릭 시 편집 모달) */}
+                              <div
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => handleEditClick(item)}
-                                className="flex-1 min-w-0 text-left"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleEditClick(item);
+                                  }
+                                }}
+                                className="flex-1 min-w-0 text-left cursor-pointer"
                               >
                                 {/* 시간 범위 표시 (시작+종료 시간 있는 경우만) */}
                                 {item.scheduleType === 'timed' && item.startTime && item.endTime && (
@@ -1128,21 +1182,21 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     <span className="text-xs text-base-content/50">
                                       {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
                                     </span>
-                                    {/* 놓침 배지 */}
-                                    {timeStatus?.status === 'missed' && (
-                                      <span className="badge badge-xs bg-error/20 text-error gap-0.5">
-                                        <AlertTriangle className="w-2.5 h-2.5" />
-                                        놓침
+                                    {/* 건너뜀 배지 */}
+                                    {item.isSkipped && (
+                                      <span className="badge badge-xs bg-base-300 text-base-content/50 gap-0.5">
+                                        <SkipForward className="w-2.5 h-2.5" />
+                                        건너뜀
                                       </span>
                                     )}
                                   </div>
                                 )}
-                                {/* 놓침 배지만 (endTime 없는 경우) */}
-                                {item.scheduleType === 'timed' && item.startTime && !item.endTime && timeStatus?.status === 'missed' && (
+                                {/* 건너뜀 배지 (endTime 없는 경우) */}
+                                {item.scheduleType === 'timed' && item.startTime && !item.endTime && item.isSkipped && (
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="badge badge-xs bg-error/20 text-error gap-0.5">
-                                      <AlertTriangle className="w-2.5 h-2.5" />
-                                      놓침
+                                    <span className="badge badge-xs bg-base-300 text-base-content/50 gap-0.5">
+                                      <SkipForward className="w-2.5 h-2.5" />
+                                      건너뜀
                                     </span>
                                   </div>
                                 )}
@@ -1153,14 +1207,18 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
                                   )}
                                   <span className={`text-sm ${
-                                    item.completed ? 'line-through text-base-content/50' : 'text-base-content'
+                                    item.isSkipped
+                                      ? 'line-through text-base-content/40' // 건너뛴 아이템: 취소선 + 흐림
+                                      : item.completed
+                                        ? 'line-through text-base-content/50'
+                                        : 'text-base-content'
                                   }`}>
                                     {item.title}
                                   </span>
                                 </div>
 
-                                {/* 시간 상태 UI (진행 중/놓침) */}
-                                {timeStatus && (timeStatus.status === 'in_progress' || timeStatus.status === 'missed') && (
+                                {/* 시간 상태 UI (진행 중/놓침) - 건너뛴 아이템은 제외 */}
+                                {!item.isSkipped && timeStatus && (timeStatus.status === 'in_progress' || timeStatus.status === 'missed') && (
                                   <div className="mt-2 space-y-1">
                                     {/* 진행 중: 진행률 바 + 시간 텍스트 */}
                                     {timeStatus.status === 'in_progress' && (
@@ -1259,7 +1317,66 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     </div>
                                   );
                                 })()}
-                              </button>
+
+                                {/* 놓친 할일 안내 + 처리 버튼 */}
+                                {isMissedNotSkipped && (
+                                  <div
+                                    className="mt-2 p-2 bg-warning/10 rounded-lg border border-warning/20"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <p className="text-xs text-warning mb-2">
+                                      놓친 할일이에요. 어떻게 처리할까요?
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleToggleComplete(item);
+                                        }}
+                                        className="btn btn-xs btn-ghost text-success gap-1"
+                                      >
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        완료했음
+                                      </button>
+                                      {/* 반복 할일만 미뤘음/필요없었음/놓침 버튼 표시 */}
+                                      {item.isRecurrenceInstance && (
+                                        <>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleSkipInstance(item, 'postponed');
+                                            }}
+                                            className="btn btn-xs btn-ghost text-warning gap-1"
+                                          >
+                                            <Pause className="w-3 h-3" />
+                                            미뤘음
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleSkipInstance(item, 'not_needed');
+                                            }}
+                                            className="btn btn-xs btn-ghost text-base-content/60 gap-1"
+                                          >
+                                            <MinusCircle className="w-3 h-3" />
+                                            필요없었음
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleSkipInstance(item, 'missed');
+                                            }}
+                                            className="btn btn-xs btn-ghost text-error gap-1"
+                                          >
+                                            <XCircle className="w-3 h-3" />
+                                            놓침
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
 
                               {/* 삭제 버튼 (반복 인스턴스는 삭제 불가) */}
                               {!item.isRecurrenceInstance && (
@@ -1271,6 +1388,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               )}
+
                             </div>
                           );
                         })}
