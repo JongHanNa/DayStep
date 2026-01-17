@@ -1124,12 +1124,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           // 배경색: 시간 상태에 따라 다르게
                           const bgColor =
                             item.isSkipped
-                              ? 'bg-base-200' // 제외된 아이템: 회색
-                              : timeStatus?.status === 'in_progress'
-                                ? 'bg-amber-50'
-                                : timeStatus?.status === 'missed'
-                                  ? 'bg-base-200' // 놓친 할일: 흰색 배경 (빨간 왼쪽 테두리는 기존 유지)
-                                  : 'bg-base-200';
+                              ? 'bg-base-200' // 제외된 아이템
+                              : item.completed
+                                ? 'bg-base-200' // 완료된 아이템
+                                : timeStatus?.status === 'in_progress'
+                                  ? 'bg-amber-50' // 진행중
+                                  : 'bg-base-200'; // 일반: solid
 
                           // 왼쪽 보더 색상: 시간 상태에 따라 다르게
                           const borderColor =
@@ -1153,18 +1153,23 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           const pulseAnimation =
                             timeStatus?.status === 'in_progress' && !item.isSkipped ? 'animate-pulse' : '';
 
-                          // 완료/제외 상태 opacity (호버 포함)
-                          const itemOpacity = (item.completed || item.isSkipped)
-                            ? 'opacity-50 hover:opacity-70'  // 완료/제외: 40 → 호버 시 50
-                            : 'hover:opacity-90';             // 일반: 호버 시 90
+                          // 완료/제외 상태 및 호버 효과
+                          const itemHoverEffect = (item.completed || item.isSkipped)
+                            ? 'opacity-50 hover:opacity-70'  // 완료/제외: 50 → 호버 시 70
+                            : '';  // 일반: 오버레이로 처리
 
                           return (
                             <div
                               key={item.id}
-                              className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} ${itemOpacity} transition-opacity`}
+                              className={`group relative flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} ${itemHoverEffect} transition-all`}
                             >
+                              {/* 일반 카드 오버레이 - 평상시 밝게, 호버 시 사라짐 (콘텐츠 뒤에 위치) */}
+                              {!item.completed && !item.isSkipped && (
+                                <div className="absolute inset-0 z-0 bg-white/20 group-hover:opacity-0 transition-opacity pointer-events-none rounded-r-lg" />
+                              )}
+
                               {/* 시간/날짜 표시 */}
-                              <div className="w-14 flex-shrink-0 text-xs text-base-content/50 pt-0.5">
+                              <div className="relative w-14 flex-shrink-0 text-xs text-base-content/50 pt-0.5">
                                 {item.scheduleType === 'timed' && item.startTime ? (
                                   <span>{format(item.startTime, 'HH:mm')}</span>
                                 ) : item.scheduleType === 'anytime' ? (
@@ -1177,7 +1182,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                               {/* 완료 토글 / 제외 취소 아이콘 */}
                               <button
                                 onClick={() => item.isSkipped ? handleCancelExclusion(item) : handleToggleComplete(item)}
-                                className={`flex-shrink-0 ${
+                                className={`relative flex-shrink-0 ${
                                   item.isSkipped
                                     ? item.exclusionReason === 'postponed'
                                       ? 'text-warning hover:text-warning/80' // 미뤘음: 연노랑
@@ -1217,7 +1222,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     handleEditClick(item);
                                   }
                                 }}
-                                className="flex-1 min-w-0 text-left cursor-pointer"
+                                className="relative flex-1 min-w-0 text-left cursor-pointer"
                               >
                                 {/* 시간 범위 표시 (시작+종료 시간 있는 경우만) */}
                                 {item.scheduleType === 'timed' && item.startTime && item.endTime && (
@@ -1298,8 +1303,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         </div>
                                       </>
                                     )}
-                                    {/* 놓침: 경과 시간만 표시 */}
-                                    {timeStatus.status === 'missed' && (
+                                    {/* 놓침: 경과 시간만 표시 (제외 상태가 아닐 때만) */}
+                                    {timeStatus.status === 'missed' && !item.isSkipped && (
                                       <div className="text-xs text-error">
                                         <span>{timeStatusText?.primary}</span>
                                       </div>
