@@ -1325,7 +1325,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <p className="text-xs text-warning mb-2">
-                                      놓친 할일이에요. 어떻게 처리할까요?
+                                      어떻게 처리할까요?
                                     </p>
                                     <div className="flex flex-wrap gap-1">
                                       <button
