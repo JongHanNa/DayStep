@@ -1098,9 +1098,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                             item.isSkipped
                               ? 'bg-base-200/50' // 건너뛴 아이템: 회색/반투명
                               : timeStatus?.status === 'in_progress'
-                                ? 'bg-warning/10'
+                                ? 'bg-amber-50'
                                 : timeStatus?.status === 'missed'
-                                  ? 'bg-error/10'
+                                  ? 'bg-base-200' // 놓친 할일: 흰색 배경 (빨간 왼쪽 테두리는 기존 유지)
                                   : 'bg-base-200';
 
                           // 왼쪽 보더 색상: 시간 상태에 따라 다르게
