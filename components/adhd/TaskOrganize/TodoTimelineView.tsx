@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle, SkipForward, Pause, MinusCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle, SkipForward, Pause, MinusCircle, Cloud } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -23,6 +23,12 @@ import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
 import { calculateTimeGaps, type TimeGap } from '@/lib/timeGapUtils';
 import QuickLogModal from '@/components/adhd/QuickLogModal';
 import { Plus } from 'lucide-react';
+import PostponeOptionsSheet from '@/components/todos/PostponeOptionsSheet';
+import AnytimeInboxSheet from '@/components/todos/AnytimeInboxSheet';
+import { postponeTodoInstance, queryAnytimeTodosWithJWT } from '@/lib/supabase/todo-postpone';
+import { usePomodoroStore } from '@/state/stores/pomodoroStore';
+import { useRouter } from 'next/navigation';
+import type { PostponeOptions } from '@/types';
 
 interface TodoTimelineViewProps {
   userId: string;
@@ -97,6 +103,19 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 삭제 확인 상태
   const [deletingTodoId, setDeletingTodoId] = useState<string | null>(null);
+
+  // 미루기 옵션 시트 상태
+  const [postponeSheetOpen, setPostponeSheetOpen] = useState(false);
+  const [postponingItem, setPostponingItem] = useState<TimelineItem | null>(null);
+  const [isPostponeProcessing, setIsPostponeProcessing] = useState(false);
+
+  // 시간 미정 인박스 상태
+  const [anytimeInboxOpen, setAnytimeInboxOpen] = useState(false);
+  const [anytimeCount, setAnytimeCount] = useState(0);
+
+  // 라우터 및 포모도로 스토어
+  const router = useRouter();
+  const { connectRecurringTodo } = usePomodoroStore();
 
   // 빈 시간 사후 기록 모달 상태
   const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);
@@ -466,6 +485,120 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       console.error('제외 취소 실패:', error);
     }
   }, [userId]);
+
+  // 미루기 옵션 시트 열기
+  const handleOpenPostponeSheet = useCallback((item: TimelineItem) => {
+    setPostponingItem(item);
+    setPostponeSheetOpen(true);
+  }, []);
+
+  // 미루기 처리
+  const handlePostpone = useCallback(async (options: PostponeOptions) => {
+    if (!postponingItem || !postponingItem.recurrenceSourceId || !postponingItem.recurrenceOccurrenceDate) {
+      console.error('미루기 실패: 필수 정보 없음');
+      return;
+    }
+
+    setIsPostponeProcessing(true);
+
+    try {
+      const { action, recordPostponement, newTime } = options;
+
+      if (action === 'record_only') {
+        // 기록만 남기기: 기존 handleSkipInstance와 동일
+        await createTodoExclusionWithJWT({
+          parent_todo_id: postponingItem.recurrenceSourceId,
+          excluded_date: postponingItem.recurrenceOccurrenceDate,
+          user_id: userId,
+          exclusion_reason: 'postponed'
+        });
+
+        // 로컬 상태 업데이트
+        setRecurrenceInstances(prev => prev.map(inst =>
+          inst.id === postponingItem.id
+            ? { ...inst, isSkipped: true, exclusionReason: 'postponed' }
+            : inst
+        ));
+      } else if (action === 'start_now') {
+        // 지금 바로 하기: 포모도로 페이지로 이동
+        if (recordPostponement) {
+          await createTodoExclusionWithJWT({
+            parent_todo_id: postponingItem.recurrenceSourceId,
+            excluded_date: postponingItem.recurrenceOccurrenceDate,
+            user_id: userId,
+            exclusion_reason: 'postponed'
+          });
+        }
+
+        // 포모도로 스토어에 연동
+        connectRecurringTodo(
+          postponingItem.recurrenceSourceId,
+          postponingItem.recurrenceOccurrenceDate,
+          postponingItem.title
+        );
+
+        // 포모도로 페이지로 이동
+        const params = new URLSearchParams({
+          todoId: postponingItem.recurrenceSourceId,
+          occurrenceDate: postponingItem.recurrenceOccurrenceDate,
+          title: postponingItem.title,
+        });
+        router.push(`/pomodoro?${params.toString()}`);
+      } else {
+        // reschedule 또는 anytime: todo-postpone.ts 사용
+        await postponeTodoInstance({
+          parentTodoId: postponingItem.recurrenceSourceId,
+          occurrenceDate: postponingItem.recurrenceOccurrenceDate,
+          userId,
+          action,
+          recordPostponement,
+          newTime,
+          originalStartTime: postponingItem.startTime
+            ? format(postponingItem.startTime, 'HH:mm')
+            : undefined,
+        });
+
+        // anytime인 경우 카운트 업데이트
+        if (action === 'anytime') {
+          loadAnytimeCount();
+        }
+
+        // 로컬 상태 업데이트
+        if (recordPostponement) {
+          setRecurrenceInstances(prev => prev.map(inst =>
+            inst.id === postponingItem.id
+              ? { ...inst, isSkipped: true, exclusionReason: 'postponed' }
+              : inst
+          ));
+        }
+      }
+
+      setPostponeSheetOpen(false);
+      setPostponingItem(null);
+    } catch (error) {
+      console.error('미루기 처리 실패:', error);
+    } finally {
+      setIsPostponeProcessing(false);
+    }
+  }, [postponingItem, userId, connectRecurringTodo, router]);
+
+  // 시간 미정 할일 개수 로드
+  const loadAnytimeCount = useCallback(async () => {
+    try {
+      const selectedDateString = format(navigatedMonth, 'yyyy-MM-dd');
+      const items = await queryAnytimeTodosWithJWT(userId, selectedDateString);
+      setAnytimeCount(items.length);
+    } catch (error) {
+      console.error('시간 미정 할일 개수 조회 실패:', error);
+    }
+  }, [userId, navigatedMonth]);
+
+  // 시간 미정 할일 개수 로드 (날짜 변경 시)
+  useEffect(() => {
+    if (userId) {
+      loadAnytimeCount();
+    }
+  }, [loadAnytimeCount, userId]);
 
   // 빈 시간 클릭 핸들러
   const handleTimeGapClick = useCallback((gap: TimeGap) => {
@@ -907,10 +1040,22 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             </div>
             <button
               onClick={() => setShowFuelBadges(!showFuelBadges)}
-              className={`btn btn-ghost btn-sm btn-circle mr-2 ${showFuelBadges ? 'text-orange-500' : 'text-base-content/40'}`}
+              className={`btn btn-ghost btn-sm btn-circle ${showFuelBadges ? 'text-orange-500' : 'text-base-content/40'}`}
               title={showFuelBadges ? '원동력 숨기기' : '원동력 표시'}
             >
               <Zap className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setAnytimeInboxOpen(true)}
+              className="btn btn-ghost btn-sm btn-circle mr-2 text-purple-500 relative"
+              title="시간 미정 할일"
+            >
+              <Cloud className="w-4 h-4" />
+              {anytimeCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {anytimeCount > 9 ? '9+' : anytimeCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -960,10 +1105,22 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           </div>
           <button
             onClick={() => setShowFuelBadges(!showFuelBadges)}
-            className={`btn btn-ghost btn-sm btn-circle mr-2 ${showFuelBadges ? 'text-orange-500' : 'text-base-content/40'}`}
+            className={`btn btn-ghost btn-sm btn-circle ${showFuelBadges ? 'text-orange-500' : 'text-base-content/40'}`}
             title={showFuelBadges ? '원동력 숨기기' : '원동력 표시'}
           >
             <Zap className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setAnytimeInboxOpen(true)}
+            className="btn btn-ghost btn-sm btn-circle mr-2 text-purple-500 relative"
+            title="시간 미정 할일"
+          >
+            <Cloud className="w-4 h-4" />
+            {anytimeCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {anytimeCount > 9 ? '9+' : anytimeCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -1418,7 +1575,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              handleSkipInstance(item, 'postponed');
+                                              handleOpenPostponeSheet(item);
                                             }}
                                             className="btn btn-xs btn-ghost text-warning gap-1"
                                           >
@@ -1553,6 +1710,29 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         }}
         prefillStartTime={quickLogPrefillTime?.start}
         prefillEndTime={quickLogPrefillTime?.end}
+      />
+
+      {/* 미루기 옵션 시트 */}
+      {postponingItem?.originalTodo && (
+        <PostponeOptionsSheet
+          isOpen={postponeSheetOpen}
+          onClose={() => {
+            setPostponeSheetOpen(false);
+            setPostponingItem(null);
+          }}
+          todo={postponingItem.originalTodo}
+          occurrenceDate={postponingItem.recurrenceOccurrenceDate || ''}
+          onPostpone={handlePostpone}
+          isProcessing={isPostponeProcessing}
+        />
+      )}
+
+      {/* 시간 미정 인박스 시트 */}
+      <AnytimeInboxSheet
+        isOpen={anytimeInboxOpen}
+        onClose={() => setAnytimeInboxOpen(false)}
+        selectedDate={format(navigatedMonth, 'yyyy-MM-dd')}
+        onRefresh={loadAnytimeCount}
       />
     </div>
   );

@@ -192,6 +192,82 @@ export class TodoCompletionsService {
   }
 
   /**
+   * 반복 할일 인스턴스 완료 처리
+   *
+   * @param parentTodoId - 반복 할일의 부모 ID
+   * @param userId - 사용자 ID
+   * @param occurrenceDate - 발생 날짜 (YYYY-MM-DD 문자열)
+   */
+  static async markRecurrenceAsCompleted(
+    parentTodoId: string,
+    userId: string,
+    occurrenceDate: string
+  ): Promise<TodoCompletion> {
+    const completionData = {
+      todo_id: parentTodoId,
+      user_id: userId,
+      completion_date: occurrenceDate
+    };
+
+    try {
+      // 중복 체크: 이미 완료된 경우 기존 기록 반환
+      const existing = await queryRLSTableWithJWT('todo_completions', [
+        { column: 'todo_id', operator: 'eq', value: parentTodoId },
+        { column: 'user_id', operator: 'eq', value: userId },
+        { column: 'completion_date', operator: 'eq', value: occurrenceDate }
+      ], { limit: 1 });
+
+      if (existing && existing.length > 0) {
+        console.log('ℹ️ 이미 완료된 반복 할일:', {
+          parentTodoId,
+          occurrenceDate
+        });
+        return existing[0];
+      }
+
+      // 🔑 JWT 방식으로 완료 기록 생성 (Capacitor 환경 호환)
+      const data = await createWithJWT('todo_completions', completionData);
+
+      console.log('✅ 반복 할일 인스턴스 완료 처리 성공:', {
+        parentTodoId,
+        occurrenceDate,
+        createdAt: data[0]?.created_at
+      });
+
+      return data[0];
+    } catch (error) {
+      console.error('❌ 반복 할일 완료 처리 오류:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 반복 할일 인스턴스 완료 취소
+   */
+  static async markRecurrenceAsIncomplete(
+    parentTodoId: string,
+    userId: string,
+    occurrenceDate: string
+  ): Promise<void> {
+    try {
+      // 🔑 JWT 방식으로 완료 기록 삭제 (Capacitor 환경 호환)
+      await deleteWithJWT('todo_completions', [
+        { column: 'todo_id', operator: 'eq', value: parentTodoId },
+        { column: 'user_id', operator: 'eq', value: userId },
+        { column: 'completion_date', operator: 'eq', value: occurrenceDate }
+      ]);
+
+      console.log('✅ 반복 할일 인스턴스 완료 취소 성공:', {
+        parentTodoId,
+        occurrenceDate
+      });
+    } catch (error) {
+      console.error('❌ 반복 할일 완료 취소 오류:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 완료 통계 조회 (옵션: 나중에 확장 가능)
    */
   static async getCompletionStats(

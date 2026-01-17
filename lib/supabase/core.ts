@@ -287,6 +287,10 @@ export async function queryRLSTableWithJWT(
   conditionArray.forEach(condition => {
     if (condition.operator === 'in' && Array.isArray(condition.value)) {
       queryParams.push(`${condition.column}=in.(${condition.value.join(',')})`);
+    } else if (condition.operator === 'like' || condition.operator === 'ilike') {
+      // like/ilike 연산자는 % 문자를 URL 인코딩해야 함
+      const encodedValue = encodeURIComponent(String(condition.value));
+      queryParams.push(`${condition.column}=${condition.operator}.${encodedValue}`);
     } else {
       queryParams.push(`${condition.column}=${condition.operator}.${condition.value}`);
     }
@@ -358,6 +362,9 @@ export async function updateWithJWT(
   conditionArray.forEach(condition => {
     if (condition.operator === 'in' && Array.isArray(condition.value)) {
       queryParams.push(`${condition.column}=in.(${condition.value.join(',')})`);
+    } else if (condition.operator === 'like' || condition.operator === 'ilike') {
+      const encodedValue = encodeURIComponent(String(condition.value));
+      queryParams.push(`${condition.column}=${condition.operator}.${encodedValue}`);
     } else {
       queryParams.push(`${condition.column}=${condition.operator}.${condition.value}`);
     }
@@ -400,6 +407,9 @@ export async function deleteWithJWT(
   conditionArray.forEach(condition => {
     if (condition.operator === 'in' && Array.isArray(condition.value)) {
       queryParams.push(`${condition.column}=in.(${condition.value.join(',')})`);
+    } else if (condition.operator === 'like' || condition.operator === 'ilike') {
+      const encodedValue = encodeURIComponent(String(condition.value));
+      queryParams.push(`${condition.column}=${condition.operator}.${encodedValue}`);
     } else {
       queryParams.push(`${condition.column}=${condition.operator}.${condition.value}`);
     }

@@ -40,6 +40,13 @@ interface PomodoroStoreState extends BaseStoreState {
   // 할일 연동
   connectedTodoId: string | null;
 
+  // 반복 할일 인스턴스 정보 (반복 할일의 특정 날짜 인스턴스)
+  connectedRecurrenceInfo: {
+    parentTodoId: string;
+    occurrenceDate: string; // YYYY-MM-DD
+    title?: string;
+  } | null;
+
   // 액션들
   updateSettings: (settings: Partial<TimerSettings>) => void;
 
@@ -70,6 +77,11 @@ interface PomodoroStoreState extends BaseStoreState {
   // 할일 연동
   connectTodo: (todoId: string) => void;
   disconnectTodo: () => void;
+
+  // 반복 할일 연동
+  connectRecurringTodo: (parentTodoId: string, occurrenceDate: string, title?: string) => void;
+  disconnectRecurringTodo: () => void;
+  getConnectedRecurrenceInfo: () => { parentTodoId: string; occurrenceDate: string; title?: string } | null;
 
   // 스토어 초기화
   reset: () => void;
@@ -125,6 +137,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     isStatsOpen: false,
     showNotifications: true,
     connectedTodoId: null,
+    connectedRecurrenceInfo: null,
 
     /**
      * 설정 업데이트
@@ -500,6 +513,49 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
     },
 
     /**
+     * 반복 할일 인스턴스 연동
+     * @param parentTodoId - 반복 할일의 부모 ID
+     * @param occurrenceDate - 특정 발생 날짜 (YYYY-MM-DD)
+     * @param title - 할일 제목 (UI 표시용)
+     */
+    connectRecurringTodo: (parentTodoId: string, occurrenceDate: string, title?: string) => {
+      logStoreAction("PomodoroStore", "connectRecurringTodo", {
+        parentTodoId,
+        occurrenceDate,
+        title,
+      });
+
+      set((state: PomodoroStoreState) => {
+        state.connectedRecurrenceInfo = {
+          parentTodoId,
+          occurrenceDate,
+          title,
+        };
+        // 일반 할일 ID도 parentTodoId로 설정 (기존 로직 호환)
+        state.connectedTodoId = parentTodoId;
+      });
+    },
+
+    /**
+     * 반복 할일 연동 해제
+     */
+    disconnectRecurringTodo: () => {
+      logStoreAction("PomodoroStore", "disconnectRecurringTodo");
+
+      set((state: PomodoroStoreState) => {
+        state.connectedRecurrenceInfo = null;
+        state.connectedTodoId = null;
+      });
+    },
+
+    /**
+     * 연동된 반복 할일 정보 조회
+     */
+    getConnectedRecurrenceInfo: () => {
+      return get().connectedRecurrenceInfo;
+    },
+
+    /**
      * 스토어 초기화
      */
     reset: () => {
@@ -523,6 +579,7 @@ export const usePomodoroStore = createStore<PomodoroStoreState>(
         state.isStatsOpen = false;
         state.showNotifications = true;
         state.connectedTodoId = null;
+        state.connectedRecurrenceInfo = null;
       });
     },
   }),

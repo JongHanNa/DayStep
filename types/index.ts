@@ -557,3 +557,52 @@ export interface AreaResourceNoteCount {
   note_count: number;
 }
 
+// ============================================
+// 반복 할일 미루기 (Postpone) Types
+// ============================================
+
+/**
+ * 미루기 액션 타입
+ * - record_only: 기록만 남기기 (패스)
+ * - reschedule: 특정 시간으로 미루기
+ * - anytime: 나중에 (시간 미정)
+ * - start_now: 지금 바로 하기 (타이머 시작)
+ */
+export type PostponeAction = 'record_only' | 'reschedule' | 'anytime' | 'start_now';
+
+/**
+ * 미루기 옵션
+ */
+export interface PostponeOptions {
+  action: PostponeAction;
+  recordPostponement: boolean; // 미룸 기록 여부 (todo_exclusions에 'postponed' 저장)
+  newTime?: string; // HH:mm 형식 (reschedule인 경우만 사용)
+}
+
+/**
+ * 미루기 처리 파라미터
+ */
+export interface PostponeParams {
+  parentTodoId: string;
+  occurrenceDate: string; // YYYY-MM-DD
+  userId: string;
+  action: PostponeAction;
+  recordPostponement: boolean;
+  newTime?: string; // HH:mm
+  originalStartTime?: string; // ISO format (원래 시작 시간)
+}
+
+/**
+ * 시간 미정 할일 아이템 (Anytime Inbox용)
+ */
+export interface AnytimeInboxItem {
+  parentTodoId: string;
+  occurrenceDate: string; // YYYY-MM-DD
+  title: string;
+  icon?: string | null;
+  color?: string | null;
+  originalStartTime?: string; // 원래 예정 시간 (HH:mm 또는 ISO)
+  postponedAt: string; // 미룬 시각 (ISO format)
+  hasPostponementRecord: boolean; // 미룸 기록 여부
+}
+
