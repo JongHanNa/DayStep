@@ -64,6 +64,7 @@ interface TimelineItem {
   exclusionReason?: 'deleted' | 'skipped' | 'postponed' | 'not_needed' | 'missed'; // 제외 사유
   // 실제 수행 인스턴스 (미루기 후 완료) - 2026-01-19 추가
   isActualExecution?: boolean;
+  originalStartTime?: string; // 미룸 완료 시 원래 시작 시간 (뱃지 표시용)
   // 원본 Todo 참조 (편집 모달용)
   originalTodo?: Todo;
 }
@@ -264,6 +265,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             isSkipped: instance.isSkipped || data.is_skipped || false,
             exclusionReason: instance.exclusionReason || data.exclusion_reason,
             isActualExecution: data.is_actual_execution || false, // 실제 수행 인스턴스 (미루기 후 완료)
+            originalStartTime: data.original_start_time || undefined, // 미룸 완료 시 원래 시작 시간
             originalTodo: originalTodo
           };
         });
@@ -1400,11 +1402,14 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                         'bg-base-300 text-base-content/50'
                                       }`}>
-                                        {item.completed ? '완료' :
-                                         item.exclusionReason === 'postponed' ? '미뤘음' :
-                                         item.exclusionReason === 'missed' ? '놓침' :
-                                         item.exclusionReason === 'not_needed' ? '필요없었음' :
-                                         '건너뜀'}
+                                        {item.completed
+                                          ? (item.isActualExecution && item.originalStartTime
+                                              ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`
+                                              : '완료')
+                                          : item.exclusionReason === 'postponed' ? '미뤘음' :
+                                            item.exclusionReason === 'missed' ? '놓침' :
+                                            item.exclusionReason === 'not_needed' ? '필요없었음' :
+                                            '건너뜀'}
                                       </span>
                                     )}
                                   </div>
@@ -1418,11 +1423,14 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                       item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
                                       'bg-base-300 text-base-content/50'
                                     }`}>
-                                      {item.completed ? '완료' :
-                                       item.exclusionReason === 'postponed' ? '미뤘음' :
-                                       item.exclusionReason === 'missed' ? '놓침' :
-                                       item.exclusionReason === 'not_needed' ? '필요없었음' :
-                                       '건너뜀'}
+                                      {item.completed
+                                        ? (item.isActualExecution && item.originalStartTime
+                                            ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`
+                                            : '완료')
+                                        : item.exclusionReason === 'postponed' ? '미뤘음' :
+                                          item.exclusionReason === 'missed' ? '놓침' :
+                                          item.exclusionReason === 'not_needed' ? '필요없었음' :
+                                          '건너뜀'}
                                     </span>
                                   </div>
                                 )}
