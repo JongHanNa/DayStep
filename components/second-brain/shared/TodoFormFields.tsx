@@ -425,6 +425,40 @@ export default function TodoFormFields({
         endTime={todo.endTime}
         includeEndDate={todo.includeEndDate}
         anytimeDuration={todo.anytimeDuration}
+        // 통합 콜백 사용 (모든 시간 관련 값을 한 번에 업데이트)
+        onConfirm={(data) => {
+          const updates: Partial<TodoFormData> = {
+            scheduleType: data.scheduleType,
+          };
+
+          if (data.scheduleType === 'timed') {
+            updates.scheduledDate = todo.scheduledDate || new Date();
+            updates.includeTime = true;
+            updates.startTime = data.startTime;
+            updates.endTime = data.endTime;
+            updates.includeEndDate = data.includeEndDate;
+            updates.endDate = todo.scheduledDate || new Date();
+          } else if (data.scheduleType === 'anytime') {
+            updates.scheduledDate = todo.scheduledDate || new Date();
+            updates.includeEndDate = false;
+            updates.includeTime = false;
+            updates.anytimeDuration = data.anytimeDuration;
+          } else if (data.scheduleType === 'all_day') {
+            updates.scheduledDate = todo.scheduledDate || new Date();
+            updates.includeEndDate = false;
+            updates.includeTime = false;
+          } else if (data.scheduleType === 'none') {
+            updates.scheduledDate = undefined;
+            updates.includeEndDate = false;
+            updates.includeTime = false;
+            updates.startTime = undefined;
+            updates.endDate = undefined;
+            updates.endTime = undefined;
+          }
+
+          onChange({ ...todo, ...updates });
+        }}
+        // 기존 개별 콜백 유지 (하위 호환성)
         onScheduleTypeChange={(type) => {
           const updates: Partial<TodoFormData> = { scheduleType: type };
 

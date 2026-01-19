@@ -9,6 +9,15 @@ import { differenceInMinutes, parse, format as formatDate } from 'date-fns';
 
 type ScheduleType = 'none' | 'anytime' | 'timed' | 'all_day';
 
+// 통합 콜백 데이터 타입
+export interface TimeDetailConfirmData {
+  scheduleType: ScheduleType;
+  startTime?: string;
+  endTime?: string;
+  includeEndDate: boolean;
+  anytimeDuration?: number;
+}
+
 interface TimeDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +26,9 @@ interface TimeDetailModalProps {
   endTime?: string; // HH:mm 형식
   includeEndDate?: boolean;
   anytimeDuration?: number; // 분 단위
+  // 통합 콜백 (권장) - 모든 시간 관련 값을 한 번에 전달
+  onConfirm?: (data: TimeDetailConfirmData) => void;
+  // 개별 콜백 (하위 호환성)
   onScheduleTypeChange: (type: ScheduleType) => void;
   onStartTimeChange: (time: string) => void;
   onEndTimeChange: (time: string) => void;
@@ -43,6 +55,7 @@ const TimeDetailModal: React.FC<TimeDetailModalProps> = ({
   endTime = '',
   includeEndDate = false,
   anytimeDuration = 30,
+  onConfirm,
   onScheduleTypeChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -92,6 +105,20 @@ const TimeDetailModal: React.FC<TimeDetailModalProps> = ({
   };
 
   const handleConfirm = () => {
+    // 통합 콜백이 있으면 사용 (권장 방식)
+    if (onConfirm) {
+      onConfirm({
+        scheduleType: localScheduleType,
+        startTime: localScheduleType === 'timed' ? localStartTime : undefined,
+        endTime: localScheduleType === 'timed' && localIncludeEnd ? localEndTime : undefined,
+        includeEndDate: localScheduleType === 'timed' ? localIncludeEnd : false,
+        anytimeDuration: localScheduleType === 'anytime' ? localDuration : undefined,
+      });
+      onClose();
+      return;
+    }
+
+    // 기존 방식 (하위 호환성)
     onScheduleTypeChange(localScheduleType);
     if (localScheduleType === 'timed') {
       onStartTimeChange(localStartTime);
