@@ -11,6 +11,15 @@ export interface TodoCompletion {
   user_id: string;
   completion_date: string;
   created_at: string;
+  // 실제 수행 시간 (미루기 후 완료 시) - 2026-01-19 추가
+  actual_start_time: string | null;
+  actual_end_time: string | null;
+}
+
+// markRecurrenceAsCompleted 옵션 타입
+export interface MarkRecurrenceCompletedOptions {
+  actualStartTime?: string;  // ISO 8601 형식
+  actualEndTime?: string;    // ISO 8601 형식
 }
 
 /**
@@ -197,17 +206,27 @@ export class TodoCompletionsService {
    * @param parentTodoId - 반복 할일의 부모 ID
    * @param userId - 사용자 ID
    * @param occurrenceDate - 발생 날짜 (YYYY-MM-DD 문자열)
+   * @param options - 추가 옵션 (실제 수행 시간 등)
    */
   static async markRecurrenceAsCompleted(
     parentTodoId: string,
     userId: string,
-    occurrenceDate: string
+    occurrenceDate: string,
+    options?: MarkRecurrenceCompletedOptions
   ): Promise<TodoCompletion> {
-    const completionData = {
+    const completionData: Record<string, unknown> = {
       todo_id: parentTodoId,
       user_id: userId,
-      completion_date: occurrenceDate
+      completion_date: occurrenceDate,
     };
+
+    // 실제 수행 시간이 제공된 경우 추가 (2026-01-19)
+    if (options?.actualStartTime) {
+      completionData.actual_start_time = options.actualStartTime;
+    }
+    if (options?.actualEndTime) {
+      completionData.actual_end_time = options.actualEndTime;
+    }
 
     try {
       // 중복 체크: 이미 완료된 경우 기존 기록 반환
@@ -231,6 +250,8 @@ export class TodoCompletionsService {
       console.log('✅ 반복 할일 인스턴스 완료 처리 성공:', {
         parentTodoId,
         occurrenceDate,
+        actualStartTime: options?.actualStartTime,
+        actualEndTime: options?.actualEndTime,
         createdAt: data[0]?.created_at
       });
 

@@ -31,6 +31,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore, Note } from '@/state/stores/noteStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { addTodoNote } from '@/lib/supabase/todo-notes';
+import { removeAnytimeOverrideWithJWT } from '@/lib/supabase/todo-postpone';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { usePomodoroLiveActivity } from '@/hooks/usePomodoroLiveActivity';
 import { usePiPTimer } from '@/hooks/usePiPTimer';
@@ -567,14 +568,38 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
     const sessionEndTime = new Date();
 
     // 반복 할일 인스턴스 완료 처리 (2026-01-19 추가)
+    // 실제 수행 시간을 함께 저장하여 타임라인에 별도 인스턴스로 표시
     if (linkedParentTodoId && linkedOccurrenceDate && userId) {
       try {
+        // 1. 완료 기록 생성 (실제 수행 시간 포함)
         await TodoCompletionsService.markRecurrenceAsCompleted(
           linkedParentTodoId,
           userId,
-          linkedOccurrenceDate
+          linkedOccurrenceDate,
+          {
+            actualStartTime: sessionStartTime.toISOString(),
+            actualEndTime: sessionEndTime.toISOString(),
+          }
         );
-        console.log('✅ 반복 할일 인스턴스 완료 처리:', { linkedParentTodoId, linkedOccurrenceDate });
+        console.log('✅ 반복 할일 인스턴스 완료 처리 (실제 시간 포함):', {
+          linkedParentTodoId,
+          linkedOccurrenceDate,
+          actualStartTime: sessionStartTime.toISOString(),
+          actualEndTime: sessionEndTime.toISOString(),
+        });
+
+        // 2. anytime override 제거 (시간 미정 목록에서 사라지도록)
+        try {
+          await removeAnytimeOverrideWithJWT({
+            parentTodoId: linkedParentTodoId,
+            occurrenceDate: linkedOccurrenceDate,
+            userId,
+          });
+          console.log('🗑️ anytime override 제거 완료');
+        } catch (overrideError) {
+          // override 제거 실패는 무시 (없을 수도 있음)
+          console.log('ℹ️ anytime override 제거 스킵 (없거나 실패):', overrideError);
+        }
       } catch (error) {
         console.error('❌ 반복 할일 완료 처리 실패:', error);
       }

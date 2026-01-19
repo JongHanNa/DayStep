@@ -428,28 +428,106 @@ export function isRecurrenceInstanceCompleted(
 }
 
 /**
+ * 완료 기록 타입 (실제 수행 시간 포함)
+ */
+interface CompletionWithActualTime {
+  todo_id: string;
+  completion_date: string;
+  actual_start_time?: string | null;
+  actual_end_time?: string | null;
+}
+
+/**
  * 반복 할일 인스턴스들에 완료 상태를 적용
+ *
+ * 2026-01-19: actual_start_time이 있는 경우 새 인스턴스 생성 로직 추가
+ * - 원래 인스턴스가 "미룸" 상태면 → "미룸" 상태 유지
+ * - actual_end_time 시간에 새 인스턴스 추가 → "완료" 상태
  */
 export function applyCompletionStatusToInstances(
   instances: GeneratedRecurrenceItem[],
-  completions: { todo_id: string; completion_date: string }[]
+  completions: CompletionWithActualTime[]
 ): GeneratedRecurrenceItem[] {
-  return instances.map(instance => {
-    const isCompleted = isRecurrenceInstanceCompleted(
-      instance.originalId,
-      instance.occurrenceDate,
-      completions
+  const result: GeneratedRecurrenceItem[] = [];
+
+  instances.forEach(instance => {
+    const dateString = format(instance.occurrenceDate, 'yyyy-MM-dd');
+
+    // 해당 날짜의 완료 기록 찾기
+    const completion = completions.find(c =>
+      c.todo_id === instance.originalId &&
+      c.completion_date === dateString
     );
 
-    return {
-      ...instance,
-      data: {
-        ...instance.data,
-        completed: isCompleted,
-        completion_status: isCompleted ? 'completed' : 'pending'
+    // 완료 기록이 있고, actual_start_time이 있는 경우 (미루기 후 완료)
+    if (completion && completion.actual_start_time && completion.actual_end_time) {
+      // 원래 인스턴스가 "미룸" 상태인 경우
+      if (instance.exclusionReason === 'postponed') {
+        // 1. 원래 인스턴스: "미룸" 상태 유지 (완료 아님)
+        result.push({
+          ...instance,
+          data: {
+            ...instance.data,
+            completed: false,
+            completion_status: 'postponed'
+          }
+        });
+
+        // 2. 실제 수행 시간에 새 인스턴스 추가: "완료" 상태
+        const actualEndTime = new Date(completion.actual_end_time);
+        const actualStartTime = new Date(completion.actual_start_time);
+
+        result.push({
+          ...instance,
+          id: `${instance.id}-actual-completion`,
+          occurrenceDate: actualEndTime, // 종료 시간 기준으로 표시
+          data: {
+            ...instance.data,
+            id: `${instance.data.id}-actual-completion`,
+            start_time: actualStartTime.toISOString(),
+            end_time: actualEndTime.toISOString(),
+            completed: true,
+            completion_status: 'completed',
+            is_actual_execution: true, // 실제 수행 인스턴스 표시
+            original_occurrence_date: dateString, // 원래 날짜 기록
+          },
+          isSkipped: false,
+          exclusionReason: undefined
+        });
+      } else {
+        // 원래 인스턴스가 "미룸" 상태가 아닌 경우 (일반 완료)
+        // 실제 시간으로 업데이트하고 완료 처리
+        const actualEndTime = new Date(completion.actual_end_time);
+        const actualStartTime = new Date(completion.actual_start_time);
+
+        result.push({
+          ...instance,
+          occurrenceDate: actualEndTime,
+          data: {
+            ...instance.data,
+            start_time: actualStartTime.toISOString(),
+            end_time: actualEndTime.toISOString(),
+            completed: true,
+            completion_status: 'completed'
+          }
+        });
       }
-    };
+    } else {
+      // 완료 기록이 없거나, actual_start_time이 없는 경우 (기존 로직)
+      const isCompleted = !!completion;
+
+      result.push({
+        ...instance,
+        data: {
+          ...instance.data,
+          completed: isCompleted,
+          completion_status: isCompleted ? 'completed' : (instance.exclusionReason || 'pending')
+        }
+      });
+    }
   });
+
+  return result;
 }
 
 /**

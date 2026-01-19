@@ -62,6 +62,8 @@ interface TimelineItem {
   recurrenceOccurrenceDate?: string;
   isSkipped?: boolean; // 건너뛴 인스턴스 여부
   exclusionReason?: 'deleted' | 'skipped' | 'postponed' | 'not_needed' | 'missed'; // 제외 사유
+  // 실제 수행 인스턴스 (미루기 후 완료) - 2026-01-19 추가
+  isActualExecution?: boolean;
   // 원본 Todo 참조 (편집 모달용)
   originalTodo?: Todo;
 }
@@ -261,6 +263,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             recurrenceOccurrenceDate: data.recurrence_occurrence_date,
             isSkipped: instance.isSkipped || data.is_skipped || false,
             exclusionReason: instance.exclusionReason || data.exclusion_reason,
+            isActualExecution: data.is_actual_execution || false, // 실제 수행 인스턴스 (미루기 후 완료)
             originalTodo: originalTodo
           };
         });
