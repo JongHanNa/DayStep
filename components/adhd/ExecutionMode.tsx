@@ -38,6 +38,7 @@ import { useTheme } from '@/hooks/useTheme';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
+import { TodoCompletionsService } from '@/services/todo-completions.service';
 import { RelationshipDetectorService } from '@/services/relationship-detector.service';
 import { updateWithJWT } from '@/lib/supabase/core';
 import { PersonSelector, PersonLinksPreview } from '@/components/cherished/PersonSelector';
@@ -545,14 +546,27 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       return;
     }
 
-    const { sessionId, linkedTodoId } = executionMode.adhocMode;
+    const { sessionId, linkedTodoId, linkedParentTodoId, linkedOccurrenceDate } = executionMode.adhocMode;
 
     // 세션 시작/종료 시간 계산
     const sessionStartTime = restoredStartTime || new Date(Date.now() - timerState.duration + timerState.remainingTime);
     const sessionEndTime = new Date();
 
-    // 연결된 할일이 있으면 시간/인물 정보 포함하여 완료 처리
-    if (linkedTodoId) {
+    // 반복 할일 인스턴스 완료 처리 (2026-01-19 추가)
+    if (linkedParentTodoId && linkedOccurrenceDate && userId) {
+      try {
+        await TodoCompletionsService.markRecurrenceAsCompleted(
+          linkedParentTodoId,
+          userId,
+          linkedOccurrenceDate
+        );
+        console.log('✅ 반복 할일 인스턴스 완료 처리:', { linkedParentTodoId, linkedOccurrenceDate });
+      } catch (error) {
+        console.error('❌ 반복 할일 완료 처리 실패:', error);
+      }
+    }
+    // 단일 할일 완료 처리 (기존 로직)
+    else if (linkedTodoId) {
       try {
         await updateTodo(linkedTodoId, {
           completed: true,
@@ -578,8 +592,8 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
       }
     }
 
-    // linkedTodoId가 있으면 바로 다음으로, 없으면 기록 화면으로
-    if (linkedTodoId) {
+    // 연결된 할일(단일 또는 반복)이 있으면 바로 다음으로, 없으면 기록 화면으로
+    if (linkedTodoId || (linkedParentTodoId && linkedOccurrenceDate)) {
       // 정리 및 다음으로
       stopPomodoroTimer();
       endAdhocMode();

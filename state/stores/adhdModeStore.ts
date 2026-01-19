@@ -15,6 +15,9 @@ interface AdhocModeState {
   sessionId: string | null;        // DB 세션 ID (영속화용)
   linkedTodoId: string | null;     // 연결된 미완료 할일 ID
   linkedTodoTitle: string | null;  // 연결된 할일 제목 (표시용)
+  // 반복 할일 연결 지원 (2026-01-19 추가)
+  linkedParentTodoId: string | null;    // 반복 할일의 부모 ID
+  linkedOccurrenceDate: string | null;  // YYYY-MM-DD 형식
   joyfulPeopleIds: string[];       // 기쁘게 할 분들 ID
   shamefulPeopleIds: string[];     // 부끄러운 분들 ID (이 분들 앞에서 부끄러운 행동)
 }
@@ -142,6 +145,8 @@ interface ADHDModeState {
   endAdhocMode: () => void;
   setSessionId: (sessionId: string | null) => void;
   setLinkedTodo: (todoId: string | null, title: string | null) => void;
+  // 반복 할일 연결 (2026-01-19 추가)
+  setLinkedRecurringTodo: (parentTodoId: string | null, occurrenceDate: string | null, title: string | null) => void;
   // 인물 연결 Actions
   setLinkedPeople: (joyfulIds: string[], shamefulIds: string[]) => void;
   addJoyfulPerson: (personId: string) => void;
@@ -238,6 +243,8 @@ const DEFAULT_ADHOC_MODE: AdhocModeState = {
   sessionId: null,
   linkedTodoId: null,
   linkedTodoTitle: null,
+  linkedParentTodoId: null,
+  linkedOccurrenceDate: null,
   joyfulPeopleIds: [],
   shamefulPeopleIds: [],
 };
@@ -430,6 +437,24 @@ export const useADHDModeStore = create<ADHDModeState>()(
                 ...state.executionMode.adhocMode,
                 linkedTodoId: todoId,
                 linkedTodoTitle: title,
+              },
+            }
+          }));
+        },
+
+        // 반복 할일 연결 (2026-01-19 추가)
+        setLinkedRecurringTodo: (parentTodoId, occurrenceDate, title) => {
+          console.log('🔗 ADHD: 반복 할일 인스턴스 연결', { parentTodoId, occurrenceDate, title });
+          set((state) => ({
+            executionMode: {
+              ...state.executionMode,
+              adhocMode: {
+                ...state.executionMode.adhocMode,
+                linkedParentTodoId: parentTodoId,
+                linkedOccurrenceDate: occurrenceDate,
+                linkedTodoTitle: title,
+                // 단일 할일 ID는 초기화 (반복 할일과 중복 방지)
+                linkedTodoId: null,
               },
             }
           }));

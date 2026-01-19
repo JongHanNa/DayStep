@@ -27,6 +27,7 @@ import PostponeOptionsSheet from '@/components/todos/PostponeOptionsSheet';
 import AnytimeInboxSheet from '@/components/todos/AnytimeInboxSheet';
 import { postponeTodoInstance, queryAnytimeTodosWithJWT } from '@/lib/supabase/todo-postpone';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useRouter } from 'next/navigation';
 import type { PostponeOptions } from '@/types';
 
@@ -116,6 +117,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 라우터 및 포모도로 스토어
   const router = useRouter();
   const { connectRecurringTodo } = usePomodoroStore();
+
+  // ADHD 모드 스토어 - 실행 모드 진입용 (2026-01-19 추가)
+  const {
+    setLinkedRecurringTodo,
+    startAdhocMode,
+    enterExecuteMode,
+  } = useADHDModeStore();
 
   // 빈 시간 사후 기록 모달 상태
   const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);
@@ -505,7 +513,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       const { action, recordPostponement, newTime } = options;
 
       if (action === 'start_now') {
-        // 지금 바로 하기: 포모도로 페이지로 이동
+        // 지금 바로 하기: ExecutionMode로 진입 (2026-01-19 수정)
         if (recordPostponement) {
           await createTodoExclusionWithJWT({
             parent_todo_id: postponingItem.recurrenceSourceId,
@@ -515,20 +523,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           });
         }
 
-        // 포모도로 스토어에 연동
-        connectRecurringTodo(
+        // adhdModeStore에 반복 할일 정보 설정
+        setLinkedRecurringTodo(
           postponingItem.recurrenceSourceId,
           postponingItem.recurrenceOccurrenceDate,
           postponingItem.title
         );
 
-        // 포모도로 페이지로 이동
-        const params = new URLSearchParams({
-          todoId: postponingItem.recurrenceSourceId,
-          occurrenceDate: postponingItem.recurrenceOccurrenceDate,
-          title: postponingItem.title,
-        });
-        router.push(`/pomodoro?${params.toString()}`);
+        // 즉흥 모드 시작 및 실행 모드 진입
+        startAdhocMode();
+        await enterExecuteMode(userId);
       } else {
         // reschedule 또는 anytime: todo-postpone.ts 사용
         await postponeTodoInstance({

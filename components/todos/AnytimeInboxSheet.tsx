@@ -22,6 +22,7 @@ import {
   removeAnytimeOverrideWithJWT,
 } from '@/lib/supabase/todo-postpone';
 import { useAuth } from '@/app/context/AuthContext';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useRouter } from 'next/navigation';
 
 // 아이콘 이름을 Lucide 컴포넌트로 변환
@@ -53,6 +54,14 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
 }) => {
   const { user } = useAuth();
   const router = useRouter();
+
+  // ADHD 모드 스토어 - 실행 모드 진입용 (2026-01-19 추가)
+  const {
+    setLinkedRecurringTodo,
+    startAdhocMode,
+    enterExecuteMode,
+  } = useADHDModeStore();
+
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<AnytimeInboxItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,14 +103,17 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
     try {
       switch (action) {
         case 'start_now':
-          // 타이머 페이지로 이동 (반복 할일 정보 전달)
-          // URL 파라미터로 전달
-          const timerParams = new URLSearchParams({
-            todoId: item.parentTodoId,
-            occurrenceDate: item.occurrenceDate,
-            title: item.title,
-          });
-          router.push(`/pomodoro?${timerParams.toString()}`);
+          // ExecutionMode로 진입 (2026-01-19 수정)
+          // adhdModeStore에 반복 할일 정보 설정
+          setLinkedRecurringTodo(
+            item.parentTodoId,
+            item.occurrenceDate,
+            item.title
+          );
+
+          // 즉흥 모드 시작 및 실행 모드 진입
+          startAdhocMode();
+          await enterExecuteMode(user.id);
           onClose();
           break;
 
