@@ -104,16 +104,18 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
       switch (action) {
         case 'start_now':
           // ExecutionMode로 진입 (2026-01-19 수정)
-          // adhdModeStore에 반복 할일 정보 설정
+          // 실행 모드 먼저 진입 (executionMode 초기화 후)
+          await enterExecuteMode(user.id);
+
+          // 그 다음 adhocMode에 반복 할일 정보 설정 (초기화 이후에 설정해야 유지됨)
           setLinkedRecurringTodo(
             item.parentTodoId,
             item.occurrenceDate,
             item.title
           );
 
-          // 즉흥 모드 시작 및 실행 모드 진입
+          // 즉흥 모드 활성화
           startAdhocMode();
-          await enterExecuteMode(user.id);
           onClose();
           break;
 

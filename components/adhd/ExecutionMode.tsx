@@ -166,6 +166,20 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const [environmentSkipped, setEnvironmentSkipped] = useState(false);
   const [pendingLinkedTodo, setPendingLinkedTodo] = useState<{ id: string; title: string } | null>(null);
 
+  // 외부에서 adhocMode 진입 시 viewState 자동 설정 (2026-01-19 추가)
+  // 타임라인에서 "지금 바로 하기" 선택 시 adhocMode.isActive가 true로 설정되지만
+  // viewState는 'recommendation' 상태로 유지되어 빈 화면이 표시되는 문제 수정
+  useEffect(() => {
+    const { adhocMode } = executionMode;
+
+    // adhocMode가 활성화되었고, 타이머가 아직 시작 전이면
+    // distraction-plan 화면으로 전환
+    if (adhocMode.isActive && timerState.status === 'idle' && viewState === 'recommendation') {
+      console.log('🔄 외부 adhocMode 진입 감지 - distraction-plan으로 전환');
+      setViewState('distraction-plan');
+    }
+  }, [executionMode.adhocMode.isActive, timerState.status, viewState]);
+
   // 로딩 상태 (Skip DB 제거로 항상 false)
 
   // 오늘 실행 가능한 할일만 필터링
@@ -1953,7 +1967,8 @@ function AdhocTimerView({
       className="w-full max-w-sm text-center"
     >
       {/* 상단: 할일 제목 또는 "포커스" */}
-      {linkedTodoId ? (
+      {/* linkedTodoId: 일반 할일, linkedTodoTitle: 반복 할일 - 둘 중 하나라도 있으면 제목 표시 */}
+      {(linkedTodoId || linkedTodoTitle) ? (
         isEditingTitle ? (
           <input
             autoFocus
@@ -2109,7 +2124,8 @@ function AdhocTimerView({
       </div>
 
       {/* 미완료 할일 입력 (제목 없을 때만) */}
-      {!linkedTodoId && (
+      {/* linkedTodoId: 일반 할일, linkedTodoTitle: 반복 할일 - 둘 다 없을 때만 입력란 표시 */}
+      {(!linkedTodoId && !linkedTodoTitle) && (
         <div className="mb-4 px-4">
           <div className="flex gap-2">
             <input

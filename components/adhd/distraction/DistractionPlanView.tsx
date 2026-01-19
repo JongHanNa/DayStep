@@ -371,7 +371,7 @@ export default function DistractionPlanView({
 
       {/* 상단 버튼 - 헤더 바로 아래 (2026-01-19 추가) */}
       <div className="flex gap-3 mb-4">
-        <button onClick={onSkip} className="btn btn-ghost flex-1">
+        <button onClick={onSkip} className="btn bg-base-200 flex-1">
           건너뛰기
         </button>
         <button

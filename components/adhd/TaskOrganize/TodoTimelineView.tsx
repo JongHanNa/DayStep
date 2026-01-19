@@ -523,16 +523,18 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           });
         }
 
-        // adhdModeStore에 반복 할일 정보 설정
+        // 실행 모드 먼저 진입 (executionMode 초기화 후)
+        await enterExecuteMode(userId);
+
+        // 그 다음 adhocMode에 반복 할일 정보 설정 (초기화 이후에 설정해야 유지됨)
         setLinkedRecurringTodo(
           postponingItem.recurrenceSourceId,
           postponingItem.recurrenceOccurrenceDate,
           postponingItem.title
         );
 
-        // 즉흥 모드 시작 및 실행 모드 진입
+        // 즉흥 모드 활성화
         startAdhocMode();
-        await enterExecuteMode(userId);
       } else {
         // reschedule 또는 anytime: todo-postpone.ts 사용
         await postponeTodoInstance({
