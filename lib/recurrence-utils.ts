@@ -469,7 +469,9 @@ export function applyCompletionStatusToInstances(
           data: {
             ...instance.data,
             completed: false,
-            completion_status: 'postponed'
+            completion_status: 'postponed',
+            postponed_to_time: completion.actual_end_time, // 미룬 목적지 종료 시간 (뱃지 표시용)
+            postponed_to_start_time: completion.actual_start_time, // 미룬 목적지 시작 시간 (뱃지 표시용)
           }
         });
 
