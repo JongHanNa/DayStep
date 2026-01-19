@@ -92,6 +92,16 @@ const RecurringTimeChangeDialog: React.FC<RecurringTimeChangeDialogProps> = ({
     }
   };
 
+  // 시간 범위 포맷팅 (시작~종료)
+  const formatTimeRange = (start?: string, end?: string): string => {
+    const startFormatted = formatTime(start);
+    const endFormatted = formatTime(end);
+
+    if (!startFormatted) return '';
+    if (!endFormatted || startFormatted === endFormatted) return startFormatted;
+    return `${startFormatted} ~ ${endFormatted}`;
+  };
+
   // 옵션 설명 동적 생성
   const getOptionDescriptions = () => {
     const changeType = changedFields.title && changedFields.time
@@ -182,9 +192,9 @@ const RecurringTimeChangeDialog: React.FC<RecurringTimeChangeDialogProps> = ({
           {changedFields.time && originalTime?.start && newTime?.start && (
             <div className="mt-2 flex items-center justify-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-gray-400" />
-              <span className="text-gray-500 line-through">{formatTime(originalTime.start)}</span>
+              <span className="text-gray-500 line-through">{formatTimeRange(originalTime.start, originalTime.end)}</span>
               <span className="text-gray-400">→</span>
-              <span className="text-blue-600 font-semibold">{formatTime(newTime.start)}</span>
+              <span className="text-blue-600 font-semibold">{formatTimeRange(newTime.start, newTime.end)}</span>
             </div>
           )}
         </div>
