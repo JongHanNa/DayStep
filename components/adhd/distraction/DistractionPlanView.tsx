@@ -359,7 +359,7 @@ export default function DistractionPlanView({
       className="flex flex-col h-full px-4 py-6"
     >
       {/* 헤더 */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-4">
         <div className="flex items-center justify-center gap-2 mb-3">
           <Target className="w-7 h-7 text-primary" />
           <h2 className="text-xl font-bold">집중 환경 준비</h2>
@@ -367,6 +367,27 @@ export default function DistractionPlanView({
         <p className="text-sm text-base-content/60">
           시작 전에 방해 요소를 치워요
         </p>
+      </div>
+
+      {/* 상단 버튼 - 헤더 바로 아래 (2026-01-19 추가) */}
+      <div className="flex gap-3 mb-4">
+        <button onClick={onSkip} className="btn btn-ghost flex-1">
+          건너뛰기
+        </button>
+        <button
+          onClick={handleComplete}
+          disabled={isLoading}
+          className="btn btn-primary flex-1"
+        >
+          {isLoading ? (
+            <span className="loading loading-spinner loading-sm" />
+          ) : (
+            <>
+              준비 완료
+              <ChevronRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
       </div>
 
       {/* 카테고리 목록 */}
@@ -607,30 +628,6 @@ export default function DistractionPlanView({
           </span>
         </motion.div>
       )}
-
-      {/* 하단 버튼 */}
-      <div className="flex gap-3 mt-4">
-        <button
-          onClick={onSkip}
-          className="btn btn-ghost flex-1"
-        >
-          건너뛰기
-        </button>
-        <button
-          onClick={handleComplete}
-          disabled={!canProceed || isLoading}
-          className="btn btn-primary flex-1"
-        >
-          {isLoading ? (
-            <span className="loading loading-spinner loading-sm" />
-          ) : (
-            <>
-              준비 완료
-              <ChevronRight className="w-4 h-4" />
-            </>
-          )}
-        </button>
-      </div>
     </motion.div>
   );
 }
