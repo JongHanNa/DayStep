@@ -490,6 +490,8 @@ export function applyCompletionStatusToInstances(
             completion_status: 'completed',
             is_actual_execution: true, // 실제 수행 인스턴스 표시
             original_occurrence_date: dateString, // 원래 날짜 기록
+            is_skipped: false, // 명시적 초기화 (원래 인스턴스 값 덮어쓰기)
+            exclusion_reason: undefined, // 명시적 초기화 (원래 인스턴스 값 덮어쓰기)
           },
           isSkipped: false,
           exclusionReason: undefined
