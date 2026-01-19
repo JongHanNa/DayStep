@@ -493,6 +493,7 @@ export function applyCompletionStatusToInstances(
             is_actual_execution: true, // 실제 수행 인스턴스 표시
             original_occurrence_date: dateString, // 원래 날짜 기록
             original_start_time: instance.data.start_time, // 원래 시작 시간 (뱃지 표시용)
+            original_end_time: instance.data.end_time, // 원래 종료 시간 (뱃지 표시용)
             is_skipped: false, // 명시적 초기화 (원래 인스턴스 값 덮어쓰기)
             exclusion_reason: undefined, // 명시적 초기화 (원래 인스턴스 값 덮어쓰기)
           },
