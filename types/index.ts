@@ -563,12 +563,11 @@ export interface AreaResourceNoteCount {
 
 /**
  * 미루기 액션 타입
- * - record_only: 기록만 남기기 (패스)
  * - reschedule: 특정 시간으로 미루기
  * - anytime: 나중에 (시간 미정)
  * - start_now: 지금 바로 하기 (타이머 시작)
  */
-export type PostponeAction = 'record_only' | 'reschedule' | 'anytime' | 'start_now';
+export type PostponeAction = 'reschedule' | 'anytime' | 'start_now';
 
 /**
  * 미루기 옵션

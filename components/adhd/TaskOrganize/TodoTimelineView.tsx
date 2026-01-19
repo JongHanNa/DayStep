@@ -504,22 +504,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     try {
       const { action, recordPostponement, newTime } = options;
 
-      if (action === 'record_only') {
-        // 기록만 남기기: 기존 handleSkipInstance와 동일
-        await createTodoExclusionWithJWT({
-          parent_todo_id: postponingItem.recurrenceSourceId,
-          excluded_date: postponingItem.recurrenceOccurrenceDate,
-          user_id: userId,
-          exclusion_reason: 'postponed'
-        });
-
-        // 로컬 상태 업데이트
-        setRecurrenceInstances(prev => prev.map(inst =>
-          inst.id === postponingItem.id
-            ? { ...inst, isSkipped: true, exclusionReason: 'postponed' }
-            : inst
-        ));
-      } else if (action === 'start_now') {
+      if (action === 'start_now') {
         // 지금 바로 하기: 포모도로 페이지로 이동
         if (recordPostponement) {
           await createTodoExclusionWithJWT({

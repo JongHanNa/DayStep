@@ -3,13 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  FileText,
   Clock,
   Cloud,
   Play,
   X,
   Check,
-  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -54,26 +52,14 @@ interface OptionConfig {
   color: string;
   bgColor: string;
   borderColor: string;
-  // 기록만 남기기는 체크박스 비활성화 (항상 true)
-  recordDisabled?: boolean;
 }
 
 const OPTIONS: OptionConfig[] = [
   {
-    action: 'record_only',
-    icon: FileText,
-    title: '기록만 남기기',
-    description: '일단 미뤘다는 기록만 남겨둘게요. 시간은 그대로요.',
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
-    borderColor: 'border-gray-200',
-    recordDisabled: true, // 항상 true, 체크박스 비활성화
-  },
-  {
     action: 'reschedule',
     icon: Clock,
-    title: '특정 시간으로',
-    description: '지금은 안 되지만, 오늘 다른 시간에 할게요.',
+    title: '시간 지정하여 미룸',
+    description: '오늘 다른 시간으로 미룰래요.',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
@@ -81,8 +67,8 @@ const OPTIONS: OptionConfig[] = [
   {
     action: 'anytime',
     icon: Cloud,
-    title: '나중에 (시간 미정)',
-    description: '지금 당장은 못해요. 나중에 시간 날 때 할게요.',
+    title: '시간지정 없이 미룸',
+    description: '몇시에 할지 아직 모르겠어요.',
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-200',
@@ -107,7 +93,7 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
   isProcessing = false,
 }) => {
   const [mounted, setMounted] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<PostponeAction>('record_only');
+  const [selectedAction, setSelectedAction] = useState<PostponeAction>('reschedule');
   const [recordPostponement, setRecordPostponement] = useState(true);
   const [newTime, setNewTime] = useState('14:00'); // 기본값: 오후 2시
 
@@ -119,7 +105,7 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
   // 모달 열릴 때 상태 초기화
   useEffect(() => {
     if (isOpen) {
-      setSelectedAction('record_only');
+      setSelectedAction('reschedule');
       setRecordPostponement(true);
       // 현재 시간 + 1시간을 기본값으로
       const now = new Date();
@@ -130,23 +116,14 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
     }
   }, [isOpen]);
 
-  // 선택된 액션에 따라 recordPostponement 강제 설정
-  useEffect(() => {
-    if (selectedAction === 'record_only') {
-      setRecordPostponement(true); // 기록만 남기기는 항상 true
-    }
-  }, [selectedAction]);
-
   const handleConfirm = () => {
     const options: PostponeOptions = {
       action: selectedAction,
-      recordPostponement: selectedAction === 'record_only' ? true : recordPostponement,
+      recordPostponement,
       ...(selectedAction === 'reschedule' && { newTime }),
     };
     onPostpone(options);
   };
-
-  const selectedOption = OPTIONS.find(opt => opt.action === selectedAction);
 
   if (!isOpen || !mounted) return null;
 
@@ -261,18 +238,13 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
         <div className="p-4 border-t border-base-300 space-y-3">
           {/* 미룸 기록 체크박스 */}
           <label
-            className={cn(
-              "flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer",
-              selectedOption?.recordDisabled
-                ? "bg-base-200 opacity-60 cursor-not-allowed"
-                : "bg-base-100 hover:bg-base-200"
-            )}
+            className="flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-base-100 hover:bg-base-200"
           >
             <input
               type="checkbox"
               checked={recordPostponement}
               onChange={(e) => setRecordPostponement(e.target.checked)}
-              disabled={selectedOption?.recordDisabled || isProcessing}
+              disabled={isProcessing}
               className="checkbox checkbox-sm checkbox-primary"
             />
             <div className="flex-1">
