@@ -886,6 +886,19 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setIsQuickLogModalOpen(true);
   }, []);
 
+  // 할일 추가 핸들러 (네비게이션 + 버튼용)
+  const handleAddTodo = useCallback(() => {
+    // 현재 보고 있는 월의 1일 자정을 기본값으로 설정
+    const startDate = startOfMonth(navigatedMonth);
+    const endDate = new Date(startDate);
+    endDate.setHours(1, 0, 0, 0); // 1시간 후 종료
+    setQuickLogPrefillTime({
+      start: startDate,
+      end: endDate
+    });
+    setIsQuickLogModalOpen(true);
+  }, [navigatedMonth]);
+
   // 편집 저장
   const handleEditSave = useCallback(async (formData: TodoFormData) => {
     if (!editingTodo) return;
@@ -1460,6 +1473,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                 currentDate={navigatedMonth}
                 onMonthChange={handleMonthChange}
                 onTodayClick={handleTodayClick}
+                onAddClick={handleAddTodo}
               />
             </div>
             <button
@@ -1499,6 +1513,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             <Clock className="w-12 h-12 mb-4 opacity-50" />
             <p>이 기간에 할일이 없어요</p>
             <p className="text-sm text-base-content/40 mt-1">{rangeInfoText}</p>
+            <button
+              onClick={handleAddTodo}
+              className="btn btn-primary btn-sm mt-4 gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              할일 추가하기
+            </button>
           </div>
 
           {/* 미래 더 보기 버튼 */}
@@ -1511,6 +1532,17 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             미래 6개월 더 보기
           </button>
         </div>
+
+        {/* 빈 시간 사후 기록 모달 - 빈 타임라인에서도 표시 */}
+        <QuickLogModal
+          isOpen={isQuickLogModalOpen}
+          onClose={() => {
+            setIsQuickLogModalOpen(false);
+            setQuickLogPrefillTime(null);
+          }}
+          prefillStartTime={quickLogPrefillTime?.start}
+          prefillEndTime={quickLogPrefillTime?.end}
+        />
       </div>
     );
   }
@@ -1525,6 +1557,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
               currentDate={navigatedMonth}
               onMonthChange={handleMonthChange}
               onTodayClick={handleTodayClick}
+              onAddClick={handleAddTodo}
             />
           </div>
           <button

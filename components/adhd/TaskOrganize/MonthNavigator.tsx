@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Calendar, Plus } from 'lucide-react';
 import { format, addMonths, subMonths } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { MonthPickerPopover } from './MonthPickerPopover';
@@ -10,6 +10,7 @@ interface MonthNavigatorProps {
   currentDate: Date;
   onMonthChange: (date: Date) => void;
   onTodayClick: () => void;
+  onAddClick?: () => void;
 }
 
 /**
@@ -22,7 +23,8 @@ interface MonthNavigatorProps {
 export function MonthNavigator({
   currentDate,
   onMonthChange,
-  onTodayClick
+  onTodayClick,
+  onAddClick
 }: MonthNavigatorProps) {
   const [showPopover, setShowPopover] = useState(false);
 
@@ -65,6 +67,16 @@ export function MonthNavigator({
 
       {/* 우측: 네비게이션 버튼들 */}
       <div className="flex items-center gap-1">
+        {/* + 할일 추가 버튼 */}
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="btn btn-ghost btn-sm btn-circle"
+            aria-label="할일 추가"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={handlePrevMonth}
           className="btn btn-ghost btn-sm btn-circle"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, Check, CalendarPlus } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -52,6 +52,26 @@ export default function QuickLogModal({
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // isOpen이 true로 변경될 때 state 리셋
+  useEffect(() => {
+    if (isOpen) {
+      // mode 리셋
+      setMode(prefillStartTime ? 'detailed' : 'select');
+
+      // 폼 상태 리셋
+      setTitle('');
+      setDuration(30);
+      setShowSuccess(false);
+
+      // startTime 리셋
+      if (prefillStartTime) {
+        setStartTime(format(prefillStartTime, 'HH:mm'));
+      } else {
+        setStartTime(format(subMinutes(new Date(), 30), 'HH:mm'));
+      }
+    }
+  }, [isOpen, prefillStartTime]);
 
   // 시작 시간과 소요 시간으로 종료 시간 계산
   const calculateEndTime = (start: string, durationMinutes: number): Date => {
