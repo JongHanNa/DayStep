@@ -594,6 +594,24 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       return;
     }
 
+    // 미룸 상태인 경우: 미룸 완료 항목 존재 여부 확인
+    if (item.exclusionReason === 'postponed') {
+      // recurrenceInstances에서 연결된 actual-completion 항목 찾기
+      const hasActualCompletion = recurrenceInstances.some(inst =>
+        inst.id?.endsWith('-actual-completion') &&
+        inst.recurrenceSourceId === item.recurrenceSourceId &&
+        inst.recurrenceOccurrenceDate === item.recurrenceOccurrenceDate
+      );
+
+      if (hasActualCompletion) {
+        toast({
+          title: '미룸 완료 항목이 있어요',
+          description: '미룸 완료 항목에서 되돌려주세요',
+        });
+        return;
+      }
+    }
+
     try {
       // DB에서 exclusion 삭제
       await deleteTodoExclusionWithJWT(
@@ -611,7 +629,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     } catch (error) {
       console.error('제외 취소 실패:', error);
     }
-  }, [userId]);
+  }, [userId, toast, recurrenceInstances]);
 
   // 미루기 옵션 시트 열기
   const handleOpenPostponeSheet = useCallback((item: TimelineItem) => {
