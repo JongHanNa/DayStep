@@ -719,11 +719,29 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const handleEditSave = useCallback(async (formData: TodoFormData) => {
     if (!editingTodo) return;
 
+    // HH:mm 형식을 ISO timestamp로 변환 (handleRecurringSave와 동일한 로직)
+    const formatTimeToISO = (timeStr: string | undefined, baseDate: Date): string | undefined => {
+      if (!timeStr) return undefined;
+      if (timeStr.includes('T')) return timeStr; // 이미 ISO 형식
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const date = new Date(baseDate);
+      date.setHours(hours, minutes, 0, 0);
+      return date.toISOString();
+    };
+
+    const baseDate = formData.scheduledDate || new Date();
+
     await updateTodo(editingTodo.id, {
       title: formData.title,
       icon: formData.icon,
       color: formData.color,
-      start_time: formData.scheduledDate?.toISOString(),
+      // 시간 포함 여부에 따라 start_time 결정
+      start_time: formData.startTime
+        ? formatTimeToISO(formData.startTime, baseDate)
+        : formData.scheduledDate?.toISOString(),
+      end_time: formData.endTime
+        ? formatTimeToISO(formData.endTime, baseDate)
+        : undefined,
       schedule_type: formData.scheduleType,
       completed: formData.completed,
       recurrence_pattern: formData.recurrencePattern as any,
