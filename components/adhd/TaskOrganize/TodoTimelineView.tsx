@@ -1983,12 +1983,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                                 {/* 미룸 생성 항목 전용 선택지 (미룸완료 + 원래대로 복원) */}
                                 {(() => {
-                                  // 미룸 생성 항목 식별: 독립 할일(parentRecurringTodoId 있음) + 미완료 + 시간 지남
+                                  // 미룸 생성 항목 식별: 독립 할일(parentRecurringTodoId 있음) + 미완료
+                                  // 미래 시간으로 미뤄진 항목도 포함 (timeStatus?.status === 'missed' 조건 제거)
                                   const isPostponedCreatedItem =
                                     item.originalTodo?.parentRecurringTodoId &&
                                     !item.completed &&
-                                    !item.isRecurrenceInstance &&
-                                    timeStatus?.status === 'missed';
+                                    !item.isRecurrenceInstance;
 
                                   if (isPostponedCreatedItem) {
                                     // 원래 시간 범위 텍스트 생성
