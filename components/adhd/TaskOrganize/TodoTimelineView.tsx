@@ -71,8 +71,6 @@ interface TimelineItem {
   postponedToStartTime?: string; // 미룸 목적지 시작 시간 (뱃지 표시용)
   // 원본 Todo 참조 (편집 모달용)
   originalTodo?: Todo;
-  // 시간 override 여부 (반복 아이콘 표시 제어용)
-  hasTimeOverride?: boolean;
 }
 
 // 요일 약자
@@ -275,8 +273,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             originalEndTime: data.original_end_time || undefined, // 미룸 완료 시 원래 종료 시간
             postponedToTime: data.postponed_to_time || undefined, // 미룸 목적지 종료 시간
             postponedToStartTime: data.postponed_to_start_time || undefined, // 미룸 목적지 시작 시간
-            originalTodo: originalTodo,
-            hasTimeOverride: !!data.time_override?.start_time // 시간 override 여부
+            originalTodo: originalTodo
           };
         });
 
@@ -774,10 +771,33 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 편집 삭제
   const handleEditDelete = useCallback(async () => {
     if (!editingTodo) return;
-    await deleteTodo(editingTodo.id);
+
+    // 반복 인스턴스인 경우: 원본 삭제하지 않고 해당 날짜만 제외 처리
+    if (editingItem?.isRecurrenceInstance && editingItem?.recurrenceSourceId && editingItem?.recurrenceOccurrenceDate) {
+      try {
+        await createTodoExclusionWithJWT({
+          parent_todo_id: editingItem.recurrenceSourceId,
+          excluded_date: editingItem.recurrenceOccurrenceDate,
+          user_id: userId,
+          exclusion_reason: 'deleted'
+        });
+        console.log('✅ 반복 인스턴스 제외 처리 완료:', {
+          sourceId: editingItem.recurrenceSourceId,
+          date: editingItem.recurrenceOccurrenceDate
+        });
+        await fetchAllTodos();
+      } catch (error) {
+        console.error('❌ 반복 인스턴스 제외 처리 실패:', error);
+      }
+    } else {
+      // 일반 할일 또는 "이것만 변경"으로 생성된 독립 할일: 직접 삭제
+      await deleteTodo(editingTodo.id);
+    }
+
     setEditingTodo(null);
     setEditFormData(null);
-  }, [editingTodo, deleteTodo]);
+    setEditingItem(null);
+  }, [editingTodo, editingItem, deleteTodo, fetchAllTodos, userId]);
 
   // 반복 할일 변경 저장
   const handleRecurringSave = useCallback(async (
@@ -1649,8 +1669,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 )}
 
                                 <div className="flex items-center gap-1.5">
-                                  {/* 반복 아이콘 - override가 있는 인스턴스는 표시하지 않음 */}
-                                  {item.isRecurrenceInstance && !item.hasTimeOverride && (
+                                  {/* 반복 아이콘 */}
+                                  {item.isRecurrenceInstance && (
                                     <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
                                   )}
                                   <span className={`text-sm ${

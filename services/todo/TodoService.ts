@@ -21,9 +21,6 @@ import {
   updateWithJWT
 } from '@/lib/supabaseWebViewHelper';
 import {
-  createTimeOverrideWithJWT,
-  updateTimeOverrideWithJWT,
-  queryTimeOverridesWithJWT,
   deleteTimeOverridesFromDateWithJWT,
   deleteAllTimeOverridesWithJWT
 } from '@/lib/supabase/time-overrides';
@@ -1497,7 +1494,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               break; // 변환 완료, 추가 override 처리 불필요
             }
 
-            // 🔧 기존 로직: 반복 할일의 특정 날짜 인스턴스만 업데이트 (todo_time_overrides 사용)
+            // 🔧 새 로직: 반복 인스턴스 "이것만 변경" → exclusion + 새 독립 할일 생성
             if (!capturedOccurrenceDate) {
               throw new ServiceError(
                 '특정 인스턴스 업데이트에는 날짜 정보가 필요합니다.',
@@ -1508,48 +1505,52 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
             }
 
             // 날짜를 YYYY-MM-DD 형식으로 변환 (로컬 날짜 기준)
-            const overrideDate = format(capturedOccurrenceDate, 'yyyy-MM-dd');
+            const excludeDate = format(capturedOccurrenceDate, 'yyyy-MM-dd');
 
             // 🆕 제목 변경 정보 추출 (handleRecurringUpdate에서 _titleChange로 전달됨)
             const titleChange = (updates as any)._titleChange;
-            const newTitleForOverride = titleChange?.newTitle;
+            const newTitleForInstance = titleChange?.newTitle;
 
-            // 기존 override 확인
-            const existingOverrides = await queryTimeOverridesWithJWT(
-              id,
-              userId,
-              { start: overrideDate, end: overrideDate }
-            );
-
-            // override 데이터 구성 (시간과 제목 모두 선택적)
-            const overrideUpdateData: { start_time?: string; end_time?: string; title?: string } = {};
-            if (updates.start_time) overrideUpdateData.start_time = updates.start_time;
-            if (updates.end_time) overrideUpdateData.end_time = updates.end_time;
-            if (newTitleForOverride) overrideUpdateData.title = newTitleForOverride;
-
-            console.log('🔍 [TodoService] 인스턴스 override 데이터:', {
-              overrideDate,
-              overrideUpdateData,
-              hasTitleChange: !!newTitleForOverride,
-              hasTimeChange: !!(updates.start_time || updates.end_time)
+            console.log('🔍 [TodoService] "이것만 변경" - 독립 할일 생성:', {
+              excludeDate,
+              newTitle: newTitleForInstance,
+              newStartTime: updates.start_time,
+              newEndTime: updates.end_time
             });
 
-            if (existingOverrides.length > 0) {
-              // 업데이트
-              await updateTimeOverrideWithJWT(id, overrideDate, overrideUpdateData);
-            } else {
-              // 생성 - 시간이나 제목 중 하나라도 있으면 생성
-              if (Object.keys(overrideUpdateData).length > 0) {
-                await createTimeOverrideWithJWT({
-                  parent_todo_id: id,
-                  user_id: userId,
-                  override_date: overrideDate,
-                  start_time: updates.start_time,
-                  end_time: updates.end_time,
-                  title: newTitleForOverride
-                });
-              }
-            }
+            // 1. 원본 반복에서 해당 날짜 제외
+            await createTodoExclusionWithJWT({
+              parent_todo_id: id,
+              excluded_date: excludeDate,
+              user_id: userId,
+              exclusion_reason: 'deleted'
+            });
+            console.log('✅ [TodoService] 해당 날짜 제외 완료:', { excludeDate });
+
+            // 2. 새 독립 할일 생성 (원본 속성 복사 + 변경된 시간/제목)
+            const newTodoData: TodoInsert = {
+              title: newTitleForInstance || todo.title,
+              start_time: updates.start_time || todo.startTime?.toISOString() || null,
+              end_time: updates.end_time || todo.endTime?.toISOString() || null,
+              schedule_type: todo.scheduleType || 'timed',
+              icon: todo.icon,
+              color: todo.color,
+              user_id: userId,
+              // 반복 설정 없음 (독립 할일)
+              recurrence_pattern: 'none',
+              recurrence_interval: undefined,
+              recurrence_end_date: undefined,
+              recurrence_count: undefined,
+              recurrence_days_of_week: undefined,
+              // 기타 속성
+              completed: false,
+              order_index: todo.orderIndex || 0,
+              joyful_people_ids: todo.joyfulPeopleIds || [],
+              shameful_people_ids: todo.shamefulPeopleIds || [],
+            };
+
+            const newTodo = await createTodoWithJWT(newTodoData, userId);
+            console.log('✅ [TodoService] 독립 할일 생성 완료:', { newTodoId: newTodo.id });
             break;
 
           case 'future':
