@@ -362,6 +362,37 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 완료 토글 (일반 할일 vs 반복 인스턴스 분기)
   const handleToggleComplete = useCallback(async (item: TimelineItem) => {
+    // 🆕 "미룸 완료" 항목의 완료 취소: 삭제와 같은 동작 (원본 복원)
+    if (item.id?.endsWith('-actual-completion') && item.completed) {
+      if (item.recurrenceSourceId && item.recurrenceOccurrenceDate) {
+        try {
+          // 1. todo_completions에서 완료 기록 삭제
+          await TodoCompletionsService.markRecurrenceAsIncomplete(
+            item.recurrenceSourceId,
+            userId,
+            item.recurrenceOccurrenceDate
+          );
+
+          // 2. exclusion 삭제 (원본 복원)
+          await deleteTodoExclusionWithJWT(
+            item.recurrenceSourceId,
+            item.recurrenceOccurrenceDate,
+            userId
+          );
+
+          console.log('✅ 미룸 완료 항목 미완료 처리 → 원본 복원:', {
+            sourceId: item.recurrenceSourceId,
+            date: item.recurrenceOccurrenceDate
+          });
+
+          await fetchAllTodos();
+        } catch (error) {
+          console.error('❌ 미룸 완료 항목 미완료 처리 실패:', error);
+        }
+      }
+      return;
+    }
+
     if (item.isRecurrenceInstance && item.recurrenceSourceId && item.recurrenceOccurrenceDate) {
       // 반복 인스턴스: todo_completions 테이블 사용
       try {
@@ -399,7 +430,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       // 일반 할일: completed 필드 토글
       await updateTodo(item.originalTodo.id, { completed: !item.completed });
     }
-  }, [userId, updateTodo]);
+  }, [userId, updateTodo, fetchAllTodos]);
 
   // 삭제 처리
   const handleDelete = useCallback(async (todoId: string) => {
