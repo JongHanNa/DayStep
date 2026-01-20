@@ -89,12 +89,6 @@ export default function HomePage() {
     }
   };
 
-  const handleCare = () => {
-    if (user?.id) {
-      enterCareMode(user.id);
-    }
-  };
-
   const handleRelationshipInsights = () => {
     if (user?.id) {
       enterRelationshipInsightsMode(user.id);
@@ -151,7 +145,6 @@ export default function HomePage() {
     <ADHDEntryScreen
       userId={user?.id}
       onExecute={handleExecute}
-      onCare={handleCare}
       onRelationshipInsights={handleRelationshipInsights}
       onFuel={handleFuel}
     />

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, BookHeart, HelpCircle, Lightbulb, Sun, Moon, Settings, Crown, Zap } from 'lucide-react';
+import { BookHeart, HelpCircle, Lightbulb, Sun, Moon, Settings, Crown, Zap } from 'lucide-react';
 import QuickLogModal from './QuickLogModal';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
@@ -16,7 +16,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 interface ADHDEntryScreenProps {
   userId?: string;
   onExecute: () => void;
-  onCare: () => void;
   onRelationshipInsights: () => void;
   onFuel: (noteId?: string) => void;
 }
@@ -28,7 +27,7 @@ interface ADHDEntryScreenProps {
  * - 실행하기: 단일 할일 추천 모드로 진입
  * - 정리하기: 기존 GraphView로 진입
  */
-export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onExecute, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
   const router = useRouter();
   const { awakeningSentence } = useADHDModeStore();
   const { showDescriptions, setShowDescriptions } = useSettingsStore();
@@ -40,13 +39,9 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
 
   // 버튼 설명 데이터 (ADHD 어려움 → 해결책 구조)
   const buttonDescriptions = {
-    care: {
-      title: '소중한 사람, 놓치지 않게',
-      description: '성인 ADHD의 어려움: 연락 깜빡함 → 오해 → 관계 악화\n해결책: 연락할 때가 되면 알려줘요'
-    },
-    insights: {
-      title: '대화 내용, 다시 찾을 수 있게',
-      description: '성인 ADHD의 어려움: 뭘 들었는지 기억 안 남 → 같은 질문 반복\n해결책: 기록해두면 언제든 찾을 수 있어요'
+    relationship: {
+      title: '관계 기록',
+      description: '성인 ADHD의 어려움: 연락 깜빡함, 대화 내용 기억 안 남\n해결책: 소식을 기록하고, 연락할 때가 되면 알려줘요'
     },
     learning: {
       title: '복잡한 머릿속, 정리해줄게',
@@ -111,7 +106,7 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
         {userId && (
           <PriorityReminderBanner
             userId={userId}
-            onContactClick={onCare}
+            onContactClick={onRelationshipInsights}
           />
         )}
 
@@ -140,16 +135,16 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
 
         {/* 선택 버튼들 */}
         <div className="flex flex-col gap-4">
-          {/* 소중한 사람, 놓치지 않게 버튼 */}
+          {/* 관계 기록 버튼 (통합) */}
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={onCare}
+              onClick={onRelationshipInsights}
               className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-pink-500 text-white border-none hover:bg-pink-600"
             >
-              <MessageCircle className="w-7 h-7" />
-              <span className="text-xl font-semibold">소중한 사람, 놓치지 않게</span>
+              <BookHeart className="w-7 h-7" />
+              <span className="text-xl font-semibold">관계 기록</span>
             </motion.button>
             {!showDescriptions && (
               <Popover>
@@ -159,47 +154,15 @@ export default function ADHDEntryScreen({ userId, onExecute, onCare, onRelations
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
-                  {buttonDescriptions.care.description}
+                  {buttonDescriptions.relationship.description}
                 </PopoverContent>
               </Popover>
             )}
             {showDescriptions && (
               <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 연락 깜빡함 → 오해 → 관계 악화
+                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 연락 깜빡함, 대화 내용 기억 안 남
                 <br />
-                <span className="text-base-content/70">해결책:</span> 연락할 때가 되면 알려줘요
-              </p>
-            )}
-          </div>
-
-          {/* 대화 내용, 다시 찾을 수 있게 버튼 */}
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onRelationshipInsights}
-              className="btn btn-ghost btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
-            >
-              <BookHeart className="w-7 h-7" />
-              <span className="text-xl font-semibold">대화 내용, 다시 찾을 수 있게</span>
-            </motion.button>
-            {!showDescriptions && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="absolute top-2 right-2 p-1 rounded-full bg-base-300 hover:bg-base-content/20 transition-colors">
-                    <HelpCircle className="w-4 h-4 text-base-content/60" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
-                  {buttonDescriptions.insights.description}
-                </PopoverContent>
-              </Popover>
-            )}
-            {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 뭘 들었는지 기억 안 남 → 같은 질문 반복
-                <br />
-                <span className="text-base-content/70">해결책:</span> 기록해두면 언제든 찾을 수 있어요
+                <span className="text-base-content/70">해결책:</span> 소식을 기록하고, 연락할 때가 되면 알려줘요
               </p>
             )}
           </div>
