@@ -1456,7 +1456,39 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
 
         switch (updateType) {
           case 'this':
-            // 🔧 수정: 특정 날짜 인스턴스만 업데이트 (todo_time_overrides 사용)
+            // 🆕 일반 할일이 반복 할일로 변환되는 경우 감지
+            const isConvertingToRecurring =
+              (!todo.recurrencePattern || todo.recurrencePattern === 'none') &&
+              updateData.recurrence_pattern &&
+              updateData.recurrence_pattern !== 'none';
+
+            if (isConvertingToRecurring) {
+              console.log('🔄 [TodoService] 일반 할일 → 반복 할일 변환:', {
+                todoId: id,
+                currentPattern: todo.recurrencePattern,
+                newPattern: updateData.recurrence_pattern
+              });
+
+              // 원본 할일에 반복 설정 저장 (todos 테이블 직접 업데이트)
+              await this.executeQuery(
+                this.client
+                  .from('todos')
+                  .update({
+                    recurrence_pattern: updateData.recurrence_pattern,
+                    recurrence_interval: updateData.recurrence_interval ?? 1,
+                    recurrence_end_date: updateData.recurrence_end_date,
+                    recurrence_count: updateData.recurrence_count,
+                    recurrence_days_of_week: updateData.recurrence_days_of_week,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', id)
+                  .select(),
+                { id, action: 'convertToRecurring' }
+              );
+              break; // 변환 완료, 추가 override 처리 불필요
+            }
+
+            // 🔧 기존 로직: 반복 할일의 특정 날짜 인스턴스만 업데이트 (todo_time_overrides 사용)
             if (!capturedOccurrenceDate) {
               throw new ServiceError(
                 '특정 인스턴스 업데이트에는 날짜 정보가 필요합니다.',
