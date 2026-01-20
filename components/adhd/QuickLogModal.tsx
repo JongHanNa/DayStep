@@ -15,6 +15,8 @@ interface QuickLogModalProps {
   prefillStartTime?: Date;
   /** 사전 설정된 종료 시간 */
   prefillEndTime?: Date;
+  /** 초기 모드 설정 (+ 버튼: 'new', 빈 시간 클릭: 'detailed') */
+  initialMode?: 'detailed' | 'new';
 }
 
 type ModalMode = 'select' | 'detailed' | 'new';
@@ -31,12 +33,14 @@ export default function QuickLogModal({
   onClose,
   prefillStartTime,
   prefillEndTime,
+  initialMode,
 }: QuickLogModalProps) {
   const { createTodo } = useTodoStore();
 
   // 모달 모드: select(선택), detailed(상세), new(새 일정)
+  // initialMode가 있으면 사용, 없으면 prefillStartTime 기반 기존 로직
   const [mode, setMode] = useState<ModalMode>(
-    prefillStartTime ? 'detailed' : 'select'
+    initialMode || (prefillStartTime ? 'detailed' : 'select')
   );
 
   // 상세 입력 폼 상태
@@ -56,8 +60,8 @@ export default function QuickLogModal({
   // isOpen이 true로 변경될 때 state 리셋
   useEffect(() => {
     if (isOpen) {
-      // mode 리셋
-      setMode(prefillStartTime ? 'detailed' : 'select');
+      // mode 리셋 - initialMode가 있으면 사용, 없으면 기존 로직
+      setMode(initialMode || (prefillStartTime ? 'detailed' : 'select'));
 
       // 폼 상태 리셋
       setTitle('');
@@ -71,7 +75,7 @@ export default function QuickLogModal({
         setStartTime(format(subMinutes(new Date(), 30), 'HH:mm'));
       }
     }
-  }, [isOpen, prefillStartTime]);
+  }, [isOpen, prefillStartTime, initialMode]);
 
   // 시작 시간과 소요 시간으로 종료 시간 계산
   const calculateEndTime = (start: string, durationMinutes: number): Date => {
@@ -151,7 +155,7 @@ export default function QuickLogModal({
 
   // 모달 닫기 (상태 초기화)
   const handleClose = () => {
-    setMode(prefillStartTime ? 'detailed' : 'select');
+    setMode(initialMode || (prefillStartTime ? 'detailed' : 'select'));
     setTitle('');
     setStartTime(format(subMinutes(new Date(), 30), 'HH:mm'));
     setDuration(30);

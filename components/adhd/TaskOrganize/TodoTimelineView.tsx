@@ -137,6 +137,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 빈 시간 사후 기록 모달 상태
   const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);
   const [quickLogPrefillTime, setQuickLogPrefillTime] = useState<{ start: Date; end: Date } | null>(null);
+  const [quickLogInitialMode, setQuickLogInitialMode] = useState<'detailed' | 'new' | undefined>(undefined);
 
   // 빈 시간 로그 중복 방지용 ref
   const loggedOngoingTasksRef = useRef<Set<string>>(new Set());
@@ -883,6 +884,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       start: gap.startTime,
       end: gap.endTime
     });
+    setQuickLogInitialMode('detailed'); // 빈 시간 클릭 → 사후 기록 모드
     setIsQuickLogModalOpen(true);
   }, []);
 
@@ -896,6 +898,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       start: startDate,
       end: endDate
     });
+    setQuickLogInitialMode('new'); // + 버튼 클릭 → 새 일정 모드
     setIsQuickLogModalOpen(true);
   }, [navigatedMonth]);
 
@@ -1539,9 +1542,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           onClose={() => {
             setIsQuickLogModalOpen(false);
             setQuickLogPrefillTime(null);
+            setQuickLogInitialMode(undefined);
           }}
           prefillStartTime={quickLogPrefillTime?.start}
           prefillEndTime={quickLogPrefillTime?.end}
+          initialMode={quickLogInitialMode}
         />
       </div>
     );
@@ -2262,9 +2267,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         onClose={() => {
           setIsQuickLogModalOpen(false);
           setQuickLogPrefillTime(null);
+          setQuickLogInitialMode(undefined);
         }}
         prefillStartTime={quickLogPrefillTime?.start}
         prefillEndTime={quickLogPrefillTime?.end}
+        initialMode={quickLogInitialMode}
       />
 
       {/* 미루기 옵션 시트 */}
