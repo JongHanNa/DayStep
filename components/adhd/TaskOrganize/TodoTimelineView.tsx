@@ -518,13 +518,21 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       return;
     }
 
-    // 미룸으로 생성된 독립 할일(미완료)은 편집 모달 열지 않음
-    const isPostponedIndependent = item.originalTodo?.parentRecurringTodoId && !item.completed;
-    if (isPostponedIndependent) {
-      toast({
-        title: '미룸 할일',
-        description: '"미룸완료" 또는 "원래대로 복원"을 사용하세요',
-      });
+    // 미룸으로 생성된 독립 할일은 편집 모달 열지 않음
+    if (item.originalTodo?.parentRecurringTodoId) {
+      if (item.completed) {
+        // 완료된 미룸 독립 할일
+        toast({
+          title: '완료된 미룸 항목',
+          description: '체크 버튼을 눌러 되돌릴 수 있어요',
+        });
+      } else {
+        // 미완료 미룸 독립 할일
+        toast({
+          title: '미룸 할일',
+          description: '"미룸완료" 또는 "원래대로 복원"을 사용하세요',
+        });
+      }
       return;
     }
 
@@ -2063,8 +2071,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 })()}
                               </div>
 
-                              {/* 삭제 버튼 (반복 인스턴스는 삭제 불가) */}
-                              {!item.isRecurrenceInstance && (
+                              {/* 삭제 버튼 (반복 인스턴스, 미룸 생성 항목은 삭제 불가) */}
+                              {!item.isRecurrenceInstance && !item.originalTodo?.parentRecurringTodoId && (
                                 <button
                                   onClick={() => setDeletingTodoId(item.id)}
                                   className="btn btn-ghost btn-xs rounded-full text-error opacity-0 group-hover:opacity-100"
