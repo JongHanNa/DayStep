@@ -85,7 +85,7 @@ const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
  * - 맥락: 프로젝트/목표 배지로 어떤 목표를 위한 건지 표시
  */
 export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
-  const { todos, fetchAllTodos, updateTodo, deleteTodo, updateRecurringTodo } = useTodoStore();
+  const { todos, fetchAllTodos, updateTodo, deleteTodo, updateRecurringTodo, deleteRecurringTodo } = useTodoStore();
   const { people, loadPeople } = useCherishedPeopleStore();
   const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -992,6 +992,36 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setEditFormData(null);
     setEditingItem(null);
   }, [editingTodo, editingItem, deleteTodo, fetchAllTodos, userId]);
+
+  // 반복 할일 삭제 (옵션: 이 일정만/이후 모든 일정/모든 일정)
+  const handleRecurringDelete = useCallback(async (
+    deleteType: 'this' | 'future' | 'all'
+  ) => {
+    if (!editingTodo || !editingItem) return;
+
+    // 반복 인스턴스인 경우 원본 ID와 발생 날짜 추출
+    const isInstance = editingItem.isRecurrenceInstance;
+    const sourceId = isInstance ? editingItem.recurrenceSourceId : editingTodo.id;
+    const occurrenceDate = isInstance && editingItem.recurrenceOccurrenceDate
+      ? editingItem.recurrenceOccurrenceDate
+      : undefined;
+
+    if (!sourceId) {
+      console.error('반복 할일 ID를 찾을 수 없습니다.');
+      return;
+    }
+
+    try {
+      await deleteRecurringTodo(sourceId, deleteType, occurrenceDate);
+      await fetchAllTodos();
+    } catch (error) {
+      console.error('반복 할일 삭제 실패:', error);
+    }
+
+    setEditingTodo(null);
+    setEditFormData(null);
+    setEditingItem(null);
+  }, [editingTodo, editingItem, deleteRecurringTodo, fetchAllTodos]);
 
   // 반복 할일 변경 저장
   const handleRecurringSave = useCallback(async (
@@ -2145,6 +2175,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         onSave={handleEditSave}
         onChange={setEditFormData}
         onDelete={handleEditDelete}
+        onRecurringDelete={handleRecurringDelete}
         onRecurringSave={handleRecurringSave}
         originalTitle={editingItem?.title}
         originalStartTime={editingItem?.startTime?.toISOString()}
