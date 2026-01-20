@@ -509,6 +509,15 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           updated_at: new Date().toISOString(),
         };
 
+        // 🔍 디버깅: recurrence 필드 포함 여부 확인
+        console.log('🔍 [TodoService.update] updateData:', {
+          id,
+          hasRecurrencePattern: 'recurrence_pattern' in updateData,
+          recurrencePattern: updateData.recurrence_pattern,
+          recurrenceInterval: updateData.recurrence_interval,
+          updateDataKeys: Object.keys(updateData)
+        });
+
         // 🔑 JWT 방식으로 할일 업데이트 (Capacitor 환경 호환)
         const data = await updateWithJWT('todos', 
           { column: 'id', operator: 'eq', value: id },

@@ -27,6 +27,7 @@ interface TodoEditModalProps {
   originalTitle?: string; // 원본 제목 (제목 변경 감지용)
   originalStartTime?: string; // 원본 시작 시간 (시간 변경 감지용)
   originalEndTime?: string; // 원본 종료 시간 (시간 변경 감지용)
+  originalRecurrencePattern?: string; // 원본 반복 패턴 (일반→반복 변환 감지용)
   occurrenceDate?: string; // 반복 인스턴스의 날짜 (YYYY-MM-DD)
   // 선택적 props (수집 페이지 등에서 사용)
   notes?: Note[];
@@ -62,6 +63,7 @@ export default function TodoEditModal({
   originalTitle,
   originalStartTime,
   originalEndTime,
+  originalRecurrencePattern,
   occurrenceDate,
   notes,
   todos = [],
@@ -121,19 +123,21 @@ export default function TodoEditModal({
   const handleSaveClick = useCallback(() => {
     if (!todo) return;
 
-    const isRecurring = todo.recurrencePattern && todo.recurrencePattern !== 'none';
+    // 원본이 반복 할일이었는지 확인 (폼 값이 아닌 원본 값 사용)
+    // 일반 할일 → 반복 할일로 변환 시 모달이 뜨지 않도록 함
+    const wasRecurring = originalRecurrencePattern && originalRecurrencePattern !== 'none';
     const titleChanged = hasTitleChanged();
     const timeChanged = hasTimeChanged();
 
-    // 반복 할일이고 제목 또는 시간이 변경된 경우 → 다이얼로그 표시
-    if (isRecurring && (titleChanged || timeChanged) && onRecurringSave) {
+    // 원본이 반복 할일이고 제목 또는 시간이 변경된 경우에만 다이얼로그 표시
+    if (wasRecurring && (titleChanged || timeChanged) && onRecurringSave) {
       setChangedFields({ title: titleChanged, time: timeChanged });
       setShowTimeChangeDialog(true);
     } else {
-      // 일반 저장
+      // 일반 저장 (일반 → 반복 변환 포함)
       onSave(todo);
     }
-  }, [todo, hasTitleChanged, hasTimeChanged, onRecurringSave, onSave]);
+  }, [todo, originalRecurrencePattern, hasTitleChanged, hasTimeChanged, onRecurringSave, onSave]);
 
   // 반복 시간 변경 확인 핸들러
   const handleTimeChangeConfirm = useCallback(async (updateType: 'this' | 'future' | 'all') => {

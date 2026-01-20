@@ -325,9 +325,37 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       return;
     }
 
+    // 🔍 디버깅: 반복 패턴 변환 조건 확인 (v6)
+    console.log('🔍 [handleSubmit] 디버깅:', {
+      isEditMode,
+      editingTodoId: editingTodo?.id,
+      editingTodoPattern: editingTodo?.recurrence_pattern,  // ← 핵심!
+      valuesRecurrencePattern: values.recurrencePattern,
+      condition1_noPattern: !editingTodo?.recurrence_pattern,
+      condition2_isNone: editingTodo?.recurrence_pattern === 'none',
+    });
+
+    // ✅ 일반 할일 → 반복 할일 변환 여부 먼저 확인
+    const isConvertingToRecurring =
+      isEditMode && editingTodo &&
+      (!editingTodo.recurrence_pattern || editingTodo.recurrence_pattern === 'none') &&
+      values.recurrencePattern &&
+      values.recurrencePattern !== 'none';
+
+    console.log('🔍 [handleSubmit] isConvertingToRecurring 결과:', isConvertingToRecurring);
+
+    if (isConvertingToRecurring) {
+      console.log('🔄 [handleSubmit] 일반 할일 → 반복 할일 변환 (모달 스킵):', {
+        todoId: editingTodo?.id,
+        oldPattern: editingTodo?.recurrence_pattern,
+        newPattern: values.recurrencePattern
+      });
+    }
+
     // 반복 할일 수정 시 제목/시간 변경 확인 (매일, 매주, 매달 패턴)
+    // ⚠️ 일반 → 반복 변환 케이스는 제외 (모달 표시 안 함)
     if (isEditMode && editingTodo && editingTodo.recurrence_pattern &&
-        editingTodo.recurrence_pattern !== 'none') {
+        editingTodo.recurrence_pattern !== 'none' && !isConvertingToRecurring) {
 
       // 제목 변경 감지
       const originalTodoTitle = editingTodo.title || '';
@@ -547,6 +575,21 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       let createdTodoId: string | null = null;
       
       if (isEditMode && editingTodo?.id) {
+        // 일반 할일 → 반복 할일 변환 여부 로깅 (디버깅용)
+        const isConvertingToRecurring =
+          (!editingTodo.recurrence_pattern || editingTodo.recurrence_pattern === 'none') &&
+          todoData.recurrence_pattern &&
+          todoData.recurrence_pattern !== 'none';
+
+        if (isConvertingToRecurring) {
+          console.log('🔄 [handleSubmit] 일반 할일 → 반복 할일 변환:', {
+            todoId: editingTodo.id,
+            oldPattern: editingTodo.recurrence_pattern,
+            newPattern: todoData.recurrence_pattern
+          });
+        }
+
+        // 항상 updateTodo 사용 (반복 설정 변경 포함)
         await updateTodo(editingTodo.id, todoData);
       } else {
         const createdTodo = await createTodo(todoData);
@@ -628,7 +671,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       setIsSubmitting(false);
     }
   }, [
-    isAuthenticated, user?.id, values, createTodo, updateTodo, toast, 
+    isAuthenticated, user?.id, values, createTodo, updateTodo, toast,
     onOpenChange, isEditMode, editingTodo?.id, setIsSubmitting
   ]);
 
@@ -823,9 +866,8 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
         todoData.end_time = newTimeForUpdate.end?.toISOString() || addMinutes(newTimeForUpdate.start, 60).toISOString();
       }
 
-      // 반복 설정
-      if (values.showRecurrenceSettings &&
-          values.recurrencePattern &&
+      // 반복 설정 - showRecurrenceSettings 조건 제거 (handleRecurringUpdate 호출 시점에는 이미 반복 설정 변경이 확정됨)
+      if (values.recurrencePattern &&
           values.recurrencePattern !== 'none') {
         todoData.recurrence_pattern = values.recurrencePattern;
         todoData.recurrence_interval = values.recurrenceInterval;

@@ -1719,6 +1719,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         originalTitle={editingItem?.title}
         originalStartTime={editingItem?.startTime?.toISOString()}
         originalEndTime={editingItem?.endTime?.toISOString()}
+        // 편집 중인 할일의 최신 recurrencePattern을 스토어에서 조회
+        // (일반→반복 변환 후 재편집 시 최신 값 반영을 위해)
+        originalRecurrencePattern={
+          editingTodo
+            ? (todos.find(t => t.id === editingTodo.id)?.recurrencePattern ?? editingTodo.recurrencePattern)
+            : undefined
+        }
         occurrenceDate={editingItem?.recurrenceOccurrenceDate}
         headerTitle="할일 편집"
         todoId={editingTodo?.id}
