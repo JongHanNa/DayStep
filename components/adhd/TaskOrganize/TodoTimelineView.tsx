@@ -71,6 +71,8 @@ interface TimelineItem {
   postponedToStartTime?: string; // 미룸 목적지 시작 시간 (뱃지 표시용)
   // 원본 Todo 참조 (편집 모달용)
   originalTodo?: Todo;
+  // 시간 override 여부 (반복 아이콘 표시 제어용)
+  hasTimeOverride?: boolean;
 }
 
 // 요일 약자
@@ -273,7 +275,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             originalEndTime: data.original_end_time || undefined, // 미룸 완료 시 원래 종료 시간
             postponedToTime: data.postponed_to_time || undefined, // 미룸 목적지 종료 시간
             postponedToStartTime: data.postponed_to_start_time || undefined, // 미룸 목적지 시작 시간
-            originalTodo: originalTodo
+            originalTodo: originalTodo,
+            hasTimeOverride: !!data.time_override?.start_time // 시간 override 여부
           };
         });
 
@@ -445,7 +448,18 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     if (item.originalTodo) {
       setEditingTodo(item.originalTodo);
       setEditingItem(item); // 반복 인스턴스 정보 저장
-      setEditFormData(todoToFormData(item.originalTodo, item.isRecurrenceInstance));
+
+      const formData = todoToFormData(item.originalTodo, item.isRecurrenceInstance);
+      // 반복 인스턴스인 경우 인스턴스의 시간을 사용 (override 적용된 시간)
+      if (item.isRecurrenceInstance && item.startTime) {
+        formData.scheduledDate = item.startTime;
+        formData.startTime = item.startTime.toTimeString().slice(0, 5);
+        if (item.endTime) {
+          formData.endDate = item.endTime;
+          formData.endTime = item.endTime.toTimeString().slice(0, 5);
+        }
+      }
+      setEditFormData(formData);
     }
   }, [todoToFormData]);
 
@@ -1635,8 +1649,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 )}
 
                                 <div className="flex items-center gap-1.5">
-                                  {/* 반복 아이콘 */}
-                                  {item.isRecurrenceInstance && (
+                                  {/* 반복 아이콘 - override가 있는 인스턴스는 표시하지 않음 */}
+                                  {item.isRecurrenceInstance && !item.hasTimeOverride && (
                                     <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
                                   )}
                                   <span className={`text-sm ${
