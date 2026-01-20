@@ -562,7 +562,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     if (item.isRecurrenceInstance && item.exclusionReason === 'postponed') {
       toast({
         title: '미룬 할일',
-        description: '미룸 상태를 취소하려면 미뤄둔 할일에서 "원래대로 복원"을 눌러주세요',
+        description: '미룸 완료 항목의 체크 버튼을 눌러 되돌릴 수 있어요',
       });
       return;
     }
@@ -681,7 +681,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     if (item.exclusionReason === 'postponed') {
       toast({
         title: '미룬 할일',
-        description: '미룸 상태를 취소하려면 미뤄둔 할일에서 "원래대로 복원"을 눌러주세요',
+        description: '미룸 완료 항목의 체크 버튼을 눌러 되돌릴 수 있어요',
       });
       return;
     }
