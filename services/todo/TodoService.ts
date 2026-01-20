@@ -20,10 +20,7 @@ import {
   deleteAllTodoExclusionsWithJWT,
   updateWithJWT
 } from '@/lib/supabaseWebViewHelper';
-import {
-  deleteTimeOverridesFromDateWithJWT,
-  deleteAllTimeOverridesWithJWT
-} from '@/lib/supabase/time-overrides';
+// time-overrides 삭제됨 - 새 아키텍처에서는 독립 할일 방식 사용
 import { format } from 'date-fns';
 // getCurrentUser는 Capacitor 백업 세션 패턴으로 교체됨
 import { supabase } from '@/lib/supabase';
@@ -1565,10 +1562,9 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               );
             }
 
-            const fromDate = format(capturedOccurrenceDate, 'yyyy-MM-dd');
-            await deleteTimeOverridesFromDateWithJWT(id, fromDate, userId);
+            // time-overrides 삭제됨 - 새 아키텍처에서는 독립 할일 방식 사용
 
-            // 2. 원본 todos 업데이트
+            // 원본 todos 업데이트
             if (todo.parentTodoId) {
               await this.executeQuery(
                 this.client
@@ -1595,10 +1591,9 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
 
           case 'all':
             // 🔧 수정: 모든 일정 업데이트
-            // 1. 모든 override 삭제
-            await deleteAllTimeOverridesWithJWT(id, userId);
+            // time-overrides 삭제됨 - 새 아키텍처에서는 독립 할일 방식 사용
 
-            // 2. 원본 todos 업데이트
+            // 원본 todos 업데이트
             const parentId = todo.parentTodoId || id;
             await this.executeQuery(
               this.client

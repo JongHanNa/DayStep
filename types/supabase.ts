@@ -22,8 +22,11 @@ export type Database = {
           id: string
           interaction_date: string
           interaction_type: string
+          meeting_note: string | null
           person_id: string
           recent_news: string | null
+          request_from_them: string | null
+          request_to_them: string | null
           todo_id: string | null
           user_id: string
         }
@@ -34,8 +37,11 @@ export type Database = {
           id?: string
           interaction_date: string
           interaction_type: string
+          meeting_note?: string | null
           person_id: string
           recent_news?: string | null
+          request_from_them?: string | null
+          request_to_them?: string | null
           todo_id?: string | null
           user_id: string
         }
@@ -46,8 +52,11 @@ export type Database = {
           id?: string
           interaction_date?: string
           interaction_type?: string
+          meeting_note?: string | null
           person_id?: string
           recent_news?: string | null
+          request_from_them?: string | null
+          request_to_them?: string | null
           todo_id?: string | null
           user_id?: string
         }
@@ -202,6 +211,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_banner_pinned: boolean | null
           is_floating: boolean
           is_pinned: boolean
           is_processed: boolean | null
@@ -222,6 +232,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          is_banner_pinned?: boolean | null
           is_floating?: boolean
           is_pinned?: boolean
           is_processed?: boolean | null
@@ -242,6 +253,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          is_banner_pinned?: boolean | null
           is_floating?: boolean
           is_pinned?: boolean
           is_processed?: boolean | null
@@ -263,6 +275,7 @@ export type Database = {
         Row: {
           break_duration: number | null
           created_at: string
+          distraction_plan: Json | null
           duration: number | null
           end_time: string | null
           id: string
@@ -277,6 +290,7 @@ export type Database = {
         Insert: {
           break_duration?: number | null
           created_at?: string
+          distraction_plan?: Json | null
           duration?: number | null
           end_time?: string | null
           id?: string
@@ -291,6 +305,7 @@ export type Database = {
         Update: {
           break_duration?: number | null
           created_at?: string
+          distraction_plan?: Json | null
           duration?: number | null
           end_time?: string | null
           id?: string
@@ -464,6 +479,8 @@ export type Database = {
       }
       todo_completions: {
         Row: {
+          actual_end_time: string | null
+          actual_start_time: string | null
           completed_at: string | null
           completion_date: string
           created_at: string | null
@@ -473,6 +490,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
           completed_at?: string | null
           completion_date: string
           created_at?: string | null
@@ -482,6 +501,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
           completed_at?: string | null
           completion_date?: string
           created_at?: string | null
@@ -511,6 +532,7 @@ export type Database = {
         Row: {
           created_at: string | null
           excluded_date: string
+          exclusion_reason: string
           id: string
           parent_todo_id: string
           user_id: string
@@ -518,6 +540,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           excluded_date: string
+          exclusion_reason?: string
           id?: string
           parent_todo_id: string
           user_id: string
@@ -525,6 +548,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           excluded_date?: string
+          exclusion_reason?: string
           id?: string
           parent_todo_id?: string
           user_id?: string
@@ -578,50 +602,6 @@ export type Database = {
           },
         ]
       }
-      todo_overrides: {
-        Row: {
-          created_at: string | null
-          end_time: string | null
-          id: string
-          override_date: string
-          parent_todo_id: string
-          start_time: string | null
-          title: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          end_time?: string | null
-          id?: string
-          override_date: string
-          parent_todo_id: string
-          start_time?: string | null
-          title?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          end_time?: string | null
-          id?: string
-          override_date?: string
-          parent_todo_id?: string
-          start_time?: string | null
-          title?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "todo_overrides_parent_todo_id_fkey"
-            columns: ["parent_todo_id"]
-            isOneToOne: false
-            referencedRelation: "todos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       todos: {
         Row: {
           anytime_duration: number | null
@@ -638,7 +618,10 @@ export type Database = {
           is_relationship_task: boolean | null
           is_today_highlight: boolean
           joyful_people_ids: string[] | null
+          occurrence_date: string | null
           order_index: number
+          original_start_time: string | null
+          parent_recurring_todo_id: string | null
           parent_todo_id: string | null
           priority: string | null
           recurrence_count: number | null
@@ -670,7 +653,10 @@ export type Database = {
           is_relationship_task?: boolean | null
           is_today_highlight?: boolean
           joyful_people_ids?: string[] | null
+          occurrence_date?: string | null
           order_index?: number
+          original_start_time?: string | null
+          parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
           priority?: string | null
           recurrence_count?: number | null
@@ -702,7 +688,10 @@ export type Database = {
           is_relationship_task?: boolean | null
           is_today_highlight?: boolean
           joyful_people_ids?: string[] | null
+          occurrence_date?: string | null
           order_index?: number
+          original_start_time?: string | null
+          parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
           priority?: string | null
           recurrence_count?: number | null
@@ -720,6 +709,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "todos_parent_recurring_todo_id_fkey"
+            columns: ["parent_recurring_todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "todos_parent_todo_id_fkey"
             columns: ["parent_todo_id"]
@@ -887,6 +883,7 @@ export type Database = {
         | "read_later"
         | "reference"
         | "inbox"
+        | "fuel"
       platform_enum: "ios" | "android" | "web"
       recurrence_pattern_enum:
         | "none"
@@ -1056,6 +1053,7 @@ export const Constants = {
         "read_later",
         "reference",
         "inbox",
+        "fuel",
       ],
       platform_enum: ["ios", "android", "web"],
       recurrence_pattern_enum: ["none", "daily", "weekly", "monthly", "custom"],

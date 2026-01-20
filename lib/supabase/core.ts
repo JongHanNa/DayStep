@@ -254,8 +254,8 @@ export async function fetchWithJWT(
  */
 export interface QueryCondition {
   column: string;
-  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in';
-  value: string | number | boolean | string[] | number[];
+  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in' | 'is' | 'not.is';
+  value: string | number | boolean | string[] | number[] | null;
 }
 
 /**

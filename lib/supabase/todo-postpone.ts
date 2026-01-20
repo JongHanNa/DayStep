@@ -1,25 +1,41 @@
 /**
  * Todo Postpone - 반복 할일 미루기 처리 통합 모듈
+ *
+ * 새 아키텍처 (2025.01):
+ * - todo_overrides 테이블 삭제됨
+ * - 대신 exclusion + 독립 할일 방식으로 처리
+ * - 독립 할일은 todos 테이블에 parent_recurring_todo_id, occurrence_date 컬럼으로 연결
  */
 
-import { createTodoExclusionWithJWT } from './todo-exclusions';
-import {
-  createTimeOverrideWithJWT,
-  updateTimeOverrideWithJWT,
-  queryTimeOverridesWithJWT,
-  deleteTimeOverrideWithJWT
-} from './time-overrides';
-import { queryRLSTableWithJWT } from './core';
+import { createTodoExclusionWithJWT, deleteTodoExclusionWithJWT } from './todo-exclusions';
+import { queryRLSTableWithJWT, updateWithJWT, type QueryCondition } from './core';
+import { createTodoWithJWT, deleteTodoWithJWT } from './todos';
 import type { PostponeParams, AnytimeInboxItem } from '@/types';
+
+/**
+ * HH:mm 시간을 특정 날짜 기준 ISO string으로 변환
+ */
+function convertToISOTime(occurrenceDate: string, time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const dateObj = new Date(occurrenceDate + 'T00:00:00+09:00'); // KST 기준
+  dateObj.setHours(hours, minutes, 0, 0);
+  return dateObj.toISOString();
+}
 
 /**
  * 미루기 처리 통합 함수
  *
+ * 새 아키텍처:
+ * - reschedule: exclusion 생성 + 새 시간의 독립 할일 생성
+ * - anytime: exclusion 생성 + schedule_type='anytime'인 독립 할일 생성
+ * - start_now: DB 변경 없음 (타이머만 시작)
+ *
  * @param params.action - 'reschedule' | 'anytime' | 'start_now'
- * @param params.recordPostponement - 미룸 기록 여부
+ * @param params.recordPostponement - 미룸 기록 여부 (exclusion 생성)
  * @param params.newTime - HH:mm (reschedule인 경우)
+ * @returns 생성된 독립 할일의 ID (start_now인 경우 null)
  */
-export async function postponeTodoInstance(params: PostponeParams): Promise<void> {
+export async function postponeTodoInstance(params: PostponeParams): Promise<string | null> {
   const {
     parentTodoId,
     occurrenceDate,
@@ -39,7 +55,7 @@ export async function postponeTodoInstance(params: PostponeParams): Promise<void
   });
 
   try {
-    // 1. 미룸 기록 (선택적)
+    // 1. 원본 반복 할일에서 해당 날짜 제외 (exclusion 생성)
     if (recordPostponement) {
       await createTodoExclusionWithJWT({
         parent_todo_id: parentTodoId,
@@ -47,32 +63,92 @@ export async function postponeTodoInstance(params: PostponeParams): Promise<void
         user_id: userId,
         exclusion_reason: 'postponed',
       });
-      console.log('✅ 미룸 기록 생성 완료');
+      console.log('✅ 미룸 기록(exclusion) 생성 완료');
     }
 
-    // 2. 시간 변경 (action에 따라)
-    if (action === 'reschedule' && newTime) {
-      // 특정 시간으로 변경
-      await createOrUpdateTimeOverride({
-        parentTodoId,
-        occurrenceDate,
-        userId,
-        newTime,
-      });
-      console.log('✅ 시간 override 생성 완료:', newTime);
+    // 2. 원본 할일 정보 조회
+    const parentTodos = await queryRLSTableWithJWT('todos', [
+      { column: 'id', operator: 'eq', value: parentTodoId }
+    ], {
+      select: 'id, title, icon, color, start_time, end_time, anytime_duration'
+    });
+
+    if (!parentTodos || parentTodos.length === 0) {
+      throw new Error(`원본 할일을 찾을 수 없습니다: ${parentTodoId}`);
+    }
+
+    const parentTodo = parentTodos[0];
+
+    // 3. 독립 할일 데이터 구성
+    const newTodoData: Record<string, any> = {
+      title: parentTodo.title,
+      icon: parentTodo.icon,
+      color: parentTodo.color,
+      anytime_duration: parentTodo.anytime_duration,
+      recurrence_pattern: 'none', // 독립 할일은 반복 없음
+      parent_recurring_todo_id: parentTodoId, // 원본 반복 할일 연결
+      occurrence_date: occurrenceDate, // 분리된 인스턴스의 발생 날짜
+    };
+
+    // 원본 시간 저장 (모든 액션에서 공통)
+    if (parentTodo.start_time) {
+      newTodoData.original_start_time = parentTodo.start_time;
+    }
+    if (parentTodo.end_time) {
+      newTodoData.original_end_time = parentTodo.end_time;
+    }
+
+    if (action === 'start_now') {
+      // start_now: 현재 시간으로 즉시 시작 (exclusion + 독립 할일 생성)
+      const now = new Date();
+      newTodoData.schedule_type = 'timed';
+      newTodoData.start_time = now.toISOString();
+
+      // end_time 계산 (원본 duration 유지)
+      if (parentTodo.start_time && parentTodo.end_time) {
+        const originalStart = new Date(parentTodo.start_time);
+        const originalEnd = new Date(parentTodo.end_time);
+        const durationMs = originalEnd.getTime() - originalStart.getTime();
+        newTodoData.end_time = new Date(now.getTime() + durationMs).toISOString();
+      }
+
+      console.log('⏱️ start_now 독립 할일 생성 중...', { startTime: newTodoData.start_time });
     } else if (action === 'anytime') {
-      // anytime으로 변경 (시간 null + 메타데이터)
-      await createAnytimeOverride({
-        parentTodoId,
-        occurrenceDate,
-        userId,
-        originalStartTime,
-      });
-      console.log('✅ anytime override 생성 완료');
-    }
-    // 'start_now'는 타이머 시작만 (별도 처리 - 호출 측에서 라우터 이동)
+      // anytime: schedule_type='anytime', 원래 시간 저장
+      newTodoData.schedule_type = 'anytime';
+      newTodoData.start_time = null;
+      newTodoData.end_time = null;
 
-    console.log('✅ 반복 할일 미루기 처리 완료');
+      // originalStartTime 파라미터로 덮어쓰기 (제공된 경우)
+      if (originalStartTime) {
+        newTodoData.original_start_time = convertToISOTime(occurrenceDate, originalStartTime);
+      }
+
+      console.log('⏳ anytime 독립 할일 생성 중...');
+    } else if (action === 'reschedule' && newTime) {
+      // reschedule: 새 시간으로 timed 할일 생성
+      newTodoData.schedule_type = 'timed';
+      newTodoData.start_time = convertToISOTime(occurrenceDate, newTime);
+
+      // end_time 계산 (원본 start_time, end_time 차이로 duration 계산)
+      if (parentTodo.start_time && parentTodo.end_time) {
+        const originalStart = new Date(parentTodo.start_time);
+        const originalEnd = new Date(parentTodo.end_time);
+        const durationMs = originalEnd.getTime() - originalStart.getTime();
+
+        const newStartDate = new Date(newTodoData.start_time);
+        newTodoData.end_time = new Date(newStartDate.getTime() + durationMs).toISOString();
+      }
+
+      console.log('📅 reschedule 독립 할일 생성 중...', { newTime });
+    }
+
+    // 4. 독립 할일 생성
+    const newTodo = await createTodoWithJWT(newTodoData, userId);
+
+    console.log('✅ 반복 할일 미루기 처리 완료:', { newTodoId: newTodo.id });
+    return newTodo.id;
+
   } catch (error) {
     console.error('❌ 반복 할일 미루기 처리 실패:', error);
     throw error;
@@ -80,91 +156,10 @@ export async function postponeTodoInstance(params: PostponeParams): Promise<void
 }
 
 /**
- * 시간 override 생성 또는 업데이트
- */
-async function createOrUpdateTimeOverride(params: {
-  parentTodoId: string;
-  occurrenceDate: string;
-  userId: string;
-  newTime: string; // HH:mm
-}): Promise<void> {
-  const { parentTodoId, occurrenceDate, userId, newTime } = params;
-
-  // HH:mm을 ISO string으로 변환 (해당 날짜 기준)
-  const [hours, minutes] = newTime.split(':').map(Number);
-  const dateObj = new Date(occurrenceDate);
-  dateObj.setHours(hours, minutes, 0, 0);
-  const isoStartTime = dateObj.toISOString();
-
-  // 기존 override가 있는지 확인
-  const existingOverrides = await queryTimeOverridesWithJWT(
-    parentTodoId,
-    userId,
-    { start: occurrenceDate, end: occurrenceDate }
-  );
-
-  if (existingOverrides.length > 0) {
-    // 업데이트
-    await updateTimeOverrideWithJWT(parentTodoId, occurrenceDate, {
-      start_time: isoStartTime,
-    });
-  } else {
-    // 생성
-    await createTimeOverrideWithJWT({
-      parent_todo_id: parentTodoId,
-      user_id: userId,
-      override_date: occurrenceDate,
-      start_time: isoStartTime,
-    });
-  }
-}
-
-/**
- * Anytime override 생성 (시간 미정)
- *
- * schedule_type을 'anytime'으로 변경하고 원래 시간을 메타데이터로 저장
- */
-async function createAnytimeOverride(params: {
-  parentTodoId: string;
-  occurrenceDate: string;
-  userId: string;
-  originalStartTime?: string;
-}): Promise<void> {
-  const { parentTodoId, occurrenceDate, userId, originalStartTime } = params;
-
-  // 기존 override가 있는지 확인
-  const existingOverrides = await queryTimeOverridesWithJWT(
-    parentTodoId,
-    userId,
-    { start: occurrenceDate, end: occurrenceDate }
-  );
-
-  // anytime override: start_time을 null로 설정하고 schedule_type 변경 효과
-  // 실제로는 todo_overrides 테이블에 is_anytime 플래그 또는 start_time null로 처리
-  // 여기서는 start_time을 특수 값으로 설정하여 anytime 표시
-  // -> 실제 구현: start_time을 null 또는 'anytime' 마커로 처리
-
-  const anytimeTitle = originalStartTime ? `__anytime__${originalStartTime}` : '__anytime__';
-
-  if (existingOverrides.length > 0) {
-    await updateTimeOverrideWithJWT(parentTodoId, occurrenceDate, {
-      start_time: undefined, // anytime을 위해 시간 제거
-      title: anytimeTitle,
-    });
-  } else {
-    // anytime: start_time 없이 생성 (undefined로 처리)
-    await createTimeOverrideWithJWT({
-      parent_todo_id: parentTodoId,
-      user_id: userId,
-      override_date: occurrenceDate,
-      // start_time 생략 = anytime
-      title: anytimeTitle,
-    });
-  }
-}
-
-/**
  * 시간 미정(anytime) 할일 목록 조회
+ *
+ * 새 아키텍처:
+ * - todos 테이블에서 schedule_type='anytime' AND parent_recurring_todo_id IS NOT NULL 조회
  *
  * @param userId - 사용자 ID
  * @param date - 조회할 날짜 (YYYY-MM-DD) - 해당 날짜의 anytime 할일만
@@ -177,74 +172,35 @@ export async function queryAnytimeTodosWithJWT(
   console.log('☁️ 시간 미정 할일 조회:', { userId, date });
 
   try {
-    // todo_overrides에서 anytime 항목 조회 (title이 '__anytime__'으로 시작)
-    const overrides = await queryRLSTableWithJWT('todo_overrides', [
-      {
-        column: 'user_id',
-        operator: 'eq',
-        value: userId,
-      },
-      {
-        column: 'title',
-        operator: 'like',
-        value: '__anytime__%',
-      },
-      ...(date ? [{
-        column: 'override_date',
-        operator: 'eq' as const,
-        value: date,
-      }] : []),
-    ], {
-      select: 'parent_todo_id, override_date, title, created_at',
+    // todos 테이블에서 anytime 독립 할일 조회
+    const conditions: QueryCondition[] = [
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'schedule_type', operator: 'eq', value: 'anytime' },
+      { column: 'parent_recurring_todo_id', operator: 'not.is', value: null },
+      { column: 'completed', operator: 'eq', value: false },
+    ];
+
+    if (date) {
+      conditions.push({ column: 'occurrence_date', operator: 'eq', value: date });
+    }
+
+    const todos = await queryRLSTableWithJWT('todos', conditions, {
+      select: 'id, title, icon, color, original_start_time, occurrence_date, parent_recurring_todo_id, created_at',
       order: 'created_at.desc',
     });
 
-    // parent_todo_id로 할일 정보 조회
-    const todoIds = [...new Set(overrides.map((o: any) => o.parent_todo_id))];
-
-    if (todoIds.length === 0) {
-      return [];
-    }
-
-    // 할일 정보 조회
-    const todos = await queryRLSTableWithJWT('todos', [
-      {
-        column: 'id',
-        operator: 'in',
-        value: `(${todoIds.map(id => `'${id}'`).join(',')})`,
-      },
-    ], {
-      select: 'id, title, icon, color, start_time',
-    });
-
-    interface TodoInfo {
-      id: string;
-      title: string;
-      icon?: string | null;
-      color?: string | null;
-      start_time?: string | null;
-    }
-
-    const todoMap = new Map<string, TodoInfo>(
-      todos.map((t: TodoInfo) => [t.id, t])
-    );
-
     // AnytimeInboxItem 형태로 변환
-    const result: AnytimeInboxItem[] = overrides.map((override: any) => {
-      const todo = todoMap.get(override.parent_todo_id);
-      const originalTime = override.title?.replace('__anytime__', '') || undefined;
-
-      return {
-        parentTodoId: override.parent_todo_id,
-        occurrenceDate: override.override_date,
-        title: todo?.title || '알 수 없는 할일',
-        icon: todo?.icon,
-        color: todo?.color,
-        originalStartTime: originalTime || todo?.start_time?.slice(11, 16),
-        postponedAt: override.created_at,
-        hasPostponementRecord: true, // 별도 조회 필요 시 추가
-      };
-    });
+    const result: AnytimeInboxItem[] = todos.map((todo: any) => ({
+      id: todo.id,
+      parentTodoId: todo.parent_recurring_todo_id,
+      occurrenceDate: todo.occurrence_date,
+      title: todo.title,
+      icon: todo.icon,
+      color: todo.color,
+      originalStartTime: todo.original_start_time?.slice(11, 16), // HH:mm 추출
+      postponedAt: todo.created_at,
+      hasPostponementRecord: true, // exclusion과 함께 생성되므로 항상 true
+    }));
 
     console.log('✅ 시간 미정 할일 조회 성공:', { count: result.length });
     return result;
@@ -256,51 +212,97 @@ export async function queryAnytimeTodosWithJWT(
 
 /**
  * Anytime 상태 해제 (시간 지정으로 복원)
+ *
+ * 새 아키텍처:
+ * - 독립 할일의 schedule_type을 'timed'로 변경
+ * - start_time 설정
  */
 export async function restoreFromAnytimeWithJWT(params: {
-  parentTodoId: string;
-  occurrenceDate: string;
+  todoId: string; // 독립 할일 ID
   userId: string;
   newTime: string; // HH:mm
 }): Promise<void> {
-  const { parentTodoId, occurrenceDate, userId, newTime } = params;
+  const { todoId, userId, newTime } = params;
 
   console.log('⏰ anytime에서 시간 지정으로 복원:', {
-    parentTodoId,
-    occurrenceDate,
+    todoId,
     newTime,
   });
 
-  // HH:mm을 ISO string으로 변환
-  const [hours, minutes] = newTime.split(':').map(Number);
-  const dateObj = new Date(occurrenceDate);
-  dateObj.setHours(hours, minutes, 0, 0);
-  const isoStartTime = dateObj.toISOString();
+  try {
+    // 독립 할일 정보 조회 (occurrence_date 필요)
+    const todos = await queryRLSTableWithJWT('todos', [
+      { column: 'id', operator: 'eq', value: todoId },
+      { column: 'user_id', operator: 'eq', value: userId },
+    ], {
+      select: 'id, occurrence_date, anytime_duration'
+    });
 
-  await updateTimeOverrideWithJWT(parentTodoId, occurrenceDate, {
-    start_time: isoStartTime,
-    title: undefined, // anytime 마커 제거
-  });
+    if (!todos || todos.length === 0) {
+      throw new Error(`할일을 찾을 수 없습니다: ${todoId}`);
+    }
 
-  console.log('✅ anytime에서 시간 지정으로 복원 완료');
+    const todo = todos[0];
+    const newStartTime = convertToISOTime(todo.occurrence_date, newTime);
+
+    // end_time 계산
+    let newEndTime: string | undefined;
+    if (todo.anytime_duration) {
+      const startDate = new Date(newStartTime);
+      startDate.setMinutes(startDate.getMinutes() + todo.anytime_duration);
+      newEndTime = startDate.toISOString();
+    }
+
+    // 할일 업데이트
+    await updateWithJWT('todos',
+      { column: 'id', operator: 'eq', value: todoId },
+      {
+        schedule_type: 'timed',
+        start_time: newStartTime,
+        end_time: newEndTime,
+      }
+    );
+
+    console.log('✅ anytime에서 시간 지정으로 복원 완료');
+  } catch (error) {
+    console.error('❌ anytime 복원 실패:', error);
+    throw error;
+  }
 }
 
 /**
- * Anytime override 삭제 (원래 시간으로 복원)
+ * Anytime 독립 할일 삭제 (원래 반복 할일 복원)
+ *
+ * 새 아키텍처:
+ * - 독립 할일 삭제
+ * - exclusion 삭제 (원본 반복 복원)
  */
 export async function removeAnytimeOverrideWithJWT(params: {
-  parentTodoId: string;
-  occurrenceDate: string;
+  todoId: string; // 독립 할일 ID
+  parentTodoId: string; // 원본 반복 할일 ID
+  occurrenceDate: string; // YYYY-MM-DD
   userId: string;
 }): Promise<void> {
-  const { parentTodoId, occurrenceDate, userId } = params;
+  const { todoId, parentTodoId, occurrenceDate, userId } = params;
 
-  console.log('🗑️ anytime override 삭제:', {
+  console.log('🗑️ anytime 독립 할일 삭제 (원본 복원):', {
+    todoId,
     parentTodoId,
     occurrenceDate,
   });
 
-  await deleteTimeOverrideWithJWT(parentTodoId, occurrenceDate, userId);
+  try {
+    // 1. 독립 할일 삭제
+    await deleteTodoWithJWT(todoId);
+    console.log('✅ 독립 할일 삭제 완료');
 
-  console.log('✅ anytime override 삭제 완료');
+    // 2. exclusion 삭제 (원본 반복 복원)
+    await deleteTodoExclusionWithJWT(parentTodoId, occurrenceDate, userId);
+    console.log('✅ exclusion 삭제 완료 (원본 반복 복원)');
+
+    console.log('✅ anytime 독립 할일 삭제 및 원본 복원 완료');
+  } catch (error) {
+    console.error('❌ anytime 삭제 실패:', error);
+    throw error;
+  }
 }

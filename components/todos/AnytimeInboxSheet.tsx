@@ -130,8 +130,9 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
           break;
 
         case 'delete':
-          // anytime override 삭제 (원래 시간으로 복원)
+          // anytime 독립 할일 삭제 (원래 반복 복원)
           await removeAnytimeOverrideWithJWT({
+            todoId: item.id,
             parentTodoId: item.parentTodoId,
             occurrenceDate: item.occurrenceDate,
             userId: user.id,
@@ -153,8 +154,7 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
     setIsProcessing(true);
     try {
       await restoreFromAnytimeWithJWT({
-        parentTodoId: selectedItem.parentTodoId,
-        occurrenceDate: selectedItem.occurrenceDate,
+        todoId: selectedItem.id,
         userId: user.id,
         newTime,
       });

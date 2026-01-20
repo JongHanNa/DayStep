@@ -596,15 +596,17 @@ export interface PostponeParams {
 
 /**
  * 시간 미정 할일 아이템 (Anytime Inbox용)
+ * 새 아키텍처: 독립 할일로 저장됨 (todo_overrides 대신 todos 테이블 사용)
  */
 export interface AnytimeInboxItem {
-  parentTodoId: string;
-  occurrenceDate: string; // YYYY-MM-DD
+  id: string; // 독립 할일 ID (todos 테이블의 id)
+  parentTodoId: string; // 원본 반복 할일 ID (parent_recurring_todo_id)
+  occurrenceDate: string; // YYYY-MM-DD (occurrence_date)
   title: string;
   icon?: string | null;
   color?: string | null;
   originalStartTime?: string; // 원래 예정 시간 (HH:mm 또는 ISO)
-  postponedAt: string; // 미룬 시각 (ISO format)
-  hasPostponementRecord: boolean; // 미룸 기록 여부
+  postponedAt: string; // 미룬 시각 (created_at)
+  hasPostponementRecord: boolean; // 미룸 기록 여부 (exclusion 존재 여부)
 }
 

@@ -588,17 +588,21 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
           actualEndTime: sessionEndTime.toISOString(),
         });
 
-        // 2. anytime override 제거 (시간 미정 목록에서 사라지도록)
-        try {
-          await removeAnytimeOverrideWithJWT({
-            parentTodoId: linkedParentTodoId,
-            occurrenceDate: linkedOccurrenceDate,
-            userId,
-          });
-          console.log('🗑️ anytime override 제거 완료');
-        } catch (overrideError) {
-          // override 제거 실패는 무시 (없을 수도 있음)
-          console.log('ℹ️ anytime override 제거 스킵 (없거나 실패):', overrideError);
+        // 2. anytime 독립 할일 제거 (시간 미정 목록에서 사라지도록)
+        // 새 아키텍처: linkedTodoId가 있으면 독립 할일이므로 삭제 필요
+        if (linkedTodoId) {
+          try {
+            await removeAnytimeOverrideWithJWT({
+              todoId: linkedTodoId,
+              parentTodoId: linkedParentTodoId,
+              occurrenceDate: linkedOccurrenceDate,
+              userId,
+            });
+            console.log('🗑️ anytime 독립 할일 삭제 완료');
+          } catch (overrideError) {
+            // 삭제 실패는 무시 (anytime이 아닐 수도 있음)
+            console.log('ℹ️ anytime 삭제 스킵 (없거나 실패):', overrideError);
+          }
         }
       } catch (error) {
         console.error('❌ 반복 할일 완료 처리 실패:', error);

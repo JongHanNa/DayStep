@@ -45,7 +45,7 @@ export {
 // ================================
 export * from './todos';
 export * from './todo-exclusions';
-export * from './time-overrides';
+export * from './todo-postpone';
 
 export {
   // Todos
@@ -69,13 +69,12 @@ export {
 } from './todo-exclusions';
 
 export {
-  queryTimeOverridesWithJWT,
-  createTimeOverrideWithJWT,
-  updateTimeOverrideWithJWT,
-  deleteTimeOverrideWithJWT,
-  deleteTimeOverridesFromDateWithJWT,
-  deleteAllTimeOverridesWithJWT
-} from './time-overrides';
+  // Todo Postpone (미루기)
+  postponeTodoInstance,
+  queryAnytimeTodosWithJWT,
+  restoreFromAnytimeWithJWT,
+  removeAnytimeOverrideWithJWT
+} from './todo-postpone';
 
 // ================================
 // 사용자 설정

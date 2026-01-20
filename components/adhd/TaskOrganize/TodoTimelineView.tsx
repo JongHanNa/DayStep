@@ -772,6 +772,40 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const handleEditDelete = useCallback(async () => {
     if (!editingTodo) return;
 
+    // 가상 "미룸 완료" 인스턴스인 경우: 완료 기록 + exclusion 삭제 → 원본 복원
+    if (editingItem?.id?.endsWith('-actual-completion')) {
+      if (editingItem.recurrenceSourceId && editingItem.recurrenceOccurrenceDate) {
+        try {
+          // 1. todo_completions에서 완료 기록 삭제
+          await TodoCompletionsService.markRecurrenceAsIncomplete(
+            editingItem.recurrenceSourceId,
+            userId,
+            editingItem.recurrenceOccurrenceDate
+          );
+
+          // 2. exclusion 삭제 (원본 복원)
+          await deleteTodoExclusionWithJWT(
+            editingItem.recurrenceSourceId,
+            editingItem.recurrenceOccurrenceDate,
+            userId
+          );
+
+          console.log('✅ 미룸 완료 항목 삭제 및 원본 복원:', {
+            sourceId: editingItem.recurrenceSourceId,
+            date: editingItem.recurrenceOccurrenceDate
+          });
+
+          await fetchAllTodos();
+        } catch (error) {
+          console.error('❌ 미룸 완료 항목 삭제 실패:', error);
+        }
+      }
+      setEditingTodo(null);
+      setEditFormData(null);
+      setEditingItem(null);
+      return;
+    }
+
     // 반복 인스턴스인 경우: 원본 삭제하지 않고 해당 날짜만 제외 처리
     if (editingItem?.isRecurrenceInstance && editingItem?.recurrenceSourceId && editingItem?.recurrenceOccurrenceDate) {
       try {
