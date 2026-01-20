@@ -673,14 +673,46 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       return date.toISOString();
     };
 
+    // 원본 할일의 날짜를 유지하면서 시간만 변경 (모두 변경용)
+    const formatTimeToISOPreservingOriginalDate = (
+      timeStr: string | undefined,
+      originalStartTime: string | undefined
+    ): string | undefined => {
+      if (!timeStr) return undefined;
+      if (timeStr.includes('T')) return timeStr; // 이미 ISO
+      if (!originalStartTime) return formatTimeToISO(timeStr, new Date());
+
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const originalDate = new Date(originalStartTime);
+      originalDate.setHours(hours, minutes, 0, 0);
+      return originalDate.toISOString();
+    };
+
+    // "모두 변경"일 때 원본 할일의 날짜 유지
+    let startTimeISO: string | undefined;
+    let endTimeISO: string | undefined;
+
+    if (updateType === 'all') {
+      // todos 배열에서 원본 할일 찾기 (sourceId로)
+      const originalTodo = todos.find(t => t.id === sourceId);
+      const originalStartTime = originalTodo?.startTime?.toISOString();
+
+      startTimeISO = formatTimeToISOPreservingOriginalDate(formData.startTime, originalStartTime);
+      endTimeISO = formatTimeToISOPreservingOriginalDate(formData.endTime, originalStartTime);
+    } else {
+      // this/future: 인스턴스 날짜 기반
+      startTimeISO = formatTimeToISO(formData.startTime, occurrenceDate);
+      endTimeISO = formatTimeToISO(formData.endTime, occurrenceDate);
+    }
+
     await updateRecurringTodo(
       sourceId,
       {
         title: formData.title,
         icon: formData.icon,
         color: formData.color,
-        start_time: formatTimeToISO(formData.startTime, occurrenceDate),
-        end_time: formatTimeToISO(formData.endTime, occurrenceDate),
+        start_time: startTimeISO,
+        end_time: endTimeISO,
         schedule_type: formData.scheduleType,
       },
       updateType,
