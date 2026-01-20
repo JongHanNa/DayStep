@@ -46,7 +46,10 @@ export class Todo {
 
     // 소중한 사람 연결 필드
     public readonly joyfulPeopleIds: string[] = [],
-    public readonly shamefulPeopleIds: string[] = []
+    public readonly shamefulPeopleIds: string[] = [],
+
+    // 일반 할일 스킵 상태
+    public readonly skipStatus: 'not_needed' | 'missed' | null = null
   ) {}
 
   /**
@@ -89,6 +92,9 @@ export class Todo {
     // 소중한 사람 연결 필드
     const joyfulPeopleIds = record.joyfulPeopleIds ?? record.joyful_people_ids ?? [];
     const shamefulPeopleIds = record.shamefulPeopleIds ?? record.shameful_people_ids ?? [];
+
+    // 일반 할일 스킵 상태
+    const skipStatus = record.skipStatus ?? record.skip_status ?? null;
 
     // title 필드
     const title = data.title;
@@ -136,7 +142,10 @@ export class Todo {
 
       // 소중한 사람 연결 필드
       joyfulPeopleIds || [],
-      shamefulPeopleIds || []
+      shamefulPeopleIds || [],
+
+      // 일반 할일 스킵 상태
+      skipStatus
     );
   }
 
@@ -560,6 +569,9 @@ export class Todo {
       // 소중한 사람 연결 필드
       joyful_people_ids: this.joyfulPeopleIds,
       shameful_people_ids: this.shamefulPeopleIds,
+
+      // 일반 할일 스킵 상태
+      skip_status: this.skipStatus,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),

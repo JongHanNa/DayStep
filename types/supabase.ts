@@ -649,6 +649,7 @@ export type Database = {
           recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type: Database["public"]["Enums"]["schedule_type_enum"]
           shameful_people_ids: string[] | null
+          skip_status: string | null
           start_time: string | null
           title: string
           updated_at: string
@@ -680,6 +681,7 @@ export type Database = {
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
           shameful_people_ids?: string[] | null
+          skip_status?: string | null
           start_time?: string | null
           title: string
           updated_at?: string
@@ -711,6 +713,7 @@ export type Database = {
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
           shameful_people_ids?: string[] | null
+          skip_status?: string | null
           start_time?: string | null
           title?: string
           updated_at?: string

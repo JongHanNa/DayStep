@@ -62,6 +62,7 @@ interface TimelineItem {
   recurrenceOccurrenceDate?: string;
   isSkipped?: boolean; // 건너뛴 인스턴스 여부
   exclusionReason?: 'deleted' | 'skipped' | 'postponed' | 'not_needed' | 'missed'; // 제외 사유
+  skipStatus?: 'not_needed' | 'missed' | null; // 일반 할일 스킵 상태
   // 실제 수행 인스턴스 (미루기 후 완료) - 2026-01-19 추가
   isActualExecution?: boolean;
   originalStartTime?: string; // 미룸 완료 시 원래 시작 시간 (뱃지 표시용)
@@ -479,6 +480,60 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     }
   }, [userId]);
 
+  // 일반 할일/반복 할일 통합 스킵 핸들러
+  const handleSkipTodo = useCallback(async (
+    item: TimelineItem,
+    reason: 'not_needed' | 'missed'
+  ) => {
+    if (item.isRecurrenceInstance) {
+      // 반복 인스턴스: 기존 로직 사용 (todo_exclusions)
+      await handleSkipInstance(item, reason);
+    } else {
+      // 일반 할일: todos.skip_status 업데이트
+      try {
+        await updateTodo(item.id, { skip_status: reason });
+        // 로컬 상태는 store에서 자동 업데이트됨
+        await fetchAllTodos(); // 상태 동기화
+      } catch (error) {
+        console.error('일반 할일 스킵 실패:', error);
+      }
+    }
+  }, [handleSkipInstance, updateTodo, fetchAllTodos, userId]);
+
+  // 일반 할일 스킵 취소 핸들러
+  const handleUnskipTodo = useCallback(async (item: TimelineItem) => {
+    if (item.isRecurrenceInstance) {
+      // 반복 인스턴스: 기존 handleCancelExclusion 로직 재사용
+      // handleCancelExclusion이 아래에 정의되어 있으므로 직접 호출
+      if (!item.recurrenceSourceId || !item.recurrenceOccurrenceDate) {
+        console.error('제외 취소 실패: 필수 정보 없음');
+        return;
+      }
+      try {
+        await deleteTodoExclusionWithJWT(
+          item.recurrenceSourceId,
+          item.recurrenceOccurrenceDate,
+          userId
+        );
+        setRecurrenceInstances(prev => prev.map(inst =>
+          inst.id === item.id
+            ? { ...inst, isSkipped: false, exclusionReason: undefined }
+            : inst
+        ));
+      } catch (error) {
+        console.error('제외 취소 실패:', error);
+      }
+    } else {
+      // 일반 할일: skip_status = null
+      try {
+        await updateTodo(item.id, { skip_status: null });
+        await fetchAllTodos(); // 상태 동기화
+      } catch (error) {
+        console.error('일반 할일 스킵 취소 실패:', error);
+      }
+    }
+  }, [updateTodo, fetchAllTodos, userId]);
+
   // 제외 상태 취소 핸들러
   const handleCancelExclusion = useCallback(async (item: TimelineItem) => {
     if (!item.isRecurrenceInstance || !item.recurrenceSourceId || !item.recurrenceOccurrenceDate) {
@@ -513,8 +568,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 미루기 처리
   const handlePostpone = useCallback(async (options: PostponeOptions) => {
-    if (!postponingItem || !postponingItem.recurrenceSourceId || !postponingItem.recurrenceOccurrenceDate) {
-      console.error('미루기 실패: 필수 정보 없음');
+    if (!postponingItem) {
+      console.error('미루기 실패: postponingItem 없음');
       return;
     }
 
@@ -523,55 +578,104 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     try {
       const { action, recordPostponement, newTime } = options;
 
-      if (action === 'start_now') {
-        // 지금 바로 하기: ExecutionMode로 진입 (2026-01-19 수정)
-        if (recordPostponement) {
-          await createTodoExclusionWithJWT({
-            parent_todo_id: postponingItem.recurrenceSourceId,
-            excluded_date: postponingItem.recurrenceOccurrenceDate,
-            user_id: userId,
-            exclusion_reason: 'postponed'
+      // 반복 인스턴스인지 일반 할일인지 구분
+      const isRecurrenceInstance = postponingItem.isRecurrenceInstance &&
+        postponingItem.recurrenceSourceId &&
+        postponingItem.recurrenceOccurrenceDate;
+
+      if (isRecurrenceInstance) {
+        // ========== 반복 인스턴스 처리 (기존 로직) ==========
+        if (action === 'start_now') {
+          // 지금 바로 하기: ExecutionMode로 진입 (2026-01-19 수정)
+          if (recordPostponement) {
+            await createTodoExclusionWithJWT({
+              parent_todo_id: postponingItem.recurrenceSourceId!,
+              excluded_date: postponingItem.recurrenceOccurrenceDate!,
+              user_id: userId,
+              exclusion_reason: 'postponed'
+            });
+          }
+
+          // 실행 모드 먼저 진입 (executionMode 초기화 후)
+          await enterExecuteMode(userId);
+
+          // 그 다음 adhocMode에 반복 할일 정보 설정 (초기화 이후에 설정해야 유지됨)
+          setLinkedRecurringTodo(
+            postponingItem.recurrenceSourceId!,
+            postponingItem.recurrenceOccurrenceDate!,
+            postponingItem.title
+          );
+
+          // 즉흥 모드 활성화
+          startAdhocMode();
+        } else {
+          // reschedule 또는 anytime: todo-postpone.ts 사용
+          await postponeTodoInstance({
+            parentTodoId: postponingItem.recurrenceSourceId!,
+            occurrenceDate: postponingItem.recurrenceOccurrenceDate!,
+            userId,
+            action,
+            recordPostponement,
+            newTime,
+            originalStartTime: postponingItem.startTime
+              ? format(postponingItem.startTime, 'HH:mm')
+              : undefined,
           });
+
+          // anytime인 경우 카운트 업데이트
+          if (action === 'anytime') {
+            loadAnytimeCount();
+          }
+
+          // 로컬 상태 업데이트
+          if (recordPostponement) {
+            setRecurrenceInstances(prev => prev.map(inst =>
+              inst.id === postponingItem.id
+                ? { ...inst, isSkipped: true, exclusionReason: 'postponed' }
+                : inst
+            ));
+          }
         }
-
-        // 실행 모드 먼저 진입 (executionMode 초기화 후)
-        await enterExecuteMode(userId);
-
-        // 그 다음 adhocMode에 반복 할일 정보 설정 (초기화 이후에 설정해야 유지됨)
-        setLinkedRecurringTodo(
-          postponingItem.recurrenceSourceId,
-          postponingItem.recurrenceOccurrenceDate,
-          postponingItem.title
-        );
-
-        // 즉흥 모드 활성화
-        startAdhocMode();
       } else {
-        // reschedule 또는 anytime: todo-postpone.ts 사용
-        await postponeTodoInstance({
-          parentTodoId: postponingItem.recurrenceSourceId,
-          occurrenceDate: postponingItem.recurrenceOccurrenceDate,
-          userId,
-          action,
-          recordPostponement,
-          newTime,
-          originalStartTime: postponingItem.startTime
-            ? format(postponingItem.startTime, 'HH:mm')
-            : undefined,
-        });
+        // ========== 일반 할일 처리 (새 로직) ==========
+        if (action === 'start_now') {
+          // 지금 바로 하기: ExecutionMode로 진입
+          await enterExecuteMode(userId);
+          startAdhocMode();
+        } else if (action === 'reschedule' && newTime) {
+          // 시간 변경: start_time, end_time 업데이트
+          const [hours, minutes] = newTime.split(':').map(Number);
+          const newStart = new Date(postponingItem.startTime || new Date());
+          newStart.setHours(hours, minutes, 0, 0);
 
-        // anytime인 경우 카운트 업데이트
-        if (action === 'anytime') {
+          // 기존 duration 유지
+          let newEnd: Date | null = null;
+          if (postponingItem.endTime && postponingItem.startTime) {
+            const duration = new Date(postponingItem.endTime).getTime() -
+                            new Date(postponingItem.startTime).getTime();
+            newEnd = new Date(newStart.getTime() + duration);
+          }
+
+          await updateTodo(postponingItem.id, {
+            start_time: newStart.toISOString(),
+            end_time: newEnd?.toISOString() ?? undefined,
+          });
+
+          // 상태 동기화
+          await fetchAllTodos();
+        } else if (action === 'anytime') {
+          // 시간 미정으로 변경
+          await updateTodo(postponingItem.id, {
+            schedule_type: 'anytime',
+            start_time: undefined,
+            end_time: undefined,
+          });
+
+          // anytime 카운트 업데이트
           loadAnytimeCount();
-        }
 
-        // 로컬 상태 업데이트
-        if (recordPostponement) {
-          setRecurrenceInstances(prev => prev.map(inst =>
-            inst.id === postponingItem.id
-              ? { ...inst, isSkipped: true, exclusionReason: 'postponed' }
-              : inst
-          ));
+          // 상태 동기화
+          await fetchAllTodos();
         }
       }
 
@@ -582,7 +686,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     } finally {
       setIsPostponeProcessing(false);
     }
-  }, [postponingItem, userId, connectRecurringTodo, router]);
+  }, [postponingItem, userId, connectRecurringTodo, router, updateTodo, fetchAllTodos]);
 
   // 시간 미정 할일 개수 로드
   const loadAnytimeCount = useCallback(async () => {
@@ -782,6 +886,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         joyfulPeopleIds: todo.joyfulPeopleIds || [],
         shamefulPeopleIds: todo.shamefulPeopleIds || [],
         isRecurrenceInstance: false,
+        skipStatus: todo.skipStatus as 'not_needed' | 'missed' | null | undefined,
         originalTodo: todo
       }));
 
@@ -1346,11 +1451,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   : 'bg-transparent'; // 일반: 투명 (배경 div로 처리)
 
                           // 왼쪽 보더 색상: 시간 상태에 따라 다르게
+                          // 일반 할일 skipStatus도 처리
+                          const isSkippedOrSkipStatus = item.isSkipped || item.skipStatus;
+                          const skipReason = item.isSkipped ? item.exclusionReason : item.skipStatus;
+
                           const borderColor =
-                            item.isSkipped
-                              ? item.exclusionReason === 'postponed'
+                            isSkippedOrSkipStatus
+                              ? skipReason === 'postponed'
                                 ? 'border-l-warning' // 미뤘음: 연노랑
-                                : item.exclusionReason === 'missed'
+                                : skipReason === 'missed'
                                   ? 'border-l-error' // 놓침: 빨간색
                                   : 'border-l-base-300' // 필요없었음/건너뜀: 회색
                               : item.completed
@@ -1365,10 +1474,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                           // 펄스 애니메이션 (진행 중일 때만)
                           const pulseAnimation =
-                            timeStatus?.status === 'in_progress' && !item.isSkipped ? 'animate-pulse' : '';
+                            timeStatus?.status === 'in_progress' && !isSkippedOrSkipStatus ? 'animate-pulse' : '';
 
                           // 완료/제외 상태 및 호버 효과
-                          const itemHoverEffect = (item.completed || item.isSkipped)
+                          const itemHoverEffect = (item.completed || isSkippedOrSkipStatus)
                             ? 'opacity-50 hover:opacity-70 hover:shadow-md hover:-translate-y-0.5'  // 완료/제외: 흐릿 + 떠오르는 느낌
                             : 'hover:shadow-md hover:-translate-y-0.5';  // 일반: 떠오르는 느낌
 
@@ -1378,7 +1487,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                               className={`group relative flex items-start gap-3 p-3 rounded-lg border-l-4 ${bgColor} ${borderColor} ${pulseAnimation} ${itemHoverEffect} transition-all`}
                             >
                               {/* 일반 카드 차단 레이어 - bg-base-100 차단용 */}
-                              {!item.completed && !item.isSkipped && (
+                              {!item.completed && !isSkippedOrSkipStatus && (
                                 <div className="absolute inset-0 z-0 bg-base-200 pointer-events-none rounded-r-lg" />
                               )}
 
@@ -1395,12 +1504,20 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                               {/* 완료 토글 / 제외 취소 아이콘 */}
                               <button
-                                onClick={() => item.isSkipped ? handleCancelExclusion(item) : handleToggleComplete(item)}
+                                onClick={() => {
+                                  if (item.isSkipped) {
+                                    handleCancelExclusion(item);
+                                  } else if (item.skipStatus) {
+                                    handleUnskipTodo(item);
+                                  } else {
+                                    handleToggleComplete(item);
+                                  }
+                                }}
                                 className={`relative flex-shrink-0 ${
-                                  item.isSkipped
-                                    ? item.exclusionReason === 'postponed'
+                                  isSkippedOrSkipStatus
+                                    ? skipReason === 'postponed'
                                       ? 'text-warning hover:text-warning/80' // 미뤘음: 연노랑
-                                      : item.exclusionReason === 'missed'
+                                      : skipReason === 'missed'
                                         ? 'text-error hover:text-error/80' // 놓침: 빨간색
                                         : 'text-base-content/50 hover:text-base-content/70' // 필요없었음/건너뜀: 회색
                                     : item.completed
@@ -1409,12 +1526,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         ? 'text-error'
                                         : 'text-base-content/40'
                                 }`}
-                                title={item.isSkipped ? '클릭하여 제외 취소' : item.completed ? '미완료로 변경' : '완료로 변경'}
+                                title={isSkippedOrSkipStatus ? '클릭하여 제외 취소' : item.completed ? '미완료로 변경' : '완료로 변경'}
                               >
-                                {item.isSkipped ? (
-                                  item.exclusionReason === 'postponed' ? <Pause className="w-5 h-5" /> :
-                                  item.exclusionReason === 'missed' ? <XCircle className="w-5 h-5" /> :
-                                  item.exclusionReason === 'not_needed' ? <MinusCircle className="w-5 h-5" /> :
+                                {isSkippedOrSkipStatus ? (
+                                  skipReason === 'postponed' ? <Pause className="w-5 h-5" /> :
+                                  skipReason === 'missed' ? <XCircle className="w-5 h-5" /> :
+                                  skipReason === 'not_needed' ? <MinusCircle className="w-5 h-5" /> :
                                   <SkipForward className="w-5 h-5" />
                                 ) : item.completed ? (
                                   <CheckCircle2 className="w-5 h-5" />
@@ -1445,11 +1562,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                       {format(item.startTime, 'HH:mm')} - {format(item.endTime, 'HH:mm')}
                                     </span>
                                         {/* 상태 배지 (완료/제외) */}
-                                    {(item.isSkipped || item.completed) && (
+                                    {(isSkippedOrSkipStatus || item.completed) && (
                                       <span className={`badge badge-xs ${
                                         item.completed ? 'bg-success/20 text-success' :
-                                        item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
-                                        item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
+                                        skipReason === 'postponed' ? 'bg-warning/20 text-warning' :
+                                        skipReason === 'missed' ? 'bg-error/20 text-error' :
                                         'bg-base-300 text-base-content/50'
                                       }`}>
                                         {item.completed
@@ -1458,26 +1575,26 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                                   ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
                                                   : `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`)
                                               : '완료')
-                                          : item.exclusionReason === 'postponed'
+                                          : skipReason === 'postponed'
                                             ? (item.postponedToTime && item.postponedToStartTime
                                                 ? `미룸 (→ ${format(new Date(item.postponedToStartTime), 'HH:mm')} ~ ${format(new Date(item.postponedToTime), 'HH:mm')})`
                                                 : item.postponedToTime
                                                   ? `미룸 (→ ${format(new Date(item.postponedToTime), 'HH:mm')})`
                                                   : '미뤘음')
-                                            : item.exclusionReason === 'missed' ? '놓침' :
-                                              item.exclusionReason === 'not_needed' ? '필요없었음' :
+                                            : skipReason === 'missed' ? '놓침' :
+                                              skipReason === 'not_needed' ? '필요없었음' :
                                               '건너뜀'}
                                       </span>
                                     )}
                                   </div>
                                 )}
                                 {/* 상태 배지 (endTime 없는 경우, 완료/제외) */}
-                                {item.scheduleType === 'timed' && item.startTime && !item.endTime && (item.isSkipped || item.completed) && (
+                                {item.scheduleType === 'timed' && item.startTime && !item.endTime && (isSkippedOrSkipStatus || item.completed) && (
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className={`badge badge-xs ${
                                       item.completed ? 'bg-success/20 text-success' :
-                                      item.exclusionReason === 'postponed' ? 'bg-warning/20 text-warning' :
-                                      item.exclusionReason === 'missed' ? 'bg-error/20 text-error' :
+                                      skipReason === 'postponed' ? 'bg-warning/20 text-warning' :
+                                      skipReason === 'missed' ? 'bg-error/20 text-error' :
                                       'bg-base-300 text-base-content/50'
                                     }`}>
                                       {item.completed
@@ -1486,14 +1603,14 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                                 ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
                                                 : `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`)
                                             : '완료')
-                                        : item.exclusionReason === 'postponed'
+                                        : skipReason === 'postponed'
                                           ? (item.postponedToTime && item.postponedToStartTime
                                               ? `미룸 (→ ${format(new Date(item.postponedToStartTime), 'HH:mm')} ~ ${format(new Date(item.postponedToTime), 'HH:mm')})`
                                               : item.postponedToTime
                                                 ? `미룸 (→ ${format(new Date(item.postponedToTime), 'HH:mm')})`
                                                 : '미뤘음')
-                                          : item.exclusionReason === 'missed' ? '놓침' :
-                                            item.exclusionReason === 'not_needed' ? '필요없었음' :
+                                          : skipReason === 'missed' ? '놓침' :
+                                            skipReason === 'not_needed' ? '필요없었음' :
                                             '건너뜀'}
                                     </span>
                                   </div>
@@ -1505,7 +1622,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
                                   )}
                                   <span className={`text-sm ${
-                                    item.isSkipped
+                                    isSkippedOrSkipStatus
                                       ? 'line-through text-base-content/40' // 건너뛴 아이템: 취소선 + 흐림
                                       : item.completed
                                         ? 'line-through text-base-content/50'
@@ -1538,7 +1655,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                       </>
                                     )}
                                     {/* 놓침: 경과 시간만 표시 (제외 상태가 아닐 때만) */}
-                                    {timeStatus.status === 'missed' && !item.isSkipped && (
+                                    {timeStatus.status === 'missed' && !isSkippedOrSkipStatus && (
                                       <div className="text-xs text-error">
                                         <span>{timeStatusText?.primary}</span>
                                       </div>
@@ -1635,41 +1752,37 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         <CheckCircle2 className="w-3 h-3" />
                                         완료했음
                                       </button>
-                                      {/* 반복 할일만 미뤘음/필요없었음/놓침 버튼 표시 */}
-                                      {item.isRecurrenceInstance && (
-                                        <>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleOpenPostponeSheet(item);
-                                            }}
-                                            className="btn btn-xs btn-ghost text-warning gap-1"
-                                          >
-                                            <Pause className="w-3 h-3" />
-                                            미뤘음
-                                          </button>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleSkipInstance(item, 'not_needed');
-                                            }}
-                                            className="btn btn-xs btn-ghost text-base-content/60 gap-1"
-                                          >
-                                            <MinusCircle className="w-3 h-3" />
-                                            필요없었음
-                                          </button>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleSkipInstance(item, 'missed');
-                                            }}
-                                            className="btn btn-xs btn-ghost text-error gap-1"
-                                          >
-                                            <XCircle className="w-3 h-3" />
-                                            놓침
-                                          </button>
-                                        </>
-                                      )}
+                                      {/* 미뤘음/필요없었음/놓침 버튼 (일반 할일 + 반복 인스턴스 모두) */}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenPostponeSheet(item);
+                                        }}
+                                        className="btn btn-xs btn-ghost text-warning gap-1"
+                                      >
+                                        <Pause className="w-3 h-3" />
+                                        미뤘음
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSkipTodo(item, 'not_needed');
+                                        }}
+                                        className="btn btn-xs btn-ghost text-base-content/60 gap-1"
+                                      >
+                                        <MinusCircle className="w-3 h-3" />
+                                        필요없었음
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSkipTodo(item, 'missed');
+                                        }}
+                                        className="btn btn-xs btn-ghost text-error gap-1"
+                                      >
+                                        <XCircle className="w-3 h-3" />
+                                        놓침
+                                      </button>
                                     </div>
                                   </div>
                                 )}
