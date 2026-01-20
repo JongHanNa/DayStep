@@ -558,6 +558,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       return;
     }
 
+    // 미룸 상태인 반복 인스턴스도 편집 차단 (원본)
+    if (item.isRecurrenceInstance && item.exclusionReason === 'postponed') {
+      toast({
+        title: '미룬 할일',
+        description: '미룸 상태를 취소하려면 미뤄둔 할일에서 "원래대로 복원"을 눌러주세요',
+      });
+      return;
+    }
+
     if (item.originalTodo) {
       setEditingTodo(item.originalTodo);
       setEditingItem(item); // 반복 인스턴스 정보 저장
@@ -668,22 +677,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       return;
     }
 
-    // 미룸 상태인 경우: 미룸 완료 항목 존재 여부 확인
+    // 미룸 상태인 경우: 취소 차단 (원복은 미룸 생성 항목에서만 가능)
     if (item.exclusionReason === 'postponed') {
-      // recurrenceInstances에서 연결된 actual-completion 항목 찾기
-      const hasActualCompletion = recurrenceInstances.some(inst =>
-        inst.id?.endsWith('-actual-completion') &&
-        inst.recurrenceSourceId === item.recurrenceSourceId &&
-        inst.recurrenceOccurrenceDate === item.recurrenceOccurrenceDate
-      );
-
-      if (hasActualCompletion) {
-        toast({
-          title: '미룸 완료 항목이 있어요',
-          description: '미룸 완료 항목에서 되돌려주세요',
-        });
-        return;
-      }
+      toast({
+        title: '미룬 할일',
+        description: '미룸 상태를 취소하려면 미뤄둔 할일에서 "원래대로 복원"을 눌러주세요',
+      });
+      return;
     }
 
     try {
@@ -703,7 +703,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     } catch (error) {
       console.error('제외 취소 실패:', error);
     }
-  }, [userId, toast, recurrenceInstances]);
+  }, [userId, toast]);
 
   // 미루기 옵션 시트 열기
   const handleOpenPostponeSheet = useCallback((item: TimelineItem) => {

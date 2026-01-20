@@ -94,7 +94,6 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const [selectedAction, setSelectedAction] = useState<PostponeAction>('reschedule');
-  const [recordPostponement, setRecordPostponement] = useState(true);
   const [newTime, setNewTime] = useState('14:00'); // 기본값: 오후 2시
 
   useEffect(() => {
@@ -106,7 +105,6 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
   useEffect(() => {
     if (isOpen) {
       setSelectedAction('reschedule');
-      setRecordPostponement(true);
       // 현재 시간 + 1시간을 기본값으로
       const now = new Date();
       now.setHours(now.getHours() + 1);
@@ -119,7 +117,7 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
   const handleConfirm = () => {
     const options: PostponeOptions = {
       action: selectedAction,
-      recordPostponement,
+      recordPostponement: true, // 항상 미룸 기록 남기기
       ...(selectedAction === 'reschedule' && { newTime }),
     };
     onPostpone(options);
@@ -234,32 +232,8 @@ const PostponeOptionsSheet: React.FC<PostponeOptionsSheetProps> = ({
           )}
         </div>
 
-        {/* 미룸 기록 체크박스 + 확인 버튼 */}
-        <div className="p-4 border-t border-base-300 space-y-3">
-          {/* 미룸 기록 체크박스 */}
-          <label
-            className="flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer bg-base-100 hover:bg-base-200"
-          >
-            <input
-              type="checkbox"
-              checked={recordPostponement}
-              onChange={(e) => setRecordPostponement(e.target.checked)}
-              disabled={isProcessing}
-              className="checkbox checkbox-sm checkbox-primary"
-            />
-            <div className="flex-1">
-              <p className="font-medium text-sm">미룸 기록 남기기</p>
-              <p className="text-xs text-base-content/60">
-                원래 {todo.start_time
-                  ? (typeof todo.start_time === 'string'
-                      ? todo.start_time.slice(11, 16) || todo.start_time.slice(0, 5)
-                      : todo.start_time.toTimeString().slice(0, 5))
-                  : '예정된 시간'}에 예정된 할일을 미뤘다는 히스토리를 저장합니다.
-              </p>
-            </div>
-          </label>
-
-          {/* 확인 버튼 */}
+        {/* 확인 버튼 */}
+        <div className="p-4 border-t border-base-300">
           <Button
             type="button"
             onClick={handleConfirm}
