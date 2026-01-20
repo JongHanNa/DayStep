@@ -30,6 +30,7 @@ import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useRouter } from 'next/navigation';
 import type { PostponeOptions } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface TodoTimelineViewProps {
   userId: string;
@@ -124,6 +125,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 라우터 및 포모도로 스토어
   const router = useRouter();
   const { connectRecurringTodo } = usePomodoroStore();
+  const { toast } = useToast();
 
   // ADHD 모드 스토어 - 실행 모드 진입용 (2026-01-19 추가)
   const {
@@ -473,6 +475,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 편집 모달 열기
   const handleEditClick = useCallback((item: TimelineItem) => {
+    // "미룸 완료" 항목은 편집 모달 열지 않음 (체크 버튼으로만 되돌리기 가능)
+    if (item.id?.endsWith('-actual-completion')) {
+      toast({
+        title: '완료된 미룸 항목',
+        description: '체크 버튼을 눌러 되돌릴 수 있어요',
+      });
+      return;
+    }
+
     if (item.originalTodo) {
       setEditingTodo(item.originalTodo);
       setEditingItem(item); // 반복 인스턴스 정보 저장
@@ -489,7 +500,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       }
       setEditFormData(formData);
     }
-  }, [todoToFormData]);
+  }, [todoToFormData, toast]);
 
   // 건너뛰기 처리 (반복 인스턴스)
   // reason: 'postponed' (미뤘음) | 'not_needed' (필요없었음) | 'missed' (놓침)
