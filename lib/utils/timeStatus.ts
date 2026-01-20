@@ -30,8 +30,8 @@ const DEFAULT_GRACE_PERIOD_MINUTES = 10;
  * @returns 시간 상태 결과
  */
 export function getTimeStatus(
-  startTime: Date | null,
-  endTime: Date | null,
+  startTime: Date | string | null,
+  endTime: Date | string | null,
   completed: boolean,
   now: Date = new Date()
 ): TimeStatusResult {
@@ -45,7 +45,11 @@ export function getTimeStatus(
     return { status: 'upcoming' };
   }
 
-  const startMs = startTime.getTime();
+  // Date 인스턴스가 아닌 경우 변환 (문자열로 전달될 수 있음)
+  const start = startTime instanceof Date ? startTime : new Date(startTime);
+  const end = endTime ? (endTime instanceof Date ? endTime : new Date(endTime)) : null;
+
+  const startMs = start.getTime();
   const nowMs = now.getTime();
 
   // 아직 시작 전
@@ -54,7 +58,7 @@ export function getTimeStatus(
   }
 
   // endTime이 없는 경우: 시작 후 10분이 지나면 놓침
-  if (!endTime) {
+  if (!end) {
     const gracePeriodMs = DEFAULT_GRACE_PERIOD_MINUTES * 60 * 1000;
     const deadlineMs = startMs + gracePeriodMs;
 
@@ -79,7 +83,7 @@ export function getTimeStatus(
   }
 
   // endTime이 있는 경우: 기존 로직
-  const endMs = endTime.getTime();
+  const endMs = end.getTime();
 
   // 진행 중
   if (nowMs >= startMs && nowMs < endMs) {

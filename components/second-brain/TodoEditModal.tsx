@@ -124,17 +124,22 @@ export default function TodoEditModal({
     if (!todo) return;
 
     // 원본이 반복 할일이었는지 확인 (폼 값이 아닌 원본 값 사용)
-    // 일반 할일 → 반복 할일로 변환 시 모달이 뜨지 않도록 함
     const wasRecurring = originalRecurrencePattern && originalRecurrencePattern !== 'none';
+    // 현재 폼 상태가 반복인지 확인
+    const isNowRecurring = todo?.recurrencePattern && todo.recurrencePattern !== 'none';
+    // 반복 → 반복 안함 변환 감지
+    const isConvertingToNonRecurring = wasRecurring && !isNowRecurring;
+
     const titleChanged = hasTitleChanged();
     const timeChanged = hasTimeChanged();
 
     // 원본이 반복 할일이고 제목 또는 시간이 변경된 경우에만 다이얼로그 표시
-    if (wasRecurring && (titleChanged || timeChanged) && onRecurringSave) {
+    // 단, 반복 → 반복 안함 변환 시에는 모달 없이 저장 (선택지 불필요)
+    if (wasRecurring && !isConvertingToNonRecurring && (titleChanged || timeChanged) && onRecurringSave) {
       setChangedFields({ title: titleChanged, time: timeChanged });
       setShowTimeChangeDialog(true);
     } else {
-      // 일반 저장 (일반 → 반복 변환 포함)
+      // 일반 저장 (일반 → 반복 변환 포함, 반복 → 반복 안함 변환 포함)
       onSave(todo);
     }
   }, [todo, originalRecurrencePattern, hasTitleChanged, hasTimeChanged, onRecurringSave, onSave]);

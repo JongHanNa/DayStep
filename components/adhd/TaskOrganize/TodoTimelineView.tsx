@@ -739,7 +739,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 할일의 표시 날짜 결정 (startTime 기준)
   const getDisplayDate = useCallback((item: TimelineItem): Date => {
-    return item.startTime || item.createdAt;
+    if (item.startTime instanceof Date) {
+      return item.startTime;
+    }
+    if (item.createdAt instanceof Date) {
+      return item.createdAt;
+    }
+    return new Date(); // 최종 폴백
   }, []);
 
   // 타임라인 아이템 생성 (일반 할일 + 반복 인스턴스 병합)
@@ -1209,12 +1215,12 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                   let timeGaps: TimeGap[] = [];
                   if (isPastOrToday) {
                     const timedItems = items
-                      .filter(item => item.scheduleType === 'timed' && item.startTime)
+                      .filter(item => item.scheduleType === 'timed' && item.startTime instanceof Date)
                       .map(item => ({
                         id: item.id,
                         title: item.title,
-                        startTime: item.startTime?.toISOString(),
-                        endTime: item.endTime?.toISOString(),
+                        startTime: item.startTime instanceof Date ? item.startTime.toISOString() : undefined,
+                        endTime: item.endTime instanceof Date ? item.endTime.toISOString() : undefined,
                         type: 'todo'
                       }));
 
@@ -1247,14 +1253,20 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                   // 시간순 정렬 (startTime 기준)
                   renderItems.sort((a, b) => {
-                    const getStartTime = (item: RenderItem): Date => {
+                    const getStartTime = (item: RenderItem): number => {
+                      let time: Date | string | null;
                       if (item.type === 'todo') {
-                        return item.data.startTime || item.data.createdAt;
+                        time = item.data.startTime || item.data.createdAt;
                       } else {
-                        return item.data.startTime;
+                        time = item.data.startTime;
                       }
+                      // Date 인스턴스가 아닌 경우 변환
+                      if (time instanceof Date) {
+                        return time.getTime();
+                      }
+                      return time ? new Date(time).getTime() : 0;
                     };
-                    return getStartTime(a).getTime() - getStartTime(b).getTime();
+                    return getStartTime(a) - getStartTime(b);
                   });
 
                   return (
