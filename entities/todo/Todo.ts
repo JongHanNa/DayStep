@@ -49,7 +49,15 @@ export class Todo {
     public readonly shamefulPeopleIds: string[] = [],
 
     // 일반 할일 스킵 상태
-    public readonly skipStatus: 'not_needed' | 'missed' | null = null
+    public readonly skipStatus: 'not_needed' | 'missed' | null = null,
+
+    // 미루기로 생성된 독립 할일 필드 (원본 반복 할일 연결)
+    public readonly parentRecurringTodoId: string | null = null,
+    public readonly occurrenceDate: string | null = null,
+
+    // 미룸 시 원래 시간 정보 (뱃지 표시용)
+    public readonly originalStartTime: Date | null = null,
+    public readonly originalEndTime: Date | null = null
   ) {}
 
   /**
@@ -95,6 +103,14 @@ export class Todo {
 
     // 일반 할일 스킵 상태
     const skipStatus = record.skipStatus ?? record.skip_status ?? null;
+
+    // 미루기로 생성된 독립 할일 필드
+    const parentRecurringTodoId = record.parentRecurringTodoId ?? record.parent_recurring_todo_id ?? null;
+    const occurrenceDate = record.occurrenceDate ?? record.occurrence_date ?? null;
+
+    // 미룸 시 원래 시간 정보
+    const originalStartTime = record.originalStartTime ?? record.original_start_time ?? null;
+    const originalEndTime = record.originalEndTime ?? record.original_end_time ?? null;
 
     // title 필드
     const title = data.title;
@@ -145,7 +161,15 @@ export class Todo {
       shamefulPeopleIds || [],
 
       // 일반 할일 스킵 상태
-      skipStatus
+      skipStatus,
+
+      // 미루기로 생성된 독립 할일 필드
+      parentRecurringTodoId,
+      occurrenceDate,
+
+      // 미룸 시 원래 시간 정보
+      originalStartTime ? new Date(originalStartTime) : null,
+      originalEndTime ? new Date(originalEndTime) : null
     );
   }
 

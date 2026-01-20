@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle, SkipForward, Pause, MinusCircle, Cloud } from 'lucide-react';
+import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle, SkipForward, Pause, MinusCircle, Cloud, RotateCcw } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -25,7 +25,7 @@ import QuickLogModal from '@/components/adhd/QuickLogModal';
 import { Plus } from 'lucide-react';
 import PostponeOptionsSheet from '@/components/todos/PostponeOptionsSheet';
 import AnytimeInboxSheet from '@/components/todos/AnytimeInboxSheet';
-import { postponeTodoInstance, queryAnytimeTodosWithJWT } from '@/lib/supabase/todo-postpone';
+import { postponeTodoInstance, queryAnytimeTodosWithJWT, removeAnytimeOverrideWithJWT } from '@/lib/supabase/todo-postpone';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useRouter } from 'next/navigation';
@@ -273,7 +273,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             isActualExecution: data.is_actual_execution || false, // 실제 수행 인스턴스 (미루기 후 완료)
             originalStartTime: data.original_start_time || undefined, // 미룸 완료 시 원래 시작 시간
             originalEndTime: data.original_end_time || undefined, // 미룸 완료 시 원래 종료 시간
-            postponedToTime: data.postponed_to_time || undefined, // 미룸 목적지 종료 시간
+            postponedToTime: data.postponed_to_end_time || undefined, // 미룸 목적지 종료 시간
             postponedToStartTime: data.postponed_to_start_time || undefined, // 미룸 목적지 시작 시간
             originalTodo: originalTodo
           };
@@ -440,6 +440,40 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setDeletingTodoId(null);
   }, [deleteTodo]);
 
+  // 미룸 생성 항목 원래대로 복원 (독립 할일 삭제 + exclusion 삭제)
+  const handleRestoreOriginal = useCallback(async (item: TimelineItem) => {
+    if (!item.originalTodo?.parentRecurringTodoId || !item.originalTodo?.occurrenceDate) {
+      console.error('원래대로 복원 실패: 필수 정보 없음', {
+        parentId: item.originalTodo?.parentRecurringTodoId,
+        date: item.originalTodo?.occurrenceDate
+      });
+      return;
+    }
+
+    try {
+      await removeAnytimeOverrideWithJWT({
+        todoId: item.originalTodo.id,
+        parentTodoId: item.originalTodo.parentRecurringTodoId,
+        occurrenceDate: item.originalTodo.occurrenceDate,
+        userId
+      });
+
+      toast({
+        title: '원래대로 복원',
+        description: '미룸을 취소하고 원래 시간으로 복원했어요',
+      });
+
+      await fetchAllTodos();
+    } catch (error) {
+      console.error('원래대로 복원 실패:', error);
+      toast({
+        title: '복원 실패',
+        description: '다시 시도해주세요',
+        variant: 'destructive'
+      });
+    }
+  }, [userId, fetchAllTodos, toast]);
+
   // Todo → TodoFormData 변환
   const todoToFormData = useCallback((todo: Todo, isInstance?: boolean): TodoFormData => {
     return {
@@ -480,6 +514,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       toast({
         title: '완료된 미룸 항목',
         description: '체크 버튼을 눌러 되돌릴 수 있어요',
+      });
+      return;
+    }
+
+    // 미룸으로 생성된 독립 할일(미완료)은 편집 모달 열지 않음
+    const isPostponedIndependent = item.originalTodo?.parentRecurringTodoId && !item.completed;
+    if (isPostponedIndependent) {
+      toast({
+        title: '미룸 할일',
+        description: '"미룸완료" 또는 "원래대로 복원"을 사용하세요',
       });
       return;
     }
@@ -700,12 +744,38 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
           // 로컬 상태 업데이트
           if (recordPostponement) {
+            // reschedule 액션일 때만 목적지 시간 계산
+            let newEndTime: string | undefined;
+            let newStartTime: string | undefined;
+            if (action === 'reschedule' && newTime) {
+              const [hours, minutes] = newTime.split(':').map(Number);
+              const occDate = postponingItem.recurrenceOccurrenceDate!;
+              const startDate = new Date(`${occDate}T00:00:00+09:00`);
+              startDate.setHours(hours, minutes, 0, 0);
+              newStartTime = startDate.toISOString();
+
+              // end_time 계산 (원본 duration 유지)
+              if (postponingItem.startTime && postponingItem.endTime) {
+                const originalDuration = new Date(postponingItem.endTime).getTime() - new Date(postponingItem.startTime).getTime();
+                newEndTime = new Date(startDate.getTime() + originalDuration).toISOString();
+              }
+            }
+
             setRecurrenceInstances(prev => prev.map(inst =>
               inst.id === postponingItem.id
-                ? { ...inst, isSkipped: true, exclusionReason: 'postponed' }
+                ? {
+                    ...inst,
+                    isSkipped: true,
+                    exclusionReason: 'postponed',
+                    postponedToTime: newEndTime,
+                    postponedToStartTime: newStartTime,
+                  }
                 : inst
             ));
           }
+
+          // 생성된 독립 할일을 타임라인에 표시하기 위해 todos 상태 동기화
+          await fetchAllTodos();
         }
       } else {
         // ========== 일반 할일 처리 (새 로직) ==========
@@ -1033,7 +1103,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         shamefulPeopleIds: todo.shamefulPeopleIds || [],
         isRecurrenceInstance: false,
         skipStatus: todo.skipStatus as 'not_needed' | 'missed' | null | undefined,
-        originalTodo: todo
+        originalTodo: todo,
+        // 미룸 생성 항목의 원래 시간 정보
+        originalStartTime: todo.originalStartTime?.toISOString(),
+        originalEndTime: todo.originalEndTime?.toISOString()
       }));
 
     // 병합 및 정렬 (오래된 것 → 최신 순, 날짜 오름차순)
@@ -1716,7 +1789,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         'bg-base-300 text-base-content/50'
                                       }`}>
                                         {item.completed
-                                          ? (item.isActualExecution && item.originalStartTime
+                                          ? ((item.isActualExecution || item.originalTodo?.parentRecurringTodoId) && item.originalStartTime
                                               ? (item.originalEndTime
                                                   ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
                                                   : `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`)
@@ -1744,7 +1817,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                       'bg-base-300 text-base-content/50'
                                     }`}>
                                       {item.completed
-                                        ? (item.isActualExecution && item.originalStartTime
+                                        ? ((item.isActualExecution || item.originalTodo?.parentRecurringTodoId) && item.originalStartTime
                                             ? (item.originalEndTime
                                                 ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
                                                 : `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`)
@@ -1878,60 +1951,116 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   );
                                 })()}
 
-                                {/* 놓친 할일 안내 + 처리 버튼 */}
-                                {isMissedNotSkipped && (
-                                  <div
-                                    className="mt-2 p-2 bg-warning/10 rounded-lg border border-warning/20"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <p className="text-xs text-base-content/60 mb-2">
-                                      어떻게 기록할까요?
-                                    </p>
-                                    <div className="flex flex-wrap gap-1">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleToggleComplete(item);
-                                        }}
-                                        className="btn btn-xs btn-ghost text-success gap-1"
+                                {/* 미룸 생성 항목 전용 선택지 (미룸완료 + 원래대로 복원) */}
+                                {(() => {
+                                  // 미룸 생성 항목 식별: 독립 할일(parentRecurringTodoId 있음) + 미완료 + 시간 지남
+                                  const isPostponedCreatedItem =
+                                    item.originalTodo?.parentRecurringTodoId &&
+                                    !item.completed &&
+                                    !item.isRecurrenceInstance &&
+                                    timeStatus?.status === 'missed';
+
+                                  if (isPostponedCreatedItem) {
+                                    // 원래 시간 범위 텍스트 생성
+                                    const originalTimeText = item.originalStartTime && item.originalEndTime
+                                      ? ` (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
+                                      : item.originalStartTime
+                                        ? ` (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`
+                                        : '';
+
+                                    return (
+                                      <div
+                                        className="mt-2 p-2 bg-info/10 rounded-lg border border-info/20"
+                                        onClick={(e) => e.stopPropagation()}
                                       >
-                                        <CheckCircle2 className="w-3 h-3" />
-                                        완료했음
-                                      </button>
-                                      {/* 미뤘음/필요없었음/놓침 버튼 (일반 할일 + 반복 인스턴스 모두) */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenPostponeSheet(item);
-                                        }}
-                                        className="btn btn-xs btn-ghost text-warning gap-1"
+                                        <p className="text-xs text-base-content/60 mb-2">
+                                          미뤄둔 할일이에요.{originalTimeText} 어떻게 할까요?
+                                        </p>
+                                        <div className="flex flex-wrap gap-1">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleToggleComplete(item);
+                                            }}
+                                            className="btn btn-xs btn-ghost text-success gap-1"
+                                          >
+                                            <CheckCircle2 className="w-3 h-3" />
+                                            미룸완료
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleRestoreOriginal(item);
+                                            }}
+                                            className="btn btn-xs btn-ghost text-info gap-1"
+                                          >
+                                            <RotateCcw className="w-3 h-3" />
+                                            원래대로 복원
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+
+                                  // 일반 놓친 할일 (미룸 생성 항목이 아닌 경우)
+                                  if (isMissedNotSkipped && !item.originalTodo?.parentRecurringTodoId) {
+                                    return (
+                                      <div
+                                        className="mt-2 p-2 bg-warning/10 rounded-lg border border-warning/20"
+                                        onClick={(e) => e.stopPropagation()}
                                       >
-                                        <Pause className="w-3 h-3" />
-                                        미뤘음
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSkipTodo(item, 'not_needed');
-                                        }}
-                                        className="btn btn-xs btn-ghost text-base-content/60 gap-1"
-                                      >
-                                        <MinusCircle className="w-3 h-3" />
-                                        필요없었음
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSkipTodo(item, 'missed');
-                                        }}
-                                        className="btn btn-xs btn-ghost text-error gap-1"
-                                      >
-                                        <XCircle className="w-3 h-3" />
-                                        놓침
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
+                                        <p className="text-xs text-base-content/60 mb-2">
+                                          어떻게 기록할까요?
+                                        </p>
+                                        <div className="flex flex-wrap gap-1">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleToggleComplete(item);
+                                            }}
+                                            className="btn btn-xs btn-ghost text-success gap-1"
+                                          >
+                                            <CheckCircle2 className="w-3 h-3" />
+                                            완료했음
+                                          </button>
+                                          {/* 미뤘음/필요없었음/놓침 버튼 (일반 할일 + 반복 인스턴스 모두) */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleOpenPostponeSheet(item);
+                                            }}
+                                            className="btn btn-xs btn-ghost text-warning gap-1"
+                                          >
+                                            <Pause className="w-3 h-3" />
+                                            미뤘음
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleSkipTodo(item, 'not_needed');
+                                            }}
+                                            className="btn btn-xs btn-ghost text-base-content/60 gap-1"
+                                          >
+                                            <MinusCircle className="w-3 h-3" />
+                                            필요없었음
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleSkipTodo(item, 'missed');
+                                            }}
+                                            className="btn btn-xs btn-ghost text-error gap-1"
+                                          >
+                                            <XCircle className="w-3 h-3" />
+                                            놓침
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+
+                                  return null;
+                                })()}
                               </div>
 
                               {/* 삭제 버튼 (반복 인스턴스는 삭제 불가) */}

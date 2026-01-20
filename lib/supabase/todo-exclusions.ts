@@ -17,6 +17,8 @@ export type ExclusionReason = 'deleted' | 'skipped' | 'postponed' | 'not_needed'
 export interface TodoExclusionInfo {
   excluded_date: string;
   exclusion_reason: ExclusionReason;
+  postponed_to_start_time?: string | null; // 미룸 목적지 시작 시간 (ISO string)
+  postponed_to_end_time?: string | null; // 미룸 목적지 종료 시간 (ISO string)
 }
 
 /**
@@ -28,6 +30,8 @@ export async function createTodoExclusionWithJWT(exclusionData: {
   excluded_date: string; // YYYY-MM-DD 형식
   user_id: string;
   exclusion_reason?: ExclusionReason;
+  postponed_to_start_time?: string; // 미룸 목적지 시작 시간 (ISO string)
+  postponed_to_end_time?: string; // 미룸 목적지 종료 시간 (ISO string)
 }): Promise<any> {
   const dataWithReason = {
     ...exclusionData,
@@ -108,13 +112,15 @@ export async function queryTodoExclusionsDetailWithJWT(
         value: userId
       }
     ], {
-      select: 'excluded_date, exclusion_reason',
+      select: 'excluded_date, exclusion_reason, postponed_to_start_time, postponed_to_end_time',
       order: 'excluded_date.asc'
     });
 
     const result: TodoExclusionInfo[] = exclusions.map((e: any) => ({
       excluded_date: e.excluded_date,
-      exclusion_reason: e.exclusion_reason || 'deleted'
+      exclusion_reason: e.exclusion_reason || 'deleted',
+      postponed_to_start_time: e.postponed_to_start_time || null,
+      postponed_to_end_time: e.postponed_to_end_time || null
     }));
 
     console.log('✅ JWT 반복 일정 제외 날짜 상세 조회 성공:', {

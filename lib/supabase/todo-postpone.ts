@@ -55,18 +55,7 @@ export async function postponeTodoInstance(params: PostponeParams): Promise<stri
   });
 
   try {
-    // 1. 원본 반복 할일에서 해당 날짜 제외 (exclusion 생성)
-    if (recordPostponement) {
-      await createTodoExclusionWithJWT({
-        parent_todo_id: parentTodoId,
-        excluded_date: occurrenceDate,
-        user_id: userId,
-        exclusion_reason: 'postponed',
-      });
-      console.log('✅ 미룸 기록(exclusion) 생성 완료');
-    }
-
-    // 2. 원본 할일 정보 조회
+    // 2. 원본 할일 정보 조회 (exclusion 생성 전에 먼저 조회 - reschedule 목적지 시간 계산용)
     const parentTodos = await queryRLSTableWithJWT('todos', [
       { column: 'id', operator: 'eq', value: parentTodoId }
     ], {
@@ -78,6 +67,39 @@ export async function postponeTodoInstance(params: PostponeParams): Promise<stri
     }
 
     const parentTodo = parentTodos[0];
+
+    // 1. 원본 반복 할일에서 해당 날짜 제외 (exclusion 생성)
+    // reschedule 액션일 때만 목적지 시간 포함
+    if (recordPostponement) {
+      let postponedToStartTime: string | undefined;
+      let postponedToEndTime: string | undefined;
+
+      // reschedule 액션이고 newTime이 있을 때만 목적지 시간 계산
+      if (action === 'reschedule' && newTime) {
+        postponedToStartTime = convertToISOTime(occurrenceDate, newTime);
+
+        // end_time 계산 (원본 duration 유지)
+        if (parentTodo.start_time && parentTodo.end_time) {
+          const originalStart = new Date(parentTodo.start_time);
+          const originalEnd = new Date(parentTodo.end_time);
+          const durationMs = originalEnd.getTime() - originalStart.getTime();
+          const newStartDate = new Date(postponedToStartTime);
+          postponedToEndTime = new Date(newStartDate.getTime() + durationMs).toISOString();
+        }
+      }
+
+      await createTodoExclusionWithJWT({
+        parent_todo_id: parentTodoId,
+        excluded_date: occurrenceDate,
+        user_id: userId,
+        exclusion_reason: 'postponed',
+        postponed_to_start_time: postponedToStartTime,
+        postponed_to_end_time: postponedToEndTime,
+      });
+      console.log('✅ 미룸 기록(exclusion) 생성 완료', {
+        hasDestinationTime: !!(postponedToStartTime && postponedToEndTime)
+      });
+    }
 
     // 3. 독립 할일 데이터 구성
     const newTodoData: Record<string, any> = {
