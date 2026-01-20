@@ -429,6 +429,28 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         console.error('반복 인스턴스 완료 토글 실패:', error);
       }
     } else if (item.originalTodo) {
+      // 미룸 생성 독립 할일의 완료 취소: 원본 복원
+      if (item.originalTodo.parentRecurringTodoId && item.completed) {
+        try {
+          await removeAnytimeOverrideWithJWT({
+            todoId: item.originalTodo.id,
+            parentTodoId: item.originalTodo.parentRecurringTodoId,
+            occurrenceDate: item.originalTodo.occurrenceDate!,
+            userId
+          });
+
+          console.log('✅ 미룸 생성 독립 할일 완료 취소 → 원본 복원:', {
+            todoId: item.originalTodo.id,
+            parentId: item.originalTodo.parentRecurringTodoId
+          });
+
+          await fetchAllTodos();
+        } catch (error) {
+          console.error('❌ 미룸 생성 독립 할일 완료 취소 실패:', error);
+        }
+        return;
+      }
+
       // 일반 할일: completed 필드 토글
       await updateTodo(item.originalTodo.id, { completed: !item.completed });
     }
