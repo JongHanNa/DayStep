@@ -1441,8 +1441,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                         'bg-base-300 text-base-content/50'
                                       }`}>
                                         {item.completed
-                                          ? (item.isActualExecution && item.originalStartTime && item.originalEndTime
-                                              ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
+                                          ? (item.isActualExecution && item.originalStartTime
+                                              ? (item.originalEndTime
+                                                  ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
+                                                  : `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`)
                                               : '완료')
                                           : item.exclusionReason === 'postponed'
                                             ? (item.postponedToTime && item.postponedToStartTime
@@ -1467,8 +1469,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                       'bg-base-300 text-base-content/50'
                                     }`}>
                                       {item.completed
-                                        ? (item.isActualExecution && item.originalStartTime && item.originalEndTime
-                                            ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
+                                        ? (item.isActualExecution && item.originalStartTime
+                                            ? (item.originalEndTime
+                                                ? `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')} ~ ${format(new Date(item.originalEndTime), 'HH:mm')})`
+                                                : `미룸 완료 (원래 ${format(new Date(item.originalStartTime), 'HH:mm')})`)
                                             : '완료')
                                         : item.exclusionReason === 'postponed'
                                           ? (item.postponedToTime && item.postponedToStartTime
