@@ -18,8 +18,6 @@ import {
   Pause,
   Square,
   Timer,
-  Sun,
-  Moon,
   PictureInPicture2,
   Lightbulb,
   Plus,
@@ -35,7 +33,6 @@ import { removeAnytimeOverrideWithJWT } from '@/lib/supabase/todo-postpone';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { usePomodoroLiveActivity } from '@/hooks/usePomodoroLiveActivity';
 import { usePiPTimer } from '@/hooks/usePiPTimer';
-import { useTheme } from '@/hooks/useTheme';
 // CircularSlider 라이브러리 제거 - 커스텀 구현 사용
 import { useAuth } from '@/app/context/AuthContext';
 import { PomodoroSessionService } from '@/services/pomodoro-session.service';
@@ -137,8 +134,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
   });
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
-
-  const { resolvedTheme, setTheme } = useTheme();
 
   const [viewState, setViewState] = useState<ViewState>('recommendation');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -997,14 +992,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
             오늘 {completedInSession}개 완료!
           </motion.div>
         )}
-
-        <button
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="btn btn-circle btn-sm btn-ghost"
-          aria-label="테마 전환"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
       </header>
 
       {/* 개발환경 디버그 패널 (아코디언) */}

@@ -992,7 +992,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         </div>
       )}
       {activeTab === 'execute' && userId && (
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
           <ExecutionMode 
             onExit={() => setActiveTab('fuel')}
             hideNavigation={true}
