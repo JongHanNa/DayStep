@@ -1,19 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { BookHeart, HelpCircle, Lightbulb, Sun, Moon, Settings, Crown } from 'lucide-react';
+import { Sun, Moon, Settings, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ADHDEntryScreenProps {
   userId?: string;
-  onExecute: () => void;
   onRelationshipInsights: () => void;
   onFuel: (noteId?: string) => void;
 }
@@ -21,33 +18,21 @@ interface ADHDEntryScreenProps {
 /**
  * ADHD 모드 진입 화면
  *
- * "지금 뭐 할 거야?" 질문과 함께 두 가지 선택지 제공:
- * - 실행하기: 단일 할일 추천 모드로 진입
- * - 정리하기: 기존 GraphView로 진입
+ * 배너만 표시 (네비게이션은 사이드바/하단탭으로 분리됨)
+ * - FuelReminderBanner: 원동력 상기
+ * - PriorityReminderBanner: 우선순위 상기
+ * - 각성 문장 (설정된 경우)
  */
-export default function ADHDEntryScreen({ userId, onExecute, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
   const router = useRouter();
   const { awakeningSentence } = useADHDModeStore();
-  const { showDescriptions, setShowDescriptions } = useSettingsStore();
   const { resolvedTheme, setTheme } = useTheme();
   const { hasActiveSubscription } = useSubscription();
 
-  // 버튼 설명 데이터 (ADHD 어려움 → 해결책 구조)
-  const buttonDescriptions = {
-    relationship: {
-      title: '관계 기록',
-      description: '성인 ADHD의 어려움: 연락 깜빡함, 대화 내용 기억 안 남\n해결책: 소식을 기록하고, 연락할 때가 되면 알려줘요'
-    },
-    learning: {
-      title: '복잡한 머릿속, 정리해줄게',
-      description: '성인 ADHD의 어려움: 뭐부터 할지 모름 → 시작 못함 → 자책\n해결책: 하나씩 같이 정리해줄게요'
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
-      {/* 구독 상태 배지, 테마 토글 및 설정 버튼 (우측 상단) */}
-      <div className="absolute top-0 pt-4 right-4 flex items-center gap-2 safe-area-top">
+      {/* 구독 상태 배지, 테마 토글 및 설정 버튼 (우측 상단) - 모바일에서만 표시 */}
+      <div className="absolute top-0 pt-4 right-4 flex items-center gap-2 safe-area-top md:hidden">
         {/* 구독 상태 배지 */}
         <button
           onClick={() => router.push('/settings/subscription')}
@@ -119,82 +104,19 @@ export default function ADHDEntryScreen({ userId, onExecute, onRelationshipInsig
 
         {!awakeningSentence && <div className="mb-8" />}
 
-        {/* 설명 보기 토글 버튼 */}
-        <button
-          onClick={() => setShowDescriptions(!showDescriptions)}
-          className="flex items-center justify-center gap-1 text-xs text-base-content/50 hover:text-base-content/70 mb-4 mx-auto"
+        {/* 안내 메시지 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-center text-base-content/50 mt-8"
         >
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>{showDescriptions ? '설명 숨기기' : '각 버튼 설명 보기'}</span>
-        </button>
-
-        {/* 선택 버튼들 */}
-        <div className="flex flex-col gap-4">
-          {/* 관계 기록 버튼 (통합) */}
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onRelationshipInsights}
-              className="btn btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg bg-pink-500 text-white border-none hover:bg-pink-600"
-            >
-              <BookHeart className="w-7 h-7" />
-              <span className="text-xl font-semibold">관계 기록</span>
-            </motion.button>
-            {!showDescriptions && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
-                    <HelpCircle className="w-4 h-4 text-white/80" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
-                  {buttonDescriptions.relationship.description}
-                </PopoverContent>
-              </Popover>
-            )}
-            {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 연락 깜빡함, 대화 내용 기억 안 남
-                <br />
-                <span className="text-base-content/70">해결책:</span> 소식을 기록하고, 연락할 때가 되면 알려줘요
-              </p>
-            )}
-          </div>
-
-          {/* 복잡한 머릿속, 정리해줄게 버튼 */}
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onFuel()}
-              className="btn btn-primary btn-lg w-full rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
-            >
-              <Lightbulb className="w-7 h-7" />
-              <span className="text-xl font-semibold">복잡한 머릿속, 정리해줄게</span>
-            </motion.button>
-            {!showDescriptions && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
-                    <HelpCircle className="w-4 h-4 text-white/80" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent side="left" className="w-[220px] p-3 text-sm bg-base-100 border border-base-300 shadow-lg whitespace-pre-line text-center">
-                  {buttonDescriptions.learning.description}
-                </PopoverContent>
-              </Popover>
-            )}
-            {showDescriptions && (
-              <p className="text-xs text-base-content/50 mt-2 text-center leading-relaxed">
-                <span className="text-base-content/40">성인 ADHD의 어려움:</span> 뭐부터 할지 모름 → 시작 못함 → 자책
-                <br />
-                <span className="text-base-content/70">해결책:</span> 하나씩 같이 정리해줄게요
-              </p>
-            )}
-          </div>
-
-        </div>
+          <p className="text-sm">
+            {/* 웹: 좌측 사이드바, 모바일: 하단 탭 안내 */}
+            <span className="hidden md:inline">왼쪽 메뉴에서 시작하세요</span>
+            <span className="md:hidden">아래 탭에서 시작하세요</span>
+          </p>
+        </motion.div>
       </motion.div>
     </div>
   );

@@ -11,6 +11,7 @@ import OrganizeModeWrapper from '@/components/adhd/OrganizeModeWrapper';
 import CareMode from '@/components/adhd/CareMode';
 import FuelMode from '@/components/adhd/FuelMode';
 import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights';
+import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
@@ -115,6 +116,9 @@ export default function HomePage() {
     enterEntryMode();
   };
 
+  // 네비게이션 표시 여부 (entry 모드에서만 표시)
+  const showNavigation = currentMode === 'entry' || currentMode === 'relationship-insights' || currentMode === 'fuel';
+
   // 실행 모드
   if (currentMode === 'execute') {
     return <ExecutionMode onExit={handleExitExecutionMode} />;
@@ -130,23 +134,40 @@ export default function HomePage() {
     return <CareMode onExit={handleExitExecutionMode} />;
   }
 
-  // 관계 인사이트 모드
-  if (currentMode === 'relationship-insights') {
-    return <RelationshipInsightsMode onExit={handleExitExecutionMode} />;
-  }
-
-  // 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력)
-  if (currentMode === 'fuel') {
-    return <FuelMode onExit={handleExitFuelMode} />;
-  }
-
-  // 진입 화면 (기본)
+  // ADHD 모드 레이아웃 (entry, relationship-insights, fuel)
   return (
-    <ADHDEntryScreen
-      userId={user?.id}
-      onExecute={handleExecute}
-      onRelationshipInsights={handleRelationshipInsights}
-      onFuel={handleFuel}
-    />
+    <div className="flex min-h-screen">
+      {/* 웹 사이드바 (md 이상) */}
+      <div className="hidden md:block">
+        <ADHDSidebar />
+      </div>
+
+      {/* 메인 콘텐츠 */}
+      <main className="flex-1 md:ml-16 pb-20 md:pb-0">
+        {/* 관계 인사이트 모드 */}
+        {currentMode === 'relationship-insights' && (
+          <RelationshipInsightsMode onExit={handleExitExecutionMode} />
+        )}
+
+        {/* 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력) */}
+        {currentMode === 'fuel' && (
+          <FuelMode onExit={handleExitFuelMode} />
+        )}
+
+        {/* 진입 화면 (기본) */}
+        {currentMode === 'entry' && (
+          <ADHDEntryScreen
+            userId={user?.id}
+            onRelationshipInsights={handleRelationshipInsights}
+            onFuel={handleFuel}
+          />
+        )}
+      </main>
+
+      {/* 모바일 하단탭 (md 미만) */}
+      <div className="md:hidden">
+        <ADHDBottomTabBar />
+      </div>
+    </div>
   );
 }
