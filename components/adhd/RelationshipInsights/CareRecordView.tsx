@@ -305,16 +305,8 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
 
   return (
     <div className="p-4">
-      <AnimatePresence mode="wait">
-        {/* 사람 선택 화면 */}
-        {viewState === 'select-person' && (
-          <motion.div
-            key="select"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-4"
-          >
+      {/* 사람 선택 화면 - 항상 표시 */}
+      <div className="space-y-4">
             {/* 용량 경고 배너 */}
             <UsageWarningBanner
               entities={['cherished_people', 'care_interaction']}
@@ -591,273 +583,284 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                 </div>
               </>
             )}
-          </motion.div>
-        )}
+      </div>
 
-        {/* 소식 작성 화면 */}
-        {viewState === 'write-news' && (
-          <motion.div
-            key="write"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-4 pb-24"
-          >
-            {/* 뒤로가기 + 헤더 */}
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                onClick={handleBack}
-                className="btn btn-ghost btn-circle btn-sm"
+      {/* 기록하기/완료 모달 */}
+      <dialog
+        open={viewState !== 'select-person'}
+        className="modal z-[110]"
+      >
+        <div className="modal-box max-w-lg max-h-[90vh] overflow-y-auto p-0">
+          <AnimatePresence mode="wait">
+            {/* 소식 작성 화면 */}
+            {viewState === 'write-news' && (
+              <motion.div
+                key="write"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-4 space-y-4 pb-24"
               >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div className="flex-1">
-                <p className="text-sm text-base-content/60">기록하기</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold text-primary">
-                    {careMode.selectedPersonName}님과의 시간
-                  </p>
+                {/* 뒤로가기 + 헤더 */}
+                <div className="flex items-center gap-2 mb-4 sticky top-0 bg-base-100 z-10 -mx-4 px-4 py-2">
                   <button
-                    onClick={() => {
-                      const selectedPerson = people.find(p => p.id === careMode.selectedPersonId);
-                      if (selectedPerson) {
-                        openAddPersonModal(selectedPerson);
-                      }
-                    }}
-                    className="btn btn-ghost btn-xs btn-circle"
-                    title="인물 정보 수정"
+                    onClick={handleBack}
+                    className="btn btn-ghost btn-circle btn-sm"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                   </button>
+                  <div className="flex-1">
+                    <p className="text-sm text-base-content/60">기록하기</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-lg font-bold text-primary">
+                        {careMode.selectedPersonName}님과의 시간
+                      </p>
+                      <button
+                        onClick={() => {
+                          const selectedPerson = people.find(p => p.id === careMode.selectedPersonId);
+                          if (selectedPerson) {
+                            openAddPersonModal(selectedPerson);
+                          }
+                        }}
+                        className="btn btn-ghost btn-xs btn-circle"
+                        title="인물 정보 수정"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* 1. 들은 소식 - 최상단 */}
-            <div>
-              <p className="text-sm font-medium mb-2">
-                요즘 그분은 어떻게 지내고 계세요?
-              </p>
-              <textarea
-                value={recentNews}
-                onChange={(e) => setRecentNews(e.target.value)}
-                placeholder="들은 소식을 적어보세요..."
-                className="textarea textarea-bordered w-full h-24 resize-none"
-              />
-            </div>
-
-            {/* 2. 어떻게 연락했나요? */}
-            <div>
-              <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-primary" />
-                마음을 전했다면, 기록으로 남겨보세요. 어떻게 마음을 전했나요?
-              </p>
-              {/* 소식만 기록할게요 옵션 */}
-              <label className="flex items-center gap-2 mb-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={skipInteractionType}
-                  onChange={(e) => {
-                    setSkipInteractionType(e.target.checked);
-                    if (e.target.checked) setInteractionType(null);
-                  }}
-                  className="checkbox checkbox-sm checkbox-primary"
-                />
-                <span className="text-sm text-base-content/70">소식만 기록할게요</span>
-              </label>
-              {!skipInteractionType && (
-                <div className="grid grid-cols-4 gap-2">
-                  {(Object.entries(INTERACTION_TYPE_LABELS) as [InteractionType, { label: string; icon: string }][]).map(
-                    ([type, { label, icon }]) => {
-                      const IconComponent = INTERACTION_ICONS[icon];
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setInteractionType(type)}
-                          className={`p-2 rounded-lg text-center transition-all ${
-                            interactionType === type
-                              ? 'bg-pink-500 text-white scale-105'
-                              : 'bg-base-200 hover:bg-base-300'
-                          }`}
-                        >
-                          <div className="flex justify-center">
-                            {IconComponent && <IconComponent className="w-5 h-5" />}
-                          </div>
-                          <div className="text-xs mt-1">{label}</div>
-                        </button>
-                      );
-                    }
-                  )}
+                {/* 1. 들은 소식 - 최상단 */}
+                <div>
+                  <p className="text-sm font-medium mb-2">
+                    요즘 그분은 어떻게 지내고 계세요?
+                  </p>
+                  <textarea
+                    value={recentNews}
+                    onChange={(e) => setRecentNews(e.target.value)}
+                    placeholder="들은 소식을 적어보세요..."
+                    className="textarea textarea-bordered w-full h-24 resize-none"
+                  />
                 </div>
-              )}
-            </div>
 
-            {/* 3. 감사했던 점 */}
-            <div>
-              <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                <Heart className="w-4 h-4 text-pink-500" />
-                감사했던 점이 있다면?
-              </p>
-              <textarea
-                value={gratitudeNote}
-                onChange={(e) => setGratitudeNote(e.target.value)}
-                placeholder="선택사항"
-                className="textarea textarea-bordered w-full h-20 resize-none"
-              />
-            </div>
-
-            {/* 4. 받은 부탁 (상대방 → 나) */}
-            <div>
-              <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                <ArrowDownLeft className="w-4 h-4 text-blue-500" />
-                받은 부탁이 있나요?
-              </p>
-              <textarea
-                value={requestFromThem}
-                onChange={(e) => setRequestFromThem(e.target.value)}
-                placeholder="상대방이 나에게 부탁한 내용 (선택사항)"
-                className="textarea textarea-bordered w-full h-20 resize-none"
-              />
-            </div>
-
-            {/* 5. 한 부탁 (나 → 상대방) */}
-            <div>
-              <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                <ArrowUpRight className="w-4 h-4 text-green-500" />
-                부탁한 것이 있나요?
-              </p>
-              <textarea
-                value={requestToThem}
-                onChange={(e) => setRequestToThem(e.target.value)}
-                placeholder="내가 상대방에게 부탁한 내용 (선택사항)"
-                className="textarea textarea-bordered w-full h-20 resize-none"
-              />
-            </div>
-
-            {/* 6. 회의 내용 */}
-            <div>
-              <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-purple-500" />
-                회의 내용이 있나요?
-              </p>
-              <textarea
-                value={meetingNote}
-                onChange={(e) => setMeetingNote(e.target.value)}
-                placeholder="회의/미팅에서 나온 주요 내용 (선택사항)"
-                className="textarea textarea-bordered w-full h-20 resize-none"
-              />
-            </div>
-
-            {/* 7. 선물/도움 계획 + 할일 연동 */}
-            <div>
-              <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                <Gift className="w-4 h-4 text-amber-500" />
-                해드리고 싶은 것이 있나요?
-              </p>
-              <p className="text-xs text-base-content/50 mb-2">
-                커피 한 잔의 마음도 좋아요
-              </p>
-              <textarea
-                value={giftPlan}
-                onChange={(e) => setGiftPlan(e.target.value)}
-                placeholder="작은 선물, 도움, 함께하는 시간..."
-                className="textarea textarea-bordered w-full h-20 resize-none"
-              />
-              {/* 할일로 추가 옵션 */}
-              {giftPlan.trim() && (
-                <div className="mt-3 p-3 rounded-lg bg-base-200">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                {/* 2. 어떻게 연락했나요? */}
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-primary" />
+                    마음을 전했다면, 기록으로 남겨보세요. 어떻게 마음을 전했나요?
+                  </p>
+                  {/* 소식만 기록할게요 옵션 */}
+                  <label className="flex items-center gap-2 mb-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={createGiftTodo}
+                      checked={skipInteractionType}
                       onChange={(e) => {
-                        setCreateGiftTodo(e.target.checked);
-                        if (e.target.checked && !giftTodoDate) {
-                          const today = new Date();
-                          const yyyy = today.getFullYear();
-                          const mm = String(today.getMonth() + 1).padStart(2, '0');
-                          const dd = String(today.getDate()).padStart(2, '0');
-                          setGiftTodoDate(`${yyyy}-${mm}-${dd}`);
-                        }
+                        setSkipInteractionType(e.target.checked);
+                        if (e.target.checked) setInteractionType(null);
                       }}
                       className="checkbox checkbox-sm checkbox-primary"
                     />
-                    <span className="text-sm">할일로 추가하기</span>
+                    <span className="text-sm text-base-content/70">소식만 기록할게요</span>
                   </label>
-                  {createGiftTodo && (
-                    <input
-                      type="date"
-                      value={giftTodoDate}
-                      onChange={(e) => setGiftTodoDate(e.target.value)}
-                      className="input input-sm input-bordered w-full mt-2"
-                      placeholder="날짜 선택 (선택사항)"
-                    />
+                  {!skipInteractionType && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {(Object.entries(INTERACTION_TYPE_LABELS) as [InteractionType, { label: string; icon: string }][]).map(
+                        ([type, { label, icon }]) => {
+                          const IconComponent = INTERACTION_ICONS[icon];
+                          return (
+                            <button
+                              key={type}
+                              onClick={() => setInteractionType(type)}
+                              className={`p-2 rounded-lg text-center transition-all ${
+                                interactionType === type
+                                  ? 'bg-pink-500 text-white scale-105'
+                                  : 'bg-base-200 hover:bg-base-300'
+                              }`}
+                            >
+                              <div className="flex justify-center">
+                                {IconComponent && <IconComponent className="w-5 h-5" />}
+                              </div>
+                              <div className="text-xs mt-1">{label}</div>
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* 저장 버튼 */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-base-100">
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="btn btn-primary w-full rounded-full btn-lg"
+                {/* 3. 감사했던 점 */}
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-500" />
+                    감사했던 점이 있다면?
+                  </p>
+                  <textarea
+                    value={gratitudeNote}
+                    onChange={(e) => setGratitudeNote(e.target.value)}
+                    placeholder="선택사항"
+                    className="textarea textarea-bordered w-full h-20 resize-none"
+                  />
+                </div>
+
+                {/* 4. 받은 부탁 (상대방 → 나) */}
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <ArrowDownLeft className="w-4 h-4 text-blue-500" />
+                    받은 부탁이 있나요?
+                  </p>
+                  <textarea
+                    value={requestFromThem}
+                    onChange={(e) => setRequestFromThem(e.target.value)}
+                    placeholder="상대방이 나에게 부탁한 내용 (선택사항)"
+                    className="textarea textarea-bordered w-full h-20 resize-none"
+                  />
+                </div>
+
+                {/* 5. 한 부탁 (나 → 상대방) */}
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <ArrowUpRight className="w-4 h-4 text-green-500" />
+                    부탁한 것이 있나요?
+                  </p>
+                  <textarea
+                    value={requestToThem}
+                    onChange={(e) => setRequestToThem(e.target.value)}
+                    placeholder="내가 상대방에게 부탁한 내용 (선택사항)"
+                    className="textarea textarea-bordered w-full h-20 resize-none"
+                  />
+                </div>
+
+                {/* 6. 회의 내용 */}
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-purple-500" />
+                    회의 내용이 있나요?
+                  </p>
+                  <textarea
+                    value={meetingNote}
+                    onChange={(e) => setMeetingNote(e.target.value)}
+                    placeholder="회의/미팅에서 나온 주요 내용 (선택사항)"
+                    className="textarea textarea-bordered w-full h-20 resize-none"
+                  />
+                </div>
+
+                {/* 7. 선물/도움 계획 + 할일 연동 */}
+                <div>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-amber-500" />
+                    해드리고 싶은 것이 있나요?
+                  </p>
+                  <p className="text-xs text-base-content/50 mb-2">
+                    커피 한 잔의 마음도 좋아요
+                  </p>
+                  <textarea
+                    value={giftPlan}
+                    onChange={(e) => setGiftPlan(e.target.value)}
+                    placeholder="작은 선물, 도움, 함께하는 시간..."
+                    className="textarea textarea-bordered w-full h-20 resize-none"
+                  />
+                  {/* 할일로 추가 옵션 */}
+                  {giftPlan.trim() && (
+                    <div className="mt-3 p-3 rounded-lg bg-base-200">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={createGiftTodo}
+                          onChange={(e) => {
+                            setCreateGiftTodo(e.target.checked);
+                            if (e.target.checked && !giftTodoDate) {
+                              const today = new Date();
+                              const yyyy = today.getFullYear();
+                              const mm = String(today.getMonth() + 1).padStart(2, '0');
+                              const dd = String(today.getDate()).padStart(2, '0');
+                              setGiftTodoDate(`${yyyy}-${mm}-${dd}`);
+                            }
+                          }}
+                          className="checkbox checkbox-sm checkbox-primary"
+                        />
+                        <span className="text-sm">할일로 추가하기</span>
+                      </label>
+                      {createGiftTodo && (
+                        <input
+                          type="date"
+                          value={giftTodoDate}
+                          onChange={(e) => setGiftTodoDate(e.target.value)}
+                          className="input input-sm input-bordered w-full mt-2"
+                          placeholder="날짜 선택 (선택사항)"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 저장 버튼 */}
+                <div className="sticky bottom-0 -mx-4 px-4 py-4 bg-base-100 border-t border-base-200">
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="btn btn-primary w-full rounded-full btn-lg"
+                  >
+                    {isSaving ? (
+                      <span className="loading loading-spinner loading-sm" />
+                    ) : (
+                      '저장'
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 완료 화면 */}
+            {viewState === 'completed' && (
+              <motion.div
+                key="completed"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="flex flex-col items-center justify-center min-h-[50vh] p-4 space-y-6"
               >
-                {isSaving ? (
-                  <span className="loading loading-spinner loading-sm" />
-                ) : (
-                  '저장'
-                )}
-              </button>
-            </div>
-          </motion.div>
-        )}
+                {/* 완료 아이콘 */}
+                <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Heart className="w-12 h-12 text-primary" fill="currentColor" />
+                </div>
 
-        {/* 완료 화면 */}
-        {viewState === 'completed' && (
-          <motion.div
-            key="completed"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="flex flex-col items-center justify-center min-h-[50vh] space-y-6"
-          >
-            {/* 완료 아이콘 */}
-            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
-              <Heart className="w-12 h-12 text-primary" fill="currentColor" />
-            </div>
+                {/* 완료 메시지 - 소식만 기록 vs 마음 전함 구분 */}
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-primary mb-2">
+                    {skipInteractionType ? '소식을 기록했어요!' : '따뜻한 마음을 전했어요!'}
+                  </h2>
+                  <p className="text-base-content/70">
+                    {skipInteractionType
+                      ? `${careMode.selectedPersonName}님의 소식을 잊지 않을게요`
+                      : `${careMode.selectedPersonName}님이 기뻐하실 거예요`}
+                  </p>
+                </div>
 
-            {/* 완료 메시지 - 소식만 기록 vs 마음 전함 구분 */}
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-primary mb-2">
-                {skipInteractionType ? '소식을 기록했어요!' : '따뜻한 마음을 전했어요!'}
-              </h2>
-              <p className="text-base-content/70">
-                {skipInteractionType
-                  ? `${careMode.selectedPersonName}님의 소식을 잊지 않을게요`
-                  : `${careMode.selectedPersonName}님이 기뻐하실 거예요`}
-              </p>
-            </div>
+                {/* 성찰 메시지 */}
+                <div className="p-4 rounded-xl bg-base-200 max-w-xs">
+                  <p className="text-sm text-base-content/80 text-center">
+                    관계에 투자한 시간은 절대 낭비가 아닙니다
+                  </p>
+                </div>
 
-            {/* 성찰 메시지 */}
-            <div className="p-4 rounded-xl bg-base-200 max-w-xs">
-              <p className="text-sm text-base-content/80 text-center">
-                관계에 투자한 시간은 절대 낭비가 아닙니다
-              </p>
-            </div>
-
-            {/* 다시 기록하기 버튼 */}
-            <button
-              onClick={handleRecordAnother}
-              className="btn btn-primary btn-lg rounded-full px-8"
-            >
-              <Check className="w-5 h-5 mr-2" />
-              또 기록하기
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                {/* 다시 기록하기 버튼 */}
+                <button
+                  onClick={handleRecordAnother}
+                  className="btn btn-primary btn-lg rounded-full px-8"
+                >
+                  <Check className="w-5 h-5 mr-2" />
+                  또 기록하기
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={handleBack}>close</button>
+        </form>
+      </dialog>
 
       {/* 용량 제한 모달 */}
       {limitResult && (
