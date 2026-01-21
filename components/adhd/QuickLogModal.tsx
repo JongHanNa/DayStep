@@ -46,12 +46,28 @@ export default function QuickLogModal({
   // 상세 입력 폼 상태
   const [title, setTitle] = useState('');
   const [startTime, setStartTime] = useState(() => {
+    // 새 일정 모드: 현재 시간 사용
+    if (initialMode === 'new') {
+      return format(new Date(), 'HH:mm');
+    }
+    // 빈 시간 클릭: prefillStartTime 사용
     if (prefillStartTime) {
       return format(prefillStartTime, 'HH:mm');
     }
+    // 기본값: 30분 전
     return format(subMinutes(new Date(), 30), 'HH:mm');
   });
   const [duration, setDuration] = useState(30); // 분 단위
+
+  // 커스텀 소요 시간 입력 상태
+  const [isCustomDuration, setIsCustomDuration] = useState(false);
+  const [customHours, setCustomHours] = useState(0);
+  const [customMinutes, setCustomMinutes] = useState(30);
+
+  // 실제 적용되는 소요 시간 (프리셋 또는 커스텀)
+  const effectiveDuration = isCustomDuration
+    ? customHours * 60 + customMinutes
+    : duration;
 
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
@@ -69,11 +85,21 @@ export default function QuickLogModal({
       setShowSuccess(false);
 
       // startTime 리셋
-      if (prefillStartTime) {
+      if (initialMode === 'new') {
+        // 새 일정 모드: 현재 시간 사용
+        setStartTime(format(new Date(), 'HH:mm'));
+      } else if (prefillStartTime) {
+        // 빈 시간 클릭: prefillStartTime 사용
         setStartTime(format(prefillStartTime, 'HH:mm'));
       } else {
+        // 기본값: 30분 전
         setStartTime(format(subMinutes(new Date(), 30), 'HH:mm'));
       }
+
+      // 커스텀 소요 시간 상태 리셋
+      setIsCustomDuration(false);
+      setCustomHours(0);
+      setCustomMinutes(30);
     }
   }, [isOpen, prefillStartTime, initialMode]);
 
@@ -94,7 +120,7 @@ export default function QuickLogModal({
       const [hours, minutes] = startTime.split(':').map(Number);
       const startDate = new Date();
       startDate.setHours(hours, minutes, 0, 0);
-      const endDate = calculateEndTime(startTime, duration);
+      const endDate = calculateEndTime(startTime, effectiveDuration);
 
       const todoInput: CreateTodoInput = {
         title: title.trim(),
@@ -128,7 +154,7 @@ export default function QuickLogModal({
       const [hours, minutes] = startTime.split(':').map(Number);
       const startDate = new Date();
       startDate.setHours(hours, minutes, 0, 0);
-      const endDate = calculateEndTime(startTime, duration);
+      const endDate = calculateEndTime(startTime, effectiveDuration);
 
       const todoInput: CreateTodoInput = {
         title: title.trim(),
@@ -159,6 +185,9 @@ export default function QuickLogModal({
     setTitle('');
     setStartTime(format(subMinutes(new Date(), 30), 'HH:mm'));
     setDuration(30);
+    setIsCustomDuration(false);
+    setCustomHours(0);
+    setCustomMinutes(30);
     setIsLoading(false);
     setShowSuccess(false);
     onClose();
@@ -263,24 +292,59 @@ export default function QuickLogModal({
                 <label className="label">
                   <span className="label-text font-medium">소요 시간</span>
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {[15, 30, 45, 60, 90, 120].map((mins) => (
                     <button
                       key={mins}
-                      onClick={() => setDuration(mins)}
-                      className={`btn btn-sm flex-1 ${
-                        duration === mins ? 'btn-primary' : 'btn-outline'
+                      onClick={() => {
+                        setDuration(mins);
+                        setIsCustomDuration(false);
+                      }}
+                      className={`btn btn-sm ${
+                        !isCustomDuration && duration === mins ? 'btn-primary' : 'btn-ghost bg-base-200'
                       }`}
                     >
                       {mins < 60 ? `${mins}분` : `${mins / 60}시간`}
                     </button>
                   ))}
                 </div>
+                {/* 직접 입력 버튼 */}
+                <button
+                  onClick={() => setIsCustomDuration(!isCustomDuration)}
+                  className={`btn btn-sm w-full mt-2 ${
+                    isCustomDuration ? 'btn-primary' : 'btn-ghost bg-base-200'
+                  }`}
+                >
+                  직접 입력
+                </button>
+                {/* 커스텀 시간/분 입력 */}
+                {isCustomDuration && (
+                  <div className="flex gap-2 mt-2">
+                    <select
+                      value={customHours}
+                      onChange={(e) => setCustomHours(Number(e.target.value))}
+                      className="select select-bordered flex-1"
+                    >
+                      {[...Array(13)].map((_, i) => (
+                        <option key={i} value={i}>{i}시간</option>
+                      ))}
+                    </select>
+                    <select
+                      value={customMinutes}
+                      onChange={(e) => setCustomMinutes(Number(e.target.value))}
+                      className="select select-bordered flex-1"
+                    >
+                      {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                        <option key={m} value={m}>{m}분</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* 예상 종료 시간 표시 */}
               <div className="text-sm text-base-content/60 text-center">
-                {startTime} ~ {format(calculateEndTime(startTime, duration), 'HH:mm')} ({duration}분)
+                {startTime} ~ {format(calculateEndTime(startTime, effectiveDuration), 'HH:mm')} ({effectiveDuration}분)
               </div>
 
               {/* 저장 버튼 */}
@@ -344,24 +408,59 @@ export default function QuickLogModal({
                 <label className="label">
                   <span className="label-text font-medium">예상 소요 시간</span>
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {[15, 30, 45, 60, 90, 120].map((mins) => (
                     <button
                       key={mins}
-                      onClick={() => setDuration(mins)}
-                      className={`btn btn-sm flex-1 ${
-                        duration === mins ? 'btn-accent' : 'btn-ghost bg-base-200'
+                      onClick={() => {
+                        setDuration(mins);
+                        setIsCustomDuration(false);
+                      }}
+                      className={`btn btn-sm ${
+                        !isCustomDuration && duration === mins ? 'btn-accent' : 'btn-ghost bg-base-200'
                       }`}
                     >
                       {mins < 60 ? `${mins}분` : `${mins / 60}시간`}
                     </button>
                   ))}
                 </div>
+                {/* 직접 입력 버튼 */}
+                <button
+                  onClick={() => setIsCustomDuration(!isCustomDuration)}
+                  className={`btn btn-sm w-full mt-2 ${
+                    isCustomDuration ? 'btn-accent' : 'btn-ghost bg-base-200'
+                  }`}
+                >
+                  직접 입력
+                </button>
+                {/* 커스텀 시간/분 입력 */}
+                {isCustomDuration && (
+                  <div className="flex gap-2 mt-2">
+                    <select
+                      value={customHours}
+                      onChange={(e) => setCustomHours(Number(e.target.value))}
+                      className="select select-bordered flex-1"
+                    >
+                      {[...Array(13)].map((_, i) => (
+                        <option key={i} value={i}>{i}시간</option>
+                      ))}
+                    </select>
+                    <select
+                      value={customMinutes}
+                      onChange={(e) => setCustomMinutes(Number(e.target.value))}
+                      className="select select-bordered flex-1"
+                    >
+                      {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                        <option key={m} value={m}>{m}분</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* 예상 시간 표시 */}
               <div className="text-sm text-base-content/60 text-center">
-                {startTime} ~ {format(calculateEndTime(startTime, duration), 'HH:mm')} ({duration}분)
+                {startTime} ~ {format(calculateEndTime(startTime, effectiveDuration), 'HH:mm')} ({effectiveDuration}분)
               </div>
 
               {/* 저장 버튼 */}
