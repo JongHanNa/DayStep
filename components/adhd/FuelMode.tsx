@@ -244,6 +244,22 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     }
   }, [timerState.status, viewState]);
 
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdownId) {
+        const target = event.target as HTMLElement;
+        // 드롭다운 내부 클릭이 아니면 닫기
+        if (!target.closest('[data-dropdown-menu]')) {
+          setOpenDropdownId(null);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openDropdownId]);
+
   // 배너에서 진입 시 선택된 노트로 자동 이동
   useEffect(() => {
     if (selectedNoteIdFromStore && fuelNotes.length > 0 && viewState === 'select-duration') {
@@ -1164,17 +1180,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       {openDropdownId === entry.id && (
-                        <div className="absolute right-0 top-full mt-1 w-36 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
-                          <button
-                            onClick={() => handleOpenEditModal(entry)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
-                          >
-                            <Pencil className="w-4 h-4" />
-                            수정
-                          </button>
+                        <div data-dropdown-menu className="absolute right-0 top-full mt-1 w-36 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
                           <button
                             onClick={() => handleToggleBannerPin(entry)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
                           >
                             <Pin className={`w-4 h-4 ${entry.is_banner_pinned ? 'text-primary fill-primary' : ''}`} />
                             {entry.is_banner_pinned ? '배너 고정 해제' : '배너에 고정'}
@@ -1913,17 +1922,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         {openDropdownId === note.id && (
-                          <div className="absolute right-0 top-full mt-1 w-32 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
-                            <button
-                              onClick={() => handleOpenEditModal(note)}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-base-200 rounded-t-lg"
-                            >
-                              <Pencil className="w-4 h-4" />
-                              수정
-                            </button>
+                          <div data-dropdown-menu className="absolute right-0 top-full mt-1 w-32 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50">
                             <button
                               onClick={() => handleOpenDeleteModal(note.id)}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-b-lg"
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-base-200 rounded-lg"
                             >
                               <Trash2 className="w-4 h-4" />
                               삭제
