@@ -181,6 +181,11 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
+  // 원동력 모달 상태
+  const [showFuelInputModal, setShowFuelInputModal] = useState(false); // 원동력 입력 모달
+  const [selectedFuelNote, setSelectedFuelNote] = useState<Note | null>(null); // 상세 보기/편집 모달
+  const [editTitle, setEditTitle] = useState(''); // 제목 편집용
+
   // 할일 편집/삭제 모달 상태
   const [editingTodo, setEditingTodo] = useState<{ id: string; title: string; noteId: string } | null>(null);
   const [editTodoTitle, setEditTodoTitle] = useState('');
@@ -896,11 +901,11 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     handleStartTimer();
   }, [handleStartTimer]);
 
-  // "수집→실행" 핸들러 (영감 노트 입력 화면으로 이동)
+  // "수집→실행" 핸들러 (원동력 입력 모달 열기)
   const handleStartCollectToExecute = useCallback(() => {
     resetFuelDraft();  // 기존 draft 초기화
-    setFuelViewState('inspiration-input');
-  }, [resetFuelDraft, setFuelViewState]);
+    setShowFuelInputModal(true);
+  }, [resetFuelDraft]);
 
   // ============================================
   // 영감 노트 플로우 핸들러들
@@ -952,6 +957,46 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     // action-choice 화면으로 이동
     setFuelViewState('action-choice');
   }, [setFuelDraft, setFuelViewState]);
+
+  // 원동력 항목 클릭 핸들러 (상세 모달 열기)
+  const handleFuelItemClick = useCallback((note: Note) => {
+    setSelectedFuelNote(note);
+    setEditTitle(note.title || '');
+    setEditContent(note.content || '');
+  }, []);
+
+  // 원동력 상세 모달 닫기
+  const handleCloseFuelDetailModal = useCallback(() => {
+    setSelectedFuelNote(null);
+    setEditTitle('');
+    setEditContent('');
+  }, []);
+
+  // 원동력 상세 모달에서 저장
+  const handleSaveFuelDetail = useCallback(async () => {
+    if (!selectedFuelNote) return;
+
+    try {
+      await updateNote({
+        id: selectedFuelNote.id,
+        title: editTitle.trim() || undefined,
+        content: editContent.trim(),
+      });
+      handleCloseFuelDetailModal();
+    } catch (error) {
+      console.error('원동력 수정 실패:', error);
+    }
+  }, [selectedFuelNote, editTitle, editContent, updateNote, handleCloseFuelDetailModal]);
+
+  // 원동력 상세 모달에서 할일 만들기
+  const handleCreateTodoFromDetail = useCallback(() => {
+    if (!selectedFuelNote) return;
+
+    // 상세 모달 닫기
+    handleCloseFuelDetailModal();
+    // 할일 만들기 플로우 시작
+    handleCreateTodoFromEntry(selectedFuelNote);
+  }, [selectedFuelNote, handleCloseFuelDetailModal, handleCreateTodoFromEntry]);
 
   const renderSelectDurationView = () => (
     <motion.div
@@ -1051,7 +1096,8 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                 return (
                   <div
                     key={entry.id}
-                    className="flex items-start gap-3 p-3 bg-base-200 rounded-xl"
+                    onClick={() => handleFuelItemClick(entry)}
+                    className="flex items-start gap-3 p-3 bg-base-200 rounded-xl cursor-pointer hover:bg-base-300 transition-colors"
                   >
                     {/* 처리됨 표시 - 체크 아이콘 */}
                     {isProcessed && (
@@ -1077,13 +1123,13 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                                 {todo.title}
                               </span>
                               <button
-                                onClick={() => handleOpenTodoEditModal(todo.id, todo.title, entry.id)}
+                                onClick={(e) => { e.stopPropagation(); handleOpenTodoEditModal(todo.id, todo.title, entry.id); }}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 hover:bg-primary/20"
                               >
                                 <Pencil className="w-3 h-3" />
                               </button>
                               <button
-                                onClick={() => handleOpenTodoDeleteModal(todo.id, entry.id)}
+                                onClick={(e) => { e.stopPropagation(); handleOpenTodoDeleteModal(todo.id, entry.id); }}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-r-full hover:bg-error/20 hover:text-error"
                               >
                                 <X className="w-3 h-3" />
@@ -1101,7 +1147,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                     {/* 할일 만들기 버튼 (미처리인 경우만) */}
                     {!isProcessed && (
                       <button
-                        onClick={() => handleCreateTodoFromEntry(entry)}
+                        onClick={(e) => { e.stopPropagation(); handleCreateTodoFromEntry(entry); }}
                         className="btn btn-sm btn-ghost text-primary flex-shrink-0"
                       >
                         <ListTodo className="w-4 h-4" />
@@ -1110,7 +1156,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
                     )}
 
                     {/* 드롭다운 메뉴 */}
-                    <div className="relative flex-shrink-0">
+                    <div className="relative flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleToggleDropdown(entry.id)}
                         className="btn btn-sm btn-ghost btn-circle"
@@ -2050,6 +2096,235 @@ export default function FuelMode({ onExit }: FuelModeProps) {
           </div>
           <form method="dialog" className="modal-backdrop">
             <button onClick={handleCloseTodoDeleteModal}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* 원동력 입력 모달 ("원동력 부터 적고 실행" 버튼 클릭 시) */}
+      {showFuelInputModal && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-lg max-h-[90vh] overflow-y-auto">
+            {/* 헤더 */}
+            <div className="sticky top-0 z-10 bg-base-100 flex items-center justify-between pb-4 border-b border-base-300 -mx-6 px-6 pt-2 -mt-2">
+              <button
+                onClick={() => setShowFuelInputModal(false)}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                취소
+              </button>
+              <h3 className="font-bold text-lg">원동력 채우기</h3>
+              <div className="w-14"></div>
+            </div>
+
+            {/* 안내 문구 */}
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 my-4">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                {fuelMessage}
+              </p>
+            </div>
+
+            {/* 제목 입력 (선택) */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                제목 (선택)
+              </label>
+              <input
+                type="text"
+                value={draftTitle}
+                onChange={(e) => setFuelDraft({ title: e.target.value })}
+                placeholder="제목을 입력하세요 (없으면 내용에서 자동 생성)"
+                className="input input-bordered w-full bg-base-200"
+              />
+            </div>
+
+            {/* 내용 입력 (필수) */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                {FUEL_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
+              </label>
+              <div
+                className="p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors min-h-[100px]"
+                onClick={() => setIsContentEditorOpen(true)}
+              >
+                {draftContent ? (
+                  <MarkdownViewer content={draftContent} className="prose prose-sm max-w-none" />
+                ) : (
+                  <p className="text-base-content/50">{FUEL_FIELD_LABELS.content.placeholder}</p>
+                )}
+              </div>
+
+              {/* 내용 편집 모달 */}
+              <ContentEditorModal
+                open={isContentEditorOpen}
+                content={draftContent}
+                onClose={() => setIsContentEditorOpen(false)}
+                onChange={(content) => setFuelDraft({ content })}
+                placeholder={FUEL_FIELD_LABELS.content.placeholder}
+                enableAutoSave={false}
+              />
+            </div>
+
+            {/* 액션 버튼들 */}
+            <div className="flex flex-col gap-3 mt-6">
+              <p className="text-base font-semibold text-base-content/80">
+                이 원동력으로
+              </p>
+
+              {/* 지금 시작하기 */}
+              <button
+                onClick={() => {
+                  setShowFuelInputModal(false);
+                  handleInspirationQuickTodo();
+                }}
+                disabled={!draftContent.trim()}
+                className="btn btn-primary btn-lg w-full h-14 flex items-center justify-center gap-3"
+              >
+                <Play className="w-5 h-5" />
+                <span className="text-base font-semibold">지금 시작하기</span>
+              </button>
+
+              {/* 일정 잡기 */}
+              <button
+                onClick={() => {
+                  setShowFuelInputModal(false);
+                  handleInspirationScheduledTodo();
+                }}
+                disabled={!draftContent.trim()}
+                className="btn btn-ghost btn-lg w-full h-12 flex items-center justify-center gap-3 border-2 border-base-300 bg-base-200"
+              >
+                <CalendarClock className="w-5 h-5" />
+                <span className="text-base font-semibold">일정 잡기</span>
+              </button>
+
+              {/* 저장하기 */}
+              <button
+                onClick={async () => {
+                  await handleInspirationSaveOnly();
+                  setShowFuelInputModal(false);
+                }}
+                disabled={!draftContent.trim() || isSaving}
+                className="btn btn-ghost btn-md w-full flex items-center justify-center gap-2 text-base-content/60"
+              >
+                {isSaving ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  <Save className="w-5 h-5" />
+                )}
+                <span>{isSaving ? '저장 중...' : '저장하기'}</span>
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setShowFuelInputModal(false)}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* 원동력 상세 모달 (원동력 항목 클릭 시) */}
+      {selectedFuelNote && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-lg max-h-[90vh] overflow-y-auto">
+            {/* 헤더 */}
+            <div className="sticky top-0 z-10 bg-base-100 flex items-center justify-between pb-4 border-b border-base-300 -mx-6 px-6 pt-2 -mt-2">
+              <button
+                onClick={handleCloseFuelDetailModal}
+                className="btn btn-ghost btn-sm rounded-full"
+              >
+                취소
+              </button>
+              <h3 className="font-bold text-lg">원동력 상세</h3>
+              <button
+                onClick={handleSaveFuelDetail}
+                disabled={!editContent.trim()}
+                className="btn btn-primary btn-sm rounded-full"
+              >
+                저장
+              </button>
+            </div>
+
+            {/* 제목 편집 */}
+            <div className="my-4">
+              <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                제목
+              </label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="제목 (선택사항)"
+                className="input input-bordered w-full bg-base-200"
+              />
+            </div>
+
+            {/* 내용 편집 */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-base-content/70 mb-1 block">
+                내용
+              </label>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                placeholder="원동력 내용"
+                className="textarea textarea-bordered w-full h-32 bg-base-200"
+              />
+            </div>
+
+            {/* 연결된 할일 목록 */}
+            {selectedFuelNote.todos && selectedFuelNote.todos.length > 0 && (
+              <div className="mb-4">
+                <label className="text-sm font-medium text-base-content/70 mb-2 block flex items-center gap-2">
+                  <ListTodo className="w-4 h-4" />
+                  연결된 할일
+                </label>
+                <div className="space-y-2">
+                  {selectedFuelNote.todos.map((todo) => (
+                    <div
+                      key={todo.id}
+                      className="flex items-center justify-between p-2 bg-base-200 rounded-lg"
+                    >
+                      <span className="text-sm flex-1 truncate">{todo.title}</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleOpenTodoEditModal(todo.id, todo.title, selectedFuelNote.id)}
+                          className="btn btn-ghost btn-xs"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleOpenTodoDeleteModal(todo.id, selectedFuelNote.id)}
+                          className="btn btn-ghost btn-xs text-error"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 할일 만들기 버튼 (미처리인 경우) */}
+            {!selectedFuelNote.is_processed && (!selectedFuelNote.todos || selectedFuelNote.todos.length === 0) && (
+              <div className="mt-6">
+                <button
+                  onClick={handleCreateTodoFromDetail}
+                  className="btn btn-primary w-full gap-2"
+                >
+                  <ListTodo className="w-4 h-4" />
+                  이 원동력으로 할일 만들기
+                </button>
+              </div>
+            )}
+
+            {/* 메타 정보 */}
+            <div className="mt-4 pt-4 border-t border-base-300">
+              <p className="text-xs text-base-content/50">
+                {format(new Date(selectedFuelNote.created_at), 'yyyy년 M월 d일 (EEE) HH:mm', { locale: ko })}
+              </p>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={handleCloseFuelDetailModal}>close</button>
           </form>
         </dialog>
       )}
