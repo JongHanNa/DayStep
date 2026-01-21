@@ -69,7 +69,7 @@ export default function ADHDNavItem({
     <button
       onClick={onClick}
       className={`
-        flex-1 flex flex-col items-center justify-center gap-1 py-2
+        flex-1 flex flex-col items-center justify-center py-2
         transition-all duration-200
         ${isActive
           ? 'text-primary'
@@ -79,7 +79,6 @@ export default function ADHDNavItem({
       aria-label={label}
     >
       <IconComponent className={`w-6 h-6 ${isActive ? 'scale-110' : ''} transition-transform`} />
-      <span className="text-xs font-medium">{label}</span>
     </button>
   );
 }

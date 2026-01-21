@@ -29,43 +29,6 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-base-100 px-6 relative">
-      {/* 구독 상태 배지, 테마 토글 및 설정 버튼 (우측 상단) - 모바일에서만 표시 */}
-      <div className="absolute top-0 pt-4 right-4 flex items-center gap-2 safe-area-top md:hidden">
-        {/* 구독 상태 배지 */}
-        <button
-          onClick={() => enterSettingsMode('subscription')}
-          className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
-            hasActiveSubscription
-              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
-              : 'bg-base-200 text-base-content/60'
-          }`}
-          aria-label="구독 관리"
-        >
-          {hasActiveSubscription ? (
-            <>
-              <Crown className="w-3 h-3" />
-              Pro
-            </>
-          ) : (
-            'Free'
-          )}
-        </button>
-        <button
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="btn btn-circle btn-sm btn-ghost"
-          aria-label="테마 전환"
-        >
-          {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-        <button
-          onClick={() => enterSettingsMode('main')}
-          className="btn btn-circle btn-sm btn-ghost"
-          aria-label="설정"
-        >
-          <Settings className="w-4 h-4" />
-        </button>
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
