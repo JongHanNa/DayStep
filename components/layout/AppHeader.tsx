@@ -90,10 +90,10 @@ export default function AppHeader() {
   // - /: 비인증 시 숨김 (LandingPage), 인증 시 표시 (GraphView)
   const alwaysHiddenPaths = ['/login', '/landing', '/second-brain/onboarding'];
 
-  // ADHD 모드에서 헤더 숨김 (entry, execute, care, relationship-insights)
+  // ADHD 모드에서 헤더 숨김 (entry, execute, care, relationship-insights, settings)
   // organize 모드는 헤더 표시 (그래프 뷰 표시)
   // currentMode가 null이어도 adhdModeEnabled가 true면 entry 화면이므로 숨김
-  const headerHiddenModes: ADHDMode[] = ['entry', 'execute', 'care', 'relationship-insights', 'task-organize', 'fuel'];
+  const headerHiddenModes: ADHDMode[] = ['entry', 'execute', 'care', 'relationship-insights', 'task-organize', 'fuel', 'settings'];
   const shouldHideForADHDMode = adhdModeEnabled && (currentMode === null || headerHiddenModes.includes(currentMode));
 
   const shouldHide = alwaysHiddenPaths.some(path => normalizedPathname === path) ||
