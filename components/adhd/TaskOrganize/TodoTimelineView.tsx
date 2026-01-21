@@ -1695,10 +1695,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     <div
                       key={dayKey}
                       ref={isTodayDate ? todaySectionRef : undefined}
-                      className="flex gap-4"
+                      className="flex flex-col sm:flex-row sm:gap-4"
                     >
-                      {/* 날짜 헤더 (왼쪽 고정) */}
-                      <div className="w-12 flex-shrink-0 pt-1">
+                      {/* 날짜 헤더 - 모바일: 상단 가로, 데스크톱: 왼쪽 세로 */}
+                      <div className="flex sm:flex-col items-baseline sm:items-start gap-2 sm:gap-0 sm:w-12 flex-shrink-0 mb-2 sm:mb-0 sm:pt-1">
                         <div className={`text-2xl font-bold ${isTodayDate ? 'text-primary' : 'text-base-content'}`}>
                           {dayNumber}
                         </div>
@@ -1707,7 +1707,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                         </div>
                       </div>
 
-                      {/* 할일 목록 (오른쪽) */}
+                      {/* 할일 목록 - 모바일: 전체 너비, 데스크톱: 오른쪽 */}
                       <div className="flex-1 space-y-2">
                         {renderItems.map((renderItem) => {
                           // 빈 시간 렌더링
