@@ -65,8 +65,8 @@ import type { EnvironmentSetup } from '@/types/distraction';
 type FuelTabType = 'fuel' | 'timeline' | 'organize' | 'stats';
 
 const FUEL_TABS: { id: FuelTabType; label: string; icon: React.ReactNode }[] = [
-  { id: 'fuel', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
+  { id: 'fuel', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
 ];
