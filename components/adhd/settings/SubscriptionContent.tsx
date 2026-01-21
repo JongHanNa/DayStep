@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { ArrowLeft, Crown, RefreshCw, Calendar, AlertCircle, Wrench, XCircle, CheckCircle, Globe, CreditCard, Check } from 'lucide-react';
+import { Crown, RefreshCw, Calendar, AlertCircle, Wrench, XCircle, CheckCircle, Globe, CreditCard, Check } from 'lucide-react';
 import Script from 'next/script';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -247,18 +247,10 @@ export default function SubscriptionContent({ onBack }: SubscriptionContentProps
 
   return (
     <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
-      {/* 상단 네비게이션 */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="btn btn-circle btn-ghost btn-sm"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">구독 관리</h1>
-          <p className="text-muted-foreground">Pro 기능을 잠금 해제하세요</p>
-        </div>
+      {/* 헤더 */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">구독 관리</h1>
+        <p className="text-muted-foreground">Pro 기능을 잠금 해제하세요</p>
       </div>
 
       {/* 현재 구독 상태 */}
