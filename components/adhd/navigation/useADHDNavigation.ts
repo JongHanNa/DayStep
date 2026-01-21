@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
@@ -23,29 +22,24 @@ export const navItems: NavItem[] = [
  * ADHD 모드 네비게이션 로직 훅
  *
  * 사이드바(웹)와 하단탭(모바일)에서 공통으로 사용하는 네비게이션 로직 제공
+ * URL 변경 없이 currentMode 상태로 모든 탭 전환 처리
  */
 export function useADHDNavigation() {
-  const router = useRouter();
-  const pathname = usePathname();
   const { user } = useAuth();
-  const { currentMode, enterEntryMode, enterRelationshipInsightsMode, enterFuelMode } = useADHDModeStore();
+  const { currentMode, enterEntryMode, enterRelationshipInsightsMode, enterFuelMode, enterSettingsMode } = useADHDModeStore();
 
   /**
-   * 현재 모드 또는 경로에 따른 활성 탭 결정
-   * - /settings 경로에서는 settings 탭 활성화
-   * - 그 외에는 현재 모드에 따라 활성 탭 결정
+   * 현재 모드에 따른 활성 탭 결정
+   * - URL 기반이 아닌 currentMode 상태만으로 결정
    */
-  const getActiveTab = (mode: ADHDMode, currentPathname: string): NavItemId => {
-    // settings 경로에서는 settings 탭 활성화
-    if (currentPathname.startsWith('/settings')) {
-      return 'settings';
-    }
-
+  const getActiveTab = (mode: ADHDMode): NavItemId => {
     switch (mode) {
       case 'relationship-insights':
         return 'relationship';
       case 'fuel':
         return 'fuel';
+      case 'settings':
+        return 'settings';
       case 'entry':
       case 'execute':
       case 'organize':
@@ -55,10 +49,11 @@ export function useADHDNavigation() {
     }
   };
 
-  const activeTab = getActiveTab(currentMode, pathname);
+  const activeTab = getActiveTab(currentMode);
 
   /**
    * 네비게이션 아이템 클릭 핸들러
+   * - URL 변경 없이 상태만 변경
    */
   const handleNavClick = (itemId: NavItemId) => {
     switch (itemId) {
@@ -76,7 +71,7 @@ export function useADHDNavigation() {
         }
         break;
       case 'settings':
-        router.push('/settings');
+        enterSettingsMode('main');
         break;
     }
   };

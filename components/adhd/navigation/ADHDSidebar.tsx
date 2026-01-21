@@ -8,6 +8,7 @@ import { Settings, Crown, LogOut, Sun, Moon } from 'lucide-react';
 import ADHDNavItem from './ADHDNavItem';
 import { AvatarImage } from '@/components/ui/optimized-image';
 import { useADHDNavigation } from './useADHDNavigation';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 
 /**
  * ADHD 모드 웹용 좌측 사이드바
@@ -20,6 +21,7 @@ export default function ADHDSidebar() {
   const { user, signOut } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const { navItems, activeTab, handleNavClick } = useADHDNavigation();
+  const { enterSettingsMode } = useADHDModeStore();
 
   // 드롭다운 상태
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -52,16 +54,16 @@ export default function ADHDSidebar() {
     router.push('/');
   };
 
-  // 설정 페이지로 이동
+  // 설정 모드로 전환 (URL 변경 없음)
   const handleSettings = () => {
     setIsDropdownOpen(false);
-    router.push('/settings');
+    enterSettingsMode('main');
   };
 
-  // 프리미엄 페이지로 이동
+  // 구독 관리 모드로 전환 (URL 변경 없음)
   const handlePremium = () => {
     setIsDropdownOpen(false);
-    router.push('/subscription');
+    enterSettingsMode('subscription');
   };
 
   // 다크모드 토글

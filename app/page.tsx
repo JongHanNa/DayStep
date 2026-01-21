@@ -12,6 +12,7 @@ import CareMode from '@/components/adhd/CareMode';
 import FuelMode from '@/components/adhd/FuelMode';
 import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
+import SettingsMode from '@/components/adhd/SettingsMode';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
@@ -116,8 +117,8 @@ export default function HomePage() {
     enterEntryMode();
   };
 
-  // 네비게이션 표시 여부 (entry, relationship-insights, fuel 모드에서 표시, null은 entry로 취급)
-  const showNavigation = currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel';
+  // 네비게이션 표시 여부 (entry, relationship-insights, fuel, settings 모드에서 표시, null은 entry로 취급)
+  const showNavigation = currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel' || currentMode === 'settings';
 
   // 실행 모드
   if (currentMode === 'execute') {
@@ -152,6 +153,11 @@ export default function HomePage() {
         {/* 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력) */}
         {currentMode === 'fuel' && (
           <FuelMode onExit={handleExitFuelMode} />
+        )}
+
+        {/* 설정 모드 */}
+        {currentMode === 'settings' && (
+          <SettingsMode onExit={enterEntryMode} />
         )}
 
         {/* 진입 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}

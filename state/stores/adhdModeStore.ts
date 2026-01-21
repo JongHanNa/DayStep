@@ -6,7 +6,16 @@ import { Todo } from '@/entities/todo/Todo';
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | null;
+
+// 설정 모드 서브뷰 타입
+export type SettingsSubView = 'main' | 'subscription' | 'account' | 'font' | 'notifications' | 'theme' | 'time-format' | 'todos' | 'widgets';
+
+// 설정 모드 상태
+interface SettingsModeState {
+  isActive: boolean;
+  subView: SettingsSubView;
+}
 
 // 즉흥 모드 상태 (지금 떠오른 거 할래)
 interface AdhocModeState {
@@ -118,6 +127,9 @@ interface ADHDModeState {
   // 복잡한 머릿속, 정리해줄게 모드 상태
   fuelMode: FuelModeState;
 
+  // 설정 모드 상태
+  settingsMode: SettingsModeState;
+
   // 사용자 설정
   awakeningSentence: string | null;
 
@@ -209,6 +221,11 @@ interface ADHDModeState {
   /** @deprecated Use endFuelMode instead */
   endInboxMode: () => void;
 
+  // === 설정 모드 Actions ===
+  enterSettingsMode: (subView?: SettingsSubView) => void;
+  setSettingsSubView: (subView: SettingsSubView) => void;
+  exitSettingsMode: () => void;
+
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
 
@@ -293,6 +310,11 @@ const DEFAULT_FUEL_MODE: FuelModeState = {
   todosDraft: [],
 };
 
+const DEFAULT_SETTINGS_MODE: SettingsModeState = {
+  isActive: false,
+  subView: 'main',
+};
+
 // ============================================
 // Store 생성
 // ============================================
@@ -308,6 +330,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
         fuelMode: DEFAULT_FUEL_MODE,
+        settingsMode: DEFAULT_SETTINGS_MODE,
         awakeningSentence: null,
         cachedPatterns: null,
         isLoadingPatterns: false,
@@ -350,6 +373,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
             organizeMode: DEFAULT_ORGANIZE_MODE,
             careMode: DEFAULT_CARE_MODE,
             fuelMode: DEFAULT_FUEL_MODE,
+            settingsMode: DEFAULT_SETTINGS_MODE,
             currentUserId: null,
           });
         },
@@ -779,6 +803,36 @@ export const useADHDModeStore = create<ADHDModeState>()(
         endInboxMode: () => {
           console.warn('⚠️ endInboxMode는 deprecated입니다. endFuelMode를 사용하세요.');
           get().endFuelMode();
+        },
+
+        // === 설정 모드 Actions ===
+        enterSettingsMode: (subView: SettingsSubView = 'main') => {
+          console.log('⚙️ ADHD: 설정 모드 진입', subView);
+          set({
+            currentMode: 'settings',
+            settingsMode: {
+              isActive: true,
+              subView,
+            }
+          });
+        },
+
+        setSettingsSubView: (subView: SettingsSubView) => {
+          console.log('⚙️ ADHD: 설정 서브뷰 변경', subView);
+          set((state) => ({
+            settingsMode: {
+              ...state.settingsMode,
+              subView,
+            }
+          }));
+        },
+
+        exitSettingsMode: () => {
+          console.log('⚙️ ADHD: 설정 모드 종료');
+          set({
+            currentMode: 'entry',
+            settingsMode: DEFAULT_SETTINGS_MODE,
+          });
         },
 
         // === 설정 Actions ===
