@@ -60,6 +60,7 @@ import { OrganizeNeededView } from '@/components/adhd/TaskOrganize/OrganizeNeede
 import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
 import { DistractionPlanView } from '@/components/adhd/distraction';
 import type { EnvironmentSetup } from '@/types/distraction';
+import ExecutionMode from '@/components/adhd/ExecutionMode';
 
 // 탭 타입 정의
 type FuelTabType = 'fuel' | 'timeline' | 'execute' | 'organize' | 'stats';
@@ -991,25 +992,11 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         </div>
       )}
       {activeTab === 'execute' && userId && (
-        <div className="flex-1 overflow-y-auto px-4 pb-4 mobile-container">
-          <div className="flex flex-col items-center justify-center py-8">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleGoToExecute}
-              className="btn btn-primary btn-lg w-full max-w-md rounded-2xl h-20 flex items-center justify-center gap-3 shadow-lg"
-            >
-              <Target className="w-7 h-7" />
-              <div className="flex flex-col items-start">
-                <span className="text-lg font-semibold">실행과 집중 시작</span>
-                <span className="text-xs opacity-80">ExecutionMode로 전환</span>
-              </div>
-            </motion.button>
-            
-            <p className="text-sm text-base-content/60 mt-4 text-center max-w-md">
-              할 일을 선택하고 타이머와 함께 집중 실행 모드를 시작합니다
-            </p>
-          </div>
+        <div className="flex-1 overflow-hidden">
+          <ExecutionMode 
+            onExit={() => setActiveTab('fuel')}
+            hideNavigation={true}
+          />
         </div>
       )}
       {activeTab === 'organize' && userId && (

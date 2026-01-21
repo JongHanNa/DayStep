@@ -63,6 +63,7 @@ const getScheduleTypeLabel = (scheduleType: string): string => {
 
 interface ExecutionModeProps {
   onExit: () => void;
+  hideNavigation?: boolean;  // 탭 내부에서 렌더링될 때 네비게이션 숨김
 }
 
 type ViewState = 'recommendation' | 'skip-reason' | 'completed-all' | 'empty-state' | 'distraction-plan' | 'adhoc-timer' | 'adhoc-capture' | 'adhoc-note-connection';
@@ -73,7 +74,7 @@ type ViewState = 'recommendation' | 'skip-reason' | 'completed-all' | 'empty-sta
  * 할일 목록을 숨기고 단일 할일만 추천하여
  * ADHD 사용자가 "지금 할 수 있는 가장 작은 것 하나"에 집중하도록 돕습니다.
  */
-export default function ExecutionMode({ onExit }: ExecutionModeProps) {
+export default function ExecutionMode({ onExit, hideNavigation = false }: ExecutionModeProps) {
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -974,15 +975,17 @@ export default function ExecutionMode({ onExit }: ExecutionModeProps) {
   const todayCompletedTodos = getTodayCompletedTodos();
 
   return (
-    <div className="min-h-screen flex flex-col bg-base-100 safe-area-top">
+    <div className={`flex flex-col bg-base-100 ${hideNavigation ? 'min-h-full' : 'min-h-screen safe-area-top'}`}>
       {/* 헤더 */}
       <header className="p-4 flex items-center justify-between">
-        <button
-          onClick={onExit}
-          className="btn btn-ghost btn-sm btn-circle"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        {!hideNavigation && (
+          <button
+            onClick={onExit}
+            className="btn btn-ghost btn-sm btn-circle"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
 
         {completedInSession > 0 && (
           <motion.div
