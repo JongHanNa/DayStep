@@ -73,7 +73,7 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
   };
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
+    <div className="h-screen bg-base-100 flex flex-col safe-area-top overflow-hidden">
       {/* 헤더 - 탭 네비게이션만 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         {/* 탭 네비게이션 */}

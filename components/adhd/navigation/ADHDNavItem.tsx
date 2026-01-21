@@ -57,7 +57,7 @@ export default function ADHDNavItem({
       >
         <IconComponent className="w-6 h-6" />
         {/* 툴팁 */}
-        <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium bg-base-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+        <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium bg-base-300 text-base-content rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
           {label}
         </span>
       </button>
