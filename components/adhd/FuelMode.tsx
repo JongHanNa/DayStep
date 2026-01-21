@@ -2261,11 +2261,25 @@ export default function FuelMode({ onExit }: FuelModeProps) {
               <label className="text-sm font-medium text-base-content/70 mb-1 block">
                 내용
               </label>
-              <textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                placeholder="원동력 내용"
-                className="textarea textarea-bordered w-full h-32 bg-base-200"
+              <div
+                className="p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors min-h-[100px]"
+                onClick={() => setIsEditContentEditorOpen(true)}
+              >
+                {editContent ? (
+                  <MarkdownViewer content={editContent} className="prose prose-sm max-w-none" />
+                ) : (
+                  <p className="text-base-content/50">원동력 내용을 입력하세요</p>
+                )}
+              </div>
+
+              {/* 내용 편집 모달 */}
+              <ContentEditorModal
+                open={isEditContentEditorOpen}
+                content={editContent}
+                onClose={() => setIsEditContentEditorOpen(false)}
+                onChange={(content) => setEditContent(content)}
+                placeholder="원동력 내용을 입력하세요"
+                enableAutoSave={false}
               />
             </div>
 
