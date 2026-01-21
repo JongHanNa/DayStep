@@ -117,25 +117,20 @@ export default function HomePage() {
     enterEntryMode();
   };
 
-  // 네비게이션 표시 여부 (entry, relationship-insights, fuel, settings 모드에서 표시, null은 entry로 취급)
-  const showNavigation = currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel' || currentMode === 'settings';
+  // 네비게이션 표시 여부 (entry, relationship-insights, fuel, settings, execute 모드에서 표시, null은 entry로 취급)
+  const showNavigation = currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel' || currentMode === 'settings' || currentMode === 'execute';
 
-  // 실행 모드
-  if (currentMode === 'execute') {
-    return <ExecutionMode onExit={handleExitExecutionMode} />;
-  }
-
-  // 정리 모드 (타이머 + 인터럽트 래퍼)
+  // 정리 모드 (타이머 + 인터럽트 래퍼) - 전체화면
   if (currentMode === 'organize') {
     return <OrganizeModeWrapper onExit={handleExitExecutionMode} />;
   }
 
-  // 마음 전해보기 모드
+  // 마음 전해보기 모드 - 전체화면
   if (currentMode === 'care') {
     return <CareMode onExit={handleExitExecutionMode} />;
   }
 
-  // ADHD 모드 레이아웃 (entry, relationship-insights, fuel)
+  // ADHD 모드 레이아웃 (entry, relationship-insights, fuel, execute, settings)
   return (
     <div className="flex min-h-screen">
       {/* 웹 사이드바 (md 이상) */}
@@ -145,6 +140,11 @@ export default function HomePage() {
 
       {/* 메인 콘텐츠 */}
       <main className="flex-1 min-w-0 md:ml-16 pb-20 md:pb-0">
+        {/* 실행 모드 */}
+        {currentMode === 'execute' && (
+          <ExecutionMode onExit={handleExitExecutionMode} />
+        )}
+
         {/* 관계 인사이트 모드 */}
         {currentMode === 'relationship-insights' && (
           <RelationshipInsightsMode onExit={handleExitExecutionMode} />
