@@ -308,7 +308,7 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
           <div className="p-4 border-t border-base-300 bg-blue-50">
             <div className="flex items-center justify-between mb-3">
               <p className="font-medium text-blue-700">
-                "{selectedItem.title}" 시간 변경
+                {`"${selectedItem.title}" 시간 변경`}
               </p>
               <button
                 type="button"
