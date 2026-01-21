@@ -9,8 +9,8 @@
  */
 
 import { AlertTriangle, TrendingUp, Crown } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useUsageStats } from '@/hooks/useUsageStats';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import type { UsageEntityType } from '@/lib/featureFlags';
 
 interface UsageWarningBannerProps {
@@ -21,8 +21,8 @@ interface UsageWarningBannerProps {
 }
 
 export function UsageWarningBanner({ entities, className = '' }: UsageWarningBannerProps) {
-  const router = useRouter();
   const { usageSummary, hasActiveSubscription } = useUsageStats();
+  const { enterSettingsMode } = useADHDModeStore();
 
   // Pro 사용자는 표시 안 함
   if (hasActiveSubscription) return null;
@@ -39,7 +39,7 @@ export function UsageWarningBanner({ entities, className = '' }: UsageWarningBan
   const warningItems = relevantWarnings.filter((item) => item.warning || item.blocked);
 
   const handleUpgrade = () => {
-    router.push('/settings/subscription');
+    enterSettingsMode('subscription');
   };
 
   return (

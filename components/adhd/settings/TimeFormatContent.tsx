@@ -1,7 +1,6 @@
 'use client';
 
 import { ArrowLeft, Clock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -9,8 +8,16 @@ import { useSettingsStore, TimeFormat } from '@/state/stores/settingsStore';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-export default function TimeFormatPage() {
-  const router = useRouter();
+interface TimeFormatContentProps {
+  onBack: () => void;
+}
+
+/**
+ * 시간 표기법 설정 콘텐츠
+ *
+ * 기존 /settings/time-format 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
+ */
+export default function TimeFormatContent({ onBack }: TimeFormatContentProps) {
   const { timeFormat, setTimeFormat } = useSettingsStore();
   const now = new Date();
 
@@ -46,7 +53,7 @@ export default function TimeFormatPage() {
       {/* 상단 네비게이션 */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => router.back()}
+          onClick={onBack}
           className="btn btn-circle btn-ghost btn-sm"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -64,7 +71,7 @@ export default function TimeFormatPage() {
           <div>
             <h2 className="text-xl font-semibold">현재 시간</h2>
             <p className="text-2xl font-bold mt-1">
-              {timeFormat === '12h' 
+              {timeFormat === '12h'
                 ? format(now, 'a h:mm', { locale: ko })
                 : format(now, 'HH:mm')
               }
@@ -143,7 +150,7 @@ export default function TimeFormatPage() {
               <span className="text-sm">모든 시간 관련 UI</span>
             </div>
           </div>
-          
+
           <div className="mt-6 pt-4 border-t">
             <p className="text-sm text-muted-foreground">
               💡 <strong>팁:</strong> 시간 표기법은 즉시 적용되며, 모든 화면에서 일관된 형식으로 표시됩니다.

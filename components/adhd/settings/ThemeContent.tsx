@@ -1,16 +1,23 @@
 'use client';
 
 import { ArrowLeft, Sun, Moon, Monitor } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-export default function ThemePage() {
-  const router = useRouter();
-  const { theme, setTheme, themes } = useTheme();
+interface ThemeContentProps {
+  onBack: () => void;
+}
+
+/**
+ * 테마 설정 콘텐츠
+ *
+ * 기존 /settings/theme 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
+ */
+export default function ThemeContent({ onBack }: ThemeContentProps) {
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // 하이드레이션 이슈 방지
@@ -55,7 +62,7 @@ export default function ThemePage() {
       {/* 상단 네비게이션 */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => router.back()}
+          onClick={onBack}
           className="btn btn-circle btn-ghost btn-sm"
         >
           <ArrowLeft className="w-5 h-5" />

@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Sun, Moon, Settings, Crown } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -24,8 +23,7 @@ interface ADHDEntryScreenProps {
  * - 각성 문장 (설정된 경우)
  */
 export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
-  const router = useRouter();
-  const { awakeningSentence } = useADHDModeStore();
+  const { awakeningSentence, enterSettingsMode } = useADHDModeStore();
   const { resolvedTheme, setTheme } = useTheme();
   const { hasActiveSubscription } = useSubscription();
 
@@ -35,7 +33,7 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
       <div className="absolute top-0 pt-4 right-4 flex items-center gap-2 safe-area-top md:hidden">
         {/* 구독 상태 배지 */}
         <button
-          onClick={() => router.push('/settings/subscription')}
+          onClick={() => enterSettingsMode('subscription')}
           className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
             hasActiveSubscription
               ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
@@ -60,7 +58,7 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
           {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
         <button
-          onClick={() => router.push('/settings')}
+          onClick={() => enterSettingsMode('main')}
           className="btn btn-circle btn-sm btn-ghost"
           aria-label="설정"
         >

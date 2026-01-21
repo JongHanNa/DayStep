@@ -1,11 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { Crown, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PRO_FEATURES } from '@/lib/featureFlags';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 
 interface PaywallProps {
   /**
@@ -49,8 +49,8 @@ export function Paywall({
   isModal = false,
   onClose,
 }: PaywallProps) {
-  const router = useRouter();
   const { hasActiveSubscription, isInTrial, daysRemainingInTrial } = useSubscription();
+  const { enterSettingsMode } = useADHDModeStore();
 
   // 현재 기능 찾기
   const currentFeature = featureId
@@ -58,7 +58,7 @@ export function Paywall({
     : null;
 
   const handleUpgrade = () => {
-    router.push('/settings/subscription');
+    enterSettingsMode('subscription');
     onClose?.();
   };
 

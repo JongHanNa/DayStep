@@ -6,6 +6,10 @@ import SubscriptionContent from './settings/SubscriptionContent';
 import AccountContent from './settings/AccountContent';
 import FontContent from './settings/FontContent';
 import TodosContent from './settings/TodosContent';
+import ThemeContent from './settings/ThemeContent';
+import NotificationsContent from './settings/NotificationsContent';
+import TimeFormatContent from './settings/TimeFormatContent';
+import WidgetsContent from './settings/WidgetsContent';
 
 interface SettingsModeProps {
   onExit: () => void;
@@ -20,7 +24,10 @@ interface SettingsModeProps {
  * - account: 계정 관리
  * - font: 글꼴 설정
  * - todos: 할일 완료 설정
- * - (기타 서브뷰들은 추후 구현)
+ * - theme: 테마 설정
+ * - notifications: 알림 설정
+ * - time-format: 시간 표기법 설정
+ * - widgets: 위젯 설정
  */
 export default function SettingsMode({ onExit }: SettingsModeProps) {
   const { settingsMode, setSettingsSubView, exitSettingsMode } = useADHDModeStore();
@@ -51,6 +58,14 @@ export default function SettingsMode({ onExit }: SettingsModeProps) {
         return <FontContent onBack={handleBack} />;
       case 'todos':
         return <TodosContent onBack={handleBack} />;
+      case 'theme':
+        return <ThemeContent onBack={handleBack} />;
+      case 'notifications':
+        return <NotificationsContent onBack={handleBack} />;
+      case 'time-format':
+        return <TimeFormatContent onBack={handleBack} />;
+      case 'widgets':
+        return <WidgetsContent onBack={handleBack} />;
       case 'main':
       default:
         return (

@@ -12,7 +12,7 @@ import { Check, Loader2, X, Sparkles, AlertTriangle, Crown } from 'lucide-react'
 import { BOTTOM_BAR, APPLE_SPRING } from '@/lib/animations/appleMotion';
 import { getAllSetItems, type RecommendationItem } from './RecommendationData';
 import type { LimitCheckResult } from './useBatchCreate';
-import { useRouter } from 'next/navigation';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 
 interface SelectedItemsBarProps {
   selectedCount: number;
@@ -33,7 +33,7 @@ export function SelectedItemsBar({
   limitCheck,
   hasActiveSubscription,
 }: SelectedItemsBarProps) {
-  const router = useRouter();
+  const { enterSettingsMode } = useADHDModeStore();
   const allItems = getAllSetItems();
 
   const handleCreate = async () => {
@@ -42,7 +42,7 @@ export function SelectedItemsBar({
   };
 
   const handleUpgrade = () => {
-    router.push('/settings/subscription');
+    enterSettingsMode('subscription');
   };
 
   // 제한 초과 메시지 생성
