@@ -958,24 +958,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       exit={{ opacity: 0, y: -20 }}
       className="flex flex-col h-full w-full overflow-x-hidden"
     >
-      {/* 헤더 - 고정 영역 */}
+      {/* 헤더 - 탭 네비게이션만 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-        <div className="flex items-center gap-3 p-4">
-          <button onClick={handleBack} className="btn btn-ghost btn-circle">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-bold flex-1">복잡한 머릿속, 정리해줄게</h1>
-          <button
-            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="btn btn-circle btn-sm btn-ghost"
-            aria-label="테마 전환"
-          >
-            {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-        </div>
-
         {/* 탭 네비게이션 */}
-        <div className="flex overflow-x-auto px-2 pb-2 gap-1 scrollbar-hide">
+        <div className="flex overflow-x-auto px-2 py-2 gap-1 scrollbar-hide">
           {FUEL_TABS.map((tab) => {
             const isProLocked = tab.id === 'stats' && !hasActiveSubscription;
             return (

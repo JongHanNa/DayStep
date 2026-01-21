@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Heart, MessageCircle, BarChart3, Sun, Moon, PenLine, Crown } from 'lucide-react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useState } from 'react';
+import { Heart, MessageCircle, BarChart3, PenLine, Crown } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useTheme } from '@/hooks/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { CareRecordView } from './CareRecordView';
@@ -32,7 +30,6 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
   const [activeTab, setActiveTab] = useState<TabType>('record');
   const { user } = useAuth();
   const userId = user?.id;
-  const { resolvedTheme, setTheme } = useTheme();
   const { hasActiveSubscription } = useSubscription();
 
   // Pro 전용 탭인지 확인
@@ -77,27 +74,10 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col safe-area-top">
-      {/* 헤더 */}
+      {/* 헤더 - 탭 네비게이션만 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-        <div className="flex items-center gap-3 p-4">
-          <button
-            onClick={onExit}
-            className="btn btn-ghost btn-circle btn-sm"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold flex-1">관계 기록</h1>
-          <button
-            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="btn btn-circle btn-sm btn-ghost"
-            aria-label="테마 전환"
-          >
-            {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-        </div>
-
         {/* 탭 네비게이션 */}
-        <div className="flex overflow-x-auto px-2 pb-2 gap-1 scrollbar-hide">
+        <div className="flex overflow-x-auto px-2 py-2 gap-1 scrollbar-hide">
           {TABS.map((tab) => (
             <button
               key={tab.id}
