@@ -9,7 +9,6 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SubscriptionPlanCard } from '@/components/subscription/SubscriptionPlanCard';
-import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import { toast } from 'sonner';
 import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { devCancelSubscription, devActivateSubscription } from '@/lib/supabase/subscription';
@@ -114,7 +113,7 @@ export default function SubscriptionPage() {
           displayMode: 'overlay',
           theme: 'light',
           locale: 'ko',
-          successUrl: `${window.location.origin}/settings/subscription?success=true`,
+          successUrl: `${window.location.origin}/subscription?success=true`,
         },
       });
     } catch (error) {
@@ -131,19 +130,19 @@ export default function SubscriptionPage() {
     if (urlParams.get('success') === 'true') {
       toast.success('결제가 완료되었습니다! 구독이 곧 활성화됩니다.');
       // URL에서 success 파라미터 제거
-      router.replace('/settings/subscription');
+      router.replace('/subscription');
     }
   }, [router]);
 
   // 경로 저장
   useEffect(() => {
-    saveLastVisitedRoute('/settings/subscription');
+    saveLastVisitedRoute('/subscription');
   }, []);
 
   // 인증 확인
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login?redirect=%2Fsettings%2Fsubscription');
+      router.push('/login?redirect=%2Fsubscription');
     }
   }, [authLoading, isAuthenticated, router]);
 

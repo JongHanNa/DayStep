@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
@@ -26,13 +26,21 @@ export const navItems: NavItem[] = [
  */
 export function useADHDNavigation() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
   const { currentMode, enterEntryMode, enterRelationshipInsightsMode, enterFuelMode } = useADHDModeStore();
 
   /**
-   * 현재 모드에 따른 활성 탭 결정
+   * 현재 모드 또는 경로에 따른 활성 탭 결정
+   * - /settings 경로에서는 settings 탭 활성화
+   * - 그 외에는 현재 모드에 따라 활성 탭 결정
    */
-  const getActiveTab = (mode: ADHDMode): NavItemId => {
+  const getActiveTab = (mode: ADHDMode, currentPathname: string): NavItemId => {
+    // settings 경로에서는 settings 탭 활성화
+    if (currentPathname.startsWith('/settings')) {
+      return 'settings';
+    }
+
     switch (mode) {
       case 'relationship-insights':
         return 'relationship';
@@ -47,7 +55,7 @@ export function useADHDNavigation() {
     }
   };
 
-  const activeTab = getActiveTab(currentMode);
+  const activeTab = getActiveTab(currentMode, pathname);
 
   /**
    * 네비게이션 아이템 클릭 핸들러
