@@ -956,7 +956,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col h-full"
+      className="flex flex-col h-full w-full overflow-x-hidden"
     >
       {/* 헤더 - 고정 영역 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">

@@ -143,7 +143,7 @@ export default function HomePage() {
       </div>
 
       {/* 메인 콘텐츠 */}
-      <main className="flex-1 md:ml-16 pb-20 md:pb-0">
+      <main className="flex-1 min-w-0 md:ml-16 pb-20 md:pb-0">
         {/* 관계 인사이트 모드 */}
         {currentMode === 'relationship-insights' && (
           <RelationshipInsightsMode onExit={handleExitExecutionMode} />
