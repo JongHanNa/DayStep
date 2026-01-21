@@ -116,8 +116,8 @@ export default function HomePage() {
     enterEntryMode();
   };
 
-  // 네비게이션 표시 여부 (entry 모드에서만 표시)
-  const showNavigation = currentMode === 'entry' || currentMode === 'relationship-insights' || currentMode === 'fuel';
+  // 네비게이션 표시 여부 (entry, relationship-insights, fuel 모드에서 표시, null은 entry로 취급)
+  const showNavigation = currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel';
 
   // 실행 모드
   if (currentMode === 'execute') {
@@ -154,8 +154,8 @@ export default function HomePage() {
           <FuelMode onExit={handleExitFuelMode} />
         )}
 
-        {/* 진입 화면 (기본) */}
-        {currentMode === 'entry' && (
+        {/* 진입 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}
+        {(currentMode === 'entry' || currentMode === null) && (
           <ADHDEntryScreen
             userId={user?.id}
             onRelationshipInsights={handleRelationshipInsights}
