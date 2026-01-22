@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay } from 'date-fns';
+import { format, isToday, startOfMonth, endOfMonth, subMonths, addMonths, getDate, getDay, differenceInMonths, isSameMonth } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, ChevronDown, Repeat, Zap, AlertTriangle, XCircle, SkipForward, Pause, MinusCircle, Cloud, RotateCcw } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -100,6 +100,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 현재 네비게이션 월 (MonthNavigator 연동)
   const [navigatedMonth, setNavigatedMonth] = useState<Date>(new Date());
+  // 목표 월 상태 (월 클릭 시 설정, 스크롤 도달 시 해제 - IntersectionObserver 제어용)
+  const [targetNavigatedMonth, setTargetNavigatedMonth] = useState<Date | null>(null);
 
   // 반복 인스턴스 및 완료 상태
   const [recurrenceInstances, setRecurrenceInstances] = useState<TimelineItem[]>([]);
@@ -1323,8 +1325,24 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // 월 변경 핸들러 (MonthNavigator에서 호출)
   const handleMonthChange = useCallback((date: Date) => {
-    scrollToMonth(date);
-  }, [scrollToMonth]);
+    const targetMonth = startOfMonth(date);
+
+    // 목표 월이 현재 로드된 범위 내인지 확인
+    if (targetMonth < dateRange.rangeStart) {
+      // 과거 방향으로 범위 확장 필요
+      const monthsToExtend = differenceInMonths(dateRange.rangeStart, targetMonth) + 1;
+      setPastMonthsLoaded(prev => prev + monthsToExtend);
+    } else if (targetMonth > dateRange.rangeEnd) {
+      // 미래 방향으로 범위 확장 필요
+      const monthsToExtend = differenceInMonths(targetMonth, dateRange.rangeEnd) + 1;
+      setFutureMonthsLoaded(prev => prev + monthsToExtend);
+    }
+
+    // navigatedMonth 설정 (스크롤은 데이터 로드 후 useEffect에서)
+    // 목표 월 설정 - IntersectionObserver가 중간 월을 감지하지 않도록
+    setTargetNavigatedMonth(date);
+    setNavigatedMonth(date);
+  }, [dateRange.rangeStart, dateRange.rangeEnd]);
 
   // 첫 로드 시 오늘 날짜로 스크롤
   useEffect(() => {
@@ -1357,14 +1375,26 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         const scrollContainer = monthRef.closest('.overflow-y-auto') as HTMLElement | null;
         console.log('[Timeline] scrollContainer found:', !!scrollContainer);
         if (scrollContainer) {
-          // 오늘 날짜 섹션이 있으면 그곳으로, 없으면 월 섹션으로
-          if (todaySectionRef.current) {
+          // DOM 쿼리로 오늘 날짜 요소 직접 찾기 (todaySectionRef가 아직 설정되지 않은 경우 대비)
+          const todayDateStr = format(today, 'yyyy-MM-dd');
+          const todayElement = scrollContainer.querySelector(`[data-date="${todayDateStr}"]`) as HTMLElement;
+
+          if (todayElement) {
+            // 오늘 날짜 요소로 스크롤
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const elementRect = todayElement.getBoundingClientRect();
+            const scrollOffset = elementRect.top - containerRect.top + scrollContainer.scrollTop;
+            console.log('[Timeline] scrollOffset (today via DOM query):', scrollOffset);
+            scrollContainer.scrollTop = scrollOffset;
+          } else if (todaySectionRef.current) {
+            // fallback: todaySectionRef가 있으면 사용
             const containerRect = scrollContainer.getBoundingClientRect();
             const sectionRect = todaySectionRef.current.getBoundingClientRect();
             const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
-            console.log('[Timeline] scrollOffset (today):', scrollOffset);
+            console.log('[Timeline] scrollOffset (today via ref):', scrollOffset);
             scrollContainer.scrollTop = scrollOffset;
           } else {
+            // 오늘 날짜 요소가 없으면 월 섹션으로 폴백
             const containerRect = scrollContainer.getBoundingClientRect();
             const sectionRect = monthRef.getBoundingClientRect();
             const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
@@ -1388,6 +1418,80 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     return () => clearTimeout(timer);
   }, [isLoading, hasScrolledToToday, timelineItems.length, findClosestMonthWithData, sortedMonthKeys]);
 
+  // navigatedMonth가 변경되고 해당 월 섹션이 존재할 때 스크롤
+  // (MonthNavigator에서 월 클릭 시 데이터 로드 완료 후 자동 스크롤)
+  // v3: sortedMonthKeys 포함 확인 + requestAnimationFrame 폴링
+  const lastScrolledMonthRef = useRef<string | null>(null);
+  useEffect(() => {
+    // 첫 로드 완료 전에는 실행하지 않음
+    if (!hasScrolledToToday) return;
+
+    const monthKey = format(navigatedMonth, 'yyyy년 M월', { locale: ko });
+
+    // 이미 스크롤한 월이면 스킵 (무한 루프 방지)
+    if (lastScrolledMonthRef.current === monthKey) return;
+
+    // sortedMonthKeys에 해당 월이 없으면 대기
+    // (다음 sortedMonthKeys 업데이트 시 useEffect 재실행됨)
+    if (!sortedMonthKeys.includes(monthKey)) {
+      return;
+    }
+
+    // 스크롤 실행 함수
+    const executeScroll = (ref: HTMLElement) => {
+      isScrollingProgrammatically.current = true;
+      lastScrolledMonthRef.current = monthKey;
+
+      const scrollContainer = ref.closest('.overflow-y-auto') as HTMLElement | null;
+      if (scrollContainer) {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const sectionRect = ref.getBoundingClientRect();
+        const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
+        scrollContainer.scrollTop = scrollOffset;
+      }
+
+      // 스크롤 완료 후 IntersectionObserver 다시 활성화 및 목표 월 해제
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+        // 목표 월에 도달했으므로 해제 (IntersectionObserver 다시 활성화)
+        if (targetNavigatedMonth && isSameMonth(navigatedMonth, targetNavigatedMonth)) {
+          setTargetNavigatedMonth(null);
+        }
+      }, 500);
+    };
+
+    // ref가 존재하면 즉시 스크롤
+    const ref = monthSectionRefs.current[monthKey];
+    if (ref) {
+      executeScroll(ref);
+      return;
+    }
+
+    // ref가 없으면 requestAnimationFrame으로 DOM 렌더링 대기 (최대 10프레임 ~160ms)
+    let rafId: number;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    const tryScroll = () => {
+      const retryRef = monthSectionRefs.current[monthKey];
+      if (retryRef) {
+        executeScroll(retryRef);
+        return;
+      }
+
+      attempts++;
+      if (attempts < maxAttempts) {
+        rafId = requestAnimationFrame(tryScroll);
+      }
+    };
+
+    rafId = requestAnimationFrame(tryScroll);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [navigatedMonth, sortedMonthKeys, hasScrolledToToday]);
+
   // IntersectionObserver로 스크롤 시 현재 보이는 월 감지
   useEffect(() => {
     if (!isScrollReady || sortedMonthKeys.length === 0) return;
@@ -1397,8 +1501,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // 프로그래밍적 스크롤 중이면 무시
-        if (isScrollingProgrammatically.current) return;
+        // 프로그래밍적 스크롤 중이거나 목표 월이 설정된 경우 무시
+        // (목표 월로 스크롤 중 중간 월 감지 방지)
+        if (isScrollingProgrammatically.current || targetNavigatedMonth) {
+          return;
+        }
 
         entries.forEach((entry) => {
           const monthKey = entry.target.getAttribute('data-month-key');
@@ -1423,6 +1530,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                 const month = parseInt(match[2]) - 1;
                 const newDate = new Date(year, month, 1);
                 setNavigatedMonth(newDate);
+                // 사용자 스크롤로 이동한 월도 기록 (프로그래밍 스크롤 중복 방지)
+                lastScrolledMonthRef.current = monthKey;
               }
               break;
             }
@@ -1695,6 +1804,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                     <div
                       key={dayKey}
                       ref={isTodayDate ? todaySectionRef : undefined}
+                      data-date={format(date, 'yyyy-MM-dd')}
                       className="flex flex-col sm:flex-row sm:gap-4"
                     >
                       {/* 날짜 헤더 - 모바일: 상단 가로, 데스크톱: 왼쪽 세로 */}

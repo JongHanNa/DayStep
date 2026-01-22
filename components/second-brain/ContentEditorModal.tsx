@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useModalStore } from '@/state/stores/modalStore';
-import AdvancedMarkdownEditor from '@/components/notes/AdvancedMarkdownEditor';
+import AdvancedMarkdownEditor, { AdvancedMarkdownEditorRef } from '@/components/notes/AdvancedMarkdownEditor';
+import MarkdownToolbar from '@/components/notes/editor/MarkdownToolbar';
 import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { ChevronDown, ChevronUp, ChevronLeft, PanelTop } from 'lucide-react';
@@ -67,6 +69,19 @@ export default function ContentEditorModal({
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
 
+  // 에디터 ref (툴바에서 에디터 조작용)
+  const editorRef = useRef<AdvancedMarkdownEditorRef>(null);
+
+  // 툴바 핸들러 - 에디터 ref를 통해 텍스트 삽입
+  const handleToolbarInsert = useCallback((text: string, cursorOffset?: number) => {
+    editorRef.current?.insertText(text, cursorOffset);
+  }, []);
+
+  // 툴바 핸들러 - 선택 영역 감싸기
+  const handleWrapSelection = useCallback((prefix: string, suffix: string) => {
+    editorRef.current?.wrapSelection(prefix, suffix);
+  }, []);
+
 
   // 자동저장 Hook - localContent 사용
   const autoSave = useAutoSave(localContent, {
@@ -124,12 +139,16 @@ export default function ContentEditorModal({
 
   if (!open) return null;
 
+  // SSR 환경에서는 document가 없으므로 체크
+  if (typeof document === 'undefined') return null;
+
+  // Portal로 document.body에 직접 렌더링하여 부모 모달의 제약에서 벗어남
   // Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor
-  return (
-    <dialog open className="modal modal-open z-[110]">
-      <div className={`modal-box rounded-none bg-base-200 dark:bg-base-100 w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
-        {/* 헤더 */}
-        <div className={`flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1`}>
+  return createPortal(
+    <dialog open className="modal modal-open z-[110] fixed inset-0">
+      <div className={`modal-box rounded-none bg-base-200 dark:bg-base-100 w-full max-w-7xl h-screen max-h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>
+        {/* 헤더 - sticky로 고정하여 내용이 길어져도 항상 보이게 함 */}
+        <div className={`sticky top-0 z-10 bg-base-200 dark:bg-base-100 flex-shrink-0 flex items-center justify-between ${process.env.BUILD_TARGET === 'web' ? 'pt-2' : 'pt-[30px]'} pb-1`}>
           <button
             onClick={onClose}
             className="btn btn-ghost btn-circle btn-sm"
@@ -172,7 +191,19 @@ export default function ContentEditorModal({
           </button>
         </div>
 
-        {/* 스크롤 영역: 슬라이더 + 에디터 */}
+        {/* MarkdownToolbar - 스크롤 영역 밖에 고정 배치 */}
+        {isToolbarVisible && (
+          <div className="flex-shrink-0 px-3">
+            <MarkdownToolbar
+              onInsert={handleToolbarInsert}
+              onWrapSelection={handleWrapSelection}
+              fontSize={editorFontSize}
+              onFontSizeChange={setEditorFontSize}
+            />
+          </div>
+        )}
+
+        {/* 스크롤 영역: 에디터만 스크롤 */}
         <div
           className="flex-1 overflow-y-auto px-0"
           style={{
@@ -188,19 +219,21 @@ export default function ContentEditorModal({
             }
           `}</style>
 
-          {/* 마크다운 에디터 */}
+          {/* 마크다운 에디터 - 툴바는 위에서 별도 렌더링 */}
           <AdvancedMarkdownEditor
+            ref={editorRef}
             value={localContent}  // ✅ 내부 state 사용 - 외부 리렌더 영향 없음
             onChange={handleContentChange}
             placeholder={placeholder}
-            minHeight={770}
+            minHeight={0}
             fontSize={editorFontSize}
             onFontSizeChange={setEditorFontSize}
-            showToolbar={isToolbarVisible}
+            showToolbar={false}  // 툴바는 스크롤 영역 밖에서 렌더링
           />
         </div>
       </div>
       <div className="modal-backdrop" onClick={onClose} />
-    </dialog>
+    </dialog>,
+    document.body
   );
 }

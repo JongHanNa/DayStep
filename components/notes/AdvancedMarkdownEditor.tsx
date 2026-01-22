@@ -15,6 +15,13 @@ import { headerDecorationExtension } from './editor/markdownHeaderDecorations';
 import { dynamicCursorPlugin } from './editor/markdownCursorPlugin';
 import MarkdownToolbar from './editor/MarkdownToolbar';
 
+// 에디터 ref 인터페이스 (외부에서 조작 시 사용)
+export interface AdvancedMarkdownEditorRef {
+  view: any;
+  insertText: (text: string, cursorOffset?: number) => void;
+  wrapSelection: (prefix: string, suffix: string) => void;
+}
+
 interface AdvancedMarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -97,10 +104,58 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
     detectPlatform();
   }, []);
   
-  // ref 전달
+  // 텍스트 삽입 함수 (ref로 노출)
+  const insertText = useCallback((text: string, cursorOffset: number = 0) => {
+    if (editorRef.current) {
+      const view = editorRef.current.view;
+      if (view) {
+        const { state } = view;
+        const { selection } = state;
+        const from = selection.main.from;
+
+        view.dispatch({
+          changes: {
+            from,
+            to: selection.main.to,
+            insert: text,
+          },
+          selection: {
+            anchor: from + text.length + cursorOffset,
+          },
+        });
+        view.focus();
+      }
+    }
+  }, []);
+
+  // 선택 영역 감싸기 함수 (ref로 노출)
+  const wrapSelection = useCallback((prefix: string, suffix: string) => {
+    const view = editorRef.current?.view;
+    if (!view) return;
+
+    const { from, to } = view.state.selection.main;
+    const selectedText = view.state.sliceDoc(from, to);
+
+    if (selectedText) {
+      view.dispatch({
+        changes: { from, to, insert: `${prefix}${selectedText}${suffix}` },
+        selection: { anchor: from + prefix.length + selectedText.length + suffix.length }
+      });
+    } else {
+      view.dispatch({
+        changes: { from, to, insert: `${prefix}${suffix}` },
+        selection: { anchor: from + prefix.length }
+      });
+    }
+    view.focus();
+  }, []);
+
+  // ref 전달 - 외부에서 에디터 조작 가능
   React.useImperativeHandle(ref, () => ({
     view: editorRef.current?.view,
-  }), []);
+    insertText,
+    wrapSelection,
+  }), [insertText, wrapSelection]);
   
   const extensions = useMemo(() => [
     // 키맵을 가장 먼저 배치하여 최고 우선순위 확보
