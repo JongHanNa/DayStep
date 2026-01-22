@@ -211,12 +211,16 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
               <div className="collapse-content">
                 <div className="pt-2">
                   <p className="text-sm text-base-content/70 leading-relaxed">
-                    DayStep MCP는 <span className="font-medium text-primary">중요·긴급한데 막연해서 미루던 일</span>을{' '}
-                    <span className="font-medium text-accent">"뇌에 친절한 단위"</span>로 쪼개서
-                    바로 실행할 수 있는 작은 단계로 만들어줍니다.
+                    성인 ADHD의 <span className="font-medium text-primary">집행기능(executive function)</span> 특성상,{' '}
+                    중요한 일도 <span className="font-medium">"어디서부터?"</span>가 막연하면 미루게 됩니다.
+                  </p>
+                  <p className="text-sm text-base-content/70 mt-2 leading-relaxed">
+                    DayStep MCP는 막막한 계획을{' '}
+                    <span className="font-medium text-primary">"폴더 열기 → 파일 1개 만들기 → ..."</span>{' '}
+                    처럼 <span className="font-medium text-accent">"뇌에 친절한 단위"</span>로 쪼개줍니다.
                   </p>
                   <p className="text-sm text-base-content/60 mt-2">
-                    ADHD가 있어도 <span className="font-medium">"뭐부터 해야 하지?"</span> 없이 바로 시작!
+                    <span className="font-medium">작업 시작이 90%</span> — 시작만 하면 나머지는 따라와요!
                   </p>
                   <div className="mt-4">
                     <button
@@ -243,15 +247,15 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                       <Brain className="w-8 h-8 text-primary" />
                     </div>
                     <h3 className="font-semibold text-lg mb-2">
-                      막연한 계획, AI가 실행 가능한 단계로 바꿔드려요
+                      막연한 계획을 "뇌에 친절한 단위"로 바꿔드려요
                     </h3>
                     <p className="text-base-content/60 text-sm max-w-xs mx-auto leading-relaxed">
-                      <span className="font-medium text-base-content/80">"취업 준비"</span> 같은 막막한 목표를{' '}
-                      <span className="font-medium text-primary">"잡코리아 열기 → 이력서 편집 클릭 → ..."</span>{' '}
-                      처럼 5분 안에 끝낼 수 있는 작은 행동으로 쪼개줍니다.
+                      <span className="font-medium text-base-content/80">"프로젝트 완성"</span> 같은 막막한 목표를{' '}
+                      <span className="font-medium text-primary">"폴더 열기 → 파일 1개 만들기 → ..."</span>{' '}
+                      처럼 바로 몸이 움직이는 작은 행동으로 쪼개줍니다.
                     </p>
                     <p className="text-sm text-base-content/50 mt-3">
-                      ADHD가 있어도 미루지 않고 바로 시작할 수 있어요!
+                      <span className="font-medium">작업 시작이 90%</span> — 시작만 하면 나머지는 따라와요!
                     </p>
                     <button
                       onClick={() => setCurrentTab('guide')}
