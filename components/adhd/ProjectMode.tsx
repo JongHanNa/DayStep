@@ -212,12 +212,12 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                 <div className="pt-2">
                   <p className="text-sm text-base-content/70 leading-relaxed">
                     성인 ADHD의 <span className="font-medium text-primary">집행기능(executive function)</span> 특성상,{' '}
-                    중요한 일도 <span className="font-medium">"어디서부터?"</span>가 막연하면 미루게 됩니다.
+                    중요한 일도 <span className="font-medium">{'"어디서부터?"'}</span>가 막연하면 미루게 됩니다.
                   </p>
                   <p className="text-sm text-base-content/70 mt-2 leading-relaxed">
                     DayStep MCP는 막막한 계획을{' '}
-                    <span className="font-medium text-primary">"폴더 열기 → 파일 1개 만들기 → ..."</span>{' '}
-                    처럼 <span className="font-medium text-accent">"뇌에 친절한 단위"</span>로 쪼개줍니다.
+                    <span className="font-medium text-primary">{'"폴더 열기 → 파일 1개 만들기 → ..."'}</span>{' '}
+                    처럼 <span className="font-medium text-accent">{'"뇌에 친절한 단위"'}</span>로 쪼개줍니다.
                   </p>
                   <p className="text-sm text-base-content/60 mt-2">
                     <span className="font-medium">작업 시작이 90%</span> — 시작만 하면 나머지는 따라와요!
@@ -247,11 +247,11 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                       <Brain className="w-8 h-8 text-primary" />
                     </div>
                     <h3 className="font-semibold text-lg mb-2">
-                      막연한 계획을 "뇌에 친절한 단위"로 바꿔드려요
+                      막연한 계획을 {'"뇌에 친절한 단위"'}로 바꿔드려요
                     </h3>
                     <p className="text-base-content/60 text-sm max-w-xs mx-auto leading-relaxed">
-                      <span className="font-medium text-base-content/80">"프로젝트 완성"</span> 같은 막막한 목표를{' '}
-                      <span className="font-medium text-primary">"폴더 열기 → 파일 1개 만들기 → ..."</span>{' '}
+                      <span className="font-medium text-base-content/80">{'"프로젝트 완성"'}</span> 같은 막막한 목표를{' '}
+                      <span className="font-medium text-primary">{'"폴더 열기 → 파일 1개 만들기 → ..."'}</span>{' '}
                       처럼 바로 몸이 움직이는 작은 행동으로 쪼개줍니다.
                     </p>
                     <p className="text-sm text-base-content/50 mt-3">
