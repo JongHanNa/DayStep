@@ -9,6 +9,7 @@ import NoteEditModal from '@/components/second-brain/NoteEditModal';
 import RecurringDeleteDialog from '@/components/todos/RecurringDeleteDialog';
 import RecurringTimeChangeDialog from '@/components/todos/RecurringTimeChangeDialog';
 import LinkedFuelsSection from '@/components/second-brain/shared/LinkedFuelsSection';
+import SubtaskSection from '@/components/todos/SubtaskSection';
 import { useModalStore } from '@/state/stores/modalStore';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { useNoteStore } from '@/state/stores/noteStore';
@@ -54,6 +55,8 @@ interface TodoEditModalProps {
   // 연결된 실행 원동력 섹션용 props
   fuelNotes?: Note[]; // fuel 카테고리 노트 (실행 원동력)
   showLinkedFuels?: boolean; // 연결된 원동력 섹션 표시 여부 (기본값: true)
+  // 서브태스크 섹션용 props
+  showSubtasks?: boolean; // 세부 단계 섹션 표시 여부 (기본값: true)
 }
 
 export default function TodoEditModal({
@@ -91,6 +94,7 @@ export default function TodoEditModal({
   onNoteImmediateSave,
   fuelNotes = [],
   showLinkedFuels = true,
+  showSubtasks = true,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
   const { createFuelNote } = useNoteStore();
@@ -366,6 +370,15 @@ export default function TodoEditModal({
             showProject={showProject}
             occurrenceDate={occurrenceDate}
           />
+
+          {/* 세부 단계 (서브태스크) 섹션 */}
+          {showSubtasks && todoId && userId && (
+            <SubtaskSection
+              todoId={todoId}
+              userId={userId}
+              todoColor={todo?.color}
+            />
+          )}
 
           {/* 연결된 실행 원동력 섹션 */}
           {showLinkedFuels && todoId && userId && (

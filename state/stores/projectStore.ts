@@ -497,6 +497,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
           .select('*')
           .eq('project_id', projectId)
           .eq('user_id', userId)
+          .is('parent_todo_id', null)  // 부모 할일만 조회 (서브태스크 제외)
           .order('created_at', { ascending: false });
 
         if (error) {

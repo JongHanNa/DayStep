@@ -1173,6 +1173,92 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
       },
 
+      // 서브태스크 생성
+      createSubtask: async (parentTodoId: string, title: string) => {
+        try {
+          // Capacitor 백업 인증 패턴
+          let userId: string | null = null;
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+              userId = session.user.id;
+            }
+          } catch {}
+
+          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
+            const { Preferences } = await import('@capacitor/preferences');
+            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
+            if (value) {
+              userId = JSON.parse(value).user?.id;
+            }
+          }
+
+          if (!userId) {
+            throw new Error("사용자 인증이 필요합니다.");
+          }
+
+          // 부모 할일 정보 가져오기
+          const parentTodo = get().todos.find((t: Todo) => t.id === parentTodoId);
+
+          // 기존 서브태스크의 최대 order_index 계산
+          const existingSubtasks = get().subtaskGroups.get(parentTodoId) || [];
+          const maxOrder = existingSubtasks.length > 0
+            ? Math.max(...existingSubtasks.map((t: Todo) => t.orderIndex || 0))
+            : -1;
+
+          // 서브태스크 데이터
+          const subtaskData = {
+            title,
+            user_id: userId,
+            parent_todo_id: parentTodoId,
+            recurrence_pattern: 'none' as const,
+            schedule_type: 'anytime' as const,
+            order_index: maxOrder + 1,
+            completed: false,
+            // 부모 할일의 일부 속성 상속
+            start_time: parentTodo?.startTime,
+            project_id: parentTodo?.projectId,
+          };
+
+          // DB에 서브태스크 생성
+          const { data, error } = await supabase
+            .from('todos')
+            .insert(subtaskData)
+            .select()
+            .single();
+
+          if (error) {
+            console.error('❌ 서브태스크 생성 실패:', error);
+            throw error;
+          }
+
+          // Todo 인스턴스로 변환
+          const newSubtask = Todo.fromDatabase(data);
+
+          // 상태 업데이트
+          set((state: TodoStoreState) => {
+            // todos 배열에 추가
+            state.todos.push(newSubtask);
+
+            // subtaskGroups에 추가
+            const subtasks = state.subtaskGroups.get(parentTodoId) || [];
+            subtasks.push(newSubtask);
+            state.subtaskGroups.set(parentTodoId, subtasks);
+          });
+
+          console.log('✅ createSubtask 완료:', {
+            parentTodoId,
+            subtaskId: newSubtask.id,
+            title,
+          });
+
+          return newSubtask;
+        } catch (error) {
+          console.error('❌ createSubtask 실패:', error);
+          throw error;
+        }
+      },
+
       // 서브태스크 완료 토글 (모든 서브태스크 완료 시 부모 자동 완료)
       toggleSubtask: async (subtaskId: string) => {
         const state = get();
@@ -1250,6 +1336,50 @@ export const useTodoStore = createStore<TodoStoreState>(
               t.id === subtaskId ? { ...t, completed: !newCompletedState } as Todo : t
             );
             state.subtaskGroups.set(parentTodoId, revertedSubtasks);
+          });
+
+          return false;
+        }
+      },
+
+      deleteSubtask: async (subtaskId: string) => {
+        const state = get();
+        const subtask = state.todos.find((t: Todo) => t.id === subtaskId);
+
+        if (!subtask || !subtask.parentTodoId) {
+          console.error('❌ 서브태스크를 찾을 수 없음:', subtaskId);
+          return false;
+        }
+
+        const parentTodoId = subtask.parentTodoId;
+
+        // 1. Optimistic Update: UI에서 즉시 제거
+        set((state: TodoStoreState) => {
+          // todos 배열에서 제거
+          state.todos = state.todos.filter((t: Todo) => t.id !== subtaskId);
+
+          // subtaskGroups에서도 제거
+          const subtasks = state.subtaskGroups.get(parentTodoId) || [];
+          const updatedSubtasks = subtasks.filter((t: Todo) => t.id !== subtaskId);
+          state.subtaskGroups.set(parentTodoId, updatedSubtasks);
+        });
+
+        try {
+          // 2. DB에서 삭제
+          const success = await deleteTodoAction(subtaskId);
+          if (!success) throw new Error('서브태스크 삭제 실패');
+
+          console.log('✅ 서브태스크 삭제 완료:', subtaskId);
+          return true;
+        } catch (error) {
+          console.error('❌ deleteSubtask 실패:', error);
+
+          // 실패 시 롤백: 서브태스크 복원
+          set((state: TodoStoreState) => {
+            state.todos.push(subtask);
+
+            const subtasks = state.subtaskGroups.get(parentTodoId) || [];
+            state.subtaskGroups.set(parentTodoId, [...subtasks, subtask]);
           });
 
           return false;

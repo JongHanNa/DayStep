@@ -1171,6 +1171,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       .filter(todo => {
         // 반복 할일 제외
         if (isRecurringTodo(todo)) return false;
+        // 서브태스크 제외 (부모 할일만 표시)
+        if (todo.parentTodoId) return false;
         // startTime 있는 것만
         if (!todo.startTime) return false;
         // 날짜 범위 체크

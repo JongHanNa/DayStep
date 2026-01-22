@@ -155,7 +155,9 @@ export interface TodoStoreState extends BaseStoreState {
   getSubtasksForTodo: (parentTodoId: string) => Todo[];
   getSubtaskProgress: (parentTodoId: string) => { completed: number; total: number };
   fetchSubtasks: (parentTodoId: string) => Promise<void>;
+  createSubtask: (parentTodoId: string, title: string) => Promise<Todo>;
   toggleSubtask: (subtaskId: string) => Promise<boolean>;
+  deleteSubtask: (subtaskId: string) => Promise<boolean>;
 
   // 아카이브 기능
   archiveTodo: (id: string, category?: string) => Promise<boolean>;
