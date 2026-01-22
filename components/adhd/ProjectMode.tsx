@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square } from 'lucide-react';
+import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles } from 'lucide-react';
 import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -196,29 +196,79 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
         {currentTab === 'guide' ? (
           // 가이드 탭
           <MCPGuideContent />
-        ) : loading ? (
-          <div className="flex justify-center py-8">
-            <div className="loading loading-spinner loading-md" />
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <div className="text-center py-12">
-            <FolderKanban className="w-12 h-12 mx-auto text-base-300 mb-4" />
-            <p className="text-base-content/60">
-              {statusFilter === 'all'
-                ? 'AI와 함께 프로젝트를 계획해보세요'
-                : '해당하는 프로젝트가 없습니다'}
-            </p>
-            {statusFilter === 'all' && (
-              <button
-                onClick={() => setCurrentTab('guide')}
-                className="btn btn-primary btn-sm mt-4 gap-1"
-              >
-                <BookOpen className="w-4 h-4" />
-                연동 가이드 보기
-              </button>
-            )}
-          </div>
         ) : (
+          <>
+            {/* AI 연동 권장 안내 (접는 구조) */}
+            <div className="collapse collapse-arrow bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4 rounded-xl">
+              <input type="checkbox" defaultChecked />
+              <div className="collapse-title font-semibold flex items-center gap-2 pr-10">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-primary" />
+                </div>
+                <span>AI와 함께 계획하면 더 쉬워요</span>
+                <Sparkles className="w-4 h-4 text-warning" />
+              </div>
+              <div className="collapse-content">
+                <div className="pt-2">
+                  <p className="text-sm text-base-content/70 leading-relaxed">
+                    DayStep MCP는 <span className="font-medium text-primary">"이력서 작성"</span> 같은 막연한 할일을{' '}
+                    <span className="font-medium text-accent">"사람인 열기 → 로그인 → 이력서 탭 클릭"</span> 처럼
+                    바로 실행할 수 있는 작은 단계로 쪼개줍니다.
+                  </p>
+                  <p className="text-sm text-base-content/60 mt-2">
+                    ADHD가 있어도 <span className="font-medium">"뭐부터 해야 하지?"</span> 없이 바로 시작!
+                  </p>
+                  <div className="mt-4">
+                    <button
+                      onClick={() => setCurrentTab('guide')}
+                      className="btn btn-primary btn-sm rounded-full gap-1"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      AI 연동하기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="loading loading-spinner loading-md" />
+              </div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="text-center py-12">
+                {statusFilter === 'all' ? (
+                  <>
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Brain className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">
+                      막연한 계획, AI가 실행 가능한 단계로 바꿔드려요
+                    </h3>
+                    <p className="text-base-content/60 text-sm max-w-xs mx-auto leading-relaxed">
+                      <span className="font-medium text-base-content/80">"취업 준비"</span> 같은 막막한 목표를{' '}
+                      <span className="font-medium text-primary">"잡코리아 열기 → 이력서 편집 클릭 → ..."</span>{' '}
+                      처럼 5분 안에 끝낼 수 있는 작은 행동으로 쪼개줍니다.
+                    </p>
+                    <p className="text-sm text-base-content/50 mt-3">
+                      ADHD가 있어도 미루지 않고 바로 시작할 수 있어요!
+                    </p>
+                    <button
+                      onClick={() => setCurrentTab('guide')}
+                      className="btn btn-primary btn-sm mt-6 gap-1 rounded-full"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      AI 연동 가이드 보기
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <FolderKanban className="w-12 h-12 mx-auto text-base-300 mb-4" />
+                    <p className="text-base-content/60">해당하는 프로젝트가 없습니다</p>
+                  </>
+                )}
+              </div>
+            ) : (
           <div className="space-y-3">
             {filteredProjects.map((project) => {
               const progress = projectProgress.get(project.id);
@@ -356,7 +406,9 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                 </div>
               );
             })}
-          </div>
+            </div>
+            )}
+          </>
         )}
       </main>
 
