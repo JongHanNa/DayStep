@@ -94,8 +94,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
 
   // 날짜 범위 상태 (과거/미래 개월 수)
-  const [pastMonthsLoaded, setPastMonthsLoaded] = useState(3);
-  const [futureMonthsLoaded, setFutureMonthsLoaded] = useState(3);
+  const [pastMonthsLoaded, setPastMonthsLoaded] = useState(1);
+  const [futureMonthsLoaded, setFutureMonthsLoaded] = useState(2);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // 현재 네비게이션 월 (MonthNavigator 연동)
@@ -1123,13 +1123,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // "더 보기" 핸들러
   const handleLoadMorePast = useCallback(async () => {
     setIsLoadingMore(true);
-    setPastMonthsLoaded(prev => prev + 6);
+    setPastMonthsLoaded(prev => prev + 1);
     setIsLoadingMore(false);
   }, []);
 
   const handleLoadMoreFuture = useCallback(async () => {
     setIsLoadingMore(true);
-    setFutureMonthsLoaded(prev => prev + 6);
+    setFutureMonthsLoaded(prev => prev + 1);
     setIsLoadingMore(false);
   }, []);
 
@@ -1509,7 +1509,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             className="w-full py-3 mb-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
           >
             <ChevronUp className="w-4 h-4" />
-            과거 6개월 더 보기
+            과거 1개월 더 보기
           </button>
 
           <div className="flex flex-col items-center justify-center h-48 text-base-content/60">
@@ -1532,7 +1532,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             className="w-full py-3 mt-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
           >
             <ChevronDown className="w-4 h-4" />
-            미래 6개월 더 보기
+            미래 1개월 더 보기
           </button>
         </div>
 
@@ -1599,7 +1599,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           ) : (
             <>
               <ChevronUp className="w-4 h-4" />
-              과거 6개월 더 보기
+              과거 1개월 더 보기
             </>
           )}
         </button>
@@ -2195,7 +2195,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           ) : (
             <>
               <ChevronDown className="w-4 h-4" />
-              미래 6개월 더 보기
+              미래 1개월 더 보기
             </>
           )}
         </button>

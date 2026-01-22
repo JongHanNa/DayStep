@@ -1332,9 +1332,9 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
         getUnprocessedFuelNotes: () => {
           const { notes } = get();
-          // note_category가 'fuel'인 노트 중 할일로 변환되지 않은 것들
+          // note_category가 'fuel'인 노트 중 연결된 할일이 없는 것들
           return notes.filter(note =>
-            note.note_category === 'fuel' && !note.is_processed
+            note.note_category === 'fuel' && (note.todos?.length ?? 0) === 0
           );
         },
 

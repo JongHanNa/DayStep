@@ -876,9 +876,8 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   // 타이머 시간 선택 화면 (복잡한 머릿속, 정리해줄게)
   // 원동력 목록: 미처리 우선 정렬 (미처리 → 처리됨 순서)
   const sortedFuelNotes = useMemo(() => {
-    // 처리 여부 판단: is_processed가 true이거나 연결된 할일이 있으면 처리됨
-    const isProcessed = (note: Note) =>
-      note.is_processed === true || (note.todos?.length ?? 0) > 0;
+    // 처리 여부 판단: 연결된 할일이 있으면 처리됨
+    const isProcessed = (note: Note) => (note.todos?.length ?? 0) > 0;
 
     return [...fuelNotes].sort((a, b) => {
       const aProcessed = isProcessed(a);
@@ -1106,8 +1105,8 @@ export default function FuelMode({ onExit }: FuelModeProps) {
             </div>
             <div className="flex flex-col gap-2">
               {sortedFuelNotes.map(entry => {
-                // 처리 여부 판단
-                const isProcessed = entry.is_processed === true || (entry.todos?.length ?? 0) > 0;
+                // 처리 여부 판단: 연결된 할일이 있으면 처리됨
+                const isProcessed = (entry.todos?.length ?? 0) > 0;
 
                 return (
                   <div
