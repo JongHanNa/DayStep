@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square } from 'lucide-react';
+import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square } from 'lucide-react';
 import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -148,19 +148,8 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
     <div className="min-h-screen bg-base-100">
       {/* 헤더 */}
       <header className="sticky top-0 z-10 bg-base-100 border-b border-base-200">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={onExit}
-            className="btn btn-ghost btn-circle"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-semibold">프로젝트</h1>
-          <div className="w-10" /> {/* 균형 맞추기 */}
-        </div>
-
         {/* 메인 탭: 프로젝트 목록 vs 가이드 */}
-        <div className="flex gap-2 px-4 pb-2 border-b border-base-200">
+        <div className="flex gap-2 px-4 pt-3 pb-2 border-b border-base-200">
           <button
             onClick={() => setCurrentTab('projects')}
             className={`flex-1 py-2 text-sm font-medium rounded-t-lg transition-colors ${
