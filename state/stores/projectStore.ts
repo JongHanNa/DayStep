@@ -5,13 +5,24 @@
  */
 
 import type { Project, ProjectInsert, ProjectUpdate, ProjectProgress, ProjectStatus, Todo } from '@/types';
-import { supabase } from '@/lib/supabase';
 import {
   createStore,
   loadingHelpers,
   logStoreAction,
 } from '../utils/storeUtils';
 import type { BaseStoreState } from '../types';
+import {
+  fetchProjectsWithJWT,
+  fetchProjectByIdWithJWT,
+  fetchProjectProgressWithJWT,
+  createProjectWithJWT,
+  updateProjectWithJWT,
+  deleteProjectWithJWT,
+  deleteProjectWithTodosWithJWT,
+  completeProjectWithJWT,
+  fetchProjectTodosWithJWT,
+  unlinkTodoFromProjectWithJWT,
+} from '@/lib/supabase/projects';
 
 /**
  * 프로젝트 스토어 상태 타입 정의
@@ -77,7 +88,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
     statusFilter: 'all',
 
     /**
-     * 프로젝트 목록 조회
+     * 프로젝트 목록 조회 (JWT 방식)
      */
     fetchProjects: async (userId: string, status?: ProjectStatus) => {
       logStoreAction('ProjectStore', 'fetchProjects', { userId, status });
@@ -87,21 +98,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       });
 
       try {
-        let query = supabase
-          .from('projects')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
-
-        if (status) {
-          query = query.eq('status', status);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          throw error;
-        }
+        const data = await fetchProjectsWithJWT(userId, status);
 
         set((state: ProjectStoreState) => {
           state.projects = data || [];
@@ -120,22 +117,13 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트 상세 조회
+     * 프로젝트 상세 조회 (JWT 방식)
      */
     fetchProjectById: async (userId: string, projectId: string) => {
       logStoreAction('ProjectStore', 'fetchProjectById', { userId, projectId });
 
       try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('id', projectId)
-          .eq('user_id', userId)
-          .single();
-
-        if (error) {
-          throw error;
-        }
+        const data = await fetchProjectByIdWithJWT(userId, projectId);
 
         set((state: ProjectStoreState) => {
           state.currentProject = data;
@@ -152,37 +140,19 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트 진행률 조회
+     * 프로젝트 진행률 조회 (JWT 방식)
      */
     fetchProjectProgress: async (userId: string, projectId: string) => {
       logStoreAction('ProjectStore', 'fetchProjectProgress', { userId, projectId });
 
       try {
-        // 프로젝트에 연결된 할일 통계 조회
-        const { data: todos, error } = await supabase
-          .from('todos')
-          .select('id, completed')
-          .eq('project_id', projectId)
-          .eq('user_id', userId);
+        const progressData = await fetchProjectProgressWithJWT(userId, projectId);
 
-        if (error) {
-          throw error;
+        if (progressData) {
+          set((state: ProjectStoreState) => {
+            state.projectProgress.set(projectId, progressData);
+          });
         }
-
-        const total = todos?.length || 0;
-        const completed = todos?.filter((t) => t.completed).length || 0;
-        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-        const progressData: ProjectProgress = {
-          project_id: projectId,
-          total,
-          completed,
-          progress,
-        };
-
-        set((state: ProjectStoreState) => {
-          state.projectProgress.set(projectId, progressData);
-        });
 
         return progressData;
       } catch (error) {
@@ -192,7 +162,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트 생성
+     * 프로젝트 생성 (JWT 방식)
      */
     createProject: async (userId: string, data: Omit<ProjectInsert, 'user_id'>) => {
       logStoreAction('ProjectStore', 'createProject', { userId, data });
@@ -202,27 +172,14 @@ export const useProjectStore = createStore<ProjectStoreState>(
       });
 
       try {
-        const { data: newProject, error } = await supabase
-          .from('projects')
-          .insert({
-            user_id: userId,
-            title: data.title,
-            description: data.description || null,
-            status: data.status || 'in_progress',
-            icon: data.icon || null,
-            color: data.color || '#A8DADC',
-          })
-          .select()
-          .single();
+        const newProject = await createProjectWithJWT(userId, data);
 
-        if (error) {
-          throw error;
+        if (newProject) {
+          set((state: ProjectStoreState) => {
+            state.projects.unshift(newProject);
+            loadingHelpers.setSuccess(state);
+          });
         }
-
-        set((state: ProjectStoreState) => {
-          state.projects.unshift(newProject);
-          loadingHelpers.setSuccess(state);
-        });
 
         return newProject;
       } catch (error) {
@@ -238,7 +195,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트 수정
+     * 프로젝트 수정 (JWT 방식)
      */
     updateProject: async (userId: string, data: ProjectUpdate) => {
       logStoreAction('ProjectStore', 'updateProject', { userId, data });
@@ -259,31 +216,20 @@ export const useProjectStore = createStore<ProjectStoreState>(
       });
 
       try {
-        const { data: updatedProject, error } = await supabase
-          .from('projects')
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', id)
-          .eq('user_id', userId)
-          .select()
-          .single();
+        const updatedProject = await updateProjectWithJWT(userId, id, updates);
 
-        if (error) {
-          throw error;
+        if (updatedProject) {
+          set((state: ProjectStoreState) => {
+            const index = state.projects.findIndex((p) => p.id === id);
+            if (index !== -1) {
+              state.projects[index] = updatedProject;
+            }
+            if (state.currentProject?.id === id) {
+              state.currentProject = updatedProject;
+            }
+            loadingHelpers.setSuccess(state);
+          });
         }
-
-        set((state: ProjectStoreState) => {
-          const index = state.projects.findIndex((p) => p.id === id);
-          if (index !== -1) {
-            state.projects[index] = updatedProject;
-          }
-          if (state.currentProject?.id === id) {
-            state.currentProject = updatedProject;
-          }
-          loadingHelpers.setSuccess(state);
-        });
 
         return updatedProject;
       } catch (error) {
@@ -301,7 +247,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트 삭제
+     * 프로젝트 삭제 (JWT 방식)
      */
     deleteProject: async (userId: string, projectId: string) => {
       logStoreAction('ProjectStore', 'deleteProject', { userId, projectId });
@@ -317,22 +263,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       });
 
       try {
-        // 연결된 할일의 project_id를 null로 설정
-        await supabase
-          .from('todos')
-          .update({ project_id: null })
-          .eq('project_id', projectId);
-
-        // 프로젝트 삭제
-        const { error } = await supabase
-          .from('projects')
-          .delete()
-          .eq('id', projectId)
-          .eq('user_id', userId);
-
-        if (error) {
-          throw error;
-        }
+        await deleteProjectWithJWT(userId, projectId);
 
         set((state: ProjectStoreState) => {
           state.projectProgress.delete(projectId);
@@ -351,7 +282,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트와 연결된 할일 모두 삭제
+     * 프로젝트와 연결된 할일 모두 삭제 (JWT 방식)
      */
     deleteProjectWithTodos: async (userId: string, projectId: string) => {
       logStoreAction('ProjectStore', 'deleteProjectWithTodos', { userId, projectId });
@@ -367,27 +298,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
       });
 
       try {
-        // 연결된 할일 삭제
-        const { error: todosError } = await supabase
-          .from('todos')
-          .delete()
-          .eq('project_id', projectId)
-          .eq('user_id', userId);
-
-        if (todosError) {
-          throw todosError;
-        }
-
-        // 프로젝트 삭제
-        const { error } = await supabase
-          .from('projects')
-          .delete()
-          .eq('id', projectId)
-          .eq('user_id', userId);
-
-        if (error) {
-          throw error;
-        }
+        await deleteProjectWithTodosWithJWT(userId, projectId);
 
         set((state: ProjectStoreState) => {
           state.projectProgress.delete(projectId);
@@ -407,26 +318,35 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트 완료
+     * 프로젝트 완료 (JWT 방식)
      */
     completeProject: async (userId: string, projectId: string) => {
       logStoreAction('ProjectStore', 'completeProject', { userId, projectId });
 
-      const result = await get().updateProject(userId, {
-        id: projectId,
-        status: 'completed',
+      // Optimistic update
+      const originalProjects = [...get().projects];
+
+      set((state: ProjectStoreState) => {
+        const index = state.projects.findIndex((p) => p.id === projectId);
+        if (index !== -1) {
+          state.projects[index] = { ...state.projects[index], status: 'completed' };
+        }
+        if (state.currentProject?.id === projectId) {
+          state.currentProject = { ...state.currentProject, status: 'completed' };
+        }
       });
 
-      if (result) {
-        // completed_at 업데이트
-        await supabase
-          .from('projects')
-          .update({ completed_at: new Date().toISOString() })
-          .eq('id', projectId)
-          .eq('user_id', userId);
+      try {
+        await completeProjectWithJWT(userId, projectId);
+        return true;
+      } catch (error) {
+        console.error('프로젝트 완료 오류:', error);
+        // Rollback
+        set((state: ProjectStoreState) => {
+          state.projects = originalProjects;
+        });
+        return false;
       }
-
-      return !!result;
     },
 
     /**
@@ -486,25 +406,13 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트에 연결된 할일 조회
+     * 프로젝트에 연결된 할일 조회 (JWT 방식)
      */
     fetchProjectTodos: async (userId: string, projectId: string) => {
       logStoreAction('ProjectStore', 'fetchProjectTodos', { userId, projectId });
 
       try {
-        const { data, error } = await supabase
-          .from('todos')
-          .select('*')
-          .eq('project_id', projectId)
-          .eq('user_id', userId)
-          .is('parent_todo_id', null)  // 부모 할일만 조회 (서브태스크 제외)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
-
-        const todos = data || [];
+        const todos = await fetchProjectTodosWithJWT(userId, projectId);
 
         set((state: ProjectStoreState) => {
           state.projectTodos.set(projectId, todos);
@@ -518,21 +426,13 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 할일에서 프로젝트 연결 해제
+     * 할일에서 프로젝트 연결 해제 (JWT 방식)
      */
     unlinkTodoFromProject: async (userId: string, todoId: string) => {
       logStoreAction('ProjectStore', 'unlinkTodoFromProject', { userId, todoId });
 
       try {
-        const { error } = await supabase
-          .from('todos')
-          .update({ project_id: null })
-          .eq('id', todoId)
-          .eq('user_id', userId);
-
-        if (error) {
-          throw error;
-        }
+        await unlinkTodoFromProjectWithJWT(userId, todoId);
 
         // projectTodos 캐시에서 제거
         set((state: ProjectStoreState) => {

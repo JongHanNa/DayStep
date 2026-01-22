@@ -56,6 +56,14 @@ import {
   updateLoadStateOnSuccess,
 } from "./actions/todoCacheActions";
 
+// JWT 기반 서브태스크 함수들 (Capacitor 환경 지원)
+import {
+  fetchSubtasksWithJWT,
+  createSubtaskWithJWT,
+  updateSubtaskCompletionWithJWT,
+  updateParentTodoCompletionWithJWT,
+} from "@/lib/supabase/subtasks";
+
 /**
  * 할일 스토어 생성
  */
@@ -1111,7 +1119,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         return { completed, total };
       },
 
-      // 서브태스크 조회 (DB에서 가져오기)
+      // 서브태스크 조회 (JWT 방식 - Capacitor 환경 지원)
       fetchSubtasks: async (parentTodoId: string) => {
         try {
           // Capacitor 백업 인증 패턴
@@ -1135,19 +1143,8 @@ export const useTodoStore = createStore<TodoStoreState>(
             throw new Error("사용자 인증이 필요합니다.");
           }
 
-          // 서브태스크 조회
-          const { data, error } = await supabase
-            .from('todos')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('parent_todo_id', parentTodoId)
-            .eq('recurrence_pattern', 'none')
-            .order('order_index', { ascending: true });
-
-          if (error) {
-            console.error('❌ 서브태스크 조회 실패:', error);
-            return;
-          }
+          // JWT 방식으로 서브태스크 조회 (Capacitor 환경 지원)
+          const data = await fetchSubtasksWithJWT(userId, parentTodoId);
 
           // Todo 인스턴스로 변환
           const subtasks = (data || []).map((row: any) => Todo.fromDatabase(row));
@@ -1173,7 +1170,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
       },
 
-      // 서브태스크 생성
+      // 서브태스크 생성 (JWT 방식 - Capacitor 환경 지원)
       createSubtask: async (parentTodoId: string, title: string) => {
         try {
           // Capacitor 백업 인증 패턴
@@ -1220,16 +1217,11 @@ export const useTodoStore = createStore<TodoStoreState>(
             project_id: parentTodo?.projectId,
           };
 
-          // DB에 서브태스크 생성
-          const { data, error } = await supabase
-            .from('todos')
-            .insert(subtaskData)
-            .select()
-            .single();
+          // JWT 방식으로 서브태스크 생성 (Capacitor 환경 지원)
+          const data = await createSubtaskWithJWT(subtaskData);
 
-          if (error) {
-            console.error('❌ 서브태스크 생성 실패:', error);
-            throw error;
+          if (!data) {
+            throw new Error('서브태스크 생성 실패');
           }
 
           // Todo 인스턴스로 변환
@@ -1259,7 +1251,8 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
       },
 
-      // 서브태스크 완료 토글 (모든 서브태스크 완료 시 부모 자동 완료)
+      // 서브태스크 완료 토글 (JWT 방식 - Capacitor 환경 지원)
+      // 모든 서브태스크 완료 시 부모 자동 완료
       toggleSubtask: async (subtaskId: string) => {
         const state = get();
         const subtask = state.todos.find((t: Todo) => t.id === subtaskId);
@@ -1288,13 +1281,8 @@ export const useTodoStore = createStore<TodoStoreState>(
         });
 
         try {
-          // 2. DB 업데이트
-          const { error } = await supabase
-            .from('todos')
-            .update({ completed: newCompletedState, updated_at: new Date().toISOString() })
-            .eq('id', subtaskId);
-
-          if (error) throw error;
+          // 2. JWT 방식으로 DB 업데이트 (Capacitor 환경 지원)
+          await updateSubtaskCompletionWithJWT(subtaskId, newCompletedState);
 
           // 3. 모든 서브태스크가 완료되었는지 확인
           const updatedState = get();
@@ -1313,11 +1301,8 @@ export const useTodoStore = createStore<TodoStoreState>(
               }
             });
 
-            // DB에도 부모 할일 완료 처리
-            await supabase
-              .from('todos')
-              .update({ completed: true, updated_at: new Date().toISOString() })
-              .eq('id', parentTodoId);
+            // JWT 방식으로 부모 할일 완료 처리 (Capacitor 환경 지원)
+            await updateParentTodoCompletionWithJWT(parentTodoId, true);
           }
 
           return true;

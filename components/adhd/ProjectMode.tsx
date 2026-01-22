@@ -22,8 +22,12 @@ interface ProjectModeProps {
  * - 간단한 UI: 핵심 정보만 표시
  */
 export default function ProjectMode({ onExit }: ProjectModeProps) {
-  const { user } = useAuth();
-  const userId = user?.id;
+  const { user, loading: authLoading } = useAuth();
+  const { currentUserId } = useADHDModeStore();
+
+  // fallback: useAuth()가 user를 반환하지 않을 때 adhdModeStore의 currentUserId 사용
+  // Capacitor 환경에서 타이밍 문제로 user가 null일 수 있음
+  const userId = user?.id || currentUserId;
 
   const {
     projects,
@@ -47,21 +51,25 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
 
   // 데이터 로드
   useEffect(() => {
-    if (userId) {
+    if (userId && !authLoading) {
+      console.log('📁 ProjectMode: fetchProjects 호출', {
+        userId,
+        source: user?.id ? 'useAuth' : 'currentUserId',
+      });
       fetchProjects(userId);
     }
-  }, [userId, fetchProjects]);
+  }, [userId, authLoading, user?.id, fetchProjects]);
 
   // 프로젝트별 진행률 로드
   useEffect(() => {
-    if (userId && projects.length > 0) {
+    if (userId && !authLoading && projects.length > 0) {
       projects.forEach((project) => {
         if (!projectProgress.has(project.id)) {
           fetchProjectProgress(userId, project.id);
         }
       });
     }
-  }, [userId, projects, projectProgress, fetchProjectProgress]);
+  }, [userId, authLoading, projects, projectProgress, fetchProjectProgress]);
 
   // 현재 탭: 프로젝트 목록 vs 가이드
   const [currentTab, setCurrentTab] = useState<'projects' | 'guide'>('projects');
