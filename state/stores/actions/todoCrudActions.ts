@@ -5,6 +5,7 @@ import { TodoService } from "@/services/todo/TodoService";
 import { integratedNotificationService } from "@/services/integrated-notification.service";
 import { widgetSyncService } from "@/services/widget-sync.service";
 import { isCapacitorEnvironment } from "@/lib/supabase/core";
+import { fetchTodoByIdWithJWT } from "@/lib/supabase/todos";
 import {
   createAsyncAction,
   createRetryableAction,
@@ -218,22 +219,15 @@ export const deleteTodoAction = createAsyncAction(async (id: string) => {
 });
 
 /**
- * 할일 조회 액션 (READ)
+ * 할일 조회 액션 (READ) - JWT 방식
  */
 export const fetchTodoByIdAction = async (id: string) => {
   logStoreAction("TodoStore", "fetchTodoById", { id });
 
   try {
-    const { data, error } = await supabase
-      .from("todos")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    if (!data) return null;
-
-    return Todo.fromDatabase(data);
+    // JWT 방식으로 할일 조회 (Capacitor/웹 공통)
+    const todo = await fetchTodoByIdWithJWT(id);
+    return todo; // 이미 Todo.fromDatabase() 적용됨
   } catch (error) {
     console.error("할일 조회 실패:", error);
     return null;

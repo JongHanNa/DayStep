@@ -1,6 +1,7 @@
 import { User, Session } from "@supabase/supabase-js";
 import { User as AppUser } from "@/entities/user/User";
 import { supabase } from "@/lib/supabase";
+import { updateUserWithJWT } from "@/lib/supabase/users";
 import {
   createStore,
   loadingHelpers,
@@ -257,18 +258,8 @@ export const useAuthStore = createStore<AuthStoreState>(
       }
 
       try {
-        // 데이터베이스 업데이트
-        const { error } = await supabase
-          .from("users")
-          .update({
-            name: data.name,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", user.id);
-
-        if (error) {
-          throw error;
-        }
+        // JWT 방식으로 데이터베이스 업데이트 (Capacitor/웹 공통)
+        await updateUserWithJWT(user.id, { name: data.name });
 
         // 로컬 상태 업데이트
         const updatedAppUser = appUser.update(data.name);

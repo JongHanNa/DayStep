@@ -2,7 +2,7 @@
  * Supabase Users - 사용자 및 포모도로 세션 관리
  */
 
-import { fetchWithJWT, queryRLSTableWithJWT, QueryOptions, createWithJWT } from './core';
+import { fetchWithJWT, queryRLSTableWithJWT, QueryOptions, createWithJWT, updateWithJWT } from './core';
 
 /**
  * JWT 방식으로 사용자 정보 조회 (타임아웃 및 재시도 최적화)
@@ -135,5 +135,34 @@ export async function fetchPomodoroSessions(userId: string, options: QueryOption
   } catch (error) {
     console.error('❌ 포모도로 세션 조회 실패:', error);
     return [];
+  }
+}
+
+/**
+ * JWT 방식으로 사용자 프로필 업데이트
+ */
+export async function updateUserWithJWT(
+  userId: string,
+  data: { name?: string; [key: string]: any }
+): Promise<boolean> {
+  console.log('👤 JWT 방식으로 사용자 프로필 업데이트:', { userId, data });
+
+  try {
+    const updateData = {
+      ...data,
+      updated_at: new Date().toISOString()
+    };
+
+    await updateWithJWT('users', {
+      column: 'id',
+      operator: 'eq',
+      value: userId
+    }, updateData);
+
+    console.log('✅ JWT 사용자 프로필 업데이트 성공');
+    return true;
+  } catch (error) {
+    console.error('❌ JWT 사용자 프로필 업데이트 실패:', error);
+    throw error;
   }
 }

@@ -218,5 +218,39 @@ export async function fetchAllTodosWithJWT(
   }
 }
 
+/**
+ * JWT 방식으로 특정 할일 조회 (ID로 단건 조회)
+ */
+export async function fetchTodoByIdWithJWT(todoId: string): Promise<any | null> {
+  console.log('📋 JWT 방식으로 할일 단건 조회:', { todoId });
+
+  try {
+    const todos = await queryRLSTableWithJWT('todos', {
+      column: 'id',
+      operator: 'eq',
+      value: todoId
+    }, {
+      select: '*'
+    });
+
+    const rawTodo = Array.isArray(todos) ? todos[0] : todos;
+
+    if (!rawTodo) {
+      console.log('⚠️ 할일을 찾을 수 없음:', { todoId });
+      return null;
+    }
+
+    // Todo.fromDatabase()로 camelCase 변환
+    const { Todo } = await import('../../entities/todo/Todo');
+    const todo = Todo.fromDatabase(rawTodo);
+
+    console.log('✅ JWT 할일 단건 조회 성공:', { id: todo.id, title: todo.title });
+    return todo;
+  } catch (error) {
+    console.error('❌ JWT 할일 단건 조회 실패:', error);
+    return null;
+  }
+}
+
 // getMaxOrderIndexWithJWT는 core.ts에 있으므로 재export
 export { getMaxOrderIndexWithJWT } from './core';
