@@ -252,8 +252,55 @@ const TOOLS: McpTool[] = [
 4. 막히는 부분: "가장 어렵거나 막막한 부분이 무엇인가요?"
    - 예: 시작하기가 어려움, 어디서부터 해야 할지 모름 등
 
-이 정보를 바탕으로 맞춤형 프로젝트와 할일을 생성하세요.
-할일은 5-15분 단위의 구체적인 행동으로 쪼개고, 필요시 subtasks로 더 작게 나누세요.`,
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔴 ADHD 친화적 서브태스크 필수 규칙
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+【필수】 모든 할일에 subtasks 배열을 포함하세요!
+- 최소 2-3개 이상의 서브태스크
+- 각 서브태스크는 "5분 안에 끝낼 수 있는 물리적 행동"
+
+【"물리적 행동"이란?】
+✅ 몸이 움직이는 것: 클릭, 열기, 타이핑, 복사/붙여넣기, 스크롤
+❌ 생각하는 것: 검토하기, 확인하기, 준비하기, 고민하기
+
+【파일/URL 포함 규칙】
+- 참조 파일이 있으면 → 전체 경로 포함 (예: ~/Downloads/이력서.docx)
+- 웹사이트라면 → URL 포함 (예: www.saramin.co.kr)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 좋은 예시 vs 나쁜 예시
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ 나쁜 예시 (모호함, 서브태스크 없음):
+{
+  "title": "사람인 이력서 경력 업데이트",
+  "subtasks": []
+}
+
+✅ 좋은 예시 (물리적 행동 + 파일 경로):
+{
+  "title": "사람인 이력서 경력 업데이트",
+  "subtasks": [
+    { "title": "Chrome에서 사람인 사이트 열기 (www.saramin.co.kr)" },
+    { "title": "로그인 후 '이력서 관리' 메뉴 클릭" },
+    { "title": "참조 파일 열기: ~/Downloads/입사지원/나종한_경력기술서.docx" },
+    { "title": "'경력사항' 섹션에서 '편집' 버튼 클릭" },
+    { "title": "참조 파일에서 최신 경력 복사 → 사람인에 붙여넣기" },
+    { "title": "'저장' 버튼 클릭" }
+  ]
+}
+
+【변환 예시】
+| 모호한 표현 ❌ | 물리적 행동 ✅ |
+|--------------|---------------|
+| 이력서 준비 | 이력서 파일 열기: ~/Downloads/이력서.docx |
+| 회사 조사 | 잡코리아에서 'OO회사' 검색 후 채용공고 클릭 |
+| 자기소개서 작성 | 메모장 열고 첫 문장 타이핑: "저는..." |
+| 내용 검토 | Ctrl+F로 '경력' 단어 검색 |
+| 포트폴리오 확인 | 포트폴리오 폴더 열기: ~/Documents/Portfolio/ |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -274,18 +321,18 @@ const TOOLS: McpTool[] = [
           items: {
             type: 'object',
             properties: {
-              title: { type: 'string', description: '할일 제목 (구체적인 행동)' },
+              title: { type: 'string', description: '할일 제목 (15분 이내 완료 가능한 구체적 행동. 모호한 표현 금지)' },
               start_time: { type: 'string', description: '시작일 (today, tomorrow, YYYY-MM-DD)' },
               schedule_type: { type: 'string', enum: ['all_day', 'timed', 'anytime', 'none'], description: '일정 타입' },
               priority: { type: 'string', enum: ['low', 'medium', 'high'], description: '우선순위' },
               anytime_duration: { type: 'number', description: '예상 소요시간 (분)' },
               subtasks: {
                 type: 'array',
-                description: '이 할일의 세부 단계 (5분짜리 작은 행동들). ADHD용 "바보같이 작게 쪼개기" 기능.',
+                description: '🔴 필수! 모든 할일에 최소 2-3개 서브태스크 포함. 각 서브태스크는 "5분 안에 끝나는 물리적 행동"만 가능 (클릭, 열기, 타이핑, 복사/붙여넣기). "검토하기", "확인하기" 같은 모호한 표현 금지!',
                 items: {
                   type: 'object',
                   properties: {
-                    title: { type: 'string', description: '서브태스크 제목 (예: "잡코리아 템플릿 열기")' },
+                    title: { type: 'string', description: '물리적 행동 제목. 파일 참조 시 전체 경로 포함 (예: "이력서 열기: ~/Downloads/이력서.docx"), 웹사이트는 URL 포함 (예: "사람인 열기 (www.saramin.co.kr)")' },
                     anytime_duration: { type: 'number', description: '예상 소요시간 (분, 기본값 5분)' },
                   },
                   required: ['title'],
