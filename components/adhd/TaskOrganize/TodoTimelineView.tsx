@@ -7,6 +7,7 @@ import { CheckCircle2, Clock, Trash2, Circle, Heart, AlertCircle, ChevronUp, Che
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
+import { useProjectStore } from '@/state/stores/projectStore';
 import { Todo } from '@/entities/todo/Todo';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
@@ -88,6 +89,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { todos, fetchAllTodos, updateTodo, deleteTodo, updateRecurringTodo, deleteRecurringTodo } = useTodoStore();
   const { people, loadPeople } = useCherishedPeopleStore();
   const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
+  const { projects, fetchProjects, createProject } = useProjectStore();
   const [isLoading, setIsLoading] = useState(true);
 
   // 펼친 fuel 배지 상태
@@ -171,8 +173,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // 프로그래밍적 스크롤 중인지 추적 (사용자 스크롤과 구분)
   const isScrollingProgrammatically = useRef(false);
 
-  // 프로젝트/목표 관련 기능 제거됨 - 빈 배열로 대체
-  const projects: { id: string; title: string }[] = [];
+  // 목표 기능은 추후 구현 예정 - 빈 배열로 대체
   const goals: { id: string; title: string }[] = [];
 
   // 날짜 범위 계산
@@ -201,12 +202,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       setIsLoading(true);
       await Promise.all([
         fetchAllTodos(),
-        loadPeople(userId)
+        loadPeople(userId),
+        fetchProjects(userId)
       ]);
       setIsLoading(false);
     };
     loadData();
-  }, [userId, fetchAllTodos, loadPeople]);
+  }, [userId, fetchAllTodos, loadPeople, fetchProjects]);
 
   // 반복 인스턴스 생성 및 완료 상태 로드
   useEffect(() => {
@@ -354,9 +356,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     loadTodoFuelLinks();
   }, [userId, todos]);
 
-  // 프로젝트/목표 매핑 생성
+  // 프로젝트/목표 매핑 생성 (색상, 아이콘 포함)
   const projectMap = useMemo(() => {
-    return new Map(projects.map(p => [p.id, p.title]));
+    return new Map(projects.map(p => [p.id, { title: p.title, color: p.color, icon: p.icon }]));
   }, [projects]);
 
   const goalMap = useMemo(() => {
@@ -912,6 +914,21 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setIsQuickLogModalOpen(true);
   }, [navigatedMonth]);
 
+  // 프로젝트 생성 핸들러
+  const handleCreateProject = useCallback(async (title: string) => {
+    const newProject = await createProject(userId, { title });
+    if (!newProject) {
+      throw new Error('프로젝트 생성에 실패했습니다.');
+    }
+    return newProject;
+  }, [userId, createProject]);
+
+  // 프로젝트 즉시 저장 핸들러
+  const handleProjectImmediateSave = useCallback(async (projectId: string | null) => {
+    if (!editingTodo) return;
+    await updateTodo(editingTodo.id, { project_id: projectId });
+  }, [editingTodo, updateTodo]);
+
   // 편집 저장
   const handleEditSave = useCallback(async (formData: TodoFormData) => {
     if (!editingTodo) return;
@@ -948,6 +965,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       recurrence_days_of_week: formData.selectedDaysOfWeek,
       joyful_people_ids: formData.joyfulPeopleIds,
       shameful_people_ids: formData.shamefulPeopleIds,
+      project_id: formData.projectIds?.[0] || null,
     });
 
     setEditingTodo(null);
@@ -1923,7 +1941,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
                           // 할일 렌더링
                           const item = renderItem.data;
-                          const projectName = item.projectId ? projectMap.get(item.projectId) : undefined;
+                          const projectInfo = item.projectId ? projectMap.get(item.projectId) : undefined;
                           const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
 
                           // 시간 상태 계산 (timed && startTime이 있는 경우)
@@ -2160,17 +2178,25 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   </div>
                                 )}
 
-                                {/* 맥락 배지 */}
-                                {(goalName || projectName) && (
+                                {/* 맥락 배지 (프로젝트/목표) */}
+                                {(goalName || projectInfo) && (
                                   <div className="flex flex-wrap gap-1 mt-1.5">
                                     {goalName && (
                                       <span className="badge badge-xs badge-ghost">
                                         {goalName}
                                       </span>
                                     )}
-                                    {projectName && (
-                                      <span className="badge badge-xs badge-ghost">
-                                        {projectName}
+                                    {projectInfo && (
+                                      <span
+                                        className="badge badge-xs gap-1"
+                                        style={{
+                                          backgroundColor: projectInfo.color ? `${projectInfo.color}20` : undefined,
+                                          borderColor: projectInfo.color || undefined,
+                                          color: projectInfo.color || undefined
+                                        }}
+                                      >
+                                        {projectInfo.icon && <span>{projectInfo.icon}</span>}
+                                        {projectInfo.title}
                                       </span>
                                     )}
                                   </div>
@@ -2411,6 +2437,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         userId={userId}
         showLinkedFuels={true}
         fuelNotes={fuelNotes}
+        projects={projects}
+        onCreateProject={handleCreateProject}
+        onProjectImmediateSave={handleProjectImmediateSave}
       />
 
       {/* 삭제 확인 다이얼로그 */}

@@ -349,6 +349,45 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          color: string | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_history: {
         Row: {
           created_at: string | null
@@ -624,6 +663,7 @@ export type Database = {
           parent_recurring_todo_id: string | null
           parent_todo_id: string | null
           priority: string | null
+          project_id: string | null
           recurrence_count: number | null
           recurrence_day_of_month: number | null
           recurrence_days_of_week: Json | null
@@ -659,6 +699,7 @@ export type Database = {
           parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
           priority?: string | null
+          project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null
           recurrence_days_of_week?: Json | null
@@ -694,6 +735,7 @@ export type Database = {
           parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
           priority?: string | null
+          project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null
           recurrence_days_of_week?: Json | null
@@ -721,6 +763,13 @@ export type Database = {
             columns: ["parent_todo_id"]
             isOneToOne: false
             referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {

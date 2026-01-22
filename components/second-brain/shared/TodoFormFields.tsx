@@ -6,8 +6,9 @@ import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Note } from '@/types/second-brain';
-import type { RecurrencePattern } from '@/types';
+import type { RecurrencePattern, Project } from '@/types';
 import CollapsibleNoteSection from './CollapsibleNoteSection';
+import CollapsibleProjectSection from './CollapsibleProjectSection';
 import RecurrenceSettings from '@/components/todos/form/RecurrenceSettings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
 import { getUnifiedIcon } from '@/lib/icon-collection';
@@ -81,10 +82,16 @@ interface TodoFormFieldsProps {
   onCreateNote?: (title: string) => Promise<Note>; // 새 노트 생성
   onUpdateNote?: (id: string, title: string) => Promise<void>; // 노트 수정
   onDeleteNote?: (id: string) => Promise<void>; // 노트 삭제
+  // 프로젝트 관련 props
+  projects?: Project[]; // 프로젝트 목록
+  onProjectClick?: (project: Project) => void; // 프로젝트 클릭 핸들러
+  onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
+  onProjectImmediateSave?: (projectId: string | null) => Promise<void>; // 프로젝트 즉시 저장
   // 섹션 표시 여부 제어 (기본값: true)
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
+  showProject?: boolean; // 프로젝트 섹션 표시 여부
   // 즉시 DB 저장을 위한 props
   todoId?: string;
   userId?: string;
@@ -107,9 +114,14 @@ export default function TodoFormFields({
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
+  projects = [],
+  onProjectClick,
+  onCreateProject,
+  onProjectImmediateSave,
   showScheduledDate = true,
   showHighlight = true,
   showCompleted = true,
+  showProject = true,
   todoId,
   userId,
   onNoteImmediateSave,
@@ -390,6 +402,26 @@ export default function TodoFormFields({
           iconClassName="text-amber-500"
         />
       </div>
+
+      {/* 프로젝트 연결 (단일 선택) - showProject이고 프로젝트 목록이 있을 때 표시 */}
+      {showProject && projects.length > 0 && (
+        <CollapsibleProjectSection
+          selectedProjectId={todo.projectIds?.[0] || null}
+          allProjects={projects}
+          onChange={(projectId) =>
+            onChange({
+              ...todo,
+              projectIds: projectId ? [projectId] : [],
+            })
+          }
+          onCreateProject={onCreateProject}
+          onProjectClick={onProjectClick}
+          todoColor={todo.color}
+          todoId={todoId}
+          userId={userId}
+          onImmediateSave={onProjectImmediateSave}
+        />
+      )}
 
       {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (

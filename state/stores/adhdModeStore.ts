@@ -6,7 +6,7 @@ import { Todo } from '@/entities/todo/Todo';
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | null;
+export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
 
 // 설정 모드 서브뷰 타입
 export type SettingsSubView = 'main' | 'subscription' | 'account' | 'font' | 'notifications' | 'theme' | 'time-format' | 'todos' | 'widgets';
@@ -186,6 +186,9 @@ interface ADHDModeState {
 
   // === 할일 정리 모드 Actions ===
   enterTaskOrganizeMode: (userId: string) => void;
+
+  // === 프로젝트 모드 Actions ===
+  enterProjectMode: (userId: string) => void;
 
   // === 복잡한 머릿속, 정리해줄게 모드 Actions ===
   enterFuelMode: (userId: string, selectedNoteId?: string) => void;
@@ -666,6 +669,15 @@ export const useADHDModeStore = create<ADHDModeState>()(
           console.log('📋 ADHD: 할일 정리 모드 진입');
           set({
             currentMode: 'task-organize',
+            currentUserId: userId,
+          });
+        },
+
+        // === 프로젝트 모드 Actions ===
+        enterProjectMode: (userId: string) => {
+          console.log('📁 ADHD: 프로젝트 모드 진입');
+          set({
+            currentMode: 'project',
             currentUserId: userId,
           });
         },

@@ -3,6 +3,7 @@
 import React from 'react';
 import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 import type { Note } from '@/types/second-brain';
+import type { Project } from '@/types';
 
 /**
  * 할일 폼 콘텐츠 공통 컴포넌트
@@ -22,14 +23,20 @@ export interface TodoFormContentProps {
 
   /** 선택적 데이터 */
   notes?: Note[];
+  projects?: Project[];
 
-  /** 생성/수정/삭제 핸들러 */
+  /** 노트 생성/수정/삭제 핸들러 */
   onCreateNote?: (title: string) => Promise<Note>;
   onUpdateNote?: (id: string) => Promise<void>;
   onDeleteNote?: (id: string) => Promise<void>;
 
   /** 노트 클릭 핸들러 (편집 모달 열기) */
   onNoteClick?: (note: Note) => void;
+
+  /** 프로젝트 핸들러 */
+  onCreateProject?: (title: string) => Promise<Project>;
+  onProjectClick?: (project: Project) => void;
+  onProjectImmediateSave?: (projectId: string | null) => Promise<void>;
 
   /** 플레이스홀더 */
   titlePlaceholder?: string;
@@ -38,6 +45,7 @@ export interface TodoFormContentProps {
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
+  showProject?: boolean;
 
   /** 즉시 DB 저장을 위한 props */
   todoId?: string;
@@ -52,14 +60,19 @@ export default function TodoFormContent({
   formData,
   onChange,
   notes,
+  projects,
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
   onNoteClick,
+  onCreateProject,
+  onProjectClick,
+  onProjectImmediateSave,
   titlePlaceholder,
   showScheduledDate = true,
   showHighlight = true,
   showCompleted = true,
+  showProject = true,
   todoId,
   userId,
   onNoteImmediateSave,
@@ -71,13 +84,18 @@ export default function TodoFormContent({
       onChange={onChange}
       titlePlaceholder={titlePlaceholder}
       notes={notes}
+      projects={projects}
       onNoteClick={onNoteClick}
       onCreateNote={onCreateNote}
       onUpdateNote={onUpdateNote}
       onDeleteNote={onDeleteNote}
+      onProjectClick={onProjectClick}
+      onCreateProject={onCreateProject}
+      onProjectImmediateSave={onProjectImmediateSave}
       showScheduledDate={showScheduledDate}
       showHighlight={showHighlight}
       showCompleted={showCompleted}
+      showProject={showProject}
       todoId={todoId}
       userId={userId}
       onNoteImmediateSave={onNoteImmediateSave}

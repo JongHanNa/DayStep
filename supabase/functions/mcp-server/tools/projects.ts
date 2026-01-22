@@ -1,7 +1,7 @@
 /**
- * Projects CRUD 도구
+ * Projects CRUD 도구 (심플 버전 - AI 플래닝용)
  *
- * 프로젝트 관리
+ * ADHD 친화적 AI 플래닝 기능을 위한 프로젝트 관리
  */
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0';
@@ -13,6 +13,8 @@ import type {
   UpdateProjectInput,
   DeleteProjectInput,
   CompleteProjectInput,
+  CreateProjectWithTodosInput,
+  GetProjectProgressInput,
 } from '../types/tools.ts';
 import type { DateContext } from '../utils/date.ts';
 import { resolveDate } from '../utils/date.ts';
@@ -21,7 +23,6 @@ import {
   createErrorResult,
   createListResult,
   createConfirmationRequired,
-  getStatusEmoji,
   formatDateKorean,
 } from '../utils/response.ts';
 
@@ -34,16 +35,28 @@ interface ProjectRow {
   title: string;
   status: string;
   description?: string;
-  start_date?: string;
-  end_date?: string;
   icon?: string;
   color?: string;
+  created_at?: string;
+}
+
+function getProjectStatusEmoji(status: string): string {
+  switch (status) {
+    case 'active':
+      return '🚀';
+    case 'completed':
+      return '✅';
+    case 'abandoned':
+      return '🗑️';
+    default:
+      return '📁';
+  }
 }
 
 function formatProject(project: ProjectRow): string {
-  const status = getStatusEmoji(project.status);
-  const endDate = project.end_date ? ` (~${formatDateKorean(project.end_date)})` : '';
-  return `${status} ${project.title}${endDate} (ID: ${project.id})`;
+  const status = getProjectStatusEmoji(project.status);
+  const icon = project.icon || '';
+  return `${status} ${icon} ${project.title} (ID: ${project.id})`;
 }
 
 // ============================================================================
@@ -57,44 +70,23 @@ export async function createProject(
   supabase: SupabaseClient,
   userId: string,
   input: CreateProjectInput,
-  dateContext: DateContext
+  _dateContext: DateContext
 ): Promise<McpToolCallResult> {
-  const { title, goal_id, area_resource_id, description, start_date, end_date, status, icon, color } = input;
+  const { title, description, status, icon, color } = input;
 
   if (!title) {
     return createErrorResult('title은 필수입니다.');
   }
-
-  // 동적 날짜 해결
-  const resolvedStartDate = resolveDate(start_date, dateContext);
-  const resolvedEndDate = resolveDate(end_date, dateContext);
-
-  // 최대 order_index 조회
-  const { data: maxOrder } = await supabase
-    .from('projects')
-    .select('order_index')
-    .eq('user_id', userId)
-    .order('order_index', { ascending: false })
-    .limit(1)
-    .single();
-
-  const newOrderIndex = (maxOrder?.order_index ?? -1) + 1;
 
   const { data, error } = await supabase
     .from('projects')
     .insert({
       user_id: userId,
       title,
-      goal_id: goal_id || null,
-      area_resource_id: area_resource_id || null,
       description: description || null,
-      start_date: resolvedStartDate,
-      end_date: resolvedEndDate,
-      status: status || 'not_started',
+      status: status || 'active',
       icon: icon || null,
       color: color || '#A8DADC',
-      order_index: newOrderIndex,
-      is_completed: false,
     })
     .select()
     .single();
@@ -119,22 +111,16 @@ export async function listProjects(
   input: ListProjectsInput,
   _dateContext: DateContext
 ): Promise<McpToolCallResult> {
-  const { status, goal_id, area_resource_id, limit = 50, offset = 0 } = input;
+  const { status, limit = 50, offset = 0 } = input;
 
   let query = supabase
     .from('projects')
     .select('*')
     .eq('user_id', userId)
-    .order('order_index', { ascending: true });
+    .order('created_at', { ascending: false });
 
   if (status) {
     query = query.eq('status', status);
-  }
-  if (goal_id) {
-    query = query.eq('goal_id', goal_id);
-  }
-  if (area_resource_id) {
-    query = query.eq('area_resource_id', area_resource_id);
   }
 
   query = query.range(offset, offset + limit - 1);
@@ -152,7 +138,7 @@ export async function listProjects(
 }
 
 /**
- * 프로젝트 상세 조회
+ * 프로젝트 상세 조회 (진행률 포함)
  */
 export async function getProject(
   supabase: SupabaseClient,
@@ -168,7 +154,7 @@ export async function getProject(
 
   const { data, error } = await supabase
     .from('projects')
-    .select('*, goals(title), areas_resources(title)')
+    .select('*')
     .eq('id', id)
     .eq('user_id', userId)
     .single();
@@ -177,42 +163,46 @@ export async function getProject(
     return createErrorResult('프로젝트를 찾을 수 없습니다.');
   }
 
-  // 연결된 할일 조회
+  // 연결된 할일 조회 및 진행률 계산
+  const { data: todos, error: todosError } = await supabase
+    .from('todos')
+    .select('id, title, completed, start_time, priority')
+    .eq('project_id', id)
+    .eq('user_id', userId)
+    .order('start_time', { ascending: true });
+
   let todosStr = '';
-  if (include_todos) {
-    const { data: todoProjects } = await supabase
-      .from('todo_projects')
-      .select('todos(id, title, completed, start_time)')
-      .eq('project_id', id);
+  let progressStr = '';
 
-    const todos = todoProjects?.map((tp: any) => tp.todos).filter(Boolean) || [];
+  if (!todosError && todos) {
+    const total = todos.length;
+    const completed = todos.filter((t: any) => t.completed).length;
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    if (todos.length > 0) {
+    progressStr = `진행률: ${completed}/${total} (${progress}%)`;
+
+    if (include_todos && todos.length > 0) {
       todosStr = '\n\n📋 연결된 할일:\n' + todos.map((t: any, i: number) => {
         const check = t.completed ? '✅' : '⬜';
-        return `  ${i + 1}. ${check} ${t.title}`;
+        const priority = t.priority === 'high' ? '🔴' : t.priority === 'low' ? '🟢' : '';
+        return `  ${i + 1}. ${check} ${priority} ${t.title}`;
       }).join('\n');
-    } else {
+    } else if (include_todos) {
       todosStr = '\n\n📋 연결된 할일: 없음';
     }
   }
-
-  const goalTitle = (data as any).goals?.title || '없음';
-  const areaTitle = (data as any).areas_resources?.title || '없음';
 
   const details = `
 📁 프로젝트 상세 정보
 
 제목: ${data.title}
 설명: ${data.description || '없음'}
-상태: ${getStatusEmoji(data.status)} ${data.status}
-시작일: ${formatDateKorean(data.start_date)}
-종료일: ${formatDateKorean(data.end_date)}
-연결된 목표: ${goalTitle}
-연결된 책임/자원: ${areaTitle}
+상태: ${getProjectStatusEmoji(data.status)} ${data.status}
+${progressStr}
 아이콘: ${data.icon || '없음'}
 색상: ${data.color}
-생성일: ${new Date(data.created_at).toLocaleDateString('ko-KR')}
+생성일: ${formatDateKorean(data.created_at)}
+${data.completed_at ? `완료일: ${formatDateKorean(data.completed_at)}` : ''}
 ID: ${data.id}${todosStr}
 `.trim();
 
@@ -229,7 +219,7 @@ export async function updateProject(
   supabase: SupabaseClient,
   userId: string,
   input: UpdateProjectInput,
-  dateContext: DateContext
+  _dateContext: DateContext
 ): Promise<McpToolCallResult> {
   const { id, ...updates } = input;
 
@@ -257,21 +247,15 @@ export async function updateProject(
   if (updates.status !== undefined) validUpdates.status = updates.status;
   if (updates.icon !== undefined) validUpdates.icon = updates.icon;
   if (updates.color !== undefined) validUpdates.color = updates.color;
-  if (updates.goal_id !== undefined) validUpdates.goal_id = updates.goal_id;
-  if (updates.area_resource_id !== undefined) validUpdates.area_resource_id = updates.area_resource_id;
-
-  if (updates.start_date !== undefined) {
-    validUpdates.start_date = updates.start_date ? resolveDate(updates.start_date, dateContext) : null;
-  }
-  if (updates.end_date !== undefined) {
-    validUpdates.end_date = updates.end_date ? resolveDate(updates.end_date, dateContext) : null;
-  }
 
   if (Object.keys(validUpdates).length === 0) {
     return createErrorResult('수정할 항목이 없습니다.');
   }
 
-  validUpdates.updated_at = new Date().toISOString();
+  // 완료 상태로 변경 시 completed_at 설정
+  if (updates.status === 'completed' && existing.status !== 'completed') {
+    validUpdates.completed_at = new Date().toISOString();
+  }
 
   const { data, error } = await supabase
     .from('projects')
@@ -317,24 +301,24 @@ export async function deleteProject(
 
   // 연결된 할일 확인
   const { count: todoCount } = await supabase
-    .from('todo_projects')
+    .from('todos')
     .select('id', { count: 'exact' })
     .eq('project_id', id);
 
   if ((todoCount || 0) > 0 && !force) {
     return createConfirmationRequired(
       `"${existing.title}"에 연결된 할일이 ${todoCount}개 있습니다.`,
-      '삭제하면 할일과의 연결이 해제됩니다. force: true 옵션을 사용하여 다시 호출해주세요.'
+      '삭제하면 할일의 프로젝트 연결이 해제됩니다. force: true 옵션을 사용하여 다시 호출해주세요.'
     );
   }
 
-  // 연결 해제
+  // 연결된 할일의 project_id를 null로 설정
   if ((todoCount || 0) > 0) {
-    await supabase.from('todo_projects').delete().eq('project_id', id);
+    await supabase
+      .from('todos')
+      .update({ project_id: null })
+      .eq('project_id', id);
   }
-
-  // project_notes 연결 해제
-  await supabase.from('project_notes').delete().eq('project_id', id);
 
   // 삭제
   const { error } = await supabase.from('projects').delete().eq('id', id).eq('user_id', userId);
@@ -381,9 +365,7 @@ export async function completeProject(
     .from('projects')
     .update({
       status: 'completed',
-      is_completed: true,
       completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     })
     .eq('id', id)
     .eq('user_id', userId);
@@ -393,4 +375,177 @@ export async function completeProject(
   }
 
   return createSuccessResult(`🎉 프로젝트 "${existing.title}"이(가) 완료되었습니다!`);
+}
+
+// ============================================================================
+// 신규 도구 (AI 플래닝용)
+// ============================================================================
+
+/**
+ * 프로젝트와 할일을 일괄 생성 (AI 플래닝 결과)
+ */
+export async function createProjectWithTodos(
+  supabase: SupabaseClient,
+  userId: string,
+  input: CreateProjectWithTodosInput,
+  dateContext: DateContext
+): Promise<McpToolCallResult> {
+  const { project, todos } = input;
+
+  if (!project?.title) {
+    return createErrorResult('project.title은 필수입니다.');
+  }
+
+  if (!todos || todos.length === 0) {
+    return createErrorResult('최소 1개 이상의 할일이 필요합니다.');
+  }
+
+  // 1. 프로젝트 생성
+  const { data: projectData, error: projectError } = await supabase
+    .from('projects')
+    .insert({
+      user_id: userId,
+      title: project.title,
+      description: project.description || null,
+      icon: project.icon || null,
+      color: project.color || '#A8DADC',
+      status: 'active',
+    })
+    .select()
+    .single();
+
+  if (projectError) {
+    return createErrorResult(`프로젝트 생성 실패: ${projectError.message}`);
+  }
+
+  const projectId = projectData.id;
+
+  // 2. 할일 일괄 생성
+  const todoInserts = todos.map((todo, index) => {
+    // 날짜 해석
+    let startTime: string | null = null;
+    if (todo.start_time) {
+      startTime = resolveDate(todo.start_time, dateContext);
+      if (startTime) {
+        // 시간이 없으면 자정으로 설정
+        const date = new Date(startTime);
+        if (date.getHours() === 0 && date.getMinutes() === 0) {
+          date.setHours(9, 0, 0, 0); // 기본 시작 시간: 오전 9시
+        }
+        startTime = date.toISOString();
+      }
+    }
+
+    return {
+      user_id: userId,
+      title: todo.title,
+      project_id: projectId,
+      start_time: startTime,
+      schedule_type: todo.schedule_type || 'anytime',
+      priority: todo.priority || 'medium',
+      anytime_duration: todo.anytime_duration || null,
+      order_index: index,
+      completed: false,
+    };
+  });
+
+  const { data: todosData, error: todosError } = await supabase
+    .from('todos')
+    .insert(todoInserts)
+    .select();
+
+  if (todosError) {
+    // 롤백: 프로젝트도 삭제
+    await supabase.from('projects').delete().eq('id', projectId);
+    return createErrorResult(`할일 생성 실패: ${todosError.message}`);
+  }
+
+  const todoCount = todosData?.length || 0;
+
+  return createSuccessResult(
+    `✅ 프로젝트 "${project.title}"과(와) ${todoCount}개의 할일이 생성되었습니다.`,
+    {
+      project: {
+        id: projectId,
+        title: project.title,
+        status: 'active',
+        color: projectData.color,
+        icon: projectData.icon,
+      },
+      todos: todosData?.map((t: any) => ({
+        id: t.id,
+        title: t.title,
+        start_time: t.start_time,
+        schedule_type: t.schedule_type,
+      })),
+    }
+  );
+}
+
+/**
+ * 프로젝트 진행률 조회
+ */
+export async function getProjectProgress(
+  supabase: SupabaseClient,
+  userId: string,
+  input: GetProjectProgressInput,
+  _dateContext: DateContext
+): Promise<McpToolCallResult> {
+  const { project_id } = input;
+
+  if (!project_id) {
+    return createErrorResult('project_id는 필수입니다.');
+  }
+
+  // 프로젝트 확인
+  const { data: project, error: projectError } = await supabase
+    .from('projects')
+    .select('id, title, status')
+    .eq('id', project_id)
+    .eq('user_id', userId)
+    .single();
+
+  if (projectError || !project) {
+    return createErrorResult('프로젝트를 찾을 수 없습니다.');
+  }
+
+  // 할일 통계 조회
+  const { data: todos, error: todosError } = await supabase
+    .from('todos')
+    .select('id, completed')
+    .eq('project_id', project_id)
+    .eq('user_id', userId);
+
+  if (todosError) {
+    return createErrorResult(`할일 조회 실패: ${todosError.message}`);
+  }
+
+  const total = todos?.length || 0;
+  const completed = todos?.filter((t: any) => t.completed).length || 0;
+  const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  const progressBar = generateProgressBar(progress);
+
+  const details = `
+📊 "${project.title}" 진행률
+
+${progressBar} ${progress}%
+
+완료: ${completed}개 / 전체: ${total}개
+상태: ${getProjectStatusEmoji(project.status)} ${project.status}
+`.trim();
+
+  return {
+    content: [{ type: 'text', text: details }],
+    isError: false,
+  };
+}
+
+/**
+ * 진행률 막대 생성
+ */
+function generateProgressBar(percent: number): string {
+  const filled = Math.round(percent / 10);
+  const empty = 10 - filled;
+  return '█'.repeat(filled) + '░'.repeat(empty);
 }

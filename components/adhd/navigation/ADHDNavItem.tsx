@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, BookHeart, Lightbulb, Settings, LucideIcon } from 'lucide-react';
+import { Home, BookHeart, Lightbulb, FolderKanban, Settings, LucideIcon } from 'lucide-react';
 import { NavItemId } from './useADHDNavigation';
 
 // 아이콘 매핑
@@ -8,6 +8,7 @@ const iconMap: Record<string, LucideIcon> = {
   Home,
   BookHeart,
   Lightbulb,
+  FolderKanban,
   Settings,
 };
 

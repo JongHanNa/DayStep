@@ -3,7 +3,7 @@
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
-export type NavItemId = 'home' | 'relationship' | 'fuel' | 'settings';
+export type NavItemId = 'home' | 'relationship' | 'fuel' | 'project' | 'settings';
 
 export interface NavItem {
   id: NavItemId;
@@ -15,6 +15,7 @@ export const navItems: NavItem[] = [
   { id: 'home', label: '홈', icon: 'Home' },
   { id: 'relationship', label: '관계 기록', icon: 'BookHeart' },
   { id: 'fuel', label: '머릿속 정리', icon: 'Lightbulb' },
+  { id: 'project', label: '프로젝트', icon: 'FolderKanban' },
   { id: 'settings', label: '설정', icon: 'Settings' },
 ];
 
@@ -26,7 +27,7 @@ export const navItems: NavItem[] = [
  */
 export function useADHDNavigation() {
   const { user } = useAuth();
-  const { currentMode, enterEntryMode, enterRelationshipInsightsMode, enterFuelMode, enterSettingsMode } = useADHDModeStore();
+  const { currentMode, enterEntryMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, enterSettingsMode } = useADHDModeStore();
 
   /**
    * 현재 모드에 따른 활성 탭 결정
@@ -38,6 +39,8 @@ export function useADHDNavigation() {
         return 'relationship';
       case 'fuel':
         return 'fuel';
+      case 'project':
+        return 'project';
       case 'settings':
         return 'settings';
       case 'entry':
@@ -68,6 +71,11 @@ export function useADHDNavigation() {
       case 'fuel':
         if (user?.id) {
           enterFuelMode(user.id);
+        }
+        break;
+      case 'project':
+        if (user?.id) {
+          enterProjectMode(user.id);
         }
         break;
       case 'settings':

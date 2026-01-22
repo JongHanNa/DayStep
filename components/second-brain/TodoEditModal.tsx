@@ -13,7 +13,7 @@ import { useModalStore } from '@/state/stores/modalStore';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { useNoteStore } from '@/state/stores/noteStore';
 import type { Note } from '@/types/second-brain';
-import type { Todo } from '@/types';
+import type { Todo, Project } from '@/types';
 
 interface TodoEditModalProps {
   open: boolean;
@@ -32,9 +32,13 @@ interface TodoEditModalProps {
   // 선택적 props (수집 페이지 등에서 사용)
   notes?: Note[];
   todos?: Todo[]; // NoteEditModal을 위해 추가
+  projects?: Project[]; // 프로젝트 목록
   onCreateNote?: (title: string) => Promise<Note>;
   onUpdateNote?: (id: string) => Promise<void>;
   onDeleteNote?: (id: string) => Promise<void>;
+  onCreateProject?: (title: string) => Promise<Project>; // 새 프로젝트 생성
+  onProjectClick?: (project: Project) => void; // 프로젝트 클릭 핸들러
+  onProjectImmediateSave?: (projectId: string | null) => Promise<void>; // 프로젝트 즉시 저장
   titlePlaceholder?: string;
   additionalContent?: React.ReactNode;
   headerTitle?: string; // 모달 헤더 제목 (기본값: "할일 편집")
@@ -42,6 +46,7 @@ interface TodoEditModalProps {
   showScheduledDate?: boolean;
   showHighlight?: boolean;
   showCompleted?: boolean;
+  showProject?: boolean; // 프로젝트 섹션 표시 여부
   // 즉시 DB 저장을 위한 props
   todoId?: string;
   userId?: string;
@@ -67,15 +72,20 @@ export default function TodoEditModal({
   occurrenceDate,
   notes,
   todos = [],
+  projects = [],
   onCreateNote,
   onUpdateNote,
   onDeleteNote,
+  onCreateProject,
+  onProjectClick,
+  onProjectImmediateSave,
   titlePlaceholder,
   additionalContent,
   headerTitle = '할일 편집',
   showScheduledDate,
   showHighlight,
   showCompleted,
+  showProject = true,
   todoId,
   userId,
   onNoteImmediateSave,
@@ -339,16 +349,21 @@ export default function TodoEditModal({
             onChange={onChange}
             titlePlaceholder={titlePlaceholder}
             notes={notes}
+            projects={projects}
             onNoteClick={handleNoteClick}
             onCreateNote={onCreateNote}
             onUpdateNote={onUpdateNote}
             onDeleteNote={onDeleteNote}
+            onProjectClick={onProjectClick}
+            onCreateProject={onCreateProject}
+            onProjectImmediateSave={onProjectImmediateSave}
             todoId={todoId}
             userId={userId}
             onNoteImmediateSave={onNoteImmediateSave}
             showScheduledDate={showScheduledDate}
             showHighlight={showHighlight}
             showCompleted={showCompleted}
+            showProject={showProject}
             occurrenceDate={occurrenceDate}
           />
 

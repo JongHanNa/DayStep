@@ -40,6 +40,8 @@ import {
   updateProject,
   deleteProject,
   completeProject,
+  createProjectWithTodos,
+  getProjectProgress,
 } from '../tools/projects.ts';
 
 import {
@@ -243,7 +245,7 @@ const TOOLS: McpTool[] = [
     },
   },
 
-  // ========== Projects ==========
+  // ========== Projects (심플 버전 - AI 플래닝용) ==========
   {
     name: 'create_project',
     description: '새로운 프로젝트를 생성합니다.',
@@ -251,14 +253,10 @@ const TOOLS: McpTool[] = [
       type: 'object',
       properties: {
         title: { type: 'string', description: '프로젝트 제목' },
-        goal_id: { type: 'string', description: '연결할 목표 ID' },
-        area_resource_id: { type: 'string', description: '연결할 책임/자원 ID' },
         description: { type: 'string', description: '설명' },
-        start_date: { type: 'string', description: '시작일' },
-        end_date: { type: 'string', description: '종료일' },
-        status: { type: 'string', enum: ['not_started', 'in_progress', 'paused', 'completed'], description: '상태' },
-        icon: { type: 'string', description: '아이콘' },
-        color: { type: 'string', description: '색상' },
+        status: { type: 'string', enum: ['active', 'completed', 'abandoned'], description: '상태' },
+        icon: { type: 'string', description: '아이콘 (이모지)' },
+        color: { type: 'string', description: '색상 (Hex 코드, 예: #A8DADC)' },
       },
       required: ['title'],
     },
@@ -269,9 +267,7 @@ const TOOLS: McpTool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        status: { type: 'string', enum: ['not_started', 'in_progress', 'paused', 'completed'], description: '상태 필터' },
-        goal_id: { type: 'string', description: '목표 ID 필터' },
-        area_resource_id: { type: 'string', description: '책임/자원 ID 필터' },
+        status: { type: 'string', enum: ['active', 'completed', 'abandoned'], description: '상태 필터' },
         limit: { type: 'number', description: '최대 개수' },
         offset: { type: 'number', description: '시작 위치' },
       },
@@ -279,7 +275,7 @@ const TOOLS: McpTool[] = [
   },
   {
     name: 'get_project',
-    description: '특정 프로젝트의 상세 정보를 조회합니다.',
+    description: '특정 프로젝트의 상세 정보를 조회합니다. 진행률과 연결된 할일 목록 포함.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -297,12 +293,8 @@ const TOOLS: McpTool[] = [
       properties: {
         id: { type: 'string', description: 'ID' },
         title: { type: 'string', description: '제목' },
-        goal_id: { type: ['string', 'null'], description: '목표 ID' },
-        area_resource_id: { type: ['string', 'null'], description: '책임/자원 ID' },
         description: { type: ['string', 'null'], description: '설명' },
-        start_date: { type: ['string', 'null'], description: '시작일' },
-        end_date: { type: ['string', 'null'], description: '종료일' },
-        status: { type: 'string', enum: ['not_started', 'in_progress', 'paused', 'completed'], description: '상태' },
+        status: { type: 'string', enum: ['active', 'completed', 'abandoned'], description: '상태' },
         icon: { type: 'string', description: '아이콘' },
         color: { type: 'string', description: '색상' },
       },
@@ -311,7 +303,7 @@ const TOOLS: McpTool[] = [
   },
   {
     name: 'delete_project',
-    description: '프로젝트를 삭제합니다.',
+    description: '프로젝트를 삭제합니다. 연결된 할일의 project_id가 null로 설정됩니다.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -330,6 +322,53 @@ const TOOLS: McpTool[] = [
         id: { type: 'string', description: 'ID' },
       },
       required: ['id'],
+    },
+  },
+  {
+    name: 'create_project_with_todos',
+    description: 'AI 플래닝 결과를 프로젝트와 할일들로 일괄 생성합니다. ADHD 친화적 계획 수립에 최적화.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'object',
+          description: '프로젝트 정보',
+          properties: {
+            title: { type: 'string', description: '프로젝트 제목' },
+            description: { type: 'string', description: '설명 (AI가 생성한 요약)' },
+            icon: { type: 'string', description: '이모지 아이콘' },
+            color: { type: 'string', description: '색상 (Hex 코드)' },
+          },
+          required: ['title'],
+        },
+        todos: {
+          type: 'array',
+          description: '할일 목록',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', description: '할일 제목 (구체적인 행동)' },
+              start_time: { type: 'string', description: '시작일 (today, tomorrow, YYYY-MM-DD)' },
+              schedule_type: { type: 'string', enum: ['all_day', 'timed', 'anytime', 'none'], description: '일정 타입' },
+              priority: { type: 'string', enum: ['low', 'medium', 'high'], description: '우선순위' },
+              anytime_duration: { type: 'number', description: '예상 소요시간 (분)' },
+            },
+            required: ['title'],
+          },
+        },
+      },
+      required: ['project', 'todos'],
+    },
+  },
+  {
+    name: 'get_project_progress',
+    description: '프로젝트 진행률을 조회합니다. (완료/전체 할일, 진행률 퍼센트)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project_id: { type: 'string', description: '프로젝트 ID' },
+      },
+      required: ['project_id'],
     },
   },
 
@@ -647,7 +686,7 @@ export async function handleToolsCall(
       case 'set_goal_status':
         return await setGoalStatus(supabase, userId, args, dateContext);
 
-      // Projects
+      // Projects (심플 버전 - AI 플래닝용)
       case 'create_project':
         return await createProject(supabase, userId, args, dateContext);
       case 'list_projects':
@@ -660,6 +699,10 @@ export async function handleToolsCall(
         return await deleteProject(supabase, userId, args, dateContext);
       case 'complete_project':
         return await completeProject(supabase, userId, args, dateContext);
+      case 'create_project_with_todos':
+        return await createProjectWithTodos(supabase, userId, args, dateContext);
+      case 'get_project_progress':
+        return await getProjectProgress(supabase, userId, args, dateContext);
 
       // Todos
       case 'create_todo':

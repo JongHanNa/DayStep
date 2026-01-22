@@ -19,8 +19,8 @@ export type User = Tables<"users">;
 export type Todo = Tables<"todos">;
 
 // Todo + 반복 인스턴스 런타임 필드 (달력 등에서 사용)
+// project_id는 이제 기본 Todo 타입에 포함됨
 export type TodoWithRecurrenceInstance = Todo & {
-  project_id?: string;  // projects 관계 테이블에서 가져옴
   is_recurrence_instance?: boolean;
   recurrence_source_id?: string;
   recurrence_occurrence_date?: string;
@@ -313,7 +313,8 @@ export interface CreateTodoInput {
   assigned_date?: string | null;
 
   // Relations
-  project_ids?: string[]; // 다중 프로젝트 연결
+  project_id?: string | null; // 프로젝트 연결 (단일)
+  project_ids?: string[]; // 다중 프로젝트 연결 (하위 호환성)
   note_ids?: string[]; // 연결된 노트 ID들
 
   // Balance System
@@ -463,59 +464,35 @@ export interface GoalUpdate extends Partial<GoalInsert> {
   id: string;
 }
 
-// Project types
-export interface Project {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string | null;
-  goal_id: string | null;
-  area_resource_id: string | null;
-  icon: string | null;
-  color: string | null;
-  status: ProgressStatus;
-  is_completed: boolean;
-  start_date: string | null;
-  end_date: string | null;
-  completed_at: string | null;
-  order_index: number;
-  created_at: string;
-  updated_at: string;
+// Project Status (AI 플래닝용 간소화된 상태)
+export type ProjectStatus = 'active' | 'completed' | 'abandoned';
 
-  // 수집→과제 플로우 필드
-  expected_outcome: string | null;        // 기대 효과
-  preparation: string | null;             // 준비할 것
-  source_reflection_id: string | null;    // 연결된 수집 ID
-
-  // Relations
-  goal?: Goal;
-  area_resource?: AreaResource;
+// Project types (AI 플래닝용 간소화된 스키마)
+// DB 스키마에서 projects 테이블 타입을 사용
+export type Project = Tables<'projects'> & {
+  // Relations (선택적으로 조인해서 가져올 때 사용)
   todos?: Todo[];
-  notes?: Note[];
-}
+};
 
 export interface ProjectInsert {
   user_id: string;
   title: string;
   description?: string | null;
-  goal_id?: string | null;
-  area_resource_id?: string | null;
+  status?: ProjectStatus;
   icon?: string | null;
   color?: string | null;
-  status?: ProgressStatus;
-  is_completed?: boolean;
-  start_date?: string | null;
-  end_date?: string | null;
-  completed_at?: string | null;
-  order_index?: number;
-  // 수집→과제 플로우 필드
-  expected_outcome?: string | null;
-  preparation?: string | null;
-  source_reflection_id?: string | null;
 }
 
-export interface ProjectUpdate extends Partial<ProjectInsert> {
+export interface ProjectUpdate extends Partial<Omit<ProjectInsert, 'user_id'>> {
   id: string;
+}
+
+// Project 진행률 정보
+export interface ProjectProgress {
+  project_id: string;
+  total: number;
+  completed: number;
+  progress: number; // 0-100 퍼센트
 }
 
 // Extended Todo type with new fields (기존 Todo 타입을 확장하지 않고 새 필드만 문서화)

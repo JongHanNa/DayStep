@@ -310,3 +310,33 @@ export interface GetStatisticsInput {
   period?: 'today' | 'week' | 'month' | 'year';
   timezone?: string;
 }
+
+// ============================================================================
+// 신규 Projects 도구 타입 (AI 플래닝용)
+// ============================================================================
+
+/**
+ * AI 플래닝 결과를 프로젝트와 할일로 일괄 생성하는 입력 타입
+ */
+export interface CreateProjectWithTodosInput {
+  project: {
+    title: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+  };
+  todos: Array<{
+    title: string;
+    start_time?: string;  // 'today', 'tomorrow', 'YYYY-MM-DD'
+    schedule_type?: ScheduleType;
+    priority?: Priority;
+    anytime_duration?: number;  // 예상 소요시간 (분)
+  }>;
+}
+
+/**
+ * 프로젝트 진행률 조회 입력 타입
+ */
+export interface GetProjectProgressInput {
+  project_id: string;
+}
