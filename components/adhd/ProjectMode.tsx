@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, FolderKanban, Check, Archive, Trash2, BookOpen } from 'lucide-react';
+import { ArrowLeft, Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square } from 'lucide-react';
 import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -35,7 +35,10 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
     setStatusFilter,
     deleteProject,
     completeProject,
-    abandonProject,
+    holdProject,
+    startProject,
+    unstartProject,
+    resumeProject,
   } = useProjectStore();
 
   const filteredProjects = useFilteredProjects();
@@ -66,18 +69,23 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
   // 상태 필터 버튼
   const filterButtons: { label: string; value: ProjectStatus | 'all' }[] = [
     { label: '전체', value: 'all' },
-    { label: '진행중', value: 'active' },
+    { label: '시작안함', value: 'not_started' },
+    { label: '진행중', value: 'in_progress' },
+    { label: '중단', value: 'on_hold' },
     { label: '완료', value: 'completed' },
-    { label: '포기', value: 'abandoned' },
   ];
 
   // 상태별 배지 색상
   const getStatusBadge = (status: string | null) => {
     switch (status) {
+      case 'not_started':
+        return <span className="badge badge-outline badge-xs">시작안함</span>;
+      case 'on_hold':
+        return <span className="badge badge-warning badge-xs">중단</span>;
       case 'completed':
         return <span className="badge badge-success badge-xs">완료</span>;
-      case 'abandoned':
-        return <span className="badge badge-ghost badge-xs">포기</span>;
+      case 'in_progress':
+        return <span className="badge badge-primary badge-xs">진행중</span>;
       default:
         return null;
     }
@@ -96,11 +104,35 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
     }
   };
 
-  // 프로젝트 포기
-  const handleAbandon = async (e: React.MouseEvent, projectId: string) => {
+  // 프로젝트 중단
+  const handleHold = async (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
-    if (userId && confirm('이 프로젝트를 포기하시겠습니까?')) {
-      await abandonProject(userId, projectId);
+    if (userId && confirm('이 프로젝트를 중단하시겠습니까?')) {
+      await holdProject(userId, projectId);
+    }
+  };
+
+  // 프로젝트 시작 (not_started → in_progress)
+  const handleStart = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    if (userId) {
+      await startProject(userId, projectId);
+    }
+  };
+
+  // 프로젝트 시작안함으로 되돌리기 (in_progress → not_started)
+  const handleUnstart = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    if (userId) {
+      await unstartProject(userId, projectId);
+    }
+  };
+
+  // 프로젝트 재개 (on_hold → in_progress)
+  const handleResume = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    if (userId) {
+      await resumeProject(userId, projectId);
     }
   };
 
@@ -251,23 +283,76 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                         )}
                       </div>
 
-                      {/* 액션 버튼 (활성 프로젝트만) */}
-                      {project.status === 'active' && (
-                        <div className="flex gap-1 flex-shrink-0">
-                          <button
-                            onClick={(e) => handleComplete(e, project.id)}
-                            className="btn btn-ghost btn-xs btn-circle"
-                            title="완료"
-                          >
-                            <Check className="w-4 h-4 text-success" />
-                          </button>
-                          <button
-                            onClick={(e) => handleAbandon(e, project.id)}
-                            className="btn btn-ghost btn-xs btn-circle"
-                            title="포기"
-                          >
-                            <Archive className="w-4 h-4 text-base-content/40" />
-                          </button>
+                      {/* 상태 버튼 - 항상 4개 표시 */}
+                      <div className="flex gap-1 flex-shrink-0">
+                        {/* 시작안함 버튼 */}
+                        <button
+                          onClick={(e) => handleUnstart(e, project.id)}
+                          disabled={project.status === 'not_started' || project.status === 'on_hold' || project.status === 'completed'}
+                          className={`btn btn-xs btn-circle ${
+                            project.status === 'not_started'
+                              ? 'bg-base-300 text-base-content'
+                              : project.status === 'on_hold' || project.status === 'completed'
+                              ? 'opacity-30 cursor-not-allowed'
+                              : 'btn-ghost'
+                          }`}
+                          title="시작안함"
+                        >
+                          <Square className="w-4 h-4" />
+                        </button>
+
+                        {/* 진행중 버튼 */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (project.status === 'not_started') handleStart(e, project.id);
+                            else if (project.status === 'on_hold') handleResume(e, project.id);
+                          }}
+                          disabled={project.status === 'in_progress' || project.status === 'completed'}
+                          className={`btn btn-xs btn-circle ${
+                            project.status === 'in_progress'
+                              ? 'bg-primary/20 text-primary'
+                              : project.status === 'completed'
+                              ? 'opacity-30 cursor-not-allowed'
+                              : 'btn-ghost'
+                          }`}
+                          title="진행중"
+                        >
+                          <Play className="w-4 h-4" />
+                        </button>
+
+                        {/* 중단 버튼 */}
+                        <button
+                          onClick={(e) => handleHold(e, project.id)}
+                          disabled={project.status === 'on_hold' || project.status === 'not_started' || project.status === 'completed'}
+                          className={`btn btn-xs btn-circle ${
+                            project.status === 'on_hold'
+                              ? 'bg-warning/20 text-warning'
+                              : project.status === 'not_started' || project.status === 'completed'
+                              ? 'opacity-30 cursor-not-allowed'
+                              : 'btn-ghost'
+                          }`}
+                          title="중단"
+                        >
+                          <Pause className="w-4 h-4" />
+                        </button>
+
+                        {/* 완료 버튼 */}
+                        <button
+                          onClick={(e) => handleComplete(e, project.id)}
+                          disabled={project.status === 'completed'}
+                          className={`btn btn-xs btn-circle ${
+                            project.status === 'completed'
+                              ? 'bg-success/20 text-success'
+                              : 'btn-ghost'
+                          }`}
+                          title="완료"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+
+                        {/* 삭제 버튼 */}
+                        {project.status !== 'completed' && (
                           <button
                             onClick={(e) => handleDelete(e, project.id)}
                             className="btn btn-ghost btn-xs btn-circle"
@@ -275,8 +360,8 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                           >
                             <Trash2 className="w-4 h-4 text-error" />
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

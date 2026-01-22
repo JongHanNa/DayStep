@@ -4,7 +4,7 @@
  * ADHD 친화적 AI 플래닝 기능을 위한 프로젝트 관리 스토어
  */
 
-import type { Project, ProjectInsert, ProjectUpdate, ProjectProgress, ProjectStatus } from '@/types';
+import type { Project, ProjectInsert, ProjectUpdate, ProjectProgress, ProjectStatus, Todo } from '@/types';
 import { supabase } from '@/lib/supabase';
 import {
   createStore,
@@ -21,6 +21,7 @@ interface ProjectStoreState extends BaseStoreState {
   projects: Project[];
   currentProject: Project | null;
   projectProgress: Map<string, ProjectProgress>;
+  projectTodos: Map<string, Todo[]>; // 프로젝트별 연결된 할일 목록
 
   // UI 상태
   loading: boolean;
@@ -34,11 +35,17 @@ interface ProjectStoreState extends BaseStoreState {
   fetchProjects: (userId: string, status?: ProjectStatus) => Promise<void>;
   fetchProjectById: (userId: string, projectId: string) => Promise<Project | null>;
   fetchProjectProgress: (userId: string, projectId: string) => Promise<ProjectProgress | null>;
+  fetchProjectTodos: (userId: string, projectId: string) => Promise<Todo[]>; // 연결된 할일 조회
   createProject: (userId: string, data: Omit<ProjectInsert, 'user_id'>) => Promise<Project | null>;
   updateProject: (userId: string, data: ProjectUpdate) => Promise<Project | null>;
   deleteProject: (userId: string, projectId: string) => Promise<boolean>;
+  deleteProjectWithTodos: (userId: string, projectId: string) => Promise<boolean>; // 연결된 할일도 함께 삭제
   completeProject: (userId: string, projectId: string) => Promise<boolean>;
-  abandonProject: (userId: string, projectId: string) => Promise<boolean>;
+  holdProject: (userId: string, projectId: string) => Promise<boolean>; // 중단
+  startProject: (userId: string, projectId: string) => Promise<boolean>; // 시작 (not_started → in_progress)
+  unstartProject: (userId: string, projectId: string) => Promise<boolean>; // 시작안함으로 되돌리기 (in_progress → not_started)
+  resumeProject: (userId: string, projectId: string) => Promise<boolean>; // 재개 (on_hold → in_progress)
+  unlinkTodoFromProject: (userId: string, todoId: string) => Promise<boolean>; // 할일 연결 해제
 
   // 필터 액션
   setStatusFilter: (status: ProjectStatus | 'all') => void;
@@ -63,6 +70,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
     projects: [],
     currentProject: null,
     projectProgress: new Map(),
+    projectTodos: new Map(),
     loading: false,
     error: null,
     lastUpdated: null,
@@ -200,7 +208,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
             user_id: userId,
             title: data.title,
             description: data.description || null,
-            status: data.status || 'active',
+            status: data.status || 'in_progress',
             icon: data.icon || null,
             color: data.color || '#A8DADC',
           })
@@ -343,6 +351,62 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
+     * 프로젝트와 연결된 할일 모두 삭제
+     */
+    deleteProjectWithTodos: async (userId: string, projectId: string) => {
+      logStoreAction('ProjectStore', 'deleteProjectWithTodos', { userId, projectId });
+
+      // Optimistic delete
+      const originalProjects = [...get().projects];
+
+      set((state: ProjectStoreState) => {
+        state.projects = state.projects.filter((p) => p.id !== projectId);
+        if (state.currentProject?.id === projectId) {
+          state.currentProject = null;
+        }
+      });
+
+      try {
+        // 연결된 할일 삭제
+        const { error: todosError } = await supabase
+          .from('todos')
+          .delete()
+          .eq('project_id', projectId)
+          .eq('user_id', userId);
+
+        if (todosError) {
+          throw todosError;
+        }
+
+        // 프로젝트 삭제
+        const { error } = await supabase
+          .from('projects')
+          .delete()
+          .eq('id', projectId)
+          .eq('user_id', userId);
+
+        if (error) {
+          throw error;
+        }
+
+        set((state: ProjectStoreState) => {
+          state.projectProgress.delete(projectId);
+          state.projectTodos.delete(projectId);
+        });
+
+        return true;
+      } catch (error) {
+        console.error('프로젝트 및 할일 삭제 오류:', error);
+        // Rollback
+        set((state: ProjectStoreState) => {
+          state.projects = originalProjects;
+          state.error = error instanceof Error ? error.message : '프로젝트 삭제에 실패했습니다.';
+        });
+        return false;
+      }
+    },
+
+    /**
      * 프로젝트 완료
      */
     completeProject: async (userId: string, projectId: string) => {
@@ -366,17 +430,124 @@ export const useProjectStore = createStore<ProjectStoreState>(
     },
 
     /**
-     * 프로젝트 포기
+     * 프로젝트 중단 (on_hold)
      */
-    abandonProject: async (userId: string, projectId: string) => {
-      logStoreAction('ProjectStore', 'abandonProject', { userId, projectId });
+    holdProject: async (userId: string, projectId: string) => {
+      logStoreAction('ProjectStore', 'holdProject', { userId, projectId });
 
       const result = await get().updateProject(userId, {
         id: projectId,
-        status: 'abandoned',
+        status: 'on_hold',
       });
 
       return !!result;
+    },
+
+    /**
+     * 프로젝트 시작 (not_started → in_progress)
+     */
+    startProject: async (userId: string, projectId: string) => {
+      logStoreAction('ProjectStore', 'startProject', { userId, projectId });
+
+      const result = await get().updateProject(userId, {
+        id: projectId,
+        status: 'in_progress',
+      });
+
+      return !!result;
+    },
+
+    /**
+     * 프로젝트 시작안함으로 되돌리기 (in_progress → not_started)
+     */
+    unstartProject: async (userId: string, projectId: string) => {
+      logStoreAction('ProjectStore', 'unstartProject', { userId, projectId });
+
+      const result = await get().updateProject(userId, {
+        id: projectId,
+        status: 'not_started',
+      });
+
+      return !!result;
+    },
+
+    /**
+     * 프로젝트 재개 (on_hold → in_progress)
+     */
+    resumeProject: async (userId: string, projectId: string) => {
+      logStoreAction('ProjectStore', 'resumeProject', { userId, projectId });
+
+      const result = await get().updateProject(userId, {
+        id: projectId,
+        status: 'in_progress',
+      });
+
+      return !!result;
+    },
+
+    /**
+     * 프로젝트에 연결된 할일 조회
+     */
+    fetchProjectTodos: async (userId: string, projectId: string) => {
+      logStoreAction('ProjectStore', 'fetchProjectTodos', { userId, projectId });
+
+      try {
+        const { data, error } = await supabase
+          .from('todos')
+          .select('*')
+          .eq('project_id', projectId)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        const todos = data || [];
+
+        set((state: ProjectStoreState) => {
+          state.projectTodos.set(projectId, todos);
+        });
+
+        return todos;
+      } catch (error) {
+        console.error('프로젝트 할일 조회 오류:', error);
+        return [];
+      }
+    },
+
+    /**
+     * 할일에서 프로젝트 연결 해제
+     */
+    unlinkTodoFromProject: async (userId: string, todoId: string) => {
+      logStoreAction('ProjectStore', 'unlinkTodoFromProject', { userId, todoId });
+
+      try {
+        const { error } = await supabase
+          .from('todos')
+          .update({ project_id: null })
+          .eq('id', todoId)
+          .eq('user_id', userId);
+
+        if (error) {
+          throw error;
+        }
+
+        // projectTodos 캐시에서 제거
+        set((state: ProjectStoreState) => {
+          state.projectTodos.forEach((todos, projectId) => {
+            const filtered = todos.filter((t) => t.id !== todoId);
+            if (filtered.length !== todos.length) {
+              state.projectTodos.set(projectId, filtered);
+            }
+          });
+        });
+
+        return true;
+      } catch (error) {
+        console.error('할일 연결 해제 오류:', error);
+        return false;
+      }
     },
 
     /**
@@ -423,6 +594,7 @@ export const useProjectStore = createStore<ProjectStoreState>(
         state.projects = [];
         state.currentProject = null;
         state.projectProgress = new Map();
+        state.projectTodos = new Map();
         state.loading = false;
         state.error = null;
         state.lastUpdated = null;
@@ -451,9 +623,17 @@ export const useFilteredProjects = () => {
 };
 
 /**
- * 활성 프로젝트만 가져오는 셀렉터
+ * 진행중 프로젝트만 가져오는 셀렉터
+ */
+export const useInProgressProjects = () => {
+  const { projects } = useProjectStore();
+  return projects.filter((project) => project.status === 'in_progress');
+};
+
+/**
+ * 활성 프로젝트만 가져오는 셀렉터 (하위 호환성)
+ * @deprecated useInProgressProjects 사용 권장
  */
 export const useActiveProjects = () => {
-  const { projects } = useProjectStore();
-  return projects.filter((project) => project.status === 'active');
+  return useInProgressProjects();
 };

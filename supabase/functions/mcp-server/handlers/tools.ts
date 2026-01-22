@@ -16,15 +16,6 @@ import { getCurrentDateContext } from '../utils/date.ts';
 
 // Tool 구현 임포트
 import {
-  createAreaResource,
-  listAreasResources,
-  getAreaResource,
-  updateAreaResource,
-  deleteAreaResource,
-  archiveAreaResource,
-} from '../tools/areas-resources.ts';
-
-import {
   createGoal,
   listGoals,
   getGoal,
@@ -72,87 +63,6 @@ import {
 // ============================================================================
 
 const TOOLS: McpTool[] = [
-  // ========== Areas/Resources ==========
-  {
-    name: 'create_area_resource',
-    description: '새로운 책임(Area) 또는 자원(Resource)을 생성합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: '이름' },
-        status: { type: 'string', enum: ['area', 'resource'], description: '유형 (area: 책임, resource: 자원)' },
-        icon: { type: 'string', description: '아이콘 (예: lucide-Heart)' },
-        color: { type: 'string', description: '색상 (Hex 코드, 예: #A8DADC)' },
-        is_pinned: { type: 'boolean', description: '고정 여부' },
-      },
-      required: ['title', 'status'],
-    },
-  },
-  {
-    name: 'list_areas_resources',
-    description: '책임 및 자원 목록을 조회합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', enum: ['area', 'resource', 'archived'], description: '유형 필터' },
-        is_pinned: { type: 'boolean', description: '고정 여부 필터' },
-        limit: { type: 'number', description: '최대 개수' },
-        offset: { type: 'number', description: '시작 위치' },
-      },
-    },
-  },
-  {
-    name: 'get_area_resource',
-    description: '특정 책임 또는 자원의 상세 정보를 조회합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-      },
-      required: ['id'],
-    },
-  },
-  {
-    name: 'update_area_resource',
-    description: '책임 또는 자원을 수정합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-        title: { type: 'string', description: '이름' },
-        status: { type: 'string', enum: ['area', 'resource', 'archived'], description: '유형' },
-        icon: { type: 'string', description: '아이콘' },
-        color: { type: 'string', description: '색상' },
-        is_pinned: { type: 'boolean', description: '고정 여부' },
-        order_index: { type: 'number', description: '정렬 순서' },
-      },
-      required: ['id'],
-    },
-  },
-  {
-    name: 'delete_area_resource',
-    description: '책임 또는 자원을 삭제합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-        force: { type: 'boolean', description: '연결된 항목이 있어도 강제 삭제' },
-      },
-      required: ['id'],
-    },
-  },
-  {
-    name: 'archive_area_resource',
-    description: '책임 또는 자원을 보관 처리합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-      },
-      required: ['id'],
-    },
-  },
-
   // ========== Goals ==========
   {
     name: 'create_goal',
@@ -658,20 +568,6 @@ export async function handleToolsCall(
 
   try {
     switch (name) {
-      // Areas/Resources
-      case 'create_area_resource':
-        return await createAreaResource(supabase, userId, args, dateContext);
-      case 'list_areas_resources':
-        return await listAreasResources(supabase, userId, args, dateContext);
-      case 'get_area_resource':
-        return await getAreaResource(supabase, userId, args, dateContext);
-      case 'update_area_resource':
-        return await updateAreaResource(supabase, userId, args, dateContext);
-      case 'delete_area_resource':
-        return await deleteAreaResource(supabase, userId, args, dateContext);
-      case 'archive_area_resource':
-        return await archiveAreaResource(supabase, userId, args, dateContext);
-
       // Goals
       case 'create_goal':
         return await createGoal(supabase, userId, args, dateContext);
