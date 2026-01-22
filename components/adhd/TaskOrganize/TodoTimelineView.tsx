@@ -1216,7 +1216,16 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     // 병합 및 정렬 (오래된 것 → 최신 순, 날짜 오름차순)
     const allItems = [...nonRecurringItems, ...recurrenceInstances];
 
-    return allItems.sort((a, b) => getDisplayDate(a).getTime() - getDisplayDate(b).getTime());
+    return allItems.sort((a, b) => {
+      const dateA = getDisplayDate(a).getTime();
+      const dateB = getDisplayDate(b).getTime();
+
+      // 1차 정렬: 날짜순
+      if (dateA !== dateB) return dateA - dateB;
+
+      // 2차 정렬: 같은 날짜면 orderIndex순 (anytime 할일용)
+      return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
+    });
   }, [todos, recurrenceInstances, dateRange.rangeStart, dateRange.rangeEnd, getDisplayDate]);
 
   // 월별 > 날짜별 그룹핑
