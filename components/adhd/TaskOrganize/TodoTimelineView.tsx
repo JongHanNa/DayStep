@@ -159,6 +159,14 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [isScrollReady, setIsScrollReady] = useState(false);
+  // 스크롤 완료 시간 저장 (데이터 로딩 후 재스크롤용)
+  const scrollCompletedTimeRef = useRef<number | null>(null);
+
+  // 컴포넌트 마운트 또는 userId 변경 시 스크롤 상태 초기화 (탭 전환 시 스크롤 재실행)
+  useEffect(() => {
+    setHasScrolledToToday(false);
+    setIsScrollReady(false);
+  }, [userId]);
 
   // 프로그래밍적 스크롤 중인지 추적 (사용자 스크롤과 구분)
   const isScrollingProgrammatically = useRef(false);
@@ -1363,55 +1371,117 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       // 오늘 월에 데이터가 없으면 가장 가까운 월 찾기
       if (!monthRef) {
         const closestMonth = findClosestMonthWithData(today);
-        console.log('[Timeline] closestMonth:', closestMonth);
-        console.log('[Timeline] sortedMonthKeys:', sortedMonthKeys);
         if (closestMonth) {
           monthRef = monthSectionRefs.current[closestMonth];
-          console.log('[Timeline] monthRef found:', !!monthRef);
         }
       }
 
       if (monthRef) {
         const scrollContainer = monthRef.closest('.overflow-y-auto') as HTMLElement | null;
-        console.log('[Timeline] scrollContainer found:', !!scrollContainer);
         if (scrollContainer) {
-          // DOM 쿼리로 오늘 날짜 요소 직접 찾기 (todaySectionRef가 아직 설정되지 않은 경우 대비)
           const todayDateStr = format(today, 'yyyy-MM-dd');
-          const todayElement = scrollContainer.querySelector(`[data-date="${todayDateStr}"]`) as HTMLElement;
+
+          // 스크롤 실행 함수 - 재시도 로직 포함
+          const executeScrollToToday = (element: HTMLElement, maxRetries = 5) => {
+            const tryScroll = (attempt: number) => {
+              const containerRect = scrollContainer.getBoundingClientRect();
+              const elementRect = element.getBoundingClientRect();
+              const targetOffset = elementRect.top - containerRect.top + scrollContainer.scrollTop;
+
+              scrollContainer.scrollTop = targetOffset;
+
+              // 검증: 스크롤 후 위치 확인
+              requestAnimationFrame(() => {
+                const newElementRect = element.getBoundingClientRect();
+                const newContainerRect = scrollContainer.getBoundingClientRect();
+                const tolerance = 100; // 100px 이내면 성공
+                const distanceFromTop = newElementRect.top - newContainerRect.top;
+
+                // 요소가 화면 상단 근처에 있지 않으면 재시도
+                if (Math.abs(distanceFromTop) > tolerance && attempt < maxRetries) {
+                  setTimeout(() => tryScroll(attempt + 1), 50);
+                } else {
+                  // 스크롤 완료 시간 기록 (데이터 로딩 후 재스크롤용)
+                  scrollCompletedTimeRef.current = Date.now();
+
+                  // v12: 스크롤 완료 직후 폴링으로 위치 강제 체크
+                  // (비동기 데이터 로딩으로 인한 DOM 변경 대응)
+                  const checkIntervals = [100, 300, 600, 1000];
+                  checkIntervals.forEach((delay) => {
+                    setTimeout(() => {
+                      // 2초 이내에만 체크
+                      if (Date.now() - (scrollCompletedTimeRef.current || 0) > 2000) return;
+
+                      const currentElementRect = element.getBoundingClientRect();
+                      const currentContainerRect = scrollContainer.getBoundingClientRect();
+                      const currentDistance = currentElementRect.top - currentContainerRect.top;
+
+                      if (Math.abs(currentDistance) > 200) {
+                        console.log('[Timeline] v12 Re-scrolling after data load, distance:', currentDistance, 'delay:', delay);
+                        const newOffset = currentElementRect.top - currentContainerRect.top + scrollContainer.scrollTop;
+                        scrollContainer.scrollTop = newOffset;
+                        scrollCompletedTimeRef.current = Date.now();
+                      }
+                    }, delay);
+                  });
+                }
+              });
+            };
+
+            tryScroll(0);
+          };
+
+          // 오늘 요소 찾기 - 월 섹션 내에서만 검색 (전체 컨테이너에서 첫 번째 매칭 방지)
+          const todayMonthSection = monthSectionRefs.current[todayMonthKey];
+          const todayElement = (todayMonthSection?.querySelector(`[data-date="${todayDateStr}"]`)
+            ?? scrollContainer.querySelector(`[data-date="${todayDateStr}"]`)) as HTMLElement;
 
           if (todayElement) {
-            // 오늘 날짜 요소로 스크롤
-            const containerRect = scrollContainer.getBoundingClientRect();
-            const elementRect = todayElement.getBoundingClientRect();
-            const scrollOffset = elementRect.top - containerRect.top + scrollContainer.scrollTop;
-            console.log('[Timeline] scrollOffset (today via DOM query):', scrollOffset);
-            scrollContainer.scrollTop = scrollOffset;
-          } else if (todaySectionRef.current) {
-            // fallback: todaySectionRef가 있으면 사용
-            const containerRect = scrollContainer.getBoundingClientRect();
-            const sectionRect = todaySectionRef.current.getBoundingClientRect();
-            const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
-            console.log('[Timeline] scrollOffset (today via ref):', scrollOffset);
-            scrollContainer.scrollTop = scrollOffset;
+            // 즉시 스크롤
+            executeScrollToToday(todayElement);
           } else {
-            // 오늘 날짜 요소가 없으면 월 섹션으로 폴백
-            const containerRect = scrollContainer.getBoundingClientRect();
-            const sectionRect = monthRef.getBoundingClientRect();
-            const scrollOffset = sectionRect.top - containerRect.top + scrollContainer.scrollTop;
-            console.log('[Timeline] scrollOffset (month):', scrollOffset);
-            scrollContainer.scrollTop = scrollOffset;
+            // requestAnimationFrame으로 DOM 렌더링 대기 (최대 10프레임)
+            let attempts = 0;
+            const maxAttempts = 10;
+
+            const tryScrollToToday = () => {
+              // 월 섹션 내에서 먼저 검색, 없으면 전체 컨테이너에서 검색
+              const retryMonthSection = monthSectionRefs.current[todayMonthKey];
+              const retryElement = (retryMonthSection?.querySelector(`[data-date="${todayDateStr}"]`)
+                ?? scrollContainer.querySelector(`[data-date="${todayDateStr}"]`)) as HTMLElement;
+              if (retryElement) {
+                executeScrollToToday(retryElement);
+                return;
+              }
+
+              attempts++;
+              if (attempts < maxAttempts) {
+                requestAnimationFrame(tryScrollToToday);
+              } else {
+                // 폴백: todaySectionRef 또는 월 섹션으로 스크롤
+                if (todaySectionRef.current) {
+                  executeScrollToToday(todaySectionRef.current);
+                } else {
+                  executeScrollToToday(monthRef);
+                }
+              }
+            };
+
+            requestAnimationFrame(tryScrollToToday);
           }
         }
-      } else {
-        console.log('[Timeline] monthRef is null, refs:', Object.keys(monthSectionRefs.current));
       }
-      setNavigatedMonth(today);
-      setHasScrolledToToday(true);
-      setIsScrollReady(true);
 
-      // 스크롤 완료 후 IntersectionObserver 다시 활성화
+      // 상태 업데이트를 스크롤 완료 후로 지연 (리렌더링으로 인한 스크롤 리셋 방지)
       setTimeout(() => {
-        isScrollingProgrammatically.current = false;
+        setNavigatedMonth(today);
+        setHasScrolledToToday(true);
+        setIsScrollReady(true);
+
+        // 스크롤 완료 후 IntersectionObserver 다시 활성화
+        setTimeout(() => {
+          isScrollingProgrammatically.current = false;
+        }, 100);
       }, 300);
     }, 200);
 

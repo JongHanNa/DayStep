@@ -160,8 +160,8 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
   const { hasActiveSubscription } = useSubscription();
 
-  // 탭 상태
-  const [activeTab, setActiveTab] = useState<FuelTabType>('fuel');
+  // 탭 상태 - 기본값: 타임라인 (가장 많이 사용하는 탭)
+  const [activeTab, setActiveTab] = useState<FuelTabType>('timeline');
   const [showPaywall, setShowPaywall] = useState(false);
 
   // 로컬 상태
