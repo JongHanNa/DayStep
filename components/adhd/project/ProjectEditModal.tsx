@@ -3,11 +3,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Check, FolderKanban, Trash2, ChevronDown, ChevronUp, Unlink, Play, Pause, CheckCircle, ListTodo } from 'lucide-react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { useProjectStore } from '@/state/stores/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useAuth } from '@/app/context/AuthContext';
 import type { Project, Todo, ProjectStatus } from '@/types';
+import type { Note } from '@/types/second-brain';
+import { fetchNotesWithJWT } from '@/lib/supabase/notes';
 import SubtaskList from '@/components/todos/SubtaskList';
+import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
 
 // 기본 색상 팔레트
 const COLOR_PALETTE = [
@@ -70,7 +76,11 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
     resumeProject,
     unlinkTodoFromProject,
     fetchProjects,
+    projects,
   } = useProjectStore();
+
+  // 연결된 실행 원동력을 위한 fuel 노트 상태
+  const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
 
   const isEditing = !!project;
 
@@ -87,6 +97,13 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
   const [isTodosExpanded, setIsTodosExpanded] = useState(false);
   const [loadingTodos, setLoadingTodos] = useState(false);
 
+  // 할일 편집 상태
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [editFormData, setEditFormData] = useState<TodoFormData | null>(null);
+
+  // Todo 스토어
+  const { updateTodo, deleteTodo } = useTodoStore();
+
   // 삭제 확인 모달 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteOption, setDeleteOption] = useState<'project_only' | 'with_todos'>('project_only');
@@ -96,7 +113,8 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
     if (isEditing && project && userId) {
       setLoadingTodos(true);
       fetchProjectTodos(userId, project.id).then((todos) => {
-        setLinkedTodos(todos);
+        // order_index 오름차순 정렬
+        setLinkedTodos([...todos].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)));
         setLoadingTodos(false);
       });
     }
@@ -107,10 +125,27 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
     if (project) {
       const todos = projectTodos.get(project.id);
       if (todos) {
-        setLinkedTodos(todos);
+        // order_index 오름차순 정렬
+        setLinkedTodos([...todos].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)));
       }
     }
   }, [projectTodos, project]);
+
+  // fuel 노트 (실행 원동력) 로드
+  useEffect(() => {
+    const loadFuelNotes = async () => {
+      if (!userId) return;
+
+      try {
+        const allNotes = await fetchNotesWithJWT(userId);
+        const fuel = allNotes.filter(n => n.note_category === 'fuel');
+        setFuelNotes(fuel);
+      } catch (error) {
+        console.error('fuel 노트 로드 실패:', error);
+      }
+    };
+    loadFuelNotes();
+  }, [userId]);
 
   // 저장
   const handleSave = async () => {
@@ -215,16 +250,83 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
     setLinkedTodos((prev) => prev.filter((t) => t.id !== todoId));
   };
 
+  // Todo(DB 형태) → TodoFormData(폼 형태) 변환
+  const todoToFormData = (todo: Todo): TodoFormData => ({
+    title: todo.title,
+    isHighlight: todo.is_today_highlight ?? false,
+    completed: todo.completed,
+    scheduleType: todo.schedule_type ?? 'anytime',
+    scheduledDate: todo.start_time ? new Date(todo.start_time) : undefined,
+    includeTime: todo.schedule_type === 'timed',
+    startTime: todo.start_time
+      ? format(new Date(todo.start_time), 'HH:mm')
+      : undefined,
+    anytimeDuration: todo.anytime_duration ?? undefined,
+    projectIds: todo.project_id ? [todo.project_id] : [],
+  });
+
+  // 할일 클릭 시 편집 모달 열기
+  const handleTodoClick = (todo: Todo) => {
+    setEditingTodo(todo);
+    setEditFormData(todoToFormData(todo));
+  };
+
+  // 할일 편집 저장
+  const handleEditSave = async (formData: TodoFormData) => {
+    if (!editingTodo || !userId) return;
+
+    await updateTodo(editingTodo.id, {
+      title: formData.title,
+      is_today_highlight: formData.isHighlight,
+      completed: formData.completed,
+    });
+
+    // 프로젝트 할일 목록 새로고침
+    if (project) {
+      fetchProjectTodos(userId, project.id);
+    }
+
+    setEditingTodo(null);
+    setEditFormData(null);
+  };
+
+  // 할일 삭제
+  const handleEditDelete = async () => {
+    if (!editingTodo || !userId) return;
+
+    await deleteTodo(editingTodo.id);
+
+    // 프로젝트 할일 목록 새로고침
+    if (project) {
+      fetchProjectTodos(userId, project.id);
+    }
+
+    setEditingTodo(null);
+    setEditFormData(null);
+  };
+
+  // 할일 날짜 포맷
+  const formatTodoDate = (todo: Todo): string => {
+    if (todo.schedule_type === 'anytime') return '언제든지';
+    if (!todo.start_time) return '';
+
+    const date = format(new Date(todo.start_time), 'M/d', { locale: ko });
+    if (todo.schedule_type === 'all_day') return date;
+
+    const time = format(new Date(todo.start_time), 'HH:mm');
+    return `${date} ${time}`;
+  };
+
   return (
     <dialog open className="modal z-[110]">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="modal-box max-w-md max-h-[90vh] overflow-y-auto"
+        className="modal-box max-w-md max-h-[90vh] overflow-y-auto !pt-0"
       >
         {/* 헤더 */}
-        <div className="sticky top-0 z-10 bg-base-100 pt-2 pb-4 -mt-2 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-base-100 pt-[30px] sm:pt-4 pb-4 flex items-center justify-between">
           <button
             onClick={onClose}
             className="btn btn-ghost btn-sm rounded-full"
@@ -417,9 +519,13 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
                   </p>
                 ) : (
                   linkedTodos.map((todo) => (
-                    <div key={todo.id} className="rounded-lg bg-base-200 overflow-hidden">
+                    <div
+                      key={todo.id}
+                      className="rounded-lg bg-base-200 overflow-hidden cursor-pointer hover:bg-base-300 transition-colors"
+                      onClick={() => handleTodoClick(todo)}
+                    >
                       <div className="flex items-center justify-between p-2">
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div
                             className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                               todo.completed
@@ -429,16 +535,26 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
                           >
                             {todo.completed && <Check className="w-3 h-3 text-white" />}
                           </div>
-                          <span
-                            className={`text-sm truncate ${
-                              todo.completed ? 'line-through text-base-content/50' : ''
-                            }`}
-                          >
-                            {todo.title}
-                          </span>
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span
+                              className={`text-sm truncate ${
+                                todo.completed ? 'line-through text-base-content/50' : ''
+                              }`}
+                            >
+                              {todo.title}
+                            </span>
+                            {formatTodoDate(todo) && (
+                              <span className="text-xs text-base-content/50">
+                                {formatTodoDate(todo)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <button
-                          onClick={() => handleUnlinkTodo(todo.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUnlinkTodo(todo.id);
+                          }}
                           className="btn btn-ghost btn-xs btn-circle flex-shrink-0"
                           title="연결 해제"
                         >
@@ -545,6 +661,28 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
       <form method="dialog" className="modal-backdrop">
         <button onClick={onClose}>close</button>
       </form>
+
+      {/* 할일 편집 모달 */}
+      {editingTodo && editFormData && (
+        <TodoEditModal
+          open={true}
+          todo={editFormData}
+          onClose={() => {
+            setEditingTodo(null);
+            setEditFormData(null);
+          }}
+          onSave={handleEditSave}
+          onChange={setEditFormData}
+          onDelete={handleEditDelete}
+          headerTitle="할일 편집"
+          showProject={true}
+          showLinkedFuels={true}
+          fuelNotes={fuelNotes}
+          projects={projects}
+          todoId={editingTodo?.id}
+          userId={userId}
+        />
+      )}
 
       {/* 삭제 확인 모달 */}
       {showDeleteModal && (
