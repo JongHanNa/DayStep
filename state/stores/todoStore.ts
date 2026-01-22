@@ -1088,18 +1088,27 @@ export const useTodoStore = createStore<TodoStoreState>(
 
       // 할일에 서브태스크가 있는지 확인
       hasSubtasks: (todoId: string) => {
-        const subtasks = get().subtaskGroups.get(todoId);
+        const subtaskGroups = get().subtaskGroups;
+        // Map이 아닌 경우 방어 (persist 복원 시 객체로 변환될 수 있음)
+        if (!(subtaskGroups instanceof Map)) return false;
+        const subtasks = subtaskGroups.get(todoId);
         return !!subtasks && subtasks.length > 0;
       },
 
       // 특정 할일의 서브태스크 목록 반환
       getSubtasksForTodo: (parentTodoId: string) => {
-        return get().subtaskGroups.get(parentTodoId) || [];
+        const subtaskGroups = get().subtaskGroups;
+        // Map이 아닌 경우 방어 (persist 복원 시 객체로 변환될 수 있음)
+        if (!(subtaskGroups instanceof Map)) return [];
+        return subtaskGroups.get(parentTodoId) || [];
       },
 
       // 서브태스크 진행률 계산
       getSubtaskProgress: (parentTodoId: string) => {
-        const subtasks = get().subtaskGroups.get(parentTodoId) || [];
+        const subtaskGroups = get().subtaskGroups;
+        // Map이 아닌 경우 방어 (persist 복원 시 객체로 변환될 수 있음)
+        if (!(subtaskGroups instanceof Map)) return { completed: 0, total: 0 };
+        const subtasks = subtaskGroups.get(parentTodoId) || [];
         const total = subtasks.length;
         const completed = subtasks.filter((t: Todo) => t.completed).length;
         return { completed, total };
@@ -1393,6 +1402,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         "realtimeSync",
         "channel",
         "recurringGroups", // 파생 데이터이므로 persist하지 않음
+        "subtaskGroups", // 파생 데이터이므로 persist하지 않음 (Map 직렬화 오류 방지)
       ],
     } as any,
   }
