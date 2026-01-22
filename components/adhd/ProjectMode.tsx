@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, FolderKanban, Check, Archive, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, FolderKanban, Check, Archive, Trash2, BookOpen } from 'lucide-react';
 import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import type { Project, ProjectStatus } from '@/types';
 import ProjectEditModal from './project/ProjectEditModal';
+import MCPGuideContent from './project/MCPGuideContent';
 
 interface ProjectModeProps {
   onExit: () => void;
@@ -58,6 +59,9 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
       });
     }
   }, [userId, projects, projectProgress, fetchProjectProgress]);
+
+  // 현재 탭: 프로젝트 목록 vs 가이드
+  const [currentTab, setCurrentTab] = useState<'projects' | 'guide'>('projects');
 
   // 상태 필터 버튼
   const filterButtons: { label: string; value: ProjectStatus | 'all' }[] = [
@@ -123,25 +127,55 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
           <div className="w-10" /> {/* 균형 맞추기 */}
         </div>
 
-        {/* 상태 필터 */}
-        <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
-          {filterButtons.map((btn) => (
-            <button
-              key={btn.value}
-              onClick={() => setStatusFilter(btn.value)}
-              className={`btn btn-sm rounded-full ${
-                statusFilter === btn.value ? 'btn-primary' : 'btn-ghost'
-              }`}
-            >
-              {btn.label}
-            </button>
-          ))}
+        {/* 메인 탭: 프로젝트 목록 vs 가이드 */}
+        <div className="flex gap-2 px-4 pb-2 border-b border-base-200">
+          <button
+            onClick={() => setCurrentTab('projects')}
+            className={`flex-1 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              currentTab === 'projects'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-base-content/60 hover:text-base-content'
+            }`}
+          >
+            프로젝트 목록
+          </button>
+          <button
+            onClick={() => setCurrentTab('guide')}
+            className={`flex-1 py-2 text-sm font-medium rounded-t-lg transition-colors flex items-center justify-center gap-1 ${
+              currentTab === 'guide'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-base-content/60 hover:text-base-content'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            AI 연동 가이드
+          </button>
         </div>
+
+        {/* 상태 필터 (프로젝트 탭에서만 표시) */}
+        {currentTab === 'projects' && (
+          <div className="flex gap-2 px-4 py-2 overflow-x-auto">
+            {filterButtons.map((btn) => (
+              <button
+                key={btn.value}
+                onClick={() => setStatusFilter(btn.value)}
+                className={`btn btn-sm rounded-full ${
+                  statusFilter === btn.value ? 'btn-primary' : 'btn-ghost'
+                }`}
+              >
+                {btn.label}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
-      {/* 프로젝트 목록 */}
+      {/* 메인 콘텐츠 */}
       <main className="p-4 pb-24">
-        {loading ? (
+        {currentTab === 'guide' ? (
+          // 가이드 탭
+          <MCPGuideContent />
+        ) : loading ? (
           <div className="flex justify-center py-8">
             <div className="loading loading-spinner loading-md" />
           </div>
@@ -153,6 +187,15 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                 ? 'AI와 함께 프로젝트를 계획해보세요'
                 : '해당하는 프로젝트가 없습니다'}
             </p>
+            {statusFilter === 'all' && (
+              <button
+                onClick={() => setCurrentTab('guide')}
+                className="btn btn-primary btn-sm mt-4 gap-1"
+              >
+                <BookOpen className="w-4 h-4" />
+                연동 가이드 보기
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -243,13 +286,15 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
         )}
       </main>
 
-      {/* FAB - 새 프로젝트 */}
-      <button
-        onClick={() => setIsCreateModalOpen(true)}
-        className="fixed bottom-24 right-4 btn btn-primary btn-circle shadow-lg z-20"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      {/* FAB - 새 프로젝트 (프로젝트 탭에서만 표시) */}
+      {currentTab === 'projects' && (
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="fixed bottom-24 right-4 btn btn-primary btn-circle shadow-lg z-20"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
 
       {/* 프로젝트 편집 모달 */}
       {editingProject && (
