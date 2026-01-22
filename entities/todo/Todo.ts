@@ -57,7 +57,10 @@ export class Todo {
 
     // 미룸 시 원래 시간 정보 (뱃지 표시용)
     public readonly originalStartTime: Date | null = null,
-    public readonly originalEndTime: Date | null = null
+    public readonly originalEndTime: Date | null = null,
+
+    // 서브태스크 예상 소요시간 (분 단위, ADHD용 "바보같이 작게 쪼개기")
+    public readonly anytimeDuration: number | null = null
   ) {}
 
   /**
@@ -111,6 +114,9 @@ export class Todo {
     // 미룸 시 원래 시간 정보
     const originalStartTime = record.originalStartTime ?? record.original_start_time ?? null;
     const originalEndTime = record.originalEndTime ?? record.original_end_time ?? null;
+
+    // 서브태스크 예상 소요시간 (ADHD용)
+    const anytimeDuration = record.anytimeDuration ?? record.anytime_duration ?? null;
 
     // title 필드
     const title = data.title;
@@ -169,7 +175,10 @@ export class Todo {
 
       // 미룸 시 원래 시간 정보
       originalStartTime ? new Date(originalStartTime) : null,
-      originalEndTime ? new Date(originalEndTime) : null
+      originalEndTime ? new Date(originalEndTime) : null,
+
+      // 서브태스크 예상 소요시간
+      anytimeDuration
     );
   }
 
@@ -596,6 +605,9 @@ export class Todo {
 
       // 일반 할일 스킵 상태
       skip_status: this.skipStatus,
+
+      // 서브태스크 예상 소요시간
+      anytime_duration: this.anytimeDuration,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),

@@ -236,7 +236,24 @@ const TOOLS: McpTool[] = [
   },
   {
     name: 'create_project_with_todos',
-    description: 'AI 플래닝 결과를 프로젝트와 할일들로 일괄 생성합니다. ADHD 친화적 계획 수립에 최적화.',
+    description: `AI 플래닝 결과를 프로젝트와 할일들로 일괄 생성합니다. ADHD 친화적 계획 수립에 최적화.
+
+⚠️ 중요: 이 도구를 호출하기 전에 반드시 사용자에게 다음 질문을 해서 상황을 파악하세요:
+
+1. 현재 상태: "지금까지 이 일을 위해 무엇을 준비하셨나요?"
+   - 예: 이력서 초안 있음/없음, 포트폴리오 있음/없음
+
+2. 구체적 목표: "어떤 회사/직무를 목표로 하시나요?" 또는 "구체적으로 어떤 결과를 원하시나요?"
+   - 예: 지원 회사 정해짐/탐색 중, 목표 금액/기간 등
+
+3. 가능한 시간: "이 일에 하루에 얼마나 시간을 쓸 수 있나요?"
+   - 예: 1시간 미만 / 1-2시간 / 2시간 이상
+
+4. 막히는 부분: "가장 어렵거나 막막한 부분이 무엇인가요?"
+   - 예: 시작하기가 어려움, 어디서부터 해야 할지 모름 등
+
+이 정보를 바탕으로 맞춤형 프로젝트와 할일을 생성하세요.
+할일은 5-15분 단위의 구체적인 행동으로 쪼개고, 필요시 subtasks로 더 작게 나누세요.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -262,6 +279,18 @@ const TOOLS: McpTool[] = [
               schedule_type: { type: 'string', enum: ['all_day', 'timed', 'anytime', 'none'], description: '일정 타입' },
               priority: { type: 'string', enum: ['low', 'medium', 'high'], description: '우선순위' },
               anytime_duration: { type: 'number', description: '예상 소요시간 (분)' },
+              subtasks: {
+                type: 'array',
+                description: '이 할일의 세부 단계 (5분짜리 작은 행동들). ADHD용 "바보같이 작게 쪼개기" 기능.',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string', description: '서브태스크 제목 (예: "잡코리아 템플릿 열기")' },
+                    anytime_duration: { type: 'number', description: '예상 소요시간 (분, 기본값 5분)' },
+                  },
+                  required: ['title'],
+                },
+              },
             },
             required: ['title'],
           },

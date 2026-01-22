@@ -28,6 +28,9 @@ export interface TodoStoreState extends BaseStoreState {
   // 새로운 스키마 관련 상태
   recurringGroups: Map<string, Todo[]>; // parent_todo_id -> instances
 
+  // 서브태스크 관련 상태 (ADHD용 "바보같이 작게 쪼개기")
+  subtaskGroups: Map<string, Todo[]>; // parent_todo_id -> subtasks
+
   // 반복 할일 완료 상태 관련
   todoCompletions: { todo_id: string; completion_date: string }[]; // 완료 기록 캐시
 
@@ -145,6 +148,14 @@ export interface TodoStoreState extends BaseStoreState {
   getRecurringTodos: () => Todo[];
   getRecurringInstances: (parentId: string) => Todo[];
   filterByScheduleType: (type: ScheduleType) => Todo[];
+
+  // 서브태스크 관련 유틸리티 (ADHD용 "바보같이 작게 쪼개기")
+  isSubtask: (todo: Todo) => boolean;
+  hasSubtasks: (todoId: string) => boolean;
+  getSubtasksForTodo: (parentTodoId: string) => Todo[];
+  getSubtaskProgress: (parentTodoId: string) => { completed: number; total: number };
+  fetchSubtasks: (parentTodoId: string) => Promise<void>;
+  toggleSubtask: (subtaskId: string) => Promise<boolean>;
 
   // 아카이브 기능
   archiveTodo: (id: string, category?: string) => Promise<boolean>;

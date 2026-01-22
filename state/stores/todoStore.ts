@@ -79,6 +79,7 @@ export const useTodoStore = createStore<TodoStoreState>(
 
       // 새로운 스키마 관련 상태
       recurringGroups: new Map(),
+      subtaskGroups: new Map(), // 서브태스크 그룹 (ADHD용)
       todoCompletions: [],
 
       // 📦 전역 로드 상태 초기값
@@ -154,17 +155,29 @@ export const useTodoStore = createStore<TodoStoreState>(
           set((state: TodoStoreState) => {
             state.todos = todos;
             state.loading = false;
-            
+
             // 반복 할일 그룹 재구성
             const groups = new Map<string, Todo[]>();
+            // 서브태스크 그룹 재구성 (ADHD용)
+            const subtasks = new Map<string, Todo[]>();
+
             todos.forEach((todo: Todo) => {
               if (todo.parentTodoId) {
-                const existing = groups.get(todo.parentTodoId) || [];
-                existing.push(todo);
-                groups.set(todo.parentTodoId, existing);
+                // 반복 할일 인스턴스인지 서브태스크인지 구분
+                // 서브태스크: recurrencePattern이 'none'이고 parentTodoId가 있음
+                if (todo.recurrencePattern === 'none') {
+                  const existing = subtasks.get(todo.parentTodoId) || [];
+                  existing.push(todo);
+                  subtasks.set(todo.parentTodoId, existing);
+                } else {
+                  const existing = groups.get(todo.parentTodoId) || [];
+                  existing.push(todo);
+                  groups.set(todo.parentTodoId, existing);
+                }
               }
             });
             state.recurringGroups = groups;
+            state.subtaskGroups = subtasks;
 
             state.refreshStats();
             updateLoadStateOnSuccess(set);
@@ -172,6 +185,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             console.log("✅ fetchTodosForCurrentView 완료:", {
               todosCount: todos.length,
               recurringGroupsCount: groups.size,
+              subtaskGroupsCount: subtasks.size,
             });
           });
         } catch (error) {
@@ -326,14 +340,25 @@ export const useTodoStore = createStore<TodoStoreState>(
 
             // 반복 할일 그룹 재구성
             const groups = new Map<string, Todo[]>();
+            // 서브태스크 그룹 재구성 (ADHD용)
+            const subtasks = new Map<string, Todo[]>();
+
             todos.forEach((todo: Todo) => {
               if (todo.parentTodoId) {
-                const existing = groups.get(todo.parentTodoId) || [];
-                existing.push(todo);
-                groups.set(todo.parentTodoId, existing);
+                // 반복 할일 인스턴스인지 서브태스크인지 구분
+                if (todo.recurrencePattern === 'none') {
+                  const existing = subtasks.get(todo.parentTodoId) || [];
+                  existing.push(todo);
+                  subtasks.set(todo.parentTodoId, existing);
+                } else {
+                  const existing = groups.get(todo.parentTodoId) || [];
+                  existing.push(todo);
+                  groups.set(todo.parentTodoId, existing);
+                }
               }
             });
             state.recurringGroups = groups;
+            state.subtaskGroups = subtasks;
 
             state.refreshStats();
             updateLoadStateOnSuccess(set);
@@ -341,6 +366,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             console.log("✅ fetchAllTodos 완료:", {
               todosCount: todos.length,
               recurringGroupsCount: groups.size,
+              subtaskGroupsCount: subtasks.size,
             });
           });
         } catch (error) {
@@ -1053,6 +1079,177 @@ export const useTodoStore = createStore<TodoStoreState>(
         return get().getTodosByScheduleType(type);
       },
 
+      // === 서브태스크 관련 유틸리티 (ADHD용 "바보같이 작게 쪼개기") ===
+
+      // 할일이 서브태스크인지 확인
+      isSubtask: (todo: Todo) => {
+        return !!todo.parentTodoId && todo.recurrencePattern === 'none';
+      },
+
+      // 할일에 서브태스크가 있는지 확인
+      hasSubtasks: (todoId: string) => {
+        const subtasks = get().subtaskGroups.get(todoId);
+        return !!subtasks && subtasks.length > 0;
+      },
+
+      // 특정 할일의 서브태스크 목록 반환
+      getSubtasksForTodo: (parentTodoId: string) => {
+        return get().subtaskGroups.get(parentTodoId) || [];
+      },
+
+      // 서브태스크 진행률 계산
+      getSubtaskProgress: (parentTodoId: string) => {
+        const subtasks = get().subtaskGroups.get(parentTodoId) || [];
+        const total = subtasks.length;
+        const completed = subtasks.filter((t: Todo) => t.completed).length;
+        return { completed, total };
+      },
+
+      // 서브태스크 조회 (DB에서 가져오기)
+      fetchSubtasks: async (parentTodoId: string) => {
+        try {
+          // Capacitor 백업 인증 패턴
+          let userId: string | null = null;
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+              userId = session.user.id;
+            }
+          } catch {}
+
+          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
+            const { Preferences } = await import('@capacitor/preferences');
+            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
+            if (value) {
+              userId = JSON.parse(value).user?.id;
+            }
+          }
+
+          if (!userId) {
+            throw new Error("사용자 인증이 필요합니다.");
+          }
+
+          // 서브태스크 조회
+          const { data, error } = await supabase
+            .from('todos')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('parent_todo_id', parentTodoId)
+            .eq('recurrence_pattern', 'none')
+            .order('order_index', { ascending: true });
+
+          if (error) {
+            console.error('❌ 서브태스크 조회 실패:', error);
+            return;
+          }
+
+          // Todo 인스턴스로 변환
+          const subtasks = (data || []).map((row: any) => Todo.fromDatabase(row));
+
+          // 상태 업데이트
+          set((state: TodoStoreState) => {
+            state.subtaskGroups.set(parentTodoId, subtasks);
+
+            // todos 배열에도 추가 (중복 방지)
+            const existingIds = new Set(state.todos.map((t: Todo) => t.id));
+            const newSubtasks = subtasks.filter((t: Todo) => !existingIds.has(t.id));
+            if (newSubtasks.length > 0) {
+              state.todos = [...state.todos, ...newSubtasks];
+            }
+          });
+
+          console.log('✅ fetchSubtasks 완료:', {
+            parentTodoId,
+            subtaskCount: subtasks.length,
+          });
+        } catch (error) {
+          console.error('❌ fetchSubtasks 실패:', error);
+        }
+      },
+
+      // 서브태스크 완료 토글 (모든 서브태스크 완료 시 부모 자동 완료)
+      toggleSubtask: async (subtaskId: string) => {
+        const state = get();
+        const subtask = state.todos.find((t: Todo) => t.id === subtaskId);
+
+        if (!subtask || !subtask.parentTodoId) {
+          console.error('❌ 서브태스크를 찾을 수 없음:', subtaskId);
+          return false;
+        }
+
+        const newCompletedState = !subtask.completed;
+        const parentTodoId = subtask.parentTodoId;
+
+        // 1. 서브태스크 상태 즉시 업데이트 (Optimistic Update)
+        set((state: TodoStoreState) => {
+          const todoIndex = state.todos.findIndex((t: Todo) => t.id === subtaskId);
+          if (todoIndex !== -1) {
+            state.todos[todoIndex] = { ...state.todos[todoIndex], completed: newCompletedState } as Todo;
+          }
+
+          // subtaskGroups도 업데이트
+          const subtasks = state.subtaskGroups.get(parentTodoId) || [];
+          const updatedSubtasks = subtasks.map((t: Todo) =>
+            t.id === subtaskId ? { ...t, completed: newCompletedState } as Todo : t
+          );
+          state.subtaskGroups.set(parentTodoId, updatedSubtasks);
+        });
+
+        try {
+          // 2. DB 업데이트
+          const { error } = await supabase
+            .from('todos')
+            .update({ completed: newCompletedState, updated_at: new Date().toISOString() })
+            .eq('id', subtaskId);
+
+          if (error) throw error;
+
+          // 3. 모든 서브태스크가 완료되었는지 확인
+          const updatedState = get();
+          const allSubtasks = updatedState.subtaskGroups.get(parentTodoId) || [];
+          const allCompleted = allSubtasks.length > 0 && allSubtasks.every((t: Todo) => t.completed);
+
+          // 4. 모든 서브태스크 완료 시 부모 할일도 자동 완료
+          if (allCompleted) {
+            console.log('🎯 모든 서브태스크 완료! 부모 할일 자동 완료 처리:', parentTodoId);
+
+            // 부모 할일 상태 업데이트
+            set((state: TodoStoreState) => {
+              const parentIndex = state.todos.findIndex((t: Todo) => t.id === parentTodoId);
+              if (parentIndex !== -1) {
+                state.todos[parentIndex] = { ...state.todos[parentIndex], completed: true } as Todo;
+              }
+            });
+
+            // DB에도 부모 할일 완료 처리
+            await supabase
+              .from('todos')
+              .update({ completed: true, updated_at: new Date().toISOString() })
+              .eq('id', parentTodoId);
+          }
+
+          return true;
+        } catch (error) {
+          console.error('❌ toggleSubtask 실패:', error);
+
+          // 실패 시 롤백
+          set((state: TodoStoreState) => {
+            const todoIndex = state.todos.findIndex((t: Todo) => t.id === subtaskId);
+            if (todoIndex !== -1) {
+              state.todos[todoIndex] = { ...state.todos[todoIndex], completed: !newCompletedState } as Todo;
+            }
+
+            const subtasks = state.subtaskGroups.get(parentTodoId) || [];
+            const revertedSubtasks = subtasks.map((t: Todo) =>
+              t.id === subtaskId ? { ...t, completed: !newCompletedState } as Todo : t
+            );
+            state.subtaskGroups.set(parentTodoId, revertedSubtasks);
+          });
+
+          return false;
+        }
+      },
+
       // 아카이브 기능 (TODO: 구현 필요)
       archiveTodo: async (id: string, category?: string) => {
         console.log('TODO: archiveTodo', { id, category });
@@ -1089,6 +1286,7 @@ export const useTodoStore = createStore<TodoStoreState>(
           state.error = null;
           state.lastUpdated = null;
           state.recurringGroups = new Map();
+          state.subtaskGroups = new Map();
           state.todoCompletions = [];
           state.loadState = createInitialLoadState();
           state.filters = {

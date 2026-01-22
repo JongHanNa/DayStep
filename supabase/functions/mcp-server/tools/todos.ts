@@ -151,6 +151,9 @@ export async function createTodo(
 
   const newOrderIndex = (maxOrder?.order_index ?? -1) + 1;
 
+  // 프로젝트 연결 (단일 프로젝트만 지원 - todos.project_id 컬럼 사용)
+  const projectId = project_ids && project_ids.length > 0 ? project_ids[0] : null;
+
   const { data, error } = await supabase
     .from('todos')
     .insert({
@@ -166,6 +169,7 @@ export async function createTodo(
       anytime_duration: anytime_duration || null,
       order_index: newOrderIndex,
       completed: false,
+      project_id: projectId,
       ...recurrenceColumns,
     })
     .select()
@@ -173,17 +177,6 @@ export async function createTodo(
 
   if (error) {
     return createErrorResult(`생성 실패: ${error.message}`);
-  }
-
-  // 프로젝트 연결
-  if (project_ids && project_ids.length > 0) {
-    const projectLinks = project_ids.map((projectId) => ({
-      todo_id: data.id,
-      project_id: projectId,
-      user_id: userId,
-    }));
-
-    await supabase.from('todo_projects').insert(projectLinks);
   }
 
   const timeStr = resolvedStartTime ? ` (${formatDateKorean(resolvedStartTime)})` : '';
@@ -244,21 +237,9 @@ export async function listTodos(
     query = query.eq('schedule_type', schedule_type);
   }
 
-  // 프로젝트 필터 (별도 조회 필요)
+  // 프로젝트 필터 (todos.project_id 컬럼 직접 필터링)
   if (project_id) {
-    const { data: todoProjects } = await supabase
-      .from('todo_projects')
-      .select('todo_id')
-      .eq('project_id', project_id);
-
-    const todoIds = todoProjects?.map((tp) => tp.todo_id) || [];
-    if (todoIds.length === 0) {
-      return createListResult([], formatTodo, {
-        title: '📋 할일 목록',
-        emptyMessage: '할일이 없습니다.',
-      });
-    }
-    query = query.in('id', todoIds);
+    query = query.eq('project_id', project_id);
   }
 
   query = query.range(offset, offset + limit - 1);
@@ -307,18 +288,21 @@ export async function getTodo(
     return createErrorResult('할일을 찾을 수 없습니다.');
   }
 
-  // 연결된 프로젝트 조회
+  // 연결된 프로젝트 조회 (todos.project_id 컬럼 사용)
   let projectsStr = '';
   if (include_projects) {
-    const { data: todoProjects } = await supabase
-      .from('todo_projects')
-      .select('projects(id, title)')
-      .eq('todo_id', id);
+    if (data.project_id) {
+      const { data: project } = await supabase
+        .from('projects')
+        .select('id, title')
+        .eq('id', data.project_id)
+        .single();
 
-    const projects = todoProjects?.map((tp: any) => tp.projects).filter(Boolean) || [];
-
-    if (projects.length > 0) {
-      projectsStr = '\n연결된 프로젝트: ' + projects.map((p: any) => p.title).join(', ');
+      if (project) {
+        projectsStr = `\n연결된 프로젝트: ${project.title}`;
+      } else {
+        projectsStr = '\n연결된 프로젝트: 없음';
+      }
     } else {
       projectsStr = '\n연결된 프로젝트: 없음';
     }
@@ -469,8 +453,7 @@ export async function deleteTodo(
     );
   }
 
-  // 연결 해제
-  await supabase.from('todo_projects').delete().eq('todo_id', id);
+  // 연결 해제 (todo_projects 테이블은 존재하지 않음 - todos.project_id 컬럼 사용)
   await supabase.from('todo_notes').delete().eq('todo_id', id);
   await supabase.from('todo_completions').delete().eq('todo_id', id);
 

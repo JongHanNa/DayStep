@@ -316,6 +316,14 @@ export interface GetStatisticsInput {
 // ============================================================================
 
 /**
+ * 서브태스크 입력 타입 (ADHD용 "바보같이 작게 쪼개기")
+ */
+export interface SubtaskInput {
+  title: string;
+  anytime_duration?: number;  // 예상 소요시간 (분, 기본값 5분)
+}
+
+/**
  * AI 플래닝 결과를 프로젝트와 할일로 일괄 생성하는 입력 타입
  */
 export interface CreateProjectWithTodosInput {
@@ -331,6 +339,7 @@ export interface CreateProjectWithTodosInput {
     schedule_type?: ScheduleType;
     priority?: Priority;
     anytime_duration?: number;  // 예상 소요시간 (분)
+    subtasks?: SubtaskInput[];  // ADHD용 서브태스크 (5분짜리 작은 행동들)
   }>;
 }
 

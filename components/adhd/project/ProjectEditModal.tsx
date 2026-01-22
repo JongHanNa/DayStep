@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Check, FolderKanban, Trash2, ChevronDown, ChevronUp, Unlink, Play, Pause, CheckCircle, ListTodo } from 'lucide-react';
 import { useProjectStore } from '@/state/stores/projectStore';
+import { useTodoStore } from '@/state/stores/todoStore';
 import { useAuth } from '@/app/context/AuthContext';
 import type { Project, Todo, ProjectStatus } from '@/types';
+import SubtaskList from '@/components/todos/SubtaskList';
 
 // 기본 색상 팔레트
 const COLOR_PALETTE = [
@@ -415,35 +417,38 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
                   </p>
                 ) : (
                   linkedTodos.map((todo) => (
-                    <div
-                      key={todo.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-base-200"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            todo.completed
-                              ? 'bg-success border-success'
-                              : 'border-base-content/30'
-                          }`}
-                        >
-                          {todo.completed && <Check className="w-3 h-3 text-white" />}
+                    <div key={todo.id} className="rounded-lg bg-base-200 overflow-hidden">
+                      <div className="flex items-center justify-between p-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                              todo.completed
+                                ? 'bg-success border-success'
+                                : 'border-base-content/30'
+                            }`}
+                          >
+                            {todo.completed && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <span
+                            className={`text-sm truncate ${
+                              todo.completed ? 'line-through text-base-content/50' : ''
+                            }`}
+                          >
+                            {todo.title}
+                          </span>
                         </div>
-                        <span
-                          className={`text-sm truncate ${
-                            todo.completed ? 'line-through text-base-content/50' : ''
-                          }`}
+                        <button
+                          onClick={() => handleUnlinkTodo(todo.id)}
+                          className="btn btn-ghost btn-xs btn-circle flex-shrink-0"
+                          title="연결 해제"
                         >
-                          {todo.title}
-                        </span>
+                          <Unlink className="w-3 h-3 text-base-content/40" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleUnlinkTodo(todo.id)}
-                        className="btn btn-ghost btn-xs btn-circle flex-shrink-0"
-                        title="연결 해제"
-                      >
-                        <Unlink className="w-3 h-3 text-base-content/40" />
-                      </button>
+                      {/* 서브태스크 목록 (있는 경우) */}
+                      <div className="px-2 pb-2">
+                        <SubtaskList parentTodoId={todo.id} compact />
+                      </div>
                     </div>
                   ))
                 )}
