@@ -56,8 +56,6 @@ interface TimelineItem {
   recurrenceEndDate?: Date | null;
   recurrenceCount?: number | null;
   recurrenceDaysOfWeek?: number[] | null;
-  joyfulPeopleIds: string[];
-  shamefulPeopleIds: string[];
   // 반복 인스턴스 전용 필드
   isRecurrenceInstance?: boolean;
   recurrenceSourceId?: string;
@@ -276,8 +274,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             recurrenceEndDate: data.recurrence_end_date ? new Date(data.recurrence_end_date) : undefined,
             recurrenceCount: data.recurrence_count,
             recurrenceDaysOfWeek: data.recurrence_days_of_week,
-            joyfulPeopleIds: data.joyful_people_ids || [],
-            shamefulPeopleIds: data.shameful_people_ids || [],
             isRecurrenceInstance: true,
             recurrenceSourceId: instance.originalId,
             recurrenceOccurrenceDate: data.recurrence_occurrence_date,
@@ -534,8 +530,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       recurrenceEndDate: todo.recurrenceEndDate ? new Date(todo.recurrenceEndDate) : undefined,
       recurrenceCount: todo.recurrenceCount || undefined,
       selectedDaysOfWeek: todo.recurrenceDaysOfWeek || undefined,
-      joyfulPeopleIds: todo.joyfulPeopleIds || [],
-      shamefulPeopleIds: todo.shamefulPeopleIds || [],
       // 반복 인스턴스 정보
       isRecurrenceInstance: isInstance ?? false,
       originalStartDate: todo.startTime ? new Date(todo.startTime) : undefined,
@@ -963,8 +957,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       recurrence_end_date: formData.recurrenceEndDate?.toISOString().split('T')[0],
       recurrence_count: formData.recurrenceCount,
       recurrence_days_of_week: formData.selectedDaysOfWeek,
-      joyful_people_ids: formData.joyfulPeopleIds,
-      shameful_people_ids: formData.shamefulPeopleIds,
       project_id: formData.projectIds?.[0] || null,
     });
 
@@ -1203,8 +1195,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         recurrenceEndDate: todo.recurrenceEndDate,
         recurrenceCount: todo.recurrenceCount,
         recurrenceDaysOfWeek: todo.recurrenceDaysOfWeek,
-        joyfulPeopleIds: todo.joyfulPeopleIds || [],
-        shamefulPeopleIds: todo.shamefulPeopleIds || [],
         isRecurrenceInstance: false,
         skipStatus: todo.skipStatus as 'not_needed' | 'missed' | null | undefined,
         originalTodo: todo,
@@ -2210,27 +2200,6 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                     )}
                                   </div>
                                 )}
-
-                                {/* 소중한 사람 표시 */}
-                                {(() => {
-                                  const joyfulPeople = people.filter(p => item.joyfulPeopleIds.includes(p.id));
-                                  const shamefulPeople = people.filter(p => item.shamefulPeopleIds.includes(p.id));
-                                  if (joyfulPeople.length === 0 && shamefulPeople.length === 0) return null;
-                                  return (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {joyfulPeople.map(p => (
-                                        <span key={p.id} className="badge badge-xs bg-pink-500/20 text-pink-600 dark:text-pink-400 gap-0.5">
-                                          <Heart className="w-2.5 h-2.5" />{p.name}
-                                        </span>
-                                      ))}
-                                      {shamefulPeople.map(p => (
-                                        <span key={p.id} className="badge badge-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 gap-0.5">
-                                          <AlertCircle className="w-2.5 h-2.5" />{p.name}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  );
-                                })()}
 
                                 {/* 연결된 실행 원동력 표시 */}
                                 {showFuelBadges && (() => {

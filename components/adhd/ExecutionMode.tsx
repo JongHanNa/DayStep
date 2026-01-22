@@ -612,10 +612,8 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
           schedule_type: 'timed',
           start_time: sessionStartTime.toISOString(),
           end_time: sessionEndTime.toISOString(),
-          joyful_people_ids: joyfulPeopleIds,
-          shameful_people_ids: shamefulPeopleIds,
         });
-        console.log('✅ 연결된 할일 완료 처리 (시간/인물 포함):', linkedTodoId);
+        console.log('✅ 연결된 할일 완료 처리 (시간 포함):', linkedTodoId);
       } catch (error) {
         console.error('❌ 할일 완료 처리 실패:', error);
       }
@@ -810,8 +808,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
           schedule_type: 'timed',
           start_time: sessionStartTime.toISOString(),
           end_time: sessionEndTime.toISOString(),
-          joyful_people_ids: joyfulPeopleIds,
-          shameful_people_ids: shamefulPeopleIds,
         });
         todoIdForNote = linkedTodoId;
       } catch (error) {
@@ -825,8 +821,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
         schedule_type: 'timed',
         start_time: sessionStartTime.toISOString(),
         end_time: sessionEndTime.toISOString(),
-        joyful_people_ids: joyfulPeopleIds,
-        shameful_people_ids: shamefulPeopleIds,
         user_id: userId,
       });
       if (newTodo) {

@@ -2,9 +2,6 @@
 // 소중한 사람 관리 시스템 타입 정의
 // ============================================
 
-/** 포모도로 세션 인물 연결 유형 */
-export type PersonLinkType = 'joyful' | 'shameful';
-
 /** 관심 표현 방식 */
 export type InteractionType =
   | 'call'        // 전화

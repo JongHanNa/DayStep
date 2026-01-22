@@ -574,6 +574,8 @@ export type Database = {
           exclusion_reason: string
           id: string
           parent_todo_id: string
+          postponed_to_end_time: string | null
+          postponed_to_start_time: string | null
           user_id: string
         }
         Insert: {
@@ -582,6 +584,8 @@ export type Database = {
           exclusion_reason?: string
           id?: string
           parent_todo_id: string
+          postponed_to_end_time?: string | null
+          postponed_to_start_time?: string | null
           user_id: string
         }
         Update: {
@@ -590,6 +594,8 @@ export type Database = {
           exclusion_reason?: string
           id?: string
           parent_todo_id?: string
+          postponed_to_end_time?: string | null
+          postponed_to_start_time?: string | null
           user_id?: string
         }
         Relationships: [
@@ -656,9 +662,9 @@ export type Database = {
           id: string
           is_relationship_task: boolean | null
           is_today_highlight: boolean
-          joyful_people_ids: string[] | null
           occurrence_date: string | null
           order_index: number
+          original_end_time: string | null
           original_start_time: string | null
           parent_recurring_todo_id: string | null
           parent_todo_id: string | null
@@ -671,7 +677,6 @@ export type Database = {
           recurrence_interval: number | null
           recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type: Database["public"]["Enums"]["schedule_type_enum"]
-          shameful_people_ids: string[] | null
           skip_status: string | null
           start_time: string | null
           title: string
@@ -692,9 +697,9 @@ export type Database = {
           id?: string
           is_relationship_task?: boolean | null
           is_today_highlight?: boolean
-          joyful_people_ids?: string[] | null
           occurrence_date?: string | null
           order_index?: number
+          original_end_time?: string | null
           original_start_time?: string | null
           parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
@@ -707,7 +712,6 @@ export type Database = {
           recurrence_interval?: number | null
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
-          shameful_people_ids?: string[] | null
           skip_status?: string | null
           start_time?: string | null
           title: string
@@ -728,9 +732,9 @@ export type Database = {
           id?: string
           is_relationship_task?: boolean | null
           is_today_highlight?: boolean
-          joyful_people_ids?: string[] | null
           occurrence_date?: string | null
           order_index?: number
+          original_end_time?: string | null
           original_start_time?: string | null
           parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
@@ -743,7 +747,6 @@ export type Database = {
           recurrence_interval?: number | null
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
-          shameful_people_ids?: string[] | null
           skip_status?: string | null
           start_time?: string | null
           title?: string

@@ -44,10 +44,6 @@ export class Todo {
     // 관계 할일 필드
     public readonly isRelationshipTask: boolean = false,
 
-    // 소중한 사람 연결 필드
-    public readonly joyfulPeopleIds: string[] = [],
-    public readonly shamefulPeopleIds: string[] = [],
-
     // 일반 할일 스킵 상태
     public readonly skipStatus: 'not_needed' | 'missed' | null = null,
 
@@ -99,10 +95,6 @@ export class Todo {
 
     // 관계 할일 필드
     const isRelationshipTask = record.isRelationshipTask ?? record.is_relationship_task ?? false;
-
-    // 소중한 사람 연결 필드
-    const joyfulPeopleIds = record.joyfulPeopleIds ?? record.joyful_people_ids ?? [];
-    const shamefulPeopleIds = record.shamefulPeopleIds ?? record.shameful_people_ids ?? [];
 
     // 일반 할일 스킵 상태
     const skipStatus = record.skipStatus ?? record.skip_status ?? null;
@@ -161,10 +153,6 @@ export class Todo {
 
       // 관계 할일 필드
       isRelationshipTask,
-
-      // 소중한 사람 연결 필드
-      joyfulPeopleIds || [],
-      shamefulPeopleIds || [],
 
       // 일반 할일 스킵 상태
       skipStatus,
@@ -598,10 +586,6 @@ export class Todo {
 
       // 관계 태그
       is_relationship_task: this.isRelationshipTask,
-
-      // 소중한 사람 연결 필드
-      joyful_people_ids: this.joyfulPeopleIds,
-      shameful_people_ids: this.shamefulPeopleIds,
 
       // 일반 할일 스킵 상태
       skip_status: this.skipStatus,

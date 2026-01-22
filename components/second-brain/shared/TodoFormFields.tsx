@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Star, StickyNote, CheckCircle2, Sparkles, Target, Palette, Repeat, Calendar, Clock, Heart, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Star, StickyNote, CheckCircle2, Sparkles, Target, Palette, Repeat, Calendar, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -16,15 +16,12 @@ import { getColorById } from '@/lib/color-palette';
 import type { UnifiedIconKey } from '@/lib/icon-collection';
 import { ScrollDurationPicker } from '@/components/ui/scroll-duration-picker';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
-import { PersonSelector } from '@/components/cherished/PersonSelector';
-import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 
 // 요약 행 및 상세 모달 컴포넌트
 import TodoSummaryRow from '@/components/todos/form/TodoSummaryRow';
 import DateDetailModal from '@/components/todos/form/DateDetailModal';
 import TimeDetailModal from '@/components/todos/form/TimeDetailModal';
 import RecurrenceDetailModal from '@/components/todos/form/RecurrenceDetailModal';
-import PersonDetailModal from '@/components/todos/form/PersonDetailModal';
 import RecurringInstanceNoticeDialog from '@/components/todos/form/RecurringInstanceNoticeDialog';
 
 /**
@@ -67,10 +64,6 @@ export interface TodoFormData {
 
   // 관계 균형 관련
   isRelationshipTask?: boolean; // 관계 할일 여부
-
-  // 소중한 사람 연결 필드
-  joyfulPeopleIds?: string[];
-  shamefulPeopleIds?: string[];
 }
 
 interface TodoFormFieldsProps {
@@ -143,15 +136,10 @@ export default function TodoFormFields({
     loop: true
   });
 
-  // 소중한 사람 store
-  const { people } = useCherishedPeopleStore();
-
   // 상세 모달 상태
   const [showDateModal, setShowDateModal] = useState(false);
   const [showTimeModal, setShowTimeModal] = useState(false);
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
-  const [showJoyfulModal, setShowJoyfulModal] = useState(false);
-  const [showShamefulModal, setShowShamefulModal] = useState(false);
 
   // 반복 인스턴스 안내 다이얼로그 상태
   const [showRecurrenceNotice, setShowRecurrenceNotice] = useState(false);
@@ -284,13 +272,6 @@ export default function TodoFormFields({
     }
   };
 
-  // 사람 수 레이블
-  const getPeopleCountLabel = (ids: string[] | undefined): string => {
-    const count = ids?.length || 0;
-    if (count === 0) return '선택 안함';
-    return `${count}명`;
-  };
-
   // 날짜 행 클릭 핸들러
   const handleDateRowClick = () => {
     if (todo.isRecurrenceInstance) {
@@ -381,27 +362,6 @@ export default function TodoFormFields({
           </label>
         </div>
       )}
-
-      {/* 소중한 사람 연결 섹션 */}
-      <div className="my-4 space-y-1">
-        {/* 기쁜 분들 */}
-        <TodoSummaryRow
-          icon={<Heart className="w-5 h-5" />}
-          label="기쁜 분들"
-          suffix={getPeopleCountLabel(todo.joyfulPeopleIds)}
-          onClick={() => setShowJoyfulModal(true)}
-          iconClassName="text-pink-500"
-        />
-
-        {/* 부끄러운 행동 */}
-        <TodoSummaryRow
-          icon={<AlertTriangle className="w-5 h-5" />}
-          label="부끄러운 행동"
-          suffix={getPeopleCountLabel(todo.shamefulPeopleIds)}
-          onClick={() => setShowShamefulModal(true)}
-          iconClassName="text-amber-500"
-        />
-      </div>
 
       {/* 프로젝트 연결 (단일 선택) - showProject이고 프로젝트 목록이 있을 때 표시 */}
       {showProject && projects.length > 0 && (
@@ -553,28 +513,6 @@ export default function TodoFormFields({
         originalStartDate={todo.originalStartDate}
         onOriginalStartDateChange={(date) => onChange({ ...todo, originalStartDate: date })}
         isRecurrenceInstance={todo.isRecurrenceInstance}
-      />
-
-      {/* 기쁜 분들 상세 모달 */}
-      <PersonDetailModal
-        isOpen={showJoyfulModal}
-        onClose={() => setShowJoyfulModal(false)}
-        title="기쁜 분들"
-        description="이 일로 기뻐하실 분들을 선택하세요"
-        linkType="joyful"
-        selectedPeopleIds={todo.joyfulPeopleIds || []}
-        onSelectionChange={(ids) => onChange({ ...todo, joyfulPeopleIds: ids })}
-      />
-
-      {/* 부끄러운 행동 상세 모달 */}
-      <PersonDetailModal
-        isOpen={showShamefulModal}
-        onClose={() => setShowShamefulModal(false)}
-        title="부끄러운 행동"
-        description="이 분들 앞에선 부끄러운 행동"
-        linkType="shameful"
-        selectedPeopleIds={todo.shamefulPeopleIds || []}
-        onSelectionChange={(ids) => onChange({ ...todo, shamefulPeopleIds: ids })}
       />
 
       {/* 반복 인스턴스 안내 다이얼로그 */}

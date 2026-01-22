@@ -1542,8 +1542,6 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               // 기타 속성
               completed: false,
               order_index: todo.orderIndex || 0,
-              joyful_people_ids: todo.joyfulPeopleIds || [],
-              shameful_people_ids: todo.shamefulPeopleIds || [],
             };
 
             const newTodo = await createTodoWithJWT(newTodoData, userId);

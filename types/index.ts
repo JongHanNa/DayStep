@@ -320,10 +320,6 @@ export interface CreateTodoInput {
   // Balance System
   is_relationship_task?: boolean; // 관계 할일 여부
 
-  // Cherished People (소중한 사람 연결)
-  joyful_people_ids?: string[]; // 이 일로 기뻐하실 분들
-  shameful_people_ids?: string[]; // 이 분들 앞에선 부끄러운 행동
-
   // Skip status (일반 할일 스킵)
   skip_status?: 'not_needed' | 'missed' | null; // 일반 할일 스킵 상태
 }

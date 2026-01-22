@@ -539,9 +539,6 @@ export const useTodoStore = createStore<TodoStoreState>(
           parentTodoId: data.parent_todo_id || (data as any).parentTodoId,
           userId: data.user_id || (data as any).userId,
           orderIndex: data.order_index || (data as any).orderIndex,
-          // 인물 연결 필드 변환
-          joyfulPeopleIds: data.joyful_people_ids || (data as any).joyfulPeopleIds || [],
-          shamefulPeopleIds: data.shameful_people_ids || (data as any).shamefulPeopleIds || [],
         };
 
 
