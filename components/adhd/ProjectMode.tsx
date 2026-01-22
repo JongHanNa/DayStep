@@ -211,9 +211,9 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
               <div className="collapse-content">
                 <div className="pt-2">
                   <p className="text-sm text-base-content/70 leading-relaxed">
-                    DayStep MCP는 <span className="font-medium text-primary">"이력서 작성"</span> 같은 막연한 할일을{' '}
-                    <span className="font-medium text-accent">"사람인 열기 → 로그인 → 이력서 탭 클릭"</span> 처럼
-                    바로 실행할 수 있는 작은 단계로 쪼개줍니다.
+                    DayStep MCP는 <span className="font-medium text-primary">중요·긴급한데 막연해서 미루던 일</span>을{' '}
+                    <span className="font-medium text-accent">"뇌에 친절한 단위"</span>로 쪼개서
+                    바로 실행할 수 있는 작은 단계로 만들어줍니다.
                   </p>
                   <p className="text-sm text-base-content/60 mt-2">
                     ADHD가 있어도 <span className="font-medium">"뭐부터 해야 하지?"</span> 없이 바로 시작!
