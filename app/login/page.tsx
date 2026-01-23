@@ -4,15 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LoginButton } from "@/components/auth/LoginButton";
 import { UnauthenticatedOnly } from "@/components/auth/AuthGuard";
+import DemoLoginForm from "@/components/auth/DemoLoginForm";
 
 // URL 파라미터를 직접 파싱하는 함수 (static export 호환)
 function getUrlParams() {
-  if (typeof window === "undefined") return { error: null, redirect: null };
+  if (typeof window === "undefined") return { error: null, redirect: null, demo: null };
 
   const urlParams = new URLSearchParams(window.location.search);
   return {
     error: urlParams.get("error"),
     redirect: urlParams.get("redirect"),
+    demo: urlParams.get("demo"),
   };
 }
 
@@ -66,7 +68,8 @@ export default function LoginPage() {
   const [urlParams, setUrlParams] = useState<{
     error: string | null;
     redirect: string | null;
-  }>({ error: null, redirect: null });
+    demo: string | null;
+  }>({ error: null, redirect: null, demo: null });
 
   // 개발 환경 여부 확인 (웹 개발 또는 Capacitor 개발 환경)
   const isDevelopment = process.env.NODE_ENV === 'development' ||
@@ -149,6 +152,26 @@ export default function LoginPage() {
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 p-10 sm:p-12">
             <div className="space-y-6 sm:space-y-8">
               <LoginButton provider="google" />
+
+              {/* 데모 모드: 포트폴리오 체험 로그인 */}
+              {urlParams.demo === 'true' && (
+                <>
+                  {/* 구분선 */}
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="bg-white/80 dark:bg-gray-800/80 px-4 text-gray-500 dark:text-gray-400">
+                        Pro 계정 체험
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 데모 로그인 폼 */}
+                  <DemoLoginForm />
+                </>
+              )}
 
               {/* 개발 환경 전용: 테스트 계정 로그인 */}
               {isDevelopment && (

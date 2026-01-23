@@ -64,6 +64,7 @@ const defaultContextValue: AuthContextType = {
   signInWithGoogle: async () => {},
   signInWithKakao: async () => {},
   signInWithTestAccount: async () => {},
+  signInWithEmail: async () => {},
   signOut: async () => {},
   isAuthenticated: false,
   isHydrated: false,
@@ -637,6 +638,35 @@ export function AuthProvider({
     }
   };
 
+  // 이메일/비밀번호 로그인 (데모 계정용)
+  const signInWithEmail = async (email: string, password: string) => {
+    console.log('[Auth] 이메일/비밀번호 로그인 시작:', email);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('[Auth] 이메일/비밀번호 로그인 성공:', data.user?.id);
+
+      // onAuthStateChange에서 상태 업데이트 처리됨
+      // 타임라인으로 리다이렉트
+      window.location.href = '/';
+
+    } catch (error) {
+      console.error('[Auth] 이메일/비밀번호 로그인 실패:', error);
+      const errorMessage = error instanceof Error ? error.message : '로그인 중 오류가 발생했습니다.';
+      alert(`로그인 오류: ${errorMessage}`);
+      setLoading(false);
+    }
+  };
+
   // 로그아웃
   const signOut = async () => {
     console.log('[Auth] Starting sign out...');
@@ -729,6 +759,7 @@ export function AuthProvider({
     signInWithGoogle,
     signInWithKakao,
     signInWithTestAccount,
+    signInWithEmail,
     signOut,
     isAuthenticated: !!user,
     isHydrated,

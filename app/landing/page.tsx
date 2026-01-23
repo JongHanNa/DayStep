@@ -45,6 +45,9 @@ export default function LandingPage() {
   // 회전하는 기능 텍스트 상태
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
 
+  // 데모 모드 상태 (URL 파라미터 ?demo=true)
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
   // Framer Motion variants
   const featureContainerVariants = staggerFadeInUpVariants(60, 0.15);
   const ctaVariants = scaleFadeInVariants(0.9);
@@ -57,6 +60,12 @@ export default function LandingPage() {
     }, 3000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // URL 파라미터에서 데모 모드 감지
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsDemoMode(params.get('demo') === 'true');
   }, []);
 
   // 랜딩 페이지에서만 html/body의 bg-base-200 제거
@@ -96,7 +105,8 @@ export default function LandingPage() {
     if (isAuthenticated) {
       router.push('/');
     } else {
-      router.push('/login');
+      // 데모 모드면 파라미터 유지
+      router.push(isDemoMode ? '/login?demo=true' : '/login');
     }
   };
 

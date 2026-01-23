@@ -24,6 +24,7 @@ export interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithKakao: () => Promise<void>;
   signInWithTestAccount: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   
   // 유틸리티
