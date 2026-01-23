@@ -2,6 +2,7 @@
  * 인증 핸들러
  *
  * OAuth 초기화, 콜백 처리, JWT 토큰 발급/검증
+ * ChatGPT Actions OAuth 2.0 Authorization Code Flow 지원
  */
 
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0';
@@ -12,7 +13,7 @@ import {
   createHttpErrorResponse,
   CORS_HEADERS,
 } from '../utils/response.ts';
-import type { AuthResult, McpTokenPayload } from '../types/mcp.ts';
+import type { AuthResult, McpTokenPayload, OAuthTokenResponse, AuthCodeData } from '../types/mcp.ts';
 
 // ============================================================================
 // 환경 변수
@@ -24,7 +25,26 @@ function getEnvVars() {
     supabaseAnonKey: Deno.env.get('SUPABASE_ANON_KEY')!,
     supabaseServiceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     mcpJwtSecret: Deno.env.get('MCP_JWT_SECRET') || 'default-secret-change-in-production',
+    chatgptClientId: Deno.env.get('CHATGPT_CLIENT_ID') || 'chatgpt-daystep',
+    chatgptClientSecret: Deno.env.get('CHATGPT_CLIENT_SECRET') || '',
   };
+}
+
+// ============================================================================
+// ChatGPT OAuth 2.0 Authorization Code 저장소
+// ============================================================================
+
+// In-memory store (Edge Function 수명 동안 유지, 10분 만료)
+const authCodeStore = new Map<string, AuthCodeData>();
+
+// 만료된 코드 정리
+function cleanupExpiredCodes(): void {
+  const now = Date.now();
+  for (const [code, data] of authCodeStore.entries()) {
+    if (now > data.expiresAt) {
+      authCodeStore.delete(code);
+    }
+  }
 }
 
 // ============================================================================
@@ -270,6 +290,7 @@ function getCookieValue(req: Request, name: string): string | null {
 
 /**
  * OAuth 콜백 처리 (PKCE flow)
+ * ChatGPT Actions OAuth 플로우도 지원
  */
 export async function handleAuthCallback(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -289,6 +310,18 @@ export async function handleAuthCallback(req: Request): Promise<Response> {
   const codeVerifier = getCookieValue(req, 'mcp_code_verifier');
   if (!codeVerifier) {
     return createPlainTextResponse(generateErrorPage('인증 세션이 만료되었습니다. 다시 시도해주세요.'));
+  }
+
+  // ChatGPT OAuth 플로우 감지
+  const oauthDataCookie = getCookieValue(req, 'mcp_oauth_data');
+  let chatgptOAuthData: { state: string; redirectUri: string; clientId: string; scope?: string } | null = null;
+
+  if (oauthDataCookie) {
+    try {
+      chatgptOAuthData = JSON.parse(atob(oauthDataCookie));
+    } catch {
+      // 쿠키 파싱 실패 시 일반 MCP 플로우로 처리
+    }
   }
 
   try {
@@ -318,7 +351,18 @@ export async function handleAuthCallback(req: Request): Promise<Response> {
       return createPlainTextResponse(generateErrorPage('토큰 교환 실패: 유효하지 않은 응답'));
     }
 
-    // MCP 토큰 생성
+    // ChatGPT OAuth 플로우인 경우 authorization code 발급 후 리다이렉트
+    if (chatgptOAuthData && chatgptOAuthData.state && chatgptOAuthData.redirectUri) {
+      return handleChatGPTOAuthCallback(
+        tokenData.user.id,
+        tokenData.user.email || '',
+        tokenData.access_token,
+        tokenData.refresh_token,
+        chatgptOAuthData
+      );
+    }
+
+    // 일반 MCP 플로우: MCP 토큰 생성 및 성공 페이지 표시
     const mcpToken = await generateMcpToken({
       userId: tokenData.user.id,
       email: tokenData.user.email || '',
@@ -465,7 +509,7 @@ export async function authenticateRequest(req: Request): Promise<AuthResult> {
  */
 async function refreshSupabaseSession(
   refreshToken: string
-): Promise<{ access_token: string } | null> {
+): Promise<{ access_token: string; refresh_token: string } | null> {
   try {
     const { supabaseUrl, supabaseAnonKey } = getEnvVars();
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -477,9 +521,325 @@ async function refreshSupabaseSession(
       return null;
     }
 
-    return { access_token: data.session.access_token };
+    return {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    };
   } catch (err) {
     console.error('Session refresh error:', err);
     return null;
   }
+}
+
+// ============================================================================
+// ChatGPT Actions OAuth 2.0 엔드포인트
+// ============================================================================
+
+/**
+ * GET /oauth/authorize - ChatGPT가 사용자를 인증 페이지로 보낼 때 호출
+ */
+export async function handleOAuthAuthorize(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const clientId = url.searchParams.get('client_id');
+  const redirectUri = url.searchParams.get('redirect_uri');
+  const responseType = url.searchParams.get('response_type');
+  const state = url.searchParams.get('state');
+  const scope = url.searchParams.get('scope');
+
+  const { chatgptClientId, supabaseUrl } = getEnvVars();
+
+  // client_id 검증
+  if (clientId !== chatgptClientId) {
+    return createHttpErrorResponse(400, -32602, 'Invalid client_id');
+  }
+
+  // response_type 검증
+  if (responseType !== 'code') {
+    return createHttpErrorResponse(400, -32602, 'Only response_type=code is supported');
+  }
+
+  // redirect_uri 검증 (ChatGPT의 콜백 URL 패턴)
+  if (!redirectUri) {
+    return createHttpErrorResponse(400, -32602, 'redirect_uri is required');
+  }
+
+  // state 검증
+  if (!state) {
+    return createHttpErrorResponse(400, -32602, 'state is required');
+  }
+
+  // 기존 Supabase OAuth 초기화 로직 재사용
+  const provider = 'google'; // 기본 프로바이더
+
+  // 콜백 URL 생성 (Edge Function 경로)
+  const callbackUrl = `${supabaseUrl}/functions/v1/mcp-server/auth/callback`;
+
+  // PKCE code_verifier 및 code_challenge 생성
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+  // Supabase Auth OAuth URL 구성
+  const oauthUrl = new URL(`${supabaseUrl}/auth/v1/authorize`);
+  oauthUrl.searchParams.set('provider', provider);
+  oauthUrl.searchParams.set('redirect_to', callbackUrl);
+  oauthUrl.searchParams.set('code_challenge', codeChallenge);
+  oauthUrl.searchParams.set('code_challenge_method', 'S256');
+  oauthUrl.searchParams.set('prompt', 'select_account');
+
+  // OAuth 정보를 쿠키에 저장 (ChatGPT 플로우 식별용)
+  const cookieData = JSON.stringify({
+    state,
+    redirectUri,
+    clientId,
+    scope: scope || 'todos:read todos:write',
+  });
+  const encodedCookieData = btoa(cookieData);
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      'Location': oauthUrl.toString(),
+      'Set-Cookie': [
+        `mcp_code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`,
+        `mcp_oauth_data=${encodedCookieData}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`,
+      ].join(', '),
+      ...CORS_HEADERS,
+    },
+  });
+}
+
+/**
+ * POST /oauth/token - Authorization code를 access token으로 교환
+ */
+export async function handleOAuthToken(req: Request): Promise<Response> {
+  const { chatgptClientId, chatgptClientSecret } = getEnvVars();
+
+  // application/x-www-form-urlencoded 파싱
+  let grantType: string | null = null;
+  let code: string | null = null;
+  let refreshToken: string | null = null;
+  let clientId: string | null = null;
+  let clientSecret: string | null = null;
+  let redirectUri: string | null = null;
+
+  const contentType = req.headers.get('content-type') || '';
+
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    const formData = await req.text();
+    const params = new URLSearchParams(formData);
+    grantType = params.get('grant_type');
+    code = params.get('code');
+    refreshToken = params.get('refresh_token');
+    clientId = params.get('client_id');
+    clientSecret = params.get('client_secret');
+    redirectUri = params.get('redirect_uri');
+  } else if (contentType.includes('application/json')) {
+    const body = await req.json();
+    grantType = body.grant_type;
+    code = body.code;
+    refreshToken = body.refresh_token;
+    clientId = body.client_id;
+    clientSecret = body.client_secret;
+    redirectUri = body.redirect_uri;
+  } else {
+    return createJsonResponse(
+      { error: 'invalid_request', error_description: 'Unsupported content type' },
+      400
+    );
+  }
+
+  // 클라이언트 인증 (Basic Auth 또는 body 파라미터)
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader?.startsWith('Basic ')) {
+    const decoded = atob(authHeader.slice(6));
+    const [authClientId, authClientSecret] = decoded.split(':');
+    clientId = authClientId;
+    clientSecret = authClientSecret;
+  }
+
+  // 클라이언트 검증
+  if (clientId !== chatgptClientId) {
+    return createJsonResponse(
+      { error: 'invalid_client', error_description: 'Invalid client_id' },
+      401
+    );
+  }
+
+  // client_secret이 설정된 경우에만 검증
+  if (chatgptClientSecret && clientSecret !== chatgptClientSecret) {
+    return createJsonResponse(
+      { error: 'invalid_client', error_description: 'Invalid client_secret' },
+      401
+    );
+  }
+
+  // Grant type 처리
+  if (grantType === 'authorization_code') {
+    return handleAuthorizationCodeGrant(code, redirectUri);
+  } else if (grantType === 'refresh_token') {
+    return handleRefreshTokenGrant(refreshToken);
+  } else {
+    return createJsonResponse(
+      { error: 'unsupported_grant_type', error_description: 'Only authorization_code and refresh_token are supported' },
+      400
+    );
+  }
+}
+
+/**
+ * Authorization Code Grant 처리
+ */
+async function handleAuthorizationCodeGrant(
+  code: string | null,
+  _redirectUri: string | null
+): Promise<Response> {
+  if (!code) {
+    return createJsonResponse(
+      { error: 'invalid_request', error_description: 'code is required' },
+      400
+    );
+  }
+
+  // 만료된 코드 정리
+  cleanupExpiredCodes();
+
+  // 코드 조회
+  const authData = authCodeStore.get(code);
+  if (!authData) {
+    return createJsonResponse(
+      { error: 'invalid_grant', error_description: 'Invalid or expired authorization code' },
+      400
+    );
+  }
+
+  // 코드 사용 후 삭제 (일회용)
+  authCodeStore.delete(code);
+
+  // 만료 확인
+  if (Date.now() > authData.expiresAt) {
+    return createJsonResponse(
+      { error: 'invalid_grant', error_description: 'Authorization code has expired' },
+      400
+    );
+  }
+
+  // MCP 토큰 생성
+  const expiresIn = 3600; // 1시간
+  const mcpToken = await generateMcpToken({
+    userId: authData.userId,
+    email: authData.email,
+    supabaseAccessToken: authData.supabaseAccessToken,
+    supabaseRefreshToken: authData.supabaseRefreshToken,
+    expiresAt: Math.floor(Date.now() / 1000) + expiresIn,
+  });
+
+  const response: OAuthTokenResponse = {
+    access_token: mcpToken,
+    token_type: 'Bearer',
+    expires_in: expiresIn,
+    refresh_token: authData.supabaseRefreshToken,
+    scope: authData.scope || 'todos:read todos:write',
+  };
+
+  return createJsonResponse(response);
+}
+
+/**
+ * Refresh Token Grant 처리
+ */
+async function handleRefreshTokenGrant(refreshToken: string | null): Promise<Response> {
+  if (!refreshToken) {
+    return createJsonResponse(
+      { error: 'invalid_request', error_description: 'refresh_token is required' },
+      400
+    );
+  }
+
+  // Supabase 세션 갱신
+  const newSession = await refreshSupabaseSession(refreshToken);
+  if (!newSession) {
+    return createJsonResponse(
+      { error: 'invalid_grant', error_description: 'Invalid or expired refresh token' },
+      400
+    );
+  }
+
+  // 새 MCP 토큰 생성
+  // refreshToken에서 userId를 추출할 수 없으므로 서비스 역할로 사용자 조회
+  const { supabaseUrl, supabaseAnonKey } = getEnvVars();
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: { Authorization: `Bearer ${newSession.access_token}` },
+    },
+  });
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return createJsonResponse(
+      { error: 'invalid_grant', error_description: 'Failed to retrieve user' },
+      400
+    );
+  }
+
+  const expiresIn = 3600;
+  const mcpToken = await generateMcpToken({
+    userId: userData.user.id,
+    email: userData.user.email || '',
+    supabaseAccessToken: newSession.access_token,
+    supabaseRefreshToken: newSession.refresh_token,
+    expiresAt: Math.floor(Date.now() / 1000) + expiresIn,
+  });
+
+  const response: OAuthTokenResponse = {
+    access_token: mcpToken,
+    token_type: 'Bearer',
+    expires_in: expiresIn,
+    refresh_token: newSession.refresh_token,
+    scope: 'todos:read todos:write',
+  };
+
+  return createJsonResponse(response);
+}
+
+/**
+ * OAuth 콜백에서 ChatGPT 플로우 감지 및 처리
+ */
+export function handleChatGPTOAuthCallback(
+  userId: string,
+  email: string,
+  supabaseAccessToken: string,
+  supabaseRefreshToken: string,
+  oauthData: { state: string; redirectUri: string; clientId: string; scope?: string }
+): Response {
+  // Authorization code 생성
+  const authCode = crypto.randomUUID();
+
+  // 코드 저장 (10분 만료)
+  authCodeStore.set(authCode, {
+    userId,
+    email,
+    supabaseAccessToken,
+    supabaseRefreshToken,
+    redirectUri: oauthData.redirectUri,
+    scope: oauthData.scope || 'todos:read todos:write',
+    expiresAt: Date.now() + 10 * 60 * 1000,
+  });
+
+  // ChatGPT redirect_uri로 code와 state 전달
+  const redirectUrl = new URL(oauthData.redirectUri);
+  redirectUrl.searchParams.set('code', authCode);
+  redirectUrl.searchParams.set('state', oauthData.state);
+
+  // 쿠키 삭제 및 리다이렉트
+  return new Response(null, {
+    status: 302,
+    headers: {
+      'Location': redirectUrl.toString(),
+      'Set-Cookie': [
+        'mcp_code_verifier=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0',
+        'mcp_oauth_data=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0',
+      ].join(', '),
+      ...CORS_HEADERS,
+    },
+  });
 }

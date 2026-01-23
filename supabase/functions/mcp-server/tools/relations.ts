@@ -344,12 +344,10 @@ export async function createPlanFromTemplate(
   // 템플릿 정의
   const templates: Record<string, {
     area?: { title: string; status: 'area' | 'resource' };
-    goal?: { title: string };
     projects: { title: string; todos: { title: string }[] }[];
   }> = {
     health: {
       area: { title: '건강 관리', status: 'area' },
-      goal: { title: `${dateContext.year}년 건강 목표` },
       projects: [
         {
           title: '규칙적인 운동 습관',
@@ -370,7 +368,6 @@ export async function createPlanFromTemplate(
     },
     finance: {
       area: { title: '재무 관리', status: 'area' },
-      goal: { title: `${dateContext.year}년 재무 목표` },
       projects: [
         {
           title: '월간 예산 관리',
@@ -391,7 +388,6 @@ export async function createPlanFromTemplate(
     },
     self_development: {
       area: { title: '자기 개발', status: 'area' },
-      goal: { title: `${dateContext.year}년 성장 목표` },
       projects: [
         {
           title: '독서 습관',
@@ -412,7 +408,6 @@ export async function createPlanFromTemplate(
     },
     family: {
       area: { title: '가족/관계', status: 'area' },
-      goal: { title: `${dateContext.year}년 관계 목표` },
       projects: [
         {
           title: '가족 시간',
@@ -474,38 +469,7 @@ export async function createPlanFromTemplate(
       createdItems.push(`책임: ${area.title}`);
     }
 
-    // 2. Goal 생성
-    let goalId: string | null = null;
-    if (template.goal) {
-      const { data: maxOrder } = await supabase
-        .from('goals')
-        .select('order_index')
-        .eq('user_id', userId)
-        .order('order_index', { ascending: false })
-        .limit(1)
-        .single();
-
-      const { data: goal, error } = await supabase
-        .from('goals')
-        .insert({
-          user_id: userId,
-          title: customTitle ? `${customTitle} ${template.goal.title}` : template.goal.title,
-          year_goal: dateContext.year,
-          quarter_goal: dateContext.quarter,
-          area_resource_id: areaId,
-          status: 'not_started',
-          color: customColor,
-          order_index: (maxOrder?.order_index ?? -1) + 1,
-        })
-        .select()
-        .single();
-
-      if (error) throw new Error(`Goal 생성 실패: ${error.message}`);
-      goalId = goal.id;
-      createdItems.push(`목표: ${goal.title}`);
-    }
-
-    // 3. Projects 및 Todos 생성
+    // 2. Projects 및 Todos 생성
     for (const projectTemplate of template.projects) {
       const { data: maxProjectOrder } = await supabase
         .from('projects')
@@ -520,9 +484,8 @@ export async function createPlanFromTemplate(
         .insert({
           user_id: userId,
           title: customTitle ? `${customTitle} ${projectTemplate.title}` : projectTemplate.title,
-          goal_id: goalId,
           area_resource_id: areaId,
-          status: 'not_started',
+          status: 'active',
           color: customColor,
           start_date: resolvedStartDate,
           order_index: (maxProjectOrder?.order_index ?? -1) + 1,
@@ -663,7 +626,7 @@ export async function searchItems(
   input: SearchItemsInput,
   _dateContext: DateContext
 ): Promise<McpToolCallResult> {
-  const { query, types = ['todos', 'projects', 'goals'], limit = 10 } = input;
+  const { query, types = ['todos', 'projects'], limit = 10 } = input;
 
   if (!query) {
     return createErrorResult('query는 필수입니다.');
@@ -703,24 +666,6 @@ export async function searchItems(
       results.push('📁 프로젝트:');
       projects.forEach((p) => {
         results.push(`  ${getStatusEmoji(p.status)} ${p.title}`);
-      });
-    }
-  }
-
-  // Goals 검색
-  if (types.includes('goals')) {
-    const { data: goals } = await supabase
-      .from('goals')
-      .select('id, title, status, year_goal, quarter_goal')
-      .eq('user_id', userId)
-      .ilike('title', searchPattern)
-      .limit(limit);
-
-    if (goals && goals.length > 0) {
-      results.push('🎯 목표:');
-      goals.forEach((g) => {
-        const period = g.year_goal ? `[${g.year_goal}${g.quarter_goal ? ` ${g.quarter_goal}` : ''}]` : '';
-        results.push(`  ${getStatusEmoji(g.status)} ${g.title} ${period}`);
       });
     }
   }
@@ -771,23 +716,6 @@ export async function getInboxItems(
     results.push(`📥 정리되지 않은 할일 (${orphanTodos.length}개):`);
     orphanTodos.forEach((t: any, i: number) => {
       results.push(`  ${i + 1}. ${t.title} (${formatDateKorean(t.start_time)})`);
-    });
-  }
-
-  // 목표에 연결되지 않은 프로젝트
-  const { data: unlinkedProjects } = await supabase
-    .from('projects')
-    .select('id, title, status')
-    .eq('user_id', userId)
-    .is('goal_id', null)
-    .neq('status', 'completed')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (unlinkedProjects && unlinkedProjects.length > 0) {
-    results.push(`\n📁 목표 없는 프로젝트 (${unlinkedProjects.length}개):`);
-    unlinkedProjects.forEach((p, i) => {
-      results.push(`  ${i + 1}. ${getStatusEmoji(p.status)} ${p.title}`);
     });
   }
 
@@ -949,24 +877,9 @@ export async function getStatistics(
   const allProjects = projects || [];
   const projectStats = {
     total: allProjects.length,
-    not_started: allProjects.filter((p) => p.status === 'not_started').length,
-    in_progress: allProjects.filter((p) => p.status === 'in_progress').length,
+    active: allProjects.filter((p) => p.status === 'active').length,
     completed: allProjects.filter((p) => p.status === 'completed').length,
-  };
-
-  // 목표 통계
-  const { data: goals } = await supabase
-    .from('goals')
-    .select('id, status, year_goal')
-    .eq('user_id', userId)
-    .eq('year_goal', dateContext.year);
-
-  const allGoals = goals || [];
-  const goalStats = {
-    total: allGoals.length,
-    not_started: allGoals.filter((g) => g.status === 'not_started').length,
-    in_progress: allGoals.filter((g) => g.status === 'in_progress').length,
-    completed: allGoals.filter((g) => g.status === 'completed').length,
+    abandoned: allProjects.filter((p) => p.status === 'abandoned').length,
   };
 
   const periodLabel = {
@@ -986,15 +899,9 @@ export async function getStatistics(
 
 📁 프로젝트
   총 개수: ${projectStats.total}
-  시작 전: ${projectStats.not_started}
-  진행 중: ${projectStats.in_progress}
+  진행 중: ${projectStats.active}
   완료: ${projectStats.completed}
-
-🎯 목표 (${dateContext.year}년)
-  총 개수: ${goalStats.total}
-  시작 전: ${goalStats.not_started}
-  진행 중: ${goalStats.in_progress}
-  완료: ${goalStats.completed}
+  포기: ${projectStats.abandoned}
 `.trim();
 
   return {

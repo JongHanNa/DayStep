@@ -8,16 +8,24 @@
  * - POST /mcp-server - JSON-RPC 2.0 MCP 요청 처리
  * - GET /mcp-server/auth/init - OAuth 인증 초기화
  * - GET /mcp-server/auth/callback - OAuth 콜백 처리
+ *
+ * ChatGPT Actions REST API:
+ * - GET /mcp-server/oauth/authorize - OAuth 2.0 인증 시작
+ * - POST /mcp-server/oauth/token - 토큰 교환
+ * - GET /mcp-server/openapi.json - OpenAPI 스키마
+ * - GET/POST/PATCH/DELETE /mcp-server/api/v1/* - REST API
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0';
 import type { JsonRpcRequest, JsonRpcResponse, McpToolCallResult } from './types/mcp.ts';
 import { getCurrentDateContext } from './utils/date.ts';
 import { createCorsResponse, createHttpErrorResponse, createJsonResponse, CORS_HEADERS } from './utils/response.ts';
-import { handleAuthInit, handleAuthCallback, authenticateRequest } from './handlers/auth.ts';
-import { handleToolsList, handleToolsCall, MCP_TOOLS } from './handlers/tools.ts';
+import { handleAuthInit, handleAuthCallback, authenticateRequest, handleOAuthAuthorize, handleOAuthToken } from './handlers/auth.ts';
+import { handleToolsList, handleToolsCall } from './handlers/tools.ts';
 import { handleResourcesList, handleResourcesRead } from './handlers/resources.ts';
 import { handlePromptsList, handlePromptsGet } from './handlers/prompts.ts';
+import { handleRestApi } from './handlers/rest-api.ts';
+import { getOpenApiSchema } from './openapi/schema.ts';
 
 // ============================================================================
 // Rate Limiting (간단한 인메모리 구현)
@@ -102,6 +110,73 @@ Deno.serve(async (req: Request) => {
   // OAuth 콜백
   if (path.endsWith('/auth/callback') && req.method === 'GET') {
     return handleAuthCallback(req);
+  }
+
+  // ============================================================================
+  // ChatGPT Actions OAuth 2.0 엔드포인트
+  // ============================================================================
+
+  // OAuth 인증 시작 (ChatGPT가 사용자를 보내는 URL)
+  if (path.endsWith('/oauth/authorize') && req.method === 'GET') {
+    const clientIP = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(`oauth:${clientIP}`, 10, 60000)) {
+      return createHttpErrorResponse(429, -32000, '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+    }
+    return handleOAuthAuthorize(req);
+  }
+
+  // OAuth 토큰 교환
+  if (path.endsWith('/oauth/token') && req.method === 'POST') {
+    const clientIP = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(`token:${clientIP}`, 20, 60000)) {
+      return createHttpErrorResponse(429, -32000, '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+    }
+    return handleOAuthToken(req);
+  }
+
+  // ============================================================================
+  // OpenAPI 스키마 엔드포인트
+  // ============================================================================
+
+  if (path.endsWith('/openapi.json') && req.method === 'GET') {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const baseUrl = `${supabaseUrl}/functions/v1/mcp-server`;
+    return createJsonResponse(getOpenApiSchema(baseUrl));
+  }
+
+  // ============================================================================
+  // ChatGPT Actions REST API 엔드포인트
+  // ============================================================================
+
+  if (path.includes('/api/v1/')) {
+    // 인증 확인
+    const authResult = await authenticateRequest(req);
+    if (!authResult.success || !authResult.userId) {
+      return createHttpErrorResponse(401, -32001, authResult.error || '인증 필요');
+    }
+
+    const userId = authResult.userId;
+
+    // Rate limiting: 분당 60회
+    if (!checkRateLimit(`api:${userId}`, 60, 60000)) {
+      return createHttpErrorResponse(429, -32000, '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+    }
+
+    // Supabase 클라이언트 생성
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return createHttpErrorResponse(500, -32000, '서버 구성 오류');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // API 경로 추출
+    const apiPathMatch = path.match(/\/api\/v1\/(.+)/);
+    const apiPath = apiPathMatch ? apiPathMatch[1] : '';
+
+    return handleRestApi(req, supabase, userId, apiPath);
   }
 
   // ============================================================================

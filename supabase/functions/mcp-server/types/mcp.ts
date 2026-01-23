@@ -204,3 +204,177 @@ export interface McpTokenPayload {
   exp: number;
   iat: number;
 }
+
+// ============================================================================
+// ChatGPT Actions OAuth 2.0 타입
+// ============================================================================
+
+/**
+ * OAuth 2.0 Token Response
+ */
+export interface OAuthTokenResponse {
+  access_token: string;
+  token_type: 'Bearer';
+  expires_in: number;
+  refresh_token?: string;
+  scope?: string;
+}
+
+/**
+ * Authorization Code 임시 저장 데이터
+ */
+export interface AuthCodeData {
+  userId: string;
+  email: string;
+  supabaseAccessToken: string;
+  supabaseRefreshToken: string;
+  redirectUri: string;
+  scope: string;
+  expiresAt: number;
+}
+
+// ============================================================================
+// REST API 타입
+// ============================================================================
+
+/**
+ * REST API 목록 응답
+ */
+export interface RestListResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+}
+
+/**
+ * REST API 에러 응답
+ */
+export interface RestErrorResponse {
+  error: {
+    code: number;
+    message: string;
+    details?: unknown;
+  };
+}
+
+/**
+ * Todo REST API 타입
+ */
+export interface TodoResponse {
+  id: string;
+  title: string;
+  completed: boolean;
+  schedule_type: string;
+  start_time: string | null;
+  end_time: string | null;
+  priority: string;
+  project_id: string | null;
+  recurrence_pattern: string;
+  is_today_highlight: boolean;
+  icon: string | null;
+  color: string;
+  anytime_duration: number | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Todo 생성 입력
+ */
+export interface CreateTodoRequest {
+  title: string;
+  schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none';
+  start_time?: string;
+  end_time?: string;
+  priority?: 'low' | 'medium' | 'high';
+  project_id?: string;
+  is_today_highlight?: boolean;
+  icon?: string;
+  color?: string;
+  anytime_duration?: number;
+}
+
+/**
+ * Todo 수정 입력
+ */
+export interface UpdateTodoRequest {
+  title?: string;
+  schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none';
+  start_time?: string | null;
+  end_time?: string | null;
+  priority?: 'low' | 'medium' | 'high';
+  completed?: boolean;
+  project_id?: string | null;
+  is_today_highlight?: boolean;
+  icon?: string;
+  color?: string;
+  anytime_duration?: number;
+}
+
+// ============================================================================
+// Project REST API 타입
+// ============================================================================
+
+/**
+ * Project 응답 타입
+ */
+export interface ProjectResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  icon: string | null;
+  color: string;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Project 생성 입력
+ */
+export interface CreateProjectRequest {
+  title: string;
+  description?: string;
+  status?: 'active' | 'completed' | 'abandoned';
+  icon?: string;
+  color?: string;
+}
+
+/**
+ * Project 수정 입력
+ */
+export interface UpdateProjectRequest {
+  title?: string;
+  description?: string | null;
+  status?: 'active' | 'completed' | 'abandoned';
+  icon?: string;
+  color?: string;
+}
+
+/**
+ * Project+Todos 일괄 생성 입력
+ */
+export interface CreateProjectWithTodosRequest {
+  project: {
+    title: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+  };
+  todos: Array<{
+    title: string;
+    start_time?: string;
+    schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none';
+    priority?: 'low' | 'medium' | 'high';
+    anytime_duration?: number;
+    subtasks?: Array<{
+      title: string;
+      anytime_duration?: number;
+    }>;
+  }>;
+}

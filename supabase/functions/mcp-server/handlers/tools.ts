@@ -16,15 +16,6 @@ import { getCurrentDateContext } from '../utils/date.ts';
 
 // Tool 구현 임포트
 import {
-  createGoal,
-  listGoals,
-  getGoal,
-  updateGoal,
-  deleteGoal,
-  setGoalStatus,
-} from '../tools/goals.ts';
-
-import {
   createProject,
   listProjects,
   getProject,
@@ -63,98 +54,6 @@ import {
 // ============================================================================
 
 const TOOLS: McpTool[] = [
-  // ========== Goals ==========
-  {
-    name: 'create_goal',
-    description: '새로운 목표를 생성합니다. year_goal과 quarter_goal로 연간/분기 목표를 설정할 수 있습니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: '목표 제목' },
-        year_goal: { type: ['number', 'string'], description: '연도 (예: 2025) 또는 "current"로 현재 연도' },
-        quarter_goal: { type: 'string', enum: ['Q1', 'Q2', 'Q3', 'Q4', 'current'], description: '분기 또는 "current"로 현재 분기' },
-        area_resource_id: { type: 'string', description: '연결할 책임/자원 ID' },
-        start_date: { type: 'string', description: '시작일 (YYYY-MM-DD 또는 today, tomorrow, next_week 등)' },
-        end_date: { type: 'string', description: '종료일' },
-        status: { type: 'string', enum: ['not_started', 'in_progress', 'paused', 'completed'], description: '상태' },
-        icon: { type: 'string', description: '아이콘' },
-        color: { type: 'string', description: '색상' },
-      },
-      required: ['title'],
-    },
-  },
-  {
-    name: 'list_goals',
-    description: '목표 목록을 조회합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        status: { type: 'string', enum: ['not_started', 'in_progress', 'paused', 'completed'], description: '상태 필터' },
-        year_goal: { type: ['number', 'string'], description: '연도 필터 또는 "current"' },
-        quarter_goal: { type: 'string', enum: ['Q1', 'Q2', 'Q3', 'Q4', 'current'], description: '분기 필터' },
-        area_resource_id: { type: 'string', description: '책임/자원 ID 필터' },
-        limit: { type: 'number', description: '최대 개수' },
-        offset: { type: 'number', description: '시작 위치' },
-      },
-    },
-  },
-  {
-    name: 'get_goal',
-    description: '특정 목표의 상세 정보를 조회합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-        include_projects: { type: 'boolean', description: '연결된 프로젝트 포함 여부' },
-      },
-      required: ['id'],
-    },
-  },
-  {
-    name: 'update_goal',
-    description: '목표를 수정합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-        title: { type: 'string', description: '제목' },
-        year_goal: { type: ['number', 'null'], description: '연도 (null로 해제)' },
-        quarter_goal: { type: ['string', 'null'], enum: ['Q1', 'Q2', 'Q3', 'Q4', null], description: '분기' },
-        area_resource_id: { type: ['string', 'null'], description: '책임/자원 ID' },
-        start_date: { type: ['string', 'null'], description: '시작일' },
-        end_date: { type: ['string', 'null'], description: '종료일' },
-        status: { type: 'string', enum: ['not_started', 'in_progress', 'paused', 'completed'], description: '상태' },
-        icon: { type: 'string', description: '아이콘' },
-        color: { type: 'string', description: '색상' },
-      },
-      required: ['id'],
-    },
-  },
-  {
-    name: 'delete_goal',
-    description: '목표를 삭제합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-        force: { type: 'boolean', description: '연결된 프로젝트가 있어도 강제 삭제' },
-      },
-      required: ['id'],
-    },
-  },
-  {
-    name: 'set_goal_status',
-    description: '목표의 상태를 변경합니다.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: 'ID' },
-        status: { type: 'string', enum: ['not_started', 'in_progress', 'paused', 'completed'], description: '새 상태' },
-      },
-      required: ['id', 'status'],
-    },
-  },
-
   // ========== Projects (심플 버전 - AI 플래닝용) ==========
   {
     name: 'create_project',
@@ -574,12 +473,12 @@ const TOOLS: McpTool[] = [
   },
   {
     name: 'search_items',
-    description: '책임, 자원, 목표, 프로젝트, 할일을 통합 검색합니다.',
+    description: '책임, 자원, 프로젝트, 할일을 통합 검색합니다.',
     inputSchema: {
       type: 'object',
       properties: {
         query: { type: 'string', description: '검색어' },
-        types: { type: 'array', items: { type: 'string', enum: ['area', 'resource', 'goal', 'project', 'todo'] }, description: '검색 대상 타입' },
+        types: { type: 'array', items: { type: 'string', enum: ['area', 'resource', 'project', 'todo'] }, description: '검색 대상 타입' },
         limit: { type: 'number', description: '최대 결과 수' },
       },
       required: ['query'],
@@ -587,11 +486,10 @@ const TOOLS: McpTool[] = [
   },
   {
     name: 'get_inbox_items',
-    description: '인박스 항목(연결되지 않은 목표, 프로젝트, 할일)을 조회합니다.',
+    description: '인박스 항목(프로젝트에 연결되지 않은 할일)을 조회합니다.',
     inputSchema: {
       type: 'object',
       properties: {
-        types: { type: 'array', items: { type: 'string', enum: ['goal', 'project', 'todo'] }, description: '조회할 타입' },
         limit: { type: 'number', description: '최대 개수' },
       },
     },
@@ -644,20 +542,6 @@ export async function handleToolsCall(
 
   try {
     switch (name) {
-      // Goals
-      case 'create_goal':
-        return await createGoal(supabase, userId, args, dateContext);
-      case 'list_goals':
-        return await listGoals(supabase, userId, args, dateContext);
-      case 'get_goal':
-        return await getGoal(supabase, userId, args, dateContext);
-      case 'update_goal':
-        return await updateGoal(supabase, userId, args, dateContext);
-      case 'delete_goal':
-        return await deleteGoal(supabase, userId, args, dateContext);
-      case 'set_goal_status':
-        return await setGoalStatus(supabase, userId, args, dateContext);
-
       // Projects (심플 버전 - AI 플래닝용)
       case 'create_project':
         return await createProject(supabase, userId, args, dateContext);
