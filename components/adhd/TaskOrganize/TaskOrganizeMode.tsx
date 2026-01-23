@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Clock, Inbox, BarChart3, Network, Sun, Moon, Lock } from 'lucide-react';
+import { ArrowLeft, Clock, Inbox, BarChart3, Network, Sun, Moon, Lock, HelpCircle, Brain } from 'lucide-react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -26,6 +26,30 @@ interface TaskOrganizeModeProps {
   onExit: () => void;
 }
 
+// 탭별 도움말 콘텐츠
+const TAB_HELP_CONTENT: Record<TabType, { title: string; difficulty: string; help: string }> = {
+  timeline: {
+    title: '타임라인',
+    difficulty: '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다. 성취감 인식이 부족해요.',
+    help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
+  },
+  organize: {
+    title: '정리',
+    difficulty: '조직화/우선순위 설정 결함. 할일이 쌓이면 어디서 시작할지 막막합니다.',
+    help: '미분류 할일만 모아서 표시 → 정리해야 할 것만 집중, 인지 부하 감소!',
+  },
+  stats: {
+    title: '통계',
+    difficulty: '피드백 민감도 저하. 자신의 패턴 인식이 어렵고, 같은 실수를 반복하게 됩니다.',
+    help: '완료율, 시간대별 패턴 분석 → 데이터 기반 자기 이해, 최적 루틴 발견!',
+  },
+  graph: {
+    title: '그래프',
+    difficulty: '전체 구조 파악의 어려움. 할일들 사이의 관계를 놓치기 쉽습니다.',
+    help: '할일/프로젝트/목표 관계 시각화 → 전체 그림 파악, 우선순위 결정 도움!',
+  },
+};
+
 /**
  * 할일 정리 모드 - ADHD 친화적 할일 관리
  *
@@ -38,6 +62,7 @@ interface TaskOrganizeModeProps {
 export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
   const [activeTab, setActiveTab] = useState<TabType>('timeline');
   const [showPaywall, setShowPaywall] = useState(false);
+  const [helpModalTab, setHelpModalTab] = useState<TabType | null>(null);
   const { user } = useAuth();
   const userId = user?.id;
   const { resolvedTheme, setTheme } = useTheme();
@@ -101,19 +126,28 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
           {TABS.map((tab) => {
             const isProLocked = tab.id === 'stats' && !hasActiveSubscription;
             return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-primary-content'
-                    : 'bg-base-200 text-base-content hover:bg-base-300'
-                }`}
-              >
-                {tab.icon}
-                <span className="text-sm font-medium">{tab.label}</span>
-                {isProLocked && <Lock className="w-3 h-3 ml-0.5 opacity-60" />}
-              </button>
+              <div key={tab.id} className="flex items-center gap-0.5">
+                {/* 도움말 버튼 - 버튼 중첩 방지를 위해 형제 요소로 분리 */}
+                <button
+                  onClick={() => setHelpModalTab(tab.id)}
+                  className="p-1 rounded-full hover:bg-base-300 transition-colors"
+                >
+                  <HelpCircle className="w-4 h-4 text-base-content/60" />
+                </button>
+                {/* 탭 버튼 */}
+                <button
+                  onClick={() => handleTabClick(tab.id)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-primary text-primary-content'
+                      : 'bg-base-200 text-base-content hover:bg-base-300'
+                  }`}
+                >
+                  {tab.icon}
+                  <span className="text-sm font-medium">{tab.label}</span>
+                  {isProLocked && <Lock className="w-3 h-3 ml-0.5 opacity-60" />}
+                </button>
+              </div>
             );
           })}
         </div>
@@ -133,6 +167,41 @@ export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
           title="통계 & 인사이트"
           description="생산성 통계와 패턴 분석을 확인하세요"
         />
+      )}
+
+      {/* 탭별 도움말 모달 */}
+      {helpModalTab && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold">{TAB_HELP_CONTENT[helpModalTab].title}</h3>
+            </div>
+
+            <div className="space-y-3 text-sm text-base-content/80">
+              <p className="font-medium text-error/80">
+                😵 ADHD 특성: {TAB_HELP_CONTENT[helpModalTab].difficulty}
+              </p>
+              <p>
+                ✨ 이 기능은: {TAB_HELP_CONTENT[helpModalTab].help}
+              </p>
+            </div>
+
+            <div className="modal-action">
+              <button
+                onClick={() => setHelpModalTab(null)}
+                className="btn btn-primary rounded-full"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setHelpModalTab(null)}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );

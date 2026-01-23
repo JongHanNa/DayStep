@@ -33,6 +33,8 @@ import {
   CheckCircle2,
   Pin,
   Inbox,
+  HelpCircle,
+  Brain,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -68,6 +70,30 @@ const FUEL_TABS: { id: FuelTabType; label: string; icon: React.ReactNode }[] = [
   { id: 'fuel', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
 ];
+
+// 탭별 도움말 콘텐츠
+const FUEL_TAB_HELP: Record<FuelTabType, { title: string; difficulty: string; help: string }> = {
+  timeline: {
+    title: '타임라인',
+    difficulty: '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다.',
+    help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
+  },
+  execute: {
+    title: '실행',
+    difficulty: '과제 시작의 어려움(Task Initiation). 해야 할 건 알지만 시작 버튼이 안 눌려요.',
+    help: '타이머 + 방해차단 + 원동력 상기 → 시작의 마찰을 줄여 첫 발을 내딛도록 도움!',
+  },
+  fuel: {
+    title: '원동력',
+    difficulty: '동기 유지 결함(Motivation Deficit). 중요한 건 알지만 하고 싶은 마음이 안 생겨요.',
+    help: '왜 해야 하는지, 완료 후 기분을 미리 적어두고 → 실행 전 다시 보며 동기 충전!',
+  },
+  organize: {
+    title: '정리',
+    difficulty: '조직화 결함. 머릿속이 복잡하고 할일이 뒤엉켜 어디서 시작할지 막막해요.',
+    help: '미분류 할일만 모아서 표시 → 정리해야 할 것만 집중, 인지 부하 감소!',
+  },
+};
 
 interface FuelModeProps {
   onExit: () => void;
@@ -176,6 +202,9 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   const [editContent, setEditContent] = useState('');
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  // 도움말 모달 상태
+  const [helpModalTab, setHelpModalTab] = useState<FuelTabType | null>(null);
 
   // 원동력 모달 상태
   const [showFuelInputModal, setShowFuelInputModal] = useState(false); // 원동력 입력 모달
@@ -1017,18 +1046,29 @@ export default function FuelMode({ onExit }: FuelModeProps) {
         {/* 탭 네비게이션 */}
         <div className="flex overflow-x-auto px-2 py-2 gap-1 scrollbar-hide">
           {FUEL_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-primary text-primary-content'
-                  : 'bg-base-200 text-base-content hover:bg-base-300'
-              }`}
-            >
-              {tab.icon}
-              <span className="text-sm font-medium">{tab.label}</span>
-            </button>
+            <div key={tab.id} className="flex items-center gap-0.5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setHelpModalTab(tab.id);
+                }}
+                className="p-1.5 rounded-full text-base-content/50 hover:text-primary hover:bg-base-200 transition-colors"
+                aria-label={`${tab.label} 도움말`}
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleTabClick(tab.id)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-content'
+                    : 'bg-base-200 text-base-content hover:bg-base-300'
+                }`}
+              >
+                {tab.icon}
+                <span className="text-sm font-medium">{tab.label}</span>
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -2323,6 +2363,41 @@ export default function FuelMode({ onExit }: FuelModeProps) {
           </div>
           <form method="dialog" className="modal-backdrop">
             <button onClick={handleCloseFuelDetailModal}>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* 탭 도움말 모달 */}
+      {helpModalTab && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold">{FUEL_TAB_HELP[helpModalTab].title}</h3>
+            </div>
+
+            <div className="space-y-3 text-sm text-base-content/80">
+              <p className="font-medium text-error/80">
+                😵 ADHD 특성: {FUEL_TAB_HELP[helpModalTab].difficulty}
+              </p>
+              <p>
+                ✨ 이 기능은: {FUEL_TAB_HELP[helpModalTab].help}
+              </p>
+            </div>
+
+            <div className="modal-action">
+              <button
+                onClick={() => setHelpModalTab(null)}
+                className="btn btn-primary rounded-full"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setHelpModalTab(null)}>close</button>
           </form>
         </dialog>
       )}
