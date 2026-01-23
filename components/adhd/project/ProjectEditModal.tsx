@@ -307,10 +307,15 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
 
   // 할일 날짜 포맷
   const formatTodoDate = (todo: Todo): string => {
-    if (todo.schedule_type === 'anytime') return '언제든지';
-    if (!todo.start_time) return '';
+    // start_time이 없는 경우
+    if (!todo.start_time) {
+      return todo.schedule_type === 'anytime' ? '언제든지' : '';
+    }
 
     const date = format(new Date(todo.start_time), 'M/d', { locale: ko });
+
+    // anytime이어도 날짜가 있으면 함께 표시
+    if (todo.schedule_type === 'anytime') return `${date} · 언제든지`;
     if (todo.schedule_type === 'all_day') return date;
 
     const time = format(new Date(todo.start_time), 'HH:mm');
