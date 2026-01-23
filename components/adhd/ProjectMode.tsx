@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles, PenLine } from 'lucide-react';
+import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles, PenLine, HelpCircle } from 'lucide-react';
 import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -48,6 +48,7 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
   const filteredProjects = useFilteredProjects();
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // 데이터 로드
   useEffect(() => {
@@ -158,17 +159,30 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
       <header className="sticky top-0 z-10 bg-base-100 border-b border-base-200">
         {/* 메인 탭: 프로젝트 목록 vs 가이드 */}
         <div className="flex gap-2 px-4 pt-3 pb-2 border-b border-base-200">
-          <button
-            onClick={() => setCurrentTab('projects')}
-            className={`flex-1 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-              currentTab === 'projects'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-base-content/60 hover:text-base-content'
-            }`}
-          >
-            <Sparkles className="w-4 h-4" />
-            AI 계획
-          </button>
+          {/* AI 계획 탭 영역 - 도움말 버튼과 탭 버튼을 형제로 분리 */}
+          <div className={`flex-1 flex items-center justify-center gap-1 ${
+            currentTab === 'projects'
+              ? 'border-b-2 border-primary'
+              : ''
+          }`}>
+            <button
+              onClick={() => setShowHelpModal(true)}
+              className="p-1 rounded-full hover:bg-base-300 transition-colors"
+            >
+              <HelpCircle className="w-4 h-4 text-base-content/60" />
+            </button>
+            <button
+              onClick={() => setCurrentTab('projects')}
+              className={`py-2 text-sm font-medium flex items-center gap-1 transition-colors ${
+                currentTab === 'projects'
+                  ? 'text-primary'
+                  : 'text-base-content/60 hover:text-base-content'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              AI 계획
+            </button>
+          </div>
           <button
             onClick={() => setCurrentTab('guide')}
             className={`flex-1 py-2 text-sm font-medium rounded-t-lg transition-colors flex items-center justify-center gap-1 ${
@@ -207,43 +221,6 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
           <MCPGuideContent />
         ) : (
           <>
-            {/* AI 연동 권장 안내 (접는 구조) */}
-            <div className="collapse collapse-arrow bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 mb-4 rounded-xl">
-              <input type="checkbox" defaultChecked />
-              <div className="collapse-title font-semibold flex items-center gap-2 pr-10">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-primary" />
-                </div>
-                <span>AI와 함께 계획하면 더 쉬워요</span>
-                <Sparkles className="w-4 h-4 text-warning" />
-              </div>
-              <div className="collapse-content">
-                <div className="pt-2">
-                  <p className="text-sm text-base-content/70 leading-relaxed">
-                    성인 ADHD의 <span className="font-medium text-primary">집행기능(executive function)</span> 특성상,{' '}
-                    중요한 일도 <span className="font-medium">{'"어디서부터?"'}</span>가 막연하면 미루게 됩니다.
-                  </p>
-                  <p className="text-sm text-base-content/70 mt-2 leading-relaxed">
-                    DayStep MCP는 막막한 계획을{' '}
-                    <span className="font-medium text-primary">{'"폴더 열기 → 파일 1개 만들기 → ..."'}</span>{' '}
-                    처럼 <span className="font-medium text-accent">{'"뇌에 친절한 단위"'}</span>로 쪼개줍니다.
-                  </p>
-                  <p className="text-sm text-base-content/60 mt-2">
-                    <span className="font-medium">작업 시작이 90%</span> — 시작만 하면 나머지는 따라와요!
-                  </p>
-                  <div className="mt-4">
-                    <button
-                      onClick={() => setCurrentTab('guide')}
-                      className="btn btn-primary btn-sm rounded-full gap-1"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      AI 연동하기
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {loading ? (
               <div className="flex justify-center py-8">
                 <div className="loading loading-spinner loading-md" />
@@ -463,6 +440,49 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
         <ProjectEditModal
           onClose={() => setIsCreateModalOpen(false)}
         />
+      )}
+
+      {/* AI 계획 도움말 모달 */}
+      {showHelpModal && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold">AI와 함께 계획하면 더 쉬워요</h3>
+              <Sparkles className="w-4 h-4 text-warning" />
+            </div>
+
+            <div className="space-y-3 text-sm text-base-content/80">
+              <p className="font-medium text-primary">
+                중요하고 긴급한데 시작이 어렵고 막연한 것들을 여기서 관리하세요.
+              </p>
+              <p>
+                성인 ADHD의 <span className="text-primary">집행기능(executive function)</span> 특성상,
+                중요한 일도 {'"어디서부터?"'}가 막연하면 미루게 됩니다.
+              </p>
+              <p>
+                DayStep MCP는 막막한 계획을 {'"'}
+                <span className="text-primary">폴더 열기 → 파일 1개 만들기 → ...</span>
+                {'"'}처럼 {'"'}<span className="text-warning">뇌에 친절한 단위</span>{'"'}로 쪼개줍니다.
+              </p>
+              <p>작업 시작이 90% — 시작만 하면 나머지는 따라와요!</p>
+            </div>
+
+            <div className="modal-action">
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="btn btn-primary rounded-full"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setShowHelpModal(false)}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );
