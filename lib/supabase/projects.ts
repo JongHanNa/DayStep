@@ -73,10 +73,11 @@ export async function fetchProjectProgressWithJWT(
   console.log('📁 JWT 방식으로 프로젝트 진행률 조회:', { userId, projectId });
 
   try {
-    // 프로젝트에 연결된 할일 통계 조회
+    // 프로젝트에 연결된 할일 통계 조회 (서브태스크 제외 - 편집 모달과 동일하게)
     const todos = await queryRLSTableWithJWT('todos', [
       { column: 'project_id', operator: 'eq', value: projectId },
-      { column: 'user_id', operator: 'eq', value: userId }
+      { column: 'user_id', operator: 'eq', value: userId },
+      { column: 'parent_todo_id', operator: 'is', value: null }
     ], {
       select: 'id,completed'
     });

@@ -1,25 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, MessageCircle, BarChart3, PenLine, Crown } from 'lucide-react';
+import { Heart, MessageCircle, PenLine, Crown } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { CareRecordView } from './CareRecordView';
 import { GratitudeJournalView } from './GratitudeJournalView';
 import { NewsMemosView } from './NewsMemosView';
-import { StatsDashboardView } from './StatsDashboardView';
 
-type TabType = 'record' | 'news' | 'gratitude' | 'stats';
+type TabType = 'record' | 'news' | 'gratitude';
 
 // Pro 전용 탭 정의 (record 제외)
-const PRO_ONLY_TABS: TabType[] = ['news', 'gratitude', 'stats'];
+const PRO_ONLY_TABS: TabType[] = ['news', 'gratitude'];
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode; proOnly?: boolean }[] = [
   { id: 'record', label: '기록', icon: <PenLine className="w-4 h-4" /> },
   { id: 'news', label: '소식', icon: <MessageCircle className="w-4 h-4" />, proOnly: true },
   { id: 'gratitude', label: '감사', icon: <Heart className="w-4 h-4" />, proOnly: true },
-  { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" />, proOnly: true },
 ];
 
 interface RelationshipInsightsModeProps {
@@ -65,8 +63,6 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
         return <GratitudeJournalView userId={userId} />;
       case 'news':
         return <NewsMemosView userId={userId} />;
-      case 'stats':
-        return <StatsDashboardView userId={userId} />;
       default:
         return null;
     }

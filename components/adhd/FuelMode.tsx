@@ -33,8 +33,6 @@ import {
   CheckCircle2,
   Pin,
   Inbox,
-  BarChart3,
-  Lock,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -57,20 +55,18 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { TodoTimelineView } from '@/components/adhd/TaskOrganize/TodoTimelineView';
 import { OrganizeNeededView } from '@/components/adhd/TaskOrganize/OrganizeNeededView';
-import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
 import { DistractionPlanView } from '@/components/adhd/distraction';
 import type { EnvironmentSetup } from '@/types/distraction';
 import ExecutionMode from '@/components/adhd/ExecutionMode';
 
 // 탭 타입 정의
-type FuelTabType = 'fuel' | 'timeline' | 'execute' | 'organize' | 'stats';
+type FuelTabType = 'fuel' | 'timeline' | 'execute' | 'organize';
 
 const FUEL_TABS: { id: FuelTabType; label: string; icon: React.ReactNode }[] = [
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
   { id: 'execute', label: '실행', icon: <Target className="w-4 h-4" /> },
   { id: 'fuel', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
-  { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
 ];
 
 interface FuelModeProps {
@@ -893,14 +889,10 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     });
   }, [fuelNotes]);
 
-  // 탭 클릭 핸들러 - 통계 탭은 Pro 전용
+  // 탭 클릭 핸들러
   const handleTabClick = useCallback((tabId: FuelTabType) => {
-    if (tabId === 'stats' && !hasActiveSubscription) {
-      setShowPaywall(true);
-      return;
-    }
     setActiveTab(tabId);
-  }, [hasActiveSubscription]);
+  }, []);
 
   // "실행과 집중으로 가기" 핸들러
   // endFuelMode() 제거 - ExecutionMode에서 뒤로가기 시 FuelMode로 복귀할 수 있도록
@@ -1024,24 +1016,20 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         {/* 탭 네비게이션 */}
         <div className="flex overflow-x-auto px-2 py-2 gap-1 scrollbar-hide">
-          {FUEL_TABS.map((tab) => {
-            const isProLocked = tab.id === 'stats' && !hasActiveSubscription;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-primary-content'
-                    : 'bg-base-200 text-base-content hover:bg-base-300'
-                }`}
-              >
-                {tab.icon}
-                <span className="text-sm font-medium">{tab.label}</span>
-                {isProLocked && <Lock className="w-3 h-3 ml-0.5 opacity-60" />}
-              </button>
-            );
-          })}
+          {FUEL_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-primary text-primary-content'
+                  : 'bg-base-200 text-base-content hover:bg-base-300'
+              }`}
+            >
+              {tab.icon}
+              <span className="text-sm font-medium">{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -1062,11 +1050,6 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       {activeTab === 'organize' && userId && (
         <div className="flex-1 overflow-y-auto">
           <OrganizeNeededView userId={userId} />
-        </div>
-      )}
-      {activeTab === 'stats' && userId && (
-        <div className="flex-1 overflow-y-auto">
-          <TodoStatsView userId={userId} />
         </div>
       )}
 

@@ -68,6 +68,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
     deleteProject,
     deleteProjectWithTodos,
     fetchProjectTodos,
+    fetchProjectProgress,
     projectTodos,
     completeProject,
     holdProject,
@@ -266,6 +267,31 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
   });
 
   // 할일 클릭 시 편집 모달 열기
+  // 할일 완료 토글 (체크박스 클릭)
+  const handleTodoComplete = async (e: React.MouseEvent, todo: Todo) => {
+    e.stopPropagation(); // 버블링 방지 - 편집 모달 열림 방지
+    if (!userId) return;
+
+    const newCompleted = !todo.completed;
+
+    // 1. Optimistic Update - UI 즉시 반영
+    setLinkedTodos(prev =>
+      prev.map(t => t.id === todo.id ? { ...t, completed: newCompleted } : t)
+    );
+
+    // 2. DB 업데이트
+    await updateTodo(todo.id, {
+      completed: newCompleted
+    });
+
+    // 3. 스토어 동기화 (일관성 보장)
+    if (project) {
+      fetchProjectTodos(userId, project.id);
+      // 4. 진행률 동기화 - 프로젝트 목록에 즉시 반영
+      fetchProjectProgress(userId, project.id);
+    }
+  };
+
   const handleTodoClick = (todo: Todo) => {
     setEditingTodo(todo);
     setEditFormData(todoToFormData(todo));
@@ -532,10 +558,11 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
                       <div className="flex items-center justify-between p-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div
-                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            onClick={(e) => handleTodoComplete(e, todo)}
+                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 cursor-pointer ${
                               todo.completed
                                 ? 'bg-success border-success'
-                                : 'border-base-content/30'
+                                : 'border-base-content/30 hover:border-base-content/50'
                             }`}
                           >
                             {todo.completed && <Check className="w-3 h-3 text-white" />}
