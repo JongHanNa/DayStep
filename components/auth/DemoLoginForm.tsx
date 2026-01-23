@@ -10,8 +10,8 @@ import { Mail, Lock, LogIn } from 'lucide-react';
  */
 export default function DemoLoginForm() {
   const { signInWithEmail, loading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@daystep.app');
+  const [password, setPassword] = useState('Demo2026!');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,11 +95,6 @@ export default function DemoLoginForm() {
         )}
       </button>
 
-      {/* 계정 정보 힌트 */}
-      <div className="text-xs text-center text-gray-500 dark:text-gray-400 space-y-1 mt-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <p><strong>이메일:</strong> demo@daystep.app</p>
-        <p><strong>비밀번호:</strong> Demo2026!</p>
-      </div>
     </form>
   );
 }

@@ -151,7 +151,9 @@ export default function LoginPage() {
           {/* 로그인 폼 */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 p-10 sm:p-12">
             <div className="space-y-6 sm:space-y-8">
-              <LoginButton provider="google" />
+              {urlParams.demo !== 'true' && (
+                <LoginButton provider="google" />
+              )}
 
               {/* 데모 모드: 포트폴리오 체험 로그인 */}
               {urlParams.demo === 'true' && (
