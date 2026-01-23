@@ -60,7 +60,7 @@ const challenges = [
 const solutions = [
   {
     challenge: '시작이 어려워요',
-    solution: '"지금 뭐 할 거야?"',
+    solution: '바로 실행',
     description: '복잡하게 생각하지 않아도 돼요. 버튼 하나로 바로 시작할 수 있어요.',
     icon: Timer,
     color: 'primary',
@@ -130,7 +130,7 @@ export default function SystemSection() {
               <span className="text-white/90 font-medium">혹시 이런 어려움을 겪고 계신가요?</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              혼자만 그런 게 아니에요
+              많은 분들이 경험하는 어려움입니다
             </h2>
             <p className="text-lg text-white/80 max-w-2xl mx-auto">
               성인 ADHD 또는 비슷한 성향을 가진 많은 분들이
@@ -253,10 +253,10 @@ export default function SystemSection() {
             transition={{ delay: 0.3 }}
           >
             <p className="text-white text-lg font-medium">
-              &quot;완벽하지 않아도 괜찮아요.
+              작은 시작이 변화를 만듭니다.
               <br className="sm:hidden" />
               <span className="hidden sm:inline"> </span>
-              오늘 하루, 한 걸음부터 시작해요.&quot;
+              오늘 할 수 있는 것부터 시작하세요.
             </p>
           </motion.div>
         </div>

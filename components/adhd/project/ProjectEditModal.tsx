@@ -365,7 +365,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
             취소
           </button>
           <h3 className="text-lg font-bold">
-            {isEditing ? '프로젝트 편집' : '새 프로젝트'}
+            {isEditing ? '계획 편집' : '새 계획'}
           </h3>
           <div className="flex gap-1">
             {isEditing && (
@@ -413,7 +413,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="프로젝트 이름"
+            placeholder="계획 이름"
             className="input input-bordered flex-1 text-lg font-semibold"
             autoFocus
           />
@@ -427,7 +427,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="프로젝트에 대한 간단한 설명..."
+            placeholder="이 계획에 대한 간단한 설명..."
             className="textarea textarea-bordered h-20"
           />
         </div>
@@ -728,7 +728,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
             animate={{ opacity: 1, scale: 1 }}
             className="relative bg-base-100 rounded-2xl p-6 mx-4 max-w-sm w-full shadow-xl"
           >
-            <h3 className="text-lg font-bold mb-2">프로젝트 삭제</h3>
+            <h3 className="text-lg font-bold mb-2">계획 삭제</h3>
             <p className="text-base-content/70 mb-4">
               &ldquo;{project?.title}&rdquo;을(를) 삭제하시겠습니까?
             </p>

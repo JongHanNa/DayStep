@@ -13,9 +13,9 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { id: 'home', label: '대시보드', icon: 'Home' },
-  { id: 'relationship', label: '관계 기록', icon: 'BookHeart' },
+  { id: 'project', label: '미룸방지', icon: 'Shield' },
   { id: 'fuel', label: '머릿속 정리', icon: 'Lightbulb' },
-  { id: 'project', label: '프로젝트', icon: 'FolderKanban' },
+  { id: 'relationship', label: '관계 기록', icon: 'BookHeart' },
   { id: 'settings', label: '설정', icon: 'Settings' },
 ];
 

@@ -463,6 +463,9 @@ export interface GoalUpdate extends Partial<GoalInsert> {
 // Project Status (AI 플래닝용 간소화된 상태)
 export type ProjectStatus = 'not_started' | 'in_progress' | 'on_hold' | 'completed';
 
+// Project Source - AI 생성 vs 직접 작성 구분
+export type ProjectSource = 'manual' | 'mcp';
+
 // Project types (AI 플래닝용 간소화된 스키마)
 // DB 스키마에서 projects 테이블 타입을 사용
 export type Project = Tables<'projects'> & {
@@ -477,6 +480,7 @@ export interface ProjectInsert {
   status?: ProjectStatus;
   icon?: string | null;
   color?: string | null;
+  source?: ProjectSource; // AI 생성('mcp') vs 직접 작성('manual')
 }
 
 export interface ProjectUpdate extends Partial<Omit<ProjectInsert, 'user_id'>> {

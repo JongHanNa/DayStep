@@ -87,6 +87,7 @@ export async function createProject(
       status: status || 'active',
       icon: icon || null,
       color: color || '#A8DADC',
+      source: 'mcp', // MCP(AI)로 생성됨을 표시
     })
     .select()
     .single();
@@ -411,6 +412,7 @@ export async function createProjectWithTodos(
       icon: project.icon || null,
       color: project.color || '#A8DADC',
       status: 'active',
+      source: 'mcp', // MCP(AI)로 생성됨을 표시
     })
     .select()
     .single();

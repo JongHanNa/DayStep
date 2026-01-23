@@ -128,7 +128,7 @@ export default function StatsSection() {
           transition={{ duration: 0.8 }}
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-            성인 ADHD, 혼자가 아니에요
+            성인 ADHD, 생각보다 흔합니다
           </h2>
           <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto px-4">
             많은 분들이 비슷한 어려움을 겪고 있고,

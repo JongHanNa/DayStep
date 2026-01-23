@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles } from 'lucide-react';
+import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles, PenLine } from 'lucide-react';
 import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -166,7 +166,8 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                 : 'text-base-content/60 hover:text-base-content'
             }`}
           >
-            프로젝트 목록
+            <Sparkles className="w-4 h-4" />
+            AI 계획
           </button>
           <button
             onClick={() => setCurrentTab('guide')}
@@ -177,7 +178,7 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            AI 연동 가이드
+            연동 가이드
           </button>
         </div>
 
@@ -258,7 +259,7 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                       막연한 계획을 {'"뇌에 친절한 단위"'}로 바꿔드려요
                     </h3>
                     <p className="text-base-content/60 text-sm max-w-xs mx-auto leading-relaxed">
-                      <span className="font-medium text-base-content/80">{'"프로젝트 완성"'}</span> 같은 막막한 목표를{' '}
+                      <span className="font-medium text-base-content/80">{'"보고서 완성"'}</span> 같은 막막한 목표를{' '}
                       <span className="font-medium text-primary">{'"폴더 열기 → 파일 1개 만들기 → ..."'}</span>{' '}
                       처럼 바로 몸이 움직이는 작은 행동으로 쪼개줍니다.
                     </p>
@@ -276,7 +277,7 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                 ) : (
                   <>
                     <FolderKanban className="w-12 h-12 mx-auto text-base-300 mb-4" />
-                    <p className="text-base-content/60">해당하는 프로젝트가 없습니다</p>
+                    <p className="text-base-content/60">해당하는 계획이 없습니다</p>
                   </>
                 )}
               </div>
@@ -310,6 +311,21 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium truncate">{project.title}</h3>
                           {getStatusBadge(project.status)}
+                        </div>
+
+                        {/* 출처 라벨 */}
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {project.source === 'mcp' ? (
+                            <>
+                              <Sparkles className="w-3 h-3 text-warning" />
+                              <span className="text-xs text-warning">AI 생성</span>
+                            </>
+                          ) : (
+                            <>
+                              <PenLine className="w-3 h-3 text-base-content/50" />
+                              <span className="text-xs text-base-content/50">직접 작성</span>
+                            </>
+                          )}
                         </div>
 
                         {project.description && (

@@ -18,6 +18,7 @@ import dynamic from 'next/dynamic';
 import LandingNav from '@/components/layout/LandingNav';
 import StatsSection from '@/components/landing/StatsSection';
 import SystemSection from '@/components/landing/SystemSection';
+import AntiProcrastinationSection from '@/components/landing/AntiProcrastinationSection';
 // TODO: 실제 사용자 후기 수집 후 활성화 예정
 // import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
@@ -248,7 +249,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-4xl font-bold text-white mb-4">
-              &quot;지금 뭐 할 거야?&quot;
+              바로 실행
             </h2>
             <p className="text-lg text-white/90">
               복잡하지 않아요. 필요한 것만 담았어요.
@@ -348,6 +349,9 @@ export default function LandingPage() {
       {/* System Section */}
       <SystemSection />
 
+      {/* Anti-Procrastination Section - 미룸방지 기능 소개 */}
+      <AntiProcrastinationSection />
+
       {/*
         TODO: 실제 사용자 후기 수집 후 활성화 예정
         현재는 임시 데이터이므로 숨김 처리
@@ -374,9 +378,9 @@ export default function LandingPage() {
             DayStep과 함께 시작하세요
           </h2>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            완벽하지 않아도 괜찮아요.
+            작은 시작이 변화를 만듭니다.
             <br />
-            오늘 하루, 한 걸음부터 함께해요.
+            오늘 할 수 있는 것부터 시작하세요.
           </p>
           <button
             onClick={handleGetStarted}

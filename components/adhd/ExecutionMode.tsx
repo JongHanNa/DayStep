@@ -135,7 +135,7 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
 
-  const [viewState, setViewState] = useState<ViewState>('recommendation');
+  const [viewState, setViewState] = useState<ViewState>('distraction-plan');
   const [isAnimating, setIsAnimating] = useState(false);
   const [showCompletedList, setShowCompletedList] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false); // 기본적으로 접힌 상태
