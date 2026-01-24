@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles, PenLine, HelpCircle } from 'lucide-react';
+import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles, PenLine, HelpCircle, MessageSquare } from 'lucide-react';
 import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import type { Project, ProjectStatus } from '@/types';
 import ProjectEditModal from './project/ProjectEditModal';
 import MCPGuideContent from './project/MCPGuideContent';
+import { AIPlanningChat } from './ai-planning';
 
 interface ProjectModeProps {
   onExit: () => void;
@@ -72,8 +73,8 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
     }
   }, [userId, authLoading, projects, projectProgress, fetchProjectProgress]);
 
-  // 현재 탭: 프로젝트 목록 vs 가이드
-  const [currentTab, setCurrentTab] = useState<'projects' | 'guide'>('projects');
+  // 현재 탭: 프로젝트 목록 vs AI 채팅 vs 가이드
+  const [currentTab, setCurrentTab] = useState<'projects' | 'chat' | 'guide'>('projects');
 
   // 상태 필터 버튼
   const filterButtons: { label: string; value: ProjectStatus | 'all' }[] = [
@@ -157,8 +158,8 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
     <div className="min-h-screen bg-base-100">
       {/* 헤더 */}
       <header className="sticky top-0 z-10 bg-base-100 border-b border-base-200">
-        {/* 메인 탭: 프로젝트 목록 vs 가이드 */}
-        <div className="flex gap-2 px-4 pt-3 pb-2 border-b border-base-200">
+        {/* 메인 탭: 프로젝트 목록 vs AI 채팅 vs 가이드 */}
+        <div className="flex gap-1 px-4 pt-3 pb-2 border-b border-base-200">
           {/* AI 계획 탭 영역 - 도움말 버튼과 탭 버튼을 형제로 분리 */}
           <div className={`flex-1 flex items-center justify-center gap-1 ${
             currentTab === 'projects'
@@ -183,16 +184,29 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
               AI 계획
             </button>
           </div>
+          {/* AI 채팅 탭 */}
+          <button
+            onClick={() => setCurrentTab('chat')}
+            className={`flex-1 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+              currentTab === 'chat'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-base-content/60 hover:text-base-content'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            AI 채팅
+          </button>
+          {/* 연동 가이드 탭 */}
           <button
             onClick={() => setCurrentTab('guide')}
-            className={`flex-1 py-2 text-sm font-medium rounded-t-lg transition-colors flex items-center justify-center gap-1 ${
+            className={`flex-1 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
               currentTab === 'guide'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-base-content/60 hover:text-base-content'
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            연동 가이드
+            가이드
           </button>
         </div>
 
@@ -215,10 +229,13 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
       </header>
 
       {/* 메인 콘텐츠 */}
-      <main className="p-4 pb-24">
+      <main className={`${currentTab === 'chat' ? 'p-0' : 'p-4'} pb-24`}>
         {currentTab === 'guide' ? (
           // 가이드 탭
           <MCPGuideContent />
+        ) : currentTab === 'chat' ? (
+          // AI 채팅 탭
+          <AIPlanningChat />
         ) : (
           <>
             {loading ? (
