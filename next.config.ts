@@ -204,6 +204,8 @@ const nextConfig: NextConfig = {
         [path.resolve(__dirname, 'app/api/analytics/performance/route.ts')]: path.resolve(__dirname, 'app/api/analytics/performance/route.mobile.ts'),
         [path.resolve(__dirname, 'app/api/sse/route.ts')]: path.resolve(__dirname, 'app/api/sse/route.mobile.ts'),
         [path.resolve(__dirname, 'app/auth/callback/route.ts')]: path.resolve(__dirname, 'app/auth/callback/route.mobile.ts'),
+        [path.resolve(__dirname, 'app/api/ai/chat/route.ts')]: path.resolve(__dirname, 'app/api/ai/chat/route.mobile.ts'),
+        [path.resolve(__dirname, 'app/api/ai/usage/route.ts')]: path.resolve(__dirname, 'app/api/ai/usage/route.mobile.ts'),
       };
     }
     
