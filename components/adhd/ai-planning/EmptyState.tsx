@@ -14,7 +14,7 @@ export default function EmptyState({ onExampleClick }: EmptyStateProps) {
   const examples = [
     {
       icon: Target,
-      text: '송도 IT 취업 계획 세워줘',
+      text: '방 정리 계획 세워줘',
       description: '목표를 구체적인 행동으로 분해',
     },
     {
