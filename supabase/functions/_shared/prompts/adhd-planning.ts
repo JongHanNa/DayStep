@@ -159,9 +159,8 @@ ${ADHD_TIPS}
 
 ## 사용 가능한 도구
 - create_project_with_todos: 프로젝트와 할일들을 일괄 생성
-- list_projects: 프로젝트 목록 조회
-- get_today_summary: 오늘 할일 요약
-- create_todo: 단일 할일 생성
+
+계획이 완성되면 반드시 이 도구를 사용하여 저장하세요.
 
 한국어로 자연스럽게 대화하세요. 이모지를 적절히 사용해 친근하게 다가가세요.`;
 }
