@@ -218,7 +218,7 @@ export default function MCPGuideContent() {
               <p className="text-sm font-medium">&quot;TOEIC 900점 목표 공부 계획 만들어줘&quot;</p>
             </div>
             <div className="bg-base-300 p-3 rounded-lg">
-              <p className="text-sm font-medium">&quot;오늘 할 일 보여줘&quot;</p>
+              <p className="text-sm font-medium">&quot;이사 계획 세워줘&quot;</p>
             </div>
           </div>
 
