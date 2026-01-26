@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { Menu, X } from 'lucide-react';
@@ -13,6 +13,8 @@ export default function LandingNav() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isDemoMode = searchParams.get('demo') === 'true';
 
   // 페이지 배경색과 동일한 색상 계산
   const { scrollYProgress } = useScroll();
@@ -76,7 +78,7 @@ export default function LandingNav() {
     if (isAuthenticated) {
       router.push('/');
     } else {
-      router.push('/login');
+      router.push(isDemoMode ? '/login?demo=true' : '/login');
     }
   };
 
