@@ -26,30 +26,30 @@ export default function ProviderSelector({
     description: string;
     requiresPro: boolean;
   }> = [
-    {
-      id: 'claude',
-      name: 'Claude',
-      description: 'Anthropic - 최고 품질',
-      requiresPro: true,
-    },
-    {
-      id: 'openai',
-      name: 'GPT-4o',
-      description: 'OpenAI - 균형잡힌 성능',
-      requiresPro: false,
-    },
+    // {
+    //   id: 'claude',
+    //   name: 'Claude',
+    //   description: 'Anthropic - 최고 품질',
+    //   requiresPro: true,
+    // },
+    // {
+    //   id: 'openai',
+    //   name: 'GPT-4o',
+    //   description: 'OpenAI - 균형잡힌 성능',
+    //   requiresPro: false,
+    // },
     {
       id: 'groq',
       name: 'Llama 3.3',
       description: 'Groq - 빠른 응답',
       requiresPro: false,
     },
-    {
-      id: 'gemini',
-      name: 'Gemini',
-      description: 'Google - 테스트용',
-      requiresPro: false,
-    },
+    // {
+    //   id: 'gemini',
+    //   name: 'Gemini',
+    //   description: 'Google - 테스트용',
+    //   requiresPro: false,
+    // },
   ];
 
   return (
@@ -114,15 +114,15 @@ export default function ProviderSelector({
         })}
       </div>
 
-      {/* Pro 안내 */}
-      {!isPro && (
+      {/* Pro 안내 - Claude 선택지 숨김으로 임시 비활성화 */}
+      {/* {!isPro && (
         <div className="px-3 py-2 bg-primary/5 border-t border-primary/10">
           <p className="text-xs text-primary">
             <Crown className="w-3 h-3 inline mr-1" />
             Pro로 업그레이드하면 Claude를 사용할 수 있어요
           </p>
         </div>
-      )}
+      )} */}
     </motion.div>
   );
 }
