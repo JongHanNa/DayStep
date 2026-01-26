@@ -160,6 +160,14 @@ export class GroqProvider implements AIProviderClient {
 
     yield JSON.stringify({ type: 'message_start', message_id: 'groq-stream' });
 
+    let messageEndSent = false;
+
+    // Tool Calls 누적 (스트리밍에서 arguments가 쪼개져 올 수 있음)
+    const toolCallsAccumulator: Map<
+      number,
+      { id: string; name: string; arguments: string }
+    > = new Map();
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -173,6 +181,24 @@ export class GroqProvider implements AIProviderClient {
         if (line.startsWith('data: ')) {
           const data = line.slice(6);
           if (data === '[DONE]') {
+            // [DONE] 전에 누적된 tool calls 처리
+            for (const [, tc] of toolCallsAccumulator) {
+              try {
+                yield JSON.stringify({
+                  type: 'tool_use_start',
+                  tool_call: {
+                    id: tc.id,
+                    name: tc.name,
+                    input: JSON.parse(tc.arguments || '{}'),
+                  },
+                });
+              } catch {
+                console.error('[Groq] Failed to parse tool arguments:', tc.arguments);
+              }
+            }
+            toolCallsAccumulator.clear();
+
+            messageEndSent = true;
             yield JSON.stringify({ type: 'message_end' });
             continue;
           }
@@ -186,6 +212,28 @@ export class GroqProvider implements AIProviderClient {
                 type: 'content_delta',
                 delta: delta.content,
               });
+            }
+
+            // Tool Calls 누적 처리
+            if (delta?.tool_calls) {
+              for (const tc of delta.tool_calls) {
+                const index = tc.index ?? 0;
+                const existing = toolCallsAccumulator.get(index);
+
+                if (existing) {
+                  // arguments 누적
+                  if (tc.function?.arguments) {
+                    existing.arguments += tc.function.arguments;
+                  }
+                } else {
+                  // 새 tool call 시작
+                  toolCallsAccumulator.set(index, {
+                    id: tc.id || `tool-${index}`,
+                    name: tc.function?.name || '',
+                    arguments: tc.function?.arguments || '',
+                  });
+                }
+              }
             }
 
             // Groq 사용량 (x-groq 헤더에서)
@@ -203,6 +251,102 @@ export class GroqProvider implements AIProviderClient {
           }
         }
       }
+    }
+
+    // 스트림 종료 후 버퍼에 남은 데이터 처리
+    if (buffer.trim()) {
+      const remainingLines = buffer.split('\n');
+      for (const line of remainingLines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') {
+            // [DONE] 전에 누적된 tool calls 처리
+            for (const [, tc] of toolCallsAccumulator) {
+              try {
+                yield JSON.stringify({
+                  type: 'tool_use_start',
+                  tool_call: {
+                    id: tc.id,
+                    name: tc.name,
+                    input: JSON.parse(tc.arguments || '{}'),
+                  },
+                });
+              } catch {
+                console.error('[Groq] Failed to parse tool arguments:', tc.arguments);
+              }
+            }
+            toolCallsAccumulator.clear();
+
+            messageEndSent = true;
+            yield JSON.stringify({ type: 'message_end' });
+          } else if (data) {
+            try {
+              const event = JSON.parse(data);
+              const delta = event.choices?.[0]?.delta;
+              if (delta?.content) {
+                yield JSON.stringify({
+                  type: 'content_delta',
+                  delta: delta.content,
+                });
+              }
+
+              // Tool Calls 누적 처리
+              if (delta?.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const index = tc.index ?? 0;
+                  const existing = toolCallsAccumulator.get(index);
+
+                  if (existing) {
+                    if (tc.function?.arguments) {
+                      existing.arguments += tc.function.arguments;
+                    }
+                  } else {
+                    toolCallsAccumulator.set(index, {
+                      id: tc.id || `tool-${index}`,
+                      name: tc.function?.name || '',
+                      arguments: tc.function?.arguments || '',
+                    });
+                  }
+                }
+              }
+
+              if (event.x_groq?.usage) {
+                yield JSON.stringify({
+                  type: 'usage',
+                  usage: {
+                    input_tokens: event.x_groq.usage.prompt_tokens || 0,
+                    output_tokens: event.x_groq.usage.completion_tokens || 0,
+                  },
+                });
+              }
+            } catch {
+              // JSON 파싱 실패 무시
+            }
+          }
+        }
+      }
+    }
+
+    // message_end 보장 (스트림이 비정상 종료되어도)
+    if (!messageEndSent) {
+      // 비정상 종료 시에도 누적된 tool calls 처리
+      for (const [, tc] of toolCallsAccumulator) {
+        try {
+          yield JSON.stringify({
+            type: 'tool_use_start',
+            tool_call: {
+              id: tc.id,
+              name: tc.name,
+              input: JSON.parse(tc.arguments || '{}'),
+            },
+          });
+        } catch {
+          console.error('[Groq] Failed to parse tool arguments:', tc.arguments);
+        }
+      }
+
+      console.warn('[Groq] Stream ended without [DONE], sending message_end');
+      yield JSON.stringify({ type: 'message_end' });
     }
   }
 }

@@ -121,8 +121,8 @@ async function createProjectWithTodos(
       description: project.description || null,
       icon: project.icon || null,
       color: project.color || '#A8DADC',
-      status: 'active',
-      source: 'ai_gateway',
+      status: 'not_started',
+      source: 'mcp',
     })
     .select()
     .single();

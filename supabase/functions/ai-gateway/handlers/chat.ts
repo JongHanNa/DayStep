@@ -223,6 +223,8 @@ export async function handleStreamingChat(
           tools,
         });
 
+        let messageEndReceived = false;
+
         for await (const chunk of streamGenerator) {
           try {
             const event = JSON.parse(chunk);
@@ -245,6 +247,8 @@ export async function handleStreamingChat(
             }
 
             if (event.type === 'message_end') {
+              messageEndReceived = true;
+
               // Tool Calls 처리
               if (pendingToolCalls.length > 0) {
                 for (const toolCall of pendingToolCalls) {
@@ -295,6 +299,33 @@ export async function handleStreamingChat(
             // 파싱 실패 시 raw 전송
             controller.enqueue(encoder.encode(formatSSE('raw', { data: chunk })));
           }
+        }
+
+        // 스트림 종료 후 done 이벤트 보장 (message_end 미수신 시)
+        if (!messageEndReceived) {
+          console.warn('[chat.ts] Stream ended without message_end, sending done event');
+          const cost = calculateCost(model, totalInputTokens, totalOutputTokens);
+          await incrementUsage(
+            supabaseAdmin,
+            userId,
+            isPro,
+            totalInputTokens,
+            totalOutputTokens,
+            cost,
+            provider,
+            model
+          );
+          controller.enqueue(
+            encoder.encode(
+              formatSSE('done', {
+                usage: {
+                  input_tokens: totalInputTokens,
+                  output_tokens: totalOutputTokens,
+                  estimated_cost: cost,
+                },
+              })
+            )
+          );
         }
 
         controller.close();

@@ -277,7 +277,7 @@ npx supabase functions deploy mcp-server --project-ref <PROJECT_REF> --no-verify
 **Optimistic Update 패턴 (필수)**:
 - UI 즉시 업데이트 → DB 업데이트 → 동기화 순서
 - 에러 시 롤백으로 일관성 보장
-- 드래그앤드롭, 편집 등 모든 상태 변경에 적용
+- 드래그앤드롭, 편집 등 모든 상태 변경에 적용Edge Function
 
 **적용 원칙**:
 - `setState` 먼저 → `await DB.update()` → `fetch & setState` (동기화)

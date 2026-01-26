@@ -88,7 +88,7 @@ const initialState = {
   isLoading: false,
   isStreaming: false,
   error: null,
-  provider: 'gemini' as AIProvider,
+  provider: 'groq' as AIProvider, // 무료 tier 기본값: Groq
   availableProviders: ['openai', 'groq', 'gemini'] as AIProvider[],
   usage: null,
   isPro: false,
@@ -174,7 +174,21 @@ export const useAIPlanningStore = create<AIPlanningState>()(
 
       // 스트리밍 상태
       setStreaming: (streaming) => {
-        set({ isStreaming: streaming });
+        set((state) => {
+          // 스트리밍 종료 시 마지막 메시지의 isStreaming도 false로
+          if (!streaming && state.messages.length > 0) {
+            const messages = [...state.messages];
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage.isStreaming) {
+              messages[messages.length - 1] = {
+                ...lastMessage,
+                isStreaming: false,
+              };
+              return { isStreaming: streaming, messages };
+            }
+          }
+          return { isStreaming: streaming };
+        });
       },
 
       // 에러 상태
@@ -205,8 +219,7 @@ export const useAIPlanningStore = create<AIPlanningState>()(
           availableProviders: isPro
             ? ['claude', 'openai', 'groq', 'gemini']
             : ['openai', 'groq', 'gemini'],
-          // 기본 프로바이더 변경
-          provider: isPro ? 'claude' : 'gemini',
+          // provider는 변경하지 않음 - 초기값 'groq' 유지
         });
       },
 

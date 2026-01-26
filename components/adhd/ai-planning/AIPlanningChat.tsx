@@ -24,6 +24,19 @@ import UsageIndicator from './UsageIndicator';
 import ProviderSelector from './ProviderSelector';
 
 /**
+ * BUILD_TARGET에 따른 AI API 엔드포인트 반환
+ * - 웹: Next.js API Route 사용
+ * - 모바일: Supabase Edge Function 직접 호출
+ */
+const getAIEndpoint = (path: 'chat' | 'usage') => {
+  if (process.env.BUILD_TARGET === 'mobile') {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return `${supabaseUrl}/functions/v1/ai-gateway/${path}`;
+  }
+  return `/api/ai/${path}`;
+};
+
+/**
  * AI 플래닝 채팅 컴포넌트
  *
  * 사용자와 AI가 양방향으로 소통하며 계획을 세우는 채팅 UI
@@ -69,7 +82,7 @@ export default function AIPlanningChat() {
       if (!session?.access_token) return;
 
       try {
-        const response = await fetch('/api/ai/usage', {
+        const response = await fetch(getAIEndpoint('usage'), {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
@@ -139,7 +152,7 @@ export default function AIPlanningChat() {
     });
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch(getAIEndpoint('chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,19 +180,18 @@ export default function AIPlanningChat() {
 
       if (!reader) throw new Error('No response body');
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // 불완전한 청크 버퍼링을 위한 변수
+      let buffer = '';
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
+      // SSE 라인 처리 헬퍼 함수 (while 루프 밖에서 정의하여 버퍼 처리에서도 재사용)
+      const processSSELines = (lines: string[]) => {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
           if (line.startsWith('event: ')) {
             const eventType = line.slice(7);
 
-            // 다음 라인에서 데이터 읽기
-            const dataLineIndex = lines.indexOf(line) + 1;
+            // 다음 라인에서 데이터 읽기 (현재 인덱스 + 1)
+            const dataLineIndex = i + 1;
             if (dataLineIndex < lines.length && lines[dataLineIndex].startsWith('data: ')) {
               const data = lines[dataLineIndex].slice(6);
               try {
@@ -187,6 +199,8 @@ export default function AIPlanningChat() {
 
                 switch (eventType) {
                   case 'delta':
+                    // 🔧 디버깅 로그: delta 이벤트 수신 확인
+                    console.log('[SSE] delta received:', parsed);
                     if (parsed.content) {
                       appendToLastMessage(parsed.content);
                     }
@@ -197,6 +211,7 @@ export default function AIPlanningChat() {
                     break;
 
                   case 'done':
+                    console.log('[SSE] done event received:', parsed);
                     if (parsed.usage) {
                       // 사용량 업데이트
                       const newUsage = {
@@ -210,18 +225,43 @@ export default function AIPlanningChat() {
                       };
                       setUsage(newUsage);
                     }
+                    // done 이벤트 수신 시 즉시 스트리밍 종료
+                    setStreaming(false);
                     break;
 
                   case 'error':
                     setError(parsed.message || 'Unknown error');
                     break;
                 }
-              } catch {
-                // JSON 파싱 실패 무시
+              } catch (parseError) {
+                // JSON 파싱 실패 시 에러 로깅 (디버깅용)
+                console.warn('SSE JSON parse error:', parseError, 'data:', data);
               }
             }
           }
         }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // 이전 버퍼와 새 청크 결합
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        // 마지막 불완전한 라인은 버퍼에 보관
+        buffer = lines.pop() || '';
+
+        processSSELines(lines);
+      }
+
+      console.log('[SSE] Stream ended, buffer:', buffer);
+
+      // ✅ 스트림 종료 후 버퍼에 남은 이벤트 처리
+      // reader.read()가 done=true를 반환할 때 버퍼에 남은 마지막 이벤트(예: done)가 처리되지 않는 버그 수정
+      if (buffer.trim()) {
+        const remainingLines = buffer.split('\n');
+        processSSELines(remainingLines);
       }
     } catch (err) {
       console.error('Chat error:', err);
