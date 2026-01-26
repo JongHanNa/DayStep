@@ -212,7 +212,7 @@ export default function MCPGuideContent() {
 
           <div className="space-y-2">
             <div className="bg-base-300 p-3 rounded-lg">
-              <p className="text-sm font-medium">&quot;송도 IT 취업 계획 세워줘&quot;</p>
+              <p className="text-sm font-medium">&quot;방 정리 계획 세워줘&quot;</p>
             </div>
             <div className="bg-base-300 p-3 rounded-lg">
               <p className="text-sm font-medium">&quot;TOEIC 900점 목표 공부 계획 만들어줘&quot;</p>
