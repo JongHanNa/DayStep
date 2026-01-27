@@ -39,7 +39,7 @@ import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
 import { RelationshipDetectorService } from '@/services/relationship-detector.service';
 import { updateWithJWT } from '@/lib/supabase/core';
-import { PersonSelector, PersonLinksPreview } from '@/components/cherished/PersonSelector';
+import { PersonSelector } from '@/components/cherished/PersonSelector';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import FuelSelector from '@/components/adhd/FuelSelector';
 import { DistractionPlanView } from '@/components/adhd/distraction';
@@ -1915,7 +1915,6 @@ function AdhocTimerView({
   const [isDragging, setIsDragging] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
-  const [showPersonSelector, setShowPersonSelector] = useState(false);
 
   // 타이머 시작 시점 (세션 복원 시 원본 시간 사용, 아니면 현재 시간)
   const [startedAt] = useState(() => originalStartTime || new Date());
@@ -2176,31 +2175,6 @@ function AdhocTimerView({
           <>지금 기록안해도 끝나면 뭐 했는지 물어볼게요<br />원을 드래그해서 바로 끝낼 수도 있어요</>
         )}
       </p>
-
-      {/* 인물 연결 미리보기 */}
-      <div className="w-full max-w-xs mb-6 mx-auto">
-        <PersonLinksPreview
-          joyfulPeopleIds={joyfulPeopleIds}
-          shamefulPeopleIds={shamefulPeopleIds}
-          onEdit={() => setShowPersonSelector(!showPersonSelector)}
-        />
-
-        {/* 인물 선택 UI */}
-        {showPersonSelector && (
-          <div className="mt-3 space-y-3">
-            <PersonSelector
-              selectedPeopleIds={joyfulPeopleIds}
-              onSelectionChange={(ids) => onLinkedPeopleChange(ids, shamefulPeopleIds)}
-              linkType="joyful"
-            />
-            <PersonSelector
-              selectedPeopleIds={shamefulPeopleIds}
-              onSelectionChange={(ids) => onLinkedPeopleChange(joyfulPeopleIds, ids)}
-              linkType="shameful"
-            />
-          </div>
-        )}
-      </div>
 
       {/* 중단 버튼 */}
       <motion.button
