@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DayStep 프로젝트 포트폴리오 - 나종한</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #fff;
+            font-size: 11pt;
+        }
+
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm;
+        }
+
+        @media print {
+            .container {
+                max-width: none;
+                padding: 15mm;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+
+        /* 헤더 */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #3B82F6;
+        }
+
+        .header h1 {
+            font-size: 28pt;
+            font-weight: 700;
+            color: #1E3A5F;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 14pt;
+            color: #666;
+            font-weight: 400;
+        }
+
+        /* 프로젝트 개요 테이블 */
+        .overview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .overview-table th,
+        .overview-table td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .overview-table th {
+            background: #F0F4F8;
+            font-weight: 600;
+            width: 25%;
+            color: #1E3A5F;
+        }
+
+        /* 섹션 */
+        h2 {
+            font-size: 16pt;
+            color: #1E3A5F;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3B82F6;
+        }
+
+        h3 {
+            font-size: 13pt;
+            color: #2563EB;
+            margin-top: 25px;
+            margin-bottom: 12px;
+        }
+
+        p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        /* 리스트 */
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        li strong {
+            color: #1E3A5F;
+        }
+
+        /* 기술 스택 테이블 */
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+
+        .tech-table th,
+        .tech-table td {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .tech-table th {
+            width: 28%;
+            font-weight: 600;
+        }
+
+        .tech-table.frontend th { background: #E8F4FD; color: #1E40AF; }
+        .tech-table.backend th { background: #F0FDF4; color: #166534; }
+        .tech-table.mobile th { background: #FEF3C7; color: #92400E; }
+
+        /* 스크린샷 섹션 */
+        .screenshot-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #F8FAFC;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .screenshot-section h4 {
+            color: #475569;
+            margin-bottom: 15px;
+            font-size: 12pt;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .screenshot-item {
+            text-align: center;
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .screenshot-caption {
+            margin-top: 10px;
+            font-size: 10pt;
+            color: #64748B;
+            font-weight: 500;
+        }
+
+        /* 푸터 */
+        .footer {
+            margin-top: 40px;
+            padding: 20px;
+            background: #F5F5F5;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        /* 강조 박스 */
+        .highlight-box {
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+
+        .highlight-box h4 {
+            margin-bottom: 10px;
+            font-size: 12pt;
+        }
+
+        .highlight-box ul {
+            margin-left: 20px;
+        }
+
+        .highlight-box li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>DayStep 프로젝트 포트폴리오</h1>
+            <p class="subtitle">ADHD 성향을 위한 할일 관리 앱</p>
+        </div>
+
+        <!-- 프로젝트 개요 -->
+        <table class="overview-table">
+            <tr>
+                <th>프로젝트명</th>
+                <td>DayStep - 나만의 할일 관리</td>
+            </tr>
+            <tr>
+                <th>개발 기간</th>
+                <td>2025.11 ~ 현재 (개인 프로젝트)</td>
+            </tr>
+            <tr>
+                <th>배포 URL</th>
+                <td><a href="https://daystep.vercel.app">https://daystep.vercel.app</a></td>
+            </tr>
+            <tr>
+                <th>플랫폼</th>
+                <td>Web (PWA), iOS, Android</td>
+            </tr>
+            <tr>
+                <th>역할</th>
+                <td>기획, 디자인, 프론트엔드, 백엔드 전체 개발</td>
+            </tr>
+        </table>
+
+        <!-- 1. 프로젝트 소개 -->
+        <h2>1. 프로젝트 소개</h2>
+
+        <h3>1.1 개발 배경</h3>
+        <p>ADHD 성향이 있는 사람들은 기존 할일 관리 앱의 복잡한 인터페이스와 기능에 압도당하기 쉽습니다.</p>
+        <p>DayStep은 이러한 문제를 해결하기 위해 <strong>'지금 할 수 있는 가장 작은 것 하나'</strong>에 집중하는 철학을 바탕으로 설계되었습니다. 미룸 방지, 동기 부여, 관계 관리 기능을 통합하여 ADHD 성향 사용자도 쉽게 사용할 수 있는 할일 관리 경험을 제공합니다.</p>
+
+        <h3>1.2 핵심 기능</h3>
+        <ul>
+            <li><strong>미룸방지:</strong> 프로젝트 기반 할일 관리, 진행률 시각화, 상태별 필터링</li>
+            <li><strong>머릿속 정리:</strong> 타임라인 뷰로 하루 일과 관리, 미완료 일정 추적</li>
+            <li><strong>실행 모드:</strong> "지금 할 수 있는 가장 작은 것 하나" - 포모도로 타이머 연동</li>
+            <li><strong>원동력:</strong> 개인 맞춤형 동기 부여 문구 관리</li>
+            <li><strong>관계 기록:</strong> 중요한 사람들과의 연락 주기 관리, 소식/감사 기록</li>
+            <li><strong>AI 채팅:</strong> CAPS 메서드 기반 ADHD 친화적 계획 수립 도우미</li>
+        </ul>
+
+        <!-- 스크린샷 섹션 -->
+        <div class="screenshot-section">
+            <h4>📱 주요 화면 스크린샷</h4>
+            <div class="screenshot-grid">
+                <div class="screenshot-item">
+                    <img src="portfolio_screenshots/daystep_01_dashboard.gif" alt="홈 대시보드">
+                    <p class="screenshot-caption">그림 1. 홈 대시보드 (동기부여 배너 + 연락 알림)</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="portfolio_screenshots/daystep_02_mirumbangji.gif" alt="미룸방지">
+                    <p class="screenshot-caption">그림 2. 미룸방지 (프로젝트 기반 할일 관리)</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="portfolio_screenshots/daystep_03_timeline.gif" alt="타임라인">
+                    <p class="screenshot-caption">그림 3. 머릿속 정리 - 타임라인</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="portfolio_screenshots/daystep_04_execute.gif" alt="실행 모드">
+                    <p class="screenshot-caption">그림 4. 머릿속 정리 - 실행</p>
+                </div>
+            </div>
+            <div class="screenshot-grid" style="margin-top: 20px;">
+                <div class="screenshot-item">
+                    <img src="portfolio_screenshots/daystep_05_contact.gif" alt="관계 기록">
+                    <p class="screenshot-caption">그림 5. 관계 기록 (연락 주기 관리)</p>
+                </div>
+            </div>
+            <p style="margin-top: 15px; font-size: 10pt; color: #64748B; text-align: center;">
+                ※ 실제 앱 체험: <a href="https://daystep.vercel.app/?demo=true">https://daystep.vercel.app/?demo=true</a> (demo@daystep.app / Demo2026!)
+            </p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- 2. 기술 스택 -->
+        <h2>2. 기술 스택</h2>
+
+        <h3>2.1 Frontend</h3>
+        <table class="tech-table frontend">
+            <tr><th>Framework</th><td>Next.js 15 (App Router), React 19</td></tr>
+            <tr><th>Language</th><td>TypeScript 5</td></tr>
+            <tr><th>Styling</th><td>Tailwind CSS 3, DaisyUI, shadcn/ui (Radix UI)</td></tr>
+            <tr><th>State Management</th><td>Zustand 5, Immer (불변성 관리)</td></tr>
+            <tr><th>Animation</th><td>Framer Motion 12, GSAP 3, React Spring</td></tr>
+            <tr><th>Form & Validation</th><td>React Hook Form 7, Zod 4</td></tr>
+            <tr><th>Drag & Drop</th><td>@dnd-kit (core, sortable, modifiers)</td></tr>
+        </table>
+
+        <h3>2.2 Backend & Database</h3>
+        <table class="tech-table backend">
+            <tr><th>BaaS</th><td>Supabase (PostgreSQL, Auth, Realtime, Storage)</td></tr>
+            <tr><th>Auth</th><td>Supabase Auth (Google OAuth, Apple Sign-In)</td></tr>
+            <tr><th>Security</th><td>Row Level Security (RLS) 정책으로 데이터 보호</td></tr>
+            <tr><th>Offline Support</th><td>Dexie.js (IndexedDB 기반 오프라인 캐싱)</td></tr>
+        </table>
+
+        <h3>2.3 Mobile (Hybrid App)</h3>
+        <table class="tech-table mobile">
+            <tr><th>Framework</th><td>Capacitor 7 (iOS, Android)</td></tr>
+            <tr><th>Native Features</th><td>Push Notifications, Local Notifications, Contacts, StatusBar, Keyboard</td></tr>
+            <tr><th>iOS Specific</th><td>Live Activity (Dynamic Island), Contact Groups Plugin (자체 개발)</td></tr>
+            <tr><th>IAP</th><td>RevenueCat (구독 결제 관리)</td></tr>
+        </table>
+
+        <h3>2.4 DevOps & Testing</h3>
+        <ul>
+            <li><strong>Deployment:</strong> Vercel (Web), App Store, Google Play</li>
+            <li><strong>Unit/Integration Test:</strong> Jest 29, Testing Library</li>
+            <li><strong>E2E Test:</strong> Playwright</li>
+            <li><strong>Code Quality:</strong> ESLint, Prettier, TypeScript strict mode</li>
+        </ul>
+
+        <div class="page-break"></div>
+
+        <!-- 3. 아키텍처 -->
+        <h2>3. 아키텍처 및 기술적 특징</h2>
+
+        <h3>3.1 하이브리드 앱 아키텍처</h3>
+        <p>하나의 Next.js 코드베이스로 Web, iOS, Android 3개 플랫폼을 동시에 지원합니다. Capacitor를 활용하여 네이티브 기능(Push 알림, 연락처 접근, Live Activity 등)을 웹 앱에 통합했습니다.</p>
+        <ul>
+            <li>BUILD_TARGET 환경변수로 플랫폼별 빌드 분기 처리</li>
+            <li>Capacitor Plugin 시스템으로 네이티브 브릿지 구현</li>
+            <li>자체 개발 플러그인: @daystep/contact-groups (iOS 연락처 그룹), @daystep/theme-bridge (네이티브 테마 동기화)</li>
+        </ul>
+
+        <h3>3.2 상태 관리 전략</h3>
+        <p>Zustand를 중심으로 클라이언트 상태를 관리하고, Immer로 불변성을 보장합니다. 오프라인 지원을 위해 Dexie.js(IndexedDB)를 사용하여 로컬 캐싱을 구현했습니다.</p>
+        <ul>
+            <li>Zustand Store: 전역 UI 상태, 사용자 설정 관리</li>
+            <li>Supabase Realtime: 멀티 디바이스 실시간 동기화</li>
+            <li>Dexie.js: 오프라인 우선 데이터 접근, 온라인 복귀 시 자동 동기화</li>
+        </ul>
+
+        <h3>3.3 UX 최적화</h3>
+        <ul>
+            <li><strong>모바일 최적화 UI:</strong> React Modal Sheet을 활용한 바텀시트 네비게이션</li>
+            <li><strong>애니메이션:</strong> Framer Motion으로 부드러운 페이지 전환 및 마이크로 인터랙션</li>
+            <li><strong>드래그 앤 드롭:</strong> @dnd-kit으로 할일 순서 변경, 접근성(키보드) 지원</li>
+            <li><strong>다크 모드:</strong> next-themes로 시스템 설정 연동 및 수동 전환</li>
+        </ul>
+
+        <div class="page-break"></div>
+
+        <!-- 4. 성과 및 배운 점 -->
+        <h2>4. 프로젝트 성과 및 배운 점</h2>
+
+        <div class="highlight-box">
+            <h4>🎯 기술적 성과</h4>
+            <ul>
+                <li>하나의 코드베이스로 Web/iOS/Android 3개 플랫폼 동시 지원</li>
+                <li>Capacitor 플러그인 직접 개발 경험 (Swift/Kotlin 브릿지 코드 작성)</li>
+                <li>Supabase RLS를 활용한 서버리스 보안 아키텍처 구현</li>
+                <li>오프라인 우선 아키텍처로 네트워크 불안정 상황에서도 사용성 확보</li>
+            </ul>
+        </div>
+
+        <h3>배운 점</h3>
+        <ul>
+            <li><strong>하이브리드 앱 개발:</strong> 웹 기술로 네이티브 앱 품질을 달성하기 위한 성능 최적화 기법</li>
+            <li><strong>상태 관리:</strong> 복잡한 앱에서 Zustand + Immer 조합의 효율성</li>
+            <li><strong>사용자 중심 설계:</strong> ADHD 성향 사용자를 위한 UX 리서치 및 기능 설계</li>
+            <li><strong>풀스택 개발:</strong> 기획부터 배포까지 전 과정을 혼자 수행하며 얻은 제품 개발 역량</li>
+        </ul>
+
+        <!-- 푸터 -->
+        <div class="footer">
+            <p><strong>배포 URL:</strong> <a href="https://daystep.vercel.app">https://daystep.vercel.app</a></p>
+            <p><strong>체험 계정:</strong> demo@daystep.app / Demo2026!</p>
+        </div>
+    </div>
+</body>
+</html>
