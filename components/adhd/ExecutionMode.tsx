@@ -39,8 +39,6 @@ import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
 import { RelationshipDetectorService } from '@/services/relationship-detector.service';
 import { updateWithJWT } from '@/lib/supabase/core';
-import { PersonSelector } from '@/components/cherished/PersonSelector';
-import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import FuelSelector from '@/components/adhd/FuelSelector';
 import { DistractionPlanView } from '@/components/adhd/distraction';
 import { EnvironmentSetup } from '@/types/distraction';
@@ -87,19 +85,10 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     enterOrganizeMode,
     setSessionId,
     setLinkedTodo,
-    setLinkedPeople,
-    clearLinkedPeople,
   } = useADHDModeStore();
-
-  // 소중한 사람 스토어
-  const { loadPeople } = useCherishedPeopleStore();
 
   // 노트 스토어 (영감 노트 연결용)
   const { getInboxNotes, createInboxNote, notes: allNotes } = useNoteStore();
-
-  // 인물 연결 상태
-  const joyfulPeopleIds = executionMode.adhocMode.joyfulPeopleIds;
-  const shamefulPeopleIds = executionMode.adhocMode.shamefulPeopleIds;
 
   // 포모도로 훅 (Web Worker 기반 실제 타이머)
   const {
@@ -385,13 +374,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     restoreActiveSession();
   }, [userId, isWorkerReady]);
 
-  // 소중한 사람 목록 로드
-  useEffect(() => {
-    if (userId) {
-      loadPeople(userId);
-    }
-  }, [userId, loadPeople]);
-
   // "했어" 클릭
   const handleComplete = async (method: 'direct' | 'alternative') => {
     const currentTodo = executionMode.currentRecommendation;
@@ -636,7 +618,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
       endAdhocMode();
       setSessionId(null);
       setLinkedTodo(null, null);
-      clearLinkedPeople();
       setRestoredStartTime(null);
       setRestoredDuration(null);
       markCompleted('adhoc', 'direct');
@@ -842,7 +823,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
     setLinkedTodo(null, null); // 연결 해제
-    clearLinkedPeople(); // 인물 연결 초기화
     markCompleted('adhoc', 'direct'); // 세션 완료 수 증가
 
     setTimeout(() => {
@@ -867,7 +847,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     setAdhocCaptureTitle('');
     stopPomodoroTimer(); // 타이머 정지 및 리셋
     endAdhocMode();
-    clearLinkedPeople(); // 인물 연결 초기화
     getNextRecommendation();
   };
 
@@ -1110,9 +1089,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
               originalStartTime={restoredStartTime || undefined}
               originalDuration={restoredDuration || undefined}
               totalDuration={totalDuration}
-              joyfulPeopleIds={joyfulPeopleIds}
-              shamefulPeopleIds={shamefulPeopleIds}
-              onLinkedPeopleChange={setLinkedPeople}
               isPiPAvailable={isPiPAvailable}
               isPiPActive={isPiPActive}
               onStartPiP={startPiP}
@@ -1135,9 +1111,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
               onCapture={handleCaptureAdhocTodo}
               onSkip={handleSkipAdhocCapture}
               isAnimating={isAnimating}
-              joyfulPeopleIds={joyfulPeopleIds}
-              shamefulPeopleIds={shamefulPeopleIds}
-              onLinkedPeopleChange={setLinkedPeople}
             />
           )}
 
@@ -1872,10 +1845,6 @@ interface AdhocTimerViewProps {
   originalDuration?: number;
   // 화면 endTime 계산용 totalDuration (DB와 동기화)
   totalDuration: number | null;
-  // 인물 연결 props
-  joyfulPeopleIds: string[];
-  shamefulPeopleIds: string[];
-  onLinkedPeopleChange: (joyfulIds: string[], shamefulIds: string[]) => void;
   // PiP 타이머 props (iOS 15+)
   isPiPAvailable: boolean;
   isPiPActive: boolean;
@@ -1902,9 +1871,6 @@ function AdhocTimerView({
   originalStartTime,
   originalDuration,
   totalDuration,
-  joyfulPeopleIds,
-  shamefulPeopleIds,
-  onLinkedPeopleChange,
   isPiPAvailable,
   isPiPActive,
   onStartPiP,
@@ -2200,10 +2166,6 @@ interface AdhocCaptureViewProps {
   onCapture: () => void;
   onSkip: () => void;
   isAnimating: boolean;
-  // 인물 연결 props
-  joyfulPeopleIds: string[];
-  shamefulPeopleIds: string[];
-  onLinkedPeopleChange: (joyfulIds: string[], shamefulIds: string[]) => void;
 }
 
 function AdhocCaptureView({
@@ -2212,9 +2174,6 @@ function AdhocCaptureView({
   onCapture,
   onSkip,
   isAnimating,
-  joyfulPeopleIds,
-  shamefulPeopleIds,
-  onLinkedPeopleChange,
 }: AdhocCaptureViewProps) {
   return (
     <motion.div
@@ -2248,23 +2207,7 @@ function AdhocCaptureView({
         }}
       />
 
-      {/* 인물 연결 섹션 */}
-      <div className="space-y-2 mb-6">
-        <PersonSelector
-          selectedPeopleIds={joyfulPeopleIds}
-          onSelectionChange={(ids) => onLinkedPeopleChange(ids, shamefulPeopleIds)}
-          linkType="joyful"
-          compact
-        />
-        <PersonSelector
-          selectedPeopleIds={shamefulPeopleIds}
-          onSelectionChange={(ids) => onLinkedPeopleChange(joyfulPeopleIds, ids)}
-          linkType="shameful"
-          compact
-        />
-      </div>
-
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 mt-6">
         {/* 기록할게 버튼 */}
         <motion.button
           whileHover={{ scale: 1.02 }}

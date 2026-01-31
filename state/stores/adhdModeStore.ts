@@ -27,8 +27,6 @@ interface AdhocModeState {
   // 반복 할일 연결 지원 (2026-01-19 추가)
   linkedParentTodoId: string | null;    // 반복 할일의 부모 ID
   linkedOccurrenceDate: string | null;  // YYYY-MM-DD 형식
-  joyfulPeopleIds: string[];       // 기쁘게 할 분들 ID
-  shamefulPeopleIds: string[];     // 부끄러운 분들 ID (이 분들 앞에서 부끄러운 행동)
 }
 
 // 포모도로 완료 후 노트 연결 대기 상태
@@ -159,13 +157,6 @@ interface ADHDModeState {
   setLinkedTodo: (todoId: string | null, title: string | null) => void;
   // 반복 할일 연결 (2026-01-19 추가)
   setLinkedRecurringTodo: (parentTodoId: string | null, occurrenceDate: string | null, title: string | null) => void;
-  // 인물 연결 Actions
-  setLinkedPeople: (joyfulIds: string[], shamefulIds: string[]) => void;
-  addJoyfulPerson: (personId: string) => void;
-  removeJoyfulPerson: (personId: string) => void;
-  addShamefulPerson: (personId: string) => void;
-  removeShamefulPerson: (personId: string) => void;
-  clearLinkedPeople: () => void;
 
   // 포모도로 완료 후 노트 연결 Actions
   setPendingNoteConnection: (data: { todoId: string; linkedNoteId?: string | null; newNoteContent?: string | null } | null) => void;
@@ -265,8 +256,6 @@ const DEFAULT_ADHOC_MODE: AdhocModeState = {
   linkedTodoTitle: null,
   linkedParentTodoId: null,
   linkedOccurrenceDate: null,
-  joyfulPeopleIds: [],
-  shamefulPeopleIds: [],
 };
 
 const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
@@ -482,87 +471,6 @@ export const useADHDModeStore = create<ADHDModeState>()(
                 linkedTodoTitle: title,
                 // 단일 할일 ID는 초기화 (반복 할일과 중복 방지)
                 linkedTodoId: null,
-              },
-            }
-          }));
-        },
-
-        // === 인물 연결 Actions ===
-        setLinkedPeople: (joyfulIds, shamefulIds) => {
-          console.log('👥 ADHD: 연결된 인물 설정', { joyfulIds, shamefulIds });
-          set((state) => ({
-            executionMode: {
-              ...state.executionMode,
-              adhocMode: {
-                ...state.executionMode.adhocMode,
-                joyfulPeopleIds: joyfulIds,
-                shamefulPeopleIds: shamefulIds,
-              },
-            }
-          }));
-        },
-
-        addJoyfulPerson: (personId) => {
-          set((state) => ({
-            executionMode: {
-              ...state.executionMode,
-              adhocMode: {
-                ...state.executionMode.adhocMode,
-                joyfulPeopleIds: state.executionMode.adhocMode.joyfulPeopleIds.includes(personId)
-                  ? state.executionMode.adhocMode.joyfulPeopleIds
-                  : [...state.executionMode.adhocMode.joyfulPeopleIds, personId],
-              },
-            }
-          }));
-        },
-
-        removeJoyfulPerson: (personId) => {
-          set((state) => ({
-            executionMode: {
-              ...state.executionMode,
-              adhocMode: {
-                ...state.executionMode.adhocMode,
-                joyfulPeopleIds: state.executionMode.adhocMode.joyfulPeopleIds.filter(id => id !== personId),
-              },
-            }
-          }));
-        },
-
-        addShamefulPerson: (personId) => {
-          set((state) => ({
-            executionMode: {
-              ...state.executionMode,
-              adhocMode: {
-                ...state.executionMode.adhocMode,
-                shamefulPeopleIds: state.executionMode.adhocMode.shamefulPeopleIds.includes(personId)
-                  ? state.executionMode.adhocMode.shamefulPeopleIds
-                  : [...state.executionMode.adhocMode.shamefulPeopleIds, personId],
-              },
-            }
-          }));
-        },
-
-        removeShamefulPerson: (personId) => {
-          set((state) => ({
-            executionMode: {
-              ...state.executionMode,
-              adhocMode: {
-                ...state.executionMode.adhocMode,
-                shamefulPeopleIds: state.executionMode.adhocMode.shamefulPeopleIds.filter(id => id !== personId),
-              },
-            }
-          }));
-        },
-
-        clearLinkedPeople: () => {
-          console.log('🗑️ ADHD: 연결된 인물 초기화');
-          set((state) => ({
-            executionMode: {
-              ...state.executionMode,
-              adhocMode: {
-                ...state.executionMode.adhocMode,
-                joyfulPeopleIds: [],
-                shamefulPeopleIds: [],
               },
             }
           }));

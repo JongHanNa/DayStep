@@ -280,9 +280,7 @@ export type Database = {
           end_time: string | null
           id: string
           is_completed: boolean | null
-          joyful_people_ids: string[] | null
           linked_todo_id: string | null
-          shameful_people_ids: string[] | null
           start_time: string
           updated_at: string
           user_id: string
@@ -295,9 +293,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           is_completed?: boolean | null
-          joyful_people_ids?: string[] | null
           linked_todo_id?: string | null
-          shameful_people_ids?: string[] | null
           start_time: string
           updated_at?: string
           user_id: string
@@ -310,9 +306,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           is_completed?: boolean | null
-          joyful_people_ids?: string[] | null
           linked_todo_id?: string | null
-          shameful_people_ids?: string[] | null
           start_time?: string
           updated_at?: string
           user_id?: string
