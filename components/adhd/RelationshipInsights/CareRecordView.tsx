@@ -719,7 +719,7 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                 {/* 1. 들은 소식 - 최상단 */}
                 <div>
                   <p className="text-sm font-medium mb-2">
-                    요즘 그분은 어떻게 지내고 계세요?
+                  오늘 그분과 무슨 시간을 보냈고, 요즘 그분은 어떻게 지내고 계세요?
                   </p>
                   <textarea
                     value={recentNews}
