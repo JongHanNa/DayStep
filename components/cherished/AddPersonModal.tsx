@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Check, Plus, Pencil } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useDepartmentStore } from '@/state/stores/departmentStore';
 import { DepartmentService } from '@/services/department.service';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { TagInput } from '@/components/ui/TagInput';
+import { DepartmentTagInput } from '@/components/ui/DepartmentTagInput';
 import type { CherishedPerson, CherishedPersonInput } from '@/types/cherished-people';
 import type { Department } from '@/types/department';
 
@@ -59,11 +60,9 @@ export default function AddPersonModal({
   const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
 
   // 부서 관리 상태
-  const [isAddingDepartment, setIsAddingDepartment] = useState(false);
-  const [newDepartmentName, setNewDepartmentName] = useState('');
-  const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null);
-  const [editingDepartmentName, setEditingDepartmentName] = useState('');
   const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [editingDepartmentName, setEditingDepartmentName] = useState('');
   const [isDepartmentSaving, setIsDepartmentSaving] = useState(false);
 
   // 모달 열릴 때 추천 목록 및 부서 로드
@@ -113,20 +112,9 @@ export default function AddPersonModal({
     setOriginalDepartmentIds([]);
     setShowDeleteConfirm(false);
     // 부서 관리 상태 초기화
-    setIsAddingDepartment(false);
-    setNewDepartmentName('');
-    setEditingDepartmentId(null);
-    setEditingDepartmentName('');
     setDepartmentToDelete(null);
-  };
-
-  // 부서 선택 토글
-  const toggleDepartment = (departmentId: string) => {
-    setSelectedDepartmentIds((prev) =>
-      prev.includes(departmentId)
-        ? prev.filter((id) => id !== departmentId)
-        : [...prev, departmentId]
-    );
+    setEditingDepartment(null);
+    setEditingDepartmentName('');
   };
 
   // 부서 연결 업데이트
@@ -147,54 +135,39 @@ export default function AddPersonModal({
     }
   };
 
-  // 새 부서 추가
-  const handleAddDepartment = async () => {
-    if (!newDepartmentName.trim() || !userId) return;
+  // 새 부서 생성 (DepartmentTagInput용)
+  const handleCreateDepartment = async (name: string): Promise<Department | null> => {
+    if (!userId) return null;
 
-    setIsDepartmentSaving(true);
     try {
-      const newDepartment = await createDepartment(userId, {
-        name: newDepartmentName.trim(),
-      });
-      if (newDepartment) {
-        // 새로 생성된 부서 선택
-        setSelectedDepartmentIds((prev) => [...prev, newDepartment.id]);
-        setNewDepartmentName('');
-        setIsAddingDepartment(false);
-      }
+      const newDepartment = await createDepartment(userId, { name });
+      return newDepartment;
     } catch (error) {
       console.error('부서 추가 실패:', error);
-    } finally {
-      setIsDepartmentSaving(false);
+      return null;
     }
   };
 
-  // 부서 수정 시작
+  // 부서 편집 시작
   const handleStartEditDepartment = (department: Department) => {
-    setEditingDepartmentId(department.id);
+    setEditingDepartment(department);
     setEditingDepartmentName(department.name);
   };
 
-  // 부서 수정 저장
+  // 부서 편집 저장
   const handleSaveDepartmentEdit = async () => {
-    if (!editingDepartmentId || !editingDepartmentName.trim() || !userId) return;
+    if (!editingDepartment || !editingDepartmentName.trim() || !userId) return;
 
     setIsDepartmentSaving(true);
     try {
-      await updateDepartmentStore(userId, editingDepartmentId, { name: editingDepartmentName.trim() });
-      setEditingDepartmentId(null);
+      await updateDepartmentStore(userId, editingDepartment.id, { name: editingDepartmentName.trim() });
+      setEditingDepartment(null);
       setEditingDepartmentName('');
     } catch (error) {
       console.error('부서 수정 실패:', error);
     } finally {
       setIsDepartmentSaving(false);
     }
-  };
-
-  // 부서 수정 취소
-  const handleCancelDepartmentEdit = () => {
-    setEditingDepartmentId(null);
-    setEditingDepartmentName('');
   };
 
   // 부서 삭제
@@ -356,157 +329,63 @@ export default function AddPersonModal({
             placeholder="관계를 입력하세요 (예: 가족, 친구)"
           />
 
-          {/* 부서/소속 - 체크박스 목록 + 추가/편집/삭제 */}
-          <div>
-            <label className="text-sm font-medium block mb-2">부서/소속 (선택)</label>
-            {isLoadingDepartments ? (
-              <div className="flex items-center justify-center py-4">
-                <span className="loading loading-spinner loading-sm" />
+          {/* 부서/소속 - TagInput 스타일 */}
+          <DepartmentTagInput
+            selectedIds={selectedDepartmentIds}
+            onSelectedIdsChange={setSelectedDepartmentIds}
+            departments={departmentList}
+            onCreateDepartment={handleCreateDepartment}
+            onEditDepartment={handleStartEditDepartment}
+            onDeleteDepartment={setDepartmentToDelete}
+            label="부서/소속 (선택)"
+            placeholder="부서를 입력하세요"
+            isLoading={isLoadingDepartments}
+          />
+
+          {/* 부서 편집 모달 */}
+          {editingDepartment && (
+            <div className="p-3 rounded-xl bg-base-200 border border-base-300">
+              <p className="text-sm font-medium mb-2">부서 이름 수정</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editingDepartmentName}
+                  onChange={(e) => setEditingDepartmentName(e.target.value)}
+                  className="input input-sm input-bordered flex-1"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveDepartmentEdit();
+                    if (e.key === 'Escape') {
+                      setEditingDepartment(null);
+                      setEditingDepartmentName('');
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveDepartmentEdit}
+                  disabled={isDepartmentSaving || !editingDepartmentName.trim()}
+                  className="btn btn-primary btn-sm"
+                >
+                  {isDepartmentSaving ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : (
+                    '저장'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingDepartment(null);
+                    setEditingDepartmentName('');
+                  }}
+                  className="btn btn-ghost btn-sm"
+                >
+                  취소
+                </button>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {/* 부서 목록 */}
-                {departmentList.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    {departmentList.map((department) => {
-                      const isSelected = selectedDepartmentIds.includes(department.id);
-                      const isEditing = editingDepartmentId === department.id;
-
-                      if (isEditing) {
-                        return (
-                          <div key={department.id} className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={editingDepartmentName}
-                              onChange={(e) => setEditingDepartmentName(e.target.value)}
-                              className="input input-sm input-bordered flex-1"
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveDepartmentEdit();
-                                if (e.key === 'Escape') handleCancelDepartmentEdit();
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={handleSaveDepartmentEdit}
-                              disabled={isDepartmentSaving || !editingDepartmentName.trim()}
-                              className="btn btn-ghost btn-xs btn-circle text-success"
-                            >
-                              {isDepartmentSaving ? (
-                                <span className="loading loading-spinner loading-xs" />
-                              ) : (
-                                <Check className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleCancelDepartmentEdit}
-                              className="btn btn-ghost btn-xs btn-circle"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div
-                          key={department.id}
-                          className="flex items-center justify-between group"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => toggleDepartment(department.id)}
-                            className={`
-                              flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm
-                              transition-colors border flex-shrink-0
-                              ${isSelected
-                                ? 'bg-primary text-primary-content border-primary'
-                                : 'bg-base-200 text-base-content border-base-300 hover:bg-base-300'
-                              }
-                            `}
-                          >
-                            {isSelected && <Check className="w-3.5 h-3.5" />}
-                            {department.name}
-                          </button>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              type="button"
-                              onClick={() => handleStartEditDepartment(department)}
-                              className="btn btn-ghost btn-xs btn-circle"
-                              title="편집"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDepartmentToDelete(department)}
-                              className="btn btn-ghost btn-xs btn-circle text-error"
-                              title="삭제"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* 새 부서 추가 영역 */}
-                {isAddingDepartment ? (
-                  <div className="flex items-center gap-2 mt-2">
-                    <input
-                      type="text"
-                      value={newDepartmentName}
-                      onChange={(e) => setNewDepartmentName(e.target.value)}
-                      placeholder="새 부서 이름"
-                      className="input input-sm input-bordered flex-1"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleAddDepartment();
-                        if (e.key === 'Escape') {
-                          setIsAddingDepartment(false);
-                          setNewDepartmentName('');
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddDepartment}
-                      disabled={isDepartmentSaving || !newDepartmentName.trim()}
-                      className="btn btn-primary btn-sm"
-                    >
-                      {isDepartmentSaving ? (
-                        <span className="loading loading-spinner loading-xs" />
-                      ) : (
-                        '추가'
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingDepartment(false);
-                        setNewDepartmentName('');
-                      }}
-                      className="btn btn-ghost btn-sm"
-                    >
-                      취소
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingDepartment(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border border-dashed border-base-300 text-base-content/60 hover:bg-base-200 hover:border-base-400 transition-colors mt-2"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    새 부서 추가
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* 부서 삭제 확인 */}
           {departmentToDelete && (
