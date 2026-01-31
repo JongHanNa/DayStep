@@ -14,13 +14,15 @@ interface DepartmentTagInputProps {
   placeholder?: string;
   label?: string;
   isLoading?: boolean;
+  /** 관리 버튼 표시 여부 */
+  showManageButton?: boolean;
 }
 
 /**
  * 부서 태그 입력 컴포넌트
- * - TagInput과 동일한 UI 패턴
+ * - RelationshipTagInput/RoleTagInput과 동일한 UI 패턴
  * - 기존 부서 선택 또는 새 부서 생성
- * - 편집/삭제는 관리 모드에서 처리
+ * - "관리" 버튼으로 모달 열어 편집/삭제
  */
 export function DepartmentTagInput({
   selectedIds,
@@ -32,32 +34,29 @@ export function DepartmentTagInput({
   placeholder = '부서를 입력하세요',
   label,
   isLoading = false,
+  showManageButton = true,
 }: DepartmentTagInputProps) {
   const [inputValue, setInputValue] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [showManageMode, setShowManageMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 선택된 부서 객체들
   const selectedDepartments = departments.filter((d) => selectedIds.includes(d.id));
 
-  // 입력값에 따른 부서 필터링
-  useEffect(() => {
-    const unselected = departments.filter((d) => !selectedIds.includes(d.id));
+  // 필터링된 추천 목록
+  const filteredSuggestions = departments.filter(
+    (d) =>
+      !selectedIds.includes(d.id) &&
+      d.name.toLowerCase().includes(inputValue.toLowerCase())
+  );
 
-    if (inputValue.trim()) {
-      const filtered = unselected.filter((d) =>
-        d.name.toLowerCase().includes(inputValue.toLowerCase())
-      );
-      setFilteredDepartments(filtered);
-      setShowSuggestions(true);
-    } else {
-      setFilteredDepartments(unselected);
-    }
-  }, [inputValue, departments, selectedIds]);
+  // 입력값과 정확히 일치하는 부서가 있는지
+  const exactMatch = departments.find(
+    (d) => d.name.toLowerCase() === inputValue.toLowerCase().trim()
+  );
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -66,7 +65,7 @@ export function DepartmentTagInput({
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setShowSuggestions(false);
+        setShowDropdown(false);
       }
     };
 
@@ -80,7 +79,7 @@ export function DepartmentTagInput({
       onSelectedIdsChange([...selectedIds, department.id]);
     }
     setInputValue('');
-    setShowSuggestions(false);
+    setShowDropdown(false);
   };
 
   // 부서 선택 해제
@@ -92,13 +91,19 @@ export function DepartmentTagInput({
   const handleCreateDepartment = async () => {
     if (!inputValue.trim() || isCreating) return;
 
+    // 이미 존재하는 부서명인 경우 선택만
+    if (exactMatch) {
+      selectDepartment(exactMatch);
+      return;
+    }
+
     setIsCreating(true);
     try {
       const newDepartment = await onCreateDepartment(inputValue.trim());
       if (newDepartment) {
         onSelectedIdsChange([...selectedIds, newDepartment.id]);
         setInputValue('');
-        setShowSuggestions(false);
+        setShowDropdown(false);
       }
     } finally {
       setIsCreating(false);
@@ -112,87 +117,45 @@ export function DepartmentTagInput({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (inputValue.trim()) {
-        // 정확히 일치하는 부서가 있으면 선택
-        const exactMatch = departments.find(
-          (d) => d.name.toLowerCase() === inputValue.toLowerCase() && !selectedIds.includes(d.id)
-        );
         if (exactMatch) {
           selectDepartment(exactMatch);
-        } else if (filteredDepartments.length > 0) {
-          // 필터된 첫 번째 부서 선택
-          selectDepartment(filteredDepartments[0]);
         } else {
-          // 새 부서 생성
           handleCreateDepartment();
         }
       }
     } else if (e.key === 'Backspace' && !inputValue && selectedIds.length > 0) {
       removeDepartment(selectedIds[selectedIds.length - 1]);
     } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
+      setShowDropdown(false);
     }
   };
 
-  const handleFocus = () => {
-    setShowSuggestions(true);
+  // 부서 삭제
+  const handleDeleteDepartment = (department: Department) => {
+    // 선택 목록에서도 제거
+    onSelectedIdsChange(selectedIds.filter((id) => id !== department.id));
+    // 실제 삭제
+    if (onDeleteDepartment) {
+      onDeleteDepartment(department);
+    }
   };
-
-  // 입력값이 기존 부서와 일치하지 않으면 "새 부서 추가" 옵션 표시
-  const showCreateOption =
-    inputValue.trim() &&
-    !departments.some((d) => d.name.toLowerCase() === inputValue.toLowerCase());
 
   return (
     <div ref={containerRef} className="relative">
-      {label && (
+      {/* 라벨 + 관리 버튼 */}
+      {(label || showManageButton) && (
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium">{label}</label>
-          {(onEditDepartment || onDeleteDepartment) && departments.length > 0 && (
+          {label && <label className="text-sm font-medium">{label}</label>}
+          {showManageButton && (onEditDepartment || onDeleteDepartment) && departments.length > 0 && (
             <button
               type="button"
-              onClick={() => setShowManageMode(!showManageMode)}
-              className={`btn btn-ghost btn-xs gap-1 ${showManageMode ? 'text-primary' : ''}`}
+              onClick={() => setShowManageModal(true)}
+              className="text-xs text-base-content/60 hover:text-primary flex items-center gap-1"
             >
-              <Settings className="w-3.5 h-3.5" />
-              {showManageMode ? '완료' : '관리'}
+              <Settings className="w-3 h-3" />
+              관리
             </button>
           )}
-        </div>
-      )}
-
-      {/* 관리 모드 */}
-      {showManageMode && (
-        <div className="mb-2 p-2 rounded-lg bg-base-200 border border-base-300">
-          <p className="text-xs text-base-content/60 mb-2">부서를 선택하여 편집하거나 삭제하세요</p>
-          <div className="flex flex-wrap gap-2">
-            {departments.map((department) => (
-              <div key={department.id} className="flex items-center gap-1">
-                <span className="px-2 py-1 rounded-full bg-base-100 text-sm border border-base-300">
-                  {department.name}
-                </span>
-                {onEditDepartment && (
-                  <button
-                    type="button"
-                    onClick={() => onEditDepartment(department)}
-                    className="btn btn-ghost btn-xs btn-circle"
-                    title="편집"
-                  >
-                    ✏️
-                  </button>
-                )}
-                {onDeleteDepartment && (
-                  <button
-                    type="button"
-                    onClick={() => onDeleteDepartment(department)}
-                    className="btn btn-ghost btn-xs btn-circle text-error"
-                    title="삭제"
-                  >
-                    🗑️
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -202,15 +165,20 @@ export function DepartmentTagInput({
         </div>
       ) : (
         <>
+          {/* 입력 영역 */}
           <div
             className="flex flex-wrap gap-2 p-3 rounded-lg bg-base-200 border border-base-300 min-h-[48px] cursor-text"
             onClick={() => inputRef.current?.focus()}
           >
-            {/* 선택된 부서들 */}
+            {/* 선택된 부서 태그들 */}
             {selectedDepartments.map((department) => (
               <span
                 key={department.id}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/20 text-primary text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm"
+                style={{
+                  backgroundColor: `${department.color}20`,
+                  color: department.color,
+                }}
               >
                 <span>{department.name}</span>
                 <button
@@ -219,7 +187,7 @@ export function DepartmentTagInput({
                     e.stopPropagation();
                     removeDepartment(department.id);
                   }}
-                  className="hover:bg-primary/30 rounded-full p-0.5 transition-colors"
+                  className="hover:opacity-70 rounded-full p-0.5 transition-opacity"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -231,19 +199,22 @@ export function DepartmentTagInput({
               ref={inputRef}
               type="text"
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onFocus={handleFocus}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
               onKeyDown={handleKeyDown}
               placeholder={selectedIds.length === 0 ? placeholder : ''}
               className="flex-1 min-w-[100px] bg-transparent outline-none text-base"
             />
           </div>
 
-          {/* 자동완성 드롭다운 */}
-          {showSuggestions && (filteredDepartments.length > 0 || showCreateOption) && (
+          {/* 드롭다운 */}
+          {showDropdown && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
-              {/* 기존 부서 목록 */}
-              {filteredDepartments.map((department) => (
+              {/* 기존 부서 선택 */}
+              {filteredSuggestions.map((department) => (
                 <button
                   key={department.id}
                   type="button"
@@ -251,34 +222,110 @@ export function DepartmentTagInput({
                     e.preventDefault();
                     selectDepartment(department);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-base-200 transition-colors text-sm"
+                  className="w-full px-4 py-2 text-left hover:bg-base-200 transition-colors text-sm flex items-center gap-2"
                 >
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: department.color }}
+                  />
                   {department.name}
                 </button>
               ))}
 
-              {/* 새 부서 추가 옵션 */}
-              {showCreateOption && (
+              {/* 새 부서 생성 옵션 */}
+              {inputValue.trim() && !exactMatch && (
                 <button
                   type="button"
                   onMouseDown={(e) => {
                     e.preventDefault();
                     handleCreateDepartment();
                   }}
+                  className="w-full px-4 py-2 text-left hover:bg-base-200 transition-colors text-sm flex items-center gap-2 text-primary border-t border-base-300"
                   disabled={isCreating}
-                  className="w-full px-4 py-2 text-left hover:bg-base-200 transition-colors text-sm text-primary flex items-center gap-2 border-t border-base-200"
                 >
-                  {isCreating ? (
-                    <span className="loading loading-spinner loading-xs" />
-                  ) : (
-                    <Plus className="w-4 h-4" />
-                  )}
-                  &quot;{inputValue}&quot; 새 부서 추가
+                  <Plus className="w-4 h-4" />
+                  {isCreating ? '생성 중...' : `"${inputValue.trim()}" 새로 만들기`}
                 </button>
+              )}
+
+              {/* 목록이 비어있을 때 */}
+              {filteredSuggestions.length === 0 && !inputValue.trim() && (
+                <div className="px-4 py-3 text-sm text-base-content/50 text-center">
+                  부서를 입력하세요
+                </div>
               )}
             </div>
           )}
         </>
+      )}
+
+      {/* 관리 모달 */}
+      {showManageModal && (
+        <dialog open className="modal z-[110]">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-lg">부서 관리</h3>
+              <button
+                type="button"
+                onClick={() => setShowManageModal(false)}
+                className="btn btn-sm btn-circle btn-ghost"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 부서 목록 */}
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {departments.length === 0 ? (
+                <p className="text-sm text-base-content/50 text-center py-4">
+                  등록된 부서가 없습니다
+                </p>
+              ) : (
+                departments.map((department) => (
+                  <div
+                    key={department.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-base-200"
+                  >
+                    <span
+                      className="w-4 h-4 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: department.color }}
+                    />
+                    <span className="flex-1 text-sm">{department.name}</span>
+                    {onEditDepartment && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowManageModal(false);
+                          onEditDepartment(department);
+                        }}
+                        className="btn btn-xs btn-ghost"
+                      >
+                        수정
+                      </button>
+                    )}
+                    {onDeleteDepartment && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDepartment(department)}
+                        className="btn btn-xs btn-ghost text-error"
+                      >
+                        삭제
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button
+              type="button"
+              onClick={() => setShowManageModal(false)}
+            >
+              닫기
+            </button>
+          </form>
+        </dialog>
       )}
     </div>
   );
