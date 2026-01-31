@@ -592,3 +592,13 @@ export interface AnytimeInboxItem {
 // ============================================
 export * from './department';
 
+// ============================================
+// Relationship Types (Re-export)
+// ============================================
+export * from './relationship';
+
+// ============================================
+// Role Types (Re-export)
+// ============================================
+export * from './role';
+

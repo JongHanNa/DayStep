@@ -4,11 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useDepartmentStore } from '@/state/stores/departmentStore';
+import { useRelationshipStore } from '@/state/stores/relationshipStore';
+import { useRoleStore } from '@/state/stores/roleStore';
 import { DepartmentService } from '@/services/department.service';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
-import { TagInput } from '@/components/ui/TagInput';
 import { DepartmentTagInput } from '@/components/ui/DepartmentTagInput';
+import { RelationshipTagInput } from '@/components/ui/RelationshipTagInput';
+import { RoleTagInput } from '@/components/ui/RoleTagInput';
 import type { CherishedPerson, CherishedPersonInput } from '@/types/cherished-people';
 import type { Department } from '@/types/department';
 
@@ -33,9 +36,6 @@ export default function AddPersonModal({
     updatePerson,
     deactivatePerson,
     loadPeople,
-    loadSuggestions,
-    relationshipSuggestions,
-    roleSuggestions,
   } = useCherishedPeopleStore();
   const {
     departments: departmentList,
@@ -46,18 +46,32 @@ export default function AddPersonModal({
     linkPersonToDepartment,
     unlinkPersonFromDepartment,
   } = useDepartmentStore();
+  const {
+    fetchRelationships,
+    fetchAllPersonRelationships,
+    updatePersonRelationships,
+    getPersonRelationshipIds,
+  } = useRelationshipStore();
+  const {
+    fetchRoles,
+    fetchAllPersonRoles,
+    updatePersonRoles,
+    getPersonRoleIds,
+  } = useRoleStore();
   const { checkAndProceed, limitResult, isModalOpen, closeModal, onCreateSuccess, onDeleteSuccess } = useUsageLimitCheck();
 
   // 폼 상태
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
-  const [relationships, setRelationships] = useState<string[]>([]);
-  const [roles, setRoles] = useState<string[]>([]);
+  const [selectedRelationshipIds, setSelectedRelationshipIds] = useState<string[]>([]);
+  const [originalRelationshipIds, setOriginalRelationshipIds] = useState<string[]>([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [originalRoleIds, setOriginalRoleIds] = useState<string[]>([]);
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
   const [originalDepartmentIds, setOriginalDepartmentIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   // 부서 관리 상태
   const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
@@ -65,13 +79,16 @@ export default function AddPersonModal({
   const [editingDepartmentName, setEditingDepartmentName] = useState('');
   const [isDepartmentSaving, setIsDepartmentSaving] = useState(false);
 
-  // 모달 열릴 때 추천 목록 및 부서 로드
+  // 모달 열릴 때 데이터 로드 (관계, 역할, 부서)
   useEffect(() => {
     if (isOpen && userId) {
-      loadSuggestions(userId);
+      fetchRelationships(userId);
+      fetchRoles(userId);
       fetchDepartments(userId);
+      fetchAllPersonRelationships(userId);
+      fetchAllPersonRoles(userId);
     }
-  }, [isOpen, userId, loadSuggestions, fetchDepartments]);
+  }, [isOpen, userId, fetchRelationships, fetchRoles, fetchDepartments, fetchAllPersonRelationships, fetchAllPersonRoles]);
 
   // 편집 모드일 때 데이터 로드
   useEffect(() => {
@@ -79,20 +96,29 @@ export default function AddPersonModal({
       if (editingPerson) {
         setName(editingPerson.name);
         setNickname(editingPerson.nickname || '');
-        setRelationships(editingPerson.relationships || []);
-        setRoles(editingPerson.roles || []);
 
-        // 현재 연결된 부서 목록 조회
-        setIsLoadingDepartments(true);
+        // 현재 연결된 관계/역할/부서 목록 조회
+        setIsLoadingData(true);
         try {
+          // 관계 ID 로드 (스토어 캐시 사용)
+          const relationshipIds = getPersonRelationshipIds(editingPerson.id);
+          setSelectedRelationshipIds(relationshipIds);
+          setOriginalRelationshipIds(relationshipIds);
+
+          // 역할 ID 로드 (스토어 캐시 사용)
+          const roleIds = getPersonRoleIds(editingPerson.id);
+          setSelectedRoleIds(roleIds);
+          setOriginalRoleIds(roleIds);
+
+          // 부서 ID 로드
           const personDepartments = await DepartmentService.getPersonDepartments(userId, editingPerson.id);
           const departmentIds = personDepartments.map((d: Department) => d.id);
           setSelectedDepartmentIds(departmentIds);
           setOriginalDepartmentIds(departmentIds);
         } catch (error) {
-          console.error('부서 로드 실패:', error);
+          console.error('데이터 로드 실패:', error);
         } finally {
-          setIsLoadingDepartments(false);
+          setIsLoadingData(false);
         }
       } else {
         resetForm();
@@ -100,14 +126,16 @@ export default function AddPersonModal({
     };
 
     loadPersonData();
-  }, [editingPerson, userId]);
+  }, [editingPerson, userId, getPersonRelationshipIds, getPersonRoleIds]);
 
   // 폼 리셋
   const resetForm = () => {
     setName('');
     setNickname('');
-    setRelationships([]);
-    setRoles([]);
+    setSelectedRelationshipIds([]);
+    setOriginalRelationshipIds([]);
+    setSelectedRoleIds([]);
+    setOriginalRoleIds([]);
     setSelectedDepartmentIds([]);
     setOriginalDepartmentIds([]);
     setShowDeleteConfirm(false);
@@ -191,11 +219,12 @@ export default function AddPersonModal({
   const handleSave = async () => {
     if (!name.trim()) return;
 
+    // 기존 text[] 필드는 빈 배열로 유지 (새 조인 테이블 사용)
     const input: CherishedPersonInput = {
       name: name.trim(),
       nickname: nickname.trim() || undefined,
-      relationships,
-      roles,
+      relationships: [], // 더 이상 사용하지 않음 - person_relationships 테이블 사용
+      roles: [], // 더 이상 사용하지 않음 - person_roles 테이블 사용
     };
 
     // 새로 추가하는 경우에만 용량 체크
@@ -205,6 +234,10 @@ export default function AddPersonModal({
         try {
           const newPerson = await addPerson(userId, input);
           if (newPerson) {
+            // 관계 연결
+            await updatePersonRelationships(userId, newPerson.id, selectedRelationshipIds);
+            // 역할 연결
+            await updatePersonRoles(userId, newPerson.id, selectedRoleIds);
             // 부서 연결
             for (const departmentId of selectedDepartmentIds) {
               await linkPersonToDepartment(userId, newPerson.id, departmentId);
@@ -224,6 +257,10 @@ export default function AddPersonModal({
       setIsSaving(true);
       try {
         await updatePerson(editingPerson.id, userId, input);
+        // 관계 연결 업데이트
+        await updatePersonRelationships(userId, editingPerson.id, selectedRelationshipIds);
+        // 역할 연결 업데이트
+        await updatePersonRoles(userId, editingPerson.id, selectedRoleIds);
         // 부서 연결 업데이트
         await updateDepartmentLinks(editingPerson.id);
         await loadPeople(userId); // 최신 데이터 리로드
@@ -321,11 +358,10 @@ export default function AddPersonModal({
           </div>
 
           {/* 관계 */}
-          <TagInput
+          <RelationshipTagInput
             label="관계"
-            value={relationships}
-            onChange={setRelationships}
-            suggestions={relationshipSuggestions}
+            value={selectedRelationshipIds}
+            onChange={setSelectedRelationshipIds}
             placeholder="관계를 입력하세요 (예: 가족, 친구)"
           />
 
@@ -339,7 +375,7 @@ export default function AddPersonModal({
             onDeleteDepartment={setDepartmentToDelete}
             label="부서/소속 (선택)"
             placeholder="부서를 입력하세요"
-            isLoading={isLoadingDepartments}
+            isLoading={isLoadingData}
           />
 
           {/* 부서 편집 모달 */}
@@ -421,11 +457,10 @@ export default function AddPersonModal({
           )}
 
           {/* 역할/직분 */}
-          <TagInput
+          <RoleTagInput
             label="역할/직분 (선택)"
-            value={roles}
-            onChange={setRoles}
-            suggestions={roleSuggestions}
+            value={selectedRoleIds}
+            onChange={setSelectedRoleIds}
             placeholder="역할을 입력하세요 (예: 팀장, 부장)"
           />
         </div>

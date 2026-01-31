@@ -32,6 +32,8 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useDepartmentStore } from '@/state/stores/departmentStore';
+import { useRelationshipStore } from '@/state/stores/relationshipStore';
+import { useRoleStore } from '@/state/stores/roleStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
 import { DepartmentService } from '@/services/department.service';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
@@ -91,6 +93,22 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
     fetchDepartments,
   } = useDepartmentStore();
 
+  const {
+    relationships,
+    fetchRelationships,
+    getPersonRelationshipIds,
+    fetchAllPersonRelationships,
+    personRelationshipMap,
+  } = useRelationshipStore();
+
+  const {
+    roles,
+    fetchRoles,
+    getPersonRoleIds,
+    fetchAllPersonRoles,
+    personRoleMap,
+  } = useRoleStore();
+
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   const [viewState, setViewState] = useState<ViewState>('select-person');
@@ -122,22 +140,62 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
   // 새 사람 추가 가능 여부 (검색어 있고 + 정확히 일치 없음)
   const canCreateNew = searchQuery.trim() && !exactMatchExists;
 
-  // 고유값 추출 (필터 드롭다운용)
-  const uniqueRelationships = useMemo(() =>
-    [...new Set(people.flatMap(p => p.relationships || []))].filter(Boolean).sort(), [people]);
-  const uniqueRoles = useMemo(() =>
-    [...new Set(people.flatMap(p => p.roles || []))].filter(Boolean).sort(), [people]);
+  // 사용 중인 관계/역할 ID 추출 (필터 드롭다운용)
+  const usedRelationshipIds = useMemo(() => {
+    const ids = new Set<string>();
+    personRelationshipMap.forEach((relIds) => {
+      relIds.forEach((id) => ids.add(id));
+    });
+    return Array.from(ids);
+  }, [personRelationshipMap]);
 
-  // 필터 함수
+  const usedRoleIds = useMemo(() => {
+    const ids = new Set<string>();
+    personRoleMap.forEach((roleIds) => {
+      roleIds.forEach((id) => ids.add(id));
+    });
+    return Array.from(ids);
+  }, [personRoleMap]);
+
+  // 필터 드롭다운에 표시할 관계/역할 목록
+  const filterRelationships = useMemo(() =>
+    relationships.filter(r => usedRelationshipIds.includes(r.id)).sort((a, b) => a.name.localeCompare(b.name)),
+    [relationships, usedRelationshipIds]);
+  const filterRoles = useMemo(() =>
+    roles.filter(r => usedRoleIds.includes(r.id)).sort((a, b) => a.name.localeCompare(b.name)),
+    [roles, usedRoleIds]);
+
+  // 필터 함수 (ID 기반)
   const matchesFilter = useCallback((person: CherishedPerson) => {
-    if (filterRelationship && !person.relationships?.includes(filterRelationship)) return false;
-    if (filterRole && !person.roles?.includes(filterRole)) return false;
+    if (filterRelationship) {
+      const personRelIds = personRelationshipMap.get(person.id) || [];
+      if (!personRelIds.includes(filterRelationship)) return false;
+    }
+    if (filterRole) {
+      const personRoleIds = personRoleMap.get(person.id) || [];
+      if (!personRoleIds.includes(filterRole)) return false;
+    }
     if (filterDepartment) {
       const personDepts = personDepartmentMap.get(person.id) || [];
       if (!personDepts.includes(filterDepartment)) return false;
     }
     return true;
-  }, [filterRelationship, filterRole, filterDepartment, personDepartmentMap]);
+  }, [filterRelationship, filterRole, filterDepartment, personRelationshipMap, personRoleMap, personDepartmentMap]);
+
+  // 관계/역할 이름 조회 헬퍼
+  const getRelationshipNames = useCallback((personId: string) => {
+    const relIds = personRelationshipMap.get(personId) || [];
+    return relIds
+      .map(id => relationships.find(r => r.id === id)?.name)
+      .filter(Boolean) as string[];
+  }, [personRelationshipMap, relationships]);
+
+  const getRoleNames = useCallback((personId: string) => {
+    const roleIds = personRoleMap.get(personId) || [];
+    return roleIds
+      .map(id => roles.find(r => r.id === id)?.name)
+      .filter(Boolean) as string[];
+  }, [personRoleMap, roles]);
 
   // 필터링된 추천 목록 (오래 연락 안한 분들)
   const filteredRecommendations = useMemo(() =>
@@ -177,6 +235,10 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
       loadRecommendations(userId, 7);
       loadReminderMessage();
       fetchDepartments(userId);
+      fetchRelationships(userId);
+      fetchRoles(userId);
+      fetchAllPersonRelationships(userId);
+      fetchAllPersonRoles(userId);
 
       // person-department 매핑 로드
       const loadPersonDepartmentMap = async () => {
@@ -190,7 +252,7 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
       };
       loadPersonDepartmentMap();
     }
-  }, [userId, loadPeople, loadRecommendations, fetchDepartments]);
+  }, [userId, loadPeople, loadRecommendations, fetchDepartments, fetchRelationships, fetchRoles, fetchAllPersonRelationships, fetchAllPersonRoles]);
 
   // 성찰 메시지 로드
   const loadReminderMessage = async () => {
@@ -367,26 +429,26 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
             </div>
 
             {/* 필터 드롭다운 */}
-            {(uniqueRelationships.length > 0 || uniqueRoles.length > 0 || departments.length > 0) && (
+            {(filterRelationships.length > 0 || filterRoles.length > 0 || departments.length > 0) && (
               <div className="flex gap-2 flex-wrap">
-                {uniqueRelationships.length > 0 && (
+                {filterRelationships.length > 0 && (
                   <select
                     value={filterRelationship || ''}
                     onChange={(e) => setFilterRelationship(e.target.value || null)}
                     className="select select-xs select-bordered bg-base-200"
                   >
                     <option value="">관계 전체</option>
-                    {uniqueRelationships.map(r => <option key={r} value={r}>{r}</option>)}
+                    {filterRelationships.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                 )}
-                {uniqueRoles.length > 0 && (
+                {filterRoles.length > 0 && (
                   <select
                     value={filterRole || ''}
                     onChange={(e) => setFilterRole(e.target.value || null)}
                     className="select select-xs select-bordered bg-base-200"
                   >
                     <option value="">역할 전체</option>
-                    {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                    {filterRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                 )}
                 {departments.length > 0 && (
@@ -468,20 +530,24 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                           >
                             <div>
                               <span className="font-medium text-lg">{rec.person.name}</span>
-                              {(rec.person.relationships?.length > 0 || rec.person.roles?.length > 0) && (
-                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                  {rec.person.relationships?.length > 0 && (
-                                    <span className="text-xs text-base-content/50">
-                                      {rec.person.relationships.join(', ')}
-                                    </span>
-                                  )}
-                                  {rec.person.roles?.length > 0 && (
-                                    <span className="text-xs text-primary/70">
-                                      {rec.person.roles.join(', ')}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                              {(() => {
+                                const relNames = getRelationshipNames(rec.person.id);
+                                const roleNames = getRoleNames(rec.person.id);
+                                return (relNames.length > 0 || roleNames.length > 0) && (
+                                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                    {relNames.length > 0 && (
+                                      <span className="text-xs text-base-content/50">
+                                        {relNames.join(', ')}
+                                      </span>
+                                    )}
+                                    {roleNames.length > 0 && (
+                                      <span className="text-xs text-primary/70">
+                                        {roleNames.join(', ')}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </button>
                           <div className="flex items-center gap-2">
@@ -544,20 +610,24 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                           >
                             <div>
                               <span className="font-medium">{person.name}</span>
-                              {(person.relationships?.length > 0 || person.roles?.length > 0) && (
-                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                  {person.relationships?.length > 0 && (
-                                    <span className="text-xs text-base-content/50">
-                                      {person.relationships.join(', ')}
-                                    </span>
-                                  )}
-                                  {person.roles?.length > 0 && (
-                                    <span className="text-xs text-primary/70">
-                                      {person.roles.join(', ')}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                              {(() => {
+                                const relNames = getRelationshipNames(person.id);
+                                const roleNames = getRoleNames(person.id);
+                                return (relNames.length > 0 || roleNames.length > 0) && (
+                                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                    {relNames.length > 0 && (
+                                      <span className="text-xs text-base-content/50">
+                                        {relNames.join(', ')}
+                                      </span>
+                                    )}
+                                    {roleNames.length > 0 && (
+                                      <span className="text-xs text-primary/70">
+                                        {roleNames.join(', ')}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </button>
                           <div className="flex items-center gap-2">
