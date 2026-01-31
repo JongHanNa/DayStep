@@ -1922,19 +1922,30 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                 <span className="text-xs">
                                   {gap.startTime <= currentTime && currentTime <= gap.endTime
                                     ? (() => {
+                                        // 현재 진행 중
                                         const diffMs = gap.endTime.getTime() - currentTime.getTime();
                                         const hours = Math.floor(diffMs / (1000 * 60 * 60));
                                         const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                                         const remaining = hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
                                         return `${format(gap.startTime, 'HH:mm')} ~ ${format(gap.endTime, 'HH:mm')} 현재 ${format(currentTime, 'HH:mm')} 뭐하는 중이세요? (다음 일정까지 ${remaining})`;
                                       })()
-                                    : (() => {
-                                        const diffMs = gap.endTime.getTime() - gap.startTime.getTime();
-                                        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-                                        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                                        const duration = hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
-                                        return `${format(gap.startTime, 'HH:mm')} ~ ${format(gap.endTime, 'HH:mm')} 이 시간에 뭐 했어요? (${duration})`;
-                                      })()}
+                                    : gap.endTime < currentTime
+                                      ? (() => {
+                                          // 과거
+                                          const diffMs = gap.endTime.getTime() - gap.startTime.getTime();
+                                          const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                                          const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                          const duration = hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+                                          return `${format(gap.startTime, 'HH:mm')} ~ ${format(gap.endTime, 'HH:mm')} 이 시간에 뭐 했어요? (${duration})`;
+                                        })()
+                                      : (() => {
+                                          // 미래
+                                          const diffMs = gap.endTime.getTime() - gap.startTime.getTime();
+                                          const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                                          const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                          const duration = hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+                                          return `${format(gap.startTime, 'HH:mm')} ~ ${format(gap.endTime, 'HH:mm')} 뭐 할 예정이에요? (${duration})`;
+                                        })()}
                                 </span>
                               </button>
                             );
