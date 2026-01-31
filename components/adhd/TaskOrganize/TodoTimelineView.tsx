@@ -8,6 +8,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useProjectStore } from '@/state/stores/projectStore';
+import { useDepartmentStore } from '@/state/stores/departmentStore';
 import { Todo } from '@/entities/todo/Todo';
 import TodoEditModal from '@/components/second-brain/TodoEditModal';
 import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
@@ -48,6 +49,7 @@ interface TimelineItem {
   createdAt: Date;
   projectId?: string | null;
   goalId?: string | null;
+  departmentId?: string | null;
   icon?: string | null;
   color?: string | null;
   orderIndex: number;
@@ -88,6 +90,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { people, loadPeople } = useCherishedPeopleStore();
   const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
   const { projects, fetchProjects, createProject } = useProjectStore();
+  const { departments, fetchDepartments } = useDepartmentStore();
   const [isLoading, setIsLoading] = useState(true);
 
   // 펼친 fuel 배지 상태
@@ -201,12 +204,13 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
       await Promise.all([
         fetchAllTodos(),
         loadPeople(userId),
-        fetchProjects(userId)
+        fetchProjects(userId),
+        fetchDepartments(userId)
       ]);
       setIsLoading(false);
     };
     loadData();
-  }, [userId, fetchAllTodos, loadPeople, fetchProjects]);
+  }, [userId, fetchAllTodos, loadPeople, fetchProjects, fetchDepartments]);
 
   // 반복 인스턴스 생성 및 완료 상태 로드
   useEffect(() => {
@@ -266,6 +270,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             createdAt: data.created_at ? new Date(data.created_at) : new Date(),
             projectId: data.project_id,
             goalId: data.goal_id,
+            departmentId: data.department_id,
             icon: data.icon,
             color: data.color,
             orderIndex: data.order_index || 0,
@@ -360,6 +365,11 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const goalMap = useMemo(() => {
     return new Map(goals.map(g => [g.id, g.title]));
   }, [goals]);
+
+  // 부서 매핑 생성 (색상, 아이콘, 이름 포함)
+  const departmentMap = useMemo(() => {
+    return new Map(departments.map(d => [d.id, { name: d.name, color: d.color, icon: d.icon }]));
+  }, [departments]);
 
   // 연결된 fuel 노트 가져오기
   const getLinkedFuels = useCallback((item: TimelineItem): Note[] => {
@@ -1189,6 +1199,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         createdAt: todo.createdAt,
         projectId: todo.projectId,
         goalId: todo.goalId,
+        departmentId: todo.departmentId,
         icon: todo.icon,
         color: todo.color,
         orderIndex: todo.orderIndex,
@@ -1955,6 +1966,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                           const item = renderItem.data;
                           const projectInfo = item.projectId ? projectMap.get(item.projectId) : undefined;
                           const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
+                          const departmentInfo = item.departmentId ? departmentMap.get(item.departmentId) : undefined;
 
                           // 시간 상태 계산 (timed && startTime이 있는 경우)
                           // endTime이 없어도 시작 후 10분 지나면 놓침으로 표시
@@ -2190,8 +2202,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                   </div>
                                 )}
 
-                                {/* 맥락 배지 (프로젝트/목표) */}
-                                {(goalName || projectInfo) && (
+                                {/* 맥락 배지 (프로젝트/목표/부서) */}
+                                {(goalName || projectInfo || departmentInfo) && (
                                   <div className="flex flex-wrap gap-1 mt-1.5">
                                     {goalName && (
                                       <span className="badge badge-xs badge-ghost">
@@ -2209,6 +2221,19 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
                                       >
                                         {projectInfo.icon && <span>{projectInfo.icon}</span>}
                                         {projectInfo.title}
+                                      </span>
+                                    )}
+                                    {departmentInfo && (
+                                      <span
+                                        className="badge badge-xs gap-1"
+                                        style={{
+                                          backgroundColor: departmentInfo.color ? `${departmentInfo.color}20` : undefined,
+                                          borderColor: departmentInfo.color || undefined,
+                                          color: departmentInfo.color || undefined
+                                        }}
+                                      >
+                                        {departmentInfo.icon && <span>{departmentInfo.icon}</span>}
+                                        {departmentInfo.name}
                                       </span>
                                     )}
                                   </div>

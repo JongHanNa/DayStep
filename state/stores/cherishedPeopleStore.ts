@@ -32,7 +32,6 @@ interface CherishedPeopleState {
   // 자동완성 추천 목록
   relationshipSuggestions: string[];
   roleSuggestions: string[];
-  departmentSuggestions: string[];
   isLoadingSuggestions: boolean;
 
   // 우선순위 상기 모달
@@ -96,7 +95,6 @@ const DEFAULT_STATE = {
   isLoadingInteractions: false,
   relationshipSuggestions: [],
   roleSuggestions: [],
-  departmentSuggestions: [],
   isLoadingSuggestions: false,
   currentReminder: null,
   showPriorityReminderModal: false,
@@ -219,15 +217,13 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
       loadSuggestions: async (userId) => {
         set({ isLoadingSuggestions: true });
         try {
-          const [relationships, roles, departments] = await Promise.all([
+          const [relationships, roles] = await Promise.all([
             CherishedPeopleService.getRelationshipSuggestions(userId),
             CherishedPeopleService.getRoleSuggestions(userId),
-            CherishedPeopleService.getDepartmentSuggestions(userId),
           ]);
           set({
             relationshipSuggestions: relationships,
             roleSuggestions: roles,
-            departmentSuggestions: departments,
             isLoadingSuggestions: false,
           });
         } catch (error) {

@@ -59,7 +59,6 @@ export class CherishedPeopleService {
       nickname: input.nickname?.trim() || null,
       relationships: input.relationships || [],
       roles: input.roles || [],
-      departments: input.departments || [],
       is_active: true,
       interaction_count: 0,
     };
@@ -726,19 +725,4 @@ export class CherishedPeopleService {
     }
   }
 
-  /**
-   * 부서/소속 추천 목록 조회 (자동완성용)
-   * 사용자가 입력한 기존 값들만 반환
-   */
-  static async getDepartmentSuggestions(userId: string): Promise<string[]> {
-    try {
-      const people = await this.getPeople(userId);
-      const allDepartments = people.flatMap((p) => p.departments || []);
-      const uniqueDepartments = [...new Set(allDepartments)].filter(Boolean);
-      return uniqueDepartments.sort();
-    } catch (error) {
-      console.error('❌ 부서/소속 추천 조회 오류:', error);
-      return [];
-    }
-  }
 }

@@ -158,13 +158,10 @@ export function StatsDashboardView({ userId }: StatsDashboardViewProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="font-medium">{item.person.name}</span>
-                  {(item.person.relationships?.length > 0 || item.person.departments?.length > 0 || item.person.roles?.length > 0) && (
+                  {(item.person.relationships?.length > 0 || item.person.roles?.length > 0) && (
                     <div className="flex items-center gap-1.5 flex-wrap text-xs">
                       {item.person.relationships?.length > 0 && (
                         <span className="text-base-content/50">{item.person.relationships.join(', ')}</span>
-                      )}
-                      {item.person.departments?.length > 0 && (
-                        <span className="text-secondary/70">{item.person.departments.join(', ')}</span>
                       )}
                       {item.person.roles?.length > 0 && (
                         <span className="text-primary/70">{item.person.roles.join(', ')}</span>

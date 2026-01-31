@@ -56,7 +56,10 @@ export class Todo {
     public readonly originalEndTime: Date | null = null,
 
     // 서브태스크 예상 소요시간 (분 단위, ADHD용 "바보같이 작게 쪼개기")
-    public readonly anytimeDuration: number | null = null
+    public readonly anytimeDuration: number | null = null,
+
+    // 부서 연결 (Phase 6: Department 기능)
+    public readonly departmentId: string | null = null
   ) {}
 
   /**
@@ -109,6 +112,9 @@ export class Todo {
 
     // 서브태스크 예상 소요시간 (ADHD용)
     const anytimeDuration = record.anytimeDuration ?? record.anytime_duration ?? null;
+
+    // 부서 연결 (Phase 6)
+    const departmentId = record.departmentId ?? record.department_id ?? null;
 
     // title 필드
     const title = data.title;
@@ -166,7 +172,10 @@ export class Todo {
       originalEndTime ? new Date(originalEndTime) : null,
 
       // 서브태스크 예상 소요시간
-      anytimeDuration
+      anytimeDuration,
+
+      // 부서 연결
+      departmentId
     );
   }
 
@@ -592,6 +601,9 @@ export class Todo {
 
       // 서브태스크 예상 소요시간
       anytime_duration: this.anytimeDuration,
+
+      // 부서 연결
+      department_id: this.departmentId,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),

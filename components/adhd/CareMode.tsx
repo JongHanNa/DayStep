@@ -124,7 +124,6 @@ export default function CareMode({ onExit }: CareModeProps) {
 
   // 필터링 상태
   const [filterRelationship, setFilterRelationship] = useState<string | null>(null);
-  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState<string | null>(null);
 
   // 검색어와 정확히 일치하는 사람이 있는지 확인
@@ -140,18 +139,15 @@ export default function CareMode({ onExit }: CareModeProps) {
   // 고유값 추출 (필터 드롭다운용)
   const uniqueRelationships = useMemo(() =>
     [...new Set(people.flatMap(p => p.relationships || []))].filter(Boolean).sort(), [people]);
-  const uniqueDepartments = useMemo(() =>
-    [...new Set(people.flatMap(p => p.departments || []))].filter(Boolean).sort(), [people]);
   const uniqueRoles = useMemo(() =>
     [...new Set(people.flatMap(p => p.roles || []))].filter(Boolean).sort(), [people]);
 
   // 필터 함수
   const matchesFilter = useCallback((person: CherishedPerson) => {
     if (filterRelationship && !person.relationships?.includes(filterRelationship)) return false;
-    if (filterDepartment && !person.departments?.includes(filterDepartment)) return false;
     if (filterRole && !person.roles?.includes(filterRole)) return false;
     return true;
-  }, [filterRelationship, filterDepartment, filterRole]);
+  }, [filterRelationship, filterRole]);
 
   // 필터링된 추천 목록 (오래 연락 안한 분들)
   const filteredRecommendations = useMemo(() =>
@@ -437,7 +433,7 @@ export default function CareMode({ onExit }: CareModeProps) {
             </div>
 
             {/* 필터 드롭다운 */}
-            {(uniqueRelationships.length > 0 || uniqueDepartments.length > 0 || uniqueRoles.length > 0) && (
+            {(uniqueRelationships.length > 0 || uniqueRoles.length > 0) && (
               <div className="flex gap-2 flex-wrap">
                 {uniqueRelationships.length > 0 && (
                   <select
@@ -447,16 +443,6 @@ export default function CareMode({ onExit }: CareModeProps) {
                   >
                     <option value="">관계 전체</option>
                     {uniqueRelationships.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                )}
-                {uniqueDepartments.length > 0 && (
-                  <select
-                    value={filterDepartment || ''}
-                    onChange={(e) => setFilterDepartment(e.target.value || null)}
-                    className="select select-xs select-bordered bg-base-200"
-                  >
-                    <option value="">부서 전체</option>
-                    {uniqueDepartments.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 )}
                 {uniqueRoles.length > 0 && (
@@ -538,16 +524,11 @@ export default function CareMode({ onExit }: CareModeProps) {
                           >
                             <div>
                               <span className="font-medium text-lg">{rec.person.name}</span>
-                              {(rec.person.relationships?.length > 0 || rec.person.departments?.length > 0 || rec.person.roles?.length > 0) && (
+                              {(rec.person.relationships?.length > 0 || rec.person.roles?.length > 0) && (
                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   {rec.person.relationships?.length > 0 && (
                                     <span className="text-xs text-base-content/50">
                                       {rec.person.relationships.join(', ')}
-                                    </span>
-                                  )}
-                                  {rec.person.departments?.length > 0 && (
-                                    <span className="text-xs text-secondary/70">
-                                      {rec.person.departments.join(', ')}
                                     </span>
                                   )}
                                   {rec.person.roles?.length > 0 && (
@@ -619,16 +600,11 @@ export default function CareMode({ onExit }: CareModeProps) {
                           >
                             <div>
                               <span className="font-medium">{person.name}</span>
-                              {(person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
+                              {(person.relationships?.length > 0 || person.roles?.length > 0) && (
                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   {person.relationships?.length > 0 && (
                                     <span className="text-xs text-base-content/50">
                                       {person.relationships.join(', ')}
-                                    </span>
-                                  )}
-                                  {person.departments?.length > 0 && (
-                                    <span className="text-xs text-secondary/70">
-                                      {person.departments.join(', ')}
                                     </span>
                                   )}
                                   {person.roles?.length > 0 && (

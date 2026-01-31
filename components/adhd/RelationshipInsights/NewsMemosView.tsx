@@ -296,13 +296,10 @@ export function NewsMemosView({ userId }: NewsMemosViewProps) {
                     <div className="flex items-center justify-between mb-1">
                       <div className="min-w-0">
                         <h3 className="font-semibold truncate">{personName}</h3>
-                        {person && (person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
+                        {person && (person.relationships?.length > 0 || person.roles?.length > 0) && (
                           <div className="flex items-center gap-1.5 flex-wrap text-xs">
                             {person.relationships?.length > 0 && (
                               <span className="text-base-content/50">{person.relationships.join(', ')}</span>
-                            )}
-                            {person.departments?.length > 0 && (
-                              <span className="text-secondary/70">{person.departments.join(', ')}</span>
                             )}
                             {person.roles?.length > 0 && (
                               <span className="text-primary/70">{person.roles.join(', ')}</span>

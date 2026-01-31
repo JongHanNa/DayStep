@@ -40,7 +40,6 @@ export function PersonSelector({
 
   // 필터 상태
   const [filterRelationship, setFilterRelationship] = useState<string | null>(null);
-  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState<string | null>(null);
 
   // 선택된 인물 정보
@@ -54,10 +53,6 @@ export function PersonSelector({
     [...new Set(people.flatMap(p => p.relationships || []))].filter(Boolean).sort(),
     [people]
   );
-  const uniqueDepartments = useMemo(() =>
-    [...new Set(people.flatMap(p => p.departments || []))].filter(Boolean).sort(),
-    [people]
-  );
   const uniqueRoles = useMemo(() =>
     [...new Set(people.flatMap(p => p.roles || []))].filter(Boolean).sort(),
     [people]
@@ -66,10 +61,9 @@ export function PersonSelector({
   // 필터 함수
   const matchesFilter = useCallback((person: CherishedPerson) => {
     if (filterRelationship && !person.relationships?.includes(filterRelationship)) return false;
-    if (filterDepartment && !person.departments?.includes(filterDepartment)) return false;
     if (filterRole && !person.roles?.includes(filterRole)) return false;
     return true;
-  }, [filterRelationship, filterDepartment, filterRole]);
+  }, [filterRelationship, filterRole]);
 
   // 필터링된 인물 목록
   const filteredPeople = useMemo(() => {
@@ -235,7 +229,7 @@ export function PersonSelector({
               </div>
 
               {/* 필터 */}
-              {(uniqueRelationships.length > 0 || uniqueDepartments.length > 0 || uniqueRoles.length > 0) && (
+              {(uniqueRelationships.length > 0 || uniqueRoles.length > 0) && (
                 <div className="flex gap-2 flex-wrap">
                   {uniqueRelationships.length > 0 && (
                     <select
@@ -246,18 +240,6 @@ export function PersonSelector({
                       <option value="">관계 전체</option>
                       {uniqueRelationships.map(r => (
                         <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  )}
-                  {uniqueDepartments.length > 0 && (
-                    <select
-                      value={filterDepartment || ''}
-                      onChange={(e) => setFilterDepartment(e.target.value || null)}
-                      className="select select-xs select-bordered bg-base-100"
-                    >
-                      <option value="">부서 전체</option>
-                      {uniqueDepartments.map(d => (
-                        <option key={d} value={d}>{d}</option>
                       ))}
                     </select>
                   )}
@@ -319,12 +301,9 @@ export function PersonSelector({
                         </div>
                         <div className="flex-1 text-left">
                           <div className="text-sm font-medium">{person.name}</div>
-                          {(person.relationships?.length > 0 || person.departments?.length > 0) && (
+                          {person.relationships?.length > 0 && (
                             <div className="text-xs text-base-content/60">
-                              {[
-                                ...(person.relationships || []),
-                                ...(person.departments || [])
-                              ].join(', ')}
+                              {person.relationships.join(', ')}
                             </div>
                           )}
                         </div>

@@ -31,11 +31,14 @@ import AddPersonModal from '../../cherished/AddPersonModal';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
+import { useDepartmentStore } from '@/state/stores/departmentStore';
 import { CherishedPeopleService } from '@/services/cherished-people.service';
+import { DepartmentService } from '@/services/department.service';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
+import type { PersonDepartment } from '@/types/department';
 import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 
 interface CareRecordViewProps {
@@ -83,6 +86,11 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
     deactivatePerson,
   } = useCherishedPeopleStore();
 
+  const {
+    departments,
+    fetchDepartments,
+  } = useDepartmentStore();
+
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   const [viewState, setViewState] = useState<ViewState>('select-person');
@@ -98,8 +106,11 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
 
   // 필터링 상태
   const [filterRelationship, setFilterRelationship] = useState<string | null>(null);
-  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState<string | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
+
+  // person-department 매핑 캐시
+  const [personDepartmentMap, setPersonDepartmentMap] = useState<Map<string, string[]>>(new Map());
 
   // 검색어와 정확히 일치하는 사람이 있는지 확인
   const exactMatchExists = useMemo(() => {
@@ -114,18 +125,19 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
   // 고유값 추출 (필터 드롭다운용)
   const uniqueRelationships = useMemo(() =>
     [...new Set(people.flatMap(p => p.relationships || []))].filter(Boolean).sort(), [people]);
-  const uniqueDepartments = useMemo(() =>
-    [...new Set(people.flatMap(p => p.departments || []))].filter(Boolean).sort(), [people]);
   const uniqueRoles = useMemo(() =>
     [...new Set(people.flatMap(p => p.roles || []))].filter(Boolean).sort(), [people]);
 
   // 필터 함수
   const matchesFilter = useCallback((person: CherishedPerson) => {
     if (filterRelationship && !person.relationships?.includes(filterRelationship)) return false;
-    if (filterDepartment && !person.departments?.includes(filterDepartment)) return false;
     if (filterRole && !person.roles?.includes(filterRole)) return false;
+    if (filterDepartment) {
+      const personDepts = personDepartmentMap.get(person.id) || [];
+      if (!personDepts.includes(filterDepartment)) return false;
+    }
     return true;
-  }, [filterRelationship, filterDepartment, filterRole]);
+  }, [filterRelationship, filterRole, filterDepartment, personDepartmentMap]);
 
   // 필터링된 추천 목록 (오래 연락 안한 분들)
   const filteredRecommendations = useMemo(() =>
@@ -164,8 +176,21 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
       loadPeople(userId);
       loadRecommendations(userId, 7);
       loadReminderMessage();
+      fetchDepartments(userId);
+
+      // person-department 매핑 로드
+      const loadPersonDepartmentMap = async () => {
+        const mappings = await DepartmentService.getAllPersonDepartments(userId);
+        const map = new Map<string, string[]>();
+        mappings.forEach((mapping: PersonDepartment) => {
+          const existing = map.get(mapping.person_id) || [];
+          map.set(mapping.person_id, [...existing, mapping.department_id]);
+        });
+        setPersonDepartmentMap(map);
+      };
+      loadPersonDepartmentMap();
     }
-  }, [userId, loadPeople, loadRecommendations]);
+  }, [userId, loadPeople, loadRecommendations, fetchDepartments]);
 
   // 성찰 메시지 로드
   const loadReminderMessage = async () => {
@@ -342,7 +367,7 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
             </div>
 
             {/* 필터 드롭다운 */}
-            {(uniqueRelationships.length > 0 || uniqueDepartments.length > 0 || uniqueRoles.length > 0) && (
+            {(uniqueRelationships.length > 0 || uniqueRoles.length > 0 || departments.length > 0) && (
               <div className="flex gap-2 flex-wrap">
                 {uniqueRelationships.length > 0 && (
                   <select
@@ -354,16 +379,6 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                     {uniqueRelationships.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 )}
-                {uniqueDepartments.length > 0 && (
-                  <select
-                    value={filterDepartment || ''}
-                    onChange={(e) => setFilterDepartment(e.target.value || null)}
-                    className="select select-xs select-bordered bg-base-200"
-                  >
-                    <option value="">부서 전체</option>
-                    {uniqueDepartments.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                )}
                 {uniqueRoles.length > 0 && (
                   <select
                     value={filterRole || ''}
@@ -372,6 +387,16 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                   >
                     <option value="">역할 전체</option>
                     {uniqueRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                )}
+                {departments.length > 0 && (
+                  <select
+                    value={filterDepartment || ''}
+                    onChange={(e) => setFilterDepartment(e.target.value || null)}
+                    className="select select-xs select-bordered bg-base-200"
+                  >
+                    <option value="">부서 전체</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 )}
               </div>
@@ -443,16 +468,11 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                           >
                             <div>
                               <span className="font-medium text-lg">{rec.person.name}</span>
-                              {(rec.person.relationships?.length > 0 || rec.person.departments?.length > 0 || rec.person.roles?.length > 0) && (
+                              {(rec.person.relationships?.length > 0 || rec.person.roles?.length > 0) && (
                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   {rec.person.relationships?.length > 0 && (
                                     <span className="text-xs text-base-content/50">
                                       {rec.person.relationships.join(', ')}
-                                    </span>
-                                  )}
-                                  {rec.person.departments?.length > 0 && (
-                                    <span className="text-xs text-secondary/70">
-                                      {rec.person.departments.join(', ')}
                                     </span>
                                   )}
                                   {rec.person.roles?.length > 0 && (
@@ -524,16 +544,11 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
                           >
                             <div>
                               <span className="font-medium">{person.name}</span>
-                              {(person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
+                              {(person.relationships?.length > 0 || person.roles?.length > 0) && (
                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   {person.relationships?.length > 0 && (
                                     <span className="text-xs text-base-content/50">
                                       {person.relationships.join(', ')}
-                                    </span>
-                                  )}
-                                  {person.departments?.length > 0 && (
-                                    <span className="text-xs text-secondary/70">
-                                      {person.departments.join(', ')}
                                     </span>
                                   )}
                                   {person.roles?.length > 0 && (

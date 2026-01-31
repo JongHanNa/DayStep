@@ -587,3 +587,8 @@ export interface AnytimeInboxItem {
   hasPostponementRecord: boolean; // 미룸 기록 여부 (exclusion 존재 여부)
 }
 
+// ============================================
+// Department Types (Re-export)
+// ============================================
+export * from './department';
+

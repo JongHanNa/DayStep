@@ -284,13 +284,10 @@ export function GratitudeJournalView({ userId }: GratitudeJournalViewProps) {
                     <h3 className="font-semibold">{personName}님께 감사한 점들</h3>
                     <span className="text-xs text-base-content/60">({personNotes.length})</span>
                   </div>
-                  {person && (person.relationships?.length > 0 || person.departments?.length > 0 || person.roles?.length > 0) && (
+                  {person && (person.relationships?.length > 0 || person.roles?.length > 0) && (
                     <div className="flex items-center gap-1.5 flex-wrap text-xs mt-0.5">
                       {person.relationships?.length > 0 && (
                         <span className="text-base-content/50">{person.relationships.join(', ')}</span>
-                      )}
-                      {person.departments?.length > 0 && (
-                        <span className="text-secondary/70">{person.departments.join(', ')}</span>
                       )}
                       {person.roles?.length > 0 && (
                         <span className="text-primary/70">{person.roles.join(', ')}</span>
