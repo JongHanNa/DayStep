@@ -7,7 +7,6 @@ import "./globals.css";
 import { generateSEO } from "@/lib/seo";
 import { AuthProvider, AuthState } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
-import AppHeader from "@/components/layout/AppHeader";
 import { openDyslexic } from "@/lib/fonts";
 import { FontProvider } from "@/components/providers/FontProvider";
 // 성능 모니터링 비활성화
@@ -55,8 +54,6 @@ export default function RootLayout({
               <SubscriptionSyncProvider>
                 <RealtimeSyncProvider>
                   <ReminderProvider>
-                  {/* 상단 헤더 바 */}
-                  <AppHeader />
                   {/* 진행 중인 할일 배너 */}
                   <ActiveTodoBannerProvider />
                   <main
