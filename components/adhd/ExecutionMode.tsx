@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import {
   Check,
-  ArrowLeft,
   ArrowRight,
   PartyPopper,
   Trash2,
@@ -946,15 +945,6 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     <div className={`flex flex-col bg-base-100 ${hideNavigation ? 'min-h-full' : 'min-h-screen safe-area-top'}`}>
       {/* 헤더 */}
       <header className="p-4 flex items-center justify-between">
-        {!hideNavigation && (
-          <button
-            onClick={onExit}
-            className="btn btn-ghost btn-sm btn-circle"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        )}
-
         {completedInSession > 0 && (
           <motion.div
             initial={{ scale: 0 }}
