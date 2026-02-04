@@ -62,12 +62,12 @@ import type { EnvironmentSetup } from '@/types/distraction';
 import ExecutionMode from '@/components/adhd/ExecutionMode';
 
 // 탭 타입 정의
-type FuelTabType = 'fuel' | 'timeline' | 'execute' | 'organize';
+type FuelTabType = 'motivation' | 'timeline' | 'execute' | 'organize';
 
 const FUEL_TABS: { id: FuelTabType; label: string; icon: React.ReactNode }[] = [
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
   { id: 'execute', label: '실행', icon: <Target className="w-4 h-4" /> },
-  { id: 'fuel', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
+  { id: 'motivation', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
 ];
 
@@ -83,7 +83,7 @@ const FUEL_TAB_HELP: Record<FuelTabType, { title: string; difficulty: string; he
     difficulty: '과제 시작의 어려움(Task Initiation). 해야 할 건 알지만 시작 버튼이 안 눌려요.',
     help: '타이머 + 방해차단 + 원동력 상기 → 시작의 마찰을 줄여 첫 발을 내딛도록 도움!',
   },
-  fuel: {
+  motivation: {
     title: '원동력',
     difficulty: '동기 유지 결함(Motivation Deficit). 중요한 건 알지만 하고 싶은 마음이 안 생겨요.',
     help: '왜 해야 하는지, 완료 후 기분을 미리 적어두고 → 실행 전 다시 보며 동기 충전!',
@@ -188,6 +188,13 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   // 탭 상태 - currentSubView가 있으면 해당 값 사용, 없으면 타임라인
   const [activeTab, setActiveTab] = useState<FuelTabType>((currentSubView as FuelTabType) || 'timeline');
   const [showPaywall, setShowPaywall] = useState(false);
+
+  // URL 라우팅으로 진입 시 currentSubView와 activeTab 동기화
+  useEffect(() => {
+    if (currentSubView && ['motivation', 'timeline', 'execute', 'organize'].includes(currentSubView)) {
+      setActiveTab(currentSubView as FuelTabType);
+    }
+  }, [currentSubView]);
 
   // 로컬 상태
   const [selectedDuration, setSelectedDuration] = useState(10); // 기본 10분
@@ -1086,8 +1093,8 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       )}
       {activeTab === 'execute' && userId && (
         <div className="flex-1 overflow-y-auto">
-          <ExecutionMode 
-            onExit={() => setActiveTab('fuel')}
+          <ExecutionMode
+            onExit={() => setActiveTab('motivation')}
             hideNavigation={true}
           />
         </div>
@@ -1099,7 +1106,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       )}
 
       {/* 원동력 탭 콘텐츠 - 스크롤 영역 */}
-      {activeTab === 'fuel' && (
+      {activeTab === 'motivation' && (
       <div className="flex-1 overflow-y-auto px-4 pb-4 mobile-container">
         {/* 용량 경고 배너 */}
         <UsageWarningBanner

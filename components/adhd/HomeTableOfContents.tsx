@@ -1,8 +1,7 @@
 'use client';
 
-import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { Crown } from 'lucide-react';
+import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 
 interface SubItem {
   id: string;
@@ -22,15 +21,13 @@ interface GroupItem {
  *
  * 4개 그룹(대시보드, 미룸방지, 머릿속정리, 관계기록)을 목차 형태로 표시
  * 각 서브아이템 클릭 시 해당 화면의 특정 탭으로 이동
+ *
+ * 환경별 분기:
+ * - 웹: URL 기반 라우팅 (/adhd/project?tab=ai-chat)
+ * - Capacitor: Store 기반 (enterProjectMode)
  */
 export default function HomeTableOfContents() {
-  const { user } = useAuth();
-  const {
-    enterEntryMode,
-    enterProjectMode,
-    enterFuelMode,
-    enterRelationshipInsightsMode
-  } = useADHDModeStore();
+  const { goEntry, goProject, goFuel, goRelationshipInsights } = useADHDNavigation();
 
   const groups: GroupItem[] = [
     {
@@ -42,7 +39,7 @@ export default function HomeTableOfContents() {
         { id: 'activity', label: '활동', isPro: true },
       ],
       onNavigate: (subItemId?: string) => {
-        enterEntryMode(subItemId);
+        goEntry(subItemId);
       },
     },
     {
@@ -54,9 +51,7 @@ export default function HomeTableOfContents() {
         { id: 'guide', label: '가이드' },
       ],
       onNavigate: (subItemId?: string) => {
-        if (user?.id) {
-          enterProjectMode(user.id, subItemId);
-        }
+        goProject(subItemId);
       },
     },
     {
@@ -69,9 +64,7 @@ export default function HomeTableOfContents() {
         { id: 'organize', label: '정리' },
       ],
       onNavigate: (subItemId?: string) => {
-        if (user?.id) {
-          enterFuelMode(user.id, undefined, subItemId);
-        }
+        goFuel(subItemId);
       },
     },
     {
@@ -83,9 +76,7 @@ export default function HomeTableOfContents() {
         { id: 'gratitude', label: '감사', isPro: true },
       ],
       onNavigate: (subItemId?: string) => {
-        if (user?.id) {
-          enterRelationshipInsightsMode(user.id, subItemId);
-        }
+        goRelationshipInsights(subItemId);
       },
     },
   ];
@@ -96,7 +87,7 @@ export default function HomeTableOfContents() {
         {/* 헤더 */}
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-base-content">
-            DayStep 일상 관리 목차
+            일상 관리 목차
           </h1>
           <p className="text-sm text-base-content/60 mt-2">
             목차를 클릭하면 해당 페이지로 이동합니다

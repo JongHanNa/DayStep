@@ -3,6 +3,7 @@
 import { Home, Menu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import { SUBVIEW_CONFIG } from './subviewConfig';
 
 /**
@@ -15,10 +16,14 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
  * - 최상단: 프로필 아바타 + 드롭다운
  * - 홈: 항상 홈 아이콘 (고정, 비활성화 상태)
  * - 중앙: 목차 화면이면 햄버거, 서브뷰 화면이면 서브뷰 아이콘 (항상 활성화)
+ *
+ * 환경별 분기:
+ * - 웹: URL 기반 라우팅 (/adhd)
+ * - Capacitor: Store 기반 (enterHomeMode)
  */
 export default function ADHDSidebar() {
   const currentSubView = useADHDModeStore((state) => state.currentSubView);
-  const enterHomeMode = useADHDModeStore((state) => state.enterHomeMode);
+  const { goHome } = useADHDNavigation();
 
   // 중앙 아이콘 결정: 서브뷰면 해당 아이콘, 목차면 Menu
   const CenterIcon = currentSubView
@@ -35,7 +40,7 @@ export default function ADHDSidebar() {
 
       {/* 홈 아이콘 (고정, 비활성화 상태) */}
       <button
-        onClick={enterHomeMode}
+        onClick={goHome}
         className="mt-2 w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 text-base-content/60 hover:bg-base-300"
         aria-label="홈"
       >
@@ -49,7 +54,7 @@ export default function ADHDSidebar() {
       {/* 햄버거 또는 서브뷰 아이콘 (항상 활성화) */}
       <div className="mt-2">
         <button
-          onClick={currentSubView ? undefined : enterHomeMode}
+          onClick={currentSubView ? undefined : goHome}
           className={`group w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 relative ${
             currentSubView ? 'cursor-default' : 'hover:bg-base-300'
           }`}

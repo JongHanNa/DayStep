@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Home, Menu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import { SUBVIEW_CONFIG } from './subviewConfig';
 
 /**
@@ -16,10 +17,14 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
  * 활성화 로직:
  * - 왼쪽: 항상 홈 아이콘 (고정, 비활성화 상태)
  * - 중앙: 목차 화면이면 햄버거, 서브뷰 화면이면 서브뷰 아이콘 (항상 활성화)
+ *
+ * 환경별 분기:
+ * - 웹: URL 기반 라우팅 (/adhd)
+ * - Capacitor: Store 기반 (enterHomeMode)
  */
 export default function ADHDBottomTabBar() {
   const currentSubView = useADHDModeStore((state) => state.currentSubView);
-  const enterHomeMode = useADHDModeStore((state) => state.enterHomeMode);
+  const { goHome } = useADHDNavigation();
   const [showLabel, setShowLabel] = useState(false);
 
   // 중앙 버튼 클릭 핸들러
@@ -30,7 +35,7 @@ export default function ADHDBottomTabBar() {
 
     // 목차일 때만 홈으로 이동
     if (!currentSubView) {
-      enterHomeMode();
+      goHome();
     }
   };
 
@@ -47,7 +52,7 @@ export default function ADHDBottomTabBar() {
       {/* 왼쪽 영역: 홈 아이콘 (항상 고정, 비활성화 상태) */}
       <div className="flex-1 flex justify-start">
         <button
-          onClick={enterHomeMode}
+          onClick={goHome}
           className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 text-base-content/60 active:bg-base-300"
           aria-label="홈"
         >

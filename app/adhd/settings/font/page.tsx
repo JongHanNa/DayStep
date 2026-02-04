@@ -1,0 +1,20 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
+import FontContent from '@/components/adhd/settings/FontContent';
+
+/**
+ * /adhd/settings/font - 글꼴 설정 페이지
+ */
+export default function FontPage() {
+  const { goSettings } = useADHDNavigation();
+
+  // Store 동기화
+  useEffect(() => {
+    useADHDModeStore.getState().enterSettingsMode('font');
+  }, []);
+
+  return <FontContent onBack={() => goSettings()} />;
+}

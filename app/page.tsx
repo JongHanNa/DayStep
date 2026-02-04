@@ -1,6 +1,5 @@
 'use client';
 
-import { Suspense } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -18,22 +17,14 @@ import ProjectMode from '@/components/adhd/ProjectMode';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
-import { useADHDRouting } from '@/hooks/useADHDRouting';
-
-/**
- * URL 라우팅 동기화 컴포넌트 (웹 전용)
- * useSearchParams 사용으로 Suspense 경계 내에서만 동작
- */
-function ADHDRoutingSync() {
-  useADHDRouting();
-  return null;
-}
+import { isCapacitorEnv } from '@/lib/utils/platform';
 
 /**
  * 루트 페이지 (/)
  *
  * 라우팅 흐름:
- * - 인증됨 + ADHD 모드: ADHDEntryScreen 또는 ExecutionMode 표시
+ * - 웹 + 인증됨 + ADHD 모드: 홈 목차 직접 표시 (리다이렉트 없음)
+ * - Capacitor + 인증됨 + ADHD 모드: 기존 Store 기반 방식 유지
  * - 인증됨 + ADHD 모드 비활성화: GraphView 대시보드 표시
  * - 비인증 + 웹: LandingPage 직접 렌더링 (URL '/' 유지)
  * - 비인증 + Capacitor: /login으로 리다이렉트
@@ -51,7 +42,7 @@ export default function HomePage() {
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isNative = window.location.protocol === 'capacitor:';
+      const isNative = isCapacitorEnv();
       setIsCapacitor(isNative);
       setMounted(true);
     }
@@ -67,6 +58,7 @@ export default function HomePage() {
       router.replace('/login');
     }
   }, [isAuthenticated, loading, isCapacitor, mounted, router]);
+
 
   // 로딩 중
   if (loading || !mounted) {
@@ -94,6 +86,28 @@ export default function HomePage() {
   // 인증된 사용자 + ADHD 모드 비활성화: 기존 그래프 뷰
   if (!adhdModeEnabled) {
     return <GraphView />;
+  }
+
+  // 웹 + 인증됨 + ADHD 모드: 홈 목차 직접 표시 (리다이렉트 없음)
+  if (!isCapacitor) {
+    return (
+      <div className="flex min-h-screen">
+        {/* 웹 사이드바 (md 이상) */}
+        <div className="hidden md:block">
+          <ADHDSidebar />
+        </div>
+
+        {/* 메인 콘텐츠 */}
+        <main className="flex-1 min-w-0 md:ml-16 pb-20 md:pb-0">
+          <HomeTableOfContents />
+        </main>
+
+        {/* 모바일 하단탭 (md 미만) */}
+        <div className="md:hidden">
+          <ADHDBottomTabBar />
+        </div>
+      </div>
+    );
   }
 
   // 인증된 사용자 + ADHD 모드 활성화
@@ -148,15 +162,9 @@ export default function HomePage() {
     return <CareMode onExit={handleExitExecutionMode} />;
   }
 
-  // ADHD 모드 레이아웃 (entry, relationship-insights, fuel, execute, settings)
+  // Capacitor ADHD 모드 레이아웃 (entry, relationship-insights, fuel, execute, settings)
   return (
-    <>
-      {/* URL 라우팅 동기화 (웹 전용, Suspense 경계 필요) */}
-      <Suspense fallback={null}>
-        <ADHDRoutingSync />
-      </Suspense>
-
-      <div className="flex min-h-screen">
+    <div className="flex min-h-screen">
         {/* 웹 사이드바 (md 이상) */}
         <div className="hidden md:block">
           <ADHDSidebar />
@@ -208,7 +216,6 @@ export default function HomePage() {
         <div className="md:hidden">
           <ADHDBottomTabBar />
         </div>
-      </div>
-    </>
+    </div>
   );
 }
