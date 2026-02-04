@@ -26,13 +26,11 @@ import {
   Trash2,
   Sun,
   Moon,
-  Target,
   PenLine,
   MoreVertical,
   Pencil,
   CheckCircle2,
   Pin,
-  Inbox,
   HelpCircle,
   Brain,
 } from 'lucide-react';
@@ -60,40 +58,24 @@ import { OrganizeNeededView } from '@/components/adhd/TaskOrganize/OrganizeNeede
 import { DistractionPlanView } from '@/components/adhd/distraction';
 import type { EnvironmentSetup } from '@/types/distraction';
 import ExecutionMode from '@/components/adhd/ExecutionMode';
+import { getGroupTabs, getGroupHelpContent, type ADHDScreenHelp } from '@/lib/constants/adhd-screens';
 
 // 탭 타입 정의
 type FuelTabType = 'motivation' | 'timeline' | 'execute' | 'organize';
 
-const FUEL_TABS: { id: FuelTabType; label: string; icon: React.ReactNode }[] = [
-  { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
-  { id: 'execute', label: '실행', icon: <Target className="w-4 h-4" /> },
-  { id: 'motivation', label: '원동력', icon: <Lightbulb className="w-4 h-4" /> },
-  { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
-];
+// ADHD_SCREENS에서 탭 목록 파생
+const FUEL_TABS_RAW = getGroupTabs('fuel');
+const FUEL_TABS = FUEL_TABS_RAW.map((tab) => {
+  const IconComponent = tab.icon;
+  return {
+    id: tab.id as FuelTabType,
+    label: tab.label,
+    icon: <IconComponent className="w-4 h-4" />,
+  };
+});
 
-// 탭별 도움말 콘텐츠
-const FUEL_TAB_HELP: Record<FuelTabType, { title: string; difficulty: string; help: string }> = {
-  timeline: {
-    title: '타임라인',
-    difficulty: '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다.',
-    help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
-  },
-  execute: {
-    title: '실행',
-    difficulty: '과제 시작의 어려움(Task Initiation). 해야 할 건 알지만 시작 버튼이 안 눌려요.',
-    help: '타이머 + 방해차단 + 원동력 상기 → 시작의 마찰을 줄여 첫 발을 내딛도록 도움!',
-  },
-  motivation: {
-    title: '원동력',
-    difficulty: '동기 유지 결함(Motivation Deficit). 중요한 건 알지만 하고 싶은 마음이 안 생겨요.',
-    help: '왜 해야 하는지, 완료 후 기분을 미리 적어두고 → 실행 전 다시 보며 동기 충전!',
-  },
-  organize: {
-    title: '정리',
-    difficulty: '조직화 결함. 머릿속이 복잡하고 할일이 뒤엉켜 어디서 시작할지 막막해요.',
-    help: '미분류 할일만 모아서 표시 → 정리해야 할 것만 집중, 인지 부하 감소!',
-  },
-};
+// ADHD_SCREENS에서 도움말 콘텐츠 파생
+const FUEL_TAB_HELP = getGroupHelpContent('fuel') as Record<FuelTabType, ADHDScreenHelp>;
 
 interface FuelModeProps {
   onExit: () => void;

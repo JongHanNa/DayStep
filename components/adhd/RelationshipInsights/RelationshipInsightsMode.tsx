@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, MessageCircle, PenLine, Crown, HelpCircle, Brain } from 'lucide-react';
+import { Crown, HelpCircle, Brain } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -9,40 +9,29 @@ import { Paywall } from '@/components/subscription/Paywall';
 import { CareRecordView } from './CareRecordView';
 import { GratitudeJournalView } from './GratitudeJournalView';
 import { NewsMemosView } from './NewsMemosView';
+import { getProOnlyTabIds, getGroupTabs, getGroupHelpContent, type ADHDScreenHelp } from '@/lib/constants/adhd-screens';
 
 type TabType = 'record' | 'news' | 'gratitude';
 
-// Pro 전용 탭 정의 (record 제외)
-const PRO_ONLY_TABS: TabType[] = ['news', 'gratitude'];
+// ADHD_SCREENS에서 Pro 전용 탭과 탭 목록 파생
+const PRO_ONLY_TABS = getProOnlyTabIds<TabType>('relationship');
+const RELATIONSHIP_TABS_RAW = getGroupTabs('relationship');
+const TABS = RELATIONSHIP_TABS_RAW.map((tab) => {
+  const IconComponent = tab.icon;
+  return {
+    id: tab.id as TabType,
+    label: tab.label,
+    icon: <IconComponent className="w-4 h-4" />,
+    proOnly: tab.proOnly,
+  };
+});
 
-const TABS: { id: TabType; label: string; icon: React.ReactNode; proOnly?: boolean }[] = [
-  { id: 'record', label: '기록', icon: <PenLine className="w-4 h-4" /> },
-  { id: 'news', label: '소식', icon: <MessageCircle className="w-4 h-4" />, proOnly: true },
-  { id: 'gratitude', label: '감사', icon: <Heart className="w-4 h-4" />, proOnly: true },
-];
+// ADHD_SCREENS에서 도움말 콘텐츠 파생
+const TAB_HELP_CONTENT = getGroupHelpContent('relationship') as Record<TabType, ADHDScreenHelp>;
 
 interface RelationshipInsightsModeProps {
   onExit: () => void;
 }
-
-// 탭별 도움말 콘텐츠
-const TAB_HELP_CONTENT: Record<TabType, { title: string; difficulty: string; help: string }> = {
-  record: {
-    title: '기록',
-    difficulty: '작업기억(Working Memory) 결함으로 대화 내용, 약속, 부탁 등을 쉽게 잊어버립니다. "들었는데 기억이 안 나요"',
-    help: '만남 직후 바로 기록 → 외부 기억 저장소 역할. 부탁/약속을 할일로 연동하여 잊어버림 방지!',
-  },
-  news: {
-    title: '소식',
-    difficulty: '시간 감각 왜곡(Time Blindness)으로 "언제 연락했더라?" 추적이 어렵습니다. 관계 소홀 인식이 늦어요.',
-    help: '기록된 소식을 시간순 조회 → 연락 빈도 시각화, 소홀한 관계 파악에 도움!',
-  },
-  gratitude: {
-    title: '감사',
-    difficulty: '부정 편향(Negativity Bias) 강화. 감정 조절 어려움으로 좌절감에 쉽게 압도됩니다.',
-    help: '감사한 순간 기록 → 긍정 경험 의도적 회상, 정서 균형 회복에 도움!',
-  },
-};
 
 export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModeProps) {
   const { currentSubView } = useADHDModeStore();

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, BarChart3, Users, Flag } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
@@ -10,17 +10,13 @@ import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
 import { StatsDashboardView } from '@/components/adhd/RelationshipInsights/StatsDashboardView';
 import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { ADHD_SCREENS, getProOnlyTabIds, getGroupTabs } from '@/lib/constants/adhd-screens';
 
 type TabType = 'banner' | 'contact' | 'activity';
 
-// Pro 전용 탭 정의
-const PRO_ONLY_TABS: TabType[] = ['contact', 'activity'];
-
-const TABS: { id: TabType; label: string; icon: React.ReactNode; proOnly?: boolean }[] = [
-  { id: 'banner', label: '배너', icon: <Flag className="w-4 h-4" /> },
-  { id: 'contact', label: '연락', icon: <Users className="w-4 h-4" />, proOnly: true },
-  { id: 'activity', label: '활동', icon: <BarChart3 className="w-4 h-4" />, proOnly: true },
-];
+// ADHD_SCREENS에서 Pro 전용 탭과 탭 목록 파생
+const PRO_ONLY_TABS = getProOnlyTabIds<TabType>('dashboard');
+const DASHBOARD_TABS = getGroupTabs('dashboard');
 
 interface ADHDEntryScreenProps {
   userId?: string;
@@ -134,23 +130,26 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
       {/* 탭 네비게이션 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className="flex overflow-x-auto px-4 py-3 gap-2 scrollbar-hide">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-primary text-primary-content'
-                  : 'bg-base-200 text-base-content hover:bg-base-300'
-              }`}
-            >
-              {tab.icon}
-              <span className="text-sm font-medium">{tab.label}</span>
-              {tab.proOnly && !hasActiveSubscription && (
-                <Crown className="w-3 h-3 text-amber-500" />
-              )}
-            </button>
-          ))}
+          {DASHBOARD_TABS.map((tab) => {
+            const IconComponent = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary text-primary-content'
+                    : 'bg-base-200 text-base-content hover:bg-base-300'
+                }`}
+              >
+                <IconComponent className="w-4 h-4" />
+                <span className="text-sm font-medium">{tab.label}</span>
+                {tab.proOnly && !hasActiveSubscription && (
+                  <Crown className="w-3 h-3 text-amber-500" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { Crown } from 'lucide-react';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
+import { ADHD_SCREENS, type ADHDGroupId } from '@/lib/constants/adhd-screens';
 
 interface SubItem {
   id: string;
@@ -29,57 +30,25 @@ interface GroupItem {
 export default function HomeTableOfContents() {
   const { goEntry, goProject, goFuel, goRelationshipInsights } = useADHDNavigation();
 
-  const groups: GroupItem[] = [
-    {
-      id: 'dashboard',
-      title: '대시보드',
-      subItems: [
-        { id: 'banner', label: '배너' },
-        { id: 'contact', label: '연락', isPro: true },
-        { id: 'activity', label: '활동', isPro: true },
-      ],
-      onNavigate: (subItemId?: string) => {
-        goEntry(subItemId);
-      },
-    },
-    {
-      id: 'project',
-      title: '미룸방지',
-      subItems: [
-        { id: 'ai-plan', label: 'AI 계획' },
-        { id: 'ai-chat', label: 'AI 채팅' },
-        { id: 'guide', label: '가이드' },
-      ],
-      onNavigate: (subItemId?: string) => {
-        goProject(subItemId);
-      },
-    },
-    {
-      id: 'fuel',
-      title: '머릿속정리',
-      subItems: [
-        { id: 'timeline', label: '타임라인' },
-        { id: 'execute', label: '실행' },
-        { id: 'motivation', label: '원동력' },
-        { id: 'organize', label: '정리' },
-      ],
-      onNavigate: (subItemId?: string) => {
-        goFuel(subItemId);
-      },
-    },
-    {
-      id: 'relationship',
-      title: '관계기록',
-      subItems: [
-        { id: 'record', label: '기록' },
-        { id: 'news', label: '소식', isPro: true },
-        { id: 'gratitude', label: '감사', isPro: true },
-      ],
-      onNavigate: (subItemId?: string) => {
-        goRelationshipInsights(subItemId);
-      },
-    },
-  ];
+  // 그룹별 네비게이션 핸들러 매핑
+  const navigateHandlers: Record<ADHDGroupId, (subItemId?: string) => void> = {
+    dashboard: goEntry,
+    project: goProject,
+    fuel: goFuel,
+    relationship: goRelationshipInsights,
+  };
+
+  // ADHD_SCREENS에서 groups 배열 생성
+  const groups: GroupItem[] = Object.values(ADHD_SCREENS).map((group) => ({
+    id: group.id,
+    title: group.title,
+    subItems: group.items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      isPro: item.isPro,
+    })),
+    onNavigate: navigateHandlers[group.id],
+  }));
 
   return (
     <div className="min-h-screen bg-base-100 px-4 py-6 sm:px-6 sm:py-8">
