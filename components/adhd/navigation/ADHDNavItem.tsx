@@ -70,7 +70,7 @@ export default function ADHDNavItem({
     <button
       onClick={onClick}
       className={`
-        flex-1 flex flex-col items-center justify-center py-2
+        flex flex-col items-center justify-center py-2 px-3
         transition-all duration-200
         ${isActive
           ? 'text-primary'
