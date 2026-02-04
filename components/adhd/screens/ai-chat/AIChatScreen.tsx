@@ -1,13 +1,15 @@
 'use client';
 
-import { AIChatView } from '@/components/adhd/project/AIChatView';
+import { AIPlanningChat } from '@/components/adhd/ai-planning';
 
 /**
  * AI와 대화하기 화면
  * screens/ 아키텍처에서 사용하는 독립적인 화면 컴포넌트
+ *
+ * AIPlanningChat을 직접 사용
  */
 export function AIChatScreen() {
-  return <AIChatView />;
+  return <AIPlanningChat />;
 }
 
 export default AIChatScreen;

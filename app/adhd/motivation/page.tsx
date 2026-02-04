@@ -3,18 +3,19 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { NewsMemosView } from '@/components/adhd/RelationshipInsights/NewsMemosView';
+import { MotivationScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/relationship-insights/news - 소식 서브탭 페이지
+ * /adhd/motivation - 원동력 새기기 페이지
+ * Flat 라우트 구조
  */
-export default function NewsPage() {
+export default function MotivationPage() {
   const { user } = useAuth();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterRelationshipInsightsMode(user.id, 'news');
+      useADHDStore.getState().enterFuelMode(user.id, undefined, 'motivation');
     }
   }, [user?.id]);
 
@@ -26,5 +27,9 @@ export default function NewsPage() {
     );
   }
 
-  return <NewsMemosView userId={user.id} />;
+  return (
+    <div className="min-h-screen bg-base-100">
+      <MotivationScreen userId={user.id} />
+    </div>
+  );
 }

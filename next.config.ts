@@ -354,6 +354,24 @@ const nextConfig: NextConfig = {
 
   // 웹 전용 헤더 설정 (모바일 export 모드에서는 지원되지 않음)
   ...(isWebBuild && {
+    async redirects() {
+      return [
+        // ADHD 그룹 라우트 → Flat 라우트 리다이렉트
+        { source: '/adhd/fuel/motivation', destination: '/adhd/motivation', permanent: true },
+        { source: '/adhd/fuel/timeline', destination: '/adhd/timeline', permanent: true },
+        { source: '/adhd/fuel/execute', destination: '/adhd/execute', permanent: true },
+        { source: '/adhd/fuel/organize', destination: '/adhd/organize', permanent: true },
+        { source: '/adhd/project/ai-plan', destination: '/adhd/ai-plan', permanent: true },
+        { source: '/adhd/project/ai-chat', destination: '/adhd/ai-chat', permanent: true },
+        { source: '/adhd/project/guide', destination: '/adhd/guide', permanent: true },
+        { source: '/adhd/relationship-insights/record', destination: '/adhd/record', permanent: true },
+        { source: '/adhd/relationship-insights/news', destination: '/adhd/news', permanent: true },
+        { source: '/adhd/relationship-insights/gratitude', destination: '/adhd/gratitude', permanent: true },
+        { source: '/adhd/entry/banner', destination: '/adhd/banner', permanent: true },
+        { source: '/adhd/entry/contact', destination: '/adhd/contact', permanent: true },
+        { source: '/adhd/entry/activity', destination: '/adhd/activity', permanent: true },
+      ];
+    },
     async rewrites() {
       return [
         {

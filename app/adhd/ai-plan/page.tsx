@@ -3,18 +3,19 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { OrganizeView } from '@/components/adhd/fuel';
+import { AIPlanScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/fuel/organize - 정리 서브탭 페이지
+ * /adhd/ai-plan - AI로 계획하기 페이지
+ * Flat 라우트 구조
  */
-export default function OrganizePage() {
+export default function AIPlanPage() {
   const { user } = useAuth();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterFuelMode(user.id, undefined, 'organize');
+      useADHDStore.getState().enterProjectMode(user.id, 'ai-plan');
     }
   }, [user?.id]);
 
@@ -28,7 +29,7 @@ export default function OrganizePage() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      <OrganizeView userId={user.id} />
+      <AIPlanScreen userId={user.id} />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import LandingPage from './landing/page';
 import GraphView from '@/components/graph/GraphView';
 import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import { ExecutionContainer } from '@/components/adhd/execution';
-import OrganizeWrapper from '@/components/adhd/OrganizeWrapper';
+import { OrganizeScreen } from '@/components/adhd/screens/organize';
 import { CareContainer } from '@/components/adhd/care';
 import { GenericTabContainer } from '@/components/adhd/containers/GenericTabContainer';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
@@ -156,9 +156,9 @@ export default function HomePage() {
   // 네비게이션 표시 여부 (home, entry, relationship-insights, fuel, settings, execute, project 모드에서 표시)
   const showNavigation = currentMode === 'home' || currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel' || currentMode === 'settings' || currentMode === 'execute' || currentMode === 'project';
 
-  // 정리 모드 (타이머 + 인터럽트 래퍼) - 전체화면
+  // 정리 모드 (할일 정리하기) - 전체화면
   if (currentMode === 'organize') {
-    return <OrganizeWrapper onExit={handleExitExecutionMode} />;
+    return user?.id ? <OrganizeScreen userId={user.id} /> : null;
   }
 
   // 마음 전해보기 모드 - 전체화면

@@ -6,5 +6,3 @@ export { GratitudeJournalView } from './GratitudeJournalView';
 export { NewsMemosView } from './NewsMemosView';
 export { StatsDashboardView } from './StatsDashboardView';
 export { CareRecordView } from './CareRecordView';
-
-// RelationshipContainer 삭제됨 - GenericTabContainer로 대체

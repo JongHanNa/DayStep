@@ -4,7 +4,7 @@ import { Crown } from 'lucide-react';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import {
   getUIGroupsForTableOfContents,
-  type ADHDRouteGroupId,
+  type ADHDSubViewId,
 } from '@/lib/constants/adhd-screens';
 
 /**
@@ -13,32 +13,12 @@ import {
  * UI_GROUPS 설정을 기반으로 목차 형태로 표시
  * 화면 이동 시 UI_GROUPS만 수정하면 목차가 자동으로 업데이트됨
  *
- * routeGroup을 기반으로 실제 라우팅 경로 결정:
- * - dashboard → goEntry
- * - project → goProject
- * - fuel → goFuel
- * - relationship → goRelationshipInsights
+ * Flat 라우트 구조 사용:
+ * - 모든 화면은 /adhd/{screenId}로 직접 이동
+ * - routeGroup은 더 이상 라우팅에 사용되지 않음
  */
 export default function HomeTableOfContents() {
-  const { goEntry, goProject, goFuel, goRelationshipInsights } = useADHDNavigation();
-
-  // routeGroup에 따른 네비게이션 핸들러 매핑
-  const navigateByRouteGroup = (routeGroup: ADHDRouteGroupId, subItemId: string) => {
-    switch (routeGroup) {
-      case 'dashboard':
-        goEntry(subItemId);
-        break;
-      case 'project':
-        goProject(subItemId);
-        break;
-      case 'fuel':
-        goFuel(subItemId);
-        break;
-      case 'relationship':
-        goRelationshipInsights(subItemId);
-        break;
-    }
-  };
+  const { goScreen } = useADHDNavigation();
 
   // UI_GROUPS와 SCREEN_REGISTRY에서 목차 데이터 생성
   const groups = getUIGroupsForTableOfContents();
@@ -73,7 +53,7 @@ export default function HomeTableOfContents() {
                 {group.subItems.map((item) => (
                   <li key={item.id}>
                     <button
-                      onClick={() => navigateByRouteGroup(item.routeGroup, item.id)}
+                      onClick={() => goScreen(item.id as ADHDSubViewId)}
                       className="flex items-center gap-2 text-base-content/80 hover:text-primary transition-colors py-1"
                     >
                       <span className="text-base">{item.label}</span>

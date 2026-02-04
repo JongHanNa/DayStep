@@ -3,18 +3,19 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { CareRecordView } from '@/components/adhd/RelationshipInsights/CareRecordView';
+import { TimelineScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/relationship-insights/record - 기록 서브탭 페이지
+ * /adhd/timeline - 하루 돌아보기 페이지
+ * Flat 라우트 구조
  */
-export default function RecordPage() {
+export default function TimelinePage() {
   const { user } = useAuth();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterRelationshipInsightsMode(user.id, 'record');
+      useADHDStore.getState().enterFuelMode(user.id, undefined, 'timeline');
     }
   }, [user?.id]);
 
@@ -26,5 +27,9 @@ export default function RecordPage() {
     );
   }
 
-  return <CareRecordView userId={user.id} />;
+  return (
+    <div className="min-h-screen bg-base-100">
+      <TimelineScreen userId={user.id} />
+    </div>
+  );
 }

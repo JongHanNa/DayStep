@@ -24,7 +24,6 @@ export { default as FuelReminderBanner } from './FuelReminderBanner';
 export { default as QuickLogModal } from './QuickLogModal';
 export { default as AwakeningSentenceSetup } from './AwakeningSentenceSetup';
 export { default as OrganizeTimer } from './OrganizeTimer';
-export { default as OrganizeWrapper } from './OrganizeWrapper';
 
 // === View export ===
 export {
@@ -32,6 +31,8 @@ export {
   CareView,
   SettingsView,
   TaskOrganizeView,
-  OrganizeView,
   EntryView,
 } from './views';
+
+// === Screen export ===
+export { OrganizeScreen } from './screens/organize';

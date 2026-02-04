@@ -3,19 +3,19 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { MotivationView } from '@/components/adhd/fuel';
+import { GratitudeScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/fuel/motivation - 원동력 새기기 페이지
- * HomeTableOfContents에서 "원동력 새기기" 메뉴 클릭 시 진입
+ * /adhd/gratitude - 감사 기록하기 페이지
+ * Flat 라우트 구조
  */
-export default function MotivationPage() {
+export default function GratitudePage() {
   const { user } = useAuth();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterFuelMode(user.id, undefined, 'motivation');
+      useADHDStore.getState().enterRelationshipInsightsMode(user.id, 'gratitude');
     }
   }, [user?.id]);
 
@@ -27,9 +27,5 @@ export default function MotivationPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-base-100">
-      <MotivationView userId={user.id} />
-    </div>
-  );
+  return <GratitudeScreen userId={user.id} />;
 }

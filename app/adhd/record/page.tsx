@@ -3,18 +3,19 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { TimelineView } from '@/components/adhd/fuel';
+import { RecordScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/fuel/timeline - 타임라인 서브탭 페이지
+ * /adhd/record - 관계 기록하기 페이지
+ * Flat 라우트 구조
  */
-export default function TimelinePage() {
+export default function RecordPage() {
   const { user } = useAuth();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterFuelMode(user.id, undefined, 'timeline');
+      useADHDStore.getState().enterRelationshipInsightsMode(user.id, 'record');
     }
   }, [user?.id]);
 
@@ -26,9 +27,5 @@ export default function TimelinePage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-base-100">
-      <TimelineView userId={user.id} />
-    </div>
-  );
+  return <RecordScreen userId={user.id} />;
 }

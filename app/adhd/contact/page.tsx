@@ -3,18 +3,19 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { GratitudeJournalView } from '@/components/adhd/RelationshipInsights/GratitudeJournalView';
+import { ContactScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/relationship-insights/gratitude - 감사 서브탭 페이지
+ * /adhd/contact - 연락 돌아보기 페이지 (Pro 전용)
+ * Flat 라우트 구조
  */
-export default function GratitudePage() {
+export default function ContactPage() {
   const { user } = useAuth();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterRelationshipInsightsMode(user.id, 'gratitude');
+      useADHDStore.getState().enterEntryMode('contact');
     }
   }, [user?.id]);
 
@@ -26,5 +27,5 @@ export default function GratitudePage() {
     );
   }
 
-  return <GratitudeJournalView userId={user.id} />;
+  return <ContactScreen userId={user.id} />;
 }

@@ -3,20 +3,19 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { ExecuteView } from '@/components/adhd/fuel';
+import { ActivityScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/fuel/execute - 실행 서브탭 페이지
+ * /adhd/activity - 활동 살펴보기 페이지 (Pro 전용)
+ * Flat 라우트 구조
  */
-export default function ExecutePage() {
+export default function ActivityPage() {
   const { user } = useAuth();
-  const { goFuel } = useADHDNavigation();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterFuelMode(user.id, undefined, 'execute');
+      useADHDStore.getState().enterEntryMode('activity');
     }
   }, [user?.id]);
 
@@ -28,9 +27,5 @@ export default function ExecutePage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-base-100">
-      <ExecuteView onExit={() => goFuel()} />
-    </div>
-  );
+  return <ActivityScreen userId={user.id} />;
 }
