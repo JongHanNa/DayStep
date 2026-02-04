@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Home, Menu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
@@ -19,6 +20,19 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
 export default function ADHDBottomTabBar() {
   const currentSubView = useADHDModeStore((state) => state.currentSubView);
   const enterHomeMode = useADHDModeStore((state) => state.enterHomeMode);
+  const [showLabel, setShowLabel] = useState(false);
+
+  // 중앙 버튼 클릭 핸들러
+  const handleCenterClick = () => {
+    // 화면 이름 표시 (서브뷰든 목차든)
+    setShowLabel(true);
+    setTimeout(() => setShowLabel(false), 1500);
+
+    // 목차일 때만 홈으로 이동
+    if (!currentSubView) {
+      enterHomeMode();
+    }
+  };
 
   // 중앙 아이콘 결정: 서브뷰면 해당 아이콘, 목차면 Menu
   const CenterIcon = currentSubView
@@ -42,14 +56,16 @@ export default function ADHDBottomTabBar() {
       </div>
 
       {/* 중앙 영역: 햄버거 또는 서브뷰 아이콘 (항상 활성화) */}
-      <div className="flex-1 flex justify-center">
+      <div className="flex-1 flex justify-center relative">
         <button
-          onClick={enterHomeMode}
-          className="group w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 active:bg-base-300"
+          onClick={handleCenterClick}
+          className={`group w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 ${
+            currentSubView ? '' : 'active:bg-base-300'
+          }`}
           aria-label={centerLabel}
         >
           {currentSubView ? (
-            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
               <CenterIcon className="w-7 h-7 text-primary" />
             </div>
           ) : (
@@ -62,6 +78,12 @@ export default function ADHDBottomTabBar() {
             </div>
           )}
         </button>
+        {/* 터치 시 화면 이름 표시 */}
+        {showLabel && (
+          <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-4 py-2 text-sm font-medium bg-base-300 text-base-content rounded-lg whitespace-nowrap animate-fade-in">
+            {centerLabel}
+          </span>
+        )}
       </div>
 
       {/* 오른쪽 영역: 프로필 아바타 + 드롭다운 */}

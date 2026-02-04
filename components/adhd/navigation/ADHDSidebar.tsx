@@ -49,23 +49,29 @@ export default function ADHDSidebar() {
       {/* 햄버거 또는 서브뷰 아이콘 (항상 활성화) */}
       <div className="mt-2">
         <button
-          onClick={enterHomeMode}
-          className="group w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-base-300"
+          onClick={currentSubView ? undefined : enterHomeMode}
+          className={`group w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 relative ${
+            currentSubView ? 'cursor-default' : 'hover:bg-base-300'
+          }`}
           aria-label={centerLabel}
         >
           {currentSubView ? (
-            <div className="w-9 h-9 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+            <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center">
               <CenterIcon className="w-8 h-8 text-primary" />
             </div>
           ) : (
             <div className="w-9 h-9 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
               <div className="grid grid-cols-3 gap-1">
                 {[...Array(9)].map((_, i) => (
-                  <div key={i} className="w-2 h-2 bg-primary rounded-full" />
+                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
                 ))}
               </div>
             </div>
           )}
+          {/* 툴팁: 서브뷰면 화면 이름, 목차면 "목차" */}
+          <span className="absolute left-full ml-2 px-3 py-1.5 text-sm font-medium bg-base-300 text-base-content rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+            {centerLabel}
+          </span>
         </button>
       </div>
 
