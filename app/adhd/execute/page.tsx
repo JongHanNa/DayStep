@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import ExecutionMode from '@/components/adhd/ExecutionMode';
+import { ExecutionContainer } from '@/components/adhd/execution';
 
 /**
  * /adhd/execute - 실행 모드 페이지
@@ -30,5 +30,5 @@ export default function ExecutePage() {
     }
   };
 
-  return <ExecutionMode onExit={handleExit} />;
+  return <ExecutionContainer onExit={handleExit} />;
 }

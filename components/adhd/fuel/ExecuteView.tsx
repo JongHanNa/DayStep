@@ -1,6 +1,6 @@
 'use client';
 
-import ExecutionMode from '@/components/adhd/ExecutionMode';
+import { ExecutionContainer } from '@/components/adhd/execution';
 
 interface ExecuteViewProps {
   onExit: () => void;
@@ -11,5 +11,5 @@ interface ExecuteViewProps {
  * ExecutionMode를 래핑
  */
 export function ExecuteView({ onExit }: ExecuteViewProps) {
-  return <ExecutionMode onExit={onExit} />;
+  return <ExecutionContainer onExit={onExit} />;
 }
