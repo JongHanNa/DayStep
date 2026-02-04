@@ -7,16 +7,16 @@ import { Label } from '@/components/ui/label';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
-interface ThemeContentProps {
+interface ThemeViewProps {
   onBack: () => void;
 }
 
 /**
- * 테마 설정 콘텐츠
+ * 테마 설정 뷰
  *
  * 기존 /settings/theme 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function ThemeContent({ onBack }: ThemeContentProps) {
+export default function ThemeView({ onBack }: ThemeViewProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 

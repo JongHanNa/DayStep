@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { ExecuteContent } from '@/components/adhd/fuel';
+import { ExecuteView } from '@/components/adhd/fuel';
 
 /**
  * /adhd/fuel/execute - 실행 서브탭 페이지
@@ -30,7 +30,7 @@ export default function ExecutePage() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      <ExecuteContent onExit={() => goFuel()} />
+      <ExecuteView onExit={() => goFuel()} />
     </div>
   );
 }

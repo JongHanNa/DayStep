@@ -1,15 +1,15 @@
 'use client';
 
 import { useADHDModeStore, SettingsSubView } from '@/state/stores/adhdModeStore';
-import SettingsMainContent from './settings/SettingsMainContent';
-import SubscriptionContent from './settings/SubscriptionContent';
-import AccountContent from './settings/AccountContent';
-import FontContent from './settings/FontContent';
-import TodosContent from './settings/TodosContent';
-import ThemeContent from './settings/ThemeContent';
-import NotificationsContent from './settings/NotificationsContent';
-import TimeFormatContent from './settings/TimeFormatContent';
-import WidgetsContent from './settings/WidgetsContent';
+import SettingsMainView from './settings/SettingsMainView';
+import SubscriptionView from './settings/SubscriptionView';
+import AccountView from './settings/AccountView';
+import FontView from './settings/FontView';
+import TodosView from './settings/TodosView';
+import ThemeView from './settings/ThemeView';
+import NotificationsView from './settings/NotificationsView';
+import TimeFormatView from './settings/TimeFormatView';
+import WidgetsView from './settings/WidgetsView';
 
 interface SettingsModeProps {
   onExit: () => void;
@@ -51,25 +51,25 @@ export default function SettingsMode({ onExit }: SettingsModeProps) {
   const renderContent = () => {
     switch (subView) {
       case 'subscription':
-        return <SubscriptionContent onBack={handleBack} />;
+        return <SubscriptionView onBack={handleBack} />;
       case 'account':
-        return <AccountContent onBack={handleBack} />;
+        return <AccountView onBack={handleBack} />;
       case 'font':
-        return <FontContent onBack={handleBack} />;
+        return <FontView onBack={handleBack} />;
       case 'todos':
-        return <TodosContent onBack={handleBack} />;
+        return <TodosView onBack={handleBack} />;
       case 'theme':
-        return <ThemeContent onBack={handleBack} />;
+        return <ThemeView onBack={handleBack} />;
       case 'notifications':
-        return <NotificationsContent onBack={handleBack} />;
+        return <NotificationsView onBack={handleBack} />;
       case 'time-format':
-        return <TimeFormatContent onBack={handleBack} />;
+        return <TimeFormatView onBack={handleBack} />;
       case 'widgets':
-        return <WidgetsContent onBack={handleBack} />;
+        return <WidgetsView onBack={handleBack} />;
       case 'main':
       default:
         return (
-          <SettingsMainContent
+          <SettingsMainView
             onNavigate={handleNavigate}
             onExit={exitSettingsMode}
           />

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import NotificationsContent from '@/components/adhd/settings/NotificationsContent';
+import NotificationsView from '@/components/adhd/settings/NotificationsView';
 
 /**
  * /adhd/settings/notifications - 알림 설정 페이지
@@ -16,5 +16,5 @@ export default function NotificationsPage() {
     useADHDModeStore.getState().enterSettingsMode('notifications');
   }, []);
 
-  return <NotificationsContent onBack={() => goSettings()} />;
+  return <NotificationsView onBack={() => goSettings()} />;
 }

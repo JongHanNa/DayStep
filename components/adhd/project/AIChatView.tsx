@@ -3,9 +3,9 @@
 import { AIPlanningChat } from '@/components/adhd/ai-planning';
 
 /**
- * AI 채팅 콘텐츠
+ * AI 채팅 뷰
  * AIPlanningChat을 래핑
  */
-export function AIChatContent() {
+export function AIChatView() {
   return <AIPlanningChat />;
 }

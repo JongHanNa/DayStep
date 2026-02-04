@@ -4,16 +4,16 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import TodoCompletionSettings from '@/components/notifications/TodoCompletionSettings';
 
-interface TodosContentProps {
+interface TodosViewProps {
   onBack: () => void;
 }
 
 /**
- * 할일 완료 설정 콘텐츠
+ * 할일 완료 설정 뷰
  *
  * 기존 /settings/todos 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function TodosContent({ onBack }: TodosContentProps) {
+export default function TodosView({ onBack }: TodosViewProps) {
   return (
     <div className="container max-w-2xl mx-auto p-4 space-y-6">
       {/* 상단 네비게이션 */}

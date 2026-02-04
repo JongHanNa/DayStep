@@ -58,24 +58,29 @@ import { OrganizeNeededView } from '@/components/adhd/TaskOrganize/OrganizeNeede
 import { DistractionPlanView } from '@/components/adhd/distraction';
 import type { EnvironmentSetup } from '@/types/distraction';
 import ExecutionMode from '@/components/adhd/ExecutionMode';
-import { getGroupTabs, getGroupHelpContent, type ADHDScreenHelp } from '@/lib/constants/adhd-screens';
+import { getItemsByRouteGroup, type ADHDScreenHelp } from '@/lib/constants/adhd-screens';
 
 // 탭 타입 정의
 type FuelTabType = 'motivation' | 'timeline' | 'execute' | 'organize';
 
-// ADHD_SCREENS에서 탭 목록 파생
-const FUEL_TABS_RAW = getGroupTabs('fuel');
-const FUEL_TABS = FUEL_TABS_RAW.map((tab) => {
-  const IconComponent = tab.icon;
+// fuel 라우트 그룹의 아이템들 가져오기
+const FUEL_ITEMS = getItemsByRouteGroup('fuel');
+const FUEL_TABS = FUEL_ITEMS.map((item) => {
+  const IconComponent = item.icon;
   return {
-    id: tab.id as FuelTabType,
-    label: tab.label,
+    id: item.id as FuelTabType,
+    label: item.label,
     icon: <IconComponent className="w-4 h-4" />,
   };
 });
 
-// ADHD_SCREENS에서 도움말 콘텐츠 파생
-const FUEL_TAB_HELP = getGroupHelpContent('fuel') as Record<FuelTabType, ADHDScreenHelp>;
+// 도움말 콘텐츠 파생
+const FUEL_TAB_HELP: Record<FuelTabType, ADHDScreenHelp> = {} as Record<FuelTabType, ADHDScreenHelp>;
+FUEL_ITEMS.forEach((item) => {
+  if (item.help) {
+    FUEL_TAB_HELP[item.id as FuelTabType] = item.help;
+  }
+});
 
 interface FuelModeProps {
   onExit: () => void;

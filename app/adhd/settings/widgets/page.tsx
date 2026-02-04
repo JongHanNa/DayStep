@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import WidgetsContent from '@/components/adhd/settings/WidgetsContent';
+import WidgetsView from '@/components/adhd/settings/WidgetsView';
 
 /**
  * /adhd/settings/widgets - 위젯 설정 페이지
@@ -16,5 +16,5 @@ export default function WidgetsPage() {
     useADHDModeStore.getState().enterSettingsMode('widgets');
   }, []);
 
-  return <WidgetsContent onBack={() => goSettings()} />;
+  return <WidgetsView onBack={() => goSettings()} />;
 }

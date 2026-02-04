@@ -2,14 +2,14 @@
 
 import { TodoTimelineView } from '@/components/adhd/TaskOrganize/TodoTimelineView';
 
-interface TimelineContentProps {
+interface TimelineViewProps {
   userId: string;
 }
 
 /**
- * 타임라인 콘텐츠
+ * 타임라인 뷰
  * TodoTimelineView를 래핑
  */
-export function TimelineContent({ userId }: TimelineContentProps) {
+export function TimelineView({ userId }: TimelineViewProps) {
   return <TodoTimelineView userId={userId} />;
 }

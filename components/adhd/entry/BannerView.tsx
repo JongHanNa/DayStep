@@ -5,19 +5,19 @@ import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
 
-interface BannerContentProps {
+interface BannerViewProps {
   userId: string;
   onRelationshipInsights: () => void;
   onFuel: (noteId?: string) => void;
 }
 
 /**
- * 대시보드 배너 콘텐츠
+ * 대시보드 배너 뷰
  * - FuelReminderBanner: 원동력 상기 배너
  * - PriorityReminderBanner: 우선순위 상기 배너
  * - 각성 문장 (설정된 경우)
  */
-export function BannerContent({ userId, onRelationshipInsights, onFuel }: BannerContentProps) {
+export function BannerView({ userId, onRelationshipInsights, onFuel }: BannerViewProps) {
   const { awakeningSentence } = useADHDModeStore();
 
   return (

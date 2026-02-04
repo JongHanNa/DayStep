@@ -7,7 +7,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import type { Project, ProjectStatus } from '@/types';
 import ProjectEditModal from './project/ProjectEditModal';
-import MCPGuideContent from './project/MCPGuideContent';
+import MCPGuideView from './project/MCPGuideView';
 import { AIPlanningChat } from './ai-planning';
 
 interface ProjectModeProps {
@@ -244,7 +244,7 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
       <main className={`${currentTab === 'chat' ? 'p-0' : 'p-4'} pb-24`}>
         {currentTab === 'guide' ? (
           // 가이드 탭
-          <MCPGuideContent />
+          <MCPGuideView />
         ) : currentTab === 'chat' ? (
           // AI 채팅 탭
           <AIPlanningChat />

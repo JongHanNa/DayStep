@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import ThemeContent from '@/components/adhd/settings/ThemeContent';
+import ThemeView from '@/components/adhd/settings/ThemeView';
 
 /**
  * /adhd/settings/theme - 테마 설정 페이지
@@ -16,5 +16,5 @@ export default function ThemePage() {
     useADHDModeStore.getState().enterSettingsMode('theme');
   }, []);
 
-  return <ThemeContent onBack={() => goSettings()} />;
+  return <ThemeView onBack={() => goSettings()} />;
 }

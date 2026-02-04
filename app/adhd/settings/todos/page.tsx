@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import TodosContent from '@/components/adhd/settings/TodosContent';
+import TodosView from '@/components/adhd/settings/TodosView';
 
 /**
  * /adhd/settings/todos - 할일 완료 설정 페이지
@@ -16,5 +16,5 @@ export default function TodosPage() {
     useADHDModeStore.getState().enterSettingsMode('todos');
   }, []);
 
-  return <TodosContent onBack={() => goSettings()} />;
+  return <TodosView onBack={() => goSettings()} />;
 }

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import { AIChatContent } from '@/components/adhd/project';
+import { AIChatView } from '@/components/adhd/project';
 
 /**
  * /adhd/project/ai-chat - AI 채팅 서브탭 페이지
@@ -20,7 +20,7 @@ export default function AIChatPage() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      <AIChatContent />
+      <AIChatView />
     </div>
   );
 }

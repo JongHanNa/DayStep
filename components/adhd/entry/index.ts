@@ -1,3 +1,3 @@
-export { BannerContent } from './BannerContent';
-export { ContactContent } from './ContactContent';
-export { ActivityContent } from './ActivityContent';
+export { BannerView } from './BannerView';
+export { ContactView } from './ContactView';
+export { ActivityView } from './ActivityView';

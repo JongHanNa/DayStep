@@ -9,25 +9,30 @@ import { Paywall } from '@/components/subscription/Paywall';
 import { CareRecordView } from './CareRecordView';
 import { GratitudeJournalView } from './GratitudeJournalView';
 import { NewsMemosView } from './NewsMemosView';
-import { getProOnlyTabIds, getGroupTabs, getGroupHelpContent, type ADHDScreenHelp } from '@/lib/constants/adhd-screens';
+import { getItemsByRouteGroup, type ADHDScreenHelp } from '@/lib/constants/adhd-screens';
 
 type TabType = 'record' | 'news' | 'gratitude';
 
-// ADHD_SCREENS에서 Pro 전용 탭과 탭 목록 파생
-const PRO_ONLY_TABS = getProOnlyTabIds<TabType>('relationship');
-const RELATIONSHIP_TABS_RAW = getGroupTabs('relationship');
-const TABS = RELATIONSHIP_TABS_RAW.map((tab) => {
-  const IconComponent = tab.icon;
+// relationship 라우트 그룹의 아이템들 가져오기
+const RELATIONSHIP_ITEMS = getItemsByRouteGroup('relationship');
+const PRO_ONLY_TABS = RELATIONSHIP_ITEMS.filter((item) => item.isPro).map((item) => item.id) as TabType[];
+const TABS = RELATIONSHIP_ITEMS.map((item) => {
+  const IconComponent = item.icon;
   return {
-    id: tab.id as TabType,
-    label: tab.label,
+    id: item.id as TabType,
+    label: item.label,
     icon: <IconComponent className="w-4 h-4" />,
-    proOnly: tab.proOnly,
+    proOnly: item.isPro,
   };
 });
 
-// ADHD_SCREENS에서 도움말 콘텐츠 파생
-const TAB_HELP_CONTENT = getGroupHelpContent('relationship') as Record<TabType, ADHDScreenHelp>;
+// 도움말 콘텐츠 파생
+const TAB_HELP_CONTENT: Record<TabType, ADHDScreenHelp> = {} as Record<TabType, ADHDScreenHelp>;
+RELATIONSHIP_ITEMS.forEach((item) => {
+  if (item.help) {
+    TAB_HELP_CONTENT[item.id as TabType] = item.help;
+  }
+});
 
 interface RelationshipInsightsModeProps {
   onExit: () => void;

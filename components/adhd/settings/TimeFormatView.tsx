@@ -8,16 +8,16 @@ import { useSettingsStore, TimeFormat } from '@/state/stores/settingsStore';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-interface TimeFormatContentProps {
+interface TimeFormatViewProps {
   onBack: () => void;
 }
 
 /**
- * 시간 표기법 설정 콘텐츠
+ * 시간 표기법 설정 뷰
  *
  * 기존 /settings/time-format 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function TimeFormatContent({ onBack }: TimeFormatContentProps) {
+export default function TimeFormatView({ onBack }: TimeFormatViewProps) {
   const { timeFormat, setTimeFormat } = useSettingsStore();
   const now = new Date();
 

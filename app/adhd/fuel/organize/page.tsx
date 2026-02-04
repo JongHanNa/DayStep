@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import { OrganizeContent } from '@/components/adhd/fuel';
+import { OrganizeView } from '@/components/adhd/fuel';
 
 /**
  * /adhd/fuel/organize - 정리 서브탭 페이지
@@ -28,7 +28,7 @@ export default function OrganizePage() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      <OrganizeContent userId={user.id} />
+      <OrganizeView userId={user.id} />
     </div>
   );
 }

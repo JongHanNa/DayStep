@@ -2,40 +2,52 @@
 
 import { Crown } from 'lucide-react';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { ADHD_SCREENS, type ADHDGroupId } from '@/lib/constants/adhd-screens';
+import { ADHD_SCREENS, type ADHDRouteGroupId } from '@/lib/constants/adhd-screens';
 
 interface SubItem {
   id: string;
   label: string;
   isPro?: boolean;
+  routeGroup: ADHDRouteGroupId;
 }
 
 interface GroupItem {
   id: string;
   title: string;
   subItems: SubItem[];
-  onNavigate: (subItemId?: string) => void;
 }
 
 /**
  * 홈 목차 화면
  *
- * 4개 그룹(대시보드, 미룸방지, 머릿속정리, 관계기록)을 목차 형태로 표시
+ * 3개 그룹(생각과 기억, 일상 돌보기, 미룸방지)을 목차 형태로 표시
  * 각 서브아이템 클릭 시 해당 화면의 특정 탭으로 이동
  *
- * 환경별 분기:
- * - 웹: URL 기반 라우팅 (/adhd/project?tab=ai-chat)
- * - Capacitor: Store 기반 (enterProjectMode)
+ * routeGroup을 기반으로 실제 라우팅 경로 결정:
+ * - dashboard → goEntry
+ * - project → goProject
+ * - fuel → goFuel
+ * - relationship → goRelationshipInsights
  */
 export default function HomeTableOfContents() {
   const { goEntry, goProject, goFuel, goRelationshipInsights } = useADHDNavigation();
 
-  // 그룹별 네비게이션 핸들러 매핑
-  const navigateHandlers: Record<ADHDGroupId, (subItemId?: string) => void> = {
-    dashboard: goEntry,
-    project: goProject,
-    fuel: goFuel,
-    relationship: goRelationshipInsights,
+  // routeGroup에 따른 네비게이션 핸들러 매핑
+  const navigateByRouteGroup = (routeGroup: ADHDRouteGroupId, subItemId: string) => {
+    switch (routeGroup) {
+      case 'dashboard':
+        goEntry(subItemId);
+        break;
+      case 'project':
+        goProject(subItemId);
+        break;
+      case 'fuel':
+        goFuel(subItemId);
+        break;
+      case 'relationship':
+        goRelationshipInsights(subItemId);
+        break;
+    }
   };
 
   // ADHD_SCREENS에서 groups 배열 생성
@@ -46,8 +58,8 @@ export default function HomeTableOfContents() {
       id: item.id,
       label: item.label,
       isPro: item.isPro,
+      routeGroup: item.routeGroup,
     })),
-    onNavigate: navigateHandlers[group.id],
   }));
 
   return (
@@ -80,7 +92,7 @@ export default function HomeTableOfContents() {
                 {group.subItems.map((item) => (
                   <li key={item.id}>
                     <button
-                      onClick={() => group.onNavigate(item.id)}
+                      onClick={() => navigateByRouteGroup(item.routeGroup, item.id)}
                       className="flex items-center gap-2 text-base-content/80 hover:text-primary transition-colors py-1"
                     >
                       <span className="text-base">{item.label}</span>

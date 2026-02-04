@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import { TimelineContent } from '@/components/adhd/fuel';
+import { TimelineView } from '@/components/adhd/fuel';
 
 /**
  * /adhd/fuel/timeline - 타임라인 서브탭 페이지
@@ -28,7 +28,7 @@ export default function TimelinePage() {
 
   return (
     <div className="min-h-screen bg-base-100">
-      <TimelineContent userId={user.id} />
+      <TimelineView userId={user.id} />
     </div>
   );
 }

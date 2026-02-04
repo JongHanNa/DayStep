@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import { GuideContent } from '@/components/adhd/project';
+import { GuideView } from '@/components/adhd/project';
 
 /**
  * /adhd/project/guide - 가이드 서브탭 페이지
@@ -20,7 +20,7 @@ export default function GuidePage() {
 
   return (
     <div className="min-h-screen bg-base-100 p-4">
-      <GuideContent />
+      <GuideView />
     </div>
   );
 }

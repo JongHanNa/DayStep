@@ -1,4 +1,4 @@
 export { default as ProjectEditModal } from './ProjectEditModal';
-export { default as MCPGuideContent } from './MCPGuideContent';
-export { AIChatContent } from './AIChatContent';
-export { GuideContent } from './GuideContent';
+export { default as MCPGuideView } from './MCPGuideView';
+export { AIChatView } from './AIChatView';
+export { GuideView } from './GuideView';

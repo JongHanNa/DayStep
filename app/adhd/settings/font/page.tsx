@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import FontContent from '@/components/adhd/settings/FontContent';
+import FontView from '@/components/adhd/settings/FontView';
 
 /**
  * /adhd/settings/font - 글꼴 설정 페이지
@@ -16,5 +16,5 @@ export default function FontPage() {
     useADHDModeStore.getState().enterSettingsMode('font');
   }, []);
 
-  return <FontContent onBack={() => goSettings()} />;
+  return <FontView onBack={() => goSettings()} />;
 }

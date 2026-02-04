@@ -5,7 +5,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
-import { ContactContent } from '@/components/adhd/entry';
+import { ContactView } from '@/components/adhd/entry';
 
 /**
  * /adhd/entry/contact - 연락 통계 서브탭 페이지 (Pro 전용)
@@ -45,7 +45,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen flex flex-col bg-base-100 safe-area-top">
       <div className="flex-1 overflow-y-auto px-4">
-        <ContactContent userId={user.id} />
+        <ContactView userId={user.id} />
       </div>
     </div>
   );

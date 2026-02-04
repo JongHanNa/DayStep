@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { BannerContent } from '@/components/adhd/entry';
+import { BannerView } from '@/components/adhd/entry';
 
 /**
  * /adhd/entry/banner - 배너 서브탭 페이지
@@ -36,7 +36,7 @@ export default function BannerPage() {
   return (
     <div className="min-h-screen flex flex-col bg-base-100 safe-area-top">
       <div className="flex-1 overflow-y-auto px-4">
-        <BannerContent
+        <BannerView
           userId={user.id}
           onRelationshipInsights={goRelationshipInsights}
           onFuel={handleFuel}

@@ -45,16 +45,16 @@ declare global {
   }
 }
 
-interface SubscriptionContentProps {
+interface SubscriptionViewProps {
   onBack: () => void;
 }
 
 /**
- * 구독 관리 콘텐츠
+ * 구독 관리 뷰
  *
  * 기존 /subscription 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function SubscriptionContent({ onBack }: SubscriptionContentProps) {
+export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const { user } = useAuth();
   const {
     subscriptionInfo,

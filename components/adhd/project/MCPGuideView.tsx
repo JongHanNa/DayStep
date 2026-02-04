@@ -20,7 +20,7 @@ import { Capacitor } from '@capacitor/core';
  *
  * 사용자가 자신의 Claude API를 통해 DayStep과 연동하도록 안내합니다.
  */
-export default function MCPGuideContent() {
+export default function MCPGuideView() {
   const [copiedConfig, setCopiedConfig] = useState(false);
   const [expandedStep, setExpandedStep] = useState<number | null>(1);
 

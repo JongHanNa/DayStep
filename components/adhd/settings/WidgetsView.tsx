@@ -3,16 +3,16 @@
 import { ArrowLeft, Smartphone, Home, Settings } from 'lucide-react';
 import { WidgetSettings } from '@/components/widgets/WidgetSettings';
 
-interface WidgetsContentProps {
+interface WidgetsViewProps {
   onBack: () => void;
 }
 
 /**
- * 위젯 설정 콘텐츠
+ * 위젯 설정 뷰
  *
  * 기존 /settings/widgets 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function WidgetsContent({ onBack }: WidgetsContentProps) {
+export default function WidgetsView({ onBack }: WidgetsViewProps) {
   return (
     <div className="container max-w-2xl mx-auto p-4 space-y-6">
       {/* 페이지 헤더 */}

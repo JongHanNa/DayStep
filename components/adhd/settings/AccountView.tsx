@@ -9,16 +9,16 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-interface AccountContentProps {
+interface AccountViewProps {
   onBack: () => void;
 }
 
 /**
- * 계정 관리 콘텐츠
+ * 계정 관리 뷰
  *
  * 기존 /settings/account 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function AccountContent({ onBack }: AccountContentProps) {
+export default function AccountView({ onBack }: AccountViewProps) {
   const { user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 

@@ -2,14 +2,14 @@
 
 import ExecutionMode from '@/components/adhd/ExecutionMode';
 
-interface ExecuteContentProps {
+interface ExecuteViewProps {
   onExit: () => void;
 }
 
 /**
- * 실행 콘텐츠
+ * 실행 뷰
  * ExecutionMode를 래핑
  */
-export function ExecuteContent({ onExit }: ExecuteContentProps) {
+export function ExecuteView({ onExit }: ExecuteViewProps) {
   return <ExecutionMode onExit={onExit} />;
 }

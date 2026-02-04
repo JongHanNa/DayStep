@@ -10,13 +10,13 @@ import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
 import { StatsDashboardView } from '@/components/adhd/RelationshipInsights/StatsDashboardView';
 import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
 import { useADHDModeStore } from '@/state/stores/adhdModeStore';
-import { ADHD_SCREENS, getProOnlyTabIds, getGroupTabs } from '@/lib/constants/adhd-screens';
+import { getItemsByRouteGroup } from '@/lib/constants/adhd-screens';
 
 type TabType = 'banner' | 'contact' | 'activity';
 
-// ADHD_SCREENS에서 Pro 전용 탭과 탭 목록 파생
-const PRO_ONLY_TABS = getProOnlyTabIds<TabType>('dashboard');
-const DASHBOARD_TABS = getGroupTabs('dashboard');
+// dashboard 라우트 그룹의 아이템들 가져오기
+const DASHBOARD_ITEMS = getItemsByRouteGroup('dashboard');
+const PRO_ONLY_TABS = DASHBOARD_ITEMS.filter((item) => item.isPro).map((item) => item.id) as TabType[];
 
 interface ADHDEntryScreenProps {
   userId?: string;
@@ -28,9 +28,9 @@ interface ADHDEntryScreenProps {
  * ADHD 모드 진입 화면 (대시보드)
  *
  * 3개 탭으로 구성:
- * - 배너: FuelReminderBanner + PriorityReminderBanner + 각성 문장
- * - 연락 (Pro): 관계 통계 (StatsDashboardView)
- * - 활동 (Pro): 할일 통계 (TodoStatsView)
+ * - 마음 깨우기: FuelReminderBanner + PriorityReminderBanner + 각성 문장
+ * - 연락 돌아보기 (Pro): 관계 통계 (StatsDashboardView)
+ * - 활동 살펴보기 (Pro): 할일 통계 (TodoStatsView)
  */
 export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
   const { awakeningSentence, currentSubView } = useADHDModeStore();
@@ -56,7 +56,7 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
         <div className="px-4 py-6">
           <Paywall
             featureId={activeTab === 'contact' ? 'relationship_insights' : 'todo_stats'}
-            title={activeTab === 'contact' ? '관계 통계' : '활동 통계'}
+            title={activeTab === 'contact' ? '연락 돌아보기' : '활동 살펴보기'}
             description={
               activeTab === 'contact'
                 ? '관계 기록 패턴을 분석하고 인사이트를 확인하세요'
@@ -130,21 +130,21 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
       {/* 탭 네비게이션 */}
       <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
         <div className="flex overflow-x-auto px-4 py-3 gap-2 scrollbar-hide">
-          {DASHBOARD_TABS.map((tab) => {
-            const IconComponent = tab.icon;
+          {DASHBOARD_ITEMS.map((item) => {
+            const IconComponent = item.icon;
             return (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
+                key={item.id}
+                onClick={() => setActiveTab(item.id as TabType)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
+                  activeTab === item.id
                     ? 'bg-primary text-primary-content'
                     : 'bg-base-200 text-base-content hover:bg-base-300'
                 }`}
               >
                 <IconComponent className="w-4 h-4" />
-                <span className="text-sm font-medium">{tab.label}</span>
-                {tab.proOnly && !hasActiveSubscription && (
+                <span className="text-sm font-medium">{item.label}</span>
+                {item.isPro && !hasActiveSubscription && (
                   <Crown className="w-3 h-3 text-amber-500" />
                 )}
               </button>

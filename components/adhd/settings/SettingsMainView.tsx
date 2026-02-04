@@ -10,17 +10,17 @@ import {
 import { SyncStatusIndicator } from '@/components/ui/pull-to-refresh';
 import ADHDSettingsSection from '@/components/settings/ADHDSettingsSection';
 
-interface SettingsMainContentProps {
+interface SettingsMainViewProps {
   onNavigate: (subView: SettingsSubView) => void;
   onExit: () => void;
 }
 
 /**
- * 설정 메인 화면 콘텐츠
+ * 설정 메인 화면 뷰
  *
  * 기존 /settings 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function SettingsMainContent({ onNavigate, onExit }: SettingsMainContentProps) {
+export default function SettingsMainView({ onNavigate, onExit }: SettingsMainViewProps) {
   const { user } = useAuth();
 
   return (

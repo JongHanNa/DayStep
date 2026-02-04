@@ -3,7 +3,7 @@
 import { ArrowLeft, Check, Type } from 'lucide-react';
 import { useSettingsStore, FontFamily } from '@/state/stores/settingsStore';
 
-interface FontContentProps {
+interface FontViewProps {
   onBack: () => void;
 }
 
@@ -25,11 +25,11 @@ const FONT_OPTIONS = [
 ];
 
 /**
- * 글꼴 설정 콘텐츠
+ * 글꼴 설정 뷰
  *
  * 기존 /settings/font 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function FontContent({ onBack }: FontContentProps) {
+export default function FontView({ onBack }: FontViewProps) {
   const { fontFamily, wordSpacing, letterSpacing, fontSize, setFontFamily, setWordSpacing, setLetterSpacing, setFontSize } = useSettingsStore();
 
   // 안전한 spacing 및 fontSize 값 처리

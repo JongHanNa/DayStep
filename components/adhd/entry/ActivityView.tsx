@@ -2,14 +2,14 @@
 
 import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
 
-interface ActivityContentProps {
+interface ActivityViewProps {
   userId: string;
 }
 
 /**
- * 대시보드 활동 통계 콘텐츠 (Pro 전용)
+ * 대시보드 활동 통계 뷰 (Pro 전용)
  * TodoStatsView를 래핑
  */
-export function ActivityContent({ userId }: ActivityContentProps) {
+export function ActivityView({ userId }: ActivityViewProps) {
   return <TodoStatsView userId={userId} />;
 }

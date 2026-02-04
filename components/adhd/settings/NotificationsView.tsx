@@ -4,16 +4,16 @@ import { ArrowLeft, Bell, Settings } from 'lucide-react';
 import { NotificationSettings } from '@/components/notifications/NotificationSettings';
 import { NotificationManagerComponent } from '@/components/notifications/NotificationManager';
 
-interface NotificationsContentProps {
+interface NotificationsViewProps {
   onBack: () => void;
 }
 
 /**
- * 알림 설정 콘텐츠
+ * 알림 설정 뷰
  *
  * 기존 /settings/notifications 페이지의 콘텐츠를 URL 변경 없이 렌더링합니다.
  */
-export default function NotificationsContent({ onBack }: NotificationsContentProps) {
+export default function NotificationsView({ onBack }: NotificationsViewProps) {
   return (
     <div className="container max-w-2xl mx-auto p-4 space-y-6">
       {/* 페이지 헤더 */}
