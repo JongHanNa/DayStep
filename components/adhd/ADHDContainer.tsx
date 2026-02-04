@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
 import { isCapacitorEnv } from '@/lib/utils/platform';
 import { useAuth } from '@/app/context/AuthContext';
+import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import type { ADHDSubViewId, ADHDRouteGroupId } from '@/lib/constants/adhd-screens';
 
 // Dynamic imports for code splitting
@@ -23,7 +24,7 @@ const TaskOrganizeContainer = dynamic(() => import('./task-organize/TaskOrganize
 const OrganizeScreen = dynamic(() => import('./screens/organize/OrganizeScreen'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const EntryContainer = dynamic(() => import('./views/EntryView'), {
+const ADHDEntryScreen = dynamic(() => import('./ADHDEntryScreen'), {
   loading: () => <ViewLoadingSpinner />,
 });
 
@@ -107,6 +108,7 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
   const storeMode = useADHDStore((s) => s.currentMode);
   const { user } = useAuth();
   const userId = user?.id;
+  const { goRelationshipInsights, goFuel } = useADHDNavigation();
 
   // 우선순위: 명시적 mode prop > Capacitor Store > URL 경로
   const currentMode = explicitMode
@@ -148,7 +150,13 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
     case 'organize':
       return userId ? <OrganizeScreen userId={userId} /> : null;
     case 'entry':
-      return <EntryContainer onExit={handleExit} />;
+      return (
+        <ADHDEntryScreen
+          userId={userId}
+          onRelationshipInsights={goRelationshipInsights}
+          onFuel={goFuel}
+        />
+      );
     case 'relationship-insights':
       // GenericTabContainer로 relationship 라우트 그룹 렌더링
       return (

@@ -1,4 +1,4 @@
 // TaskOrganize 배럴 export
 
 export { default as TaskOrganizeContainer } from './TaskOrganizeContainer';
-export * from './views';
+// Note: views는 screens/*/components/로 이동됨

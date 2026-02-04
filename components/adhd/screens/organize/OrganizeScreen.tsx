@@ -1,6 +1,6 @@
 'use client';
 
-import { OrganizeNeededView } from '@/components/adhd/task-organize/views/OrganizeNeededView';
+import { OrganizeNeededView } from './components/OrganizeNeededView';
 
 interface OrganizeScreenProps {
   userId: string;

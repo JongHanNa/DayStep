@@ -1,6 +1,6 @@
 'use client';
 
-import { BannerView } from '@/components/adhd/views/BannerView';
+import { BannerView } from './components/BannerView';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 
 interface BannerScreenProps {

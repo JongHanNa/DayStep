@@ -1,6 +1,6 @@
 'use client';
 
-import { TodoTimelineView } from '@/components/adhd/task-organize/views/TodoTimelineView';
+import { TodoTimelineView } from './components/TodoTimelineView';
 
 interface TimelineScreenProps {
   userId: string;

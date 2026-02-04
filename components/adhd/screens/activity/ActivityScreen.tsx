@@ -1,6 +1,6 @@
 'use client';
 
-import { ActivityView } from '@/components/adhd/views/ActivityView';
+import { ActivityView } from './components/ActivityView';
 
 interface ActivityScreenProps {
   userId: string;

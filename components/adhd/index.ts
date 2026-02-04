@@ -24,14 +24,26 @@ export { default as QuickLogModal } from './QuickLogModal';
 export { default as AwakeningSentenceSetup } from './AwakeningSentenceSetup';
 export { default as OrganizeTimer } from './OrganizeTimer';
 
-// === View export ===
-export {
-  FocusExecutionView,
-  RelationshipRecordView,
-  SettingsView,
-  TaskOrganizeView,
-  EntryView,
-} from './views';
-
 // === Screen export ===
 export { OrganizeScreen } from './screens/organize';
+export { TimelineScreen } from './screens/timeline';
+export { ActivityScreen } from './screens/activity';
+export { BannerScreen } from './screens/banner';
+export { ContactScreen } from './screens/contact';
+export { ExecuteScreen } from './screens/execute';
+
+// === Screen Components re-export ===
+// 하위 호환성을 위한 View export (새 위치: screens/*/components/)
+export { ActivityView, TodoStatsView } from './screens/activity/components';
+export { BannerView } from './screens/banner/components';
+export { ContactView } from './screens/contact/components';
+export { TodoTimelineView, MonthNavigator, MonthPickerPopover } from './screens/timeline/components';
+export { OrganizeNeededView } from './screens/organize/components';
+export {
+  RecommendationView,
+  CompletedAllView,
+  EmptyStateView,
+  AdhocTimerView,
+  AdhocCaptureView,
+  AdhocNoteConnectionView,
+} from './screens/execute/components';

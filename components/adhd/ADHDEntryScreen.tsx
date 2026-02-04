@@ -8,7 +8,7 @@ import { Paywall } from '@/components/subscription/Paywall';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 import MotivationReminderBanner from '@/components/adhd/MotivationReminderBanner';
 import { StatsDashboardView } from '@/components/adhd/common';
-import { TodoStatsView } from '@/components/adhd/task-organize/views/TodoStatsView';
+import { TodoStatsView } from '@/components/adhd/screens/activity/components/TodoStatsView';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { getItemsByRouteGroup } from '@/lib/constants/adhd-screens';
 

@@ -36,7 +36,7 @@ import {
   AdhocTimerView,
   AdhocCaptureView,
   AdhocNoteConnectionView,
-} from './focus-execution/views';
+} from '../screens/execute/components';
 import { useExecutionRecommendation } from '../hooks/useExecutionRecommendation';
 
 interface ExecutionContainerProps {

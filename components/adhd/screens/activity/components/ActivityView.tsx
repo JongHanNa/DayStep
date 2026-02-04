@@ -1,6 +1,6 @@
 'use client';
 
-import { TodoStatsView } from '@/components/adhd/task-organize/views/TodoStatsView';
+import { TodoStatsView } from './TodoStatsView';
 
 interface ActivityViewProps {
   userId: string;
