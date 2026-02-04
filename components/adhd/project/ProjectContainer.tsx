@@ -2,31 +2,31 @@
 
 import { useEffect, useState } from 'react';
 import { Plus, FolderKanban, Check, Pause, Trash2, BookOpen, Play, Square, Bot, Brain, Sparkles, PenLine, HelpCircle, MessageSquare } from 'lucide-react';
-import { useProjectStore, useActiveProjects, useFilteredProjects } from '@/state/stores/projectStore';
+import { useProjectStore, useFilteredProjects } from '@/state/stores/projectStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import type { Project, ProjectStatus } from '@/types';
-import ProjectEditModal from './project/ProjectEditModal';
-import MCPGuideView from './project/MCPGuideView';
-import { AIPlanningChat } from './ai-planning';
+import ProjectEditModal from '../project/ProjectEditModal';
+import MCPGuideView from '../project/MCPGuideView';
+import { AIPlanningChat } from '../ai-planning';
 
-interface ProjectModeProps {
+interface ProjectContainerProps {
   onExit: () => void;
 }
 
 /**
- * 프로젝트 모드 - AI 플래닝으로 생성된 프로젝트 관리
+ * 프로젝트 뷰 - AI 플래닝으로 생성된 프로젝트 관리
  *
  * ADHD 관점:
  * - 진행률 시각화: 각 프로젝트의 완료/전체 할일 수 표시
  * - 색상 구분: 프로젝트별 시각적 구분
  * - 간단한 UI: 핵심 정보만 표시
  */
-export default function ProjectMode({ onExit }: ProjectModeProps) {
+export default function ProjectContainer({ onExit }: ProjectContainerProps) {
   const { user, loading: authLoading } = useAuth();
   const { currentUserId } = useADHDStore();
 
-  // fallback: useAuth()가 user를 반환하지 않을 때 adhdModeStore의 currentUserId 사용
+  // fallback: useAuth()가 user를 반환하지 않을 때 adhdStore의 currentUserId 사용
   // Capacitor 환경에서 타이밍 문제로 user가 null일 수 있음
   const userId = user?.id || currentUserId;
 
@@ -54,7 +54,7 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
   // 데이터 로드
   useEffect(() => {
     if (userId && !authLoading) {
-      console.log('📁 ProjectMode: fetchProjects 호출', {
+      console.log('📁 ProjectView: fetchProjects 호출', {
         userId,
         source: user?.id ? 'useAuth' : 'currentUserId',
       });
@@ -73,7 +73,7 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
     }
   }, [userId, authLoading, projects, projectProgress, fetchProjectProgress]);
 
-  // adhdModeStore에서 currentSubView 가져오기
+  // adhdStore에서 currentSubView 가져오기
   const { currentSubView } = useADHDStore();
 
   // 서브뷰 ID를 탭 타입으로 매핑

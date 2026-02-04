@@ -57,7 +57,7 @@ import { TodoTimelineView } from '@/components/adhd/TaskOrganize/TodoTimelineVie
 import { OrganizeNeededView } from '@/components/adhd/TaskOrganize/OrganizeNeededView';
 import { DistractionPlanView } from '@/components/adhd/distraction';
 import type { EnvironmentSetup } from '@/types/distraction';
-import ExecutionMode from '@/components/adhd/ExecutionMode';
+import { ExecutionContainer } from '@/components/adhd/execution';
 import { getItemsByRouteGroup, type ADHDScreenHelp } from '@/lib/constants/adhd-screens';
 
 // 탭 타입 정의
@@ -82,7 +82,7 @@ FUEL_ITEMS.forEach((item) => {
   }
 });
 
-interface FuelModeProps {
+interface FuelContainerProps {
   onExit: () => void;
 }
 
@@ -111,7 +111,7 @@ const UNIFIED_TAGS = [
  * ExecutionMode처럼 타이머와 함께 기록 시간을 갖습니다.
  * 타이머 진행 중에 생각을 수집하고, 명료화하고, 할일을 계획합니다.
  */
-export default function FuelMode({ onExit }: FuelModeProps) {
+export default function FuelContainer({ onExit }: FuelContainerProps) {
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -1080,7 +1080,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       )}
       {activeTab === 'execute' && userId && (
         <div className="flex-1 overflow-y-auto">
-          <ExecutionMode
+          <ExecutionContainer
             onExit={() => setActiveTab('motivation')}
             hideNavigation={true}
           />

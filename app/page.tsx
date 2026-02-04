@@ -6,14 +6,14 @@ import { useEffect, useState } from 'react';
 import LandingPage from './landing/page';
 import GraphView from '@/components/graph/GraphView';
 import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
-import ExecutionMode from '@/components/adhd/ExecutionMode';
+import { ExecutionContainer } from '@/components/adhd/execution';
 import OrganizeWrapper from '@/components/adhd/OrganizeWrapper';
-import CareMode from '@/components/adhd/CareMode';
-import FuelMode from '@/components/adhd/FuelMode';
-import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights';
+import { CareContainer } from '@/components/adhd/care';
+import { FuelContainer } from '@/components/adhd/fuel';
+import { RelationshipContainer } from '@/components/adhd/RelationshipInsights';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
-import SettingsMode from '@/components/adhd/SettingsMode';
-import ProjectMode from '@/components/adhd/ProjectMode';
+import { SettingsContainer } from '@/components/adhd/settings';
+import { ProjectContainer } from '@/components/adhd/project';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
@@ -159,7 +159,7 @@ export default function HomePage() {
 
   // 마음 전해보기 모드 - 전체화면
   if (currentMode === 'care') {
-    return <CareMode onExit={handleExitExecutionMode} />;
+    return <CareContainer onExit={handleExitExecutionMode} />;
   }
 
   // Capacitor ADHD 모드 레이아웃 (entry, relationship-insights, fuel, execute, settings)
@@ -174,27 +174,27 @@ export default function HomePage() {
         <main className="flex-1 min-w-0 md:ml-16 pb-20 md:pb-0">
           {/* 실행 모드 */}
           {currentMode === 'execute' && (
-            <ExecutionMode onExit={handleExitExecutionMode} />
+            <ExecutionContainer onExit={handleExitExecutionMode} />
           )}
 
           {/* 관계 인사이트 모드 */}
           {currentMode === 'relationship-insights' && (
-            <RelationshipInsightsMode onExit={handleExitExecutionMode} />
+            <RelationshipContainer onExit={handleExitExecutionMode} />
           )}
 
           {/* 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력) */}
           {currentMode === 'fuel' && (
-            <FuelMode onExit={handleExitFuelMode} />
+            <FuelContainer onExit={handleExitFuelMode} />
           )}
 
           {/* 설정 모드 */}
           {currentMode === 'settings' && (
-            <SettingsMode onExit={handleExitToHome} />
+            <SettingsContainer onExit={handleExitToHome} />
           )}
 
           {/* 프로젝트 모드 */}
           {currentMode === 'project' && (
-            <ProjectMode onExit={handleExitToHome} />
+            <ProjectContainer onExit={handleExitToHome} />
           )}
 
           {/* 대시보드 (entry 모드) */}

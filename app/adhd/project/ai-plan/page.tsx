@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import ProjectMode from '@/components/adhd/ProjectMode';
+import { ProjectContainer } from '@/components/adhd/project';
 
 /**
  * /adhd/project/ai-plan - AI 계획 서브탭 페이지 (기본 탭)
@@ -20,5 +20,5 @@ export default function AIPlanPage() {
     }
   }, [user?.id]);
 
-  return <ProjectMode onExit={goHome} />;
+  return <ProjectContainer onExit={goHome} />;
 }

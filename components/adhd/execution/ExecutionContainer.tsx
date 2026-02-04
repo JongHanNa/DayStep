@@ -45,7 +45,7 @@ interface ExecutionContainerProps {
 }
 
 /**
- * ADHD 실행 모드 컨테이너
+ * ADHD 실행 모드 화면
  *
  * 할일 목록을 숨기고 단일 할일만 추천하여
  * ADHD 사용자가 "지금 할 수 있는 가장 작은 것 하나"에 집중하도록 돕습니다.

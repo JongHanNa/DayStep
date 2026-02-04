@@ -1,4 +1,16 @@
 'use client';
 
-// FuelMode를 직접 re-export (통합 예정)
-export { default } from '../FuelMode';
+import FuelContainer from '../fuel/FuelContainer';
+
+interface FuelViewProps {
+  onExit: () => void;
+}
+
+/**
+ * 원동력 모드 뷰
+ *
+ * ADHDContainer에서 사용되는 원동력 모드 래퍼입니다.
+ */
+export default function FuelView({ onExit }: FuelViewProps) {
+  return <FuelContainer onExit={onExit} />;
+}

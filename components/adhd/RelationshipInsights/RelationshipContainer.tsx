@@ -34,11 +34,11 @@ RELATIONSHIP_ITEMS.forEach((item) => {
   }
 });
 
-interface RelationshipInsightsModeProps {
+interface RelationshipContainerProps {
   onExit: () => void;
 }
 
-export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModeProps) {
+export default function RelationshipContainer({ onExit }: RelationshipContainerProps) {
   const { currentSubView } = useADHDStore();
   const [activeTab, setActiveTab] = useState<TabType>((currentSubView as TabType) || 'record');
   const [helpModalTab, setHelpModalTab] = useState<TabType | null>(null);

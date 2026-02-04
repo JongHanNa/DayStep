@@ -1,22 +1,22 @@
 'use client';
 
 import { useADHDStore, SettingsSubView } from '@/state/stores/adhdStore';
-import SettingsMainView from './settings/SettingsMainView';
-import SubscriptionView from './settings/SubscriptionView';
-import AccountView from './settings/AccountView';
-import FontView from './settings/FontView';
-import TodosView from './settings/TodosView';
-import ThemeView from './settings/ThemeView';
-import NotificationsView from './settings/NotificationsView';
-import TimeFormatView from './settings/TimeFormatView';
-import WidgetsView from './settings/WidgetsView';
+import SettingsMainView from './SettingsMainView';
+import SubscriptionView from './SubscriptionView';
+import AccountView from './AccountView';
+import FontView from './FontView';
+import TodosView from './TodosView';
+import ThemeView from './ThemeView';
+import NotificationsView from './NotificationsView';
+import TimeFormatView from './TimeFormatView';
+import WidgetsView from './WidgetsView';
 
-interface SettingsModeProps {
+interface SettingsScreenProps {
   onExit: () => void;
 }
 
 /**
- * 설정 모드 메인 컴포넌트
+ * 설정 화면
  *
  * URL 변경 없이 subView 상태에 따라 적절한 설정 화면을 렌더링합니다.
  * - main: 설정 메인 화면
@@ -29,7 +29,7 @@ interface SettingsModeProps {
  * - time-format: 시간 표기법 설정
  * - widgets: 위젯 설정
  */
-export default function SettingsMode({ onExit }: SettingsModeProps) {
+export default function SettingsScreen({ onExit }: SettingsScreenProps) {
   const { settingsMode, setSettingsSubView, exitSettingsMode } = useADHDStore();
   const { subView } = settingsMode;
 

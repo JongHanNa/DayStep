@@ -5,32 +5,32 @@ import { usePathname } from 'next/navigation';
 import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
 import { isCapacitorEnv } from '@/lib/utils/platform';
 
-// Dynamic imports for code splitting
-const ExecutionView = dynamic(() => import('./views/ExecutionView'), {
+// Dynamic imports for code splitting - 도메인 폴더의 Container 직접 import
+const ExecutionContainer = dynamic(() => import('./execution/ExecutionContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const FuelView = dynamic(() => import('./views/FuelView'), {
+const FuelContainer = dynamic(() => import('./fuel/FuelContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const CareView = dynamic(() => import('./views/CareView'), {
+const CareContainer = dynamic(() => import('./care/CareContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const ProjectView = dynamic(() => import('./views/ProjectView'), {
+const ProjectContainer = dynamic(() => import('./project/ProjectContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const SettingsView = dynamic(() => import('./views/SettingsView'), {
+const SettingsContainer = dynamic(() => import('./settings/SettingsContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const TaskOrganizeView = dynamic(() => import('./views/TaskOrganizeView'), {
+const TaskOrganizeContainer = dynamic(() => import('./task-organize/TaskOrganizeContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const OrganizeView = dynamic(() => import('./views/OrganizeView'), {
+const OrganizeWrapper = dynamic(() => import('./OrganizeWrapper'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const EntryView = dynamic(() => import('./views/EntryView'), {
+const EntryContainer = dynamic(() => import('./views/EntryView'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const RelationshipInsightsView = dynamic(() => import('./views/RelationshipInsightsView'), {
+const RelationshipContainer = dynamic(() => import('./RelationshipInsights/RelationshipContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
 
@@ -93,11 +93,11 @@ interface ADHDContainerProps {
 /**
  * ADHD 통합 컨테이너
  *
- * 모든 ADHD 모드의 단일 진입점으로, 환경에 따라 적절한 뷰를 렌더링합니다.
+ * 모든 ADHD 모드의 단일 진입점으로, 환경에 따라 적절한 Container를 렌더링합니다.
  * - 웹: URL 기반으로 모드 결정
  * - Capacitor: Store 기반으로 모드 결정
  *
- * 코드 스플리팅을 통해 각 뷰를 lazy loading합니다.
+ * 코드 스플리팅을 통해 각 Container를 lazy loading합니다.
  */
 export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps) {
   const pathname = usePathname();
@@ -112,26 +112,26 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
     useADHDStore.getState().enterHomeMode();
   });
 
-  // 모드별 뷰 렌더링
+  // 모드별 Container 렌더링
   switch (currentMode) {
     case 'execute':
-      return <ExecutionView onExit={handleExit} />;
+      return <ExecutionContainer onExit={handleExit} />;
     case 'fuel':
-      return <FuelView onExit={handleExit} />;
+      return <FuelContainer onExit={handleExit} />;
     case 'care':
-      return <CareView onExit={handleExit} />;
+      return <CareContainer onExit={handleExit} />;
     case 'project':
-      return <ProjectView onExit={handleExit} />;
+      return <ProjectContainer onExit={handleExit} />;
     case 'settings':
-      return <SettingsView onExit={handleExit} />;
+      return <SettingsContainer onExit={handleExit} />;
     case 'task-organize':
-      return <TaskOrganizeView onExit={handleExit} />;
+      return <TaskOrganizeContainer onExit={handleExit} />;
     case 'organize':
-      return <OrganizeView onExit={handleExit} />;
+      return <OrganizeWrapper onExit={handleExit} />;
     case 'entry':
-      return <EntryView onExit={handleExit} />;
+      return <EntryContainer onExit={handleExit} />;
     case 'relationship-insights':
-      return <RelationshipInsightsView onExit={handleExit} />;
+      return <RelationshipContainer onExit={handleExit} />;
     default:
       // home은 루트 경로라 별도 처리 필요
       return null;

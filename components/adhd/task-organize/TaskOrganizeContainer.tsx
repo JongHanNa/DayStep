@@ -7,10 +7,10 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
-import { TodoTimelineView } from './TodoTimelineView';
-import { OrganizeNeededView } from './OrganizeNeededView';
-import { TodoStatsView } from './TodoStatsView';
-import { GraphTabView } from './GraphTabView';
+import { TodoTimelineView } from '../TaskOrganize/TodoTimelineView';
+import { OrganizeNeededView } from '../TaskOrganize/OrganizeNeededView';
+import { TodoStatsView } from '../TaskOrganize/TodoStatsView';
+import { GraphTabView } from '../TaskOrganize/GraphTabView';
 
 type TabType = 'timeline' | 'organize' | 'stats' | 'graph';
 
@@ -22,7 +22,7 @@ const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   // { id: 'graph', label: '그래프', icon: <Network className="w-4 h-4" /> },
 ];
 
-interface TaskOrganizeModeProps {
+interface TaskOrganizeContainerProps {
   onExit: () => void;
 }
 
@@ -59,7 +59,7 @@ const TAB_HELP_CONTENT: Record<TabType, { title: string; difficulty: string; hel
  * - 통계: 완료율, 패턴 분석
  * - 그래프: 전체 구조 시각화 (임시 숨김)
  */
-export function TaskOrganizeMode({ onExit }: TaskOrganizeModeProps) {
+export default function TaskOrganizeContainer({ onExit }: TaskOrganizeContainerProps) {
   const [activeTab, setActiveTab] = useState<TabType>('timeline');
   const [showPaywall, setShowPaywall] = useState(false);
   const [helpModalTab, setHelpModalTab] = useState<TabType | null>(null);

@@ -1,6 +1,8 @@
-// Fuel 모드 배럴 export
+// Fuel Container 배럴 export
 
-// 기존 탭 뷰 컴포넌트
+export { default as FuelContainer } from './FuelContainer';
+
+// 탭 뷰 컴포넌트
 export { TimelineView } from './TimelineView';
 export { ExecuteView } from './ExecuteView';
 export { OrganizeView } from './OrganizeView';

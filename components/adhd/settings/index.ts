@@ -1,6 +1,8 @@
-// Settings 모드 배럴 export
+// Settings Container 배럴 export
 
-// 기존 뷰 컴포넌트
+export { default as SettingsContainer } from './SettingsContainer';
+
+// 뷰 컴포넌트
 export { default as SettingsMainView } from './SettingsMainView';
 export { default as SubscriptionView } from './SubscriptionView';
 export { default as AccountView } from './AccountView';

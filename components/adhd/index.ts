@@ -3,21 +3,14 @@
 // === 통합 컨테이너 ===
 export { ADHDContainer } from './ADHDContainer';
 
-// === 개별 뷰 (ADHDContainer를 통해 접근 권장) ===
-export {
-  ExecutionView,
-  FuelView,
-  CareView,
-  ProjectView,
-  SettingsView,
-  TaskOrganizeView,
-  OrganizeView,
-  EntryView,
-  RelationshipInsightsView,
-} from './views';
-
-// === 실행 모드 (실제 구현이 분리된 컨테이너) ===
+// === 도메인 Container ===
 export { ExecutionContainer } from './execution';
+export { FuelContainer } from './fuel';
+export { CareContainer } from './care';
+export { ProjectContainer } from './project';
+export { SettingsContainer } from './settings';
+export { TaskOrganizeContainer } from './task-organize';
+export { RelationshipContainer } from './RelationshipInsights';
 
 // === 공통 컴포넌트 ===
 export * from './common';
@@ -33,18 +26,15 @@ export { default as AwakeningSentenceSetup } from './AwakeningSentenceSetup';
 export { default as OrganizeTimer } from './OrganizeTimer';
 export { default as OrganizeWrapper } from './OrganizeWrapper';
 
-// === 레거시 Mode 직접 export (하위 호환성) ===
-/** @deprecated Use ExecutionView from views instead */
-export { default as ExecutionMode } from './ExecutionMode';
-/** @deprecated Use FuelView from views instead */
-export { default as FuelMode } from './FuelMode';
-/** @deprecated Use CareView from views instead */
-export { default as CareMode } from './CareMode';
-/** @deprecated Use ProjectView from views instead */
-export { default as ProjectMode } from './ProjectMode';
-/** @deprecated Use SettingsView from views instead */
-export { default as SettingsMode } from './SettingsMode';
-/** @deprecated Use OrganizeTimer instead */
-export { default as OrganizeModeTimer } from './OrganizeTimer';
-/** @deprecated Use OrganizeWrapper instead */
-export { default as OrganizeModeWrapper } from './OrganizeWrapper';
+// === 레거시 View export (하위 호환성 - Container 사용 권장) ===
+export {
+  ExecutionView,
+  FuelView,
+  CareView,
+  ProjectView,
+  SettingsView,
+  TaskOrganizeView,
+  OrganizeView,
+  EntryView,
+  RelationshipInsightsView,
+} from './views';
