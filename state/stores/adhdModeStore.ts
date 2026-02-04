@@ -230,6 +230,9 @@ interface ADHDModeState {
 
   // === 추천 알고리즘 ===
   calculateRecommendationScore: (todo: Todo) => number;
+
+  // === URL 복원 Actions (웹 라우팅 지원) ===
+  restoreFromUrl: (mode: string, tab: string | null, userId: string | null) => void;
 }
 
 // ============================================
@@ -834,6 +837,33 @@ export const useADHDModeStore = create<ADHDModeState>()(
           });
 
           return score;
+        },
+
+        // === URL 복원 Actions (웹 라우팅 지원) ===
+        restoreFromUrl: (mode: string, tab: string | null, userId: string | null) => {
+          console.log('🔄 ADHD: URL에서 상태 복원', { mode, tab, userId });
+
+          switch (mode) {
+            case 'entry':
+              get().enterEntryMode(tab || undefined);
+              break;
+            case 'project':
+              if (userId) get().enterProjectMode(userId, tab || undefined);
+              break;
+            case 'fuel':
+              if (userId) get().enterFuelMode(userId, undefined, tab || undefined);
+              break;
+            case 'relationship-insights':
+              if (userId) get().enterRelationshipInsightsMode(userId, tab || undefined);
+              break;
+            case 'settings':
+              get().enterSettingsMode((tab as SettingsSubView) || 'main');
+              break;
+            case 'home':
+            default:
+              get().enterHomeMode();
+              break;
+          }
         },
       }),
       {

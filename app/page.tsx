@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -17,6 +18,16 @@ import ProjectMode from '@/components/adhd/ProjectMode';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
+import { useADHDRouting } from '@/hooks/useADHDRouting';
+
+/**
+ * URL 라우팅 동기화 컴포넌트 (웹 전용)
+ * useSearchParams 사용으로 Suspense 경계 내에서만 동작
+ */
+function ADHDRoutingSync() {
+  useADHDRouting();
+  return null;
+}
 
 /**
  * 루트 페이지 (/)
@@ -139,58 +150,65 @@ export default function HomePage() {
 
   // ADHD 모드 레이아웃 (entry, relationship-insights, fuel, execute, settings)
   return (
-    <div className="flex min-h-screen">
-      {/* 웹 사이드바 (md 이상) */}
-      <div className="hidden md:block">
-        <ADHDSidebar />
+    <>
+      {/* URL 라우팅 동기화 (웹 전용, Suspense 경계 필요) */}
+      <Suspense fallback={null}>
+        <ADHDRoutingSync />
+      </Suspense>
+
+      <div className="flex min-h-screen">
+        {/* 웹 사이드바 (md 이상) */}
+        <div className="hidden md:block">
+          <ADHDSidebar />
+        </div>
+
+        {/* 메인 콘텐츠 */}
+        <main className="flex-1 min-w-0 md:ml-16 pb-20 md:pb-0">
+          {/* 실행 모드 */}
+          {currentMode === 'execute' && (
+            <ExecutionMode onExit={handleExitExecutionMode} />
+          )}
+
+          {/* 관계 인사이트 모드 */}
+          {currentMode === 'relationship-insights' && (
+            <RelationshipInsightsMode onExit={handleExitExecutionMode} />
+          )}
+
+          {/* 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력) */}
+          {currentMode === 'fuel' && (
+            <FuelMode onExit={handleExitFuelMode} />
+          )}
+
+          {/* 설정 모드 */}
+          {currentMode === 'settings' && (
+            <SettingsMode onExit={handleExitToHome} />
+          )}
+
+          {/* 프로젝트 모드 */}
+          {currentMode === 'project' && (
+            <ProjectMode onExit={handleExitToHome} />
+          )}
+
+          {/* 대시보드 (entry 모드) */}
+          {currentMode === 'entry' && (
+            <ADHDEntryScreen
+              userId={user?.id}
+              onRelationshipInsights={handleRelationshipInsights}
+              onFuel={handleFuel}
+            />
+          )}
+
+          {/* 홈 목차 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}
+          {(currentMode === 'home' || currentMode === null) && (
+            <HomeTableOfContents />
+          )}
+        </main>
+
+        {/* 모바일 하단탭 (md 미만) */}
+        <div className="md:hidden">
+          <ADHDBottomTabBar />
+        </div>
       </div>
-
-      {/* 메인 콘텐츠 */}
-      <main className="flex-1 min-w-0 md:ml-16 pb-20 md:pb-0">
-        {/* 실행 모드 */}
-        {currentMode === 'execute' && (
-          <ExecutionMode onExit={handleExitExecutionMode} />
-        )}
-
-        {/* 관계 인사이트 모드 */}
-        {currentMode === 'relationship-insights' && (
-          <RelationshipInsightsMode onExit={handleExitExecutionMode} />
-        )}
-
-        {/* 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력) */}
-        {currentMode === 'fuel' && (
-          <FuelMode onExit={handleExitFuelMode} />
-        )}
-
-        {/* 설정 모드 */}
-        {currentMode === 'settings' && (
-          <SettingsMode onExit={handleExitToHome} />
-        )}
-
-        {/* 프로젝트 모드 */}
-        {currentMode === 'project' && (
-          <ProjectMode onExit={handleExitToHome} />
-        )}
-
-        {/* 대시보드 (entry 모드) */}
-        {currentMode === 'entry' && (
-          <ADHDEntryScreen
-            userId={user?.id}
-            onRelationshipInsights={handleRelationshipInsights}
-            onFuel={handleFuel}
-          />
-        )}
-
-        {/* 홈 목차 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}
-        {(currentMode === 'home' || currentMode === null) && (
-          <HomeTableOfContents />
-        )}
-      </main>
-
-      {/* 모바일 하단탭 (md 미만) */}
-      <div className="md:hidden">
-        <ADHDBottomTabBar />
-      </div>
-    </div>
+    </>
   );
 }
