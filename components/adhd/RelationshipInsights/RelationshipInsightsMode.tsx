@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Heart, MessageCircle, PenLine, Crown, HelpCircle, Brain } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useADHDModeStore } from '@/state/stores/adhdModeStore';
 import { Paywall } from '@/components/subscription/Paywall';
 import { CareRecordView } from './CareRecordView';
 import { GratitudeJournalView } from './GratitudeJournalView';
@@ -44,7 +45,8 @@ const TAB_HELP_CONTENT: Record<TabType, { title: string; difficulty: string; hel
 };
 
 export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModeProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('record');
+  const { currentSubView } = useADHDModeStore();
+  const [activeTab, setActiveTab] = useState<TabType>((currentSubView as TabType) || 'record');
   const [helpModalTab, setHelpModalTab] = useState<TabType | null>(null);
   const { user } = useAuth();
   const userId = user?.id;
@@ -88,6 +90,53 @@ export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModePro
     }
   };
 
+  // currentSubView가 있으면 탭 없이 단일 콘텐츠만 표시
+  if (currentSubView) {
+    return (
+      <div className="h-screen bg-base-100 flex flex-col safe-area-top overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          {renderContent()}
+        </div>
+
+        {/* 탭별 도움말 모달 */}
+        {helpModalTab && (
+          <dialog open className="modal z-[110]">
+            <div className="modal-box max-w-md">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">{TAB_HELP_CONTENT[helpModalTab].title}</h3>
+              </div>
+
+              <div className="space-y-3 text-sm text-base-content/80">
+                <p className="font-medium text-error/80">
+                  😵 ADHD 특성: {TAB_HELP_CONTENT[helpModalTab].difficulty}
+                </p>
+                <p>
+                  ✨ 이 기능은: {TAB_HELP_CONTENT[helpModalTab].help}
+                </p>
+              </div>
+
+              <div className="modal-action">
+                <button
+                  onClick={() => setHelpModalTab(null)}
+                  className="btn btn-primary rounded-full"
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+            <form method="dialog" className="modal-backdrop">
+              <button onClick={() => setHelpModalTab(null)}>close</button>
+            </form>
+          </dialog>
+        )}
+      </div>
+    );
+  }
+
+  // currentSubView가 null이면 기존 탭 UI (직접 접근 시)
   return (
     <div className="h-screen bg-base-100 flex flex-col safe-area-top overflow-hidden">
       {/* 헤더 - 탭 네비게이션만 */}

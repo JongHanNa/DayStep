@@ -37,8 +37,8 @@ interface ADHDEntryScreenProps {
  * - 활동 (Pro): 할일 통계 (TodoStatsView)
  */
 export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('banner');
-  const { awakeningSentence } = useADHDModeStore();
+  const { awakeningSentence, currentSubView } = useADHDModeStore();
+  const [activeTab, setActiveTab] = useState<TabType>((currentSubView as TabType) || 'banner');
   const { hasActiveSubscription } = useSubscription();
 
   // Pro 전용 탭인지 확인
@@ -106,18 +106,6 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
 
             {!awakeningSentence && <div className="mb-8" />}
 
-            {/* 안내 메시지 */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-center text-base-content/50 mt-8"
-            >
-              <p className="text-sm">
-                <span className="hidden md:inline">왼쪽 메뉴에서 시작하세요</span>
-                <span className="md:hidden">아래 탭에서 시작하세요</span>
-              </p>
-            </motion.div>
           </motion.div>
         );
       case 'contact':
@@ -129,6 +117,18 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
     }
   };
 
+  // currentSubView가 있으면 탭 없이 단일 콘텐츠만 표시
+  if (currentSubView) {
+    return (
+      <div className="min-h-screen flex flex-col bg-base-100 safe-area-top">
+        <div className="flex-1 overflow-y-auto px-4">
+          {renderContent()}
+        </div>
+      </div>
+    );
+  }
+
+  // currentSubView가 null이면 기존 탭 UI (직접 접근 시)
   return (
     <div className="min-h-screen flex flex-col bg-base-100 safe-area-top">
       {/* 탭 네비게이션 */}

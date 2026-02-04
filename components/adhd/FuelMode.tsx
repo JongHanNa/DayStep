@@ -182,8 +182,11 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
   const { hasActiveSubscription } = useSubscription();
 
-  // 탭 상태 - 기본값: 타임라인 (가장 많이 사용하는 탭)
-  const [activeTab, setActiveTab] = useState<FuelTabType>('timeline');
+  // adhdModeStore에서 currentSubView 가져오기
+  const { currentSubView } = useADHDModeStore();
+
+  // 탭 상태 - currentSubView가 있으면 해당 값 사용, 없으면 타임라인
+  const [activeTab, setActiveTab] = useState<FuelTabType>((currentSubView as FuelTabType) || 'timeline');
   const [showPaywall, setShowPaywall] = useState(false);
 
   // 로컬 상태
@@ -1041,37 +1044,39 @@ export default function FuelMode({ onExit }: FuelModeProps) {
       exit={{ opacity: 0, y: -20 }}
       className="flex flex-col h-full w-full overflow-x-hidden"
     >
-      {/* 헤더 - 탭 네비게이션만 */}
-      <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-        {/* 탭 네비게이션 */}
-        <div className="flex overflow-x-auto px-2 py-2 gap-1 scrollbar-hide">
-          {FUEL_TABS.map((tab) => (
-            <div key={tab.id} className="flex items-center gap-0.5">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setHelpModalTab(tab.id);
-                }}
-                className="p-1.5 rounded-full text-base-content/50 hover:text-primary hover:bg-base-200 transition-colors"
-                aria-label={`${tab.label} 도움말`}
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => handleTabClick(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-primary-content'
-                    : 'bg-base-200 text-base-content hover:bg-base-300'
-                }`}
-              >
-                {tab.icon}
-                <span className="text-sm font-medium">{tab.label}</span>
-              </button>
-            </div>
-          ))}
+      {/* 헤더 - 탭 네비게이션 (currentSubView가 없을 때만 표시) */}
+      {!currentSubView && (
+        <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
+          {/* 탭 네비게이션 */}
+          <div className="flex overflow-x-auto px-2 py-2 gap-1 scrollbar-hide">
+            {FUEL_TABS.map((tab) => (
+              <div key={tab.id} className="flex items-center gap-0.5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHelpModalTab(tab.id);
+                  }}
+                  className="p-1.5 rounded-full text-base-content/50 hover:text-primary hover:bg-base-200 transition-colors"
+                  aria-label={`${tab.label} 도움말`}
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleTabClick(tab.id)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-primary text-primary-content'
+                      : 'bg-base-200 text-base-content hover:bg-base-300'
+                  }`}
+                >
+                  {tab.icon}
+                  <span className="text-sm font-medium">{tab.label}</span>
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 콘텐츠 - 탭에 따라 분기 */}
       {activeTab === 'timeline' && userId && (

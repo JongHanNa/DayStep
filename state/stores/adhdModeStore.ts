@@ -112,6 +112,7 @@ interface ADHDModeState {
   // 모드 상태
   currentMode: ADHDMode;
   previousMode: ADHDMode | null;  // 뒤로가기용 이전 모드 저장
+  currentSubView: string | null;  // 서브뷰 ID (예: 'banner', 'contact', 'timeline' 등)
 
   // 실행 모드 상태
   executionMode: ExecutionModeState;
@@ -137,6 +138,9 @@ interface ADHDModeState {
 
   // 현재 사용자 ID (DB 연동용)
   currentUserId: string | null;
+
+  // === 서브뷰 Actions ===
+  setCurrentSubView: (subView: string | null) => void;
 
   // === 모드 전환 Actions ===
   enterHomeMode: () => void;
@@ -319,6 +323,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
         // 초기 상태
         currentMode: null,
         previousMode: null,
+        currentSubView: null,
         executionMode: DEFAULT_EXECUTION_MODE,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
@@ -329,15 +334,21 @@ export const useADHDModeStore = create<ADHDModeState>()(
         isLoadingPatterns: false,
         currentUserId: null,
 
+        // === 서브뷰 Actions ===
+        setCurrentSubView: (subView: string | null) => {
+          console.log('🔀 ADHD: 서브뷰 설정', subView);
+          set({ currentSubView: subView });
+        },
+
         // === 모드 전환 Actions ===
         enterHomeMode: () => {
           console.log('🏠 ADHD: 홈 목차 모드');
-          set({ currentMode: 'home', previousMode: null });
+          set({ currentMode: 'home', previousMode: null, currentSubView: null });
         },
 
         enterEntryMode: (initialTab?: string) => {
           console.log('🎯 ADHD: 진입 화면 모드', initialTab ? `(탭: ${initialTab})` : '');
-          set({ currentMode: 'entry', previousMode: null });
+          set({ currentMode: 'entry', previousMode: null, currentSubView: initialTab || null });
         },
 
         enterExecuteMode: async (userId: string) => {
@@ -575,6 +586,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set({
             currentMode: 'relationship-insights',
             currentUserId: userId,
+            currentSubView: initialTab || null,
           });
         },
 
@@ -593,6 +605,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set({
             currentMode: 'project',
             currentUserId: userId,
+            currentSubView: initialTab || null,
           });
         },
 
@@ -602,6 +615,7 @@ export const useADHDModeStore = create<ADHDModeState>()(
           set({
             currentMode: 'fuel',
             currentUserId: userId,
+            currentSubView: initialTab || null,
             fuelMode: {
               isActive: true,
               startedAt: new Date(),

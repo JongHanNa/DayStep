@@ -73,8 +73,18 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
     }
   }, [userId, authLoading, projects, projectProgress, fetchProjectProgress]);
 
+  // adhdModeStore에서 currentSubView 가져오기
+  const { currentSubView } = useADHDModeStore();
+
+  // 서브뷰 ID를 탭 타입으로 매핑
+  const getInitialTab = (): 'projects' | 'chat' | 'guide' => {
+    if (currentSubView === 'ai-chat') return 'chat';
+    if (currentSubView === 'guide') return 'guide';
+    return 'projects'; // 'ai-plan' 또는 기본값
+  };
+
   // 현재 탭: 프로젝트 목록 vs AI 채팅 vs 가이드
-  const [currentTab, setCurrentTab] = useState<'projects' | 'chat' | 'guide'>('projects');
+  const [currentTab, setCurrentTab] = useState<'projects' | 'chat' | 'guide'>(getInitialTab());
 
   // 상태 필터 버튼
   const filterButtons: { label: string; value: ProjectStatus | 'all' }[] = [
@@ -156,62 +166,64 @@ export default function ProjectMode({ onExit }: ProjectModeProps) {
 
   return (
     <div className="min-h-screen bg-base-100">
-      {/* 헤더 */}
+      {/* 헤더 - currentSubView가 없을 때만 탭 네비게이션 표시 */}
       <header className="sticky top-0 z-10 bg-base-100 border-b border-base-200">
-        {/* 메인 탭: 프로젝트 목록 vs AI 채팅 vs 가이드 */}
-        <div className="flex gap-1 px-4 pt-3 pb-2 border-b border-base-200">
-          {/* AI 계획 탭 영역 - 도움말 버튼과 탭 버튼을 형제로 분리 */}
-          <div className={`flex-1 flex items-center justify-center gap-1 ${
-            currentTab === 'projects'
-              ? 'border-b-2 border-primary'
-              : ''
-          }`}>
+        {/* 메인 탭: 프로젝트 목록 vs AI 채팅 vs 가이드 (currentSubView가 없을 때만) */}
+        {!currentSubView && (
+          <div className="flex gap-1 px-4 pt-3 pb-2 border-b border-base-200">
+            {/* AI 계획 탭 영역 - 도움말 버튼과 탭 버튼을 형제로 분리 */}
+            <div className={`flex-1 flex items-center justify-center gap-1 ${
+              currentTab === 'projects'
+                ? 'border-b-2 border-primary'
+                : ''
+            }`}>
+              <button
+                onClick={() => setShowHelpModal(true)}
+                className="p-1 rounded-full hover:bg-base-300 transition-colors"
+              >
+                <HelpCircle className="w-4 h-4 text-base-content/60" />
+              </button>
+              <button
+                onClick={() => setCurrentTab('projects')}
+                className={`py-2 text-sm font-medium flex items-center gap-1 transition-colors ${
+                  currentTab === 'projects'
+                    ? 'text-primary'
+                    : 'text-base-content/60 hover:text-base-content'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                AI 계획
+              </button>
+            </div>
+            {/* AI 채팅 탭 */}
             <button
-              onClick={() => setShowHelpModal(true)}
-              className="p-1 rounded-full hover:bg-base-300 transition-colors"
-            >
-              <HelpCircle className="w-4 h-4 text-base-content/60" />
-            </button>
-            <button
-              onClick={() => setCurrentTab('projects')}
-              className={`py-2 text-sm font-medium flex items-center gap-1 transition-colors ${
-                currentTab === 'projects'
-                  ? 'text-primary'
+              onClick={() => setCurrentTab('chat')}
+              className={`flex-1 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                currentTab === 'chat'
+                  ? 'text-primary border-b-2 border-primary'
                   : 'text-base-content/60 hover:text-base-content'
               }`}
             >
-              <Sparkles className="w-4 h-4" />
-              AI 계획
+              <MessageSquare className="w-4 h-4" />
+              AI 채팅
+            </button>
+            {/* 연동 가이드 탭 */}
+            <button
+              onClick={() => setCurrentTab('guide')}
+              className={`flex-1 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                currentTab === 'guide'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-base-content/60 hover:text-base-content'
+              }`}
+            >
+              <BookOpen className="w-4 h-4" />
+              가이드
             </button>
           </div>
-          {/* AI 채팅 탭 */}
-          <button
-            onClick={() => setCurrentTab('chat')}
-            className={`flex-1 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-              currentTab === 'chat'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-base-content/60 hover:text-base-content'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            AI 채팅
-          </button>
-          {/* 연동 가이드 탭 */}
-          <button
-            onClick={() => setCurrentTab('guide')}
-            className={`flex-1 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-              currentTab === 'guide'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-base-content/60 hover:text-base-content'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            가이드
-          </button>
-        </div>
+        )}
 
         {/* 상태 필터 (프로젝트 탭에서만 표시) */}
-        {currentTab === 'projects' && (
+        {currentTab === 'projects' && !currentSubView && (
           <div className="flex gap-2 px-4 py-2 overflow-x-auto">
             {filterButtons.map((btn) => (
               <button

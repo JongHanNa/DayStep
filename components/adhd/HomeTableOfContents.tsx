@@ -107,16 +107,13 @@ export default function HomeTableOfContents() {
         <div className="space-y-6">
           {groups.map((group) => (
             <section key={group.id} className="space-y-2">
-              {/* 그룹 제목 (클릭 가능) */}
-              <button
-                onClick={() => group.onNavigate()}
-                className="w-full text-left group"
-              >
-                <h2 className="text-lg font-semibold text-base-content group-hover:text-primary transition-colors">
+              {/* 그룹 제목 (클릭 불가) */}
+              <div className="w-full text-left">
+                <h2 className="text-lg font-semibold text-base-content">
                   [{group.title}]
                 </h2>
                 <div className="h-px bg-base-300 mt-1" />
-              </button>
+              </div>
 
               {/* 서브아이템 목록 */}
               <ul className="pl-4 space-y-1">
