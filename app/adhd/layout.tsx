@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { isCapacitorEnv } from '@/lib/utils/platform';
-import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useEffect, useState } from 'react';
 
 /**
@@ -15,7 +14,6 @@ import { useEffect, useState } from 'react';
  */
 export default function ADHDLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
-  const { adhdModeEnabled } = useSettingsStore();
   const [mounted, setMounted] = useState(false);
   const [isCapacitor, setIsCapacitor] = useState(false);
 
@@ -42,11 +40,6 @@ export default function ADHDLayout({ children }: { children: React.ReactNode }) 
   // 비인증 사용자 → 로그인
   if (!isAuthenticated) {
     redirect('/login');
-  }
-
-  // ADHD 모드 비활성화 → 기본 대시보드
-  if (!adhdModeEnabled) {
-    redirect('/');
   }
 
   return (

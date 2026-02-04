@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Clock, Inbox, BarChart3, Network, Sun, Moon, Lock, HelpCircle, Brain } from 'lucide-react';
+import { ArrowLeft, Clock, Inbox, BarChart3, Sun, Moon, Lock, HelpCircle, Brain } from 'lucide-react';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,16 +10,13 @@ import { Paywall } from '@/components/subscription/Paywall';
 import { TodoTimelineView } from '../TaskOrganize/TodoTimelineView';
 import { OrganizeNeededView } from '../TaskOrganize/OrganizeNeededView';
 import { TodoStatsView } from '../TaskOrganize/TodoStatsView';
-import { GraphTabView } from '../TaskOrganize/GraphTabView';
 
-type TabType = 'timeline' | 'organize' | 'stats' | 'graph';
+type TabType = 'timeline' | 'organize' | 'stats';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
   { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
-  // TODO: 그래프 탭 임시 숨김 처리 - 추후 활성화
-  // { id: 'graph', label: '그래프', icon: <Network className="w-4 h-4" /> },
 ];
 
 interface TaskOrganizeContainerProps {
@@ -43,21 +40,15 @@ const TAB_HELP_CONTENT: Record<TabType, { title: string; difficulty: string; hel
     difficulty: '피드백 민감도 저하. 자신의 패턴 인식이 어렵고, 같은 실수를 반복하게 됩니다.',
     help: '완료율, 시간대별 패턴 분석 → 데이터 기반 자기 이해, 최적 루틴 발견!',
   },
-  graph: {
-    title: '그래프',
-    difficulty: '전체 구조 파악의 어려움. 할일들 사이의 관계를 놓치기 쉽습니다.',
-    help: '할일/프로젝트/목표 관계 시각화 → 전체 그림 파악, 우선순위 결정 도움!',
-  },
 };
 
 /**
  * 할일 정리 모드 - ADHD 친화적 할일 관리
  *
- * 4개 탭:
+ * 3개 탭:
  * - 타임라인: 할일 완료/생성 기록 시간순
  * - 정리: 미분류 할일들 정리
  * - 통계: 완료율, 패턴 분석
- * - 그래프: 전체 구조 시각화 (임시 숨김)
  */
 export default function TaskOrganizeContainer({ onExit }: TaskOrganizeContainerProps) {
   const [activeTab, setActiveTab] = useState<TabType>('timeline');
@@ -93,8 +84,6 @@ export default function TaskOrganizeContainer({ onExit }: TaskOrganizeContainerP
         return <OrganizeNeededView userId={userId} />;
       case 'stats':
         return <TodoStatsView userId={userId} />;
-      case 'graph':
-        return <GraphTabView userId={userId} />;
       default:
         return null;
     }

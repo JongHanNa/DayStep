@@ -24,7 +24,6 @@ export interface AppSettings {
   fontSize: FontSize;
   todoCompletion: TodoCompletionSettings;
   colorTheme: ColorTheme;
-  adhdModeEnabled: boolean;
   showDescriptions: boolean;
   showFuelBadges: boolean;
   _lastSyncedAt: string | null;
@@ -44,7 +43,6 @@ interface SettingsState extends AppSettings {
   setShowCompletedItems: (show: boolean) => void;
   setCompletedItemsOpacity: (opacity: number) => void;
   setColorTheme: (theme: ColorTheme) => void;
-  setAdhdModeEnabled: (enabled: boolean) => void;
   setShowDescriptions: (show: boolean) => void;
   setShowFuelBadges: (show: boolean) => void;
 
@@ -77,9 +75,6 @@ export const useSettingsStore = create<SettingsState>()(
 
         // 기본값: Ocean Blue 테마
         colorTheme: DEFAULT_COLOR_THEME,
-
-        // 기본값: ADHD 모드 활성화
-        adhdModeEnabled: true,
 
         // 기본값: 설명 표시
         showDescriptions: true,
@@ -152,11 +147,6 @@ export const useSettingsStore = create<SettingsState>()(
           set({ colorTheme: theme });
         },
 
-        setAdhdModeEnabled: (enabled: boolean) => {
-          console.log('⚙️ ADHD 모드 설정 변경:', enabled);
-          set({ adhdModeEnabled: enabled });
-        },
-
         setShowDescriptions: (show: boolean) => {
           console.log('⚙️ 설명 표시 설정 변경:', show);
           set({ showDescriptions: show });
@@ -190,7 +180,6 @@ export const useSettingsStore = create<SettingsState>()(
           fontSize: state.fontSize,
           todoCompletion: state.todoCompletion,
           colorTheme: state.colorTheme,
-          adhdModeEnabled: state.adhdModeEnabled,
           showDescriptions: state.showDescriptions,
           showFuelBadges: state.showFuelBadges,
           _lastSyncedAt: state._lastSyncedAt,
@@ -216,7 +205,6 @@ export function getSettingsForSync(): AppSettings {
     fontSize: state.fontSize,
     todoCompletion: state.todoCompletion,
     colorTheme: state.colorTheme,
-    adhdModeEnabled: state.adhdModeEnabled,
     showDescriptions: state.showDescriptions,
     showFuelBadges: state.showFuelBadges,
     _lastSyncedAt: state._lastSyncedAt,

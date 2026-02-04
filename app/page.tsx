@@ -4,8 +4,6 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LandingPage from './landing/page';
-import GraphView from '@/components/graph/GraphView';
-import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import { ExecutionContainer } from '@/components/adhd/execution';
 import { OrganizeScreen } from '@/components/adhd/screens/organize';
 import { CareContainer } from '@/components/adhd/care';
@@ -13,8 +11,7 @@ import { GenericTabContainer } from '@/components/adhd/containers/GenericTabCont
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { SettingsContainer } from '@/components/adhd/settings';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
-import { useSettingsStore } from '@/state/stores/settingsStore';
-import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { isCapacitorEnv } from '@/lib/utils/platform';
 import type { ADHDSubViewId } from '@/lib/constants/adhd-screens';
 
@@ -27,9 +24,8 @@ const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
  * 루트 페이지 (/)
  *
  * 라우팅 흐름:
- * - 웹 + 인증됨 + ADHD 모드: 홈 목차 직접 표시 (리다이렉트 없음)
- * - Capacitor + 인증됨 + ADHD 모드: 기존 Store 기반 방식 유지
- * - 인증됨 + ADHD 모드 비활성화: GraphView 대시보드 표시
+ * - 웹 + 인증됨: 홈 목차 직접 표시 (리다이렉트 없음)
+ * - Capacitor + 인증됨: 기존 Store 기반 방식 유지
  * - 비인증 + 웹: LandingPage 직접 렌더링 (URL '/' 유지)
  * - 비인증 + Capacitor: /login으로 리다이렉트
  */
@@ -39,8 +35,7 @@ export default function HomePage() {
   const [isCapacitor, setIsCapacitor] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // ADHD 모드 상태
-  const { adhdModeEnabled } = useSettingsStore();
+  // ADHD 스토어
   const { currentMode, previousMode, enterHomeMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, exitMode } = useADHDStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
@@ -87,12 +82,7 @@ export default function HomePage() {
     return <LandingPage />;
   }
 
-  // 인증된 사용자 + ADHD 모드 비활성화: 기존 그래프 뷰
-  if (!adhdModeEnabled) {
-    return <GraphView />;
-  }
-
-  // 웹 + 인증됨 + ADHD 모드: 홈 목차 직접 표시 (리다이렉트 없음)
+  // 웹 + 인증됨: 홈 목차 직접 표시 (리다이렉트 없음)
   if (!isCapacitor) {
     return (
       <div className="flex min-h-screen">
@@ -213,17 +203,8 @@ export default function HomePage() {
             />
           )}
 
-          {/* 대시보드 (entry 모드) */}
-          {currentMode === 'entry' && (
-            <ADHDEntryScreen
-              userId={user?.id}
-              onRelationshipInsights={handleRelationshipInsights}
-              onFuel={handleFuel}
-            />
-          )}
-
           {/* 홈 목차 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}
-          {(currentMode === 'home' || currentMode === null) && (
+          {(currentMode === 'home' || currentMode === 'entry' || currentMode === null) && (
             <HomeTableOfContents />
           )}
         </main>
