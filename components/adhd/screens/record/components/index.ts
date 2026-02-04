@@ -1,0 +1,1 @@
+export { CareRecordView } from './CareRecordView';

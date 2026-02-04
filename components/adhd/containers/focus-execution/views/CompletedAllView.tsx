@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PartyPopper, Fuel, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import type { Note } from '@/state/stores/noteStore';
-import FuelSelector from '@/components/adhd/FuelSelector';
+import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
 
 interface CompletedTodoForBalance {
   id: string;
@@ -116,7 +116,7 @@ export function CompletedAllView({
                 className="overflow-hidden"
               >
                 <div className="mt-4 p-4 bg-base-200 rounded-xl text-left">
-                  <FuelSelector
+                  <MotivationNoteSelector
                     notes={notes}
                     mode={fuelMode}
                     onModeChange={setFuelMode}

@@ -1,6 +1,6 @@
 'use client';
 
-import { ExecutionContainer } from '@/components/adhd/execution';
+import FocusExecutionContainer from '@/components/adhd/containers/FocusExecutionContainer';
 
 interface ExecuteScreenProps {
   userId?: string;
@@ -14,7 +14,7 @@ interface ExecuteScreenProps {
  * ExecutionContainer를 직접 사용
  */
 export function ExecuteScreen({ onExit = () => {} }: ExecuteScreenProps) {
-  return <ExecutionContainer onExit={onExit} />;
+  return <FocusExecutionContainer onExit={onExit} />;
 }
 
 export default ExecuteScreen;

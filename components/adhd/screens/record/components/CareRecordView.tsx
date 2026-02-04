@@ -27,7 +27,7 @@ import {
   FileText,
   type LucideIcon,
 } from 'lucide-react';
-import AddPersonModal from '../../cherished/AddPersonModal';
+import AddPersonModal from '@/components/cherished/AddPersonModal';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';

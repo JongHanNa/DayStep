@@ -6,9 +6,9 @@ import { Crown } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
-import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
-import { StatsDashboardView } from '@/components/adhd/RelationshipInsights/StatsDashboardView';
-import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
+import MotivationReminderBanner from '@/components/adhd/MotivationReminderBanner';
+import { StatsDashboardView } from '@/components/adhd/common';
+import { TodoStatsView } from '@/components/adhd/task-organize/views/TodoStatsView';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { getItemsByRouteGroup } from '@/lib/constants/adhd-screens';
 
@@ -28,7 +28,7 @@ interface ADHDEntryScreenProps {
  * ADHD 모드 진입 화면 (대시보드)
  *
  * 3개 탭으로 구성:
- * - 마음 깨우기: FuelReminderBanner + PriorityReminderBanner + 각성 문장
+ * - 마음 깨우기: MotivationReminderBanner + PriorityReminderBanner + 각성 문장
  * - 연락 돌아보기 (Pro): 관계 통계 (StatsDashboardView)
  * - 활동 살펴보기 (Pro): 할일 통계 (TodoStatsView)
  */
@@ -77,7 +77,7 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
             className="w-full max-w-sm mx-auto text-center mt-8"
           >
             {/* 원동력 상기 배너 */}
-            <FuelReminderBanner
+            <MotivationReminderBanner
               userId={userId}
               onFuelClick={(noteId) => onFuel(noteId)}
             />

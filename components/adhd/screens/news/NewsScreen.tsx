@@ -1,6 +1,6 @@
 'use client';
 
-import { NewsMemosView } from '@/components/adhd/RelationshipInsights/NewsMemosView';
+import { NewsMemosView } from './components';
 
 interface NewsScreenProps {
   userId: string;

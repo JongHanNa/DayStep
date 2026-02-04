@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, Square, Check, Zap, PictureInPicture2 } from 'lucide-react';
 import type { TimerDisplayMode } from '@/types/adhd';
-import CircularProgressSlider from '../components/CircularProgressSlider';
+import CircularProgressSlider from '@/components/adhd/common/CircularProgressSlider';
 
 interface AdhocTimerViewProps {
   timerState: {

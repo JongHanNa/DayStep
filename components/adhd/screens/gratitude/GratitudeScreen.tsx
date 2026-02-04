@@ -1,6 +1,6 @@
 'use client';
 
-import { GratitudeJournalView } from '@/components/adhd/RelationshipInsights/GratitudeJournalView';
+import { GratitudeJournalView } from './components';
 
 interface GratitudeScreenProps {
   userId: string;

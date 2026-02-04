@@ -8,10 +8,10 @@ import { useAuth } from '@/app/context/AuthContext';
 import type { ADHDSubViewId, ADHDRouteGroupId } from '@/lib/constants/adhd-screens';
 
 // Dynamic imports for code splitting
-const ExecutionContainer = dynamic(() => import('./execution/ExecutionContainer'), {
+const FocusExecutionContainer = dynamic(() => import('./containers/FocusExecutionContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const CareContainer = dynamic(() => import('./care/CareContainer'), {
+const RelationshipRecordContainer = dynamic(() => import('./containers/RelationshipRecordContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
 const SettingsContainer = dynamic(() => import('./settings/SettingsContainer'), {
@@ -120,7 +120,7 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
   // 모드별 Container 렌더링
   switch (currentMode) {
     case 'execute':
-      return <ExecutionContainer onExit={handleExit} />;
+      return <FocusExecutionContainer onExit={handleExit} />;
     case 'fuel':
       // GenericTabContainer로 fuel 라우트 그룹 렌더링
       return (
@@ -131,7 +131,7 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
         />
       );
     case 'care':
-      return <CareContainer onExit={handleExit} />;
+      return <RelationshipRecordContainer onExit={handleExit} />;
     case 'project':
       // GenericTabContainer로 project 라우트 그룹 렌더링
       return (

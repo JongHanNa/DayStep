@@ -1,6 +1,6 @@
 'use client';
 
-import { StatsDashboardView } from '@/components/adhd/RelationshipInsights/StatsDashboardView';
+import { StatsDashboardView } from '@/components/adhd/common';
 
 interface ContactViewProps {
   userId: string;

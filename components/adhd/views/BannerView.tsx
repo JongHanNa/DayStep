@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
-import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
+import MotivationReminderBanner from '@/components/adhd/MotivationReminderBanner';
 
 interface BannerViewProps {
   userId: string;
@@ -13,7 +13,7 @@ interface BannerViewProps {
 
 /**
  * 대시보드 배너 뷰
- * - FuelReminderBanner: 원동력 상기 배너
+ * - MotivationReminderBanner: 원동력 상기 배너
  * - PriorityReminderBanner: 우선순위 상기 배너
  * - 각성 문장 (설정된 경우)
  */
@@ -28,7 +28,7 @@ export function BannerView({ userId, onRelationshipInsights, onFuel }: BannerVie
       className="w-full max-w-sm mx-auto text-center mt-8"
     >
       {/* 원동력 상기 배너 */}
-      <FuelReminderBanner
+      <MotivationReminderBanner
         userId={userId}
         onFuelClick={(noteId) => onFuel(noteId)}
       />

@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Fuel } from 'lucide-react';
 import type { Note } from '@/state/stores/noteStore';
-import FuelSelector from '@/components/adhd/FuelSelector';
+import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
 
 interface AdhocNoteConnectionViewProps {
   notes: Note[];
@@ -57,7 +57,7 @@ export function AdhocNoteConnectionView({
       </p>
 
       <div className="mb-6 text-left">
-        <FuelSelector
+        <MotivationNoteSelector
           notes={notes.slice(0, 10)}
           mode={mode}
           onModeChange={onModeChange}

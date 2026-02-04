@@ -1,6 +1,6 @@
 'use client';
 
-import MCPGuideView from '@/components/adhd/project/MCPGuideView';
+import { MCPGuideView } from './components';
 
 /**
  * 사용법 배우기 화면

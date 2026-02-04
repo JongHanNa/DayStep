@@ -1,6 +1,6 @@
 'use client';
 
-import { CareRecordView } from '@/components/adhd/RelationshipInsights/CareRecordView';
+import { CareRecordView } from './components';
 
 interface RecordScreenProps {
   userId: string;

@@ -1,4 +1,4 @@
-// Execution Container 뷰 컴포넌트 배럴 export
+// Focus Execution Views 배럴 export
 
 export { RecommendationView } from './RecommendationView';
 export { CompletedAllView } from './CompletedAllView';

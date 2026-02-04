@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { X, Plus, FileText } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Note } from '@/types/second-brain';
-import FuelSelector from '@/components/adhd/FuelSelector';
+import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
 
 interface LinkedFuelsSectionProps {
   todoId: string;
@@ -139,7 +139,7 @@ export default function LinkedFuelsSection({
               <div className="w-[52px]" /> {/* 균형을 위한 빈 공간 */}
             </div>
 
-            <FuelSelector
+            <MotivationNoteSelector
               notes={availableNotes}
               mode={addMode}
               onModeChange={setAddMode}

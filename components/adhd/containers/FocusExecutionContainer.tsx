@@ -36,8 +36,8 @@ import {
   AdhocTimerView,
   AdhocCaptureView,
   AdhocNoteConnectionView,
-} from './views';
-import { useExecutionRecommendation } from './hooks';
+} from './focus-execution/views';
+import { useExecutionRecommendation } from '../hooks/useExecutionRecommendation';
 
 interface ExecutionContainerProps {
   onExit: () => void;

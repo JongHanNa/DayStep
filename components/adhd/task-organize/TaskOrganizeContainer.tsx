@@ -7,9 +7,9 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
-import { TodoTimelineView } from '../TaskOrganize/TodoTimelineView';
-import { OrganizeNeededView } from '../TaskOrganize/OrganizeNeededView';
-import { TodoStatsView } from '../TaskOrganize/TodoStatsView';
+import { TodoTimelineView } from './views/TodoTimelineView';
+import { OrganizeNeededView } from './views/OrganizeNeededView';
+import { TodoStatsView } from './views/TodoStatsView';
 
 type TabType = 'timeline' | 'organize' | 'stats';
 

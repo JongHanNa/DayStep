@@ -7,8 +7,7 @@ export { ADHDContainer } from './ADHDContainer';
 export { GenericTabContainer } from './containers/GenericTabContainer';
 
 // === 도메인 Container ===
-export { ExecutionContainer } from './execution';
-export { CareContainer } from './care';
+export { FocusExecutionContainer, RelationshipRecordContainer } from './containers';
 export { SettingsContainer } from './settings';
 export { TaskOrganizeContainer } from './task-organize';
 
@@ -19,16 +18,16 @@ export * from './common';
 export { default as ADHDEntryScreen } from './ADHDEntryScreen';
 export { default as HomeTableOfContents } from './HomeTableOfContents';
 export { default as ADHDInterruptModal } from './ADHDInterruptModal';
-export { default as FuelSelector } from './FuelSelector';
-export { default as FuelReminderBanner } from './FuelReminderBanner';
+export { default as MotivationNoteSelector } from './MotivationNoteSelector';
+export { default as MotivationReminderBanner } from './MotivationReminderBanner';
 export { default as QuickLogModal } from './QuickLogModal';
 export { default as AwakeningSentenceSetup } from './AwakeningSentenceSetup';
 export { default as OrganizeTimer } from './OrganizeTimer';
 
 // === View export ===
 export {
-  ExecutionView,
-  CareView,
+  FocusExecutionView,
+  RelationshipRecordView,
   SettingsView,
   TaskOrganizeView,
   EntryView,

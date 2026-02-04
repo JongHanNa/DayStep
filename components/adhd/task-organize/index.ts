@@ -1,3 +1,4 @@
-// TaskOrganize Container 배럴 export
+// TaskOrganize 배럴 export
 
 export { default as TaskOrganizeContainer } from './TaskOrganizeContainer';
+export * from './views';

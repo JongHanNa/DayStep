@@ -1,6 +1,6 @@
 'use client';
 
-import { ContactView } from '@/components/adhd/entry/ContactView';
+import { ContactView } from '@/components/adhd/views/ContactView';
 
 interface ContactScreenProps {
   userId: string;

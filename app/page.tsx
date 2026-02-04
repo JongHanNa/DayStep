@@ -4,9 +4,9 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LandingPage from './landing/page';
-import { ExecutionContainer } from '@/components/adhd/execution';
+import FocusExecutionContainer from '@/components/adhd/containers/FocusExecutionContainer';
 import { OrganizeScreen } from '@/components/adhd/screens/organize';
-import { CareContainer } from '@/components/adhd/care';
+import RelationshipRecordContainer from '@/components/adhd/containers/RelationshipRecordContainer';
 import { GenericTabContainer } from '@/components/adhd/containers/GenericTabContainer';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { SettingsContainer } from '@/components/adhd/settings';
@@ -153,7 +153,7 @@ export default function HomePage() {
 
   // 마음 전해보기 모드 - 전체화면
   if (currentMode === 'care') {
-    return <CareContainer onExit={handleExitExecutionMode} />;
+    return <RelationshipRecordContainer onExit={handleExitExecutionMode} />;
   }
 
   // Capacitor ADHD 모드 레이아웃 (entry, relationship-insights, fuel, execute, settings)
@@ -168,7 +168,7 @@ export default function HomePage() {
         <main className="flex-1 min-w-0 md:ml-16 pb-20 md:pb-0">
           {/* 실행 모드 */}
           {currentMode === 'execute' && (
-            <ExecutionContainer onExit={handleExitExecutionMode} />
+            <FocusExecutionContainer onExit={handleExitExecutionMode} />
           )}
 
           {/* 관계 인사이트 모드 */}

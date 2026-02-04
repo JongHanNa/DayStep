@@ -1,0 +1,1 @@
+export { NewsMemosView } from './NewsMemosView';

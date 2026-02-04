@@ -1,6 +1,6 @@
 'use client';
 
-import { AIPlanView } from '@/components/adhd/project/AIPlanView';
+import { AIPlanView } from './components';
 
 interface AIPlanScreenProps {
   userId: string;

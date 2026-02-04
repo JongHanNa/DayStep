@@ -1,6 +1,6 @@
 'use client';
 
-import { AIPlanningChat } from '@/components/adhd/ai-planning';
+import { AIPlanningChat } from './components';
 
 /**
  * AI와 대화하기 화면

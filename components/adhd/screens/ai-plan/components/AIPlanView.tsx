@@ -20,7 +20,7 @@ import { useProjectStore, useFilteredProjects } from '@/state/stores/projectStor
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import type { Project, ProjectStatus } from '@/types';
-import ProjectEditModal from './ProjectEditModal';
+import ProjectEditModal from '@/components/adhd/modals/ProjectEditModal';
 
 interface AIPlanViewProps {
   userId: string;
