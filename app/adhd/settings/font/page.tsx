@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import FontView from '@/components/adhd/settings/FontView';
 
@@ -13,7 +13,7 @@ export default function FontPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('font');
+    useADHDStore.getState().enterSettingsMode('font');
   }, []);
 
   return <FontView onBack={() => goSettings()} />;

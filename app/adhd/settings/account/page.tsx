@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import AccountView from '@/components/adhd/settings/AccountView';
 
@@ -13,7 +13,7 @@ export default function AccountPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('account');
+    useADHDStore.getState().enterSettingsMode('account');
   }, []);
 
   return <AccountView onBack={() => goSettings()} />;

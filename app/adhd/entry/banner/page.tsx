@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import { BannerView } from '@/components/adhd/entry';
 
@@ -15,12 +15,12 @@ export default function BannerPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterEntryMode('banner');
+    useADHDStore.getState().enterEntryMode('banner');
   }, []);
 
   const handleFuel = (noteId?: string) => {
     if (noteId && user?.id) {
-      useADHDModeStore.getState().enterFuelMode(user.id, noteId);
+      useADHDStore.getState().enterFuelMode(user.id, noteId);
     }
     goFuel();
   };

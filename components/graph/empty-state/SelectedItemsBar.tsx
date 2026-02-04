@@ -12,7 +12,7 @@ import { Check, Loader2, X, Sparkles, AlertTriangle, Crown } from 'lucide-react'
 import { BOTTOM_BAR, APPLE_SPRING } from '@/lib/animations/appleMotion';
 import { getAllSetItems, type RecommendationItem } from './RecommendationData';
 import type { LimitCheckResult } from './useBatchCreate';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 
 interface SelectedItemsBarProps {
   selectedCount: number;
@@ -33,7 +33,7 @@ export function SelectedItemsBar({
   limitCheck,
   hasActiveSubscription,
 }: SelectedItemsBarProps) {
-  const { enterSettingsMode } = useADHDModeStore();
+  const { enterSettingsMode } = useADHDStore();
   const allItems = getAllSetItems();
 
   const handleCreate = async () => {

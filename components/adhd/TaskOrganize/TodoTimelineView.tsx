@@ -29,7 +29,7 @@ import PostponeOptionsSheet from '@/components/todos/PostponeOptionsSheet';
 import AnytimeInboxSheet from '@/components/todos/AnytimeInboxSheet';
 import { postponeTodoInstance, queryAnytimeTodosWithJWT, removeAnytimeOverrideWithJWT } from '@/lib/supabase/todo-postpone';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useRouter } from 'next/navigation';
 import type { PostponeOptions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -137,7 +137,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setLinkedRecurringTodo,
     startAdhocMode,
     enterExecuteMode,
-  } = useADHDModeStore();
+  } = useADHDStore();
 
   // 빈 시간 사후 기록 모달 상태
   const [isQuickLogModalOpen, setIsQuickLogModalOpen] = useState(false);

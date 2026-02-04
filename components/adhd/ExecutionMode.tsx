@@ -23,7 +23,7 @@ import {
   Fuel,
 } from 'lucide-react';
 import { Todo } from '@/entities/todo/Todo';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore, Note } from '@/state/stores/noteStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
@@ -84,7 +84,7 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     enterOrganizeMode,
     setSessionId,
     setLinkedTodo,
-  } = useADHDModeStore();
+  } = useADHDStore();
 
   // 노트 스토어 (영감 노트 연결용)
   const { getInboxNotes, createInboxNote, notes: allNotes } = useNoteStore();
@@ -261,7 +261,7 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
   // 다음 추천 할일 가져오기
   const getNextRecommendation = useCallback(() => {
     // 이미 타이머 실행 중이면 추천 건너뛰기 (세션 복원 후 덮어쓰기 방지)
-    const { adhocMode } = useADHDModeStore.getState().executionMode;
+    const { adhocMode } = useADHDStore.getState().executionMode;
     if (adhocMode.isActive) {
       console.log('⏭️ 타이머 실행 중 - 추천 로드 건너뛰기');
       return;
@@ -270,7 +270,7 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     // getState()로 최신 todos 상태 조회 (stale closure 방지)
     const todayTodos = getTodayTodos(true);
     // Zustand getState()로 최신 상태 조회 (stale closure 방지)
-    const { skippedTodoIds } = useADHDModeStore.getState().executionMode;
+    const { skippedTodoIds } = useADHDStore.getState().executionMode;
 
     // 건너뛴 할일 제외
     const candidates = todayTodos.filter(
@@ -278,7 +278,7 @@ export default function ExecutionMode({ onExit, hideNavigation = false }: Execut
     );
 
     if (candidates.length === 0) {
-      const { completedInSession } = useADHDModeStore.getState().executionMode;
+      const { completedInSession } = useADHDStore.getState().executionMode;
       if (completedInSession > 0) {
         // 세션 중 완료한 할일이 있으면 축하 화면
         // 실행 원동력 목록 로드

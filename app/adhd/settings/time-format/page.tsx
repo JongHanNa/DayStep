@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import TimeFormatView from '@/components/adhd/settings/TimeFormatView';
 
@@ -13,7 +13,7 @@ export default function TimeFormatPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('time-format');
+    useADHDStore.getState().enterSettingsMode('time-format');
   }, []);
 
   return <TimeFormatView onBack={() => goSettings()} />;

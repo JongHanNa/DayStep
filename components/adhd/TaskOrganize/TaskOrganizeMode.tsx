@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ArrowLeft, Clock, Inbox, BarChart3, Network, Sun, Moon, Lock, HelpCircle, Brain } from 'lucide-react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';

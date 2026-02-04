@@ -3,9 +3,9 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { useADHDModeStore, SettingsSubView } from '@/state/stores/adhdModeStore';
+import { useADHDStore, SettingsSubView } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import SettingsMode from '@/components/adhd/SettingsMode';
+import { ADHDContainer } from '@/components/adhd';
 
 /**
  * /adhd/settings 페이지 콘텐츠
@@ -17,10 +17,10 @@ function SettingsPageContent() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode((tab as SettingsSubView) || 'main');
+    useADHDStore.getState().enterSettingsMode((tab as SettingsSubView) || 'main');
   }, [tab]);
 
-  return <SettingsMode onExit={goHome} />;
+  return <ADHDContainer mode="settings" onExit={goHome} />;
 }
 
 /**

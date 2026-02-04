@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import ProjectMode from '@/components/adhd/ProjectMode';
 
@@ -16,7 +16,7 @@ export default function AIPlanPage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterProjectMode(user.id, 'ai-plan');
+      useADHDStore.getState().enterProjectMode(user.id, 'ai-plan');
     }
   }, [user?.id]);
 

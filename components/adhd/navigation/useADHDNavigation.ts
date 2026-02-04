@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
+import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
 
 export type NavItemId = 'home';
 
@@ -24,13 +24,13 @@ export const navItems: NavItem[] = [
  */
 export function useADHDNavigation() {
   const { user } = useAuth();
-  const { currentMode, enterHomeMode } = useADHDModeStore();
+  const { currentMode, enterHomeMode } = useADHDStore();
 
   /**
    * 현재 모드에 따른 활성 탭 결정
    * - home 모드일 때만 home 활성화
    */
-  const getActiveTab = (mode: ADHDMode): NavItemId | null => {
+  const getActiveTab = (mode: ADHDScreen): NavItemId | null => {
     if (mode === 'home' || mode === null) {
       return 'home';
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/app/context/AuthContext';
-import { SettingsSubView } from '@/state/stores/adhdModeStore';
+import { SettingsSubView } from '@/state/stores/adhdStore';
 import {
   User,
   Type,

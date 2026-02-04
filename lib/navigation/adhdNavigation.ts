@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useADHDModeStore, SettingsSubView } from '@/state/stores/adhdModeStore';
+import { useADHDStore, SettingsSubView } from '@/state/stores/adhdStore';
 import { isCapacitorEnv } from '@/lib/utils/platform';
 import { useAuth } from '@/app/context/AuthContext';
 
@@ -30,7 +30,7 @@ export function useADHDNavigation() {
 
     if (isCapacitorEnv()) {
       // Capacitor: Store 기반 네비게이션
-      const store = useADHDModeStore.getState();
+      const store = useADHDStore.getState();
 
       switch (mode) {
         case 'home':
@@ -63,7 +63,7 @@ export function useADHDNavigation() {
       }
     } else {
       // 웹: URL + Store 동시 업데이트
-      const store = useADHDModeStore.getState();
+      const store = useADHDStore.getState();
 
       if (mode === 'home') {
         // 홈은 루트 경로 - Store 초기화 필수 (사이드바 아이콘 상태 동기화)
@@ -88,7 +88,7 @@ export function useADHDNavigation() {
   const goBack = () => {
     if (isCapacitorEnv()) {
       // Capacitor: 홈으로 이동
-      useADHDModeStore.getState().enterHomeMode();
+      useADHDStore.getState().enterHomeMode();
     } else {
       // 웹: 브라우저 히스토리 사용
       router.back();

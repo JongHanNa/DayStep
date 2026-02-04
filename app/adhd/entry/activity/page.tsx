@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { ActivityView } from '@/components/adhd/entry';
@@ -16,7 +16,7 @@ export default function ActivityPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterEntryMode('activity');
+    useADHDStore.getState().enterEntryMode('activity');
   }, []);
 
   if (!user?.id) {

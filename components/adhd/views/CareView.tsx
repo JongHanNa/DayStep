@@ -32,7 +32,7 @@ import {
   FileText,
   type LucideIcon,
 } from 'lucide-react';
-import AddPersonModal from '../cherished/AddPersonModal';
+import AddPersonModal from '../../cherished/AddPersonModal';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
@@ -45,7 +45,7 @@ import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner
 import type { CherishedPerson, InteractionType, CareInteractionInput } from '@/types/cherished-people';
 import { INTERACTION_TYPE_LABELS } from '@/types/cherished-people';
 
-interface CareModeProps {
+interface CareViewProps {
   onExit: () => void;
 }
 
@@ -67,12 +67,12 @@ const INTERACTION_ICONS: Record<string, LucideIcon> = {
 
 
 /**
- * 마음 전해보기 모드
+ * 케어 모드 뷰
  *
- * ExecutionMode처럼 타이머와 함께 소중한 사람에게 관심을 표현하는 시간을 갖습니다.
+ * 타이머와 함께 소중한 사람에게 관심을 표현하는 시간을 갖습니다.
  * 완료 시 todos + care_interactions에 연결하여 저장합니다.
  */
-export default function CareMode({ onExit }: CareModeProps) {
+export default function CareView({ onExit }: CareViewProps) {
   const { user } = useAuth();
   const userId = user?.id;
 

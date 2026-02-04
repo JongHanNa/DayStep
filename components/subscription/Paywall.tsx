@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PRO_FEATURES } from '@/lib/featureFlags';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 
 interface PaywallProps {
   /**
@@ -50,7 +50,7 @@ export function Paywall({
   onClose,
 }: PaywallProps) {
   const { hasActiveSubscription, isInTrial, daysRemainingInTrial } = useSubscription();
-  const { enterSettingsMode } = useADHDModeStore();
+  const { enterSettingsMode } = useADHDStore();
 
   // 현재 기능 찾기
   const currentFeature = featureId

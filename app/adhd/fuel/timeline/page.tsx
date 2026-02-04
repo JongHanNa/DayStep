@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { TimelineView } from '@/components/adhd/fuel';
 
 /**
@@ -14,7 +14,7 @@ export default function TimelinePage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterFuelMode(user.id, undefined, 'timeline');
+      useADHDStore.getState().enterFuelMode(user.id, undefined, 'timeline');
     }
   }, [user?.id]);
 

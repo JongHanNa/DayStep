@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { GuideView } from '@/components/adhd/project';
 
 /**
@@ -14,7 +14,7 @@ export default function GuidePage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterProjectMode(user.id, 'guide');
+      useADHDStore.getState().enterProjectMode(user.id, 'guide');
     }
   }, [user?.id]);
 

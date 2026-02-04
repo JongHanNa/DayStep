@@ -10,7 +10,7 @@
 
 import { AlertTriangle, TrendingUp, Crown } from 'lucide-react';
 import { useUsageStats } from '@/hooks/useUsageStats';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import type { UsageEntityType } from '@/lib/featureFlags';
 
 interface UsageWarningBannerProps {
@@ -22,7 +22,7 @@ interface UsageWarningBannerProps {
 
 export function UsageWarningBanner({ entities, className = '' }: UsageWarningBannerProps) {
   const { usageSummary, hasActiveSubscription } = useUsageStats();
-  const { enterSettingsMode } = useADHDModeStore();
+  const { enterSettingsMode } = useADHDStore();
 
   // Pro 사용자는 표시 안 함
   if (hasActiveSubscription) return null;

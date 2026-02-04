@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Crown, HelpCircle, Brain } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { Paywall } from '@/components/subscription/Paywall';
 import { CareRecordView } from './CareRecordView';
 import { GratitudeJournalView } from './GratitudeJournalView';
@@ -39,7 +39,7 @@ interface RelationshipInsightsModeProps {
 }
 
 export function RelationshipInsightsMode({ onExit }: RelationshipInsightsModeProps) {
-  const { currentSubView } = useADHDModeStore();
+  const { currentSubView } = useADHDStore();
   const [activeTab, setActiveTab] = useState<TabType>((currentSubView as TabType) || 'record');
   const [helpModalTab, setHelpModalTab] = useState<TabType | null>(null);
   const { user } = useAuth();

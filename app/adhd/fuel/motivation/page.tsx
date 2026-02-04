@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { MotivationView } from '@/components/adhd/fuel';
 
 /**
@@ -15,7 +15,7 @@ export default function MotivationPage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterFuelMode(user.id, undefined, 'motivation');
+      useADHDStore.getState().enterFuelMode(user.id, undefined, 'motivation');
     }
   }, [user?.id]);
 

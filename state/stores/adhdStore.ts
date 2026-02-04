@@ -6,7 +6,10 @@ import { Todo } from '@/entities/todo/Todo';
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'home' | 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
+export type ADHDScreen = 'home' | 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
+
+/** @deprecated Use ADHDScreen instead */
+export type ADHDMode = ADHDScreen;
 
 // 설정 모드 서브뷰 타입
 export type SettingsSubView = 'main' | 'subscription' | 'account' | 'font' | 'notifications' | 'theme' | 'time-format' | 'todos' | 'widgets';
@@ -110,8 +113,8 @@ interface CachedPatterns {
 
 interface ADHDModeState {
   // 모드 상태
-  currentMode: ADHDMode;
-  previousMode: ADHDMode | null;  // 뒤로가기용 이전 모드 저장
+  currentMode: ADHDScreen;
+  previousMode: ADHDScreen | null;  // 뒤로가기용 이전 모드 저장
   currentSubView: string | null;  // 서브뷰 ID (예: 'banner', 'contact', 'timeline' 등)
 
   // 실행 모드 상태
@@ -319,7 +322,7 @@ const DEFAULT_SETTINGS_MODE: SettingsModeState = {
 // Store 생성
 // ============================================
 
-export const useADHDModeStore = create<ADHDModeState>()(
+export const useADHDStore = create<ADHDModeState>()(
   devtools(
     persist(
       (set, get) => ({
@@ -880,3 +883,6 @@ export const useADHDModeStore = create<ADHDModeState>()(
     }
   )
 );
+
+/** @deprecated Use useADHDStore instead */
+export const useADHDModeStore = useADHDStore;

@@ -35,7 +35,7 @@ import {
   Brain,
 } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import type { MoodLevel, TodoDraft } from '@/types/fuel';
 import { FUEL_FIELD_LABELS, PROJECT_DERIVE_LABELS, TODO_PLANNING_LABELS, FUEL_MESSAGES } from '@/types/fuel';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -126,7 +126,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
     startAdhocMode,
     setSessionId,
     setLinkedTodo,
-  } = useADHDModeStore();
+  } = useADHDStore();
 
   // Fuel 노트 관리 (noteStore 사용)
   const {
@@ -170,7 +170,7 @@ export default function FuelMode({ onExit }: FuelModeProps) {
   const { hasActiveSubscription } = useSubscription();
 
   // adhdModeStore에서 currentSubView 가져오기
-  const { currentSubView } = useADHDModeStore();
+  const { currentSubView } = useADHDStore();
 
   // 탭 상태 - currentSubView가 있으면 해당 값 사용, 없으면 타임라인
   const [activeTab, setActiveTab] = useState<FuelTabType>((currentSubView as FuelTabType) || 'timeline');

@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import AddPersonModal from '../../cherished/AddPersonModal';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import { useDepartmentStore } from '@/state/stores/departmentStore';
 import { useRelationshipStore } from '@/state/stores/relationshipStore';
@@ -72,7 +72,7 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
     setCareModePerson,
     setCareModeLinkedTodo,
     endCareMode,
-  } = useADHDModeStore();
+  } = useADHDStore();
 
   const {
     people,

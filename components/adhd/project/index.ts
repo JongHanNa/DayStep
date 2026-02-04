@@ -1,5 +1,4 @@
-// Project Container 배럴 export
-export { default, ProjectContainer } from './ProjectContainer';
+// Project 모드 배럴 export
 
 // 기존 컴포넌트
 export { default as ProjectEditModal } from './ProjectEditModal';

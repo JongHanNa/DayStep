@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 
 /**
  * 구독 페이지 리다이렉트
@@ -12,7 +12,7 @@ import { useADHDModeStore } from '@/state/stores/adhdModeStore';
  */
 export default function SubscriptionPage() {
   const router = useRouter();
-  const { enterSettingsMode } = useADHDModeStore();
+  const { enterSettingsMode } = useADHDStore();
 
   useEffect(() => {
     // 구독 관리 모드 진입 후 홈으로 리다이렉트

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import OrganizeModeWrapper from '@/components/adhd/OrganizeModeWrapper';
+import { ADHDContainer } from '@/components/adhd';
 
 /**
  * /adhd/organize - 정리 모드 페이지 (풀스크린)
@@ -13,8 +13,8 @@ export default function OrganizePage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterOrganizeMode();
+    useADHDStore.getState().enterOrganizeMode();
   }, []);
 
-  return <OrganizeModeWrapper onExit={goHome} />;
+  return <ADHDContainer mode="organize" onExit={goHome} />;
 }

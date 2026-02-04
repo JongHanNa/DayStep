@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import NotificationsView from '@/components/adhd/settings/NotificationsView';
 
@@ -13,7 +13,7 @@ export default function NotificationsPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('notifications');
+    useADHDStore.getState().enterSettingsMode('notifications');
   }, []);
 
   return <NotificationsView onBack={() => goSettings()} />;

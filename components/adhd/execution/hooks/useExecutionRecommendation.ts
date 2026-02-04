@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import type { Todo } from '@/entities/todo/Todo';
 
 /**
@@ -12,7 +12,7 @@ import type { Todo } from '@/entities/todo/Todo';
  */
 export function useExecutionRecommendation() {
   const { todos } = useTodoStore();
-  const { calculateRecommendationScore, setCurrentRecommendation } = useADHDModeStore();
+  const { calculateRecommendationScore, setCurrentRecommendation } = useADHDStore();
 
   // 오늘 실행 가능한 할일만 필터링
   const getTodayTodos = useCallback((useLatestState: boolean = false) => {
@@ -61,7 +61,7 @@ export function useExecutionRecommendation() {
     onEmptyNoCompleted: () => void,
   ): Todo | null => {
     // 이미 타이머 실행 중이면 추천 건너뛰기
-    const { adhocMode, skippedTodoIds, completedInSession } = useADHDModeStore.getState().executionMode;
+    const { adhocMode, skippedTodoIds, completedInSession } = useADHDStore.getState().executionMode;
     if (adhocMode.isActive) {
       return null;
     }

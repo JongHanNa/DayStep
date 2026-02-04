@@ -2,7 +2,7 @@
 
 import { Home, Menu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import { SUBVIEW_CONFIG } from './subviewConfig';
 
@@ -22,7 +22,7 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
  * - Capacitor: Store 기반 (enterHomeMode)
  */
 export default function ADHDSidebar() {
-  const currentSubView = useADHDModeStore((state) => state.currentSubView);
+  const currentSubView = useADHDStore((state) => state.currentSubView);
   const { goHome } = useADHDNavigation();
 
   // 중앙 아이콘 결정: 서브뷰면 해당 아이콘, 목차면 Menu

@@ -20,7 +20,7 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useNoteStore, type Note } from '@/state/stores/noteStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
@@ -58,7 +58,7 @@ export function MotivationView({ userId }: MotivationViewProps) {
     setFuelDraft,
     resetFuelDraft,
     enterExecuteMode,
-  } = useADHDModeStore();
+  } = useADHDStore();
 
   const { draftTitle, draftContent } = fuelMode;
 

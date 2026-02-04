@@ -7,7 +7,7 @@ import LandingPage from './landing/page';
 import GraphView from '@/components/graph/GraphView';
 import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import ExecutionMode from '@/components/adhd/ExecutionMode';
-import OrganizeModeWrapper from '@/components/adhd/OrganizeModeWrapper';
+import OrganizeWrapper from '@/components/adhd/OrganizeWrapper';
 import CareMode from '@/components/adhd/CareMode';
 import FuelMode from '@/components/adhd/FuelMode';
 import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights';
@@ -16,7 +16,7 @@ import SettingsMode from '@/components/adhd/SettingsMode';
 import ProjectMode from '@/components/adhd/ProjectMode';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import { useSettingsStore } from '@/state/stores/settingsStore';
-import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
+import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
 import { isCapacitorEnv } from '@/lib/utils/platform';
 
 /**
@@ -37,7 +37,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, previousMode, enterHomeMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, exitMode } = useADHDModeStore();
+  const { currentMode, previousMode, enterHomeMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, exitMode } = useADHDStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function HomePage() {
 
   // 정리 모드 (타이머 + 인터럽트 래퍼) - 전체화면
   if (currentMode === 'organize') {
-    return <OrganizeModeWrapper onExit={handleExitExecutionMode} />;
+    return <OrganizeWrapper onExit={handleExitExecutionMode} />;
   }
 
   // 마음 전해보기 모드 - 전체화면

@@ -22,7 +22,7 @@ import {
   removeAnytimeOverrideWithJWT,
 } from '@/lib/supabase/todo-postpone';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useRouter } from 'next/navigation';
 
 // 아이콘 이름을 Lucide 컴포넌트로 변환
@@ -60,7 +60,7 @@ const AnytimeInboxSheet: React.FC<AnytimeInboxSheetProps> = ({
     setLinkedRecurringTodo,
     startAdhocMode,
     enterExecuteMode,
-  } = useADHDModeStore();
+  } = useADHDStore();
 
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<AnytimeInboxItem[]>([]);

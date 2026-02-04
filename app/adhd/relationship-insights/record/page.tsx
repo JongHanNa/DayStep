@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { CareRecordView } from '@/components/adhd/RelationshipInsights/CareRecordView';
 
 /**
@@ -14,7 +14,7 @@ export default function RecordPage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterRelationshipInsightsMode(user.id, 'record');
+      useADHDStore.getState().enterRelationshipInsightsMode(user.id, 'record');
     }
   }, [user?.id]);
 

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { GratitudeJournalView } from '@/components/adhd/RelationshipInsights/GratitudeJournalView';
 
 /**
@@ -14,7 +14,7 @@ export default function GratitudePage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterRelationshipInsightsMode(user.id, 'gratitude');
+      useADHDStore.getState().enterRelationshipInsightsMode(user.id, 'gratitude');
     }
   }, [user?.id]);
 

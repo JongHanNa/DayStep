@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import ADHDInterruptModal from './ADHDInterruptModal';
 import GraphView from '@/components/graph/GraphView';
 
@@ -24,7 +24,7 @@ const INTERRUPT_TODO_THRESHOLD = 3; // 연속 할일 추가 수
  * - 인터럽트 조건 감지
  */
 export default function OrganizeModeWrapper({ onExit }: OrganizeModeWrapperProps) {
-  const { awakeningSentence, organizeMode, resetOrganizeMode } = useADHDModeStore();
+  const { awakeningSentence, organizeMode, resetOrganizeMode } = useADHDStore();
 
   const [showInterrupt, setShowInterrupt] = useState(false);
   const [interruptDismissCount, setInterruptDismissCount] = useState(0);
@@ -67,9 +67,9 @@ export default function OrganizeModeWrapper({ onExit }: OrganizeModeWrapperProps
     setInterruptDismissCount((prev) => prev + 1);
     timerFiredRef.current = false;
     // 연속 할일 추가 카운터 리셋 + 타이머 리셋
-    useADHDModeStore.getState().resetOrganizeMode();
+    useADHDStore.getState().resetOrganizeMode();
     // startTime 다시 설정 (타이머 재시작)
-    useADHDModeStore.getState().enterOrganizeMode();
+    useADHDStore.getState().enterOrganizeMode();
   }, []);
 
   return (

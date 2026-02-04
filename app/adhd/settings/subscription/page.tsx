@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import SubscriptionView from '@/components/adhd/settings/SubscriptionView';
 
@@ -13,7 +13,7 @@ export default function SubscriptionPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('subscription');
+    useADHDStore.getState().enterSettingsMode('subscription');
   }, []);
 
   return <SubscriptionView onBack={() => goSettings()} />;

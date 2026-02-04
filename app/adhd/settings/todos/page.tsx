@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import TodosView from '@/components/adhd/settings/TodosView';
 
@@ -13,7 +13,7 @@ export default function TodosPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('todos');
+    useADHDStore.getState().enterSettingsMode('todos');
   }, []);
 
   return <TodosView onBack={() => goSettings()} />;

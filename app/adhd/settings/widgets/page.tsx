@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import WidgetsView from '@/components/adhd/settings/WidgetsView';
 
@@ -13,7 +13,7 @@ export default function WidgetsPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('widgets');
+    useADHDStore.getState().enterSettingsMode('widgets');
   }, []);
 
   return <WidgetsView onBack={() => goSettings()} />;

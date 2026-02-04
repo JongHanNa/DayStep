@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import { ExecuteView } from '@/components/adhd/fuel';
 
@@ -16,7 +16,7 @@ export default function ExecutePage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterFuelMode(user.id, undefined, 'execute');
+      useADHDStore.getState().enterFuelMode(user.id, undefined, 'execute');
     }
   }, [user?.id]);
 

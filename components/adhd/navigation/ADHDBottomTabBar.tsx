@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Home, Menu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import { SUBVIEW_CONFIG } from './subviewConfig';
 
@@ -23,7 +23,7 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
  * - Capacitor: Store 기반 (enterHomeMode)
  */
 export default function ADHDBottomTabBar() {
-  const currentSubView = useADHDModeStore((state) => state.currentSubView);
+  const currentSubView = useADHDStore((state) => state.currentSubView);
   const { goHome } = useADHDNavigation();
   const [showLabel, setShowLabel] = useState(false);
 

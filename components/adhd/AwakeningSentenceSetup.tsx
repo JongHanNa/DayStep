@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, X } from 'lucide-react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 
 interface AwakeningSentenceSetupProps {
   /** 모달 형태로 사용 시 닫기 콜백 */
@@ -34,7 +34,7 @@ export default function AwakeningSentenceSetup({
   onComplete,
   mode = 'edit',
 }: AwakeningSentenceSetupProps) {
-  const { awakeningSentence, setAwakeningSentence } = useADHDModeStore();
+  const { awakeningSentence, setAwakeningSentence } = useADHDStore();
   const [inputValue, setInputValue] = useState(awakeningSentence || '');
   const [showExamples, setShowExamples] = useState(false);
 

@@ -9,7 +9,7 @@ import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanne
 import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
 import { StatsDashboardView } from '@/components/adhd/RelationshipInsights/StatsDashboardView';
 import { TodoStatsView } from '@/components/adhd/TaskOrganize/TodoStatsView';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { getItemsByRouteGroup } from '@/lib/constants/adhd-screens';
 
 type TabType = 'banner' | 'contact' | 'activity';
@@ -33,7 +33,7 @@ interface ADHDEntryScreenProps {
  * - 활동 살펴보기 (Pro): 할일 통계 (TodoStatsView)
  */
 export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
-  const { awakeningSentence, currentSubView } = useADHDModeStore();
+  const { awakeningSentence, currentSubView } = useADHDStore();
   const [activeTab, setActiveTab] = useState<TabType>((currentSubView as TabType) || 'banner');
   const { hasActiveSubscription } = useSubscription();
 

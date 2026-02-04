@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { ContactView } from '@/components/adhd/entry';
@@ -16,7 +16,7 @@ export default function ContactPage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterEntryMode('contact');
+    useADHDStore.getState().enterEntryMode('contact');
   }, []);
 
   if (!user?.id) {

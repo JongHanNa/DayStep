@@ -10,7 +10,7 @@ import {
   ChevronUp,
   RotateCcw,
 } from 'lucide-react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useNoteStore } from '@/state/stores/noteStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
@@ -65,7 +65,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
     enterOrganizeMode,
     setSessionId,
     setLinkedTodo,
-  } = useADHDModeStore();
+  } = useADHDStore();
 
   // 노트 스토어
   const { getInboxNotes, createInboxNote, notes: allNotes } = useNoteStore();
@@ -138,7 +138,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
 
   // 다음 추천 할일 가져오기
   const getNextRecommendation = useCallback(() => {
-    const { adhocMode, skippedTodoIds, completedInSession } = useADHDModeStore.getState().executionMode;
+    const { adhocMode, skippedTodoIds, completedInSession } = useADHDStore.getState().executionMode;
     if (adhocMode.isActive) return;
 
     const todayTodos = getTodayTodos(true);
@@ -157,7 +157,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
       return;
     }
 
-    const { calculateRecommendationScore } = useADHDModeStore.getState();
+    const { calculateRecommendationScore } = useADHDStore.getState();
     const scored = candidates.map(todo => ({
       todo,
       score: calculateRecommendationScore(todo),

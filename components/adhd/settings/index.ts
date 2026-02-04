@@ -1,5 +1,4 @@
-// Settings Container 배럴 export
-export { default, SettingsContainer } from './SettingsContainer';
+// Settings 모드 배럴 export
 
 // 기존 뷰 컴포넌트
 export { default as SettingsMainView } from './SettingsMainView';

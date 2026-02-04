@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 import FuelReminderBanner from '@/components/adhd/FuelReminderBanner';
 
@@ -18,7 +18,7 @@ interface BannerViewProps {
  * - 각성 문장 (설정된 경우)
  */
 export function BannerView({ userId, onRelationshipInsights, onFuel }: BannerViewProps) {
-  const { awakeningSentence } = useADHDModeStore();
+  const { awakeningSentence } = useADHDStore();
 
   return (
     <motion.div

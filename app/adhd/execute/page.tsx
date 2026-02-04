@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { ExecutionContainer } from '@/components/adhd/execution';
+import { ADHDContainer } from '@/components/adhd';
 
 /**
  * /adhd/execute - 실행 모드 페이지
@@ -12,12 +12,12 @@ import { ExecutionContainer } from '@/components/adhd/execution';
 export default function ExecutePage() {
   const { user } = useAuth();
   const { goHome, goFuel } = useADHDNavigation();
-  const previousMode = useADHDModeStore((s) => s.previousMode);
+  const previousMode = useADHDStore((s) => s.previousMode);
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDModeStore.getState().enterExecuteMode(user.id);
+      useADHDStore.getState().enterExecuteMode(user.id);
     }
   }, [user?.id]);
 
@@ -30,5 +30,5 @@ export default function ExecutePage() {
     }
   };
 
-  return <ExecutionContainer onExit={handleExit} />;
+  return <ADHDContainer mode="execute" onExit={handleExit} />;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import ThemeView from '@/components/adhd/settings/ThemeView';
 
@@ -13,7 +13,7 @@ export default function ThemePage() {
 
   // Store 동기화
   useEffect(() => {
-    useADHDModeStore.getState().enterSettingsMode('theme');
+    useADHDStore.getState().enterSettingsMode('theme');
   }, []);
 
   return <ThemeView onBack={() => goSettings()} />;

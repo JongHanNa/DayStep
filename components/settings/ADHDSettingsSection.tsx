@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Sparkles, ChevronRight } from 'lucide-react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
-import { useADHDModeStore } from '@/state/stores/adhdModeStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import AwakeningSentenceSetup from '@/components/adhd/AwakeningSentenceSetup';
 
 /**
@@ -16,7 +16,7 @@ import AwakeningSentenceSetup from '@/components/adhd/AwakeningSentenceSetup';
  */
 export default function ADHDSettingsSection() {
   const { adhdModeEnabled, setAdhdModeEnabled } = useSettingsStore();
-  const { awakeningSentence } = useADHDModeStore();
+  const { awakeningSentence } = useADHDStore();
   const [showSentenceModal, setShowSentenceModal] = useState(false);
 
   return (
