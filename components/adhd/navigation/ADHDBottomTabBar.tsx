@@ -45,10 +45,22 @@ export default function ADHDBottomTabBar() {
       <div className="flex-1 flex justify-center">
         <button
           onClick={enterHomeMode}
-          className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 bg-primary text-primary-content"
+          className="group w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 active:bg-base-300"
           aria-label={centerLabel}
         >
-          <CenterIcon className="w-5 h-5" />
+          {currentSubView ? (
+            <div className="w-7 h-7 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+              <CenterIcon className="w-4 h-4 text-primary" />
+            </div>
+          ) : (
+            <div className="w-7 h-7 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+              <div className="grid grid-cols-3 gap-0.5">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className="w-1 h-1 bg-primary rounded-full" />
+                ))}
+              </div>
+            </div>
+          )}
         </button>
       </div>
 

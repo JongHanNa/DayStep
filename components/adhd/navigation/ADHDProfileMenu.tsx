@@ -73,7 +73,7 @@ export default function ADHDProfileMenu({ variant }: ADHDProfileMenuProps) {
 
   const buttonClasses =
     variant === 'sidebar'
-      ? `w-10 h-10 mb-6 ${buttonCommonClasses}`
+      ? `w-10 h-10 ${buttonCommonClasses}`
       : `w-10 h-10 ${buttonCommonClasses}`;
 
   const dropdownPositionClasses =

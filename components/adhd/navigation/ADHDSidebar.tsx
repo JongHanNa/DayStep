@@ -9,10 +9,11 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
  * ADHD 모드 웹용 좌측 사이드바
  *
  * md(768px) 이상에서만 표시
- * 구조: 홈 아이콘(상단, 고정) - 햄버거/서브뷰 아이콘(중앙) - 프로필(하단)
+ * 구조: 프로필(최상단) - 홈 아이콘 - 햄버거/서브뷰 아이콘 - 빈 공간
  *
  * 활성화 로직:
- * - 상단: 항상 홈 아이콘 (고정, 비활성화 상태)
+ * - 최상단: 프로필 아바타 + 드롭다운
+ * - 홈: 항상 홈 아이콘 (고정, 비활성화 상태)
  * - 중앙: 목차 화면이면 햄버거, 서브뷰 화면이면 서브뷰 아이콘 (항상 활성화)
  */
 export default function ADHDSidebar() {
@@ -29,10 +30,13 @@ export default function ADHDSidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-16 bg-base-200 border-r border-base-300 flex flex-col items-center py-4 z-30">
-      {/* 상단: 홈 아이콘 (항상 고정, 비활성화 상태) */}
+      {/* 최상단: 프로필 아바타 + 드롭다운 */}
+      <ADHDProfileMenu variant="sidebar" />
+
+      {/* 홈 아이콘 (고정, 비활성화 상태) */}
       <button
         onClick={enterHomeMode}
-        className="w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 text-base-content/60 hover:bg-base-300"
+        className="mt-2 w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 text-base-content/60 hover:bg-base-300"
         aria-label="홈"
       >
         <Home className="w-6 h-6" />
@@ -42,22 +46,31 @@ export default function ADHDSidebar() {
         </span>
       </button>
 
-      {/* 중앙: 햄버거 또는 서브뷰 아이콘 (항상 활성화) */}
+      {/* 햄버거 또는 서브뷰 아이콘 (항상 활성화) */}
       <div className="mt-2">
         <button
           onClick={enterHomeMode}
-          className="w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 bg-primary text-primary-content"
+          className="group w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 hover:bg-base-300"
           aria-label={centerLabel}
         >
-          <CenterIcon className="w-6 h-6" />
+          {currentSubView ? (
+            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+              <CenterIcon className="w-5 h-5 text-primary" />
+            </div>
+          ) : (
+            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+              <div className="grid grid-cols-3 gap-1">
+                {[...Array(9)].map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
+                ))}
+              </div>
+            </div>
+          )}
         </button>
       </div>
 
       {/* 빈 공간 */}
       <div className="flex-1" />
-
-      {/* 하단: 프로필 아바타 + 드롭다운 */}
-      <ADHDProfileMenu variant="sidebar" />
     </aside>
   );
 }
