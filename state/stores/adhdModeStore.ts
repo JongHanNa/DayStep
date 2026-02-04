@@ -6,7 +6,7 @@ import { Todo } from '@/entities/todo/Todo';
 // 타입 정의
 // ============================================
 
-export type ADHDMode = 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
+export type ADHDMode = 'home' | 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
 
 // 설정 모드 서브뷰 타입
 export type SettingsSubView = 'main' | 'subscription' | 'account' | 'font' | 'notifications' | 'theme' | 'time-format' | 'todos' | 'widgets';
@@ -139,7 +139,8 @@ interface ADHDModeState {
   currentUserId: string | null;
 
   // === 모드 전환 Actions ===
-  enterEntryMode: () => void;
+  enterHomeMode: () => void;
+  enterEntryMode: (initialTab?: string) => void;
   enterExecuteMode: (userId: string) => Promise<void>;
   enterOrganizeMode: () => void;
   exitMode: () => void;
@@ -173,16 +174,16 @@ interface ADHDModeState {
   endCareMode: () => void;
 
   // === 관계 인사이트 모드 Actions ===
-  enterRelationshipInsightsMode: (userId: string) => void;
+  enterRelationshipInsightsMode: (userId: string, initialTab?: string) => void;
 
   // === 할일 정리 모드 Actions ===
   enterTaskOrganizeMode: (userId: string) => void;
 
   // === 프로젝트 모드 Actions ===
-  enterProjectMode: (userId: string) => void;
+  enterProjectMode: (userId: string, initialTab?: string) => void;
 
   // === 복잡한 머릿속, 정리해줄게 모드 Actions ===
-  enterFuelMode: (userId: string, selectedNoteId?: string) => void;
+  enterFuelMode: (userId: string, selectedNoteId?: string, initialTab?: string) => void;
   setFuelViewState: (viewState: FuelViewState) => void;
   setFuelDraft: (draft: {
     // 수집 필드
@@ -329,8 +330,13 @@ export const useADHDModeStore = create<ADHDModeState>()(
         currentUserId: null,
 
         // === 모드 전환 Actions ===
-        enterEntryMode: () => {
-          console.log('🎯 ADHD: 진입 화면 모드');
+        enterHomeMode: () => {
+          console.log('🏠 ADHD: 홈 목차 모드');
+          set({ currentMode: 'home', previousMode: null });
+        },
+
+        enterEntryMode: (initialTab?: string) => {
+          console.log('🎯 ADHD: 진입 화면 모드', initialTab ? `(탭: ${initialTab})` : '');
           set({ currentMode: 'entry', previousMode: null });
         },
 
@@ -564,8 +570,8 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         // === 관계 인사이트 모드 Actions ===
-        enterRelationshipInsightsMode: (userId: string) => {
-          console.log('📊 ADHD: 관계 인사이트 모드 진입');
+        enterRelationshipInsightsMode: (userId: string, initialTab?: string) => {
+          console.log('📊 ADHD: 관계 인사이트 모드 진입', initialTab ? `(탭: ${initialTab})` : '');
           set({
             currentMode: 'relationship-insights',
             currentUserId: userId,
@@ -582,8 +588,8 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         // === 프로젝트 모드 Actions ===
-        enterProjectMode: (userId: string) => {
-          console.log('📁 ADHD: 프로젝트 모드 진입');
+        enterProjectMode: (userId: string, initialTab?: string) => {
+          console.log('📁 ADHD: 프로젝트 모드 진입', initialTab ? `(탭: ${initialTab})` : '');
           set({
             currentMode: 'project',
             currentUserId: userId,
@@ -591,8 +597,8 @@ export const useADHDModeStore = create<ADHDModeState>()(
         },
 
         // === 복잡한 머릿속, 정리해줄게 모드 Actions ===
-        enterFuelMode: (userId: string, selectedNoteId?: string) => {
-          console.log('💡 ADHD: 원동력 모드 진입', selectedNoteId ? `(선택된 노트: ${selectedNoteId})` : '');
+        enterFuelMode: (userId: string, selectedNoteId?: string, initialTab?: string) => {
+          console.log('💡 ADHD: 원동력 모드 진입', selectedNoteId ? `(선택된 노트: ${selectedNoteId})` : '', initialTab ? `(탭: ${initialTab})` : '');
           set({
             currentMode: 'fuel',
             currentUserId: userId,

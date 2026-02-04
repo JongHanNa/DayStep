@@ -3,7 +3,7 @@
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
-export type NavItemId = 'home' | 'relationship' | 'fuel' | 'project' | 'settings';
+export type NavItemId = 'home';
 
 export interface NavItem {
   id: NavItemId;
@@ -11,12 +11,9 @@ export interface NavItem {
   icon: string; // lucide icon name
 }
 
+// 간소화된 네비게이션: 홈 버튼만 (프로필은 별도 컴포넌트)
 export const navItems: NavItem[] = [
-  { id: 'home', label: '대시보드', icon: 'Home' },
-  { id: 'project', label: '미룸방지', icon: 'Shield' },
-  { id: 'fuel', label: '머릿속 정리', icon: 'Lightbulb' },
-  { id: 'relationship', label: '관계 기록', icon: 'BookHeart' },
-  { id: 'settings', label: '설정', icon: 'Settings' },
+  { id: 'home', label: '홈', icon: 'Home' },
 ];
 
 /**
@@ -27,60 +24,28 @@ export const navItems: NavItem[] = [
  */
 export function useADHDNavigation() {
   const { user } = useAuth();
-  const { currentMode, enterEntryMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, enterSettingsMode } = useADHDModeStore();
+  const { currentMode, enterHomeMode } = useADHDModeStore();
 
   /**
    * 현재 모드에 따른 활성 탭 결정
-   * - URL 기반이 아닌 currentMode 상태만으로 결정
+   * - home 모드일 때만 home 활성화
    */
-  const getActiveTab = (mode: ADHDMode): NavItemId => {
-    switch (mode) {
-      case 'relationship-insights':
-        return 'relationship';
-      case 'fuel':
-        return 'fuel';
-      case 'project':
-        return 'project';
-      case 'settings':
-        return 'settings';
-      case 'entry':
-      case 'execute':
-      case 'organize':
-      case 'care':
-      default:
-        return 'home';
+  const getActiveTab = (mode: ADHDMode): NavItemId | null => {
+    if (mode === 'home' || mode === null) {
+      return 'home';
     }
+    return null;
   };
 
   const activeTab = getActiveTab(currentMode);
 
   /**
    * 네비게이션 아이템 클릭 핸들러
-   * - URL 변경 없이 상태만 변경
+   * - 홈 버튼 클릭 시 목차 화면으로 이동
    */
   const handleNavClick = (itemId: NavItemId) => {
-    switch (itemId) {
-      case 'home':
-        enterEntryMode();
-        break;
-      case 'relationship':
-        if (user?.id) {
-          enterRelationshipInsightsMode(user.id);
-        }
-        break;
-      case 'fuel':
-        if (user?.id) {
-          enterFuelMode(user.id);
-        }
-        break;
-      case 'project':
-        if (user?.id) {
-          enterProjectMode(user.id);
-        }
-        break;
-      case 'settings':
-        enterSettingsMode('main');
-        break;
+    if (itemId === 'home') {
+      enterHomeMode();
     }
   };
 

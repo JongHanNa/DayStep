@@ -9,15 +9,15 @@ import ADHDProfileMenu from './ADHDProfileMenu';
  *
  * md(768px) 미만에서만 표시
  * Safe Area 대응 포함
+ * 구조: 홈 버튼 + 프로필 (2개만)
  */
 export default function ADHDBottomTabBar() {
   const { navItems, activeTab, handleNavClick } = useADHDNavigation();
 
-  const mainNavItems = navItems.filter(item => item.id !== 'settings');
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-base-200 border-t border-base-300 flex items-center z-30 safe-area-bottom">
-      {mainNavItems.map(item => (
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-base-200 border-t border-base-300 flex items-center justify-center gap-8 z-30 safe-area-bottom">
+      {/* 홈 버튼 */}
+      {navItems.map(item => (
         <ADHDNavItem
           key={item.id}
           id={item.id}

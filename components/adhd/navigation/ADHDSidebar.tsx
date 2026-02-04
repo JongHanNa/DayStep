@@ -8,22 +8,16 @@ import ADHDProfileMenu from './ADHDProfileMenu';
  * ADHD 모드 웹용 좌측 사이드바
  *
  * md(768px) 이상에서만 표시
- * 구조: Avatar(상단 + 드롭다운) - 메인 네비게이션
+ * 구조: 홈 버튼(상단) - 빈 공간 - 프로필(하단)
  */
 export default function ADHDSidebar() {
   const { navItems, activeTab, handleNavClick } = useADHDNavigation();
 
-  // settings 제외한 메인 네비게이션 아이템
-  const mainNavItems = navItems.filter(item => item.id !== 'settings');
-
   return (
     <aside className="fixed left-0 top-0 h-full w-16 bg-base-200 border-r border-base-300 flex flex-col items-center py-4 z-30">
-      {/* 상단: 사용자 아바타 + 드롭다운 */}
-      <ADHDProfileMenu variant="sidebar" />
-
-      {/* 중앙: 메인 네비게이션 */}
-      <nav className="flex-1 flex flex-col items-center gap-2">
-        {mainNavItems.map(item => (
+      {/* 상단: 홈 버튼 */}
+      <nav className="flex flex-col items-center gap-2">
+        {navItems.map(item => (
           <ADHDNavItem
             key={item.id}
             id={item.id}
@@ -35,6 +29,12 @@ export default function ADHDSidebar() {
           />
         ))}
       </nav>
+
+      {/* 중앙: 빈 공간 */}
+      <div className="flex-1" />
+
+      {/* 하단: 프로필 아바타 + 드롭다운 */}
+      <ADHDProfileMenu variant="sidebar" />
     </aside>
   );
 }

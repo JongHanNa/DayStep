@@ -14,6 +14,7 @@ import { RelationshipInsightsMode } from '@/components/adhd/RelationshipInsights
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import SettingsMode from '@/components/adhd/SettingsMode';
 import ProjectMode from '@/components/adhd/ProjectMode';
+import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDModeStore, ADHDMode } from '@/state/stores/adhdModeStore';
 
@@ -34,7 +35,7 @@ export default function HomePage() {
 
   // ADHD 모드 상태
   const { adhdModeEnabled } = useSettingsStore();
-  const { currentMode, previousMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, exitMode } = useADHDModeStore();
+  const { currentMode, previousMode, enterHomeMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, exitMode } = useADHDModeStore();
 
   // 하이드레이션 완료 후 Capacitor 환경 감지
   useEffect(() => {
@@ -115,11 +116,16 @@ export default function HomePage() {
 
   // FuelMode에서 뒤로가기 - 항상 홈으로
   const handleExitFuelMode = () => {
-    enterEntryMode();
+    enterHomeMode();
   };
 
-  // 네비게이션 표시 여부 (entry, relationship-insights, fuel, settings, execute, project 모드에서 표시, null은 entry로 취급)
-  const showNavigation = currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel' || currentMode === 'settings' || currentMode === 'execute' || currentMode === 'project';
+  // 모든 모드에서 뒤로가기 - 홈 목차로
+  const handleExitToHome = () => {
+    enterHomeMode();
+  };
+
+  // 네비게이션 표시 여부 (home, entry, relationship-insights, fuel, settings, execute, project 모드에서 표시)
+  const showNavigation = currentMode === 'home' || currentMode === 'entry' || currentMode === null || currentMode === 'relationship-insights' || currentMode === 'fuel' || currentMode === 'settings' || currentMode === 'execute' || currentMode === 'project';
 
   // 정리 모드 (타이머 + 인터럽트 래퍼) - 전체화면
   if (currentMode === 'organize') {
@@ -158,21 +164,26 @@ export default function HomePage() {
 
         {/* 설정 모드 */}
         {currentMode === 'settings' && (
-          <SettingsMode onExit={enterEntryMode} />
+          <SettingsMode onExit={handleExitToHome} />
         )}
 
         {/* 프로젝트 모드 */}
         {currentMode === 'project' && (
-          <ProjectMode onExit={enterEntryMode} />
+          <ProjectMode onExit={handleExitToHome} />
         )}
 
-        {/* 진입 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}
-        {(currentMode === 'entry' || currentMode === null) && (
+        {/* 대시보드 (entry 모드) */}
+        {currentMode === 'entry' && (
           <ADHDEntryScreen
             userId={user?.id}
             onRelationshipInsights={handleRelationshipInsights}
             onFuel={handleFuel}
           />
+        )}
+
+        {/* 홈 목차 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}
+        {(currentMode === 'home' || currentMode === null) && (
+          <HomeTableOfContents />
         )}
       </main>
 
