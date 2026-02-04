@@ -37,7 +37,7 @@ export default function ADHDBottomTabBar() {
           className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 text-base-content/60 active:bg-base-300"
           aria-label="홈"
         >
-          <Home className="w-5 h-5" />
+          <Home className="w-7 h-7" />
         </button>
       </div>
 
@@ -49,14 +49,14 @@ export default function ADHDBottomTabBar() {
           aria-label={centerLabel}
         >
           {currentSubView ? (
-            <div className="w-7 h-7 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
-              <CenterIcon className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+              <CenterIcon className="w-7 h-7 text-primary" />
             </div>
           ) : (
-            <div className="w-7 h-7 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
               <div className="grid grid-cols-3 gap-0.5">
                 {[...Array(9)].map((_, i) => (
-                  <div key={i} className="w-1 h-1 bg-primary rounded-full" />
+                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
                 ))}
               </div>
             </div>

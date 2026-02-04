@@ -39,7 +39,7 @@ export default function ADHDSidebar() {
         className="mt-2 w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 text-base-content/60 hover:bg-base-300"
         aria-label="홈"
       >
-        <Home className="w-6 h-6" />
+        <Home className="w-8 h-8" />
         {/* 툴팁 */}
         <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium bg-base-300 text-base-content rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
           홈
@@ -54,14 +54,14 @@ export default function ADHDSidebar() {
           aria-label={centerLabel}
         >
           {currentSubView ? (
-            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
-              <CenterIcon className="w-5 h-5 text-primary" />
+            <div className="w-9 h-9 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+              <CenterIcon className="w-8 h-8 text-primary" />
             </div>
           ) : (
-            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+            <div className="w-9 h-9 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
               <div className="grid grid-cols-3 gap-1">
                 {[...Array(9)].map((_, i) => (
-                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
+                  <div key={i} className="w-2 h-2 bg-primary rounded-full" />
                 ))}
               </div>
             </div>
