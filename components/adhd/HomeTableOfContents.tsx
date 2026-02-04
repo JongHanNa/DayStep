@@ -2,26 +2,16 @@
 
 import { Crown } from 'lucide-react';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { ADHD_SCREENS, type ADHDRouteGroupId } from '@/lib/constants/adhd-screens';
-
-interface SubItem {
-  id: string;
-  label: string;
-  isPro?: boolean;
-  routeGroup: ADHDRouteGroupId;
-}
-
-interface GroupItem {
-  id: string;
-  title: string;
-  subItems: SubItem[];
-}
+import {
+  getUIGroupsForTableOfContents,
+  type ADHDRouteGroupId,
+} from '@/lib/constants/adhd-screens';
 
 /**
  * 홈 목차 화면
  *
- * 3개 그룹(생각과 기억, 일상 돌보기, 미룸방지)을 목차 형태로 표시
- * 각 서브아이템 클릭 시 해당 화면의 특정 탭으로 이동
+ * UI_GROUPS 설정을 기반으로 목차 형태로 표시
+ * 화면 이동 시 UI_GROUPS만 수정하면 목차가 자동으로 업데이트됨
  *
  * routeGroup을 기반으로 실제 라우팅 경로 결정:
  * - dashboard → goEntry
@@ -50,17 +40,8 @@ export default function HomeTableOfContents() {
     }
   };
 
-  // ADHD_SCREENS에서 groups 배열 생성
-  const groups: GroupItem[] = Object.values(ADHD_SCREENS).map((group) => ({
-    id: group.id,
-    title: group.title,
-    subItems: group.items.map((item) => ({
-      id: item.id,
-      label: item.label,
-      isPro: item.isPro,
-      routeGroup: item.routeGroup,
-    })),
-  }));
+  // UI_GROUPS와 SCREEN_REGISTRY에서 목차 데이터 생성
+  const groups = getUIGroupsForTableOfContents();
 
   return (
     <div className="min-h-screen bg-base-100 px-4 py-6 sm:px-6 sm:py-8">

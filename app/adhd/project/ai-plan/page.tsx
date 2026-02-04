@@ -4,7 +4,10 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { ProjectContainer } from '@/components/adhd/project';
+import { GenericTabContainer } from '@/components/adhd/containers/GenericTabContainer';
+import type { ADHDSubViewId } from '@/lib/constants/adhd-screens';
+
+const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
 
 /**
  * /adhd/project/ai-plan - AI 계획 서브탭 페이지 (기본 탭)
@@ -20,5 +23,11 @@ export default function AIPlanPage() {
     }
   }, [user?.id]);
 
-  return <ProjectContainer onExit={goHome} />;
+  return (
+    <GenericTabContainer
+      screenIds={PROJECT_SCREEN_IDS}
+      routeGroupId="project"
+      onExit={goHome}
+    />
+  );
 }

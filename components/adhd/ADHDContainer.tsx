@@ -4,18 +4,13 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
 import { isCapacitorEnv } from '@/lib/utils/platform';
+import type { ADHDSubViewId, ADHDRouteGroupId } from '@/lib/constants/adhd-screens';
 
-// Dynamic imports for code splitting - 도메인 폴더의 Container 직접 import
+// Dynamic imports for code splitting
 const ExecutionContainer = dynamic(() => import('./execution/ExecutionContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const FuelContainer = dynamic(() => import('./fuel/FuelContainer'), {
-  loading: () => <ViewLoadingSpinner />,
-});
 const CareContainer = dynamic(() => import('./care/CareContainer'), {
-  loading: () => <ViewLoadingSpinner />,
-});
-const ProjectContainer = dynamic(() => import('./project/ProjectContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
 const SettingsContainer = dynamic(() => import('./settings/SettingsContainer'), {
@@ -30,9 +25,16 @@ const OrganizeWrapper = dynamic(() => import('./OrganizeWrapper'), {
 const EntryContainer = dynamic(() => import('./views/EntryView'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const RelationshipContainer = dynamic(() => import('./RelationshipInsights/RelationshipContainer'), {
+
+// GenericTabContainer - 범용 탭 컨테이너 (fuel, project, relationship-insights용)
+const GenericTabContainer = dynamic(() => import('./containers/GenericTabContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
+
+// 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
+const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'execute', 'organize'];
+const RELATIONSHIP_SCREEN_IDS: ADHDSubViewId[] = ['record', 'news', 'gratitude'];
+const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
 
 /**
  * 로딩 스피너 컴포넌트
@@ -117,11 +119,25 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
     case 'execute':
       return <ExecutionContainer onExit={handleExit} />;
     case 'fuel':
-      return <FuelContainer onExit={handleExit} />;
+      // GenericTabContainer로 fuel 라우트 그룹 렌더링
+      return (
+        <GenericTabContainer
+          screenIds={FUEL_SCREEN_IDS}
+          routeGroupId="fuel"
+          onExit={handleExit}
+        />
+      );
     case 'care':
       return <CareContainer onExit={handleExit} />;
     case 'project':
-      return <ProjectContainer onExit={handleExit} />;
+      // GenericTabContainer로 project 라우트 그룹 렌더링
+      return (
+        <GenericTabContainer
+          screenIds={PROJECT_SCREEN_IDS}
+          routeGroupId="project"
+          onExit={handleExit}
+        />
+      );
     case 'settings':
       return <SettingsContainer onExit={handleExit} />;
     case 'task-organize':
@@ -131,7 +147,14 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
     case 'entry':
       return <EntryContainer onExit={handleExit} />;
     case 'relationship-insights':
-      return <RelationshipContainer onExit={handleExit} />;
+      // GenericTabContainer로 relationship 라우트 그룹 렌더링
+      return (
+        <GenericTabContainer
+          screenIds={RELATIONSHIP_SCREEN_IDS}
+          routeGroupId="relationship"
+          onExit={handleExit}
+        />
+      );
     default:
       // home은 루트 경로라 별도 처리 필요
       return null;

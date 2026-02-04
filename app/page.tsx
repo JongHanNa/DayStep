@@ -9,15 +9,19 @@ import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import { ExecutionContainer } from '@/components/adhd/execution';
 import OrganizeWrapper from '@/components/adhd/OrganizeWrapper';
 import { CareContainer } from '@/components/adhd/care';
-import { FuelContainer } from '@/components/adhd/fuel';
-import { RelationshipContainer } from '@/components/adhd/RelationshipInsights';
+import { GenericTabContainer } from '@/components/adhd/containers/GenericTabContainer';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { SettingsContainer } from '@/components/adhd/settings';
-import { ProjectContainer } from '@/components/adhd/project';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
 import { isCapacitorEnv } from '@/lib/utils/platform';
+import type { ADHDSubViewId } from '@/lib/constants/adhd-screens';
+
+// 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
+const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'execute', 'organize'];
+const RELATIONSHIP_SCREEN_IDS: ADHDSubViewId[] = ['record', 'news', 'gratitude'];
+const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
 
 /**
  * 루트 페이지 (/)
@@ -179,12 +183,20 @@ export default function HomePage() {
 
           {/* 관계 인사이트 모드 */}
           {currentMode === 'relationship-insights' && (
-            <RelationshipContainer onExit={handleExitExecutionMode} />
+            <GenericTabContainer
+              screenIds={RELATIONSHIP_SCREEN_IDS}
+              routeGroupId="relationship"
+              onExit={handleExitExecutionMode}
+            />
           )}
 
           {/* 복잡한 머릿속, 정리해줄게 모드 (Fuel/원동력) */}
           {currentMode === 'fuel' && (
-            <FuelContainer onExit={handleExitFuelMode} />
+            <GenericTabContainer
+              screenIds={FUEL_SCREEN_IDS}
+              routeGroupId="fuel"
+              onExit={handleExitFuelMode}
+            />
           )}
 
           {/* 설정 모드 */}
@@ -194,7 +206,11 @@ export default function HomePage() {
 
           {/* 프로젝트 모드 */}
           {currentMode === 'project' && (
-            <ProjectContainer onExit={handleExitToHome} />
+            <GenericTabContainer
+              screenIds={PROJECT_SCREEN_IDS}
+              routeGroupId="project"
+              onExit={handleExitToHome}
+            />
           )}
 
           {/* 대시보드 (entry 모드) */}

@@ -1,9 +1,10 @@
-// RelationshipInsights Container 배럴 export
+// RelationshipInsights 배럴 export
 
-export { default as RelationshipContainer } from './RelationshipContainer';
-
-// 탭 뷰 컴포넌트
+// 탭 뷰 컴포넌트 (screens/ 폴더에서 사용)
 export { TimelineView } from './TimelineView';
 export { GratitudeJournalView } from './GratitudeJournalView';
 export { NewsMemosView } from './NewsMemosView';
 export { StatsDashboardView } from './StatsDashboardView';
+export { CareRecordView } from './CareRecordView';
+
+// RelationshipContainer 삭제됨 - GenericTabContainer로 대체
