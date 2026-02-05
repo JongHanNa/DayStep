@@ -92,7 +92,26 @@ export function useTimelineNavigation({
 
     const allItems = [...nonRecurringItems, ...recurrenceInstances];
 
-    return allItems.sort((a, b) => {
+    // 방어 코드: 동일 날짜 + 동일 제목 + 동일 시간대의 반복 인스턴스 중복 제거
+    // DB에 동일 반복 할일이 여러 개 존재할 경우 최신 원본만 유지
+    const deduped = allItems.filter((item, index, arr) => {
+      if (!item.isRecurrenceInstance || !item.recurrenceOccurrenceDate) return true;
+      const duplicates = arr.filter(
+        other =>
+          other.isRecurrenceInstance &&
+          other.recurrenceOccurrenceDate === item.recurrenceOccurrenceDate &&
+          other.title === item.title &&
+          other.startTime?.getTime() === item.startTime?.getTime()
+      );
+      if (duplicates.length <= 1) return true;
+      // 최신 원본(createdAt 기준)의 인스턴스만 유지
+      const newest = duplicates.reduce((a, b) =>
+        (a.originalTodo?.createdAt?.getTime() ?? 0) >= (b.originalTodo?.createdAt?.getTime() ?? 0) ? a : b
+      );
+      return item === newest;
+    });
+
+    return deduped.sort((a, b) => {
       const dateA = getDisplayDate(a).getTime();
       const dateB = getDisplayDate(b).getTime();
       if (dateA !== dateB) return dateA - dateB;
