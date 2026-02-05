@@ -147,31 +147,6 @@ npx supabase functions deploy mcp-server --project-ref <PROJECT_REF> --no-verify
 | 화면 크기별 UI | Tailwind Responsive |
 | Capacitor 네이티브 | BUILD_TARGET |
 
-### 2. 📚 외부 리소스 활용
-
-**MCP 선택**: 라이브러리 명시? → Context7만 | 미정 → Perplexity → Context7
-
-**예외 조건** (모두 만족 시만 커스텀):
-- [ ] MCP로 적합한 라이브러리 없음
-- [ ] 환경 호환성 문제 확인
-- [ ] 요구사항 매우 특수
-- [ ] 성능상 커스텀 필수
-
-### 3. 권장패턴 & 안티패턴
-
-| 영역 | 권장 ✅ | 안티패턴 ❌ |
-|------|---------|------------|
-| **코드 재사용** | 공통 함수 추출 (`lib/helpers/`, `lib/utils/`) | 동일 로직 여러 곳에 인라인 구현 |
-| **상태 전달** | Context API, Zustand 전역 상태 | 5단계 이상 Props Drilling |
-| **컴포넌트 크기** | 200줄 이하, Custom Hook 분리 | 500줄+ God Component |
-| **상수 관리** | `lib/constants/`, 환경 변수 분리 | Magic Number/String 하드코딩 |
-| **타입 정의** | 명확한 타입, `types/` 디렉토리 관리 | `any` 타입 남용 |
-| **타입 위치** | 공유 타입은 `types/`에 정의 | 컴포넌트 파일 내 타입 정의 |
-
-**타입 정의 원칙**:
-- 여러 파일에서 사용 → `types/index.ts` 또는 도메인별 파일
-- 단일 파일 전용 + 재사용 가능성 없음 → 해당 파일 내 정의 허용
-
 ---
 
 ## 🎨 프론트엔드 개발 패턴
@@ -299,18 +274,6 @@ npx supabase functions deploy mcp-server --project-ref <PROJECT_REF> --no-verify
 
 ---
 
-## 🔄 개발 워크플로우
-
-### 표준 5단계
-
-1. 요구사항 분석
-2. 라이브러리 탐색 (Perplexity MCP)
-3. 공식 문서 확인 (Context7 MCP)
-4. 기존 패턴 탐색 (`components/ui/`, DaisyUI)
-5. 구현 및 검증 (웹/모바일 테스트)
-
----
-
 ## ✅ 품질 관리
 
 ### 작업 완료 체크리스트
@@ -321,25 +284,3 @@ npx supabase functions deploy mcp-server --project-ref <PROJECT_REF> --no-verify
 4. [ ] 사용자 검증 요청
 5. [ ] git commit
 6. [ ] 다음 작업 시작
-
-### 2회 실패 시
-
-→ Perplexity/Context7 MCP 사용 (근본 원인 분석, deprecated 확인)
-
-### 자동 경고 트리거
-
-| 트리거 | 조치 |
-|--------|------|
-| 구버전 패턴 | Context7 최신 패턴 확인 |
-| 신규 라이브러리 | 호환성 확인 (React 19, Next.js 15) |
-| 위험 컴포넌트 | 테스트 필수 (전역 상태, 인증, 네이티브 브리지 등) |
-
----
-
-## 📚 기타 가이드
-
-### 쉬운 설명 규칙
-
-**트리거**: 기술 용어, 복잡한 개념 설명 시
-
-**형식**: 기술 설명 후 "쉽게 말하면:" + 실생활 비유
