@@ -104,7 +104,10 @@ export function timelineItemToTodo(item: TimelineItem): Todo {
       importance: orig.importance,
       urgency: orig.urgency,
       is_reluctant_must_do: orig.isReluctantMustDo,
-      skip_status: item.skipStatus ?? null,
+      skip_status: item.skipStatus
+        ?? (item.exclusionReason === 'not_needed' ? 'not_needed' : null)
+        ?? (item.exclusionReason === 'missed' ? 'missed' : null)
+        ?? null,
     });
   }
 

@@ -35,7 +35,8 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
     return timelineItems
       .filter((item) => {
         if (!item.startTime) return false;
-        if (item.isSkipped || item.exclusionReason === 'deleted') return false;
+        // deleted/postponed만 제외, not_needed/missed는 표시 (배지로 상태 표시)
+        if (item.exclusionReason === 'deleted' || item.exclusionReason === 'postponed') return false;
         return format(item.startTime, 'yyyy-MM-dd') === dateStr;
       })
       .map(timelineItemToTodo);

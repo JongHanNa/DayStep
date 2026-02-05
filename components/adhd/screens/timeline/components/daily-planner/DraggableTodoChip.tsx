@@ -32,6 +32,8 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
     ? new Date(todo.startTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
     : null;
 
+  const isSkipped = todo.skipStatus !== null && todo.skipStatus !== undefined;
+
   // 클릭 vs 드래그 구분을 위한 핸들러
   const handlePointerDown = (e: React.PointerEvent) => {
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
@@ -54,7 +56,7 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
       onPointerDown={handlePointerDown}
       onClick={handleClick}
       className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm cursor-grab active:cursor-grabbing transition-colors
-        ${todo.completed ? 'bg-base-200 text-base-content/40 line-through' : 'bg-base-100 hover:bg-base-300'}
+        ${isSkipped ? 'bg-base-200 text-base-content/40 line-through' : todo.completed ? 'bg-base-200 text-base-content/40 line-through' : 'bg-base-100 hover:bg-base-300'}
         ${isDragging ? 'shadow-lg z-50' : ''}
       `}
     >
@@ -90,6 +92,15 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
 
       {/* 제목 */}
       <span className="truncate flex-1">{todo.title}</span>
+
+      {/* 스킵 상태 배지 */}
+      {isSkipped && (
+        <span className={`flex-shrink-0 text-[10px] px-1 rounded ${
+          todo.skipStatus === 'missed' ? 'bg-error/20 text-error' : 'bg-base-300 text-base-content/50'
+        }`}>
+          {todo.skipStatus === 'missed' ? '놓침' : '필요없었음'}
+        </span>
+      )}
     </div>
   );
 }
