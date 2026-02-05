@@ -40,10 +40,10 @@ export const DeepLinkHandler: React.FC = () => {
         case "todos":
           if (todoId) {
             // 특정 할일로 이동
-            router.push(`/second-brain/todos?id=${todoId}`);
+            router.push(`/todos?id=${todoId}`);
           } else {
             // 할일 목록 페이지로 이동
-            router.push("/second-brain/todos");
+            router.push("/todos");
           }
           break;
 

@@ -1,5 +1,5 @@
 import type { Todo } from '@/entities/todo/Todo';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import type { TimeGap } from '@/lib/timeGapUtils';
 
 // ─── Props ───────────────────────────────────────

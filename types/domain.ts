@@ -1,5 +1,5 @@
 /**
- * Second Brain (GTD + PARA) 시스템 타입 정의
+ * 도메인 (GTD + PARA) 시스템 타입 정의
  *
  * PARA:
  * - Projects: 두 단계 이상의 할일 묶음 (종료일 있음)

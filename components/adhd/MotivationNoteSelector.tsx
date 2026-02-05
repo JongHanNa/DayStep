@@ -2,7 +2,7 @@
 
 import { FileText, Plus } from 'lucide-react';
 
-// 범용 노트 타입 (noteStore.Note와 second-brain.Note 모두 호환)
+// 범용 노트 타입 (noteStore.Note와 domain.Note 모두 호환)
 interface FuelNote {
   id: string;
   title?: string;

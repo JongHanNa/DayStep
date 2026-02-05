@@ -5,8 +5,8 @@
  * @see /patterns/modals/ReactModalSheet/README.md
  *
  * 현재 사용 중:
- * - app/settings/second-brain/areas/page.tsx (영역 편집)
- * - app/settings/second-brain/projects/page.tsx (프로젝트 삭제 확인)
+ * - 영역 편집 모달
+ * - 프로젝트 삭제 확인 모달
  */
 
 'use client';

@@ -80,8 +80,8 @@ export const PRO_FEATURES = [
   {
     id: 'unlimited_notes',
     name: '무제한 노트',
-    description: 'Second Brain 노트 무제한 작성',
-    path: '/second-brain/notes',
+    description: '노트 무제한 작성',
+    path: null,
   },
   {
     id: 'statistics',

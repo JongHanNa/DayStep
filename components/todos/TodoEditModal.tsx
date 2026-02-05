@@ -3,17 +3,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import TodoFormContent from '@/components/todos/TodoFormContent';
-import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
-import { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
-import NoteEditModal from '@/components/second-brain/NoteEditModal';
+import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
+import { type NoteFormData } from '@/components/notes/shared/NoteFormFields';
+import NoteEditModal from '@/components/notes/NoteEditModal';
 import RecurringDeleteDialog from '@/components/todos/RecurringDeleteDialog';
 import RecurringTimeChangeDialog from '@/components/todos/RecurringTimeChangeDialog';
-import LinkedFuelsSection from '@/components/second-brain/shared/LinkedFuelsSection';
+import LinkedFuelsSection from '@/components/todos/shared/LinkedFuelsSection';
 import SubtaskSection from '@/components/todos/SubtaskSection';
 import { useModalStore } from '@/state/stores/modalStore';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { useNoteStore } from '@/state/stores/noteStore';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import type { Todo, Project } from '@/types';
 
 interface TodoEditModalProps {

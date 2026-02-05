@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import TodoFormFields, { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
-import type { Note } from '@/types/second-brain';
+import TodoFormFields, { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
+import type { Note } from '@/types/domain';
 import type { Project } from '@/types';
 
 /**

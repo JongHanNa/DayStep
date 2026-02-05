@@ -9,11 +9,11 @@ import { useProjectStore } from '@/state/stores/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useAuth } from '@/app/context/AuthContext';
 import type { Project, Todo, ProjectStatus } from '@/types';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import { fetchNotesWithJWT } from '@/lib/supabase/notes';
 import SubtaskList from '@/components/todos/SubtaskList';
-import TodoEditModal from '@/components/second-brain/TodoEditModal';
-import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import TodoEditModal from '@/components/todos/TodoEditModal';
+import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
 
 // 기본 색상 팔레트
 const COLOR_PALETTE = [

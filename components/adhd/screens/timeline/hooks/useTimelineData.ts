@@ -7,7 +7,7 @@ import { useProjectStore } from '@/state/stores/projectStore';
 import { useDepartmentStore } from '@/state/stores/departmentStore';
 import { fetchNotesWithJWT } from '@/lib/supabase/notes';
 import { getTodoNotes } from '@/lib/supabase/todo-notes';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import { generateAllRecurrenceInstances, applyCompletionStatusToInstances, isRecurringTodo } from '@/lib/recurrence-utils';
 import { loadCompletionsForDateRange } from '@/lib/supabase/completions';
 import { queryAnytimeTodosWithJWT } from '@/lib/supabase/todo-postpone';

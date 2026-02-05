@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
 import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import type { TimelineItem, ProjectMapValue, DepartmentMapValue } from '../types';
 
 interface TimelineItemCardProps {

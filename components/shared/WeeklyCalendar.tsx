@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, differenceInCalendarDays } from 'date-fns';
 import { useDroppable } from '@dnd-kit/core';
-import type { InboxItem, Project } from '@/types/second-brain';
+import type { InboxItem, Project } from '@/types/domain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import { useAuth } from '@/app/context/AuthContext';
 

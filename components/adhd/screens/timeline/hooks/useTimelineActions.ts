@@ -5,7 +5,7 @@ import { usePomodoroStore } from '@/state/stores/pomodoroStore';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useProjectStore } from '@/state/stores/projectStore';
 import { Todo } from '@/entities/todo/Todo';
-import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
 import { createTodoExclusionWithJWT, deleteTodoExclusionWithJWT } from '@/lib/supabase/todo-exclusions';
 import { postponeTodoInstance, removeAnytimeOverrideWithJWT } from '@/lib/supabase/todo-postpone';

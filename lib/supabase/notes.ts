@@ -3,7 +3,7 @@
  */
 
 import { createWithJWT, updateWithJWT, deleteWithJWT, queryRLSTableWithJWT } from './core';
-import type { Note, CreateNoteInput, UpdateNoteInput } from '@/types/second-brain';
+import type { Note, CreateNoteInput, UpdateNoteInput } from '@/types/domain';
 
 /**
  * JWT 방식으로 노트 조회

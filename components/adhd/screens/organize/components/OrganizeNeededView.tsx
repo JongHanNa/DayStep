@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Inbox, AlertCircle, Trash2, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { addDays, startOfWeek, addWeeks } from 'date-fns';
 import { useTodoStore } from '@/state/stores/todoStore';
-import TodoEditModal from '@/components/second-brain/TodoEditModal';
-import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import TodoEditModal from '@/components/todos/TodoEditModal';
+import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
 import { Todo } from '@/entities/todo/Todo';
 
 interface OrganizeNeededViewProps {

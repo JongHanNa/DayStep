@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { FileText, Search, ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import { Note } from '@/types/second-brain';
+import { Note } from '@/types/domain';
 
 interface CollapsibleNoteSectionProps {
   selectedNoteIds: string[];

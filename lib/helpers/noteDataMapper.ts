@@ -5,13 +5,13 @@
  * 목적: 코드 중복 제거, 일관성 보장, 유지보수성 향상
  */
 
-import type { Note, InboxItem } from '@/types/second-brain';
-import type { NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import type { Note, InboxItem } from '@/types/domain';
+import type { NoteFormData } from '@/components/notes/shared/NoteFormFields';
 
 /**
  * Note → NoteFormData 변환
  *
- * 사용처: 노트 페이지 (app/second-brain/notes/page.tsx)
+ * 사용처: 노트 관련 페이지
  *
  * @param note - DB notes 테이블 데이터
  * @param areas - 영역 목록 (area/resource 구분용, optional)
@@ -51,8 +51,6 @@ export function mapNoteToNoteForm(
  * InboxItem → NoteFormData 변환
  *
  * 사용처: 수집/명료화 페이지
- * - components/second-brain/clarify/NoteInboxList.tsx
- * - app/second-brain/collect (관련 파일들)
  *
  * @param item - InboxItem 데이터 (노트 타입 수집함 아이템)
  * @returns 노트 편집 모달에 전달할 폼 데이터

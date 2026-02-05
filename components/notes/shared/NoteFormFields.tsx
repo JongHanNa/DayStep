@@ -1,10 +1,10 @@
 'use client';
 
-import type { NoteCategory, Note } from '@/types/second-brain';
+import type { NoteCategory, Note } from '@/types/domain';
 import type { Todo } from '@/types';
 import { FileText, StickyNote, Star } from 'lucide-react';
-import CollapsibleNoteSection from './CollapsibleNoteSection';
-import CollapsibleTodoSection from './CollapsibleTodoSection';
+import CollapsibleNoteSection from '@/components/shared/CollapsibleNoteSection';
+import CollapsibleTodoSection from '@/components/shared/CollapsibleTodoSection';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
 
 /**

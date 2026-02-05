@@ -24,7 +24,7 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageWarningBanner } from '@/components/subscription/UsageWarningBanner';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
-import ContentEditorModal from '@/components/second-brain/ContentEditorModal';
+import ContentEditorModal from '@/components/notes/ContentEditorModal';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
 import { FUEL_FIELD_LABELS, FUEL_MESSAGES } from '@/types/fuel';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';

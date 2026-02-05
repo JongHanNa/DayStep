@@ -9,7 +9,7 @@ const LAST_VISITED_ROUTE_KEY = 'last_visited_route';
 
 /**
  * 현재 경로를 Capacitor Preferences에 저장
- * @param route - 저장할 경로 (예: '/second-brain/routines', '/timeline')
+ * @param route - 저장할 경로 (예: '/routines', '/timeline')
  */
 export async function saveLastVisitedRoute(route: string): Promise<void> {
   // Capacitor 환경에서만 동작

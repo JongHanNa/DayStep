@@ -1,6 +1,6 @@
 // Graph View Types
 // Note: originalData uses 'any' to accommodate different type sources
-// (types/index.ts, types/second-brain.ts, entities/todo/Todo.ts)
+// (types/index.ts, types/domain.ts, entities/todo/Todo.ts)
 
 // Node type enum
 export type GraphNodeType = 'area' | 'resource' | 'goal' | 'project' | 'todo' | 'note';

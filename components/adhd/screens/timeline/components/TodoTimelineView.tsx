@@ -6,7 +6,7 @@ import { Clock, ChevronUp, ChevronDown, Zap, Plus, Cloud } from 'lucide-react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useProjectStore } from '@/state/stores/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import TodoEditModal from '@/components/second-brain/TodoEditModal';
+import TodoEditModal from '@/components/todos/TodoEditModal';
 import QuickLogModal from '@/components/adhd/QuickLogModal';
 import PostponeOptionsSheet from '@/components/todos/PostponeOptionsSheet';
 import AnytimeInboxSheet from '@/components/todos/AnytimeInboxSheet';

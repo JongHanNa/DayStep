@@ -3,7 +3,7 @@
  */
 
 import { createWithJWT, updateWithJWT, deleteWithJWT, queryRLSTableWithJWT } from './core';
-import type { AreaResource } from '@/types/second-brain';
+import type { AreaResource } from '@/types/domain';
 
 /**
  * JWT 방식으로 영역/자원 조회

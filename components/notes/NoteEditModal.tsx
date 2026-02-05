@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import NoteFormFields, { type NoteFormData } from '@/components/second-brain/shared/NoteFormFields';
+import NoteFormFields, { type NoteFormData } from '@/components/notes/shared/NoteFormFields';
 import ContentEditorModal from './ContentEditorModal';
-import TodoEditModal from '@/components/second-brain/TodoEditModal';
-import { type TodoFormData } from '@/components/second-brain/shared/TodoFormFields';
+import TodoEditModal from '@/components/todos/TodoEditModal';
+import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
-import { useNoteStore } from '@/state/stores/secondBrain/noteStore';
+import { useNoteStore } from '@/state/stores/noteStore';
 import { useAuth } from '@/app/context/AuthContext';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import type { Todo } from '@/types';
 
 interface NoteEditModalProps {
@@ -110,7 +110,7 @@ export default function NoteEditModal({
     }
 
     // ✅ DB만 업데이트, 실시간 입력은 에디터가 관리
-    await updateNote(note.id, user.id, { content });
+    await updateNote({ id: note.id, content });
 
     // ❌ onChange 호출 제거 - 자동 저장 후 오래된 content로 상태 재설정 방지
     // onChange({ ...note, content });

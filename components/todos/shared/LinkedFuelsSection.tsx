@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X, Plus, FileText } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
 
 interface LinkedFuelsSectionProps {

@@ -1,4 +1,4 @@
-import { Project } from '@/types/second-brain';
+import { Project } from '@/types/domain';
 
 /**
  * 프로젝트 수집함 필터

@@ -5,9 +5,9 @@ import { Star, StickyNote, CheckCircle2, Sparkles, Target, Palette, Repeat, Cale
 import { toast } from 'sonner';
 import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import type { Note } from '@/types/second-brain';
+import type { Note } from '@/types/domain';
 import type { RecurrencePattern, Project } from '@/types';
-import CollapsibleNoteSection from './CollapsibleNoteSection';
+import CollapsibleNoteSection from '@/components/shared/CollapsibleNoteSection';
 import CollapsibleProjectSection from './CollapsibleProjectSection';
 import RecurrenceSettings from '@/components/todos/form/RecurrenceSettings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
