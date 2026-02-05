@@ -1,14 +1,18 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
 
 interface ReluctantTasksPanelProps {
   todos: Todo[];
+  onEditClick?: (todo: Todo) => void;
+  onToggle?: (todo: Todo) => void;
+  onAddClick?: () => void;
 }
 
-export function ReluctantTasksPanel({ todos }: ReluctantTasksPanelProps) {
+export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onAddClick }: ReluctantTasksPanelProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'reluctant-tasks',
     data: { type: 'reluctant' },
@@ -24,6 +28,15 @@ export function ReluctantTasksPanel({ todos }: ReluctantTasksPanelProps) {
       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
         <span>💪</span>
         하기 싫어도 해야 할 일
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="btn btn-ghost btn-xs btn-circle ml-auto"
+            aria-label="하기싫어도 할일 추가"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
       </h3>
 
       <div className="space-y-1 min-h-[40px]">
@@ -33,7 +46,7 @@ export function ReluctantTasksPanel({ todos }: ReluctantTasksPanelProps) {
           </div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} />
+            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} onEditClick={onEditClick} onToggle={onToggle} />
           ))
         )}
       </div>

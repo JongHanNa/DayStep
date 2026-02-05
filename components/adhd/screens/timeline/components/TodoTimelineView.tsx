@@ -255,6 +255,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
         <DailyPlannerView
           userId={userId}
           date={nav.navigatedMonth}
+          timelineItems={nav.timelineItems}
+          onEditClick={actions.handleEditClick}
+          onToggleComplete={actions.handleToggleComplete}
+          onAddTodo={actions.handleAddTodoWithPrefill}
         />
         {renderModals()}
       </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
@@ -10,9 +11,12 @@ interface TimeSlotSectionProps {
   icon: string;
   todos: Todo[];
   accentColor: string;
+  onEditClick?: (todo: Todo) => void;
+  onToggle?: (todo: Todo) => void;
+  onAddClick?: () => void;
 }
 
-export function TimeSlotSection({ id, label, icon, todos, accentColor }: TimeSlotSectionProps) {
+export function TimeSlotSection({ id, label, icon, todos, accentColor, onEditClick, onToggle, onAddClick }: TimeSlotSectionProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: { type: 'time-slot', period: id.replace('schedule-', '') },
@@ -30,6 +34,15 @@ export function TimeSlotSection({ id, label, icon, todos, accentColor }: TimeSlo
         <span className="text-base">{icon}</span>
         <span className={`text-sm font-semibold ${accentColor}`}>{label}</span>
         <span className="text-xs text-base-content/40 ml-auto">{todos.length}개</span>
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="btn btn-ghost btn-xs btn-circle"
+            aria-label={`${label} 할일 추가`}
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* 할일 목록 */}
@@ -45,7 +58,7 @@ export function TimeSlotSection({ id, label, icon, todos, accentColor }: TimeSlo
               return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
             })
             .map(todo => (
-              <DraggableTodoChip key={`ts-${todo.id}`} todo={todo} showTime />
+              <DraggableTodoChip key={`ts-${todo.id}`} todo={todo} showTime onEditClick={onEditClick} onToggle={onToggle} />
             ))
         )}
       </div>

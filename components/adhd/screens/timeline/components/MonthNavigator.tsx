@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Calendar, Plus, Check } from 'lucide-react';
-import { format, addMonths, subMonths } from 'date-fns';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Check } from 'lucide-react';
+import { format, addMonths, subMonths, addDays, subDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { MonthPickerPopover } from './MonthPickerPopover';
 import {
@@ -39,14 +39,14 @@ export function MonthNavigator({
 }: MonthNavigatorProps) {
   const [showPopover, setShowPopover] = useState(false);
 
-  // 이전 달로 이동
+  // 이전 달/일로 이동
   const handlePrevMonth = () => {
-    onMonthChange(subMonths(currentDate, 1));
+    onMonthChange(viewMode === 'daily' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
   };
 
-  // 다음 달로 이동
+  // 다음 달/일로 이동
   const handleNextMonth = () => {
-    onMonthChange(addMonths(currentDate, 1));
+    onMonthChange(viewMode === 'daily' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
   };
 
   // 월 선택 팝오버에서 선택
@@ -56,9 +56,8 @@ export function MonthNavigator({
 
   return (
     <div className="relative flex items-center justify-between px-4 py-3 bg-base-100 border-b border-base-300">
-      {/* 좌측: 캘린더 아이콘 + 월 표시 */}
+      {/* 좌측: 월 표시 */}
       <div className="flex items-center gap-2">
-        <Calendar className="w-5 h-5 text-base-content/60" />
         <button
           onClick={() => setShowPopover(!showPopover)}
           className="flex items-center gap-1 text-lg font-semibold hover:text-primary transition-colors"
@@ -116,7 +115,7 @@ export function MonthNavigator({
         <button
           onClick={handlePrevMonth}
           className="btn btn-ghost btn-sm btn-circle"
-          aria-label="이전 달"
+          aria-label={viewMode === 'daily' ? '이전 날' : '이전 달'}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -129,7 +128,7 @@ export function MonthNavigator({
         <button
           onClick={handleNextMonth}
           className="btn btn-ghost btn-sm btn-circle"
-          aria-label="다음 달"
+          aria-label={viewMode === 'daily' ? '다음 날' : '다음 달'}
         >
           <ChevronRight className="w-4 h-4" />
         </button>

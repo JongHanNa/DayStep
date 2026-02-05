@@ -28,17 +28,22 @@ import { GratitudePanel } from './GratitudePanel';
 import { DayReflectionBar } from './DayReflectionBar';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
+import type { TimelineItem } from '../../types';
 
 interface DailyPlannerViewProps {
   userId: string;
   date: Date;
+  timelineItems: TimelineItem[];
+  onEditClick?: (item: TimelineItem) => void;
+  onToggleComplete?: (item: TimelineItem) => void;
+  onAddTodo?: (prefillStart?: Date, prefillEnd?: Date, mode?: 'detailed' | 'new') => void;
 }
 
-export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
+export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
-  const todos = useTodoStore(s => s.todos);
 
   const {
+    todayTodos,
     morningTodos,
     afternoonTodos,
     eveningTodos,
@@ -47,7 +52,7 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
     reflection,
     upsertReflection,
     dateStr,
-  } = useDailyPlannerData({ userId, date });
+  } = useDailyPlannerData({ userId, date, timelineItems });
 
   // Mobile swipe state
   const [mobilePage, setMobilePage] = useState(0);
@@ -73,10 +78,10 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const todoId = (event.active.data.current as any)?.todoId;
     if (todoId) {
-      const todo = todos.find((t: Todo) => t.id === todoId);
+      const todo = todayTodos.find((t: Todo) => t.id === todoId);
       if (todo) setActiveTodo(todo);
     }
-  }, [todos]);
+  }, [todayTodos]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     setActiveTodo(null);
@@ -87,9 +92,19 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
     const dropData = over.data.current as any;
     if (!todoId || !dropData) return;
 
+    // 반복 인스턴스인지 확인
+    const timelineItem = timelineItems.find(i => i.id === todoId);
+    const isRecurrenceInstance = timelineItem?.isRecurrenceInstance;
+    const dbId = isRecurrenceInstance ? timelineItem?.recurrenceSourceId : todoId;
+
+    if (!dbId) return;
+
     try {
       switch (dropData.type) {
         case 'time-slot': {
+          // 반복 인스턴스는 시간 변경 불가
+          if (isRecurrenceInstance) break;
+
           const defaultTimes: Record<string, string> = {
             morning: '09:00',
             afternoon: '13:00',
@@ -100,21 +115,21 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
           const startDate = new Date(date);
           startDate.setHours(parseInt(h), parseInt(m), 0, 0);
 
-          await updateTodo(todoId, {
+          await updateTodo(dbId, {
             start_time: startDate.toISOString(),
             schedule_type: 'timed',
           });
           break;
         }
         case 'matrix': {
-          await updateTodo(todoId, {
+          await updateTodo(dbId, {
             importance: dropData.importance,
             urgency: dropData.urgency,
           });
           break;
         }
         case 'reluctant': {
-          await updateTodo(todoId, {
+          await updateTodo(dbId, {
             is_reluctant_must_do: true,
           });
           break;
@@ -123,7 +138,57 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
     } catch (error) {
       console.error('드래그 앤 드롭 업데이트 실패:', error);
     }
-  }, [date, updateTodo]);
+  }, [date, updateTodo, timelineItems]);
+
+  // 칩 클릭 → TimelineItem 찾아서 편집 콜백 호출
+  const handleChipEditClick = useCallback((todo: Todo) => {
+    const item = timelineItems.find(i => i.id === todo.id);
+    if (item && onEditClick) onEditClick(item);
+  }, [timelineItems, onEditClick]);
+
+  // 칩 토글 → TimelineItem 찾아서 토글 콜백 호출
+  const handleChipToggle = useCallback((todo: Todo) => {
+    const item = timelineItems.find(i => i.id === todo.id);
+    if (item && onToggleComplete) onToggleComplete(item);
+  }, [timelineItems, onToggleComplete]);
+
+  // 섹션별 추가 핸들러
+  const handleAddMorning = useCallback(() => {
+    if (!onAddTodo) return;
+    const start = new Date(date);
+    start.setHours(9, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(10, 0, 0, 0);
+    onAddTodo(start, end, 'new');
+  }, [date, onAddTodo]);
+
+  const handleAddAfternoon = useCallback(() => {
+    if (!onAddTodo) return;
+    const start = new Date(date);
+    start.setHours(13, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(14, 0, 0, 0);
+    onAddTodo(start, end, 'new');
+  }, [date, onAddTodo]);
+
+  const handleAddEvening = useCallback(() => {
+    if (!onAddTodo) return;
+    const start = new Date(date);
+    start.setHours(18, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(19, 0, 0, 0);
+    onAddTodo(start, end, 'new');
+  }, [date, onAddTodo]);
+
+  const handleAddMatrix = useCallback(() => {
+    if (!onAddTodo) return;
+    onAddTodo(undefined, undefined, 'new');
+  }, [onAddTodo]);
+
+  const handleAddReluctant = useCallback(() => {
+    if (!onAddTodo) return;
+    onAddTodo(undefined, undefined, 'new');
+  }, [onAddTodo]);
 
   // Reflection handlers
   const handleReflectionUpdate = useCallback((field: string, value: any) => {
@@ -141,7 +206,7 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
   }, [mobilePage]);
 
   // 날짜 표시
-  const dateLabel = format(date, 'M월 d일 (EEEE)', { locale: ko });
+  const dateLabel = format(date, 'd일 (EEEE)', { locale: ko });
 
   // ─── 시간표 섹션 (Page 1 for mobile) ───
   const scheduleSection = (
@@ -150,6 +215,11 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
         morningTodos={morningTodos}
         afternoonTodos={afternoonTodos}
         eveningTodos={eveningTodos}
+        onEditClick={handleChipEditClick}
+        onToggle={handleChipToggle}
+        onAddMorning={handleAddMorning}
+        onAddAfternoon={handleAddAfternoon}
+        onAddEvening={handleAddEvening}
       />
     </div>
   );
@@ -157,8 +227,18 @@ export function DailyPlannerView({ userId, date }: DailyPlannerViewProps) {
   // ─── 플래너 섹션 (Page 2 for mobile) ───
   const plannerSection = (
     <div className="space-y-3">
-      <PriorityMatrixPanel todos={matrixTodos} />
-      <ReluctantTasksPanel todos={reluctantTodos} />
+      <PriorityMatrixPanel
+        todos={matrixTodos}
+        onEditClick={handleChipEditClick}
+        onToggle={handleChipToggle}
+        onAddClick={handleAddMatrix}
+      />
+      <ReluctantTasksPanel
+        todos={reluctantTodos}
+        onEditClick={handleChipEditClick}
+        onToggle={handleChipToggle}
+        onAddClick={handleAddReluctant}
+      />
       <RewardPanel
         value={reflection?.reward || ''}
         onChange={v => handleReflectionUpdate('reward', v)}

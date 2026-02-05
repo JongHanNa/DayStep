@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
@@ -10,9 +11,11 @@ interface QuadrantProps {
   sublabel: string;
   todos: Todo[];
   bgColor: string;
+  onEditClick?: (todo: Todo) => void;
+  onToggle?: (todo: Todo) => void;
 }
 
-function Quadrant({ id, label, sublabel, todos, bgColor }: QuadrantProps) {
+function Quadrant({ id, label, sublabel, todos, bgColor, onEditClick, onToggle }: QuadrantProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: {
@@ -38,7 +41,7 @@ function Quadrant({ id, label, sublabel, todos, bgColor }: QuadrantProps) {
           <div className="text-[10px] text-base-content/25 text-center py-2">드래그</div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} />
+            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} onEditClick={onEditClick} onToggle={onToggle} />
           ))
         )}
       </div>
@@ -48,9 +51,12 @@ function Quadrant({ id, label, sublabel, todos, bgColor }: QuadrantProps) {
 
 interface PriorityMatrixPanelProps {
   todos: Todo[];
+  onEditClick?: (todo: Todo) => void;
+  onToggle?: (todo: Todo) => void;
+  onAddClick?: () => void;
 }
 
-export function PriorityMatrixPanel({ todos }: PriorityMatrixPanelProps) {
+export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }: PriorityMatrixPanelProps) {
   const q1 = todos.filter((t: any) => t.importance === true && t.urgency === true);
   const q2 = todos.filter((t: any) => t.importance === false && t.urgency === true);
   const q3 = todos.filter((t: any) => t.importance === true && t.urgency === false);
@@ -61,6 +67,15 @@ export function PriorityMatrixPanel({ todos }: PriorityMatrixPanelProps) {
       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
         <span>🎯</span>
         우선순위
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="btn btn-ghost btn-xs btn-circle ml-auto"
+            aria-label="우선순위 할일 추가"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
       </h3>
 
       {/* 축 라벨 */}
@@ -77,6 +92,8 @@ export function PriorityMatrixPanel({ todos }: PriorityMatrixPanelProps) {
           sublabel="중요O 긴급O"
           todos={q1}
           bgColor="bg-error/5"
+          onEditClick={onEditClick}
+          onToggle={onToggle}
         />
         <Quadrant
           id="matrix-q2"
@@ -84,6 +101,8 @@ export function PriorityMatrixPanel({ todos }: PriorityMatrixPanelProps) {
           sublabel="중요X 긴급O"
           todos={q2}
           bgColor="bg-warning/5"
+          onEditClick={onEditClick}
+          onToggle={onToggle}
         />
         <Quadrant
           id="matrix-q3"
@@ -91,6 +110,8 @@ export function PriorityMatrixPanel({ todos }: PriorityMatrixPanelProps) {
           sublabel="중요O 긴급X"
           todos={q3}
           bgColor="bg-info/5"
+          onEditClick={onEditClick}
+          onToggle={onToggle}
         />
         <Quadrant
           id="matrix-q4"
@@ -98,6 +119,8 @@ export function PriorityMatrixPanel({ todos }: PriorityMatrixPanelProps) {
           sublabel="중요X 긴급X"
           todos={q4}
           bgColor="bg-base-100"
+          onEditClick={onEditClick}
+          onToggle={onToggle}
         />
       </div>
     </div>

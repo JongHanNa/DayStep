@@ -5,13 +5,15 @@ import { format } from 'date-fns';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useDailyReflectionStore } from '@/state/stores/dailyReflectionStore';
 import type { Todo } from '@/entities/todo/Todo';
+import { type TimelineItem, timelineItemToTodo } from '../types';
 
 interface UseDailyPlannerDataProps {
   userId: string;
   date: Date;
+  timelineItems: TimelineItem[];
 }
 
-export function useDailyPlannerData({ userId, date }: UseDailyPlannerDataProps) {
+export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPlannerDataProps) {
   const todos = useTodoStore(s => s.todos);
   const fetchReflection = useDailyReflectionStore(s => s.fetchReflection);
   const getReflection = useDailyReflectionStore(s => s.getReflection);
@@ -28,14 +30,16 @@ export function useDailyPlannerData({ userId, date }: UseDailyPlannerDataProps) 
 
   const reflection = getReflection(dateStr);
 
-  // 오늘 날짜의 할일 필터링
+  // timelineItems 기반 오늘 할일 필터링 (반복 인스턴스 포함)
   const todayTodos = useMemo(() => {
-    return todos.filter((todo: Todo) => {
-      if (!todo.startTime) return false;
-      const todoDate = format(new Date(todo.startTime), 'yyyy-MM-dd');
-      return todoDate === dateStr;
-    });
-  }, [todos, dateStr]);
+    return timelineItems
+      .filter((item) => {
+        if (!item.startTime) return false;
+        if (item.isSkipped || item.exclusionReason === 'deleted') return false;
+        return format(item.startTime, 'yyyy-MM-dd') === dateStr;
+      })
+      .map(timelineItemToTodo);
+  }, [timelineItems, dateStr]);
 
   // 시간대별 그룹핑 (KST 기준)
   const morningTodos = useMemo(() => {

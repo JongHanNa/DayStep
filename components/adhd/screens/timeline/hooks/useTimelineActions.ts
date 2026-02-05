@@ -497,6 +497,19 @@ export function useTimelineActions({
     setIsQuickLogModalOpen(true);
   }, []);
 
+  // 섹션별 할일 추가 핸들러 (DailyPlanner용)
+  const handleAddTodoWithPrefill = useCallback((
+    prefillStart?: Date,
+    prefillEnd?: Date,
+    mode?: 'detailed' | 'new'
+  ) => {
+    setQuickLogPrefillTime(
+      prefillStart && prefillEnd ? { start: prefillStart, end: prefillEnd } : null
+    );
+    setQuickLogInitialMode(mode ?? 'new');
+    setIsQuickLogModalOpen(true);
+  }, []);
+
   // 할일 추가 핸들러
   const handleAddTodo = useCallback(() => {
     const startDate = startOfMonth(navigatedMonth);
@@ -761,6 +774,7 @@ export function useTimelineActions({
     handlePostpone,
     handleTimeGapClick,
     handleAddTodo,
+    handleAddTodoWithPrefill,
     handleCreateProject,
     handleProjectImmediateSave,
     handleEditSave,

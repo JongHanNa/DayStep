@@ -1,4 +1,4 @@
-import type { Todo } from '@/entities/todo/Todo';
+import { Todo } from '@/entities/todo/Todo';
 import type { Note } from '@/types/domain';
 import type { TimeGap } from '@/lib/timeGapUtils';
 
@@ -64,6 +64,67 @@ export interface DepartmentMapValue {
 
 // ─── 뷰 모드 ───
 export type TimelineViewMode = 'agenda' | 'daily';
+
+// ─── TimelineItem → Todo 변환 유틸 ───
+export function timelineItemToTodo(item: TimelineItem): Todo {
+  // 비반복 인스턴스는 원본 Todo를 그대로 사용
+  if (item.originalTodo && !item.isRecurrenceInstance) {
+    return item.originalTodo;
+  }
+
+  // 반복 인스턴스: 원본 Todo 기반 + 인스턴스별 필드 오버라이드
+  if (item.originalTodo && item.isRecurrenceInstance) {
+    const orig = item.originalTodo;
+    return Todo.fromDatabase({
+      id: item.id,
+      user_id: orig.userId,
+      title: item.title,
+      completed: item.completed,
+      order_index: item.orderIndex,
+      created_at: item.createdAt?.toISOString(),
+      updated_at: orig.updatedAt?.toISOString(),
+      priority: orig.priority,
+      icon: item.icon ?? orig.icon,
+      color: item.color ?? orig.color,
+      schedule_type: item.scheduleType,
+      start_time: item.startTime?.toISOString() ?? null,
+      end_time: item.endTime?.toISOString() ?? null,
+      recurrence_pattern: orig.recurrencePattern,
+      recurrence_end_date: orig.recurrenceEndDate?.toISOString() ?? null,
+      recurrence_count: orig.recurrenceCount,
+      recurrence_interval: orig.recurrenceInterval,
+      recurrence_days_of_week: orig.recurrenceDaysOfWeek,
+      recurrence_day_of_month: orig.recurrenceDayOfMonth,
+      parent_todo_id: orig.parentTodoId,
+      project_id: orig.projectId,
+      goal_id: orig.goalId,
+      area_id: orig.areaId,
+      resource_id: orig.resourceId,
+      department_id: orig.departmentId,
+      importance: orig.importance,
+      urgency: orig.urgency,
+      is_reluctant_must_do: orig.isReluctantMustDo,
+      skip_status: item.skipStatus ?? null,
+    });
+  }
+
+  // originalTodo가 없는 경우 (안전장치)
+  return Todo.fromDatabase({
+    id: item.id,
+    title: item.title,
+    completed: item.completed,
+    order_index: item.orderIndex,
+    created_at: item.createdAt?.toISOString(),
+    schedule_type: item.scheduleType,
+    start_time: item.startTime?.toISOString() ?? null,
+    end_time: item.endTime?.toISOString() ?? null,
+    icon: item.icon,
+    color: item.color,
+    importance: null,
+    urgency: null,
+    is_reluctant_must_do: false,
+  });
+}
 
 // ─── 상수 ───
 export const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
