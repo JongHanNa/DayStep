@@ -25,12 +25,15 @@ export default function ADHDSidebar() {
   const currentSubView = useADHDStore((state) => state.currentSubView);
   const { goHome, goScreen } = useADHDNavigation();
 
+  // timeline은 고정 Clock 버튼이 있으므로 서브뷰 아이콘 영역에서 제외
+  const effectiveSubView = currentSubView === 'timeline' ? null : currentSubView;
+
   // 중앙 아이콘 결정: 서브뷰면 해당 아이콘, 목차면 Menu
-  const CenterIcon = currentSubView
-    ? SUBVIEW_CONFIG[currentSubView]?.icon || Menu
+  const CenterIcon = effectiveSubView
+    ? SUBVIEW_CONFIG[effectiveSubView]?.icon || Menu
     : Menu;
-  const centerLabel = currentSubView
-    ? SUBVIEW_CONFIG[currentSubView]?.label || '목차'
+  const centerLabel = effectiveSubView
+    ? SUBVIEW_CONFIG[effectiveSubView]?.label || '목차'
     : '목차';
 
   return (
@@ -71,13 +74,13 @@ export default function ADHDSidebar() {
       {/* 햄버거 또는 서브뷰 아이콘 (항상 활성화) */}
       <div className="mt-2">
         <button
-          onClick={currentSubView ? undefined : goHome}
+          onClick={effectiveSubView ? undefined : goHome}
           className={`group w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 relative ${
-            currentSubView ? 'cursor-default' : 'hover:bg-base-300'
+            effectiveSubView ? 'cursor-default' : 'hover:bg-base-300'
           }`}
           aria-label={centerLabel}
         >
-          {currentSubView ? (
+          {effectiveSubView ? (
             <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center">
               <CenterIcon className="w-8 h-8 text-primary" />
             </div>
