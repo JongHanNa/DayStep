@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Menu } from 'lucide-react';
+import { Home, Menu, Clock } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
@@ -23,7 +23,7 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
  */
 export default function ADHDSidebar() {
   const currentSubView = useADHDStore((state) => state.currentSubView);
-  const { goHome } = useADHDNavigation();
+  const { goHome, goScreen } = useADHDNavigation();
 
   // 중앙 아이콘 결정: 서브뷰면 해당 아이콘, 목차면 Menu
   const CenterIcon = currentSubView
@@ -37,6 +37,23 @@ export default function ADHDSidebar() {
     <aside className="fixed left-0 top-0 h-full w-16 bg-base-200 border-r border-base-300 flex flex-col items-center py-4 z-30">
       {/* 최상단: 프로필 아바타 + 드롭다운 */}
       <ADHDProfileMenu variant="sidebar" />
+
+      {/* 하루 돌아보기 (Clock 아이콘) */}
+      <button
+        onClick={() => goScreen('timeline')}
+        className={`mt-2 w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 ${
+          currentSubView === 'timeline'
+            ? 'text-primary bg-primary/10'
+            : 'text-base-content/60 hover:bg-base-300'
+        }`}
+        aria-label="하루 돌아보기"
+      >
+        <Clock className="w-8 h-8" />
+        {/* 툴팁 */}
+        <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium bg-base-300 text-base-content rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+          하루 돌아보기
+        </span>
+      </button>
 
       {/* 홈 아이콘 (고정, 비활성화 상태) */}
       <button

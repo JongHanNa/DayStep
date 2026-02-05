@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, Menu } from 'lucide-react';
+import { Home, Menu, Clock } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
@@ -24,7 +24,7 @@ import { SUBVIEW_CONFIG } from './subviewConfig';
  */
 export default function ADHDBottomTabBar() {
   const currentSubView = useADHDStore((state) => state.currentSubView);
-  const { goHome } = useADHDNavigation();
+  const { goHome, goScreen } = useADHDNavigation();
   const [showLabel, setShowLabel] = useState(false);
 
   // 중앙 버튼 클릭 핸들러
@@ -49,14 +49,29 @@ export default function ADHDBottomTabBar() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 h-16 bg-base-200 border-t border-base-300 flex items-center px-4 z-30 safe-area-bottom">
-      {/* 왼쪽 영역: 홈 아이콘 (항상 고정, 비활성화 상태) */}
-      <div className="flex-1 flex justify-start">
+      {/* 홈 아이콘 (항상 고정, 비활성화 상태) */}
+      <div className="flex-1 flex justify-center">
         <button
           onClick={goHome}
           className="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 text-base-content/60 active:bg-base-300"
           aria-label="홈"
         >
           <Home className="w-7 h-7" />
+        </button>
+      </div>
+
+      {/* 하루 돌아보기 (Clock 아이콘) */}
+      <div className="flex-1 flex justify-center">
+        <button
+          onClick={() => goScreen('timeline')}
+          className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
+            currentSubView === 'timeline'
+              ? 'text-primary bg-primary/10'
+              : 'text-base-content/60 active:bg-base-300'
+          }`}
+          aria-label="하루 돌아보기"
+        >
+          <Clock className="w-7 h-7" />
         </button>
       </div>
 
@@ -91,8 +106,8 @@ export default function ADHDBottomTabBar() {
         )}
       </div>
 
-      {/* 오른쪽 영역: 프로필 아바타 + 드롭다운 */}
-      <div className="flex-1 flex justify-end">
+      {/* 프로필 아바타 + 드롭다운 */}
+      <div className="flex-1 flex justify-center">
         <ADHDProfileMenu variant="tabbar" />
       </div>
     </nav>
