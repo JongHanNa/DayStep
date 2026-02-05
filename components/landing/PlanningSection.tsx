@@ -26,7 +26,7 @@ const features = [
   },
 ];
 
-export default function AntiProcrastinationSection() {
+export default function PlanningSection() {
   const fadeInVariants = fadeInUpVariants(80);
   const bidirectionalViewportOptions = getBidirectionalViewportOptions(0.2);
   const staggerVariants = staggerFadeInUpVariants(60, 0.15);

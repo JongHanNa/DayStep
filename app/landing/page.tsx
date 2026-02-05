@@ -18,7 +18,7 @@ import dynamic from 'next/dynamic';
 import LandingNav from '@/components/layout/LandingNav';
 import StatsSection from '@/components/landing/StatsSection';
 import SystemSection from '@/components/landing/SystemSection';
-import AntiProcrastinationSection from '@/components/landing/AntiProcrastinationSection';
+import PlanningSection from '@/components/landing/PlanningSection';
 // TODO: 실제 사용자 후기 수집 후 활성화 예정
 // import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import FAQSection from '@/components/landing/FAQSection';
@@ -349,8 +349,8 @@ export default function LandingPage() {
       {/* System Section */}
       <SystemSection />
 
-      {/* Anti-Procrastination Section - 미룸방지 기능 소개 */}
-      <AntiProcrastinationSection />
+      {/* Planning Section - 계획 세우기 기능 소개 */}
+      <PlanningSection />
 
       {/*
         TODO: 실제 사용자 후기 수집 후 활성화 예정

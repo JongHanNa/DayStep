@@ -18,7 +18,7 @@ export { GratitudeScreen } from './gratitude';
 export { TimelineScreen } from './timeline';
 export { ActivityScreen } from './activity';
 
-// 미룸방지 (Project) 그룹
+// 계획 세우기 (Project) 그룹
 export { BannerScreen } from './banner';
 export { ExecuteScreen } from './execute';
 export { OrganizeScreen } from './organize';

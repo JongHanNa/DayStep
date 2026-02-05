@@ -249,7 +249,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   },
   {
     id: 'project',
-    title: '미룸방지',
+    title: '계획 세우기',
     screenIds: ['banner', 'execute', 'organize', 'ai-plan', 'ai-chat', 'guide'],
   },
 ];
@@ -377,7 +377,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
   },
   project: {
     id: 'project',
-    title: '미룸방지',
+    title: '계획 세우기',
     items: [
       {
         id: 'banner',
