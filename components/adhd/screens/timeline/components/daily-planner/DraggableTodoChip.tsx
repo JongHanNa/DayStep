@@ -6,6 +6,16 @@ import { CSS } from '@dnd-kit/utilities';
 import { CheckCircle2, Circle, MinusCircle, XCircle } from 'lucide-react';
 import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { unifiedIconsCollection } from '@/lib/icon-collection';
+
+// 아이콘 이름을 Lucide 컴포넌트로 변환
+const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null => {
+  if (!iconName) return null;
+  const capitalizedName = iconName.charAt(0).toUpperCase() + iconName.slice(1);
+  const iconKey = `lucide-${capitalizedName}`;
+  const iconData = unifiedIconsCollection[iconKey];
+  return iconData?.component || null;
+};
 
 interface DraggableTodoChipProps {
   todo: Todo;
@@ -92,9 +102,10 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
       )}
 
       {/* 아이콘 */}
-      {todo.icon && (
-        <span className="flex-shrink-0 text-sm">{todo.icon}</span>
-      )}
+      {todo.icon && (() => {
+        const TodoIcon = getTodoIcon(todo.icon);
+        return TodoIcon ? <TodoIcon className="w-4 h-4 flex-shrink-0" /> : null;
+      })()}
 
       {/* 제목 */}
       <span className="truncate flex-1">{todo.title}</span>

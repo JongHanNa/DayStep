@@ -1,5 +1,6 @@
 'use client';
 
+import { Sunrise, Sun, Moon } from 'lucide-react';
 import { TimeSlotSection } from './TimeSlotSection';
 import type { Todo } from '@/entities/todo/Todo';
 
@@ -29,7 +30,7 @@ export function TimeSchedulePanel({
       <TimeSlotSection
         id="schedule-morning"
         label="오전"
-        icon="🌅"
+        icon={<Sunrise className="w-4 h-4 text-amber-600" />}
         todos={morningTodos}
         accentColor="text-amber-600"
         onEditClick={onEditClick}
@@ -39,7 +40,7 @@ export function TimeSchedulePanel({
       <TimeSlotSection
         id="schedule-afternoon"
         label="오후"
-        icon="☀️"
+        icon={<Sun className="w-4 h-4 text-orange-600" />}
         todos={afternoonTodos}
         accentColor="text-orange-600"
         onEditClick={onEditClick}
@@ -49,7 +50,7 @@ export function TimeSchedulePanel({
       <TimeSlotSection
         id="schedule-evening"
         label="저녁"
-        icon="🌙"
+        icon={<Moon className="w-4 h-4 text-indigo-600" />}
         todos={eveningTodos}
         accentColor="text-indigo-600"
         onEditClick={onEditClick}

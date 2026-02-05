@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, Dumbbell } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
@@ -26,7 +26,7 @@ export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onAddClick }
       }`}
     >
       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-        <span>💪</span>
+        <Dumbbell className="w-4 h-4" />
         하기 싫어도 해야 할 일
         {onAddClick && (
           <button

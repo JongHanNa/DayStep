@@ -8,7 +8,7 @@ import type { Todo } from '@/entities/todo/Todo';
 interface TimeSlotSectionProps {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   todos: Todo[];
   accentColor: string;
   onEditClick?: (todo: Todo) => void;
@@ -31,7 +31,7 @@ export function TimeSlotSection({ id, label, icon, todos, accentColor, onEditCli
     >
       {/* 헤더 */}
       <div className={`flex items-center gap-2 px-3 py-2 border-b border-base-300`}>
-        <span className="text-base">{icon}</span>
+        {icon}
         <span className={`text-sm font-semibold ${accentColor}`}>{label}</span>
         <span className="text-xs text-base-content/40 ml-auto">{todos.length}개</span>
         {onAddClick && (

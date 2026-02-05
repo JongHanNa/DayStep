@@ -1,13 +1,13 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, Target, Flame, Zap, ClipboardList, MessageCircle } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
 
 interface QuadrantProps {
   id: string;
-  label: string;
+  label: React.ReactNode;
   sublabel: string;
   todos: Todo[];
   bgColor: string;
@@ -65,7 +65,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
   return (
     <div className="rounded-lg border border-base-300 bg-base-200 p-3">
       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-        <span>🎯</span>
+        <Target className="w-4 h-4" />
         우선순위
         {onAddClick && (
           <button
@@ -88,7 +88,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
       <div className="grid grid-cols-2 gap-2">
         <Quadrant
           id="matrix-q1"
-          label="🔥 지금!"
+          label={<><Flame className="w-3.5 h-3.5 text-error inline" /> 지금!</>}
           sublabel="중요O 긴급O"
           todos={q1}
           bgColor="bg-error/5"
@@ -97,7 +97,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
         />
         <Quadrant
           id="matrix-q2"
-          label="⚡ 빠르게"
+          label={<><Zap className="w-3.5 h-3.5 text-warning inline" /> 빠르게</>}
           sublabel="중요X 긴급O"
           todos={q2}
           bgColor="bg-warning/5"
@@ -106,7 +106,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
         />
         <Quadrant
           id="matrix-q3"
-          label="📋 계획"
+          label={<><ClipboardList className="w-3.5 h-3.5 text-info inline" /> 계획</>}
           sublabel="중요O 긴급X"
           todos={q3}
           bgColor="bg-info/5"
@@ -115,7 +115,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
         />
         <Quadrant
           id="matrix-q4"
-          label="💭 나중에"
+          label={<><MessageCircle className="w-3.5 h-3.5 text-base-content/50 inline" /> 나중에</>}
           sublabel="중요X 긴급X"
           todos={q4}
           bgColor="bg-base-100"

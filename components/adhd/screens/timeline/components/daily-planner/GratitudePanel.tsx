@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { Heart } from 'lucide-react';
 
 interface GratitudePanelProps {
   values: string[];
@@ -36,7 +37,7 @@ export function GratitudePanel({ values, onChange }: GratitudePanelProps) {
   return (
     <div className="rounded-lg border border-base-300 bg-base-200 p-3">
       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-        <span>🙏</span>
+        <Heart className="w-4 h-4" />
         오늘의 감사
       </h3>
       <div className="space-y-1.5">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { Gift } from 'lucide-react';
 
 interface RewardPanelProps {
   value: string;
@@ -26,7 +27,7 @@ export function RewardPanel({ value, onChange }: RewardPanelProps) {
   return (
     <div className="rounded-lg border border-base-300 bg-base-200 p-3">
       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-        <span>🎁</span>
+        <Gift className="w-4 h-4" />
         보상
       </h3>
       <input
