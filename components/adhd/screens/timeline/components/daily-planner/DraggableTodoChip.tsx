@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Check } from 'lucide-react';
+import { CheckCircle2, Circle, MinusCircle, XCircle } from 'lucide-react';
 import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
 
@@ -71,11 +71,17 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
           }
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
-          ${todo.completed ? 'bg-primary border-primary text-primary-content' : 'border-base-content/30 hover:border-primary'}
-        `}
+        className="flex-shrink-0 flex items-center justify-center"
       >
-        {todo.completed && <Check className="w-3 h-3" />}
+        {isSkipped ? (
+          todo.skipStatus === 'missed'
+            ? <XCircle className="w-5 h-5 text-error" />
+            : <MinusCircle className="w-5 h-5 text-base-content/50" />
+        ) : todo.completed ? (
+          <CheckCircle2 className="w-5 h-5 text-success" />
+        ) : (
+          <Circle className="w-5 h-5 text-base-content/40" />
+        )}
       </button>
 
       {/* 시간 */}
@@ -93,12 +99,14 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
       {/* 제목 */}
       <span className="truncate flex-1">{todo.title}</span>
 
-      {/* 스킵 상태 배지 */}
-      {isSkipped && (
+      {/* 완료/스킵 상태 배지 */}
+      {(todo.completed || isSkipped) && (
         <span className={`flex-shrink-0 text-[10px] px-1 rounded ${
-          todo.skipStatus === 'missed' ? 'bg-error/20 text-error' : 'bg-base-300 text-base-content/50'
+          todo.completed ? 'bg-success/20 text-success' :
+          todo.skipStatus === 'missed' ? 'bg-error/20 text-error' :
+          'bg-base-300 text-base-content/50'
         }`}>
-          {todo.skipStatus === 'missed' ? '놓침' : '필요없었음'}
+          {todo.completed ? '완료' : todo.skipStatus === 'missed' ? '놓침' : '필요없었음'}
         </span>
       )}
     </div>
