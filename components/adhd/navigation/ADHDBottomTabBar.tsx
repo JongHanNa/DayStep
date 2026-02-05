@@ -92,10 +92,16 @@ export default function ADHDBottomTabBar() {
               <CenterIcon className="w-7 h-7 text-primary" />
             </div>
           ) : (
-            <div className="w-8 h-8 bg-white group-hover:bg-base-300 rounded-lg flex items-center justify-center transition-colors">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+              currentSubView === null
+                ? 'bg-white group-hover:bg-base-300'
+                : 'group-hover:bg-base-300'
+            }`}>
               <div className="grid grid-cols-3 gap-0.5">
                 {[...Array(9)].map((_, i) => (
-                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full" />
+                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${
+                    currentSubView === null ? 'bg-primary' : 'bg-base-content/40'
+                  }`} />
                 ))}
               </div>
             </div>
