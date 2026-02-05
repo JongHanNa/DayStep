@@ -10,6 +10,8 @@ interface TimeSchedulePanelProps {
   eveningTodos: Todo[];
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
+  onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
+  onPostpone?: (todo: Todo) => void;
   onAddMorning?: () => void;
   onAddAfternoon?: () => void;
   onAddEvening?: () => void;
@@ -21,6 +23,8 @@ export function TimeSchedulePanel({
   eveningTodos,
   onEditClick,
   onToggle,
+  onSkipTodo,
+  onPostpone,
   onAddMorning,
   onAddAfternoon,
   onAddEvening,
@@ -35,6 +39,8 @@ export function TimeSchedulePanel({
         accentColor="text-amber-600"
         onEditClick={onEditClick}
         onToggle={onToggle}
+        onSkipTodo={onSkipTodo}
+        onPostpone={onPostpone}
         onAddClick={onAddMorning}
       />
       <TimeSlotSection
@@ -45,6 +51,8 @@ export function TimeSchedulePanel({
         accentColor="text-orange-600"
         onEditClick={onEditClick}
         onToggle={onToggle}
+        onSkipTodo={onSkipTodo}
+        onPostpone={onPostpone}
         onAddClick={onAddAfternoon}
       />
       <TimeSlotSection
@@ -55,6 +63,8 @@ export function TimeSchedulePanel({
         accentColor="text-indigo-600"
         onEditClick={onEditClick}
         onToggle={onToggle}
+        onSkipTodo={onSkipTodo}
+        onPostpone={onPostpone}
         onAddClick={onAddEvening}
       />
     </div>

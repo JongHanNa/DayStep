@@ -258,6 +258,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
           timelineItems={nav.timelineItems}
           onEditClick={actions.handleEditClick}
           onToggleComplete={actions.handleToggleComplete}
+          onSkipTodo={actions.handleSkipTodo}
+          onOpenPostponeSheet={actions.handleOpenPostponeSheet}
           onAddTodo={actions.handleAddTodoWithPrefill}
         />
         {renderModals()}

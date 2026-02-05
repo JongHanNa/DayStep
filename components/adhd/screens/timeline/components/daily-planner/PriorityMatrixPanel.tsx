@@ -13,9 +13,11 @@ interface QuadrantProps {
   bgColor: string;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
+  onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
+  onPostpone?: (todo: Todo) => void;
 }
 
-function Quadrant({ id, label, sublabel, todos, bgColor, onEditClick, onToggle }: QuadrantProps) {
+function Quadrant({ id, label, sublabel, todos, bgColor, onEditClick, onToggle, onSkipTodo, onPostpone }: QuadrantProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: {
@@ -41,7 +43,7 @@ function Quadrant({ id, label, sublabel, todos, bgColor, onEditClick, onToggle }
           <div className="text-[10px] text-base-content/25 text-center py-2">드래그</div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} onEditClick={onEditClick} onToggle={onToggle} />
+            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} onEditClick={onEditClick} onToggle={onToggle} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
           ))
         )}
       </div>
@@ -53,10 +55,12 @@ interface PriorityMatrixPanelProps {
   todos: Todo[];
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
+  onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
+  onPostpone?: (todo: Todo) => void;
   onAddClick?: () => void;
 }
 
-export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }: PriorityMatrixPanelProps) {
+export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onSkipTodo, onPostpone, onAddClick }: PriorityMatrixPanelProps) {
   const q1 = todos.filter((t: any) => t.importance === true && t.urgency === true);
   const q2 = todos.filter((t: any) => t.importance === false && t.urgency === true);
   const q3 = todos.filter((t: any) => t.importance === true && t.urgency === false);
@@ -94,6 +98,8 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
           bgColor="bg-error/5"
           onEditClick={onEditClick}
           onToggle={onToggle}
+          onSkipTodo={onSkipTodo}
+          onPostpone={onPostpone}
         />
         <Quadrant
           id="matrix-q2"
@@ -103,6 +109,8 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
           bgColor="bg-warning/5"
           onEditClick={onEditClick}
           onToggle={onToggle}
+          onSkipTodo={onSkipTodo}
+          onPostpone={onPostpone}
         />
         <Quadrant
           id="matrix-q3"
@@ -112,6 +120,8 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
           bgColor="bg-info/5"
           onEditClick={onEditClick}
           onToggle={onToggle}
+          onSkipTodo={onSkipTodo}
+          onPostpone={onPostpone}
         />
         <Quadrant
           id="matrix-q4"
@@ -121,6 +131,8 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onAddClick }
           bgColor="bg-base-100"
           onEditClick={onEditClick}
           onToggle={onToggle}
+          onSkipTodo={onSkipTodo}
+          onPostpone={onPostpone}
         />
       </div>
     </div>

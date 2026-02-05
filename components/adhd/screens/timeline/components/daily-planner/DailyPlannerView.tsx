@@ -36,10 +36,12 @@ interface DailyPlannerViewProps {
   timelineItems: TimelineItem[];
   onEditClick?: (item: TimelineItem) => void;
   onToggleComplete?: (item: TimelineItem) => void;
+  onSkipTodo?: (item: TimelineItem, reason: 'not_needed' | 'missed') => void;
+  onOpenPostponeSheet?: (item: TimelineItem) => void;
   onAddTodo?: (prefillStart?: Date, prefillEnd?: Date, mode?: 'detailed' | 'new') => void;
 }
 
-export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onAddTodo }: DailyPlannerViewProps) {
+export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onSkipTodo, onOpenPostponeSheet, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
 
   const {
@@ -152,6 +154,18 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     if (item && onToggleComplete) onToggleComplete(item);
   }, [timelineItems, onToggleComplete]);
 
+  // 칩 스킵 → TimelineItem 찾아서 스킵 콜백 호출
+  const handleChipSkip = useCallback((todo: Todo, reason: 'not_needed' | 'missed') => {
+    const item = timelineItems.find(i => i.id === todo.id);
+    if (item && onSkipTodo) onSkipTodo(item, reason);
+  }, [timelineItems, onSkipTodo]);
+
+  // 칩 미루기 → TimelineItem 찾아서 미루기 시트 열기
+  const handleChipPostpone = useCallback((todo: Todo) => {
+    const item = timelineItems.find(i => i.id === todo.id);
+    if (item && onOpenPostponeSheet) onOpenPostponeSheet(item);
+  }, [timelineItems, onOpenPostponeSheet]);
+
   // 섹션별 추가 핸들러
   const handleAddMorning = useCallback(() => {
     if (!onAddTodo) return;
@@ -217,6 +231,8 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         eveningTodos={eveningTodos}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
+        onSkipTodo={handleChipSkip}
+        onPostpone={handleChipPostpone}
         onAddMorning={handleAddMorning}
         onAddAfternoon={handleAddAfternoon}
         onAddEvening={handleAddEvening}
@@ -231,12 +247,16 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         todos={matrixTodos}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
+        onSkipTodo={handleChipSkip}
+        onPostpone={handleChipPostpone}
         onAddClick={handleAddMatrix}
       />
       <ReluctantTasksPanel
         todos={reluctantTodos}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
+        onSkipTodo={handleChipSkip}
+        onPostpone={handleChipPostpone}
         onAddClick={handleAddReluctant}
       />
       <RewardPanel

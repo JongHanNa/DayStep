@@ -13,10 +13,12 @@ interface TimeSlotSectionProps {
   accentColor: string;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
+  onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
+  onPostpone?: (todo: Todo) => void;
   onAddClick?: () => void;
 }
 
-export function TimeSlotSection({ id, label, icon, todos, accentColor, onEditClick, onToggle, onAddClick }: TimeSlotSectionProps) {
+export function TimeSlotSection({ id, label, icon, todos, accentColor, onEditClick, onToggle, onSkipTodo, onPostpone, onAddClick }: TimeSlotSectionProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: { type: 'time-slot', period: id.replace('schedule-', '') },
@@ -58,7 +60,7 @@ export function TimeSlotSection({ id, label, icon, todos, accentColor, onEditCli
               return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
             })
             .map(todo => (
-              <DraggableTodoChip key={`ts-${todo.id}`} todo={todo} showTime onEditClick={onEditClick} onToggle={onToggle} />
+              <DraggableTodoChip key={`ts-${todo.id}`} todo={todo} showTime onEditClick={onEditClick} onToggle={onToggle} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
             ))
         )}
       </div>
