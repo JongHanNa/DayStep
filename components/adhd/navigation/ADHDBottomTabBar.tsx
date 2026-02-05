@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, Menu, Clock, SquareMenu } from 'lucide-react';
+import { Home, Menu, Calendar, SquareMenu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
@@ -63,7 +63,7 @@ export default function ADHDBottomTabBar() {
         </button>
       </div>
 
-      {/* 하루 돌아보기 (Clock 아이콘) */}
+      {/* 달력 (Calendar 아이콘) */}
       <div className="flex-1 flex justify-center">
         <button
           onClick={() => goScreen('timeline')}
@@ -72,9 +72,9 @@ export default function ADHDBottomTabBar() {
               ? 'text-primary bg-primary/10'
               : 'text-base-content/60 active:bg-base-300'
           }`}
-          aria-label="하루 돌아보기"
+          aria-label="달력"
         >
-          <Clock className="w-7 h-7" />
+          <Calendar className="w-7 h-7" />
         </button>
       </div>
 

@@ -6,7 +6,7 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import { TimelineScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/timeline - 하루 돌아보기 페이지
+ * /adhd/timeline - 달력 페이지
  * Flat 라우트 구조
  */
 export default function TimelinePage() {

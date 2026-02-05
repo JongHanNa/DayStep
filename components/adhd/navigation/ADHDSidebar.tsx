@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Menu, Clock, SquareMenu } from 'lucide-react';
+import { Home, Menu, Calendar, SquareMenu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
@@ -41,7 +41,7 @@ export default function ADHDSidebar() {
       {/* 최상단: 프로필 아바타 + 드롭다운 */}
       <ADHDProfileMenu variant="sidebar" />
 
-      {/* 하루 돌아보기 (Clock 아이콘) */}
+      {/* 달력 (Calendar 아이콘) */}
       <button
         onClick={() => goScreen('timeline')}
         className={`mt-2 w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 ${
@@ -49,12 +49,12 @@ export default function ADHDSidebar() {
             ? 'text-primary bg-primary/10'
             : 'text-base-content/60 hover:bg-base-300'
         }`}
-        aria-label="하루 돌아보기"
+        aria-label="달력"
       >
-        <Clock className="w-8 h-8" />
+        <Calendar className="w-8 h-8" />
         {/* 툴팁 */}
         <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium bg-base-300 text-base-content rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-          하루 돌아보기
+          달력
         </span>
       </button>
 

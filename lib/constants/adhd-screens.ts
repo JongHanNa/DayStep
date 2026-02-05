@@ -5,7 +5,7 @@ import {
   Sparkles,
   MessageSquare,
   BookOpen,
-  Clock,
+  Calendar,
   Target,
   Lightbulb,
   Inbox,
@@ -164,11 +164,11 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
   },
   timeline: {
     id: 'timeline',
-    label: '하루 돌아보기',
-    icon: Clock,
+    label: '달력',
+    icon: Calendar,
     componentPath: 'screens/timeline/TimelineScreen',
     help: {
-      title: '하루 돌아보기',
+      title: '달력',
       difficulty:
         '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다.',
       help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
@@ -356,11 +356,11 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
       },
       {
         id: 'timeline',
-        label: '하루 돌아보기',
-        icon: Clock,
+        label: '달력',
+        icon: Calendar,
         routeGroup: 'fuel',
         help: {
-          title: '하루 돌아보기',
+          title: '달력',
           difficulty:
             '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다.',
           help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
