@@ -547,6 +547,10 @@ export const useTodoStore = createStore<TodoStoreState>(
           parentTodoId: data.parent_todo_id || (data as any).parentTodoId,
           userId: data.user_id || (data as any).userId,
           orderIndex: data.order_index || (data as any).orderIndex,
+          // Daily Planner 필드들
+          importance: data.importance !== undefined ? data.importance : (data as any).importance,
+          urgency: data.urgency !== undefined ? data.urgency : (data as any).urgency,
+          isReluctantMustDo: data.is_reluctant_must_do !== undefined ? data.is_reluctant_must_do : (data as any).isReluctantMustDo,
         };
 
 

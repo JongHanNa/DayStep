@@ -62,5 +62,8 @@ export interface DepartmentMapValue {
   icon: string | null;
 }
 
+// ─── 뷰 모드 ───
+export type TimelineViewMode = 'agenda' | 'daily';
+
 // ─── 상수 ───
 export const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];

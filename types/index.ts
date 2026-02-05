@@ -322,6 +322,11 @@ export interface CreateTodoInput {
 
   // Skip status (일반 할일 스킵)
   skip_status?: 'not_needed' | 'missed' | null; // 일반 할일 스킵 상태
+
+  // Daily Planner 필드들
+  importance?: boolean | null; // Eisenhower 매트릭스: 중요도
+  urgency?: boolean | null; // Eisenhower 매트릭스: 긴급도
+  is_reluctant_must_do?: boolean; // 하기 싫어도 해야할 일
 }
 
 // Note instance types
@@ -601,4 +606,24 @@ export * from './relationship';
 // Role Types (Re-export)
 // ============================================
 export * from './role';
+
+// ============================================
+// Daily Planner Types
+// ============================================
+
+export interface DailyReflection {
+  id: string;
+  user_id: string;
+  date: string; // YYYY-MM-DD
+  praises: string[];
+  gratitudes: string[];
+  reward: string;
+  reflection: string;
+  spending_note: string;
+  thought_archive: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type TimelineViewMode = 'agenda' | 'daily';
 

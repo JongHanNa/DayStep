@@ -1,16 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Calendar, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Calendar, Plus, Check } from 'lucide-react';
 import { format, addMonths, subMonths } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { MonthPickerPopover } from './MonthPickerPopover';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import type { TimelineViewMode } from '../types';
 
 interface MonthNavigatorProps {
   currentDate: Date;
   onMonthChange: (date: Date) => void;
   onTodayClick: () => void;
   onAddClick?: () => void;
+  viewMode?: TimelineViewMode;
+  onViewModeChange?: (mode: TimelineViewMode) => void;
 }
 
 /**
@@ -24,7 +33,9 @@ export function MonthNavigator({
   currentDate,
   onMonthChange,
   onTodayClick,
-  onAddClick
+  onAddClick,
+  viewMode = 'agenda',
+  onViewModeChange,
 }: MonthNavigatorProps) {
   const [showPopover, setShowPopover] = useState(false);
 
@@ -77,6 +88,31 @@ export function MonthNavigator({
             <Plus className="w-4 h-4" />
           </button>
         )}
+
+        {/* 뷰 모드 드롭다운 */}
+        {onViewModeChange && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="btn btn-ghost btn-sm px-2 text-sm gap-1">
+                {viewMode === 'agenda' ? '일정' : '하루'}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[100px]">
+              <DropdownMenuItem onClick={() => onViewModeChange('agenda')} className="gap-2">
+                {viewMode === 'agenda' && <Check className="w-3 h-3" />}
+                {viewMode !== 'agenda' && <span className="w-3" />}
+                일정
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewModeChange('daily')} className="gap-2">
+                {viewMode === 'daily' && <Check className="w-3 h-3" />}
+                {viewMode !== 'daily' && <span className="w-3" />}
+                하루
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
         <button
           onClick={handlePrevMonth}
           className="btn btn-ghost btn-sm btn-circle"

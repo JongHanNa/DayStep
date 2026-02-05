@@ -241,7 +241,19 @@ export function useTimelineNavigation({
               if (match) {
                 const year = parseInt(match[1]);
                 const month = parseInt(match[2]) - 1;
-                setNavigatedMonth(new Date(year, month, 1));
+                setNavigatedMonth(prev => {
+                  const today = new Date();
+                  // 감지된 월이 현재 실제 월이면 → 오늘 날짜 사용
+                  if (year === today.getFullYear() && month === today.getMonth()) {
+                    return today;
+                  }
+                  // 감지된 월이 이전 navigatedMonth와 같은 월이면 → 기존 날짜 유지
+                  if (year === prev.getFullYear() && month === prev.getMonth()) {
+                    return prev;
+                  }
+                  // 다른 월로 스크롤 → 1일 사용
+                  return new Date(year, month, 1);
+                });
               }
               break;
             }

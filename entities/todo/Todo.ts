@@ -59,7 +59,12 @@ export class Todo {
     public readonly anytimeDuration: number | null = null,
 
     // 부서 연결 (Phase 6: Department 기능)
-    public readonly departmentId: string | null = null
+    public readonly departmentId: string | null = null,
+
+    // Daily Planner 필드들
+    public readonly importance: boolean | null = null,
+    public readonly urgency: boolean | null = null,
+    public readonly isReluctantMustDo: boolean = false
   ) {}
 
   /**
@@ -115,6 +120,11 @@ export class Todo {
 
     // 부서 연결 (Phase 6)
     const departmentId = record.departmentId ?? record.department_id ?? null;
+
+    // Daily Planner 필드들
+    const importance = record.importance ?? null;
+    const urgency = record.urgency ?? null;
+    const isReluctantMustDo = record.isReluctantMustDo ?? record.is_reluctant_must_do ?? false;
 
     // title 필드
     const title = data.title;
@@ -175,7 +185,12 @@ export class Todo {
       anytimeDuration,
 
       // 부서 연결
-      departmentId
+      departmentId,
+
+      // Daily Planner 필드들
+      importance,
+      urgency,
+      isReluctantMustDo
     );
   }
 
@@ -604,6 +619,11 @@ export class Todo {
 
       // 부서 연결
       department_id: this.departmentId,
+
+      // Daily Planner 필드들
+      importance: this.importance,
+      urgency: this.urgency,
+      is_reluctant_must_do: this.isReluctantMustDo,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),

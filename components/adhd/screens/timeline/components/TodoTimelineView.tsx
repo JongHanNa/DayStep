@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { format, isToday, startOfMonth, subMonths, differenceInMonths } from 'date-fns';
 import { Clock, ChevronUp, ChevronDown, Zap, Plus, Cloud } from 'lucide-react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -17,7 +17,8 @@ import { TimelineGapButton } from './TimelineGapButton';
 import { useTimelineData } from '../hooks/useTimelineData';
 import { useTimelineNavigation } from '../hooks/useTimelineNavigation';
 import { useTimelineActions } from '../hooks/useTimelineActions';
-import type { TodoTimelineViewProps, RenderItem } from '../types';
+import { DailyPlannerView } from './daily-planner/DailyPlannerView';
+import type { TodoTimelineViewProps, RenderItem, TimelineViewMode } from '../types';
 
 /**
  * 타임라인 탭 - 할일 생성 기록 시간순
@@ -30,6 +31,9 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
   const { projects } = useProjectStore();
   const { todos } = useTodoStore();
+
+  // 뷰 모드 상태
+  const [viewMode, setViewMode] = useState<TimelineViewMode>('agenda');
 
   // 시간 미정 인박스 상태
   const [anytimeInboxOpen, setAnytimeInboxOpen] = useState(false);
@@ -48,6 +52,15 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     setPastMonthsLoaded: data.setPastMonthsLoaded,
     setFutureMonthsLoaded: data.setFutureMonthsLoaded,
   });
+
+  // 하루뷰 → 일정뷰 전환 시 오늘로 스크롤
+  const prevViewModeRef = useRef(viewMode);
+  useEffect(() => {
+    if (prevViewModeRef.current !== 'agenda' && viewMode === 'agenda') {
+      nav.handleTodayClick();
+    }
+    prevViewModeRef.current = viewMode;
+  }, [viewMode, nav.handleTodayClick]);
 
   // 3. 액션 훅
   const actions = useTimelineActions({
@@ -104,6 +117,8 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             onMonthChange={handleMonthChange}
             onTodayClick={nav.handleTodayClick}
             onAddClick={actions.handleAddTodo}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
         </div>
         <button
@@ -228,6 +243,20 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
     return (
       <div className="flex items-center justify-center h-64">
         <span className="loading loading-spinner loading-md" />
+      </div>
+    );
+  }
+
+  // ─── 하루 뷰 모드 ───
+  if (viewMode === 'daily') {
+    return (
+      <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-dvh">
+        {renderHeader()}
+        <DailyPlannerView
+          userId={userId}
+          date={nav.navigatedMonth}
+        />
+        {renderModals()}
       </div>
     );
   }
