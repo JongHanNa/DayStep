@@ -96,7 +96,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // ─── 공통 헤더 JSX ───
   const renderHeader = () => (
-    <div className="sticky top-0 z-10 bg-base-100">
+    <div className="flex-shrink-0 bg-base-100 z-10">
       <div className="flex items-center">
         <div className="flex-1">
           <MonthNavigator
@@ -235,40 +235,42 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
   // ─── 빈 상태 ───
   if (nav.timelineItems.length === 0) {
     return (
-      <div>
+      <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-dvh">
         {renderHeader()}
 
-        <div className="p-4">
-          <button
-            onClick={handleLoadMorePast}
-            disabled={data.isLoadingMore}
-            className="w-full py-3 mb-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
-          >
-            <ChevronUp className="w-4 h-4" />
-            과거 1개월 더 보기
-          </button>
-
-          <div className="flex flex-col items-center justify-center h-48 text-base-content/60">
-            <Clock className="w-12 h-12 mb-4 opacity-50" />
-            <p>이 기간에 할일이 없어요</p>
-            <p className="text-sm text-base-content/40 mt-1">{nav.rangeInfoText}</p>
+        <div ref={nav.scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
+          <div className="p-4">
             <button
-              onClick={actions.handleAddTodo}
-              className="btn btn-primary btn-sm mt-4 gap-2"
+              onClick={handleLoadMorePast}
+              disabled={data.isLoadingMore}
+              className="w-full py-3 mb-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
             >
-              <Plus className="w-4 h-4" />
-              할일 추가하기
+              <ChevronUp className="w-4 h-4" />
+              과거 1개월 더 보기
+            </button>
+
+            <div className="flex flex-col items-center justify-center h-48 text-base-content/60">
+              <Clock className="w-12 h-12 mb-4 opacity-50" />
+              <p>이 기간에 할일이 없어요</p>
+              <p className="text-sm text-base-content/40 mt-1">{nav.rangeInfoText}</p>
+              <button
+                onClick={actions.handleAddTodo}
+                className="btn btn-primary btn-sm mt-4 gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                할일 추가하기
+              </button>
+            </div>
+
+            <button
+              onClick={handleLoadMoreFuture}
+              disabled={data.isLoadingMore}
+              className="w-full py-3 mt-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
+            >
+              <ChevronDown className="w-4 h-4" />
+              미래 1개월 더 보기
             </button>
           </div>
-
-          <button
-            onClick={handleLoadMoreFuture}
-            disabled={data.isLoadingMore}
-            className="w-full py-3 mt-4 text-sm text-base-content/60 bg-base-200 rounded-lg hover:bg-base-300 transition-colors flex items-center justify-center gap-2"
-          >
-            <ChevronDown className="w-4 h-4" />
-            미래 1개월 더 보기
-          </button>
         </div>
 
         {renderModals()}
@@ -278,9 +280,10 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
 
   // ─── 메인 타임라인 ───
   return (
-    <div>
+    <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-dvh">
       {renderHeader()}
 
+      <div ref={nav.scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
       <div className={`p-4 space-y-8 transition-opacity duration-100 ${nav.isScrollReady ? 'opacity-100' : 'opacity-0'}`}>
         {/* 과거 더 보기 버튼 */}
         <button
@@ -453,6 +456,7 @@ export function TodoTimelineView({ userId }: TodoTimelineViewProps) {
             </>
           )}
         </button>
+      </div>
       </div>
 
       {renderModals()}

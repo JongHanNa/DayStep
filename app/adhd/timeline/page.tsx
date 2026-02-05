@@ -28,7 +28,7 @@ export default function TimelinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100">
+    <div className="bg-base-100">
       <TimelineScreen userId={user.id} />
     </div>
   );

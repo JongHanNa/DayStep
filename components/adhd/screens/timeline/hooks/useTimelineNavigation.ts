@@ -190,8 +190,7 @@ export function useTimelineNavigation({
     setNavigatedMonth(date);
 
     requestAnimationFrame(() => {
-      const scrollContainer = document.querySelector('.overflow-y-auto') as HTMLElement;
-      if (scrollContainer) scrollContainer.scrollTop = 0;
+      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
     });
   }, []);
 
@@ -250,8 +249,8 @@ export function useTimelineNavigation({
         }
       },
       {
-        root: null,
-        rootMargin: '-80px 0px -50% 0px',
+        root: scrollContainerRef.current,
+        rootMargin: '0px 0px -50% 0px',
         threshold: [0, 0.1, 0.5, 1]
       }
     );
