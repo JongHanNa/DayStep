@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Menu, Clock } from 'lucide-react';
+import { Home, Menu, Clock, SquareMenu } from 'lucide-react';
 import ADHDProfileMenu from './ADHDProfileMenu';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
@@ -90,13 +90,9 @@ export default function ADHDSidebar() {
                 ? 'bg-white group-hover:bg-base-300'
                 : 'group-hover:bg-base-300'
             }`}>
-              <div className="grid grid-cols-3 gap-1">
-                {[...Array(9)].map((_, i) => (
-                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${
-                    currentSubView === null ? 'bg-primary' : 'bg-base-content/40'
-                  }`} />
-                ))}
-              </div>
+              <SquareMenu className={`w-8 h-8 ${
+                currentSubView === null ? 'text-primary' : 'text-base-content/40'
+              }`} />
             </div>
           )}
           {/* 툴팁: 서브뷰면 화면 이름, 목차면 "목차" */}
