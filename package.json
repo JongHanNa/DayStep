@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "dev:web": "npm run dev --workspace=@daystep/web",
+    "dev:mobile": "npm run dev:mobile --workspace=@daystep/web",
     "build": "turbo run build",
     "build:web": "npm run build --workspace=@daystep/web",
     "build:mobile": "npm run build:mobile --workspace=@daystep/web",
