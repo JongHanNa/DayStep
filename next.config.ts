@@ -5,33 +5,33 @@ import withPWA from 'next-pwa';
 // 빌드 타겟 결정 (BUILD_TARGET 환경변수 우선, 후위 MOBILE_BUILD)
 const buildTarget = process.env.BUILD_TARGET || (process.env.MOBILE_BUILD === 'true' ? 'mobile' : 'web');
 const isMobileBuild = buildTarget === 'mobile';
+const isElectronBuild = buildTarget === 'electron';
+const isStaticExport = isMobileBuild || isElectronBuild;
 const isWebBuild = buildTarget === 'web';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
   // 환경별 기본 설정
-  ...(isMobileBuild && {
-    // 모바일 빌드 설정 (Capacitor export 모드)
+  ...(isStaticExport && {
+    // 정적 export 모드 (Capacitor + Electron 공통)
     output: 'export',
     distDir: 'out',
     trailingSlash: true,
-    generateBuildId: () => `mobile-build-${Date.now()}`,
-    // 모바일에서 불필요한 기능 비활성화
+    generateBuildId: () => `${buildTarget}-build-${Date.now()}`,
     poweredByHeader: false,
-    reactStrictMode: false, // 모바일 하이드레이션 문제 해결을 위해 비활성화
-    // 모바일 전용 페이지 확장자 우선 순위 설정
-    pageExtensions: isMobileBuild ? ['mobile.tsx', 'mobile.ts', 'tsx', 'ts', 'jsx', 'js'] : ['tsx', 'ts', 'jsx', 'js'],
-    // 경로 설정 단순화
+    reactStrictMode: false,
+    // 빌드 타겟별 페이지 확장자 우선 순위
+    pageExtensions: isElectronBuild
+      ? ['electron.tsx', 'electron.ts', 'tsx', 'ts', 'jsx', 'js']
+      : ['mobile.tsx', 'mobile.ts', 'tsx', 'ts', 'jsx', 'js'],
     assetPrefix: '',
     basePath: '',
-    // 모바일 빌드 시 린팅 건너뛰기
     eslint: {
       ignoreDuringBuilds: true,
     },
     typescript: {
-      ignoreBuildErrors: false, // 타입 에러는 여전히 확인
+      ignoreBuildErrors: false,
     },
-    // 빌드 추적 비활성화로 성능 향상 (experimental로 이동)
     experimental: {
       outputFileTracing: false,
     },
@@ -58,19 +58,18 @@ const nextConfig: NextConfig = {
       }
 
       // 프로덕션 환경 분기
-      if (isMobileBuild) {
-        // 모바일 프로덕션: Xcode/Android Studio 디버깅을 위해 모든 console 보존
+      if (isMobileBuild || isElectronBuild) {
+        // 모바일/Electron 프로덕션: 디버깅을 위해 모든 console 보존
         return false;
       } else {
         // 웹 프로덕션: error/warn만 남기고 나머지 제거 (console.log 포함)
         return { exclude: ['error', 'warn'] };
       }
     })(),
-    // 모바일에서도 디버깅 정보 보존을 위한 설정
-    ...(isMobileBuild && {
-      emotion: false, // 불필요한 CSS-in-JS 최적화 비활성화
-      // 소스맵 생성으로 디버깅 향상 (프로덕션에서도 유지)
-      reactRemoveProperties: false, // React 속성 보존
+    // 모바일/Electron에서도 디버깅 정보 보존을 위한 설정
+    ...(isStaticExport && {
+      emotion: false,
+      reactRemoveProperties: false,
     }),
   },
   
@@ -80,7 +79,7 @@ const nextConfig: NextConfig = {
     '@supabase/supabase-js',
     '@supabase/realtime-js',
     '@supabase/postgrest-js',
-    ...(isMobileBuild ? [] : ['@supabase/ssr']), // 웹에서만 필요
+    ...(!isStaticExport ? ['@supabase/ssr'] : []), // 웹에서만 필요
     // 필수 UI 라이브러리만 포함
     'framer-motion',
   ],
@@ -105,16 +104,16 @@ const nextConfig: NextConfig = {
       // 환경별 최적화
       ...(isMobileBuild ? [
         '@capacitor/core',
-        '@capacitor/preferences'
-      ] : [
+        '@capacitor/preferences',
+      ] : isElectronBuild ? [] : [
         'zustand', // 웹에서 상태관리 최적화 필요
         'framer-motion' // 웹에서 애니메이션 최적화 필요
       ]),
     ],
     // 메모리 사용량 최적화 (모바일에서 더 중요)
     webpackMemoryOptimizations: true,
-    // 모바일에서 추가 최적화
-    ...(isMobileBuild && {
+    // 모바일/Electron 에서 추가 최적화
+    ...(isStaticExport && {
       scrollRestoration: true,
     }),
     // 웹에서만 활성화할 기능들
@@ -124,7 +123,7 @@ const nextConfig: NextConfig = {
   },
 
   // 이미지 최적화 설정
-  images: isMobileBuild ? {
+  images: isStaticExport ? {
     unoptimized: true, // export 모드에서는 이미지 최적화 비활성화
   } : {
     // 지원하는 이미지 포맷 (성능 우선순위 순)
@@ -193,11 +192,12 @@ const nextConfig: NextConfig = {
       crypto: false,
     };
     
-    // 모바일 빌드 시 동적 API 라우트를 정적 모바일 버전으로 리다이렉트
-    if (isMobileBuild) {
+    // 정적 export 빌드 시 동적 API 라우트를 정적 버전으로 리다이렉트
+    if (isMobileBuild || isElectronBuild) {
       const path = require('path');
       config.resolve.alias = {
         ...config.resolve.alias,
+        // 모바일/Electron 공통: API 라우트를 모바일 스텁으로 리다이렉트
         [path.resolve(__dirname, 'app/api/auth/google/url/route.ts')]: path.resolve(__dirname, 'app/api/auth/google/url/route.mobile.ts'),
         [path.resolve(__dirname, 'app/api/auth/google/callback/route.ts')]: path.resolve(__dirname, 'app/api/auth/google/callback/route.mobile.ts'),
         [path.resolve(__dirname, 'app/api/auth/callback/route.ts')]: path.resolve(__dirname, 'app/api/auth/callback/route.mobile.ts'),
@@ -207,6 +207,27 @@ const nextConfig: NextConfig = {
         [path.resolve(__dirname, 'app/api/ai/chat/route.ts')]: path.resolve(__dirname, 'app/api/ai/chat/route.mobile.ts'),
         [path.resolve(__dirname, 'app/api/ai/usage/route.ts')]: path.resolve(__dirname, 'app/api/ai/usage/route.mobile.ts'),
       };
+
+      // Electron 빌드 전용: Capacitor 패키지를 no-op 스텁으로 교체
+      if (isElectronBuild) {
+        config.resolve.alias = {
+          ...config.resolve.alias,
+          '@capacitor/core': path.resolve(__dirname, 'electron/stubs/capacitor-core.ts'),
+          '@capacitor/preferences': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capacitor/app': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capacitor/browser': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capacitor/keyboard': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capacitor/local-notifications': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capacitor/push-notifications': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capacitor/status-bar': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capgo/capacitor-social-login': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@capacitor-community/contacts': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@revenuecat/purchases-capacitor': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          'capacitor-live-activity': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@daystep/theme-bridge': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+          '@daystep/contact-groups': path.resolve(__dirname, 'electron/stubs/no-op.ts'),
+        };
+      }
     }
     
     // TypeScript 설정 수정
@@ -216,20 +237,20 @@ const nextConfig: NextConfig = {
           if (rule.exclude) {
             if (Array.isArray(rule.exclude)) {
               rule.exclude.push(/supabase\/functions/, /mobile\//, /\/src\//, /^src\//);
-              // 모바일 빌드에서 API 라우트도 제외
-              if (isMobileBuild) {
+              // 모바일/Electron 빌드에서 API 라우트도 제외
+              if (isStaticExport) {
                 rule.exclude.push(/app\/api\//);
               }
             } else {
               const excludes = [rule.exclude, /supabase\/functions/, /mobile\//, /\/src\//, /^src\//];
-              if (isMobileBuild) {
+              if (isStaticExport) {
                 excludes.push(/app\/api\//);
               }
               rule.exclude = excludes;
             }
           } else {
             const excludes = [/supabase\/functions/, /mobile\//, /\/src\//, /^src\//];
-            if (isMobileBuild) {
+            if (isStaticExport) {
               excludes.push(/app\/api\//);
             }
             rule.exclude = excludes;

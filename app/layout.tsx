@@ -16,6 +16,8 @@ import { Toaster } from "sonner";
 import { RealtimeSyncProvider } from "@/components/providers/RealtimeSyncProvider";
 import { ReminderProvider } from "@/components/providers/ReminderProvider";
 import { AppLifecycleHandler } from "@/components/providers/AppLifecycleHandler";
+import { ElectronLifecycleHandler } from "@/components/providers/ElectronLifecycleHandler";
+import { TitleBar } from "@/components/electron/TitleBar";
 import { SubscriptionSyncProvider } from "@/components/providers/SubscriptionSyncProvider";
 import { STYLING, UI_LAYOUT } from "@/lib/constants";
 import { getTailwindClasses } from "@/lib/theme-colors";
@@ -51,6 +53,8 @@ export default function RootLayout({
           <FontProvider>
             <AuthProvider initialAuth={initialAuth}>
               <AppLifecycleHandler />
+              <ElectronLifecycleHandler />
+              <TitleBar />
               <SubscriptionSyncProvider>
                 <RealtimeSyncProvider>
                   <ReminderProvider>

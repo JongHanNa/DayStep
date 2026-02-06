@@ -2,6 +2,7 @@
   "name": "daystep",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/dist/main.js",
   "scripts": {
     "postinstall": "patch-package",
     "dev": "node scripts/setup-dev-ip.js && cross-env NODE_ENV=development next dev",
@@ -60,7 +61,13 @@
     "debug:mobile": "DEBUG=capacitor* npm run mobile:build",
     "migrate:todos": "tsx scripts/migrate-todos-schema.ts",
     "migrate:todos:dry-run": "DRY_RUN=true tsx scripts/migrate-todos-schema.ts",
-    "migrate:todos:drop-old": "DROP_OLD_COLUMN=true tsx scripts/migrate-todos-schema.ts"
+    "migrate:todos:drop-old": "DROP_OLD_COLUMN=true tsx scripts/migrate-todos-schema.ts",
+    "build:electron": "node scripts/build-electron-dev.js",
+    "build:electron:prod": "node scripts/build-electron-prod.js",
+    "dev:electron": "node scripts/build-electron-dev.js",
+    "package:electron": "electron-builder --mac --win",
+    "package:electron:mac": "electron-builder --mac",
+    "package:electron:win": "electron-builder --win"
   },
   "dependencies": {
     "@capacitor-community/contacts": "^7.0.0",
@@ -187,6 +194,11 @@
     "ts-jest": "^29.4.0",
     "tsx": "^4.20.4",
     "typescript": "^5",
-    "xcode": "^3.0.1"
+    "xcode": "^3.0.1",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.0.0",
+    "@electron/rebuild": "^3.7.0"
   }
 }

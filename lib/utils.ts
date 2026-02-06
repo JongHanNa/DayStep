@@ -15,9 +15,9 @@ export function cn(...inputs: ClassValue[]) {
  * - Browser: http://localhost:3000 (로컬 개발용)
  */
 // 환경 감지 결과를 캐시하여 성능 향상
-let cachedEnvironment: 'capacitor' | 'browser' | null = null;
+let cachedEnvironment: 'capacitor' | 'electron' | 'browser' | null = null;
 
-function detectEnvironment(): 'capacitor' | 'browser' {
+function detectEnvironment(): 'capacitor' | 'electron' | 'browser' {
   if (cachedEnvironment) {
     return cachedEnvironment;
   }
@@ -27,7 +27,7 @@ function detectEnvironment(): 'capacitor' | 'browser' {
     cachedEnvironment = 'capacitor';
     return 'capacitor';
   }
-  
+
   // 2. Capacitor 객체 감지
   if (typeof (window as any).Capacitor !== 'undefined') {
     const isNative = (window as any).Capacitor?.isNativePlatform?.() === true;
@@ -36,16 +36,22 @@ function detectEnvironment(): 'capacitor' | 'browser' {
       return 'capacitor';
     }
   }
-  
+
   // 3. UserAgent 기반 감지 (추가 보완)
   const userAgent = window.navigator.userAgent || '';
   const isCapacitorWebView = userAgent.includes('CapacitorWebView');
-  
+
   if (isCapacitorWebView) {
     cachedEnvironment = 'capacitor';
     return 'capacitor';
   }
-  
+
+  // 4. Electron 감지 (electronAPI 객체 확인)
+  if ((window as any).electronAPI) {
+    cachedEnvironment = 'electron';
+    return 'electron';
+  }
+
   cachedEnvironment = 'browser';
   return 'browser';
 }
@@ -90,6 +96,14 @@ export function toSiteURL(path: string): string {
 export function isCapacitorEnvironment(): boolean {
   if (typeof window === 'undefined') return false;
   return detectEnvironment() === 'capacitor';
+}
+
+/**
+ * Electron 환경인지 확인하는 유틸리티 함수
+ */
+export function isElectronEnvironment(): boolean {
+  if (typeof window === 'undefined') return false;
+  return detectEnvironment() === 'electron';
 }
 
 /**

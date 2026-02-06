@@ -71,7 +71,30 @@ export async function fetchWithJWT(
       // Supabase client token acquisition failed
     }
 
-    // 2순위: Capacitor 저장소 백업 (Supabase 클라이언트 실패 시)
+    // 2순위: Electron 저장소 백업 (Supabase 클라이언트 실패 시)
+    if (!accessToken && typeof window !== 'undefined' && (window as any).electronAPI) {
+      try {
+        const { ElectronPreferences } = await import('@/lib/electron/electronPreferences');
+        const { value } = await ElectronPreferences.get({ key: 'supabase_auth_session' });
+        if (value) {
+          const sessionData = JSON.parse(value);
+          const electronToken = sessionData.access_token;
+          if (electronToken && sessionData.expires_at) {
+            const expiresAt = sessionData.expires_at * 1000;
+            const now = Date.now();
+            if (now < expiresAt) {
+              accessToken = electronToken;
+            }
+          } else {
+            accessToken = electronToken;
+          }
+        }
+      } catch (electronError) {
+        console.log('⚠️ Electron 백업 토큰 로드 실패:', electronError);
+      }
+    }
+
+    // 3순위: Capacitor 저장소 백업 (Supabase 클라이언트 실패 시)
     if (!accessToken && isCapacitorEnvironment()) {
       try {
         const { Preferences } = await import('@capacitor/preferences');
@@ -209,7 +232,25 @@ export async function fetchWithJWT(
                 hasNewToken: !!refreshResult.data.session.access_token
               });
 
-              // 🔑 새로운 토큰을 Capacitor 저장소에도 즉시 업데이트
+              // 🔑 새로운 토큰을 Electron/Capacitor 저장소에도 즉시 업데이트
+              if (typeof window !== 'undefined' && (window as any).electronAPI) {
+                try {
+                  const { ElectronPreferences } = await import('@/lib/electron/electronPreferences');
+                  await ElectronPreferences.set({
+                    key: 'supabase_auth_session',
+                    value: JSON.stringify({
+                      access_token: refreshResult.data.session.access_token,
+                      refresh_token: refreshResult.data.session.refresh_token,
+                      expires_at: refreshResult.data.session.expires_at,
+                      token_type: refreshResult.data.session.token_type,
+                      user: refreshResult.data.session.user
+                    })
+                  });
+                  console.log('✅ 새로운 세션이 Electron 저장소에 업데이트됨');
+                } catch (electronUpdateError) {
+                  console.warn('⚠️ Electron 저장소 업데이트 실패:', electronUpdateError);
+                }
+              }
               if (isCapacitorEnvironment()) {
                 try {
                   const { Preferences } = await import('@capacitor/preferences');

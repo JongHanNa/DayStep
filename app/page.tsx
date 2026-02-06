@@ -12,7 +12,7 @@ import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { SettingsContainer } from '@/components/adhd/settings';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { isCapacitorEnv } from '@/lib/utils/platform';
+import { isCapacitorEnv, isElectronEnv } from '@/lib/utils/platform';
 import type { ADHDSubViewId } from '@/lib/constants/adhd-screens';
 
 // 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
@@ -38,25 +38,27 @@ export default function HomePage() {
   // ADHD 스토어
   const { currentMode, previousMode, enterHomeMode, enterEntryMode, enterExecuteMode, enterCareMode, enterRelationshipInsightsMode, enterFuelMode, enterProjectMode, exitMode } = useADHDStore();
 
-  // 하이드레이션 완료 후 Capacitor 환경 감지
+  const [isElectron, setIsElectron] = useState(false);
+
+  // 하이드레이션 완료 후 환경 감지
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isNative = isCapacitorEnv();
-      setIsCapacitor(isNative);
+      setIsCapacitor(isCapacitorEnv());
+      setIsElectron(isElectronEnv());
       setMounted(true);
     }
   }, []);
 
-  // Capacitor 비인증 사용자만 리다이렉트
+  // Capacitor/Electron 비인증 사용자 리다이렉트
   useEffect(() => {
     if (loading || !mounted) {
       return;
     }
 
-    if (!isAuthenticated && isCapacitor) {
+    if (!isAuthenticated && (isCapacitor || isElectron)) {
       router.replace('/login');
     }
-  }, [isAuthenticated, loading, isCapacitor, mounted, router]);
+  }, [isAuthenticated, loading, isCapacitor, isElectron, mounted, router]);
 
 
   // 로딩 중
@@ -68,8 +70,8 @@ export default function HomePage() {
     );
   }
 
-  // Capacitor 비인증: 리다이렉트 중 로딩 표시
-  if (!isAuthenticated && isCapacitor) {
+  // Capacitor/Electron 비인증: 리다이렉트 중 로딩 표시
+  if (!isAuthenticated && (isCapacitor || isElectron)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary" />

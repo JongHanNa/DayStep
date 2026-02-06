@@ -20,33 +20,38 @@ import { clearLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useSettingsSync } from '@/hooks/useSettingsSync';
 
-// 환경 감지 (실제 Capacitor 환경에서만 모바일로 감지)
-const isMobileEnvironment = (() => {
-  if (typeof window === 'undefined') return false;
-  
+// 환경 감지 (Capacitor / Electron / 웹 분리)
+const { isMobileEnvironment, isElectronEnvironment } = (() => {
+  if (typeof window === 'undefined') return { isMobileEnvironment: false, isElectronEnvironment: false };
+
+  // 🖥️ Electron 감지 (electronAPI 객체 존재 여부)
+  if ((window as any).electronAPI) {
+    console.log('🖥️ Electron 환경 감지');
+    return { isMobileEnvironment: false, isElectronEnvironment: true };
+  }
+
   // 🎯 핵심: 실제 Capacitor 환경에서만 모바일로 감지
-  // capacitor:// 프로토콜이 가장 확실한 방법
   const isCapacitorProtocol = window.location.protocol === 'capacitor:';
   const hasCapacitorGlobal = !!(window as any).Capacitor;
-  
+
   // 추가 검증: http/https는 웹 환경
   const isWebProtocol = ['http:', 'https:'].includes(window.location.protocol);
-  
+
   // 웹 환경이면 무조건 웹으로 처리
   if (isWebProtocol) {
     console.log('🌐 웹 프로토콜 감지:', window.location.protocol);
-    return false;
+    return { isMobileEnvironment: false, isElectronEnvironment: false };
   }
-  
+
   // Capacitor 환경이면 모바일로 처리
   if (isCapacitorProtocol && hasCapacitorGlobal) {
     console.log('📱 Capacitor 환경 감지:', window.location.protocol);
-    return true;
+    return { isMobileEnvironment: true, isElectronEnvironment: false };
   }
-  
+
   // 기본값: 웹 환경
   console.log('🌐 기본값: 웹 환경으로 처리');
-  return false;
+  return { isMobileEnvironment: false, isElectronEnvironment: false };
 })();
 
 // 최소 인증 상태 타입 정의 (서버에서 사용)
@@ -109,9 +114,14 @@ export function AuthProvider({
     
     const getInitialSession = async () => {
       try {
-        console.log(`🔄 초기 세션 확인 시작... (환경: ${isMobileEnvironment ? '모바일' : '웹'})`);
-        
-        if (isMobileEnvironment) {
+        const envLabel = isElectronEnvironment ? 'Electron' : isMobileEnvironment ? '모바일' : '웹';
+        console.log(`🔄 초기 세션 확인 시작... (환경: ${envLabel})`);
+
+        if (isElectronEnvironment) {
+          // 🖥️ Electron 환경: electron-store 기반 세션 복원
+          console.log('🖥️ Electron 환경 - electron-store 세션 복원');
+          await handleElectronInitialSession();
+        } else if (isMobileEnvironment) {
           // 🎯 모바일 환경: 네이티브 SDK 클라이언트 인증 방식
           console.log('📱 모바일 환경 - 네이티브 SDK 클라이언트 인증');
           await handleMobileInitialSession();
@@ -180,6 +190,83 @@ export function AuthProvider({
       } catch (error) {
         console.warn('Capacitor 세션 복원 실패:', error);
         return false;
+      }
+    };
+
+    // 🖥️ Electron 환경 초기 세션 처리 (electron-store 방식)
+    const handleElectronInitialSession = async () => {
+      console.log('🖥️ Electron electron-store 세션 확인...');
+
+      try {
+        const electronAPI = (window as any).electronAPI;
+        if (!electronAPI?.store?.get) {
+          console.log('❌ electronAPI.store 사용 불가 - 비인증 상태');
+          setSession(null);
+          setUser(null);
+          setAppUser(null);
+          return;
+        }
+
+        const storedValue = await electronAPI.store.get('supabase_auth_session');
+
+        if (!storedValue) {
+          console.log('❌ Electron 저장소에 세션 없음 - 비인증 상태');
+          setSession(null);
+          setUser(null);
+          setAppUser(null);
+          return;
+        }
+
+        const storedSession = typeof storedValue === 'string' ? JSON.parse(storedValue) : storedValue;
+
+        // 토큰 만료 확인
+        const expiresAt = storedSession.expires_at ? new Date(storedSession.expires_at * 1000) : null;
+        const now = new Date();
+
+        if (expiresAt && now >= expiresAt) {
+          console.log('❌ Electron 세션 만료됨 - 비인증 상태');
+          setSession(null);
+          setUser(null);
+          setAppUser(null);
+          return;
+        }
+
+        console.log('✅ Electron 세션 유효 - setSession 시작');
+
+        // Supabase에 세션 설정
+        const { data, error } = await supabase.auth.setSession({
+          access_token: storedSession.access_token,
+          refresh_token: storedSession.refresh_token,
+        });
+
+        if (error) {
+          console.warn('❌ Electron Supabase setSession 실패:', error);
+          setSession(null);
+          setUser(null);
+          setAppUser(null);
+          return;
+        }
+
+        if (data.session?.user) {
+          setSession(data.session);
+          setUser(data.session.user);
+
+          // AppUser 로드
+          try {
+            const appUserData = await loadAppUser(data.session.user);
+            if (appUserData) {
+              setAppUser(appUserData);
+              console.log('✅ Electron AppUser 로드 완료:', appUserData.name);
+            }
+          } catch (appUserError) {
+            console.warn('Electron AppUser 로드 실패:', appUserError);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Electron 세션 복원 실패:', error);
+        setSession(null);
+        setUser(null);
+        setAppUser(null);
       }
     };
 
@@ -499,11 +586,17 @@ export function AuthProvider({
 
   // Google OAuth 로그인 (환경별 분리)
   const signInWithGoogle = async () => {
-    console.log(`[Auth] Starting Google sign in... (환경: ${isMobileEnvironment ? '모바일' : '웹'})`);
+    const envLabel = isElectronEnvironment ? 'Electron' : isMobileEnvironment ? '모바일' : '웹';
+    console.log(`[Auth] Starting Google sign in... (환경: ${envLabel})`);
     setLoading(true);
-    
+
     try {
-      if (isMobileEnvironment) {
+      if (isElectronEnvironment) {
+        // 🖥️ Electron 환경: handleGoogleSignIn이 electronOAuthHandlers를 동적 import
+        console.log('[Auth] Electron OAuth 시작');
+        const { error } = await handleGoogleSignIn();
+        if (error) throw error;
+      } else if (isMobileEnvironment) {
         // 🎯 모바일 환경: 네이티브 Google Sign-In SDK
         // 모바일 네이티브 Google Sign-In 시작
         

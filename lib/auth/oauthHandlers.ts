@@ -23,6 +23,13 @@ export async function handleGoogleSignIn(): Promise<OAuthResult> {
   console.log("[OAuth] Starting Google sign in...");
 
   try {
+    // Electron 환경 체크 (Capacitor 이전에 확인)
+    if (typeof window !== 'undefined' && (window as any).electronAPI) {
+      console.log("[OAuth] Electron environment detected, using Electron OAuth flow");
+      const { handleGoogleSignInElectron } = await import('./electronOAuthHandlers');
+      return handleGoogleSignInElectron();
+    }
+
     const platform = Capacitor.getPlatform();
     const isNativePlatform = Capacitor.isNativePlatform();
 

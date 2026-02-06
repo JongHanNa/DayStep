@@ -113,6 +113,10 @@ public/sw.js
 # Serena MCP cache
 .serena/
 
+# Electron
+/dist-electron/
+/electron/dist/
+
 # Task files
 # tasks.json
 # tasks/ 

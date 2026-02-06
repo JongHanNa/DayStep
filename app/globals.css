@@ -24,6 +24,99 @@
   padding-top: 44px !important; /* iOS 상태바 + 노치 */
 }
 
+/* Electron 환경 - 커스텀 타이틀바 */
+.electron {
+  --electron-titlebar-height: 40px;
+  --header-total-height: calc(56px + var(--electron-titlebar-height));
+}
+
+/* Mac: 신호등 버튼 영역 패딩 */
+.electron-mac {
+  --electron-titlebar-height: 28px;
+}
+
+/* Electron 타이틀바 */
+.electron-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--electron-titlebar-height);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.electron-titlebar-drag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  -webkit-app-region: drag;
+}
+
+/* Windows 타이틀바 버튼 */
+.electron-titlebar-controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+  z-index: 1;
+}
+
+.electron-titlebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-base-content, #333);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.electron-titlebar-btn:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.electron-titlebar-btn-close:hover {
+  background-color: #e81123;
+  color: white;
+}
+
+/* 다크모드 타이틀바 */
+[data-theme="dark"] .electron-titlebar-btn {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .electron-titlebar-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .electron-titlebar-btn-close:hover {
+  background-color: #e81123;
+  color: white;
+}
+
+/* Mac에서 Windows 컨트롤 숨기기 */
+.electron-mac .electron-titlebar-controls {
+  display: none;
+}
+
+/* Electron 환경에서 본문 상단 패딩 */
+.electron body,
+.electron main {
+  padding-top: var(--electron-titlebar-height) !important;
+}
+
+/* Electron 비활성 윈도우 */
+.electron-blurred .electron-titlebar {
+  opacity: 0.7;
+}
+
 /* 배터리 효율성 최적화 애니메이션 */
 @import '../styles/animations.css';
 

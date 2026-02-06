@@ -80,9 +80,16 @@ function getThemeBackgroundColor(theme: 'light' | 'dark'): string {
  */
 export async function syncWebViewBackgroundColor(theme: 'light' | 'dark'): Promise<void> {
   try {
-    // Capacitor 환경 체크
     if (typeof window === 'undefined') return;
 
+    // Electron 환경: 타이틀바 오버레이 색상 동기화
+    if ((window as any).electronAPI) {
+      const { syncElectronTitleBarColor } = await import('@/lib/electron/electronThemeBridge');
+      await syncElectronTitleBarColor(theme);
+      return;
+    }
+
+    // Capacitor 환경 체크
     const { Capacitor } = await import('@capacitor/core');
     if (!Capacitor.isNativePlatform()) return;
 
