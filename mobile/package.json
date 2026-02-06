@@ -11,12 +11,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@capacitor/android": "^6.2.1",
-    "@capacitor/browser": "^6.0.5",
-    "@capacitor/cli": "^6.2.1",
-    "@capacitor/core": "^6.2.1",
-    "@capacitor/ios": "^6.2.1",
-    "@capacitor/status-bar": "^6.0.2",
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/browser": "^8.0.0",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/ios": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.0",
     "@daystep/contact-groups": "file:../plugins/contact-groups",
     "@daystep/widget-bridge": "file:../plugins/widget-bridge"
   }

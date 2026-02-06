@@ -102,5 +102,7 @@
     <true/>
     <key>CFBundleDisplayName</key>
     <string>DevDayStep</string>
+    <key>CAPACITOR_DEBUG</key>
+    <string>$(CAPACITOR_DEBUG)</string>
   </dict>
 </plist>

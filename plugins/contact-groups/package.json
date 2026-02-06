@@ -24,9 +24,9 @@
   "author": "DayStep Team",
   "license": "MIT",
   "devDependencies": {
-    "@capacitor/core": "^7.0.0"
+    "@capacitor/core": "^8.0.0"
   },
   "peerDependencies": {
-    "@capacitor/core": "^7.0.0"
+    "@capacitor/core": ">=8.0.0"
   }
 }
