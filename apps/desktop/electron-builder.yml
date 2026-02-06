@@ -1,0 +1,24 @@
+appId: com.daystep.desktop
+productName: DayStep
+directories:
+  output: ../../dist-electron
+  buildResources: resources
+files:
+  - dist/**/*
+  - ../web/out/**/*
+  - ../../package.json
+extraMetadata:
+  main: apps/desktop/dist/main.js
+mac:
+  category: public.app-category.productivity
+  target: [dmg, zip]
+  icon: resources/icon.icns
+  hardenedRuntime: true
+win:
+  target: [nsis]
+  icon: resources/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+publish:
+  provider: github

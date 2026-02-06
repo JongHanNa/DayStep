@@ -1,0 +1,77 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@mobile/*": [
+        "../mobile-capacitor/src/*"
+      ],
+      "@mobile/pages/*": [
+        "../mobile-capacitor/src/pages/*"
+      ],
+      "@mobile/features/*": [
+        "../mobile-capacitor/src/features/*"
+      ],
+      "@mobile/entities/*": [
+        "../mobile-capacitor/src/entities/*"
+      ],
+      "@mobile/widgets/*": [
+        "../mobile-capacitor/src/widgets/*"
+      ],
+      "@mobile/shared/*": [
+        "../mobile-capacitor/src/shared/*"
+      ],
+      "@plugins/*": [
+        "./plugins/*"
+      ]
+    },
+    "target": "ES2022"
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    "out/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "supabase/functions/**/*",
+    "../mobile-capacitor/**/*",
+    "src/**/*",
+    "**/src/**/*",
+    "**/__tests__/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "../desktop/**/*"
+  ]
+}

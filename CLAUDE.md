@@ -5,13 +5,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 프로젝트 정보
 
 **저장소**: DayStep - 할일 관리 및 템플릿 기반 생산성 앱
-**배포**: 웹 (Vercel) + iOS/Android 네이티브 앱
+**배포**: 웹 (Vercel) + iOS/Android 네이티브 앱 + Desktop (Electron)
+
+## 모노레포 구조 (Turborepo + npm Workspaces)
+
+```
+DayStep/
+  turbo.json
+  package.json                 (루트: workspaces 설정)
+  apps/
+    web/                       (Next.js 웹앱 + Capacitor/Electron 빌드)
+    mobile-capacitor/          (Capacitor iOS/Android 네이티브)
+    desktop/                   (Electron 메인 프로세스)
+    mobile-rn/                 (React Native 앱 - 예정)
+  packages/                    (공유 패키지 - 예정)
+```
+
+### 빌드 명령어
+- 웹: `cd apps/web && npm run build` 또는 루트 `npm run build:web`
+- 모바일: `cd apps/web && npm run build:mobile`
+- Electron: `cd apps/web && npm run build:electron`
 
 ## 빌드 및 배포
 
 **TestFlight 배포 프로세스**:
-1. 빌드 실행: `npm run build:mobile` 또는 `npm run build:mobile:prod`
-2. Xcode 열기: `npx cap open ios`
+1. 빌드 실행: `cd apps/web && npm run build:mobile` 또는 `build:mobile:prod`
+2. Xcode 열기: `cd apps/mobile-capacitor && npx cap open ios`
 3. Archive 생성: Product → Archive (Any iOS Device 선택)
 4. App Store Connect 업로드: Distribute App → Upload
 5. TestFlight 설정: App Store Connect에서 테스터 추가
@@ -24,16 +43,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 환경 설정
 
-**환경 파일 분리**:
+**환경 파일 분리** (apps/web/ 디렉터리 내):
 - `.env.development` → 개발 DB (DayStep)
 - `.env.production` → 프로덕션 DB (DayStep Production)
 
 **Vercel 배포**:
-- ⚠️ Vercel은 `.env.production` 파일을 사용하지 않음
-- ✅ Vercel Dashboard → Settings → Environment Variables에서 설정
+- Vercel 루트 디렉터리: 프로젝트 루트 (vercel.json에서 buildCommand로 apps/web 지정)
 - **Production**: main 브랜치 → 프로덕션 DB → `daystep.vercel.app`
 - **Preview**: develop/feature 브랜치 → 개발 DB → 자동 생성 URL
-- 📖 상세 가이드: `docs/VERCEL_DEPLOYMENT.md` 참조
 
 ## MCP 서버
 
@@ -42,7 +59,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npx supabase functions deploy mcp-server --project-ref <PROJECT_REF> --no-verify-jwt
 ```
-⚠️ `--no-verify-jwt` 필수 (공개 OAuth 엔드포인트용, 없으면 401 오류)
 
 ## 핵심 아키텍처 패턴
 
