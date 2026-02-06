@@ -13,7 +13,6 @@ dependencies {
     implementation project(':capacitor-preferences')
     implementation project(':capacitor-local-notifications')
     implementation project(':capacitor-community-contacts')
-    implementation project(':daystep-widget-bridge')
     implementation project(':daystep-contact-groups')
     implementation project(':revenuecat-purchases-capacitor')
 

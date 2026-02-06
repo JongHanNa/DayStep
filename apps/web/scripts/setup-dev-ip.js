@@ -59,8 +59,16 @@ function isValidIP(ip) {
  */
 async function updateCapacitorConfigIP(currentIP) {
   try {
-    const configPath = path.join(__dirname, '..', 'mobile', 'capacitor.config.ts');
-    
+    const configPath = path.join(__dirname, '..', '..', 'mobile-capacitor', 'capacitor.config.ts');
+
+    // 파일이 없으면 스킵 (웹 전용 개발 시)
+    try {
+      await fs.access(configPath);
+    } catch {
+      console.log('🌐 Capacitor 설정 파일 없음 - 스킵');
+      return currentIP;
+    }
+
     // 현재 설정 파일 읽기
     const configContent = await fs.readFile(configPath, 'utf-8');
     
