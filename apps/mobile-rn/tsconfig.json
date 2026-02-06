@@ -1,0 +1,16 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["jest"],
+    "baseUrl": ".",
+    "paths": {
+      "@daystep/shared-core": ["../../packages/shared-core/src"],
+      "@daystep/shared-core/*": ["../../packages/shared-core/src/*"],
+      "@daystep/shared-utils": ["../../packages/shared-utils/src"],
+      "@daystep/shared-utils/*": ["../../packages/shared-utils/src/*"],
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
+}
