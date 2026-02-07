@@ -30,5 +30,21 @@ target 'DayStepRN' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Fix: RCTSwiftUI modulemap not found during Xcode Clang dependency scanning.
+    # The scanner runs BEFORE build phases, so it can't find the modulemap
+    # at ${PODS_CONFIGURATION_BUILD_DIR}/RCTSwiftUI/ (only exists after building).
+    # Rewrite the path in generated xcconfig files to the source location.
+    xcconfig_dir = "#{installer.sandbox.root}/Target Support Files/Pods-DayStepRN"
+    Dir.glob("#{xcconfig_dir}/*.xcconfig").each do |xcconfig_path|
+      content = File.read(xcconfig_path)
+      if content.include?('${PODS_CONFIGURATION_BUILD_DIR}/RCTSwiftUI/RCTSwiftUI.modulemap')
+        content.gsub!(
+          '${PODS_CONFIGURATION_BUILD_DIR}/RCTSwiftUI/RCTSwiftUI.modulemap',
+          '${PODS_ROOT}/Target Support Files/RCTSwiftUI/RCTSwiftUI.modulemap'
+        )
+        File.write(xcconfig_path, content)
+      end
+    end
   end
 end
