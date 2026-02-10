@@ -457,7 +457,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       {/* Drag Overlay */}
       <DragOverlay modifiers={[snapCenterToCursor, restrictToWindowEdges]}>
         {activeTodo && (
-          <div className="opacity-90 pointer-events-none">
+          <div className="opacity-90 pointer-events-none w-64">
             <DraggableTodoChip todo={activeTodo} />
           </div>
         )}
