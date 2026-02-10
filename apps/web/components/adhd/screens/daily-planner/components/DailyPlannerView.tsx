@@ -16,7 +16,7 @@ import {
   type DragMoveEvent,
 } from '@dnd-kit/core';
 import { pointerWithin } from '@dnd-kit/core';
-import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import { restrictToWindowEdges, snapCenterToCursor } from '@dnd-kit/modifiers';
 
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useDailyPlannerData } from '../hooks/useDailyPlannerData';
@@ -455,7 +455,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       </div>
 
       {/* Drag Overlay */}
-      <DragOverlay modifiers={[restrictToWindowEdges]}>
+      <DragOverlay modifiers={[snapCenterToCursor, restrictToWindowEdges]}>
         {activeTodo && (
           <div className="opacity-90 pointer-events-none">
             <DraggableTodoChip todo={activeTodo} />

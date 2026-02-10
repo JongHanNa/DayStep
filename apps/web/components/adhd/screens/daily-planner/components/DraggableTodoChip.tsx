@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+
 import { CheckCircle2, Circle, MinusCircle, XCircle, Pause } from 'lucide-react';
 import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -31,14 +31,13 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `chip-${todo.id}`,
     data: { type: 'todo', todoId: todo.id },
   });
 
-  const style = transform ? {
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
+  const style = isDragging ? {
+    opacity: 0.4,
   } : undefined;
 
   const timeStr = showTime && todo.startTime
