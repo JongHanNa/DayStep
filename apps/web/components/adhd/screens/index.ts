@@ -16,6 +16,7 @@ export { ContactScreen } from './contact';
 // 일상 돌보기 (Care) 그룹
 export { GratitudeScreen } from './gratitude';
 export { TimelineScreen } from './timeline';
+export { DailyPlannerScreen } from './daily-planner';
 export { ActivityScreen } from './activity';
 
 // 계획 세우기 (Project) 그룹
@@ -39,6 +40,7 @@ import { NewsScreen } from './news';
 import { ContactScreen } from './contact';
 import { GratitudeScreen } from './gratitude';
 import { TimelineScreen } from './timeline';
+import { DailyPlannerScreen } from './daily-planner';
 import { ActivityScreen } from './activity';
 import { BannerScreen } from './banner';
 import { ExecuteScreen } from './execute';
@@ -61,6 +63,7 @@ export const SCREEN_COMPONENTS: Record<ADHDSubViewId, ScreenComponent> = {
   contact: ContactScreen,
   gratitude: GratitudeScreen,
   timeline: TimelineScreen,
+  'daily-planner': DailyPlannerScreen,
   activity: ActivityScreen,
   banner: BannerScreen,
   execute: ExecuteScreen,

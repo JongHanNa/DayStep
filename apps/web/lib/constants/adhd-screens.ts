@@ -33,6 +33,7 @@ export type ADHDSubViewId =
   | 'ai-chat'
   | 'guide'
   | 'timeline'
+  | 'daily-planner'
   | 'execute'
   | 'motivation'
   | 'organize'
@@ -174,6 +175,12 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
       help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
     },
   },
+  'daily-planner': {
+    id: 'daily-planner',
+    label: '하루 플래너',
+    icon: Calendar,
+    componentPath: 'screens/daily-planner/DailyPlannerScreen',
+  },
   activity: {
     id: 'activity',
     label: '활동 살펴보기',
@@ -267,7 +274,7 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
   {
     id: 'fuel',
     basePath: '/adhd/fuel',
-    screenIds: ['motivation', 'timeline', 'execute', 'organize'],
+    screenIds: ['motivation', 'timeline', 'daily-planner', 'execute', 'organize'],
   },
   {
     id: 'relationship',

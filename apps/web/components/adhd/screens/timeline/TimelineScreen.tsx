@@ -1,9 +1,11 @@
 'use client';
 
 import { TodoTimelineView } from './components/TodoTimelineView';
+import type { TimelineViewMode } from './types';
 
 interface TimelineScreenProps {
   userId: string;
+  viewMode?: TimelineViewMode;
 }
 
 /**
@@ -12,8 +14,8 @@ interface TimelineScreenProps {
  *
  * TodoTimelineView를 직접 사용
  */
-export function TimelineScreen({ userId }: TimelineScreenProps) {
-  return <TodoTimelineView userId={userId} />;
+export function TimelineScreen({ userId, viewMode = 'agenda' }: TimelineScreenProps) {
+  return <TodoTimelineView userId={userId} viewMode={viewMode} />;
 }
 
 export default TimelineScreen;

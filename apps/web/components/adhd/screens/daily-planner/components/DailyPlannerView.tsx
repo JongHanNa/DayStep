@@ -18,7 +18,7 @@ import { pointerWithin } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useDailyPlannerData } from '../../hooks/useDailyPlannerData';
+import { useDailyPlannerData } from '../hooks/useDailyPlannerData';
 import { TimeSchedulePanel } from './TimeSchedulePanel';
 import { PriorityMatrixPanel } from './PriorityMatrixPanel';
 import { ReluctantTasksPanel } from './ReluctantTasksPanel';
@@ -28,7 +28,7 @@ import { GratitudePanel } from './GratitudePanel';
 import { DayReflectionBar } from './DayReflectionBar';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
-import type { TimelineItem } from '../../types';
+import type { TimelineItem } from '../../timeline/types';
 
 interface DailyPlannerViewProps {
   userId: string;

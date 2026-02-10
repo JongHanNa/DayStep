@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useDailyReflectionStore } from '@/state/stores/dailyReflectionStore';
 import type { Todo } from '@/entities/todo/Todo';
-import { type TimelineItem, timelineItemToTodo } from '../types';
+import { type TimelineItem, timelineItemToTodo } from '../../timeline/types';
 
 interface UseDailyPlannerDataProps {
   userId: string;

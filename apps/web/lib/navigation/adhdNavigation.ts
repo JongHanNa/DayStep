@@ -41,6 +41,7 @@ export function useADHDNavigation() {
       switch (screenId) {
         case 'motivation':
         case 'timeline':
+        case 'daily-planner':
         case 'execute':
         case 'organize':
           if (userId) store.enterFuelMode(userId, undefined, screenId);

@@ -5,6 +5,7 @@ import type { TimeGap } from '@/lib/timeGapUtils';
 // ─── Props ───────────────────────────────────────
 export interface TodoTimelineViewProps {
   userId: string;
+  viewMode?: TimelineViewMode;
 }
 
 // ─── 타임라인 아이템 타입 (일반 할일 + 반복 인스턴스 통합) ───

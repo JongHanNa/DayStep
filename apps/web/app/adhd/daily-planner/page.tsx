@@ -6,16 +6,16 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import { TimelineScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/timeline - 달력 페이지
+ * /adhd/daily-planner - 하루 플래너 페이지
  * Flat 라우트 구조
  */
-export default function TimelinePage() {
+export default function DailyPlannerPage() {
   const { user } = useAuth();
 
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterFuelMode(user.id, undefined, 'timeline');
+      useADHDStore.getState().enterFuelMode(user.id, undefined, 'daily-planner');
     }
   }, [user?.id]);
 
@@ -29,7 +29,7 @@ export default function TimelinePage() {
 
   return (
     <div className="bg-base-100">
-      <TimelineScreen userId={user.id} viewMode="agenda" />
+      <TimelineScreen userId={user.id} viewMode="daily" />
     </div>
   );
 }

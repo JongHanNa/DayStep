@@ -21,8 +21,8 @@ export default function ADHDSidebar() {
   const currentSubView = useADHDStore((state) => state.currentSubView);
   const { goHome, goScreen } = useADHDNavigation();
 
-  // timeline은 고정 Calendar 버튼이 있으므로 배지에서 제외
-  const effectiveSubView = currentSubView === 'timeline' ? null : currentSubView;
+  // timeline/daily-planner는 고정 Calendar 버튼이 있으므로 배지에서 제외
+  const effectiveSubView = currentSubView === 'timeline' || currentSubView === 'daily-planner' ? null : currentSubView;
 
   // 배지 아이콘: effectiveSubView가 있으면 해당 화면 아이콘
   const BadgeIcon = effectiveSubView ? SUBVIEW_CONFIG[effectiveSubView]?.icon : null;
@@ -36,7 +36,7 @@ export default function ADHDSidebar() {
       <button
         onClick={() => goScreen('timeline')}
         className={`mt-2 w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 ${
-          currentSubView === 'timeline'
+          currentSubView === 'timeline' || currentSubView === 'daily-planner'
             ? 'text-primary bg-primary/10'
             : 'text-base-content/60 hover:bg-base-300'
         }`}
