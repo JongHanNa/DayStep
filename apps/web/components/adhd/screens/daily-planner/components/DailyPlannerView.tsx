@@ -176,6 +176,15 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     }
   }, [date, updateTodo, timelineItems]);
 
+  const handleDragCancel = useCallback(() => {
+    if (pageSwitchTimeoutRef.current) {
+      clearTimeout(pageSwitchTimeoutRef.current);
+      pageSwitchTimeoutRef.current = null;
+    }
+    setEdgeHover(null);
+    setActiveTodo(null);
+  }, []);
+
   // 칩 클릭 → TimelineItem 찾아서 편집 콜백 호출
   const handleChipEditClick = useCallback((todo: Todo) => {
     const item = timelineItems.find(i => i.id === todo.id);
@@ -375,6 +384,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <div className={`flex-1 overscroll-contain ${activeTodo ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* 날짜 표시 */}
@@ -455,7 +465,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       </div>
 
       {/* Drag Overlay */}
-      <DragOverlay modifiers={[snapCenterToCursor, restrictToWindowEdges]}>
+      <DragOverlay modifiers={[snapCenterToCursor, restrictToWindowEdges]} dropAnimation={null}>
         {activeTodo && (
           <div className="opacity-90 pointer-events-none w-64">
             <DraggableTodoChip todo={activeTodo} />

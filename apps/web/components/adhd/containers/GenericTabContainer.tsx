@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { Crown, HelpCircle, Brain } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -87,6 +87,14 @@ export function GenericTabContainer({
   };
 
   const [activeTab, setActiveTab] = useState<ADHDSubViewId>(getInitialTab());
+
+  // currentSubView 변경 시 activeTab 동기화 (Capacitor Store 기반 네비게이션용)
+  useEffect(() => {
+    if (currentSubView && screenIds.includes(currentSubView as ADHDSubViewId)) {
+      setActiveTab(currentSubView as ADHDSubViewId);
+    }
+  }, [currentSubView, screenIds]);
+
   const [helpModalTab, setHelpModalTab] = useState<ADHDSubViewId | null>(null);
 
   // Pro 전용 탭인지 확인

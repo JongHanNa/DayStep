@@ -2,6 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* DaisyUI v5 + Tailwind v3 호환성 패치 */
+/* Tailwind v3 Preflight(unlayered)가 DaisyUI v5(layered) 스타일을 덮어쓰는 문제 해결 */
+/* Preflight: button { background-color: transparent } → .btn 배경 투명화 */
+/* Preflight: * { border-width: 0 } → .btn 테두리 제거 */
+/* Preflight: button { padding: 0 } → .btn 패딩 제거 */
+.btn {
+  background-color: var(--btn-bg);
+  border-width: var(--border);
+  border-style: solid;
+  border-color: var(--btn-border);
+  padding-inline: var(--btn-p);
+}
+
+/* btn-circle: 아이콘 전용 버튼은 padding 0 유지 */
+/* DaisyUI layered .btn-circle { padding-inline: 0 }이 위 unlayered .btn 패치에 의해 덮어써짐 → 복원 */
+.btn-circle {
+  padding-inline: 0;
+}
+
+/* Preflight: * { border-width: 0 } → .badge 테두리/배경 제거 */
+.badge {
+  border-width: var(--border);
+  border-style: solid;
+  border-color: var(--badge-color, var(--color-base-200));
+  background-color: var(--badge-bg);
+}
+
+/* Preflight: * { border-width: 0 } → .checkbox 테두리 제거 */
+.checkbox {
+  border-width: var(--border);
+  border-style: solid;
+  border-color: var(--input-color, color-mix(in oklab, var(--color-base-content) 20%, transparent));
+}
+
 /* 헤더 높이 CSS 변수 - 최상위 레벨에서 정의 */
 :root {
   --header-height: 56px; /* h-14 = 3.5rem = 56px */
@@ -254,10 +288,6 @@ dialog::backdrop {
   --status-pending: 213 97% 87%; /* #60a5fa */
 }
 
-
-* {
-  border-color: var(--border);
-}
 
 html, body {
   /* 가로 스크롤만 막기 */
