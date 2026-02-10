@@ -346,9 +346,10 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
           <div className="overflow-hidden relative" ref={scrollContainerRef}>
             <motion.div
               drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
+              dragConstraints={{ left: slideOffset, right: 0 }}
               dragElastic={0.2}
               onDragEnd={handleDragEndSwipe}
+              dragMomentum={false}
               animate={{ x: mobilePage === 0 ? 0 : slideOffset }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="flex"

@@ -142,7 +142,7 @@ export default function HomeTableOfContents() {
         <div className="overflow-hidden relative" ref={scrollContainerRef}>
           <motion.div
             drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
+            dragConstraints={{ left: slideOffset, right: 0 }}
             dragElastic={0.2}
             dragMomentum={false}
             onDragEnd={handleDragEndSwipe}
