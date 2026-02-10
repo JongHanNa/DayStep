@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Crown } from 'lucide-react';
-import { motion, type PanInfo } from 'framer-motion';
+import { motion, useAnimation, type PanInfo } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import {
@@ -37,6 +37,7 @@ export default function HomeTableOfContents() {
   const [mobilePage, setMobilePage] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const controls = useAnimation();
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -53,14 +54,20 @@ export default function HomeTableOfContents() {
   const page1Width = containerWidth > 0 ? containerWidth - PEEK_AMOUNT : 0;
   const slideOffset = PEEK_AMOUNT - page1Width - GAP;
 
+  useEffect(() => {
+    controls.start({ x: mobilePage === 0 ? 0 : slideOffset });
+  }, [mobilePage, slideOffset, controls]);
+
   const handleDragEndSwipe = useCallback((_: unknown, info: PanInfo) => {
     const threshold = 50;
     if (info.offset.x < -threshold && mobilePage === 0) {
       setMobilePage(1);
     } else if (info.offset.x > threshold && mobilePage === 1) {
       setMobilePage(0);
+    } else {
+      controls.start({ x: mobilePage === 0 ? 0 : slideOffset });
     }
-  }, [mobilePage]);
+  }, [mobilePage, slideOffset, controls]);
 
   // 목차 콘텐츠
   const tocContent = (
@@ -146,7 +153,7 @@ export default function HomeTableOfContents() {
             dragElastic={0.2}
             dragMomentum={false}
             onDragEnd={handleDragEndSwipe}
-            animate={{ x: mobilePage === 0 ? 0 : slideOffset }}
+            animate={controls}
             transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.6 }}
             className="flex"
             style={{ gap: `${GAP}px` }}

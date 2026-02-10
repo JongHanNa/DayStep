@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation, type PanInfo } from 'framer-motion';
 import {
   DndContext,
   DragOverlay,
@@ -60,6 +60,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
   const [mobilePage, setMobilePage] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const swipeControls = useAnimation();
 
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -77,6 +78,10 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
   const GAP = 12;
   const page1Width = containerWidth > 0 ? containerWidth - PEEK_AMOUNT : 0;
   const slideOffset = PEEK_AMOUNT - page1Width - GAP;
+
+  useEffect(() => {
+    swipeControls.start({ x: mobilePage === 0 ? 0 : slideOffset });
+  }, [mobilePage, slideOffset, swipeControls]);
 
   // DnD state
   const [activeTodo, setActiveTodo] = useState<Todo | null>(null);
@@ -235,8 +240,10 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       setMobilePage(1);
     } else if (info.offset.x > threshold && mobilePage === 1) {
       setMobilePage(0);
+    } else {
+      swipeControls.start({ x: mobilePage === 0 ? 0 : slideOffset });
     }
-  }, [mobilePage]);
+  }, [mobilePage, slideOffset, swipeControls]);
 
   // 날짜 표시
   const dateLabel = format(date, 'd일 (EEEE)', { locale: ko });
@@ -350,7 +357,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
               dragElastic={0.2}
               onDragEnd={handleDragEndSwipe}
               dragMomentum={false}
-              animate={{ x: mobilePage === 0 ? 0 : slideOffset }}
+              animate={swipeControls}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="flex"
               style={{ gap: `${GAP}px` }}

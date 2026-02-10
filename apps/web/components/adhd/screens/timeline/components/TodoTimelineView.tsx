@@ -108,7 +108,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
 
   // ─── 공통 헤더 JSX ───
   const renderHeader = () => (
-    <div className="flex-shrink-0 bg-base-100 z-10">
+    <div className="flex-shrink-0 bg-base-100 z-10 safe-area-top">
       <div className="flex items-center">
         <div className="flex-1">
           <MonthNavigator
