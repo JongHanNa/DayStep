@@ -1,11 +1,18 @@
 'use client';
 
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Crown } from 'lucide-react';
+import { motion, type PanInfo } from 'framer-motion';
+import { useAuth } from '@/app/context/AuthContext';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import {
   getUIGroupsForTableOfContents,
   type ADHDSubViewId,
 } from '@/lib/constants/adhd-screens';
+import { BannerView } from './screens/banner/components/BannerView';
+
+const PEEK_AMOUNT = 40;
+const GAP = 12;
 
 /**
  * 홈 목차 화면
@@ -13,17 +20,50 @@ import {
  * UI_GROUPS 설정을 기반으로 목차 형태로 표시
  * 화면 이동 시 UI_GROUPS만 수정하면 목차가 자동으로 업데이트됨
  *
- * Flat 라우트 구조 사용:
- * - 모든 화면은 /adhd/{screenId}로 직접 이동
- * - routeGroup은 더 이상 라우팅에 사용되지 않음
+ * 모바일(md 미만): 2페이지 양방향 Peek 캐러셀
+ *   - 페이지 0: 일상 관리 목차
+ *   - 페이지 1: 마음 깨우기 (BannerView)
+ *
+ * 데스크탑(md 이상): 기존 목차만 표시
  */
 export default function HomeTableOfContents() {
-  const { goScreen } = useADHDNavigation();
+  const { user } = useAuth();
+  const { goScreen, goRelationshipInsights, goFuel } = useADHDNavigation();
 
   // UI_GROUPS와 SCREEN_REGISTRY에서 목차 데이터 생성
   const groups = getUIGroupsForTableOfContents();
 
-  return (
+  // Mobile swipe state
+  const [mobilePage, setMobilePage] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const page1Width = containerWidth > 0 ? containerWidth - PEEK_AMOUNT : 0;
+  const slideOffset = PEEK_AMOUNT - page1Width - GAP;
+
+  const handleDragEndSwipe = useCallback((_: unknown, info: PanInfo) => {
+    const threshold = 50;
+    if (info.offset.x < -threshold && mobilePage === 0) {
+      setMobilePage(1);
+    } else if (info.offset.x > threshold && mobilePage === 1) {
+      setMobilePage(0);
+    }
+  }, [mobilePage]);
+
+  // 목차 콘텐츠
+  const tocContent = (
     <div className="min-h-screen bg-base-100 px-4 py-6 sm:px-6 sm:py-8">
       <div className="max-w-lg mx-auto">
         {/* 헤더 */}
@@ -69,5 +109,62 @@ export default function HomeTableOfContents() {
         </div>
       </div>
     </div>
+  );
+
+  // 마음 깨우기 콘텐츠
+  const bannerContent = user?.id ? (
+    <div className="min-h-screen bg-base-100 px-4 py-6">
+      <BannerView
+        userId={user.id}
+        onRelationshipInsights={() => goRelationshipInsights()}
+        onFuel={() => goFuel('execute')}
+      />
+    </div>
+  ) : null;
+
+  return (
+    <>
+      {/* 모바일: 스와이프 캐러셀 */}
+      <div className="md:hidden">
+        {/* Dot indicator */}
+        <div className="flex justify-center gap-2 pt-2 pb-1">
+          {[0, 1].map(i => (
+            <button
+              key={i}
+              onClick={() => setMobilePage(i)}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                mobilePage === i ? 'bg-primary' : 'bg-base-content/20'
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="overflow-hidden relative" ref={scrollContainerRef}>
+          <motion.div
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEndSwipe}
+            animate={{ x: mobilePage === 0 ? 0 : slideOffset }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="flex"
+            style={{ gap: `${GAP}px` }}
+          >
+            <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
+              {tocContent}
+            </div>
+            <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
+              {bannerContent}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* 데스크탑: 목차 + 마음 깨우기 나란히 */}
+      <div className="hidden md:flex gap-6 px-6 py-8">
+        <div className="flex-1 max-w-lg">{tocContent}</div>
+        <div className="flex-1 max-w-lg">{bannerContent}</div>
+      </div>
+    </>
   );
 }

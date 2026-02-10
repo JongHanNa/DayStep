@@ -245,6 +245,11 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
 
 export const UI_GROUPS: UIGroupConfig[] = [
   {
+    id: 'project',
+    title: '계획 세우기',
+    screenIds: ['execute', 'organize', 'ai-plan', 'ai-chat', 'guide'],
+  },
+  {
     id: 'memory',
     title: '생각과 기억',
     screenIds: ['motivation', 'record', 'news', 'contact'],
@@ -253,11 +258,6 @@ export const UI_GROUPS: UIGroupConfig[] = [
     id: 'care',
     title: '일상 돌보기',
     screenIds: ['gratitude', 'timeline', 'activity'],
-  },
-  {
-    id: 'project',
-    title: '계획 세우기',
-    screenIds: ['banner', 'execute', 'organize', 'ai-plan', 'ai-chat', 'guide'],
   },
 ];
 
@@ -386,12 +386,6 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
     id: 'project',
     title: '계획 세우기',
     items: [
-      {
-        id: 'banner',
-        label: '마음 깨우기',
-        icon: Flag,
-        routeGroup: 'dashboard',
-      },
       {
         id: 'execute',
         label: '집중 실행하기',
