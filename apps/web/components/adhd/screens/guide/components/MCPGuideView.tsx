@@ -148,7 +148,7 @@ export default function MCPGuideView() {
         </p>
         <button
           onClick={handleOpenAuth}
-          className="btn btn-primary btn-sm gap-2 rounded-full"
+          className="btn btn-primary gap-2 rounded-full"
         >
           <Key className="w-4 h-4" />
           토큰 발급받기

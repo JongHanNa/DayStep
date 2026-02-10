@@ -28,7 +28,7 @@ export default function DailyPlannerPage() {
   }
 
   return (
-    <div className="bg-base-100">
+    <div className="bg-base-100 h-[calc(100dvh-5rem)] md:h-dvh">
       <TimelineScreen userId={user.id} viewMode="daily" />
     </div>
   );

@@ -11,12 +11,13 @@ import { GenericTabContainer } from '@/components/adhd/containers/GenericTabCont
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { SettingsContainer } from '@/components/adhd/settings';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
+import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { isCapacitorEnv, isElectronEnv } from '@/lib/utils/platform';
 import type { ADHDSubViewId } from '@/lib/constants/adhd-screens';
 
 // 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
-const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'execute', 'organize'];
+const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'daily-planner', 'execute', 'organize'];
 const RELATIONSHIP_SCREEN_IDS: ADHDSubViewId[] = ['record', 'news', 'gratitude'];
 const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
 
@@ -205,8 +206,17 @@ export default function HomePage() {
             />
           )}
 
+          {/* 진입 모드 (연락 돌아보기 / 활동 살펴보기) */}
+          {currentMode === 'entry' && (
+            <ADHDEntryScreen
+              userId={user?.id}
+              onRelationshipInsights={handleRelationshipInsights}
+              onFuel={handleFuel}
+            />
+          )}
+
           {/* 홈 목차 화면 (기본) - null일 때도 표시 (새로고침 시 persist에서 제외된 currentMode가 null로 초기화됨) */}
-          {(currentMode === 'home' || currentMode === 'entry' || currentMode === null) && (
+          {(currentMode === 'home' || currentMode === null) && (
             <HomeTableOfContents />
           )}
         </main>

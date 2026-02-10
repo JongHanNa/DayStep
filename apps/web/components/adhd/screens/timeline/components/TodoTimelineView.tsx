@@ -249,7 +249,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
   // ─── 하루 뷰 모드 ───
   if (viewMode === 'daily') {
     return (
-      <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-dvh safe-area-top">
+      <div className="flex flex-col h-full">
         {renderHeader()}
         <DailyPlannerView
           userId={userId}
@@ -269,10 +269,10 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
   // ─── 빈 상태 ───
   if (nav.timelineItems.length === 0) {
     return (
-      <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-dvh safe-area-top">
+      <div className="flex flex-col h-full">
         {renderHeader()}
 
-        <div ref={nav.scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
+        <div ref={nav.scrollContainerRef} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
           <div className="p-4">
             <button
               onClick={handleLoadMorePast}
@@ -314,10 +314,10 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
 
   // ─── 메인 타임라인 ───
   return (
-    <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-dvh safe-area-top">
+    <div className="flex flex-col h-full">
       {renderHeader()}
 
-      <div ref={nav.scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
+      <div ref={nav.scrollContainerRef} className="flex-1 overflow-y-auto min-h-0 overscroll-contain">
       <div className={`p-4 space-y-8 transition-opacity duration-100 ${nav.isScrollReady ? 'opacity-100' : 'opacity-0'}`}>
         {/* 과거 더 보기 버튼 */}
         <button

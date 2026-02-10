@@ -153,7 +153,7 @@ export function AIPlanView({ userId }: AIPlanViewProps) {
             key={btn.value}
             onClick={() => setStatusFilter(btn.value)}
             className={`btn btn-sm rounded-full ${
-              statusFilter === btn.value ? 'btn-primary' : 'btn-ghost'
+              statusFilter === btn.value ? 'btn-primary' : 'bg-base-200 text-base-content hover:bg-base-300'
             }`}
           >
             {btn.label}

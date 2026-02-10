@@ -144,9 +144,10 @@ export default function HomeTableOfContents() {
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
+            dragMomentum={false}
             onDragEnd={handleDragEndSwipe}
             animate={{ x: mobilePage === 0 ? 0 : slideOffset }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.6 }}
             className="flex"
             style={{ gap: `${GAP}px` }}
           >
