@@ -125,7 +125,7 @@ export default function HomeTableOfContents() {
   return (
     <>
       {/* 모바일: 스와이프 캐러셀 */}
-      <div className="md:hidden">
+      <div className="md:hidden safe-area-top">
         {/* Dot indicator */}
         <div className="flex justify-center gap-2 pt-2 pb-1">
           {[0, 1].map(i => (
@@ -133,7 +133,7 @@ export default function HomeTableOfContents() {
               key={i}
               onClick={() => setMobilePage(i)}
               className={`w-2 h-2 rounded-full transition-colors ${
-                mobilePage === i ? 'bg-primary' : 'bg-base-content/20'
+                mobilePage === i ? 'bg-primary' : 'bg-base-300'
               }`}
             />
           ))}

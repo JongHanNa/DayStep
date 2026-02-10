@@ -336,7 +336,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
                 key={i}
                 onClick={() => setMobilePage(i)}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  mobilePage === i ? 'bg-primary' : 'bg-base-content/20'
+                  mobilePage === i ? 'bg-primary' : 'bg-base-300'
                 }`}
               />
             ))}

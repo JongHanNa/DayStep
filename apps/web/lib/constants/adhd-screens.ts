@@ -247,7 +247,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'project',
     title: '계획 세우기',
-    screenIds: ['execute', 'organize', 'ai-plan', 'ai-chat', 'guide', 'timeline', 'daily-planner'],
+    screenIds: ['daily-planner', 'timeline', 'execute', 'organize', 'ai-plan', 'ai-chat', 'guide'],
   },
   {
     id: 'memory',

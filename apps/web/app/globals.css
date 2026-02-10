@@ -17,11 +17,11 @@
 
 /* Capacitor 환경 - @layer 밖에서 정의 (높은 우선순위) */
 .capacitor {
-  --header-total-height: calc(56px + 44px); /* 100px - iOS 노치 포함 */
+  --header-total-height: calc(56px + env(safe-area-inset-top, 44px));
 }
 
 .capacitor .safe-area-top {
-  padding-top: 44px !important; /* iOS 상태바 + 노치 */
+  padding-top: env(safe-area-inset-top, 44px) !important;
 }
 
 /* Electron 환경 - 커스텀 타이틀바 */
