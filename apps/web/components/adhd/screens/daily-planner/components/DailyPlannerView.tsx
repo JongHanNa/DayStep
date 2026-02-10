@@ -11,8 +11,10 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core';
 import { pointerWithin } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
@@ -117,6 +119,9 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     const todoId = (active.data.current as any)?.todoId;
     const dropData = over.data.current as any;
     if (!todoId || !dropData) return;
+
+    // 엣지 드롭존은 무시 (페이지 전환만 담당)
+    if (dropData.type === 'page-switch') return;
 
     // 반복 인스턴스인지 확인
     const timelineItem = timelineItems.find(i => i.id === todoId);
@@ -245,6 +250,28 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     }
   }, [mobilePage, slideOffset, swipeControls]);
 
+  // ─── 엣지 드롭존 (크로스 페이지 DnD) ───
+  const { setNodeRef: setRightEdgeRef, isOver: isOverRightEdge } = useDroppable({
+    id: 'page-edge-right',
+    data: { type: 'page-switch', direction: 'right' },
+    disabled: !activeTodo || mobilePage !== 0,
+  });
+
+  const { setNodeRef: setLeftEdgeRef, isOver: isOverLeftEdge } = useDroppable({
+    id: 'page-edge-left',
+    data: { type: 'page-switch', direction: 'left' },
+    disabled: !activeTodo || mobilePage !== 1,
+  });
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const overId = event.over?.id;
+    if (overId === 'page-edge-right' && mobilePage === 0) {
+      setMobilePage(1);
+    } else if (overId === 'page-edge-left' && mobilePage === 1) {
+      setMobilePage(0);
+    }
+  }, [mobilePage]);
+
   // 날짜 표시
   const dateLabel = format(date, 'd일 (EEEE)', { locale: ko });
 
@@ -317,9 +344,10 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       sensors={sensors}
       collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex-1 overflow-y-auto">
+      <div className={`flex-1 overscroll-contain ${activeTodo ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* 날짜 표시 */}
         <div className="px-4 py-2 text-center">
           <span className="text-sm font-medium text-base-content/60">{dateLabel}</span>
@@ -351,14 +379,35 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
           {/* Swipable content */}
           <div className="overflow-hidden relative" ref={scrollContainerRef}>
+            {/* 오른쪽 엣지 드롭존 (page 0 → page 1) */}
+            <div
+              ref={setRightEdgeRef}
+              className={`absolute right-0 top-0 bottom-0 w-10 z-20 transition-opacity ${
+                activeTodo && mobilePage === 0
+                  ? 'opacity-100 bg-primary/10 border-l-2 border-primary/30'
+                  : 'opacity-0 pointer-events-none'
+              }`}
+            />
+            {/* 왼쪽 엣지 드롭존 (page 1 → page 0) */}
+            <div
+              ref={setLeftEdgeRef}
+              className={`absolute left-0 top-0 bottom-0 w-10 z-20 transition-opacity ${
+                activeTodo && mobilePage === 1
+                  ? 'opacity-100 bg-primary/10 border-r-2 border-primary/30'
+                  : 'opacity-0 pointer-events-none'
+              }`}
+            />
             <motion.div
-              drag="x"
+              drag={activeTodo ? false : "x"}
               dragConstraints={{ left: slideOffset, right: 0 }}
               dragElastic={0.2}
               onDragEnd={handleDragEndSwipe}
               dragMomentum={false}
               animate={swipeControls}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              transition={activeTodo
+                ? { type: 'tween', duration: 0.15 }
+                : { type: 'spring', stiffness: 300, damping: 30 }
+              }
               className="flex"
               style={{ gap: `${GAP}px` }}
             >

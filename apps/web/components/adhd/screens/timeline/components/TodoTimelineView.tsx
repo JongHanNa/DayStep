@@ -108,7 +108,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
 
   // ─── 공통 헤더 JSX ───
   const renderHeader = () => (
-    <div className="flex-shrink-0 bg-base-100 z-10 safe-area-top">
+    <div className="flex-shrink-0 bg-base-100 z-10">
       <div className="flex items-center">
         <div className="flex-1">
           <MonthNavigator
@@ -249,7 +249,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
   // ─── 하루 뷰 모드 ───
   if (viewMode === 'daily') {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full overflow-hidden">
         {renderHeader()}
         <DailyPlannerView
           userId={userId}
