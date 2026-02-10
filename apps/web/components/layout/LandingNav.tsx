@@ -124,13 +124,13 @@ export default function LandingNav() {
                     </Link>
                     <button
                       onClick={handleGetStarted}
-                      className="btn btn-primary btn-sm rounded-full"
+                      className="btn btn-sm rounded-full px-5 bg-white/20 text-white hover:bg-white/30 border border-white/50 backdrop-blur-sm"
                     >
                       시작하기
                     </button>
                   </>
                 ) : (
-                  <Link href="/" className="btn btn-primary btn-sm rounded-full">
+                  <Link href="/" className="btn btn-sm rounded-full px-5 bg-white/20 text-white hover:bg-white/30 border border-white/50 backdrop-blur-sm">
                     무료로 시작하기
                   </Link>
                 )}
@@ -185,7 +185,7 @@ export default function LandingNav() {
                         handleGetStarted();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="w-full btn btn-primary"
+                      className="w-full btn bg-white text-gray-800 hover:bg-gray-100 border-none shadow-lg"
                     >
                       시작하기
                     </button>
@@ -193,7 +193,7 @@ export default function LandingNav() {
                 ) : (
                   <Link
                     href="/"
-                    className="block w-full btn btn-primary"
+                    className="block w-full btn bg-white text-gray-800 hover:bg-gray-100 border-none shadow-lg"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     무료로 시작하기
