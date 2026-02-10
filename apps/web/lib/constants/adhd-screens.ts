@@ -165,11 +165,11 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
   },
   timeline: {
     id: 'timeline',
-    label: '달력',
+    label: '일정 계획하기',
     icon: Calendar,
     componentPath: 'screens/timeline/TimelineScreen',
     help: {
-      title: '달력',
+      title: '일정 계획하기',
       difficulty:
         '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다.',
       help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
@@ -177,7 +177,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
   },
   'daily-planner': {
     id: 'daily-planner',
-    label: '하루 플래너',
+    label: '하루 계획하기',
     icon: Calendar,
     componentPath: 'screens/daily-planner/DailyPlannerScreen',
   },
@@ -247,7 +247,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'project',
     title: '계획 세우기',
-    screenIds: ['execute', 'organize', 'ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['execute', 'organize', 'ai-plan', 'ai-chat', 'guide', 'timeline', 'daily-planner'],
   },
   {
     id: 'memory',
@@ -257,7 +257,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'care',
     title: '일상 돌보기',
-    screenIds: ['gratitude', 'timeline', 'activity'],
+    screenIds: ['gratitude', 'activity'],
   },
 ];
 
@@ -362,18 +362,6 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         },
       },
       {
-        id: 'timeline',
-        label: '달력',
-        icon: Calendar,
-        routeGroup: 'fuel',
-        help: {
-          title: '달력',
-          difficulty:
-            '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다.',
-          help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
-        },
-      },
-      {
         id: 'activity',
         label: '활동 살펴보기',
         icon: BarChart3,
@@ -427,6 +415,24 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         label: '사용법 배우기',
         icon: BookOpen,
         routeGroup: 'project',
+      },
+      {
+        id: 'timeline',
+        label: '일정 계획하기',
+        icon: Calendar,
+        routeGroup: 'fuel',
+        help: {
+          title: '일정 계획하기',
+          difficulty:
+            '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다.',
+          help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
+        },
+      },
+      {
+        id: 'daily-planner',
+        label: '하루 계획하기',
+        icon: Calendar,
+        routeGroup: 'fuel',
       },
     ],
   },
