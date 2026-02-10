@@ -11,10 +11,9 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
+  type DragMoveEvent,
 } from '@dnd-kit/core';
 import { pointerWithin } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
@@ -87,6 +86,8 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
   // DnD state
   const [activeTodo, setActiveTodo] = useState<Todo | null>(null);
+  const [edgeHover, setEdgeHover] = useState<'left' | 'right' | null>(null);
+  const pageSwitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor !== undefined;
 
@@ -112,16 +113,20 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
   }, [todayTodos]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    // 페이지 전환 타이머 정리
+    if (pageSwitchTimeoutRef.current) {
+      clearTimeout(pageSwitchTimeoutRef.current);
+      pageSwitchTimeoutRef.current = null;
+    }
+    setEdgeHover(null);
     setActiveTodo(null);
+
     const { active, over } = event;
     if (!over) return;
 
     const todoId = (active.data.current as any)?.todoId;
     const dropData = over.data.current as any;
     if (!todoId || !dropData) return;
-
-    // 엣지 드롭존은 무시 (페이지 전환만 담당)
-    if (dropData.type === 'page-switch') return;
 
     // 반복 인스턴스인지 확인
     const timelineItem = timelineItems.find(i => i.id === todoId);
@@ -250,27 +255,51 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     }
   }, [mobilePage, slideOffset, swipeControls]);
 
-  // ─── 엣지 드롭존 (크로스 페이지 DnD) ───
-  const { setNodeRef: setRightEdgeRef, isOver: isOverRightEdge } = useDroppable({
-    id: 'page-edge-right',
-    data: { type: 'page-switch', direction: 'right' },
-    disabled: !activeTodo || mobilePage !== 0,
-  });
+  // ─── onDragMove 기반 엣지 감지 (크로스 페이지 DnD) ───
+  const handleDragMove = useCallback((event: DragMoveEvent) => {
+    if (!activeTodo) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-  const { setNodeRef: setLeftEdgeRef, isOver: isOverLeftEdge } = useDroppable({
-    id: 'page-edge-left',
-    data: { type: 'page-switch', direction: 'left' },
-    disabled: !activeTodo || mobilePage !== 1,
-  });
+    const rect = container.getBoundingClientRect();
 
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    const overId = event.over?.id;
-    if (overId === 'page-edge-right' && mobilePage === 0) {
-      setMobilePage(1);
-    } else if (overId === 'page-edge-left' && mobilePage === 1) {
-      setMobilePage(0);
+    // 현재 포인터 X 좌표 계산 (초기 위치 + delta)
+    let initialX = 0;
+    if (event.activatorEvent instanceof TouchEvent) {
+      initialX = event.activatorEvent.touches[0]?.clientX ?? 0;
+    } else if (event.activatorEvent instanceof MouseEvent) {
+      initialX = event.activatorEvent.clientX ?? 0;
     }
-  }, [mobilePage]);
+    const currentX = initialX + event.delta.x;
+
+    const edgeThreshold = 50;
+
+    if (currentX > rect.right - edgeThreshold && mobilePage === 0) {
+      setEdgeHover('right');
+      if (!pageSwitchTimeoutRef.current) {
+        pageSwitchTimeoutRef.current = setTimeout(() => {
+          setMobilePage(1);
+          pageSwitchTimeoutRef.current = null;
+          setEdgeHover(null);
+        }, 300);
+      }
+    } else if (currentX < rect.left + edgeThreshold && mobilePage === 1) {
+      setEdgeHover('left');
+      if (!pageSwitchTimeoutRef.current) {
+        pageSwitchTimeoutRef.current = setTimeout(() => {
+          setMobilePage(0);
+          pageSwitchTimeoutRef.current = null;
+          setEdgeHover(null);
+        }, 300);
+      }
+    } else {
+      setEdgeHover(null);
+      if (pageSwitchTimeoutRef.current) {
+        clearTimeout(pageSwitchTimeoutRef.current);
+        pageSwitchTimeoutRef.current = null;
+      }
+    }
+  }, [mobilePage, activeTodo]);
 
   // 날짜 표시
   const dateLabel = format(date, 'd일 (EEEE)', { locale: ko });
@@ -344,7 +373,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       sensors={sensors}
       collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
     >
       <div className={`flex-1 overscroll-contain ${activeTodo ? 'overflow-hidden' : 'overflow-y-auto'}`}>
@@ -379,23 +408,23 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
           {/* Swipable content */}
           <div className="overflow-hidden relative" ref={scrollContainerRef}>
-            {/* 오른쪽 엣지 드롭존 (page 0 → page 1) */}
+            {/* 오른쪽 엣지 인디케이터 (page 0 → page 1) */}
             <div
-              ref={setRightEdgeRef}
-              className={`absolute right-0 top-0 bottom-0 w-10 z-20 transition-opacity ${
-                activeTodo && mobilePage === 0
-                  ? 'opacity-100 bg-primary/10 border-l-2 border-primary/30'
-                  : 'opacity-0 pointer-events-none'
-              }`}
+              className={`absolute right-0 top-0 bottom-0 w-12 z-20 transition-all duration-200
+                ${activeTodo && mobilePage === 0
+                  ? edgeHover === 'right'
+                    ? 'opacity-100 bg-primary/20 border-l-2 border-primary/50'
+                    : 'opacity-60 bg-primary/5 border-l border-primary/20'
+                  : 'opacity-0 pointer-events-none'}`}
             />
-            {/* 왼쪽 엣지 드롭존 (page 1 → page 0) */}
+            {/* 왼쪽 엣지 인디케이터 (page 1 → page 0) */}
             <div
-              ref={setLeftEdgeRef}
-              className={`absolute left-0 top-0 bottom-0 w-10 z-20 transition-opacity ${
-                activeTodo && mobilePage === 1
-                  ? 'opacity-100 bg-primary/10 border-r-2 border-primary/30'
-                  : 'opacity-0 pointer-events-none'
-              }`}
+              className={`absolute left-0 top-0 bottom-0 w-12 z-20 transition-all duration-200
+                ${activeTodo && mobilePage === 1
+                  ? edgeHover === 'left'
+                    ? 'opacity-100 bg-primary/20 border-r-2 border-primary/50'
+                    : 'opacity-60 bg-primary/5 border-r border-primary/20'
+                  : 'opacity-0 pointer-events-none'}`}
             />
             <motion.div
               drag={activeTodo ? false : "x"}
