@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
@@ -58,6 +58,25 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
   // Mobile swipe state
   const [mobilePage, setMobilePage] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const PEEK_AMOUNT = 40;
+  const GAP = 12;
+  const page1Width = containerWidth > 0 ? containerWidth - PEEK_AMOUNT : 0;
+  const slideOffset = PEEK_AMOUNT - page1Width - GAP;
 
   // DnD state
   const [activeTodo, setActiveTodo] = useState<Todo | null>(null);
@@ -324,19 +343,23 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
           </div>
 
           {/* Swipable content */}
-          <div className="overflow-hidden relative">
+          <div className="overflow-hidden relative" ref={scrollContainerRef}>
             <motion.div
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.2}
               onDragEnd={handleDragEndSwipe}
-              animate={{ x: mobilePage === 0 ? 0 : '-100%' }}
+              animate={{ x: mobilePage === 0 ? 0 : slideOffset }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="flex"
-              style={{ width: '200%' }}
+              style={{ gap: `${GAP}px` }}
             >
-              <div className="w-1/2 pr-2">{scheduleSection}</div>
-              <div className="w-1/2 pl-2">{plannerSection}</div>
+              <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
+                {scheduleSection}
+              </div>
+              <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
+                {plannerSection}
+              </div>
             </motion.div>
           </div>
 
