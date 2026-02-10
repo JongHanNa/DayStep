@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "dev:web": "npm run dev --workspace=@daystep/web",
-    "dev:mobile": "npm run dev:mobile --workspace=@daystep/web",
+    "dev:capacitor": "npm run capacitor:dev --workspace=@daystep/web",
+    "prod:capacitor": "npm run capacitor:prod --workspace=@daystep/web",
     "build": "turbo run build",
     "build:web": "npm run build --workspace=@daystep/web",
     "build:mobile": "npm run build:mobile --workspace=@daystep/web",
@@ -20,7 +21,6 @@
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "dev:rn": "npm run start --workspace=@daystep/mobile-rn",
     "start:rn": "npm run start --workspace=@daystep/mobile-rn",
     "ios:rn": "npm run ios --workspace=@daystep/mobile-rn",
     "android:rn": "npm run android --workspace=@daystep/mobile-rn",

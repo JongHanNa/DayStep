@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "android:prod": "ENVFILE=.env.production react-native run-android",
+    "ios": "rm -f /tmp/envfile && react-native run-ios",
+    "ios:prod": "echo '.env.production' > /tmp/envfile && react-native run-ios --scheme DayStepProd --mode Release",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"

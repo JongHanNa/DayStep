@@ -9,7 +9,11 @@ const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('📱 핫 리로드 제어 모바일 빌드를 시작합니다...\n');
+// dev (기본값) | prod 모드
+const BUILD_MODE = process.argv[2] === 'prod' ? 'prod' : 'dev';
+const isProd = BUILD_MODE === 'prod';
+
+console.log(`📱 핫 리로드 제어 모바일 빌드를 시작합니다... (${isProd ? '운영' : '개발'} 모드)\n`);
 
 // 개발 서버 실행 여부 확인
 function checkDevServer() {
@@ -72,15 +76,23 @@ function runMobileBuild() {
     const ENV_PRODUCTION_LOCAL = path.join(process.cwd(), '.env.production.local');
     const ENV_DEVELOPMENT = path.join(process.cwd(), '.env.development');
 
-    // .env.development 내용을 .env.production.local로 복사
-    console.log('📝 개발 DB 설정을 위한 임시 환경 파일 생성 중...');
-    if (!fs.existsSync(ENV_DEVELOPMENT)) {
-      reject(new Error('.env.development 파일이 존재하지 않습니다.'));
-      return;
+    // dev 모드: .env.development → .env.production.local 복사 (개발 DB 사용)
+    // prod 모드: .env.production.local 삭제 (운영 DB 사용)
+    if (isProd) {
+      if (fs.existsSync(ENV_PRODUCTION_LOCAL)) {
+        fs.unlinkSync(ENV_PRODUCTION_LOCAL);
+      }
+      console.log('📝 운영 DB 설정 사용\n');
+    } else {
+      console.log('📝 개발 DB 설정을 위한 임시 환경 파일 생성 중...');
+      if (!fs.existsSync(ENV_DEVELOPMENT)) {
+        reject(new Error('.env.development 파일이 존재하지 않습니다.'));
+        return;
+      }
+      const devEnvContent = fs.readFileSync(ENV_DEVELOPMENT, 'utf-8');
+      fs.writeFileSync(ENV_PRODUCTION_LOCAL, devEnvContent);
+      console.log('✅ 개발 DB 설정 완료\n');
     }
-    const devEnvContent = fs.readFileSync(ENV_DEVELOPMENT, 'utf-8');
-    fs.writeFileSync(ENV_PRODUCTION_LOCAL, devEnvContent);
-    console.log('✅ 개발 DB 설정 완료\n');
 
     const buildCommands = [
       // 출력 폴더만 정리 (캐시는 보존하여 속도 향상)
@@ -90,9 +102,8 @@ function runMobileBuild() {
       'node scripts/setup-dev-ip.js',
       'node scripts/build-mobile-routes.js backup && node scripts/build-mobile-routes.js mobile',
 
-      // 개발 친화적 고성능 빌드 (디버깅 정보 보존)
-      // NODE_ENV=production (export 모드 필수), CAPACITOR_ENV=development (개발 DB)
-      'cross-env NODE_ENV=production BUILD_TARGET=mobile CAPACITOR_ENV=development NEXT_PUBLIC_CAPACITOR_ENV=development NODE_OPTIONS="--max-old-space-size=4096" npx next build --no-lint',
+      // NODE_ENV=production (export 모드 필수), CAPACITOR_ENV는 모드에 따라 분기
+      `cross-env NODE_ENV=production BUILD_TARGET=mobile CAPACITOR_ENV=${isProd ? 'production' : 'development'} NEXT_PUBLIC_CAPACITOR_ENV=${isProd ? 'production' : 'development'} NODE_OPTIONS="--max-old-space-size=4096" npx next build --no-lint`,
 
       // Capacitor 동기화 (sync 사용 - 디버깅에 필요한 설정들 포함)
       'npm run mobile:sync',
@@ -110,14 +121,14 @@ function runMobileBuild() {
         ...process.env,
         NODE_ENV: 'production',
         BUILD_TARGET: 'mobile',
-        CAPACITOR_ENV: 'development',
-        NEXT_PUBLIC_CAPACITOR_ENV: 'development'
+        CAPACITOR_ENV: isProd ? 'production' : 'development',
+        NEXT_PUBLIC_CAPACITOR_ENV: isProd ? 'production' : 'development'
       }
     });
 
     buildProcess.on('close', (code) => {
-      // .env.production.local 정리 (성공/실패 무관)
-      if (fs.existsSync(ENV_PRODUCTION_LOCAL)) {
+      // dev 모드에서만 .env.production.local 정리 (성공/실패 무관)
+      if (!isProd && fs.existsSync(ENV_PRODUCTION_LOCAL)) {
         console.log('\n🧹 임시 환경 파일 정리 중...');
         fs.unlinkSync(ENV_PRODUCTION_LOCAL);
         console.log('✅ Cleanup 완료');
@@ -126,11 +137,13 @@ function runMobileBuild() {
       if (code === 0) {
         console.log('\n✅ 모바일 빌드가 완료되었습니다!');
 
-        // Bundle ID와 Display Name을 개발 환경용으로 업데이트
-        console.log('\n📝 Bundle Identifier 및 Display Name 업데이트 중...');
+        // Bundle ID와 Display Name을 모드에 따라 업데이트
+        const bundleId = isProd ? 'com.daystep.app' : 'com.daystep.app.dev';
+        const displayName = isProd ? 'DayStep' : 'DevDayStep';
+        console.log(`\n📝 Bundle Identifier 및 Display Name 업데이트 중... (${displayName})`);
         const { updateBundleId } = require('./update-bundle-id.js');
-        updateBundleId('com.daystep.app.dev', 'DevDayStep');
-        console.log('✅ 앱 이름이 "DevDayStep"으로 설정되었습니다.');
+        updateBundleId(bundleId, displayName);
+        console.log(`✅ 앱 이름이 "${displayName}"으로 설정되었습니다.`);
 
         resolve();
       } else {
@@ -140,8 +153,8 @@ function runMobileBuild() {
     });
 
     buildProcess.on('error', (error) => {
-      // 오류 시에도 .env.production.local 정리
-      if (fs.existsSync(ENV_PRODUCTION_LOCAL)) {
+      // dev 모드에서만 .env.production.local 정리
+      if (!isProd && fs.existsSync(ENV_PRODUCTION_LOCAL)) {
         console.log('\n🧹 임시 환경 파일 정리 중...');
         fs.unlinkSync(ENV_PRODUCTION_LOCAL);
         console.log('✅ Cleanup 완료');

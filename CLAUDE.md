@@ -26,6 +26,21 @@ DayStep/
 - 모바일: `cd apps/web && npm run build:mobile`
 - Electron: `cd apps/web && npm run build:electron`
 
+### React Native 개발 워크플로우 (실기기)
+
+**개발환경** (Debug + 개발 DB):
+1. `npm run start:rn` — Metro 번들러 시작 (필수)
+2. Xcode에서 DayStepRN scheme 선택 → 실기기 선택 → Cmd+R
+
+**운영환경** (Release + 운영 DB):
+1. Metro 불필요 (JS 번들 내장)
+2. Xcode에서 DayStepProd scheme 선택 → 실기기 선택 → Cmd+R
+
+| scheme | 빌드 모드 | DB | 앱 이름 | Bundle ID | Metro 필요 |
+|--------|----------|------|---------|-----------|-----------|
+| DayStepRN | Debug | 개발 | DevDayStep | com.daystep.app.dev | O |
+| DayStepProd | Release | 운영 | DayStep | com.daystep.app | X |
+
 ## 빌드 및 배포
 
 **TestFlight 배포 프로세스**:

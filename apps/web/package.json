@@ -28,6 +28,8 @@
     "build:mobile": "node scripts/build-mobile-dev.js",
     "build:mobile:prod": "node scripts/build-mobile-prod.js",
     "dev:mobile": "node scripts/mobile-build-with-hotreload.js",
+    "capacitor:dev": "node scripts/mobile-build-with-hotreload.js dev",
+    "capacitor:prod": "node scripts/mobile-build-with-hotreload.js prod",
     "build:mobile:no-pods": "node scripts/setup-dev-ip.js && node scripts/build-mobile-routes.js backup && node scripts/build-mobile-routes.js mobile && cross-env NODE_ENV=development BUILD_TARGET=mobile npx next build && npm run mobile:copy && node scripts/build-mobile-routes.js restore",
     "build:web": "cross-env NODE_ENV=production BUILD_TARGET=web next build",
     "dev:web": "node scripts/setup-dev-ip.js && pkill -f \"next dev\" || true && cross-env NODE_ENV=development BUILD_TARGET=web npm run dev",
