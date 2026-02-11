@@ -37,12 +37,13 @@ interface DailyPlannerViewProps {
   timelineItems: TimelineItem[];
   onEditClick?: (item: TimelineItem) => void;
   onToggleComplete?: (item: TimelineItem) => void;
+  onUnskipTodo?: (item: TimelineItem) => void;
   onSkipTodo?: (item: TimelineItem, reason: 'not_needed' | 'missed') => void;
   onOpenPostponeSheet?: (item: TimelineItem) => void;
   onAddTodo?: (prefillStart?: Date, prefillEnd?: Date, mode?: 'detailed' | 'new') => void;
 }
 
-export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onSkipTodo, onOpenPostponeSheet, onAddTodo }: DailyPlannerViewProps) {
+export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
 
   const {
@@ -56,6 +57,15 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     upsertReflection,
     dateStr,
   } = useDailyPlannerData({ userId, date, timelineItems });
+
+  // Desktop detection (JS-based to avoid duplicate droppable registration)
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Mobile swipe state
   const [mobilePage, setMobilePage] = useState(0);
@@ -209,6 +219,12 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     if (item && onOpenPostponeSheet) onOpenPostponeSheet(item);
   }, [timelineItems, onOpenPostponeSheet]);
 
+  // 칩 스킵 취소 → TimelineItem 찾아서 스킵 취소 콜백 호출
+  const handleChipUnskip = useCallback((todo: Todo) => {
+    const item = timelineItems.find(i => i.id === todo.id);
+    if (item && onUnskipTodo) onUnskipTodo(item);
+  }, [timelineItems, onUnskipTodo]);
+
   // 섹션별 추가 핸들러
   const handleAddMorning = useCallback(() => {
     if (!onAddTodo) return;
@@ -266,7 +282,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
   // ─── onDragMove 기반 엣지 감지 (크로스 페이지 DnD) ───
   const handleDragMove = useCallback((event: DragMoveEvent) => {
-    if (!activeTodo) return;
+    if (!activeTodo || isDesktop) return; // 데스크톱에서는 엣지 감지 불필요
     const container = scrollContainerRef.current;
     if (!container) return;
 
@@ -308,7 +324,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         pageSwitchTimeoutRef.current = null;
       }
     }
-  }, [mobilePage, activeTodo]);
+  }, [mobilePage, activeTodo, isDesktop]);
 
   // 날짜 표시
   const dateLabel = format(date, 'd일 (EEEE)', { locale: ko });
@@ -322,6 +338,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         eveningTodos={eveningTodos}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
+        onUnskip={handleChipUnskip}
         onSkipTodo={handleChipSkip}
         onPostpone={handleChipPostpone}
         onAddMorning={handleAddMorning}
@@ -338,6 +355,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         todos={matrixTodos}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
+        onUnskip={handleChipUnskip}
         onSkipTodo={handleChipSkip}
         onPostpone={handleChipPostpone}
         onAddClick={handleAddMatrix}
@@ -346,6 +364,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         todos={reluctantTodos}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
+        onUnskip={handleChipUnskip}
         onSkipTodo={handleChipSkip}
         onPostpone={handleChipPostpone}
         onAddClick={handleAddReluctant}
@@ -392,76 +411,77 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
           <span className="text-sm font-medium text-base-content/60">{dateLabel}</span>
         </div>
 
-        {/* ─── 데스크탑/태블릿: 2컬럼 ─── */}
-        <div className="hidden md:block px-4 pb-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>{scheduleSection}</div>
-            <div>{plannerSection}</div>
+        {/* ─── JS 기반 조건부 렌더링: 데스크탑 vs 모바일 ─── */}
+        {isDesktop ? (
+          <div className="px-4 pb-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>{scheduleSection}</div>
+              <div>{plannerSection}</div>
+            </div>
+            <div className="mt-3">{reflectionBar}</div>
           </div>
-          <div className="mt-3">{reflectionBar}</div>
-        </div>
+        ) : (
+          <div className="px-4 pb-4">
+            {/* Dot indicator */}
+            <div className="flex justify-center gap-2 mb-3">
+              {[0, 1].map(i => (
+                <button
+                  key={i}
+                  onClick={() => setMobilePage(i)}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    mobilePage === i ? 'bg-primary' : 'bg-base-300'
+                  }`}
+                />
+              ))}
+            </div>
 
-        {/* ─── 모바일: 스와이프 페이지 ─── */}
-        <div className="md:hidden px-4 pb-4">
-          {/* Dot indicator */}
-          <div className="flex justify-center gap-2 mb-3">
-            {[0, 1].map(i => (
-              <button
-                key={i}
-                onClick={() => setMobilePage(i)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  mobilePage === i ? 'bg-primary' : 'bg-base-300'
-                }`}
+            {/* Swipable content */}
+            <div className="overflow-hidden relative" ref={scrollContainerRef}>
+              {/* 오른쪽 엣지 인디케이터 (page 0 → page 1) */}
+              <div
+                className={`absolute right-0 top-0 bottom-0 w-12 z-20 transition-all duration-200
+                  ${activeTodo && mobilePage === 0
+                    ? edgeHover === 'right'
+                      ? 'opacity-100 bg-primary/20 border-l-2 border-primary/50'
+                      : 'opacity-60 bg-primary/5 border-l border-primary/20'
+                    : 'opacity-0 pointer-events-none'}`}
               />
-            ))}
-          </div>
+              {/* 왼쪽 엣지 인디케이터 (page 1 → page 0) */}
+              <div
+                className={`absolute left-0 top-0 bottom-0 w-12 z-20 transition-all duration-200
+                  ${activeTodo && mobilePage === 1
+                    ? edgeHover === 'left'
+                      ? 'opacity-100 bg-primary/20 border-r-2 border-primary/50'
+                      : 'opacity-60 bg-primary/5 border-r border-primary/20'
+                    : 'opacity-0 pointer-events-none'}`}
+              />
+              <motion.div
+                drag={activeTodo ? false : "x"}
+                dragConstraints={{ left: slideOffset, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={handleDragEndSwipe}
+                dragMomentum={false}
+                animate={swipeControls}
+                transition={activeTodo
+                  ? { type: 'tween', duration: 0.15 }
+                  : { type: 'spring', stiffness: 300, damping: 30 }
+                }
+                className="flex"
+                style={{ gap: `${GAP}px` }}
+              >
+                <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
+                  {scheduleSection}
+                </div>
+                <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
+                  {plannerSection}
+                </div>
+              </motion.div>
+            </div>
 
-          {/* Swipable content */}
-          <div className="overflow-hidden relative" ref={scrollContainerRef}>
-            {/* 오른쪽 엣지 인디케이터 (page 0 → page 1) */}
-            <div
-              className={`absolute right-0 top-0 bottom-0 w-12 z-20 transition-all duration-200
-                ${activeTodo && mobilePage === 0
-                  ? edgeHover === 'right'
-                    ? 'opacity-100 bg-primary/20 border-l-2 border-primary/50'
-                    : 'opacity-60 bg-primary/5 border-l border-primary/20'
-                  : 'opacity-0 pointer-events-none'}`}
-            />
-            {/* 왼쪽 엣지 인디케이터 (page 1 → page 0) */}
-            <div
-              className={`absolute left-0 top-0 bottom-0 w-12 z-20 transition-all duration-200
-                ${activeTodo && mobilePage === 1
-                  ? edgeHover === 'left'
-                    ? 'opacity-100 bg-primary/20 border-r-2 border-primary/50'
-                    : 'opacity-60 bg-primary/5 border-r border-primary/20'
-                  : 'opacity-0 pointer-events-none'}`}
-            />
-            <motion.div
-              drag={activeTodo ? false : "x"}
-              dragConstraints={{ left: slideOffset, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={handleDragEndSwipe}
-              dragMomentum={false}
-              animate={swipeControls}
-              transition={activeTodo
-                ? { type: 'tween', duration: 0.15 }
-                : { type: 'spring', stiffness: 300, damping: 30 }
-              }
-              className="flex"
-              style={{ gap: `${GAP}px` }}
-            >
-              <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
-                {scheduleSection}
-              </div>
-              <div className="flex-shrink-0" style={{ width: page1Width || '100%' }}>
-                {plannerSection}
-              </div>
-            </motion.div>
+            {/* 하단 리플렉션 바 (고정) */}
+            <div className="mt-3">{reflectionBar}</div>
           </div>
-
-          {/* 하단 리플렉션 바 (고정) */}
-          <div className="mt-3">{reflectionBar}</div>
-        </div>
+        )}
       </div>
 
       {/* Drag Overlay */}

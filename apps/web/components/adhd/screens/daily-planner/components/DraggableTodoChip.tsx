@@ -23,11 +23,12 @@ interface DraggableTodoChipProps {
   showTime?: boolean;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
+  onUnskip?: (todo: Todo) => void;
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggle, onSkipTodo, onPostpone }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -94,7 +95,9 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (onToggle) {
+            if (isSkipped && onUnskip) {
+              onUnskip(todo);
+            } else if (onToggle) {
               onToggle(todo);
             } else {
               toggleTodo(todo.id);

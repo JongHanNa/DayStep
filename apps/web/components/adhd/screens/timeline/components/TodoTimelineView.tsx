@@ -257,6 +257,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
           timelineItems={nav.timelineItems}
           onEditClick={actions.handleEditClick}
           onToggleComplete={actions.handleToggleComplete}
+          onUnskipTodo={actions.handleUnskipTodo}
           onSkipTodo={actions.handleSkipTodo}
           onOpenPostponeSheet={actions.handleOpenPostponeSheet}
           onAddTodo={actions.handleAddTodoWithPrefill}
