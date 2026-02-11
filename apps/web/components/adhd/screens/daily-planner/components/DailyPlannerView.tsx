@@ -58,6 +58,24 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     dateStr,
   } = useDailyPlannerData({ userId, date, timelineItems });
 
+  // DndContext 마운트/언마운트 추적 + 잔여 DOM 정리
+  useEffect(() => {
+    const isCap = typeof window !== 'undefined' && (window as any).Capacitor !== undefined;
+    if (isCap) {
+      console.log('[DailyPlanner] DndContext MOUNTED');
+    }
+    return () => {
+      if (!isCap) return;
+      console.log('[DailyPlanner] DndContext UNMOUNTING');
+      requestAnimationFrame(() => {
+        // DndContext 잔여 요소 수동 정리 (React 언마운트 후에도 남아있을 수 있음)
+        document.querySelectorAll('[id^="DndLiveRegion"], [id^="DndDescribedBy"]')
+          .forEach(el => el.remove());
+        window.scrollTo(0, 0);
+      });
+    };
+  }, []);
+
   // Desktop detection (JS-based to avoid duplicate droppable registration)
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
@@ -484,14 +502,14 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         )}
       </div>
 
-      {/* Drag Overlay */}
-      <DragOverlay modifiers={[snapCenterToCursor, restrictToWindowEdges]} dropAnimation={null}>
-        {activeTodo && (
+      {/* Drag Overlay — 드래그 중일 때만 렌더링 */}
+      {activeTodo && (
+        <DragOverlay modifiers={[snapCenterToCursor, restrictToWindowEdges]} dropAnimation={null}>
           <div className="opacity-90 pointer-events-none w-64">
             <DraggableTodoChip todo={activeTodo} />
           </div>
-        )}
-      </DragOverlay>
+        </DragOverlay>
+      )}
     </DndContext>
   );
 }

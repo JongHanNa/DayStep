@@ -50,6 +50,14 @@ export default function HomePage() {
     }
   }, []);
 
+  // Capacitor: currentMode 전환 시 방어적 스크롤 리셋
+  useEffect(() => {
+    if (typeof window === 'undefined' || !(window as any).Capacitor) return;
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+  }, [currentMode]);
+
   // Capacitor/Electron 비인증 사용자 리다이렉트
   useEffect(() => {
     if (loading || !mounted) {

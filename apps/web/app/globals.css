@@ -49,14 +49,15 @@
   }
 }
 
-/* Capacitor: --cap-safe-top fallback (네이티브 StatusBar 성공 시 0px로 리셋됨) */
+/* Capacitor: --cap-safe-top CSS-only 선언 (JS 불필요, WKUserScript가 .capacitor 클래스 추가 시 매칭) */
 .capacitor {
+  --cap-safe-top: 0px;
   --header-total-height: calc(56px + var(--cap-safe-top, 0px));
 }
 
-/* Triple-layer: max(CSS변수, env()) — 네이티브 StatusBar 성공 시 둘 다 0px */
+/* safe-area-top: --cap-safe-top 우선, 미설정시 env() fallback */
 .safe-area-top {
-  padding-top: max(var(--cap-safe-top, 0px), env(safe-area-inset-top, 0px)) !important;
+  padding-top: var(--cap-safe-top, env(safe-area-inset-top, 0px)) !important;
 }
 
 /* Capacitor: body 스크롤 차단 (상태바 뒤로 밀림 방지) */
@@ -75,7 +76,7 @@ html.capacitor body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: max(var(--cap-safe-top, 0px), env(safe-area-inset-top, 0px));
+  height: var(--cap-safe-top, 0px);
   background-color: var(--color-base-100);
   z-index: 9999;
   pointer-events: none;
@@ -91,7 +92,7 @@ html.capacitor [id^="DndDescribedBy"] {
 /* 모든 환경의 dialog에 safe area 적용 (PWA standalone + Capacitor fallback) */
 /* createPortal → position: fixed dialog는 부모 safe-area-top을 우회하므로 별도 처리 */
 dialog[open] {
-  padding-top: max(var(--cap-safe-top, 0px), env(safe-area-inset-top, 0px)) !important;
+  padding-top: var(--cap-safe-top, env(safe-area-inset-top, 0px)) !important;
 }
 
 /* Electron 환경 - 커스텀 타이틀바 */

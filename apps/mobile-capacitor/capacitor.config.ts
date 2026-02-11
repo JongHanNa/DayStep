@@ -59,8 +59,8 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     StatusBar: {
       style: "light",
       backgroundColor: "#ffffff",
-      // WebView가 상태바 영역까지 확장 → CSS safe-area-top + body::before 오버레이로 처리
-      overlaysWebView: true,
+      // v7: 네이티브가 safe area 처리 → CSS env()=0, body::before 불필요
+      overlaysWebView: false,
     },
     SocialLogin: {
       google: {

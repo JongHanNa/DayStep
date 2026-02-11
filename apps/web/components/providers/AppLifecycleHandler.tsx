@@ -25,19 +25,16 @@ export function AppLifecycleHandler() {
     console.log('📱 Capacitor 환경 - AppLifecycleHandler 활성화');
 
     // Capacitor 클래스 추가 (CSS 선택자 .capacitor 활성화용)
+    // --cap-safe-top은 globals.css의 .capacitor 규칙이 CSS-only로 처리
     document.documentElement.classList.add('capacitor');
     console.log('🎨 Capacitor 클래스 추가됨');
 
-    // 디바이스별 상태바 높이 계산 (overlaysWebView: true → CSS 패딩 필수)
-    const screenHeight = window.screen.height;
-    let safeTop = 44;
-    if (screenHeight >= 812) safeTop = 47;
-    if ((screenHeight >= 852 && screenHeight <= 856) || screenHeight >= 932) safeTop = 59;
-    const capSafeTopValue = `${safeTop}px`;
-    document.documentElement.style.setProperty('--cap-safe-top', capSafeTopValue);
-    console.log(`📐 --cap-safe-top: ${capSafeTopValue} (screen: ${screenHeight}px)`);
+    // --cap-safe-top 설정은 layout.tsx 인라인 스크립트(초기값)와
+    // Swift viewDidLayoutSubviews(정확한 네이티브 값)가 담당.
+    // 여기서 다시 설정하면 Swift의 정확한 값(44px)을 휴리스틱(47px)으로 덮어쓰므로 제거.
 
-    // capacitor 클래스 + --cap-safe-top 보호: React 재조정으로 인한 소실 방지
+    // capacitor 클래스 보호: React 재조정으로 인한 소실 방지
+    // style 감시 제거: Swift evaluateJavaScript → style 변경 → observer 트리거 → 레이아웃 thrash 방지
     const observer = new MutationObserver((mutations) => {
       const el = document.documentElement;
       for (const mutation of mutations) {
@@ -46,17 +43,11 @@ export function AppLifecycleHandler() {
             el.classList.add('capacitor');
           }
         }
-        if (mutation.attributeName === 'style') {
-          const current = el.style.getPropertyValue('--cap-safe-top');
-          if (!current || current === '0px') {
-            el.style.setProperty('--cap-safe-top', capSafeTopValue);
-          }
-        }
       }
     });
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class', 'style'],
+      attributeFilter: ['class'],
     });
 
     // Revenue Cat 초기화 (비동기 실행, 블로킹 없음)

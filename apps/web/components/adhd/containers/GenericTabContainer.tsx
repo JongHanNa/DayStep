@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { Crown, HelpCircle, Brain } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -87,6 +87,7 @@ export function GenericTabContainer({
   };
 
   const [activeTab, setActiveTab] = useState<ADHDSubViewId>(getInitialTab());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // currentSubView 변경 시 activeTab 동기화 (Capacitor Store 기반 네비게이션용)
   useEffect(() => {
@@ -94,6 +95,19 @@ export function GenericTabContainer({
       setActiveTab(currentSubView as ADHDSubViewId);
     }
   }, [currentSubView, screenIds]);
+
+  // Capacitor: 탭 전환 시 스크롤 리셋 + 진단 로깅
+  useEffect(() => {
+    if (typeof window === 'undefined' || !(window as any).Capacitor) return;
+    requestAnimationFrame(() => {
+      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+      window.scrollTo(0, 0);
+      const capSafeTop = getComputedStyle(document.documentElement).getPropertyValue('--cap-safe-top');
+      const safeAreaEl = scrollContainerRef.current?.parentElement;
+      const padding = safeAreaEl ? getComputedStyle(safeAreaEl).paddingTop : 'N/A';
+      console.log(`[TabSwitch] tab=${activeTab} scrollTop=${scrollContainerRef.current?.scrollTop} padding=${padding} capSafeTop=${capSafeTop}`);
+    });
+  }, [activeTab]);
 
   const [helpModalTab, setHelpModalTab] = useState<ADHDSubViewId | null>(null);
 
@@ -189,7 +203,7 @@ export function GenericTabContainer({
       ) : null}
 
       {/* 메인 콘텐츠 */}
-      <div className="flex-1 overflow-y-auto overscroll-contain">{renderContent()}</div>
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain">{renderContent()}</div>
 
       {/* 도움말 모달 */}
       {helpModalTab && (

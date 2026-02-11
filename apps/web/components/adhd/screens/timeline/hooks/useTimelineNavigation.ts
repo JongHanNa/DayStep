@@ -193,8 +193,11 @@ export function useTimelineNavigation({
         const todayStr = format(today, 'yyyy-MM-dd');
         const todayEl = todaySectionRef.current
           || document.querySelector(`[data-date="${todayStr}"]`) as HTMLElement;
-        if (todayEl) {
-          todayEl.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
+        const container = scrollContainerRef.current;
+        if (todayEl && container) {
+          const containerRect = container.getBoundingClientRect();
+          const elementRect = todayEl.getBoundingClientRect();
+          container.scrollTop += (elementRect.top - containerRect.top);
         }
       });
     });
@@ -225,8 +228,11 @@ export function useTimelineNavigation({
       const todayStr = format(today, 'yyyy-MM-dd');
       const todayEl = todaySectionRef.current
         || document.querySelector(`[data-date="${todayStr}"]`) as HTMLElement;
-      if (todayEl) {
-        todayEl.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
+      const container = scrollContainerRef.current;
+      if (todayEl && container) {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = todayEl.getBoundingClientRect();
+        container.scrollTop += (elementRect.top - containerRect.top);
       }
       setHasScrolledToToday(true);
       setIsScrollReady(true);
