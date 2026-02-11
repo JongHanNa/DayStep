@@ -93,11 +93,11 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { delay: 300, tolerance: 5 },
+      activationConstraint: { distance: 5 },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: isCapacitor ? 400 : 300,
+        delay: isCapacitor ? 300 : 200,
         tolerance: isCapacitor ? 8 : 5,
       },
     })

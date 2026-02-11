@@ -3,11 +3,11 @@
 import { useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
-import { CheckCircle2, Circle, MinusCircle, XCircle, Pause } from 'lucide-react';
+import { CheckCircle2, Circle, MinusCircle, XCircle, Pause, Repeat, Clock } from 'lucide-react';
 import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { unifiedIconsCollection } from '@/lib/icon-collection';
-import { getTimeStatus } from '@/lib/utils/timeStatus';
+import { getTimeStatus, getTimeStatusText } from '@/lib/utils/timeStatus';
 
 // 아이콘 이름을 Lucide 컴포넌트로 변환
 const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null => {
@@ -51,6 +51,7 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
     ? getTimeStatus(todo.startTime, todo.endTime ?? null, todo.completed)
     : null;
   const isMissedNotSkipped = timeStatus?.status === 'missed' && !todo.completed && !isSkipped;
+  const timeStatusText = timeStatus ? getTimeStatusText(timeStatus) : null;
 
   // 클릭 vs 드래그 구분을 위한 핸들러
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -126,8 +127,21 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
           return TodoIcon ? <TodoIcon className="w-4 h-4 flex-shrink-0" /> : null;
         })()}
 
+        {/* 반복 아이콘 */}
+        {todo.recurrencePattern && (
+          <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
+        )}
+
         {/* 제목 */}
         <span className="truncate flex-1">{todo.title}</span>
+
+        {/* 종료시간 경과 표시 */}
+        {timeStatus?.status === 'missed' && !todo.completed && !isSkipped && timeStatusText?.primary && (
+          <span className="flex-shrink-0 flex items-center gap-0.5 text-[10px] text-error">
+            <Clock className="w-3 h-3" />
+            {timeStatusText.primary}
+          </span>
+        )}
 
         {/* 완료/스킵 상태 배지 */}
         {(todo.completed || isSkipped) && (
