@@ -11,6 +11,10 @@ import Capacitor
 
 class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
 
+    // MARK: - Safe-Area v7: KVO 기반 contentOffset 자동 교정
+    private var scrollOffsetObservation: NSKeyValueObservation?
+    private var isKeyboardVisible = false
+
     override open func capacitorDidLoad() {
         super.capacitorDidLoad()
 
@@ -41,6 +45,38 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
         webView?.scrollView.bounces = false
         webView?.scrollView.alwaysBounceVertical = false
         webView?.scrollView.contentOffset = .zero
+
+        // v7: 키보드 노티피케이션
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(keyboardDidHide),
+            name: UIResponder.keyboardDidHideNotification, object: nil
+        )
+
+        // v7: KVO - contentOffset 드리프트 자동 교정
+        scrollOffsetObservation = webView?.scrollView.observe(
+            \.contentOffset, options: [.new]
+        ) { [weak self] scrollView, change in
+            guard let self = self, !self.isKeyboardVisible else { return }
+            guard let newOffset = change.newValue, newOffset != .zero else { return }
+            print("[v7] contentOffset 드리프트 교정: \(newOffset) → .zero")
+            scrollView.setContentOffset(.zero, animated: false)
+        }
+    }
+
+    @objc private func keyboardWillShow(_ n: Notification) { isKeyboardVisible = true }
+    @objc private func keyboardDidHide(_ n: Notification) {
+        isKeyboardVisible = false
+        if let sv = webView?.scrollView, sv.contentOffset != .zero {
+            sv.setContentOffset(.zero, animated: false)
+        }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     // MARK: - WKScriptMessageHandler
