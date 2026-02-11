@@ -81,6 +81,13 @@ html.capacitor body::before {
   pointer-events: none;
 }
 
+/* WKWebView safe-area fix: @dnd-kit LiveRegion의 position:fixed가
+   WKWebView safe-area inset 렌더링을 방해하는 것을 방지 */
+html.capacitor [id^="DndLiveRegion"],
+html.capacitor [id^="DndDescribedBy"] {
+  position: absolute !important;
+}
+
 /* 모든 환경의 dialog에 safe area 적용 (PWA standalone + Capacitor fallback) */
 /* createPortal → position: fixed dialog는 부모 safe-area-top을 우회하므로 별도 처리 */
 dialog[open] {

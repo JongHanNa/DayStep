@@ -405,7 +405,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className={`flex-1 overscroll-contain ${activeTodo ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+      <div className="flex-1">
         {/* 날짜 표시 */}
         <div className="px-4 py-2 text-center">
           <span className="text-sm font-medium text-base-content/60">{dateLabel}</span>

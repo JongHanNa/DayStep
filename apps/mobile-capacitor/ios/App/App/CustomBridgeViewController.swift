@@ -20,20 +20,19 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
 
         // PiPTimer 플러그인 수동 등록
         bridge?.registerPluginInstance(PiPTimerPlugin())
-        print("[CustomBridge] ✅ PiPTimerPlugin registered manually")
+        NSLog("[CustomBridge] PiPTimerPlugin registered")
 
-        #if DEBUG
-        // Safari Web Inspector 활성화 (iOS 16.4+)
-        if #available(iOS 16.4, *) {
-            webView?.isInspectable = true
-        }
-
-        // JS console → 네이티브 포워딩 스크립트 주입
-        // capacitorDidLoad()에서 주입 → URL 로드 전에 확실히 등록됨
+        // JS console → 네이티브 포워딩 스크립트 주입 (항상 활성화)
         let script = WKUserScript(source: consoleForwardingScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         webView?.configuration.userContentController.addUserScript(script)
         webView?.configuration.userContentController.add(self, name: "consoleLog")
-        print("[CustomBridge] ✅ JS console forwarding enabled")
+        NSLog("[CustomBridge] JS console forwarding enabled")
+
+        #if DEBUG
+        // Safari Web Inspector 활성화 (iOS 16.4+) — Debug 전용
+        if #available(iOS 16.4, *) {
+            webView?.isInspectable = true
+        }
         #endif
     }
 
@@ -62,9 +61,18 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
         ) { [weak self] scrollView, change in
             guard let self = self, !self.isKeyboardVisible else { return }
             guard let newOffset = change.newValue, newOffset != .zero else { return }
-            print("[v7] contentOffset 드리프트 교정: \(newOffset) → .zero")
+            NSLog("[v7] contentOffset drift correction: %@ -> .zero", NSValue(cgPoint: newOffset))
             scrollView.setContentOffset(.zero, animated: false)
         }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let top = view.safeAreaInsets.top
+        NSLog("[SafeArea] viewDidLayoutSubviews: top=%.1f", top)
+        webView?.evaluateJavaScript(
+            "document.documentElement.style.setProperty('--cap-safe-top','\(top)px')"
+        )
     }
 
     @objc private func keyboardWillShow(_ n: Notification) { isKeyboardVisible = true }
@@ -82,7 +90,6 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
     // MARK: - WKScriptMessageHandler
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        #if DEBUG
         guard message.name == "consoleLog",
               let body = message.body as? [String: String],
               let level = body["level"],
@@ -96,8 +103,7 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
         case "debug": prefix = "[JS DEBUG]"
         default:      prefix = "[JS LOG]"
         }
-        print("\(prefix) \(content)")
-        #endif
+        NSLog("%@ %@", prefix, content)
     }
 
     // MARK: - Console Forwarding Script
@@ -128,6 +134,37 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
                     original.apply(console, arguments);
                 };
             });
+        })();
+        (function() {
+            if (window.location.protocol !== 'capacitor:') return;
+
+            var observer = new MutationObserver(function() {
+                var root = document.documentElement;
+                var capSafeTop = getComputedStyle(root).getPropertyValue('--cap-safe-top');
+
+                var probe = document.createElement('div');
+                probe.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';
+                document.body.appendChild(probe);
+                var envTop = probe.offsetHeight;
+                document.body.removeChild(probe);
+
+                var dndEl = document.querySelector('[id^="DndLiveRegion"]');
+                var dndPos = dndEl ? getComputedStyle(dndEl).position : 'N/A';
+
+                console.log('[SafeArea-Diag] --cap-safe-top=' + capSafeTop
+                    + ' | env()=' + envTop + 'px'
+                    + ' | DndLiveRegion pos=' + dndPos
+                    + ' | html.capacitor=' + root.classList.contains('capacitor'));
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            setTimeout(function() {
+                var root = document.documentElement;
+                console.log('[SafeArea-Init] --cap-safe-top='
+                    + getComputedStyle(root).getPropertyValue('--cap-safe-top')
+                    + ' | html.capacitor=' + root.classList.contains('capacitor'));
+            }, 2000);
         })();
         """
     }
