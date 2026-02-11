@@ -96,16 +96,12 @@ export function GenericTabContainer({
     }
   }, [currentSubView, screenIds]);
 
-  // Capacitor: 탭 전환 시 스크롤 리셋 + 진단 로깅
+  // Capacitor: 탭 전환 시 스크롤 리셋
   useEffect(() => {
     if (typeof window === 'undefined' || !(window as any).Capacitor) return;
     requestAnimationFrame(() => {
       if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
       window.scrollTo(0, 0);
-      const capSafeTop = getComputedStyle(document.documentElement).getPropertyValue('--cap-safe-top');
-      const safeAreaEl = scrollContainerRef.current?.parentElement;
-      const padding = safeAreaEl ? getComputedStyle(safeAreaEl).paddingTop : 'N/A';
-      console.log(`[TabSwitch] tab=${activeTab} scrollTop=${scrollContainerRef.current?.scrollTop} padding=${padding} capSafeTop=${capSafeTop}`);
     });
   }, [activeTab]);
 

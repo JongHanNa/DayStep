@@ -58,15 +58,11 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     dateStr,
   } = useDailyPlannerData({ userId, date, timelineItems });
 
-  // DndContext 마운트/언마운트 추적 + 잔여 DOM 정리
+  // DndContext 언마운트 시 잔여 DOM 정리
   useEffect(() => {
     const isCap = typeof window !== 'undefined' && (window as any).Capacitor !== undefined;
-    if (isCap) {
-      console.log('[DailyPlanner] DndContext MOUNTED');
-    }
     return () => {
       if (!isCap) return;
-      console.log('[DailyPlanner] DndContext UNMOUNTING');
       requestAnimationFrame(() => {
         // DndContext 잔여 요소 수동 정리 (React 언마운트 후에도 남아있을 수 있음)
         document.querySelectorAll('[id^="DndLiveRegion"], [id^="DndDescribedBy"]')

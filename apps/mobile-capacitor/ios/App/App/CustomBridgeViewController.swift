@@ -16,13 +16,11 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
 
         // PiPTimer 플러그인 수동 등록
         bridge?.registerPluginInstance(PiPTimerPlugin())
-        NSLog("[CustomBridge] PiPTimerPlugin registered")
 
         // JS console → 네이티브 포워딩 스크립트 주입 (항상 활성화)
         let script = WKUserScript(source: consoleForwardingScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         webView?.configuration.userContentController.addUserScript(script)
         webView?.configuration.userContentController.add(self, name: "consoleLog")
-        NSLog("[CustomBridge] JS console forwarding enabled")
 
         #if DEBUG
         // Safari Web Inspector 활성화 (iOS 16.4+) — Debug 전용
@@ -55,10 +53,6 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
             name: UIResponder.keyboardDidHideNotification, object: nil
         )
 
-        // 진단 로그: overlaysWebView 상태 확인
-        let safeTop = view.safeAreaInsets.top
-        NSLog("[v7] overlaysWebView=false | view.safeAreaInsets.top=%.1f | view.bg=%@",
-              safeTop, String(describing: view.backgroundColor))
     }
 
     override func viewDidLayoutSubviews() {
@@ -67,16 +61,6 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
         if let sv = webView?.scrollView, sv.contentOffset != .zero {
             sv.setContentOffset(.zero, animated: false)
         }
-        // 진단 로그: safe area, contentInset, contentOffset 확인
-        let top = view.safeAreaInsets.top
-        let ci = webView?.scrollView.contentInset ?? .zero
-        let aci = webView?.scrollView.adjustedContentInset ?? .zero
-        let co = webView?.scrollView.contentOffset ?? .zero
-        NSLog("[SafeArea] top=%.1f ci=%@ aci=%@ offset=(%.1f,%.1f)",
-              top,
-              NSValue(uiEdgeInsets: ci),
-              NSValue(uiEdgeInsets: aci),
-              co.x, co.y)
     }
 
     @objc private func keyboardDidHide(_ n: Notification) {
@@ -170,21 +154,6 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
                 });
                 headObs.observe(root, { childList: true, subtree: true });
             }
-        })();
-        /* Phase 3: Diagnostic log v9 (delayed) */
-        (function() {
-            setTimeout(function() {
-                var root = document.documentElement;
-                var style = getComputedStyle(root);
-                var saEl = document.querySelector('.safe-area-top');
-                console.log('[v9-Init]'
-                    + ' | frame=' + (window.self === window.top ? 'main' : 'sub')
-                    + ' | href=' + window.location.href
-                    + ' | --cap-safe-top=' + style.getPropertyValue('--cap-safe-top')
-                    + ' | html.capacitor=' + root.classList.contains('capacitor')
-                    + ' | native-style-tag=' + !!document.getElementById('cap-safe-area-native')
-                    + ' | safe-area-padding=' + (saEl ? getComputedStyle(saEl).paddingTop : 'N/A'));
-            }, 2000);
         })();
         """
     }

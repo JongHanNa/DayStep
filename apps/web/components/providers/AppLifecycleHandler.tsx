@@ -18,16 +18,12 @@ export function AppLifecycleHandler() {
     // Capacitor 환경 감지
     const isCapacitor = window.location.protocol === 'capacitor:';
     if (!isCapacitor) {
-      console.log('🌐 웹 환경 - AppLifecycleHandler 비활성화');
       return;
     }
-
-    console.log('📱 Capacitor 환경 - AppLifecycleHandler 활성화');
 
     // Capacitor 클래스 추가 (CSS 선택자 .capacitor 활성화용)
     // --cap-safe-top은 globals.css의 .capacitor 규칙이 CSS-only로 처리
     document.documentElement.classList.add('capacitor');
-    console.log('🎨 Capacitor 클래스 추가됨');
 
     // --cap-safe-top 설정은 layout.tsx 인라인 스크립트(초기값)와
     // Swift viewDidLayoutSubviews(정확한 네이티브 값)가 담당.
@@ -63,12 +59,11 @@ export function AppLifecycleHandler() {
     const handleAppStateChange = (state: { isActive: boolean }) => {
       if (state.isActive) {
         // 포그라운드 복귀 시
-        console.log('✅ 앱 포그라운드 복귀 - 현재 경로 유지');
         // 현재 경로를 유지하고 추가 작업을 하지 않음
         // 이렇게 하면 랜딩 페이지로 불필요하게 리다이렉트되는 것을 방지
       } else {
         // 백그라운드 전환 시
-        console.log('📴 앱 백그라운드 전환');
+        // 백그라운드 전환 — 별도 처리 없음
       }
     };
 
