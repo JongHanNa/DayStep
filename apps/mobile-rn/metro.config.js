@@ -1,16 +1,11 @@
 const path = require('path');
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const {withNativeWind} = require('nativewind/metro');
 
 const projectRoot = __dirname;
 const monorepoRoot = path.resolve(projectRoot, '../..');
 
-/**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('@react-native/metro-config').MetroConfig}
- */
-const config = {
+const config = mergeConfig(getDefaultConfig(__dirname), {
   watchFolders: [monorepoRoot],
   resolver: {
     nodeModulesPaths: [
@@ -19,6 +14,6 @@ const config = {
     ],
     disableHierarchicalLookup: true,
   },
-};
+});
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = withNativeWind(config, {input: './global.css'});

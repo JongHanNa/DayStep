@@ -1,6 +1,10 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Text, View} from 'react-native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {ScreenContainer} from '@/components/core';
+import {AnimatedPressable} from '@/components/core';
+import {GradientBackground} from '@/components/core';
+import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -8,48 +12,35 @@ type Props = {
 
 export default function LoginScreen({navigation}: Props) {
   const handleLogin = () => {
-    // TODO: 실제 인증 로직 구현
+    // TODO: Phase 1에서 실제 인증 로직 구현
     navigation.replace('Main');
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>DayStep</Text>
-      <Text style={styles.subtitle}>로그인하여 시작하세요</Text>
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>로그인 (개발용 스킵)</Text>
-      </TouchableOpacity>
-    </View>
+    <ScreenContainer gradient="warmBackground" edges={['top', 'bottom', 'left', 'right']}>
+      <View className="flex-1 justify-center items-center px-6">
+        <Animated.Text
+          entering={FadeIn.duration(600)}
+          className="text-4xl font-bold text-gray-900 mb-2">
+          DayStep
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeInDown.delay(200).duration(500)}
+          className="text-base text-gray-500 mb-10">
+          오늘 하루를 차분하게 시작하세요
+        </Animated.Text>
+
+        <Animated.View entering={FadeInDown.delay(400).duration(500)}>
+          <AnimatedPressable
+            onPress={handleLogin}
+            hapticType="medium"
+            className="bg-blue-500 px-8 py-4 rounded-2xl">
+            <Text className="text-white text-base font-semibold">
+              로그인 (개발용 스킵)
+            </Text>
+          </AnimatedPressable>
+        </Animated.View>
+      </View>
+    </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 32,
-  },
-  button: {
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
