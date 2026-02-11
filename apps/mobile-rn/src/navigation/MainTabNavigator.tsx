@@ -1,7 +1,14 @@
+/**
+ * Main Tab Navigator
+ * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 설정
+ */
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {CustomTabBar} from '@/components/navigation/CustomTabBar';
 import HomeScreen from '../screens/HomeScreen';
 import TodoListScreen from '../screens/TodoListScreen';
+import ExecutionScreen from '../screens/ExecutionScreen';
+import NotesScreen from '../screens/NotesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
@@ -9,25 +16,15 @@ const Tab = createBottomTabNavigator();
 export default function MainTabNavigator() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        headerShown: true,
-        tabBarActiveTintColor: '#4F46E5',
+        headerShown: false,
       }}>
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{title: '홈'}}
-      />
-      <Tab.Screen
-        name="TodoList"
-        component={TodoListScreen}
-        options={{title: '할일'}}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{title: '설정'}}
-      />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Planner" component={TodoListScreen} />
+      <Tab.Screen name="Execute" component={ExecutionScreen} />
+      <Tab.Screen name="Notes" component={NotesScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }

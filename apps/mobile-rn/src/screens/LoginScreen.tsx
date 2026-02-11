@@ -1,46 +1,162 @@
-import React from 'react';
-import {Text, View} from 'react-native';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {ScreenContainer} from '@/components/core';
-import {AnimatedPressable} from '@/components/core';
-import {GradientBackground} from '@/components/core';
+/**
+ * 프리미엄 로그인 화면
+ * Calm Luxe 그라디언트 + 입장 애니메이션 + 네이티브 OAuth
+ */
+import React, {useState} from 'react';
+import {Text, View, ActivityIndicator, Platform, Alert} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {GradientBackground} from '@/components/core';
+import {useAuthStore} from '@/stores/authStore';
+import {signInWithGoogle, signInWithApple} from '@/lib/auth';
 
-type Props = {
-  navigation: NativeStackNavigationProp<any>;
-};
+export default function LoginScreen() {
+  const {signInWithIdToken, loading, error, clearError} = useAuthStore();
+  const [authProvider, setAuthProvider] = useState<string | null>(null);
 
-export default function LoginScreen({navigation}: Props) {
-  const handleLogin = () => {
-    // TODO: Phase 1에서 실제 인증 로직 구현
-    navigation.replace('Main');
+  const handleGoogleSignIn = async () => {
+    setAuthProvider('google');
+    clearError();
+    try {
+      const result = await signInWithGoogle();
+      if (result) {
+        await signInWithIdToken('google', result.idToken);
+      }
+    } catch (err: any) {
+      Alert.alert('로그인 실패', err.message ?? 'Google 로그인 중 오류가 발생했습니다');
+    } finally {
+      setAuthProvider(null);
+    }
   };
 
-  return (
-    <ScreenContainer gradient="warmBackground" edges={['top', 'bottom', 'left', 'right']}>
-      <View className="flex-1 justify-center items-center px-6">
-        <Animated.Text
-          entering={FadeIn.duration(600)}
-          className="text-4xl font-bold text-gray-900 mb-2">
-          DayStep
-        </Animated.Text>
-        <Animated.Text
-          entering={FadeInDown.delay(200).duration(500)}
-          className="text-base text-gray-500 mb-10">
-          오늘 하루를 차분하게 시작하세요
-        </Animated.Text>
+  const handleAppleSignIn = async () => {
+    setAuthProvider('apple');
+    clearError();
+    try {
+      const result = await signInWithApple();
+      if (result) {
+        await signInWithIdToken('apple', result.idToken, result.nonce);
+      }
+    } catch (err: any) {
+      Alert.alert('로그인 실패', err.message ?? 'Apple 로그인 중 오류가 발생했습니다');
+    } finally {
+      setAuthProvider(null);
+    }
+  };
 
-        <Animated.View entering={FadeInDown.delay(400).duration(500)}>
-          <AnimatedPressable
-            onPress={handleLogin}
-            hapticType="medium"
-            className="bg-blue-500 px-8 py-4 rounded-2xl">
-            <Text className="text-white text-base font-semibold">
-              로그인 (개발용 스킵)
-            </Text>
-          </AnimatedPressable>
+  // DEV: 개발용 스킵
+  const handleDevSkip = async () => {
+    // Dev 모드에서는 직접 Main으로 이동하지 않고,
+    // 실제 인증 없이도 앱을 볼 수 있도록 placeholder
+    useAuthStore.setState({
+      isAuthenticated: true,
+      initializing: false,
+    });
+  };
+
+  const isLoading = loading || !!authProvider;
+
+  return (
+    <ScreenContainer edges={['top', 'bottom', 'left', 'right']}>
+      <GradientBackground
+        colors={['#F0F4FF', '#E8ECFF', '#FFFFFF']}
+        start={{x: 0.2, y: 0}}
+        end={{x: 0.8, y: 1}}
+        style={{flex: 1}}>
+        <View className="flex-1 justify-center items-center px-8">
+          {/* 로고 + 인사 */}
+          <Animated.Text
+            entering={FadeIn.duration(800)}
+            className="text-5xl font-bold text-gray-900 mb-2">
+            DayStep
+          </Animated.Text>
+          <Animated.Text
+            entering={FadeInDown.delay(200).duration(500)}
+            className="text-base text-gray-500 mb-3 text-center">
+            ADHD 친화적 일상 케어 시스템
+          </Animated.Text>
+          <Animated.Text
+            entering={FadeInDown.delay(400).duration(500)}
+            className="text-sm text-gray-400 mb-12 text-center">
+            오늘 하루를 차분하게 시작하세요
+          </Animated.Text>
+
+          {/* 에러 메시지 */}
+          {error && (
+            <Animated.View
+              entering={FadeInDown.duration(300)}
+              className="bg-red-50 px-4 py-3 rounded-xl mb-4 w-full">
+              <Text className="text-red-600 text-sm text-center">{error}</Text>
+            </Animated.View>
+          )}
+
+          {/* OAuth 버튼들 */}
+          <Animated.View
+            entering={FadeInDown.delay(600).duration(500)}
+            className="w-full gap-3">
+            {/* Google Sign-In */}
+            <AnimatedPressable
+              onPress={handleGoogleSignIn}
+              disabled={isLoading}
+              hapticType="medium"
+              className="bg-white border border-gray-200 px-6 py-4 rounded-2xl flex-row items-center justify-center"
+              style={{opacity: isLoading && authProvider !== 'google' ? 0.5 : 1}}>
+              {authProvider === 'google' ? (
+                <ActivityIndicator size="small" color="#4285F4" />
+              ) : (
+                <>
+                  <Text className="text-lg mr-3">G</Text>
+                  <Text className="text-base font-semibold text-gray-700">
+                    Google로 계속하기
+                  </Text>
+                </>
+              )}
+            </AnimatedPressable>
+
+            {/* Apple Sign-In (iOS only) */}
+            {Platform.OS === 'ios' && (
+              <AnimatedPressable
+                onPress={handleAppleSignIn}
+                disabled={isLoading}
+                hapticType="medium"
+                className="bg-black px-6 py-4 rounded-2xl flex-row items-center justify-center"
+                style={{opacity: isLoading && authProvider !== 'apple' ? 0.5 : 1}}>
+                {authProvider === 'apple' ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Text className="text-lg mr-3 text-white"></Text>
+                    <Text className="text-base font-semibold text-white">
+                      Apple로 계속하기
+                    </Text>
+                  </>
+                )}
+              </AnimatedPressable>
+            )}
+
+            {/* DEV: 개발용 스킵 */}
+            {__DEV__ && (
+              <AnimatedPressable
+                onPress={handleDevSkip}
+                hapticType="light"
+                className="mt-4 px-6 py-3 rounded-xl items-center">
+                <Text className="text-sm text-gray-400">
+                  개발용 스킵 →
+                </Text>
+              </AnimatedPressable>
+            )}
+          </Animated.View>
+        </View>
+
+        {/* 하단 약관 */}
+        <Animated.View
+          entering={FadeInDown.delay(800).duration(500)}
+          className="pb-8 px-8">
+          <Text className="text-xs text-gray-400 text-center leading-5">
+            계속 진행하면 이용약관 및 개인정보처리방침에 동의하는 것입니다
+          </Text>
         </Animated.View>
-      </View>
+      </GradientBackground>
     </ScreenContainer>
   );
 }
