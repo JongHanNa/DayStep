@@ -530,28 +530,33 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
 
         // snake_case를 camelCase로 변환 (optimistic update용)
-        const optimisticData: any = {
+        // ?? 사용: false, 0, '' 등 falsy 값 보존 (|| 는 falsy를 무시함)
+        const rawOptimisticData: any = {
           ...data,
           // snake_case → camelCase 변환
-          scheduleType: data.schedule_type || (data as any).scheduleType,
-          startTime: data.start_time || (data as any).startTime,
-          endTime: data.end_time || (data as any).endTime,
-          departureLocation: data.departure_location || (data as any).departureLocation,
-          departureTime: data.departure_time || (data as any).departureTime,
-          recurrencePattern: data.recurrence_pattern || (data as any).recurrencePattern,
-          recurrenceEndDate: data.recurrence_end_date || (data as any).recurrenceEndDate,
-          recurrenceCount: data.recurrence_count || (data as any).recurrenceCount,
-          recurrenceInterval: data.recurrence_interval || (data as any).recurrenceInterval,
-          recurrenceDaysOfWeek: data.recurrence_days_of_week || (data as any).recurrenceDaysOfWeek,
-          recurrenceDayOfMonth: data.recurrence_day_of_month || (data as any).recurrenceDayOfMonth,
-          parentTodoId: data.parent_todo_id || (data as any).parentTodoId,
-          userId: data.user_id || (data as any).userId,
-          orderIndex: data.order_index || (data as any).orderIndex,
+          scheduleType: data.schedule_type ?? (data as any).scheduleType,
+          startTime: data.start_time ?? (data as any).startTime,
+          endTime: data.end_time ?? (data as any).endTime,
+          departureLocation: data.departure_location ?? (data as any).departureLocation,
+          departureTime: data.departure_time ?? (data as any).departureTime,
+          recurrencePattern: data.recurrence_pattern ?? (data as any).recurrencePattern,
+          recurrenceEndDate: data.recurrence_end_date ?? (data as any).recurrenceEndDate,
+          recurrenceCount: data.recurrence_count ?? (data as any).recurrenceCount,
+          recurrenceInterval: data.recurrence_interval ?? (data as any).recurrenceInterval,
+          recurrenceDaysOfWeek: data.recurrence_days_of_week ?? (data as any).recurrenceDaysOfWeek,
+          recurrenceDayOfMonth: data.recurrence_day_of_month ?? (data as any).recurrenceDayOfMonth,
+          parentTodoId: data.parent_todo_id ?? (data as any).parentTodoId,
+          userId: data.user_id ?? (data as any).userId,
+          orderIndex: data.order_index ?? (data as any).orderIndex,
           // Daily Planner 필드들
-          importance: data.importance !== undefined ? data.importance : (data as any).importance,
-          urgency: data.urgency !== undefined ? data.urgency : (data as any).urgency,
-          isReluctantMustDo: data.is_reluctant_must_do !== undefined ? data.is_reluctant_must_do : (data as any).isReluctantMustDo,
+          importance: data.importance ?? (data as any).importance,
+          urgency: data.urgency ?? (data as any).urgency,
+          isReluctantMustDo: data.is_reluctant_must_do ?? (data as any).isReluctantMustDo,
         };
+        // undefined 값 제거 — 기존 todo 데이터가 덮어씌워지는 것을 방지
+        const optimisticData: any = Object.fromEntries(
+          Object.entries(rawOptimisticData).filter(([_, v]) => v !== undefined)
+        );
 
 
         // 낙관적 업데이트

@@ -25,11 +25,8 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     contentInset: "never",
     // 로그 출력 최소화를 위한 설정
     allowsLinkPreview: false,
-    // 🎈 iOS 고무줄 효과 명시적 활성화 (중요!)
-    // Perplexity는 기본 활성화라고 했지만 실제로는 명시적 설정이 필요할 수 있음
-    // @ts-ignore - Capacitor 버전별 타입 불일치 무시
     webView: {
-      disallowOverscroll: false
+      disallowOverscroll: true
     }
   },
   server: {

@@ -13,7 +13,7 @@ import { SettingsContainer } from '@/components/adhd/settings';
 import HomeTableOfContents from '@/components/adhd/HomeTableOfContents';
 import ADHDEntryScreen from '@/components/adhd/ADHDEntryScreen';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { isCapacitorEnv, isElectronEnv } from '@/lib/utils/platform';
+import { isCapacitorEnv, isElectronEnv, resetCapacitorScrollOffset } from '@/lib/utils/platform';
 import type { ADHDSubViewId } from '@/lib/constants/adhd-screens';
 
 // 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
@@ -49,6 +49,13 @@ export default function HomePage() {
       setMounted(true);
     }
   }, []);
+
+  // Capacitor: 모드 전환 시 WKWebView root scrollView contentOffset 리셋
+  useEffect(() => {
+    if (isCapacitor) {
+      resetCapacitorScrollOffset();
+    }
+  }, [currentMode, isCapacitor]);
 
   // Capacitor/Electron 비인증 사용자 리다이렉트
   useEffect(() => {

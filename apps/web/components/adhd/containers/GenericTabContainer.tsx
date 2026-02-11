@@ -14,6 +14,7 @@ import {
   type ADHDScreenHelp,
   type ADHDRouteGroupId,
 } from '@/lib/constants/adhd-screens';
+import { resetCapacitorScrollOffset } from '@/lib/utils/platform';
 import { SCREEN_COMPONENTS, type ScreenComponentProps } from '@/components/adhd/screens';
 
 interface GenericTabContainerProps {
@@ -94,6 +95,11 @@ export function GenericTabContainer({
       setActiveTab(currentSubView as ADHDSubViewId);
     }
   }, [currentSubView, screenIds]);
+
+  // Capacitor: 탭 전환 시 WKWebView root scrollView contentOffset 리셋
+  useEffect(() => {
+    resetCapacitorScrollOffset();
+  }, [activeTab]);
 
   const [helpModalTab, setHelpModalTab] = useState<ADHDSubViewId | null>(null);
 
@@ -189,7 +195,7 @@ export function GenericTabContainer({
       ) : null}
 
       {/* 메인 콘텐츠 */}
-      <div className="flex-1 overflow-y-auto">{renderContent()}</div>
+      <div className="flex-1 overflow-y-auto overscroll-contain">{renderContent()}</div>
 
       {/* 도움말 모달 */}
       {helpModalTab && (

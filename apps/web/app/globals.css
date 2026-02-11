@@ -64,7 +64,6 @@ html.capacitor,
 html.capacitor body {
   overflow: hidden !important;
   overscroll-behavior: none !important;
-  position: fixed !important;
   width: 100% !important;
   height: 100% !important;
 }
@@ -76,7 +75,7 @@ html.capacitor body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: var(--cap-safe-top, 0px);
+  height: max(var(--cap-safe-top, 0px), env(safe-area-inset-top, 0px));
   background-color: var(--color-base-100);
   z-index: 9999;
   pointer-events: none;

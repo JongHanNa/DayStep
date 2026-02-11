@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { format, isToday, startOfMonth, subMonths, differenceInMonths } from 'date-fns';
 import { Clock, ChevronUp, ChevronDown, Zap, Plus, Cloud } from 'lucide-react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -42,27 +42,6 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
       goScreen('timeline');
     }
   }, [goScreen]);
-
-  // daily 모드에서 부모 스크롤 컨테이너의 overflow 비활성화용 ref
-  const dailyWrapperRef = useRef<HTMLDivElement>(null);
-
-  // daily 모드에서 부모 스크롤 컨테이너의 overflow 비활성화 (iOS 러버밴드 방지)
-  useEffect(() => {
-    if (viewMode !== 'daily') return;
-    const wrapper = dailyWrapperRef.current;
-    if (!wrapper) return;
-
-    const scrollParent = wrapper.parentElement;
-    if (!scrollParent) return;
-
-    scrollParent.style.overflow = 'hidden';
-    scrollParent.style.overscrollBehavior = 'none';
-
-    return () => {
-      scrollParent.style.overflow = '';
-      scrollParent.style.overscrollBehavior = '';
-    };
-  }, [viewMode]);
 
   // 시간 미정 인박스 상태
   const [anytimeInboxOpen, setAnytimeInboxOpen] = useState(false);
@@ -270,7 +249,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
   // ─── 하루 뷰 모드 ───
   if (viewMode === 'daily') {
     return (
-      <div ref={dailyWrapperRef} className="flex flex-col h-full overflow-hidden">
+      <div className="flex flex-col h-full overflow-hidden">
         {renderHeader()}
         <DailyPlannerView
           userId={userId}

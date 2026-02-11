@@ -39,8 +39,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
         // iOS 고무줄 효과(bounce scrolling) 활성화 + 배경색 초기화
         if let rootVC = window?.rootViewController as? CAPBridgeViewController {
-            rootVC.webView?.scrollView.bounces = true
-            rootVC.webView?.scrollView.alwaysBounceVertical = true
+            // Root scrollView bounce 비활성화 유지 + contentOffset 리셋
+            rootVC.webView?.scrollView.bounces = false
+            rootVC.webView?.scrollView.alwaysBounceVertical = false
+            if rootVC.webView?.scrollView.contentOffset != .zero {
+                rootVC.webView?.scrollView.contentOffset = .zero
+            }
 
             // 다크모드 overscroll 대응: 초기 배경색 설정
             // 실제 테마는 JavaScript에서 ThemeBridgePlugin을 통해 업데이트됨

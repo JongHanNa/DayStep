@@ -36,9 +36,11 @@ class CustomBridgeViewController: CAPBridgeViewController, WKScriptMessageHandle
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // bounce scrolling 활성화
-        webView?.scrollView.bounces = true
-        webView?.scrollView.alwaysBounceVertical = true
+        // Root UIScrollView bounce 비활성화 (contentOffset 드리프트 방지)
+        // Inner overflow-y-auto 컨테이너들은 독립적인 WKChildScrollView → 영향 없음
+        webView?.scrollView.bounces = false
+        webView?.scrollView.alwaysBounceVertical = false
+        webView?.scrollView.contentOffset = .zero
     }
 
     // MARK: - WKScriptMessageHandler
