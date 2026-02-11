@@ -78,7 +78,7 @@ export default function SettingsScreen({ onExit }: SettingsScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-base-100">
+    <div className="min-h-screen bg-base-100 safe-area-top">
       {renderContent()}
     </div>
   );

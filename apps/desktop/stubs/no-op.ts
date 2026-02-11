@@ -63,6 +63,12 @@ export const StatusBar = {
   hide: async () => {},
 };
 
+export enum Style {
+  Dark = 'DARK',
+  Light = 'LIGHT',
+  Default = 'DEFAULT',
+}
+
 export const SocialLogin = {
   initialize: async (_opts: any) => {},
   login: async (_opts: any) => ({ provider: 'google', result: {} }),

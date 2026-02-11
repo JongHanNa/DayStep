@@ -48,6 +48,12 @@ export default function RootLayout({
 
   return (
     <html lang="ko" className={`${openDyslexic.variable} bg-base-200`}>
+      <head>
+        {/* Capacitor/Electron 환경 클래스를 React 렌더링 전에 동기적으로 추가 (safe-area-top 패딩 적용에 필요) */}
+        <script dangerouslySetInnerHTML={{
+          __html: `(function(){var d=document.documentElement;if(window.location.protocol==='capacitor:'){d.classList.add('capacitor');var h=44;if(window.screen.height>=812)h=47;if((window.screen.height>=852&&window.screen.height<=856)||window.screen.height>=932)h=59;d.style.setProperty('--cap-safe-top',h+'px');}if(navigator.userAgent.includes('Electron'))d.classList.add('electron');})();`
+        }} />
+      </head>
       <body className="antialiased mobile-container scrollbar-hide bg-base-200">
         <ThemeProvider>
           <FontProvider>

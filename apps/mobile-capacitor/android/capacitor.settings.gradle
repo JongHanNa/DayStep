@@ -14,6 +14,9 @@ project(':capacitor-local-notifications').projectDir = new File('../../../node_m
 include ':capacitor-community-contacts'
 project(':capacitor-community-contacts').projectDir = new File('../../../node_modules/@capacitor-community/contacts/android')
 
+include ':capacitor-status-bar'
+project(':capacitor-status-bar').projectDir = new File('../../../node_modules/@capacitor/status-bar/android')
+
 include ':daystep-contact-groups'
 project(':daystep-contact-groups').projectDir = new File('../../web/plugins/contact-groups/android')
 

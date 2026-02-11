@@ -97,6 +97,15 @@ export async function syncWebViewBackgroundColor(theme: 'light' | 'dark'): Promi
     const color = getThemeBackgroundColor(theme);
     await ThemeBridge.setScrollViewBackgroundColor({ color });
 
+    // StatusBar 배경색 + 텍스트 스타일 동기화 (overlaysWebView: false 상태바 영역)
+    try {
+      const { StatusBar, Style } = await import('@capacitor/status-bar');
+      await StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light });
+      await StatusBar.setBackgroundColor({ color });
+    } catch {
+      // StatusBar 플러그인 미등록 시 무시
+    }
+
     console.log(`[ThemeBridge] WebView 배경색 변경: ${color}`);
   } catch (error) {
     // 플러그인이 없거나 웹 환경인 경우 무시

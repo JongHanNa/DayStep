@@ -62,8 +62,8 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     StatusBar: {
       style: "light",
       backgroundColor: "#ffffff",
-      // 상태바 투명도 방지 - 웹뷰 위에 겹치지 않도록 설정
-      overlaysWebView: false,
+      // WebView가 상태바 영역까지 확장 → CSS safe-area-top + body::before 오버레이로 처리
+      overlaysWebView: true,
     },
     SocialLogin: {
       google: {
@@ -83,6 +83,7 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     "@capacitor/preferences",
     "@capacitor/local-notifications",
     "@capacitor-community/contacts",
+    "@capacitor/status-bar",
     "@daystep/widget-bridge",
     "@daystep/contact-groups",
     "@daystep/theme-bridge", // 다크모드 WebView 배경색 동기화
@@ -95,6 +96,7 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
     "PreferencesPlugin",
     "LocalNotificationsPlugin",
     "ContactsPlugin",
+    "StatusBarPlugin",
     "WidgetBridgePlugin",
     "ContactGroupsPlugin",
     "PurchasesPlugin", // Revenue Cat 클래스

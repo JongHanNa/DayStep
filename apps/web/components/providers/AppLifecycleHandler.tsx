@@ -24,9 +24,40 @@ export function AppLifecycleHandler() {
 
     console.log('📱 Capacitor 환경 - AppLifecycleHandler 활성화');
 
-    // Capacitor 클래스 추가 (CSS 선택자 .capacitor .safe-area-top 활성화용)
+    // Capacitor 클래스 추가 (CSS 선택자 .capacitor 활성화용)
     document.documentElement.classList.add('capacitor');
-    console.log('🎨 Capacitor 클래스 추가됨 - safe-area-top 활성화');
+    console.log('🎨 Capacitor 클래스 추가됨');
+
+    // 디바이스별 상태바 높이 계산 (overlaysWebView: true → CSS 패딩 필수)
+    const screenHeight = window.screen.height;
+    let safeTop = 44;
+    if (screenHeight >= 812) safeTop = 47;
+    if ((screenHeight >= 852 && screenHeight <= 856) || screenHeight >= 932) safeTop = 59;
+    const capSafeTopValue = `${safeTop}px`;
+    document.documentElement.style.setProperty('--cap-safe-top', capSafeTopValue);
+    console.log(`📐 --cap-safe-top: ${capSafeTopValue} (screen: ${screenHeight}px)`);
+
+    // capacitor 클래스 + --cap-safe-top 보호: React 재조정으로 인한 소실 방지
+    const observer = new MutationObserver((mutations) => {
+      const el = document.documentElement;
+      for (const mutation of mutations) {
+        if (mutation.attributeName === 'class') {
+          if (!el.classList.contains('capacitor')) {
+            el.classList.add('capacitor');
+          }
+        }
+        if (mutation.attributeName === 'style') {
+          const current = el.style.getPropertyValue('--cap-safe-top');
+          if (!current || current === '0px') {
+            el.style.setProperty('--cap-safe-top', capSafeTopValue);
+          }
+        }
+      }
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
 
     // Revenue Cat 초기화 (비동기 실행, 블로킹 없음)
     initializeRevenueCat()
@@ -55,6 +86,7 @@ export function AppLifecycleHandler() {
 
     // 클린업: 컴포넌트 언마운트 시 리스너 제거
     return () => {
+      observer.disconnect();
       App.removeAllListeners();
     };
   }, []);

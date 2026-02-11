@@ -22,5 +22,9 @@
   {
     "pkg": "ContactGroups",
     "classpath": "ContactGroupsPlugin"
+  },
+  {
+    "pkg": "@capacitor/status-bar",
+    "classpath": "StatusBarPlugin"
   }
 ]
