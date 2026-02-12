@@ -1,12 +1,16 @@
 /**
  * Daily Planner Screen
- * 시간대별 할일 (오전/오후/저녁) + 날짜 네비게이션
+ * 시간대별 할일 (오전/오후/저녁) + 날짜 네비게이션 + FAB + 바텀시트
  */
-import React, {useCallback, useEffect, useMemo} from 'react';
-import {Text, View, SectionList, RefreshControl} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
+import {Text, View, SectionList, RefreshControl, StyleSheet} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TodoCard} from '@/components/todo/TodoCard';
+import {
+  TodoFormBottomSheet,
+  type TodoFormBottomSheetRef,
+} from '@/components/todo/TodoFormBottomSheet';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
@@ -52,6 +56,7 @@ export default function TodoListScreen() {
   const {todos, selectedDate, loading, setSelectedDate, fetchTodosForDate, toggleTodoCompletion} =
     useTodoStore();
   const {primaryColor} = useTheme();
+  const formRef = useRef<TodoFormBottomSheetRef>(null);
 
   useEffect(() => {
     fetchTodosForDate(selectedDate);
@@ -85,6 +90,14 @@ export default function TodoListScreen() {
   const handleRefresh = useCallback(() => {
     fetchTodosForDate(selectedDate);
   }, [selectedDate, fetchTodosForDate]);
+
+  const handleTodoPress = useCallback((todo: Todo) => {
+    formRef.current?.openEdit(todo);
+  }, []);
+
+  const handleAddTodo = useCallback(() => {
+    formRef.current?.openCreate(selectedDate);
+  }, [selectedDate]);
 
   return (
     <ScreenContainer gradient="calmBackground">
@@ -137,6 +150,7 @@ export default function TodoListScreen() {
             todo={item}
             index={index}
             onToggle={handleToggle}
+            onPress={handleTodoPress}
           />
         )}
         ListEmptyComponent={
@@ -153,6 +167,46 @@ export default function TodoListScreen() {
           </View>
         }
       />
+
+      {/* FAB (할일 추가) */}
+      <Animated.View entering={FadeIn.delay(400).duration(300)} style={styles.fabContainer}>
+        <AnimatedPressable
+          onPress={handleAddTodo}
+          hapticType="medium"
+          scaleValue={0.9}
+          style={[styles.fab, {backgroundColor: primaryColor}]}>
+          <Text style={styles.fabText}>+</Text>
+        </AnimatedPressable>
+      </Animated.View>
+
+      {/* 할일 폼 바텀시트 */}
+      <TodoFormBottomSheet ref={formRef} />
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  fabContainer: {
+    position: 'absolute',
+    right: 20,
+    bottom: 100,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabText: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#FFFFFF',
+    marginTop: -2,
+  },
+});
