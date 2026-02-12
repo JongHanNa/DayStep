@@ -56,23 +56,14 @@ export const useWidgetSync = () => {
         return true; // due_date가 없는 경우 포함
       })
       .sort((a, b) => {
-        // 우선순위 정렬 (high > medium > low)
-        const priorityOrder = { high: 3, medium: 2, low: 1 };
-        const aPriority = priorityOrder[(a as any).priority as keyof typeof priorityOrder] || 2;
-        const bPriority = priorityOrder[(b as any).priority as keyof typeof priorityOrder] || 2;
-        
-        if (aPriority !== bPriority) {
-          return bPriority - aPriority;
-        }
-        
         // 마감일 정렬 (가까운 순)
         if ((a as any).due_date && (b as any).due_date) {
           return new Date((a as any).due_date).getTime() - new Date((b as any).due_date).getTime();
         }
-        
+
         if ((a as any).due_date && !(b as any).due_date) return -1;
         if (!(a as any).due_date && (b as any).due_date) return 1;
-        
+
         // 생성일 정렬 (최신 순)
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       })
@@ -81,7 +72,7 @@ export const useWidgetSync = () => {
         id: todo.id,
         title: (todo as any).title || todo.title,
         completed: todo.completed,
-        priority: ((todo as any).priority as 'high' | 'medium' | 'low') || 'medium',
+        priority: 'medium',
         dueDate: (todo as any).due_date || undefined,
         createdAt: new Date(todo.createdAt).toISOString(),
         updatedAt: new Date(todo.updatedAt).toISOString(),

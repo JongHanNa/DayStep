@@ -44,7 +44,6 @@ interface OldTodo {
   scheduled_time?: string | null;
   category?: string | null;
   description?: string | null;
-  priority?: string | null;
   order_index?: number;
 }
 

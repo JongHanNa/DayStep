@@ -35,12 +35,6 @@ export const MCP_RESOURCES: McpResource[] = [
     mimeType: 'text/plain',
   },
   {
-    uri: 'daystep://goals/current',
-    name: '현재 목표',
-    description: '현재 분기 목표 목록을 제공합니다.',
-    mimeType: 'application/json',
-  },
-  {
     uri: 'daystep://projects/active',
     name: '활성 프로젝트',
     description: '진행 중인 프로젝트 목록을 제공합니다.',
@@ -83,9 +77,6 @@ export async function handleResourcesRead(
 
     case 'daystep://summary/week':
       return getWeekSummaryResource(supabase, userId, dateContext);
-
-    case 'daystep://goals/current':
-      return getCurrentGoalsResource(supabase, userId, dateContext);
 
     case 'daystep://projects/active':
       return getActiveProjectsResource(supabase, userId);
@@ -271,45 +262,6 @@ async function getWeekSummaryResource(
 }
 
 /**
- * 현재 목표 리소스
- */
-async function getCurrentGoalsResource(
-  supabase: SupabaseClient,
-  userId: string,
-  dateContext: DateContext
-): Promise<McpToolCallResult> {
-  const { data: goals } = await supabase
-    .from('goals')
-    .select('id, title, status, year_goal, quarter_goal, start_date, end_date')
-    .eq('user_id', userId)
-    .eq('year_goal', dateContext.year)
-    .order('order_index', { ascending: true });
-
-  const allGoals = goals || [];
-
-  if (allGoals.length === 0) {
-    return {
-      content: [{ type: 'text', text: `${dateContext.year}년 목표가 없습니다.` }],
-      isError: false,
-    };
-  }
-
-  const formatted = allGoals.map((g) => ({
-    id: g.id,
-    title: g.title,
-    status: g.status,
-    period: g.quarter_goal || `${g.year_goal}년`,
-    startDate: g.start_date,
-    endDate: g.end_date,
-  }));
-
-  return {
-    content: [{ type: 'text', text: JSON.stringify(formatted, null, 2) }],
-    isError: false,
-  };
-}
-
-/**
  * 활성 프로젝트 리소스
  */
 async function getActiveProjectsResource(
@@ -318,7 +270,7 @@ async function getActiveProjectsResource(
 ): Promise<McpToolCallResult> {
   const { data: projects } = await supabase
     .from('projects')
-    .select('id, title, status, start_date, end_date, goals(title)')
+    .select('id, title, status, start_date, end_date')
     .eq('user_id', userId)
     .in('status', ['not_started', 'in_progress'])
     .order('order_index', { ascending: true });
@@ -336,7 +288,6 @@ async function getActiveProjectsResource(
     id: p.id,
     title: p.title,
     status: p.status,
-    goal: p.goals?.title || null,
     startDate: p.start_date,
     endDate: p.end_date,
   }));
@@ -372,23 +323,6 @@ async function getStatsOverviewResource(
 
   const allProjects = projects || [];
 
-  // 목표 통계
-  const { data: goals } = await supabase
-    .from('goals')
-    .select('id, status')
-    .eq('user_id', userId)
-    .eq('year_goal', dateContext.year);
-
-  const allGoals = goals || [];
-
-  // 책임/자원 통계
-  const { data: areas } = await supabase
-    .from('areas_resources')
-    .select('id, status')
-    .eq('user_id', userId);
-
-  const allAreas = areas || [];
-
   const stats = {
     todos: {
       total: allTodos.length,
@@ -401,18 +335,6 @@ async function getStatsOverviewResource(
       notStarted: allProjects.filter((p) => p.status === 'not_started').length,
       inProgress: allProjects.filter((p) => p.status === 'in_progress').length,
       completed: allProjects.filter((p) => p.status === 'completed').length,
-    },
-    goals: {
-      total: allGoals.length,
-      notStarted: allGoals.filter((g) => g.status === 'not_started').length,
-      inProgress: allGoals.filter((g) => g.status === 'in_progress').length,
-      completed: allGoals.filter((g) => g.status === 'completed').length,
-    },
-    areasResources: {
-      total: allAreas.length,
-      areas: allAreas.filter((a) => a.status === 'area').length,
-      resources: allAreas.filter((a) => a.status === 'resource').length,
-      archived: allAreas.filter((a) => a.status === 'archived').length,
     },
     year: dateContext.year,
     quarter: dateContext.quarter,

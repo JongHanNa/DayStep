@@ -55,7 +55,6 @@ export async function handleListTodos(
   const startDate = url.searchParams.get('start_date');
   const endDate = url.searchParams.get('end_date');
   const completed = url.searchParams.get('completed');
-  const priority = url.searchParams.get('priority');
   const projectId = url.searchParams.get('project_id');
   const scheduleType = url.searchParams.get('schedule_type');
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
@@ -94,9 +93,6 @@ export async function handleListTodos(
   // 기타 필터
   if (completed !== null) {
     query = query.eq('completed', completed === 'true');
-  }
-  if (priority) {
-    query = query.eq('priority', priority);
   }
   if (projectId) {
     query = query.eq('project_id', projectId);
@@ -186,7 +182,6 @@ export async function handleCreateTodo(
       schedule_type: scheduleType,
       start_time: resolvedStartTime,
       end_time: resolvedEndTime,
-      priority: body.priority || 'medium',
       is_today_highlight: body.is_today_highlight || false,
       icon: body.icon || null,
       color: body.color || '#DBAC6C',
@@ -264,7 +259,6 @@ export async function handleUpdateTodo(
 
   if (body.title !== undefined) updates.title = body.title;
   if (body.schedule_type !== undefined) updates.schedule_type = body.schedule_type;
-  if (body.priority !== undefined) updates.priority = body.priority;
   if (body.completed !== undefined) updates.completed = body.completed;
   if (body.is_today_highlight !== undefined) updates.is_today_highlight = body.is_today_highlight;
   if (body.icon !== undefined) updates.icon = body.icon;
@@ -747,7 +741,6 @@ export async function handleCreateProjectWithTodos(
           title: todoInput.title,
           schedule_type: scheduleType,
           start_time: resolvedStartTime,
-          priority: todoInput.priority || 'medium',
           anytime_duration: todoInput.anytime_duration || null,
           icon: null,
           color: '#DBAC6C',

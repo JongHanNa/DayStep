@@ -207,7 +207,6 @@ export type Database = {
       }
       notes: {
         Row: {
-          area_resource_id: string | null
           content: string
           created_at: string
           id: string
@@ -228,7 +227,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          area_resource_id?: string | null
           content: string
           created_at?: string
           id?: string
@@ -249,7 +247,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          area_resource_id?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -665,7 +662,6 @@ export type Database = {
           original_start_time: string | null
           parent_recurring_todo_id: string | null
           parent_todo_id: string | null
-          priority: string | null
           project_id: string | null
           recurrence_count: number | null
           recurrence_day_of_month: number | null
@@ -700,7 +696,6 @@ export type Database = {
           original_start_time?: string | null
           parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
-          priority?: string | null
           project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null
@@ -735,7 +730,6 @@ export type Database = {
           original_start_time?: string | null
           parent_recurring_todo_id?: string | null
           parent_todo_id?: string | null
-          priority?: string | null
           project_id?: string | null
           recurrence_count?: number | null
           recurrence_day_of_month?: number | null

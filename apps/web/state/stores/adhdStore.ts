@@ -820,9 +820,9 @@ export const useADHDStore = create<ADHDModeState>()(
             score -= 10;
           }
 
-          // 5. 우선순위 반영
-          if (todo.priority === 'high') score += 25;
-          else if (todo.priority === 'medium') score += 10;
+          // 5. 우선순위 반영 (importance/urgency 아이젠하워 매트릭스 기반)
+          if ((todo as any).importance === 'high') score += 25;
+          else if ((todo as any).urgency === 'high') score += 15;
 
           // === 패턴 기반 점수 ===
           const hour = new Date().getHours();

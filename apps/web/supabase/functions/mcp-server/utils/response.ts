@@ -295,14 +295,3 @@ export function getStatusEmoji(status: string): string {
   return statusEmojis[status] || '📌';
 }
 
-/**
- * 우선순위 이모지 변환
- */
-export function getPriorityEmoji(priority: string | null | undefined): string {
-  const priorityEmojis: Record<string, string> = {
-    high: '🔴',
-    medium: '🟡',
-    low: '🟢',
-  };
-  return priorityEmojis[priority || 'medium'] || '⚪';
-}

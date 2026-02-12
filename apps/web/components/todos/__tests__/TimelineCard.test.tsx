@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TimelineCard, TodoPriority, TodoStatus } from '../TimelineCard';
+import { TimelineCard, TodoStatus } from '../TimelineCard';
 import { Todo } from '@/types';
 
 // Mock 데이터
@@ -39,14 +39,6 @@ describe('TimelineCard', () => {
     
     const card = screen.getByRole('article');
     expect(card).toHaveClass('opacity-60');
-  });
-
-  it('should display priority badge correctly', () => {
-    render(<TimelineCard todo={mockTodo} />);
-    
-    // 기본 우선순위는 'medium'
-    expect(screen.getByText('보통')).toBeInTheDocument();
-    expect(screen.getByLabelText('우선순위: medium')).toBeInTheDocument();
   });
 
   it('should display formatted date and time', () => {
@@ -95,34 +87,7 @@ describe('TimelineCard', () => {
     const card = screen.getByRole('article');
     expect(card).toHaveAttribute('aria-label', '할일: 테스트 할일');
     
-    expect(screen.getByLabelText('우선순위: medium')).toBeInTheDocument();
     expect(screen.getByLabelText('상태: pending')).toBeInTheDocument();
-  });
-
-  it('should handle different priority levels with colors', () => {
-    const highPriorityTodo = {
-      ...mockTodo,
-      priority: 'high' as TodoPriority,
-    } as any;
-    
-    const { rerender } = render(<TimelineCard todo={highPriorityTodo} />);
-    expect(screen.getByText('높음')).toBeInTheDocument();
-    
-    const card = screen.getByRole('article');
-    expect(card.className).toContain('border-red-500');
-    expect(card.className).toContain('bg-red-50');
-    
-    const lowPriorityTodo = {
-      ...mockTodo,
-      priority: 'low' as TodoPriority,
-    } as any;
-    
-    rerender(<TimelineCard todo={lowPriorityTodo} />);
-    expect(screen.getByText('낮음')).toBeInTheDocument();
-    
-    const updatedCard = screen.getByRole('article');
-    expect(updatedCard.className).toContain('border-green-500');
-    expect(updatedCard.className).toContain('bg-green-50');
   });
 
   it('should handle different status types', () => {
@@ -131,26 +96,7 @@ describe('TimelineCard', () => {
     expect(screen.getByText('대기 중')).toBeInTheDocument();
   });
 
-  it('should apply priority colors consistently across components', () => {
-    const highPriorityTodo = {
-      ...mockTodo,
-      priority: 'high' as TodoPriority,
-    } as any;
-    
-    render(<TimelineCard todo={highPriorityTodo} />);
-    
-    // 카드 배경 및 테두리 색상 확인
-    const card = screen.getByRole('article');
-    expect(card.className).toContain('border-red-500');
-    expect(card.className).toContain('bg-red-50');
-    
-    // 우선순위 배지 색상 확인
-    const priorityBadge = screen.getByLabelText('우선순위: high');
-    expect(priorityBadge.className).toContain('bg-red-100');
-    expect(priorityBadge.className).toContain('text-red-800');
-  });
-
-  it('should display medium priority with default yellow colors', () => {
+  it('should display default card styling', () => {
     render(<TimelineCard todo={mockTodo} />);
     
     const card = screen.getByRole('article');

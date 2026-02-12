@@ -73,7 +73,6 @@ export function useTimelineNavigation({
         scheduleType: todo.scheduleType || 'timed',
         createdAt: todo.createdAt,
         projectId: todo.projectId,
-        goalId: todo.goalId,
         departmentId: todo.departmentId,
         icon: todo.icon,
         color: todo.color,

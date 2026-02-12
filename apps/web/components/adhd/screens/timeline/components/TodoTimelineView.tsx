@@ -450,7 +450,6 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
                               date={date}
                               currentTime={data.currentTime}
                               projectMap={data.projectMap}
-                              goalMap={data.goalMap}
                               departmentMap={data.departmentMap}
                               showFuelBadges={showFuelBadges}
                               getLinkedFuels={data.getLinkedFuels}

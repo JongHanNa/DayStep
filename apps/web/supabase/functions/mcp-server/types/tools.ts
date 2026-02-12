@@ -9,7 +9,6 @@
 // ============================================================================
 
 export type ScheduleType = 'all_day' | 'timed' | 'anytime' | 'none';
-export type Priority = 'low' | 'medium' | 'high';
 
 // ============================================================================
 // AI 플래닝 도구 타입
@@ -37,7 +36,6 @@ export interface CreateProjectWithTodosInput {
     title: string;
     start_time?: string;  // 'today', 'tomorrow', 'YYYY-MM-DD'
     schedule_type?: ScheduleType;
-    priority?: Priority;
     anytime_duration?: number;  // 예상 소요시간 (분)
     subtasks?: SubtaskInput[];  // ADHD용 서브태스크 (5분짜리 작은 행동들)
   }>;

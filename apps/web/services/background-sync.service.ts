@@ -170,7 +170,7 @@ export class BackgroundSyncService {
           id: todo.id,
           title: todo.title,
           completed: todo.completed,
-          priority: ((todo as any).priority as 'high' | 'medium' | 'low') || 'medium',
+          priority: 'medium',
           dueDate: (todo as any).due_date || undefined,
           createdAt: new Date(todo.createdAt).toISOString(),
           updatedAt: new Date(todo.updatedAt).toISOString()

@@ -270,7 +270,6 @@ export interface TodoResponse {
   schedule_type: string;
   start_time: string | null;
   end_time: string | null;
-  priority: string;
   project_id: string | null;
   recurrence_pattern: string;
   is_today_highlight: boolean;
@@ -290,7 +289,6 @@ export interface CreateTodoRequest {
   schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none';
   start_time?: string;
   end_time?: string;
-  priority?: 'low' | 'medium' | 'high';
   project_id?: string;
   is_today_highlight?: boolean;
   icon?: string;
@@ -306,7 +304,6 @@ export interface UpdateTodoRequest {
   schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none';
   start_time?: string | null;
   end_time?: string | null;
-  priority?: 'low' | 'medium' | 'high';
   completed?: boolean;
   project_id?: string | null;
   is_today_highlight?: boolean;
@@ -370,7 +367,6 @@ export interface CreateProjectWithTodosRequest {
     title: string;
     start_time?: string;
     schedule_type?: 'all_day' | 'timed' | 'anytime' | 'none';
-    priority?: 'low' | 'medium' | 'high';
     anytime_duration?: number;
     subtasks?: Array<{
       title: string;

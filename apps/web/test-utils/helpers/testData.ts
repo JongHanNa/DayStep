@@ -20,7 +20,6 @@ export const createMockTodo = (overrides: Partial<Todo> = {}): Todo => {
     order_index: overrides.orderIndex ?? defaultData.orderIndex,
     category: (overrides as any).category || null,
     description: (overrides as any).description || null,
-    priority: (overrides as any).priority || null,
     schedule_type: (overrides as any).scheduleType || 'anytime',
     start_time: (overrides as any).startTime ? (overrides as any).startTime.toISOString() : null,
     end_time: (overrides as any).endTime ? (overrides as any).endTime.toISOString() : null,

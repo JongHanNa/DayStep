@@ -317,12 +317,6 @@ export function getOpenApiSchema(baseUrl: string) {
               schema: { type: 'boolean' },
             },
             {
-              name: 'priority',
-              in: 'query',
-              description: '우선순위 필터',
-              schema: { type: 'string', enum: ['low', 'medium', 'high'] },
-            },
-            {
               name: 'project_id',
               in: 'query',
               description: '프로젝트 ID 필터',
@@ -658,11 +652,6 @@ export function getOpenApiSchema(baseUrl: string) {
                     enum: ['all_day', 'timed', 'anytime', 'none'],
                     description: '일정 타입',
                   },
-                  priority: {
-                    type: 'string',
-                    enum: ['low', 'medium', 'high'],
-                    description: '우선순위',
-                  },
                   anytime_duration: { type: 'integer', description: '예상 소요시간 (분)' },
                   subtasks: {
                     type: 'array',
@@ -694,11 +683,6 @@ export function getOpenApiSchema(baseUrl: string) {
             },
             start_time: { type: 'string', format: 'date-time', nullable: true, description: '시작 시간' },
             end_time: { type: 'string', format: 'date-time', nullable: true, description: '종료 시간' },
-            priority: {
-              type: 'string',
-              enum: ['low', 'medium', 'high'],
-              description: '우선순위',
-            },
             project_id: { type: 'string', format: 'uuid', nullable: true, description: '프로젝트 ID' },
             recurrence_pattern: { type: 'string', description: '반복 패턴' },
             is_today_highlight: { type: 'boolean', description: '오늘 하이라이트' },
@@ -723,12 +707,6 @@ export function getOpenApiSchema(baseUrl: string) {
             },
             start_time: { type: 'string', description: '시작 시간 (today, tomorrow, YYYY-MM-DD 또는 ISO datetime)' },
             end_time: { type: 'string', format: 'date-time', description: '종료 시간' },
-            priority: {
-              type: 'string',
-              enum: ['low', 'medium', 'high'],
-              default: 'medium',
-              description: '우선순위',
-            },
             project_id: { type: 'string', format: 'uuid', description: '프로젝트 ID' },
             is_today_highlight: { type: 'boolean', default: false, description: '오늘 하이라이트' },
             icon: { type: 'string', description: '아이콘' },
@@ -747,11 +725,6 @@ export function getOpenApiSchema(baseUrl: string) {
             },
             start_time: { type: 'string', nullable: true, description: '시작 시간' },
             end_time: { type: 'string', nullable: true, description: '종료 시간' },
-            priority: {
-              type: 'string',
-              enum: ['low', 'medium', 'high'],
-              description: '우선순위',
-            },
             completed: { type: 'boolean', description: '완료 여부' },
             project_id: { type: 'string', format: 'uuid', nullable: true, description: '프로젝트 ID' },
             is_today_highlight: { type: 'boolean', description: '오늘 하이라이트' },

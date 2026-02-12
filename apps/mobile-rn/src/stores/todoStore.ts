@@ -25,7 +25,6 @@ interface CreateTodoInput {
   schedule_type?: string;
   start_time?: string;
   end_time?: string;
-  priority?: string;
   icon?: string;
   color?: string;
   importance?: boolean;
@@ -36,9 +35,17 @@ interface CreateTodoInput {
   project_ids?: string[];
 }
 
+interface TodoCompletion {
+  id: string;
+  todo_id: string;
+  user_id: string;
+  completion_date: string;
+}
+
 interface TodoState {
   // 데이터
   todos: Todo[];
+  completions: TodoCompletion[]; // 반복할일 날짜별 완료 기록
   selectedDate: string; // ISO date string (YYYY-MM-DD)
 
   // 로딩 상태
@@ -54,6 +61,7 @@ interface TodoState {
   updateTodo: (id: string, updates: Partial<Todo>) => Promise<boolean>;
   deleteTodo: (id: string) => Promise<boolean>;
   toggleTodoCompletion: (id: string) => Promise<boolean>;
+  toggleRecurringCompletion: (todoId: string, date: string) => Promise<boolean>;
   setSelectedDate: (date: string) => void;
   updateRecurringTodo: (
     id: string,
@@ -96,6 +104,7 @@ export const useTodoStore = create<TodoState>()(
   persist(
     (set, get) => ({
       todos: [],
+      completions: [],
       selectedDate: format(new Date(), 'yyyy-MM-dd'),
       loading: false,
       error: null,
@@ -129,10 +138,10 @@ export const useTodoStore = create<TodoState>()(
               [
                 // 시간 지정 할일 (해당 날짜)
                 `and(schedule_type.eq.timed,start_time.gte.${dayStart},start_time.lte.${dayEnd})`,
-                // 매일 반복
-                `and(recurrence_pattern.eq.daily,start_time.lte.${dayEnd})`,
-                // 주간 반복 (해당 요일)
-                `and(recurrence_pattern.eq.weekly,recurrence_days_of_week.cs.[${dayOfWeek}],start_time.lte.${dayEnd})`,
+                // 매일 반복 (종료일 필터 포함)
+                `and(recurrence_pattern.eq.daily,start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
+                // 주간 반복 (해당 요일, 종료일 필터 포함)
+                `and(recurrence_pattern.eq.weekly,recurrence_days_of_week.cs.[${dayOfWeek}],start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
                 // anytime (시간 미지정)
                 `and(schedule_type.eq.anytime,start_time.gte.${dayStart},start_time.lte.${dayEnd})`,
               ].join(','),
@@ -165,8 +174,36 @@ export const useTodoStore = create<TodoState>()(
             }
           }
 
+          // 반복할일 날짜별 완료 상태 조회
+          let completionData: TodoCompletion[] = [];
+          // exclusion 필터 후 남은 반복할일 재계산
+          const remainingRecurringIds = filteredData
+            .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
+            .map(t => t.id);
+
+          if (remainingRecurringIds.length > 0) {
+            const {data: completions} = await supabase
+              .from('todo_completions')
+              .select('id, todo_id, user_id, completion_date')
+              .eq('completion_date', date)
+              .eq('user_id', userId)
+              .in('todo_id', remainingRecurringIds);
+            completionData = (completions ?? []) as TodoCompletion[];
+          }
+
+          // 반복할일의 completed 필드를 날짜별 상태로 덮어씀
+          const completedTodoIds = new Set(completionData.map(c => c.todo_id));
+          const enrichedData = filteredData.map(t => {
+            const isRecurring = t.recurrence_pattern && t.recurrence_pattern !== 'none';
+            if (isRecurring) {
+              return {...t, completed: completedTodoIds.has(t.id)};
+            }
+            return t;
+          });
+
           set({
-            todos: filteredData.map(parseTodo),
+            todos: enrichedData.map(parseTodo),
+            completions: completionData,
             selectedDate: date,
           });
         } catch (err: any) {
@@ -292,9 +329,84 @@ export const useTodoStore = create<TodoState>()(
         const todo = get().todos.find(t => t.id === id);
         if (!todo) return false;
 
+        const isRecurring = (todo as any).recurrence_pattern && (todo as any).recurrence_pattern !== 'none';
+        if (isRecurring) {
+          return get().toggleRecurringCompletion(id, get().selectedDate);
+        }
+
+        // 비반복 할일: 기존 방식 유지
         return get().updateTodo(id, {
           completed: !todo.completed,
         } as Partial<Todo>);
+      },
+
+      toggleRecurringCompletion: async (todoId, date) => {
+        const todo = get().todos.find(t => t.id === todoId);
+        if (!todo) return false;
+
+        const userId = await getCurrentUserId();
+        if (!userId) return false;
+
+        const existingCompletion = get().completions.find(
+          c => c.todo_id === todoId && c.completion_date === date,
+        );
+        const newCompleted = !existingCompletion;
+
+        // Optimistic update
+        const originalTodos = get().todos;
+        const originalCompletions = get().completions;
+        set(state => ({
+          todos: state.todos.map(t =>
+            t.id === todoId ? {...t, completed: newCompleted} : t,
+          ),
+          completions: existingCompletion
+            ? state.completions.filter(c => c.id !== existingCompletion.id)
+            : [...state.completions, {
+                id: `temp_${Date.now()}`,
+                todo_id: todoId,
+                user_id: userId,
+                completion_date: date,
+              }],
+        }));
+
+        try {
+          if (existingCompletion) {
+            // 완료 → 미완료: DELETE
+            const {error} = await supabase
+              .from('todo_completions')
+              .delete()
+              .eq('id', existingCompletion.id);
+            if (error) throw error;
+          } else {
+            // 미완료 → 완료: INSERT
+            const {data, error} = await supabase
+              .from('todo_completions')
+              .insert({
+                todo_id: todoId,
+                user_id: userId,
+                completion_date: date,
+              })
+              .select()
+              .single();
+            if (error) throw error;
+
+            // 임시 ID를 실제 ID로 교체
+            set(state => ({
+              completions: state.completions.map(c =>
+                c.todo_id === todoId && c.id.startsWith('temp_')
+                  ? (data as TodoCompletion)
+                  : c,
+              ),
+            }));
+          }
+          return true;
+        } catch (err: any) {
+          // 롤백
+          set({todos: originalTodos, completions: originalCompletions});
+          console.error('[TodoStore] toggleRecurringCompletion error:', err);
+          set({error: err.message ?? 'Failed to toggle recurring completion'});
+          return false;
+        }
       },
 
       updateRecurringTodo: async (id, updates, updateType, occurrenceDate) => {
@@ -445,6 +557,7 @@ export const useTodoStore = create<TodoState>()(
       storage: createJSONStorage(() => zustandMMKVStorage),
       partialize: (state) => ({
         todos: state.todos,
+        completions: state.completions,
         selectedDate: state.selectedDate,
         offlineQueue: state.offlineQueue,
       }),

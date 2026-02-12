@@ -13,7 +13,6 @@ export class Todo {
     public readonly orderIndex: number,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly priority: string | null = null,
     public readonly icon: string | null = null,
     public readonly color: string | null = null,
 
@@ -35,11 +34,8 @@ export class Todo {
     public readonly departureLocation: string | null = null,
     public readonly departureTime: Date | null = null,
 
-    // Second Brain 관계 필드들 (프로젝트/목표/영역/자원)
+    // Second Brain 관계 필드들
     public readonly projectId: string | null = null,
-    public readonly goalId: string | null = null,
-    public readonly areaId: string | null = null,
-    public readonly resourceId: string | null = null,
 
     // 관계 할일 필드
     public readonly isRelationshipTask: boolean = false,
@@ -97,9 +93,6 @@ export class Todo {
     // project_ids 배열을 projectId (첫 번째 프로젝트)로 변환
     const projectIds = record.projectIds ?? record.project_ids ?? [];
     const projectId = Array.isArray(projectIds) && projectIds.length > 0 ? projectIds[0] : (record.projectId ?? record.project_id ?? null);
-    const goalId = record.goalId ?? record.goal_id;
-    const areaId = record.areaId ?? record.area_id;
-    const resourceId = record.resourceId ?? record.resource_id;
 
     // 관계 할일 필드
     const isRelationshipTask = record.isRelationshipTask ?? record.is_relationship_task ?? false;
@@ -137,7 +130,6 @@ export class Todo {
       orderIndex || 0,
       new Date(createdAt || new Date()),
       new Date(updatedAt || new Date()),
-      data.priority,
       data.icon,
       data.color,
 
@@ -163,9 +155,6 @@ export class Todo {
 
       // Second Brain 관계 필드들
       projectId || null,
-      goalId || null,
-      areaId || null,
-      resourceId || null,
 
       // 관계 할일 필드
       isRelationshipTask,
@@ -203,7 +192,6 @@ export class Todo {
     scheduleType: ScheduleType,
     options: {
       orderIndex?: number;
-      priority?: string;
       startTime?: Date;
       endTime?: Date;
       recurrencePattern?: RecurrencePattern;
@@ -222,7 +210,6 @@ export class Todo {
     schedule_type: ScheduleType;
     start_time?: string;
     end_time?: string;
-    priority?: string;
     recurrence_pattern: RecurrencePattern;
     recurrence_end_date?: string;
     recurrence_count?: number;
@@ -260,8 +247,7 @@ export class Todo {
       title: title.trim(),
       completed: false,
       order_index: options.orderIndex ?? 0,
-      priority: options.priority,
-      
+
       // 스케줄 정보
       schedule_type: scheduleType,
       start_time: options.startTime?.toISOString(),
@@ -473,7 +459,6 @@ export class Todo {
       this.orderIndex,
       this.createdAt,
       new Date(), // 업데이트 시간 갱신
-      this.priority,
       this.icon,
       this.color,
       this.scheduleType,
@@ -489,9 +474,6 @@ export class Todo {
       this.departureLocation,
       this.departureTime,
       this.projectId,
-      this.goalId,
-      this.areaId,
-      this.resourceId,
       this.isRelationshipTask
     );
   }
@@ -521,7 +503,6 @@ export class Todo {
       this.orderIndex,
       this.createdAt,
       new Date(),
-      this.priority,
       this.icon,
       this.color,
       this.scheduleType,
@@ -537,9 +518,6 @@ export class Todo {
       this.departureLocation,
       this.departureTime,
       this.projectId,
-      this.goalId,
-      this.areaId,
-      this.resourceId,
       this.isRelationshipTask
     );
   }
@@ -583,7 +561,6 @@ export class Todo {
       title: this.title,
       completed: this.completed,
       order_index: this.orderIndex,
-      priority: this.priority,
       icon: this.icon,
       color: this.color,
 

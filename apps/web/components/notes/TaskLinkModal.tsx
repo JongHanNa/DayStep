@@ -418,14 +418,6 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
                                   {todo.title}
                                 </p>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <Badge 
-                                    variant={todo.priority === 'high' ? 'destructive' : 
-                                            todo.priority === 'medium' ? 'default' : 'secondary'}
-                                    className="text-xs"
-                                  >
-                                    {todo.priority === 'high' ? '높음' : 
-                                     todo.priority === 'medium' ? '보통' : '낮음'}
-                                  </Badge>
                                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
                                     {formatTodoTime(todo)}

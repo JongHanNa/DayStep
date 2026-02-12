@@ -421,7 +421,6 @@ export const useTodoStore = createStore<TodoStoreState>(
           title: data.title,
           completed: data.completed ?? false,
           order_index: todoData.order_index,
-          priority: data.priority,
           schedule_type: todoData.schedule_type || "anytime",
           start_time: data.start_time,
           end_time: data.end_time,

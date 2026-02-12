@@ -13,7 +13,6 @@ interface TimelineItemCardProps {
   date: Date;
   currentTime: Date;
   projectMap: Map<string, ProjectMapValue>;
-  goalMap: Map<string, string>;
   departmentMap: Map<string, DepartmentMapValue>;
   showFuelBadges: boolean;
   getLinkedFuels: (item: TimelineItem) => Note[];
@@ -34,7 +33,6 @@ export function TimelineItemCard({
   date,
   currentTime,
   projectMap,
-  goalMap,
   departmentMap,
   showFuelBadges,
   getLinkedFuels,
@@ -50,7 +48,6 @@ export function TimelineItemCard({
   onSkipTodo,
 }: TimelineItemCardProps) {
   const projectInfo = item.projectId ? projectMap.get(item.projectId) : undefined;
-  const goalName = item.goalId ? goalMap.get(item.goalId) : undefined;
   const departmentInfo = item.departmentId ? departmentMap.get(item.departmentId) : undefined;
 
   // 시간 상태 계산
@@ -272,14 +269,9 @@ export function TimelineItemCard({
           </div>
         )}
 
-        {/* 맥락 배지 (프로젝트/목표/부서) */}
-        {(goalName || projectInfo || departmentInfo) && (
+        {/* 맥락 배지 (프로젝트/부서) */}
+        {(projectInfo || departmentInfo) && (
           <div className="flex flex-wrap gap-1 mt-1.5">
-            {goalName && (
-              <span className="badge badge-xs badge-ghost">
-                {goalName}
-              </span>
-            )}
             {projectInfo && (
               <span
                 className="badge badge-xs gap-1"

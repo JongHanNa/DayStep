@@ -473,7 +473,6 @@ export class EntityPersistenceManager {
         completed: item.completed,
         order_index: item.orderIndex,
         description: item.description || null,
-        priority: item.priority || null,
         schedule_type: item.scheduleType || "anytime",
         start_time: item.startTime || null,
         end_time: item.endTime || null,

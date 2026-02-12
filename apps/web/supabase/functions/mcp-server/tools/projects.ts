@@ -79,7 +79,6 @@ export async function createProjectWithTodos(
       project_id: projectId,
       start_time: startTime,
       schedule_type: todo.schedule_type || 'anytime',
-      priority: todo.priority || 'medium',
       anytime_duration: todo.anytime_duration || null,
       order_index: index,
       completed: false,
@@ -109,7 +108,6 @@ export async function createProjectWithTodos(
     recurrence_pattern: string;
     order_index: number;
     completed: boolean;
-    priority: string;
   }> = [];
 
   // 부모 할일 ID와 입력 데이터 매핑
@@ -128,7 +126,6 @@ export async function createProjectWithTodos(
             recurrence_pattern: 'none',
             order_index: subtaskIndex,
             completed: false,
-            priority: 'medium',
           });
         });
       }

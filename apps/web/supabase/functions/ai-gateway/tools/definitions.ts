@@ -67,11 +67,6 @@ export const DAYSTEP_TOOLS: ToolDefinition[] = [
                 enum: ['anytime', 'timed', 'all_day'],
                 description: 'anytime(언제든), timed(특정시간), all_day(종일)',
               },
-              priority: {
-                type: 'string',
-                enum: ['low', 'medium', 'high'],
-                description: '우선순위',
-              },
               anytime_duration: {
                 type: 'number',
                 description: '예상 소요 시간 (분, 5-30분 권장)',
@@ -152,11 +147,6 @@ export const DAYSTEP_TOOLS: ToolDefinition[] = [
           type: 'string',
           enum: ['anytime', 'timed', 'all_day'],
           description: '일정 유형',
-        },
-        priority: {
-          type: 'string',
-          enum: ['low', 'medium', 'high'],
-          description: '우선순위',
         },
         project_id: {
           type: 'string',

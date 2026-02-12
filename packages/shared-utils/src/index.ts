@@ -5,5 +5,4 @@ export * from './time-utils';
 export * from './timeGapUtils';
 export * from './validation';
 export * from './recurring';
-export * from './nextActionMapping';
 export * from './timeStatus';

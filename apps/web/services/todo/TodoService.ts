@@ -437,7 +437,6 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         // 새로운 스키마에 맞게 변환
         const createInput: CreateTodoInput = {
           title: todoData.title,
-          priority: todoData.priority as any,
           schedule_type: (todoData as any).schedule_type || 'anytime',
           start_time: (todoData as any).start_time,
           end_time: (todoData as any).end_time,

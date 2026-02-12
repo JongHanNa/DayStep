@@ -9,7 +9,6 @@ import type { MemoData } from '@/components/todos/form/NoteInput';
 export interface TodoFormStateValues {
   // 기본 필드
   content: string;
-  priority: 'low' | 'medium' | 'high';
   selectedIcon: UnifiedIconKey;
   selectedColor: string;
 
@@ -47,7 +46,6 @@ export interface TodoFormStateValues {
 
 export interface TodoFormStateActions {
   setContent: (content: string) => void;
-  setPriority: (priority: 'low' | 'medium' | 'high') => void;
   setSelectedIcon: (icon: UnifiedIconKey) => void;
   setSelectedColor: (color: string) => void;
   setScheduleType: (type: ScheduleType) => void;
@@ -83,7 +81,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   
   // 기본 필드
   const [content, setContent] = useState('');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [selectedIcon, setSelectedIcon] = useState<UnifiedIconKey>('lucide-Home');
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR.id);
 
@@ -188,7 +185,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   // 초기화 함수 (useCallback으로 메모이제이션)
   const initializeFormFromTodo = useCallback((todo: Todo) => {
     setContent(todo.title || '');
-    setPriority((todo.priority as 'low' | 'medium' | 'high') || 'medium');
     setSelectedIcon((todo.icon as UnifiedIconKey) || 'home');
     // DB에서 hex 값 또는 colorId가 올 수 있으므로 둘 다 처리
     const colorValue = todo.color;
@@ -366,7 +362,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
 
   const initializeFormForNew = useCallback(() => {
     setContent('');
-    setPriority('medium');
     setSelectedIcon('lucide-Home');
     
     // 초기 시간이 제공된 경우 시간 지정 모드로 설정
@@ -439,7 +434,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   // 상태 값들 반환
   const values: TodoFormStateValues = {
     content,
-    priority,
     selectedIcon,
     selectedColor,
     scheduleType,
@@ -466,7 +460,6 @@ export const useTodoFormState = (config: TodoFormStateConfig) => {
   // 액션 함수들 반환
   const actions: TodoFormStateActions = {
     setContent,
-    setPriority,
     setSelectedIcon,
     setSelectedColor,
     setScheduleType,

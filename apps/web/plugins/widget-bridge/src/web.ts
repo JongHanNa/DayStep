@@ -228,7 +228,7 @@ export class WidgetBridgeWeb extends WebPlugin implements WidgetBridgePlugin {
         id: '1',
         title: '프로젝트 마무리',
         completed: false,
-        priority: 'high',
+        priority: 'medium',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         category: '업무'
@@ -246,7 +246,7 @@ export class WidgetBridgeWeb extends WebPlugin implements WidgetBridgePlugin {
         id: '3',
         title: '책 읽기',
         completed: false,
-        priority: 'low',
+        priority: 'medium',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         category: '자기계발'

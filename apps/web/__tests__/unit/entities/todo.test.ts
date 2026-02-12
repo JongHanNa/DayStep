@@ -196,16 +196,6 @@ describe('Todo Entity', () => {
       expect(completedTodo.statusIcon).toBe('✅')
     })
 
-    it('should determine priority based on order index', () => {
-      const highPriority = Todo.fromDatabase({ ...mockTodoData, order_index: 1 })
-      const mediumPriority = Todo.fromDatabase({ ...mockTodoData, order_index: 4 })
-      const lowPriority = Todo.fromDatabase({ ...mockTodoData, order_index: 10 })
-
-      expect(highPriority.priority).toBe('high')
-      expect(mediumPriority.priority).toBe('medium')
-      expect(lowPriority.priority).toBe('low')
-    })
-
     it('should determine if todo is old', () => {
       const newDate = new Date()
       const oldDate = new Date()

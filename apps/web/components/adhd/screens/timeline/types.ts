@@ -18,7 +18,6 @@ export interface TimelineItem {
   scheduleType: string;
   createdAt: Date;
   projectId?: string | null;
-  goalId?: string | null;
   departmentId?: string | null;
   icon?: string | null;
   color?: string | null;
@@ -84,7 +83,6 @@ export function timelineItemToTodo(item: TimelineItem): Todo {
       order_index: item.orderIndex,
       created_at: item.createdAt?.toISOString(),
       updated_at: orig.updatedAt?.toISOString(),
-      priority: orig.priority,
       icon: item.icon ?? orig.icon,
       color: item.color ?? orig.color,
       schedule_type: item.scheduleType,
@@ -98,9 +96,6 @@ export function timelineItemToTodo(item: TimelineItem): Todo {
       recurrence_day_of_month: orig.recurrenceDayOfMonth,
       parent_todo_id: orig.parentTodoId,
       project_id: orig.projectId,
-      goal_id: orig.goalId,
-      area_id: orig.areaId,
-      resource_id: orig.resourceId,
       department_id: orig.departmentId,
       importance: orig.importance,
       urgency: orig.urgency,

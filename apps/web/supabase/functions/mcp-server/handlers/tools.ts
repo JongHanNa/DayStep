@@ -51,7 +51,6 @@ const TOOLS: McpTool[] = [
               title: { type: 'string', description: '할일 제목 (15분 이내 완료 가능한 구체적 행동. 모호한 표현 금지)' },
               start_time: { type: 'string', description: '시작일 (today, tomorrow, YYYY-MM-DD)' },
               schedule_type: { type: 'string', enum: ['all_day', 'timed', 'anytime', 'none'], description: '일정 타입' },
-              priority: { type: 'string', enum: ['low', 'medium', 'high'], description: '우선순위' },
               anytime_duration: { type: 'number', description: '예상 소요시간 (분)' },
               subtasks: {
                 type: 'array',

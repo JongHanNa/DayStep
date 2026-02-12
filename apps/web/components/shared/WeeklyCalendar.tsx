@@ -3,17 +3,24 @@
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, differenceInCalendarDays } from 'date-fns';
 import { useDroppable } from '@dnd-kit/core';
-import type { InboxItem, Project } from '@/types/domain';
+import type { Project } from '@/types/domain';
 import CalendarTodoCard from '@/components/shared/CalendarTodoCard';
 import { useAuth } from '@/app/context/AuthContext';
 
-// end_date를 포함할 수 있는 확장 InboxItem 타입
-type InboxItemWithEndDate = InboxItem & {
+// 캘린더에서 사용하는 할일 아이템 타입
+interface CalendarTodoItem {
+  id: string;
+  content: string;
+  is_completed?: boolean;
+  is_highlight?: boolean;
+  schedule_type?: string;
+  scheduled_date?: string | null;
+  color?: string;
+  created_at: string;
   end_date?: string | null;
-};
+}
 
-// 통합 할일 타입 (InboxItem + end_date 지원)
-type UnifiedTodoItem = InboxItemWithEndDate;
+type UnifiedTodoItem = CalendarTodoItem;
 
 interface WeeklyCalendarProps {
   todos: UnifiedTodoItem[];
@@ -31,10 +38,6 @@ interface WeeklyCalendarProps {
 }
 
 
-// InboxItem인지 TodoItem인지 구분
-function isInboxItem(item: UnifiedTodoItem): item is InboxItem {
-  return 'scheduled_date' in item;
-}
 
 // 스패닝 카드 타입
 interface SpanningCard {

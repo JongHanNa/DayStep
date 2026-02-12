@@ -34,9 +34,6 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [anytimeCount, setAnytimeCount] = useState(0);
 
-  // 목표 기능은 추후 구현 예정 - 빈 배열로 대체
-  const goals: { id: string; title: string }[] = [];
-
   // 날짜 범위 계산
   const dateRange = useMemo(() => {
     const today = new Date();
@@ -121,7 +118,6 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
             scheduleType: data.schedule_type || 'timed',
             createdAt: data.created_at ? new Date(data.created_at) : new Date(),
             projectId: data.project_id,
-            goalId: data.goal_id,
             departmentId: data.department_id,
             icon: data.icon,
             color: data.color,
@@ -210,10 +206,6 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
     return new Map(projects.map(p => [p.id, { title: p.title, color: p.color, icon: p.icon }]));
   }, [projects]);
 
-  const goalMap = useMemo(() => {
-    return new Map(goals.map(g => [g.id, g.title]));
-  }, [goals]);
-
   const departmentMap = useMemo<Map<string, DepartmentMapValue>>(() => {
     return new Map(departments.map(d => [d.id, { name: d.name, color: d.color, icon: d.icon }]));
   }, [departments]);
@@ -251,7 +243,6 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
     // Memos
     dateRange,
     projectMap,
-    goalMap,
     departmentMap,
     // Callbacks
     getLinkedFuels,

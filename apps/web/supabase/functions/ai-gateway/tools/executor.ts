@@ -98,7 +98,6 @@ async function createProjectWithTodos(
       title: string;
       start_time?: string;
       schedule_type?: string;
-      priority?: string;
       anytime_duration?: number;
       subtasks?: Array<{ title: string; anytime_duration?: number }>;
     }>;
@@ -149,7 +148,6 @@ async function createProjectWithTodos(
       project_id: projectId,
       start_time: startTime,
       schedule_type: todo.schedule_type || 'anytime',
-      priority: todo.priority || 'medium',
       anytime_duration: todo.anytime_duration || null,
       order_index: index,
       completed: false,
@@ -179,7 +177,6 @@ async function createProjectWithTodos(
     recurrence_pattern: string;
     order_index: number;
     completed: boolean;
-    priority: string;
   }> = [];
 
   todos.forEach((todo, todoIndex) => {
@@ -197,7 +194,6 @@ async function createProjectWithTodos(
             recurrence_pattern: 'none',
             order_index: subtaskIndex,
             completed: false,
-            priority: 'medium',
           });
         });
       }
@@ -296,7 +292,7 @@ async function getTodaySummary(
   // 오늘 할일
   const { data: todayTodos, error: todayError } = await supabase
     .from('todos')
-    .select('id, title, completed, priority, schedule_type')
+    .select('id, title, completed, schedule_type')
     .eq('user_id', userId)
     .gte('start_time', todayStart.toISOString())
     .lt('start_time', todayEnd.toISOString())
@@ -349,11 +345,10 @@ async function createTodo(
   input: Record<string, unknown>,
   dateContext: DateContext
 ): Promise<string> {
-  const { title, start_time, schedule_type, priority, project_id, anytime_duration } = input as {
+  const { title, start_time, schedule_type, project_id, anytime_duration } = input as {
     title: string;
     start_time?: string;
     schedule_type?: string;
-    priority?: string;
     project_id?: string;
     anytime_duration?: number;
   };
@@ -377,7 +372,6 @@ async function createTodo(
       title,
       start_time: resolvedStartTime,
       schedule_type: schedule_type || 'anytime',
-      priority: priority || 'medium',
       project_id: project_id || null,
       anytime_duration: anytime_duration || null,
       completed: false,

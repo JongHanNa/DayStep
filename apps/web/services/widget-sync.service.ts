@@ -87,7 +87,7 @@ export class WidgetSyncService {
             id: todo.id,
             title: this.formatTitleWithTime(todo),
             completed: todo.completed,
-            priority: this.mapPriority(todo.priority) || 'medium',
+            priority: 'medium' as const,
             dueDate: todo.startTime?.toISOString(),
             createdAt: todo.createdAt.toISOString(),
             updatedAt: todo.updatedAt.toISOString(),
@@ -262,26 +262,6 @@ export class WidgetSyncService {
     }
 
     return displayTitle;
-  }
-
-  /**
-   * 우선순위 매핑 (내부 우선순위 → 위젯 우선순위)
-   */
-  private mapPriority(priority?: string | null): 'low' | 'medium' | 'high' | undefined {
-    if (!priority) {
-      return undefined;
-    }
-    
-    if (priority === 'high') {
-      return 'high';
-    }
-    if (priority === 'medium') {
-      return 'medium';
-    }
-    if (priority === 'low') {
-      return 'low';
-    }
-    return 'medium'; // 기본값
   }
 
   /**

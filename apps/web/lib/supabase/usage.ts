@@ -16,9 +16,7 @@ export interface UserUsageStats {
   todoCount: number;
   habitCount: number;
   projectCount: number;
-  goalCount: number;
   noteCount: number;
-  areaResourceCount: number;
   contactCount: number;
   cherishedPeopleCount: number;
   careInteractionCount: number;
@@ -37,9 +35,7 @@ function mapDbRowToUsageStats(row: any): UserUsageStats {
     todoCount: row.todo_count,
     habitCount: row.habit_count,
     projectCount: row.project_count,
-    goalCount: row.goal_count,
     noteCount: row.note_count,
-    areaResourceCount: row.area_resource_count,
     contactCount: row.contact_count,
     cherishedPeopleCount: row.cherished_people_count ?? 0,
     careInteractionCount: row.care_interaction_count ?? 0,
@@ -134,9 +130,7 @@ export async function getOrInitializeUserUsageStats(userId: string): Promise<Use
         todoCount: 0,
         habitCount: 0,
         projectCount: 0,
-        goalCount: 0,
         noteCount: 0,
-        areaResourceCount: 0,
         contactCount: 0,
         cherishedPeopleCount: 0,
         careInteractionCount: 0,
@@ -157,9 +151,7 @@ export async function getOrInitializeUserUsageStats(userId: string): Promise<Use
       todoCount: 0,
       habitCount: 0,
       projectCount: 0,
-      goalCount: 0,
       noteCount: 0,
-      areaResourceCount: 0,
       contactCount: 0,
       cherishedPeopleCount: 0,
       careInteractionCount: 0,

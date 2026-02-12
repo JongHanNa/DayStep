@@ -122,7 +122,6 @@ export interface Note {
   // Tags are loaded separately for performance
   tags?: NoteTag[];
   // Second Brain fields
-  area_resource_id?: string | null;
   note_category?: NoteCategory;
 }
 
@@ -278,7 +277,6 @@ export interface TodoWithMethods extends Todo {
 // Create Todo input with required fields for new schema
 export interface CreateTodoInput {
   title: string; // Required title field
-  priority?: "low" | "medium" | "high";
   icon?: string; // Icon key for todo category
   color?: string; // Color hex value or color ID
 
@@ -384,86 +382,8 @@ export interface UpdateTodoInput extends Partial<CreateTodoInput> {
 // ============================================
 
 // ENUM types from database
-export type AreaResourceStatus = 'area' | 'resource' | 'archived';
 export type ProgressStatus = 'not_started' | 'in_progress' | 'completed' | 'paused';
 export type Quarter = 'Q1' | 'Q2' | 'Q3' | 'Q4';
-// NoteCategory는 위쪽 Note 타입 근처에서 정의됨 (inbox 포함)
-
-// Area/Resource types
-export interface AreaResource {
-  id: string;
-  user_id: string;
-  title: string;
-  status: AreaResourceStatus;
-  icon: string | null;
-  color: string;
-  is_pinned: boolean;
-  order_index: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AreaResourceInsert {
-  user_id: string;
-  title: string;
-  status?: AreaResourceStatus;
-  icon?: string | null;
-  color?: string;
-  is_pinned?: boolean;
-  order_index?: number;
-}
-
-export interface AreaResourceUpdate extends Partial<AreaResourceInsert> {
-  id: string;
-}
-
-// Type aliases for Area and Resource (same as AreaResource, but semantically different)
-export type Area = AreaResource;
-export type Resource = AreaResource;
-
-// Goal types
-export interface Goal {
-  id: string;
-  user_id: string;
-  title: string;
-  status: ProgressStatus;
-  icon: string | null;
-  color: string | null;
-  area_id: string | null;
-  area_resource_id: string | null;
-  resource_id: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  year_goal: number | null;
-  quarter_goal: Quarter | null;
-  order_index: number;
-  created_at: string;
-  updated_at: string;
-
-  // Relations
-  area_resource?: AreaResource;
-  projects?: Project[];
-}
-
-export interface GoalInsert {
-  user_id: string;
-  title: string;
-  status?: ProgressStatus;
-  icon?: string | null;
-  color?: string | null;
-  area_id?: string | null;
-  area_resource_id?: string | null;
-  resource_id?: string | null;
-  start_date?: string | null;
-  end_date?: string | null;
-  year_goal?: number | null;
-  quarter_goal?: Quarter | null;
-  order_index?: number;
-}
-
-export interface GoalUpdate extends Partial<GoalInsert> {
-  id: string;
-}
 
 // Project Status (AI 플래닝용 간소화된 상태)
 export type ProjectStatus = 'not_started' | 'in_progress' | 'on_hold' | 'completed';
@@ -509,7 +429,6 @@ export interface TodoExtendedFields {
 
 // Extended Note type with new fields (기존 Note 타입을 확장하지 않고 새 필드만 문서화)
 export interface NoteExtendedFields {
-  area_resource_id: string | null;
   note_category: NoteCategory;
 }
 
@@ -521,25 +440,6 @@ export interface ProjectTodoStats {
   completed_todos: number;
   remaining_todos: number;
   completion_rate: number;
-}
-
-export interface GoalProjectStats {
-  goal_id: string;
-  user_id: string;
-  total_projects: number;
-  in_progress_projects: number;
-  not_started_projects: number;
-  completed_projects: number;
-  paused_projects: number;
-  completion_rate: number;
-}
-
-export interface AreaResourceNoteCount {
-  area_resource_id: string;
-  user_id: string;
-  title: string;
-  status: AreaResourceStatus;
-  note_count: number;
 }
 
 // ============================================

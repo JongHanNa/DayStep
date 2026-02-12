@@ -38,7 +38,6 @@ export interface Note {
   is_recurring?: boolean; // 반복 노트 여부
   recurrence_type?: 'single' | 'recurring' | 'instance'; // 노트 반복 타입
   // Second Brain fields
-  area_resource_id?: string | null;
   note_category?: NoteCategory;
   // Fuel fields (원동력 기능용)
   is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)
@@ -61,7 +60,6 @@ export interface CreateNoteInput {
   is_recurring?: boolean;
   recurrence_type?: 'single' | 'recurring' | 'instance';
   // Second Brain fields
-  area_resource_id?: string | null;
   note_category?: NoteCategory;
   // Fuel fields (원동력 기능용)
   is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)

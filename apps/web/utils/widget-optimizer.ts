@@ -228,7 +228,7 @@ export class WidgetOptimizer {
         id: todo.id,
         title: displayTitle,
         completed: todo.completed,
-        priority: this.determinePriority(todo),
+        priority: 'medium',
         dueDate: todo.startTime ? new Date(todo.startTime).toISOString() : undefined,
         createdAt: todo.createdAt.toISOString(),
         updatedAt: todo.updatedAt.toISOString(),
@@ -236,27 +236,6 @@ export class WidgetOptimizer {
         tags: this.generateTags(todo)
       };
     });
-  }
-
-  /**
-   * 할일의 우선순위 결정
-   */
-  private determinePriority(todo: Todo): 'high' | 'medium' | 'low' {
-    const now = new Date();
-    
-    // 시간 지정 할일인 경우
-    if (todo.startTime) {
-      const todoDate = new Date(todo.startTime);
-      const timeDiffMinutes = (todoDate.getTime() - now.getTime()) / (1000 * 60);
-      
-      if (timeDiffMinutes <= 30 && timeDiffMinutes > 0) {
-        return 'high'; // 30분 이내 시작하는 할일
-      } else if (timeDiffMinutes <= 120 && timeDiffMinutes > 0) {
-        return 'medium'; // 2시간 이내 시작하는 할일
-      }
-    }
-    
-    return 'low'; // 기본 우선순위
   }
 
   /**

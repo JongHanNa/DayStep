@@ -504,7 +504,6 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       // 기본 할일 데이터 구성
       const todoData: any = {
         title: values.content.trim(), // ✅ title 필드로 전송 (UI는 content 사용)
-        priority: values.priority,
         icon: values.selectedIcon,
         color: getColorById(values.selectedColor).hex,
         schedule_type: values.scheduleType,
@@ -515,7 +514,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
         // 한국시간(KST)으로 날짜 처리
         const selectedDate = new Date(`${values.startDate}T00:00:00+09:00`);
         todoData.start_time = new Date(selectedDate.getTime()).toISOString();
-        
+
         const endDate = new Date(`${values.startDate}T23:59:59+09:00`);
         todoData.end_time = new Date(endDate.getTime()).toISOString();
       } else if (values.scheduleType === 'anytime') {
@@ -854,7 +853,6 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
       // 기본 할일 데이터 구성
       const todoData: any = {
         title: values.content.trim(),
-        priority: values.priority,
         icon: values.selectedIcon,
         color: getColorById(values.selectedColor).hex,
         schedule_type: values.scheduleType,
