@@ -148,6 +148,12 @@ dialog[open] {
   padding-top: var(--electron-titlebar-height) !important;
 }
 
+/* Electron 환경에서 fixed 사이드바 - 타이틀바 아래로 이동 */
+.electron .adhd-sidebar {
+  top: var(--electron-titlebar-height) !important;
+  height: calc(100% - var(--electron-titlebar-height)) !important;
+}
+
 /* Electron 비활성 윈도우 */
 .electron-blurred .electron-titlebar {
   opacity: 0.7;

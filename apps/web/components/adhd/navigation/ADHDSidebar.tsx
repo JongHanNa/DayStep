@@ -28,7 +28,7 @@ export default function ADHDSidebar() {
   const BadgeIcon = effectiveSubView ? SUBVIEW_CONFIG[effectiveSubView]?.icon : null;
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-16 bg-base-200 border-r border-base-300 flex flex-col items-center py-4 z-30">
+    <aside className="adhd-sidebar fixed left-0 top-0 h-full w-16 bg-base-200 border-r border-base-300 flex flex-col items-center py-4 z-30">
       {/* 최상단: 프로필 아바타 + 드롭다운 */}
       <ADHDProfileMenu variant="sidebar" />
 

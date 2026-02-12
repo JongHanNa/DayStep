@@ -347,7 +347,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleStartCollectToExecute}
-            className="btn btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg bg-orange-500 text-white border-none hover:bg-orange-600"
+            className="btn btn-lg w-full rounded-2xl h-16 flex items-center justify-center gap-3 shadow-lg !bg-orange-500 !text-white border-none hover:!bg-orange-600"
           >
             <PenLine className="w-6 h-6" />
             <span className="text-lg font-semibold">원동력 부터 적고 실행</span>
