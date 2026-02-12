@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, Plus, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Plus, Check, Zap } from 'lucide-react';
 import { format, addMonths, subMonths, addDays, subDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { MonthPickerPopover } from './MonthPickerPopover';
@@ -20,6 +20,7 @@ interface MonthNavigatorProps {
   onAddClick?: () => void;
   viewMode?: TimelineViewMode;
   onViewModeChange?: (mode: TimelineViewMode) => void;
+  onStartRecommendedFocus?: () => void;
 }
 
 /**
@@ -36,6 +37,7 @@ export function MonthNavigator({
   onAddClick,
   viewMode = 'agenda',
   onViewModeChange,
+  onStartRecommendedFocus,
 }: MonthNavigatorProps) {
   const [showPopover, setShowPopover] = useState(false);
 
@@ -77,6 +79,17 @@ export function MonthNavigator({
 
       {/* 우측: 네비게이션 버튼들 */}
       <div className="flex items-center gap-1">
+        {/* ⚡ 추천 포커스 버튼 */}
+        {onStartRecommendedFocus && (
+          <button
+            onClick={onStartRecommendedFocus}
+            className="btn btn-ghost btn-sm btn-circle text-violet-500"
+            aria-label="추천 포커스 시작"
+          >
+            <Zap className="w-4 h-4" />
+          </button>
+        )}
+
         {/* + 할일 추가 버튼 */}
         {onAddClick && (
           <button

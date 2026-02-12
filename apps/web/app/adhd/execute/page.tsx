@@ -1,34 +1,24 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuth } from '@/app/context/AuthContext';
-import { useADHDStore } from '@/state/stores/adhdStore';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import { ADHDContainer } from '@/components/adhd';
 
 /**
  * /adhd/execute - 실행 모드 페이지
+ *
+ * @deprecated 포커스 기능이 타임라인/플래너에 인라인으로 통합되었습니다.
+ * 기존 URL 접근 시 타임라인으로 리다이렉트합니다.
  */
 export default function ExecutePage() {
-  const { user } = useAuth();
-  const { goHome, goFuel } = useADHDNavigation();
-  const previousMode = useADHDStore((s) => s.previousMode);
+  const { goScreen } = useADHDNavigation();
 
-  // Store 동기화
   useEffect(() => {
-    if (user?.id) {
-      useADHDStore.getState().enterExecuteMode(user.id);
-    }
-  }, [user?.id]);
+    goScreen('timeline');
+  }, [goScreen]);
 
-  // 종료 시 이전 모드에 따라 분기
-  const handleExit = () => {
-    if (previousMode === 'fuel') {
-      goFuel();
-    } else {
-      goHome();
-    }
-  };
-
-  return <ADHDContainer mode="execute" onExit={handleExit} />;
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <span className="loading loading-spinner loading-md" />
+    </div>
+  );
 }

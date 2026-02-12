@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
-import { CheckCircle2, Circle, MinusCircle, XCircle, Pause, Repeat, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, MinusCircle, XCircle, Pause, Repeat, Clock, Play } from 'lucide-react';
 import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { unifiedIconsCollection } from '@/lib/icon-collection';
@@ -26,9 +26,10 @@ interface DraggableTodoChipProps {
   onUnskip?: (todo: Todo) => void;
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
+  onStartFocus?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onStartFocus }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -75,7 +76,7 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
       {...listeners}
       onPointerDown={handlePointerDown}
       onClick={handleClick}
-      className={`flex flex-col rounded-lg transition-colors
+      className={`group flex flex-col rounded-lg transition-colors
         ${isDragging ? 'shadow-lg z-50' : ''}
       `}
     >
@@ -144,6 +145,21 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
             <Clock className="w-3 h-3" />
             {timeStatusText.primary}
           </span>
+        )}
+
+        {/* 포커스 시작 버튼 */}
+        {onStartFocus && !todo.completed && !isSkipped && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartFocus(todo);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="flex-shrink-0 w-7 h-7 rounded-full bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            title="포커스 시작"
+          >
+            <Play className="w-3 h-3" />
+          </button>
         )}
 
         {/* 완료/스킵 상태 배지 */}

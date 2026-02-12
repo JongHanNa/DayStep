@@ -48,6 +48,19 @@ interface ExecutionModeState {
   pendingNoteConnection: PendingNoteConnection | null;  // 포모도로 완료 후 노트 연결 대기
 }
 
+// 인라인 포커스 모드 상태 (할일 카드에서 바로 타이머 시작)
+export interface FocusModeState {
+  isFocusActive: boolean;             // 포커스 모드 활성 여부
+  focusTodo: Todo | null;             // 현재 포커스 중인 할일
+  focusStartedVia: 'inline' | 'recommend' | null;  // 진입 경로
+}
+
+// 포커스 환경 준비 설정
+export interface FocusEnvironmentPrefs {
+  showToastReminder: boolean;          // 포커스 시작 시 토스트 표시 여부
+  selectedCheckItems: string[];        // 선택된 체크리스트 아이템 ID 배열
+}
+
 // 정리 모드 상태
 interface OrganizeModeState {
   consecutiveTodoAdds: number;         // 연속 할일 추가 수
@@ -119,6 +132,12 @@ interface ADHDModeState {
 
   // 실행 모드 상태
   executionMode: ExecutionModeState;
+
+  // 인라인 포커스 모드 상태
+  focusMode: FocusModeState;
+
+  // 포커스 환경 준비 설정
+  focusEnvironmentPrefs: FocusEnvironmentPrefs;
 
   // 정리 모드 상태
   organizeMode: OrganizeModeState;
@@ -228,6 +247,11 @@ interface ADHDModeState {
   setSettingsSubView: (subView: SettingsSubView) => void;
   exitSettingsMode: () => void;
 
+  // === 인라인 포커스 모드 Actions ===
+  startFocus: (todo: Todo, via: 'inline' | 'recommend') => void;
+  endFocus: () => void;
+  setFocusEnvironmentPrefs: (prefs: Partial<FocusEnvironmentPrefs>) => void;
+
   // === 설정 Actions ===
   setAwakeningSentence: (sentence: string | null) => void;
 
@@ -275,6 +299,17 @@ const DEFAULT_EXECUTION_MODE: ExecutionModeState = {
   completedInSession: 0,
   adhocMode: DEFAULT_ADHOC_MODE,
   pendingNoteConnection: null,
+};
+
+const DEFAULT_FOCUS_MODE: FocusModeState = {
+  isFocusActive: false,
+  focusTodo: null,
+  focusStartedVia: null,
+};
+
+const DEFAULT_FOCUS_ENVIRONMENT_PREFS: FocusEnvironmentPrefs = {
+  showToastReminder: true,
+  selectedCheckItems: [],
 };
 
 const DEFAULT_ORGANIZE_MODE: OrganizeModeState = {
@@ -331,6 +366,8 @@ export const useADHDStore = create<ADHDModeState>()(
         previousMode: null,
         currentSubView: null,
         executionMode: DEFAULT_EXECUTION_MODE,
+        focusMode: DEFAULT_FOCUS_MODE,
+        focusEnvironmentPrefs: DEFAULT_FOCUS_ENVIRONMENT_PREFS,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
         fuelMode: DEFAULT_FUEL_MODE,
@@ -385,12 +422,39 @@ export const useADHDStore = create<ADHDModeState>()(
           set({
             currentMode: null,
             executionMode: DEFAULT_EXECUTION_MODE,
+            focusMode: DEFAULT_FOCUS_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
             careMode: DEFAULT_CARE_MODE,
             fuelMode: DEFAULT_FUEL_MODE,
             settingsMode: DEFAULT_SETTINGS_MODE,
             currentUserId: null,
           });
+        },
+
+        // === 인라인 포커스 모드 Actions ===
+        startFocus: (todo: Todo, via: 'inline' | 'recommend') => {
+          console.log('🎯 ADHD: 포커스 모드 시작', { todoId: todo.id, via });
+          set({
+            focusMode: {
+              isFocusActive: true,
+              focusTodo: todo,
+              focusStartedVia: via,
+            },
+          });
+        },
+
+        endFocus: () => {
+          console.log('✅ ADHD: 포커스 모드 종료');
+          set({ focusMode: DEFAULT_FOCUS_MODE });
+        },
+
+        setFocusEnvironmentPrefs: (prefs: Partial<FocusEnvironmentPrefs>) => {
+          set((state) => ({
+            focusEnvironmentPrefs: {
+              ...state.focusEnvironmentPrefs,
+              ...prefs,
+            },
+          }));
         },
 
         // === 실행 모드 Actions ===
@@ -873,6 +937,7 @@ export const useADHDStore = create<ADHDModeState>()(
         name: 'adhd-mode-store',
         partialize: (state) => ({
           awakeningSentence: state.awakeningSentence,
+          focusEnvironmentPrefs: state.focusEnvironmentPrefs,
           // userPatterns는 더 이상 persist하지 않음 (DB에서 로드)
           // currentMode와 executionMode는 세션별 초기화
         }),

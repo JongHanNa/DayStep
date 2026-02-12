@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import {
-  CheckCircle2, Clock, Trash2, Circle, Repeat, Zap,
+  CheckCircle2, Clock, Trash2, Circle, Repeat, Zap, Play,
   AlertTriangle, XCircle, SkipForward, Pause, MinusCircle, RotateCcw
 } from 'lucide-react';
 import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
@@ -26,6 +26,7 @@ interface TimelineItemCardProps {
   onRestoreOriginal: (item: TimelineItem) => void;
   onOpenPostponeSheet: (item: TimelineItem) => void;
   onSkipTodo: (item: TimelineItem, reason: 'not_needed' | 'missed') => void;
+  onStartFocus?: (item: TimelineItem) => void;
 }
 
 export function TimelineItemCard({
@@ -46,6 +47,7 @@ export function TimelineItemCard({
   onRestoreOriginal,
   onOpenPostponeSheet,
   onSkipTodo,
+  onStartFocus,
 }: TimelineItemCardProps) {
   const projectInfo = item.projectId ? projectMap.get(item.projectId) : undefined;
   const departmentInfo = item.departmentId ? departmentMap.get(item.departmentId) : undefined;
@@ -439,6 +441,24 @@ export function TimelineItemCard({
           return null;
         })()}
       </div>
+
+      {/* 포커스 시작 버튼 (미완료 + 스킵되지 않은 할일만) */}
+      {onStartFocus && !item.completed && !isSkippedOrSkipStatus && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onStartFocus(item);
+          }}
+          className={`btn btn-xs rounded-full flex-shrink-0 ${
+            timeStatus?.status === 'in_progress'
+              ? 'btn-primary text-white animate-pulse'
+              : 'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50 opacity-0 group-hover:opacity-100'
+          }`}
+          title="포커스 시작"
+        >
+          <Play className="w-3.5 h-3.5" />
+        </button>
+      )}
 
       {/* 삭제 버튼 (반복 인스턴스, 미룸 생성 항목은 삭제 불가) */}
       {!item.isRecurrenceInstance && !item.originalTodo?.parentRecurringTodoId && (

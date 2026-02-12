@@ -6,10 +6,12 @@ import { Clock, ChevronUp, ChevronDown, Zap, Plus, Cloud } from 'lucide-react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useProjectStore } from '@/state/stores/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
 import TodoEditModal from '@/components/todos/TodoEditModal';
 import QuickLogModal from '@/components/adhd/QuickLogModal';
 import PostponeOptionsSheet from '@/components/todos/PostponeOptionsSheet';
 import AnytimeInboxSheet from '@/components/todos/AnytimeInboxSheet';
+import { FocusOverlay } from '@/components/adhd/common/FocusOverlay';
 import { calculateTimeGaps, type TimeGap } from '@/lib/timeGapUtils';
 import { MonthNavigator } from './MonthNavigator';
 import { TimelineItemCard } from './TimelineItemCard';
@@ -17,9 +19,11 @@ import { TimelineGapButton } from './TimelineGapButton';
 import { useTimelineData } from '../hooks/useTimelineData';
 import { useTimelineNavigation } from '../hooks/useTimelineNavigation';
 import { useTimelineActions } from '../hooks/useTimelineActions';
+import { useFocusSession } from '@/components/adhd/hooks/useFocusSession';
+import { useExecutionRecommendation } from '@/components/adhd/hooks/useExecutionRecommendation';
 import { DailyPlannerView } from '../../daily-planner/components/DailyPlannerView';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
-import type { TodoTimelineViewProps, RenderItem, TimelineViewMode } from '../types';
+import type { TodoTimelineViewProps, RenderItem, TimelineViewMode, TimelineItem } from '../types';
 
 /**
  * 타임라인 탭 - 할일 생성 기록 시간순
@@ -33,6 +37,34 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
   const { projects } = useProjectStore();
   const { todos } = useTodoStore();
   const { goScreen } = useADHDNavigation();
+  const { focusMode, startFocus, endFocus } = useADHDStore();
+  const focusSession = useFocusSession();
+  const { getNextRecommendation } = useExecutionRecommendation();
+
+  // 할일 카드에서 포커스 시작
+  const handleStartFocusFromItem = useCallback((item: TimelineItem) => {
+    const todo = todos.find(t => t.id === item.id);
+    if (!todo) return;
+    startFocus(todo, 'inline');
+    focusSession.startFocusTimer(todo);
+  }, [todos, startFocus, focusSession]);
+
+  // 추천 기반 포커스 시작
+  const handleStartRecommendedFocus = useCallback(() => {
+    const recommended = getNextRecommendation(
+      () => {},  // 완료된 할일만 있을 때
+      () => {},  // 할일 없을 때
+    );
+    if (recommended) {
+      startFocus(recommended, 'recommend');
+      focusSession.startFocusTimer(recommended);
+    }
+  }, [getNextRecommendation, startFocus, focusSession]);
+
+  // 포커스 오버레이 닫기
+  const handleCloseFocus = useCallback(() => {
+    focusSession.stop();
+  }, [focusSession]);
 
   // 뷰 모드 변경 시 URL 네비게이션
   const handleViewModeChange = useCallback((mode: TimelineViewMode) => {
@@ -118,6 +150,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
             onAddClick={actions.handleAddTodo}
             viewMode={viewMode}
             onViewModeChange={handleViewModeChange}
+            onStartRecommendedFocus={handleStartRecommendedFocus}
           />
         </div>
         <button
@@ -141,6 +174,19 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
         </button>
       </div>
     </div>
+  );
+
+  // ─── 포커스 오버레이 (모바일) ───
+  const renderFocusOverlay = () => (
+    <>
+      {focusMode.isFocusActive && focusMode.focusTodo && (
+        <FocusOverlay
+          session={focusSession}
+          todo={focusMode.focusTodo}
+          onClose={handleCloseFocus}
+        />
+      )}
+    </>
   );
 
   // ─── 공통 모달들 JSX ───
@@ -309,6 +355,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
         </div>
 
         {renderModals()}
+        {renderFocusOverlay()}
       </div>
     );
   }
@@ -463,6 +510,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
                               onRestoreOriginal={actions.handleRestoreOriginal}
                               onOpenPostponeSheet={actions.handleOpenPostponeSheet}
                               onSkipTodo={actions.handleSkipTodo}
+                              onStartFocus={handleStartFocusFromItem}
                             />
                           );
                         })}
@@ -494,6 +542,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
       </div>
 
       {renderModals()}
+      {renderFocusOverlay()}
     </div>
   );
 }

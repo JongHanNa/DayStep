@@ -95,6 +95,7 @@ export function timelineItemToTodo(item: TimelineItem): Todo {
       recurrence_days_of_week: orig.recurrenceDaysOfWeek,
       recurrence_day_of_month: orig.recurrenceDayOfMonth,
       parent_todo_id: orig.parentTodoId,
+      parent_recurring_todo_id: item.recurrenceSourceId ?? null,
       project_id: orig.projectId,
       department_id: orig.departmentId,
       importance: orig.importance,

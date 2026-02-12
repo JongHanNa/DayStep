@@ -14,3 +14,7 @@ export {
 // Relationship Insights 공유 컴포넌트
 export { TimelineView } from './TimelineView';
 export { StatsDashboardView } from './StatsDashboardView';
+
+// 포커스 모드 컴포넌트
+export { FocusOverlay } from './FocusOverlay';
+export { FocusSidePanel } from './FocusSidePanel';

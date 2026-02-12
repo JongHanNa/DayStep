@@ -19,6 +19,10 @@ import { pointerWithin } from '@dnd-kit/core';
 import { restrictToWindowEdges, snapCenterToCursor } from '@dnd-kit/modifiers';
 
 import { useTodoStore } from '@/state/stores/todoStore';
+import { useADHDStore } from '@/state/stores/adhdStore';
+import { useFocusSession } from '@/components/adhd/hooks/useFocusSession';
+import { FocusOverlay } from '@/components/adhd/common/FocusOverlay';
+import { FocusSidePanel } from '@/components/adhd/common/FocusSidePanel';
 import { useDailyPlannerData } from '../hooks/useDailyPlannerData';
 import { TimeSchedulePanel } from './TimeSchedulePanel';
 import { PriorityMatrixPanel } from './PriorityMatrixPanel';
@@ -47,11 +51,9 @@ interface DailyPlannerViewProps {
 export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
   const updateRecurringTodo = useTodoStore(s => s.updateRecurringTodo);
-
-  // 반복 할일 DnD 다이얼로그 상태
-  const [pendingDrop, setPendingDrop] = useState<{todoId: string; updates: any; title: string} | null>(null);
-  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
-
+  const todos = useTodoStore(s => s.todos);
+  const { focusMode, startFocus } = useADHDStore();
+  // todayTodos는 timelineItems 기반 → 가상 반복 인스턴스 포함, 정확한 timed 할일만
   const {
     todayTodos,
     morningTodos,
@@ -63,6 +65,22 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     upsertReflection,
     dateStr,
   } = useDailyPlannerData({ userId, date, timelineItems });
+  const focusSession = useFocusSession(todayTodos);
+
+  // 칩에서 포커스 시작
+  const handleChipStartFocus = useCallback((todo: Todo) => {
+    startFocus(todo, 'inline');
+    focusSession.startFocusTimer(todo);
+  }, [startFocus, focusSession]);
+
+  // 포커스 오버레이 닫기
+  const handleCloseFocus = useCallback(() => {
+    focusSession.stop();
+  }, [focusSession]);
+
+  // 반복 할일 DnD 다이얼로그 상태
+  const [pendingDrop, setPendingDrop] = useState<{todoId: string; updates: any; title: string} | null>(null);
+  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
 
   // DndContext 언마운트 시 잔여 DOM 정리
   useEffect(() => {
@@ -83,6 +101,33 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  // 데스크탑 포커스 패널 리사이즈
+  const [focusPanelWidth, setFocusPanelWidth] = useState(380);
+  const isDraggingSplit = useRef(false);
+  const desktopContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSplitDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDraggingSplit.current = true;
+    const startX = e.clientX;
+    const startWidth = focusPanelWidth;
+
+    const onMove = (ev: MouseEvent) => {
+      if (!isDraggingSplit.current) return;
+      const delta = startX - ev.clientX; // 왼쪽으로 가면 패널 넓어짐
+      const container = desktopContainerRef.current;
+      const maxW = container ? container.offsetWidth * 0.7 : 800;
+      setFocusPanelWidth(Math.max(300, Math.min(startWidth + delta, maxW)));
+    };
+    const onUp = () => {
+      isDraggingSplit.current = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [focusPanelWidth]);
 
   // Mobile swipe state
   const [mobilePage, setMobilePage] = useState(0);
@@ -387,6 +432,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         onUnskip={handleChipUnskip}
         onSkipTodo={handleChipSkip}
         onPostpone={handleChipPostpone}
+        onStartFocus={handleChipStartFocus}
         onAddMorning={handleAddMorning}
         onAddAfternoon={handleAddAfternoon}
         onAddEvening={handleAddEvening}
@@ -460,11 +506,44 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         {/* ─── JS 기반 조건부 렌더링: 데스크탑 vs 모바일 ─── */}
         {isDesktop ? (
           <div className="px-4 pb-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>{scheduleSection}</div>
-              <div>{plannerSection}</div>
+            <div className="relative" ref={desktopContainerRef}>
+              {/* 기본 레이아웃 — 항상 전체 표시 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>{scheduleSection}</div>
+                <div>{plannerSection}</div>
+              </div>
+              <div className="mt-3">{reflectionBar}</div>
+
+              {/* 포커스 타이머 오버레이 패널 (오른쪽에서 슬라이드) */}
+              <AnimatePresence>
+                {focusMode.isFocusActive && focusMode.focusTodo && (
+                  <motion.div
+                    initial={{ x: '100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '100%' }}
+                    transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+                    className="absolute top-0 right-0 bottom-0 bg-base-100 shadow-[-4px_0_12px_rgba(0,0,0,0.08)] z-10 border-l border-base-300"
+                    style={{ width: focusPanelWidth }}
+                  >
+                    {/* 드래그 핸들 */}
+                    <div
+                      onMouseDown={handleSplitDragStart}
+                      className="absolute -left-3 top-0 bottom-0 w-6 cursor-col-resize flex items-center justify-center z-20 group"
+                    >
+                      <div className="w-1 h-10 bg-base-300 group-hover:bg-primary rounded-full transition-colors" />
+                    </div>
+                    {/* 패널 내용 */}
+                    <div className="h-full overflow-y-auto">
+                      <FocusSidePanel
+                        session={focusSession}
+                        todo={focusMode.focusTodo}
+                        onClose={handleCloseFocus}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <div className="mt-3">{reflectionBar}</div>
           </div>
         ) : (
           <div className="px-4 pb-4">
@@ -550,6 +629,15 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         onUpdateChoice={handleRecurringDropChoice}
         changeType="mixed"
       />
+
+      {/* 모바일 포커스 오버레이 */}
+      {!isDesktop && focusMode.isFocusActive && focusMode.focusTodo && (
+        <FocusOverlay
+          session={focusSession}
+          todo={focusMode.focusTodo}
+          onClose={handleCloseFocus}
+        />
+      )}
     </DndContext>
   );
 }
