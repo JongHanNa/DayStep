@@ -1,20 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
 import {
   useSubscriptionStore,
   type SubscriptionInfo,
   type SubscriptionStatus,
   type Platform,
 } from '@/state/stores/subscriptionStore';
-import {
-  getCustomerInfo,
-  purchaseSubscription,
-  restorePurchases,
-  setRevenueCatUserId,
-  logoutRevenueCatUser,
-  hasActiveSubscription as checkRevenueCatSubscription,
-  getSubscriptionExpirationDate,
-} from '@/lib/revenue-cat';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import { supabase } from '@/lib/supabase';
 import { queryRLSTableWithJWT } from '@/lib/supabase/core';
@@ -22,11 +12,9 @@ import { queryRLSTableWithJWT } from '@/lib/supabase/core';
 /**
  * 구독 관리 Hook
  *
- * Revenue Cat + Supabase DB 통합 구독 관리
+ * Supabase DB 기반 구독 관리 (웹 전용)
  */
 export const useSubscription = () => {
-  const isNative = Capacitor.isNativePlatform();
-
   // Zustand Store
   const {
     subscriptionInfo,
@@ -46,14 +34,14 @@ export const useSubscription = () => {
 
   /**
    * Supabase DB에서 구독 정보 조회
-   * JWT 토큰 기반 REST API 호출 (Capacitor WebView 호환)
+   * JWT 토큰 기반 REST API 호출
    */
   const fetchSubscriptionFromDb = useCallback(
     async (userId: string): Promise<SubscriptionInfo | null> => {
       try {
         console.log('💳 DB에서 구독 정보 조회 (JWT):', userId);
 
-        // JWT 방식으로 subscriptions 테이블 조회 (모바일 WebView 호환)
+        // JWT 방식으로 subscriptions 테이블 조회
         const data = await queryRLSTableWithJWT(
           'subscriptions',
           { column: 'user_id', operator: 'eq', value: userId },
@@ -101,24 +89,6 @@ export const useSubscription = () => {
   );
 
   /**
-   * Revenue Cat에서 고객 정보 조회 및 Store 업데이트
-   */
-  const refreshRevenueCatInfo = useCallback(async () => {
-    if (!FEATURE_FLAGS.PAYMENTS_ENABLED || !isNative) {
-      console.log('💳 결제 비활성화 또는 웹 환경 - Revenue Cat 조회 생략');
-      return;
-    }
-
-    try {
-      const info = await getCustomerInfo();
-      setCustomerInfo(info);
-    } catch (err: any) {
-      console.error('💳 Revenue Cat 정보 조회 실패:', err);
-      // Revenue Cat 조회 실패는 치명적이지 않음 (DB 정보로 대체 가능)
-    }
-  }, [isNative, setCustomerInfo]);
-
-  /**
    * 구독 정보 전체 동기화
    * DB + Revenue Cat 정보를 모두 가져와서 Store 업데이트
    */
@@ -134,9 +104,6 @@ export const useSubscription = () => {
         const dbInfo = await fetchSubscriptionFromDb(userId);
         setSubscriptionInfo(dbInfo);
 
-        // 2. Revenue Cat 정보 조회 (네이티브 환경만)
-        await refreshRevenueCatInfo();
-
         console.log('💳 구독 정보 동기화 완료');
       } catch (err: any) {
         console.error('💳 구독 정보 동기화 실패:', err);
@@ -145,11 +112,11 @@ export const useSubscription = () => {
         setLoading(false);
       }
     },
-    [fetchSubscriptionFromDb, refreshRevenueCatInfo, setLoading, setError, setSubscriptionInfo]
+    [fetchSubscriptionFromDb, setLoading, setError, setSubscriptionInfo]
   );
 
   /**
-   * 구독 구매
+   * 구독 구매 (웹 전용)
    */
   const purchasePackage = useCallback(
     async (plan: 'monthly' | 'yearly') => {
@@ -160,62 +127,16 @@ export const useSubscription = () => {
         };
       }
 
-      if (!isNative) {
-        return {
-          success: false,
-          error: '모바일 앱에서만 구매할 수 있습니다.',
-        };
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        console.log('💳 구독 구매 시작:', plan);
-
-        const { customerInfo: newCustomerInfo, error: purchaseError } =
-          await purchaseSubscription(plan);
-
-        if (purchaseError) {
-          throw purchaseError;
-        }
-
-        // Revenue Cat 정보 업데이트
-        setCustomerInfo(newCustomerInfo);
-
-        // DB 동기화 (Webhook이 DB를 업데이트하지만, 클라이언트에서도 조회)
-        // Webhook은 비동기이므로 약간의 지연 후 재조회
-        setTimeout(async () => {
-          const { data: session } = await supabase.auth.getSession();
-          if (session?.session?.user?.id) {
-            await syncSubscription(session.session.user.id);
-          }
-        }, 2000);
-
-        console.log('💳 구독 구매 완료');
-
-        return {
-          success: true,
-          error: null,
-        };
-      } catch (err: any) {
-        console.error('💳 구독 구매 실패:', err);
-        const errorMessage = err.message || '구독 구매 실패';
-        setError(errorMessage);
-
-        return {
-          success: false,
-          error: errorMessage,
-        };
-      } finally {
-        setLoading(false);
-      }
+      return {
+        success: false,
+        error: '웹에서는 구매할 수 없습니다.',
+      };
     },
-    [isNative, setLoading, setError, setCustomerInfo, syncSubscription]
+    []
   );
 
   /**
-   * 구독 복원 (기기 변경, 앱 재설치)
+   * 구독 복원 (웹 전용)
    */
   const restoreSubscription = useCallback(async () => {
     if (!FEATURE_FLAGS.PAYMENTS_ENABLED) {
@@ -225,58 +146,14 @@ export const useSubscription = () => {
       };
     }
 
-    if (!isNative) {
-      return {
-        success: false,
-        error: '모바일 앱에서만 복원할 수 있습니다.',
-      };
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      console.log('💳 구독 복원 시작');
-
-      const { customerInfo: restoredInfo, error: restoreError } = await restorePurchases();
-
-      if (restoreError) {
-        throw restoreError;
-      }
-
-      // Revenue Cat 정보 업데이트
-      setCustomerInfo(restoredInfo);
-
-      // DB 동기화
-      setTimeout(async () => {
-        const { data: session } = await supabase.auth.getSession();
-        if (session?.session?.user?.id) {
-          await syncSubscription(session.session.user.id);
-        }
-      }, 2000);
-
-      console.log('💳 구독 복원 완료');
-
-      return {
-        success: true,
-        error: null,
-      };
-    } catch (err: any) {
-      console.error('💳 구독 복원 실패:', err);
-      const errorMessage = err.message || '구독 복원 실패';
-      setError(errorMessage);
-
-      return {
-        success: false,
-        error: errorMessage,
-      };
-    } finally {
-      setLoading(false);
-    }
-  }, [isNative, setLoading, setError, setCustomerInfo, syncSubscription]);
+    return {
+      success: false,
+      error: '웹에서는 복원할 수 없습니다.',
+    };
+  }, []);
 
   /**
-   * 사용자 로그인 시 Revenue Cat에 사용자 ID 설정 및 구독 정보 동기화
+   * 사용자 로그인 시 구독 정보 동기화
    */
   const linkUserToRevenueCat = useCallback(
     async (userId: string) => {
@@ -285,38 +162,22 @@ export const useSubscription = () => {
         return;
       }
 
-      // 네이티브 환경: RevenueCat 연결
-      if (isNative) {
-        try {
-          console.log('💳 Revenue Cat에 사용자 연결:', userId);
-          await setRevenueCatUserId(userId);
-        } catch (err) {
-          console.error('💳 Revenue Cat 사용자 연결 실패:', err);
-        }
-      }
-
-      // 모든 환경: DB 구독 정보 동기화 (웹 포함)
+      // DB 구독 정보 동기화
       await syncSubscription(userId);
     },
-    [isNative, syncSubscription]
+    [syncSubscription]
   );
 
   /**
-   * 사용자 로그아웃 시 Revenue Cat 로그아웃
+   * 사용자 로그아웃 시 구독 상태 초기화
    */
   const unlinkUserFromRevenueCat = useCallback(async () => {
-    if (!FEATURE_FLAGS.PAYMENTS_ENABLED || !isNative) {
+    if (!FEATURE_FLAGS.PAYMENTS_ENABLED) {
       return;
     }
 
-    try {
-      console.log('💳 Revenue Cat 사용자 연결 해제');
-      await logoutRevenueCatUser();
-      reset();
-    } catch (err) {
-      console.error('💳 Revenue Cat 사용자 연결 해제 실패:', err);
-    }
-  }, [isNative, reset]);
+    reset();
+  }, [reset]);
 
   /**
    * Pro 기능 접근 가능 여부 확인
@@ -354,10 +215,8 @@ export const useSubscription = () => {
     linkUserToRevenueCat,
     unlinkUserFromRevenueCat,
     canAccessProFeature,
-    refreshRevenueCatInfo,
 
     // 환경 정보
-    isNative,
     paymentsEnabled: FEATURE_FLAGS.PAYMENTS_ENABLED,
   };
 };

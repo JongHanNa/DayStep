@@ -5,17 +5,6 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
-  // 모바일 빌드에서는 501 반환
-  if (process.env.BUILD_TARGET === 'mobile') {
-    return NextResponse.json(
-      {
-        error: 'Performance analytics is not available in mobile builds',
-        details: 'Use native Capacitor analytics plugins instead',
-        platform: 'mobile'
-      },
-      { status: 501 }
-    );
-  }
   try {
     const body = await request.json();
     

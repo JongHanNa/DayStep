@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { UnifiedIconKey, getUnifiedIcon } from '@/lib/icon-collection';
 import { getColorById } from '@/lib/color-palette';
 import { useTypingEffect } from '@/hooks/useTypingEffect';
-import { isCapacitorEnvironment } from '@/lib/utils';
+
 
 export interface TodoMetadataProps {
   selectedIcon: UnifiedIconKey;
@@ -139,17 +139,6 @@ const TodoMetadata: React.FC<TodoMetadataProps> = ({
                     textAlign: 'left',
                     // input 자체에는 transform 제거
                     transform: 'none',
-                    // Capacitor 안정성 스타일
-                    ...(isCapacitorEnvironment()
-                      ? {
-                          WebkitUserSelect: 'text',
-                          userSelect: 'text',
-                          WebkitTouchCallout: 'none',
-                          WebkitTapHighlightColor: 'transparent',
-                          transition: 'none'
-                        }
-                      : {}
-                    )
                   } as React.CSSProperties}
                   required
                 />

@@ -80,16 +80,8 @@ const AdvancedMarkdownEditor = React.forwardRef<any, AdvancedMarkdownEditorProps
           const userAgent = window.navigator.userAgent.toLowerCase();
           const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
 
-          // Capacitor 환경인지 확인
-          const { isCapacitorEnvironment } = await import('@/lib/supabaseWebViewHelper');
-
-          if (isCapacitorEnvironment() && isMobileDevice) {
-            console.log('📝 [Editor] 모바일 Capacitor 환경 감지');
-            setPlatform('mobile');
-          } else {
-            console.log('📝 [Editor] 웹 브라우저 환경 감지');
-            setPlatform('web');
-          }
+          console.log('📝 [Editor] 웹 브라우저 환경 감지');
+          setPlatform('web');
         } else {
           // 서버 사이드 렌더링 환경
           setPlatform('web');

@@ -3,23 +3,18 @@
 import { redirect } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
-import { isCapacitorEnv } from '@/lib/utils/platform';
 import { useEffect, useState } from 'react';
 
 /**
- * ADHD 모드 웹 전용 레이아웃
+ * ADHD 모드 레이아웃
  *
- * - Capacitor 환경: / 로 리다이렉트 (기존 Store 기반 방식 사용)
- * - 웹 환경: 파일 기반 라우팅 + 사이드바/하단탭
+ * 파일 기반 라우팅 + 사이드바/하단탭
  */
 export default function ADHDLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [isCapacitor, setIsCapacitor] = useState(false);
 
-  // 클라이언트 환경 감지
   useEffect(() => {
-    setIsCapacitor(isCapacitorEnv());
     setMounted(true);
   }, []);
 
@@ -30,11 +25,6 @@ export default function ADHDLayout({ children }: { children: React.ReactNode }) 
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-base-300 border-t-primary" />
       </div>
     );
-  }
-
-  // Capacitor 환경이면 / 로 리다이렉트 (기존 방식 사용)
-  if (isCapacitor) {
-    redirect('/');
   }
 
   // 비인증 사용자 → 로그인

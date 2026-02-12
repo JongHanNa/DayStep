@@ -14,7 +14,6 @@ import {
   fetchMemoInstancesByTaskIdWithJWT,
   createMultipleMemoInstancesWithJWT,
 } from '@/lib/supabaseWebViewHelper';
-import { isCapacitorEnvironment } from '@/lib/supabase/core';
 import { supabase } from '@/lib/supabase';
 import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } from '@/types';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
@@ -253,23 +252,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         createNote: async (input: CreateNoteInput) => {
           console.log('📝 NoteStore.createNote:', input);
 
-          let userId: string | null = null;
-          
-          // Capacitor 백업 인증 패턴
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-              userId = session.user.id;
-            }
-          } catch {}
-
-          if (!userId && isCapacitorEnvironment()) {
-            const { Preferences } = await import('@capacitor/preferences');
-            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            if (value) {
-              userId = JSON.parse(value).user?.id;
-            }
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
 
           if (!userId) {
             throw new Error('사용자 인증이 필요합니다.');
@@ -592,7 +576,6 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
             const linkedNotes = await get().getLinkedNotesByTaskId(taskId);
             const displayNotes: Array<Note | NoteInstance> = [];
 
-            // Capacitor 백업 인증 패턴으로 사용자 ID 확보
             let userId: string | null = null;
 
             try {
@@ -602,15 +585,6 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               }
             } catch (authError) {
               console.log('⚠️ 웹 세션 확보 실패:', authError);
-            }
-
-            if (!userId && isCapacitorEnvironment()) {
-              const { Preferences } = await import('@capacitor/preferences');
-              const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-              if (value) {
-                const session = JSON.parse(value);
-                userId = session.user?.id;
-              }
             }
 
             for (const note of linkedNotes) {
@@ -951,32 +925,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.getNoteInstancesByNoteId:', noteId);
 
           try {
-            // Capacitor 백업 인증 패턴으로 사용자 ID 확보
-            let userId: string | null = null;
-
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user?.id) {
-                userId = session.user.id;
-              }
-            } catch (authError) {
-              console.log('⚠️ 웹 세션 확보 실패:', authError);
-            }
-
-            if (!userId && isCapacitorEnvironment()) {
-              try {
-                const { Preferences } = await import('@capacitor/preferences');
-                const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-                if (value) {
-                  const session = JSON.parse(value);
-                  if (session?.user?.id) {
-                    userId = session.user.id;
-                  }
-                }
-              } catch (capacitorError) {
-                console.log('⚠️ Capacitor 백업 인증 실패:', capacitorError);
-              }
-            }
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
 
             if (!userId) {
               throw new Error('사용자 ID를 확보할 수 없습니다');
@@ -995,32 +945,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.getNoteInstancesByDate:', date);
 
           try {
-            // Capacitor 백업 인증 패턴으로 사용자 ID 확보
-            let userId: string | null = null;
-
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user?.id) {
-                userId = session.user.id;
-              }
-            } catch (authError) {
-              console.log('⚠️ 웹 세션 확보 실패:', authError);
-            }
-
-            if (!userId && isCapacitorEnvironment()) {
-              try {
-                const { Preferences } = await import('@capacitor/preferences');
-                const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-                if (value) {
-                  const session = JSON.parse(value);
-                  if (session?.user?.id) {
-                    userId = session.user.id;
-                  }
-                }
-              } catch (capacitorError) {
-                console.log('⚠️ Capacitor 백업 인증 실패:', capacitorError);
-              }
-            }
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
 
             if (!userId) {
               throw new Error('사용자 ID를 확보할 수 없습니다');
@@ -1039,32 +965,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.getNoteInstanceByDate:', { noteId, date });
 
           try {
-            // Capacitor 백업 인증 패턴으로 사용자 ID 확보
-            let userId: string | null = null;
-
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user?.id) {
-                userId = session.user.id;
-              }
-            } catch (authError) {
-              console.log('⚠️ 웹 세션 확보 실패:', authError);
-            }
-
-            if (!userId && isCapacitorEnvironment()) {
-              try {
-                const { Preferences } = await import('@capacitor/preferences');
-                const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-                if (value) {
-                  const session = JSON.parse(value);
-                  if (session?.user?.id) {
-                    userId = session.user.id;
-                  }
-                }
-              } catch (capacitorError) {
-                console.log('⚠️ Capacitor 백업 인증 실패:', capacitorError);
-              }
-            }
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
 
             if (!userId) {
               throw new Error('사용자 ID를 확보할 수 없습니다');
@@ -1083,32 +985,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.getNoteInstancesByTaskId:', taskId);
 
           try {
-            // Capacitor 백업 인증 패턴으로 사용자 ID 확보
-            let userId: string | null = null;
-
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user?.id) {
-                userId = session.user.id;
-              }
-            } catch (authError) {
-              console.log('⚠️ 웹 세션 확보 실패:', authError);
-            }
-
-            if (!userId && isCapacitorEnvironment()) {
-              try {
-                const { Preferences } = await import('@capacitor/preferences');
-                const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-                if (value) {
-                  const session = JSON.parse(value);
-                  if (session?.user?.id) {
-                    userId = session.user.id;
-                  }
-                }
-              } catch (capacitorError) {
-                console.log('⚠️ Capacitor 백업 인증 실패:', capacitorError);
-              }
-            }
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
 
             if (!userId) {
               throw new Error('사용자 ID를 확보할 수 없습니다');
@@ -1133,32 +1011,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               throw new Error('원본 노트를 찾을 수 없습니다');
             }
 
-            // Capacitor 백업 인증 패턴으로 사용자 ID 확보
-            let userId: string | null = null;
-
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user?.id) {
-                userId = session.user.id;
-              }
-            } catch (authError) {
-              console.log('⚠️ 웹 세션 확보 실패:', authError);
-            }
-
-            if (!userId && isCapacitorEnvironment()) {
-              try {
-                const { Preferences } = await import('@capacitor/preferences');
-                const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-                if (value) {
-                  const session = JSON.parse(value);
-                  if (session?.user?.id) {
-                    userId = session.user.id;
-                  }
-                }
-              } catch (capacitorError) {
-                console.log('⚠️ Capacitor 백업 인증 실패:', capacitorError);
-              }
-            }
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
 
             if (!userId) {
               throw new Error('사용자 ID를 확보할 수 없습니다');
@@ -1185,26 +1039,8 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           console.log('📝 NoteStore.upsertNoteInstance:', { noteId, date, content, taskId });
 
           try {
-            // Capacitor 백업 인증 패턴으로 사용자 ID 확보
-            let userId: string | null = null;
-
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (session?.user?.id) {
-                userId = session.user.id;
-              }
-            } catch (authError) {
-              console.log('⚠️ 웹 세션 확보 실패:', authError);
-            }
-
-            if (!userId && isCapacitorEnvironment()) {
-              const { Preferences } = await import('@capacitor/preferences');
-              const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-              if (value) {
-                const session = JSON.parse(value);
-                userId = session.user?.id;
-              }
-            }
+            const { data: { session } } = await supabase.auth.getSession();
+            const userId = session?.user?.id;
 
             if (!userId) {
               throw new Error('사용자 인증이 필요합니다');

@@ -89,21 +89,12 @@ export function GenericTabContainer({
   const [activeTab, setActiveTab] = useState<ADHDSubViewId>(getInitialTab());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // currentSubView 변경 시 activeTab 동기화 (Capacitor Store 기반 네비게이션용)
+  // currentSubView 변경 시 activeTab 동기화
   useEffect(() => {
     if (currentSubView && screenIds.includes(currentSubView as ADHDSubViewId)) {
       setActiveTab(currentSubView as ADHDSubViewId);
     }
   }, [currentSubView, screenIds]);
-
-  // Capacitor: 탭 전환 시 스크롤 리셋
-  useEffect(() => {
-    if (typeof window === 'undefined' || !(window as any).Capacitor) return;
-    requestAnimationFrame(() => {
-      if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
-      window.scrollTo(0, 0);
-    });
-  }, [activeTab]);
 
   const [helpModalTab, setHelpModalTab] = useState<ADHDSubViewId | null>(null);
 

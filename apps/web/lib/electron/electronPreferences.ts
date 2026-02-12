@@ -1,6 +1,6 @@
 /**
  * Electron 세션 저장소
- * Capacitor Preferences와 동일한 인터페이스로 electron-store 래핑
+ * electron-store 래핑
  */
 
 function getElectronAPI() {

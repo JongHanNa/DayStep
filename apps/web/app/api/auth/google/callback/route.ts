@@ -5,18 +5,6 @@ import { OAuth2Client } from 'google-auth-library';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  // Mobile builds use native OAuth through Capacitor plugins
-  if (process.env.BUILD_TARGET === 'mobile') {
-    return NextResponse.json(
-      {
-        error: 'Google OAuth callback is not available in mobile builds',
-        details: 'Use native Capacitor OAuth plugins instead',
-        platform: 'mobile'
-      },
-      { status: 501 }
-    );
-  }
-
   try {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');

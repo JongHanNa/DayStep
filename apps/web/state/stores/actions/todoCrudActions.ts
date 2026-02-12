@@ -3,8 +3,6 @@ import { CreateTodoInput, UpdateTodoInput } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { TodoService } from "@/services/todo/TodoService";
 import { integratedNotificationService } from "@/services/integrated-notification.service";
-import { widgetSyncService } from "@/services/widget-sync.service";
-import { isCapacitorEnvironment } from "@/lib/supabase/core";
 import { fetchTodoByIdWithJWT } from "@/lib/supabase/todos";
 import {
   createAsyncAction,
@@ -27,50 +25,19 @@ export const createTodoAction = createAsyncAction(async (data: CreateTodoInput) 
 
   logStoreAction("TodoStore", "createTodo", data);
 
-  // 사용자 ID 추출 (Capacitor/웹 환경 공통)
-  let userId: string | null = null;
-
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user?.id) {
-      userId = session.user.id;
-      console.log("🔑 createTodo - 세션에서 사용자 ID 획득:", {
-        userId: userId?.substring(0, 8),
-      });
-    }
-  } catch (sessionError) {
-    console.log("⚠️ createTodo - 세션 조회 실패:", sessionError);
-  }
-
-  // Capacitor 백업 시도
-  if (!userId && isCapacitorEnvironment()) {
-    try {
-      const { Preferences } = await import("@capacitor/preferences");
-      const { value } = await Preferences.get({
-        key: "supabase_auth_session",
-      });
-      if (value) {
-        const sessionData = JSON.parse(value);
-        if (sessionData.user?.id) {
-          userId = sessionData.user.id;
-          console.log("🔑 createTodo - Capacitor 저장소에서 사용자 ID 획득:", {
-            userId: userId?.substring(0, 8),
-          });
-        }
-      }
-    } catch (capacitorError) {
-      console.log(
-        "⚠️ createTodo - Capacitor 백업 사용자 ID 로드 실패:",
-        capacitorError
-      );
-    }
-  }
+  // 사용자 ID 추출
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
 
   if (!userId) {
     throw new Error("사용자 인증이 필요합니다.");
   }
+
+  console.log("🔑 createTodo - 세션에서 사용자 ID 획득:", {
+    userId: userId?.substring(0, 8),
+  });
 
   const todoData = {
     ...data,
@@ -225,7 +192,7 @@ export const fetchTodoByIdAction = async (id: string) => {
   logStoreAction("TodoStore", "fetchTodoById", { id });
 
   try {
-    // JWT 방식으로 할일 조회 (Capacitor/웹 공통)
+    // JWT 방식으로 할일 조회
     const todo = await fetchTodoByIdWithJWT(id);
     return todo; // 이미 Todo.fromDatabase() 적용됨
   } catch (error) {

@@ -73,7 +73,6 @@ export const MOBILE = {
   SAFE_AREA_BOTTOM: 34, // px - iOS 홈 인디케이터 영역
   BOTTOM_NAV_HEIGHT: 64, // px
   STATUS_BAR_HEIGHT: 20, // px
-  CAPACITOR_MIN_HEIGHT: 568, // px - 최소 지원 화면 높이
 } as const;
 
 // 🎯 우선순위 색상 상수

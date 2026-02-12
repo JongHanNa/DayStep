@@ -79,7 +79,7 @@ function TodoListScreenInner() {
   const {primaryColor} = useTheme();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
   const pagesRef = useRef<SwipeablePagesRef>(null);
-  const {dragState, setOnRequestPageChange} = useDnd();
+  const {dragState, setOnRequestPageChange, currentPageRef, triggerRemeasure} = useDnd();
 
   useEffect(() => {
     fetchTodosForDate(selectedDate);
@@ -97,6 +97,18 @@ function TodoListScreenInner() {
     });
     return () => setOnRequestPageChange(undefined);
   }, [setOnRequestPageChange]);
+
+  // 페이지 전환 시 currentPageRef 동기화 + 드롭존 재측정
+  const handlePageChange = useCallback(
+    (page: number) => {
+      currentPageRef.current = page;
+      // 페이지 전환 애니메이션 후 드롭존 좌표 재측정
+      setTimeout(() => {
+        triggerRemeasure();
+      }, 400);
+    },
+    [currentPageRef, triggerRemeasure],
+  );
 
   // 드래그 앤 드롭 완료 핸들러
   const handleDrop = useCallback(
@@ -176,7 +188,7 @@ function TodoListScreenInner() {
         </AnimatedPressable>
       </Animated.View>
 
-      <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging}>
+      <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging} onPageChange={handlePageChange}>
         {/* Page 0: 시간대별 할일 리스트 */}
         <View style={{flex: 1}}>
           <SectionList

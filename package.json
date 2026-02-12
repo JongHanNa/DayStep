@@ -10,12 +10,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "dev:web": "npm run dev --workspace=@daystep/web",
-    "dev:capacitor": "npm run capacitor:dev --workspace=@daystep/web",
-    "prod:capacitor": "npm run capacitor:prod --workspace=@daystep/web",
     "build": "turbo run build",
     "build:web": "npm run build --workspace=@daystep/web",
-    "build:mobile": "npm run build:mobile --workspace=@daystep/web",
-    "build:mobile:prod": "npm run build:mobile:prod --workspace=@daystep/web",
     "build:electron": "npm run build:electron --workspace=@daystep/web",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",

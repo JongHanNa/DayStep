@@ -1,18 +1,12 @@
-import { Capacitor } from '@capacitor/core';
-import { NotificationManager } from '@/plugins/notification';
-import { mobileNotificationService } from '@/services/mobile-notification.service';
-
 /**
  * 통합 알림 서비스
- * 네이티브 환경과 웹 환경을 자동으로 감지하여 적절한 알림 시스템 사용
+ * 웹 환경에서 Notification API를 사용한 알림 시스템
  */
 export class IntegratedNotificationService {
   private static instance: IntegratedNotificationService;
-  private isNative: boolean;
 
   constructor() {
-    this.isNative = Capacitor.isNativePlatform();
-    console.log(`🔔 IntegratedNotificationService 초기화: ${this.isNative ? 'Native' : 'Web'} 모드`);
+    console.log('🔔 IntegratedNotificationService 초기화: Web 모드');
   }
 
   public static getInstance(): IntegratedNotificationService {
@@ -29,41 +23,16 @@ export class IntegratedNotificationService {
     try {
       console.log(`📅 [IntegratedNotificationService] 할일 알림 예약: "${todo.content}" - ${reminderMinutes}분 후`);
 
-      if (this.isNative) {
-        // 네이티브 환경: @capacitor/local-notifications 사용
-        const result = await NotificationManager.scheduleNotification({
-          title: '할일 리마인더',
-          body: `곧 시작: ${todo.content}`,
-          delay: reminderMinutes * 60, // 분을 초로 변환
-          id: `todo_${todo.id}`,
-        });
-
-        if (result.success) {
-          console.log(`✅ [IntegratedNotificationService] 네이티브 할일 알림 예약 성공: ${todo.content}`);
-          return true;
-        } else {
-          console.error(`❌ [IntegratedNotificationService] 네이티브 할일 알림 예약 실패`);
-          return false;
-        }
-      } else {
-        // 웹 환경: 웹뷰 알림 (기존 방식)
-        const reminderDate = new Date(Date.now() + reminderMinutes * 60 * 1000);
-        
-        const success = await mobileNotificationService.scheduleTodoReminder({
-          todoId: todo.id,
-          title: todo.content,
-          content: todo.content,
-          startTime: reminderDate.toISOString()
-        });
-
-        if (success) {
-          console.log(`✅ [IntegratedNotificationService] 웹뷰 할일 알림 예약 성공: ${todo.content}`);
-          return true;
-        } else {
-          console.error(`❌ [IntegratedNotificationService] 웹뷰 할일 알림 예약 실패`);
-          return false;
-        }
+      // 웹 환경: setTimeout 기반 알림
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        setTimeout(() => {
+          new Notification('할일 리마인더', { body: `곧 시작: ${todo.content}` });
+        }, reminderMinutes * 60 * 1000);
+        console.log(`✅ [IntegratedNotificationService] 웹 할일 알림 예약 성공: ${todo.content}`);
+        return true;
       }
+
+      return false;
     } catch (error) {
       console.error('[IntegratedNotificationService] 할일 알림 예약 실패:', error);
       return false;
@@ -77,28 +46,13 @@ export class IntegratedNotificationService {
     try {
       console.log(`🎉 [IntegratedNotificationService] 성취 알림 표시: "${title}" - ${body}`);
 
-      if (this.isNative) {
-        // 네이티브 환경: @capacitor/local-notifications 사용
-        const result = await NotificationManager.showImmediateNotification({
-          title,
-          body,
-          id: `achievement_${Date.now()}`,
-        });
-
-        if (result.success) {
-          console.log(`✅ [IntegratedNotificationService] 네이티브 성취 알림 표시 성공`);
-          return true;
-        } else {
-          console.error(`❌ [IntegratedNotificationService] 네이티브 성취 알림 표시 실패`);
-          return false;
-        }
-      } else {
-        // 웹 환경: 웹뷰 알림
-        await mobileNotificationService.showAchievementNotification(title, body);
-        
-        console.log(`✅ [IntegratedNotificationService] 웹뷰 성취 알림 표시 성공`);
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body });
+        console.log(`✅ [IntegratedNotificationService] 웹 성취 알림 표시 성공`);
         return true;
       }
+
+      return false;
     } catch (error) {
       console.error('[IntegratedNotificationService] 성취 알림 표시 실패:', error);
       return false;
@@ -106,55 +60,19 @@ export class IntegratedNotificationService {
   }
 
   /**
-   * 특정 할일 알림 취소
+   * 특정 할일 알림 취소 (웹에서는 no-op)
    */
   async cancelTodoReminder(todoId: string): Promise<boolean> {
-    try {
-      console.log(`🗑️ [IntegratedNotificationService] 할일 알림 취소: ${todoId}`);
-
-      if (this.isNative) {
-        // 네이티브 환경: @capacitor/local-notifications 사용
-        const result = await NotificationManager.cancelNotification({ id: `todo_${todoId}` });
-        
-        console.log(`✅ [IntegratedNotificationService] 네이티브 할일 알림 취소 성공: ${todoId}`);
-        return result.success;
-      } else {
-        // 웹 환경: 웹뷰 알림
-        await mobileNotificationService.cancelTodoReminder(todoId);
-        
-        console.log(`✅ [IntegratedNotificationService] 웹뷰 할일 알림 취소 성공: ${todoId}`);
-        return true;
-      }
-    } catch (error) {
-      console.error('[IntegratedNotificationService] 할일 알림 취소 실패:', error);
-      return false;
-    }
+    console.log(`🗑️ [IntegratedNotificationService] 할일 알림 취소: ${todoId}`);
+    return true;
   }
 
   /**
-   * 모든 알림 취소
+   * 모든 알림 취소 (웹에서는 no-op)
    */
   async cancelAllNotifications(): Promise<boolean> {
-    try {
-      console.log(`🗑️ [IntegratedNotificationService] 모든 알림 취소`);
-
-      if (this.isNative) {
-        // 네이티브 환경: @capacitor/local-notifications 사용
-        const result = await NotificationManager.cancelAllNotifications();
-        
-        console.log(`✅ [IntegratedNotificationService] 네이티브 모든 알림 취소 성공`);
-        return result.success;
-      } else {
-        // 웹 환경: 웹뷰 알림
-        await mobileNotificationService.cancelAllNotifications();
-        
-        console.log(`✅ [IntegratedNotificationService] 웹뷰 모든 알림 취소 성공`);
-        return true;
-      }
-    } catch (error) {
-      console.error('[IntegratedNotificationService] 모든 알림 취소 실패:', error);
-      return false;
-    }
+    console.log(`🗑️ [IntegratedNotificationService] 모든 알림 취소`);
+    return true;
   }
 
   /**
@@ -162,34 +80,14 @@ export class IntegratedNotificationService {
    */
   async checkPermission(): Promise<{ granted: boolean; status: string }> {
     try {
-      if (this.isNative) {
-        // 네이티브 환경: @capacitor/local-notifications 권한 확인
-        const result = await NotificationManager.checkPermission();
-        return {
-          granted: result.granted,
-          status: result.status
-        };
-      } else {
-        // 웹 환경: Notification API 권한 확인
-        if (typeof window !== 'undefined' && 'Notification' in window) {
-          const permission = Notification.permission;
-          return {
-            granted: permission === 'granted',
-            status: permission
-          };
-        } else {
-          return {
-            granted: false,
-            status: 'not-supported'
-          };
-        }
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        const permission = Notification.permission;
+        return { granted: permission === 'granted', status: permission };
       }
+      return { granted: false, status: 'not-supported' };
     } catch (error) {
       console.error('[IntegratedNotificationService] 알림 권한 확인 실패:', error);
-      return {
-        granted: false,
-        status: 'error'
-      };
+      return { granted: false, status: 'error' };
     }
   }
 
@@ -198,21 +96,16 @@ export class IntegratedNotificationService {
    */
   async requestPermission(): Promise<boolean> {
     try {
-      console.log(`🔔 [IntegratedNotificationService] 알림 권한 요청`);
+      console.log('🔔 [IntegratedNotificationService] 알림 권한 요청');
 
-      if (this.isNative) {
-        // 네이티브 환경: @capacitor/local-notifications 권한 요청
-        const result = await NotificationManager.requestPermission();
-        
-        console.log(`${result.granted ? '✅' : '❌'} [IntegratedNotificationService] 네이티브 알림 권한: ${result.status}`);
-        return result.granted;
-      } else {
-        // 웹 환경: Notification API 권한 요청
-        const granted = await mobileNotificationService.requestPermission();
-        
-        console.log(`${granted ? '✅' : '❌'} [IntegratedNotificationService] 웹뷰 알림 권한: ${granted ? 'granted' : 'denied'}`);
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        const permission = await Notification.requestPermission();
+        const granted = permission === 'granted';
+        console.log(`${granted ? '✅' : '❌'} [IntegratedNotificationService] 웹 알림 권한: ${permission}`);
         return granted;
       }
+
+      return false;
     } catch (error) {
       console.error('[IntegratedNotificationService] 알림 권한 요청 실패:', error);
       return false;
@@ -234,12 +127,10 @@ export class IntegratedNotificationService {
    */
   getSystemInfo() {
     return {
-      isNative: this.isNative,
-      platform: this.isNative ? 'Native iOS/Android' : 'Web Browser',
-      systemType: this.isNative ? '@capacitor/local-notifications (UserNotifications Framework 기반)' : 'Notification API',
-      description: this.isNative 
-        ? '실제 iOS/Android 시스템 알림을 사용합니다.'
-        : 'JavaScript Notification API를 사용합니다.'
+      isNative: false,
+      platform: 'Web Browser',
+      systemType: 'Notification API',
+      description: 'JavaScript Notification API를 사용합니다.'
     };
   }
 }

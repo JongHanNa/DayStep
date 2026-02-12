@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">DayStep</string>
-    <string name="title_activity_main">DayStep</string>
-    <string name="package_name">com.daystep.app</string>
-    <string name="custom_url_scheme">com.daystep.app</string>
-</resources>

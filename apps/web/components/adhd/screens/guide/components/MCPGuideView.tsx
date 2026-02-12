@@ -13,8 +13,6 @@ import {
   Laptop,
   Rocket
 } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
-
 /**
  * MCP 연결 가이드 - Claude Desktop에서 DayStep MCP를 연결하는 방법 안내
  *
@@ -57,21 +55,8 @@ export default function MCPGuideView() {
   };
 
   // 토큰 발급 페이지 열기
-  const handleOpenAuth = async () => {
-    const isNative = Capacitor.isNativePlatform();
-
-    if (isNative) {
-      try {
-        // Capacitor Browser 동적 임포트
-        const { Browser } = await import('@capacitor/browser');
-        await Browser.open({ url: mcpAuthUrl });
-      } catch (err) {
-        console.error('Failed to open browser:', err);
-        window.open(mcpAuthUrl, '_blank');
-      }
-    } else {
-      window.open(mcpAuthUrl, '_blank');
-    }
+  const handleOpenAuth = () => {
+    window.open(mcpAuthUrl, '_blank');
   };
 
   // 스텝 토글

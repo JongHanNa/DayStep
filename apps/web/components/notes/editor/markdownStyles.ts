@@ -367,7 +367,7 @@ export const globalMarkdownStyles = `
     -webkit-user-select: text !important;
   }
 
-  /* 모바일 환경에서만 포커스 완전 제거 (Capacitor 환경) */
+  /* 모바일 환경에서만 포커스 완전 제거 */
   [data-platform="mobile"] .advanced-markdown-editor-container *:focus,
   [data-platform="mobile"] .advanced-markdown-editor-container *:focus-visible,
   [data-platform="mobile"] .advanced-markdown-editor-container .cm-focused,
@@ -625,7 +625,7 @@ export const globalMarkdownStyles = `
     color: hsl(var(--foreground)) !important;
   }
   
-  /* Capacitor WebView 특화: WKWebView 포커스 링 제거하되 CodeMirror 커서는 유지 */
+  /* WebView 특화: 포커스 링 제거하되 CodeMirror 커서는 유지 */
   .advanced-markdown-editor-container *:not(.cm-cursor):not(.cm-line) {
     outline: none !important;
     -webkit-tap-highlight-color: transparent !important;
@@ -745,7 +745,7 @@ export function createEditorTheme(minHeight: number) {
       WebkitFocusRingColor: 'transparent !important',
       WebkitAppearance: 'none !important',
     },
-    // 모바일 환경에서만 Capacitor WebView 특화 스타일
+    // 모바일 환경 특화 스타일
     '[data-platform="mobile"] *': {
       outline: 'none !important',
       WebkitTapHighlightColor: 'transparent !important',

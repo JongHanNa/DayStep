@@ -1,6 +1,6 @@
 /**
  * Supabase Subtasks - JWT 기반 서브태스크 관리
- * Capacitor WebView 환경에서 RLS 테이블 접근을 위한 함수들
+ * Electron 환경에서 RLS 테이블 접근을 위한 함수들
  */
 
 import { queryRLSTableWithJWT, createWithJWT, updateWithJWT, deleteWithJWT } from './core';

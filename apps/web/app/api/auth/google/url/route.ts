@@ -6,18 +6,6 @@ export const dynamic = 'force-dynamic';
 
 // 서버에서만 실행되는 Google Auth URL 생성 API
 export async function GET(request: NextRequest) {
-  // Mobile builds use native OAuth through Capacitor plugins
-  if (process.env.BUILD_TARGET === 'mobile') {
-    return NextResponse.json(
-      {
-        error: 'Google OAuth URL generation is not available in mobile builds',
-        details: 'Use native Capacitor OAuth plugins instead',
-        platform: 'mobile'
-      },
-      { status: 501 }
-    );
-  }
-
   try {
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get('platform') || 'web';
@@ -49,12 +37,6 @@ export async function GET(request: NextRequest) {
       `${siteUrl}/api/auth/google/callback`
     );
 
-    // 플랫폼별 추가 파라미터
-    const additionalParams: Record<string, string> = {};
-    if (platform === 'mobile') {
-      additionalParams.prompt = 'consent'; // 모바일에서는 항상 동의 화면 표시
-    }
-
     // 인증 URL 생성
     const authUrl = client.generateAuthUrl({
       access_type: 'offline', // 리프레시 토큰을 위해 필요
@@ -64,8 +46,7 @@ export async function GET(request: NextRequest) {
         'https://www.googleapis.com/auth/userinfo.profile', // 사용자 프로필 정보
         'https://www.googleapis.com/auth/userinfo.email' // 이메일 주소
       ],
-      state: JSON.stringify({ platform }), // 플랫폼 정보를 state로 전달
-      ...additionalParams
+      state: JSON.stringify({ platform }) // 플랫폼 정보를 state로 전달
     });
 
     return NextResponse.json({

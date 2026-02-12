@@ -66,60 +66,23 @@ function isValidIP(ip: string): boolean {
 }
 
 /**
- * Capacitor 설정 파일의 IP 주소를 동적으로 업데이트합니다
- */
-export async function updateCapacitorConfigIP(): Promise<string> {
-  try {
-    const currentIP = await getLocalNetworkIP();
-    const configPath = path.join(process.cwd(), 'mobile', 'capacitor.config.ts');
-    
-    // 현재 설정 파일 읽기
-    const configContent = await fs.readFile(configPath, 'utf-8');
-    
-    // IP 주소 패턴 매칭 및 교체
-    const ipPattern = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):3000/g;
-    const updatedContent = configContent.replace(ipPattern, `${currentIP}:3000`);
-    
-    // 변경사항이 있는 경우에만 파일 업데이트
-    if (configContent !== updatedContent) {
-      await fs.writeFile(configPath, updatedContent);
-      console.log(`🌐 Capacitor 설정 업데이트: ${currentIP}:3000`);
-    } else {
-      console.log(`🌐 Capacitor 설정 이미 최신 상태: ${currentIP}:3000`);
-    }
-    
-    return currentIP;
-    
-  } catch (error) {
-    console.error('🌐 Capacitor 설정 업데이트 오류:', error);
-    throw error;
-  }
-}
-
-/**
  * 개발 서버 시작 전 자동 IP 설정
  * package.json 스크립트에서 호출됩니다
  */
 export async function setupDevelopmentIP(): Promise<void> {
   try {
     console.log('🌐 개발 환경 IP 설정 시작...');
-    
-    // 1. 현재 IP 감지
+
     const currentIP = await getLocalNetworkIP();
-    
-    // 2. Capacitor 설정 업데이트
-    await updateCapacitorConfigIP();
-    
-    // 3. IP 주소를 환경 변수로 설정 (.env.local 생성/업데이트)
+
+    // IP 주소를 환경 변수로 설정 (.env.local 생성/업데이트)
     const envPath = path.join(process.cwd(), '.env.local');
     const envContent = `# 자동 생성된 로컬 IP 설정 (${new Date().toISOString()})\nNEXT_PUBLIC_LOCAL_IP=${currentIP}\n`;
-    
+
     try {
-      // 기존 .env.local 읽기
       const existingEnv = await fs.readFile(envPath, 'utf-8');
       const lines = existingEnv.split('\n');
-      
-      // NEXT_PUBLIC_LOCAL_IP 라인 찾아서 교체
+
       let found = false;
       const updatedLines = lines.map((line: string) => {
         if (line.startsWith('NEXT_PUBLIC_LOCAL_IP=')) {
@@ -128,22 +91,19 @@ export async function setupDevelopmentIP(): Promise<void> {
         }
         return line;
       });
-      
-      // 없으면 추가
+
       if (!found) {
         updatedLines.push(`NEXT_PUBLIC_LOCAL_IP=${currentIP}`);
       }
-      
+
       await fs.writeFile(envPath, updatedLines.join('\n'));
-      
+
     } catch (error) {
-      // .env.local 파일이 없으면 새로 생성
       await fs.writeFile(envPath, envContent);
     }
-    
+
     console.log(`🌐 개발 환경 IP 설정 완료: ${currentIP}`);
-    console.log(`🌐 Capacitor 앱에서 http://${currentIP}:3000 접근 가능`);
-    
+
   } catch (error) {
     console.error('🌐 개발 환경 IP 설정 실패:', error);
     process.exit(1);

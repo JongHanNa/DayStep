@@ -258,7 +258,7 @@ export const useAuthStore = createStore<AuthStoreState>(
       }
 
       try {
-        // JWT 방식으로 데이터베이스 업데이트 (Capacitor/웹 공통)
+        // JWT 방식으로 데이터베이스 업데이트
         await updateUserWithJWT(user.id, { name: data.name });
 
         // 로컬 상태 업데이트

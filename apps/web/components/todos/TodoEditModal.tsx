@@ -311,7 +311,7 @@ export default function TodoEditModal({
   if (!open || !todo) return null;
 
   // Portal을 사용하여 document.body에 렌더링
-  // 부모 컨테이너의 overflow 영향을 받지 않도록 함 (Capacitor WebView 호환성)
+  // 부모 컨테이너의 overflow 영향을 받지 않도록 함
   const modalContent = (
     <dialog open className="modal modal-open z-[110]">
       <div className="modal-box max-w-md">

@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// SSE는 웹 환경에서만 사용하므로 force-dynamic (모바일 빌드에서는 이 파일 자체가 제외됨)
+// SSE는 웹 환경에서만 사용
 export const dynamic = 'force-dynamic';
 
 // CORS preflight 요청 처리
@@ -19,18 +19,6 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: NextRequest) {
-  // 모바일 빌드에서는 SSE 비활성화
-  if (process.env.BUILD_TARGET === 'mobile') {
-    return new Response(
-      JSON.stringify({
-        error: 'Server-Sent Events are not available in mobile builds',
-        details: 'Use native Capacitor real-time features instead',
-        platform: 'mobile'
-      }),
-      { status: 501, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
   console.log('🌊 SSE 연결 요청 시작');
 
   // SSE 응답 헤더 설정 (CORS 포함)

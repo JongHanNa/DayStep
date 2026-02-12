@@ -1,37 +1,11 @@
 /**
  * Supabase Core - JWT 토큰 방식 핵심 인프라
- * Capacitor WebView 환경에서 RLS 테이블 접근을 위한 기반 기능
+ * Electron/Web 환경에서 RLS 테이블 접근을 위한 기반 기능
  *
  * @see https://supabase.com/docs/guides/api/rest/introduction
  */
 
-import { Capacitor } from '@capacitor/core';
 import { supabase } from '../supabase';
-
-/**
- * Capacitor 환경 감지 유틸리티
- */
-export const isCapacitorEnvironment = () => Capacitor.isNativePlatform();
-
-/**
- * Capacitor 환경 특화 에러 클래스
- */
-export class CapacitorAuthError extends Error {
-  constructor(message: string, public code: string) {
-    super(message);
-    this.name = 'CapacitorAuthError';
-  }
-}
-
-/**
- * 플랫폼별 에러 처리
- */
-export const handlePlatformError = (error: any) => {
-  if (isCapacitorEnvironment() && error.code === '42501') {
-    return new CapacitorAuthError('RLS policy violation in Capacitor', 'RLS_ERROR');
-  }
-  return error;
-};
 
 /**
  * JWT 토큰을 사용하여 Supabase REST API에 직접 요청 (타임아웃 및 재시도 포함)
@@ -91,35 +65,6 @@ export async function fetchWithJWT(
         }
       } catch (electronError) {
         console.log('⚠️ Electron 백업 토큰 로드 실패:', electronError);
-      }
-    }
-
-    // 3순위: Capacitor 저장소 백업 (Supabase 클라이언트 실패 시)
-    if (!accessToken && isCapacitorEnvironment()) {
-      try {
-        const { Preferences } = await import('@capacitor/preferences');
-        const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-        if (value) {
-          const sessionData = JSON.parse(value);
-          const capacitorToken = sessionData.access_token;
-
-          // Capacitor 저장소 토큰도 만료 체크
-          if (capacitorToken && sessionData.expires_at) {
-            const expiresAt = sessionData.expires_at * 1000;
-            const now = Date.now();
-            const isExpired = now >= expiresAt;
-
-            if (!isExpired) {
-              accessToken = capacitorToken;
-            } else {
-              console.warn('⚠️ Capacitor 저장소의 토큰도 만료됨');
-            }
-          } else {
-            accessToken = capacitorToken;
-          }
-        }
-      } catch (capacitorError) {
-        console.log('⚠️ Capacitor 백업 토큰 로드 실패:', capacitorError);
       }
     }
 
@@ -232,7 +177,7 @@ export async function fetchWithJWT(
                 hasNewToken: !!refreshResult.data.session.access_token
               });
 
-              // 🔑 새로운 토큰을 Electron/Capacitor 저장소에도 즉시 업데이트
+              // 🔑 새로운 토큰을 Electron 저장소에도 즉시 업데이트
               if (typeof window !== 'undefined' && (window as any).electronAPI) {
                 try {
                   const { ElectronPreferences } = await import('@/lib/electron/electronPreferences');
@@ -249,24 +194,6 @@ export async function fetchWithJWT(
                   console.log('✅ 새로운 세션이 Electron 저장소에 업데이트됨');
                 } catch (electronUpdateError) {
                   console.warn('⚠️ Electron 저장소 업데이트 실패:', electronUpdateError);
-                }
-              }
-              if (isCapacitorEnvironment()) {
-                try {
-                  const { Preferences } = await import('@capacitor/preferences');
-                  await Preferences.set({
-                    key: 'supabase_auth_session',
-                    value: JSON.stringify({
-                      access_token: refreshResult.data.session.access_token,
-                      refresh_token: refreshResult.data.session.refresh_token,
-                      expires_at: refreshResult.data.session.expires_at,
-                      token_type: refreshResult.data.session.token_type,
-                      user: refreshResult.data.session.user
-                    })
-                  });
-                  console.log('✅ 새로운 세션이 Capacitor 저장소에 업데이트됨');
-                } catch (capacitorUpdateError) {
-                  console.warn('⚠️ Capacitor 저장소 업데이트 실패 (계속 진행):', capacitorUpdateError);
                 }
               }
             } else {
@@ -311,7 +238,7 @@ export interface QueryOptions {
 
 /**
  * JWT 방식으로 RLS 테이블 데이터 조회
- * Capacitor WebView 환경에서 권장
+ * Electron 환경에서 권장
  */
 export async function queryRLSTableWithJWT(
   tableName: string,

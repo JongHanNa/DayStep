@@ -35,7 +35,7 @@ export class TodoCompletionsService {
     endDate: Date
   ): Promise<TodoCompletion[]> {
     try {
-      // 🔑 JWT 방식으로 완료 기록 조회 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 완료 기록 조회 (Electron 환경 호환)
       const data = await queryRLSTableWithJWT('todo_completions', [
         { column: 'user_id', operator: 'eq', value: userId },
         { column: 'completion_date', operator: 'gte', value: format(startDate, 'yyyy-MM-dd') },
@@ -57,7 +57,7 @@ export class TodoCompletionsService {
     userId: string
   ): Promise<TodoCompletion[]> {
     try {
-      // 🔑 JWT 방식으로 할일별 완료 기록 조회 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 할일별 완료 기록 조회 (Electron 환경 호환)
       const data = await queryRLSTableWithJWT('todo_completions', [
         { column: 'todo_id', operator: 'eq', value: todoId },
         { column: 'user_id', operator: 'eq', value: userId }
@@ -85,7 +85,7 @@ export class TodoCompletionsService {
     };
 
     try {
-      // 🔑 JWT 방식으로 완료 기록 생성 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 완료 기록 생성 (Electron 환경 호환)
       const data = await createWithJWT('todo_completions', completionData);
 
       console.log('✅ 할일 완료 처리 성공:', {
@@ -112,7 +112,7 @@ export class TodoCompletionsService {
     const targetDateString = format(startOfDay(completionDate), 'yyyy-MM-dd');
 
     try {
-      // 🔑 JWT 방식으로 완료 기록 삭제 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 완료 기록 삭제 (Electron 환경 호환)
       await deleteWithJWT('todo_completions', [
         { column: 'todo_id', operator: 'eq', value: todoId },
         { column: 'user_id', operator: 'eq', value: userId },
@@ -165,7 +165,7 @@ export class TodoCompletionsService {
     const targetDateString = format(startOfDay(targetDate), 'yyyy-MM-dd');
 
     try {
-      // 🔑 JWT 방식으로 완료 상태 확인 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 완료 상태 확인 (Electron 환경 호환)
       const data = await queryRLSTableWithJWT('todo_completions', [
         { column: 'todo_id', operator: 'eq', value: todoId },
         { column: 'user_id', operator: 'eq', value: userId },
@@ -187,7 +187,7 @@ export class TodoCompletionsService {
     userId: string
   ): Promise<void> {
     try {
-      // 🔑 JWT 방식으로 완료 기록 전체 삭제 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 완료 기록 전체 삭제 (Electron 환경 호환)
       await deleteWithJWT('todo_completions', [
         { column: 'todo_id', operator: 'eq', value: todoId },
         { column: 'user_id', operator: 'eq', value: userId }
@@ -244,7 +244,7 @@ export class TodoCompletionsService {
         return existing[0];
       }
 
-      // 🔑 JWT 방식으로 완료 기록 생성 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 완료 기록 생성 (Electron 환경 호환)
       const data = await createWithJWT('todo_completions', completionData);
 
       console.log('✅ 반복 할일 인스턴스 완료 처리 성공:', {
@@ -271,7 +271,7 @@ export class TodoCompletionsService {
     occurrenceDate: string
   ): Promise<void> {
     try {
-      // 🔑 JWT 방식으로 완료 기록 삭제 (Capacitor 환경 호환)
+      // 🔑 JWT 방식으로 완료 기록 삭제 (Electron 환경 호환)
       await deleteWithJWT('todo_completions', [
         { column: 'todo_id', operator: 'eq', value: parentTodoId },
         { column: 'user_id', operator: 'eq', value: userId },

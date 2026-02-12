@@ -1,6 +1,7 @@
 /**
  * DroppableZone
  * 드롭 대상 영역 — onLayout으로 좌표 등록 + 활성 시 하이라이트
+ * remeasureTrigger 구독: 페이지 전환 후 드롭존 좌표 재측정
  */
 import React, {useCallback, useEffect, useRef} from 'react';
 import {View, StyleSheet} from 'react-native';
@@ -28,7 +29,8 @@ export function DroppableZone({
   children,
   style,
 }: DroppableZoneProps) {
-  const {registerZone, unregisterZone, activeZoneId, dragState} = useDnd();
+  const {registerZone, unregisterZone, activeZoneId, dragState, remeasureTrigger} =
+    useDnd();
   const viewRef = useRef<View>(null);
   const isActive = activeZoneId === id && dragState.isDragging;
 
@@ -40,13 +42,24 @@ export function DroppableZone({
     bgScale.value = withSpring(isActive ? 1.02 : 1, {damping: 20});
   }, [isActive, borderOpacity, bgScale]);
 
-  const handleLayout = useCallback(() => {
+  const measure = useCallback(() => {
     viewRef.current?.measureInWindow((x, y, width, height) => {
       if (width > 0 && height > 0) {
         registerZone({id, type, x, y, width, height, data});
       }
     });
   }, [id, type, data, registerZone]);
+
+  const handleLayout = useCallback(() => {
+    measure();
+  }, [measure]);
+
+  // 페이지 전환 후 드롭존 좌표 재측정
+  useEffect(() => {
+    if (remeasureTrigger > 0) {
+      measure();
+    }
+  }, [remeasureTrigger, measure]);
 
   useEffect(() => {
     return () => unregisterZone(id);

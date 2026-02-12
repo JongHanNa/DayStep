@@ -33,7 +33,7 @@
   padding: 0; /* 내부에서 제어하도록 패딩 제거 */
   max-height: 80vh;
   overflow-y: auto;
-  /* Capacitor 환경에서 스크롤 최적화 */
+  /* iOS 스크롤 최적화 */
   -webkit-overflow-scrolling: touch;
   position: relative; /* 경계 명확화 */
   

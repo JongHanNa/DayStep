@@ -59,14 +59,13 @@ export async function saveUserPreferencesWithJWT(
   preferenceKey: string,
   preferenceValue: any
 ): Promise<boolean> {
-  const { Capacitor } = await import('@capacitor/core');
-  const isNativeEnvironment = Capacitor.isNativePlatform();
+  const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI;
 
   console.log('💾 사용자 설정 저장:', {
     userId,
     preferenceKey,
     hasValue: !!preferenceValue,
-    method: isNativeEnvironment ? 'JWT' : 'Supabase-Client'
+    method: isElectron ? 'JWT' : 'Supabase-Client'
   });
 
   try {
@@ -77,10 +76,8 @@ export async function saveUserPreferencesWithJWT(
       updated_at: new Date().toISOString()
     };
 
-    if (isNativeEnvironment) {
-      // Capacitor 환경: JWT 방식 사용 (409 에러 방지를 위해 바로 UPDATE)
-      console.log('🔧 Capacitor 환경에서 바로 PATCH 방식 사용 (409 에러 방지)');
-
+    if (isElectron) {
+      // Electron 환경: JWT 방식 사용 (409 에러 방지를 위해 바로 UPDATE)
       const updateResult = await fetchWithJWT(`/user_preferences?user_id=eq.${userId}&preference_key=eq.${preferenceKey}`, {
         method: 'PATCH',
         headers: {

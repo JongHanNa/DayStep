@@ -65,24 +65,11 @@ export const DeepLinkHandler: React.FC = () => {
     // 커스텀 이벤트 리스너 등록
     window.addEventListener("daystepDeepLink", handleDeepLink as EventListener);
 
-    // Capacitor 환경에서 직접 전역 이벤트 처리
-    if (typeof window !== "undefined" && (window as any).Capacitor) {
-      (window as any).handleDayStepDeepLink = (data: DeepLinkData) => {
-        handleDeepLink(new CustomEvent("daystepDeepLink", { detail: data }));
-      };
-    }
-
     return () => {
       window.removeEventListener(
         "daystepDeepLink",
         handleDeepLink as EventListener
       );
-      if (
-        typeof window !== "undefined" &&
-        (window as any).handleDayStepDeepLink
-      ) {
-        delete (window as any).handleDayStepDeepLink;
-      }
     };
   }, [router]);
 

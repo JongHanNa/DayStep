@@ -16,9 +16,6 @@ export * from './core';
 // 명시적 export (webpack 빌드 타임 인식을 위해 필요)
 export {
   // Core
-  isCapacitorEnvironment,
-  handlePlatformError,
-  CapacitorAuthError,
   fetchWithJWT,
   queryRLSTableWithJWT,
   createWithJWT,

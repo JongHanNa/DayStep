@@ -24,15 +24,9 @@ import UsageIndicator from './UsageIndicator';
 import ProviderSelector from './ProviderSelector';
 
 /**
- * BUILD_TARGET에 따른 AI API 엔드포인트 반환
- * - 웹: Next.js API Route 사용
- * - 모바일: Supabase Edge Function 직접 호출
+ * AI API 엔드포인트 반환
  */
 const getAIEndpoint = (path: 'chat' | 'usage') => {
-  if (process.env.BUILD_TARGET === 'mobile') {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    return `${supabaseUrl}/functions/v1/ai-gateway/${path}`;
-  }
   return `/api/ai/${path}`;
 };
 

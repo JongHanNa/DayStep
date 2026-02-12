@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { isCapacitorEnvironment } from '@/lib/utils';
 
 interface KeyboardInfo {
   height: number;
@@ -46,8 +45,7 @@ interface UseKeyboardAwareModalResult {
 
 /**
  * 모바일 키보드 감지 및 모달 위치 자동 조정 훅
- * Visual Viewport API와 Capacitor Keyboard API를 사용한 하이브리드 접근법
- * react-modal-sheet과 호환되는 키보드 처리 (iOS 시뮬레이터 호환성)
+ * Visual Viewport API를 사용한 키보드 처리
  */
 export function useKeyboardAwareModal(
   config: KeyboardAwareModalConfig = {}
@@ -135,26 +133,20 @@ export function useKeyboardAwareModal(
     });
   }, []);
 
-  // Visual Viewport API 및 Capacitor Keyboard API 이벤트 리스너 설정
+  // Visual Viewport API 이벤트 리스너 설정
   useEffect(() => {
     const listeners: (() => void)[] = [];
-    
+
     // Visual Viewport API 지원 확인 및 리스너 설정
     if (window.visualViewport) {
       const handleVisualViewportChange = () => {
         const viewport = window.visualViewport;
         if (!viewport) return;
-        
+
         const windowHeight = window.innerHeight;
         const viewportHeight = viewport.height;
         const keyboardHeight = windowHeight - viewportHeight;
-        
-        console.log('🎹 [VisualViewport] 뷰포트 변화:', {
-          windowHeight,
-          viewportHeight,
-          keyboardHeight
-        });
-        
+
         if (keyboardHeight > 50) { // 키보드가 나타남 (50px 임계값)
           setKeyboardInfo({
             height: keyboardHeight,
@@ -167,72 +159,19 @@ export function useKeyboardAwareModal(
           });
         }
       };
-      
+
       window.visualViewport.addEventListener('resize', handleVisualViewportChange);
       listeners.push(() => window.visualViewport?.removeEventListener('resize', handleVisualViewportChange));
-      
-      console.log('🎹 [VisualViewport] Visual Viewport API 리스너 설정 완료');
     }
 
-    if (!isCapacitorEnvironment()) {
-      console.log('🎹 [Keyboard] 브라우저 환경 - Visual Viewport API만 사용');
-      return () => {
-        listeners.forEach(remove => remove());
-      };
+    if (forceResizeMode) {
+      setResizeMode(forceResizeMode);
     }
-
-    const keyboardListeners: (() => void)[] = [];
-
-    const setupKeyboardListeners = async () => {
-      try {
-        const { Keyboard } = await import('@capacitor/keyboard');
-        
-        // 현재 리사이즈 모드 확인 (iOS만 지원)
-        try {
-          if (forceResizeMode) {
-            setResizeMode(forceResizeMode);
-            console.log('🎹 [Keyboard] 강제 설정된 리사이즈 모드:', forceResizeMode);
-          } else {
-            // iOS에서만 getResizeMode 지원
-            const resizeInfo = await Keyboard.getResizeMode();
-            const detectedMode: KeyboardResizeMode = 
-              resizeInfo.mode === 'body' ? 'body' :
-              resizeInfo.mode === 'ionic' ? 'ionic' :
-              resizeInfo.mode === 'native' ? 'native' : 'none';
-            setResizeMode(detectedMode);
-            console.log('🎹 [Keyboard] 감지된 리사이즈 모드:', detectedMode);
-          }
-        } catch (error) {
-          console.log('🎹 [Keyboard] 리사이즈 모드 감지 실패 (Android일 가능성), 기본값 사용');
-          setResizeMode(forceResizeMode || 'none'); // 설정에서 none으로 했으므로 기본값으로 사용
-        }
-        
-        // 키보드 이벤트 리스너 등록
-        const willShowListener = await Keyboard.addListener('keyboardWillShow', handleKeyboardWillShow);
-        keyboardListeners.push(() => willShowListener.remove());
-
-        const didShowListener = await Keyboard.addListener('keyboardDidShow', handleKeyboardDidShow);
-        keyboardListeners.push(() => didShowListener.remove());
-
-        const willHideListener = await Keyboard.addListener('keyboardWillHide', handleKeyboardWillHide);
-        keyboardListeners.push(() => willHideListener.remove());
-
-        const didHideListener = await Keyboard.addListener('keyboardDidHide', handleKeyboardDidHide);
-        keyboardListeners.push(() => didHideListener.remove());
-
-        console.log('🎹 [Keyboard] 키보드 이벤트 리스너 설정 완료');
-      } catch (error) {
-        console.error('🎹 [Keyboard] 키보드 API 설정 실패:', error);
-      }
-    };
-
-    setupKeyboardListeners();
 
     return () => {
       listeners.forEach(remove => remove());
-      keyboardListeners.forEach(remove => remove());
     };
-  }, [handleKeyboardWillShow, handleKeyboardDidShow, handleKeyboardWillHide, handleKeyboardDidHide, forceResizeMode]);
+  }, [forceResizeMode]);
 
   // 커서 위치 핸들러 - 모달 움직임 중에는 동작하지 않음
   const handleCursorMove = useCallback((position: { top: number; left: number }) => {

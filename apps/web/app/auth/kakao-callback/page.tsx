@@ -4,19 +4,6 @@ import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// 모바일 빌드용 대체 컴포넌트
-function NotAvailableInMobile() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <p className="text-muted-foreground">
-          모바일에서는 카카오 로그인이 지원되지 않습니다.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function KakaoCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -156,11 +143,6 @@ function KakaoCallbackContent() {
 }
 
 export default function KakaoCallbackPage() {
-  // 모바일 빌드에서는 대체 페이지 렌더링
-  if (process.env.BUILD_TARGET === "mobile") {
-    return <NotAvailableInMobile />;
-  }
-
   return (
     <Suspense
       fallback={

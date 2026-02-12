@@ -111,10 +111,7 @@ export default function RecurringUpdateDialog({
     }
   };
 
-  // 환경별 모달 위치 결정
-  const modalPositionClass = process.env.BUILD_TARGET === 'mobile'
-    ? 'modal-middle'  // Capacitor: 항상 중앙
-    : 'modal-bottom sm:modal-middle';  // 웹: 반응형 (모바일 하단, 데스크톱 중앙)
+  const modalPositionClass = 'modal-bottom sm:modal-middle';
 
   // 시간 변경이 있는지 확인
   const hasTimeChange = changeType === 'time' || changeType === 'mixed';

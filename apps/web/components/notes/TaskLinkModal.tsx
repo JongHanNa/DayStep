@@ -62,7 +62,7 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
   // 현재 연결된 할일 찾기
   const linkedTodo = todos.find(todo => todo.id === currentLinkedTaskId);
 
-  // 모든 할일 조회 (Capacitor 백업 인증 패턴 사용)
+  // 모든 할일 조회
   useEffect(() => {
     const fetchAllTodos = async () => {
       if (!open) {
@@ -72,11 +72,10 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
 
       console.log('📋 할일 목록 조회 시작 - 사용자 ID 확보 중...');
       setLoading(true);
-      
+
       try {
-        // Capacitor 백업 인증 패턴으로 사용자 ID 확보
         let userId: string | null = null;
-        
+
         try {
           const { supabase } = await import('@/lib/supabase');
           const { data: { session } } = await supabase.auth.getSession();
@@ -86,28 +85,6 @@ const TaskLinkModal: React.FC<TaskLinkModalProps> = ({
           }
         } catch (authError) {
           console.log('⚠️ 웹 세션 확보 실패:', authError);
-        }
-
-        // 웹에서 실패했거나 Capacitor 환경인 경우 백업 방식 사용
-        if (!userId) {
-          try {
-            const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor;
-            console.log('🔄 Capacitor 환경 감지:', !!isCapacitor);
-            
-            if (isCapacitor) {
-              const { Preferences } = await import('@capacitor/preferences');
-              const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-              if (value) {
-                const session = JSON.parse(value);
-                if (session?.user?.id) {
-                  userId = session.user.id;
-                  console.log('✅ Capacitor 백업에서 사용자 ID 확보:', userId);
-                }
-              }
-            }
-          } catch (capacitorError) {
-            console.log('⚠️ Capacitor 백업 인증 실패:', capacitorError);
-          }
         }
 
         if (!userId) {

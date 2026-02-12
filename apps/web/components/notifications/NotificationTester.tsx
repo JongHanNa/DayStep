@@ -8,7 +8,6 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { mobileNotificationService } from '@/services/mobile-notification.service';
 import { NotificationManagerComponent } from './NotificationManager';
-import { Capacitor } from '@capacitor/core';
 
 interface ScheduledNotification {
   id: string;
@@ -179,7 +178,7 @@ export const NotificationTester: React.FC = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const isNative = Capacitor.isNativePlatform();
+  const isNative = false;
 
   if (!isNative) {
     return (
@@ -334,7 +333,7 @@ export const NotificationTester: React.FC = () => {
 };
 
 export const CombinedNotificationTester: React.FC = () => {
-  const isNative = Capacitor.isNativePlatform();
+  const isNative = false;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4">

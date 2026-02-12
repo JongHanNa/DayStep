@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronDown, Target, Layers, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { saveLastVisitedRoute } from '@/lib/capacitor/lastVisitedRoute';
+
 
 // 탭 타입
 type TabType = 'responsibility' | 'resource' | 'goal';
@@ -182,17 +182,12 @@ export default function RoutinePage() {
     { id: 'goal', label: '목표', icon: Compass, color: '#22c55e' },
   ];
 
-  // 📍 Capacitor: 마지막 방문 페이지 저장
-  useEffect(() => {
-    saveLastVisitedRoute('/routine');
-  }, []);
-
   return (
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-base-100 pb-20">
         {/* 헤더 */}
         <div className="sticky top-0 z-10 bg-base-100 border-b border-base-300">
-          <div className={`max-w-3xl mx-auto px-4 ${process.env.BUILD_TARGET === 'mobile' ? 'pt-2 pb-2' : 'py-4'}`}>
+          <div className={`max-w-3xl mx-auto px-4 py-4`}>
             <p className="text-sm text-base-content/70 mt-1">
               일상적으로 반복하는 할일 관리
             </p>

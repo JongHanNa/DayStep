@@ -13,11 +13,6 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
   console.log('🔧 [서버 콜백] OAuth 콜백 처리 시작');
   
-  // 모바일 빌드에서는 사용하지 않음
-  if (process.env.BUILD_TARGET === 'mobile') {
-    return NextResponse.json({ error: 'Not available in mobile build' }, { status: 404 });
-  }
-
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');

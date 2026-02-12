@@ -3,7 +3,6 @@
 import { ThemeContext, Theme, ThemeContextType } from '@/hooks/useTheme';
 import { useEffect, useState } from 'react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
-import { syncWebViewBackgroundColor } from '@/lib/capacitor/theme-bridge';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -51,9 +50,6 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
     root.classList.remove('light', 'dark');
     root.classList.add(effectiveTheme);
     root.setAttribute('data-theme', effectiveTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
-
-    // iOS Capacitor: WebView 배경색 동기화 (overscroll 고무줄 효과 대응)
-    syncWebViewBackgroundColor(effectiveTheme);
   }, [theme]);
 
   // 컬러 테마 적용
@@ -77,36 +73,11 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
       root.classList.remove('light', 'dark');
       root.classList.add(systemTheme);
       root.setAttribute('data-theme', systemTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
-
-      // iOS Capacitor: WebView 배경색 동기화
-      syncWebViewBackgroundColor(systemTheme);
     };
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
-
-  // 앱 포그라운드 복귀 시 WebView 배경색 재동기화 (iOS에서 리셋되는 문제 대응)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        // Capacitor 네이티브 환경에서만 실행
-        try {
-          const { Capacitor } = await import('@capacitor/core');
-          if (Capacitor.isNativePlatform()) {
-            syncWebViewBackgroundColor(resolvedTheme);
-          }
-        } catch {
-          // 웹 환경에서는 무시
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [resolvedTheme]);
 
   const updateTheme = (newTheme: Theme) => {
     setTheme(newTheme);

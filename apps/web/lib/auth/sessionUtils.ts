@@ -1,14 +1,13 @@
 /**
  * Authentication Session Management Utilities
- * 
+ *
  * AuthContext에서 사용되는 세션 관리 관련 함수들을 분리했습니다.
- * 세션 복구, 사용자 로딩, Capacitor 환경 최적화 등의 기능을 포함합니다.
+ * 세션 복구, 사용자 로딩 등의 기능을 포함합니다.
  */
 
 import { User, Session } from '@supabase/supabase-js';
-import { Preferences } from '@capacitor/preferences';
 import { supabase } from '@/lib/supabase';
-import { fetchUser } from '@/lib/supabaseWebViewHelper';
+import { fetchUser } from '@/lib/supabase/users';
 import { User as AppUser } from '@/entities/user/User';
 
 /**
@@ -18,74 +17,22 @@ import { User as AppUser } from '@/entities/user/User';
  */
 const checkTokenExpiry = async (): Promise<{ hasValidToken: boolean; reason?: string }> => {
   try {
-    // 1. Supabase 클라이언트에서 토큰 확인
     const currentSession = await supabase.auth.getSession();
     if (currentSession.data.session?.access_token) {
       const tokenExpiry = currentSession.data.session.expires_at;
       const now = Math.floor(Date.now() / 1000);
-      
-      if (tokenExpiry && tokenExpiry > now + 60) { // 1분 여유 두고 체크
-        // Supabase 클라이언트에서 유효한 토큰 발견 (만료: ${tokenExpiry - now}초 후)
+
+      if (tokenExpiry && tokenExpiry > now + 60) {
         return { hasValidToken: true };
       }
     }
-    
-    // Supabase 클라이언트 토큰 없음/만료됨 - Capacitor 저장소 확인
-    
-    // 2. Capacitor 저장소에서 백업 토큰 확인
-    const { value: storedSession } = await Preferences.get({ key: 'supabase_auth_session' });
-    
-    if (storedSession) {
-      const sessionData = JSON.parse(storedSession);
-      if (sessionData.access_token && sessionData.expires_at) {
-        const tokenExpiry = sessionData.expires_at;
-        const now = Math.floor(Date.now() / 1000);
-        
-        console.log('🔍 Capacitor 저장소 토큰 만료 체크:', {
-          현재시간: new Date(now * 1000).toISOString(),
-          만료시간: new Date(tokenExpiry * 1000).toISOString(),
-          이미만료됨: tokenExpiry <= now + 60,
-          토큰시작: sessionData.access_token.substring(0, 20) + '...'
-        });
-        
-        if (tokenExpiry > now + 60) { // 1분 여유 두고 체크
-          // Capacitor 저장소에서 유효한 백업 토큰 발견 (만료: ${tokenExpiry - now}초 후)
-          return { hasValidToken: true };
-        } else {
-          console.warn('⚠️ Capacitor 저장소의 토큰도 만료됨');
-          return { hasValidToken: false, reason: 'stored-token-expired' };
-        }
-      }
-    }
-    
+
     return { hasValidToken: false, reason: 'no-token-found' };
-    
+
   } catch (error) {
     console.error('❌ 토큰 만료 체크 중 오류:', error);
     return { hasValidToken: false, reason: 'check-error' };
   }
-};
-
-/**
- * Capacitor 환경에서 세션 가져오기
- * 
- * @returns Promise<any | null> - 저장된 세션 데이터 또는 null
- */
-export const getCapacitorSession = async (): Promise<any | null> => {
-  try {
-    const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-    if (value) {
-      const sessionData = JSON.parse(value);
-      console.log('📱 Capacitor 세션 로드 성공:', {
-        hasAccessToken: !!sessionData.access_token,
-        userId: sessionData.user?.id
-      });
-      return sessionData;
-    }
-  } catch (e) {
-    console.error('❌ Capacitor 세션 로드 실패:', e);
-  }
-  return null;
 };
 
 /**
@@ -180,61 +127,6 @@ export const getSessionWithTimeout = async (
 };
 
 /**
- * 저장된 Supabase 세션 복구 시도
- * 
- * @returns Promise<{ session: Session | null; user: User | null; restored: boolean }>
- */
-export const restoreSupabaseSession = async (): Promise<{
-  session: Session | null;
-  user: User | null;
-  restored: boolean;
-}> => {
-  console.log('🔄 저장된 Supabase 세션 복구 시도...');
-  
-  try {
-    const supabaseAuthSession = await Preferences.get({ key: 'supabase_auth_session' });
-    if (!supabaseAuthSession.value) {
-      return { session: null, user: null, restored: false };
-    }
-
-    const sessionData = JSON.parse(supabaseAuthSession.value);
-    console.log('🔄 저장된 Supabase 세션 발견:', {
-      hasAccessToken: !!sessionData.access_token,
-      hasRefreshToken: !!sessionData.refresh_token,
-      userId: sessionData.user?.id
-    });
-
-    // Supabase 세션 직접 복구
-    const { data: restoredSession, error: restoreError } = await supabase.auth.setSession({
-      access_token: sessionData.access_token,
-      refresh_token: sessionData.refresh_token
-    });
-
-    if (!restoreError && restoredSession.session && restoredSession.user) {
-      console.log('✅ 저장된 Supabase 세션 복구 성공:', {
-        userId: restoredSession.user.id,
-        userEmail: restoredSession.user.email
-      });
-      return {
-        session: restoredSession.session,
-        user: restoredSession.user,
-        restored: true
-      };
-    } else {
-      console.warn('⚠️ 저장된 Supabase 세션 복구 실패:', restoreError);
-      // 실패한 세션 삭제
-      await Preferences.remove({ key: 'supabase_auth_session' });
-      return { session: null, user: null, restored: false };
-    }
-  } catch (sessionParseError) {
-    console.error('⚠️ 저장된 Supabase 세션 파싱 실패:', sessionParseError);
-    // 손상된 세션 삭제
-    await Preferences.remove({ key: 'supabase_auth_session' });
-    return { session: null, user: null, restored: false };
-  }
-};
-
-/**
  * Google idToken을 Supabase 세션으로 변환
  * 
  * @param idToken - Google idToken
@@ -264,18 +156,6 @@ export const convertGoogleTokenToSupabaseSession = async (
       userId: supabaseSession.user.id,
       userEmail: supabaseSession.user.email,
       hasRefreshToken: !!supabaseSession.session.refresh_token
-    });
-
-    // 새로 생성된 Supabase 세션을 저장
-    await Preferences.set({
-      key: 'supabase_auth_session',
-      value: JSON.stringify({
-        access_token: supabaseSession.session.access_token,
-        refresh_token: supabaseSession.session.refresh_token,
-        expires_at: supabaseSession.session.expires_at,
-        token_type: supabaseSession.session.token_type,
-        user: supabaseSession.user
-      })
     });
 
     return {
@@ -312,8 +192,8 @@ export const cleanupLegacyGoogleSession = async (sessionData: any): Promise<bool
 
     try {
       // 레거시 세션 정리
-      await Preferences.remove({ key: 'supabase.auth.session' });
-      await Preferences.remove({ key: 'supabase_auth_session' });
+      localStorage.removeItem('supabase.auth.session');
+      localStorage.removeItem('supabase_auth_session');
       console.log('✅ 레거시 Google 세션 정리 완료 - 새 로그인 필요');
       return true;
     } catch (cleanupError) {
@@ -546,63 +426,7 @@ export const loadAppUser = async (
   });
 
   try {
-    // Capacitor WebView 환경 최적화
-    const isCapacitor = !!(window as any).Capacitor;
-    
-    if (isCapacitor) {
-      console.log('📱 Capacitor 환경 감지 - JWT 토큰 직접 사용');
-      
-      // 🔑 토큰 만료 상태를 먼저 확인하여 불필요한 API 호출 방지
-      const tokenStatus = await checkTokenExpiry();
-      
-      if (!tokenStatus.hasValidToken) {
-        console.log('⚠️ 토큰이 만료되었거나 없음 - TOKEN_REFRESHED 이벤트 대기 후 처리');
-        console.log('❌ JWT 방식 실패 - 기본 AppUser 생성 (TOKEN_REFRESHED에서 재시도됨)');
-        const fallbackAppUser = AppUser.fromDatabase({
-          id: authUser.id,
-          email: authUser.email,
-          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as any);
-        return fallbackAppUser;
-      }
-      
-      console.log('✅ 유효한 토큰 발견 - JWT 사용자 조회 진행');
-
-      // 🔥 Defensive Programming: ensureUserExists 사용
-      const { ensureUserExists } = await import('@/lib/supabase/users');
-
-      const userData = await ensureUserExists(
-        authUser.id,
-        authUser.email,
-        authUser.user_metadata?.name || authUser.user_metadata?.full_name
-      );
-
-      if (userData) {
-        const appUser = AppUser.fromDatabase(userData);
-        console.log('✅ JWT 방식으로 사용자 정보 로드 완료:', {
-          appUserId: appUser.id,
-          appUserName: appUser.name,
-          appUserEmail: appUser.email
-        });
-        loadingUsers.delete(authUser.id); // 성공 시 플래그 제거
-        return appUser;
-      } else {
-        console.log('❌ JWT 방식 실패 - 기본 AppUser 생성');
-        const fallbackAppUser = AppUser.fromDatabase({
-          id: authUser.id,
-          email: authUser.email,
-          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as any);
-        return fallbackAppUser;
-      }
-    }
-
-    // 웹 환경에서도 Defensive Programming 적용
-    console.log('🌐 웹 환경 - ensureUserExists로 사용자 정보 조회/생성');
+    console.log('🌐 ensureUserExists로 사용자 정보 조회/생성');
 
     // 🔥 Defensive Programming: ensureUserExists 사용
     const { ensureUserExists } = await import('@/lib/supabase/users');
@@ -713,122 +537,9 @@ export const loadAppUserFromSession = async (
   // TOKEN_REFRESHED 이벤트에서 사용자 정보 로드 시작: ${authUser.id}
 
   try {
-    // 🔑 WebView 환경 최적화: setSession 생략하고 기존 세션 활용
-    const isCapacitor = !!(window as any).Capacitor;
-    
-    if (isCapacitor) {
-      console.log('📱 Capacitor WebView 환경 감지 - JWT 토큰 방식으로 DB 조회');
-      
-      // 🔥 중요: TOKEN_REFRESHED 이벤트에서는 session 파라미터의 토큰을 우선 사용
-      console.log('🔑 TOKEN_REFRESHED 세션에서 직접 토큰 사용:', {
-        hasSessionToken: !!session.access_token,
-        sessionExpiry: session.expires_at,
-        sessionUserId: session.user.id
-      });
-      
-      // 먼저 전달받은 session의 토큰으로 직접 테스트
-      try {
-        // fetchWithJWT가 아닌 직접 fetch로 session 토큰 사용
-        const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/users?id=eq.${authUser.id}`;
-        
-        console.log('🚀 TOKEN_REFRESHED 세션 토큰으로 직접 API 호출:', {
-          url: url,
-          hasToken: !!session.access_token,
-          tokenLength: session.access_token?.length,
-          tokenExpiry: session.expires_at
-        });
-        
-        const response = await fetch(url, {
-          headers: {
-            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          }
-        });
-        
-        console.log('📥 TOKEN_REFRESHED 직접 API 응답:', {
-          status: response.status,
-          ok: response.ok,
-          statusText: response.statusText
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          const user = Array.isArray(userData) ? userData[0] : userData;
-          
-          console.log('✅ TOKEN_REFRESHED 직접 API 성공:', {
-            hasUser: !!user,
-            userName: user?.name,
-            userEmail: user?.email
-          });
-          
-          if (user) {
-            // 🔑 성공한 새 토큰을 Capacitor 저장소에 즉시 업데이트
-            await Preferences.set({
-              key: 'supabase_auth_session',
-              value: JSON.stringify({
-                access_token: session.access_token,
-                refresh_token: session.refresh_token,
-                expires_at: session.expires_at,
-                token_type: session.token_type,
-                user: session.user
-              })
-            });
-            console.log('✅ 새로운 TOKEN_REFRESHED 세션이 Capacitor에 저장됨');
-            
-            const appUser = AppUser.fromDatabase(user);
-            console.log('✅ TOKEN_REFRESHED 직접 방식으로 AppUser 로드 완료');
-            return appUser;
-          }
-        } else {
-          const errorText = await response.text();
-          console.error('❌ TOKEN_REFRESHED 직접 API 실패:', {
-            status: response.status,
-            errorText: errorText
-          });
-        }
-      } catch (directError) {
-        console.error('❌ TOKEN_REFRESHED 직접 API 호출 중 오류:', directError);
-      }
-      
-      // 직접 방식 실패 시 기존 방식으로 폴백
-      console.log('🔄 직접 방식 실패 - 기존 JWT 테스트 방식으로 폴백');
-      
-      // Capacitor 저장소에서 세션 가져오기 (폴백)
-      const capacitorSession = await getCapacitorSession();
-      
-      if (capacitorSession?.access_token && capacitorSession.user?.id === authUser.id) {
-        console.log('✅ Capacitor 세션 유효함 - JWT 토큰으로 DB 접근 테스트');
-        
-        // JWT 토큰으로 DB 접근 권한 테스트
-        const { valid, userData } = await testUserJWTAccess(authUser.id);
-        
-        if (!valid) {
-          console.error('❌ JWT DB 접근 테스트 실패');
-          console.log('🚨 JWT 토큰 무효 - 폴백 AppUser 생성');
-          // 폴백 AppUser 생성
-          const fallbackAppUser = AppUser.fromDatabase({
-            id: authUser.id,
-            email: authUser.email,
-            name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          } as any);
-          return fallbackAppUser;
-        } else {
-          console.log('✅ JWT DB 접근 테스트 성공 - 인증 상태 정상');
-          // 테스트 성공 시 userData를 바로 사용
-          if (userData) {
-            const appUser = AppUser.fromDatabase(userData);
-            console.log('✅ JWT 방식으로 TOKEN_REFRESHED AppUser 로드 완료');
-            return appUser;
-          }
-        }
-      }
-    } else {
-      // 웹 환경에서는 Supabase 클라이언트와 세션 동기화 수행
-      console.log('🔄 일반 웹 환경 - TOKEN_REFRESHED 세션을 Supabase 클라이언트에 명시적 동기화 시작...');
+    {
+      // 웹/Electron 환경에서는 Supabase 클라이언트와 세션 동기화 수행
+      console.log('🔄 TOKEN_REFRESHED 세션을 Supabase 클라이언트에 명시적 동기화 시작...');
 
       // 1단계: setSession으로 명시적 동기화 (타임아웃 적용)
       console.log('🔄 1단계: setSession으로 명시적 동기화 중...');

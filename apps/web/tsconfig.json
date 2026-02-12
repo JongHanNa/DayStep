@@ -30,24 +30,6 @@
       "@/*": [
         "./*"
       ],
-      "@mobile/*": [
-        "../mobile-capacitor/src/*"
-      ],
-      "@mobile/pages/*": [
-        "../mobile-capacitor/src/pages/*"
-      ],
-      "@mobile/features/*": [
-        "../mobile-capacitor/src/features/*"
-      ],
-      "@mobile/entities/*": [
-        "../mobile-capacitor/src/entities/*"
-      ],
-      "@mobile/widgets/*": [
-        "../mobile-capacitor/src/widgets/*"
-      ],
-      "@mobile/shared/*": [
-        "../mobile-capacitor/src/shared/*"
-      ],
       "@plugins/*": [
         "./plugins/*"
       ]
@@ -64,7 +46,6 @@
   "exclude": [
     "node_modules",
     "supabase/functions/**/*",
-    "../mobile-capacitor/**/*",
     "src/**/*",
     "**/src/**/*",
     "**/__tests__/**/*",

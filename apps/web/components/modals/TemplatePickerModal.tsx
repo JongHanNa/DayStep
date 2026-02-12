@@ -162,7 +162,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onTemplateSelect 
 
   if (!isOpen) return null;
 
-  // Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor
+  // Z-[110] ensures modal appears above AppHeader (z-40)
   return (
     <dialog open className="modal modal-open z-[110]">
       <div className={`modal-box w-full max-w-7xl h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>

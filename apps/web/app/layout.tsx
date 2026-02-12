@@ -49,9 +49,9 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${openDyslexic.variable} bg-base-200`} suppressHydrationWarning>
       <head>
-        {/* Capacitor/Electron 환경 클래스를 React 렌더링 전에 동기적으로 추가 (safe-area-top 패딩 적용에 필요) */}
+        {/* Electron 환경 클래스를 React 렌더링 전에 동기적으로 추가 */}
         <script dangerouslySetInnerHTML={{
-          __html: `(function(){var d=document.documentElement;if(window.location.protocol==='capacitor:')d.classList.add('capacitor');if(navigator.userAgent.includes('Electron'))d.classList.add('electron');})();`
+          __html: `(function(){if(navigator.userAgent.includes('Electron'))document.documentElement.classList.add('electron');})();`
         }} />
       </head>
       <body className="antialiased mobile-container scrollbar-hide bg-base-200">

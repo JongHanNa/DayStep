@@ -175,7 +175,7 @@ export interface OptimisticState {
 }
 
 export function createOptimisticManager<T>() {
-  // Capacitor 환경에서 Map readonly 문제 해결을 위해 일반 객체 사용
+  // 일반 객체 사용 (readonly 호환성)
   let operations: Record<string, OptimisticOperation<T>> = {};
   
   return {

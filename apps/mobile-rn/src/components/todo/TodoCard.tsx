@@ -18,6 +18,7 @@ import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
 import {format} from 'date-fns';
 import {resolveTodoIcon} from '@/lib/iconMap';
+import {getPriorityColor} from '@/lib/todoUtils';
 
 interface TodoCardProps {
   todo: Todo;
@@ -141,16 +142,6 @@ export function TodoCard({todo, index = 0, onToggle, onPress}: TodoCardProps) {
       </AnimatedPressable>
     </Animated.View>
   );
-}
-
-function getPriorityColor(
-  importance?: boolean | null,
-  urgency?: boolean | null,
-): string | null {
-  if (importance && urgency) return '#EF4444'; // 긴급+중요
-  if (importance && !urgency) return '#F59E0B'; // 중요
-  if (!importance && urgency) return '#3B82F6'; // 긴급
-  return null;
 }
 
 const styles = StyleSheet.create({

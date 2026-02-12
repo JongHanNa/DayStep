@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useADHDStore, ADHDScreen } from '@/state/stores/adhdStore';
-import { isCapacitorEnv } from '@/lib/utils/platform';
+
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import type { ADHDSubViewId, ADHDRouteGroupId } from '@/lib/constants/adhd-screens';
@@ -97,9 +97,7 @@ interface ADHDContainerProps {
 /**
  * ADHD 통합 컨테이너
  *
- * 모든 ADHD 모드의 단일 진입점으로, 환경에 따라 적절한 Container를 렌더링합니다.
- * - 웹: URL 기반으로 모드 결정
- * - Capacitor: Store 기반으로 모드 결정
+ * 모든 ADHD 모드의 단일 진입점으로 URL 기반으로 모드를 결정합니다.
  *
  * 코드 스플리팅을 통해 각 Container를 lazy loading합니다.
  */
@@ -110,9 +108,8 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
   const userId = user?.id;
   const { goRelationshipInsights, goFuel } = useADHDNavigation();
 
-  // 우선순위: 명시적 mode prop > Capacitor Store > URL 경로
-  const currentMode = explicitMode
-    ?? (isCapacitorEnv() ? storeMode : getModeFromPath(pathname));
+  // 우선순위: 명시적 mode prop > URL 경로
+  const currentMode = explicitMode ?? getModeFromPath(pathname);
 
   const handleExit = onExit ?? (() => {
     // 기본 동작: 홈으로 이동

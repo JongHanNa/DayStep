@@ -8,7 +8,6 @@ import { TodoInsert, TodoUpdate, CreateTodoInput, UpdateTodoInput, ScheduleType,
 import { BaseService, ServiceError } from '../base/BaseService';
 import { TodoRepository, TodoService as ITodoService } from './TodoRepository';
 import { reminderScheduler } from '@/features/reminder/reminder-scheduler';
-import { isCapacitorEnvironment } from '@/lib/supabase/core';
 import {
   createTodoWithJWT,
   updateTodoWithJWT,
@@ -22,7 +21,7 @@ import {
 } from '@/lib/supabaseWebViewHelper';
 // time-overrides 삭제됨 - 새 아키텍처에서는 독립 할일 방식 사용
 import { format } from 'date-fns';
-// getCurrentUser는 Capacitor 백업 세션 패턴으로 교체됨
+// getCurrentUser는 JWT 백업 세션 패턴으로 교체됨
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -43,7 +42,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         this.validateRequiredFields({ id }, ['id'], 'findById');
 
         try {
-          // 🔑 JWT 방식으로 할일 조회 (Capacitor 환경 호환)
+          // 🔑 JWT 방식으로 할일 조회
           const data = await queryRLSTableWithJWT('todos', [
             { column: 'id', operator: 'eq', value: id }
           ], { single: true });
@@ -178,94 +177,12 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           }
         }
 
-        console.log('🔥 [TodoService] createWithRecurrence 호출됨:', { input, isCapacitor: isCapacitorEnvironment() });
+        console.log('🔥 [TodoService] createWithRecurrence 호출됨:', { input });
     console.log('🔍 [DEBUG] input.order_index 초기값:', input.order_index, typeof input.order_index);
 
-        // Capacitor 환경에서는 JWT 방식 사용
-        if (isCapacitorEnvironment()) {
-          console.log('🔑 [TodoService] Capacitor 환경 감지 - JWT 방식 사용');
-
-          // 🔑 Capacitor 백업 세션 패턴으로 사용자 ID 획득
-          let userId: string | undefined = undefined;
-
-          try {
-            // 순서 인덱스 자동 설정
-            if (input.order_index === undefined) {
-              console.log('📊 [TodoService] order_index 자동 설정 시작');
-              
-              try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user?.id) {
-                  userId = session.user.id;
-                }
-              } catch (sessionError) {
-                console.log("⚠️ 세션 조회 실패:", sessionError);
-              }
-              
-              if (!userId && typeof window !== 'undefined' && (window as any).Capacitor) {
-                try {
-                  const { Preferences } = await import('@capacitor/preferences');
-                  const sessionDataStr = await Preferences.get({ key: 'supabase_auth_session' });
-                  
-                  if (sessionDataStr.value) {
-                    const sessionData = JSON.parse(sessionDataStr.value);
-                    if (sessionData.user?.id) {
-                      userId = sessionData.user.id;
-                    }
-                  }
-                } catch (capacitorError) {
-                  console.log("⚠️ Capacitor 백업 사용자 ID 로드 실패:", capacitorError);
-                }
-              }
-              
-              if (!userId) {
-                throw new ServiceError('인증된 사용자를 찾을 수 없습니다.', 'UNAUTHORIZED');
-              }
-              
-              const maxOrder = await getMaxOrderIndexWithJWT('todos', userId);
-              input.order_index = maxOrder + 1;
-              console.log('📊 [TodoService] order_index 설정 완료:', { maxOrder, newOrderIndex: input.order_index });
-            }
-
-            console.log('🔥 [TodoService] JWT 할일 생성 시작:', { finalInput: input });
-
-            // 부모 할일 생성 (userId 전달하여 project_ids 처리 보장)
-            const parentTodo = await createTodoWithJWT({
-              ...input,
-              recurrence_pattern: input.recurrence_pattern || 'none',
-              recurrence_interval: input.recurrence_interval || 1
-            }, userId);
-            
-            const todos = [Todo.fromDatabase(parentTodo)];
-            
-            console.log('ℹ️ [TodoService] 할일 생성 완료 - 리마인더는 앱 시작 시 일괄 스케줄링됨');
-
-            // ✅ 반복 일정 인스턴스는 DB에 저장하지 않음 (클라이언트에서 가상 생성)
-            // recurrence-utils.ts의 generateRecurrenceInstances()가 메모리에서 인스턴스 생성
-            if (input.recurrence_pattern && input.recurrence_pattern !== 'none') {
-              console.log('✅ 반복 할일 parent 저장 완료 - 인스턴스는 클라이언트(TimelineContainer)에서 생성됨');
-            }
-
-            console.log('✅ [TodoService] JWT 할일 생성 성공:', { parentTodo });
-            return todos;
-          } catch (error) {
-            console.error('❌ [TodoService] JWT 할일 생성 실패:', error);
-            throw new ServiceError(
-              'JWT 방식으로 할일 생성에 실패했습니다.',
-              'JWT_CREATE_FAILED',
-              error as Error,
-              { input }
-            );
-          }
-        }
-
-        // 웹 환경에서는 기존 Supabase 클라이언트 사용
-        console.log('🌐 [TodoService] 웹 환경 감지 - Supabase 클라이언트 사용');
-
-        // 부모 할일 생성 - user_id가 누락되어 있어서 RLS 정책 위반
-        // 🔑 Capacitor 백업 세션 패턴으로 사용자 ID 획득
+        // 사용자 ID 획득
         let userId: string | null = null;
-        
+
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user?.id) {
@@ -274,23 +191,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         } catch (sessionError) {
           console.log("⚠️ 세션 조회 실패:", sessionError);
         }
-        
-        if (!userId && typeof window !== 'undefined' && (window as any).Capacitor) {
-          try {
-            const { Preferences } = await import('@capacitor/preferences');
-            const sessionDataStr = await Preferences.get({ key: 'supabase_auth_session' });
-            
-            if (sessionDataStr.value) {
-              const sessionData = JSON.parse(sessionDataStr.value);
-              if (sessionData.user?.id) {
-                userId = sessionData.user.id;
-              }
-            }
-          } catch (capacitorError) {
-            console.log("⚠️ Capacitor 백업 사용자 ID 로드 실패:", capacitorError);
-          }
-        }
-        
+
         if (!userId) {
           throw new ServiceError('인증된 사용자를 찾을 수 없습니다.', 'UNAUTHORIZED');
         }
@@ -332,7 +233,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           });
         }
 
-        // ✅ JWT 방식 사용 (Capacitor 환경과 동일)
+        // ✅ JWT 방식 사용 (Electron 환경 호환)
         console.log('🔥 [TodoService] 웹 환경 JWT 할일 생성 시작:', { finalInput: input });
 
         const parentTodo = await createTodoWithJWT({
@@ -372,42 +273,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           'create'
         );
 
-        console.log('🔥 [TodoService] create 호출됨:', { todoData, isCapacitor: isCapacitorEnvironment() });
-
-        // Capacitor 환경에서는 JWT 방식 사용
-        if (isCapacitorEnvironment()) {
-          console.log('🔑 [TodoService] Capacitor 환경 감지 - JWT 방식 사용');
-
-          try {
-            // 순서 인덱스 자동 설정
-            if (todoData.order_index === undefined) {
-              console.log('📊 [TodoService] order_index 자동 설정 시작');
-              const maxOrder = await getMaxOrderIndexWithJWT('todos', todoData.user_id);
-              todoData.order_index = maxOrder + 1;
-              console.log('📊 [TodoService] order_index 설정 완료:', { maxOrder, newOrderIndex: todoData.order_index });
-            }
-
-            console.log('🔥 [TodoService] JWT 할일 생성 시작:', { finalTodoData: todoData });
-            const data = await createTodoWithJWT(todoData, todoData.user_id);
-            const todo = Todo.fromDatabase(data);
-            
-            console.log('ℹ️ [TodoService] 단일 할일 생성 완료 - 리마인더는 앱 시작 시 일괄 스케줄링됨');
-            
-            console.log('✅ [TodoService] JWT 할일 생성 성공:', { data });
-            return todo;
-          } catch (error) {
-            console.error('❌ [TodoService] JWT 할일 생성 실패:', error);
-            throw new ServiceError(
-              'JWT 방식으로 할일 생성에 실패했습니다.',
-              'JWT_CREATE_FAILED',
-              error as Error,
-              { todoData }
-            );
-          }
-        }
-
-        // 웹 환경에서는 기존 Supabase 클라이언트 사용
-        console.log('🌐 [TodoService] 웹 환경 감지 - Supabase 클라이언트 사용');
+        console.log('🔥 [TodoService] create 호출됨:', { todoData });
 
         // 순서 인덱스 자동 설정 - 기존 패턴과 동일하게 수정
         if (todoData.order_index === undefined) {
@@ -511,7 +377,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           updateDataKeys: Object.keys(updateData)
         });
 
-        // 🔑 JWT 방식으로 할일 업데이트 (Capacitor 환경 호환)
+        // 🔑 JWT 방식으로 할일 업데이트 (Electron 환경 호환)
         const data = await updateWithJWT('todos', 
           { column: 'id', operator: 'eq', value: id },
           updateData
@@ -1423,24 +1289,11 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           );
         }
 
-        // userId 획득 (Capacitor 백업 세션 패턴 사용)
+        // userId 획득
         let userId: string | null = null;
 
-        if (isCapacitorEnvironment()) {
-          const { Preferences } = await import('@capacitor/preferences');
-          const sessionData = await Preferences.get({ key: 'supabase_auth_session' });
-          if (sessionData.value) {
-            try {
-              const session = JSON.parse(sessionData.value);
-              userId = session?.user?.id || null;
-            } catch (e) {
-              console.error('세션 파싱 실패:', e);
-            }
-          }
-        } else {
-          const { data } = await supabase.auth.getSession();
-          userId = data?.session?.user?.id || null;
-        }
+        const { data } = await supabase.auth.getSession();
+        userId = data?.session?.user?.id || null;
 
         if (!userId) {
           throw new ServiceError(
@@ -1627,8 +1480,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         console.log('🔴 [DEBUG] deleteRecurringTodoWithDate - 사용자 ID 조회 시작:', {
           parentId,
           deleteType,
-          excludedDate,
-          isCapacitor: typeof window !== 'undefined' && window.location?.protocol === 'capacitor:'
+          excludedDate
         });
         
         let userId: string | null = null;
@@ -1646,29 +1498,6 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           console.log("⚠️ deleteRecurringTodoWithDate - 세션 조회 실패:", sessionError);
         }
 
-        // Capacitor 백업 시도 (createTodo와 동일한 로직)
-        if (!userId && isCapacitorEnvironment()) {
-          try {
-            const { Preferences } = await import('@capacitor/preferences');
-            const sessionDataStr = await Preferences.get({ key: 'supabase_auth_session' });
-            
-            if (sessionDataStr.value) {
-              const sessionData = JSON.parse(sessionDataStr.value);
-              if (sessionData.user?.id) {
-                userId = sessionData.user.id;
-                console.log("🔑 deleteRecurringTodoWithDate - Capacitor 저장소에서 사용자 ID 획득:", {
-                  userId: userId?.substring(0, 8),
-                });
-              }
-            }
-          } catch (capacitorError) {
-            console.log(
-              "⚠️ deleteRecurringTodoWithDate - Capacitor 백업 사용자 ID 로드 실패:",
-              capacitorError
-            );
-          }
-        }
-        
         if (!userId) {
           console.error('🔴 [DEBUG] 사용자 ID 없음 (모든 시도 실패)');
           throw new ServiceError(
@@ -1734,8 +1563,7 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
         // 현재 사용자 정보 가져오기 (createTodo와 동일한 패턴 사용)
         console.log('🔴 [DEBUG] deleteRecurringTodo - 사용자 ID 조회 시작:', {
           id,
-          deleteType,
-          isCapacitor: typeof window !== 'undefined' && window.location?.protocol === 'capacitor:'
+          deleteType
         });
         
         let userId: string | null = null;
@@ -1753,29 +1581,6 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
           console.log("⚠️ deleteRecurringTodo - 세션 조회 실패:", sessionError);
         }
 
-        // Capacitor 백업 시도 (createTodo와 동일한 로직)
-        if (!userId && isCapacitorEnvironment()) {
-          try {
-            const { Preferences } = await import('@capacitor/preferences');
-            const sessionDataStr = await Preferences.get({ key: 'supabase_auth_session' });
-            
-            if (sessionDataStr.value) {
-              const sessionData = JSON.parse(sessionDataStr.value);
-              if (sessionData.user?.id) {
-                userId = sessionData.user.id;
-                console.log("🔑 deleteRecurringTodo - Capacitor 저장소에서 사용자 ID 획득:", {
-                  userId: userId?.substring(0, 8),
-                });
-              }
-            }
-          } catch (capacitorError) {
-            console.log(
-              "⚠️ deleteRecurringTodo - Capacitor 백업 사용자 ID 로드 실패:",
-              capacitorError
-            );
-          }
-        }
-        
         if (!userId) {
           console.error('🔴 [DEBUG] deleteRecurringTodo - 사용자 ID 없음 (모든 시도 실패)');
           throw new ServiceError(

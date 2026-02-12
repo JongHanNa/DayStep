@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { CustomerInfo } from '@revenuecat/purchases-capacitor';
+interface CustomerInfo {
+  entitlements: { active: Record<string, any> };
+  [key: string]: any;
+}
 
 /**
  * 구독 상태 타입

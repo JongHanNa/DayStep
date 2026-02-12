@@ -71,8 +71,6 @@ export default function WeeklyCalendar({
   const weekEnd = addDays(weekStart, 6); // 토요일
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const isMobile = process.env.BUILD_TARGET === 'mobile';
-
   // 할일을 스패닝 카드와 일반 카드로 분리
   const { spanningCards, singleDayCards } = (() => {
     const spanning: SpanningCard[] = [];
@@ -196,7 +194,7 @@ export default function WeeklyCalendar({
         </div>
 
         {/* 스패닝 카드 오버레이 (CSS Grid span 사용) - 웹 환경만 */}
-        {!isMobile && enableSpanning && spanningCards.length > 0 && (
+        {enableSpanning && spanningCards.length > 0 && (
           <div className="grid grid-cols-7 gap-2 absolute top-0 left-0 right-0 pointer-events-none">
             {/* 헤더 공간 확보 */}
             {weekDays.map((_, i) => (

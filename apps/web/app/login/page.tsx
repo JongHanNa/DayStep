@@ -71,9 +71,7 @@ export default function LoginPage() {
     demo: string | null;
   }>({ error: null, redirect: null, demo: null });
 
-  // 개발 환경 여부 확인 (웹 개발 또는 Capacitor 개발 환경)
-  const isDevelopment = process.env.NODE_ENV === 'development' ||
-    process.env.NEXT_PUBLIC_CAPACITOR_ENV === 'development';
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     // LoginPage 마운트 - 클라이언트 사이드 렌더링

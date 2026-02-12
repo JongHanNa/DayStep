@@ -7,7 +7,6 @@ import {
   applyCompletionStatusToInstances,
   isRecurrenceInstanceCompleted
 } from "@/lib/recurrence-utils";
-import { isCapacitorEnvironment } from "@/lib/supabase/core";
 import {
   createAsyncAction,
   logStoreAction,
@@ -101,41 +100,8 @@ export const deleteRecurringTodoAction = async (
  */
 export const loadCompletionsForDateRangeAction = async (startDate: Date, endDate: Date) => {
   try {
-    // 🔑 사용자 ID 획득 (Capacitor 백업 패턴)
-    let userId: string | null = null;
-    
-    // 먼저 일반 세션에서 사용자 ID 시도
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        userId = session.user.id;
-        console.log("🔑 완료 기록 로드 - 세션에서 사용자 ID 획득:", {
-          userId: userId?.substring(0, 8),
-        });
-      }
-    } catch (sessionError) {
-      console.log("⚠️ 완료 기록 로드 - 세션 조회 실패:", sessionError);
-    }
-
-    // Capacitor 백업 시도
-    if (!userId && isCapacitorEnvironment()) {
-      try {
-        const { Preferences } = await import('@capacitor/preferences');
-        const sessionDataStr = await Preferences.get({ key: 'supabase_auth_session' });
-        
-        if (sessionDataStr.value) {
-          const sessionData = JSON.parse(sessionDataStr.value);
-          if (sessionData.user?.id) {
-            userId = sessionData.user.id;
-            console.log("🔑 완료 기록 로드 - Capacitor 저장소에서 사용자 ID 획득:", {
-              userId: userId?.substring(0, 8),
-            });
-          }
-        }
-      } catch (capacitorError) {
-        console.log("⚠️ 완료 기록 로드 - Capacitor 백업 사용자 ID 로드 실패:", capacitorError);
-      }
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
 
     if (!userId) {
       console.warn("⚠️ 완료 기록 로드: 사용자 인증 필요");
@@ -171,41 +137,8 @@ export const toggleRecurrenceCompletionAction = async (
   todoCompletions: { todo_id: string; completion_date: string }[]
 ): Promise<{ isCompleted: boolean; completions: { todo_id: string; completion_date: string }[] }> => {
   try {
-    // 🔑 Capacitor 백업 세션 패턴으로 사용자 ID 획득
-    let userId: string | null = null;
-    
-    // 먼저 일반 세션에서 사용자 ID 시도
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        userId = session.user.id;
-        console.log("🔑 세션에서 사용자 ID 획득:", {
-          userId: userId?.substring(0, 8),
-        });
-      }
-    } catch (sessionError) {
-      console.log("⚠️ 세션 조회 실패:", sessionError);
-    }
-
-    // Capacitor 백업 시도 (createTodo와 동일한 로직)
-    if (!userId && typeof window !== 'undefined' && (window as any).Capacitor) {
-      try {
-        const { Preferences } = await import('@capacitor/preferences');
-        const sessionDataStr = await Preferences.get({ key: 'supabase_auth_session' }); // 🔑 올바른 key
-        
-        if (sessionDataStr.value) {
-          const sessionData = JSON.parse(sessionDataStr.value);
-          if (sessionData.user?.id) {
-            userId = sessionData.user.id;
-            console.log("🔑 Capacitor 저장소에서 사용자 ID 획득:", {
-              userId: userId?.substring(0, 8),
-            });
-          }
-        }
-      } catch (capacitorError) {
-        console.log("⚠️ Capacitor 백업 사용자 ID 로드 실패:", capacitorError);
-      }
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
 
     if (!userId) {
       console.warn("⚠️ 완료 토글: 사용자 인증 필요");

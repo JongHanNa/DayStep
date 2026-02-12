@@ -118,7 +118,7 @@ export default function NoteEditModal({
 
   if (!open || !note) return null;
 
-  // Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor
+  // Z-[110] ensures modal appears above AppHeader (z-40)
   return (
     <dialog open className="modal modal-open z-[110]">
       <div className={`modal-box bg-base-200 w-full max-w-7xl h-screen flex flex-col overflow-hidden p-[8px] ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>

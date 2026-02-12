@@ -66,11 +66,8 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
   // DndContext 언마운트 시 잔여 DOM 정리
   useEffect(() => {
-    const isCap = typeof window !== 'undefined' && (window as any).Capacitor !== undefined;
     return () => {
-      if (!isCap) return;
       requestAnimationFrame(() => {
-        // DndContext 잔여 요소 수동 정리 (React 언마운트 후에도 남아있을 수 있음)
         document.querySelectorAll('[id^="DndLiveRegion"], [id^="DndDescribedBy"]')
           .forEach(el => el.remove());
         window.scrollTo(0, 0);
@@ -119,16 +116,14 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
   const [edgeHover, setEdgeHover] = useState<'left' | 'right' | null>(null);
   const pageSwitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor !== undefined;
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: isCapacitor ? 300 : 200,
-        tolerance: isCapacitor ? 8 : 5,
+        delay: 200,
+        tolerance: 5,
       },
     })
   );

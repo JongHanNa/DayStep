@@ -11,42 +11,16 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * 환경별 동적 사이트 URL 가져오기
- * - Capacitor: http://192.168.219.101:3000 (네트워크 접근용)
- * - Browser: http://localhost:3000 (로컬 개발용)
  */
 // 환경 감지 결과를 캐시하여 성능 향상
-let cachedEnvironment: 'capacitor' | 'electron' | 'browser' | null = null;
+let cachedEnvironment: 'electron' | 'browser' | null = null;
 
-function detectEnvironment(): 'capacitor' | 'electron' | 'browser' {
+function detectEnvironment(): 'electron' | 'browser' {
   if (cachedEnvironment) {
     return cachedEnvironment;
   }
 
-  // 1. Capacitor protocol 감지 (가장 확실한 방법)
-  if (window.location.protocol === 'capacitor:') {
-    cachedEnvironment = 'capacitor';
-    return 'capacitor';
-  }
-
-  // 2. Capacitor 객체 감지
-  if (typeof (window as any).Capacitor !== 'undefined') {
-    const isNative = (window as any).Capacitor?.isNativePlatform?.() === true;
-    if (isNative) {
-      cachedEnvironment = 'capacitor';
-      return 'capacitor';
-    }
-  }
-
-  // 3. UserAgent 기반 감지 (추가 보완)
-  const userAgent = window.navigator.userAgent || '';
-  const isCapacitorWebView = userAgent.includes('CapacitorWebView');
-
-  if (isCapacitorWebView) {
-    cachedEnvironment = 'capacitor';
-    return 'capacitor';
-  }
-
-  // 4. Electron 감지 (electronAPI 객체 확인)
+  // Electron 감지 (electronAPI 객체 확인)
   if ((window as any).electronAPI) {
     cachedEnvironment = 'electron';
     return 'electron';
@@ -62,18 +36,7 @@ export function getDynamicSiteURL(): string {
     return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   }
 
-  // 클라이언트 사이드: 환경 감지
-  try {
-    const environment = detectEnvironment();
-    if (environment === 'capacitor') {
-      console.log('🔧 [URL 감지] Capacitor 환경 감지됨');
-      return process.env.NEXT_PUBLIC_SITE_URL_CAPACITOR || 'http://192.168.219.101:3000';
-    }
-    
-    console.log('🔧 [URL 감지] 브라우저 환경으로 감지됨');
-  } catch (error) {
-    console.warn('🔧 [URL 감지] 환경 감지 실패, 기본값 사용:', error);
-  }
+  // 클라이언트 사이드
 
   // 브라우저 환경 (기본값)
   return process.env.NEXT_PUBLIC_SITE_URL_BROWSER || 'http://localhost:3000';
@@ -88,14 +51,6 @@ export function toSiteURL(path: string): string {
   const siteUrl = getDynamicSiteURL();
   console.log('🎯 [URL 생성] 환경별 사이트 URL:', siteUrl);
   return `${siteUrl}${path}`;
-}
-
-/**
- * Capacitor 환경인지 확인하는 유틸리티 함수
- */
-export function isCapacitorEnvironment(): boolean {
-  if (typeof window === 'undefined') return false;
-  return detectEnvironment() === 'capacitor';
 }
 
 /**

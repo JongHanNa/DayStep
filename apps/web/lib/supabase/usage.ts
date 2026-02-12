@@ -52,7 +52,7 @@ export async function fetchUserUsageStats(userId: string): Promise<UserUsageStat
   try {
     console.log('📊 용량 통계 조회:', userId);
 
-    // JWT 방식으로 조회 (Capacitor 환경 지원)
+    // JWT 방식으로 조회 (Electron 환경 지원)
     const condition: QueryCondition = {
       column: 'user_id',
       operator: 'eq',

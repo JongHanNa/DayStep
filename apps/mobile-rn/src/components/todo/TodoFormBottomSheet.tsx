@@ -2,11 +2,10 @@
  * TodoFormBottomSheet
  * 할일 생성/편집 바텀시트
  * - @gorhom/bottom-sheet 기반
- * - 제목, 스케줄 타입, 시간, 우선순위, 반복, 아이콘
+ * - 요약 뷰 + 서브시트 패턴 (시간, 반복, 우선순위, 아이콘)
  */
 import React, {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -23,21 +22,25 @@ import {
   StyleSheet,
 } from 'react-native';
 import BottomSheet, {BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
-import Animated, {FadeIn, FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {SummaryRow} from './SummaryRow';
+import {TimePickerSheet, type TimePickerSheetRef} from './sheets/TimePickerSheet';
+import {RecurrencePickerSheet, type RecurrencePickerSheetRef} from './sheets/RecurrencePickerSheet';
+import {PriorityPickerSheet, type PriorityPickerSheetRef} from './sheets/PriorityPickerSheet';
+import {IconPickerSheet, type IconPickerSheetRef} from './sheets/IconPickerSheet';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
-import {format, addHours, setMinutes, parseISO} from 'date-fns';
+import {format, addHours, parseISO} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
-import {resolveTodoIcon, ICON_CATEGORIES} from '@/lib/iconMap';
+import {resolveTodoIcon} from '@/lib/iconMap';
 import {
   ClipboardList,
   Calendar,
   Clock,
   Repeat,
+  Flag,
   CheckCircle,
 } from 'lucide-react-native';
 
@@ -69,11 +72,6 @@ interface FormData {
   recurrenceDaysOfWeek: number[];
   completed: boolean;
 }
-
-
-const DURATIONS = [5, 10, 15, 20, 30, 45, 60, 90, 120];
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const DEFAULT_FORM: FormData = {
   title: '',
@@ -140,6 +138,20 @@ function getRecurrenceLabel(form: FormData): string {
   return '반복 없음';
 }
 
+function getPriorityLabel(form: FormData): string {
+  if (form.importance && form.urgency) return '🔴 긴급 + 중요';
+  if (form.importance) return '🟡 중요';
+  if (form.urgency) return '🔵 긴급';
+  return '⚪ 보통';
+}
+
+function getPriorityIconColor(form: FormData): string {
+  if (form.importance && form.urgency) return '#EF4444';
+  if (form.importance) return '#F59E0B';
+  if (form.urgency) return '#3B82F6';
+  return '#9CA3AF';
+}
+
 // ============================================
 // Component
 // ============================================
@@ -151,18 +163,20 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     const haptic = useHaptic();
     const {primaryColor} = useTheme();
 
+    // 서브시트 refs
+    const timeSheetRef = useRef<TimePickerSheetRef>(null);
+    const recurrenceSheetRef = useRef<RecurrencePickerSheetRef>(null);
+    const prioritySheetRef = useRef<PriorityPickerSheetRef>(null);
+    const iconSheetRef = useRef<IconPickerSheetRef>(null);
+
     const {createTodo, updateTodo, selectedDate} = useTodoStore();
 
     const [mode, setMode] = useState<'create' | 'edit'>('create');
     const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
     const [form, setForm] = useState<FormData>({...DEFAULT_FORM});
-    const [showIcons, setShowIcons] = useState(false);
-    const [iconCategory, setIconCategory] = useState(0);
-    const [showTimeSection, setShowTimeSection] = useState(false);
-    const [showRecurrence, setShowRecurrence] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    const snapPoints = useMemo(() => ['75%', '92%'], []);
+    const snapPoints = useMemo(() => ['55%', '75%'], []);
 
     // ------------------------------------------
     // Imperative handle
@@ -173,9 +187,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
         setMode('create');
         setEditingTodo(null);
         setForm({...DEFAULT_FORM, scheduledDate: targetDate});
-        setShowIcons(false);
-        setShowTimeSection(false);
-        setShowRecurrence(false);
         bottomSheetRef.current?.snapToIndex(0);
         setTimeout(() => titleInputRef.current?.focus(), 300);
       },
@@ -201,13 +212,11 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
             : [],
           completed: todo.completed ?? false,
         });
-        setShowTimeSection(todo.schedule_type === 'timed');
         // timed인데 endTime이 없으면 자동 설정 (startTime + 1시간)
         if (todo.schedule_type === 'timed' && todo.start_time && !todo.end_time) {
           const start = new Date(todo.start_time);
           setForm(prev => ({...prev, endTime: addHours(start, 1)}));
         }
-        setShowRecurrence(todo.recurrence_pattern !== 'none');
         bottomSheetRef.current?.snapToIndex(0);
       },
       close: () => {
@@ -223,48 +232,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
         setForm(prev => ({...prev, [field]: value}));
       },
       [],
-    );
-
-    const handleScheduleTypeChange = useCallback(
-      (type: ScheduleType) => {
-        haptic.selection();
-        updateField('scheduleType', type);
-        setShowTimeSection(type === 'timed');
-        if (type === 'timed' && !form.startTime) {
-          // 기본 시간 설정: 다음 정각
-          const now = new Date();
-          const nextHour = addHours(setMinutes(now, 0), 1);
-          updateField('startTime', nextHour);
-          updateField('endTime', addHours(nextHour, 1));
-        }
-      },
-      [form.startTime, haptic, updateField],
-    );
-
-    const handleHourChange = useCallback(
-      (delta: number) => {
-        if (!form.startTime) return;
-        haptic.selection();
-        const newStart = addHours(form.startTime, delta);
-        updateField('startTime', newStart);
-        if (form.endTime) {
-          updateField('endTime', addHours(form.endTime, delta));
-        }
-      },
-      [form.startTime, form.endTime, haptic, updateField],
-    );
-
-    const toggleDay = useCallback(
-      (day: number) => {
-        haptic.selection();
-        setForm(prev => {
-          const days = prev.recurrenceDaysOfWeek.includes(day)
-            ? prev.recurrenceDaysOfWeek.filter(d => d !== day)
-            : [...prev.recurrenceDaysOfWeek, day];
-          return {...prev, recurrenceDaysOfWeek: days};
-        });
-      },
-      [haptic],
     );
 
     // ------------------------------------------
@@ -296,7 +263,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           baseData.start_time = form.startTime.toISOString();
           baseData.end_time = form.endTime?.toISOString() ?? null;
         } else if (form.scheduleType === 'anytime') {
-          // anytime: 선택한 날짜의 시작 시간 설정
           const dayStart = new Date(selectedDate + 'T00:00:00');
           baseData.start_time = dayStart.toISOString();
           baseData.anytime_duration = form.anytimeDuration;
@@ -358,397 +324,181 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
       [],
     );
 
-    const priorityLabel = useMemo(() => {
-      if (form.importance && form.urgency) return '🔴 긴급 + 중요';
-      if (form.importance) return '🟡 중요';
-      if (form.urgency) return '🔵 긴급';
-      return '⚪ 보통';
-    }, [form.importance, form.urgency]);
-
     return (
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
-        handleIndicatorStyle={{backgroundColor: '#D1D5DB'}}
-        backgroundStyle={styles.sheetBg}
-        onClose={() => Keyboard.dismiss()}>
-        <BottomSheetView style={styles.container}>
-          {/* 헤더 */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              {mode === 'create' ? '새 할일' : '할일 편집'}
-            </Text>
-            <View style={styles.headerActions}>
-              {mode === 'edit' && (
+      <>
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={-1}
+          snapPoints={snapPoints}
+          enablePanDownToClose
+          backdropComponent={renderBackdrop}
+          keyboardBehavior="interactive"
+          keyboardBlurBehavior="restore"
+          handleIndicatorStyle={{backgroundColor: '#D1D5DB'}}
+          backgroundStyle={styles.sheetBg}
+          onClose={() => Keyboard.dismiss()}>
+          <BottomSheetView style={styles.container}>
+            {/* 헤더 */}
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>
+                {mode === 'create' ? '새 할일' : '할일 편집'}
+              </Text>
+              <View style={styles.headerActions}>
+                {mode === 'edit' && (
+                  <AnimatedPressable
+                    onPress={handleDelete}
+                    hapticType="light"
+                    style={styles.deleteBtn}>
+                    <Text style={styles.deleteBtnText}>삭제</Text>
+                  </AnimatedPressable>
+                )}
                 <AnimatedPressable
-                  onPress={handleDelete}
-                  hapticType="light"
-                  style={styles.deleteBtn}>
-                  <Text style={styles.deleteBtnText}>삭제</Text>
+                  onPress={handleSave}
+                  hapticType="medium"
+                  style={[styles.saveBtn, {backgroundColor: primaryColor}]}>
+                  <Text style={styles.saveBtnText}>
+                    {saving ? '저장 중...' : '저장'}
+                  </Text>
                 </AnimatedPressable>
-              )}
-              <AnimatedPressable
-                onPress={handleSave}
-                hapticType="medium"
-                style={[styles.saveBtn, {backgroundColor: primaryColor}]}>
-                <Text style={styles.saveBtnText}>
-                  {saving ? '저장 중...' : '저장'}
-                </Text>
-              </AnimatedPressable>
+              </View>
             </View>
-          </View>
 
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
-            {/* 제목 입력 */}
-            <View style={styles.section}>
-              <View style={styles.titleRow}>
-                <AnimatedPressable
-                  onPress={() => {
-                    haptic.selection();
-                    setShowIcons(v => !v);
-                  }}
-                  haptic={false}
-                  style={styles.iconBtn}>
-                  {(() => {
-                    const ResolvedIcon = resolveTodoIcon(form.icon);
-                    return ResolvedIcon ? (
-                      <ResolvedIcon size={24} color="#6B7280" />
-                    ) : (
-                      <ClipboardList size={24} color="#9CA3AF" />
-                    );
-                  })()}
-                </AnimatedPressable>
-                <TextInput
-                  ref={titleInputRef}
-                  value={form.title}
-                  onChangeText={v => updateField('title', v)}
-                  placeholder="할일을 입력하세요"
-                  placeholderTextColor="#9CA3AF"
-                  style={styles.titleInput}
-                  returnKeyType="done"
-                  autoFocus={mode === 'create'}
-                />
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}>
+              {/* 제목 입력 */}
+              <View style={styles.section}>
+                <View style={styles.titleRow}>
+                  <AnimatedPressable
+                    onPress={() => {
+                      haptic.selection();
+                      iconSheetRef.current?.open();
+                    }}
+                    haptic={false}
+                    style={styles.iconBtn}>
+                    {(() => {
+                      const ResolvedIcon = resolveTodoIcon(form.icon);
+                      return ResolvedIcon ? (
+                        <ResolvedIcon size={24} color="#6B7280" />
+                      ) : (
+                        <ClipboardList size={24} color="#9CA3AF" />
+                      );
+                    })()}
+                  </AnimatedPressable>
+                  <TextInput
+                    ref={titleInputRef}
+                    value={form.title}
+                    onChangeText={v => updateField('title', v)}
+                    placeholder="할일을 입력하세요"
+                    placeholderTextColor="#9CA3AF"
+                    style={styles.titleInput}
+                    returnKeyType="done"
+                    autoFocus={mode === 'create'}
+                  />
+                </View>
               </View>
 
-              {/* 루시드 아이콘 선택 */}
-              {showIcons && (
-                <Animated.View entering={FadeIn.duration(200)}>
-                  {/* 카테고리 칩 */}
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.iconCategoryScroll}
-                    contentContainerStyle={styles.iconCategoryContent}>
-                    {ICON_CATEGORIES.map((cat, idx) => (
-                      <AnimatedPressable
-                        key={cat.label}
-                        onPress={() => {
-                          haptic.selection();
-                          setIconCategory(idx);
-                        }}
-                        haptic={false}
-                        style={[
-                          styles.iconCategoryChip,
-                          iconCategory === idx && {backgroundColor: primaryColor},
-                        ]}>
-                        <Text
-                          style={[
-                            styles.iconCategoryText,
-                            iconCategory === idx && {color: '#FFFFFF'},
-                          ]}>
-                          {cat.label}
-                        </Text>
-                      </AnimatedPressable>
-                    ))}
-                  </ScrollView>
-                  {/* 아이콘 그리드 */}
-                  <View style={styles.iconGrid}>
-                    {ICON_CATEGORIES[iconCategory]?.icons.map(({key, Icon}) => (
-                      <AnimatedPressable
-                        key={key}
-                        onPress={() => {
-                          haptic.selection();
-                          updateField('icon', key === form.icon ? '' : key);
-                        }}
-                        haptic={false}
-                        style={[
-                          styles.iconOption,
-                          key === form.icon && {
-                            backgroundColor: primaryColor + '20',
-                            borderColor: primaryColor,
-                          },
-                        ]}>
-                        <Icon
-                          size={22}
-                          color={key === form.icon ? primaryColor : '#6B7280'}
-                        />
-                      </AnimatedPressable>
-                    ))}
-                  </View>
-                </Animated.View>
-              )}
-            </View>
-
-            {/* ──────── SummaryRow 섹션 ──────── */}
-            <View style={styles.summarySection}>
-              {/* 날짜 행 */}
-              <SummaryRow
-                Icon={Calendar}
-                iconColor="#3B82F6"
-                label={format(parseISO(form.scheduledDate), 'yyyy년 M월 d일 (EEE)', {locale: ko})}
-                suffix={form.scheduledDate === format(new Date(), 'yyyy-MM-dd') ? '오늘' : undefined}
-                showChevron={false}
-              />
-
-              {/* 시간 행 */}
-              <SummaryRow
-                Icon={Clock}
-                iconColor="#F59E0B"
-                label={getTimeLabel(form)}
-                suffix={getTimeSuffix(form)}
-                onPress={() => {
-                  haptic.selection();
-                  setShowTimeSection(v => !v);
-                }}
-              />
-
-              {/* 반복 행 */}
-              <SummaryRow
-                Icon={Repeat}
-                iconColor="#8B5CF6"
-                label={getRecurrenceLabel(form)}
-                onPress={() => {
-                  haptic.selection();
-                  setShowRecurrence(v => !v);
-                }}
-              />
-
-              {/* 완료 토글 (편집 모드만) */}
-              {mode === 'edit' && (
+              {/* ──────── SummaryRow 섹션 ──────── */}
+              <View style={styles.summarySection}>
+                {/* 날짜 행 */}
                 <SummaryRow
-                  Icon={CheckCircle}
-                  iconColor={form.completed ? '#22C55E' : '#9CA3AF'}
-                  label={form.completed ? '완료됨' : '미완료'}
-                  switchValue={form.completed}
-                  onSwitchChange={v => updateField('completed', v)}
-                  primaryColor={primaryColor}
+                  Icon={Calendar}
+                  iconColor="#3B82F6"
+                  label={format(parseISO(form.scheduledDate), 'yyyy년 M월 d일 (EEE)', {locale: ko})}
+                  suffix={form.scheduledDate === format(new Date(), 'yyyy-MM-dd') ? '오늘' : undefined}
                   showChevron={false}
                 />
-              )}
-            </View>
 
-            {/* 시간 설정 패널 (펼침) */}
-            {showTimeSection && (
-              <Animated.View entering={FadeInDown.duration(250)} style={styles.section}>
-                {/* 스케줄 타입 */}
-                <View style={styles.chipRow}>
-                  {(['anytime', 'timed', 'all_day'] as ScheduleType[]).map(type => (
-                    <AnimatedPressable
-                      key={type}
-                      onPress={() => handleScheduleTypeChange(type)}
-                      haptic={false}
-                      style={[
-                        styles.chip,
-                        form.scheduleType === type && {
-                          backgroundColor: primaryColor,
-                        },
-                      ]}>
-                      <Text
-                        style={[
-                          styles.chipText,
-                          form.scheduleType === type && styles.chipTextActive,
-                        ]}>
-                        {type === 'anytime' ? '시간 미정' : type === 'timed' ? '시간 지정' : '종일'}
-                      </Text>
-                    </AnimatedPressable>
-                  ))}
-                </View>
+                {/* 시간 행 → TimePickerSheet */}
+                <SummaryRow
+                  Icon={Clock}
+                  iconColor="#F59E0B"
+                  label={getTimeLabel(form)}
+                  suffix={getTimeSuffix(form)}
+                  onPress={() => {
+                    haptic.selection();
+                    timeSheetRef.current?.open();
+                  }}
+                />
 
-                {/* timed: 시작/종료 시간 */}
-                {form.scheduleType === 'timed' && form.startTime && (
-                  <View style={[styles.timeRow, {marginTop: 12}]}>
-                    <AnimatedPressable
-                      onPress={() => handleHourChange(-1)}
-                      hapticType="selection"
-                      style={styles.timeBtn}>
-                      <Text style={styles.timeBtnText}>−</Text>
-                    </AnimatedPressable>
-                    <View style={styles.timeDisplay}>
-                      <Text style={styles.timeText}>
-                        {format(form.startTime, 'HH:mm')}
-                      </Text>
-                      {form.endTime && (
-                        <Text style={styles.timeSep}>
-                          {' ~ '}{format(form.endTime, 'HH:mm')}
-                        </Text>
-                      )}
-                    </View>
-                    <AnimatedPressable
-                      onPress={() => handleHourChange(1)}
-                      hapticType="selection"
-                      style={styles.timeBtn}>
-                      <Text style={styles.timeBtnText}>+</Text>
-                    </AnimatedPressable>
-                  </View>
+                {/* 반복 행 → RecurrencePickerSheet */}
+                <SummaryRow
+                  Icon={Repeat}
+                  iconColor="#8B5CF6"
+                  label={getRecurrenceLabel(form)}
+                  onPress={() => {
+                    haptic.selection();
+                    recurrenceSheetRef.current?.open();
+                  }}
+                />
+
+                {/* 우선순위 행 → PriorityPickerSheet */}
+                <SummaryRow
+                  Icon={Flag}
+                  iconColor={getPriorityIconColor(form)}
+                  label={getPriorityLabel(form)}
+                  onPress={() => {
+                    haptic.selection();
+                    prioritySheetRef.current?.open();
+                  }}
+                />
+
+                {/* 완료 토글 (편집 모드만) */}
+                {mode === 'edit' && (
+                  <SummaryRow
+                    Icon={CheckCircle}
+                    iconColor={form.completed ? '#22C55E' : '#9CA3AF'}
+                    label={form.completed ? '완료됨' : '미완료'}
+                    switchValue={form.completed}
+                    onSwitchChange={v => updateField('completed', v)}
+                    primaryColor={primaryColor}
+                    showChevron={false}
+                  />
                 )}
-
-                {/* anytime: 소요 시간 */}
-                {form.scheduleType === 'anytime' && (
-                  <View style={[styles.chipRow, {marginTop: 12}]}>
-                    {DURATIONS.map(d => (
-                      <AnimatedPressable
-                        key={d}
-                        onPress={() => {
-                          haptic.selection();
-                          updateField('anytimeDuration', form.anytimeDuration === d ? null : d);
-                        }}
-                        haptic={false}
-                        style={[
-                          styles.durationChip,
-                          form.anytimeDuration === d && {
-                            backgroundColor: primaryColor,
-                          },
-                        ]}>
-                        <Text
-                          style={[
-                            styles.chipText,
-                            form.anytimeDuration === d && styles.chipTextActive,
-                          ]}>
-                          {d >= 60 ? `${d / 60}시간` : `${d}분`}
-                        </Text>
-                      </AnimatedPressable>
-                    ))}
-                  </View>
-                )}
-              </Animated.View>
-            )}
-
-            {/* 우선순위 (아이젠하워 매트릭스) */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>우선순위</Text>
-              <Text style={[styles.priorityBadge, {color: primaryColor}]}>
-                {priorityLabel}
-              </Text>
-              <View style={styles.priorityRow}>
-                <AnimatedPressable
-                  onPress={() => {
-                    haptic.selection();
-                    updateField('importance', !form.importance);
-                  }}
-                  haptic={false}
-                  style={[
-                    styles.priorityBtn,
-                    form.importance && styles.priorityBtnActive,
-                    form.importance && {borderColor: '#F59E0B'},
-                  ]}>
-                  <Text style={styles.priorityBtnText}>
-                    ⭐ 중요
-                  </Text>
-                </AnimatedPressable>
-                <AnimatedPressable
-                  onPress={() => {
-                    haptic.selection();
-                    updateField('urgency', !form.urgency);
-                  }}
-                  haptic={false}
-                  style={[
-                    styles.priorityBtn,
-                    form.urgency && styles.priorityBtnActive,
-                    form.urgency && {borderColor: '#3B82F6'},
-                  ]}>
-                  <Text style={styles.priorityBtnText}>
-                    ⚡ 긴급
-                  </Text>
-                </AnimatedPressable>
-                <AnimatedPressable
-                  onPress={() => {
-                    haptic.selection();
-                    updateField('isReluctantMustDo', !form.isReluctantMustDo);
-                  }}
-                  haptic={false}
-                  style={[
-                    styles.priorityBtn,
-                    form.isReluctantMustDo && styles.priorityBtnActive,
-                    form.isReluctantMustDo && {borderColor: '#EF4444'},
-                  ]}>
-                  <Text style={styles.priorityBtnText}>
-                    😤 해야 할 일
-                  </Text>
-                </AnimatedPressable>
               </View>
-            </View>
+            </ScrollView>
+          </BottomSheetView>
+        </BottomSheet>
 
-            {/* 반복 설정 패널 (펼침) */}
-            {showRecurrence && (
-              <Animated.View entering={FadeInDown.duration(200)} style={styles.section}>
-                <View style={styles.chipRow}>
-                  {(['none', 'daily', 'weekly', 'monthly'] as RecurrencePattern[]).map(
-                    p => (
-                      <AnimatedPressable
-                        key={p}
-                        onPress={() => {
-                          haptic.selection();
-                          updateField('recurrencePattern', p);
-                        }}
-                        haptic={false}
-                        style={[
-                          styles.chip,
-                          form.recurrencePattern === p && {
-                            backgroundColor: primaryColor,
-                          },
-                        ]}>
-                        <Text
-                          style={[
-                            styles.chipText,
-                            form.recurrencePattern === p && styles.chipTextActive,
-                          ]}>
-                          {p === 'none' ? '없음' : p === 'daily' ? '매일' : p === 'weekly' ? '매주' : '매월'}
-                        </Text>
-                      </AnimatedPressable>
-                    ),
-                  )}
-                </View>
+        {/* ──────── 서브시트 (메인시트 외부에 렌더) ──────── */}
+        <TimePickerSheet
+          ref={timeSheetRef}
+          scheduleType={form.scheduleType}
+          startTime={form.startTime}
+          endTime={form.endTime}
+          anytimeDuration={form.anytimeDuration}
+          onScheduleTypeChange={v => updateField('scheduleType', v)}
+          onStartTimeChange={v => updateField('startTime', v)}
+          onEndTimeChange={v => updateField('endTime', v)}
+          onAnytimeDurationChange={v => updateField('anytimeDuration', v)}
+        />
 
-                {/* 요일 선택 (weekly) */}
-                {form.recurrencePattern === 'weekly' && (
-                  <View style={styles.weekdayRow}>
-                    {WEEKDAYS.map((day, i) => (
-                      <AnimatedPressable
-                        key={i}
-                        onPress={() => toggleDay(i)}
-                        haptic={false}
-                        style={[
-                          styles.weekdayBtn,
-                          form.recurrenceDaysOfWeek.includes(i) && {
-                            backgroundColor: primaryColor,
-                          },
-                        ]}>
-                        <Text
-                          style={[
-                            styles.weekdayText,
-                            form.recurrenceDaysOfWeek.includes(i) &&
-                              styles.weekdayTextActive,
-                          ]}>
-                          {day}
-                        </Text>
-                      </AnimatedPressable>
-                    ))}
-                  </View>
-                )}
-              </Animated.View>
-            )}
-          </ScrollView>
-        </BottomSheetView>
-      </BottomSheet>
+        <RecurrencePickerSheet
+          ref={recurrenceSheetRef}
+          recurrencePattern={form.recurrencePattern}
+          recurrenceDaysOfWeek={form.recurrenceDaysOfWeek}
+          onPatternChange={v => updateField('recurrencePattern', v)}
+          onDaysChange={v => updateField('recurrenceDaysOfWeek', v)}
+        />
+
+        <PriorityPickerSheet
+          ref={prioritySheetRef}
+          importance={form.importance}
+          urgency={form.urgency}
+          isReluctantMustDo={form.isReluctantMustDo}
+          onImportanceChange={v => updateField('importance', v)}
+          onUrgencyChange={v => updateField('urgency', v)}
+          onReluctantChange={v => updateField('isReluctantMustDo', v)}
+        />
+
+        <IconPickerSheet
+          ref={iconSheetRef}
+          selectedIcon={form.icon}
+          onIconChange={v => updateField('icon', v)}
+        />
+      </>
     );
   },
 );
@@ -824,12 +574,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
   },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginBottom: 8,
-  },
   // Title
   titleRow: {
     flexDirection: 'row',
@@ -845,9 +589,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBtnText: {
-    fontSize: 24,
-  },
   titleInput: {
     flex: 1,
     fontSize: 16,
@@ -855,149 +596,5 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     paddingVertical: 10,
     marginLeft: 4,
-  },
-  // Icon grid
-  iconGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  iconOption: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  iconCategoryScroll: {
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  iconCategoryContent: {
-    gap: 6,
-    paddingRight: 8,
-  },
-  iconCategoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: '#F3F4F6',
-  },
-  iconCategoryText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  // Chips
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#4B5563',
-  },
-  chipTextActive: {
-    color: '#FFFFFF',
-  },
-  durationChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-  },
-  // Time
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  timeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeBtnText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  timeDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  timeSep: {
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  // Priority
-  priorityBadge: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  priorityRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  priorityBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-  },
-  priorityBtnActive: {
-    backgroundColor: '#FFF7ED',
-  },
-  priorityBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  // Recurrence
-  weekdayRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  weekdayBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
-  },
-  weekdayText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  weekdayTextActive: {
-    color: '#FFFFFF',
   },
 });

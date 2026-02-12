@@ -143,7 +143,7 @@ export default function ContentEditorModal({
   if (typeof document === 'undefined') return null;
 
   // Portal로 document.body에 직접 렌더링하여 부모 모달의 제약에서 벗어남
-  // Z-[110] ensures modal appears above AppHeader (z-40) in Capacitor
+  // Z-[110] ensures modal appears above AppHeader (z-40)
   return createPortal(
     <dialog open className="modal modal-open z-[110] fixed inset-0">
       <div className={`modal-box rounded-none bg-base-200 dark:bg-base-100 w-full max-w-7xl h-screen max-h-screen flex flex-col overflow-hidden ${process.env.BUILD_TARGET === 'web' ? 'pt-0' : ''}`}>

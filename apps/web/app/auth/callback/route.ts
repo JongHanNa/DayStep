@@ -18,18 +18,6 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
   console.log('🔧 [OAuth 콜백] Nextbase 패턴 처리 시작');
   
-  // 모바일 빌드에서는 사용하지 않음
-  if (process.env.BUILD_TARGET === 'mobile') {
-    return NextResponse.json(
-      {
-        error: 'OAuth callback is not available in mobile builds',
-        details: 'Use native Capacitor OAuth plugins instead',
-        platform: 'mobile'
-      },
-      { status: 501 }
-    );
-  }
-
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');

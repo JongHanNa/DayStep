@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import { setupRealtimeSync, stopRealtimeSync } from '@/lib/realtimeSync';
-import { startCapacitorPolling, stopCapacitorPolling } from '@/lib/realtimeSyncFallback';
 
 interface RealtimeSyncProviderProps {
   children: React.ReactNode;
@@ -25,9 +24,6 @@ export function RealtimeSyncProvider({ children }: RealtimeSyncProviderProps) {
     // (인증이 필요한 작업은 각 스토어에서 처리)
     const startRealtimeSync = () => {
       cleanupRef.current = setupRealtimeSync();
-      
-      // ✅ 스마트 폴백: Realtime 실패 시에만 폴링 시작
-      // 폴링은 setupRealtimeSync 내부에서 연결 상태에 따라 자동 제어됨
     };
 
     // 즉시 시작
@@ -41,7 +37,6 @@ export function RealtimeSyncProvider({ children }: RealtimeSyncProviderProps) {
         cleanupRef.current = null;
       }
       stopRealtimeSync();
-      // ✅ 폴링 정리는 stopRealtimeSync 내부에서 자동 처리됨
       isInitializedRef.current = false;
     };
   }, []);
@@ -52,11 +47,10 @@ export function RealtimeSyncProvider({ children }: RealtimeSyncProviderProps) {
       if (cleanupRef.current) {
         cleanupRef.current();
       }
-      stopCapacitorPolling();
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };

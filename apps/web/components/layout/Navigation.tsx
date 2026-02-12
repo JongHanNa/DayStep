@@ -7,8 +7,6 @@ import { Clock, Settings } from "lucide-react";
 import { SyncStatusIndicator } from "@/components/ui/pull-to-refresh";
 import { usePlatformUI } from "@/hooks/usePlatformUI";
 import { useEffect, useState } from "react";
-import { Capacitor } from "@capacitor/core";
-import { StatusBar, Style } from "@capacitor/status-bar";
 
 /**
  * 네비게이션 컴포넌트
@@ -22,53 +20,18 @@ export function Navigation() {
   // console.log('Navigation - isAuthenticated:', isAuthenticated, 'user:', user?.id);
 
   useEffect(() => {
-    const setupSafeArea = async () => {
-      if (Capacitor.isNativePlatform()) {
-        try {
-          // StatusBar 설정 - iOS에서 웹뷰가 상태바 아래로 들어가지 않도록 설정
-          // setOverlaysWebView는 더 이상 사용되지 않으므로 주석 처리
-          // await StatusBar.setOverlaysWebView({ overlay: false });
+    const setupSafeArea = () => {
+      // 웹 환경에서는 Safe Area Insets CSS 활용
+      const computedStyle = getComputedStyle(document.documentElement);
+      const safeAreaInsetTop = computedStyle.getPropertyValue(
+        "env(safe-area-inset-top)"
+      );
 
-          // 대신 스타일 설정으로 처리
-          await StatusBar.setStyle({ style: Style.Light });
-
-          // iOS 기본 상태바 높이 사용
-          let statusBarHeight = 44; // iOS 기본 상태바 높이
-
-          // 디바이스별 상태바 높이 감지
-          const userAgent = navigator.userAgent;
-          const isIPhoneX =
-            userAgent.includes("iPhone") &&
-            (window.screen.height === 812 || // iPhone X, XS
-              window.screen.height === 896 || // iPhone XR, XS Max
-              window.screen.height === 844 || // iPhone 12, 13, 14
-              window.screen.height === 926 || // iPhone 12 Pro Max, 13 Pro Max, 14 Plus
-              window.screen.height === 932); // iPhone 14 Pro Max, 15 Pro Max
-
-          if (isIPhoneX) {
-            statusBarHeight = 54; // 노치가 있는 iPhone
-          }
-
-          setSafeAreaTop(statusBarHeight);
-          console.log("Safe Area Top 설정:", statusBarHeight, "px");
-        } catch (error) {
-          console.warn("Safe Area 계산 오류 (무시됨):", error);
-          // 오류 발생 시 iOS 기본 높이 사용
-          setSafeAreaTop(44);
-        }
+      if (safeAreaInsetTop && safeAreaInsetTop !== "0px") {
+        const insetValue = parseInt(safeAreaInsetTop.replace("px", "")) || 0;
+        setSafeAreaTop(insetValue);
       } else {
-        // 웹 환경에서는 Safe Area Insets CSS 활용
-        const computedStyle = getComputedStyle(document.documentElement);
-        const safeAreaInsetTop = computedStyle.getPropertyValue(
-          "env(safe-area-inset-top)"
-        );
-
-        if (safeAreaInsetTop && safeAreaInsetTop !== "0px") {
-          const insetValue = parseInt(safeAreaInsetTop.replace("px", "")) || 0;
-          setSafeAreaTop(insetValue);
-        } else {
-          setSafeAreaTop(0);
-        }
+        setSafeAreaTop(0);
       }
     };
 

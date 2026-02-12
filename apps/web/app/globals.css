@@ -49,50 +49,15 @@
   }
 }
 
-/* Capacitor: --cap-safe-top CSS-only 선언 (JS 불필요, WKUserScript가 .capacitor 클래스 추가 시 매칭) */
-.capacitor {
-  --cap-safe-top: 0px;
-  --header-total-height: calc(56px + var(--cap-safe-top, 0px));
-}
-
-/* safe-area-top: --cap-safe-top 우선, 미설정시 env() fallback */
+/* safe-area-top: env() 사용 */
 .safe-area-top {
-  padding-top: var(--cap-safe-top, env(safe-area-inset-top, 0px)) !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
 }
 
-/* Capacitor: body 스크롤 차단 (상태바 뒤로 밀림 방지) */
-html.capacitor,
-html.capacitor body {
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Capacitor: 상태바 영역 불투명 오버레이 (overlaysWebView: true 대응) */
-html.capacitor body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--cap-safe-top, 0px);
-  background-color: var(--color-base-100);
-  z-index: 9999;
-  pointer-events: none;
-}
-
-/* WKWebView safe-area fix: @dnd-kit LiveRegion의 position:fixed가
-   WKWebView safe-area inset 렌더링을 방해하는 것을 방지 */
-html.capacitor [id^="DndLiveRegion"],
-html.capacitor [id^="DndDescribedBy"] {
-  position: absolute !important;
-}
-
-/* 모든 환경의 dialog에 safe area 적용 (PWA standalone + Capacitor fallback) */
+/* 모든 환경의 dialog에 safe area 적용 (PWA standalone) */
 /* createPortal → position: fixed dialog는 부모 safe-area-top을 우회하므로 별도 처리 */
 dialog[open] {
-  padding-top: var(--cap-safe-top, env(safe-area-inset-top, 0px)) !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
 }
 
 /* Electron 환경 - 커스텀 타이틀바 */
@@ -341,7 +306,7 @@ html, body {
   @apply bg-base-100;
 }
 
-/* 배경색 - iOS Capacitor overscroll(고무줄 효과) 대응 */
+/* 배경색 - iOS overscroll(고무줄 효과) 대응 */
 /* CSS 변수 참조로 단일 소스 유지 */
 html {
   background-color: var(--color-base-100) !important;
@@ -705,7 +670,7 @@ body {
       padding-bottom: max(12px, env(safe-area-inset-bottom));
     }
 
-    /* Capacitor/PWA safe-area-top 스타일은 @layer 밖 (파일 상단)에서 max() 함수로 정의됨 */
+    /* PWA safe-area-top 스타일은 @layer 밖 (파일 상단)에서 정의됨 */
 
     /* 하드웨어 가속 최적화 */
     .hardware-accelerated {

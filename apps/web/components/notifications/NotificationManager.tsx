@@ -7,8 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Capacitor } from '@capacitor/core';
-import { 
+import {
   NotificationManager, 
   NotificationHelper,
   NotificationStatus,
@@ -34,7 +33,8 @@ export const NotificationManagerComponent: React.FC = () => {
   // 예약된 알림 목록 업데이트
   const updateScheduledNotifications = useCallback(async () => {
     try {
-      if (!Capacitor.isNativePlatform()) return;
+      // 네이티브 플랫폼이 아니므로 항상 리턴
+      return;
 
       const result = await NotificationManager.getPendingNotifications();
       const converted = NotificationHelper.convertToScheduledNotifications(result.notifications);
@@ -62,10 +62,8 @@ export const NotificationManagerComponent: React.FC = () => {
   useEffect(() => {
     const initializeNotificationStatus = async () => {
       try {
-        if (!Capacitor.isNativePlatform()) {
-          setPermissionStatus('denied');
-          return;
-        }
+        setPermissionStatus('denied');
+        return;
 
         const result = await NotificationManager.checkPermission();
         setPermissionStatus(result.status);
@@ -176,7 +174,7 @@ export const NotificationManagerComponent: React.FC = () => {
     return NotificationHelper.formatRelativeTime(seconds);
   };
 
-  const isNative = Capacitor.isNativePlatform();
+  const isNative = false;
   const permissionGranted = permissionStatus === 'granted';
 
   if (!isNative) {
@@ -190,9 +188,6 @@ export const NotificationManagerComponent: React.FC = () => {
         <CardContent className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">
             알림 관리 기능은 모바일 앱에서만 사용할 수 있습니다.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Capacitor iOS/Android 환경에서 실행해주세요.
           </p>
         </CardContent>
       </Card>

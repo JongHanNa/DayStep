@@ -2,7 +2,6 @@ import { Todo } from "@/entities/todo/Todo";
 import { CreateTodoInput, ScheduleType } from "@/types";
 import { supabase } from "@/lib/supabase";
 // import { integratedNotificationService } from "@/services/integrated-notification.service";
-// import { widgetSyncService } from "@/services/widget-sync.service";
 import {
   createStore,
   createOptimisticManager,
@@ -56,7 +55,7 @@ import {
   updateLoadStateOnSuccess,
 } from "./actions/todoCacheActions";
 
-// JWT 기반 서브태스크 함수들 (Capacitor 환경 지원)
+// JWT 기반 서브태스크 함수들
 import {
   fetchSubtasksWithJWT,
   createSubtaskWithJWT,
@@ -137,22 +136,8 @@ export const useTodoStore = createStore<TodoStoreState>(
         });
 
         try {
-          // 🔑 Capacitor 백업 인증 패턴
-          let userId: string | null = null;
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-              userId = session.user.id;
-            }
-          } catch {}
-
-          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
-            const { Preferences } = await import('@capacitor/preferences');
-            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            if (value) {
-              userId = JSON.parse(value).user?.id;
-            }
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
 
           if (!userId) {
             throw new Error("사용자 인증이 필요합니다.");
@@ -212,22 +197,8 @@ export const useTodoStore = createStore<TodoStoreState>(
         });
 
         try {
-          // Capacitor 백업 인증 패턴
-          let userId: string | null = null;
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-              userId = session.user.id;
-            }
-          } catch {}
-
-          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
-            const { Preferences } = await import('@capacitor/preferences');
-            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            if (value) {
-              userId = JSON.parse(value).user?.id;
-            }
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
 
           if (!userId) {
             throw new Error("사용자 인증이 필요합니다.");
@@ -253,22 +224,8 @@ export const useTodoStore = createStore<TodoStoreState>(
       // 프로젝트별 할일 조회 (날짜 범위 제한 없음)
       fetchTodosByProjectId: async (projectId: string) => {
         try {
-          // Capacitor 백업 인증 패턴
-          let userId: string | null = null;
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-              userId = session.user.id;
-            }
-          } catch {}
-
-          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
-            const { Preferences } = await import('@capacitor/preferences');
-            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            if (value) {
-              userId = JSON.parse(value).user?.id;
-            }
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
 
           if (!userId) {
             throw new Error("사용자 인증이 필요합니다.");
@@ -317,22 +274,8 @@ export const useTodoStore = createStore<TodoStoreState>(
         });
 
         try {
-          // Capacitor 백업 인증 패턴
-          let userId: string | null = null;
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-              userId = session.user.id;
-            }
-          } catch {}
-
-          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
-            const { Preferences } = await import('@capacitor/preferences');
-            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            if (value) {
-              userId = JSON.parse(value).user?.id;
-            }
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
 
           if (!userId) {
             throw new Error("사용자 인증이 필요합니다.");
@@ -1127,31 +1070,17 @@ export const useTodoStore = createStore<TodoStoreState>(
         return { completed, total };
       },
 
-      // 서브태스크 조회 (JWT 방식 - Capacitor 환경 지원)
+      // 서브태스크 조회 (JWT 방식)
       fetchSubtasks: async (parentTodoId: string) => {
         try {
-          // Capacitor 백업 인증 패턴
-          let userId: string | null = null;
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-              userId = session.user.id;
-            }
-          } catch {}
-
-          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
-            const { Preferences } = await import('@capacitor/preferences');
-            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            if (value) {
-              userId = JSON.parse(value).user?.id;
-            }
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
 
           if (!userId) {
             throw new Error("사용자 인증이 필요합니다.");
           }
 
-          // JWT 방식으로 서브태스크 조회 (Capacitor 환경 지원)
+          // JWT 방식으로 서브태스크 조회
           const data = await fetchSubtasksWithJWT(userId, parentTodoId);
 
           // Todo 인스턴스로 변환
@@ -1178,25 +1107,11 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
       },
 
-      // 서브태스크 생성 (JWT 방식 - Capacitor 환경 지원)
+      // 서브태스크 생성 (JWT 방식)
       createSubtask: async (parentTodoId: string, title: string) => {
         try {
-          // Capacitor 백업 인증 패턴
-          let userId: string | null = null;
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user?.id) {
-              userId = session.user.id;
-            }
-          } catch {}
-
-          if (!userId && typeof window !== 'undefined' && 'Capacitor' in window) {
-            const { Preferences } = await import('@capacitor/preferences');
-            const { value } = await Preferences.get({ key: 'supabase_auth_session' });
-            if (value) {
-              userId = JSON.parse(value).user?.id;
-            }
-          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const userId = session?.user?.id;
 
           if (!userId) {
             throw new Error("사용자 인증이 필요합니다.");
@@ -1225,7 +1140,7 @@ export const useTodoStore = createStore<TodoStoreState>(
             project_id: parentTodo?.projectId,
           };
 
-          // JWT 방식으로 서브태스크 생성 (Capacitor 환경 지원)
+          // JWT 방식으로 서브태스크 생성
           const data = await createSubtaskWithJWT(subtaskData);
 
           if (!data) {
@@ -1259,7 +1174,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         }
       },
 
-      // 서브태스크 완료 토글 (JWT 방식 - Capacitor 환경 지원)
+      // 서브태스크 완료 토글 (JWT 방식)
       // 모든 서브태스크 완료 시 부모 자동 완료
       toggleSubtask: async (subtaskId: string) => {
         const state = get();
@@ -1289,7 +1204,7 @@ export const useTodoStore = createStore<TodoStoreState>(
         });
 
         try {
-          // 2. JWT 방식으로 DB 업데이트 (Capacitor 환경 지원)
+          // 2. JWT 방식으로 DB 업데이트
           await updateSubtaskCompletionWithJWT(subtaskId, newCompletedState);
 
           // 3. 모든 서브태스크가 완료되었는지 확인
@@ -1309,7 +1224,7 @@ export const useTodoStore = createStore<TodoStoreState>(
               }
             });
 
-            // JWT 방식으로 부모 할일 완료 처리 (Capacitor 환경 지원)
+            // JWT 방식으로 부모 할일 완료 처리
             await updateParentTodoCompletionWithJWT(parentTodoId, true);
           }
 

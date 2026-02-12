@@ -11,7 +11,6 @@ interface LogContext {
 
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
-  private isMobile = process.env.BUILD_TARGET === 'mobile';
 
   /**
    * 개발 환경에서만 디버그 로그 출력
@@ -87,15 +86,6 @@ class Logger {
   api(message: string, context?: LogContext): void {
     if (this.isDevelopment) {
       console.log(`🌐 [API] ${message}`, context || '');
-    }
-  }
-
-  /**
-   * 모바일 전용 로그 (개발 환경 + 모바일 빌드에서만)
-   */
-  mobile(message: string, context?: LogContext): void {
-    if (this.isDevelopment && this.isMobile) {
-      console.log(`📱 [MOBILE] ${message}`, context || '');
     }
   }
 
@@ -181,7 +171,6 @@ export const {
   timeline,
   store,
   api,
-  mobile,
   time,
   timeEnd,
   group,
