@@ -109,7 +109,7 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
           ref={scrollRef}
           horizontal
           pagingEnabled={false}
-          snapToInterval={PAGE_WIDTH}
+          snapToInterval={isDragging ? undefined : PAGE_WIDTH}
           decelerationRate="fast"
           showsHorizontalScrollIndicator={false}
           scrollEnabled={!isDragging}

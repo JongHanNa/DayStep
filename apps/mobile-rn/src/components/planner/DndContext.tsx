@@ -3,7 +3,7 @@
  * 드래그 앤 드롭 전역 상태 관리
  * - 글로벌 Pan 제스처: 캐러셀 외부에서 처리 → 페이지 전환에도 드래그 유지
  * - DroppableZone 레지스트리 + 활성 드래그 아이템 추적
- * - 연속 스크롤 엣지 감지: 2차 이징 가속 + 50% 자동 스냅
+ * - 연속 스크롤 엣지 감지: 2차 이징 가속 + 목표까지 연속 스크롤
  */
 import React, {
   createContext,
@@ -196,12 +196,12 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     if (edgeScrollIntervalRef.current) {
       clearInterval(edgeScrollIntervalRef.current);
       edgeScrollIntervalRef.current = null;
-      if (snap && pagesRefHolder.current) {
-        pagesRefHolder.current.snapToNearestPage();
-      }
     }
     isScrollingRef.current = false;
     currentScrollDirectionRef.current = null;
+    if (snap && pagesRefHolder.current) {
+      pagesRefHolder.current.snapToNearestPage();
+    }
   }, []);
 
   const triggerRemeasure = useCallback(() => {
@@ -214,6 +214,10 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     const targetPage = direction === 'next'
       ? currentPageRef.current + 1
       : currentPageRef.current - 1;
+    const startPage = currentPageRef.current;
+    const targetPosition = targetPage * PAGE_WIDTH;
+    const midpoint = (startPage + (direction === 'next' ? 0.5 : -0.5)) * PAGE_WIDTH;
+    let pageChangeCommitted = false;
 
     edgeScrollIntervalRef.current = setInterval(() => {
       const pages = pagesRefHolder.current;
@@ -224,9 +228,9 @@ export function DndProvider({children}: {children: React.ReactNode}) {
         ? SCREEN_WIDTH - x
         : x;
 
-      // 엣지 존 벗어남 → 중지 + 스냅
+      // 엣지 존 벗어남 → 중지 (snap 안 함 — updateDrag에서 이미 처리)
       if (proximity >= EDGE_ZONE) {
-        stopEdgeScroll(true);
+        stopEdgeScroll(false);
         return;
       }
 
@@ -236,27 +240,37 @@ export function DndProvider({children}: {children: React.ReactNode}) {
       const dx = direction === 'next' ? speed : -speed;
       pages.scrollByPixels(dx);
 
-      // 50% 임계값 체크
       const scrollPos = pages.getScrollPosition();
-      const startPage = direction === 'next' ? targetPage - 1 : targetPage + 1;
-      const midpoint = (startPage + (direction === 'next' ? 0.5 : -0.5)) * PAGE_WIDTH;
-      const passed = direction === 'next'
-        ? scrollPos > midpoint
-        : scrollPos < midpoint;
 
-      if (passed) {
-        // 페이지 전환 확정
-        pages.scrollTo(targetPage);
-        ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-        currentPageRef.current = targetPage;
-        lastPageChangeTimeRef.current = Date.now();
+      // 50% 임계값 — 페이지 전환 확정 (1회만)
+      if (!pageChangeCommitted) {
+        const passed = direction === 'next'
+          ? scrollPos > midpoint
+          : scrollPos < midpoint;
+        if (passed) {
+          pageChangeCommitted = true;
+          currentPageRef.current = targetPage;
+          lastPageChangeTimeRef.current = Date.now();
+          ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+          setTimeout(() => triggerRemeasure(), 400);
+        }
+      }
+
+      // 목표 위치 도달 → 스크롤 완료
+      const reached = direction === 'next'
+        ? scrollPos >= targetPosition
+        : scrollPos <= targetPosition;
+      if (reached) {
+        if (!pageChangeCommitted) {
+          currentPageRef.current = targetPage;
+          lastPageChangeTimeRef.current = Date.now();
+          ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+          setTimeout(() => triggerRemeasure(), 400);
+        }
         clearInterval(edgeScrollIntervalRef.current!);
         edgeScrollIntervalRef.current = null;
         isScrollingRef.current = false;
         currentScrollDirectionRef.current = null;
-        setTimeout(() => {
-          triggerRemeasure();
-        }, 400);
       }
     }, SCROLL_TICK_MS);
   }, [stopEdgeScroll, triggerRemeasure]);
@@ -307,6 +321,9 @@ export function DndProvider({children}: {children: React.ReactNode}) {
       }
 
       // --- 연속 스크롤 엣지 감지 ---
+      // 이미 스크롤 중이면 interval이 자체 관리 (proximity 기반 속도/정지) → 간섭 안 함
+      if (isScrollingRef.current) return;
+
       const rightProximity = SCREEN_WIDTH - x;
       const leftProximity = x;
       const now = Date.now();
@@ -317,8 +334,8 @@ export function DndProvider({children}: {children: React.ReactNode}) {
       } else if (!inCooldown && leftProximity < EDGE_ZONE && pagesRefHolder.current && currentPageRef.current > 0) {
         handleEdgeProximity('prev');
       } else {
-        if (isScrollingRef.current || edgeDwellTimerRef.current) {
-          stopEdgeScroll(true);
+        if (edgeDwellTimerRef.current) {
+          stopEdgeScroll(false);  // dwell timer만 정리
         }
       }
     },
