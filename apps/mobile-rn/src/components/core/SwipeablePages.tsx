@@ -1,18 +1,20 @@
 /**
  * SwipeablePages
- * react-native-pager-view 기반 — 네이티브 UIPageViewController/ViewPager2
- * RNGH 제스처 인식기 없음 → DnD 제스처 충돌 0
+ * RN ScrollView (horizontal + snapToInterval) 기반
+ * — 옆 페이지 peek 노출 + DnD 제스처 충돌 없음
  */
 import React, {useState, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
-import {View, StyleSheet, LayoutChangeEvent} from 'react-native';
+import {View, ScrollView, StyleSheet, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import PagerView from 'react-native-pager-view';
 import {useTheme} from '@/theme';
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const PEEK_WIDTH = 40;
+const PAGE_WIDTH = SCREEN_WIDTH - PEEK_WIDTH;
 const DOTS_HEIGHT = 30;
 
 export interface SwipeablePagesRef {
@@ -39,12 +41,15 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   }, ref) {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [containerHeight, setContainerHeight] = useState(0);
-  const pagerRef = useRef<PagerView>(null);
+  const scrollRef = useRef<ScrollView>(null);
   const {primaryColor} = useTheme();
 
   useImperativeHandle(ref, () => ({
     scrollTo: (index: number) => {
-      pagerRef.current?.setPage(index);
+      scrollRef.current?.scrollTo({x: index * PAGE_WIDTH, animated: true});
+      // 즉시 상태 업데이트 — DnD 엣지 감지에서 currentPage 조회 시 정확한 값 보장
+      setCurrentPage(index);
+      onPageChange?.(index);
     },
     currentPage,
   }));
@@ -56,16 +61,20 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
     setContainerHeight(e.nativeEvent.layout.height);
   }, []);
 
-  const handlePageSelected = useCallback(
-    (e: {nativeEvent: {position: number}}) => {
-      const index = e.nativeEvent.position;
-      setCurrentPage(index);
-      onPageChange?.(index);
+  const handleMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetX = e.nativeEvent.contentOffset.x;
+      const page = Math.round(offsetX / PAGE_WIDTH);
+      // 중복 방지 가드
+      if (page !== currentPage) {
+        setCurrentPage(page);
+        onPageChange?.(page);
+      }
     },
-    [onPageChange],
+    [onPageChange, currentPage],
   );
 
-  const pagerHeight =
+  const scrollViewHeight =
     containerHeight > 0
       ? containerHeight - (showDots && pageCount > 1 ? DOTS_HEIGHT : 0)
       : 300; // fallback
@@ -73,18 +82,24 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   return (
     <View style={styles.container} onLayout={handleContainerLayout}>
       {containerHeight > 0 && (
-        <PagerView
-          ref={pagerRef}
-          style={{height: pagerHeight}}
-          initialPage={initialPage}
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled={false}
+          snapToInterval={PAGE_WIDTH}
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
           scrollEnabled={!isDragging}
-          onPageSelected={handlePageSelected}>
+          contentOffset={{x: initialPage * PAGE_WIDTH, y: 0}}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          contentContainerStyle={{paddingRight: PEEK_WIDTH}}
+          style={{height: scrollViewHeight}}>
           {pages.map((page, index) => (
-            <View key={index} style={styles.page}>
+            <View key={index} style={[styles.page, {width: PAGE_WIDTH}]}>
               {page as React.ReactNode}
             </View>
           ))}
-        </PagerView>
+        </ScrollView>
       )}
 
       {showDots && pageCount > 1 && (
