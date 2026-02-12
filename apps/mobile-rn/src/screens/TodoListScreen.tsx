@@ -196,6 +196,7 @@ function TodoListScreenInner() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
             stickySectionHeadersEnabled={false}
+            scrollEnabled={!dragState.isDragging}
             refreshControl={
               <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
             }

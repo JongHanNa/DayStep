@@ -35,10 +35,11 @@ export function DraggableTodoChip({
 }: DraggableTodoChipProps) {
   const {
     startDragWithLayout,
-    endDrag,
     cancelDrag,
     globalPanRef,
     isDraggingShared,
+    overlayX,
+    overlayY,
     setDragEndCallback,
     setOnDropCallback,
   } = useDnd();
@@ -72,16 +73,6 @@ export function DraggableTodoChip({
     [todo, startDragWithLayout, haptic, onDrop, setDragEndCallback, setOnDropCallback, ghostOpacity],
   );
 
-  const handleDragEnd = useCallback(() => {
-    const zone = endDrag();
-    if (zone) {
-      haptic.success();
-      onDrop(todo, zone.type, zone.data);
-    } else {
-      haptic.light();
-    }
-  }, [endDrag, todo, onDrop, haptic]);
-
   const handleDragCancel = useCallback(() => {
     cancelDrag();
   }, [cancelDrag]);
@@ -91,16 +82,15 @@ export function DraggableTodoChip({
     .shouldCancelWhenOutside(false)
     .simultaneousWithExternalGesture(globalPanRef)
     .onStart(e => {
+      // UI thread에서 오버레이 위치 사전 설정 — (0,0) 깜빡임 방지
+      overlayX.value = e.absoluteX;
+      overlayY.value = e.absoluteY;
       isDraggingShared.value = true;
       ghostOpacity.value = withTiming(0.3, {duration: 150});
       runOnJS(handleDragStart)(e.absoluteX, e.absoluteY);
     })
     .onEnd(() => {
-      // Global Pan이 이미 처리했으면 스킵
-      if (isDraggingShared.value) {
-        ghostOpacity.value = withTiming(1, {duration: 200});
-        runOnJS(handleDragEnd)();
-      }
+      // 드래그 종료는 Global Pan.onEnd가 전담 — 여기서는 아무것도 하지 않음
     })
     .onFinalize((_e, success) => {
       // 핵심 가드: isDraggingShared가 true면 Global Pan이 아직 살아있음 → 취소하면 안 됨

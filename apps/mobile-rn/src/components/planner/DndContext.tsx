@@ -76,6 +76,10 @@ interface DndContextValue {
   // UI 스레드용 드래그 상태 (LongPress에서 설정, Pan에서 체크)
   isDraggingShared: Animated.SharedValue<boolean>;
 
+  // 오버레이 위치 SharedValue (LongPress.onStart에서 사전 설정하여 (0,0) 깜빡임 방지)
+  overlayX: Animated.SharedValue<number>;
+  overlayY: Animated.SharedValue<number>;
+
   // 콜백 기반 드래그 종료 — DraggableTodoChip이 등록
   setDragEndCallback: (cb: (() => void) | null) => void;
   setOnDropCallback: (cb: ((zone: DropZoneLayout | null) => void) | null) => void;
@@ -120,6 +124,10 @@ export function DndProvider({children}: {children: React.ReactNode}) {
   // 오버레이 위치 (SharedValue로 UI 스레드 구동)
   const overlayX = useSharedValue(0);
   const overlayY = useSharedValue(0);
+
+  // 드래그 위치 ref — 매 프레임 업데이트 (리렌더 방지)
+  const dragPositionRef = useRef<{x: number; y: number}>({x: 0, y: 0});
+  const activeZoneIdRef = useRef<string | null>(null);
 
   // 콜백 기반 드래그 종료
   const dragEndCallbackRef = useRef<(() => void) | null>(null);
@@ -173,16 +181,27 @@ export function DndProvider({children}: {children: React.ReactNode}) {
   // --- Drag state ---
   const startDragWithLayout = useCallback(
     (todo: Todo, x: number, y: number, width: number, height: number) => {
+      // overlayX/Y 사전 설정 — DragOverlay 마운트 시 (0,0) 깜빡임 방지
+      overlayX.value = x;
+      overlayY.value = y;
+      dragPositionRef.current = {x, y};
       setDragState({todo, x, y, isDragging: true, width, height});
     },
-    [],
+    [overlayX, overlayY],
   );
 
   const updateDrag = useCallback(
     (x: number, y: number) => {
-      setDragState(prev => ({...prev, x, y}));
+      // ref만 업데이트 — setDragState 호출 안 함 → 리렌더 방지
+      dragPositionRef.current = {x, y};
+
+      // zone 변경 시만 setState
       const zone = findZoneAtPoint(x, y);
-      setActiveZoneId(zone?.id ?? null);
+      const newZoneId = zone?.id ?? null;
+      if (newZoneId !== activeZoneIdRef.current) {
+        activeZoneIdRef.current = newZoneId;
+        setActiveZoneId(newZoneId);
+      }
 
       // --- 점진적 엣지 스크롤 ---
       const rightProximity = SCREEN_WIDTH - x;
@@ -228,10 +247,12 @@ export function DndProvider({children}: {children: React.ReactNode}) {
   );
 
   const endDrag = useCallback((): DropZoneLayout | null => {
-    const {x, y} = dragState;
+    // dragPositionRef에서 최신 위치 사용 (setDragState 안 하므로 dragState.x/y는 최초값)
+    const {x, y} = dragPositionRef.current;
     const zone = findZoneAtPoint(x, y);
     setDragState({todo: null, x: 0, y: 0, isDragging: false, width: 0, height: 0});
     setActiveZoneId(null);
+    activeZoneIdRef.current = null;
     isDraggingShared.value = false;
     if (edgeTimerRef.current) {
       clearTimeout(edgeTimerRef.current);
@@ -240,11 +261,12 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     dragEndCallbackRef.current?.();
     dragEndCallbackRef.current = null;
     return zone;
-  }, [dragState, findZoneAtPoint, isDraggingShared]);
+  }, [findZoneAtPoint, isDraggingShared]);
 
   const cancelDrag = useCallback(() => {
     setDragState({todo: null, x: 0, y: 0, isDragging: false, width: 0, height: 0});
     setActiveZoneId(null);
+    activeZoneIdRef.current = null;
     isDraggingShared.value = false;
     if (edgeTimerRef.current) {
       clearTimeout(edgeTimerRef.current);
@@ -289,12 +311,14 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     .onEnd(() => {
       // Pan이 끝나면 드롭존 판정 + 콜백 실행
       if (isDraggingShared.value) {
+        isDraggingShared.value = false; // onFinalize 중복 방지
         runOnJS(endDragFromPan)();
       }
     })
     .onFinalize(() => {
       // 안전망 — onEnd에서 처리 못한 경우
       if (isDraggingShared.value) {
+        isDraggingShared.value = false;
         runOnJS(endDragFromPan)();
       }
     });
@@ -314,6 +338,8 @@ export function DndProvider({children}: {children: React.ReactNode}) {
         activeZoneId,
         globalPanRef,
         isDraggingShared,
+        overlayX,
+        overlayY,
         setDragEndCallback,
         setOnDropCallback,
         currentPageRef,
