@@ -67,9 +67,9 @@ export function SwipeablePages({
           pagingEnabled={true}
           mode="parallax"
           modeConfig={{
-            parallaxScrollingScale: 0.85,
-            parallaxScrollingOffset: 100,
-            parallaxAdjacentItemScale: 0.7,
+            parallaxScrollingScale: 0.92,
+            parallaxScrollingOffset: 60,
+            parallaxAdjacentItemScale: 0.75,
           }}
           style={{overflow: 'visible'}}
           onSnapToItem={handleSnapToItem}
@@ -131,10 +131,9 @@ const styles = StyleSheet.create({
   },
   page: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-    marginHorizontal: 4,
   },
   dotsContainer: {
     flexDirection: 'row',
