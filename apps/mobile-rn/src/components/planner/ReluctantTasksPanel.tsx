@@ -9,6 +9,7 @@ import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {Shield, CheckCircle2, Plus} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
+import {DroppableZone} from './DroppableZone';
 
 interface ReluctantTasksPanelProps {
   onAddPress?: () => void;
@@ -59,41 +60,47 @@ export function ReluctantTasksPanel({onAddPress}: ReluctantTasksPanelProps) {
           </AnimatedPressable>
         )}
       </View>
-      <View className="bg-red-50 rounded-2xl p-4">
-        {reluctantTodos.length === 0 ? (
-          <View className="items-center py-3">
-            <Text className="text-sm text-gray-400">
-              할일을 여기에 추가해보세요
-            </Text>
-          </View>
-        ) : (
-          reluctantTodos.map(todo => (
-            <AnimatedPressable
-              key={todo.id}
-              onPress={() => toggleTodoCompletion(todo.id)}
-              onLongPress={() => handleRemove(todo.id, todo.title)}
-              hapticType="light"
-              className="flex-row items-center py-2">
-              <CheckCircle2
-                size={20}
-                color={todo.completed ? '#22C55E' : '#D1D5DB'}
-                fill={todo.completed ? '#22C55E' : 'transparent'}
-              />
-              <Text
-                className={`flex-1 text-sm ml-3 ${
-                  todo.completed
-                    ? 'text-gray-400 line-through'
-                    : 'text-gray-700'
-                }`}>
-                {todo.title}
+      <DroppableZone
+        id="reluctant"
+        type="reluctant"
+        highlightColor="rgba(239, 68, 68, 0.08)"
+        style={{borderRadius: 16}}>
+        <View className="bg-red-50 rounded-2xl p-4">
+          {reluctantTodos.length === 0 ? (
+            <View className="items-center py-3">
+              <Text className="text-sm text-gray-400">
+                할일을 여기에 추가해보세요
               </Text>
-            </AnimatedPressable>
-          ))
-        )}
-        <Text className="text-xs text-red-400 mt-2">
-          작은 용기가 큰 성장을 만들어요
-        </Text>
-      </View>
+            </View>
+          ) : (
+            reluctantTodos.map(todo => (
+              <AnimatedPressable
+                key={todo.id}
+                onPress={() => toggleTodoCompletion(todo.id)}
+                onLongPress={() => handleRemove(todo.id, todo.title)}
+                hapticType="light"
+                className="flex-row items-center py-2">
+                <CheckCircle2
+                  size={20}
+                  color={todo.completed ? '#22C55E' : '#D1D5DB'}
+                  fill={todo.completed ? '#22C55E' : 'transparent'}
+                />
+                <Text
+                  className={`flex-1 text-sm ml-3 ${
+                    todo.completed
+                      ? 'text-gray-400 line-through'
+                      : 'text-gray-700'
+                  }`}>
+                  {todo.title}
+                </Text>
+              </AnimatedPressable>
+            ))
+          )}
+          <Text className="text-xs text-red-400 mt-2">
+            작은 용기가 큰 성장을 만들어요
+          </Text>
+        </View>
+      </DroppableZone>
     </View>
   );
 }

@@ -3,7 +3,7 @@
  * react-native-reanimated-carousel 기반 — Carousel Peek 효과
  * 양옆 페이지가 살짝 보이는 parallax carousel
  */
-import React, {useState, useCallback, useRef} from 'react';
+import React, {useState, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
 import {View, StyleSheet, Dimensions, LayoutChangeEvent} from 'react-native';
 import Animated, {
   useSharedValue,
@@ -16,23 +16,39 @@ import {useTheme} from '@/theme';
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const DOTS_HEIGHT = 30;
 
+export interface SwipeablePagesRef {
+  scrollTo: (index: number) => void;
+  currentPage: number;
+}
+
 interface SwipeablePagesProps {
   children: React.ReactNode;
   initialPage?: number;
   onPageChange?: (page: number) => void;
   showDots?: boolean;
+  /** 드래그 중일 때 스와이프 비활성화 */
+  isDragging?: boolean;
 }
 
-export function SwipeablePages({
-  children,
-  initialPage = 0,
-  onPageChange,
-  showDots = true,
-}: SwipeablePagesProps) {
+export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>(
+  function SwipeablePages({
+    children,
+    initialPage = 0,
+    onPageChange,
+    showDots = true,
+    isDragging = false,
+  }, ref) {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [containerHeight, setContainerHeight] = useState(0);
   const carouselRef = useRef<ICarouselInstance>(null);
   const {primaryColor} = useTheme();
+
+  useImperativeHandle(ref, () => ({
+    scrollTo: (index: number) => {
+      carouselRef.current?.scrollTo({index, animated: true});
+    },
+    currentPage,
+  }));
 
   const pages = React.Children.toArray(children);
   const pageCount = pages.length;
@@ -65,6 +81,7 @@ export function SwipeablePages({
           defaultIndex={initialPage}
           loop={false}
           pagingEnabled={true}
+          enabled={!isDragging}
           mode="parallax"
           modeConfig={{
             parallaxScrollingScale: 0.92,
@@ -96,7 +113,7 @@ export function SwipeablePages({
       )}
     </View>
   );
-}
+});
 
 function Dot({active, color}: {active: boolean; color: string}) {
   const scale = useSharedValue(active ? 1 : 0.8);

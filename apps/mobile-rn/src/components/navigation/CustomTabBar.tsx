@@ -32,15 +32,19 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   return (
     <GlassBackground
       blurType="chromeMaterialLight"
-      blurAmount={25}
-      overlayColor="rgba(255, 255, 255, 0.88)"
+      blurAmount={32}
+      overlayColor="rgba(255, 255, 255, 0.55)"
       style={[
         styles.container,
         {
           bottom: Math.max(insets.bottom, 8),
           borderRadius: 32,
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.4)',
         },
       ]}>
+      {/* 상단 하이라이트 — 빛 반사 효과 */}
+      <View style={styles.topHighlight} />
       <View style={styles.tabRow}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -118,8 +122,8 @@ const styles = StyleSheet.create({
     right: 16,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
     elevation: 12,
   },
   tabRow: {
@@ -138,9 +142,15 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   activeIndicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 4,
+    width: 20,
+    height: 3,
+    borderRadius: 1.5,
+    marginTop: 5,
+  },
+  topHighlight: {
+    height: 1,
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 0.5,
   },
 });

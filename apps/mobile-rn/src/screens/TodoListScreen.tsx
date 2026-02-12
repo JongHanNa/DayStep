@@ -12,8 +12,10 @@ import {
   TodoFormBottomSheet,
   type TodoFormBottomSheetRef,
 } from '@/components/todo/TodoFormBottomSheet';
-import {SwipeablePages} from '@/components/core/SwipeablePages';
+import {SwipeablePages, type SwipeablePagesRef} from '@/components/core/SwipeablePages';
 import {PlannerPage2} from '@/components/planner/PlannerPage2';
+import {DndProvider, useDnd} from '@/components/planner/DndContext';
+import {DraggableTodoChip} from '@/components/planner/DraggableTodoChip';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
@@ -64,14 +66,52 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
 }
 
 export default function TodoListScreen() {
-  const {todos, selectedDate, loading, setSelectedDate, fetchTodosForDate, toggleTodoCompletion} =
+  return (
+    <DndProvider>
+      <TodoListScreenInner />
+    </DndProvider>
+  );
+}
+
+function TodoListScreenInner() {
+  const {todos, selectedDate, loading, setSelectedDate, fetchTodosForDate, toggleTodoCompletion, updateTodo} =
     useTodoStore();
   const {primaryColor} = useTheme();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
+  const pagesRef = useRef<SwipeablePagesRef>(null);
+  const {dragState, setOnRequestPageChange} = useDnd();
 
   useEffect(() => {
     fetchTodosForDate(selectedDate);
   }, []);
+
+  // 드래그 중 엣지 감지 → 페이지 전환
+  useEffect(() => {
+    setOnRequestPageChange((direction) => {
+      const current = pagesRef.current?.currentPage ?? 0;
+      if (direction === 'next' && current < 1) {
+        pagesRef.current?.scrollTo(1);
+      } else if (direction === 'prev' && current > 0) {
+        pagesRef.current?.scrollTo(0);
+      }
+    });
+    return () => setOnRequestPageChange(undefined);
+  }, [setOnRequestPageChange]);
+
+  // 드래그 앤 드롭 완료 핸들러
+  const handleDrop = useCallback(
+    (todo: Todo, zoneType: string, zoneData?: Record<string, any>) => {
+      if (zoneType === 'matrix' && zoneData) {
+        updateTodo(todo.id, {
+          importance: zoneData.importance,
+          urgency: zoneData.urgency,
+        } as any);
+      } else if (zoneType === 'reluctant') {
+        updateTodo(todo.id, {is_reluctant_must_do: true} as any);
+      }
+    },
+    [updateTodo],
+  );
 
   const sections = useMemo(() => categorizeTodos(todos), [todos]);
   const dateDisplay = format(new Date(selectedDate), 'M월 d일 EEEE', {locale: ko});
@@ -136,7 +176,7 @@ export default function TodoListScreen() {
         </AnimatedPressable>
       </Animated.View>
 
-      <SwipeablePages>
+      <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging}>
         {/* Page 0: 시간대별 할일 리스트 */}
         <View style={{flex: 1}}>
           <SectionList
@@ -163,12 +203,14 @@ export default function TodoListScreen() {
               );
             }}
             renderItem={({item, index}) => (
-              <TodoCard
-                todo={item}
-                index={index}
-                onToggle={handleToggle}
-                onPress={handleTodoPress}
-              />
+              <DraggableTodoChip todo={item} onDrop={handleDrop}>
+                <TodoCard
+                  todo={item}
+                  index={index}
+                  onToggle={handleToggle}
+                  onPress={handleTodoPress}
+                />
+              </DraggableTodoChip>
             )}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center py-20">

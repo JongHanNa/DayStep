@@ -41,6 +41,27 @@ DayStep/
 | DayStepRN | Debug | 개발 | DevDayStep | com.daystep.app.dev | O |
 | DayStepProd | Release | 운영 | DayStep | com.daystep.app | X |
 
+### Electron 데스크탑 개발 워크플로우
+
+**개발환경** (개발 DB):
+1. `cd apps/web && npm run dev:electron` — Next.js 빌드 + Electron 실행 (DevTools 자동 오픈)
+2. 코드 수정 시 Electron 재시작 필요 (HMR 미지원, 정적 빌드 기반)
+
+**프로덕션 빌드**:
+1. `cd apps/web && npm run build:electron:prod` — 프로덕션 DB + 패키징
+2. 출력: `dist-electron/` (DMG/ZIP for macOS, NSIS for Windows)
+
+| 명령어 | DB | DevTools | 출력 |
+|--------|------|---------|------|
+| `dev:electron` | 개발 | O | 앱 직접 실행 |
+| `build:electron:prod` | 운영 | X | `dist-electron/` 패키지 |
+
+**핵심 구조**:
+- `apps/desktop/` — Electron 메인 프로세스 (TypeScript)
+- `apps/web/out/` — 빌드된 정적 파일 (app:// 프로토콜로 로드)
+- OAuth: 로컬 HTTP 서버 + PKCE 콜백 패턴
+- 세션 저장: `electron-store` (key: `supabase_auth_session`)
+
 ## 빌드 및 배포
 
 **TestFlight 배포 프로세스**:

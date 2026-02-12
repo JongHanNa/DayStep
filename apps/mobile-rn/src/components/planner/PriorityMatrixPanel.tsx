@@ -10,6 +10,7 @@ import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {Target, AlertTriangle, Clock, Coffee, Plus} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
+import {DroppableZone} from './DroppableZone';
 import type {Todo} from '@daystep/shared-core';
 
 interface QuadrantConfig {
@@ -107,8 +108,12 @@ export function PriorityMatrixPanel({onAddPress}: PriorityMatrixPanelProps) {
         {quadrantData.map((q, index) => {
           const QIcon = q.Icon;
           return (
-            <View
+            <DroppableZone
               key={index}
+              id={`matrix-${index}`}
+              type="matrix"
+              data={{importance: q.importance, urgency: q.urgency}}
+              highlightColor={q.bgColor}
               style={[styles.quadrant, {backgroundColor: q.bgColor}]}>
               <View className="flex-row items-center justify-between mb-2">
                 <View className="flex-row items-center">
@@ -149,7 +154,7 @@ export function PriorityMatrixPanel({onAddPress}: PriorityMatrixPanelProps) {
                   +{q.items.length - 3}개 더
                 </Text>
               )}
-            </View>
+            </DroppableZone>
           );
         })}
       </View>

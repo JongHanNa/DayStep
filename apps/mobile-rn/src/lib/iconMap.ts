@@ -156,3 +156,104 @@ export function resolveTodoIcon(iconName: string | null | undefined): LucideIcon
   const key = iconName.toLowerCase().trim();
   return ICON_MAP[key] ?? null;
 }
+
+/**
+ * 카테고리별 아이콘 그룹 (아이콘 피커용)
+ */
+export interface IconCategory {
+  label: string;
+  icons: {key: string; Icon: LucideIcon}[];
+}
+
+export const ICON_CATEGORIES: IconCategory[] = [
+  {
+    label: '일상',
+    icons: [
+      {key: 'home', Icon: Home},
+      {key: 'coffee', Icon: Coffee},
+      {key: 'utensils', Icon: Utensils},
+      {key: 'shopping-cart', Icon: ShoppingCart},
+      {key: 'shopping-bag', Icon: ShoppingBag},
+      {key: 'pizza', Icon: Pizza},
+      {key: 'gift', Icon: Gift},
+      {key: 'umbrella', Icon: Umbrella},
+    ],
+  },
+  {
+    label: '업무',
+    icons: [
+      {key: 'briefcase', Icon: Briefcase},
+      {key: 'laptop', Icon: Laptop},
+      {key: 'monitor', Icon: Monitor},
+      {key: 'code', Icon: Code},
+      {key: 'mail', Icon: Mail},
+      {key: 'calendar', Icon: Calendar},
+      {key: 'inbox', Icon: Inbox},
+      {key: 'wallet', Icon: Wallet},
+    ],
+  },
+  {
+    label: '건강',
+    icons: [
+      {key: 'heart', Icon: Heart},
+      {key: 'pill', Icon: Pill},
+      {key: 'dumbbell', Icon: Dumbbell},
+      {key: 'leaf', Icon: Leaf},
+      {key: 'smile', Icon: Smile},
+      {key: 'eye', Icon: Eye},
+    ],
+  },
+  {
+    label: '이동',
+    icons: [
+      {key: 'car', Icon: Car},
+      {key: 'plane', Icon: Plane},
+      {key: 'map-pin', Icon: MapPin},
+      {key: 'navigation', Icon: Navigation},
+      {key: 'map', Icon: Map},
+      {key: 'globe', Icon: Globe},
+    ],
+  },
+  {
+    label: '소통',
+    icons: [
+      {key: 'phone', Icon: Phone},
+      {key: 'message-circle', Icon: MessageCircle},
+      {key: 'send', Icon: Send},
+      {key: 'users', Icon: Users},
+      {key: 'mic', Icon: Mic},
+      {key: 'headphones', Icon: Headphones},
+    ],
+  },
+  {
+    label: '창작',
+    icons: [
+      {key: 'camera', Icon: Camera},
+      {key: 'music', Icon: Music},
+      {key: 'film', Icon: Film},
+      {key: 'pen-tool', Icon: PenTool},
+      {key: 'image', Icon: Image},
+      {key: 'book', Icon: Book},
+      {key: 'book-open', Icon: BookOpen},
+      {key: 'edit-3', Icon: Edit3},
+    ],
+  },
+  {
+    label: '기타',
+    icons: [
+      {key: 'star', Icon: Star},
+      {key: 'flag', Icon: Flag},
+      {key: 'flame', Icon: Flame},
+      {key: 'rocket', Icon: Rocket},
+      {key: 'zap', Icon: Zap},
+      {key: 'target', Icon: Target},
+      {key: 'lightbulb', Icon: Lightbulb},
+      {key: 'sparkles', Icon: Sparkles},
+      {key: 'shield', Icon: Shield},
+      {key: 'moon', Icon: Moon},
+      {key: 'sun', Icon: Sun},
+      {key: 'cloud', Icon: Cloud},
+      {key: 'wind', Icon: Wind},
+    ],
+  },
+];

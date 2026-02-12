@@ -66,7 +66,7 @@ const TimeDetailModal: React.FC<TimeDetailModalProps> = ({
   const [localScheduleType, setLocalScheduleType] = useState(scheduleType);
   const [localStartTime, setLocalStartTime] = useState(startTime);
   const [localEndTime, setLocalEndTime] = useState(endTime);
-  const [localIncludeEnd, setLocalIncludeEnd] = useState(includeEndDate);
+  const [localIncludeEnd, setLocalIncludeEnd] = useState(true);
   const [localDuration, setLocalDuration] = useState(anytimeDuration);
 
   useEffect(() => {
@@ -79,7 +79,7 @@ const TimeDetailModal: React.FC<TimeDetailModalProps> = ({
       setLocalScheduleType(scheduleType);
       setLocalStartTime(startTime);
       setLocalEndTime(endTime);
-      setLocalIncludeEnd(includeEndDate);
+      setLocalIncludeEnd(true);
       setLocalDuration(anytimeDuration);
     }
   }, [isOpen, scheduleType, startTime, endTime, includeEndDate, anytimeDuration]);
@@ -194,46 +194,44 @@ const TimeDetailModal: React.FC<TimeDetailModalProps> = ({
                   <input
                     type="time"
                     value={localStartTime}
-                    onChange={(e) => setLocalStartTime(e.target.value)}
+                    onChange={(e) => {
+                      const newStart = e.target.value;
+                      setLocalStartTime(newStart);
+                      // 종료 시간 자동 설정: 시작 + 1시간
+                      if (newStart && !localEndTime) {
+                        try {
+                          const parsed = parse(newStart, 'HH:mm', new Date());
+                          const end = new Date(parsed.getTime() + 60 * 60 * 1000);
+                          setLocalEndTime(formatDate(end, 'HH:mm'));
+                        } catch {}
+                      }
+                    }}
                     className="input input-bordered w-full pl-10"
                   />
                 </div>
               </div>
 
-              {/* 종료 시간 토글 */}
-              <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                <span className="font-medium">종료 시간 설정</span>
-                <input
-                  type="checkbox"
-                  checked={localIncludeEnd}
-                  onChange={(e) => setLocalIncludeEnd(e.target.checked)}
-                  className="toggle toggle-primary"
-                />
-              </div>
-
               {/* 종료 시간 */}
-              {localIncludeEnd && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-base-content/70">
-                    종료 시간
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-                    <input
-                      type="time"
-                      value={localEndTime}
-                      onChange={(e) => setLocalEndTime(e.target.value)}
-                      className="input input-bordered w-full pl-10"
-                    />
-                  </div>
-                  {/* 소요 시간 표시 */}
-                  {calculateDuration() && (
-                    <div className="text-sm text-base-content/60 text-center">
-                      소요 시간: {calculateDuration()}
-                    </div>
-                  )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-base-content/70">
+                  종료 시간
+                </label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
+                  <input
+                    type="time"
+                    value={localEndTime}
+                    onChange={(e) => setLocalEndTime(e.target.value)}
+                    className="input input-bordered w-full pl-10"
+                  />
                 </div>
-              )}
+                {/* 소요 시간 표시 */}
+                {calculateDuration() && (
+                  <div className="text-sm text-base-content/60 text-center">
+                    소요 시간: {calculateDuration()}
+                  </div>
+                )}
+              </div>
             </>
           )}
 
