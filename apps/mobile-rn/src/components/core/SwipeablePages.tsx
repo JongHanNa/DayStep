@@ -1,19 +1,18 @@
 /**
  * SwipeablePages
- * react-native-reanimated-carousel 기반 — Carousel Peek 효과
- * 양옆 페이지가 살짝 보이는 parallax carousel
+ * react-native-pager-view 기반 — 네이티브 UIPageViewController/ViewPager2
+ * RNGH 제스처 인식기 없음 → DnD 제스처 충돌 0
  */
 import React, {useState, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
-import {View, StyleSheet, Dimensions, LayoutChangeEvent} from 'react-native';
+import {View, StyleSheet, LayoutChangeEvent} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import PagerView from 'react-native-pager-view';
 import {useTheme} from '@/theme';
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const DOTS_HEIGHT = 30;
 
 export interface SwipeablePagesRef {
@@ -40,12 +39,12 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   }, ref) {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [containerHeight, setContainerHeight] = useState(0);
-  const carouselRef = useRef<ICarouselInstance>(null);
+  const pagerRef = useRef<PagerView>(null);
   const {primaryColor} = useTheme();
 
   useImperativeHandle(ref, () => ({
     scrollTo: (index: number) => {
-      carouselRef.current?.scrollTo({index, animated: true});
+      pagerRef.current?.setPage(index);
     },
     currentPage,
   }));
@@ -57,15 +56,16 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
     setContainerHeight(e.nativeEvent.layout.height);
   }, []);
 
-  const handleSnapToItem = useCallback(
-    (index: number) => {
+  const handlePageSelected = useCallback(
+    (e: {nativeEvent: {position: number}}) => {
+      const index = e.nativeEvent.position;
       setCurrentPage(index);
       onPageChange?.(index);
     },
     [onPageChange],
   );
 
-  const carouselHeight =
+  const pagerHeight =
     containerHeight > 0
       ? containerHeight - (showDots && pageCount > 1 ? DOTS_HEIGHT : 0)
       : 300; // fallback
@@ -73,31 +73,18 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   return (
     <View style={styles.container} onLayout={handleContainerLayout}>
       {containerHeight > 0 && (
-        <Carousel
-          ref={carouselRef}
-          data={pages}
-          width={SCREEN_WIDTH}
-          height={carouselHeight}
-          defaultIndex={initialPage}
-          loop={false}
-          pagingEnabled={true}
-          enabled={!isDragging}
-          mode="parallax"
-          modeConfig={{
-            parallaxScrollingScale: 0.92,
-            parallaxScrollingOffset: 60,
-            parallaxAdjacentItemScale: 0.75,
-          }}
-          style={{overflow: 'visible'}}
-          onSnapToItem={handleSnapToItem}
-          renderItem={({item, index}) => (
-            <View
-              key={index}
-              style={[styles.page, {height: carouselHeight}]}>
-              {item as React.ReactNode}
+        <PagerView
+          ref={pagerRef}
+          style={{height: pagerHeight}}
+          initialPage={initialPage}
+          scrollEnabled={!isDragging}
+          onPageSelected={handlePageSelected}>
+          {pages.map((page, index) => (
+            <View key={index} style={styles.page}>
+              {page as React.ReactNode}
             </View>
-          )}
-        />
+          ))}
+        </PagerView>
       )}
 
       {showDots && pageCount > 1 && (
@@ -144,11 +131,9 @@ function Dot({active, color}: {active: boolean; color: string}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    overflow: 'visible',
   },
   page: {
     flex: 1,
-    overflow: 'hidden',
     backgroundColor: 'transparent',
   },
   dotsContainer: {

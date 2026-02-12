@@ -4,7 +4,7 @@
  */
 import React, {useCallback, useMemo, forwardRef, useImperativeHandle, useRef} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import BottomSheet, {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -31,14 +31,14 @@ export const PriorityPickerSheet = forwardRef<
   {importance, urgency, isReluctantMustDo, onImportanceChange, onUrgencyChange, onReluctantChange},
   ref,
 ) {
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
   const snapPoints = useMemo(() => ['40%'], []);
 
   useImperativeHandle(ref, () => ({
-    open: () => bottomSheetRef.current?.snapToIndex(0),
-    close: () => bottomSheetRef.current?.close(),
+    open: () => bottomSheetRef.current?.present(),
+    close: () => bottomSheetRef.current?.dismiss(),
   }));
 
   const priorityLabel = useMemo(() => {
@@ -61,15 +61,14 @@ export const PriorityPickerSheet = forwardRef<
   );
 
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
-      index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.sheetBg}
       handleIndicatorStyle={styles.handle}>
-      <View style={styles.container}>
+      <BottomSheetView style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
           <Flag size={18} color={primaryColor} />
@@ -121,8 +120,8 @@ export const PriorityPickerSheet = forwardRef<
             <Text style={styles.btnText}>😤 해야 할 일</Text>
           </AnimatedPressable>
         </View>
-      </View>
-    </BottomSheet>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 });
 

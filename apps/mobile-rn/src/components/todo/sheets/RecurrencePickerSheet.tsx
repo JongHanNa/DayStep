@@ -4,7 +4,7 @@
  */
 import React, {useCallback, useMemo, forwardRef, useImperativeHandle, useRef} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import BottomSheet, {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -33,14 +33,14 @@ export const RecurrencePickerSheet = forwardRef<
   {recurrencePattern, recurrenceDaysOfWeek, onPatternChange, onDaysChange},
   ref,
 ) {
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
   const snapPoints = useMemo(() => ['40%'], []);
 
   useImperativeHandle(ref, () => ({
-    open: () => bottomSheetRef.current?.snapToIndex(0),
-    close: () => bottomSheetRef.current?.close(),
+    open: () => bottomSheetRef.current?.present(),
+    close: () => bottomSheetRef.current?.dismiss(),
   }));
 
   const toggleDay = useCallback(
@@ -67,15 +67,14 @@ export const RecurrencePickerSheet = forwardRef<
   );
 
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
-      index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.sheetBg}
       handleIndicatorStyle={styles.handle}>
-      <View style={styles.container}>
+      <BottomSheetView style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
           <Repeat size={18} color={primaryColor} />
@@ -132,8 +131,8 @@ export const RecurrencePickerSheet = forwardRef<
             ))}
           </View>
         )}
-      </View>
-    </BottomSheet>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 });
 

@@ -4,7 +4,7 @@
  */
 import React, {useCallback, useMemo, useState, forwardRef, useImperativeHandle, useRef} from 'react';
 import {View, Text, ScrollView, StyleSheet} from 'react-native';
-import BottomSheet, {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -23,15 +23,15 @@ interface IconPickerSheetProps {
 
 export const IconPickerSheet = forwardRef<IconPickerSheetRef, IconPickerSheetProps>(
   function IconPickerSheet({selectedIcon, onIconChange}, ref) {
-    const bottomSheetRef = useRef<BottomSheet>(null);
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
     const {primaryColor} = useTheme();
     const haptic = useHaptic();
     const snapPoints = useMemo(() => ['55%'], []);
     const [categoryIndex, setCategoryIndex] = useState(0);
 
     useImperativeHandle(ref, () => ({
-      open: () => bottomSheetRef.current?.snapToIndex(0),
-      close: () => bottomSheetRef.current?.close(),
+      open: () => bottomSheetRef.current?.present(),
+      close: () => bottomSheetRef.current?.dismiss(),
     }));
 
     const renderBackdrop = useCallback(
@@ -47,15 +47,14 @@ export const IconPickerSheet = forwardRef<IconPickerSheetRef, IconPickerSheetPro
     );
 
     return (
-      <BottomSheet
+      <BottomSheetModal
         ref={bottomSheetRef}
-        index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.sheetBg}
         handleIndicatorStyle={styles.handle}>
-        <View style={styles.container}>
+        <BottomSheetView style={styles.container}>
           {/* 헤더 */}
           <View style={styles.header}>
             <Sparkles size={18} color={primaryColor} />
@@ -115,8 +114,8 @@ export const IconPickerSheet = forwardRef<IconPickerSheetRef, IconPickerSheetPro
               </AnimatedPressable>
             ))}
           </View>
-        </View>
-      </BottomSheet>
+        </BottomSheetView>
+      </BottomSheetModal>
     );
   },
 );
