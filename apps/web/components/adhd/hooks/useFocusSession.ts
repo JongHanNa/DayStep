@@ -12,6 +12,7 @@ import { PomodoroSessionService } from '@/services/pomodoro-session.service';
 import { TodoCompletionsService } from '@/services/todo-completions.service';
 import { updateWithJWT } from '@/lib/supabase/core';
 import { removeAnytimeOverrideWithJWT } from '@/lib/supabase/todo-postpone';
+import { deleteTodoExclusionWithJWT } from '@/lib/supabase/todo-exclusions';
 import { useExecutionRecommendation } from './useExecutionRecommendation';
 import type { Todo } from '@/entities/todo/Todo';
 import type { TimerDisplayMode } from '@/types/adhd';
@@ -61,6 +62,16 @@ export interface UseFocusSessionReturn {
   stopPiP: ReturnType<typeof usePiPTimer>['stopPiP'];
 }
 
+/** 반복 인스턴스의 occurrence date 추출 (occurrenceDate 필드 → 가상 ID 파싱 → 로컬 날짜 fallback) */
+function getOccurrenceDate(todo: Todo): string {
+  if (todo.occurrenceDate) return todo.occurrenceDate;
+  if (todo.id.includes('-recurrence-')) {
+    return todo.id.split('-recurrence-')[1].substring(0, 10);
+  }
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
 /** 반복 인스턴스의 부모 UUID를 추출 (parentRecurringTodoId → 가상 ID 파싱 → fallback) */
 function getParentTodoId(todo: Todo): string {
   if (todo.parentRecurringTodoId) return todo.parentRecurringTodoId;
@@ -79,7 +90,7 @@ export function useFocusSession(todayTodosOverride?: Todo[]): UseFocusSessionRet
     startFocus,
   } = useADHDStore();
 
-  const { updateTodo, toggleTodo } = useTodoStore();
+  const { updateTodo, toggleTodo, fetchAllTodos } = useTodoStore();
   const { settings: pomodoroSettings } = usePomodoroStore();
   const { getTodayTodos } = useExecutionRecommendation();
 
@@ -236,9 +247,7 @@ export function useFocusSession(todayTodosOverride?: Todo[]): UseFocusSessionRet
       const parentId = getParentTodoId(todo);
       if (parentId !== todo.id && userId) {
         // 반복 할일
-        const occurrenceDate = todo.startTime
-          ? new Date(todo.startTime).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
+        const occurrenceDate = getOccurrenceDate(todo);
 
         await TodoCompletionsService.markRecurrenceAsCompleted(
           parentId,
@@ -249,6 +258,12 @@ export function useFocusSession(todayTodosOverride?: Todo[]): UseFocusSessionRet
             actualEndTime: sessionEndTime.toISOString(),
           }
         );
+
+        // 미루기 exclusion 정리 (있으면 삭제, 없으면 무시)
+        await deleteTodoExclusionWithJWT(parentId, occurrenceDate, userId).catch(() => {});
+
+        // 타임라인 데이터 새로고침
+        await fetchAllTodos();
       } else {
         await updateTodo(todo.id, {
           completed: true,
@@ -271,17 +286,17 @@ export function useFocusSession(todayTodosOverride?: Todo[]): UseFocusSessionRet
       }));
     } catch (error) {
       console.error('포커스 완료 처리 실패:', error);
+    } finally {
+      stopPomodoroTimer();
+      setSessionId(null);
+      setPausedAt(null);
+      setTotalDuration(null);
+      isCompletingRef.current = false;
     }
-
-    stopPomodoroTimer();
-    setSessionId(null);
-    setPausedAt(null);
-    setTotalDuration(null);
-    isCompletingRef.current = false;
 
     // 포커스 모드는 유지 — UI에서 "다음" or "나가기" 결정
     // endFocus는 completeCurrent 또는 skipToNext에서 호출
-  }, [focusMode.focusTodo, sessionId, timerState.elapsed, userId, updateTodo, stopPomodoroTimer]);
+  }, [focusMode.focusTodo, sessionId, timerState.elapsed, userId, updateTodo, fetchAllTodos, stopPomodoroTimer]);
 
   // 완료 후 종료
   const completeCurrent = useCallback(async () => {
