@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DayStep — 집중 실행하기 UX 개선안 프로토타입</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Noto Sans KR', sans-serif; }
+    body { background: #f0f0f5; }
+
+    /* Tab navigation */
+    .tab-btn { transition: all 0.2s; }
+    .tab-btn.active { background: #8b5cf6; color: white; box-shadow: 0 2px 8px rgba(139,92,246,0.3); }
+    .tab-btn:not(.active):hover { background: #ede9fe; }
+
+    /* Overlay animations */
+    .overlay-backdrop { transition: opacity 0.3s; }
+    .overlay-sheet { transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+    .overlay-sheet.closed { transform: translateY(100%); }
+    .overlay-sheet.open { transform: translateY(0); }
+
+    /* Circular timer */
+    .timer-ring { transition: stroke-dashoffset 0.5s ease; }
+
+    /* Pulse */
+    @keyframes soft-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.2); }
+      50% { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
+    }
+    .focus-pulse { animation: soft-pulse 2s infinite; }
+
+    /* Card hover */
+    .todo-card { transition: all 0.2s; }
+    .todo-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    /* Focus button */
+    .focus-btn { transition: all 0.15s; }
+    .focus-btn:hover { transform: scale(1.1); }
+    .focus-btn:active { transform: scale(0.95); }
+
+    /* Phone mockup */
+    .phone-frame {
+      width: 375px; height: 720px;
+      border-radius: 40px;
+      border: 8px solid #1f2937;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    }
+    .phone-notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 150px; height: 28px; background: #1f2937;
+      border-radius: 0 0 20px 20px; z-index: 50;
+    }
+    .phone-content { height: 100%; overflow-y: auto; background: #f8f8f8; }
+
+    /* Desktop frame */
+    .desktop-frame {
+      width: 900px; height: 560px;
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.12);
+    }
+
+    /* Toast animation */
+    @keyframes toast-in {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-anim { animation: toast-in 0.3s ease-out; }
+
+    /* Settings panel slide */
+    .settings-slide { transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden; }
+
+    /* Countdown animation */
+    @keyframes countdown-tick {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .timer-tick { animation: countdown-tick 1s ease infinite; }
+
+    /* Split view resize handle */
+    .resize-handle { cursor: col-resize; }
+    .resize-handle:hover { background: rgba(139,92,246,0.15); }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+
+  <!-- Header -->
+  <div class="max-w-6xl mx-auto mb-8">
+    <div class="flex items-center gap-3 mb-2">
+      <div class="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">DayStep — 집중 실행하기 UX 개선안</h1>
+        <p class="text-sm text-gray-500">인터랙티브 프로토타입 · 각 시안을 클릭하며 체험해보세요</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="max-w-6xl mx-auto mb-6">
+    <div class="flex flex-wrap gap-2">
+      <button class="tab-btn active px-5 py-2.5 rounded-full text-sm font-semibold" onclick="showTab('a')">
+        시안 A · 인라인 포커스
+      </button>
+      <button class="tab-btn px-5 py-2.5 rounded-full text-sm font-semibold bg-white" onclick="showTab('b')">
+        시안 B · 하이브리드
+      </button>
+      <button class="tab-btn px-5 py-2.5 rounded-full text-sm font-semibold bg-white" onclick="showTab('c')">
+        시안 C · 스플릿 뷰
+      </button>
+      <button class="tab-btn px-5 py-2.5 rounded-full text-sm font-semibold bg-white" onclick="showTab('env')">
+        환경 준비 옵션
+      </button>
+      <button class="tab-btn px-5 py-2.5 rounded-full text-sm font-semibold bg-white" onclick="showTab('compare')">
+        비교 요약
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- 시안 A: 인라인 포커스 모드 -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="tab-a" class="tab-content max-w-6xl mx-auto">
+    <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
+      <div class="flex items-start gap-4">
+        <div class="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <span class="text-violet-600 font-bold text-sm">A</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900 mb-1">인라인 포커스 모드 <span class="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full ml-2">권장</span></h2>
+          <p class="text-sm text-gray-600">Execute 화면을 없애고, 할일 항목에서 직접 포커스 모드 진입. 바텀시트 오버레이로 타이머 표시.</p>
+          <div class="flex gap-4 mt-3 text-xs text-gray-500">
+            <span class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              1탭으로 타이머 시작
+            </span>
+            <span class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              일정 맥락 유지
+            </span>
+            <span class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              ADHD 친화적
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-8">
+      <!-- Phone: Planner View -->
+      <div>
+        <p class="text-center text-sm font-semibold text-gray-600 mb-3">하루 플래너 (▶ 버튼으로 시작)</p>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-content" id="planA-planner">
+            <!-- Header -->
+            <div class="sticky top-0 z-40 bg-white border-b border-gray-200 pt-8 px-4 pb-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg font-bold text-gray-900">2월 13일 목요일</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button class="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center focus-btn shadow-md"
+                          onclick="openFocusOverlayA('recommend')" title="추천 할일로 포커스 시작">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="px-4 py-3 space-y-2" id="planA-timeline">
+              <!-- Morning Section -->
+              <div class="flex items-center gap-2 mb-2 mt-1">
+                <span class="text-xs font-semibold text-amber-600">☀️ 오전</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+              </div>
+
+              <!-- Todo 1 - In Progress -->
+              <div class="todo-card bg-amber-50 rounded-xl p-3 border-l-4 border-l-amber-400 flex items-center gap-3 relative group" id="todoA-1">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">진행중</span>
+                    <span class="text-xs text-gray-400">09:00-10:00</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900 truncate">프로젝트 기획서 작성</p>
+                  <p class="text-xs text-gray-400 mt-0.5">📁 업무</p>
+                </div>
+                <button class="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center focus-btn shadow-sm focus-pulse"
+                        onclick="openFocusOverlayA('프로젝트 기획서 작성', '09:00', '10:00', 60)">
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Todo 2 -->
+              <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 relative group">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs text-gray-400">10:30-11:00</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900 truncate">디자인 리뷰 미팅</p>
+                  <p class="text-xs text-gray-400 mt-0.5">📁 팀 협업</p>
+                </div>
+                <button class="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center focus-btn opacity-0 group-hover:opacity-100"
+                        onclick="openFocusOverlayA('디자인 리뷰 미팅', '10:30', '11:00', 30)">
+                  <svg class="w-4 h-4 text-violet-600" fill="currentColor" viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Afternoon Section -->
+              <div class="flex items-center gap-2 mb-2 mt-4">
+                <span class="text-xs font-semibold text-orange-600">🌤 오후</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+              </div>
+
+              <!-- Todo 3 -->
+              <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 relative group">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-medium">🔥 긴급</span>
+                    <span class="text-xs text-gray-400">13:00-14:30</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900 truncate">API 버그 수정</p>
+                  <p class="text-xs text-gray-400 mt-0.5">📁 개발</p>
+                </div>
+                <button class="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center focus-btn opacity-0 group-hover:opacity-100"
+                        onclick="openFocusOverlayA('API 버그 수정', '13:00', '14:30', 90)">
+                  <svg class="w-4 h-4 text-violet-600" fill="currentColor" viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Todo 4 -->
+              <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 relative group">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs text-gray-400">15:00-16:00</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900 truncate">주간 리포트 정리</p>
+                  <p class="text-xs text-gray-400 mt-0.5">📁 업무</p>
+                </div>
+                <button class="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center focus-btn opacity-0 group-hover:opacity-100"
+                        onclick="openFocusOverlayA('주간 리포트 정리', '15:00', '16:00', 60)">
+                  <svg class="w-4 h-4 text-violet-600" fill="currentColor" viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Evening Section -->
+              <div class="flex items-center gap-2 mb-2 mt-4">
+                <span class="text-xs font-semibold text-indigo-600">🌙 저녁</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+              </div>
+
+              <!-- Todo 5 -->
+              <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 relative group">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs text-gray-400">19:00-20:00</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-900 truncate">독서 30분</p>
+                  <p class="text-xs text-gray-400 mt-0.5">📁 자기개발</p>
+                </div>
+                <button class="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center focus-btn opacity-0 group-hover:opacity-100"
+                        onclick="openFocusOverlayA('독서 30분', '19:00', '20:00', 30)">
+                  <svg class="w-4 h-4 text-violet-600" fill="currentColor" viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Completed Todo -->
+              <div class="todo-card bg-gray-50 rounded-xl p-3 border-l-4 border-l-green-400 flex items-center gap-3 opacity-60">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-600 font-medium">✅ 완료</span>
+                    <span class="text-xs text-gray-400">08:00-08:30</span>
+                  </div>
+                  <p class="text-sm font-medium text-gray-400 truncate line-through">아침 운동</p>
+                </div>
+              </div>
+
+              <div class="h-16"></div>
+            </div>
+
+            <!-- Focus Overlay (hidden by default) -->
+            <div id="focusOverlayA-backdrop" class="overlay-backdrop fixed inset-0 bg-black/40 z-50 opacity-0 pointer-events-none" onclick="closeFocusOverlayA()"></div>
+            <div id="focusOverlayA-sheet" class="overlay-sheet closed fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl" style="height: 85%;">
+              <!-- Handle -->
+              <div class="flex justify-center pt-3 pb-2">
+                <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+              </div>
+
+              <!-- Toast reminder -->
+              <div id="focusA-toast" class="hidden toast-anim mx-4 mb-3 px-4 py-2.5 bg-violet-50 border border-violet-200 rounded-xl flex items-center gap-2">
+                <span class="text-lg">📱</span>
+                <span class="text-xs text-violet-700 font-medium">핸드폰은 치워두셨나요? 집중 환경을 만들어보세요!</span>
+                <button class="ml-auto text-violet-400 hover:text-violet-600 text-xs" onclick="document.getElementById('focusA-toast').classList.add('hidden')">✕</button>
+              </div>
+
+              <!-- Current task -->
+              <div class="px-6 mb-4">
+                <p class="text-xs text-violet-500 font-semibold mb-1">지금 집중하기</p>
+                <h3 class="text-xl font-bold text-gray-900" id="focusA-title">프로젝트 기획서 작성</h3>
+                <p class="text-sm text-gray-400 mt-0.5" id="focusA-time">09:00 → 10:00 (60분)</p>
+              </div>
+
+              <!-- Circular Timer -->
+              <div class="flex justify-center mb-6">
+                <div class="relative" style="width: 220px; height: 220px;">
+                  <svg viewBox="0 0 220 220" style="width:220px;height:220px;transform:rotate(-90deg)">
+                    <circle cx="110" cy="110" r="95" stroke="#e0e7ff" stroke-width="24" fill="none"/>
+                    <circle id="focusA-ring" cx="110" cy="110" r="95" stroke="#8b5cf6" stroke-width="24" fill="none"
+                            stroke-linecap="round" stroke-dasharray="597" stroke-dashoffset="150" class="timer-ring"/>
+                  </svg>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <svg class="w-8 h-8 text-violet-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span class="text-3xl font-bold text-gray-900 timer-tick" id="focusA-countdown">24:37</span>
+                    <span class="text-xs text-gray-400">남은 시간</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Timer Controls -->
+              <div class="flex items-center justify-center gap-3 mb-6 px-6">
+                <button class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-600 hover:bg-gray-200">-1</button>
+                <button class="w-14 h-14 rounded-full bg-violet-500 flex items-center justify-center shadow-lg focus-btn" id="focusA-playBtn" onclick="toggleTimerA()">
+                  <svg id="focusA-pauseIcon" class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                  </svg>
+                  <svg id="focusA-playIcon" class="w-6 h-6 text-white hidden" fill="currentColor" viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21"/>
+                  </svg>
+                </button>
+                <button class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-600 hover:bg-gray-200">+1</button>
+              </div>
+
+              <!-- Mini Schedule (Next tasks) -->
+              <div class="px-6 mb-4">
+                <p class="text-xs text-gray-400 font-semibold mb-2">다음 일정</p>
+                <div class="space-y-2" id="focusA-nextTasks">
+                  <div class="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-xl">
+                    <div class="w-1.5 h-8 bg-gray-300 rounded-full"></div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-700 font-medium">디자인 리뷰 미팅</p>
+                      <p class="text-xs text-gray-400">10:30-11:00</p>
+                    </div>
+                    <button class="text-xs text-violet-500 font-medium hover:text-violet-700">다음에 하기</button>
+                  </div>
+                  <div class="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-xl">
+                    <div class="w-1.5 h-8 bg-red-300 rounded-full"></div>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-700 font-medium">API 버그 수정</p>
+                      <p class="text-xs text-gray-400">13:00-14:30 · 🔥 긴급</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="px-6 flex gap-2">
+                <button class="flex-1 py-3 rounded-full bg-green-500 text-white font-semibold text-sm hover:bg-green-600 transition-colors" onclick="completeFocusA()">
+                  ✅ 완료했어요
+                </button>
+                <button class="py-3 px-4 rounded-full bg-gray-100 text-gray-600 font-medium text-sm hover:bg-gray-200 transition-colors" onclick="closeFocusOverlayA()">
+                  나가기
+                </button>
+              </div>
+            </div>
+
+            <!-- Completion celebration (hidden) -->
+            <div id="focusA-complete" class="hidden fixed inset-0 z-50 bg-white flex flex-col items-center justify-center">
+              <div class="text-6xl mb-4">🎉</div>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">잘 하셨어요!</h3>
+              <p class="text-sm text-gray-500 mb-1">"프로젝트 기획서 작성" 완료</p>
+              <p class="text-xs text-violet-500 font-medium mb-8">오늘 2개 완료 · 총 50분 집중</p>
+
+              <div class="bg-violet-50 rounded-2xl p-4 w-72 mb-6">
+                <p class="text-xs text-violet-600 font-semibold mb-2">다음 할일 시작할까요?</p>
+                <div class="flex items-center gap-3">
+                  <div class="w-1.5 h-8 bg-gray-300 rounded-full"></div>
+                  <div class="flex-1">
+                    <p class="text-sm text-gray-700 font-medium">디자인 리뷰 미팅</p>
+                    <p class="text-xs text-gray-400">10:30-11:00</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex gap-2 w-72">
+                <button class="flex-1 py-3 rounded-full bg-violet-500 text-white font-semibold text-sm" onclick="closeCelebrationA()">
+                  ⚡ 바로 시작
+                </button>
+                <button class="py-3 px-5 rounded-full bg-gray-100 text-gray-600 font-medium text-sm" onclick="closeCelebrationA()">
+                  나중에
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-3">할일 항목에 마우스를 올려보세요 (모바일: 상시 표시)</p>
+      </div>
+
+      <!-- Interaction Guide -->
+      <div class="max-w-xs space-y-4 pt-8">
+        <div class="bg-white rounded-2xl p-5 border border-gray-200">
+          <h4 class="font-bold text-gray-900 mb-3 text-sm">인터랙션 흐름</h4>
+          <div class="space-y-3">
+            <div class="flex gap-3">
+              <div class="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-bold text-violet-600">1</span>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-700">직접 시작</p>
+                <p class="text-xs text-gray-500">할일 옆 <span class="text-violet-600 font-bold">▶</span> 버튼 탭 → 오버레이</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-bold text-violet-600">2</span>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-700">추천 시작</p>
+                <p class="text-xs text-gray-500">헤더 <span class="text-violet-600 font-bold">⚡</span> 버튼 → 자동 추천</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-bold text-violet-600">3</span>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-700">타이머 실행</p>
+                <p class="text-xs text-gray-500">원형 타이머 + 다음 일정 미리보기</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-bold text-violet-600">4</span>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-700">완료 → 다음</p>
+                <p class="text-xs text-gray-500">"다음 할일 시작할까요?" 추천</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-violet-50 rounded-2xl p-5 border border-violet-200">
+          <h4 class="font-bold text-violet-800 mb-2 text-sm">🎯 핵심 가치</h4>
+          <ul class="space-y-1.5 text-xs text-violet-700">
+            <li>• 네비게이션 마찰 <strong>0 step</strong> (기존 3 step)</li>
+            <li>• "지금 보고 있는 이 할일" 바로 시작</li>
+            <li>• 오버레이 뒤에 플래너가 보여 맥락 유지</li>
+            <li>• 기존 추천 알고리즘 ⚡ 버튼으로 재활용</li>
+            <li>• 환경 준비: 토스트 한 줄로 축소</li>
+          </ul>
+        </div>
+
+        <div class="bg-amber-50 rounded-2xl p-5 border border-amber-200">
+          <h4 class="font-bold text-amber-800 mb-2 text-sm">🧠 ADHD 친화성</h4>
+          <ul class="space-y-1.5 text-xs text-amber-700">
+            <li>• 화면 전환 = 주의력 분산 트리거 제거</li>
+            <li>• 진행중 할일에 펄스 애니메이션으로 시각적 어포던스</li>
+            <li>• 타이머 완료 후 자동으로 다음 추천</li>
+            <li>• 건너뛰기 버튼 반복 클릭 불필요</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- 시안 B: 하이브리드 -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="tab-b" class="tab-content max-w-6xl mx-auto hidden">
+    <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
+      <div class="flex items-start gap-4">
+        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <span class="text-blue-600 font-bold text-sm">B</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900 mb-1">하이브리드: 인라인 + 포커스 대시보드</h2>
+          <p class="text-sm text-gray-600">인라인 타이머 시작 가능 + Execute 화면을 축소된 포커스 대시보드로 변환</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-8">
+      <!-- Phone: Planner with inline -->
+      <div>
+        <p class="text-center text-sm font-semibold text-gray-600 mb-3">플래너 (인라인 시작)</p>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-content">
+            <div class="sticky top-0 z-40 bg-white border-b border-gray-200 pt-8 px-4 pb-3">
+              <div class="flex items-center justify-between">
+                <span class="text-lg font-bold text-gray-900">2월 13일 목요일</span>
+                <div class="flex items-center gap-1">
+                  <button class="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center focus-btn shadow-md">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="px-4 py-3 space-y-2">
+              <div class="flex items-center gap-2 mb-2 mt-1">
+                <span class="text-xs font-semibold text-amber-600">☀️ 오전</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <!-- Todo with inline timer active -->
+              <div class="bg-violet-50 rounded-xl p-3 border-2 border-violet-300 relative">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-0.5">
+                      <span class="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">⚡ 집중중</span>
+                      <span class="text-xs text-gray-400">09:00-10:00</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-900">프로젝트 기획서 작성</p>
+                  </div>
+                  <div class="text-center">
+                    <div class="relative" style="width:48px;height:48px;">
+                      <svg viewBox="0 0 48 48" style="width:48px;height:48px;transform:rotate(-90deg)">
+                        <circle cx="24" cy="24" r="20" stroke="#e0e7ff" stroke-width="4" fill="none"/>
+                        <circle cx="24" cy="24" r="20" stroke="#8b5cf6" stroke-width="4" fill="none"
+                                stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="31"/>
+                      </svg>
+                      <span class="absolute inset-0 flex items-center justify-center text-xs font-bold text-violet-600">24m</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex gap-1.5">
+                  <button class="flex-1 py-1.5 rounded-full bg-violet-500 text-white text-xs font-medium">⏸ 일시정지</button>
+                  <button class="flex-1 py-1.5 rounded-full bg-green-500 text-white text-xs font-medium">✅ 완료</button>
+                  <button class="py-1.5 px-3 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">⏭</button>
+                </div>
+              </div>
+
+              <!-- Other todos -->
+              <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 group">
+                <div class="flex-1">
+                  <p class="text-xs text-gray-400 mb-0.5">10:30-11:00</p>
+                  <p class="text-sm font-medium text-gray-900">디자인 리뷰 미팅</p>
+                </div>
+                <button class="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <svg class="w-3.5 h-3.5 text-violet-600" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+                </button>
+              </div>
+              <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 group">
+                <div class="flex-1">
+                  <p class="text-xs text-gray-400 mb-0.5">13:00-14:30</p>
+                  <p class="text-sm font-medium text-gray-900">API 버그 수정</p>
+                </div>
+                <button class="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <svg class="w-3.5 h-3.5 text-violet-600" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone: Focus Dashboard -->
+      <div>
+        <p class="text-center text-sm font-semibold text-gray-600 mb-3">포커스 대시보드 (축소된 Execute)</p>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-content">
+            <div class="sticky top-0 z-40 bg-white border-b border-gray-200 pt-8 px-4 pb-3">
+              <span class="text-lg font-bold text-gray-900">⚡ 포커스 대시보드</span>
+            </div>
+
+            <div class="px-4 py-4 space-y-4">
+              <!-- Session Stats -->
+              <div class="bg-gradient-to-br from-violet-500 to-violet-700 rounded-2xl p-5 text-white">
+                <p class="text-xs opacity-80 mb-1">오늘의 집중</p>
+                <div class="flex items-end gap-4">
+                  <div>
+                    <span class="text-3xl font-bold">2</span>
+                    <span class="text-sm opacity-80">개 완료</span>
+                  </div>
+                  <div>
+                    <span class="text-3xl font-bold">1h 25m</span>
+                    <span class="text-sm opacity-80"> 집중</span>
+                  </div>
+                </div>
+                <div class="mt-3 bg-white/20 rounded-full h-2">
+                  <div class="bg-white rounded-full h-2" style="width: 40%"></div>
+                </div>
+                <p class="text-xs opacity-70 mt-1">일일 목표의 40%</p>
+              </div>
+
+              <!-- Current / Next recommendation -->
+              <div class="bg-white rounded-2xl p-5 border border-gray-200">
+                <p class="text-xs text-violet-500 font-semibold mb-3">다음 추천</p>
+                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                  <p class="text-lg font-bold text-gray-900 mb-1">API 버그 수정</p>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">🔥 긴급</span>
+                    <span class="text-xs text-gray-400">13:00-14:30</span>
+                  </div>
+                </div>
+                <button class="w-full py-3 rounded-full bg-violet-500 text-white font-semibold text-sm">
+                  ⚡ 바로 시작하기
+                </button>
+                <button class="w-full py-2.5 rounded-full text-gray-500 font-medium text-sm mt-1">
+                  다른 거 추천해줘
+                </button>
+              </div>
+
+              <!-- Recent sessions -->
+              <div class="bg-white rounded-2xl p-5 border border-gray-200">
+                <p class="text-xs text-gray-500 font-semibold mb-3">최근 세션</p>
+                <div class="space-y-2">
+                  <div class="flex items-center gap-3 py-2">
+                    <span class="text-green-500">✅</span>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-700">아침 운동</p>
+                      <p class="text-xs text-gray-400">25분 집중</p>
+                    </div>
+                    <span class="text-xs text-gray-400">08:00</span>
+                  </div>
+                  <div class="flex items-center gap-3 py-2">
+                    <span class="text-green-500">✅</span>
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-700">프로젝트 기획서 작성</p>
+                      <p class="text-xs text-gray-400">60분 집중</p>
+                    </div>
+                    <span class="text-xs text-gray-400">09:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison notes -->
+      <div class="max-w-xs space-y-4 pt-8">
+        <div class="bg-white rounded-2xl p-5 border border-gray-200">
+          <h4 class="font-bold text-gray-900 mb-3 text-sm">시안 B 특징</h4>
+          <div class="space-y-2 text-xs text-gray-600">
+            <div class="flex items-start gap-2">
+              <span class="text-green-500">✓</span>
+              <span>기존 Execute 흐름 유지 (학습된 사용자)</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="text-green-500">✓</span>
+              <span>인라인 진입점 추가로 접근성 향상</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="text-green-500">✓</span>
+              <span>세션 통계 전용 공간 확보</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-red-50 rounded-2xl p-5 border border-red-200">
+          <h4 class="font-bold text-red-800 mb-3 text-sm">⚠️ 우려 사항</h4>
+          <div class="space-y-2 text-xs text-red-700">
+            <div class="flex items-start gap-2">
+              <span>•</span>
+              <span>두 가지 경로 유지 → 유지보수 복잡도 ↑</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <span>•</span>
+              <span>"어디서 시작하지?" 사용자 혼란 가능</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <span>•</span>
+              <span>인라인 타이머 + 대시보드 타이머 중복</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- 시안 C: 스플릿 뷰 -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="tab-c" class="tab-content max-w-6xl mx-auto hidden">
+    <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
+      <div class="flex items-start gap-4">
+        <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <span class="text-emerald-600 font-bold text-sm">C</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-900 mb-1">컨텍스트 스플릿 뷰 (데스크톱 중심)</h2>
+          <p class="text-sm text-gray-600">데스크톱에서 플래너 + 타이머를 나란히 표시. 모바일에서는 시안 A 오버레이.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-center mb-6">
+      <p class="text-center text-sm font-semibold text-gray-600 mb-3">데스크톱 레이아웃 (할일 클릭 → 우측 패널 연결)</p>
+    </div>
+    <div class="flex justify-center">
+      <div class="desktop-frame flex">
+        <!-- Left: Planner -->
+        <div class="flex-1 bg-ds-bg overflow-y-auto border-r border-gray-200">
+          <!-- Header -->
+          <div class="sticky top-0 z-40 bg-white border-b border-gray-200 px-5 py-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-lg font-bold text-gray-900">2월 13일 목요일</span>
+              </div>
+              <button class="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center focus-btn shadow-md">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="px-5 py-3 space-y-2">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-semibold text-amber-600">☀️ 오전</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+
+            <!-- Active item -->
+            <div class="todo-card bg-violet-50 rounded-xl p-3 border-2 border-violet-300 flex items-center gap-3 cursor-pointer" onclick="selectSplitTodo(this, '프로젝트 기획서 작성')">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-medium">⚡ 집중중</span>
+                  <span class="text-xs text-gray-400">09:00-10:00</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900">프로젝트 기획서 작성</p>
+                <p class="text-xs text-gray-400 mt-0.5">📁 업무</p>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center">
+                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+              </div>
+            </div>
+
+            <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 cursor-pointer" onclick="selectSplitTodo(this, '디자인 리뷰 미팅')">
+              <div class="flex-1">
+                <p class="text-xs text-gray-400 mb-0.5">10:30-11:00</p>
+                <p class="text-sm font-medium text-gray-900">디자인 리뷰 미팅</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 mb-2 mt-4">
+              <span class="text-xs font-semibold text-orange-600">🌤 오후</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+
+            <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 cursor-pointer" onclick="selectSplitTodo(this, 'API 버그 수정')">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-600 font-medium">🔥 긴급</span>
+                  <span class="text-xs text-gray-400">13:00-14:30</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900">API 버그 수정</p>
+              </div>
+            </div>
+
+            <div class="todo-card bg-white rounded-xl p-3 border-l-4 border-l-gray-200 flex items-center gap-3 cursor-pointer" onclick="selectSplitTodo(this, '주간 리포트 정리')">
+              <div class="flex-1">
+                <p class="text-xs text-gray-400 mb-0.5">15:00-16:00</p>
+                <p class="text-sm font-medium text-gray-900">주간 리포트 정리</p>
+              </div>
+            </div>
+
+            <div class="todo-card bg-gray-50 rounded-xl p-3 border-l-4 border-l-green-400 flex items-center gap-3 opacity-60">
+              <div class="flex-1">
+                <span class="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-600 font-medium">✅ 완료</span>
+                <p class="text-sm font-medium text-gray-400 line-through mt-0.5">아침 운동</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resize handle -->
+        <div class="resize-handle w-1 bg-gray-200 flex-shrink-0 flex items-center justify-center">
+          <div class="w-0.5 h-8 bg-gray-400 rounded-full"></div>
+        </div>
+
+        <!-- Right: Focus Timer Panel -->
+        <div class="w-80 bg-white flex flex-col" id="splitC-panel">
+          <div class="px-5 py-3 border-b border-gray-200">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <span class="text-sm font-bold text-gray-900">포커스 타이머</span>
+            </div>
+          </div>
+
+          <div class="flex-1 flex flex-col items-center justify-center p-5">
+            <!-- Current task -->
+            <div class="text-center mb-4 w-full">
+              <p class="text-xs text-violet-500 font-semibold">지금 집중하기</p>
+              <h3 class="text-base font-bold text-gray-900 mt-1" id="splitC-title">프로젝트 기획서 작성</h3>
+              <p class="text-xs text-gray-400">09:00 → 10:00</p>
+            </div>
+
+            <!-- Timer -->
+            <div class="relative mb-4" style="width:180px;height:180px;">
+              <svg viewBox="0 0 180 180" style="width:180px;height:180px;transform:rotate(-90deg)">
+                <circle cx="90" cy="90" r="76" stroke="#e0e7ff" stroke-width="18" fill="none"/>
+                <circle cx="90" cy="90" r="76" stroke="#8b5cf6" stroke-width="18" fill="none"
+                        stroke-linecap="round" stroke-dasharray="478" stroke-dashoffset="120"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <svg class="w-6 h-6 text-violet-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="text-2xl font-bold text-gray-900">24:37</span>
+                <span class="text-xs text-gray-400">남은 시간</span>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-2 mb-5">
+              <button class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-600">-1</button>
+              <button class="w-12 h-12 rounded-full bg-violet-500 flex items-center justify-center shadow-lg">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                </svg>
+              </button>
+              <button class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-600">+1</button>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 w-full">
+              <button class="flex-1 py-2.5 rounded-full bg-green-500 text-white font-semibold text-xs">✅ 완료</button>
+              <button class="py-2.5 px-3 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">⏭ 다음</button>
+            </div>
+          </div>
+
+          <!-- Next tasks -->
+          <div class="px-5 py-3 border-t border-gray-200 bg-gray-50">
+            <p class="text-xs text-gray-400 font-semibold mb-2">다음 일정</p>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-xs">
+                <div class="w-1 h-5 bg-gray-300 rounded-full"></div>
+                <span class="text-gray-700">디자인 리뷰 미팅</span>
+                <span class="text-gray-400 ml-auto">10:30</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <div class="w-1 h-5 bg-red-300 rounded-full"></div>
+                <span class="text-gray-700">API 버그 수정</span>
+                <span class="text-gray-400 ml-auto">13:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats bar -->
+          <div class="px-5 py-2.5 border-t border-gray-200 bg-violet-50 flex items-center justify-around">
+            <div class="text-center">
+              <p class="text-lg font-bold text-violet-600">2</p>
+              <p class="text-xs text-violet-400">완료</p>
+            </div>
+            <div class="w-px h-6 bg-violet-200"></div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-violet-600">1h25m</p>
+              <p class="text-xs text-violet-400">집중</p>
+            </div>
+            <div class="w-px h-6 bg-violet-200"></div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-violet-600">3</p>
+              <p class="text-xs text-violet-400">세션</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="flex flex-wrap justify-center gap-4 mt-8">
+      <div class="bg-white rounded-2xl p-5 border border-gray-200 max-w-xs">
+        <h4 class="font-bold text-gray-900 mb-3 text-sm">장점</h4>
+        <ul class="space-y-1.5 text-xs text-gray-600">
+          <li class="flex gap-2"><span class="text-green-500">✓</span> 데스크톱 화면 최적 활용</li>
+          <li class="flex gap-2"><span class="text-green-500">✓</span> 컨텍스트 전환 제로</li>
+          <li class="flex gap-2"><span class="text-green-500">✓</span> Electron 앱의 차별화</li>
+          <li class="flex gap-2"><span class="text-green-500">✓</span> 할일 클릭 → 우측 패널 자동 연결</li>
+        </ul>
+      </div>
+      <div class="bg-red-50 rounded-2xl p-5 border border-red-200 max-w-xs">
+        <h4 class="font-bold text-red-800 mb-3 text-sm">우려 사항</h4>
+        <ul class="space-y-1.5 text-xs text-red-700">
+          <li class="flex gap-2"><span>•</span> 플랫폼별 구현 분기 필요</li>
+          <li class="flex gap-2"><span>•</span> 우측 패널이 우선순위 매트릭스와 공간 경쟁</li>
+          <li class="flex gap-2"><span>•</span> 모바일에서 별도 시안 A 구현 필요</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- 환경 준비 옵션 -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="tab-env" class="tab-content max-w-6xl mx-auto hidden">
+    <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-900 mb-1">환경 준비 화면 처리 옵션</h2>
+      <p class="text-sm text-gray-600">현재 매번 체크리스트를 거치는 환경 준비 화면의 대안 3가지</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Option 1: Settings + Toast -->
+      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="bg-violet-500 text-white px-5 py-3 flex items-center gap-2">
+          <span class="text-sm font-bold">옵션 1</span>
+          <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">권장</span>
+        </div>
+        <div class="p-5">
+          <h4 class="font-bold text-gray-900 mb-2">설정 이전 + 토스트 리마인더</h4>
+          <p class="text-xs text-gray-500 mb-4">1회 설정 → 포커스 시작 시 토스트만 표시</p>
+
+          <!-- Mock: Settings -->
+          <div class="bg-gray-50 rounded-xl p-4 mb-3">
+            <p class="text-xs font-semibold text-gray-700 mb-3">⚙️ 설정 > 포커스 환경</p>
+            <div class="space-y-2.5">
+              <label class="flex items-center justify-between">
+                <span class="text-xs text-gray-700">📱 핸드폰 치우기 리마인더</span>
+                <div class="w-9 h-5 bg-violet-500 rounded-full relative cursor-pointer">
+                  <div class="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between">
+                <span class="text-xs text-gray-700">🔇 소음 차단 알림</span>
+                <div class="w-9 h-5 bg-violet-500 rounded-full relative cursor-pointer">
+                  <div class="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between">
+                <span class="text-xs text-gray-700">💧 물 마시기 알림</span>
+                <div class="w-9 h-5 bg-gray-300 rounded-full relative cursor-pointer">
+                  <div class="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between">
+                <span class="text-xs text-gray-700">🪟 환기 알림</span>
+                <div class="w-9 h-5 bg-gray-300 rounded-full relative cursor-pointer">
+                  <div class="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow"></div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Mock: Toast -->
+          <div class="bg-violet-50 border border-violet-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span class="text-lg">📱</span>
+            <span class="text-xs text-violet-700 font-medium">핸드폰은 치워두셨나요?</span>
+            <button class="ml-auto text-violet-400 text-xs">✕</button>
+          </div>
+
+          <div class="mt-4 flex items-start gap-2">
+            <span class="text-green-500 text-xs mt-0.5">✓</span>
+            <p class="text-xs text-gray-600">설정에서 한번만 구성. 이후 포커스 시작 시 토스트 1줄만 표시 (3초 후 자동 사라짐)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option 2: First session only -->
+      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="bg-blue-500 text-white px-5 py-3">
+          <span class="text-sm font-bold">옵션 2</span>
+        </div>
+        <div class="p-5">
+          <h4 class="font-bold text-gray-900 mb-2">첫 세션만 표시</h4>
+          <p class="text-xs text-gray-500 mb-4">하루 첫 포커스 세션에만 환경 체크리스트 표시</p>
+
+          <!-- Mock: First time checklist -->
+          <div class="bg-gray-50 rounded-xl p-4 mb-3">
+            <p class="text-xs font-semibold text-gray-700 mb-3">🛠 집중 환경 만들기</p>
+            <p class="text-xs text-gray-500 mb-3">오늘 첫 세션이에요! 준비해볼까요?</p>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="rounded border-gray-300 text-violet-500" checked>
+                <span class="text-xs text-gray-700">📱 핸드폰 치우기</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="rounded border-gray-300 text-violet-500" checked>
+                <span class="text-xs text-gray-700">🔇 알림 끄기</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="rounded border-gray-300 text-violet-500">
+                <span class="text-xs text-gray-700">🪟 환기하기</span>
+              </label>
+            </div>
+            <button class="w-full mt-3 py-2 rounded-full bg-violet-500 text-white text-xs font-semibold">준비 완료!</button>
+          </div>
+
+          <!-- Mock: Subsequent = skip -->
+          <div class="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+            <span class="text-green-500">✅</span>
+            <span class="text-xs text-green-700">두 번째 세션부터는 바로 타이머 시작</span>
+          </div>
+
+          <div class="mt-4 flex items-start gap-2">
+            <span class="text-yellow-500 text-xs mt-0.5">△</span>
+            <p class="text-xs text-gray-600">첫 세션의 마찰은 유지됨. 하지만 반복 클릭은 제거.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option 3: Complete removal -->
+      <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="bg-gray-700 text-white px-5 py-3">
+          <span class="text-sm font-bold">옵션 3</span>
+        </div>
+        <div class="p-5">
+          <h4 class="font-bold text-gray-900 mb-2">완전 제거</h4>
+          <p class="text-xs text-gray-500 mb-4">환경 준비 화면 자체를 없앰</p>
+
+          <!-- Mock: Direct timer -->
+          <div class="bg-gray-50 rounded-xl p-4 mb-3">
+            <div class="flex flex-col items-center">
+              <p class="text-xs text-violet-500 font-semibold mb-2">▶ 탭 → 바로 타이머</p>
+              <div class="relative" style="width:100px;height:100px;">
+                <svg viewBox="0 0 100 100" style="width:100px;height:100px;transform:rotate(-90deg)">
+                  <circle cx="50" cy="50" r="42" stroke="#e0e7ff" stroke-width="10" fill="none"/>
+                  <circle cx="50" cy="50" r="42" stroke="#8b5cf6" stroke-width="10" fill="none"
+                          stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="66"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="text-lg font-bold text-gray-900">25:00</span>
+                </div>
+              </div>
+              <p class="text-xs text-gray-400 mt-2">중간 과정 없이 즉시 시작</p>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-2">
+            <div class="flex items-start gap-2">
+              <span class="text-green-500 text-xs mt-0.5">✓</span>
+              <p class="text-xs text-gray-600">최소 마찰: 할일 → 타이머 직행</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="text-yellow-500 text-xs mt-0.5">△</span>
+              <p class="text-xs text-gray-600">환경 준비 기능의 가치를 완전히 포기</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="text-yellow-500 text-xs mt-0.5">△</span>
+              <p class="text-xs text-gray-600">ADHD 사용자에게 환경 리마인더가 도움될 수 있음</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- 비교 요약 -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="tab-compare" class="tab-content max-w-6xl mx-auto hidden">
+    <div class="bg-white rounded-2xl p-6 mb-6 border border-gray-200">
+      <h2 class="text-lg font-bold text-gray-900 mb-1">시안 비교 요약</h2>
+    </div>
+
+    <!-- Comparison table -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left px-5 py-3 font-semibold text-gray-700">항목</th>
+            <th class="text-center px-4 py-3 font-semibold text-violet-600 bg-violet-50">시안 A (인라인)</th>
+            <th class="text-center px-4 py-3 font-semibold text-blue-600">시안 B (하이브리드)</th>
+            <th class="text-center px-4 py-3 font-semibold text-emerald-600">시안 C (스플릿)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr>
+            <td class="px-5 py-3 text-gray-700">네비게이션 스텝</td>
+            <td class="text-center px-4 py-3 text-violet-700 font-bold bg-violet-50/50">1탭 (0 전환)</td>
+            <td class="text-center px-4 py-3">1탭 또는 2탭</td>
+            <td class="text-center px-4 py-3">1클릭</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 text-gray-700">일정 맥락 유지</td>
+            <td class="text-center px-4 py-3 bg-violet-50/50">✅ 오버레이 뒤 보임</td>
+            <td class="text-center px-4 py-3">⚠️ 인라인만</td>
+            <td class="text-center px-4 py-3">✅ 나란히 표시</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 text-gray-700">ADHD 친화성</td>
+            <td class="text-center px-4 py-3 bg-violet-50/50">⭐⭐⭐</td>
+            <td class="text-center px-4 py-3">⭐⭐</td>
+            <td class="text-center px-4 py-3">⭐⭐⭐ (데스크톱)</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 text-gray-700">구현 복잡도</td>
+            <td class="text-center px-4 py-3 bg-violet-50/50">🟢 낮음</td>
+            <td class="text-center px-4 py-3">🟡 중간</td>
+            <td class="text-center px-4 py-3">🔴 높음</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 text-gray-700">크로스 플랫폼</td>
+            <td class="text-center px-4 py-3 bg-violet-50/50">✅ 동일 패턴</td>
+            <td class="text-center px-4 py-3">⚠️ 대시보드 분리</td>
+            <td class="text-center px-4 py-3">❌ 플랫폼별 분기</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 text-gray-700">세션 통계</td>
+            <td class="text-center px-4 py-3 bg-violet-50/50">오버레이 내 간략</td>
+            <td class="text-center px-4 py-3">전용 대시보드</td>
+            <td class="text-center px-4 py-3">사이드패널 하단</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 text-gray-700">기존 코드 재사용</td>
+            <td class="text-center px-4 py-3 bg-violet-50/50">🟢 높음</td>
+            <td class="text-center px-4 py-3">🟡 중간</td>
+            <td class="text-center px-4 py-3">🟡 중간</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 text-gray-700">유지보수</td>
+            <td class="text-center px-4 py-3 bg-violet-50/50">🟢 단순</td>
+            <td class="text-center px-4 py-3">🔴 이중 경로</td>
+            <td class="text-center px-4 py-3">🟡 조건부 렌더링</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="bg-violet-50 rounded-2xl p-6 border border-violet-200">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center">
+          <span class="text-white font-bold">A</span>
+        </div>
+        <div>
+          <h3 class="font-bold text-violet-800">권장: 시안 A (인라인 포커스 모드)</h3>
+          <p class="text-xs text-violet-600">+ 환경 준비 옵션 1 (설정 이전 + 토스트)</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-violet-700">
+        <div>
+          <p class="font-semibold mb-1">이유:</p>
+          <ul class="space-y-1">
+            <li>• 가장 적은 마찰 (1탭 시작)</li>
+            <li>• ADHD 핵심 원칙: "지금 보이는 것에서 바로 시작"</li>
+            <li>• 기존 추천 알고리즘 ⚡ 버튼으로 재활용</li>
+            <li>• 웹/데스크톱/RN 동일 패턴</li>
+          </ul>
+        </div>
+        <div>
+          <p class="font-semibold mb-1">구현 범위:</p>
+          <ul class="space-y-1">
+            <li>• 새 컴포넌트: FocusOverlay (1개)</li>
+            <li>• 수정: TimelineItemCard, DraggableTodoChip, MonthNavigator</li>
+            <li>• 리팩토링: adhdStore (executionMode → focusMode)</li>
+            <li>• Deprecate: /adhd/execute 경로</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flow comparison diagram -->
+    <div class="mt-6 bg-white rounded-2xl p-6 border border-gray-200">
+      <h3 class="font-bold text-gray-900 mb-4 text-sm">Before / After 흐름 비교</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Before -->
+        <div>
+          <p class="text-xs font-semibold text-red-500 mb-3">❌ 기존 (3단계)</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">1</div>
+              <div class="flex-1 h-px bg-gray-300"></div>
+              <span class="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">하루 플래너에서 할일 확인</span>
+            </div>
+            <div class="flex justify-center"><span class="text-gray-300">↓</span></div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">2</div>
+              <div class="flex-1 h-px bg-gray-300"></div>
+              <span class="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">Execute 탭으로 이동</span>
+            </div>
+            <div class="flex justify-center"><span class="text-gray-300">↓</span></div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">3</div>
+              <div class="flex-1 h-px bg-gray-300"></div>
+              <span class="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">추천 확인 → 환경 준비</span>
+            </div>
+            <div class="flex justify-center"><span class="text-gray-300">↓</span></div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">4</div>
+              <div class="flex-1 h-px bg-gray-300"></div>
+              <span class="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">드디어 타이머 시작 😓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- After -->
+        <div>
+          <p class="text-xs font-semibold text-green-500 mb-3">✅ 개선 후 (1단계)</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-xs font-bold text-violet-600">1</div>
+              <div class="flex-1 h-px bg-violet-300"></div>
+              <span class="text-xs text-violet-700 bg-violet-50 px-3 py-1.5 rounded-lg font-medium">할일 옆 ▶ 탭 → 바로 타이머! ⚡</span>
+            </div>
+            <div class="mt-6 px-4 py-3 bg-violet-50 rounded-xl">
+              <p class="text-xs text-violet-600 font-medium">또는:</p>
+              <p class="text-xs text-violet-700 mt-1">헤더 ⚡ 버튼 → 자동 추천 → 바로 타이머</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─── Tab System ───
+    function showTab(id) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + id).classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    // ─── 시안 A: Focus Overlay ───
+    let timerARunning = true;
+
+    function openFocusOverlayA(titleOrMode, start, end, dur) {
+      const backdrop = document.getElementById('focusOverlayA-backdrop');
+      const sheet = document.getElementById('focusOverlayA-sheet');
+      const toast = document.getElementById('focusA-toast');
+
+      if (titleOrMode === 'recommend') {
+        document.getElementById('focusA-title').textContent = '프로젝트 기획서 작성';
+        document.getElementById('focusA-time').textContent = '09:00 → 10:00 (60분) · ⚡ AI 추천';
+      } else {
+        document.getElementById('focusA-title').textContent = titleOrMode;
+        document.getElementById('focusA-time').textContent = start + ' → ' + end + ' (' + dur + '분)';
+      }
+
+      backdrop.classList.remove('pointer-events-none');
+      backdrop.style.opacity = '1';
+      sheet.classList.remove('closed');
+      sheet.classList.add('open');
+
+      // Show toast after a delay
+      setTimeout(() => {
+        toast.classList.remove('hidden');
+      }, 500);
+
+      timerARunning = true;
+      updateTimerButtonA();
+    }
+
+    function closeFocusOverlayA() {
+      const backdrop = document.getElementById('focusOverlayA-backdrop');
+      const sheet = document.getElementById('focusOverlayA-sheet');
+      const toast = document.getElementById('focusA-toast');
+      backdrop.style.opacity = '0';
+      setTimeout(() => backdrop.classList.add('pointer-events-none'), 300);
+      sheet.classList.remove('open');
+      sheet.classList.add('closed');
+      toast.classList.add('hidden');
+    }
+
+    function toggleTimerA() {
+      timerARunning = !timerARunning;
+      updateTimerButtonA();
+    }
+
+    function updateTimerButtonA() {
+      document.getElementById('focusA-pauseIcon').classList.toggle('hidden', !timerARunning);
+      document.getElementById('focusA-playIcon').classList.toggle('hidden', timerARunning);
+    }
+
+    function completeFocusA() {
+      closeFocusOverlayA();
+      setTimeout(() => {
+        document.getElementById('focusA-complete').classList.remove('hidden');
+      }, 400);
+    }
+
+    function closeCelebrationA() {
+      document.getElementById('focusA-complete').classList.add('hidden');
+    }
+
+    // ─── 시안 C: Split View ───
+    function selectSplitTodo(el, title) {
+      document.getElementById('splitC-title').textContent = title;
+      // Visual feedback
+      document.querySelectorAll('#tab-c .todo-card').forEach(card => {
+        card.classList.remove('border-2', 'border-violet-300', 'bg-violet-50');
+        if (!card.classList.contains('opacity-60')) {
+          card.classList.add('bg-white');
+        }
+      });
+      el.classList.remove('bg-white');
+      el.classList.add('border-2', 'border-violet-300', 'bg-violet-50');
+    }
+
+    // ─── Timer animation (demo) ───
+    let timerValue = 1477; // 24:37 in seconds
+    function updateTimerDisplay() {
+      if (!timerARunning) return;
+      timerValue--;
+      if (timerValue < 0) timerValue = 1500;
+      const mins = Math.floor(timerValue / 60);
+      const secs = timerValue % 60;
+      const display = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      document.getElementById('focusA-countdown').textContent = display;
+
+      // Update ring
+      const progress = timerValue / 1500;
+      const offset = 597 * progress;
+      document.getElementById('focusA-ring').setAttribute('stroke-dashoffset', offset);
+    }
+    setInterval(updateTimerDisplay, 1000);
+  </script>
+</body>
+</html>
