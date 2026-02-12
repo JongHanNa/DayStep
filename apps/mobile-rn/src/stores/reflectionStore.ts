@@ -48,7 +48,7 @@ export const useReflectionStore = create<ReflectionState>()(
           set({loading: true, error: null});
 
           const {data, error} = await supabase
-            .from('day_reflections')
+            .from('daily_reflections')
             .select('*')
             .eq('user_id', userId)
             .eq('date', date)
@@ -96,7 +96,7 @@ export const useReflectionStore = create<ReflectionState>()(
 
         try {
           const {data: result, error} = await supabase
-            .from('day_reflections')
+            .from('daily_reflections')
             .upsert(
               {
                 user_id: userId,

@@ -28,6 +28,7 @@ import { PraisePanel } from './PraisePanel';
 import { GratitudePanel } from './GratitudePanel';
 import { DayReflectionBar } from './DayReflectionBar';
 import { DraggableTodoChip } from './DraggableTodoChip';
+import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
 import type { Todo } from '@/entities/todo/Todo';
 import type { TimelineItem } from '../../timeline/types';
 
@@ -45,6 +46,11 @@ interface DailyPlannerViewProps {
 
 export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
+  const updateRecurringTodo = useTodoStore(s => s.updateRecurringTodo);
+
+  // 반복 할일 DnD 다이얼로그 상태
+  const [pendingDrop, setPendingDrop] = useState<{todoId: string; updates: any; title: string} | null>(null);
+  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
 
   const {
     todayTodos,
@@ -182,16 +188,30 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
           break;
         }
         case 'matrix': {
-          await updateTodo(dbId, {
+          const matrixUpdates = {
             importance: dropData.importance,
             urgency: dropData.urgency,
-          });
+          };
+          if (isRecurrenceInstance) {
+            const todoTitle = timelineItem?.title || '';
+            setPendingDrop({todoId: dbId, updates: matrixUpdates, title: todoTitle});
+            setRecurringDialogOpen(true);
+            return;
+          }
+          await updateTodo(dbId, matrixUpdates);
           break;
         }
         case 'reluctant': {
-          await updateTodo(dbId, {
+          const reluctantUpdates = {
             is_reluctant_must_do: true,
-          });
+          };
+          if (isRecurrenceInstance) {
+            const todoTitle = timelineItem?.title || '';
+            setPendingDrop({todoId: dbId, updates: reluctantUpdates, title: todoTitle});
+            setRecurringDialogOpen(true);
+            return;
+          }
+          await updateTodo(dbId, reluctantUpdates);
           break;
         }
       }
@@ -208,6 +228,23 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     setEdgeHover(null);
     setActiveTodo(null);
   }, []);
+
+  // 반복 할일 DnD 다이얼로그 콜백
+  const handleRecurringDropChoice = useCallback(async (choice: 'this-only' | 'from-now' | 'all') => {
+    if (!pendingDrop) return;
+    const updateTypeMap: Record<string, 'this' | 'future' | 'all'> = {
+      'this-only': 'this',
+      'from-now': 'future',
+      'all': 'all',
+    };
+    await updateRecurringTodo(
+      pendingDrop.todoId,
+      pendingDrop.updates,
+      updateTypeMap[choice],
+      date,
+    );
+    setPendingDrop(null);
+  }, [pendingDrop, updateRecurringTodo, date]);
 
   // 칩 클릭 → TimelineItem 찾아서 편집 콜백 호출
   const handleChipEditClick = useCallback((todo: Todo) => {
@@ -506,6 +543,18 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
           </div>
         </DragOverlay>
       )}
+      {/* 반복 할일 DnD 다이얼로그 */}
+      <RecurringUpdateDialog
+        open={recurringDialogOpen}
+        onOpenChange={(open) => {
+          setRecurringDialogOpen(open);
+          if (!open) setPendingDrop(null);
+        }}
+        todoTitle={pendingDrop?.title || ''}
+        occurrenceDate={date}
+        onUpdateChoice={handleRecurringDropChoice}
+        changeType="mixed"
+      />
     </DndContext>
   );
 }

@@ -1539,10 +1539,17 @@ export class TodoService extends BaseService implements TodoRepository, ITodoSer
               recurrence_end_date: undefined,
               recurrence_count: undefined,
               recurrence_days_of_week: undefined,
+              // importance/urgency/reluctant — updates 우선, 없으면 원본 복사
+              importance: updates.importance ?? todo.importance,
+              urgency: updates.urgency ?? todo.urgency,
+              is_reluctant_must_do: updates.is_reluctant_must_do ?? todo.isReluctantMustDo,
+              // 분리 추적: 원본 반복 할일과의 관계
+              parent_recurring_todo_id: id,
+              occurrence_date: excludeDate,
               // 기타 속성
               completed: false,
               order_index: todo.orderIndex || 0,
-            };
+            } as TodoInsert;
 
             const newTodo = await createTodoWithJWT(newTodoData, userId);
             console.log('✅ [TodoService] 독립 할일 생성 완료:', { newTodoId: newTodo.id });

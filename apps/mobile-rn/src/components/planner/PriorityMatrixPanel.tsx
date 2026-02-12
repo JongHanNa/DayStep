@@ -2,12 +2,14 @@
  * Priority Matrix Panel
  * 아이젠하워 매트릭스: importance × urgency 2×2 그리드
  * todoStore에서 importance/urgency 필터링
+ * "+" 추가 + 탭 해제 기능
  */
-import React, {useMemo} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import React, {useMemo, useCallback} from 'react';
+import {View, Text, StyleSheet, Alert} from 'react-native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
-import {Target, AlertTriangle, Clock, Coffee} from 'lucide-react-native';
+import {Target, AlertTriangle, Clock, Coffee, Plus} from 'lucide-react-native';
+import {AnimatedPressable} from '@/components/core';
 import type {Todo} from '@daystep/shared-core';
 
 interface QuadrantConfig {
@@ -15,6 +17,8 @@ interface QuadrantConfig {
   Icon: React.FC<any>;
   color: string;
   bgColor: string;
+  importance: boolean;
+  urgency: boolean;
   filter: (todo: Todo) => boolean;
 }
 
@@ -24,6 +28,8 @@ const QUADRANTS: QuadrantConfig[] = [
     Icon: AlertTriangle,
     color: '#DC2626',
     bgColor: '#FEF2F2',
+    importance: true,
+    urgency: true,
     filter: (t: any) => t.importance === true && t.urgency === true,
   },
   {
@@ -31,6 +37,8 @@ const QUADRANTS: QuadrantConfig[] = [
     Icon: Target,
     color: '#2563EB',
     bgColor: '#EFF6FF',
+    importance: true,
+    urgency: false,
     filter: (t: any) => t.importance === true && !t.urgency,
   },
   {
@@ -38,6 +46,8 @@ const QUADRANTS: QuadrantConfig[] = [
     Icon: Clock,
     color: '#F59E0B',
     bgColor: '#FFFBEB',
+    importance: false,
+    urgency: true,
     filter: (t: any) => !t.importance && t.urgency === true,
   },
   {
@@ -45,12 +55,18 @@ const QUADRANTS: QuadrantConfig[] = [
     Icon: Coffee,
     color: '#6B7280',
     bgColor: '#F9FAFB',
+    importance: false,
+    urgency: false,
     filter: (t: any) => !t.importance && !t.urgency,
   },
 ];
 
-export function PriorityMatrixPanel() {
-  const {todos} = useTodoStore();
+interface PriorityMatrixPanelProps {
+  onAddPress?: (importance: boolean, urgency: boolean) => void;
+}
+
+export function PriorityMatrixPanel({onAddPress}: PriorityMatrixPanelProps) {
+  const {todos, updateTodo} = useTodoStore();
   const {primaryColor} = useTheme();
 
   const quadrantData = useMemo(() => {
@@ -59,6 +75,25 @@ export function PriorityMatrixPanel() {
       items: todos.filter(t => !t.completed).filter(q.filter),
     }));
   }, [todos]);
+
+  const handleRemoveFromMatrix = useCallback(
+    (todo: Todo) => {
+      Alert.alert(
+        '매트릭스에서 해제',
+        `"${todo.title}"을(를) 매트릭스에서 해제할까요?`,
+        [
+          {text: '취소', style: 'cancel'},
+          {
+            text: '해제',
+            style: 'destructive',
+            onPress: () =>
+              updateTodo(todo.id, {importance: null, urgency: null} as any),
+          },
+        ],
+      );
+    },
+    [updateTodo],
+  );
 
   return (
     <View className="mb-4">
@@ -75,22 +110,36 @@ export function PriorityMatrixPanel() {
             <View
               key={index}
               style={[styles.quadrant, {backgroundColor: q.bgColor}]}>
-              <View className="flex-row items-center mb-2">
-                <QIcon size={14} color={q.color} />
-                <Text
-                  className="text-xs font-semibold ml-1"
-                  style={{color: q.color}}>
-                  {q.title}
-                </Text>
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="flex-row items-center">
+                  <QIcon size={14} color={q.color} />
+                  <Text
+                    className="text-xs font-semibold ml-1"
+                    style={{color: q.color}}>
+                    {q.title}
+                  </Text>
+                </View>
+                {onAddPress && (
+                  <AnimatedPressable
+                    onPress={() => onAddPress(q.importance, q.urgency)}
+                    hapticType="light"
+                    scaleValue={0.85}>
+                    <Plus size={16} color={q.color} />
+                  </AnimatedPressable>
+                )}
               </View>
               {q.items.length > 0 ? (
                 q.items.slice(0, 3).map(todo => (
-                  <Text
+                  <AnimatedPressable
                     key={todo.id}
-                    className="text-xs text-gray-600 mb-0.5"
-                    numberOfLines={1}>
-                    • {todo.title}
-                  </Text>
+                    onPress={() => handleRemoveFromMatrix(todo)}
+                    hapticType="light">
+                    <Text
+                      className="text-xs text-gray-600 mb-0.5"
+                      numberOfLines={1}>
+                      • {todo.title}
+                    </Text>
+                  </AnimatedPressable>
                 ))
               ) : (
                 <Text className="text-xs text-gray-400">없음</Text>

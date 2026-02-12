@@ -55,6 +55,12 @@ interface TodoState {
   deleteTodo: (id: string) => Promise<boolean>;
   toggleTodoCompletion: (id: string) => Promise<boolean>;
   setSelectedDate: (date: string) => void;
+  updateRecurringTodo: (
+    id: string,
+    updates: Partial<Todo>,
+    updateType: 'this' | 'future' | 'all',
+    occurrenceDate: string,
+  ) => Promise<boolean>;
   processOfflineQueue: () => Promise<void>;
   clearError: () => void;
 }
@@ -135,8 +141,32 @@ export const useTodoStore = create<TodoState>()(
 
           if (error) throw error;
 
+          let filteredData = data ?? [];
+
+          // 반복 할일 exclusions 필터링
+          const recurringIds = filteredData
+            .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
+            .map(t => t.id);
+
+          if (recurringIds.length > 0) {
+            const {data: exclusions} = await supabase
+              .from('todo_exclusions')
+              .select('parent_todo_id, exclusion_reason')
+              .eq('excluded_date', date)
+              .in('parent_todo_id', recurringIds);
+
+            if (exclusions && exclusions.length > 0) {
+              const excludedIds = new Set(
+                exclusions
+                  .filter(e => e.exclusion_reason === 'deleted' || e.exclusion_reason === 'postponed')
+                  .map(e => e.parent_todo_id),
+              );
+              filteredData = filteredData.filter(t => !excludedIds.has(t.id));
+            }
+          }
+
           set({
-            todos: (data ?? []).map(parseTodo),
+            todos: filteredData.map(parseTodo),
             selectedDate: date,
           });
         } catch (err: any) {
@@ -265,6 +295,108 @@ export const useTodoStore = create<TodoState>()(
         return get().updateTodo(id, {
           completed: !todo.completed,
         } as Partial<Todo>);
+      },
+
+      updateRecurringTodo: async (id, updates, updateType, occurrenceDate) => {
+        try {
+          const userId = await getCurrentUserId();
+          if (!userId) throw new Error('Not authenticated');
+
+          const todo = get().todos.find(t => t.id === id);
+          if (!todo) throw new Error('Todo not found');
+
+          switch (updateType) {
+            case 'this': {
+              // 1. exclusion 생성
+              await supabase.from('todo_exclusions').insert({
+                parent_todo_id: id,
+                excluded_date: occurrenceDate,
+                user_id: userId,
+                exclusion_reason: 'deleted',
+              });
+
+              // 2. 원본 속성 복사 + updates 적용한 새 독립 할일 생성
+              const newTodoData = {
+                title: todo.title,
+                start_time: todo.start_time,
+                end_time: todo.end_time,
+                schedule_type: todo.schedule_type || 'timed',
+                icon: todo.icon,
+                color: todo.color,
+                user_id: userId,
+                recurrence_pattern: 'none',
+                completed: false,
+                order_index: todo.order_index || 0,
+                // 원본값 복사 (updates spread로 덮어쓸 수 있도록 전에 배치)
+                importance: (todo as any).importance ?? null,
+                urgency: (todo as any).urgency ?? null,
+                is_reluctant_must_do: (todo as any).is_reluctant_must_do ?? false,
+                // 분리 추적: 원본 반복 할일과의 관계
+                parent_recurring_todo_id: id,
+                occurrence_date: occurrenceDate,
+                ...updates,
+              };
+
+              const {data: newTodo, error: createErr} = await supabase
+                .from('todos')
+                .insert(newTodoData)
+                .select()
+                .single();
+
+              if (createErr) throw createErr;
+
+              // 로컬 상태: 원본 제거 + 새 할일 추가
+              set(state => ({
+                todos: [
+                  ...state.todos.filter(t => t.id !== id),
+                  parseTodo(newTodo),
+                ],
+              }));
+              break;
+            }
+            case 'future': {
+              // 부모 ID 찾기
+              const parentId = (todo as any).parent_todo_id || id;
+              const {error} = await supabase
+                .from('todos')
+                .update({...updates, updated_at: new Date().toISOString()})
+                .or(`id.eq.${parentId},parent_todo_id.eq.${parentId}`)
+                .gte('start_time', new Date(occurrenceDate).toISOString());
+
+              if (error) throw error;
+
+              // 로컬 상태 업데이트
+              set(state => ({
+                todos: state.todos.map(t =>
+                  t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
+                ),
+              }));
+              break;
+            }
+            case 'all': {
+              const parentId = (todo as any).parent_todo_id || id;
+              const {error} = await supabase
+                .from('todos')
+                .update({...updates, updated_at: new Date().toISOString()})
+                .or(`id.eq.${parentId},parent_todo_id.eq.${parentId}`);
+
+              if (error) throw error;
+
+              // 로컬 상태 업데이트
+              set(state => ({
+                todos: state.todos.map(t =>
+                  t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
+                ),
+              }));
+              break;
+            }
+          }
+          return true;
+        } catch (err: any) {
+          console.error('[TodoStore] updateRecurringTodo error:', err);
+          set({error: err.message ?? 'Failed to update recurring todo'});
+          return false;
+        }
       },
 
       processOfflineQueue: async () => {

@@ -17,6 +17,7 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
 import {format} from 'date-fns';
+import {resolveTodoIcon} from '@/lib/iconMap';
 
 interface TodoCardProps {
   todo: Todo;
@@ -102,15 +103,26 @@ export function TodoCard({todo, index = 0, onToggle, onPress}: TodoCardProps) {
           )}
 
           {/* 제목 */}
-          <Text
-            style={[
-              styles.title,
-              todo.completed && styles.titleCompleted,
-            ]}
-            numberOfLines={2}>
-            {todo.icon ? `${todo.icon} ` : ''}
-            {todo.title}
-          </Text>
+          <View style={styles.titleRow}>
+            {(() => {
+              const TodoIcon = resolveTodoIcon(todo.icon);
+              return TodoIcon ? (
+                <TodoIcon
+                  size={16}
+                  color={todo.completed ? '#9CA3AF' : '#6B7280'}
+                  style={{marginRight: 4}}
+                />
+              ) : null;
+            })()}
+            <Text
+              style={[
+                styles.title,
+                todo.completed && styles.titleCompleted,
+              ]}
+              numberOfLines={2}>
+              {todo.title}
+            </Text>
+          </View>
 
           {/* 태그 행 */}
           <View style={styles.tagRow}>
@@ -209,11 +221,16 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginLeft: 6,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 15,
     color: '#1F2937',
     fontWeight: '500',
     lineHeight: 20,
+    flex: 1,
   },
   titleCompleted: {
     textDecorationLine: 'line-through',

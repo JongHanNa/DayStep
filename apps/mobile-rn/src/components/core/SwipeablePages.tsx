@@ -10,6 +10,7 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  LayoutChangeEvent,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -23,6 +24,7 @@ const PEEK_WIDTH = 24;
 const PAGE_GAP = 12;
 const PAGE_WIDTH = SCREEN_WIDTH - PEEK_WIDTH * 2 - PAGE_GAP;
 const SNAP_INTERVAL = PAGE_WIDTH + PAGE_GAP;
+const DOTS_HEIGHT = 30;
 
 interface SwipeablePagesProps {
   children: React.ReactNode;
@@ -38,11 +40,16 @@ export function SwipeablePages({
   showDots = true,
 }: SwipeablePagesProps) {
   const [currentPage, setCurrentPage] = useState(initialPage);
+  const [containerHeight, setContainerHeight] = useState(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
   const {primaryColor} = useTheme();
 
   const pages = React.Children.toArray(children);
   const pageCount = pages.length;
+
+  const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
+    setContainerHeight(e.nativeEvent.layout.height);
+  }, []);
 
   const handleMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -57,8 +64,13 @@ export function SwipeablePages({
     [currentPage, onPageChange, pageCount],
   );
 
+  const pageHeight =
+    containerHeight > 0
+      ? containerHeight - (showDots && pageCount > 1 ? DOTS_HEIGHT : 0)
+      : undefined;
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={handleContainerLayout}>
       <Animated.ScrollView
         ref={scrollRef}
         horizontal
@@ -68,9 +80,15 @@ export function SwipeablePages({
         snapToAlignment="start"
         contentContainerStyle={styles.scrollContent}
         contentOffset={{x: initialPage * SNAP_INTERVAL, y: 0}}
-        onMomentumScrollEnd={handleMomentumScrollEnd}>
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        style={pageHeight ? {height: pageHeight} : undefined}>
         {pages.map((page, index) => (
-          <View key={index} style={styles.page}>
+          <View
+            key={index}
+            style={[
+              styles.page,
+              pageHeight ? {height: pageHeight} : undefined,
+            ]}>
             {page}
           </View>
         ))}
@@ -127,13 +145,12 @@ const styles = StyleSheet.create({
   page: {
     width: PAGE_WIDTH,
     marginHorizontal: PAGE_GAP / 2,
-    flex: 1,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 8,
+    height: DOTS_HEIGHT,
     gap: 6,
   },
   dot: {
