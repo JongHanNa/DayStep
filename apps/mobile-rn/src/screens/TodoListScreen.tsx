@@ -1,6 +1,7 @@
 /**
  * Daily Planner Screen
- * 시간대별 할일 (오전/오후/저녁) + 날짜 네비게이션 + FAB + 바텀시트
+ * - Page 0: 시간대별 할일 (오전/오후/저녁) + 날짜 네비게이션 + FAB + 바텀시트
+ * - Page 1: 우선순위 매트릭스 + 하기 싫어도 해야 할 일 + 보상/칭찬/감사
  */
 import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {Text, View, SectionList, RefreshControl, StyleSheet} from 'react-native';
@@ -11,17 +12,27 @@ import {
   TodoFormBottomSheet,
   type TodoFormBottomSheetRef,
 } from '@/components/todo/TodoFormBottomSheet';
+import {SwipeablePages} from '@/components/core/SwipeablePages';
+import {PlannerPage2} from '@/components/planner/PlannerPage2';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
+import {Sunrise, Sun, Moon, ClipboardList, Inbox} from 'lucide-react-native';
+import type {LucideIcon} from 'lucide-react-native';
 
 type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime';
 
+const SECTION_ICONS: Record<TimePeriod, {Icon: LucideIcon; color: string}> = {
+  morning: {Icon: Sunrise, color: '#F59E0B'},
+  afternoon: {Icon: Sun, color: '#F97316'},
+  evening: {Icon: Moon, color: '#8B5CF6'},
+  anytime: {Icon: ClipboardList, color: '#6B7280'},
+};
+
 interface TodoSection {
   title: string;
-  icon: string;
   period: TimePeriod;
   data: Todo[];
 }
@@ -44,10 +55,10 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   }
 
   const sections: TodoSection[] = [];
-  if (morning.length > 0) sections.push({title: '오전', icon: '🌅', period: 'morning', data: morning});
-  if (afternoon.length > 0) sections.push({title: '오후', icon: '☀️', period: 'afternoon', data: afternoon});
-  if (evening.length > 0) sections.push({title: '저녁', icon: '🌙', period: 'evening', data: evening});
-  if (anytime.length > 0) sections.push({title: '시간 미정', icon: '📋', period: 'anytime', data: anytime});
+  if (morning.length > 0) sections.push({title: '오전', period: 'morning', data: morning});
+  if (afternoon.length > 0) sections.push({title: '오후', period: 'afternoon', data: afternoon});
+  if (evening.length > 0) sections.push({title: '저녁', period: 'evening', data: evening});
+  if (anytime.length > 0) sections.push({title: '시간 미정', period: 'anytime', data: anytime});
 
   return sections;
 }
@@ -125,48 +136,57 @@ export default function TodoListScreen() {
         </AnimatedPressable>
       </Animated.View>
 
-      {/* 할일 섹션 리스트 */}
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 100}}
-        stickySectionHeadersEnabled={false}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
-        }
-        renderSectionHeader={({section}) => (
-          <View className="flex-row items-center mt-4 mb-2">
-            <Text className="text-base mr-2">{section.icon}</Text>
-            <Text className="text-sm font-semibold text-gray-500">
-              {section.title}
-            </Text>
-            <Text className="text-xs text-gray-400 ml-2">
-              {section.data.length}개
-            </Text>
-          </View>
-        )}
-        renderItem={({item, index}) => (
-          <TodoCard
-            todo={item}
-            index={index}
-            onToggle={handleToggle}
-            onPress={handleTodoPress}
+      <SwipeablePages>
+        {/* Page 0: 시간대별 할일 리스트 */}
+        <View style={{flex: 1}}>
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 100}}
+            stickySectionHeadersEnabled={false}
+            refreshControl={
+              <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+            }
+            renderSectionHeader={({section}) => {
+              const iconConfig = SECTION_ICONS[section.period];
+              const SectionIcon = iconConfig.Icon;
+              return (
+                <View className="flex-row items-center mt-4 mb-2">
+                  <SectionIcon size={16} color={iconConfig.color} strokeWidth={2} />
+                  <Text className="text-sm font-semibold text-gray-500 ml-2">
+                    {section.title}
+                  </Text>
+                  <Text className="text-xs text-gray-400 ml-2">
+                    {section.data.length}개
+                  </Text>
+                </View>
+              );
+            }}
+            renderItem={({item, index}) => (
+              <TodoCard
+                todo={item}
+                index={index}
+                onToggle={handleToggle}
+                onPress={handleTodoPress}
+              />
+            )}
+            ListEmptyComponent={
+              <View className="flex-1 justify-center items-center py-20">
+                <Animated.View entering={FadeInDown.duration(400)} className="items-center">
+                  <Inbox size={48} color="#9CA3AF" strokeWidth={1.5} />
+                  <Text className="text-base text-gray-500 text-center mt-4">
+                    이 날짜에 할일이 없어요{'\n'}
+                    + 버튼으로 추가해보세요
+                  </Text>
+                </Animated.View>
+              </View>
+            }
           />
-        )}
-        ListEmptyComponent={
-          <View className="flex-1 justify-center items-center py-20">
-            <Animated.Text
-              entering={FadeInDown.duration(400)}
-              className="text-4xl mb-4">
-              📭
-            </Animated.Text>
-            <Text className="text-base text-gray-500 text-center">
-              이 날짜에 할일이 없어요{'\n'}
-              + 버튼으로 추가해보세요
-            </Text>
-          </View>
-        }
-      />
+        </View>
+
+        {/* Page 1: 우선순위 매트릭스 + 하기 싫지만 해야 할 일 + 보상/칭찬/감사 */}
+        <PlannerPage2 />
+      </SwipeablePages>
 
       {/* FAB (할일 추가) */}
       <Animated.View entering={FadeIn.delay(400).duration(300)} style={styles.fabContainer}>

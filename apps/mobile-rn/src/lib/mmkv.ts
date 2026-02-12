@@ -2,18 +2,15 @@
  * MMKV Storage Instance + Zustand Persist Adapter
  * AsyncStorage 대비 ~30x 빠른 동기식 KV 스토리지
  */
-import {MMKV} from 'react-native-mmkv';
+import {createMMKV} from 'react-native-mmkv';
+import type {MMKV} from 'react-native-mmkv';
 import type {StateStorage} from 'zustand/middleware';
 
 // 기본 MMKV 인스턴스
-export const storage = new MMKV({
-  id: 'daystep-rn',
-});
+export const storage: MMKV = createMMKV({id: 'daystep-rn'});
 
 // Supabase 세션 전용 인스턴스 (보안 분리)
-export const sessionStorage = new MMKV({
-  id: 'daystep-session',
-});
+export const sessionStorage: MMKV = createMMKV({id: 'daystep-session'});
 
 /**
  * Zustand persist용 MMKV 어댑터

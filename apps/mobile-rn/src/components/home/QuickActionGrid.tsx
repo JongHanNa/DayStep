@@ -10,7 +10,7 @@ import {GradientBackground} from '@/components/core';
 
 interface QuickAction {
   id: string;
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   subtitle: string;
   gradient: string[];
@@ -43,7 +43,7 @@ export function QuickActionGrid({actions}: QuickActionGridProps) {
                 borderRadius: 16,
                 minHeight: 100,
               }}>
-              <Text className="text-2xl mb-2">{action.icon}</Text>
+              <View className="mb-2">{action.icon}</View>
               <Text className="text-sm font-semibold text-white">
                 {action.title}
               </Text>

@@ -1,28 +1,28 @@
 /**
  * Custom Bottom Tab Bar
  * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 설정
- * 글래스모피즘 배경 + 스프링 인디케이터 + 중앙 글로우 버튼
+ * Liquid Glass 플로팅 탭바 — 둥근 캡슐 + 따뜻한 글래스 효과
  */
 import React from 'react';
-import {View, Text, StyleSheet, Platform} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
 } from 'react-native-reanimated';
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {AnimatedPressable} from '@/components/core';
 import {GlassBackground} from '@/components/core';
-import {springs} from '@/theme/animations';
 import {useTheme} from '@/theme';
+import {Home, Calendar, Zap, FileText, Settings} from 'lucide-react-native';
+import type {LucideIcon} from 'lucide-react-native';
 
-const TAB_ICONS: Record<string, {icon: string; label: string}> = {
-  Home: {icon: '🏠', label: '홈'},
-  Planner: {icon: '📅', label: '플래너'},
-  Execute: {icon: '⚡', label: '실행'},
-  Notes: {icon: '📝', label: '노트'},
-  Settings: {icon: '⚙️', label: '설정'},
+const TAB_CONFIG: Record<string, {Icon: LucideIcon; label: string}> = {
+  Home: {Icon: Home, label: '홈'},
+  Planner: {Icon: Calendar, label: '플래너'},
+  Execute: {Icon: Zap, label: '실행'},
+  Notes: {Icon: FileText, label: '노트'},
+  Settings: {Icon: Settings, label: '설정'},
 };
 
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
@@ -33,13 +33,19 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     <GlassBackground
       blurType="chromeMaterialLight"
       blurAmount={25}
-      overlayColor="rgba(255, 255, 255, 0.85)"
-      style={[styles.container, {paddingBottom: Math.max(insets.bottom, 8)}]}>
+      overlayColor="rgba(255, 248, 240, 0.82)"
+      style={[
+        styles.container,
+        {
+          bottom: Math.max(insets.bottom, 8),
+          borderRadius: 32,
+        },
+      ]}>
       <View style={styles.tabRow}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const isCenter = route.name === 'Execute';
-          const tabInfo = TAB_ICONS[route.name] ?? {icon: '?', label: route.name};
+          const tabInfo = TAB_CONFIG[route.name] ?? {Icon: Home, label: route.name};
 
           const onPress = () => {
             const event = navigation.emit({
@@ -66,7 +72,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
           return (
             <TabButton
               key={route.key}
-              icon={tabInfo.icon}
+              Icon={tabInfo.Icon}
               label={tabInfo.label}
               isFocused={isFocused}
               primaryColor={primaryColor}
@@ -80,13 +86,13 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 }
 
 function TabButton({
-  icon,
+  Icon,
   label,
   isFocused,
   primaryColor,
   onPress,
 }: {
-  icon: string;
+  Icon: LucideIcon;
   label: string;
   isFocused: boolean;
   primaryColor: string;
@@ -105,15 +111,19 @@ function TabButton({
       scaleValue={0.9}
       style={styles.tabButton}>
       <Animated.View style={[styles.tabContent, animatedStyle]}>
-        <Text style={styles.tabIcon}>{icon}</Text>
-        <Text
+        <Icon
+          size={22}
+          color={isFocused ? primaryColor : '#9CA3AF'}
+          strokeWidth={isFocused ? 2.2 : 1.8}
+        />
+        <Animated.Text
           style={[
             styles.tabLabel,
             {color: isFocused ? primaryColor : '#9CA3AF'},
             isFocused && styles.tabLabelActive,
           ]}>
           {label}
-        </Text>
+        </Animated.Text>
         {isFocused && (
           <Animated.View
             style={[styles.activeIndicator, {backgroundColor: primaryColor}]}
@@ -149,15 +159,15 @@ function CenterButton({
             shadowRadius: isFocused ? 16 : 8,
           },
         ]}>
-        <Text style={styles.centerIcon}>⚡</Text>
+        <Zap size={24} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2} />
       </View>
-      <Text
+      <Animated.Text
         style={[
           styles.centerLabel,
           {color: isFocused ? primaryColor : '#9CA3AF'},
         ]}>
         실행
-      </Text>
+      </Animated.Text>
     </AnimatedPressable>
   );
 }
@@ -165,17 +175,20 @@ function CenterButton({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    left: 16,
+    right: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 12,
   },
   tabRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-around',
     paddingTop: 8,
+    paddingBottom: 10,
   },
   tabButton: {
     flex: 1,
@@ -185,13 +198,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
   },
-  tabIcon: {
-    fontSize: 22,
-    marginBottom: 2,
-  },
   tabLabel: {
     fontSize: 10,
     fontWeight: '500',
+    marginTop: 2,
   },
   tabLabelActive: {
     fontWeight: '600',
@@ -215,9 +225,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowOffset: {width: 0, height: 4},
     elevation: 8,
-  },
-  centerIcon: {
-    fontSize: 24,
   },
   centerLabel: {
     fontSize: 10,

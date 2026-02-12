@@ -126,7 +126,7 @@ export const useTodoStore = create<TodoState>()(
                 // 매일 반복
                 `and(recurrence_pattern.eq.daily,start_time.lte.${dayEnd})`,
                 // 주간 반복 (해당 요일)
-                `and(recurrence_pattern.eq.weekly,recurrence_days_of_week.cs.{${dayOfWeek}},start_time.lte.${dayEnd})`,
+                `and(recurrence_pattern.eq.weekly,recurrence_days_of_week.cs.[${dayOfWeek}],start_time.lte.${dayEnd})`,
                 // anytime (시간 미지정)
                 `and(schedule_type.eq.anytime,start_time.gte.${dayStart},start_time.lte.${dayEnd})`,
               ].join(','),
