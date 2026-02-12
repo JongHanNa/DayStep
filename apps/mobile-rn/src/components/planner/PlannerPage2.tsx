@@ -31,7 +31,7 @@ export function PlannerPage2() {
   return (
     <>
       <ScrollView
-        contentContainerStyle={{paddingHorizontal: 20, paddingBottom: 100}}
+        contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
         <PriorityMatrixPanel onAddPress={handleMatrixAdd} />
         <ReluctantTasksPanel onAddPress={handleReluctantAdd} />

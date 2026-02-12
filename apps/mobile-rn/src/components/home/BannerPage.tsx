@@ -34,7 +34,7 @@ export function BannerPage() {
 
   return (
     <ScrollView
-      contentContainerStyle={{paddingBottom: 100, paddingHorizontal: 20}}
+      contentContainerStyle={{paddingBottom: 100, paddingHorizontal: 4}}
       showsVerticalScrollIndicator={false}>
       {/* 섹션 제목 */}
       <Animated.View
@@ -52,7 +52,7 @@ export function BannerPage() {
           colors={['#FEF3C7', '#FDE68A', '#FBBF24']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
-          style={{borderRadius: 16, padding: 20, marginBottom: 16}}>
+          style={{borderRadius: 16, padding: 10, marginBottom: 16}}>
           <View className="flex-row items-center mb-3">
             <Flame size={22} color="#92400E" />
             <Text className="text-lg font-semibold text-amber-900 ml-2">
@@ -85,7 +85,7 @@ export function BannerPage() {
           colors={['#FCE7F3', '#FBCFE8', '#F9A8D4']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
-          style={{borderRadius: 16, padding: 20, marginBottom: 16}}>
+          style={{borderRadius: 16, padding: 10, marginBottom: 16}}>
           <View className="flex-row items-center mb-3">
             <Heart size={22} color="#9D174D" />
             <Text className="text-lg font-semibold text-pink-900 ml-2">

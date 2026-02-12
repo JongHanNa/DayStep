@@ -142,7 +142,7 @@ export default function TodoListScreen() {
           <SectionList
             sections={sections}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 100}}
+            contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
             stickySectionHeadersEnabled={false}
             refreshControl={
               <RefreshControl refreshing={loading} onRefresh={handleRefresh} />

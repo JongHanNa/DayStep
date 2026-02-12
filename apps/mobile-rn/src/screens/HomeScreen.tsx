@@ -86,7 +86,7 @@ export default function HomeScreen() {
           contentContainerStyle={{paddingBottom: 100}}
           showsVerticalScrollIndicator={false}>
           {/* 인사 + 날짜 */}
-          <View className="px-5 pt-4 pb-2">
+          <View className="px-4 pt-4 pb-2">
             <Animated.Text
               entering={FadeIn.duration(600)}
               className="text-sm text-gray-500 mb-1">
@@ -103,7 +103,7 @@ export default function HomeScreen() {
           </View>
 
           {/* 진행률 카드 */}
-          <View className="px-5 mt-4">
+          <View className="px-4 mt-4">
             <AnimatedCard enterDelay={200}>
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 mr-4">
@@ -136,13 +136,15 @@ export default function HomeScreen() {
           </View>
 
           {/* 퀵 액션 그리드 */}
-          <View className="px-5 mt-6">
+          <View className="mt-6">
             <Animated.Text
               entering={FadeInDown.delay(300).duration(400)}
-              className="text-lg font-semibold text-gray-800 mb-3">
+              className="text-lg font-semibold text-gray-800 mb-3 px-4">
               바로 시작하기
             </Animated.Text>
-            <QuickActionGrid actions={quickActions} />
+            <View className="px-1">
+              <QuickActionGrid actions={quickActions} />
+            </View>
           </View>
         </ScrollView>
 
