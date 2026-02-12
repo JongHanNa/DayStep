@@ -809,6 +809,7 @@ p{color:var(--text);margin-bottom:12px}
     <button onclick="setExampleTab('medium',this)">중간 (UI+UX)</button>
     <button onclick="setExampleTab('heavy',this)">큰 (UI+UX+IA)</button>
     <button onclick="setExampleTab('dynamics',this)">다이나믹스</button>
+    <button onclick="setExampleTab('suggest',this)">제안 요청 (AI에게 맡기기)</button>
   </div>
 
   <div class="example-list" id="example-list">
@@ -1230,7 +1231,16 @@ const examples={
   ],
   heavy:[
     {text:'"할일 편집 모달의 UI/UX/IA를 전면 리디자인 — Glassmorphism + Contextual Actions + Progressive Disclosure"',tags:['ui','ux','ia'],target:'demo-glassmorphism'},
+  ],
+  suggest:[
     {text:'"이 화면의 UI/UX 리디자인 컨셉을 3가지 제안해줘"',tags:['ui','ux','ia'],target:'layers'},
+    {text:'"이 모달에 적용 가능한 인터랙션 패턴 옵션들을 보여줘"',tags:['ux'],target:'demo-direct-manipulation'},
+    {text:'"현재 화면의 UX 문제점을 분석하고 개선안을 제시해줘"',tags:['ux'],target:'layers'},
+    {text:'"이 화면의 시각적 스타일링, 인터랙션 패턴, 정보구조를 모두 변경하는 UI/UX 리디자인 데모를 보여줘"',tags:['ui','ux','ia'],target:'layers'},
+    {text:'"이 모달을 리디자인한다면 어떤 비주얼 스타일이 어울릴지 2~3가지 시안을 제안해줘"',tags:['ui'],target:'demo-glassmorphism'},
+    {text:'"할일 목록 화면의 UX를 개선할 수 있는 인터랙션 다이나믹스 조합을 추천해줘"',tags:['ux','dynamics'],target:'demo-spring'},
+    {text:'"이 설정 화면의 정보 구조가 복잡한데, IA 관점에서 개선안을 제시해줘"',tags:['ia'],target:'demo-hub-spoke'},
+    {text:'"드래그 앤 드롭 UX를 더 자연스럽게 만들 수 있는 다이나믹스 조합을 제안해줘"',tags:['dynamics'],target:'demo-momentum'},
   ],
   dynamics:[
     {text:'"DnD 엣지 스크롤을 Continuous Mapping으로 — 엣지에 가까울수록 빠르게"',tags:['dynamics'],target:'demo-continuous'},

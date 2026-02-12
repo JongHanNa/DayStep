@@ -3,7 +3,7 @@
  * 드래그 앤 드롭 전역 상태 관리
  * - 글로벌 Pan 제스처: 캐러셀 외부에서 처리 → 페이지 전환에도 드래그 유지
  * - DroppableZone 레지스트리 + 활성 드래그 아이템 추적
- * - 점진적 엣지 스크롤: 가장자리 깊이에 따라 전환 속도 조절
+ * - 연속 스크롤 엣지 감지: 2차 이징 가속 + 50% 자동 스냅
  */
 import React, {
   createContext,
@@ -19,14 +19,20 @@ import Animated, {
   useAnimatedStyle,
   runOnJS,
 } from 'react-native-reanimated';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import type {Todo} from '@daystep/shared-core';
+import type {SwipeablePagesRef} from '@/components/core/SwipeablePages';
+import {PAGE_WIDTH} from '@/components/core/SwipeablePages';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const EDGE_ZONE = 80; // 엣지 감지 거리 (px)
-const MIN_DELAY = 300; // 가장자리 최소 지연 (ms)
-const MAX_DELAY = 1500; // 엣지존 경계 최대 지연 (ms)
+const EDGE_ZONE = 80;           // 엣지 감지 거리 (px)
+const EDGE_DWELL_MS = 150;      // 스크롤 시작 전 대기 (실수 방지)
+const SCROLL_TICK_MS = 16;      // ~60fps
+const MAX_SCROLL_SPEED = 8;     // px/tick (≈480px/s → ~0.73s에 한 페이지)
+const PAGE_CHANGE_COOLDOWN_MS = 500;
+const hapticOptions = {enableVibrateFallback: true, ignoreAndroidSystemSettings: false};
 
 interface DropZoneLayout {
   id: string;
@@ -86,10 +92,7 @@ interface DndContextValue {
 
   // Page transition
   currentPageRef: React.MutableRefObject<number>;
-  onRequestPageChange?: (direction: 'next' | 'prev') => void;
-  setOnRequestPageChange: (
-    cb: ((direction: 'next' | 'prev') => void) | undefined,
-  ) => void;
+  setPagesRef: (ref: SwipeablePagesRef | null) => void;
 
   // Remeasure trigger (페이지 전환 후 드롭존 재측정)
   remeasureTrigger: number;
@@ -141,12 +144,14 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     onDropCallbackRef.current = cb;
   }, []);
 
-  // 페이지 전환 콜백 + 현재 페이지 추적
-  const pageChangeCallbackRef = useRef<
-    ((direction: 'next' | 'prev') => void) | undefined
-  >(undefined);
+  // 연속 스크롤 엔진
   const currentPageRef = useRef<number>(0);
-  const edgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pagesRefHolder = useRef<SwipeablePagesRef | null>(null);
+  const edgeDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const edgeScrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastPageChangeTimeRef = useRef<number>(0);
+  const isScrollingRef = useRef(false);
+  const currentScrollDirectionRef = useRef<'next' | 'prev' | null>(null);
 
   // --- Zone registry ---
   const registerZone = useCallback((zone: DropZoneLayout) => {
@@ -178,6 +183,104 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     [],
   );
 
+  // --- 연속 스크롤 엔진 ---
+  const setPagesRef = useCallback((ref: SwipeablePagesRef | null) => {
+    pagesRefHolder.current = ref;
+  }, []);
+
+  const stopEdgeScroll = useCallback((snap: boolean) => {
+    if (edgeDwellTimerRef.current) {
+      clearTimeout(edgeDwellTimerRef.current);
+      edgeDwellTimerRef.current = null;
+    }
+    if (edgeScrollIntervalRef.current) {
+      clearInterval(edgeScrollIntervalRef.current);
+      edgeScrollIntervalRef.current = null;
+      if (snap && pagesRefHolder.current) {
+        pagesRefHolder.current.snapToNearestPage();
+      }
+    }
+    isScrollingRef.current = false;
+    currentScrollDirectionRef.current = null;
+  }, []);
+
+  const triggerRemeasure = useCallback(() => {
+    setRemeasureTrigger(prev => prev + 1);
+  }, []);
+
+  const startContinuousScroll = useCallback((direction: 'next' | 'prev') => {
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+    isScrollingRef.current = true;
+    const targetPage = direction === 'next'
+      ? currentPageRef.current + 1
+      : currentPageRef.current - 1;
+
+    edgeScrollIntervalRef.current = setInterval(() => {
+      const pages = pagesRefHolder.current;
+      if (!pages) return;
+
+      const {x} = dragPositionRef.current;
+      const proximity = direction === 'next'
+        ? SCREEN_WIDTH - x
+        : x;
+
+      // 엣지 존 벗어남 → 중지 + 스냅
+      if (proximity >= EDGE_ZONE) {
+        stopEdgeScroll(true);
+        return;
+      }
+
+      // 2차 이징 속도 계산
+      const ratio = (EDGE_ZONE - proximity) / EDGE_ZONE;
+      const speed = MAX_SCROLL_SPEED * ratio * ratio;
+      const dx = direction === 'next' ? speed : -speed;
+      pages.scrollByPixels(dx);
+
+      // 50% 임계값 체크
+      const scrollPos = pages.getScrollPosition();
+      const startPage = direction === 'next' ? targetPage - 1 : targetPage + 1;
+      const midpoint = (startPage + (direction === 'next' ? 0.5 : -0.5)) * PAGE_WIDTH;
+      const passed = direction === 'next'
+        ? scrollPos > midpoint
+        : scrollPos < midpoint;
+
+      if (passed) {
+        // 페이지 전환 확정
+        pages.scrollTo(targetPage);
+        ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+        currentPageRef.current = targetPage;
+        lastPageChangeTimeRef.current = Date.now();
+        clearInterval(edgeScrollIntervalRef.current!);
+        edgeScrollIntervalRef.current = null;
+        isScrollingRef.current = false;
+        currentScrollDirectionRef.current = null;
+        setTimeout(() => {
+          triggerRemeasure();
+        }, 400);
+      }
+    }, SCROLL_TICK_MS);
+  }, [stopEdgeScroll, triggerRemeasure]);
+
+  const handleEdgeProximity = useCallback((direction: 'next' | 'prev') => {
+    // 방향 변경 → 기존 스크롤 중단, dwell 재시작
+    if (currentScrollDirectionRef.current && currentScrollDirectionRef.current !== direction) {
+      stopEdgeScroll(false);
+    }
+    currentScrollDirectionRef.current = direction;
+
+    // 이미 스크롤 중 → interval이 proximity 기반 속도 조절
+    if (isScrollingRef.current) return;
+
+    // 이미 dwell 대기 중
+    if (edgeDwellTimerRef.current) return;
+
+    // dwell 타이머 시작
+    edgeDwellTimerRef.current = setTimeout(() => {
+      edgeDwellTimerRef.current = null;
+      startContinuousScroll(direction);
+    }, EDGE_DWELL_MS);
+  }, [stopEdgeScroll, startContinuousScroll]);
+
   // --- Drag state ---
   const startDragWithLayout = useCallback(
     (todo: Todo, x: number, y: number, width: number, height: number) => {
@@ -203,47 +306,23 @@ export function DndProvider({children}: {children: React.ReactNode}) {
         setActiveZoneId(newZoneId);
       }
 
-      // --- 점진적 엣지 스크롤 ---
+      // --- 연속 스크롤 엣지 감지 ---
       const rightProximity = SCREEN_WIDTH - x;
       const leftProximity = x;
+      const now = Date.now();
+      const inCooldown = now - lastPageChangeTimeRef.current < PAGE_CHANGE_COOLDOWN_MS;
 
-      if (
-        rightProximity < EDGE_ZONE &&
-        pageChangeCallbackRef.current &&
-        currentPageRef.current < 1
-      ) {
-        // 오른쪽 엣지 — 다음 페이지
-        if (!edgeTimerRef.current) {
-          const ratio = rightProximity / EDGE_ZONE; // 0=가장자리, 1=존 경계
-          const delay = MIN_DELAY + (MAX_DELAY - MIN_DELAY) * ratio;
-          edgeTimerRef.current = setTimeout(() => {
-            edgeTimerRef.current = null;
-            pageChangeCallbackRef.current?.('next');
-          }, delay);
-        }
-      } else if (
-        leftProximity < EDGE_ZONE &&
-        pageChangeCallbackRef.current &&
-        currentPageRef.current > 0
-      ) {
-        // 왼쪽 엣지 — 이전 페이지
-        if (!edgeTimerRef.current) {
-          const ratio = leftProximity / EDGE_ZONE;
-          const delay = MIN_DELAY + (MAX_DELAY - MIN_DELAY) * ratio;
-          edgeTimerRef.current = setTimeout(() => {
-            edgeTimerRef.current = null;
-            pageChangeCallbackRef.current?.('prev');
-          }, delay);
-        }
+      if (!inCooldown && rightProximity < EDGE_ZONE && pagesRefHolder.current && currentPageRef.current < 1) {
+        handleEdgeProximity('next');
+      } else if (!inCooldown && leftProximity < EDGE_ZONE && pagesRefHolder.current && currentPageRef.current > 0) {
+        handleEdgeProximity('prev');
       } else {
-        // 엣지존 벗어남 → 타이머 취소
-        if (edgeTimerRef.current) {
-          clearTimeout(edgeTimerRef.current);
-          edgeTimerRef.current = null;
+        if (isScrollingRef.current || edgeDwellTimerRef.current) {
+          stopEdgeScroll(true);
         }
       }
     },
-    [findZoneAtPoint],
+    [findZoneAtPoint, handleEdgeProximity, stopEdgeScroll],
   );
 
   const endDrag = useCallback((): DropZoneLayout | null => {
@@ -254,27 +333,21 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     setActiveZoneId(null);
     activeZoneIdRef.current = null;
     isDraggingShared.value = false;
-    if (edgeTimerRef.current) {
-      clearTimeout(edgeTimerRef.current);
-      edgeTimerRef.current = null;
-    }
+    stopEdgeScroll(true);
     dragEndCallbackRef.current?.();
     dragEndCallbackRef.current = null;
     return zone;
-  }, [findZoneAtPoint, isDraggingShared]);
+  }, [findZoneAtPoint, isDraggingShared, stopEdgeScroll]);
 
   const cancelDrag = useCallback(() => {
     setDragState({todo: null, x: 0, y: 0, isDragging: false, width: 0, height: 0});
     setActiveZoneId(null);
     activeZoneIdRef.current = null;
     isDraggingShared.value = false;
-    if (edgeTimerRef.current) {
-      clearTimeout(edgeTimerRef.current);
-      edgeTimerRef.current = null;
-    }
+    stopEdgeScroll(true);
     dragEndCallbackRef.current?.();
     dragEndCallbackRef.current = null;
-  }, [isDraggingShared]);
+  }, [isDraggingShared, stopEdgeScroll]);
 
   /** Global Pan의 onEnd에서 호출 — 드롭존 판정 + 콜백 실행 */
   const endDragFromPan = useCallback(() => {
@@ -282,17 +355,6 @@ export function DndProvider({children}: {children: React.ReactNode}) {
     onDropCallbackRef.current?.(zone);
     onDropCallbackRef.current = null;
   }, [endDrag]);
-
-  const setOnRequestPageChange = useCallback(
-    (cb: ((direction: 'next' | 'prev') => void) | undefined) => {
-      pageChangeCallbackRef.current = cb;
-    },
-    [],
-  );
-
-  const triggerRemeasure = useCallback(() => {
-    setRemeasureTrigger(prev => prev + 1);
-  }, []);
 
   // --- 글로벌 Pan 제스처 (캐러셀 외부) ---
   const globalPanGesture = Gesture.Pan()
@@ -343,8 +405,7 @@ export function DndProvider({children}: {children: React.ReactNode}) {
         setDragEndCallback,
         setOnDropCallback,
         currentPageRef,
-        onRequestPageChange: pageChangeCallbackRef.current,
-        setOnRequestPageChange,
+        setPagesRef,
         remeasureTrigger,
         triggerRemeasure,
       }}>

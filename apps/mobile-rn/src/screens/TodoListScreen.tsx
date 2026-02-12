@@ -79,24 +79,17 @@ function TodoListScreenInner() {
   const {primaryColor} = useTheme();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
   const pagesRef = useRef<SwipeablePagesRef>(null);
-  const {dragState, setOnRequestPageChange, currentPageRef, triggerRemeasure} = useDnd();
+  const {dragState, setPagesRef, currentPageRef, triggerRemeasure} = useDnd();
 
   useEffect(() => {
     fetchTodosForDate(selectedDate);
   }, []);
 
-  // 드래그 중 엣지 감지 → 페이지 전환
+  // DnD에 SwipeablePages ref 등록
   useEffect(() => {
-    setOnRequestPageChange((direction) => {
-      const current = pagesRef.current?.currentPage ?? 0;
-      if (direction === 'next' && current < 1) {
-        pagesRef.current?.scrollTo(1);
-      } else if (direction === 'prev' && current > 0) {
-        pagesRef.current?.scrollTo(0);
-      }
-    });
-    return () => setOnRequestPageChange(undefined);
-  }, [setOnRequestPageChange]);
+    if (pagesRef.current) setPagesRef(pagesRef.current);
+    return () => setPagesRef(null);
+  }, [setPagesRef]);
 
   // 페이지 전환 시 currentPageRef 동기화 + 드롭존 재측정
   const handlePageChange = useCallback(

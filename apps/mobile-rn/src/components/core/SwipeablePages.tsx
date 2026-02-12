@@ -14,11 +14,14 @@ import {useTheme} from '@/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const PEEK_WIDTH = 40;
-const PAGE_WIDTH = SCREEN_WIDTH - PEEK_WIDTH;
+export const PAGE_WIDTH = SCREEN_WIDTH - PEEK_WIDTH;
 const DOTS_HEIGHT = 30;
 
 export interface SwipeablePagesRef {
   scrollTo: (index: number) => void;
+  scrollByPixels: (dx: number) => void;
+  snapToNearestPage: () => void;
+  getScrollPosition: () => number;
   currentPage: number;
 }
 
@@ -42,15 +45,31 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [containerHeight, setContainerHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const scrollPositionRef = useRef(initialPage * PAGE_WIDTH);
   const {primaryColor} = useTheme();
 
   useImperativeHandle(ref, () => ({
     scrollTo: (index: number) => {
       scrollRef.current?.scrollTo({x: index * PAGE_WIDTH, animated: true});
-      // 즉시 상태 업데이트 — DnD 엣지 감지에서 currentPage 조회 시 정확한 값 보장
       setCurrentPage(index);
       onPageChange?.(index);
     },
+    scrollByPixels: (dx: number) => {
+      const maxScroll = (pageCount - 1) * PAGE_WIDTH;
+      const newX = Math.max(0, Math.min(maxScroll, scrollPositionRef.current + dx));
+      scrollPositionRef.current = newX;
+      scrollRef.current?.scrollTo({x: newX, animated: false});
+    },
+    snapToNearestPage: () => {
+      const page = Math.round(scrollPositionRef.current / PAGE_WIDTH);
+      const clampedPage = Math.max(0, Math.min(pageCount - 1, page));
+      scrollRef.current?.scrollTo({x: clampedPage * PAGE_WIDTH, animated: true});
+      if (clampedPage !== currentPage) {
+        setCurrentPage(clampedPage);
+        onPageChange?.(clampedPage);
+      }
+    },
+    getScrollPosition: () => scrollPositionRef.current,
     currentPage,
   }));
 
@@ -59,6 +78,10 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
 
   const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
     setContainerHeight(e.nativeEvent.layout.height);
+  }, []);
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollPositionRef.current = e.nativeEvent.contentOffset.x;
   }, []);
 
   const handleMomentumScrollEnd = useCallback(
@@ -91,6 +114,8 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
           showsHorizontalScrollIndicator={false}
           scrollEnabled={!isDragging}
           contentOffset={{x: initialPage * PAGE_WIDTH, y: 0}}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
           onMomentumScrollEnd={handleMomentumScrollEnd}
           contentContainerStyle={{paddingRight: PEEK_WIDTH}}
           style={{height: scrollViewHeight}}>
