@@ -131,9 +131,8 @@ const styles = StyleSheet.create({
   },
   page: {
     flex: 1,
-    borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
   dotsContainer: {
     flexDirection: 'row',
