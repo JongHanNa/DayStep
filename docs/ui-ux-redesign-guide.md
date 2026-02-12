@@ -48,6 +48,19 @@
 | **Bottom Sheet Cascade** | 바텀시트 위에 바텀시트 (계층적 모달) |
 | **Gesture-first** | 제스처 중심 조작 (스와이프, 핀치 등) |
 
+### 인터랙션 다이나믹스 (Interaction Dynamics)
+
+인터랙션 패턴이 **무엇을 하는가**라면, 다이나믹스는 **어떻게 느껴지는가** — 속도, 물리, 연속적 매핑 등 인터랙션의 동작 방식을 정의함.
+
+| 키워드 | 설명 | 예시 |
+|--------|------|------|
+| **Threshold Trigger** | 조건 충족 시 즉시 발동 (이진) | 엣지 닿으면 바로 페이지 전환 |
+| **Continuous Mapping** | 입력량에 비례한 연속적 반응 | 엣지 근접도 → 전환 속도 비례 |
+| **Spring Physics** | 탄성 기반 바운스/스냅/오버슈트 | 카드 놓을 때 스프링 효과로 제자리 |
+| **Momentum / Inertia** | 관성 기반 감속 | 빠르게 스크롤 후 점차 멈춤 |
+| **Haptic Feedback** | 물리 반응을 촉각으로 전달 | 드래그 중 엣지 진입 시 진동 |
+| **Dead Zone** | 의도치 않은 입력 방지 영역 | 엣지에서 일정 거리 안에선 무반응 |
+
 ### 정보 구조 컨셉
 | 키워드 | 설명 |
 |--------|------|
@@ -82,6 +95,13 @@
  - 비주얼: Glassmorphism + 보라색 액센트
  - 인터랙션: Contextual Actions + Bottom Sheet Cascade
  - 정보구조: Progressive Disclosure로 단순화"
+```
+
+### 인터랙션 다이나믹스 요청
+```
+"DnD 엣지 스크롤을 Continuous Mapping으로 — 엣지에 가까울수록 빠르게"
+"리스트 스크롤에 Momentum 효과 추가 — iOS 네이티브 느낌으로"
+"드래그 시작에 Dead Zone 20px 적용 — 탭과 구분되게"
 ```
 
 ### 컨셉 제안 요청
