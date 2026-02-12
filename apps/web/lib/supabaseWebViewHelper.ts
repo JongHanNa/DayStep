@@ -7,7 +7,6 @@
  * - import { fetchTodosWithJWT } from '@/lib/supabase/todos';
  * - import { createMemoTagWithJWT } from '@/lib/supabase/memo-tags';
  * - import { fetchGoalsWithJWT } from '@/lib/supabase/goals';
- * - import { isCapacitorEnvironment } from '@/lib/supabase/core';
  *
  * 기존 코드:
  * - import { fetchTodosWithJWT } from '@/lib/supabaseWebViewHelper'; (계속 작동)
@@ -22,6 +21,3 @@
 
 // 모든 모듈 재export
 export * from './supabase/index';
-
-// webpack 빌드 타임 명시적 export (core 함수들)
-export { isCapacitorEnvironment } from './supabase/core';

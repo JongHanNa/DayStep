@@ -2,15 +2,30 @@
 // scripts/build-electron-prod.js - 프로덕션 Electron 빌드 + 패키징 스크립트
 
 const { execSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const PROJECT_ROOT = path.join(__dirname, '..');
+const API_DIR = path.join(PROJECT_ROOT, 'app', 'api');
+const API_DIR_DISABLED = path.join(PROJECT_ROOT, 'app', '_api');
+const AUTH_CALLBACK_DIR = path.join(PROJECT_ROOT, 'app', 'auth', 'callback');
+const AUTH_CALLBACK_DIR_DISABLED = path.join(PROJECT_ROOT, 'app', 'auth', '_callback');
 
 async function buildElectronProd() {
   console.log('🖥️  Electron 프로덕션 빌드 시작...\n');
 
   try {
-    // 1. Next.js 빌드 (프로덕션 환경변수 사용 - .env.production)
+    // 1. 서버 전용 라우트 임시 비활성화 (Electron 정적 빌드와 충돌 방지)
+    if (fs.existsSync(API_DIR)) {
+      console.log('📁 API 라우트 임시 비활성화 (app/api/ → app/_api/)...');
+      fs.renameSync(API_DIR, API_DIR_DISABLED);
+    }
+    if (fs.existsSync(AUTH_CALLBACK_DIR)) {
+      console.log('📁 OAuth 콜백 라우트 임시 비활성화 (app/auth/callback/ → app/auth/_callback/)...');
+      fs.renameSync(AUTH_CALLBACK_DIR, AUTH_CALLBACK_DIR_DISABLED);
+    }
+
+    // 2. Next.js 빌드 (프로덕션 환경변수 사용 - .env.production)
     console.log('🏗️  Next.js 빌드 실행 중 (BUILD_TARGET=electron, production)...\n');
     execSync('npx next build', {
       stdio: 'inherit',
@@ -24,7 +39,7 @@ async function buildElectronProd() {
 
     console.log('\n✅ Next.js 빌드 완료!');
 
-    // 2. Electron TypeScript 컴파일
+    // 3. Electron TypeScript 컴파일
     console.log('\n🔨 Electron TypeScript 컴파일 중...\n');
     execSync('npx tsc -p ../desktop/tsconfig.json', {
       stdio: 'inherit',
@@ -33,7 +48,7 @@ async function buildElectronProd() {
 
     console.log('✅ Electron 컴파일 완료!');
 
-    // 3. electron-builder 패키징
+    // 4. electron-builder 패키징
     console.log('\n📦 Electron 패키징 중...\n');
 
     const args = process.argv.slice(2);
@@ -58,6 +73,17 @@ async function buildElectronProd() {
   } catch (error) {
     console.error('\n❌ 프로덕션 빌드 실패:', error.message);
     throw error;
+  } finally {
+    // 5. Cleanup: 서버 전용 라우트 복원
+    if (fs.existsSync(API_DIR_DISABLED)) {
+      console.log('\n🧹 API 라우트 복원 (app/_api/ → app/api/)...');
+      fs.renameSync(API_DIR_DISABLED, API_DIR);
+    }
+    if (fs.existsSync(AUTH_CALLBACK_DIR_DISABLED)) {
+      console.log('🧹 OAuth 콜백 라우트 복원 (app/auth/_callback/ → app/auth/callback/)...');
+      fs.renameSync(AUTH_CALLBACK_DIR_DISABLED, AUTH_CALLBACK_DIR);
+    }
+    console.log('✅ Cleanup 완료');
   }
 }
 

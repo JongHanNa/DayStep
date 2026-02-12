@@ -2,6 +2,7 @@
   "name": "@daystep/web",
   "version": "0.1.0",
   "private": true,
+  "main": "../desktop/dist/main.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development next dev",
     "dev:direct": "cross-env NODE_ENV=development next dev",
