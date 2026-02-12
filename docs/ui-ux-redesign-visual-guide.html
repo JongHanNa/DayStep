@@ -11,7 +11,7 @@
   --accent:#7C3AED;--accent-light:#A78BFA;--accent-dark:#5B21B6;
   --bg:#0F0F14;--bg-card:#1A1A24;--bg-card-hover:#22222E;
   --text:#E2E2EA;--text-dim:#8888A0;--text-bright:#FFFFFF;
-  --teal:#14B8A6;--orange:#F59E0B;--red:#EF4444;--green:#22C55E;
+  --teal:#14B8A6;--orange:#F59E0B;--red:#EF4444;--green:#22C55E;--blue:#3B82F6;--pink:#EC4899;
   --radius:12px;--radius-sm:8px;
   --sidebar-w:240px;
 }
@@ -55,10 +55,14 @@ p{color:var(--text);margin-bottom:12px}
 .layer-card.ui-layer{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.4)}
 .layer-card.ux-layer{background:rgba(20,184,166,.12);border-color:rgba(20,184,166,.4)}
 .layer-card.ia-layer{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4)}
+.layer-card.flow-layer{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.4)}
+.layer-card.behavior-layer{background:rgba(236,72,153,.12);border-color:rgba(236,72,153,.4)}
 .layer-card h4{font-size:1rem;margin-bottom:8px}
 .layer-card.ui-layer h4{color:var(--accent-light)}
 .layer-card.ux-layer h4{color:var(--teal)}
 .layer-card.ia-layer h4{color:var(--orange)}
+.layer-card.flow-layer h4{color:var(--blue)}
+.layer-card.behavior-layer h4{color:var(--pink)}
 .layer-card p{font-size:.85rem;color:var(--text-dim)}
 
 /* Layers Interactive Toggle */
@@ -67,6 +71,8 @@ p{color:var(--text);margin-bottom:12px}
 .layer-toggle button.active-ui{border-color:var(--accent);background:rgba(124,58,237,.2);color:var(--accent-light)}
 .layer-toggle button.active-ux{border-color:var(--teal);background:rgba(20,184,166,.2);color:var(--teal)}
 .layer-toggle button.active-ia{border-color:var(--orange);background:rgba(245,158,11,.2);color:var(--orange)}
+.layer-toggle button.active-flow{border-color:var(--blue);background:rgba(59,130,246,.2);color:var(--blue)}
+.layer-toggle button.active-behavior{border-color:var(--pink);background:rgba(236,72,153,.2);color:var(--pink)}
 .modal-demo-container{background:var(--bg-card);border-radius:var(--radius);padding:32px;min-height:280px;display:flex;align-items:center;justify-content:center;position:relative}
 .modal-demo{width:320px;border-radius:var(--radius);overflow:hidden;transition:all .5s ease}
 .modal-demo .modal-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;transition:all .5s}
@@ -95,10 +101,26 @@ p{color:var(--text);margin-bottom:12px}
 .modal-demo.view-ia .btn-demo{background:var(--orange);color:#000}
 .modal-demo.view-ia .btn-demo.secondary{background:transparent;border:1px solid var(--orange);color:var(--orange)}
 
+/* Layer: Flow view */
+.modal-demo.view-flow{background:rgba(59,130,246,.08);border:2px solid var(--blue);box-shadow:0 4px 16px rgba(59,130,246,.15)}
+.modal-demo.view-flow .modal-header{background:rgba(59,130,246,.12);color:var(--blue)}
+.modal-demo.view-flow .modal-body{color:var(--text)}
+.modal-demo.view-flow .btn-demo{background:var(--blue);color:#fff}
+.modal-demo.view-flow .btn-demo.secondary{background:transparent;border:1px solid var(--blue);color:var(--blue)}
+
+/* Layer: Behavior view */
+.modal-demo.view-behavior{background:rgba(236,72,153,.08);border:2px solid var(--pink);box-shadow:0 4px 16px rgba(236,72,153,.15)}
+.modal-demo.view-behavior .modal-header{background:rgba(236,72,153,.12);color:var(--pink)}
+.modal-demo.view-behavior .modal-body{color:var(--text)}
+.modal-demo.view-behavior .btn-demo{background:var(--pink);color:#fff}
+.modal-demo.view-behavior .btn-demo.secondary{background:transparent;border:1px solid var(--pink);color:var(--pink)}
+
 .layer-annotation{position:absolute;padding:6px 12px;border-radius:6px;font-size:.7rem;font-weight:600;pointer-events:none;transition:opacity .4s}
 .annotation-ui{background:var(--accent);color:#fff}
 .annotation-ux{background:var(--teal);color:#000}
 .annotation-ia{background:var(--orange);color:#000}
+.annotation-flow{background:var(--blue);color:#fff}
+.annotation-behavior{background:var(--pink);color:#fff}
 
 /* ─── Section 2-1: Visual Styles ─── */
 .glass-card{background:rgba(255,255,255,.08);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius);padding:24px;color:#fff;width:200px;text-align:center}
@@ -235,6 +257,8 @@ p{color:var(--text);margin-bottom:12px}
 .example-item .tag.ux{background:rgba(20,184,166,.2);color:var(--teal)}
 .example-item .tag.ia{background:rgba(245,158,11,.2);color:var(--orange)}
 .example-item .tag.dynamics{background:rgba(239,68,68,.2);color:var(--red)}
+.example-item .tag.flow{background:rgba(59,130,246,.2);color:var(--blue)}
+.example-item .tag.behavior{background:rgba(236,72,153,.2);color:var(--pink)}
 
 /* ─── Section 4: Scale ─── */
 .scale-bar{display:flex;align-items:stretch;margin:32px 0;border-radius:var(--radius);overflow:hidden;background:#1A1A24;border:1px solid #2A2A3A}
@@ -246,6 +270,36 @@ p{color:var(--text);margin-bottom:12px}
 .scale-step .scale-desc{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#22222E;border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px 16px;font-size:.75rem;color:var(--text);width:220px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:10;text-align:left}
 .scale-step:hover .scale-desc{display:block}
 .scale-fill{height:4px;background:linear-gradient(90deg,var(--accent-light),var(--accent),var(--accent-dark),var(--red),#B91C1C)}
+
+/* ─── Section 2-5: Task Flow Demos ─── */
+.flow-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.flow-step{padding:8px 14px;border-radius:var(--radius-sm);font-size:.75rem;text-align:center;transition:all .4s;position:relative}
+.flow-step.active-step{outline:2px solid var(--blue);outline-offset:2px}
+.flow-step.eliminated{opacity:.3;text-decoration:line-through;transform:scale(.9)}
+.flow-arrow{font-size:1rem;color:var(--text-dim);transition:opacity .4s}
+.flow-arrow.eliminated{opacity:.2}
+.flow-mini-timer{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;background:rgba(59,130,246,.15);border:1px solid var(--blue);font-size:.8rem;color:var(--blue)}
+.flow-mini-timer .timer-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);animation:pulse-dot 1.5s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+/* ─── Section 2-6: Behavioral Design Demos ─── */
+.choice-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.choice-btn{padding:8px 14px;border-radius:20px;border:1px solid #3A3A4A;background:var(--bg-card);color:var(--text);font-size:.75rem;cursor:pointer;transition:all .3s}
+.choice-btn:hover{border-color:var(--pink);background:rgba(236,72,153,.1)}
+.choice-btn.primary-choice{border-color:var(--pink);background:rgba(236,72,153,.2);color:var(--pink);font-weight:600}
+.choice-btn.eliminated-choice{opacity:.25;transform:scale(.9);pointer-events:none}
+.ritual-timeline{display:flex;flex-direction:column;gap:6px;width:100%;max-width:260px}
+.ritual-step{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius-sm);font-size:.75rem;transition:all .4s}
+.ritual-step .step-icon{font-size:1rem;min-width:24px;text-align:center}
+.ritual-step.ritual-active{background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.3)}
+.ritual-step.ritual-skipped{opacity:.3;text-decoration:line-through}
+.nudge-card{padding:16px 20px;border-radius:var(--radius);background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.2);text-align:center;max-width:260px;transition:all .5s}
+.nudge-card .nudge-emoji{font-size:1.5rem;margin-bottom:6px}
+.nudge-card .nudge-text{font-size:.8rem;color:var(--text);margin-bottom:10px}
+.nudge-card .nudge-btn{padding:8px 20px;border-radius:20px;border:none;background:var(--pink);color:#fff;font-size:.8rem;cursor:pointer;transition:transform .2s}
+.nudge-card .nudge-btn:hover{transform:scale(1.05)}
+.nudge-card.nudge-pulse{animation:nudge-glow 2s ease-in-out infinite}
+@keyframes nudge-glow{0%,100%{box-shadow:0 0 0 0 rgba(236,72,153,0)}50%{box-shadow:0 0 0 8px rgba(236,72,153,.2)}}
 
 /* ─── Highlight flash ─── */
 @keyframes flash{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 8px rgba(124,58,237,.4)}}
@@ -276,12 +330,14 @@ p{color:var(--text);margin-bottom:12px}
     <small>UI/UX Visual Guide</small>
   </div>
   <div class="section-label">Foundation</div>
-  <a href="#layers">1. UI / UX / IA Layers</a>
+  <a href="#layers">1. 5 Layers</a>
   <div class="section-label">Concepts</div>
   <a href="#visual-styles">2-1. Visual Styles</a>
   <a href="#interaction-patterns">2-2. Interaction Patterns</a>
   <a href="#dynamics">2-3. Interaction Dynamics</a>
   <a href="#ia-concepts">2-4. Information Architecture</a>
+  <a href="#flow-concepts">2-5. Task Flow</a>
+  <a href="#behavior-concepts">2-6. Behavioral Design</a>
   <div class="section-label">Reference</div>
   <a href="#examples">3. Request Examples</a>
   <a href="#scale">4. Change Scale</a>
@@ -298,7 +354,7 @@ p{color:var(--text);margin-bottom:12px}
 
 <!-- ═══ Section 1: Three Layers ═══ -->
 <section id="layers">
-  <h2>1. 변경 요청의 3가지 레이어</h2>
+  <h2>1. 변경 요청의 5가지 레이어</h2>
   <p>요청할 때 <strong>어떤 레이어를 바꾸고 싶은지</strong> 명시하면 에이전트가 정확히 이해합니다.</p>
 
   <div class="layer-cards">
@@ -314,16 +370,28 @@ p{color:var(--text);margin-bottom:12px}
     </div>
     <div class="layer-card ia-layer">
       <h4>IA (Information Architecture)</h4>
-      <p>정보 구조 — 콘텐츠 배치, 계층, 네비게이션 흐름</p>
+      <p>정보 배치, 계층, 네비게이션 구조</p>
       <p style="margin-top:8px;font-size:.75rem;color:var(--orange)">예: "옵션들을 컨텍스트 메뉴로 묶기"</p>
+    </div>
+    <div class="layer-card flow-layer">
+      <h4>Flow (Task Flow)</h4>
+      <p>목표 달성의 단계별 흐름, 화면 전환 시퀀스</p>
+      <p style="margin-top:8px;font-size:.75rem;color:var(--blue)">예: "3단계 진입 → 원클릭 실행으로"</p>
+    </div>
+    <div class="layer-card behavior-layer">
+      <h4>Behavior (Behavioral Design)</h4>
+      <p>동기부여, 넛지, 인지부하 관리, 습관 형성</p>
+      <p style="margin-top:8px;font-size:.75rem;color:var(--pink)">예: "선택지 5→3개로 줄여 결정마비 방지"</p>
     </div>
   </div>
 
-  <h3>Interactive: 하나의 모달을 3가지 관점으로 보기</h3>
+  <h3>Interactive: 하나의 모달을 5가지 관점으로 보기</h3>
   <div class="layer-toggle">
-    <button id="btn-ui" onclick="setLayerView('ui')" class="active-ui">UI 관점 — 색상 강조</button>
-    <button id="btn-ux" onclick="setLayerView('ux')">UX 관점 — 인터랙션 강조</button>
-    <button id="btn-ia" onclick="setLayerView('ia')">IA 관점 — 구조 강조</button>
+    <button id="btn-ui" onclick="setLayerView('ui')" class="active-ui">UI — 색상/스타일</button>
+    <button id="btn-ux" onclick="setLayerView('ux')">UX — 인터랙션</button>
+    <button id="btn-ia" onclick="setLayerView('ia')">IA — 정보 구조</button>
+    <button id="btn-flow" onclick="setLayerView('flow')">Flow — 단계 흐름</button>
+    <button id="btn-behavior" onclick="setLayerView('behavior')">Behavior — 심리 설계</button>
   </div>
   <div class="modal-demo-container" id="layer-demo-container">
     <div class="modal-demo view-ui" id="layer-modal">
@@ -345,6 +413,8 @@ p{color:var(--text);margin-bottom:12px}
     <div class="layer-annotation annotation-ui" id="ann-ui-1" style="top:12px;right:12px;opacity:1">색상/폰트/그림자</div>
     <div class="layer-annotation annotation-ux" id="ann-ux-1" style="top:12px;right:12px;opacity:0">클릭/입력 흐름</div>
     <div class="layer-annotation annotation-ia" id="ann-ia-1" style="top:12px;right:12px;opacity:0">정보 배치/계층</div>
+    <div class="layer-annotation annotation-flow" id="ann-flow-1" style="top:12px;right:12px;opacity:0">단계/전환 흐름</div>
+    <div class="layer-annotation annotation-behavior" id="ann-behavior-1" style="top:12px;right:12px;opacity:0">심리/동기 설계</div>
   </div>
 </section>
 
@@ -799,6 +869,198 @@ p{color:var(--text);margin-bottom:12px}
   </div>
 </section>
 
+<!-- ═══ Section 2-5: Task Flow Concepts ═══ -->
+<section id="flow-concepts">
+  <h2>2-5. 태스크 플로우 컨셉</h2>
+  <p>IA가 "어디에 무엇이 있는가"라면, Flow는 <strong>"A에서 B로 가는 여정"</strong> — 화면 전환 시퀀스, 단계 수, 진입점/탈출점을 다룹니다.</p>
+
+  <div class="demo-grid">
+    <!-- Entry Point Reduction -->
+    <div class="demo-card" id="demo-entry-reduction">
+      <div class="demo-area" style="flex-direction:column;gap:16px">
+        <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:4px" id="epr-label">Before: 3단계 진입</div>
+        <div class="flow-steps" id="epr-steps">
+          <div class="flow-step active-step" style="background:rgba(59,130,246,.15);color:var(--blue)" id="epr-s1">추천</div>
+          <div class="flow-arrow" id="epr-a1">&rarr;</div>
+          <div class="flow-step" style="background:rgba(59,130,246,.1);color:var(--blue)" id="epr-s2">환경 준비</div>
+          <div class="flow-arrow" id="epr-a2">&rarr;</div>
+          <div class="flow-step" style="background:rgba(59,130,246,.1);color:var(--blue)" id="epr-s3">타이머</div>
+        </div>
+        <button style="padding:6px 16px;border-radius:16px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:.75rem;cursor:pointer" onclick="toggleEntryReduction()">Toggle: 단계 축소</button>
+      </div>
+      <div class="demo-info">
+        <h4>Entry Point Reduction</h4>
+        <p>목표 달성까지의 진입 단계를 최소화. 3단계를 1클릭으로 축소하여 시작 마찰을 제거.</p>
+        <div class="demo-hint">버튼을 클릭하여 Before/After를 비교해보세요</div>
+      </div>
+    </div>
+
+    <!-- Context Preservation -->
+    <div class="demo-card" id="demo-context-preservation">
+      <div class="demo-area" style="flex-direction:column;gap:12px">
+        <div style="font-size:.7rem;color:var(--text-dim)">플래너 위 플로팅 타이머 바</div>
+        <div style="width:100%;max-width:260px;background:var(--bg);border:1px solid #2A2A3A;border-radius:var(--radius-sm);padding:10px;font-size:.75rem;color:var(--text-dim)">
+          <div style="margin-bottom:6px;opacity:.6">08:15 &nbsp;약 복용 &nbsp;&check;</div>
+          <div style="margin-bottom:6px;color:var(--text)">09:00 &nbsp;운동하기 &nbsp;<span style="color:var(--blue)">&larr; 진행 중</span></div>
+          <div style="opacity:.6">10:00 &nbsp;독서 30분</div>
+        </div>
+        <div class="flow-mini-timer" id="ctx-mini-timer">
+          <span class="timer-dot"></span>
+          <span>운동하기</span>
+          <span style="font-weight:700">12:34</span>
+          <span style="font-size:.7rem;opacity:.7">/ 25:00</span>
+        </div>
+      </div>
+      <div class="demo-info">
+        <h4>Context Preservation</h4>
+        <p>화면 전환 시 이전 맥락 유지. 타이머가 실행되어도 플래너의 하루 흐름을 잃지 않음.</p>
+      </div>
+    </div>
+
+    <!-- Smart Default -->
+    <div class="demo-card" id="demo-smart-default">
+      <div class="demo-area" style="flex-direction:column;gap:10px">
+        <div style="font-size:.7rem;color:var(--text-dim)" id="sd-label">세션 횟수에 따른 자동화</div>
+        <div style="width:100%;max-width:240px" id="sd-demo">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,.1);border-radius:var(--radius-sm);margin-bottom:6px;font-size:.75rem;color:var(--blue)" id="sd-step1">
+            <span>1.</span><span>환경 준비 체크리스트</span><span style="margin-left:auto;font-size:.65rem;opacity:.7" id="sd-badge">첫 세션</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(59,130,246,.15);border-radius:var(--radius-sm);font-size:.75rem;color:var(--blue)">
+            <span>2.</span><span>포모도로 타이머 시작</span><span style="margin-left:auto;font-size:.65rem;opacity:.7">항상</span>
+          </div>
+        </div>
+        <button style="padding:6px 16px;border-radius:16px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:.75rem;cursor:pointer" onclick="toggleSmartDefault()">Toggle: 첫 세션 / 이후 세션</button>
+      </div>
+      <div class="demo-info">
+        <h4>Smart Default</h4>
+        <p>반복 설정을 자동으로 처리. 첫 세션에만 환경 준비를 노출하고, 이후 세션은 자동 스킵.</p>
+        <div class="demo-hint">버튼을 클릭하여 세션 변화를 확인해보세요</div>
+      </div>
+    </div>
+
+    <!-- Shortcut Path -->
+    <div class="demo-card" id="demo-shortcut-path">
+      <div class="demo-area" style="flex-direction:column;gap:8px">
+        <div style="font-size:.7rem;color:var(--text-dim)">플래너 인라인 타이머 버튼</div>
+        <div style="width:100%;max-width:260px">
+          <div style="display:flex;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid #2A2A3A;border-radius:var(--radius-sm);margin-bottom:4px;font-size:.8rem;transition:all .2s" class="shortcut-item" onmouseenter="this.querySelector('.play-btn').style.opacity='1'" onmouseleave="this.querySelector('.play-btn').style.opacity='0'">
+            <span style="color:var(--text-dim);margin-right:8px">08:15</span>
+            <span style="color:var(--text)">약 복용</span>
+            <span class="play-btn" style="margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;opacity:0;transition:opacity .2s;cursor:pointer" onclick="this.textContent='&#10074;&#10074;';this.style.background='var(--green)'">&#9654;</span>
+          </div>
+          <div style="display:flex;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid #2A2A3A;border-radius:var(--radius-sm);margin-bottom:4px;font-size:.8rem;transition:all .2s" class="shortcut-item" onmouseenter="this.querySelector('.play-btn').style.opacity='1'" onmouseleave="this.querySelector('.play-btn').style.opacity='0'">
+            <span style="color:var(--text-dim);margin-right:8px">09:00</span>
+            <span style="color:var(--text)">운동하기</span>
+            <span class="play-btn" style="margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;opacity:0;transition:opacity .2s;cursor:pointer">&#9654;</span>
+          </div>
+          <div style="display:flex;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid #2A2A3A;border-radius:var(--radius-sm);font-size:.8rem;transition:all .2s" class="shortcut-item" onmouseenter="this.querySelector('.play-btn').style.opacity='1'" onmouseleave="this.querySelector('.play-btn').style.opacity='0'">
+            <span style="color:var(--text-dim);margin-right:8px">10:00</span>
+            <span style="color:var(--text)">독서 30분</span>
+            <span class="play-btn" style="margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;opacity:0;transition:opacity .2s;cursor:pointer">&#9654;</span>
+          </div>
+        </div>
+      </div>
+      <div class="demo-info">
+        <h4>Shortcut Path</h4>
+        <p>빈번한 작업에 대한 지름길. 플래너에서 할일 호버 시 &#9654; 버튼으로 바로 타이머 시작.</p>
+        <div class="demo-hint">할일 항목에 마우스를 올려보세요</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Section 2-6: Behavioral Design Concepts ═══ -->
+<section id="behavior-concepts">
+  <h2>2-6. 행동 설계 컨셉</h2>
+  <p>사용자 심리, 동기부여 패턴, 인지 부하를 다룹니다. ADHD 앱에서 특히 중요 — <strong>"왜 이렇게 설계하는가"</strong>의 심리적 근거.</p>
+
+  <div class="demo-grid">
+    <!-- Decision Reduction -->
+    <div class="demo-card" id="demo-decision-reduction">
+      <div class="demo-area" style="flex-direction:column;gap:12px">
+        <div style="font-size:.7rem;color:var(--text-dim)" id="dr-label">Before: 5개 선택지 (결정 마비)</div>
+        <div class="choice-grid" id="dr-choices">
+          <div class="choice-btn">했어</div>
+          <div class="choice-btn">타이머 켜고 할래</div>
+          <div class="choice-btn">다른 거 추천</div>
+          <div class="choice-btn">필요 없는 할일</div>
+          <div class="choice-btn">지금 떠오른거 타이머</div>
+        </div>
+        <button style="padding:6px 16px;border-radius:16px;border:1px solid var(--pink);background:transparent;color:var(--pink);font-size:.75rem;cursor:pointer" onclick="toggleDecisionReduction()">Toggle: 선택지 축소</button>
+      </div>
+      <div class="demo-info">
+        <h4>Decision Reduction</h4>
+        <p>선택지를 줄여 결정 마비 방지. 5개 → 3개로 축소하여 ADHD 사용자의 인지 부하 감소.</p>
+        <div class="demo-hint">버튼을 클릭하여 Before/After를 비교해보세요</div>
+      </div>
+    </div>
+
+    <!-- Ritual Design -->
+    <div class="demo-card" id="demo-ritual-design">
+      <div class="demo-area" style="flex-direction:column;gap:10px">
+        <div style="font-size:.7rem;color:var(--text-dim)" id="rd-label">첫 세션: 환경 준비 의식</div>
+        <div class="ritual-timeline" id="rd-timeline">
+          <div class="ritual-step ritual-active" id="rd-s1">
+            <span class="step-icon">&#128241;</span>
+            <span>핸드폰 무음 모드</span>
+          </div>
+          <div class="ritual-step" id="rd-s2">
+            <span class="step-icon">&#128187;</span>
+            <span>불필요한 탭 닫기</span>
+          </div>
+          <div class="ritual-step" id="rd-s3">
+            <span class="step-icon">&#127793;</span>
+            <span>물 한 잔 준비</span>
+          </div>
+          <div class="ritual-step" id="rd-s4">
+            <span class="step-icon">&#9201;</span>
+            <span>타이머 시작!</span>
+          </div>
+        </div>
+        <button style="padding:6px 16px;border-radius:16px;border:1px solid var(--pink);background:transparent;color:var(--pink);font-size:.75rem;cursor:pointer" onclick="toggleRitualDesign()">Toggle: 첫 세션 / 이후 세션</button>
+      </div>
+      <div class="demo-info">
+        <h4>Ritual Design</h4>
+        <p>의식(ritual) 단계로 모드 전환 유도. 첫 세션은 환경 준비로 집중 모드 진입, 이후 세션은 자동 스킵.</p>
+        <div class="demo-hint">버튼을 클릭하여 세션 차이를 확인해보세요</div>
+      </div>
+    </div>
+
+    <!-- Nudge -->
+    <div class="demo-card" id="demo-nudge">
+      <div class="demo-area">
+        <div class="nudge-card nudge-pulse" id="nudge-demo">
+          <div class="nudge-emoji">&#128161;</div>
+          <div class="nudge-text">지금 할 수 있는<br><strong>가장 작은 것 하나:</strong></div>
+          <div style="font-size:.9rem;font-weight:700;color:var(--text-bright);margin-bottom:10px">운동하기 (15분)</div>
+          <button class="nudge-btn" onclick="nudgeAccept(this)">할게!</button>
+        </div>
+      </div>
+      <div class="demo-info">
+        <h4>Nudge</h4>
+        <p>부드러운 유도로 바람직한 행동 촉진. 강제 아닌 제안으로 시작 저항을 줄임. 펄스 애니메이션이 시선을 자연스럽게 유도.</p>
+        <div class="demo-hint">"할게!" 버튼을 클릭해보세요</div>
+      </div>
+    </div>
+
+    <!-- Commitment Device -->
+    <div class="demo-card" id="demo-commitment">
+      <div class="demo-area" style="flex-direction:column;gap:12px">
+        <div style="font-size:.7rem;color:var(--text-dim)">타이머 시작 = 집중 약속</div>
+        <div style="width:80px;height:80px;border-radius:50%;border:3px solid var(--pink);display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;transition:all .3s;position:relative" id="commit-circle" onclick="toggleCommitment()">
+          <span id="commit-icon">&#9654;</span>
+        </div>
+        <div style="font-size:.75rem;color:var(--text-dim);text-align:center" id="commit-text">탭하여 집중 약속 시작</div>
+      </div>
+      <div class="demo-info">
+        <h4>Commitment Device</h4>
+        <p>사전 약속으로 실행력 강화. 타이머를 시작하는 행위 자체가 "집중하겠다"는 심리적 약속.</p>
+        <div class="demo-hint">원을 클릭하여 약속을 시작해보세요</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══ Section 3: Examples ═══ -->
 <section id="examples">
   <h2>3. 요청 예시 모음</h2>
@@ -809,7 +1071,9 @@ p{color:var(--text);margin-bottom:12px}
     <button onclick="setExampleTab('medium',this)">중간 (UI+UX)</button>
     <button onclick="setExampleTab('heavy',this)">큰 (UI+UX+IA)</button>
     <button onclick="setExampleTab('dynamics',this)">다이나믹스</button>
-    <button onclick="setExampleTab('suggest',this)">제안 요청 (AI에게 맡기기)</button>
+    <button onclick="setExampleTab('flow',this)">Flow</button>
+    <button onclick="setExampleTab('behavior',this)">Behavior</button>
+    <button onclick="setExampleTab('suggest',this)">제안 요청</button>
   </div>
 
   <div class="example-list" id="example-list">
@@ -842,7 +1106,7 @@ p{color:var(--text);margin-bottom:12px}
     <div class="scale-step">
       <h4>Overhaul</h4>
       <div class="scale-label">전면 재설계</div>
-      <div class="scale-desc">UI + UX + IA + 기능 전체 재구성. 정보 구조부터 다시 설계하는 대규모 작업.</div>
+      <div class="scale-desc">UI + UX + IA + Flow + Behavior 전체 재구성. 정보 구조부터 행동 설계까지 다시 설계하는 대규모 작업.</div>
     </div>
     <div class="scale-step">
       <h4>Design System<br>Migration</h4>
@@ -858,20 +1122,14 @@ p{color:var(--text);margin-bottom:12px}
 /* ═══ Section 1: Layer View Toggle ═══ */
 function setLayerView(view){
   const modal=document.getElementById('layer-modal');
-  const btnUi=document.getElementById('btn-ui');
-  const btnUx=document.getElementById('btn-ux');
-  const btnIa=document.getElementById('btn-ia');
-  const annUi=document.getElementById('ann-ui-1');
-  const annUx=document.getElementById('ann-ux-1');
-  const annIa=document.getElementById('ann-ia-1');
+  const views=['ui','ux','ia','flow','behavior'];
   modal.className='modal-demo view-'+view;
-  btnUi.className=view==='ui'?'active-ui':'';
-  btnUx.className=view==='ux'?'active-ux':'';
-  btnIa.className=view==='ia'?'active-ia':'';
-  annUi.style.opacity=view==='ui'?'1':'0';
-  annUx.style.opacity=view==='ux'?'1':'0';
-  annIa.style.opacity=view==='ia'?'1':'0';
-  // UX view: show interaction hints
+  views.forEach(v=>{
+    const btn=document.getElementById('btn-'+v);
+    if(btn)btn.className=v===view?'active-'+v:'';
+    const ann=document.getElementById('ann-'+v+'-1');
+    if(ann)ann.style.opacity=v===view?'1':'0';
+  });
   const f1=document.getElementById('layer-field1');
   const f2=document.getElementById('layer-field2');
   const f3=document.getElementById('layer-field3');
@@ -883,6 +1141,14 @@ function setLayerView(view){
     f1.innerHTML='<span style="border:1px solid var(--orange);padding:2px 6px;border-radius:4px">제목: 오늘 운동하기</span> <small style="color:var(--orange)">필수 정보</small>';
     f2.innerHTML='<span style="border:1px solid var(--orange);padding:2px 6px;border-radius:4px">시간: 오후 3:00</span> <small style="color:var(--orange)">2차 정보</small>';
     f3.innerHTML='<span style="opacity:.5">태그: #건강</span> <small style="color:var(--orange)">숨김 가능</small>';
+  }else if(view==='flow'){
+    f1.innerHTML='<span style="border-bottom:2px dashed var(--blue)">제목: 오늘 운동하기</span> <small style="color:var(--blue)">&larr; 1단계: 선택</small>';
+    f2.innerHTML='<span style="border-bottom:2px dashed var(--blue)">시간: 오후 3:00</span> <small style="color:var(--blue)">&larr; 2단계: 설정</small>';
+    f3.innerHTML='<span style="border-bottom:2px dashed var(--blue)">[저장] &rarr; 타이머</span> <small style="color:var(--blue)">&larr; 3단계: 실행</small>';
+  }else if(view==='behavior'){
+    f1.innerHTML='<span style="background:rgba(236,72,153,.15);padding:2px 6px;border-radius:4px">제목: 오늘 운동하기</span> <small style="color:var(--pink)">&#128161; 넛지: 작게 시작</small>';
+    f2.innerHTML='<span style="opacity:.5">시간: 오후 3:00</span> <small style="color:var(--pink)">&#129504; 인지부하 &darr;</small>';
+    f3.innerHTML='<span style="opacity:.5">태그: #건강</span> <small style="color:var(--pink)">&#127919; 선택지 축소</small>';
   }else{
     f1.innerHTML='제목: 오늘 운동하기';
     f2.innerHTML='시간: 오후 3:00';
@@ -1241,11 +1507,25 @@ const examples={
     {text:'"할일 목록 화면의 UX를 개선할 수 있는 인터랙션 다이나믹스 조합을 추천해줘"',tags:['ux','dynamics'],target:'demo-spring'},
     {text:'"이 설정 화면의 정보 구조가 복잡한데, IA 관점에서 개선안을 제시해줘"',tags:['ia'],target:'demo-hub-spoke'},
     {text:'"드래그 앤 드롭 UX를 더 자연스럽게 만들 수 있는 다이나믹스 조합을 제안해줘"',tags:['dynamics'],target:'demo-momentum'},
+    {text:'"이 화면의 Flow를 분석하고 단계 축소 방안을 제안해줘"',tags:['flow'],target:'demo-entry-reduction'},
+    {text:'"ADHD 사용자 관점에서 Behavior 개선안을 제시해줘"',tags:['behavior'],target:'demo-decision-reduction'},
   ],
   dynamics:[
     {text:'"DnD 엣지 스크롤을 Continuous Mapping으로 — 엣지에 가까울수록 빠르게"',tags:['dynamics'],target:'demo-continuous'},
     {text:'"리스트 스크롤에 Momentum 효과 추가 — iOS 네이티브 느낌으로"',tags:['dynamics'],target:'demo-momentum'},
     {text:'"드래그 시작에 Dead Zone 20px 적용 — 탭과 구분되게"',tags:['dynamics'],target:'demo-deadzone'},
+  ],
+  flow:[
+    {text:'"집중 실행 진입을 3단계에서 1클릭으로 줄여줘 — Entry Point Reduction"',tags:['flow'],target:'demo-entry-reduction'},
+    {text:'"타이머 실행 중에도 플래너 맥락이 보이게 해줘 — Context Preservation"',tags:['flow'],target:'demo-context-preservation'},
+    {text:'"환경 준비 단계를 첫 세션만 노출하고 이후엔 스킵 — Smart Default"',tags:['flow'],target:'demo-smart-default'},
+    {text:'"플래너에서 할일 옆에 바로 타이머 시작 버튼 추가 — Shortcut Path"',tags:['flow'],target:'demo-shortcut-path'},
+  ],
+  behavior:[
+    {text:'"추천 화면 선택지를 5개에서 3개로 줄여줘 — Decision Reduction"',tags:['behavior'],target:'demo-decision-reduction'},
+    {text:'"집중 시작 전 환경 준비를 의식(ritual)처럼 디자인 — Ritual Design"',tags:['behavior'],target:'demo-ritual-design'},
+    {text:'"타이머 완료 후 부드럽게 다음 할일로 유도 — Nudge"',tags:['behavior'],target:'demo-nudge'},
+    {text:'"타이머 시작을 심리적 약속으로 디자인 — Commitment Device"',tags:['behavior'],target:'demo-commitment'},
   ]
 };
 function setExampleTab(tab,btn){
@@ -1271,6 +1551,129 @@ function setExampleTab(tab,btn){
 }
 // Init first tab
 setExampleTab('light',document.querySelector('.example-tabs button'));
+
+/* ═══ Section 2-5: Task Flow Demos ═══ */
+let eprReduced=false;
+function toggleEntryReduction(){
+  eprReduced=!eprReduced;
+  const label=document.getElementById('epr-label');
+  const s1=document.getElementById('epr-s1');
+  const s2=document.getElementById('epr-s2');
+  const s3=document.getElementById('epr-s3');
+  const a1=document.getElementById('epr-a1');
+  const a2=document.getElementById('epr-a2');
+  if(eprReduced){
+    label.textContent='After: 1클릭 실행';
+    s1.classList.add('eliminated');s1.classList.remove('active-step');
+    s2.classList.add('eliminated');
+    a1.classList.add('eliminated');
+    a2.classList.add('eliminated');
+    s3.classList.add('active-step');
+    s3.textContent='▶ 타이머 시작';
+    s3.style.background='rgba(59,130,246,.3)';
+  }else{
+    label.textContent='Before: 3단계 진입';
+    s1.classList.remove('eliminated');s1.classList.add('active-step');
+    s2.classList.remove('eliminated');
+    a1.classList.remove('eliminated');
+    a2.classList.remove('eliminated');
+    s3.classList.remove('active-step');
+    s3.textContent='타이머';
+    s3.style.background='rgba(59,130,246,.1)';
+  }
+}
+
+let sdFirstSession=true;
+function toggleSmartDefault(){
+  sdFirstSession=!sdFirstSession;
+  const label=document.getElementById('sd-label');
+  const step1=document.getElementById('sd-step1');
+  const badge=document.getElementById('sd-badge');
+  if(sdFirstSession){
+    label.textContent='세션 횟수에 따른 자동화';
+    step1.style.opacity='1';
+    step1.style.textDecoration='none';
+    badge.textContent='첫 세션';
+  }else{
+    label.textContent='이후 세션: 환경 준비 자동 스킵';
+    step1.style.opacity='.3';
+    step1.style.textDecoration='line-through';
+    badge.textContent='스킵됨';
+  }
+}
+
+/* ═══ Section 2-6: Behavioral Design Demos ═══ */
+let drReduced=false;
+function toggleDecisionReduction(){
+  drReduced=!drReduced;
+  const label=document.getElementById('dr-label');
+  const grid=document.getElementById('dr-choices');
+  if(drReduced){
+    label.textContent='After: 3개 선택지 (명확한 선택)';
+    grid.innerHTML='<div class="choice-btn primary-choice">할게</div><div class="choice-btn">다른 거</div><div class="choice-btn">타이머만</div>';
+  }else{
+    label.textContent='Before: 5개 선택지 (결정 마비)';
+    grid.innerHTML='<div class="choice-btn">했어</div><div class="choice-btn">타이머 켜고 할래</div><div class="choice-btn">다른 거 추천</div><div class="choice-btn">필요 없는 할일</div><div class="choice-btn">지금 떠오른거 타이머</div>';
+  }
+}
+
+let rdFirstSession=true;
+function toggleRitualDesign(){
+  rdFirstSession=!rdFirstSession;
+  const label=document.getElementById('rd-label');
+  const s1=document.getElementById('rd-s1');
+  const s2=document.getElementById('rd-s2');
+  const s3=document.getElementById('rd-s3');
+  const s4=document.getElementById('rd-s4');
+  if(rdFirstSession){
+    label.textContent='첫 세션: 환경 준비 의식';
+    [s1,s2,s3].forEach(s=>{s.classList.remove('ritual-skipped');s.classList.add('ritual-active');});
+    s4.classList.remove('ritual-active');
+  }else{
+    label.textContent='이후 세션: 바로 타이머';
+    [s1,s2,s3].forEach(s=>{s.classList.remove('ritual-active');s.classList.add('ritual-skipped');});
+    s4.classList.add('ritual-active');
+  }
+}
+
+function nudgeAccept(btn){
+  const card=document.getElementById('nudge-demo');
+  card.classList.remove('nudge-pulse');
+  card.style.background='rgba(34,197,94,.15)';
+  card.style.borderColor='var(--green)';
+  btn.style.background='var(--green)';
+  btn.textContent='\u2713 시작합니다!';
+  setTimeout(()=>{
+    card.style.background='rgba(236,72,153,.08)';
+    card.style.borderColor='rgba(236,72,153,.2)';
+    card.classList.add('nudge-pulse');
+    btn.style.background='var(--pink)';
+    btn.textContent='할게!';
+  },1500);
+}
+
+let commitActive=false;
+function toggleCommitment(){
+  commitActive=!commitActive;
+  const circle=document.getElementById('commit-circle');
+  const icon=document.getElementById('commit-icon');
+  const text=document.getElementById('commit-text');
+  if(commitActive){
+    circle.style.borderColor='var(--green)';
+    circle.style.background='rgba(34,197,94,.15)';
+    icon.innerHTML='&#10074;&#10074;';
+    icon.style.color='var(--green)';
+    text.textContent='집중 중... 25:00';
+    text.style.color='var(--green)';
+  }else{
+    circle.style.borderColor='var(--pink)';
+    circle.style.background='transparent';
+    icon.innerHTML='&#9654;';
+    icon.style.color='';
+    text.textContent='탭하여 집중 약속 시작';
+    text.style.color='var(--text-dim)';
+  }
+}
 
 /* ═══ Sidebar Active Tracking ═══ */
 const sections=document.querySelectorAll('section[id]');
