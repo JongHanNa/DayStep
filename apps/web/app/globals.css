@@ -143,8 +143,7 @@ dialog[open] {
 }
 
 /* Electron 환경에서 본문 상단 패딩 */
-.electron body,
-.electron main {
+.electron body {
   padding-top: var(--electron-titlebar-height) !important;
 }
 
