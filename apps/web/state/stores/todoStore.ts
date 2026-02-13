@@ -1,6 +1,8 @@
 import { Todo } from "@/entities/todo/Todo";
 import { CreateTodoInput, ScheduleType } from "@/types";
 import { supabase } from "@/lib/supabase";
+import { isRecurringTodo } from "@/lib/recurrence-utils";
+import { getKSTCurrentDate, convertKstDateToUtcRange } from "@/lib/date-utils";
 // import { integratedNotificationService } from "@/services/integrated-notification.service";
 import {
   createStore,
@@ -180,7 +182,13 @@ export const useTodoStore = createStore<TodoStoreState>(
               subtaskGroupsCount: subtasks.size,
             });
           });
-          // refreshStats()는 set() 커밋 후 호출해야 get()이 새 데이터를 반환
+
+          // 반복 할일 완료 기록 로드 (stats 정확한 계산을 위해 필요)
+          const kstToday = getKSTCurrentDate();
+          const { utcStart, utcEnd } = convertKstDateToUtcRange(kstToday);
+          await get().loadCompletionsForDateRange(utcStart, utcEnd);
+
+          // refreshStats()는 todos + todoCompletions 모두 로드 후 호출
           get().refreshStats();
         } catch (error) {
           set((state: TodoStoreState) => {
@@ -968,9 +976,18 @@ export const useTodoStore = createStore<TodoStoreState>(
       refreshStats: () => {
         const state = get();
         const todos = state.todos;
-        
+        const todoCompletions = state.todoCompletions;
+        const kstToday = getKSTCurrentDate();
+
         const totalCount = todos.length;
-        const completedCount = todos.filter((t: Todo) => t.completed).length;
+        const completedCount = todos.filter((t: Todo) => {
+          // 반복 할일: todo_completions에서 오늘 날짜 완료 기록 확인
+          if (isRecurringTodo(t)) {
+            return isRecurrenceCompletedAction(t.id, kstToday, todoCompletions);
+          }
+          // 일반 할일: completed 필드 사용
+          return t.completed;
+        }).length;
         const pendingCount = totalCount - completedCount;
         
         // 오늘 완료된 할일 계산
