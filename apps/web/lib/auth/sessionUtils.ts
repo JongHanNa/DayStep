@@ -537,69 +537,8 @@ export const loadAppUserFromSession = async (
   // TOKEN_REFRESHED 이벤트에서 사용자 정보 로드 시작: ${authUser.id}
 
   try {
-    {
-      // 웹/Electron 환경에서는 Supabase 클라이언트와 세션 동기화 수행
-      console.log('🔄 TOKEN_REFRESHED 세션을 Supabase 클라이언트에 명시적 동기화 시작...');
-
-      // 1단계: setSession으로 명시적 동기화 (타임아웃 적용)
-      console.log('🔄 1단계: setSession으로 명시적 동기화 중...');
-      
-      const { error: setSessionError } = await setSessionWithTimeout({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token
-      });
-
-      if (setSessionError) {
-        console.error('❌ TOKEN_REFRESHED setSession 동기화 실패:', setSessionError);
-        return null;
-      } else {
-        console.log('✅ setSession 동기화 성공 - Supabase 클라이언트와 세션 동기화 완료');
-        
-        // 동기화 확인
-        const { data: { session: currentSession } } = await getSessionWithTimeout(5000);
-        console.log('🔍 동기화 확인 결과:', {
-          hasCurrentSession: !!currentSession,
-          currentUserId: currentSession?.user?.id,
-          originalUserId: session.user.id,
-          동기화성공: currentSession?.user?.id === session.user.id
-        });
-      }
-
-      // 2단계: refreshSession으로 완전 동기화 (권장 사항, WebView에서 타임아웃 적용)
-      console.log('🔄 2단계: refreshSession으로 완전 동기화 중...');
-
-      const { data: refreshData, error: refreshError } = await refreshSessionWithTimeout(
-        session.refresh_token, 
-        8000 // 8초 타임아웃
-      );
-
-      if (refreshError) {
-        console.warn('⚠️ refreshSession 실패, setSession 결과로 계속 진행:', refreshError);
-        // refreshSession 실패해도 setSession이 성공했으면 계속 진행
-      } else {
-        console.log('✅ refreshSession 완료 - 완전 동기화 성공:', {
-          refreshedUserId: refreshData.user?.id,
-        });
-      }
-
-      // 3단계: 최종 세션 확인 (타임아웃 적용)
-      console.log('🔄 3단계: 최종 세션 상태 확인 중...');
-
-      const { data: { session: finalSession } } = await getSessionWithTimeout(5000); // 5초 타임아웃
-
-      if (!finalSession || finalSession.user.id !== session.user.id) {
-        console.error('❌ 최종 세션 확인 실패 - 동기화되지 않음:', {
-          hasFinalSession: !!finalSession,
-          finalUserId: finalSession?.user?.id,
-          expectedUserId: session.user.id
-        });
-        return null;
-      } else {
-        console.log('✅ 최종 세션 확인 성공 - 완전 동기화 완료');
-      }
-    }
-
-    // 공통: 사용자 정보 조회 및 AppUser 생성 (Defensive Programming 적용)
+    // onAuthStateChange가 이미 유효한 세션을 전달하므로 별도 세션 동기화 불필요
+    // (setSession/refreshSession 호출은 navigator.locks 데드락을 유발함)
     try {
       // 🔥 Defensive Programming: ensureUserExists 사용
       const { ensureUserExists } = await import('@/lib/supabase/users');
