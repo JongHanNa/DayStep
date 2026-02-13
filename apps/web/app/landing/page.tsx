@@ -194,7 +194,7 @@ export default function LandingPage() {
             </button>
             <button
               onClick={handleMobileDownload}
-              className="btn btn-lg gap-2 px-8 w-full sm:w-auto rounded-full bg-white/20 text-white hover:bg-white/30 border border-white/40 backdrop-blur-sm"
+              className="btn btn-lg gap-2 px-8 w-full sm:w-auto rounded-full bg-white/90 text-gray-700 hover:bg-white border-none shadow-lg"
             >
               모바일 앱 다운로드
               <Smartphone className="w-5 h-5" />

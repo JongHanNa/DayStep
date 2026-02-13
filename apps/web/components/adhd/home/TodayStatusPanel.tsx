@@ -48,26 +48,26 @@ export default function TodayStatusPanel({ variant = 'desktop' }: TodayStatusPan
   const recentDone = getRecentlyCompletedTodos(3);
 
   return (
-    <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 p-4 lg:p-6">
+    <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 p-6 lg:p-8">
       <div className="sticky top-8 rounded-2xl bg-white dark:bg-[#242424] p-5 shadow-sm border border-gray-100 dark:border-gray-800">
         {/* 헤더 */}
         <div className="flex items-center gap-2 mb-4">
           <ClipboardList className="w-4 h-4 text-indigo-500" />
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+          <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
             오늘의 현황
           </span>
         </div>
 
         {/* 완료 / 남음 카운터 */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="text-center py-3 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
-            <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+          <div className="text-center py-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
+            <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
               {completed}
             </p>
             <p className="text-[10px] text-gray-400">완료</p>
           </div>
-          <div className="text-center py-3 rounded-xl bg-gray-50 dark:bg-gray-800">
-            <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+          <div className="text-center py-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+            <p className="text-3xl font-bold text-gray-700 dark:text-gray-300">
               {pending}
             </p>
             <p className="text-[10px] text-gray-400">남음</p>

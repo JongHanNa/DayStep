@@ -20,6 +20,7 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
   const { notes, getBannerPinnedFuelNotes, getFuelNotes } = useNoteStore();
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [expanded, setExpanded] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 데이터 로드
@@ -35,6 +36,11 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
     setPinnedNotes(pinned);
     setCurrentIndex(0);
   }, [notes, getBannerPinnedFuelNotes]);
+
+  // currentIndex 변경 시 expanded 리셋
+  useEffect(() => {
+    setExpanded(false);
+  }, [currentIndex]);
 
   // 자동 순환 타이머
   const resetTimer = useCallback(() => {
@@ -61,11 +67,10 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
     }
   };
 
-  // 인용문 클릭 → onFuelClick
+  // 인용문 클릭 → 요약/전체 토글
   const handleQuoteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const note = pinnedNotes[currentIndex];
-    if (note) onFuelClick(note.id);
+    setExpanded((prev) => !prev);
   };
 
   // 빈 상태: 고정 원동력 없으면 안내 텍스트
@@ -111,9 +116,9 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
           onClick={handleQuoteClick}
-          className="cursor-pointer h-10 flex items-center justify-center"
+          className="cursor-pointer"
         >
-          <p className="text-base font-medium text-amber-800 dark:text-amber-300 italic leading-relaxed text-center">
+          <p className={`text-base font-medium text-amber-800 dark:text-amber-300 italic leading-relaxed text-center ${!expanded ? 'line-clamp-3' : ''}`}>
             &ldquo;{currentNote?.content}&rdquo;
           </p>
         </motion.div>
