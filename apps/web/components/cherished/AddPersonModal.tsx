@@ -223,8 +223,6 @@ export default function AddPersonModal({
     const input: CherishedPersonInput = {
       name: name.trim(),
       nickname: nickname.trim() || undefined,
-      relationships: [], // 더 이상 사용하지 않음 - person_relationships 테이블 사용
-      roles: [], // 더 이상 사용하지 않음 - person_roles 테이블 사용
     };
 
     // 새로 추가하는 경우에만 용량 체크

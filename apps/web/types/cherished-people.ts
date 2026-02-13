@@ -40,8 +40,6 @@ export interface CherishedPerson {
 export interface CherishedPersonInput {
   name: string;
   nickname?: string;
-  relationships?: string[];   // 복수 관계 (배열)
-  roles?: string[];           // 역할/직분 (배열)
 }
 
 /** 관심 기록 */

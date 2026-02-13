@@ -57,8 +57,6 @@ export class CherishedPeopleService {
       user_id: userId,
       name: input.name.trim(),
       nickname: input.nickname?.trim() || null,
-      relationships: input.relationships || [],
-      roles: input.roles || [],
       is_active: true,
       interaction_count: 0,
     };
