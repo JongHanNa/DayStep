@@ -55,13 +55,18 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([
-        fetchAllTodos(),
-        loadPeople(userId),
-        fetchProjects(userId),
-        fetchDepartments(userId)
-      ]);
-      setIsLoading(false);
+      try {
+        await Promise.all([
+          fetchAllTodos().catch(e => console.error('fetchAllTodos 실패:', e)),
+          loadPeople(userId).catch(e => console.error('loadPeople 실패:', e)),
+          fetchProjects(userId).catch(e => console.error('fetchProjects 실패:', e)),
+          fetchDepartments(userId).catch(e => console.error('fetchDepartments 실패:', e)),
+        ]);
+      } catch (error) {
+        console.error('타임라인 데이터 로드 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadData();
   }, [userId, fetchAllTodos, loadPeople, fetchProjects, fetchDepartments]);

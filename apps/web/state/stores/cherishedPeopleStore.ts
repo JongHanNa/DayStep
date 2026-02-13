@@ -201,7 +201,7 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           set({ recommendations, isLoadingRecommendations: false });
         } catch (error) {
           console.error('❌ 추천 로드 실패:', error);
-          set({ isLoadingRecommendations: false });
+          set({ recommendations: [], isLoadingRecommendations: false });
         }
       },
 

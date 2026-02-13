@@ -62,7 +62,7 @@ export default function ContactRecommendationScroll({
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center gap-2 mb-3">
         <HeartHandshake className="w-4 h-4 text-pink-500" />
