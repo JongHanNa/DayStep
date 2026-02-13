@@ -123,6 +123,8 @@ export interface Note {
   tags?: NoteTag[];
   // Second Brain fields
   note_category?: NoteCategory;
+  // Fuel 감정 태그
+  emotion_tag?: string | null;
 }
 
 // Note instance types (manually defined until Supabase types are updated)
