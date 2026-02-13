@@ -12,5 +12,3 @@ interface DailyPlannerScreenProps {
 export function DailyPlannerScreen({ userId }: DailyPlannerScreenProps) {
   return <TodoTimelineView userId={userId} viewMode="daily" />;
 }
-
-export default DailyPlannerScreen;

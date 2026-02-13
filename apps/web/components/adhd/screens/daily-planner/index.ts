@@ -1,1 +1,1 @@
-export { DailyPlannerScreen, default } from './DailyPlannerScreen';
+export { DailyPlannerScreen } from './DailyPlannerScreen';

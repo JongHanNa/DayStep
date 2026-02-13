@@ -15,5 +15,3 @@ interface RecordScreenProps {
 export function RecordScreen({ userId }: RecordScreenProps) {
   return <CareRecordView userId={userId} />;
 }
-
-export default RecordScreen;

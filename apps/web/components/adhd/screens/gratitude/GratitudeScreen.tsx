@@ -15,5 +15,3 @@ interface GratitudeScreenProps {
 export function GratitudeScreen({ userId }: GratitudeScreenProps) {
   return <GratitudeJournalView userId={userId} />;
 }
-
-export default GratitudeScreen;

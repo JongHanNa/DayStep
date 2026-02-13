@@ -15,5 +15,3 @@ interface OrganizeScreenProps {
 export function OrganizeScreen({ userId }: OrganizeScreenProps) {
   return <OrganizeNeededView userId={userId} />;
 }
-
-export default OrganizeScreen;

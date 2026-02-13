@@ -15,5 +15,3 @@ interface ContactScreenProps {
 export function ContactScreen({ userId }: ContactScreenProps) {
   return <ContactView userId={userId} />;
 }
-
-export default ContactScreen;

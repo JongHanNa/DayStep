@@ -1,1 +1,1 @@
-export { NewsScreen, default } from './NewsScreen';
+export { NewsScreen } from './NewsScreen';

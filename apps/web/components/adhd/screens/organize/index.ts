@@ -1,1 +1,1 @@
-export { OrganizeScreen, default } from './OrganizeScreen';
+export { OrganizeScreen } from './OrganizeScreen';

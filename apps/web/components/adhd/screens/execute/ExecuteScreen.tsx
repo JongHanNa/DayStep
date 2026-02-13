@@ -16,5 +16,3 @@ interface ExecuteScreenProps {
 export function ExecuteScreen({ onExit = () => {} }: ExecuteScreenProps) {
   return <FocusExecutionContainer onExit={onExit} />;
 }
-
-export default ExecuteScreen;

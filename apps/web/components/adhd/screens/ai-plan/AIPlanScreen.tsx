@@ -17,5 +17,3 @@ interface AIPlanScreenProps {
 export function AIPlanScreen({ userId }: AIPlanScreenProps) {
   return <AIPlanView userId={userId} />;
 }
-
-export default AIPlanScreen;

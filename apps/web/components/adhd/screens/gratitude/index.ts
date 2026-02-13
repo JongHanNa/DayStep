@@ -1,1 +1,1 @@
-export { GratitudeScreen, default } from './GratitudeScreen';
+export { GratitudeScreen } from './GratitudeScreen';

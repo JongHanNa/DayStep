@@ -1,1 +1,1 @@
-export { GuideScreen, default } from './GuideScreen';
+export { GuideScreen } from './GuideScreen';

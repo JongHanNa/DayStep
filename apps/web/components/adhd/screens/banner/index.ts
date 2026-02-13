@@ -1,1 +1,1 @@
-export { BannerScreen, default } from './BannerScreen';
+export { BannerScreen } from './BannerScreen';

@@ -24,5 +24,3 @@ export function BannerScreen({ userId }: BannerScreenProps) {
     />
   );
 }
-
-export default BannerScreen;

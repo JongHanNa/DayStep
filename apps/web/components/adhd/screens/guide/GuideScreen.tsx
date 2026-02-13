@@ -11,5 +11,3 @@ import { MCPGuideView } from './components';
 export function GuideScreen() {
   return <MCPGuideView />;
 }
-
-export default GuideScreen;

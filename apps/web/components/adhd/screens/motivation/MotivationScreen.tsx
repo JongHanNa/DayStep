@@ -420,5 +420,3 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     </>
   );
 }
-
-export default MotivationScreen;

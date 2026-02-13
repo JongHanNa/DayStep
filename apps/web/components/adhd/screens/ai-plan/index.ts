@@ -1,1 +1,1 @@
-export { AIPlanScreen, default } from './AIPlanScreen';
+export { AIPlanScreen } from './AIPlanScreen';

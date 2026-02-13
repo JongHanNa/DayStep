@@ -1,1 +1,1 @@
-export { ActivityScreen, default } from './ActivityScreen';
+export { ActivityScreen } from './ActivityScreen';

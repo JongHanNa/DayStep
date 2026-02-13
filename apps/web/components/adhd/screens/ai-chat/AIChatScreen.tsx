@@ -11,5 +11,3 @@ import { AIPlanningChat } from './components';
 export function AIChatScreen() {
   return <AIPlanningChat />;
 }
-
-export default AIChatScreen;

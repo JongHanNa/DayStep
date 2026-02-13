@@ -15,5 +15,3 @@ interface NewsScreenProps {
 export function NewsScreen({ userId }: NewsScreenProps) {
   return <NewsMemosView userId={userId} />;
 }
-
-export default NewsScreen;

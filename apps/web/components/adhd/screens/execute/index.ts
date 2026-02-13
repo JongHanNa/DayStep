@@ -1,1 +1,1 @@
-export { ExecuteScreen, default } from './ExecuteScreen';
+export { ExecuteScreen } from './ExecuteScreen';

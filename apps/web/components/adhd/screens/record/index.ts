@@ -1,1 +1,1 @@
-export { RecordScreen, default } from './RecordScreen';
+export { RecordScreen } from './RecordScreen';

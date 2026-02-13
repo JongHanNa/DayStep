@@ -1,1 +1,1 @@
-export { TimelineScreen, default } from './TimelineScreen';
+export { TimelineScreen } from './TimelineScreen';

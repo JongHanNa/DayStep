@@ -1,1 +1,1 @@
-export { AIChatScreen, default } from './AIChatScreen';
+export { AIChatScreen } from './AIChatScreen';

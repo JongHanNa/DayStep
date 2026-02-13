@@ -135,8 +135,8 @@ const nextConfig: NextConfig = {
   webpack: (config, { dev, isServer }) => {
     // 개발 모드에서 간헐적 SyntaxError 방지를 위한 추가 안정성 설정
     if (dev) {
-      // 대형 문자열 문제 해결을 위한 캐시 비활성화 (빌드 속도 우선)
-      config.cache = false;
+      // 메모리 캐시 사용 (Fast Refresh 호환 + 파일시스템 캐시의 대형 문자열 직렬화 문제 방지)
+      config.cache = { type: 'memory' };
       
       // 심볼릭 링크 해상도 비활성화로 모듈 경로 일관성 확보
       config.resolve.symlinks = false;

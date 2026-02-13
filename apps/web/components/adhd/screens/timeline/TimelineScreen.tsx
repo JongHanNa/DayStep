@@ -17,5 +17,3 @@ interface TimelineScreenProps {
 export function TimelineScreen({ userId, viewMode = 'agenda' }: TimelineScreenProps) {
   return <TodoTimelineView userId={userId} viewMode={viewMode} />;
 }
-
-export default TimelineScreen;

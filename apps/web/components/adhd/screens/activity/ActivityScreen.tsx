@@ -15,5 +15,3 @@ interface ActivityScreenProps {
 export function ActivityScreen({ userId }: ActivityScreenProps) {
   return <ActivityView userId={userId} />;
 }
-
-export default ActivityScreen;
