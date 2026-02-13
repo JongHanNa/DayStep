@@ -117,9 +117,11 @@ export default function MCPGuideView() {
               <Sparkles className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold text-lg">AI와 함께 계획 세우기</h2>
+              <h2 className="font-semibold text-lg">Claude Desktop으로 AI 할일 자동 생성</h2>
               <p className="text-sm text-base-content/70 mt-1">
                 Claude Desktop에서 DayStep을 연결하면 AI가 할일을 자동으로 생성해줍니다.
+                <br />
+                <span className="text-xs text-base-content/50">사용자 본인의 Claude 사용량으로 작동합니다.</span>
               </p>
             </div>
           </div>

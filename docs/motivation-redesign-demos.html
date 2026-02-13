@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>원동력 새기기 - UI/UX 리디자인 데모</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Noto Sans KR', sans-serif; }
+    .phone-frame {
+      width: 375px; height: 720px;
+      border-radius: 40px;
+      border: 8px solid #1a1a2e;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 28px;
+      background: #1a1a2e;
+      border-radius: 0 0 16px 16px;
+      z-index: 50;
+    }
+    .tab-btn { transition: all 0.3s; cursor: pointer; }
+    .tab-btn.active { color: #6366f1; border-bottom: 2px solid #6366f1; font-weight: 600; }
+    .demo-section { display: none; }
+    .demo-section.active { display: block; }
+    .nav-tab { cursor: pointer; transition: all 0.2s; }
+    .nav-tab:hover { background: rgba(99,102,241,0.1); }
+    .nav-tab.active-tab { background: #6366f1; color: white; }
+
+    /* Demo A animations */
+    .emotion-tag { transition: all 0.2s; cursor: pointer; }
+    .emotion-tag:hover { transform: scale(1.05); }
+    .emotion-tag.selected { ring: 2px; ring-color: currentColor; }
+    .fuel-card-a { transition: all 0.3s ease; cursor: pointer; }
+    .fuel-card-a:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .fuel-card-a .expand-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+    .fuel-card-a.expanded .expand-content { max-height: 300px; }
+
+    /* Demo B animations */
+    .flip-card { perspective: 1000px; cursor: pointer; }
+    .flip-card-inner { transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-card-front, .flip-card-back { backface-visibility: hidden; position: absolute; inset: 0; }
+    .flip-card-back { transform: rotateY(180deg); }
+    .xp-bar-fill { transition: width 0.8s ease; }
+    @keyframes confetti-fall {
+      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100px) rotate(360deg); opacity: 0; }
+    }
+    .confetti-piece { animation: confetti-fall 1.5s ease forwards; position: absolute; }
+
+    /* Demo C */
+    .fuel-item-c { transition: all 0.2s; }
+    .fuel-item-c:hover { background: #f8fafc; }
+    .fuel-item-c .quick-actions { opacity: 0; transition: opacity 0.2s; }
+    .fuel-item-c:hover .quick-actions { opacity: 1; }
+    .inline-edit { outline: none; border-bottom: 2px solid transparent; transition: border-color 0.2s; }
+    .inline-edit:focus { border-bottom-color: #6366f1; }
+
+    /* Problem analysis */
+    .problem-card { border-left: 4px solid; }
+
+    /* Scroll */
+    .phone-scroll { overflow-y: auto; scrollbar-width: none; }
+    .phone-scroll::-webkit-scrollbar { display: none; }
+
+    /* Before/After table */
+    .comparison-table td, .comparison-table th { padding: 12px 16px; text-align: left; }
+    .before-cell { background: #fef2f2; }
+    .after-cell { background: #f0fdf4; }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+  <!-- Navigation -->
+  <header class="sticky top-0 z-50 bg-gray-950/90 backdrop-blur-lg border-b border-gray-800">
+    <div class="max-w-6xl mx-auto px-6 py-4">
+      <h1 class="text-2xl font-bold mb-1">🔥 원동력 새기기 — UI/UX 리디자인 데모</h1>
+      <p class="text-sm text-gray-400 mb-4">현재 문제점 분석 + 3가지 리디자인 방향 인터랙티브 프로토타입</p>
+      <div class="flex gap-2">
+        <button class="nav-tab active-tab px-4 py-2 rounded-full text-sm font-medium" onclick="showSection('analysis')">📊 문제 분석</button>
+        <button class="nav-tab px-4 py-2 rounded-full text-sm font-medium" onclick="showSection('demo-a')">🎨 A: 감정 기반</button>
+        <button class="nav-tab px-4 py-2 rounded-full text-sm font-medium" onclick="showSection('demo-b')">🎮 B: 게이미피케이션</button>
+        <button class="nav-tab px-4 py-2 rounded-full text-sm font-medium" onclick="showSection('demo-c')">✨ C: 미니멀 액션</button>
+        <button class="nav-tab px-4 py-2 rounded-full text-sm font-medium" onclick="showSection('comparison')">⚖️ 비교 분석</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+
+    <!-- ================================================================ -->
+    <!-- SECTION: 문제 분석 -->
+    <!-- ================================================================ -->
+    <section id="analysis" class="demo-section active">
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-2">현재 원동력 새기기 화면 — 5가지 차원 분석</h2>
+        <p class="text-gray-400 text-sm">실제 코드 기반으로 분석한 현재 구현의 문제점</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <!-- 1. 시각적 스타일링 -->
+        <div class="problem-card rounded-xl bg-gray-900 p-5" style="border-color: #f97316;">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">🎨</span>
+            <h3 class="font-bold text-lg">1. 시각적 스타일링</h3>
+          </div>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-orange-300">오렌지 CTA 과도</strong> — <code class="text-xs bg-gray-800 px-1 rounded">!bg-orange-500 btn-lg h-16</code> 크기가 공격적, 화면 상단을 독점</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-orange-300">처리/미처리 구분 부족</strong> — CheckCircle2 아이콘 하나로만 구분, 배경색 차이 없음</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-orange-300">단조로운 카드</strong> — 모든 카드가 <code class="text-xs bg-gray-800 px-1 rounded">bg-base-200</code>로 동일, 감정적 차별화 없음</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-orange-300">빈 상태 없음</strong> — 원동력이 0개일 때 별도 디자인 없이 빈 화면만 표시</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 2. 인터랙션 패턴 -->
+        <div class="problem-card rounded-xl bg-gray-900 p-5" style="border-color: #8b5cf6;">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">👆</span>
+            <h3 class="font-bold text-lg">2. 인터랙션 패턴</h3>
+          </div>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-violet-300">드롭다운 숨김</strong> — 핀 고정/삭제가 <code class="text-xs bg-gray-800 px-1 rounded">MoreHorizontal</code> 드롭다운 안에 숨겨져 발견성 낮음</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-violet-300">모바일 스와이프 없음</strong> — 터치 제스처 미지원, 탭만 가능</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-violet-300">할일 커스터마이징 불가</strong> — 원동력에서 할일 생성 시 제목만 입력, 상세 설정 불가</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-violet-300">인라인 편집 없음</strong> — 수정 시 반드시 모달 열어야 함</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 3. 정보구조 -->
+        <div class="problem-card rounded-xl bg-gray-900 p-5" style="border-color: #06b6d4;">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">🗂️</span>
+            <h3 class="font-bold text-lg">3. 정보구조</h3>
+          </div>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-cyan-300">카테고리/태그 없음</strong> — 모든 원동력이 단일 리스트, 감정/목적별 분류 불가</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-cyan-300">검색/필터 없음</strong> — 원동력이 많아지면 찾기 어려움</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-cyan-300">시간순만 가능</strong> — 미처리 우선, 생성일순 정렬만 제공</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-cyan-300">배너 고정 숨김</strong> — 홈 배너에 표시하는 핀 기능이 드롭다운 안에 있어 인지 어려움</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 4. 태스크 플로우 -->
+        <div class="problem-card rounded-xl bg-gray-900 p-5" style="border-color: #10b981;">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">🔗</span>
+            <h3 class="font-bold text-lg">4. 태스크 플로우</h3>
+          </div>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-emerald-300">원동력→할일 단절</strong> — 작성 후 "할일 만들기" 클릭 필요, 자연스런 흐름 X</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-emerald-300">진행 시각화 없음</strong> — 연결된 할일 수만 배지로 표시, 완료율 미표시</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-emerald-300">완료 연결 미표시</strong> — 할일 완료 시 원동력 카드에 반영 없음</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-red-400 mt-0.5">●</span>
+              <span><strong class="text-emerald-300">3단 CTA 혼란</strong> — 모달 내 "지금 시작/일정 잡기/저장하기" 3개 버튼의 차이 불명확</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 5. 행동 설계 -->
+        <div class="problem-card rounded-xl bg-gray-900 p-5 md:col-span-2" style="border-color: #ec4899;">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">🧠</span>
+            <h3 class="font-bold text-lg">5. 행동 설계 (ADHD 친화성)</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+            <ul class="space-y-2 text-sm text-gray-300">
+              <li class="flex items-start gap-2">
+                <span class="text-red-400 mt-0.5">●</span>
+                <span><strong class="text-pink-300">게이미피케이션 없음</strong> — 성취감/보상 메커니즘 부재, 지속 동기 약화</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-red-400 mt-0.5">●</span>
+                <span><strong class="text-pink-300">리마인더 없음</strong> — 작성한 원동력을 다시 보게 하는 메커니즘 X</span>
+              </li>
+            </ul>
+            <ul class="space-y-2 text-sm text-gray-300">
+              <li class="flex items-start gap-2">
+                <span class="text-red-400 mt-0.5">●</span>
+                <span><strong class="text-pink-300">연속 기록 없음</strong> — 꾸준한 원동력 작성 추적/시각화 없음</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-red-400 mt-0.5">●</span>
+                <span><strong class="text-pink-300">수동적 메시지</strong> — 배너에 표시할 원동력을 직접 선택해야, 랜덤/자동 추천 없음</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION: Demo A — 감정 기반 (Emotion-Based) -->
+    <!-- ================================================================ -->
+    <section id="demo-a" class="demo-section">
+      <div class="flex flex-col lg:flex-row gap-8 items-start">
+        <!-- Phone Mockup -->
+        <div class="flex-shrink-0">
+          <h2 class="text-xl font-bold mb-4">🎨 Demo A: 감정 기반 (Emotion-Based)</h2>
+          <p class="text-gray-400 text-sm mb-6">따뜻한 감정으로 동기를 일깨우는 디자인. 감정 태그, FAB, 인라인 확장 카드.</p>
+
+          <div class="phone-frame bg-amber-50">
+            <div class="phone-scroll h-full pt-8">
+              <!-- Header with gradient -->
+              <div class="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 px-5 pt-8 pb-6">
+                <h2 class="text-xl font-bold text-white">원동력 새기기</h2>
+                <p class="text-white/80 text-xs mt-1">마음에 불을 붙여보세요 🔥</p>
+                <!-- Stats -->
+                <div class="flex gap-3 mt-4">
+                  <div class="bg-white/20 backdrop-blur rounded-xl px-3 py-2 text-center flex-1">
+                    <p class="text-white text-lg font-bold">7</p>
+                    <p class="text-white/70 text-[10px]">총 원동력</p>
+                  </div>
+                  <div class="bg-white/20 backdrop-blur rounded-xl px-3 py-2 text-center flex-1">
+                    <p class="text-white text-lg font-bold">4</p>
+                    <p class="text-white/70 text-[10px]">할일 전환</p>
+                  </div>
+                  <div class="bg-white/20 backdrop-blur rounded-xl px-3 py-2 text-center flex-1">
+                    <p class="text-white text-lg font-bold">3일</p>
+                    <p class="text-white/70 text-[10px]">연속 기록</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Emotion Tags -->
+              <div class="px-4 py-3 flex gap-2 overflow-x-auto">
+                <button class="emotion-tag px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border-2 border-amber-300 whitespace-nowrap" onclick="filterEmotion(this)">✨ 전체</button>
+                <button class="emotion-tag px-3 py-1.5 rounded-full text-xs font-medium bg-rose-50 text-rose-600 border border-rose-200 whitespace-nowrap" onclick="filterEmotion(this)">💖 기쁨</button>
+                <button class="emotion-tag px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 border border-blue-200 whitespace-nowrap" onclick="filterEmotion(this)">🙏 감사</button>
+                <button class="emotion-tag px-3 py-1.5 rounded-full text-xs font-medium bg-orange-50 text-orange-600 border border-orange-200 whitespace-nowrap" onclick="filterEmotion(this)">⚡ 각성</button>
+                <button class="emotion-tag px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-600 border border-purple-200 whitespace-nowrap" onclick="filterEmotion(this)">💪 결단</button>
+              </div>
+
+              <!-- Cards -->
+              <div class="px-4 space-y-3 pb-24">
+                <!-- Card 1: unprocessed -->
+                <div class="fuel-card-a bg-white rounded-2xl p-4 shadow-sm border border-amber-100" onclick="toggleCardA(this)">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 text-rose-600">💖 기쁨</span>
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                      </div>
+                      <p class="font-medium text-sm text-gray-800">아이가 처음 걸음마를 뗐을 때의 감동</p>
+                      <p class="text-xs text-gray-400 mt-1">2월 13일</p>
+                    </div>
+                  </div>
+                  <div class="expand-content">
+                    <div class="mt-3 pt-3 border-t border-amber-100">
+                      <p class="text-xs text-gray-500 mb-3">그 순간의 벅찬 감동을 기억하며, 아이를 위해 더 나은 환경을 만들어주고 싶다.</p>
+                      <!-- Progress -->
+                      <div class="bg-amber-50 rounded-xl p-3">
+                        <p class="text-[10px] font-medium text-amber-700 mb-2">연결된 할일 (0/0)</p>
+                        <p class="text-xs text-gray-400">아직 할일이 없어요</p>
+                        <button class="mt-2 px-3 py-1.5 bg-amber-500 text-white text-xs rounded-full font-medium hover:bg-amber-600 transition">+ 할일 만들기</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 2: processed -->
+                <div class="fuel-card-a bg-white rounded-2xl p-4 shadow-sm border border-emerald-100" onclick="toggleCardA(this)">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-600">💪 결단</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                      </div>
+                      <p class="font-medium text-sm text-gray-800">작년 마라톤 완주한 그 성취감을 다시</p>
+                      <p class="text-xs text-gray-400 mt-1">2월 12일</p>
+                    </div>
+                  </div>
+                  <div class="expand-content">
+                    <div class="mt-3 pt-3 border-t border-emerald-100">
+                      <p class="text-xs text-gray-500 mb-3">42.195km를 완주했던 그 끈기가 아직 내 안에 있다. 올해도 할 수 있다.</p>
+                      <div class="bg-emerald-50 rounded-xl p-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <p class="text-[10px] font-medium text-emerald-700">연결된 할일 (1/2)</p>
+                          <span class="text-[10px] text-emerald-600 font-bold">50%</span>
+                        </div>
+                        <div class="h-1.5 bg-emerald-200 rounded-full">
+                          <div class="h-full bg-emerald-500 rounded-full" style="width:50%"></div>
+                        </div>
+                        <div class="mt-2 space-y-1">
+                          <div class="flex items-center gap-2 text-xs">
+                            <span class="text-emerald-500">✓</span>
+                            <span class="text-gray-500 line-through">러닝화 구매하기</span>
+                          </div>
+                          <div class="flex items-center gap-2 text-xs">
+                            <span class="text-gray-300">○</span>
+                            <span class="text-gray-700">주 3회 러닝 시작</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="fuel-card-a bg-white rounded-2xl p-4 shadow-sm border border-blue-100" onclick="toggleCardA(this)">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-600">🙏 감사</span>
+                        <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                      </div>
+                      <p class="font-medium text-sm text-gray-800">부모님이 묵묵히 응원해주신 것</p>
+                      <p class="text-xs text-gray-400 mt-1">2월 11일</p>
+                    </div>
+                  </div>
+                  <div class="expand-content">
+                    <div class="mt-3 pt-3 border-t border-blue-100">
+                      <p class="text-xs text-gray-500 mb-3">항상 곁에서 지지해주시는 분들에게 보답하는 마음으로.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FAB -->
+              <button class="absolute bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-amber-500 to-rose-500 rounded-full shadow-lg flex items-center justify-center text-white text-2xl hover:scale-110 transition-transform z-10">
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty state hint -->
+          <div class="mt-4 bg-gray-900 rounded-xl p-4 border border-gray-800 max-w-[375px]">
+            <p class="text-xs text-gray-400 font-medium mb-2">💡 빈 상태 디자인:</p>
+            <div class="bg-amber-50 rounded-xl p-6 text-center">
+              <div class="text-4xl mb-3">🕯️</div>
+              <p class="font-bold text-amber-800 text-sm">마음에 불을 붙여보세요</p>
+              <p class="text-xs text-amber-600 mt-1">첫 번째 원동력을 작성하고<br/>행동으로 옮겨보세요</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="flex-1 min-w-0">
+          <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+            <h3 class="font-bold text-lg mb-4">핵심 디자인 결정</h3>
+            <div class="space-y-4 text-sm">
+              <div>
+                <h4 class="font-semibold text-amber-400 mb-1">🎯 감정 태그 필터</h4>
+                <p class="text-gray-400">기쁨·감사·각성·결단 4가지 감정으로 분류. ADHD 사용자는 감정 기반 회상이 효과적 — 논리적 분류보다 감정 연결이 동기 회복에 직결.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-amber-400 mb-1">📱 FAB로 CTA 교체</h4>
+                <p class="text-gray-400">화면 상단의 공격적 오렌지 버튼 대신 우하단 FAB로 교체. 콘텐츠 영역 확보 + 엄지 접근성 최적화.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-amber-400 mb-1">🔄 인라인 확장 카드</h4>
+                <p class="text-gray-400">카드 클릭 시 모달 없이 아코디언 확장. 상세 내용 + 할일 진행률을 인라인으로 표시하여 컨텍스트 유지.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-amber-400 mb-1">📊 할일 진행률 인라인 표시</h4>
+                <p class="text-gray-400">연결된 할일의 완료율을 카드 내부에 프로그레스 바로 표시. 원동력→행동의 흐름을 시각적으로 연결.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-amber-400 mb-1">🟢 상태 도트</h4>
+                <p class="text-gray-400">카드 우상단 작은 도트로 처리 상태 표시 — 초록(할일 있음), 회색(미처리). 배경색 차이 없이도 즉시 인지.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-amber-400 mb-1">🌡️ 그라데이션 헤더</h4>
+                <p class="text-gray-400">amber→rose 따뜻한 그라데이션으로 감정적 톤 설정. 연속 기록·총 원동력·전환율 통계를 컴팩트하게 표시.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION: Demo B — 게이미피케이션 (Gamification) -->
+    <!-- ================================================================ -->
+    <section id="demo-b" class="demo-section">
+      <div class="flex flex-col lg:flex-row gap-8 items-start">
+        <div class="flex-shrink-0">
+          <h2 class="text-xl font-bold mb-4">🎮 Demo B: 게이미피케이션 (Gamification)</h2>
+          <p class="text-gray-400 text-sm mb-6">성취감과 보상으로 지속 동기 유발. XP 시스템, 카드 뒤집기, 뱃지.</p>
+
+          <div class="phone-frame bg-slate-950">
+            <div class="phone-scroll h-full pt-8">
+              <!-- Dashboard Header -->
+              <div class="bg-gradient-to-b from-indigo-600 to-slate-950 px-5 pt-8 pb-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-lg font-bold text-white">원동력 새기기</h2>
+                  <div class="flex items-center gap-1 bg-white/10 rounded-full px-3 py-1">
+                    <span class="text-orange-400">🔥</span>
+                    <span class="text-white text-xs font-bold">5일 연속</span>
+                  </div>
+                </div>
+                <!-- Level & XP -->
+                <div class="bg-white/10 backdrop-blur rounded-2xl p-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-sm font-bold text-white">5</div>
+                      <div>
+                        <p class="text-white text-xs font-medium">동기 부여자</p>
+                        <p class="text-white/60 text-[10px]">Lv.5 — 다음 레벨까지 120 XP</p>
+                      </div>
+                    </div>
+                    <span class="text-yellow-400 text-sm font-bold">380 XP</span>
+                  </div>
+                  <div class="h-2 bg-white/20 rounded-full">
+                    <div class="xp-bar-fill h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full" style="width: 76%"></div>
+                  </div>
+                </div>
+                <!-- Challenge Banner -->
+                <div class="mt-3 bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/30 rounded-xl p-3">
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg">🎯</span>
+                    <div class="flex-1">
+                      <p class="text-white text-xs font-medium">이번 주 챌린지</p>
+                      <p class="text-white/70 text-[10px]">매일 원동력 1개 작성하기 (5/7)</p>
+                    </div>
+                    <span class="text-xs text-purple-300 font-bold">+50 XP</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Badges -->
+              <div class="px-4 py-3">
+                <p class="text-[10px] font-medium text-gray-500 uppercase mb-2">성취 뱃지</p>
+                <div class="flex gap-2">
+                  <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-lg" title="첫 원동력">🌱</div>
+                  <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-lg" title="7일 연속">🔥</div>
+                  <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-lg" title="100% 전환">💎</div>
+                  <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center text-lg opacity-30" title="잠김">🔒</div>
+                  <div class="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center text-lg opacity-30" title="잠김">🔒</div>
+                </div>
+              </div>
+
+              <!-- Flip Cards -->
+              <div class="px-4 space-y-3 pb-24">
+                <div class="flip-card h-36" onclick="flipCard(this)">
+                  <div class="flip-card-inner w-full h-full">
+                    <div class="flip-card-front bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 flex flex-col justify-between">
+                      <div>
+                        <span class="text-[10px] text-white/60 font-medium">💪 결단</span>
+                        <p class="text-white font-medium text-sm mt-1">올해 안에 사이드 프로젝트 런칭하기</p>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-white/40 text-[10px]">탭하여 할일 보기 →</span>
+                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] text-white">+30 XP</span>
+                      </div>
+                    </div>
+                    <div class="flip-card-back bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4">
+                      <p class="text-[10px] text-gray-400 font-medium mb-2">연결된 할일</p>
+                      <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                          <span class="text-emerald-400">✓</span>
+                          <span class="text-gray-400 line-through text-xs">아이디어 브레인스토밍</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-gray-600">○</span>
+                          <span class="text-gray-200 text-xs">MVP 기능 정의</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-gray-600">○</span>
+                          <span class="text-gray-200 text-xs">개발 환경 세팅</span>
+                        </div>
+                      </div>
+                      <div class="mt-3 flex items-center gap-2">
+                        <div class="flex-1 h-1.5 bg-gray-700 rounded-full">
+                          <div class="h-full bg-indigo-500 rounded-full" style="width:33%"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-400">1/3</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flip-card h-36" onclick="flipCard(this)">
+                  <div class="flip-card-inner w-full h-full">
+                    <div class="flip-card-front bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-4 flex flex-col justify-between">
+                      <div>
+                        <span class="text-[10px] text-white/60 font-medium">🙏 감사</span>
+                        <p class="text-white font-medium text-sm mt-1">팀원들이 믿어준 것에 보답하기</p>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-white/40 text-[10px]">탭하여 할일 보기 →</span>
+                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] text-white">+20 XP</span>
+                      </div>
+                    </div>
+                    <div class="flip-card-back bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4">
+                      <p class="text-[10px] text-gray-400 font-medium mb-2">연결된 할일</p>
+                      <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                          <span class="text-emerald-400">✓</span>
+                          <span class="text-gray-400 line-through text-xs">감사 이메일 보내기</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-emerald-400">✓</span>
+                          <span class="text-gray-400 line-through text-xs">1:1 미팅 스케줄</span>
+                        </div>
+                      </div>
+                      <div class="mt-3 flex items-center gap-2">
+                        <div class="flex-1 h-1.5 bg-gray-700 rounded-full">
+                          <div class="h-full bg-emerald-500 rounded-full" style="width:100%"></div>
+                        </div>
+                        <span class="text-[10px] text-emerald-400 font-bold">완료!</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flip-card h-36" onclick="flipCard(this)">
+                  <div class="flip-card-inner w-full h-full">
+                    <div class="flip-card-front bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 flex flex-col justify-between">
+                      <div>
+                        <span class="text-[10px] text-white/60 font-medium">⚡ 각성</span>
+                        <p class="text-white font-medium text-sm mt-1">더 이상 미루면 후회할 거라는 깨달음</p>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-white/40 text-[10px]">탭하여 할일 보기 →</span>
+                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] text-white">+10 XP</span>
+                      </div>
+                    </div>
+                    <div class="flip-card-back bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4">
+                      <p class="text-[10px] text-gray-400 font-medium mb-2">연결된 할일 없음</p>
+                      <p class="text-xs text-gray-500 mt-4 text-center">아직 할일로 전환하지 않았어요</p>
+                      <button class="mt-3 w-full py-2 bg-amber-500 text-white text-xs rounded-xl font-medium">+ 할일 만들기 (+20 XP)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FAB -->
+              <button class="absolute bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-lg flex items-center justify-center text-white text-2xl hover:scale-110 transition-transform z-10">
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div class="mt-4 bg-gray-900 rounded-xl p-4 border border-gray-800 max-w-[375px]">
+            <p class="text-xs text-gray-400 font-medium mb-2">💡 빈 상태 디자인:</p>
+            <div class="bg-slate-900 rounded-xl p-6 text-center border border-slate-800">
+              <div class="text-4xl mb-3">🎮</div>
+              <p class="font-bold text-white text-sm">모험을 시작하세요!</p>
+              <p class="text-xs text-gray-400 mt-1">첫 원동력을 작성하고</p>
+              <div class="mt-2 inline-flex items-center gap-1 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold">
+                +50 XP 획득
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="flex-1 min-w-0">
+          <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+            <h3 class="font-bold text-lg mb-4">핵심 디자인 결정</h3>
+            <div class="space-y-4 text-sm">
+              <div>
+                <h4 class="font-semibold text-indigo-400 mb-1">🏆 XP & 레벨 시스템</h4>
+                <p class="text-gray-400">원동력 작성(+10), 할일 전환(+20), 할일 완료(+30)로 XP 획득. 레벨업 시 새 뱃지 해금. ADHD 사용자에게 즉각적 보상 피드백 제공.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-indigo-400 mb-1">🃏 카드 뒤집기 인터랙션</h4>
+                <p class="text-gray-400">앞면(원동력 텍스트 + 감정 태그) ↔ 뒷면(연결 할일 + 진행률). 즐거운 인터랙션으로 탐색 유도, 정보 밀도를 자연스럽게 분리.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-indigo-400 mb-1">🔥 연속 기록 (Streak)</h4>
+                <p class="text-gray-400">매일 원동력 작성 시 연속 기록 증가. 불꽃 아이콘과 일수 표시. 습관 형성을 위한 시각적 동기 부여.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-indigo-400 mb-1">🎯 주간 챌린지</h4>
+                <p class="text-gray-400">매주 새로운 미니 챌린지 제공 (예: 매일 1개 작성, 3개 할일 전환). 단기 목표로 장기 습관 유도.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-indigo-400 mb-1">🏅 성취 뱃지</h4>
+                <p class="text-gray-400">마일스톤 달성 시 뱃지 해금 — 첫 원동력(🌱), 7일 연속(🔥), 100% 전환(💎). 수집 욕구 자극으로 지속 사용 유도.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-indigo-400 mb-1">🎨 그라데이션 카드 색상</h4>
+                <p class="text-gray-400">감정 태그별 고유 그라데이션 — 결단(보라), 감사(초록), 각성(주황). 시각적 다양성으로 단조로움 해소.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION: Demo C — 미니멀 액션 (Minimal Action) -->
+    <!-- ================================================================ -->
+    <section id="demo-c" class="demo-section">
+      <div class="flex flex-col lg:flex-row gap-8 items-start">
+        <div class="flex-shrink-0">
+          <h2 class="text-xl font-bold mb-4">✨ Demo C: 미니멀 액션 (Minimal Action)</h2>
+          <p class="text-gray-400 text-sm mb-6">Notion 스타일 클린 인터페이스. 인라인 입력, 호버 액션, 즉시 편집.</p>
+
+          <div class="phone-frame bg-white">
+            <div class="phone-scroll h-full pt-8">
+              <!-- Header -->
+              <div class="px-5 pt-8 pb-3">
+                <h2 class="text-xl font-bold text-gray-900">원동력 새기기</h2>
+                <p class="text-gray-400 text-xs mt-0.5">행동의 이유를 기록하세요</p>
+              </div>
+
+              <!-- Inline Input Bar -->
+              <div class="px-4 mb-3">
+                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                  <span class="text-gray-400 text-lg">+</span>
+                  <input type="text" placeholder="새 원동력을 입력하세요..." class="flex-1 bg-transparent text-sm outline-none text-gray-800 placeholder-gray-400" id="demoC-input" onkeydown="handleDemoCInput(event)" />
+                  <button class="text-xs text-indigo-500 font-medium hover:text-indigo-700 hidden" id="demoC-save">저장</button>
+                </div>
+              </div>
+
+              <!-- Filter Bar -->
+              <div class="px-4 mb-3 flex items-center gap-2">
+                <button class="tab-btn active text-xs px-3 py-1.5 rounded-full bg-gray-900 text-white font-medium" onclick="switchFilterC(this, 'all')">전체 7</button>
+                <button class="tab-btn text-xs px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 font-medium" onclick="switchFilterC(this, 'pending')">미처리 3</button>
+                <button class="tab-btn text-xs px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 font-medium" onclick="switchFilterC(this, 'done')">처리완료 4</button>
+                <div class="flex-1"></div>
+                <button class="text-gray-400 hover:text-gray-600">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
+              </div>
+
+              <!-- Items List -->
+              <div class="px-4 space-y-0.5 pb-8">
+                <!-- Item 1: processed -->
+                <div class="fuel-item-c flex items-start gap-3 px-3 py-3 rounded-xl group">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium" contenteditable="false" onclick="enableEdit(this)">아이가 처음 걸음마를 뗐을 때의 감동</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-[10px] text-gray-400">2월 13일</span>
+                      <span class="text-[10px] text-emerald-500 font-medium">할일 2개 · 50%</span>
+                    </div>
+                  </div>
+                  <div class="quick-actions flex items-center gap-1 mt-1">
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs" title="배너에 고정">📌</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs" title="할일 만들기">✚</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs" title="삭제">🗑</button>
+                  </div>
+                </div>
+
+                <!-- Item 2: processed -->
+                <div class="fuel-item-c flex items-start gap-3 px-3 py-3 rounded-xl group">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium">작년 마라톤 완주한 그 성취감을 다시</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-[10px] text-gray-400">2월 12일</span>
+                      <span class="text-[10px] text-emerald-500 font-medium">할일 3개 · 100%</span>
+                    </div>
+                  </div>
+                  <div class="quick-actions flex items-center gap-1 mt-1">
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">📌</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">✚</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">🗑</button>
+                  </div>
+                </div>
+
+                <!-- Item 3: unprocessed -->
+                <div class="fuel-item-c flex items-start gap-3 px-3 py-3 rounded-xl group">
+                  <span class="w-2 h-2 rounded-full bg-gray-300 mt-1.5 flex-shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium">부모님이 묵묵히 응원해주신 것</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-[10px] text-gray-400">2월 11일</span>
+                    </div>
+                  </div>
+                  <div class="quick-actions flex items-center gap-1 mt-1">
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">📌</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">✚</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">🗑</button>
+                  </div>
+                </div>
+
+                <!-- Item 4: unprocessed -->
+                <div class="fuel-item-c flex items-start gap-3 px-3 py-3 rounded-xl group">
+                  <span class="w-2 h-2 rounded-full bg-gray-300 mt-1.5 flex-shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium">더 이상 미루면 후회할 거라는 깨달음</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-[10px] text-gray-400">2월 10일</span>
+                    </div>
+                  </div>
+                  <div class="quick-actions flex items-center gap-1 mt-1">
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">📌</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">✚</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">🗑</button>
+                  </div>
+                </div>
+
+                <!-- Item 5: processed -->
+                <div class="fuel-item-c flex items-start gap-3 px-3 py-3 rounded-xl group">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium">팀원들이 믿어준 것에 보답하기</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-[10px] text-gray-400">2월 9일</span>
+                      <span class="text-[10px] text-emerald-500 font-medium">할일 2개 · 100%</span>
+                    </div>
+                  </div>
+                  <div class="quick-actions flex items-center gap-1 mt-1">
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">📌</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">✚</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">🗑</button>
+                  </div>
+                </div>
+
+                <!-- Item 6 -->
+                <div class="fuel-item-c flex items-start gap-3 px-3 py-3 rounded-xl group">
+                  <span class="w-2 h-2 rounded-full bg-gray-300 mt-1.5 flex-shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium">올해 안에 사이드 프로젝트 런칭</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-[10px] text-gray-400">2월 8일</span>
+                    </div>
+                  </div>
+                  <div class="quick-actions flex items-center gap-1 mt-1">
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">📌</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">✚</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">🗑</button>
+                  </div>
+                </div>
+
+                <!-- Item 7 -->
+                <div class="fuel-item-c flex items-start gap-3 px-3 py-3 rounded-xl group">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0"></span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-800 font-medium">건강한 몸이 모든 것의 기본</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="text-[10px] text-gray-400">2월 7일</span>
+                      <span class="text-[10px] text-emerald-500 font-medium">할일 1개 · 100%</span>
+                    </div>
+                  </div>
+                  <div class="quick-actions flex items-center gap-1 mt-1">
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">📌</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">✚</button>
+                    <button class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 text-xs">🗑</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div class="mt-4 bg-gray-900 rounded-xl p-4 border border-gray-800 max-w-[375px]">
+            <p class="text-xs text-gray-400 font-medium mb-2">💡 빈 상태 디자인:</p>
+            <div class="bg-white rounded-xl p-8 text-center">
+              <p class="text-gray-300 text-sm">아직 원동력이 없습니다</p>
+              <p class="text-gray-400 text-xs mt-1">위 입력창에 첫 번째 원동력을 작성하세요</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="flex-1 min-w-0">
+          <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+            <h3 class="font-bold text-lg mb-4">핵심 디자인 결정</h3>
+            <div class="space-y-4 text-sm">
+              <div>
+                <h4 class="font-semibold text-gray-300 mb-1">📝 상단 고정 인라인 입력</h4>
+                <p class="text-gray-400">모달 없이 화면 상단에 항상 노출된 입력 바. 생각나는 즉시 작성 가능 — ADHD의 "지금 아니면 잊는다" 특성에 최적화.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-300 mb-1">🔍 필터/검색 바</h4>
+                <p class="text-gray-400">전체·미처리·처리완료 3탭 필터 + 검색 아이콘. 항목이 많아져도 빠르게 원하는 원동력 찾기 가능.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-300 mb-1">🟢 상태 도트</h4>
+                <p class="text-gray-400">초록(처리완료) / 회색(미처리)의 작은 도트로 한눈에 상태 파악. 최소한의 시각 요소로 최대 정보 전달.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-300 mb-1">👆 호버 퀵 액션</h4>
+                <p class="text-gray-400">마우스 호버 시 📌(배너 고정) · ✚(할일 생성) · 🗑(삭제) 3개 버튼 즉시 노출. 드롭다운 메뉴 탐색 불필요.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-300 mb-1">✏️ 인라인 편집</h4>
+                <p class="text-gray-400">텍스트 클릭 시 바로 편집 모드 진입, 포커스 아웃 시 자동 저장. 모달 전환의 컨텍스트 손실 방지.</p>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-300 mb-1">📊 인라인 통계</h4>
+                <p class="text-gray-400">각 항목 아래에 "할일 2개 · 50%" 형태로 진행 상태 즉시 표시. 별도 화면 전환 없이 전체 현황 파악.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- SECTION: 비교 분석 -->
+    <!-- ================================================================ -->
+    <section id="comparison" class="demo-section">
+      <h2 class="text-xl font-bold mb-6">⚖️ Before / After 비교 분석</h2>
+
+      <div class="overflow-x-auto">
+        <table class="comparison-table w-full text-sm rounded-xl overflow-hidden">
+          <thead>
+            <tr class="bg-gray-800">
+              <th class="text-left text-gray-400 font-medium">차원</th>
+              <th class="text-left text-gray-400 font-medium">현재 (Before)</th>
+              <th class="text-left text-gray-400 font-medium">A: 감정 기반</th>
+              <th class="text-left text-gray-400 font-medium">B: 게이미피케이션</th>
+              <th class="text-left text-gray-400 font-medium">C: 미니멀 액션</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">CTA</td>
+              <td class="before-cell text-gray-700">오렌지 btn-lg 상단 고정</td>
+              <td class="after-cell text-gray-700">FAB (우하단)</td>
+              <td class="after-cell text-gray-700">FAB + XP 보상</td>
+              <td class="after-cell text-gray-700">상단 인라인 입력</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">상태 구분</td>
+              <td class="before-cell text-gray-700">CheckCircle 아이콘만</td>
+              <td class="after-cell text-gray-700">색상 도트 + 카드 테두리</td>
+              <td class="after-cell text-gray-700">카드 색상 그라데이션</td>
+              <td class="after-cell text-gray-700">초록/회색 도트</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">빈 상태</td>
+              <td class="before-cell text-gray-700">없음 (빈 화면)</td>
+              <td class="after-cell text-gray-700">🕯️ 촛불 일러스트</td>
+              <td class="after-cell text-gray-700">🎮 +50 XP 획득 유도</td>
+              <td class="after-cell text-gray-700">미니멀 텍스트 안내</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">카드 인터랙션</td>
+              <td class="before-cell text-gray-700">모달 열기</td>
+              <td class="after-cell text-gray-700">인라인 아코디언 확장</td>
+              <td class="after-cell text-gray-700">3D 카드 뒤집기</td>
+              <td class="after-cell text-gray-700">인라인 편집</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">분류 체계</td>
+              <td class="before-cell text-gray-700">없음</td>
+              <td class="after-cell text-gray-700">감정 태그 4종 필터</td>
+              <td class="after-cell text-gray-700">감정별 카드 색상</td>
+              <td class="after-cell text-gray-700">상태 필터 3종</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">진행률 표시</td>
+              <td class="before-cell text-gray-700">할일 수 배지만</td>
+              <td class="after-cell text-gray-700">프로그레스 바 + %</td>
+              <td class="after-cell text-gray-700">뒷면 프로그레스 바</td>
+              <td class="after-cell text-gray-700">"할일 2개 · 50%" 텍스트</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">액션 접근성</td>
+              <td class="before-cell text-gray-700">드롭다운 메뉴에 숨김</td>
+              <td class="after-cell text-gray-700">카드 확장 내 인라인</td>
+              <td class="after-cell text-gray-700">뒷면 직접 버튼</td>
+              <td class="after-cell text-gray-700">호버 시 퀵 액션 3개</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">동기 부여</td>
+              <td class="before-cell text-gray-700">없음</td>
+              <td class="after-cell text-gray-700">통계 헤더 + 연속 기록</td>
+              <td class="after-cell text-gray-700">XP + 레벨 + 뱃지 + 챌린지</td>
+              <td class="after-cell text-gray-700">미니멀 (콘텐츠 집중)</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="font-medium text-gray-300">ADHD 친화성</td>
+              <td class="before-cell text-gray-700">⭐⭐</td>
+              <td class="after-cell text-gray-700">⭐⭐⭐⭐ (감정 연결)</td>
+              <td class="after-cell text-gray-700">⭐⭐⭐⭐⭐ (보상 시스템)</td>
+              <td class="after-cell text-gray-700">⭐⭐⭐ (단순 명확)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recommendation -->
+      <div class="mt-8 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-6">
+        <h3 class="font-bold text-lg mb-3">💡 권장 방향</h3>
+        <div class="space-y-3 text-sm text-gray-300">
+          <p><strong class="text-indigo-400">ADHD 사용자 최적:</strong> Demo B (게이미피케이션) — 즉각적 보상, 시각적 진행, 습관 형성 메커니즘이 ADHD의 동기 유지 결함에 가장 효과적.</p>
+          <p><strong class="text-indigo-400">최소 비용 개선:</strong> Demo C (미니멀) — 현재 구조에서 가장 적은 변경으로 핵심 문제(CTA, 상태 구분, 액션 접근성)를 해결.</p>
+          <p><strong class="text-indigo-400">하이브리드 제안:</strong> C의 인라인 입력 + A의 감정 태그 + B의 연속 기록/XP를 조합하면 실용성과 동기 부여를 동시에 달성.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Section Navigation
+    function showSection(sectionId) {
+      document.querySelectorAll('.demo-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active-tab'));
+      document.getElementById(sectionId).classList.add('active');
+      event.target.classList.add('active-tab');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Demo A: Toggle card expansion
+    function toggleCardA(card) {
+      card.classList.toggle('expanded');
+    }
+
+    // Demo A: Emotion filter
+    function filterEmotion(btn) {
+      btn.parentElement.querySelectorAll('.emotion-tag').forEach(t => {
+        t.classList.remove('border-2');
+        t.style.borderWidth = '1px';
+      });
+      btn.classList.add('border-2');
+      btn.style.borderWidth = '2px';
+    }
+
+    // Demo B: Flip card
+    function flipCard(card) {
+      card.classList.toggle('flipped');
+    }
+
+    // Demo C: Filter tabs
+    function switchFilterC(btn, filter) {
+      btn.parentElement.querySelectorAll('button').forEach(b => {
+        b.className = 'tab-btn text-xs px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 font-medium';
+      });
+      btn.className = 'tab-btn active text-xs px-3 py-1.5 rounded-full bg-gray-900 text-white font-medium';
+    }
+
+    // Demo C: Inline input
+    function handleDemoCInput(e) {
+      const saveBtn = document.getElementById('demoC-save');
+      if (e.target.value.trim()) {
+        saveBtn.classList.remove('hidden');
+      } else {
+        saveBtn.classList.add('hidden');
+      }
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        e.target.value = '';
+        saveBtn.classList.add('hidden');
+      }
+    }
+
+    // Demo C: Inline edit
+    function enableEdit(el) {
+      el.contentEditable = 'true';
+      el.focus();
+      el.classList.add('inline-edit');
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      el.addEventListener('blur', function handler() {
+        el.contentEditable = 'false';
+        el.classList.remove('inline-edit');
+        el.removeEventListener('blur', handler);
+      });
+    }
+  </script>
+</body>
+</html>

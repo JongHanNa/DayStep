@@ -286,9 +286,9 @@ export default function AIPlanningChat() {
             <Sparkles className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">AI 플래닝</h3>
+            <h3 className="font-semibold text-sm">AI로 계획하기</h3>
             <p className="text-xs text-base-content/60">
-              ADHD 친화적 계획 수립
+              ADHD 친화적 AI 플래닝
             </p>
           </div>
         </div>

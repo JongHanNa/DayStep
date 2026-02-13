@@ -40,7 +40,7 @@ export default function EmptyState({ onExampleClick }: EmptyStateProps) {
         <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
           <Sparkles className="w-8 h-8 text-primary" />
         </div>
-        <h2 className="text-lg font-bold mb-2">AI와 함께 계획 세우기</h2>
+        <h2 className="text-lg font-bold mb-2">AI로 계획 세우기</h2>
         <p className="text-sm text-base-content/60 max-w-xs mx-auto">
           ADHD 친화적인 방식으로 막연한 일을
           <br />

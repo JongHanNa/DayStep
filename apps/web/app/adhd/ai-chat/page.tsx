@@ -6,7 +6,7 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import { AIChatScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/ai-chat - AI와 대화하기 페이지
+ * /adhd/ai-chat - AI로 계획하기 페이지
  * Flat 라우트 구조
  */
 export default function AIChatPage() {

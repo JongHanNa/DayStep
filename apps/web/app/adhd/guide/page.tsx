@@ -6,7 +6,7 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import { GuideScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/guide - 사용법 배우기 페이지
+ * /adhd/guide - Claude 연결하기 페이지
  * Flat 라우트 구조
  */
 export default function GuidePage() {

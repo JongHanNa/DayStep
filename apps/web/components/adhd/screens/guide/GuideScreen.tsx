@@ -3,7 +3,7 @@
 import { MCPGuideView } from './components';
 
 /**
- * 사용법 배우기 화면
+ * Claude 연결하기 화면
  * screens/ 아키텍처에서 사용하는 독립적인 화면 컴포넌트
  *
  * MCPGuideView를 직접 사용

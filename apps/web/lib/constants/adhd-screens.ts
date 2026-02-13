@@ -12,6 +12,8 @@ import {
   PenLine,
   MessageCircle,
   Heart,
+  FolderKanban,
+  Link,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -233,23 +235,23 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
   },
   'ai-plan': {
     id: 'ai-plan',
-    label: 'AI로 계획하기',
-    icon: Sparkles,
-    shortDescription: 'AI가 할일 계획을 도와드려요',
+    label: '내 계획 보기',
+    icon: FolderKanban,
+    shortDescription: '프로젝트 목록과 진행 상황 확인',
     componentPath: 'screens/ai-plan/AIPlanScreen',
   },
   'ai-chat': {
     id: 'ai-chat',
-    label: 'AI와 대화하기',
-    icon: MessageSquare,
-    shortDescription: 'AI와 자유롭게 대화',
+    label: 'AI로 계획하기',
+    icon: Sparkles,
+    shortDescription: 'AI와 대화하며 할일 계획 세우기',
     componentPath: 'screens/ai-chat/AIChatScreen',
   },
   guide: {
     id: 'guide',
-    label: '사용법 배우기',
-    icon: BookOpen,
-    shortDescription: 'DayStep 사용법 가이드',
+    label: 'Claude 연결하기',
+    icon: Link,
+    shortDescription: 'Claude Desktop 연결하여 AI 할일 자동 생성',
     componentPath: 'screens/guide/GuideScreen',
   },
 };
@@ -416,20 +418,20 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
       },
       {
         id: 'ai-plan',
+        label: '내 계획 보기',
+        icon: FolderKanban,
+        routeGroup: 'project',
+      },
+      {
+        id: 'ai-chat',
         label: 'AI로 계획하기',
         icon: Sparkles,
         routeGroup: 'project',
       },
       {
-        id: 'ai-chat',
-        label: 'AI와 대화하기',
-        icon: MessageSquare,
-        routeGroup: 'project',
-      },
-      {
         id: 'guide',
-        label: '사용법 배우기',
-        icon: BookOpen,
+        label: 'Claude 연결하기',
+        icon: Link,
         routeGroup: 'project',
       },
       {

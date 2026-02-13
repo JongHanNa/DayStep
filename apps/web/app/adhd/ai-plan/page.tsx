@@ -6,7 +6,7 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import { AIPlanScreen } from '@/components/adhd/screens';
 
 /**
- * /adhd/ai-plan - AI로 계획하기 페이지
+ * /adhd/ai-plan - 내 계획 보기 페이지
  * Flat 라우트 구조
  */
 export default function AIPlanPage() {
