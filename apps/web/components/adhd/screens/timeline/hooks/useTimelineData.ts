@@ -56,11 +56,17 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        await Promise.all([
-          fetchAllTodos().catch(e => console.error('fetchAllTodos 실패:', e)),
-          loadPeople(userId).catch(e => console.error('loadPeople 실패:', e)),
-          fetchProjects(userId).catch(e => console.error('fetchProjects 실패:', e)),
-          fetchDepartments(userId).catch(e => console.error('fetchDepartments 실패:', e)),
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('타임라인 데이터 타임아웃 (15초)')), 15000)
+        );
+        await Promise.race([
+          Promise.all([
+            fetchAllTodos().catch(e => console.error('fetchAllTodos 실패:', e)),
+            loadPeople(userId).catch(e => console.error('loadPeople 실패:', e)),
+            fetchProjects(userId).catch(e => console.error('fetchProjects 실패:', e)),
+            fetchDepartments(userId).catch(e => console.error('fetchDepartments 실패:', e)),
+          ]),
+          timeout,
         ]);
       } catch (error) {
         console.error('타임라인 데이터 로드 실패:', error);

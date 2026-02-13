@@ -375,7 +375,8 @@ export class CherishedPeopleService {
       const people = await this.getPeople(userId);
       const now = new Date();
 
-      const recommendations: ContactRecommendation[] = [];
+      // 1단계: 추천 대상 필터링 (API 호출 없이 클라이언트에서 판단)
+      const candidates: { person: CherishedPerson; daysSinceLastContact: number }[] = [];
 
       for (const person of people) {
         let daysSinceLastContact = -1; // -1 = 한 번도 연락 안 함
@@ -387,27 +388,45 @@ export class CherishedPeopleService {
           );
         }
 
-        // 기준일 이상 연락 안 한 사람 또는 한 번도 연락 안 한 사람
         if (daysSinceLastContact >= thresholdDays || daysSinceLastContact === -1) {
-          // 마지막 관심 기록 조회
-          const lastInteractions = await this.getInteractionsByPerson(userId, person.id, 1);
-
-          // 우선순위 결정 (연락 안 한 기간 기준)
-          let priority: 'high' | 'medium' | 'normal' = 'normal';
-          if (daysSinceLastContact >= 30 || daysSinceLastContact === -1) {
-            priority = 'high';
-          } else if (daysSinceLastContact >= 14) {
-            priority = 'medium';
-          }
-
-          recommendations.push({
-            person,
-            daysSinceLastContact,
-            lastInteraction: lastInteractions[0] || null,
-            priority,
-          });
+          candidates.push({ person, daysSinceLastContact });
         }
       }
+
+      // 2단계: 배치 쿼리로 전체 interactions 한 번에 조회 (N+1 → 1회)
+      const candidateIds = candidates.map(c => c.person.id);
+      let interactionMap = new Map<string, CareInteraction>();
+
+      if (candidateIds.length > 0) {
+        const allInteractions = await queryRLSTableWithJWT('care_interactions', [
+          { column: 'user_id', operator: 'eq', value: userId },
+          { column: 'person_id', operator: 'in', value: candidateIds },
+        ], { order: 'interaction_date.desc' });
+
+        // person_id별 최신 1건만 유지
+        for (const interaction of (allInteractions || [])) {
+          if (!interactionMap.has(interaction.person_id)) {
+            interactionMap.set(interaction.person_id, interaction);
+          }
+        }
+      }
+
+      // 3단계: 추천 목록 구성
+      const recommendations: ContactRecommendation[] = candidates.map(({ person, daysSinceLastContact }) => {
+        let priority: 'high' | 'medium' | 'normal' = 'normal';
+        if (daysSinceLastContact >= 30 || daysSinceLastContact === -1) {
+          priority = 'high';
+        } else if (daysSinceLastContact >= 14) {
+          priority = 'medium';
+        }
+
+        return {
+          person,
+          daysSinceLastContact,
+          lastInteraction: interactionMap.get(person.id) || null,
+          priority,
+        };
+      });
 
       // 우선순위 + 일수 기준 정렬
       return recommendations.sort((a, b) => {

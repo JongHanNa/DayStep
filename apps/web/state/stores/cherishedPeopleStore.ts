@@ -194,10 +194,13 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
       loadRecommendations: async (userId, thresholdDays = 7) => {
         set({ isLoadingRecommendations: true });
         try {
-          const recommendations = await CherishedPeopleService.getContactRecommendations(
-            userId,
-            thresholdDays
+          const timeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('추천 로드 타임아웃 (10초)')), 10000)
           );
+          const recommendations = await Promise.race([
+            CherishedPeopleService.getContactRecommendations(userId, thresholdDays),
+            timeout,
+          ]);
           set({ recommendations, isLoadingRecommendations: false });
         } catch (error) {
           console.error('❌ 추천 로드 실패:', error);
