@@ -460,10 +460,20 @@ export function useTimelineActions({
             newEnd = new Date(newStart.getTime() + duration);
           }
 
-          await updateTodo(postponingItem.id, {
+          const updateData: Record<string, any> = {
             start_time: newStart.toISOString(),
             end_time: newEnd?.toISOString() ?? undefined,
-          });
+          };
+          // 반복 할일에서 파생된 독립 할일(this-only 오버라이드)의 미룸 시 원본 시간 저장
+          if (postponingItem.originalTodo?.parentRecurringTodoId && !postponingItem.originalTodo?.originalStartTime) {
+            if (postponingItem.startTime) {
+              updateData.original_start_time = new Date(postponingItem.startTime).toISOString();
+            }
+            if (postponingItem.endTime) {
+              updateData.original_end_time = new Date(postponingItem.endTime).toISOString();
+            }
+          }
+          await updateTodo(postponingItem.id, updateData);
 
           await fetchAllTodos();
         } else if (action === 'anytime') {

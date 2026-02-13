@@ -341,9 +341,7 @@ export function TimelineItemCard({
             item.originalTodo?.parentRecurringTodoId &&
             !item.completed &&
             !item.isRecurrenceInstance &&
-            item.originalTodo?.occurrenceDate &&
-            item.startTime &&
-            new Date(item.originalTodo.occurrenceDate).toDateString() !== item.startTime.toDateString();
+            item.originalTodo?.originalStartTime;
 
           if (isPostponedCreatedItem) {
             const originalTimeText = item.originalStartTime && item.originalEndTime

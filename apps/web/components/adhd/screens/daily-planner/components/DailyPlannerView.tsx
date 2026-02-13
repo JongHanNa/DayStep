@@ -45,10 +45,11 @@ interface DailyPlannerViewProps {
   onUnskipTodo?: (item: TimelineItem) => void;
   onSkipTodo?: (item: TimelineItem, reason: 'not_needed' | 'missed') => void;
   onOpenPostponeSheet?: (item: TimelineItem) => void;
+  onRestoreOriginal?: (item: TimelineItem) => void;
   onAddTodo?: (prefillStart?: Date, prefillEnd?: Date, mode?: 'detailed' | 'new') => void;
 }
 
-export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onAddTodo }: DailyPlannerViewProps) {
+export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onRestoreOriginal, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
   const updateRecurringTodo = useTodoStore(s => s.updateRecurringTodo);
   const todos = useTodoStore(s => s.todos);
@@ -320,6 +321,12 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     if (item && onUnskipTodo) onUnskipTodo(item);
   }, [timelineItems, onUnskipTodo]);
 
+  // 칩 미룸 복원 → TimelineItem 찾아서 복원 콜백 호출
+  const handleChipRestoreOriginal = useCallback((todo: Todo) => {
+    const item = timelineItems.find(i => i.id === todo.id);
+    if (item && onRestoreOriginal) onRestoreOriginal(item);
+  }, [timelineItems, onRestoreOriginal]);
+
   // 배치 해제 핸들러
   const handleUnassignMatrix = useCallback(async (todo: Todo) => {
     const timelineItem = timelineItems.find(i => i.id === todo.id);
@@ -475,6 +482,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         onUnskip={handleChipUnskip}
         onSkipTodo={handleChipSkip}
         onPostpone={handleChipPostpone}
+        onRestoreOriginal={handleChipRestoreOriginal}
         onStartFocus={handleChipStartFocus}
         onAddMorning={handleAddMorning}
         onAddAfternoon={handleAddAfternoon}

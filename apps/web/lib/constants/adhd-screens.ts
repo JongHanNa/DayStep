@@ -77,6 +77,8 @@ export interface ScreenDefinition {
   icon: LucideIcon;
   isPro?: boolean;
   help?: ADHDScreenHelp;
+  /** 카드 UI 1줄 설명 */
+  shortDescription?: string;
   /** 컴포넌트 경로 (동적 import용) */
   componentPath: string;
 }
@@ -110,6 +112,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'motivation',
     label: '원동력 새기기',
     icon: Lightbulb,
+    shortDescription: '왜 해야 하는지 기록',
     componentPath: 'screens/motivation/MotivationScreen',
     help: {
       title: '원동력 새기기',
@@ -122,6 +125,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'record',
     label: '관계 기록하기',
     icon: PenLine,
+    shortDescription: '소중한 만남과 대화 기록',
     componentPath: 'screens/record/RecordScreen',
     help: {
       title: '관계 기록하기',
@@ -135,6 +139,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     label: '소식 챙기기',
     icon: MessageCircle,
     isPro: true,
+    shortDescription: '소식 흐름 시간순 보기',
     componentPath: 'screens/news/NewsScreen',
     help: {
       title: '소식 챙기기',
@@ -148,6 +153,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     label: '연락 돌아보기',
     icon: Users,
     isPro: true,
+    shortDescription: '연락 빈도와 관계 돌아보기',
     componentPath: 'screens/contact/ContactScreen',
   },
   gratitude: {
@@ -155,6 +161,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     label: '감사 기록하기',
     icon: Heart,
     isPro: true,
+    shortDescription: '감사한 순간 기록',
     componentPath: 'screens/gratitude/GratitudeScreen',
     help: {
       title: '감사 기록하기',
@@ -167,6 +174,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'timeline',
     label: '일정 계획하기',
     icon: Calendar,
+    shortDescription: '타임라인으로 한눈에 보기',
     componentPath: 'screens/timeline/TimelineScreen',
     help: {
       title: '일정 계획하기',
@@ -179,6 +187,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'daily-planner',
     label: '하루 계획하기',
     icon: Calendar,
+    shortDescription: '오늘 할일을 시간별로 배치',
     componentPath: 'screens/daily-planner/DailyPlannerScreen',
   },
   activity: {
@@ -186,18 +195,21 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     label: '활동 살펴보기',
     icon: BarChart3,
     isPro: true,
+    shortDescription: '활동 패턴과 생산성 분석',
     componentPath: 'screens/activity/ActivityScreen',
   },
   banner: {
     id: 'banner',
     label: '마음 깨우기',
     icon: Flag,
+    shortDescription: '오늘의 마음가짐 세우기',
     componentPath: 'screens/banner/BannerScreen',
   },
   execute: {
     id: 'execute',
     label: '집중 실행하기',
     icon: Target,
+    shortDescription: '타이머와 함께 집중 모드',
     componentPath: 'screens/execute/ExecuteScreen',
     help: {
       title: '집중 실행하기',
@@ -210,6 +222,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'organize',
     label: '할일 정리하기',
     icon: Inbox,
+    shortDescription: '미정리 할일 분류하고 정리',
     componentPath: 'screens/organize/OrganizeScreen',
     help: {
       title: '할일 정리하기',
@@ -222,18 +235,21 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'ai-plan',
     label: 'AI로 계획하기',
     icon: Sparkles,
+    shortDescription: 'AI가 할일 계획을 도와드려요',
     componentPath: 'screens/ai-plan/AIPlanScreen',
   },
   'ai-chat': {
     id: 'ai-chat',
     label: 'AI와 대화하기',
     icon: MessageSquare,
+    shortDescription: 'AI와 자유롭게 대화',
     componentPath: 'screens/ai-chat/AIChatScreen',
   },
   guide: {
     id: 'guide',
     label: '사용법 배우기',
     icon: BookOpen,
+    shortDescription: 'DayStep 사용법 가이드',
     componentPath: 'screens/guide/GuideScreen',
   },
 };
@@ -631,6 +647,8 @@ export const getUIGroupsForTableOfContents = () => {
       return {
         id: screenId,
         label: screen?.label ?? '',
+        icon: screen?.icon,
+        shortDescription: screen?.shortDescription,
         isPro: screen?.isPro,
         routeGroup: routeGroup?.id as ADHDRouteGroupId,
       };

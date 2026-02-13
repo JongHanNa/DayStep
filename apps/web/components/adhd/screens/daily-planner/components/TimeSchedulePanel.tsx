@@ -13,6 +13,7 @@ interface TimeSchedulePanelProps {
   onUnskip?: (todo: Todo) => void;
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
+  onRestoreOriginal?: (todo: Todo) => void;
   onStartFocus?: (todo: Todo) => void;
   onAddMorning?: () => void;
   onAddAfternoon?: () => void;
@@ -28,6 +29,7 @@ export function TimeSchedulePanel({
   onUnskip,
   onSkipTodo,
   onPostpone,
+  onRestoreOriginal,
   onStartFocus,
   onAddMorning,
   onAddAfternoon,
@@ -46,6 +48,7 @@ export function TimeSchedulePanel({
         onUnskip={onUnskip}
         onSkipTodo={onSkipTodo}
         onPostpone={onPostpone}
+        onRestoreOriginal={onRestoreOriginal}
         onStartFocus={onStartFocus}
         onAddClick={onAddMorning}
       />
@@ -60,6 +63,7 @@ export function TimeSchedulePanel({
         onUnskip={onUnskip}
         onSkipTodo={onSkipTodo}
         onPostpone={onPostpone}
+        onRestoreOriginal={onRestoreOriginal}
         onStartFocus={onStartFocus}
         onAddClick={onAddAfternoon}
       />
@@ -74,6 +78,7 @@ export function TimeSchedulePanel({
         onUnskip={onUnskip}
         onSkipTodo={onSkipTodo}
         onPostpone={onPostpone}
+        onRestoreOriginal={onRestoreOriginal}
         onStartFocus={onStartFocus}
         onAddClick={onAddEvening}
       />

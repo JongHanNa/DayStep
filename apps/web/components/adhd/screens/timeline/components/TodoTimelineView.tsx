@@ -306,6 +306,7 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
           onUnskipTodo={actions.handleUnskipTodo}
           onSkipTodo={actions.handleSkipTodo}
           onOpenPostponeSheet={actions.handleOpenPostponeSheet}
+          onRestoreOriginal={actions.handleRestoreOriginal}
           onAddTodo={actions.handleAddTodoWithPrefill}
         />
         {renderModals()}

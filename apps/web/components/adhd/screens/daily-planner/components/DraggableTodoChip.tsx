@@ -3,7 +3,8 @@
 import { useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
-import { CheckCircle2, Circle, MinusCircle, XCircle, Repeat, Clock, Play, X } from 'lucide-react';
+import { CheckCircle2, Circle, MinusCircle, XCircle, Repeat, Clock, Play, X, RotateCcw } from 'lucide-react';
+import { format } from 'date-fns';
 import { MissedTodoActionPanel } from '@/components/shared/MissedTodoActionPanel';
 import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -28,11 +29,12 @@ interface DraggableTodoChipProps {
   onUnskip?: (todo: Todo) => void;
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
+  onRestoreOriginal?: (todo: Todo) => void;
   onStartFocus?: (todo: Todo) => void;
   onUnassign?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onStartFocus, onUnassign }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -189,8 +191,45 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
         )}
       </div>
 
-      {/* "어떻게 기록할까요?" 패널 */}
-      {isMissedNotSkipped && !hideOverdue && (
+      {/* 미뤄둔 할일 패널 */}
+      {todo.parentRecurringTodoId && todo.originalStartTime && !todo.completed && (
+        <div
+          className="p-2 bg-info/10 rounded-lg border border-info/20"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <p className="text-xs text-base-content/60 mb-2">
+            미뤄둔 할일이에요. (원래 {format(new Date(todo.originalStartTime), 'HH:mm')}) 어떻게 할까요?
+          </p>
+          <div className="flex flex-wrap gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle ? onToggle(todo) : toggleTodo(todo.id);
+              }}
+              className="btn btn-xs btn-ghost text-success gap-1"
+            >
+              <CheckCircle2 className="w-3 h-3" />
+              미룸완료
+            </button>
+            {onRestoreOriginal && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRestoreOriginal(todo);
+                }}
+                className="btn btn-xs btn-ghost text-info gap-1"
+              >
+                <RotateCcw className="w-3 h-3" />
+                원래대로 복원
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* "어떻게 기록할까요?" 패널 — 미뤄둔 할일이 아닌 경우만 */}
+      {isMissedNotSkipped && !hideOverdue && !(todo.parentRecurringTodoId && todo.originalStartTime && !todo.completed) && (
         <MissedTodoActionPanel
           variant="chip"
           onComplete={() => onToggle ? onToggle(todo) : toggleTodo(todo.id)}
