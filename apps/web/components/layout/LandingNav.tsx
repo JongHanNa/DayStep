@@ -124,13 +124,13 @@ export default function LandingNav() {
                     </Link>
                     <button
                       onClick={handleGetStarted}
-                      className="btn btn-sm rounded-full px-5 bg-white/20 text-white hover:bg-white/30 border border-white/50 backdrop-blur-sm"
+                      className="btn btn-sm rounded-full px-5 bg-white text-indigo-600 font-semibold hover:bg-indigo-50 border-none shadow-md"
                     >
                       시작하기
                     </button>
                   </>
                 ) : (
-                  <Link href="/" className="btn btn-sm rounded-full px-5 bg-white/20 text-white hover:bg-white/30 border border-white/50 backdrop-blur-sm">
+                  <Link href="/" className="btn btn-sm rounded-full px-5 bg-white text-indigo-600 font-semibold hover:bg-indigo-50 border-none shadow-md">
                     무료로 시작하기
                   </Link>
                 )}

@@ -187,14 +187,14 @@ export default function LandingPage() {
           >
             <button
               onClick={handleGetStarted}
-              className="btn btn-lg gap-2 px-8 w-full sm:w-auto rounded-full bg-white text-gray-800 hover:bg-gray-100 border-none shadow-lg"
+              className="btn btn-lg gap-2 px-8 w-full sm:w-auto rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:brightness-110 border-none shadow-lg shadow-indigo-500/30"
             >
               데스크톱에서 시작하기
               <ArrowRight className="w-5 h-5" />
             </button>
             <button
               onClick={handleMobileDownload}
-              className="btn btn-lg gap-2 px-8 w-full sm:w-auto rounded-full bg-white/90 text-gray-700 hover:bg-white border-none shadow-lg"
+              className="btn btn-lg gap-2 px-8 w-full sm:w-auto rounded-full bg-white text-indigo-600 hover:bg-indigo-50 border-2 border-white/80 shadow-lg"
             >
               모바일 앱 다운로드
               <Smartphone className="w-5 h-5" />
@@ -384,7 +384,7 @@ export default function LandingPage() {
           </p>
           <button
             onClick={handleGetStarted}
-            className="btn btn-lg gap-2 px-8 rounded-full bg-white text-gray-800 hover:bg-gray-100 border-none shadow-lg"
+            className="btn btn-lg gap-2 px-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:brightness-110 border-none shadow-lg shadow-indigo-500/30"
           >
             시작하기
             <ArrowRight className="w-5 h-5" />
