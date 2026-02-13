@@ -34,7 +34,7 @@ export default function ADHDSidebar() {
 
       {/* 달력 (Calendar 아이콘) */}
       <button
-        onClick={() => goScreen('timeline')}
+        onClick={() => goScreen('daily-planner')}
         className={`mt-2 w-12 h-12 flex items-center justify-center rounded-xl relative group transition-all duration-200 ${
           currentSubView === 'timeline' || currentSubView === 'daily-planner'
             ? 'text-primary bg-primary/10'

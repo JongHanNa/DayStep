@@ -11,6 +11,7 @@ interface QuadrantProps {
   sublabel: string;
   todos: Todo[];
   bgColor: string;
+  hideOverdue?: boolean;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -18,7 +19,7 @@ interface QuadrantProps {
   onPostpone?: (todo: Todo) => void;
 }
 
-function Quadrant({ id, label, sublabel, todos, bgColor, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone }: QuadrantProps) {
+function Quadrant({ id, label, sublabel, todos, bgColor, hideOverdue, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone }: QuadrantProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: {
@@ -44,7 +45,7 @@ function Quadrant({ id, label, sublabel, todos, bgColor, onEditClick, onToggle, 
           <div className="text-[10px] text-base-content/25 text-center py-2">드래그</div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
+            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} hideOverdue={hideOverdue} onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
           ))
         )}
       </div>
@@ -98,6 +99,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           sublabel="중요O 긴급O"
           todos={q1}
           bgColor="bg-error/5"
+          hideOverdue
           onEditClick={onEditClick}
           onToggle={onToggle}
           onUnskip={onUnskip}
@@ -110,6 +112,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           sublabel="중요X 긴급O"
           todos={q2}
           bgColor="bg-warning/5"
+          hideOverdue
           onEditClick={onEditClick}
           onToggle={onToggle}
           onUnskip={onUnskip}
@@ -122,6 +125,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           sublabel="중요O 긴급X"
           todos={q3}
           bgColor="bg-info/5"
+          hideOverdue
           onEditClick={onEditClick}
           onToggle={onToggle}
           onUnskip={onUnskip}
@@ -134,6 +138,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           sublabel="중요X 긴급X"
           todos={q4}
           bgColor="bg-base-100"
+          hideOverdue
           onEditClick={onEditClick}
           onToggle={onToggle}
           onUnskip={onUnskip}

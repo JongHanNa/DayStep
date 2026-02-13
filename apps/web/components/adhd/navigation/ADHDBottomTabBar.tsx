@@ -42,7 +42,7 @@ export default function ADHDBottomTabBar() {
       {/* 달력 (Calendar 아이콘) */}
       <div className="flex-1 flex justify-center">
         <button
-          onClick={() => goScreen('timeline')}
+          onClick={() => goScreen('daily-planner')}
           className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 ${
             currentSubView === 'timeline' || currentSubView === 'daily-planner'
               ? 'text-primary bg-primary/10'

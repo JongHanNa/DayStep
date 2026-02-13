@@ -21,6 +21,7 @@ const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null 
 interface DraggableTodoChipProps {
   todo: Todo;
   showTime?: boolean;
+  hideOverdue?: boolean;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -29,7 +30,7 @@ interface DraggableTodoChipProps {
   onStartFocus?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onStartFocus }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onStartFocus }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -140,7 +141,7 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
         <span className="truncate flex-1">{todo.title}</span>
 
         {/* 종료시간 경과 표시 */}
-        {timeStatus?.status === 'missed' && !todo.completed && !isSkipped && timeStatusText?.primary && (
+        {!hideOverdue && timeStatus?.status === 'missed' && !todo.completed && !isSkipped && timeStatusText?.primary && (
           <span className="flex-shrink-0 flex items-center gap-0.5 text-[10px] text-error">
             <Clock className="w-3 h-3" />
             {timeStatusText.primary}
@@ -175,7 +176,7 @@ export function DraggableTodoChip({ todo, showTime = false, onEditClick, onToggl
       </div>
 
       {/* "어떻게 기록할까요?" 패널 */}
-      {isMissedNotSkipped && !todo.parentRecurringTodoId && (
+      {isMissedNotSkipped && (
         <div
           className="px-2 py-1.5 bg-warning/5 border border-t-0 border-warning/20 rounded-b-lg"
           onClick={(e) => e.stopPropagation()}

@@ -49,7 +49,7 @@ export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onUnskip, on
           </div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
+            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} hideOverdue onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
           ))
         )}
       </div>

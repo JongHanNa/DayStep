@@ -228,12 +228,14 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
           break;
         }
         case 'matrix': {
-          const matrixUpdates = {
+          const matrixUpdates: any = {
             importance: dropData.importance,
             urgency: dropData.urgency,
           };
-          if (isRecurrenceInstance) {
-            const todoTitle = timelineItem?.title || '';
+          if (isRecurrenceInstance && timelineItem) {
+            matrixUpdates.start_time = timelineItem.startTime?.toISOString();
+            matrixUpdates.end_time = timelineItem.endTime?.toISOString();
+            const todoTitle = timelineItem.title || '';
             setPendingDrop({todoId: dbId, updates: matrixUpdates, title: todoTitle});
             setRecurringDialogOpen(true);
             return;
@@ -242,11 +244,13 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
           break;
         }
         case 'reluctant': {
-          const reluctantUpdates = {
+          const reluctantUpdates: any = {
             is_reluctant_must_do: true,
           };
-          if (isRecurrenceInstance) {
-            const todoTitle = timelineItem?.title || '';
+          if (isRecurrenceInstance && timelineItem) {
+            reluctantUpdates.start_time = timelineItem.startTime?.toISOString();
+            reluctantUpdates.end_time = timelineItem.endTime?.toISOString();
+            const todoTitle = timelineItem.title || '';
             setPendingDrop({todoId: dbId, updates: reluctantUpdates, title: todoTitle});
             setRecurringDialogOpen(true);
             return;
