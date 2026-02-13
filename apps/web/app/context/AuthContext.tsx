@@ -54,10 +54,8 @@ const AuthContext = createContext<AuthContextType>(defaultContextValue);
 
 // AuthProvider 컴포넌트 - 하이드레이션 안전성 보장
 export function AuthProvider({
-  initialAuth,
   children
 }: {
-  initialAuth?: AuthState;  // 선택적으로 서버에서 초기 상태 주입
   children: React.ReactNode;
 }) {
   // 하이드레이션 안전성을 위한 상태 - 서버와 클라이언트 동일한 초기값
@@ -69,6 +67,28 @@ export function AuthProvider({
 
   // 설정 DB 동기화 (로그인 시 DB에서 설정 로드, 설정 변경 시 DB에 저장)
   useSettingsSync(user?.id);
+
+  // 🛡️ Loading 안전장치: 15초 이상 loading=true면 강제 해제 (무한 로딩 방지)
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.warn('[Auth] 로딩 타임아웃 (15초) - 강제 해제');
+        setLoading(false);
+      }, 15000);
+    } else {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    }
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, [loading]);
 
   // 하이드레이션 완료 체크
   useEffect(() => {
@@ -187,59 +207,8 @@ export function AuthProvider({
       }
     };
 
-    // 🎯 웹 환경 초기 세션 처리 (SSR + OAuth 콜백 방식)
+    // 🎯 웹 환경 초기 세션 처리 (클라이언트 사이드 세션 확인)
     const handleWebInitialSession = async () => {
-      console.log('🌐 웹 SSR + OAuth 콜백 세션 확인...');
-      console.log('📊 initialAuth 상태:', initialAuth);
-
-      // 서버에서 초기 인증 상태가 전달된 경우 우선 사용 (SSR 최적화)
-      if (initialAuth?.isAuthenticated) {
-        console.log('🚀 서버에서 인증된 사용자 정보 사용:', initialAuth.user?.email);
-
-        const tempUser = {
-          id: initialAuth.user!.id,
-          email: initialAuth.user!.email,
-          app_metadata: {},
-          user_metadata: {},
-          aud: 'authenticated',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          email_confirmed_at: new Date().toISOString(),
-          confirmed_at: new Date().toISOString(),
-          last_sign_in_at: new Date().toISOString(),
-          role: 'authenticated'
-        } as any;
-
-        setUser(tempUser);
-        useAuthStore.setState({ user: tempUser as any });
-        console.log('✅ 서버 인증 정보로 임시 사용자 설정 완료 (authStore 동기화)');
-
-        // 비동기로 AppUser 로드
-        setTimeout(async () => {
-          try {
-            console.log('🔍 비동기 AppUser 로드 시작...');
-            const { data: { session: actualSession } } = await supabase.auth.getSession();
-
-            if (actualSession?.user) {
-              setSession(actualSession);
-              setUser(actualSession.user);
-              useAuthStore.setState({ user: actualSession.user as any });
-
-              const appUser = await loadAppUser(actualSession.user);
-              if (appUser) {
-                setAppUser(appUser);
-                console.log('✅ 웹 AppUser 로드 완료:', appUser.name);
-              }
-            }
-          } catch (appUserError) {
-            console.warn('웹 비동기 AppUser 로드 실패:', appUserError);
-          }
-        }, 100);
-
-        return;
-      }
-
-      // 서버에서 초기 상태가 없는 경우, 클라이언트에서 세션 확인 (OAuth 콜백 후)
       console.log('🔍 웹 클라이언트 세션 확인 중...');
 
       try {
@@ -277,10 +246,13 @@ export function AuthProvider({
     return () => {
       isMounted = false;
     };
-  }, [isHydrated, initialAuth]);
+  }, [isHydrated]);
 
   // TOKEN_REFRESHED 이벤트 중복 처리 방지를 위한 플래그
   const processingRef = useRef<boolean>(false);
+  // appUser를 ref로도 추적 (onAuthStateChange 클로저에서 최신 값 참조용)
+  const appUserRef = useRef<AppUser | null>(null);
+  appUserRef.current = appUser;
 
   // 인증 상태 변경 리스너 설정 - 하이드레이션 완료 후에만
   useEffect(() => {
@@ -321,13 +293,19 @@ export function AuthProvider({
         }
 
         if (session?.user) {
-          const appUser = await loadAppUserFromSession(session, processingRef);
-          if (appUser) {
-            setAppUser(appUser);
-          }
+          // 세션과 유저만 즉시 설정 (getInitialSession과 동시 getSession() 경합 방지)
           setSession(session);
           setUser(session.user);
           setLoading(false);
+
+          // appUser가 아직 없으면 비동기로 로드 (경합하지 않도록 별도 처리)
+          if (!appUserRef.current) {
+            loadAppUserFromSession(session, processingRef).then(loaded => {
+              if (loaded) setAppUser(loaded);
+            }).catch((err) => {
+              console.warn('[Auth] onAuthStateChange appUser 로드 실패:', err);
+            });
+          }
         } else {
           setSession(session);
           setUser(null);

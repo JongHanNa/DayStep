@@ -11,125 +11,111 @@ const isElectron = typeof window !== 'undefined' && !!(window as any).electronAP
 // 인메모리 폴백 스토리지 (localStorage도 차단될 경우 대비)
 const memoryStore = new Map<string, string>();
 
-// Next.js 15 + Supabase SSR 표준 패턴 - 브라우저 클라이언트 (개선된 쿠키 처리)
+/**
+ * 쿠키 문자열을 설정하는 헬퍼 함수
+ */
+function buildCookieString(name: string, value: string, options: Record<string, any> = {}): string {
+  let cookieString = `${name}=${encodeURIComponent(value)}`;
+
+  Object.entries(options).forEach(([key, val]) => {
+    if (val !== undefined && val !== null) {
+      if (typeof val === 'boolean') {
+        if (val) cookieString += `; ${key}`;
+      } else {
+        cookieString += `; ${key}=${val}`;
+      }
+    }
+  });
+
+  return cookieString;
+}
+
+// Next.js 15 + Supabase SSR 표준 패턴 - 브라우저 클라이언트 (getAll/setAll API)
 export function createBrowserSupabaseClient() {
   return createBrowserClient<Database>(
     supabaseUrl,
     supabaseAnonKey,
     {
       cookies: {
-        get: (name: string) => {
+        getAll() {
           try {
             if (typeof window === 'undefined' || typeof document === 'undefined') {
-              return undefined;
+              return [];
             }
 
-            // Electron: document.cookie 접근 불가 → localStorage → 인메모리 폴백
+            // Electron: localStorage에서 모든 supabase 쿠키 수집
             if (isElectron) {
+              const cookies: { name: string; value: string }[] = [];
               try {
-                const value = localStorage.getItem(`supabase_cookie_${name}`);
-                return value ?? undefined;
+                for (let i = 0; i < localStorage.length; i++) {
+                  const key = localStorage.key(i);
+                  if (key?.startsWith('supabase_cookie_')) {
+                    cookies.push({
+                      name: key.replace('supabase_cookie_', ''),
+                      value: localStorage.getItem(key) || ''
+                    });
+                  }
+                }
               } catch {
-                return memoryStore.get(`supabase_cookie_${name}`) ?? undefined;
+                // localStorage 접근 실패 시 인메모리 폴백
+                memoryStore.forEach((value, key) => {
+                  if (key.startsWith('supabase_cookie_')) {
+                    cookies.push({
+                      name: key.replace('supabase_cookie_', ''),
+                      value
+                    });
+                  }
+                });
               }
+              return cookies;
             }
 
-            // 브라우저: document.cookie에서 특정 쿠키 추출
-            const value = document.cookie
+            // 브라우저: document.cookie 파싱 (indexOf로 = 포함 값 안전 처리)
+            return document.cookie
               .split('; ')
-              .find(row => row.startsWith(`${name}=`))
-              ?.split('=')[1];
-
-            if (value) {
-              return decodeURIComponent(value);
-            }
-            return undefined;
+              .filter(Boolean)
+              .map(cookie => {
+                const eqIndex = cookie.indexOf('=');
+                if (eqIndex === -1) return { name: cookie, value: '' };
+                const name = cookie.substring(0, eqIndex);
+                const value = decodeURIComponent(cookie.substring(eqIndex + 1));
+                return { name, value };
+              });
           } catch (error) {
-            console.warn(`⚠️ [클라이언트 쿠키 읽기 실패] ${name}:`, error);
-            return undefined;
+            console.warn('⚠️ [클라이언트 쿠키 읽기 실패]:', error);
+            return [];
           }
         },
-        set: (name: string, value: string, options: any) => {
+        setAll(cookiesToSet) {
           try {
             if (typeof window === 'undefined' || typeof document === 'undefined') {
               return;
             }
 
-            // Electron: localStorage에 저장 → 인메모리 폴백
-            if (isElectron) {
-              try {
-                localStorage.setItem(`supabase_cookie_${name}`, value);
-              } catch {
-                memoryStore.set(`supabase_cookie_${name}`, value);
-              }
-              return;
-            }
-
-            // 브라우저: document.cookie 사용
-            const cookieOptions = {
-              path: '/',
-              maxAge: 60 * 60 * 24 * 7, // 7일
-              sameSite: 'lax',
-              secure: process.env.NODE_ENV === 'production',
-              ...options
-            };
-
-            let cookieString = `${name}=${encodeURIComponent(value)}`;
-
-            Object.entries(cookieOptions).forEach(([key, val]) => {
-              if (val !== undefined && val !== null) {
-                if (typeof val === 'boolean') {
-                  if (val) cookieString += `; ${key}`;
-                } else {
-                  cookieString += `; ${key}=${val}`;
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Electron: localStorage에 저장 → 인메모리 폴백
+              if (isElectron) {
+                try {
+                  localStorage.setItem(`supabase_cookie_${name}`, value);
+                } catch {
+                  memoryStore.set(`supabase_cookie_${name}`, value);
                 }
+                return;
               }
+
+              // 브라우저: document.cookie 사용
+              const cookieOptions = {
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7, // 7일
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production',
+                ...options
+              };
+
+              document.cookie = buildCookieString(name, value, cookieOptions);
             });
-
-            document.cookie = cookieString;
           } catch (error) {
-            console.error(`❌ [클라이언트 쿠키 저장 실패] ${name}:`, error);
-          }
-        },
-        remove: (name: string, options: any) => {
-          try {
-            if (typeof window === 'undefined' || typeof document === 'undefined') {
-              return;
-            }
-
-            // Electron: localStorage에서 삭제 → 인메모리 폴백
-            if (isElectron) {
-              try {
-                localStorage.removeItem(`supabase_cookie_${name}`);
-              } catch {
-                memoryStore.delete(`supabase_cookie_${name}`);
-              }
-              return;
-            }
-
-            // 브라우저: document.cookie로 만료 처리
-            const cookieOptions = {
-              path: '/',
-              ...options,
-              maxAge: 0,
-              expires: new Date(0).toUTCString()
-            };
-
-            let cookieString = `${name}=`;
-
-            Object.entries(cookieOptions).forEach(([key, val]) => {
-              if (val !== undefined && val !== null) {
-                if (typeof val === 'boolean') {
-                  if (val) cookieString += `; ${key}`;
-                } else {
-                  cookieString += `; ${key}=${val}`;
-                }
-              }
-            });
-
-            document.cookie = cookieString;
-          } catch (error) {
-            console.error(`❌ [클라이언트 쿠키 삭제 실패] ${name}:`, error);
+            console.error('❌ [클라이언트 쿠키 저장 실패]:', error);
           }
         },
       },

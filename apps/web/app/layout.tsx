@@ -5,7 +5,7 @@ import "./globals.css";
 // 모바일 빌드 호환성을 위해 layout에서는 force-dynamic 제거
 // 개별 페이지/라우트에서 필요시 설정
 import { generateSEO } from "@/lib/seo";
-import { AuthProvider, AuthState } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { openDyslexic } from "@/lib/fonts";
 import { FontProvider } from "@/components/providers/FontProvider";
@@ -38,12 +38,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 서버 클라이언트 호출 제거 - AuthProvider에서 클라이언트 사이드로 처리
-  const initialAuth: AuthState = {
-    isAuthenticated: false, // 기본값, AuthProvider에서 클라이언트 사이드에서 확인
-    user: null,
-  };
-
   const { safeAreaBackground, darkSafeArea } = getTailwindClasses();
 
   return (
@@ -57,7 +51,7 @@ export default function RootLayout({
       <body className="antialiased mobile-container scrollbar-hide bg-base-200">
         <ThemeProvider>
           <FontProvider>
-            <AuthProvider initialAuth={initialAuth}>
+            <AuthProvider>
               <AppLifecycleHandler />
               <ElectronLifecycleHandler />
               <TitleBar />
