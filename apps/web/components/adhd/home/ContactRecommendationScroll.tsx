@@ -33,9 +33,9 @@ export default function ContactRecommendationScroll({
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
           <HeartHandshake className="w-4 h-4 text-pink-500" />
-          <span className="text-sm font-medium text-base-content/70">연락할 사람</span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">연락할 사람</span>
         </div>
-        <div className="h-32 rounded-2xl bg-base-200/50 animate-pulse" />
+        <div className="h-32 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
       </div>
     );
   }
@@ -66,8 +66,8 @@ export default function ContactRecommendationScroll({
       {/* 헤더 */}
       <div className="flex items-center gap-2 mb-3">
         <HeartHandshake className="w-4 h-4 text-pink-500" />
-        <span className="text-sm font-medium text-base-content/70">연락할 사람</span>
-        <span className="text-xs px-1.5 py-0.5 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400">
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">연락할 사람</span>
+        <span className="ml-auto w-5 h-5 rounded-full bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center text-[10px] font-bold text-pink-600 dark:text-pink-400">
           {recommendations.length}
         </span>
       </div>
@@ -91,39 +91,39 @@ export default function ContactRecommendationScroll({
           return (
             <div
               key={rec.person.id}
-              className="w-[70vw] sm:w-48 snap-start flex-shrink-0 p-3 rounded-xl bg-base-200/60 dark:bg-base-200/30 border border-base-300/50"
+              className="w-[70vw] sm:w-48 snap-start flex-shrink-0 p-3 rounded-2xl bg-white dark:bg-[#242424] border border-gray-100 dark:border-gray-800"
             >
               {/* 우선순위 도트 + 이름 */}
               <div className="flex items-center gap-2 mb-1.5">
                 <span
                   className={`w-2 h-2 rounded-full flex-shrink-0 ${
                     rec.priority === 'high'
-                      ? 'bg-error'
+                      ? 'bg-red-500'
                       : rec.priority === 'medium'
-                        ? 'bg-warning'
-                        : 'bg-info'
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-500'
                   }`}
                 />
-                <span className="text-sm font-semibold text-base-content truncate">
+                <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                   {rec.person.nickname || rec.person.name}
                 </span>
               </div>
 
               {/* 관계/역할 */}
               {relationRoles && (
-                <p className="text-xs text-base-content/50 truncate mb-1">
+                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mb-1">
                   {relationRoles}
                 </p>
               )}
 
               {/* 마지막 연락 */}
-              <p className={`text-xs mb-1.5 ${priorityInfo.color}`}>
+              <p className="text-xs mb-1.5 text-gray-500 dark:text-gray-400">
                 {contactText}
               </p>
 
               {/* 최근 소식 */}
               {rec.lastInteraction?.recent_news && (
-                <p className="text-xs text-base-content/60 line-clamp-2 mb-2">
+                <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-2 mb-2">
                   {rec.lastInteraction.recent_news}
                 </p>
               )}

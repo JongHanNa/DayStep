@@ -71,12 +71,12 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
   // 빈 상태: 고정 원동력 없으면 안내 텍스트
   if (pinnedNotes.length === 0) {
     return (
-      <div className="mb-4 p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-700/30">
+      <div className="mb-4 p-5 rounded-2xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20">
         <div className="flex items-center gap-2 mb-2">
           <Flame className="w-4 h-4 text-amber-500" />
-          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">오늘의 원동력</span>
+          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">오늘의 원동력</span>
         </div>
-        <p className="text-sm text-base-content/50">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           고정된 원동력이 없습니다.{' '}
           <button
             onClick={() => onFuelClick('')}
@@ -93,13 +93,13 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
 
   return (
     <div
-      className="mb-4 p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-700/30 cursor-pointer"
+      className="mb-4 p-5 rounded-2xl bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20 cursor-pointer"
       onClick={handleCardClick}
     >
       {/* 헤더: 아이콘 + 라벨 */}
       <div className="flex items-center gap-2 mb-3">
         <Flame className="w-4 h-4 text-amber-500" />
-        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">오늘의 원동력</span>
+        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">오늘의 원동력</span>
       </div>
 
       {/* 인용문 crossfade */}
@@ -111,14 +111,9 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
           onClick={handleQuoteClick}
-          className="cursor-pointer"
+          className="cursor-pointer h-10 flex items-center justify-center"
         >
-          {currentNote?.title && (
-            <p className="text-sm font-semibold text-base-content mb-1">
-              {currentNote.title}
-            </p>
-          )}
-          <p className="text-sm text-base-content/80 italic leading-relaxed">
+          <p className="text-base font-medium text-amber-800 dark:text-amber-300 italic leading-relaxed text-center">
             &ldquo;{currentNote?.content}&rdquo;
           </p>
         </motion.div>

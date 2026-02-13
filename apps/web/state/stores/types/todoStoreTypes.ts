@@ -141,6 +141,7 @@ export interface TodoStoreState extends BaseStoreState {
   getFilteredTodos: () => Todo[];
   getPendingTodos: () => Todo[];
   getCompletedTodos: () => Todo[];
+  getRecentlyCompletedTodos: (limit?: number) => Todo[];
 
   // 새로운 스키마 관련 유틸리티
   getTodosByDateRange: (startDate: Date, endDate: Date) => Todo[];

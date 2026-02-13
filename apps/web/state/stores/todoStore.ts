@@ -1008,6 +1008,20 @@ export const useTodoStore = createStore<TodoStoreState>(
         return get().todos.filter((t: Todo) => t.completed);
       },
 
+      getRecentlyCompletedTodos: (limit = 3) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return get().todos
+          .filter((t: Todo) => {
+            if (!t.completed || !t.updatedAt) return false;
+            const d = new Date(t.updatedAt);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime() === today.getTime();
+          })
+          .sort((a: Todo, b: Todo) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          .slice(0, limit);
+      },
+
       // 새로운 스키마 관련 유틸리티
       getTodosByDateRange: (startDate: Date, endDate: Date) => {
         return get().todos.filter((todo: Todo) => {
