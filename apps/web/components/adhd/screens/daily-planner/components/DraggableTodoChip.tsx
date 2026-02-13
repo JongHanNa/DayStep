@@ -3,7 +3,8 @@
 import { useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
-import { CheckCircle2, Circle, MinusCircle, XCircle, Pause, Repeat, Clock, Play } from 'lucide-react';
+import { CheckCircle2, Circle, MinusCircle, XCircle, Repeat, Clock, Play, X } from 'lucide-react';
+import { MissedTodoActionPanel } from '@/components/shared/MissedTodoActionPanel';
 import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { unifiedIconsCollection } from '@/lib/icon-collection';
@@ -28,9 +29,10 @@ interface DraggableTodoChipProps {
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
   onStartFocus?: (todo: Todo) => void;
+  onUnassign?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onStartFocus }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onStartFocus, onUnassign }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -148,6 +150,18 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
           </span>
         )}
 
+        {/* 배치 해제 버튼 */}
+        {onUnassign && !todo.completed && !isSkipped && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onUnassign(todo); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="flex-shrink-0 w-5 h-5 rounded-full hover:bg-error/20 text-base-content/40 hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            title="배치 해제"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+
         {/* 포커스 시작 버튼 */}
         {onStartFocus && !todo.completed && !isSkipped && (
           <button
@@ -176,61 +190,14 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
       </div>
 
       {/* "어떻게 기록할까요?" 패널 */}
-      {isMissedNotSkipped && (
-        <div
-          className="px-2 py-1.5 bg-warning/5 border border-t-0 border-warning/20 rounded-b-lg"
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <p className="text-[10px] text-base-content/50 mb-1">어떻게 기록할까요?</p>
-          <div className="flex flex-wrap gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onToggle) onToggle(todo);
-                else toggleTodo(todo.id);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="btn btn-xs btn-ghost text-success gap-0.5"
-            >
-              <CheckCircle2 className="w-3 h-3" />
-              완료했음
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onPostpone) onPostpone(todo);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="btn btn-xs btn-ghost text-warning gap-0.5"
-            >
-              <Pause className="w-3 h-3" />
-              미뤘음
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onSkipTodo) onSkipTodo(todo, 'not_needed');
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="btn btn-xs btn-ghost text-base-content/60 gap-0.5"
-            >
-              <MinusCircle className="w-3 h-3" />
-              필요없었음
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onSkipTodo) onSkipTodo(todo, 'missed');
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="btn btn-xs btn-ghost text-error gap-0.5"
-            >
-              <XCircle className="w-3 h-3" />
-              놓침
-            </button>
-          </div>
-        </div>
+      {isMissedNotSkipped && !hideOverdue && (
+        <MissedTodoActionPanel
+          variant="chip"
+          onComplete={() => onToggle ? onToggle(todo) : toggleTodo(todo.id)}
+          onPostpone={() => onPostpone?.(todo)}
+          onSkipNotNeeded={() => onSkipTodo?.(todo, 'not_needed')}
+          onSkipMissed={() => onSkipTodo?.(todo, 'missed')}
+        />
       )}
     </div>
   );

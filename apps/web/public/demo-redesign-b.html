@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayStep - Bento Board (시안 B)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Pretendard', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { transition: background-color 0.3s, color 0.3s; }
+
+    /* Bento tile magnetic tilt */
+    .bento-tile {
+      transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.35s ease;
+      transform-style: preserve-3d;
+      perspective: 800px;
+      will-change: transform;
+    }
+    .bento-tile:hover {
+      z-index: 10;
+    }
+    .bento-tile:active {
+      transform: scale(0.96) !important;
+    }
+
+    /* Glassmorphism overlay */
+    .glass-overlay {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .bento-tile:hover .glass-overlay {
+      opacity: 1;
+    }
+
+    /* Spring entrance */
+    @keyframes spring-in {
+      0% { opacity: 0; transform: scale(0.6) translateY(40px); }
+      60% { opacity: 1; transform: scale(1.04) translateY(-4px); }
+      80% { transform: scale(0.98) translateY(2px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+    .spring-enter {
+      opacity: 0;
+      animation: spring-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.1s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.2s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.3s; }
+    .delay-7 { animation-delay: 0.35s; }
+    .delay-8 { animation-delay: 0.4s; }
+    .delay-9 { animation-delay: 0.45s; }
+    .delay-10 { animation-delay: 0.5s; }
+    .delay-11 { animation-delay: 0.55s; }
+    .delay-12 { animation-delay: 0.6s; }
+    .delay-13 { animation-delay: 0.65s; }
+
+    /* Arc gauge */
+    .arc-gauge {
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* PRO badge */
+    .pro-badge {
+      transition: transform 0.15s ease;
+    }
+    .pro-badge:hover {
+      transform: scale(1.15);
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .theme-toggle:hover {
+      transform: rotate(30deg);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+  </style>
+</head>
+<body class="bg-[#f5f5f7] dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 min-h-screen font-sans">
+
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar Mock (64px) -->
+    <aside class="hidden lg:flex w-16 bg-white dark:bg-[#141414] border-r border-gray-200 dark:border-gray-800 flex-col items-center py-6 gap-6 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">D</div>
+      <div class="flex flex-col gap-4 mt-4">
+        <button class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="check-square" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="mt-auto">
+        <button id="themeToggle" class="theme-toggle w-10 h-10 rounded-xl text-gray-400 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center" title="다크 모드 전환">
+          <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+          <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+
+      <!-- Mobile Theme Toggle -->
+      <div class="lg:hidden flex justify-end mb-4">
+        <button id="themeToggleMobile" class="theme-toggle w-10 h-10 rounded-xl bg-white dark:bg-[#1e1e1e] text-gray-500 dark:text-yellow-400 shadow-sm flex items-center justify-center" title="다크 모드 전환">
+          <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+          <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+        </button>
+      </div>
+
+      <!-- Bento Grid -->
+      <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-[140px] sm:auto-rows-[160px]">
+
+        <!-- Hero Tile: 하루 계획하기 (2x2) -->
+        <div class="bento-tile spring-enter delay-1 col-span-2 row-span-2 rounded-3xl bg-gradient-to-br from-indigo-500 via-blue-500 to-purple-600 p-5 sm:p-7 cursor-pointer relative overflow-hidden group"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <!-- Background pattern -->
+          <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-4 right-4 w-32 h-32 rounded-full border-2 border-white/30"></div>
+            <div class="absolute bottom-8 left-8 w-20 h-20 rounded-full border border-white/20"></div>
+          </div>
+          <!-- Content -->
+          <div class="relative z-10 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                  <h1 class="text-xl sm:text-2xl font-bold text-white" id="greeting"></h1>
+                  <p class="text-sm text-white/70" id="dateDisplay"></p>
+                </div>
+              </div>
+              <h2 class="text-lg sm:text-xl font-bold text-white mt-2">하루 계획하기</h2>
+              <p class="text-sm text-white/70 mt-1">오늘 할일을 시간별로 배치해요</p>
+            </div>
+            <!-- Arc Gauge -->
+            <div class="flex items-end justify-between">
+              <div class="flex items-center gap-3">
+                <svg class="w-16 h-16 -rotate-90" viewBox="0 0 72 72">
+                  <circle cx="36" cy="36" r="30" stroke-width="5" fill="none" class="stroke-white/20" />
+                  <circle id="arcGauge" cx="36" cy="36" r="30" stroke-width="5" fill="none"
+                    stroke-linecap="round" class="stroke-white arc-gauge"
+                    stroke-dasharray="188" stroke-dashoffset="188" />
+                </svg>
+                <div class="absolute" style="margin-left:18px; margin-bottom:10px;">
+                  <span class="text-lg font-bold text-white">3/7</span>
+                  <span class="text-xs text-white/60 block">완료</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 text-white text-sm font-medium">
+                시작하기
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </div>
+            </div>
+          </div>
+          <!-- Glass overlay -->
+          <div class="glass-overlay absolute inset-0 rounded-3xl bg-white/5 flex items-center justify-center">
+          </div>
+        </div>
+
+        <!-- 일정 계획하기 (1x2 tall) -->
+        <div class="bento-tile spring-enter delay-2 row-span-2 rounded-3xl bg-gradient-to-b from-blue-400 to-cyan-500 p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="clock" class="w-5 h-5 text-white"></i>
+              </div>
+              <h3 class="font-bold text-white text-base">일정 계획하기</h3>
+              <p class="text-xs text-white/70 mt-1">타임라인으로 한눈에</p>
+            </div>
+            <!-- Mini timeline dots -->
+            <div class="flex flex-col gap-2 mt-4">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-white/60"></div>
+                <div class="h-0.5 flex-1 bg-white/20 rounded"></div>
+                <span class="text-[10px] text-white/50">9:00</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-white"></div>
+                <div class="h-0.5 flex-1 bg-white/40 rounded"></div>
+                <span class="text-[10px] text-white/50">12:00</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-white/40"></div>
+                <div class="h-0.5 flex-1 bg-white/15 rounded"></div>
+                <span class="text-[10px] text-white/50">18:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 집중 실행하기 (1x1) -->
+        <div class="bento-tile spring-enter delay-3 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <i data-lucide="target" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">집중 실행하기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">타이머와 함께</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 할일 정리하기 (1x1) -->
+        <div class="bento-tile spring-enter delay-4 rounded-3xl bg-gradient-to-br from-sky-400 to-blue-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <i data-lucide="inbox" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">할일 정리하기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">미정리 할일 분류</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI로 계획하기 (1x1) -->
+        <div class="bento-tile spring-enter delay-5 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">AI로 계획하기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">AI가 도와드려요</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI와 대화하기 (1x1) -->
+        <div class="bento-tile spring-enter delay-6 rounded-3xl bg-gradient-to-br from-indigo-400 to-violet-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <i data-lucide="message-square" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">AI와 대화하기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">자유롭게 대화</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 사용법 배우기 (1x1) -->
+        <div class="bento-tile spring-enter delay-7 rounded-3xl bg-gradient-to-br from-cyan-400 to-teal-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <i data-lucide="book-open" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">사용법 배우기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">가이드 보기</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 원동력 새기기 (2x1 wide) -->
+        <div class="bento-tile spring-enter delay-8 col-span-2 rounded-3xl bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="flame" class="w-6 h-6 text-white"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-white text-base">원동력 새기기</h3>
+              <p class="text-xs text-white/70 mt-0.5">왜 해야 하는지, 내 동기를 기록하세요</p>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-white/50 flex-shrink-0"></i>
+          </div>
+        </div>
+
+        <!-- 관계 기록하기 (1x1) -->
+        <div class="bento-tile spring-enter delay-9 rounded-3xl bg-gradient-to-br from-rose-400 to-pink-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <i data-lucide="pen-line" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">관계 기록하기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">소중한 만남 기록</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 소식 챙기기 PRO (1x1) -->
+        <div class="bento-tile spring-enter delay-10 rounded-3xl bg-gradient-to-br from-orange-400 to-amber-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+              </div>
+              <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-semibold">
+                <i data-lucide="crown" class="w-3 h-3"></i> PRO
+              </span>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">소식 챙기기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">소식 흐름 보기</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 연락 돌아보기 PRO (1x1) -->
+        <div class="bento-tile spring-enter delay-11 rounded-3xl bg-gradient-to-br from-pink-400 to-rose-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <i data-lucide="users" class="w-5 h-5 text-white"></i>
+              </div>
+              <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-semibold">
+                <i data-lucide="crown" class="w-3 h-3"></i> PRO
+              </span>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">연락 돌아보기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">연락 빈도 확인</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 감사 기록하기 PRO (1x1) -->
+        <div class="bento-tile spring-enter delay-12 rounded-3xl bg-gradient-to-br from-teal-400 to-emerald-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <i data-lucide="heart" class="w-5 h-5 text-white"></i>
+              </div>
+              <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-semibold">
+                <i data-lucide="crown" class="w-3 h-3"></i> PRO
+              </span>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">감사 기록하기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">감사한 순간 기록</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 활동 살펴보기 PRO (1x1) -->
+        <div class="bento-tile spring-enter delay-13 rounded-3xl bg-gradient-to-br from-emerald-400 to-green-500 p-4 sm:p-5 cursor-pointer relative overflow-hidden"
+             onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)">
+          <div class="h-full flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 text-white"></i>
+              </div>
+              <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-semibold">
+                <i data-lucide="crown" class="w-3 h-3"></i> PRO
+              </span>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-sm">활동 살펴보기</h3>
+              <p class="text-[11px] text-white/60 mt-0.5">패턴과 생산성</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // Magnetic tilt effect
+    function tiltCard(e, el) {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = ((y - centerY) / centerY) * -8;
+      const rotateY = ((x - centerX) / centerX) * 8;
+      el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      el.style.boxShadow = `${-rotateY * 2}px ${rotateX * 2}px 30px rgba(0,0,0,0.15)`;
+    }
+
+    function resetTilt(el) {
+      el.style.transform = '';
+      el.style.boxShadow = '';
+    }
+
+    // Time-based greeting
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      const el = document.getElementById('greeting');
+      if (hour < 12) el.textContent = '좋은 아침이에요 ☀️';
+      else if (hour < 18) el.textContent = '좋은 오후예요 🌤';
+      else el.textContent = '좋은 저녁이에요 🌙';
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      document.getElementById('dateDisplay').textContent =
+        `${now.getMonth() + 1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+    }
+
+    // Arc gauge animation
+    function animateArcGauge() {
+      const gauge = document.getElementById('arcGauge');
+      if (gauge) {
+        setTimeout(() => {
+          // 3/7 ≈ 43% → dashoffset = 188 * (1 - 0.43) = ~107
+          gauge.style.strokeDashoffset = '107';
+        }, 500);
+      }
+    }
+
+    // Dark mode toggle
+    function setupThemeToggle() {
+      const toggles = [document.getElementById('themeToggle'), document.getElementById('themeToggleMobile')];
+      const saved = localStorage.getItem('daystep-demo-theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+      toggles.forEach(toggle => {
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+          const isDark = document.documentElement.classList.toggle('dark');
+          document.documentElement.classList.toggle('light', !isDark);
+          localStorage.setItem('daystep-demo-theme', isDark ? 'dark' : 'light');
+          lucide.createIcons();
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateGreeting();
+      updateDate();
+      setupThemeToggle();
+      animateArcGauge();
+    });
+  </script>
+
+</body>
+</html>

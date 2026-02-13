@@ -13,9 +13,10 @@ interface ReluctantTasksPanelProps {
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
   onAddClick?: () => void;
+  onUnassign?: (todo: Todo) => void;
 }
 
-export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onAddClick }: ReluctantTasksPanelProps) {
+export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onAddClick, onUnassign }: ReluctantTasksPanelProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'reluctant-tasks',
     data: { type: 'reluctant' },
@@ -49,7 +50,7 @@ export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onUnskip, on
           </div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} hideOverdue onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
+            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} hideOverdue onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} onUnassign={onUnassign} />
           ))
         )}
       </div>

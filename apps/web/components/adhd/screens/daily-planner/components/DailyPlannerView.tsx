@@ -320,6 +320,45 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     if (item && onUnskipTodo) onUnskipTodo(item);
   }, [timelineItems, onUnskipTodo]);
 
+  // 배치 해제 핸들러
+  const handleUnassignMatrix = useCallback(async (todo: Todo) => {
+    const timelineItem = timelineItems.find(i => i.id === todo.id);
+    const isRecurrenceInstance = timelineItem?.isRecurrenceInstance;
+    const dbId = isRecurrenceInstance ? timelineItem?.recurrenceSourceId : todo.id;
+    if (!dbId) return;
+
+    const updates = { importance: null, urgency: null };
+    if (isRecurrenceInstance && timelineItem) {
+      setPendingDrop({
+        todoId: dbId,
+        updates: { ...updates, start_time: timelineItem.startTime?.toISOString(), end_time: timelineItem.endTime?.toISOString() },
+        title: timelineItem.title || '',
+      });
+      setRecurringDialogOpen(true);
+      return;
+    }
+    await updateTodo(dbId, updates);
+  }, [timelineItems, updateTodo]);
+
+  const handleUnassignReluctant = useCallback(async (todo: Todo) => {
+    const timelineItem = timelineItems.find(i => i.id === todo.id);
+    const isRecurrenceInstance = timelineItem?.isRecurrenceInstance;
+    const dbId = isRecurrenceInstance ? timelineItem?.recurrenceSourceId : todo.id;
+    if (!dbId) return;
+
+    const updates = { is_reluctant_must_do: false };
+    if (isRecurrenceInstance && timelineItem) {
+      setPendingDrop({
+        todoId: dbId,
+        updates: { ...updates, start_time: timelineItem.startTime?.toISOString(), end_time: timelineItem.endTime?.toISOString() },
+        title: timelineItem.title || '',
+      });
+      setRecurringDialogOpen(true);
+      return;
+    }
+    await updateTodo(dbId, updates);
+  }, [timelineItems, updateTodo]);
+
   // 섹션별 추가 핸들러
   const handleAddMorning = useCallback(() => {
     if (!onAddTodo) return;
@@ -455,6 +494,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         onSkipTodo={handleChipSkip}
         onPostpone={handleChipPostpone}
         onAddClick={handleAddMatrix}
+        onUnassign={handleUnassignMatrix}
       />
       <ReluctantTasksPanel
         todos={reluctantTodos}
@@ -464,6 +504,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         onSkipTodo={handleChipSkip}
         onPostpone={handleChipPostpone}
         onAddClick={handleAddReluctant}
+        onUnassign={handleUnassignReluctant}
       />
       <RewardPanel
         value={reflection?.reward || ''}

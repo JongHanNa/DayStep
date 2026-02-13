@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayStep - Command Hub (시안 C)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Pretendard', 'system-ui', 'sans-serif'],
+            mono: ['SF Mono', 'Fira Code', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { transition: background-color 0.3s, color 0.3s; }
+
+    /* Command bar glow */
+    .command-bar {
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .command-bar:focus-within {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 8px 32px rgba(0,0,0,0.12);
+      border-color: #3B82F6;
+    }
+    .dark .command-bar:focus-within {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    /* List item */
+    .cmd-item {
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+    .cmd-item:active {
+      transform: scale(0.99);
+    }
+    .cmd-item.active {
+      background-color: rgba(59, 130, 246, 0.08);
+    }
+    .dark .cmd-item.active {
+      background-color: rgba(59, 130, 246, 0.15);
+    }
+
+    /* Highlight match */
+    .highlight {
+      color: #3B82F6;
+      font-weight: 600;
+    }
+
+    /* Section collapse */
+    .section-content {
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    }
+    .section-content.collapsed {
+      max-height: 0 !important;
+      opacity: 0;
+    }
+
+    /* Chip */
+    .recent-chip {
+      transition: background-color 0.15s ease, transform 0.15s ease;
+    }
+    .recent-chip:hover {
+      transform: translateY(-1px);
+    }
+    .recent-chip:active {
+      transform: scale(0.96);
+    }
+
+    /* Fade in */
+    @keyframes fade-in {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      opacity: 0;
+      animation: fade-in 0.4s ease-out forwards;
+    }
+    .d1 { animation-delay: 0.05s; }
+    .d2 { animation-delay: 0.1s; }
+    .d3 { animation-delay: 0.15s; }
+    .d4 { animation-delay: 0.2s; }
+    .d5 { animation-delay: 0.25s; }
+
+    /* Shortcut badge */
+    .kbd {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 10px;
+      line-height: 1;
+      padding: 3px 6px;
+      border-radius: 5px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      color: #6b7280;
+    }
+    .dark .kbd {
+      background: #1f2937;
+      border-color: #374151;
+      color: #9ca3af;
+    }
+
+    /* PRO badge */
+    .pro-badge {
+      transition: transform 0.15s ease;
+    }
+    .pro-badge:hover {
+      transform: scale(1.15);
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      transition: transform 0.3s ease;
+    }
+    .theme-toggle:hover {
+      transform: rotate(30deg);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+
+    /* Section chevron rotation */
+    .section-chevron {
+      transition: transform 0.3s ease;
+    }
+    .section-chevron.collapsed {
+      transform: rotate(-90deg);
+    }
+  </style>
+</head>
+<body class="bg-[#09090B] text-gray-100 min-h-screen font-sans">
+
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar Mock (64px) -->
+    <aside class="hidden lg:flex w-16 bg-[#0f0f12] border-r border-gray-800/50 flex-col items-center py-6 gap-6 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">D</div>
+      <div class="flex flex-col gap-4 mt-4">
+        <button class="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-600 hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="check-square" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-600 hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-600 hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="mt-auto">
+        <button id="themeToggle" class="theme-toggle w-10 h-10 rounded-xl text-yellow-400 hover:bg-gray-800 flex items-center justify-center" title="라이트 모드 전환">
+          <i data-lucide="sun" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto flex flex-col items-center px-4 py-6 sm:py-10">
+
+      <div class="w-full max-w-2xl">
+
+        <!-- Status Strip -->
+        <div class="fade-in d1 flex items-center justify-between mb-6 px-1">
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-300" id="greeting"></span>
+            <span class="text-gray-600">|</span>
+            <span class="text-sm text-gray-500" id="dateDisplay"></span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm font-bold text-blue-400">3</span>
+              <span class="text-xs text-gray-600">/</span>
+              <span class="text-sm text-gray-500">7</span>
+            </div>
+            <!-- Mobile theme toggle -->
+            <button id="themeToggleMobile" class="lg:hidden theme-toggle w-8 h-8 rounded-lg text-yellow-400 hover:bg-gray-800 flex items-center justify-center" title="라이트 모드 전환">
+              <i data-lucide="sun" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Command Bar -->
+        <div class="fade-in d2 command-bar rounded-2xl bg-[#141418] border border-gray-800 p-1 mb-5">
+          <div class="flex items-center gap-3 px-4 py-3">
+            <i data-lucide="search" class="w-5 h-5 text-gray-500 flex-shrink-0"></i>
+            <input id="commandInput" type="text" placeholder="기능 검색... (⌘K)"
+              class="flex-1 bg-transparent text-base text-gray-100 placeholder-gray-600 outline-none"
+              autocomplete="off" autofocus />
+            <kbd class="kbd hidden sm:inline-block">⌘K</kbd>
+          </div>
+        </div>
+
+        <!-- Recent Chips -->
+        <div class="fade-in d3 flex items-center gap-2 mb-6 px-1 overflow-x-auto">
+          <span class="text-[11px] text-gray-600 flex-shrink-0">최근</span>
+          <button class="recent-chip flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141418] border border-gray-800 text-xs text-gray-400 hover:bg-[#1a1a20] flex-shrink-0">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-400"></i>
+            하루 계획하기
+          </button>
+          <button class="recent-chip flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141418] border border-gray-800 text-xs text-gray-400 hover:bg-[#1a1a20] flex-shrink-0">
+            <i data-lucide="target" class="w-3.5 h-3.5 text-purple-400"></i>
+            집중 실행하기
+          </button>
+          <button class="recent-chip flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141418] border border-gray-800 text-xs text-gray-400 hover:bg-[#1a1a20] flex-shrink-0">
+            <i data-lucide="inbox" class="w-3.5 h-3.5 text-cyan-400"></i>
+            할일 정리하기
+          </button>
+        </div>
+
+        <!-- Command List -->
+        <div id="commandList" class="space-y-4">
+
+          <!-- Section: 계획 세우기 -->
+          <div class="fade-in d4" data-section="planning">
+            <button class="section-header flex items-center gap-2 px-3 py-2 w-full text-left group" onclick="toggleSection('planning')">
+              <i data-lucide="chevron-down" class="section-chevron w-4 h-4 text-gray-600"></i>
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">계획 세우기</span>
+              <span class="text-[10px] text-gray-700 ml-1">7</span>
+            </button>
+            <div class="section-content" id="section-planning" style="max-height: 500px;">
+              <div class="space-y-0.5">
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="하루 계획하기" data-desc="오늘 할일을 시간별로 배치">
+                  <div class="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 flex-shrink-0">
+                    <i data-lucide="calendar" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">하루 계획하기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">오늘 할일을 시간별로 배치</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘1</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="일정 계획하기" data-desc="타임라인으로 한눈에 보기">
+                  <div class="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 flex-shrink-0">
+                    <i data-lucide="clock" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">일정 계획하기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">타임라인으로 한눈에 보기</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘2</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="집중 실행하기" data-desc="타이머와 함께 집중 모드">
+                  <div class="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 flex-shrink-0">
+                    <i data-lucide="target" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">집중 실행하기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">타이머와 함께 집중 모드</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘3</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="할일 정리하기" data-desc="미정리 할일 분류하고 정리">
+                  <div class="w-9 h-9 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 flex-shrink-0">
+                    <i data-lucide="inbox" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">할일 정리하기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">미정리 할일 분류하고 정리</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘4</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="AI로 계획하기" data-desc="AI가 할일 계획을 도와드려요">
+                  <div class="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 flex-shrink-0">
+                    <i data-lucide="sparkles" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">AI로 계획하기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">AI가 할일 계획을 도와드려요</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘5</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="AI와 대화하기" data-desc="AI와 자유롭게 대화">
+                  <div class="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400 flex-shrink-0">
+                    <i data-lucide="message-square" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">AI와 대화하기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">AI와 자유롭게 대화</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘6</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="사용법 배우기" data-desc="DayStep 사용법 가이드">
+                  <div class="w-9 h-9 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 flex-shrink-0">
+                    <i data-lucide="book-open" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">사용법 배우기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">DayStep 사용법 가이드</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘7</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: 생각과 기억 -->
+          <div class="fade-in d5" data-section="memory">
+            <button class="section-header flex items-center gap-2 px-3 py-2 w-full text-left group" onclick="toggleSection('memory')">
+              <i data-lucide="chevron-down" class="section-chevron w-4 h-4 text-gray-600"></i>
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">생각과 기억</span>
+              <span class="text-[10px] text-gray-700 ml-1">4</span>
+            </button>
+            <div class="section-content" id="section-memory" style="max-height: 400px;">
+              <div class="space-y-0.5">
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="원동력 새기기" data-desc="왜 해야 하는지 기록">
+                  <div class="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 flex-shrink-0">
+                    <i data-lucide="flame" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">원동력 새기기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">왜 해야 하는지 기록</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘8</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="관계 기록하기" data-desc="소중한 만남과 대화 기록">
+                  <div class="w-9 h-9 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 flex-shrink-0">
+                    <i data-lucide="pen-line" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">관계 기록하기</span>
+                    <span class="text-xs text-gray-600 ml-2 hidden sm:inline">소중한 만남과 대화 기록</span>
+                  </div>
+                  <kbd class="kbd hidden sm:inline-block">⌘9</kbd>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="소식 챙기기" data-desc="소식 흐름 시간순 보기" data-pro="true">
+                  <div class="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 flex-shrink-0">
+                    <i data-lucide="message-circle" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">소식 챙기기</span>
+                    <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 ml-2 rounded-md bg-amber-500/15 text-amber-400 text-[10px] font-semibold">
+                      <i data-lucide="crown" class="w-3 h-3"></i> PRO
+                    </span>
+                  </div>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="연락 돌아보기" data-desc="연락 빈도와 관계 돌아보기" data-pro="true">
+                  <div class="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400 flex-shrink-0">
+                    <i data-lucide="users" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">연락 돌아보기</span>
+                    <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 ml-2 rounded-md bg-amber-500/15 text-amber-400 text-[10px] font-semibold">
+                      <i data-lucide="crown" class="w-3 h-3"></i> PRO
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: 일상 돌보기 -->
+          <div class="fade-in d5" data-section="care">
+            <button class="section-header flex items-center gap-2 px-3 py-2 w-full text-left group" onclick="toggleSection('care')">
+              <i data-lucide="chevron-down" class="section-chevron w-4 h-4 text-gray-600"></i>
+              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">일상 돌보기</span>
+              <span class="text-[10px] text-gray-700 ml-1">2</span>
+            </button>
+            <div class="section-content" id="section-care" style="max-height: 250px;">
+              <div class="space-y-0.5">
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="감사 기록하기" data-desc="감사한 순간 기록" data-pro="true">
+                  <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                    <i data-lucide="heart" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">감사 기록하기</span>
+                    <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 ml-2 rounded-md bg-amber-500/15 text-amber-400 text-[10px] font-semibold">
+                      <i data-lucide="crown" class="w-3 h-3"></i> PRO
+                    </span>
+                  </div>
+                </div>
+                <div class="cmd-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#141418]" data-name="활동 살펴보기" data-desc="활동 패턴과 생산성 분석" data-pro="true">
+                  <div class="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 flex-shrink-0">
+                    <i data-lucide="bar-chart-3" class="w-4.5 h-4.5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <span class="cmd-label text-sm font-medium text-gray-200">활동 살펴보기</span>
+                    <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 ml-2 rounded-md bg-amber-500/15 text-amber-400 text-[10px] font-semibold">
+                      <i data-lucide="crown" class="w-3 h-3"></i> PRO
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer hint -->
+        <div class="fade-in d5 mt-6 text-center">
+          <p class="text-[11px] text-gray-700">
+            <kbd class="kbd">↑↓</kbd> 이동 &nbsp;
+            <kbd class="kbd">↩</kbd> 실행 &nbsp;
+            <kbd class="kbd">esc</kbd> 초기화
+          </p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // State
+    let activeIndex = -1;
+    let allItems = [];
+
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      const el = document.getElementById('greeting');
+      if (hour < 12) el.textContent = '좋은 아침이에요 ☀️';
+      else if (hour < 18) el.textContent = '좋은 오후예요 🌤';
+      else el.textContent = '좋은 저녁이에요 🌙';
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      document.getElementById('dateDisplay').textContent =
+        `${now.getMonth() + 1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+    }
+
+    // Section toggle
+    function toggleSection(name) {
+      const content = document.getElementById(`section-${name}`);
+      const header = content.previousElementSibling;
+      const chevron = header.querySelector('.section-chevron');
+      content.classList.toggle('collapsed');
+      chevron.classList.toggle('collapsed');
+    }
+
+    // Filter logic
+    function filterItems(query) {
+      const items = document.querySelectorAll('.cmd-item');
+      const sections = document.querySelectorAll('[data-section]');
+      const q = query.toLowerCase().trim();
+
+      items.forEach(item => {
+        const name = item.dataset.name;
+        const desc = item.dataset.desc || '';
+        const match = q === '' || name.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+        item.style.display = match ? '' : 'none';
+
+        // Highlight matching text
+        const label = item.querySelector('.cmd-label');
+        if (q && match) {
+          const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+          label.innerHTML = name.replace(regex, '<span class="highlight">$1</span>');
+        } else {
+          label.textContent = name;
+        }
+      });
+
+      // Hide empty sections
+      sections.forEach(sec => {
+        const visibleItems = sec.querySelectorAll('.cmd-item[style=""], .cmd-item:not([style])');
+        const hasVisible = Array.from(sec.querySelectorAll('.cmd-item')).some(i => i.style.display !== 'none');
+        sec.style.display = hasVisible ? '' : 'none';
+      });
+
+      // Update active items list
+      allItems = Array.from(document.querySelectorAll('.cmd-item')).filter(i => i.style.display !== 'none');
+      activeIndex = allItems.length > 0 ? 0 : -1;
+      updateActiveHighlight();
+    }
+
+    function updateActiveHighlight() {
+      document.querySelectorAll('.cmd-item').forEach(i => i.classList.remove('active'));
+      if (activeIndex >= 0 && activeIndex < allItems.length) {
+        allItems[activeIndex].classList.add('active');
+        allItems[activeIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+
+    // Keyboard navigation
+    function setupKeyboard() {
+      const input = document.getElementById('commandInput');
+
+      input.addEventListener('input', () => {
+        filterItems(input.value);
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          input.focus();
+          input.select();
+        }
+
+        if (e.key === 'Escape') {
+          input.value = '';
+          filterItems('');
+          input.focus();
+        }
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (allItems.length > 0) {
+            activeIndex = (activeIndex + 1) % allItems.length;
+            updateActiveHighlight();
+          }
+        }
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (allItems.length > 0) {
+            activeIndex = (activeIndex - 1 + allItems.length) % allItems.length;
+            updateActiveHighlight();
+          }
+        }
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (activeIndex >= 0 && activeIndex < allItems.length) {
+            const item = allItems[activeIndex];
+            item.style.transform = 'scale(0.97)';
+            setTimeout(() => { item.style.transform = ''; }, 150);
+          }
+        }
+      });
+
+      // Click items
+      document.querySelectorAll('.cmd-item').forEach(item => {
+        item.addEventListener('click', () => {
+          item.style.transform = 'scale(0.97)';
+          setTimeout(() => { item.style.transform = ''; }, 150);
+        });
+      });
+    }
+
+    // Dark/Light mode - Command Hub defaults to dark
+    function setupThemeToggle() {
+      const toggles = [document.getElementById('themeToggle'), document.getElementById('themeToggleMobile')];
+      const saved = localStorage.getItem('daystep-demo-c-theme');
+
+      // Default to dark for Command Hub
+      if (saved === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.body.classList.remove('bg-[#09090B]', 'text-gray-100');
+        document.body.classList.add('bg-[#f5f5f7]', 'text-gray-900');
+        updateLightMode(true);
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+
+      toggles.forEach(toggle => {
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+          const isDark = document.documentElement.classList.toggle('dark');
+          document.documentElement.classList.toggle('light', !isDark);
+          localStorage.setItem('daystep-demo-c-theme', isDark ? 'dark' : 'light');
+          updateLightMode(!isDark);
+          lucide.createIcons();
+        });
+      });
+    }
+
+    function updateLightMode(isLight) {
+      const body = document.body;
+      if (isLight) {
+        body.classList.remove('bg-[#09090B]', 'text-gray-100');
+        body.classList.add('bg-[#f5f5f7]', 'text-gray-900');
+      } else {
+        body.classList.remove('bg-[#f5f5f7]', 'text-gray-900');
+        body.classList.add('bg-[#09090B]', 'text-gray-100');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateGreeting();
+      updateDate();
+      setupThemeToggle();
+      setupKeyboard();
+
+      // Initialize items list
+      allItems = Array.from(document.querySelectorAll('.cmd-item'));
+    });
+  </script>
+
+</body>
+</html>

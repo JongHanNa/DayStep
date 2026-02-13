@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayStep - Orbit (시안 D)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Pretendard', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { transition: background-color 0.3s, color 0.3s; overflow: hidden; }
+
+    /* Orbit container */
+    .orbit-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Core nucleus */
+    .nucleus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+    }
+
+    /* Ring paths */
+    .ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .light .ring {
+      border-color: rgba(0,0,0,0.06);
+    }
+
+    /* Orbiting animation */
+    @keyframes orbit {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .orbit-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      border-radius: 50%;
+      animation: orbit linear infinite;
+    }
+    .orbit-ring.paused {
+      animation-play-state: paused;
+    }
+
+    /* Node */
+    .orbit-node {
+      position: absolute;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .orbit-node:hover {
+      transform: scale(1.25) !important;
+      z-index: 30;
+    }
+    .orbit-node:active {
+      transform: scale(1.1) !important;
+    }
+
+    /* Pulse glow on hover */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 var(--glow-color); }
+      50% { box-shadow: 0 0 20px 6px var(--glow-color); }
+    }
+    .orbit-node:hover {
+      animation: pulse-glow 1.5s ease-in-out infinite;
+    }
+
+    /* Tooltip */
+    .node-tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      transform: translateX(-50%) translateY(4px);
+      z-index: 40;
+    }
+    .orbit-node:hover .node-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Ripple wave */
+    @keyframes ripple {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 0.6; }
+      100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+    }
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: ripple 0.8s ease-out forwards;
+    }
+
+    /* Entrance animation */
+    @keyframes nucleus-enter {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      60% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+    .nucleus-enter {
+      animation: nucleus-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes ring-enter {
+      0% { opacity: 0; transform: scale(0.3); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .ring-enter {
+      opacity: 0;
+      animation: ring-enter 0.6s ease-out forwards;
+    }
+    .ring-d1 { animation-delay: 0.2s; }
+    .ring-d2 { animation-delay: 0.4s; }
+    .ring-d3 { animation-delay: 0.6s; }
+
+    /* PRO badge */
+    .pro-mini {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      transition: transform 0.3s ease;
+    }
+    .theme-toggle:hover {
+      transform: rotate(30deg);
+    }
+
+    /* Mobile fallback */
+    .mobile-view { display: none; }
+    @media (max-width: 768px) {
+      .orbit-view { display: none !important; }
+      .mobile-view { display: block !important; }
+    }
+
+    /* Mobile card scroll */
+    .mobile-scroll-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 4px 16px 12px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mobile-scroll-row::-webkit-scrollbar { display: none; }
+    .mobile-card {
+      flex-shrink: 0;
+      width: 140px;
+      scroll-snap-align: start;
+      transition: transform 0.2s ease;
+    }
+    .mobile-card:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body class="bg-[#07070D] text-gray-100 min-h-screen font-sans">
+
+  <div class="flex min-h-screen h-screen">
+
+    <!-- Sidebar Mock (64px) -->
+    <aside class="hidden lg:flex w-16 bg-[#0c0c14] border-r border-gray-800/30 flex-col items-center py-6 gap-6 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">D</div>
+      <div class="flex flex-col gap-4 mt-4">
+        <button class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-700 hover:bg-gray-800/50 flex items-center justify-center transition-colors">
+          <i data-lucide="check-square" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-700 hover:bg-gray-800/50 flex items-center justify-center transition-colors">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-700 hover:bg-gray-800/50 flex items-center justify-center transition-colors">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="mt-auto">
+        <button id="themeToggle" class="theme-toggle w-10 h-10 rounded-xl text-yellow-400 hover:bg-gray-800/50 flex items-center justify-center" title="다크 모드 전환">
+          <i data-lucide="sun" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 relative overflow-hidden">
+
+      <!-- Mobile Theme Toggle -->
+      <div class="absolute top-4 right-4 z-30 md:hidden">
+        <button id="themeToggleMobile" class="theme-toggle w-10 h-10 rounded-xl bg-white/5 text-yellow-400 flex items-center justify-center" title="다크 모드 전환">
+          <i data-lucide="sun" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- ===== ORBIT VIEW (Desktop/Tablet) ===== -->
+      <div class="orbit-view w-full h-full">
+        <div class="orbit-container" id="orbitContainer">
+
+          <!-- Ring paths (visual only) -->
+          <div class="ring ring-enter ring-d1" style="width: 400px; height: 400px; margin-left: -200px; margin-top: -200px;"></div>
+          <div class="ring ring-enter ring-d2" style="width: 600px; height: 600px; margin-left: -300px; margin-top: -300px;"></div>
+          <div class="ring ring-enter ring-d3" style="width: 760px; height: 760px; margin-left: -380px; margin-top: -380px;"></div>
+
+          <!-- Nucleus -->
+          <div class="nucleus nucleus-enter w-44 h-44 rounded-full bg-gradient-to-br from-indigo-600/80 to-purple-700/80 border border-white/10 flex flex-col items-center justify-center text-center backdrop-blur-sm">
+            <p class="text-sm text-white/60 mb-1" id="greeting"></p>
+            <div class="text-3xl font-bold text-white mb-1">3<span class="text-lg text-white/50">/7</span></div>
+            <p class="text-xs text-white/50" id="dateDisplay"></p>
+            <!-- Progress ring inside nucleus -->
+            <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 176 176">
+              <circle cx="88" cy="88" r="84" stroke-width="3" fill="none" class="stroke-white/10" />
+              <circle id="nucleusRing" cx="88" cy="88" r="84" stroke-width="3" fill="none"
+                stroke-linecap="round" class="stroke-indigo-400"
+                stroke-dasharray="528" stroke-dashoffset="528"
+                style="transition: stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1);" />
+            </svg>
+          </div>
+
+          <!-- Ring 1: Planning (radius 200px, 7 nodes, 56px) -->
+          <div class="orbit-ring ring-enter ring-d1" id="ring1"
+               style="width: 400px; height: 400px; margin-left: -200px; margin-top: -200px; animation-duration: 120s;">
+            <!-- Nodes positioned around the ring -->
+            <div class="orbit-node w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/20"
+                 style="--glow-color: rgba(59,130,246,0.3); top: 0; left: 50%; margin-left: -28px; margin-top: -28px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">하루 계획하기</div>
+            </div>
+            <div class="orbit-node w-14 h-14 bg-gradient-to-br from-sky-400 to-blue-500 shadow-lg shadow-sky-500/20"
+                 style="--glow-color: rgba(56,189,248,0.3); top: 10.3%; left: 79.3%; margin-left: -28px; margin-top: -28px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="clock" class="w-6 h-6 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">일정 계획하기</div>
+            </div>
+            <div class="orbit-node w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20"
+                 style="--glow-color: rgba(139,92,246,0.3); top: 40.5%; left: 97.5%; margin-left: -28px; margin-top: -28px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="target" class="w-6 h-6 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">집중 실행하기</div>
+            </div>
+            <div class="orbit-node w-14 h-14 bg-gradient-to-br from-cyan-400 to-teal-500 shadow-lg shadow-cyan-500/20"
+                 style="--glow-color: rgba(34,211,238,0.3); top: 78%; left: 90.5%; margin-left: -28px; margin-top: -28px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="inbox" class="w-6 h-6 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">할일 정리하기</div>
+            </div>
+            <div class="orbit-node w-14 h-14 bg-gradient-to-br from-indigo-400 to-blue-600 shadow-lg shadow-indigo-500/20"
+                 style="--glow-color: rgba(99,102,241,0.3); top: 97.5%; left: 59.5%; margin-left: -28px; margin-top: -28px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">AI로 계획하기</div>
+            </div>
+            <div class="orbit-node w-14 h-14 bg-gradient-to-br from-purple-400 to-violet-600 shadow-lg shadow-purple-500/20"
+                 style="--glow-color: rgba(168,85,247,0.3); top: 97.5%; left: 40.5%; margin-left: -28px; margin-top: -28px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="message-square" class="w-6 h-6 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">AI와 대화하기</div>
+            </div>
+            <div class="orbit-node w-14 h-14 bg-gradient-to-br from-teal-400 to-cyan-600 shadow-lg shadow-teal-500/20"
+                 style="--glow-color: rgba(20,184,166,0.3); top: 78%; left: 9.5%; margin-left: -28px; margin-top: -28px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="book-open" class="w-6 h-6 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">사용법 배우기</div>
+            </div>
+          </div>
+
+          <!-- Ring 2: Memory (radius 300px, 4 nodes, 48px) -->
+          <div class="orbit-ring ring-enter ring-d2" id="ring2"
+               style="width: 600px; height: 600px; margin-left: -300px; margin-top: -300px; animation-duration: 180s; animation-direction: reverse;">
+            <div class="orbit-node w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/20"
+                 style="--glow-color: rgba(245,158,11,0.3); top: 0; left: 50%; margin-left: -24px; margin-top: -24px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="flame" class="w-5 h-5 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">원동력 새기기</div>
+            </div>
+            <div class="orbit-node w-12 h-12 bg-gradient-to-br from-rose-400 to-pink-500 shadow-lg shadow-rose-500/20"
+                 style="--glow-color: rgba(244,63,94,0.3); top: 50%; left: 100%; margin-left: -24px; margin-top: -24px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="pen-line" class="w-5 h-5 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">관계 기록하기</div>
+            </div>
+            <div class="orbit-node w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 shadow-lg shadow-orange-500/20"
+                 style="--glow-color: rgba(249,115,22,0.3); top: 100%; left: 50%; margin-left: -24px; margin-top: -24px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">소식 챙기기</div>
+              <div class="pro-mini"><i data-lucide="crown" class="w-2.5 h-2.5 text-white"></i></div>
+            </div>
+            <div class="orbit-node w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-500 shadow-lg shadow-pink-500/20"
+                 style="--glow-color: rgba(236,72,153,0.3); top: 50%; left: 0; margin-left: -24px; margin-top: -24px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="users" class="w-5 h-5 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">연락 돌아보기</div>
+              <div class="pro-mini"><i data-lucide="crown" class="w-2.5 h-2.5 text-white"></i></div>
+            </div>
+          </div>
+
+          <!-- Ring 3: Care (radius 380px, 2 nodes, 40px) -->
+          <div class="orbit-ring ring-enter ring-d3" id="ring3"
+               style="width: 760px; height: 760px; margin-left: -380px; margin-top: -380px; animation-duration: 240s;">
+            <div class="orbit-node w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/20"
+                 style="--glow-color: rgba(16,185,129,0.3); top: 14.6%; left: 14.6%; margin-left: -20px; margin-top: -20px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="heart" class="w-4 h-4 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">감사 기록하기</div>
+              <div class="pro-mini"><i data-lucide="crown" class="w-2.5 h-2.5 text-white"></i></div>
+            </div>
+            <div class="orbit-node w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg shadow-green-500/20"
+                 style="--glow-color: rgba(34,197,94,0.3); top: 85.4%; left: 85.4%; margin-left: -20px; margin-top: -20px;"
+                 onclick="rippleEffect(this)">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-white"></i>
+              <div class="node-tooltip bg-gray-900/90 text-white border border-gray-700">활동 살펴보기</div>
+              <div class="pro-mini"><i data-lucide="crown" class="w-2.5 h-2.5 text-white"></i></div>
+            </div>
+          </div>
+
+          <!-- Ring Labels -->
+          <div class="absolute top-1/2 left-1/2 pointer-events-none" style="margin-left: -200px; margin-top: -216px;">
+            <span class="text-[10px] text-purple-400/40 uppercase tracking-widest ring-enter ring-d1">Planning</span>
+          </div>
+          <div class="absolute top-1/2 left-1/2 pointer-events-none" style="margin-left: -300px; margin-top: -316px;">
+            <span class="text-[10px] text-amber-400/40 uppercase tracking-widest ring-enter ring-d2">Memory</span>
+          </div>
+          <div class="absolute top-1/2 left-1/2 pointer-events-none" style="margin-left: -380px; margin-top: -396px;">
+            <span class="text-[10px] text-teal-400/40 uppercase tracking-widest ring-enter ring-d3">Care</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== MOBILE VIEW ===== -->
+      <div class="mobile-view overflow-y-auto h-full pb-8">
+
+        <!-- Mobile Hero -->
+        <div class="px-4 pt-14 pb-6">
+          <div class="rounded-3xl bg-gradient-to-br from-indigo-600/80 to-purple-700/80 p-6 text-center relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10">
+              <div class="absolute top-4 right-4 w-24 h-24 rounded-full border border-white/20"></div>
+            </div>
+            <p class="text-sm text-white/60" id="greetingMobile"></p>
+            <div class="text-4xl font-bold text-white mt-2">3<span class="text-xl text-white/50">/7</span></div>
+            <p class="text-xs text-white/50 mt-1" id="dateMobile"></p>
+            <!-- Progress bar -->
+            <div class="mt-4 w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-white/60 rounded-full transition-all duration-1000" id="mobileProgress" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Planning Row -->
+        <div class="mb-6">
+          <h3 class="text-xs font-semibold text-purple-400/60 uppercase tracking-wider px-5 mb-2">Planning</h3>
+          <div class="mobile-scroll-row">
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="calendar" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">하루 계획하기</p>
+              <p class="text-[10px] text-white/50 mt-0.5">시간별 배치</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="clock" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">일정 계획하기</p>
+              <p class="text-[10px] text-white/50 mt-0.5">타임라인 보기</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="target" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">집중 실행하기</p>
+              <p class="text-[10px] text-white/50 mt-0.5">타이머 집중</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="inbox" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">할일 정리하기</p>
+              <p class="text-[10px] text-white/50 mt-0.5">미정리 분류</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-600 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">AI로 계획하기</p>
+              <p class="text-[10px] text-white/50 mt-0.5">AI 도움</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-purple-400 to-violet-600 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="message-square" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">AI와 대화하기</p>
+              <p class="text-[10px] text-white/50 mt-0.5">자유 대화</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-600 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="book-open" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">사용법 배우기</p>
+              <p class="text-[10px] text-white/50 mt-0.5">가이드</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory Row -->
+        <div class="mb-6">
+          <h3 class="text-xs font-semibold text-amber-400/60 uppercase tracking-wider px-5 mb-2">Memory</h3>
+          <div class="mobile-scroll-row">
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="flame" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">원동력 새기기</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 p-4 cursor-pointer">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="pen-line" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">관계 기록하기</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 p-4 cursor-pointer relative">
+              <span class="absolute top-2 right-2 text-[9px] font-bold text-white/70 bg-white/15 px-1.5 py-0.5 rounded">PRO</span>
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">소식 챙기기</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 p-4 cursor-pointer relative">
+              <span class="absolute top-2 right-2 text-[9px] font-bold text-white/70 bg-white/15 px-1.5 py-0.5 rounded">PRO</span>
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="users" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">연락 돌아보기</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Care Row -->
+        <div class="mb-6">
+          <h3 class="text-xs font-semibold text-teal-400/60 uppercase tracking-wider px-5 mb-2">Care</h3>
+          <div class="mobile-scroll-row">
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 p-4 cursor-pointer relative">
+              <span class="absolute top-2 right-2 text-[9px] font-bold text-white/70 bg-white/15 px-1.5 py-0.5 rounded">PRO</span>
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="heart" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">감사 기록하기</p>
+            </div>
+            <div class="mobile-card rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 p-4 cursor-pointer relative">
+              <span class="absolute top-2 right-2 text-[9px] font-bold text-white/70 bg-white/15 px-1.5 py-0.5 rounded">PRO</span>
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 text-white"></i>
+              </div>
+              <p class="text-xs font-semibold text-white">활동 살펴보기</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let text;
+      if (hour < 12) text = '좋은 아침이에요 ☀️';
+      else if (hour < 18) text = '좋은 오후예요 🌤';
+      else text = '좋은 저녁이에요 🌙';
+
+      const el = document.getElementById('greeting');
+      const elM = document.getElementById('greetingMobile');
+      if (el) el.textContent = text;
+      if (elM) elM.textContent = text;
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const str = `${now.getMonth() + 1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+      const el = document.getElementById('dateDisplay');
+      const elM = document.getElementById('dateMobile');
+      if (el) el.textContent = str;
+      if (elM) elM.textContent = str;
+    }
+
+    // Nucleus ring animation
+    function animateNucleusRing() {
+      const ring = document.getElementById('nucleusRing');
+      if (ring) {
+        setTimeout(() => {
+          // 3/7 ≈ 43%
+          ring.style.strokeDashoffset = String(528 * (1 - 3/7));
+        }, 500);
+      }
+      const mp = document.getElementById('mobileProgress');
+      if (mp) {
+        setTimeout(() => { mp.style.width = '43%'; }, 600);
+      }
+    }
+
+    // Pause orbits on hover
+    function setupOrbitPause() {
+      const rings = document.querySelectorAll('.orbit-ring');
+      rings.forEach(ring => {
+        ring.addEventListener('mouseenter', () => ring.classList.add('paused'));
+        ring.addEventListener('mouseleave', () => ring.classList.remove('paused'));
+      });
+    }
+
+    // Ripple effect on click
+    function rippleEffect(node) {
+      const ripple = document.createElement('div');
+      const size = node.offsetWidth;
+      ripple.className = 'ripple';
+      ripple.style.width = size + 'px';
+      ripple.style.height = size + 'px';
+      ripple.style.background = 'rgba(255,255,255,0.3)';
+      ripple.style.top = '50%';
+      ripple.style.left = '50%';
+      node.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 800);
+    }
+
+    // Dark/Light mode
+    function setupThemeToggle() {
+      const toggles = [document.getElementById('themeToggle'), document.getElementById('themeToggleMobile')];
+      const saved = localStorage.getItem('daystep-demo-d-theme');
+
+      if (saved === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.body.classList.remove('bg-[#07070D]');
+        document.body.classList.add('bg-[#f0f0f5]');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+
+      toggles.forEach(toggle => {
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+          const isDark = document.documentElement.classList.toggle('dark');
+          document.documentElement.classList.toggle('light', !isDark);
+          localStorage.setItem('daystep-demo-d-theme', isDark ? 'dark' : 'light');
+          document.body.classList.toggle('bg-[#07070D]', isDark);
+          document.body.classList.toggle('bg-[#f0f0f5]', !isDark);
+          lucide.createIcons();
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateGreeting();
+      updateDate();
+      setupThemeToggle();
+      setupOrbitPause();
+      animateNucleusRing();
+    });
+  </script>
+
+</body>
+</html>

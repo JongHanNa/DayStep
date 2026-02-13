@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayStep - Home Redesign Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Pretendard', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            plan: { DEFAULT: '#3B82F6', light: '#EFF6FF', dark: '#1E3A5F' },
+            thought: { DEFAULT: '#8B5CF6', light: '#F5F3FF', dark: '#2E1065' },
+            care: { DEFAULT: '#10B981', light: '#ECFDF5', dark: '#064E3B' },
+          },
+          keyframes: {
+            'fade-up': {
+              '0%': { opacity: '0', transform: 'translateY(16px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            'progress-ring': {
+              '0%': { strokeDashoffset: '251' },
+              '100%': { strokeDashoffset: 'var(--target-offset)' },
+            },
+          },
+          animation: {
+            'fade-up': 'fade-up 0.5s ease-out forwards',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* Base transitions */
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { transition: background-color 0.3s, color 0.3s; }
+
+    /* Stagger animation delays */
+    .stagger-1 { animation-delay: 0.05s; }
+    .stagger-2 { animation-delay: 0.1s; }
+    .stagger-3 { animation-delay: 0.15s; }
+    .stagger-4 { animation-delay: 0.2s; }
+    .stagger-5 { animation-delay: 0.25s; }
+    .stagger-6 { animation-delay: 0.3s; }
+    .stagger-7 { animation-delay: 0.35s; }
+    .stagger-8 { animation-delay: 0.4s; }
+    .stagger-9 { animation-delay: 0.45s; }
+    .stagger-10 { animation-delay: 0.5s; }
+    .stagger-11 { animation-delay: 0.55s; }
+    .stagger-12 { animation-delay: 0.6s; }
+    .stagger-13 { animation-delay: 0.65s; }
+
+    /* Card hover effects */
+    .feature-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-2px);
+    }
+    .feature-card:active {
+      transform: scale(0.97);
+    }
+
+    /* Progress ring animation */
+    .progress-ring-circle {
+      transition: stroke-dashoffset 1s ease-out;
+    }
+
+    /* Pro badge */
+    .pro-badge {
+      transition: transform 0.15s ease;
+    }
+    .pro-badge:hover {
+      transform: scale(1.15);
+    }
+
+    /* Section header decoration */
+    .section-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+
+    /* Quick action button pulse */
+    .pulse-glow {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+    }
+
+    /* Dark mode toggle */
+    .theme-toggle {
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .theme-toggle:hover {
+      transform: rotate(30deg);
+    }
+  </style>
+</head>
+<body class="bg-[#f5f5f7] dark:bg-[#121212] text-gray-900 dark:text-gray-100 min-h-screen font-sans">
+
+  <!-- Layout Container -->
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar Mock (64px) -->
+    <aside class="hidden lg:flex w-16 bg-white dark:bg-[#1a1a1a] border-r border-gray-200 dark:border-gray-800 flex-col items-center py-6 gap-6 flex-shrink-0">
+      <!-- Logo -->
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+        D
+      </div>
+      <!-- Nav icons -->
+      <div class="flex flex-col gap-4 mt-4">
+        <button class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="check-square" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+        </button>
+        <button class="w-10 h-10 rounded-xl text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <!-- Bottom: theme toggle -->
+      <div class="mt-auto">
+        <button id="themeToggle" class="theme-toggle w-10 h-10 rounded-xl text-gray-400 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center" title="다크 모드 전환">
+          <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+          <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-auto">
+
+      <!-- Main Content (Left) -->
+      <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl">
+
+        <!-- Mobile Theme Toggle -->
+        <div class="lg:hidden flex justify-end mb-4">
+          <button id="themeToggleMobile" class="theme-toggle w-10 h-10 rounded-xl bg-white dark:bg-[#242424] text-gray-500 dark:text-yellow-400 shadow-sm flex items-center justify-center" title="다크 모드 전환">
+            <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+            <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+          </button>
+        </div>
+
+        <!-- Hero Section -->
+        <section class="opacity-0 animate-fade-up stagger-1 mb-6 sm:mb-8">
+          <div class="flex items-center gap-5 sm:gap-6">
+            <!-- Progress Ring -->
+            <div class="relative flex-shrink-0">
+              <svg class="w-20 h-20 sm:w-24 sm:h-24 -rotate-90" viewBox="0 0 88 88">
+                <circle cx="44" cy="44" r="40" stroke-width="5" fill="none"
+                  class="stroke-gray-200 dark:stroke-gray-700" />
+                <circle id="progressRing" cx="44" cy="44" r="40" stroke-width="5" fill="none"
+                  stroke-linecap="round"
+                  class="stroke-indigo-500 progress-ring-circle"
+                  stroke-dasharray="251"
+                  stroke-dashoffset="251"
+                  style="--target-offset: 143" />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">3/7</span>
+                <span class="text-[10px] text-gray-400">완료</span>
+              </div>
+            </div>
+            <!-- Greeting -->
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white" id="greeting"></h1>
+              <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1" id="dateDisplay"></p>
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">오늘 할일 4개 남았어요</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="opacity-0 animate-fade-up stagger-2 mb-6 sm:mb-8">
+          <div class="flex flex-wrap gap-3">
+            <button class="pulse-glow inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium text-sm shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-shadow">
+              <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+              오늘 계획 세우기
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+            <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-[#242424] text-gray-700 dark:text-gray-300 font-medium text-sm shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors">
+              <i data-lucide="target" class="w-4 h-4"></i>
+              집중 실행
+            </button>
+            <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-[#242424] text-gray-700 dark:text-gray-300 font-medium text-sm shadow-sm border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors">
+              <i data-lucide="inbox" class="w-4 h-4"></i>
+              할일 정리
+            </button>
+          </div>
+        </section>
+
+        <!-- Section: 계획 세우기 -->
+        <section class="opacity-0 animate-fade-up stagger-3 mb-6 sm:mb-8">
+          <div class="flex items-center gap-2.5 mb-3">
+            <div class="section-dot bg-blue-500"></div>
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">계획 세우기</h2>
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-2"></div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <!-- Card: 하루 계획하기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-4 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="calendar" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">하루 계획하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">오늘 할일을 시간별로 배치</p>
+            </div>
+            <!-- Card: 일정 계획하기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-5 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="clock" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">일정 계획하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">타임라인으로 한눈에 보기</p>
+            </div>
+            <!-- Card: 집중 실행하기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-6 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="target" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">집중 실행하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">타이머와 함께 집중 모드</p>
+            </div>
+            <!-- Card: 할일 정리하기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-7 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="inbox" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">할일 정리하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">미정리 할일 분류하고 정리</p>
+            </div>
+            <!-- Card: AI로 계획하기 (Pro) -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-8 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">AI로 계획하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">AI가 할일 계획을 도와드려요</p>
+            </div>
+            <!-- Card: AI와 대화하기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-9 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="message-square" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">AI와 대화하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">AI와 자유롭게 대화</p>
+            </div>
+            <!-- Card: 사용법 배우기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-10 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/15 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="book-open" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">사용법 배우기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">DayStep 사용법 가이드</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section: 생각과 기억 -->
+        <section class="opacity-0 animate-fade-up stagger-8 mb-6 sm:mb-8">
+          <div class="flex items-center gap-2.5 mb-3">
+            <div class="section-dot bg-violet-500"></div>
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">생각과 기억</h2>
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-2"></div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <!-- Card: 원동력 새기기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-9 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-800 hover:bg-violet-50/30 dark:hover:bg-violet-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center text-violet-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">원동력 새기기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">왜 해야 하는지 기록</p>
+            </div>
+            <!-- Card: 관계 기록하기 -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-10 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-800 hover:bg-violet-50/30 dark:hover:bg-violet-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center text-violet-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="pen-line" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">관계 기록하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">소중한 만남과 대화 기록</p>
+            </div>
+            <!-- Card: 소식 챙기기 (Pro) -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-11 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-800 hover:bg-violet-50/30 dark:hover:bg-violet-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center text-violet-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="message-circle" class="w-5 h-5"></i>
+                </div>
+                <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/15 text-amber-500 text-[10px] font-semibold">
+                  <i data-lucide="crown" class="w-3 h-3"></i>
+                  PRO
+                </span>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">소식 챙기기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">소식 흐름 시간순 보기</p>
+            </div>
+            <!-- Card: 연락 돌아보기 (Pro) -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-12 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-800 hover:bg-violet-50/30 dark:hover:bg-violet-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-500/15 flex items-center justify-center text-violet-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+                <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/15 text-amber-500 text-[10px] font-semibold">
+                  <i data-lucide="crown" class="w-3 h-3"></i>
+                  PRO
+                </span>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">연락 돌아보기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">연락 빈도와 관계 돌아보기</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section: 일상 돌보기 -->
+        <section class="opacity-0 animate-fade-up stagger-10 mb-6 sm:mb-8">
+          <div class="flex items-center gap-2.5 mb-3">
+            <div class="section-dot bg-emerald-500"></div>
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">일상 돌보기</h2>
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700 ml-2"></div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <!-- Card: 감사 기록하기 (Pro) -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-11 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="heart" class="w-5 h-5"></i>
+                </div>
+                <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/15 text-amber-500 text-[10px] font-semibold">
+                  <i data-lucide="crown" class="w-3 h-3"></i>
+                  PRO
+                </span>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">감사 기록하기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">감사한 순간 기록</p>
+            </div>
+            <!-- Card: 활동 살펴보기 (Pro) -->
+            <div class="feature-card opacity-0 animate-fade-up stagger-12 group cursor-pointer rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                  <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                </div>
+                <span class="pro-badge inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/15 text-amber-500 text-[10px] font-semibold">
+                  <i data-lucide="crown" class="w-3 h-3"></i>
+                  PRO
+                </span>
+              </div>
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-1">활동 살펴보기</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">활동 패턴과 생산성 분석</p>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Right Panel -->
+      <aside class="hidden lg:block w-72 xl:w-80 p-6 lg:p-8 flex-shrink-0">
+        <div class="sticky top-8 space-y-4">
+
+          <!-- Today's Status Card -->
+          <div class="opacity-0 animate-fade-up stagger-3 rounded-2xl bg-white dark:bg-[#242424] p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-500"></i>
+              오늘의 현황
+            </h3>
+            <!-- Stats Row -->
+            <div class="flex items-center gap-4 mb-4">
+              <div class="flex-1 text-center">
+                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">3</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">완료</div>
+              </div>
+              <div class="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
+              <div class="flex-1 text-center">
+                <div class="text-2xl font-bold text-gray-400 dark:text-gray-500">4</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">남음</div>
+              </div>
+            </div>
+            <!-- Progress bar -->
+            <div class="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 ease-out" style="width: 0%" id="statusProgressBar"></div>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-2 text-right">43% 완료</p>
+            <!-- Recent completed -->
+            <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <p class="text-[10px] text-gray-400 mb-2 font-medium">최근 완료</p>
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"></i>
+                  <span class="truncate">프로젝트 제안서 작성</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"></i>
+                  <span class="truncate">팀 미팅 준비</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"></i>
+                  <span class="truncate">운동 30분</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fuel Banner (compact) -->
+          <div class="opacity-0 animate-fade-up stagger-5 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="flame" class="w-5 h-5 text-white"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-semibold text-white">원동력 새기기</h4>
+                <p class="text-xs text-white/70 truncate">오늘의 동기를 확인하세요</p>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-white/60 flex-shrink-0"></i>
+            </div>
+          </div>
+
+          <!-- Contact Banner (compact) -->
+          <div class="opacity-0 animate-fade-up stagger-7 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="heart-handshake" class="w-5 h-5 text-white"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-semibold text-white">연락 알림</h4>
+                <p class="text-xs text-white/70 truncate">3명에게 연락할 시간이에요</p>
+              </div>
+              <div class="w-6 h-6 rounded-full bg-white/25 flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-bold text-white">3</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- Mobile Bottom Panel (visible < lg) -->
+      <div class="lg:hidden px-4 pb-6 space-y-3">
+        <!-- Mobile Status -->
+        <div class="opacity-0 animate-fade-up stagger-12 rounded-2xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-500"></i>
+              오늘의 현황
+            </h3>
+            <span class="text-xs text-gray-400">43%</span>
+          </div>
+          <div class="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000 ease-out" style="width: 0%" id="statusProgressBarMobile"></div>
+          </div>
+        </div>
+        <!-- Mobile Banners Row -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 p-3.5 shadow-sm cursor-pointer">
+            <div class="flex items-center gap-2">
+              <i data-lucide="flame" class="w-4 h-4 text-white"></i>
+              <span class="text-xs font-semibold text-white">원동력</span>
+            </div>
+          </div>
+          <div class="rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 p-3.5 shadow-sm cursor-pointer">
+            <div class="flex items-center gap-2">
+              <i data-lucide="heart-handshake" class="w-4 h-4 text-white"></i>
+              <span class="text-xs font-semibold text-white">연락 알림</span>
+              <span class="ml-auto w-5 h-5 rounded-full bg-white/25 flex items-center justify-center text-[10px] font-bold text-white">3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Time-based greeting
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      const greetingEl = document.getElementById('greeting');
+      if (hour < 12) {
+        greetingEl.textContent = '좋은 아침이에요 ☀️';
+      } else if (hour < 18) {
+        greetingEl.textContent = '좋은 오후예요 🌤';
+      } else {
+        greetingEl.textContent = '좋은 저녁이에요 🌙';
+      }
+    }
+
+    // Date display
+    function updateDate() {
+      const now = new Date();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+      document.getElementById('dateDisplay').textContent = dateStr;
+    }
+
+    // Progress ring animation
+    function animateProgressRing() {
+      const ring = document.getElementById('progressRing');
+      if (ring) {
+        setTimeout(() => {
+          ring.style.strokeDashoffset = '143'; // 3/7 = ~43%
+        }, 300);
+      }
+    }
+
+    // Status progress bar animation
+    function animateProgressBars() {
+      setTimeout(() => {
+        const bar = document.getElementById('statusProgressBar');
+        const barMobile = document.getElementById('statusProgressBarMobile');
+        if (bar) bar.style.width = '43%';
+        if (barMobile) barMobile.style.width = '43%';
+      }, 600);
+    }
+
+    // Dark mode toggle
+    function setupThemeToggle() {
+      const toggles = [document.getElementById('themeToggle'), document.getElementById('themeToggleMobile')];
+
+      // Check saved preference or system preference
+      const saved = localStorage.getItem('daystep-demo-theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+
+      toggles.forEach(toggle => {
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+          const isDark = document.documentElement.classList.toggle('dark');
+          document.documentElement.classList.toggle('light', !isDark);
+          localStorage.setItem('daystep-demo-theme', isDark ? 'dark' : 'light');
+          // Re-render icons for visibility toggle
+          lucide.createIcons();
+        });
+      });
+    }
+
+    // Card click feedback
+    function setupCardInteractions() {
+      document.querySelectorAll('.feature-card').forEach(card => {
+        card.addEventListener('click', () => {
+          card.style.transform = 'scale(0.97)';
+          setTimeout(() => {
+            card.style.transform = '';
+          }, 150);
+        });
+      });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      updateGreeting();
+      updateDate();
+      setupThemeToggle();
+      setupCardInteractions();
+      animateProgressRing();
+      animateProgressBars();
+    });
+  </script>
+
+</body>
+</html>

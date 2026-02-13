@@ -3,6 +3,7 @@ import {
   CheckCircle2, Clock, Trash2, Circle, Repeat, Zap, Play,
   AlertTriangle, XCircle, SkipForward, Pause, MinusCircle, RotateCcw
 } from 'lucide-react';
+import { MissedTodoActionPanel } from '@/components/shared/MissedTodoActionPanel';
 import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
 import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
 import type { Note } from '@/types/domain';
@@ -339,7 +340,10 @@ export function TimelineItemCard({
           const isPostponedCreatedItem =
             item.originalTodo?.parentRecurringTodoId &&
             !item.completed &&
-            !item.isRecurrenceInstance;
+            !item.isRecurrenceInstance &&
+            item.originalTodo?.occurrenceDate &&
+            item.startTime &&
+            new Date(item.originalTodo.occurrenceDate).toDateString() !== item.startTime.toDateString();
 
           if (isPostponedCreatedItem) {
             const originalTimeText = item.originalStartTime && item.originalEndTime
@@ -383,58 +387,14 @@ export function TimelineItemCard({
           }
 
           // 일반 놓친 할일
-          if (isMissedNotSkipped && !item.originalTodo?.parentRecurringTodoId) {
+          if (isMissedNotSkipped) {
             return (
-              <div
-                className="mt-2 p-2 bg-warning/10 rounded-lg border border-warning/20"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <p className="text-xs text-base-content/60 mb-2">
-                  어떻게 기록할까요?
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleComplete(item);
-                    }}
-                    className="btn btn-xs btn-ghost text-success gap-1"
-                  >
-                    <CheckCircle2 className="w-3 h-3" />
-                    완료했음
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenPostponeSheet(item);
-                    }}
-                    className="btn btn-xs btn-ghost text-warning gap-1"
-                  >
-                    <Pause className="w-3 h-3" />
-                    미뤘음
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSkipTodo(item, 'not_needed');
-                    }}
-                    className="btn btn-xs btn-ghost text-base-content/60 gap-1"
-                  >
-                    <MinusCircle className="w-3 h-3" />
-                    필요없었음
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSkipTodo(item, 'missed');
-                    }}
-                    className="btn btn-xs btn-ghost text-error gap-1"
-                  >
-                    <XCircle className="w-3 h-3" />
-                    놓침
-                  </button>
-                </div>
-              </div>
+              <MissedTodoActionPanel
+                onComplete={() => onToggleComplete(item)}
+                onPostpone={() => onOpenPostponeSheet(item)}
+                onSkipNotNeeded={() => onSkipTodo(item, 'not_needed')}
+                onSkipMissed={() => onSkipTodo(item, 'missed')}
+              />
             );
           }
 

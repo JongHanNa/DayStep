@@ -207,7 +207,7 @@ export function useTimelineActions({
       return;
     }
 
-    if (item.originalTodo?.parentRecurringTodoId) {
+    if (item.originalTodo?.parentRecurringTodoId && item.originalTodo?.originalStartTime) {
       if (item.completed) {
         toast({
           title: '완료된 미룸 항목',

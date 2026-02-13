@@ -17,9 +17,10 @@ interface QuadrantProps {
   onUnskip?: (todo: Todo) => void;
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
+  onUnassign?: (todo: Todo) => void;
 }
 
-function Quadrant({ id, label, sublabel, todos, bgColor, hideOverdue, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone }: QuadrantProps) {
+function Quadrant({ id, label, sublabel, todos, bgColor, hideOverdue, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onUnassign }: QuadrantProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: {
@@ -45,7 +46,7 @@ function Quadrant({ id, label, sublabel, todos, bgColor, hideOverdue, onEditClic
           <div className="text-[10px] text-base-content/25 text-center py-2">드래그</div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} hideOverdue={hideOverdue} onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} />
+            <DraggableTodoChip key={`mx-${todo.id}`} todo={todo} hideOverdue={hideOverdue} onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} onUnassign={onUnassign} />
           ))
         )}
       </div>
@@ -61,9 +62,10 @@ interface PriorityMatrixPanelProps {
   onSkipTodo?: (todo: Todo, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
   onAddClick?: () => void;
+  onUnassign?: (todo: Todo) => void;
 }
 
-export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onAddClick }: PriorityMatrixPanelProps) {
+export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onAddClick, onUnassign }: PriorityMatrixPanelProps) {
   const q1 = todos.filter((t: any) => t.importance === true && t.urgency === true);
   const q2 = todos.filter((t: any) => t.importance === false && t.urgency === true);
   const q3 = todos.filter((t: any) => t.importance === true && t.urgency === false);
@@ -105,6 +107,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           onUnskip={onUnskip}
           onSkipTodo={onSkipTodo}
           onPostpone={onPostpone}
+          onUnassign={onUnassign}
         />
         <Quadrant
           id="matrix-q2"
@@ -118,6 +121,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           onUnskip={onUnskip}
           onSkipTodo={onSkipTodo}
           onPostpone={onPostpone}
+          onUnassign={onUnassign}
         />
         <Quadrant
           id="matrix-q3"
@@ -131,6 +135,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           onUnskip={onUnskip}
           onSkipTodo={onSkipTodo}
           onPostpone={onPostpone}
+          onUnassign={onUnassign}
         />
         <Quadrant
           id="matrix-q4"
@@ -144,6 +149,7 @@ export function PriorityMatrixPanel({ todos, onEditClick, onToggle, onUnskip, on
           onUnskip={onUnskip}
           onSkipTodo={onSkipTodo}
           onPostpone={onPostpone}
+          onUnassign={onUnassign}
         />
       </div>
     </div>
