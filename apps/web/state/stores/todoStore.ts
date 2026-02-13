@@ -172,7 +172,6 @@ export const useTodoStore = createStore<TodoStoreState>(
             state.recurringGroups = groups;
             state.subtaskGroups = subtasks;
 
-            state.refreshStats();
             updateLoadStateOnSuccess(set);
 
             console.log("✅ fetchTodosForCurrentView 완료:", {
@@ -181,6 +180,8 @@ export const useTodoStore = createStore<TodoStoreState>(
               subtaskGroupsCount: subtasks.size,
             });
           });
+          // refreshStats()는 set() 커밋 후 호출해야 get()이 새 데이터를 반환
+          get().refreshStats();
         } catch (error) {
           set((state: TodoStoreState) => {
             state.loading = false;
@@ -311,7 +312,6 @@ export const useTodoStore = createStore<TodoStoreState>(
             state.recurringGroups = groups;
             state.subtaskGroups = subtasks;
 
-            state.refreshStats();
             updateLoadStateOnSuccess(set);
 
             console.log("✅ fetchAllTodos 완료:", {
@@ -320,6 +320,8 @@ export const useTodoStore = createStore<TodoStoreState>(
               subtaskGroupsCount: subtasks.size,
             });
           });
+          // refreshStats()는 set() 커밋 후 호출해야 get()이 새 데이터를 반환
+          get().refreshStats();
         } catch (error) {
           set((state: TodoStoreState) => {
             state.loading = false;

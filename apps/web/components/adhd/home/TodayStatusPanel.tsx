@@ -48,12 +48,12 @@ export default function TodayStatusPanel({ variant = 'desktop' }: TodayStatusPan
   const recentDone = getRecentlyCompletedTodos(3);
 
   return (
-    <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 p-6 lg:p-8">
-      <div className="sticky top-8 rounded-2xl bg-white dark:bg-[#242424] p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+    <aside className="hidden lg:block w-80 xl:w-96 flex-shrink-0 p-6 lg:p-8">
+      <div className="sticky top-8 rounded-2xl bg-white dark:bg-[#242424] p-6 shadow-sm border border-gray-100 dark:border-gray-800">
         {/* 헤더 */}
         <div className="flex items-center gap-2 mb-4">
-          <ClipboardList className="w-4 h-4 text-indigo-500" />
-          <span className="text-sm font-bold text-gray-900 dark:text-white">
+          <ClipboardList className="w-5 h-5 text-indigo-500" />
+          <span className="text-base font-bold text-gray-900 dark:text-white">
             오늘의 현황
           </span>
         </div>
@@ -61,22 +61,22 @@ export default function TodayStatusPanel({ variant = 'desktop' }: TodayStatusPan
         {/* 완료 / 남음 카운터 */}
         <div className="grid grid-cols-2 divide-x divide-gray-200 dark:divide-gray-700 mb-4">
           <div className="text-center py-4">
-            <p className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">
+            <p className="text-5xl font-bold text-indigo-600 dark:text-indigo-400">
               {completed}
             </p>
-            <p className="text-xs text-gray-400 mt-1">완료</p>
+            <p className="text-sm text-gray-400 mt-1">완료</p>
           </div>
           <div className="text-center py-4">
-            <p className="text-4xl font-bold text-gray-700 dark:text-gray-300">
+            <p className="text-5xl font-bold text-gray-700 dark:text-gray-300">
               {pending}
             </p>
-            <p className="text-xs text-gray-400 mt-1">남음</p>
+            <p className="text-sm text-gray-400 mt-1">남음</p>
           </div>
         </div>
 
         {/* 프로그레스 바 */}
         <div className="mb-4">
-          <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+          <div className="h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-700 ease-out"
               style={{ width: `${rate}%` }}

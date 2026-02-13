@@ -158,7 +158,7 @@ export default function HomeTableOfContents() {
           <div className="flex items-center gap-5 sm:gap-6">
             {/* 원형 프로그레스 SVG */}
             <div className="relative flex-shrink-0">
-              <svg className="w-20 h-20 sm:w-24 sm:h-24 -rotate-90" viewBox="0 0 88 88">
+              <svg className="w-28 h-28 sm:w-36 sm:h-36 -rotate-90" viewBox="0 0 88 88">
                 <circle
                   cx="44" cy="44" r="40" strokeWidth="5" fill="none"
                   className="stroke-gray-200 dark:stroke-gray-700"
@@ -173,22 +173,22 @@ export default function HomeTableOfContents() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                <span className="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                   {completed}/{total}
                 </span>
-                <span className="text-[10px] text-gray-400">완료</span>
+                <span className="text-xs text-gray-400">완료</span>
               </div>
             </div>
 
             {/* 인사말 + 날짜 */}
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                 {getTimeGreeting()}
               </h1>
-              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 mt-1">
                 {getFormattedDate()}
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                 오늘 할일 {pending}개 남았어요
               </p>
             </div>
