@@ -50,21 +50,9 @@ const nextConfig: NextConfig = {
     // - 개발 환경/프리뷰: 모든 console 보존 (디버깅 필수)
     // - 웹 프로덕션: console.log 제거 (브라우저 콘솔 정리)
     // - Electron 프로덕션: 모든 console 보존 (DevTools 디버깅)
-    removeConsole: (() => {
-      // 개발 환경 또는 프리뷰 모드: 모든 console 보존
-      if (isDevelopment || process.env.PREVIEW_MODE) {
-        return false;
-      }
-
-      // 프로덕션 환경 분기
-      if (isElectronBuild) {
-        // Electron 프로덕션: 디버깅을 위해 모든 console 보존
-        return false;
-      } else {
-        // 웹 프로덕션: error/warn만 남기고 나머지 제거 (console.log 포함)
-        return { exclude: ['error', 'warn'] };
-      }
-    })(),
+    // 임시: 프로덕션 디버깅용 - OAuth 무한 로딩 문제 해결 후 복원
+    // 원래 설정: 웹 프로덕션에서 { exclude: ['error', 'warn'] }
+    removeConsole: false,
     // Electron에서도 디버깅 정보 보존을 위한 설정
     ...(isStaticExport && {
       emotion: false,
