@@ -1,5 +1,6 @@
 import { Todo } from "@/entities/todo/Todo";
 import { fetchTodosForDateRange } from "@/lib/supabaseWebViewHelper";
+import { getKSTCurrentDate, convertKstDateToUtcRange } from '@/lib/date-utils';
 import {
   createAsyncAction,
   logStoreAction,
@@ -15,20 +16,12 @@ import {
 export const fetchTodosForCurrentViewAction = createAsyncAction(async (userId: string) => {
   logStoreAction("TodoStore", "fetchTodosForCurrentView");
 
-  // 현재 날짜 기준 일일 로딩
-  const currentDate = new Date();
-
-  // UTC 기준으로 날짜 범위 계산 (KST +9시간 보정)
-  const utcStart = new Date(currentDate);
-  utcStart.setUTCHours(0, 0, 0, 0);
-  utcStart.setUTCHours(utcStart.getUTCHours() - 9); // KST to UTC
-
-  const utcEnd = new Date(currentDate);
-  utcEnd.setUTCHours(23, 59, 59, 999);
-  utcEnd.setUTCHours(utcEnd.getUTCHours() - 9); // KST to UTC
+  // KST 기준 오늘 날짜로 UTC 범위 계산
+  const kstToday = getKSTCurrentDate();
+  const { utcStart, utcEnd } = convertKstDateToUtcRange(kstToday);
 
   console.log("📅 할일 목록 조회 날짜 범위:", {
-    selectedDate: currentDate.toISOString().split('T')[0],
+    selectedDate: kstToday.toISOString().split('T')[0],
     utcStart: utcStart.toISOString(),
     utcEnd: utcEnd.toISOString(),
   });
