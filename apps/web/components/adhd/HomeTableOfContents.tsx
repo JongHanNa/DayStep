@@ -144,9 +144,9 @@ export default function HomeTableOfContents() {
 
   const groups = getUIGroupsForTableOfContents();
 
-  const completed = stats.todayCompleted;
+  const completed = stats.completedCount;
   const pending = stats.pendingCount;
-  const total = completed + pending;
+  const total = stats.totalCount;
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (

@@ -16,9 +16,9 @@ export default function TodayStatusPanel({ variant = 'desktop' }: TodayStatusPan
   const stats = useTodoStore((s) => s.stats);
   const getRecentlyCompletedTodos = useTodoStore((s) => s.getRecentlyCompletedTodos);
 
-  const completed = stats.todayCompleted;
+  const completed = stats.completedCount;
   const pending = stats.pendingCount;
-  const total = completed + pending;
+  const total = stats.totalCount;
   const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   if (variant === 'mobile') {
@@ -27,7 +27,7 @@ export default function TodayStatusPanel({ variant = 'desktop' }: TodayStatusPan
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <ClipboardList className="w-4 h-4 text-indigo-500" />
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <span className="text-xs font-bold text-gray-900 dark:text-white">
               오늘의 현황
             </span>
           </div>
@@ -53,24 +53,24 @@ export default function TodayStatusPanel({ variant = 'desktop' }: TodayStatusPan
         {/* 헤더 */}
         <div className="flex items-center gap-2 mb-4">
           <ClipboardList className="w-4 h-4 text-indigo-500" />
-          <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+          <span className="text-sm font-bold text-gray-900 dark:text-white">
             오늘의 현황
           </span>
         </div>
 
         {/* 완료 / 남음 카운터 */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="text-center py-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
-            <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+        <div className="grid grid-cols-2 divide-x divide-gray-200 dark:divide-gray-700 mb-4">
+          <div className="text-center py-4">
+            <p className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">
               {completed}
             </p>
-            <p className="text-[10px] text-gray-400">완료</p>
+            <p className="text-xs text-gray-400 mt-1">완료</p>
           </div>
-          <div className="text-center py-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-            <p className="text-3xl font-bold text-gray-700 dark:text-gray-300">
+          <div className="text-center py-4">
+            <p className="text-4xl font-bold text-gray-700 dark:text-gray-300">
               {pending}
             </p>
-            <p className="text-[10px] text-gray-400">남음</p>
+            <p className="text-xs text-gray-400 mt-1">남음</p>
           </div>
         </div>
 
