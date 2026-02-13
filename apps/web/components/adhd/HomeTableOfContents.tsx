@@ -152,7 +152,7 @@ export default function HomeTableOfContents() {
   return (
     <div className="flex-1 flex flex-col lg:flex-row overflow-auto bg-base-100 safe-area-top">
       {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">
         {/* 히어로: 원형 프로그레스 + 인사말 가로 배치 */}
         <section className="mb-6 sm:mb-8">
           <div className="flex items-center gap-5 sm:gap-6">
