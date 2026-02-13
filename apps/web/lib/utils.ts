@@ -36,10 +36,9 @@ export function getDynamicSiteURL(): string {
     return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   }
 
-  // 클라이언트 사이드
-
-  // 브라우저 환경 (기본값)
-  return process.env.NEXT_PUBLIC_SITE_URL_BROWSER || 'http://localhost:3000';
+  // 클라이언트 사이드: NEXT_PUBLIC_SITE_URL 사용 (빌드 시 인라인됨)
+  // fallback으로 window.location.origin 사용 (항상 올바른 도메인)
+  return process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
 }
 
 /**

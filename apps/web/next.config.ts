@@ -397,8 +397,22 @@ const pwaConfig = isWebBuild ? withPWA({
   skipWaiting: true,
   sw: 'sw.js',
   runtimeCaching: [
+    // 인증 관련 경로는 캐싱하지 않음
     {
-      urlPattern: /^https?.*/, 
+      urlPattern: /\/auth\//,
+      handler: 'NetworkOnly',
+    },
+    {
+      urlPattern: /\/api\/auth\//,
+      handler: 'NetworkOnly',
+    },
+    {
+      urlPattern: /supabase\.co/,
+      handler: 'NetworkOnly',
+    },
+    // 기존 기본 캐싱 (인증 외)
+    {
+      urlPattern: /^https?.*/,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'https-calls',
