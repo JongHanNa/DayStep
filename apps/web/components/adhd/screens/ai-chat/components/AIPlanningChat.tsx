@@ -378,7 +378,7 @@ export default function AIPlanningChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="계획이 필요한 일을 말해주세요..."
+              placeholder="이 계획대로 생성해주세요..."
               className="flex-1 textarea textarea-bordered resize-none min-h-[44px] max-h-[120px] py-2 text-sm"
               rows={1}
               disabled={isLoading}

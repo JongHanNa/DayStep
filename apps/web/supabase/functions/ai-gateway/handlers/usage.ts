@@ -19,7 +19,7 @@ export async function handleUsage(
       .from('subscriptions')
       .select('status')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     const isPro = subscription?.status === 'active' || subscription?.status === 'trial';
 
