@@ -8,7 +8,7 @@ interface ProjectSummaryBarProps {
   onProjectClick: (projectId: string | null) => void;
 }
 
-function ProgressRing({ completed, total, color, size = 28 }: { completed: number; total: number; color: string | null; size?: number }) {
+function ProgressRing({ completed, total, color, size = 32 }: { completed: number; total: number; color: string | null; size?: number }) {
   const strokeWidth = 3;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -17,31 +17,36 @@ function ProgressRing({ completed, total, color, size = 28 }: { completed: numbe
   const ringColor = color || '#6366f1';
 
   return (
-    <svg width={size} height={size} className="flex-shrink-0 -rotate-90">
-      {/* 배경 링 */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        className="text-base-content/10"
-      />
-      {/* 진행 링 */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={ringColor}
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={dashOffset}
-        strokeLinecap="round"
-        className="transition-all duration-300"
-      />
-    </svg>
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        {/* 배경 링 */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-base-content/10"
+        />
+        {/* 진행 링 */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={ringColor}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+          className="transition-all duration-300"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-base-content/60">
+        {completed}/{total}
+      </span>
+    </div>
   );
 }
 

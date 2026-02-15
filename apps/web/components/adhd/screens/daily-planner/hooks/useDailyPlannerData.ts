@@ -64,9 +64,15 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
       .map(timelineItemToTodo);
   }, [timelineItems, dateStr]);
 
-  // 시간대별 그룹핑 (KST 기준)
+  // anytime 할일 분리 (시간표에서 제외)
+  const anytimeTodos = useMemo(() => {
+    return todayTodos.filter((t: Todo) => t.scheduleType === 'anytime');
+  }, [todayTodos]);
+
+  // 시간대별 그룹핑 (KST 기준, anytime 제외)
   const morningTodos = useMemo(() => {
     return todayTodos.filter((t: Todo) => {
+      if (t.scheduleType === 'anytime') return false;
       if (!t.startTime) return false;
       const hour = new Date(t.startTime).getHours();
       return hour < 12;
@@ -75,6 +81,7 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
 
   const afternoonTodos = useMemo(() => {
     return todayTodos.filter((t: Todo) => {
+      if (t.scheduleType === 'anytime') return false;
       if (!t.startTime) return false;
       const hour = new Date(t.startTime).getHours();
       return hour >= 12 && hour < 18;
@@ -83,6 +90,7 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
 
   const eveningTodos = useMemo(() => {
     return todayTodos.filter((t: Todo) => {
+      if (t.scheduleType === 'anytime') return false;
       if (!t.startTime) return false;
       const hour = new Date(t.startTime).getHours();
       return hour >= 18;
@@ -140,6 +148,7 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
 
   return {
     todayTodos,
+    anytimeTodos,
     morningTodos,
     afternoonTodos,
     eveningTodos,

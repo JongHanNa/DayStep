@@ -58,6 +58,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
   // todayTodos는 timelineItems 기반 → 가상 반복 인스턴스 포함, 정확한 timed 할일만
   const {
     todayTodos,
+    anytimeTodos,
     morningTodos,
     afternoonTodos,
     eveningTodos,
@@ -481,6 +482,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
   const scheduleSection = (
     <div className="space-y-3">
       <TimeSchedulePanel
+        anytimeTodos={anytimeTodos}
         morningTodos={morningTodos}
         afternoonTodos={afternoonTodos}
         eveningTodos={eveningTodos}

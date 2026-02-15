@@ -1,11 +1,12 @@
 'use client';
 
-import { Sunrise, Sun, Moon } from 'lucide-react';
+import { Sunrise, Sun, Moon, Infinity } from 'lucide-react';
 import { TimeSlotSection } from './TimeSlotSection';
 import type { Todo } from '@/entities/todo/Todo';
 import type { ProjectMapValue, DepartmentMapValue } from '../../timeline/types';
 
 interface TimeSchedulePanelProps {
+  anytimeTodos: Todo[];
   morningTodos: Todo[];
   afternoonTodos: Todo[];
   eveningTodos: Todo[];
@@ -25,6 +26,7 @@ interface TimeSchedulePanelProps {
 }
 
 export function TimeSchedulePanel({
+  anytimeTodos,
   morningTodos,
   afternoonTodos,
   eveningTodos,
@@ -44,6 +46,25 @@ export function TimeSchedulePanel({
 }: TimeSchedulePanelProps) {
   return (
     <div className="space-y-3">
+      {anytimeTodos.length > 0 && (
+        <TimeSlotSection
+          id="schedule-anytime"
+          label="언제든지"
+          icon={<Infinity className="w-4 h-4 text-emerald-600" />}
+          todos={anytimeTodos}
+          accentColor="text-emerald-600"
+          projectMap={projectMap}
+          departmentMap={departmentMap}
+          highlightProjectId={highlightProjectId}
+          onEditClick={onEditClick}
+          onToggle={onToggle}
+          onUnskip={onUnskip}
+          onSkipTodo={onSkipTodo}
+          onPostpone={onPostpone}
+          onRestoreOriginal={onRestoreOriginal}
+          onStartFocus={onStartFocus}
+        />
+      )}
       <TimeSlotSection
         id="schedule-morning"
         label="오전"

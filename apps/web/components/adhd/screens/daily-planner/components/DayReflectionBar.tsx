@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { MessageCircle, Wallet, PenLine } from 'lucide-react';
 
 interface DayReflectionBarProps {
   reflection: string;
@@ -21,7 +22,7 @@ export function DayReflectionBar({
   onSpendingNoteChange,
   onThoughtArchiveChange,
 }: DayReflectionBarProps) {
-  const [activeField, setActiveField] = useState<ActiveField>(null);
+  const [activeField, setActiveField] = useState<ActiveField>('reflection');
 
   // Local states
   const [localReflection, setLocalReflection] = useState(reflection);
@@ -47,9 +48,9 @@ export function DayReflectionBar({
   }, [onReflectionChange, onSpendingNoteChange, onThoughtArchiveChange]);
 
   const fields = [
-    { key: 'reflection' as const, label: '💭 소감', value: localReflection, placeholder: '하루의 소감...' },
-    { key: 'spending' as const, label: '💰 지출', value: localSpending, placeholder: '오늘 지출...' },
-    { key: 'thought' as const, label: '📝 생각', value: localThought, placeholder: '생각 보관...' },
+    { key: 'reflection' as const, label: '소감', icon: MessageCircle, value: localReflection, placeholder: '하루의 소감...' },
+    { key: 'spending' as const, label: '지출', icon: Wallet, value: localSpending, placeholder: '오늘 지출...' },
+    { key: 'thought' as const, label: '생각', icon: PenLine, value: localThought, placeholder: '생각 보관...' },
   ];
 
   return (
@@ -60,12 +61,13 @@ export function DayReflectionBar({
           <button
             key={f.key}
             onClick={() => setActiveField(activeField === f.key ? null : f.key)}
-            className={`flex-1 px-2 py-2 text-xs font-medium transition-colors ${
+            className={`flex-1 px-2 py-2 text-xs font-medium transition-colors flex items-center justify-center gap-1 ${
               activeField === f.key
                 ? 'bg-primary/10 text-primary'
                 : 'text-base-content/50 hover:text-base-content/80'
             } ${f.value ? 'text-base-content/80' : ''}`}
           >
+            <f.icon className="w-3.5 h-3.5" />
             {f.label}
             {f.value && <span className="ml-1 text-primary">•</span>}
           </button>
