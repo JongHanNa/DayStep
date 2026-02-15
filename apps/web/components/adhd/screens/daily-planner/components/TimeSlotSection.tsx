@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
+import type { ProjectMapValue, DepartmentMapValue } from '../../timeline/types';
 
 interface TimeSlotSectionProps {
   id: string;
@@ -11,6 +12,9 @@ interface TimeSlotSectionProps {
   icon: React.ReactNode;
   todos: Todo[];
   accentColor: string;
+  projectMap?: Map<string, ProjectMapValue>;
+  departmentMap?: Map<string, DepartmentMapValue>;
+  highlightProjectId?: string | null;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -21,7 +25,7 @@ interface TimeSlotSectionProps {
   onAddClick?: () => void;
 }
 
-export function TimeSlotSection({ id, label, icon, todos, accentColor, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onAddClick }: TimeSlotSectionProps) {
+export function TimeSlotSection({ id, label, icon, todos, accentColor, projectMap, departmentMap, highlightProjectId, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onAddClick }: TimeSlotSectionProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: { type: 'time-slot', period: id.replace('schedule-', '') },
@@ -63,7 +67,7 @@ export function TimeSlotSection({ id, label, icon, todos, accentColor, onEditCli
               return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
             })
             .map(todo => (
-              <DraggableTodoChip key={`ts-${todo.id}`} todo={todo} showTime onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} onRestoreOriginal={onRestoreOriginal} onStartFocus={onStartFocus} />
+              <DraggableTodoChip key={`ts-${todo.id}`} todo={todo} showTime projectMap={projectMap} departmentMap={departmentMap} highlightProjectId={highlightProjectId} onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} onRestoreOriginal={onRestoreOriginal} onStartFocus={onStartFocus} />
             ))
         )}
       </div>

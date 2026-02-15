@@ -4,8 +4,19 @@ import { useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useDailyReflectionStore } from '@/state/stores/dailyReflectionStore';
+import { useProjectStore } from '@/state/stores/projectStore';
+import { useDepartmentStore } from '@/state/stores/departmentStore';
 import type { Todo } from '@/entities/todo/Todo';
-import { type TimelineItem, timelineItemToTodo } from '../../timeline/types';
+import { type TimelineItem, timelineItemToTodo, type ProjectMapValue, type DepartmentMapValue } from '../../timeline/types';
+
+export interface TodayProjectSummary {
+  projectId: string;
+  title: string;
+  icon: string | null;
+  color: string | null;
+  todayTotal: number;
+  todayCompleted: number;
+}
 
 interface UseDailyPlannerDataProps {
   userId: string;
@@ -18,6 +29,8 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
   const fetchReflection = useDailyReflectionStore(s => s.fetchReflection);
   const getReflection = useDailyReflectionStore(s => s.getReflection);
   const upsertReflection = useDailyReflectionStore(s => s.upsertReflection);
+  const projects = useProjectStore(s => s.projects);
+  const departments = useDepartmentStore(s => s.departments);
 
   const dateStr = format(date, 'yyyy-MM-dd');
 
@@ -29,6 +42,15 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
   }, [userId, dateStr, fetchReflection]);
 
   const reflection = getReflection(dateStr);
+
+  // 프로젝트/부서 매핑 (Timeline과 동일 패턴)
+  const projectMap = useMemo<Map<string, ProjectMapValue>>(() => {
+    return new Map(projects.map(p => [p.id, { title: p.title, color: p.color, icon: p.icon }]));
+  }, [projects]);
+
+  const departmentMap = useMemo<Map<string, DepartmentMapValue>>(() => {
+    return new Map(departments.map(d => [d.id, { name: d.name, color: d.color, icon: d.icon }]));
+  }, [departments]);
 
   // timelineItems 기반 오늘 할일 필터링 (반복 인스턴스 포함)
   const todayTodos = useMemo(() => {
@@ -86,6 +108,36 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
     });
   }, [todos, dateStr]);
 
+  // 오늘의 프로젝트 요약 데이터
+  const todayProjectSummary = useMemo<TodayProjectSummary[]>(() => {
+    const summaryMap = new Map<string, { total: number; completed: number }>();
+
+    for (const todo of todayTodos) {
+      const pid = todo.projectId;
+      if (!pid) continue;
+      const entry = summaryMap.get(pid) || { total: 0, completed: 0 };
+      entry.total++;
+      if (todo.completed) entry.completed++;
+      summaryMap.set(pid, entry);
+    }
+
+    const result: TodayProjectSummary[] = [];
+    for (const [projectId, counts] of summaryMap) {
+      const pInfo = projectMap.get(projectId);
+      if (!pInfo) continue;
+      result.push({
+        projectId,
+        title: pInfo.title,
+        icon: pInfo.icon,
+        color: pInfo.color,
+        todayTotal: counts.total,
+        todayCompleted: counts.completed,
+      });
+    }
+
+    return result.sort((a, b) => b.todayTotal - a.todayTotal);
+  }, [todayTodos, projectMap]);
+
   return {
     todayTodos,
     morningTodos,
@@ -97,5 +149,8 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
     reflection,
     upsertReflection,
     dateStr,
+    projectMap,
+    departmentMap,
+    todayProjectSummary,
   };
 }

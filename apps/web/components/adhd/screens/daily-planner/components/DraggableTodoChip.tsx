@@ -10,6 +10,7 @@ import type { Todo } from '@/entities/todo/Todo';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { unifiedIconsCollection } from '@/lib/icon-collection';
 import { getTimeStatus, getTimeStatusText } from '@/lib/utils/timeStatus';
+import type { ProjectMapValue, DepartmentMapValue } from '../../timeline/types';
 
 // 아이콘 이름을 Lucide 컴포넌트로 변환
 const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null => {
@@ -24,6 +25,9 @@ interface DraggableTodoChipProps {
   todo: Todo;
   showTime?: boolean;
   hideOverdue?: boolean;
+  projectMap?: Map<string, ProjectMapValue>;
+  departmentMap?: Map<string, DepartmentMapValue>;
+  highlightProjectId?: string | null;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -34,7 +38,7 @@ interface DraggableTodoChipProps {
   onUnassign?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, projectMap, departmentMap, highlightProjectId, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -60,6 +64,13 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
   const isMissedNotSkipped = timeStatus?.status === 'missed' && !todo.completed && !isSkipped;
   const timeStatusText = timeStatus ? getTimeStatusText(timeStatus) : null;
 
+  // 프로젝트/부서 정보
+  const projectInfo = todo.projectId && projectMap ? projectMap.get(todo.projectId) : undefined;
+  const departmentInfo = todo.departmentId && departmentMap ? departmentMap.get(todo.departmentId) : undefined;
+
+  // 하이라이트 필터: highlightProjectId가 설정되어 있고 현재 할일의 프로젝트가 다르면 dim
+  const isDimmed = highlightProjectId != null && todo.projectId !== highlightProjectId;
+
   // 클릭 vs 드래그 구분을 위한 핸들러
   const handlePointerDown = (e: React.PointerEvent) => {
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
@@ -81,114 +92,161 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
       {...listeners}
       onPointerDown={handlePointerDown}
       onClick={handleClick}
-      className={`group flex flex-col rounded-lg transition-colors
+      className={`group flex flex-col rounded-lg transition-all
         ${isDragging ? 'shadow-lg z-50' : ''}
+        ${isDimmed ? 'opacity-30' : ''}
       `}
     >
-      {/* 칩 본체 */}
-      <div
-        className={`flex items-center gap-2 px-2 py-1.5 text-sm cursor-grab active:cursor-grabbing
-          ${isMissedNotSkipped
-            ? 'bg-warning/10 border border-warning/30 rounded-lg'
-            : isSkipped
-              ? 'bg-base-200 text-base-content/40 line-through rounded-lg'
-              : todo.completed
-                ? 'bg-base-200 text-base-content/40 line-through rounded-lg'
-                : 'bg-base-100 hover:bg-base-300 rounded-lg'}
-        `}
-      >
-        {/* 완료 체크 */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isSkipped && onUnskip) {
-              onUnskip(todo);
-            } else if (onToggle) {
-              onToggle(todo);
-            } else {
-              toggleTodo(todo.id);
-            }
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="flex-shrink-0 flex items-center justify-center"
+      {/* 칩 본체 — 사이드바 + 콘텐츠 */}
+      <div className="flex overflow-hidden rounded-lg">
+        {/* 프로젝트 컬러 사이드바 */}
+        {projectInfo?.color && (
+          <div
+            className="w-1 flex-shrink-0 rounded-l-lg"
+            style={{ backgroundColor: projectInfo.color }}
+          />
+        )}
+
+        <div
+          className={`flex-1 flex flex-col gap-0.5 px-2 py-1.5 text-sm cursor-grab active:cursor-grabbing
+            ${isMissedNotSkipped
+              ? 'bg-warning/10 border border-warning/30'
+              : isSkipped
+                ? 'bg-base-200 text-base-content/40 line-through'
+                : todo.completed
+                  ? 'bg-base-200 text-base-content/40 line-through'
+                  : 'bg-base-100 hover:bg-base-300'}
+            ${projectInfo?.color ? 'rounded-r-lg' : 'rounded-lg'}
+          `}
         >
-          {isSkipped ? (
-            todo.skipStatus === 'missed'
-              ? <XCircle className="w-5 h-5 text-error" />
-              : <MinusCircle className="w-5 h-5 text-base-content/50" />
-          ) : todo.completed ? (
-            <CheckCircle2 className="w-5 h-5 text-success" />
-          ) : (
-            <Circle className="w-5 h-5 text-base-content/40" />
+          {/* 첫째 줄: 체크 + 시간 + 아이콘 + 제목 + 버튼들 */}
+          <div className="flex items-center gap-2">
+            {/* 완료 체크 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isSkipped && onUnskip) {
+                  onUnskip(todo);
+                } else if (onToggle) {
+                  onToggle(todo);
+                } else {
+                  toggleTodo(todo.id);
+                }
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="flex-shrink-0 flex items-center justify-center"
+            >
+              {isSkipped ? (
+                todo.skipStatus === 'missed'
+                  ? <XCircle className="w-5 h-5 text-error" />
+                  : <MinusCircle className="w-5 h-5 text-base-content/50" />
+              ) : todo.completed ? (
+                <CheckCircle2 className="w-5 h-5 text-success" />
+              ) : (
+                <Circle className="w-5 h-5 text-base-content/40" />
+              )}
+            </button>
+
+            {/* 시간 */}
+            {timeStr && (
+              <span className="flex-shrink-0 text-xs text-base-content/50 font-mono w-10">
+                {timeStr}
+              </span>
+            )}
+
+            {/* 아이콘 */}
+            {todo.icon && (() => {
+              const TodoIcon = getTodoIcon(todo.icon);
+              return TodoIcon ? <TodoIcon className="w-4 h-4 flex-shrink-0" /> : null;
+            })()}
+
+            {/* 반복 아이콘 */}
+            {todo.recurrencePattern && (
+              <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
+            )}
+
+            {/* 제목 */}
+            <span className="truncate flex-1">{todo.title}</span>
+
+            {/* 종료시간 경과 표시 */}
+            {!hideOverdue && timeStatus?.status === 'missed' && !todo.completed && !isSkipped && timeStatusText?.primary && (
+              <span className="flex-shrink-0 flex items-center gap-0.5 text-[10px] text-error">
+                <Clock className="w-3 h-3" />
+                {timeStatusText.primary}
+              </span>
+            )}
+
+            {/* 배치 해제 버튼 */}
+            {onUnassign && !todo.completed && !isSkipped && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onUnassign(todo); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="flex-shrink-0 w-5 h-5 rounded-full hover:bg-error/20 text-base-content/40 hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                title="배치 해제"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+
+            {/* 포커스 시작 버튼 */}
+            {onStartFocus && !todo.completed && !isSkipped && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStartFocus(todo);
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="flex-shrink-0 w-7 h-7 rounded-full bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                title="포커스 시작"
+              >
+                <Play className="w-3 h-3" />
+              </button>
+            )}
+
+            {/* 완료/스킵 상태 배지 */}
+            {(todo.completed || isSkipped) && (
+              <span className={`flex-shrink-0 text-[10px] px-1 rounded ${
+                todo.completed ? 'bg-success/20 text-success' :
+                todo.skipStatus === 'missed' ? 'bg-error/20 text-error' :
+                'bg-base-300 text-base-content/50'
+              }`}>
+                {todo.completed ? '완료' : todo.skipStatus === 'missed' ? '놓침' : '필요없었음'}
+              </span>
+            )}
+          </div>
+
+          {/* 둘째 줄: 프로젝트/부서 배지 (Timeline과 동일 스타일) */}
+          {(projectInfo || departmentInfo) && (
+            <div className="flex flex-wrap gap-1 ml-7">
+              {projectInfo && (
+                <span
+                  className="badge badge-xs gap-1"
+                  style={{
+                    backgroundColor: projectInfo.color ? `${projectInfo.color}20` : undefined,
+                    borderColor: projectInfo.color || undefined,
+                    color: projectInfo.color || undefined,
+                  }}
+                >
+                  {projectInfo.icon && <span>{projectInfo.icon}</span>}
+                  {projectInfo.title}
+                </span>
+              )}
+              {departmentInfo && (
+                <span
+                  className="badge badge-xs gap-1"
+                  style={{
+                    backgroundColor: departmentInfo.color ? `${departmentInfo.color}20` : undefined,
+                    borderColor: departmentInfo.color || undefined,
+                    color: departmentInfo.color || undefined,
+                  }}
+                >
+                  {departmentInfo.icon && <span>{departmentInfo.icon}</span>}
+                  {departmentInfo.name}
+                </span>
+              )}
+            </div>
           )}
-        </button>
-
-        {/* 시간 */}
-        {timeStr && (
-          <span className="flex-shrink-0 text-xs text-base-content/50 font-mono w-10">
-            {timeStr}
-          </span>
-        )}
-
-        {/* 아이콘 */}
-        {todo.icon && (() => {
-          const TodoIcon = getTodoIcon(todo.icon);
-          return TodoIcon ? <TodoIcon className="w-4 h-4 flex-shrink-0" /> : null;
-        })()}
-
-        {/* 반복 아이콘 */}
-        {todo.recurrencePattern && (
-          <Repeat className="w-3 h-3 text-base-content/40 flex-shrink-0" />
-        )}
-
-        {/* 제목 */}
-        <span className="truncate flex-1">{todo.title}</span>
-
-        {/* 종료시간 경과 표시 */}
-        {!hideOverdue && timeStatus?.status === 'missed' && !todo.completed && !isSkipped && timeStatusText?.primary && (
-          <span className="flex-shrink-0 flex items-center gap-0.5 text-[10px] text-error">
-            <Clock className="w-3 h-3" />
-            {timeStatusText.primary}
-          </span>
-        )}
-
-        {/* 배치 해제 버튼 */}
-        {onUnassign && !todo.completed && !isSkipped && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onUnassign(todo); }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="flex-shrink-0 w-5 h-5 rounded-full hover:bg-error/20 text-base-content/40 hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            title="배치 해제"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-
-        {/* 포커스 시작 버튼 */}
-        {onStartFocus && !todo.completed && !isSkipped && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartFocus(todo);
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="flex-shrink-0 w-7 h-7 rounded-full bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            title="포커스 시작"
-          >
-            <Play className="w-3 h-3" />
-          </button>
-        )}
-
-        {/* 완료/스킵 상태 배지 */}
-        {(todo.completed || isSkipped) && (
-          <span className={`flex-shrink-0 text-[10px] px-1 rounded ${
-            todo.completed ? 'bg-success/20 text-success' :
-            todo.skipStatus === 'missed' ? 'bg-error/20 text-error' :
-            'bg-base-300 text-base-content/50'
-          }`}>
-            {todo.completed ? '완료' : todo.skipStatus === 'missed' ? '놓침' : '필요없었음'}
-          </span>
-        )}
+        </div>
       </div>
 
       {/* 미뤄둔 할일 패널 */}

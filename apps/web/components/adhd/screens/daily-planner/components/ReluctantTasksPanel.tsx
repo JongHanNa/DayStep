@@ -4,9 +4,13 @@ import { Plus, Dumbbell } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
+import type { ProjectMapValue, DepartmentMapValue } from '../../timeline/types';
 
 interface ReluctantTasksPanelProps {
   todos: Todo[];
+  projectMap?: Map<string, ProjectMapValue>;
+  departmentMap?: Map<string, DepartmentMapValue>;
+  highlightProjectId?: string | null;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -16,7 +20,7 @@ interface ReluctantTasksPanelProps {
   onUnassign?: (todo: Todo) => void;
 }
 
-export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onAddClick, onUnassign }: ReluctantTasksPanelProps) {
+export function ReluctantTasksPanel({ todos, projectMap, departmentMap, highlightProjectId, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onAddClick, onUnassign }: ReluctantTasksPanelProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'reluctant-tasks',
     data: { type: 'reluctant' },
@@ -50,7 +54,7 @@ export function ReluctantTasksPanel({ todos, onEditClick, onToggle, onUnskip, on
           </div>
         ) : (
           todos.map(todo => (
-            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} hideOverdue onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} onUnassign={onUnassign} />
+            <DraggableTodoChip key={`rl-${todo.id}`} todo={todo} hideOverdue projectMap={projectMap} departmentMap={departmentMap} highlightProjectId={highlightProjectId} onEditClick={onEditClick} onToggle={onToggle} onUnskip={onUnskip} onSkipTodo={onSkipTodo} onPostpone={onPostpone} onUnassign={onUnassign} />
           ))
         )}
       </div>

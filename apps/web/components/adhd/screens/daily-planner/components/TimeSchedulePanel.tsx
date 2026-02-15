@@ -3,11 +3,15 @@
 import { Sunrise, Sun, Moon } from 'lucide-react';
 import { TimeSlotSection } from './TimeSlotSection';
 import type { Todo } from '@/entities/todo/Todo';
+import type { ProjectMapValue, DepartmentMapValue } from '../../timeline/types';
 
 interface TimeSchedulePanelProps {
   morningTodos: Todo[];
   afternoonTodos: Todo[];
   eveningTodos: Todo[];
+  projectMap?: Map<string, ProjectMapValue>;
+  departmentMap?: Map<string, DepartmentMapValue>;
+  highlightProjectId?: string | null;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -24,6 +28,9 @@ export function TimeSchedulePanel({
   morningTodos,
   afternoonTodos,
   eveningTodos,
+  projectMap,
+  departmentMap,
+  highlightProjectId,
   onEditClick,
   onToggle,
   onUnskip,
@@ -43,6 +50,9 @@ export function TimeSchedulePanel({
         icon={<Sunrise className="w-4 h-4 text-amber-600" />}
         todos={morningTodos}
         accentColor="text-amber-600"
+        projectMap={projectMap}
+        departmentMap={departmentMap}
+        highlightProjectId={highlightProjectId}
         onEditClick={onEditClick}
         onToggle={onToggle}
         onUnskip={onUnskip}
@@ -58,6 +68,9 @@ export function TimeSchedulePanel({
         icon={<Sun className="w-4 h-4 text-orange-600" />}
         todos={afternoonTodos}
         accentColor="text-orange-600"
+        projectMap={projectMap}
+        departmentMap={departmentMap}
+        highlightProjectId={highlightProjectId}
         onEditClick={onEditClick}
         onToggle={onToggle}
         onUnskip={onUnskip}
@@ -73,6 +86,9 @@ export function TimeSchedulePanel({
         icon={<Moon className="w-4 h-4 text-indigo-600" />}
         todos={eveningTodos}
         accentColor="text-indigo-600"
+        projectMap={projectMap}
+        departmentMap={departmentMap}
+        highlightProjectId={highlightProjectId}
         onEditClick={onEditClick}
         onToggle={onToggle}
         onUnskip={onUnskip}

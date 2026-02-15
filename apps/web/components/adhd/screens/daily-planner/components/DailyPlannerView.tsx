@@ -32,6 +32,7 @@ import { PraisePanel } from './PraisePanel';
 import { GratitudePanel } from './GratitudePanel';
 import { DayReflectionBar } from './DayReflectionBar';
 import { DraggableTodoChip } from './DraggableTodoChip';
+import { ProjectSummaryBar } from './ProjectSummaryBar';
 import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
 import type { Todo } from '@/entities/todo/Todo';
 import type { TimelineItem } from '../../timeline/types';
@@ -65,7 +66,13 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     reflection,
     upsertReflection,
     dateStr,
+    projectMap,
+    departmentMap,
+    todayProjectSummary,
   } = useDailyPlannerData({ userId, date, timelineItems });
+
+  // 프로젝트 하이라이트 필터 상태
+  const [highlightProjectId, setHighlightProjectId] = useState<string | null>(null);
   const focusSession = useFocusSession(todayTodos);
 
   // 칩에서 포커스 시작
@@ -477,6 +484,9 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         morningTodos={morningTodos}
         afternoonTodos={afternoonTodos}
         eveningTodos={eveningTodos}
+        projectMap={projectMap}
+        departmentMap={departmentMap}
+        highlightProjectId={highlightProjectId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
@@ -496,6 +506,9 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     <div className="space-y-3">
       <PriorityMatrixPanel
         todos={matrixTodos}
+        projectMap={projectMap}
+        departmentMap={departmentMap}
+        highlightProjectId={highlightProjectId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
@@ -506,6 +519,9 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       />
       <ReluctantTasksPanel
         todos={reluctantTodos}
+        projectMap={projectMap}
+        departmentMap={departmentMap}
+        highlightProjectId={highlightProjectId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
@@ -555,6 +571,17 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         <div className="px-4 py-2 text-center">
           <span className="text-sm font-medium text-base-content/60">{dateLabel}</span>
         </div>
+
+        {/* 프로젝트 요약 바 */}
+        {todayProjectSummary.length > 0 && (
+          <div className="px-4 pb-2">
+            <ProjectSummaryBar
+              summaries={todayProjectSummary}
+              activeProjectId={highlightProjectId}
+              onProjectClick={setHighlightProjectId}
+            />
+          </div>
+        )}
 
         {/* ─── JS 기반 조건부 렌더링: 데스크탑 vs 모바일 ─── */}
         {isDesktop ? (
@@ -666,7 +693,7 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
       {activeTodo && (
         <DragOverlay modifiers={[snapCenterToCursor, restrictToWindowEdges]} dropAnimation={null}>
           <div className="opacity-90 pointer-events-none w-64">
-            <DraggableTodoChip todo={activeTodo} />
+            <DraggableTodoChip todo={activeTodo} projectMap={projectMap} departmentMap={departmentMap} />
           </div>
         </DragOverlay>
       )}
