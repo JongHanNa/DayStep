@@ -1119,7 +1119,11 @@ export const useTodoStore = createStore<TodoStoreState>(
           // Todo 인스턴스로 변환
           const subtasks = (data || []).map((row: any) => Todo.fromDatabase(row));
 
-          // 상태 업데이트
+          // 상태 업데이트 (변경사항이 있을 때만)
+          const currentSubtasks = get().subtaskGroups.get(parentTodoId);
+          const hasChange = subtasks.length > 0 || (currentSubtasks && currentSubtasks.length > 0);
+          if (!hasChange) return; // 빈 결과 + 기존 캐시 없음 → set() 불필요
+
           set((state: TodoStoreState) => {
             state.subtaskGroups.set(parentTodoId, subtasks);
 

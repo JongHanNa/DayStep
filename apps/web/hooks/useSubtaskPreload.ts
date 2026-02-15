@@ -9,10 +9,19 @@ export function useSubtaskPreload(todoIds: string[]) {
       !fetchedRef.current.has(id) && !id.includes('-recurrence-')
     );
     if (newIds.length === 0) return;
-    const { fetchSubtasks } = useTodoStore.getState();
-    newIds.forEach(id => {
-      fetchedRef.current.add(id);
-      fetchSubtasks(id);
-    });
+
+    newIds.forEach(id => fetchedRef.current.add(id));
+
+    // 순차 처리: 동시 set() 호출에 의한 Maximum update depth 방지
+    let cancelled = false;
+    (async () => {
+      const { fetchSubtasks } = useTodoStore.getState();
+      for (const id of newIds) {
+        if (cancelled) break;
+        await fetchSubtasks(id);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [todoIds.join(',')]);
 }
