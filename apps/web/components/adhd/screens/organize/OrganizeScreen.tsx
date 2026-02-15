@@ -12,6 +12,6 @@ interface OrganizeScreenProps {
  *
  * OrganizeNeededView를 직접 사용
  */
-export function OrganizeScreen({ userId }: OrganizeScreenProps) {
+export default function OrganizeScreen({ userId }: OrganizeScreenProps) {
   return <OrganizeNeededView userId={userId} />;
 }
