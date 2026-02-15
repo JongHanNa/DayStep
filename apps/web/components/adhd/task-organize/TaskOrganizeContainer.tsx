@@ -1,21 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Clock, Inbox, BarChart3, Sun, Moon, Lock, HelpCircle, Brain } from 'lucide-react';
+import { ArrowLeft, Clock, BarChart3, Sun, Moon, Lock, HelpCircle, Brain } from 'lucide-react';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Paywall } from '@/components/subscription/Paywall';
 import { TodoTimelineView } from '../screens/timeline/components/TodoTimelineView';
-import { OrganizeNeededView } from '../screens/organize/components/OrganizeNeededView';
 import { TodoStatsView } from '../screens/activity/components/TodoStatsView';
 
-type TabType = 'timeline' | 'organize' | 'stats';
+type TabType = 'timeline' | 'stats';
 
 const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'timeline', label: '타임라인', icon: <Clock className="w-4 h-4" /> },
-  { id: 'organize', label: '정리', icon: <Inbox className="w-4 h-4" /> },
   { id: 'stats', label: '통계', icon: <BarChart3 className="w-4 h-4" /> },
 ];
 
@@ -29,11 +27,6 @@ const TAB_HELP_CONTENT: Record<TabType, { title: string; difficulty: string; hel
     title: '타임라인',
     difficulty: '자기 모니터링(Self-Monitoring) 결함. "내가 뭘 했지?" 파악이 어렵습니다. 성취감 인식이 부족해요.',
     help: '완료한 할일 시간순 시각화 → 작은 성취도 눈에 보임, 자기효능감 강화!',
-  },
-  organize: {
-    title: '정리',
-    difficulty: '조직화/우선순위 설정 결함. 할일이 쌓이면 어디서 시작할지 막막합니다.',
-    help: '미분류 할일만 모아서 표시 → 정리해야 할 것만 집중, 인지 부하 감소!',
   },
   stats: {
     title: '통계',
@@ -80,8 +73,6 @@ export default function TaskOrganizeContainer({ onExit }: TaskOrganizeContainerP
     switch (activeTab) {
       case 'timeline':
         return <TodoTimelineView userId={userId} />;
-      case 'organize':
-        return <OrganizeNeededView userId={userId} />;
       case 'stats':
         return <TodoStatsView userId={userId} />;
       default:

@@ -6,7 +6,7 @@ import { Todo } from '@/entities/todo/Todo';
 // 타입 정의
 // ============================================
 
-export type ADHDScreen = 'home' | 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
+export type ADHDScreen = 'home' | 'entry' | 'execute' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
 
 /** @deprecated Use ADHDScreen instead */
 export type ADHDMode = ADHDScreen;
@@ -168,7 +168,6 @@ interface ADHDModeState {
   enterHomeMode: () => void;
   enterEntryMode: (initialTab?: string) => void;
   enterExecuteMode: (userId: string) => Promise<void>;
-  enterOrganizeMode: () => void;
   exitMode: () => void;
 
   // === 실행 모드 Actions ===
@@ -403,17 +402,6 @@ export const useADHDStore = create<ADHDModeState>()(
             previousMode: currentMode,  // 뒤로가기용 이전 모드 저장
             currentUserId: userId,
             executionMode: DEFAULT_EXECUTION_MODE,
-          });
-        },
-
-        enterOrganizeMode: () => {
-          console.log('🎯 ADHD: 정리 모드 진입');
-          set({
-            currentMode: 'organize',
-            organizeMode: {
-              consecutiveTodoAdds: 0,
-              startTime: new Date(),
-            }
           });
         },
 

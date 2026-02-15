@@ -8,7 +8,6 @@ import {
   Calendar,
   Target,
   Lightbulb,
-  Inbox,
   PenLine,
   MessageCircle,
   Heart,
@@ -38,7 +37,6 @@ export type ADHDSubViewId =
   | 'daily-planner'
   | 'execute'
   | 'motivation'
-  | 'organize'
   | 'record'
   | 'news'
   | 'gratitude';
@@ -220,19 +218,6 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
       help: '타이머 + 방해차단 + 원동력 상기 → 시작의 마찰을 줄여 첫 발을 내딛도록 도움!',
     },
   },
-  organize: {
-    id: 'organize',
-    label: '할일 정리하기',
-    icon: Inbox,
-    shortDescription: '미정리 할일 분류하고 정리',
-    componentPath: 'screens/organize/OrganizeScreen',
-    help: {
-      title: '할일 정리하기',
-      difficulty:
-        '조직화 결함. 머릿속이 복잡하고 할일이 뒤엉켜 어디서 시작할지 막막해요.',
-      help: '미분류 할일만 모아서 표시 → 정리해야 할 것만 집중, 인지 부하 감소!',
-    },
-  },
   'ai-plan': {
     id: 'ai-plan',
     label: '내 계획 보기',
@@ -265,7 +250,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'project',
     title: '계획 세우기',
-    screenIds: ['daily-planner', 'timeline', 'organize', 'ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['daily-planner', 'timeline', 'ai-plan', 'ai-chat', 'guide'],
   },
   {
     id: 'memory',
@@ -292,7 +277,7 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
   {
     id: 'fuel',
     basePath: '/adhd/fuel',
-    screenIds: ['motivation', 'timeline', 'daily-planner', 'execute', 'organize'],
+    screenIds: ['motivation', 'timeline', 'daily-planner', 'execute'],
   },
   {
     id: 'relationship',
@@ -402,18 +387,6 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
           difficulty:
             '과제 시작의 어려움(Task Initiation). 해야 할 건 알지만 시작 버튼이 안 눌려요.',
           help: '타이머 + 방해차단 + 원동력 상기 → 시작의 마찰을 줄여 첫 발을 내딛도록 도움!',
-        },
-      },
-      {
-        id: 'organize',
-        label: '할일 정리하기',
-        icon: Inbox,
-        routeGroup: 'fuel',
-        help: {
-          title: '할일 정리하기',
-          difficulty:
-            '조직화 결함. 머릿속이 복잡하고 할일이 뒤엉켜 어디서 시작할지 막막해요.',
-          help: '미분류 할일만 모아서 표시 → 정리해야 할 것만 집중, 인지 부하 감소!',
         },
       },
       {

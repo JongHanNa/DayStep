@@ -285,7 +285,6 @@ const nextConfig: NextConfig = {
         { source: '/adhd/fuel/motivation', destination: '/adhd/motivation', permanent: true },
         { source: '/adhd/fuel/timeline', destination: '/adhd/timeline', permanent: true },
         { source: '/adhd/fuel/execute', destination: '/adhd/execute', permanent: true },
-        { source: '/adhd/fuel/organize', destination: '/adhd/organize', permanent: true },
         { source: '/adhd/project/ai-plan', destination: '/adhd/ai-plan', permanent: true },
         { source: '/adhd/project/ai-chat', destination: '/adhd/ai-chat', permanent: true },
         { source: '/adhd/project/guide', destination: '/adhd/guide', permanent: true },

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Crown, Calendar, Inbox, type LucideIcon } from 'lucide-react';
+import { Crown, Calendar, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
 import { useADHDStore } from '@/state/stores/adhdStore';
@@ -229,17 +229,6 @@ export default function HomeTableOfContents() {
           >
             <Calendar className="w-4 h-4" />
             오늘 계획 세우기 &rarr;
-          </button>
-          <button
-            onClick={() => goScreen('organize')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl
-              bg-white dark:bg-[#242424] border border-gray-200 dark:border-gray-700
-              text-gray-700 dark:text-gray-300 text-sm font-medium
-              hover:bg-gray-50 dark:hover:bg-gray-800 active:scale-[0.97]
-              transition-all duration-200"
-          >
-            <Inbox className="w-4 h-4" />
-            할일 정리
           </button>
         </div>
 

@@ -54,7 +54,6 @@ export interface CompletedAllViewProps {
 
 /** 빈 상태 뷰 Props */
 export interface EmptyStateViewProps {
-  onGoToOrganize: () => void;
   onStartAdhoc: () => void;
 }
 

@@ -21,9 +21,6 @@ const SettingsContainer = dynamic(() => import('./settings/SettingsContainer'), 
 const TaskOrganizeContainer = dynamic(() => import('./task-organize/TaskOrganizeContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
-const OrganizeScreen = dynamic(() => import('./screens/organize/OrganizeScreen'), {
-  loading: () => <ViewLoadingSpinner />,
-});
 const ADHDEntryScreen = dynamic(() => import('./ADHDEntryScreen'), {
   loading: () => <ViewLoadingSpinner />,
 });
@@ -34,7 +31,7 @@ const GenericTabContainer = dynamic(() => import('./containers/GenericTabContain
 });
 
 // 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
-const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'daily-planner', 'execute', 'organize'];
+const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'daily-planner', 'execute'];
 const RELATIONSHIP_SCREEN_IDS: ADHDSubViewId[] = ['record', 'news', 'gratitude'];
 const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
 
@@ -70,8 +67,6 @@ function getModeFromPath(pathname: string): ADHDScreen {
       return 'project';
     case 'settings':
       return 'settings';
-    case 'organize':
-      return 'organize';
     case 'task-organize':
       return 'task-organize';
     case 'relationship-insights':
@@ -144,8 +139,6 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
       return <SettingsContainer onExit={handleExit} />;
     case 'task-organize':
       return <TaskOrganizeContainer onExit={handleExit} />;
-    case 'organize':
-      return userId ? <OrganizeScreen userId={userId} /> : null;
     case 'entry':
       return (
         <ADHDEntryScreen

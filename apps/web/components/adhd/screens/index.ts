@@ -22,7 +22,6 @@ export { ActivityScreen } from './activity';
 // 계획 세우기 (Project) 그룹
 export { BannerScreen } from './banner';
 export { ExecuteScreen } from './execute';
-export { OrganizeScreen } from './organize';
 export { AIPlanScreen } from './ai-plan';
 export { AIChatScreen } from './ai-chat';
 export { GuideScreen } from './guide';
@@ -44,7 +43,6 @@ import { DailyPlannerScreen } from './daily-planner';
 import { ActivityScreen } from './activity';
 import { BannerScreen } from './banner';
 import { ExecuteScreen } from './execute';
-import { OrganizeScreen } from './organize';
 import { AIPlanScreen } from './ai-plan';
 import { AIChatScreen } from './ai-chat';
 import { GuideScreen } from './guide';
@@ -67,7 +65,6 @@ export const SCREEN_COMPONENTS: Record<ADHDSubViewId, ScreenComponent> = {
   activity: ActivityScreen,
   banner: BannerScreen,
   execute: ExecuteScreen,
-  organize: OrganizeScreen,
   'ai-plan': AIPlanScreen,
   'ai-chat': AIChatScreen,
   guide: GuideScreen,

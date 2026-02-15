@@ -62,7 +62,6 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
     markSkipped,
     startAdhocMode,
     endAdhocMode,
-    enterOrganizeMode,
     setSessionId,
     setLinkedTodo,
   } = useADHDStore();
@@ -625,9 +624,6 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
     }
   };
 
-  // 정리하기 모드로 이동
-  const handleGoToOrganize = () => enterOrganizeMode();
-
   // 완료된 할일 제목 수정
   const handleUpdateCompletedTodoTitle = useCallback(async (todoId: string, newTitle: string) => {
     if (!newTitle.trim()) return;
@@ -752,7 +748,6 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
           {viewState === 'empty-state' && (
             <EmptyStateView
               key="empty-state"
-              onGoToOrganize={handleGoToOrganize}
               onStartAdhoc={handleStartAdhoc}
             />
           )}

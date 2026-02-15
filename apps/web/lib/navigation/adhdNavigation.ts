@@ -9,7 +9,7 @@ import type { ADHDSubViewId } from '@/lib/constants/adhd-screens';
  * ADHD 라우트 타입
  */
 export type ADHDRoute = {
-  mode: 'home' | 'entry' | 'execute' | 'organize' | 'care' | 'relationship-insights' | 'project' | 'fuel' | 'settings';
+  mode: 'home' | 'entry' | 'execute' | 'care' | 'relationship-insights' | 'project' | 'fuel' | 'settings';
   tab?: string;
 };
 
@@ -118,11 +118,6 @@ export function useADHDNavigation() {
   const goExecute = () => navigate({ mode: 'execute' });
 
   /**
-   * 정리 모드로 이동
-   */
-  const goOrganize = () => navigate({ mode: 'organize' });
-
-  /**
    * 마음 전해보기로 이동
    */
   const goCare = () => navigate({ mode: 'care' });
@@ -138,7 +133,6 @@ export function useADHDNavigation() {
     goRelationshipInsights,
     goSettings,
     goExecute,
-    goOrganize,
     goCare,
   };
 }
