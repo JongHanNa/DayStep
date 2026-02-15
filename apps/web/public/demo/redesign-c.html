@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시안 C: 프로젝트 타임라인 오버레이 + 스마트 헤더 (Rich)</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #1d232a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .time-slot { border-left: 2px solid #374151; }
+    .todo-chip {
+      background: #2a303c;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      transition: all 0.15s ease;
+      cursor: grab;
+    }
+    .todo-chip:hover { background: #323844; border-color: #4b5563; }
+    .todo-chip-with-sidebar {
+      background: #2a303c;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      transition: all 0.15s ease;
+      cursor: grab;
+      overflow: hidden;
+      display: flex;
+    }
+    .todo-chip-with-sidebar:hover { background: #323844; border-color: #4b5563; }
+    .sidebar-indicator {
+      width: 4px;
+      min-height: 100%;
+      flex-shrink: 0;
+      border-radius: 12px 0 0 12px;
+    }
+    .project-summary-card {
+      background: #2a303c;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .project-summary-card:hover { border-color: #4b5563; background: #323844; }
+    .project-summary-card.active { border-width: 2px; }
+    .project-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 6px;
+      border: 1px solid;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    .bracket-connector {
+      position: absolute;
+      right: -12px;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      border: 2px solid;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+    }
+    .matrix-quadrant {
+      border: 1px solid #374151;
+      border-radius: 12px;
+      background: #2a303c;
+      min-height: 120px;
+    }
+    .section-header {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ca3af;
+    }
+    .comparison-label {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 50;
+    }
+    .highlight-overlay {
+      transition: opacity 0.3s ease;
+    }
+    .dimmed { opacity: 0.3; }
+    .progress-bar-sm {
+      background: #374151;
+      border-radius: 4px;
+      height: 3px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .connected-group {
+      position: relative;
+    }
+    .connected-group::after {
+      content: '';
+      position: absolute;
+      right: -8px;
+      top: 4px;
+      bottom: 4px;
+      width: 6px;
+      border: 2px solid;
+      border-left: none;
+      border-radius: 0 6px 6px 0;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 text-gray-200">
+
+  <!-- Header -->
+  <div class="comparison-label">
+    <span class="badge badge-accent badge-lg font-bold">시안 C</span>
+  </div>
+
+  <div class="max-w-md mx-auto">
+    <!-- Title -->
+    <div class="text-center mb-6">
+      <h1 class="text-xl font-bold text-white mb-1">시안 C: 프로젝트 오버레이 + 스마트 헤더</h1>
+      <p class="text-sm text-gray-400">Rich — 오늘의 프로젝트 요약 + 컬러 바 + 커넥터</p>
+      <div class="divider my-2"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TODAY'S PROJECT SUMMARY (NEW!) -->
+    <!-- ============================================ -->
+    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+      <span>📊</span> 오늘의 프로젝트 요약
+      <span class="badge badge-ghost badge-sm">NEW</span>
+    </h2>
+
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      <!-- Project 1: 집 정리하기 -->
+      <div class="project-summary-card active" style="border-color: #10b981;" onclick="highlightProject('home')">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">🏠</span>
+            <span class="text-sm font-medium" style="color: #10b981;">집 정리하기</span>
+          </div>
+          <!-- Mini progress ring -->
+          <svg class="progress-ring" width="28" height="28" viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="11" fill="none" stroke="#374151" stroke-width="3"/>
+            <circle cx="14" cy="14" r="11" fill="none" stroke="#10b981" stroke-width="3"
+              stroke-dasharray="69.1" stroke-dashoffset="41.5" stroke-linecap="round"/>
+            <text x="14" y="14" text-anchor="middle" dominant-baseline="central"
+              fill="#10b981" font-size="8" font-weight="bold" transform="rotate(90 14 14)">2/5</text>
+          </svg>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="progress-bar-sm flex-1">
+            <div class="progress-bar-fill" style="width: 40%; background: #10b981;"></div>
+          </div>
+          <span class="text-[10px] text-gray-500">오늘 3개</span>
+        </div>
+      </div>
+
+      <!-- Project 2: 업무 프로젝트 -->
+      <div class="project-summary-card" onclick="highlightProject('work')">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">💼</span>
+            <span class="text-sm font-medium" style="color: #6366f1;">업무 프로젝트</span>
+          </div>
+          <svg class="progress-ring" width="28" height="28" viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="11" fill="none" stroke="#374151" stroke-width="3"/>
+            <circle cx="14" cy="14" r="11" fill="none" stroke="#6366f1" stroke-width="3"
+              stroke-dasharray="69.1" stroke-dashoffset="51.8" stroke-linecap="round"/>
+            <text x="14" y="14" text-anchor="middle" dominant-baseline="central"
+              fill="#6366f1" font-size="8" font-weight="bold" transform="rotate(90 14 14)">1/4</text>
+          </svg>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="progress-bar-sm flex-1">
+            <div class="progress-bar-fill" style="width: 25%; background: #6366f1;"></div>
+          </div>
+          <span class="text-[10px] text-gray-500">오늘 1개</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============================================ -->
+    <!-- DAILY PLANNER: Time Schedule -->
+    <!-- ============================================ -->
+    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+      <span>📅</span> 하루 계획하기 — 시간 스케줄 (After)
+    </h2>
+
+    <div class="space-y-3 mb-6" id="schedule-area">
+      <!-- 09:00 — Home project todo 1 -->
+      <div class="time-slot pl-3" data-project="home">
+        <div class="text-xs text-gray-500 mb-1">09:00</div>
+        <div class="todo-chip-with-sidebar highlight-overlay">
+          <div class="sidebar-indicator" style="background: #10b981;"></div>
+          <div class="p-2.5 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm">🧹</span>
+              <span class="text-sm text-gray-200">방 한 칸 정리하기</span>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-1">
+              <span class="project-badge" style="background-color: #10b98120; border-color: #10b981; color: #10b981;">
+                🏠 집 정리하기
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10:00 — Home project todo 2 (connected) -->
+      <div class="time-slot pl-3" data-project="home">
+        <div class="text-xs text-gray-500 mb-1">10:00</div>
+        <div class="todo-chip-with-sidebar highlight-overlay">
+          <div class="sidebar-indicator" style="background: #10b981;"></div>
+          <div class="p-2.5 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm">🗄️</span>
+              <span class="text-sm text-gray-200">서랍 하나 비우기</span>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-1">
+              <span class="project-badge" style="background-color: #10b98120; border-color: #10b981; color: #10b981;">
+                🏠 집 정리하기
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector indicator between 09:00 and 10:00 -->
+      <div class="flex items-center gap-2 pl-6 -mt-2 -mb-1" data-project="home">
+        <div class="highlight-overlay flex items-center gap-1.5 text-[10px]" style="color: #10b981;">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 6 L6 6 M6 1 L6 11" stroke="#10b981" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          연속 작업 블록 (09:00–10:00)
+        </div>
+      </div>
+
+      <!-- 11:00 — Standalone todo (no project) -->
+      <div class="time-slot pl-3" data-project="none">
+        <div class="text-xs text-gray-500 mb-1">11:00</div>
+        <div class="todo-chip p-2.5 highlight-overlay">
+          <div class="flex items-center gap-2">
+            <span class="text-sm">📧</span>
+            <span class="text-sm text-gray-200">이메일 확인하기</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 14:00 — Home project todo 3 (isolated) -->
+      <div class="time-slot pl-3" data-project="home">
+        <div class="text-xs text-gray-500 mb-1">14:00</div>
+        <div class="todo-chip-with-sidebar highlight-overlay">
+          <div class="sidebar-indicator" style="background: #10b981;"></div>
+          <div class="p-2.5 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm">🧺</span>
+              <span class="text-sm text-gray-200">빨래 정리하기</span>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-1">
+              <span class="project-badge" style="background-color: #10b98120; border-color: #10b981; color: #10b981;">
+                🏠 집 정리하기
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 15:00 — Work project todo -->
+      <div class="time-slot pl-3" data-project="work">
+        <div class="text-xs text-gray-500 mb-1">15:00</div>
+        <div class="todo-chip-with-sidebar highlight-overlay">
+          <div class="sidebar-indicator" style="background: #6366f1;"></div>
+          <div class="p-2.5 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm">📝</span>
+              <span class="text-sm text-gray-200">보고서 작성하기</span>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-1">
+              <span class="project-badge" style="background-color: #6366f120; border-color: #6366f1; color: #6366f1;">
+                💼 업무 프로젝트
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 16:00 — Standalone -->
+      <div class="time-slot pl-3" data-project="none">
+        <div class="text-xs text-gray-500 mb-1">16:00</div>
+        <div class="todo-chip p-2.5 highlight-overlay">
+          <div class="flex items-center gap-2">
+            <span class="text-sm">🏃</span>
+            <span class="text-sm text-gray-200">운동하기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============================================ -->
+    <!-- PRIORITY MATRIX (After only) -->
+    <!-- ============================================ -->
+    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+      <span>🎯</span> 우선순위 매트릭스 (After)
+    </h2>
+
+    <div class="grid grid-cols-2 gap-2 mb-6">
+      <div class="matrix-quadrant p-2">
+        <div class="text-[10px] text-red-400 font-semibold mb-1.5">긴급+중요</div>
+        <div class="todo-chip-with-sidebar mb-1.5" style="border-radius: 8px;" data-project="home">
+          <div class="sidebar-indicator" style="background: #10b981; border-radius: 8px 0 0 8px;"></div>
+          <div class="p-1.5 flex-1 highlight-overlay">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs">🧹</span>
+              <span class="text-xs text-gray-200 truncate">방 한 칸 정리</span>
+            </div>
+            <div class="mt-0.5">
+              <span class="project-badge" style="background-color: #10b98120; border-color: #10b981; color: #10b981; font-size: 8px; padding: 0 3px;">
+                🏠 집 정리
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="todo-chip-with-sidebar mb-1.5" style="border-radius: 8px;" data-project="work">
+          <div class="sidebar-indicator" style="background: #6366f1; border-radius: 8px 0 0 8px;"></div>
+          <div class="p-1.5 flex-1 highlight-overlay">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs">📝</span>
+              <span class="text-xs text-gray-200 truncate">보고서 작성</span>
+            </div>
+            <div class="mt-0.5">
+              <span class="project-badge" style="background-color: #6366f120; border-color: #6366f1; color: #6366f1; font-size: 8px; padding: 0 3px;">
+                💼 업무
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="matrix-quadrant p-2">
+        <div class="text-[10px] text-blue-400 font-semibold mb-1.5">중요</div>
+        <div class="todo-chip p-1.5 mb-1.5 highlight-overlay" data-project="none">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs">📧</span>
+            <span class="text-xs text-gray-200 truncate">이메일 확인</span>
+          </div>
+        </div>
+      </div>
+      <div class="matrix-quadrant p-2">
+        <div class="text-[10px] text-yellow-400 font-semibold mb-1.5">긴급</div>
+        <div class="todo-chip-with-sidebar mb-1.5" style="border-radius: 8px;" data-project="home">
+          <div class="sidebar-indicator" style="background: #10b981; border-radius: 8px 0 0 8px;"></div>
+          <div class="p-1.5 flex-1 highlight-overlay">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs">🧺</span>
+              <span class="text-xs text-gray-200 truncate">빨래 정리</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="matrix-quadrant p-2">
+        <div class="text-[10px] text-gray-400 font-semibold mb-1.5">나중에</div>
+        <div class="todo-chip-with-sidebar mb-1.5" style="border-radius: 8px;" data-project="home">
+          <div class="sidebar-indicator" style="background: #10b981; border-radius: 8px 0 0 8px;"></div>
+          <div class="p-1.5 flex-1 highlight-overlay">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs">🗄️</span>
+              <span class="text-xs text-gray-200 truncate">서랍 비우기</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============================================ -->
+    <!-- INTERACTION DEMO -->
+    <!-- ============================================ -->
+    <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+      <span>✨</span> 인터랙션 데모
+    </h2>
+
+    <div class="bg-base-200 rounded-xl p-4 mb-4">
+      <p class="text-sm text-gray-400 mb-3">상단 프로젝트 요약 카드를 클릭하면, 해당 프로젝트 할일만 하이라이트됩니다:</p>
+      <div class="flex gap-2">
+        <button class="btn btn-sm" style="border-color: #10b981; color: #10b981;" onclick="highlightProject('home')">
+          🏠 집 정리하기 하이라이트
+        </button>
+        <button class="btn btn-sm" style="border-color: #6366f1; color: #6366f1;" onclick="highlightProject('work')">
+          💼 업무 하이라이트
+        </button>
+        <button class="btn btn-sm btn-ghost" onclick="highlightProject(null)">
+          전체 보기
+        </button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ============================================ -->
+    <!-- DESIGN NOTES -->
+    <!-- ============================================ -->
+    <div class="bg-base-200 rounded-xl p-4 mb-6">
+      <h3 class="font-bold text-white mb-2">디자인 노트</h3>
+      <ul class="text-sm text-gray-400 space-y-1.5">
+        <li class="flex gap-2"><span class="text-success">+</span> "오늘의 프로젝트" 요약 카드 → 프로젝트 중심 관리 가능</li>
+        <li class="flex gap-2"><span class="text-success">+</span> 프로젝트별 완료율 진행 링 → 동기부여 피드백 극대화</li>
+        <li class="flex gap-2"><span class="text-success">+</span> 사이드바 + 배지 + 커넥터 → 시간축 위의 프로젝트 블록 시각화</li>
+        <li class="flex gap-2"><span class="text-success">+</span> 프로젝트 카드 클릭 → 필터/하이라이트 → 빠른 포커스 전환</li>
+        <li class="flex gap-2"><span class="text-success">+</span> ADHD 사용자: "왜 이걸 해야 하지?" 단서 풍부하게 제공</li>
+        <li class="flex gap-2"><span class="text-warning">~</span> UI 복잡도 증가 → 정보 과부하 가능성</li>
+        <li class="flex gap-2"><span class="text-warning">~</span> 프로젝트가 많을 때 요약 카드 영역이 커질 수 있음</li>
+        <li class="flex gap-2"><span class="text-error">-</span> 구현 비용 가장 높음 — 요약 카드, 커넥터, 하이라이트 로직</li>
+        <li class="flex gap-2"><span class="text-error">-</span> 프로젝트 요약 데이터 집계 로직 필요 (전체 할일 수, 완료 수)</li>
+      </ul>
+    </div>
+
+    <!-- Implementation Diff -->
+    <div class="bg-base-200 rounded-xl p-4 mb-6">
+      <h3 class="font-bold text-white mb-2">구현 변경 범위</h3>
+      <div class="text-sm text-gray-400 space-y-1">
+        <div><code class="text-info">DraggableTodoChip.tsx</code> — 사이드바 + 배지 + projectMap props</div>
+        <div><code class="text-info">TimeSlotSection.tsx</code> — 연속 블록 커넥터 + projectMap 전달</div>
+        <div><code class="text-info">PriorityMatrixPanel.tsx</code> — 사이드바 + 배지 + projectMap 전달</div>
+        <div><code class="text-info">DailyPlannerView.tsx</code> — 프로젝트 요약 데이터 집계 + 하이라이트 상태 관리</div>
+        <div><code class="text-warning">ProjectSummaryCard.tsx</code> — <span class="text-warning">신규</span> 프로젝트 요약 카드 + 진행 링</div>
+        <div><code class="text-warning">ProjectSummaryBar.tsx</code> — <span class="text-warning">신규</span> 요약 카드 컨테이너 + 필터 로직</div>
+        <div><code class="text-warning">BlockConnector.tsx</code> — <span class="text-warning">신규</span> 연속 블록 커넥터 컴포넌트</div>
+      </div>
+      <div class="mt-2 text-xs text-gray-500">예상 변경 파일: 7개 | 추가 코드: ~250줄</div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COMPARISON TABLE -->
+    <!-- ============================================ -->
+    <div class="bg-base-200 rounded-xl p-4 mb-6">
+      <h3 class="font-bold text-white mb-3">시안 비교 (A vs B vs C)</h3>
+      <div class="overflow-x-auto">
+        <table class="table table-xs">
+          <thead>
+            <tr>
+              <th class="text-gray-400">기준</th>
+              <th class="text-primary">A (Minimal)</th>
+              <th class="text-secondary">B (Balanced)</th>
+              <th class="text-accent">C (Rich)</th>
+            </tr>
+          </thead>
+          <tbody class="text-gray-300">
+            <tr>
+              <td class="text-gray-500">구현 난이도</td>
+              <td class="text-success">낮음</td>
+              <td class="text-warning">중간</td>
+              <td class="text-error">높음</td>
+            </tr>
+            <tr>
+              <td class="text-gray-500">변경 파일 수</td>
+              <td>4개</td>
+              <td>5개</td>
+              <td>7개</td>
+            </tr>
+            <tr>
+              <td class="text-gray-500">추가 코드</td>
+              <td>~30줄</td>
+              <td>~120줄</td>
+              <td>~250줄</td>
+            </tr>
+            <tr>
+              <td class="text-gray-500">프로젝트 인지</td>
+              <td>배지</td>
+              <td>사이드바+배지</td>
+              <td>사이드바+배지+요약</td>
+            </tr>
+            <tr>
+              <td class="text-gray-500">진행률 표시</td>
+              <td class="text-error">X</td>
+              <td>그룹 헤더</td>
+              <td>요약 카드+진행 링</td>
+            </tr>
+            <tr>
+              <td class="text-gray-500">그룹핑</td>
+              <td class="text-error">X</td>
+              <td>접이식</td>
+              <td>커넥터</td>
+            </tr>
+            <tr>
+              <td class="text-gray-500">필터/하이라이트</td>
+              <td class="text-error">X</td>
+              <td class="text-error">X</td>
+              <td class="text-success">O</td>
+            </tr>
+            <tr>
+              <td class="text-gray-500">ADHD 지원</td>
+              <td>기본</td>
+              <td>양호</td>
+              <td class="text-success">우수</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-xs text-gray-600 pb-8">
+      DayStep Redesign Demo — 시안 C: Project Timeline Overlay + Smart Header (Rich)
+    </div>
+  </div>
+
+  <script>
+    let activeProject = null;
+
+    function highlightProject(project) {
+      activeProject = (activeProject === project) ? null : project;
+
+      // Update summary cards
+      document.querySelectorAll('.project-summary-card').forEach(card => {
+        card.classList.remove('active');
+      });
+
+      // Update all highlight-overlay elements
+      document.querySelectorAll('.highlight-overlay').forEach(el => {
+        el.classList.remove('dimmed');
+      });
+
+      if (activeProject) {
+        // Dim non-matching items
+        document.querySelectorAll('[data-project]').forEach(el => {
+          const overlays = el.querySelectorAll('.highlight-overlay');
+          if (el.dataset.project !== activeProject) {
+            overlays.forEach(o => o.classList.add('dimmed'));
+          }
+          // Also dim standalone items without data-project on parent
+          if (el.dataset.project === 'none') {
+            overlays.forEach(o => o.classList.add('dimmed'));
+          }
+        });
+
+        // Highlight active summary card
+        const cardIndex = activeProject === 'home' ? 0 : 1;
+        const cards = document.querySelectorAll('.project-summary-card');
+        if (cards[cardIndex]) {
+          cards[cardIndex].classList.add('active');
+          const color = activeProject === 'home' ? '#10b981' : '#6366f1';
+          cards[cardIndex].style.borderColor = color;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
