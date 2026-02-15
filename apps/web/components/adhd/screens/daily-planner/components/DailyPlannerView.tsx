@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion, AnimatePresence, useAnimation, type PanInfo } from 'framer-motion';
@@ -34,6 +34,7 @@ import { DayReflectionBar } from './DayReflectionBar';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import { ProjectSummaryBar } from './ProjectSummaryBar';
 import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
+import { useSubtaskPreload } from '@/hooks/useSubtaskPreload';
 import type { Todo } from '@/entities/todo/Todo';
 import type { TimelineItem } from '../../timeline/types';
 
@@ -71,6 +72,10 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
     departmentMap,
     todayProjectSummary,
   } = useDailyPlannerData({ userId, date, timelineItems });
+
+  // 서브태스크 프리로드
+  const todayTodoIds = useMemo(() => todayTodos.map((t: Todo) => t.id), [todayTodos]);
+  useSubtaskPreload(todayTodoIds);
 
   // 프로젝트 하이라이트 필터 상태
   const [highlightProjectId, setHighlightProjectId] = useState<string | null>(null);

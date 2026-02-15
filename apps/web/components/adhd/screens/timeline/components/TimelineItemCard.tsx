@@ -6,6 +6,7 @@ import {
 import { MissedTodoActionPanel } from '@/components/shared/MissedTodoActionPanel';
 import { getTimeStatus, getTimeStatusText, type TimeStatusResult } from '@/lib/utils/timeStatus';
 import { TimeProgressBar } from '@/components/shared/TimeProgressBar';
+import { useTodoStore } from '@/state/stores/todoStore';
 import type { Note } from '@/types/domain';
 import type { TimelineItem, ProjectMapValue, DepartmentMapValue } from '../types';
 
@@ -50,6 +51,9 @@ export function TimelineItemCard({
   onSkipTodo,
   onStartFocus,
 }: TimelineItemCardProps) {
+  const hasSubtasks = useTodoStore(s => s.hasSubtasks);
+  const getSubtaskProgress = useTodoStore(s => s.getSubtaskProgress);
+
   const projectInfo = item.projectId ? projectMap.get(item.projectId) : undefined;
   const departmentInfo = item.departmentId ? departmentMap.get(item.departmentId) : undefined;
 
@@ -148,7 +152,7 @@ export function TimelineItemCard({
         {item.scheduleType === 'timed' && item.startTime ? (
           <span>{format(item.startTime, 'HH:mm')}</span>
         ) : (
-          <span>{format(date, 'MM-dd')}</span>
+          <span className="text-emerald-600">언제든지</span>
         )}
       </div>
 
@@ -241,6 +245,14 @@ export function TimelineItemCard({
           }`}>
             {item.title}
           </span>
+          {hasSubtasks(item.id) && (() => {
+            const progress = getSubtaskProgress(item.id);
+            return (
+              <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-base-300 text-base-content/60 font-medium ml-1">
+                {progress.completed}/{progress.total}
+              </span>
+            );
+          })()}
         </div>
 
         {/* 시간 상태 UI (진행 중/놓침) */}

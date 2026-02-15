@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { format, isToday, startOfMonth, subMonths, differenceInMonths } from 'date-fns';
 import { Clock, ChevronUp, ChevronDown, Zap, Plus, Cloud } from 'lucide-react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
@@ -23,6 +23,7 @@ import { useFocusSession } from '@/components/adhd/hooks/useFocusSession';
 import { useExecutionRecommendation } from '@/components/adhd/hooks/useExecutionRecommendation';
 import { DailyPlannerView } from '../../daily-planner/components/DailyPlannerView';
 import { useADHDNavigation } from '@/lib/navigation/adhdNavigation';
+import { useSubtaskPreload } from '@/hooks/useSubtaskPreload';
 import type { TodoTimelineViewProps, RenderItem, TimelineViewMode, TimelineItem } from '../types';
 
 /**
@@ -101,6 +102,10 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
     loadAnytimeCount: data.loadAnytimeCount,
     navigatedMonth: nav.navigatedMonth,
   });
+
+  // 서브태스크 프리로드
+  const timelineItemIds = useMemo(() => nav.timelineItems.map(i => i.id), [nav.timelineItems]);
+  useSubtaskPreload(timelineItemIds);
 
   // 4. 교차 관심사 핸들러 (data + nav 양쪽 호출)
   const handleLoadMorePast = useCallback(() => {

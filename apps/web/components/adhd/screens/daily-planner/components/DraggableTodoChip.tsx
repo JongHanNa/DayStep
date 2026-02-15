@@ -40,6 +40,8 @@ interface DraggableTodoChipProps {
 
 export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, projectMap, departmentMap, highlightProjectId, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
+  const hasSubtasks = useTodoStore(s => s.hasSubtasks);
+  const getSubtaskProgress = useTodoStore(s => s.getSubtaskProgress);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -51,8 +53,15 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
     opacity: 0.4,
   } : undefined;
 
-  const timeStr = showTime && todo.startTime
-    ? new Date(todo.startTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const timeStr = showTime && todo.startTime && todo.scheduleType !== 'anytime'
+    ? (() => {
+        const start = new Date(todo.startTime!).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        if (todo.endTime) {
+          const end = new Date(todo.endTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+          return `${start}-${end}`;
+        }
+        return start;
+      })()
     : null;
 
   const isSkipped = todo.skipStatus !== null && todo.skipStatus !== undefined;
@@ -149,7 +158,7 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
 
             {/* 시간 */}
             {timeStr && (
-              <span className="flex-shrink-0 text-xs text-base-content/50 font-mono w-10">
+              <span className="flex-shrink-0 text-xs text-base-content/50 font-mono">
                 {timeStr}
               </span>
             )}
@@ -167,6 +176,16 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
 
             {/* 제목 */}
             <span className="truncate flex-1">{todo.title}</span>
+
+            {/* 서브태스크 진행도 배지 */}
+            {hasSubtasks(todo.id) && (() => {
+              const progress = getSubtaskProgress(todo.id);
+              return (
+                <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-base-300 text-base-content/60 font-medium">
+                  {progress.completed}/{progress.total}
+                </span>
+              );
+            })()}
 
             {/* 종료시간 경과 표시 */}
             {!hideOverdue && timeStatus?.status === 'missed' && !todo.completed && !isSkipped && timeStatusText?.primary && (
