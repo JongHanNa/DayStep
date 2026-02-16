@@ -92,6 +92,13 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     }
   }, [isPaddleReady]);
 
+  // 클라이언트 사이드 네비게이션 시 Paddle.js가 이미 로드되어 있으면 즉시 초기화
+  useEffect(() => {
+    if (window.Paddle && !isPaddleReady) {
+      initializePaddle();
+    }
+  }, [initializePaddle, isPaddleReady]);
+
   // Paddle Checkout 열기
   const openPaddleCheckout = useCallback((plan: 'monthly' | 'yearly') => {
     if (!window.Paddle) {
