@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayStep 구독 관리 리디자인 데모</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+            accent: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    .tab-active { border-bottom: 3px solid #3b82f6; color: #1d4ed8; font-weight: 600; }
+    .tab-inactive { border-bottom: 3px solid transparent; color: #6b7280; }
+    .tab-inactive:hover { color: #374151; border-bottom-color: #d1d5db; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: ''; display: inline-block; width: 0; height: 0; border-left: 6px solid #6b7280; border-top: 4px solid transparent; border-bottom: 4px solid transparent; margin-right: 8px; transition: transform 0.2s; }
+    details[open] summary::before { transform: rotate(90deg); }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- 헤더 배너 -->
+  <div class="bg-white border-b shadow-sm sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-bold text-gray-900">DayStep 구독 관리 리디자인</h1>
+          <p class="text-xs text-gray-500">3가지 시안 비교 데모 (코드 변경 없음)</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-400">
+          <span class="hidden sm:inline">Tailwind CSS CDN</span>
+          <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">DEMO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탭 네비게이션 -->
+  <div class="bg-white border-b">
+    <div class="max-w-4xl mx-auto px-4">
+      <nav class="flex gap-0" id="tabs">
+        <button onclick="switchTab('a')" id="tab-a" class="tab-active px-5 py-3 text-sm transition-all">
+          시안 A — 미니멀 대시보드
+        </button>
+        <button onclick="switchTab('b')" id="tab-b" class="tab-inactive px-5 py-3 text-sm transition-all">
+          시안 B — 가치 중심 카드
+        </button>
+        <button onclick="switchTab('c')" id="tab-c" class="tab-inactive px-5 py-3 text-sm transition-all">
+          시안 C — 단계별 가이드
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- 상태 토글 (공통) -->
+  <div class="max-w-4xl mx-auto px-4 pt-4">
+    <div class="flex items-center gap-3 bg-white rounded-lg border px-4 py-2.5 shadow-sm">
+      <span class="text-sm font-medium text-gray-600">상태 전환:</span>
+      <button onclick="toggleState()" id="state-toggle" class="relative inline-flex h-7 w-14 items-center rounded-full transition-colors bg-green-500">
+        <span id="state-dot" class="inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform translate-x-8"></span>
+      </button>
+      <span id="state-label" class="text-sm font-semibold text-green-700">Pro 구독 중</span>
+      <span class="text-xs text-gray-400 ml-auto hidden sm:inline">토글하여 비구독 상태 확인</span>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 시안 A: 미니멀 대시보드 -->
+  <!-- ============================================ -->
+  <div id="panel-a" class="fade-in">
+    <div class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+      <!-- A: 구독 상태 (Pro) -->
+      <div id="a-subscribed" class="space-y-5">
+        <!-- 헤더 + 상태 배지 -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">구독 관리</h2>
+            <p class="text-gray-500 text-sm mt-0.5">Pro를 이용 중입니다</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+              PRO
+            </span>
+          </div>
+        </div>
+
+        <!-- 구독 정보 카드 -->
+        <div class="bg-white rounded-xl border shadow-sm p-5">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="text-gray-400 text-xs font-medium uppercase tracking-wide">플랜</span>
+              <p class="mt-1 font-semibold text-gray-900">연간 구독</p>
+            </div>
+            <div>
+              <span class="text-gray-400 text-xs font-medium uppercase tracking-wide">결제 금액</span>
+              <p class="mt-1 font-semibold text-gray-900">&#8361;44,000/년</p>
+            </div>
+            <div>
+              <span class="text-gray-400 text-xs font-medium uppercase tracking-wide">다음 결제일</span>
+              <p class="mt-1 font-semibold text-gray-900">2027. 2. 16.</p>
+            </div>
+            <div>
+              <span class="text-gray-400 text-xs font-medium uppercase tracking-wide">상태</span>
+              <p class="mt-1 font-semibold text-green-600 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                활성
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 관리 액션 버튼 그룹 -->
+        <div class="bg-white rounded-xl border shadow-sm p-5">
+          <h3 class="text-sm font-semibold text-gray-900 mb-3">구독 관리</h3>
+          <div class="flex flex-wrap gap-2">
+            <button class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition border border-blue-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+              결제 관리
+            </button>
+            <button class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition border border-gray-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              플랜 변경
+            </button>
+            <a href="/refund" class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition border border-red-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/></svg>
+              환불 요청
+            </a>
+          </div>
+          <div class="mt-4 pt-3 border-t flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+            <a href="/refund" class="hover:text-gray-600 underline">환불 정책</a>
+            <span>|</span>
+            <a href="mailto:support@daystep.app" class="hover:text-gray-600 underline">support@daystep.app</a>
+            <span>|</span>
+            <a href="/terms" class="hover:text-gray-600 underline">이용약관</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- A: 비구독 상태 -->
+      <div id="a-unsubscribed" class="hidden space-y-5">
+        <!-- 헤더 -->
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">구독 관리</h2>
+          <p class="text-gray-500 text-sm mt-0.5">Pro로 더 많은 것을 해보세요</p>
+        </div>
+
+        <!-- 결제 CTA -->
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-lg">
+          <h3 class="text-lg font-bold mb-1">DayStep Pro</h3>
+          <p class="text-blue-100 text-sm mb-5">무제한 생산성, 더 깊은 관계 관리</p>
+
+          <!-- 월간/연간 토글 -->
+          <div class="flex items-center gap-2 mb-4">
+            <button onclick="togglePlanA('monthly')" id="a-plan-monthly" class="px-4 py-2 rounded-lg text-sm font-medium bg-white/20 text-white">월간</button>
+            <button onclick="togglePlanA('yearly')" id="a-plan-yearly" class="px-4 py-2 rounded-lg text-sm font-medium bg-white text-blue-700">연간 (33% 할인)</button>
+          </div>
+
+          <div id="a-price-monthly" class="hidden">
+            <div class="flex items-baseline gap-1 mb-4">
+              <span class="text-3xl font-extrabold">&#8361;5,500</span>
+              <span class="text-blue-200 text-sm">/월</span>
+            </div>
+            <button class="w-full bg-white text-blue-700 font-bold py-3 rounded-lg hover:bg-blue-50 transition shadow">
+              월간 구독 시작하기
+            </button>
+          </div>
+          <div id="a-price-yearly">
+            <div class="flex items-baseline gap-1 mb-1">
+              <span class="text-3xl font-extrabold">&#8361;44,000</span>
+              <span class="text-blue-200 text-sm">/년</span>
+            </div>
+            <p class="text-blue-200 text-xs mb-4">월 &#8361;3,667 (33% 할인)</p>
+            <button class="w-full bg-white text-blue-700 font-bold py-3 rounded-lg hover:bg-blue-50 transition shadow">
+              연간 구독 시작하기
+            </button>
+          </div>
+        </div>
+
+        <!-- 전체 기능 비교 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <div class="px-5 pt-5 pb-3">
+            <h3 class="text-base font-bold text-gray-900">Free vs Pro 기능 비교</h3>
+          </div>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 border-y">
+                <th class="text-left px-5 py-2.5 text-gray-500 font-medium">기능</th>
+                <th class="text-center px-3 py-2.5 text-gray-500 font-medium w-24">Free</th>
+                <th class="text-center px-3 py-2.5 text-amber-600 font-medium w-24">Pro</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              <tr><td class="px-5 py-2.5 text-gray-700">할일</td><td class="text-center text-gray-500">60개</td><td class="text-center text-amber-600 font-semibold">무제한</td></tr>
+              <tr><td class="px-5 py-2.5 text-gray-700">습관 (반복 할일)</td><td class="text-center text-gray-500">5개</td><td class="text-center text-amber-600 font-semibold">무제한</td></tr>
+              <tr><td class="px-5 py-2.5 text-gray-700">프로젝트</td><td class="text-center text-gray-500">15개</td><td class="text-center text-amber-600 font-semibold">무제한</td></tr>
+              <tr><td class="px-5 py-2.5 text-gray-700">노트</td><td class="text-center text-gray-500">40개</td><td class="text-center text-amber-600 font-semibold">무제한</td></tr>
+              <tr><td class="px-5 py-2.5 text-gray-700">연락처 연결</td><td class="text-center text-gray-500">10개</td><td class="text-center text-amber-600 font-semibold">무제한</td></tr>
+              <tr><td class="px-5 py-2.5 text-gray-700">소중한 사람</td><td class="text-center text-gray-500">10명</td><td class="text-center text-amber-600 font-semibold">무제한</td></tr>
+              <tr><td class="px-5 py-2.5 text-gray-700">관심 기록</td><td class="text-center text-gray-500">30개</td><td class="text-center text-amber-600 font-semibold">무제한</td></tr>
+              <tr><td class="px-5 py-2.5 text-gray-700">통계 & 인사이트</td><td class="text-center text-red-400">&#10005;</td><td class="text-center text-green-500 font-bold">&#10003;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 시안 B: 가치 중심 카드 -->
+  <!-- ============================================ -->
+  <div id="panel-b" class="hidden fade-in">
+    <div class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+      <!-- B: 구독 상태 (Pro) -->
+      <div id="b-subscribed" class="space-y-5">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">구독 관리</h2>
+          <p class="text-gray-500 text-sm mt-0.5">Pro를 이용 중입니다</p>
+        </div>
+
+        <!-- 프리미엄 그라데이션 카드 -->
+        <div class="bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)]"></div>
+          <div class="relative">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center glass">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold">DayStep Pro</h3>
+                <p class="text-amber-100 text-sm">연간 구독 &middot; &#8361;44,000/년</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 mb-4">
+              <span class="bg-white/20 text-white/90 text-xs px-2 py-1 rounded-full glass">다음 결제: 2027. 2. 16.</span>
+              <span class="bg-green-400/30 text-white text-xs px-2 py-1 rounded-full">활성</span>
+            </div>
+
+            <!-- 이용 중인 Pro 기능 칩 -->
+            <div class="mb-1">
+              <p class="text-amber-100 text-xs font-medium mb-2 uppercase tracking-wide">이용 중인 Pro 기능</p>
+              <div class="flex flex-wrap gap-1.5">
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">무제한 할일</span>
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">무제한 습관</span>
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">무제한 프로젝트</span>
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">무제한 노트</span>
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">무제한 연락처</span>
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">무제한 소중한 사람</span>
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">무제한 관심 기록</span>
+                <span class="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full glass">통계 & 인사이트</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 도움이 필요하세요? (접을 수 있는 섹션) -->
+        <div class="bg-white rounded-xl border shadow-sm">
+          <details>
+            <summary class="flex items-center justify-between px-5 py-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-xl transition">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                도움이 필요하세요?
+              </span>
+            </summary>
+            <div class="px-5 pb-5 pt-1 space-y-4 border-t">
+              <!-- 결제 관리 -->
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-900">결제 관리</h4>
+                  <p class="text-xs text-gray-500 mb-2">결제 수단 변경, 영수증 확인, 플랜 변경</p>
+                  <button class="text-xs text-blue-600 font-medium hover:underline">Paddle 고객 포털 열기 &rarr;</button>
+                </div>
+              </div>
+              <!-- 환불 요청 -->
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/></svg>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-900">환불 요청</h4>
+                  <p class="text-xs text-gray-500 mb-2">구독 후 7일 이내 전액 환불 가능</p>
+                  <a href="/refund" class="text-xs text-red-500 font-medium hover:underline">환불 정책 확인 &rarr;</a>
+                </div>
+              </div>
+              <!-- 구독 취소 -->
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-900">구독 취소</h4>
+                  <p class="text-xs text-gray-500 mb-2">다음 결제일까지 Pro 기능을 계속 이용할 수 있습니다</p>
+                  <button class="text-xs text-gray-500 font-medium hover:underline">구독 취소하기 &rarr;</button>
+                </div>
+              </div>
+              <!-- 문의 -->
+              <div class="pt-3 border-t text-xs text-gray-400 flex items-center gap-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                직접 문의: <a href="mailto:support@daystep.app" class="underline hover:text-gray-600">support@daystep.app</a>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- B: 비구독 상태 -->
+      <div id="b-unsubscribed" class="hidden space-y-5">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">구독 관리</h2>
+          <p class="text-gray-500 text-sm mt-0.5">Pro로 더 많은 것을 해보세요</p>
+        </div>
+
+        <!-- 가치 강조 헤더 -->
+        <div class="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-xl border border-violet-200 p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-violet-500" fill="currentColor" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+            <h3 class="text-base font-bold text-violet-900">DayStep Pro로 한계를 없애세요</h3>
+          </div>
+          <p class="text-sm text-violet-700 mb-1">할일 60개로는 부족하지 않으신가요? Pro로 무제한 생산성을 경험하세요.</p>
+        </div>
+
+        <!-- Free vs Pro 비교 테이블 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 border-b">
+                <th class="text-left px-5 py-3 text-gray-600 font-semibold">기능</th>
+                <th class="text-center px-3 py-3 text-gray-400 font-semibold w-28">
+                  <span class="inline-block bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">Free</span>
+                </th>
+                <th class="text-center px-3 py-3 w-28">
+                  <span class="inline-block bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">Pro</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              <tr class="hover:bg-gray-50"><td class="px-5 py-3 text-gray-700">할일</td><td class="text-center text-gray-400 font-mono text-xs">60개</td><td class="text-center font-semibold text-amber-600">무제한</td></tr>
+              <tr class="hover:bg-gray-50"><td class="px-5 py-3 text-gray-700">습관 (반복 할일)</td><td class="text-center text-gray-400 font-mono text-xs">5개</td><td class="text-center font-semibold text-amber-600">무제한</td></tr>
+              <tr class="hover:bg-gray-50"><td class="px-5 py-3 text-gray-700">프로젝트</td><td class="text-center text-gray-400 font-mono text-xs">15개</td><td class="text-center font-semibold text-amber-600">무제한</td></tr>
+              <tr class="hover:bg-gray-50"><td class="px-5 py-3 text-gray-700">노트</td><td class="text-center text-gray-400 font-mono text-xs">40개</td><td class="text-center font-semibold text-amber-600">무제한</td></tr>
+              <tr class="hover:bg-gray-50"><td class="px-5 py-3 text-gray-700">연락처 연결</td><td class="text-center text-gray-400 font-mono text-xs">10개</td><td class="text-center font-semibold text-amber-600">무제한</td></tr>
+              <tr class="hover:bg-gray-50"><td class="px-5 py-3 text-gray-700">소중한 사람</td><td class="text-center text-gray-400 font-mono text-xs">10명</td><td class="text-center font-semibold text-amber-600">무제한</td></tr>
+              <tr class="hover:bg-gray-50"><td class="px-5 py-3 text-gray-700">관심 기록</td><td class="text-center text-gray-400 font-mono text-xs">30개</td><td class="text-center font-semibold text-amber-600">무제한</td></tr>
+              <tr class="hover:bg-gray-50 bg-amber-50/50"><td class="px-5 py-3 text-gray-700 font-medium">통계 & 인사이트</td><td class="text-center text-red-400 text-lg">&#10005;</td><td class="text-center text-green-500 text-lg font-bold">&#10003;</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 결제 CTA -->
+        <div class="grid sm:grid-cols-2 gap-3">
+          <button class="flex flex-col items-center bg-white border-2 border-gray-200 rounded-xl px-5 py-5 hover:border-blue-300 hover:shadow transition group">
+            <span class="text-xs text-gray-400 font-medium mb-1">월간 구독</span>
+            <span class="text-2xl font-extrabold text-gray-900">&#8361;5,500<span class="text-sm font-normal text-gray-400">/월</span></span>
+            <span class="mt-3 w-full bg-gray-100 group-hover:bg-blue-600 group-hover:text-white text-gray-600 text-sm font-semibold py-2.5 rounded-lg text-center transition">시작하기</span>
+          </button>
+          <button class="flex flex-col items-center bg-white border-2 border-blue-400 rounded-xl px-5 py-5 hover:shadow-lg transition relative group">
+            <span class="absolute -top-2.5 right-3 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">33% 할인</span>
+            <span class="text-xs text-blue-500 font-medium mb-1">연간 구독</span>
+            <span class="text-2xl font-extrabold text-gray-900">&#8361;44,000<span class="text-sm font-normal text-gray-400">/년</span></span>
+            <span class="text-xs text-gray-400 mb-1">월 &#8361;3,667</span>
+            <span class="mt-2 w-full bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-lg text-center group-hover:bg-blue-700 transition">시작하기</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- 시안 C: 단계별 가이드 -->
+  <!-- ============================================ -->
+  <div id="panel-c" class="hidden fade-in">
+    <div class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+      <!-- C: 구독 상태 (Pro) -->
+      <div id="c-subscribed" class="space-y-5">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">구독 관리</h2>
+          <p class="text-gray-500 text-sm mt-0.5">Pro를 이용 중입니다</p>
+        </div>
+
+        <!-- 아코디언: 구독 정보 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <details open>
+            <summary class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition">
+              <span class="flex items-center gap-3">
+                <span class="w-7 h-7 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">1</span>
+                <span class="text-sm font-semibold text-gray-800">구독 정보</span>
+              </span>
+              <span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                활성
+              </span>
+            </summary>
+            <div class="px-5 pb-5 pt-1 border-t">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mt-3">
+                <div>
+                  <span class="text-gray-400 text-xs">플랜</span>
+                  <p class="font-semibold text-gray-900">연간</p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs">결제 금액</span>
+                  <p class="font-semibold text-gray-900">&#8361;44,000/년</p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs">다음 결제일</span>
+                  <p class="font-semibold text-gray-900">2027. 2. 16.</p>
+                </div>
+                <div>
+                  <span class="text-gray-400 text-xs">결제 플랫폼</span>
+                  <p class="font-semibold text-gray-900">Paddle (웹)</p>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- 아코디언: 구독 관리 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <details>
+            <summary class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition">
+              <span class="flex items-center gap-3">
+                <span class="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-600">2</span>
+                <span class="text-sm font-semibold text-gray-800">구독 관리</span>
+              </span>
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+            </summary>
+            <div class="px-5 pb-5 pt-1 border-t space-y-3 mt-2">
+              <a href="#" class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition group">
+                <div class="w-8 h-8 bg-blue-200 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                </div>
+                <div class="flex-1">
+                  <span class="text-sm font-medium text-blue-800">결제 수단 변경</span>
+                  <p class="text-xs text-blue-500">카드 정보 수정, 영수증 확인</p>
+                </div>
+                <svg class="w-4 h-4 text-blue-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+              </a>
+
+              <a href="#" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group">
+                <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </div>
+                <div class="flex-1">
+                  <span class="text-sm font-medium text-gray-700">플랜 변경</span>
+                  <p class="text-xs text-gray-500">월간 &#8596; 연간 전환</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+              </a>
+
+              <div class="pt-2 border-t">
+                <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition group">
+                  <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  </div>
+                  <div class="flex-1">
+                    <span class="text-sm font-medium text-red-600">구독 취소</span>
+                    <p class="text-xs text-gray-500">다음 결제일까지 Pro 이용 가능</p>
+                  </div>
+                  <svg class="w-4 h-4 text-red-300 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </a>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- 아코디언: 도움말 & 환불 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <details>
+            <summary class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition">
+              <span class="flex items-center gap-3">
+                <span class="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">3</span>
+                <span class="text-sm font-semibold text-gray-800">도움말 & 환불</span>
+              </span>
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+            </summary>
+            <div class="px-5 pb-5 pt-1 border-t space-y-4 mt-2">
+              <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <h4 class="text-sm font-semibold text-amber-800 mb-1">환불 정책</h4>
+                <p class="text-xs text-amber-700 mb-2">구독 후 7일 이내: 전액 환불 가능<br/>7일 이후: 남은 기간 비례 환불</p>
+                <a href="/refund" class="text-xs text-amber-700 font-semibold underline hover:text-amber-900">환불 정책 전문 보기 &rarr;</a>
+              </div>
+
+              <a href="/refund" class="flex items-center gap-3 p-3 bg-red-50 rounded-lg hover:bg-red-100 transition group">
+                <div class="w-8 h-8 bg-red-200 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/></svg>
+                </div>
+                <div class="flex-1">
+                  <span class="text-sm font-medium text-red-700">환불 요청하기</span>
+                  <p class="text-xs text-gray-500">환불 신청 페이지로 이동합니다</p>
+                </div>
+                <svg class="w-4 h-4 text-red-300 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+              </a>
+
+              <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <div>
+                  <span class="text-sm font-medium text-gray-700">이메일 문의</span>
+                  <p class="text-xs text-gray-500"><a href="mailto:support@daystep.app" class="text-blue-600 underline">support@daystep.app</a></p>
+                </div>
+              </div>
+
+              <div class="flex gap-3 text-xs text-gray-400 pt-1">
+                <a href="/terms" class="underline hover:text-gray-600">이용약관</a>
+                <a href="/privacy" class="underline hover:text-gray-600">개인정보 처리방침</a>
+                <a href="/refund" class="underline hover:text-gray-600">환불 정책</a>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- iOS/Android 안내 (별도 섹션) -->
+        <div class="bg-gray-50 rounded-xl border p-4">
+          <p class="text-xs text-gray-500 font-medium mb-2">다른 플랫폼에서 구독하셨나요?</p>
+          <div class="flex flex-wrap gap-2">
+            <a href="https://apps.apple.com/account/subscriptions" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-gray-600 bg-white border rounded-lg px-3 py-2 hover:bg-gray-100 transition">
+              <span>&#127822;</span> App Store에서 관리
+              <span class="text-gray-400">&rarr;</span>
+            </a>
+            <a href="https://play.google.com/store/account/subscriptions" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-gray-600 bg-white border rounded-lg px-3 py-2 hover:bg-gray-100 transition">
+              <span>&#129302;</span> Play Store에서 관리
+              <span class="text-gray-400">&rarr;</span>
+            </a>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-2">iOS/Android에서 구독하신 경우 해당 스토어에서 결제 관리, 구독 취소가 가능합니다.</p>
+        </div>
+      </div>
+
+      <!-- C: 비구독 상태 -->
+      <div id="c-unsubscribed" class="hidden space-y-5">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">구독 관리</h2>
+          <p class="text-gray-500 text-sm mt-0.5">Pro로 더 많은 것을 해보세요</p>
+        </div>
+
+        <!-- 단계 1: 기능 탐색 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <details open>
+            <summary class="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition">
+              <span class="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">1</span>
+              <span class="text-sm font-semibold text-gray-800">Pro 기능 살펴보기</span>
+            </summary>
+            <div class="px-5 pb-5 border-t">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg">
+                  <span class="text-amber-500 font-bold text-xs w-6 text-right">&#8734;</span>
+                  <span class="text-sm text-gray-700">할일 <span class="text-gray-400 text-xs">(Free: 60개)</span></span>
+                </div>
+                <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg">
+                  <span class="text-amber-500 font-bold text-xs w-6 text-right">&#8734;</span>
+                  <span class="text-sm text-gray-700">습관 <span class="text-gray-400 text-xs">(Free: 5개)</span></span>
+                </div>
+                <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg">
+                  <span class="text-amber-500 font-bold text-xs w-6 text-right">&#8734;</span>
+                  <span class="text-sm text-gray-700">프로젝트 <span class="text-gray-400 text-xs">(Free: 15개)</span></span>
+                </div>
+                <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg">
+                  <span class="text-amber-500 font-bold text-xs w-6 text-right">&#8734;</span>
+                  <span class="text-sm text-gray-700">노트 <span class="text-gray-400 text-xs">(Free: 40개)</span></span>
+                </div>
+                <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg">
+                  <span class="text-amber-500 font-bold text-xs w-6 text-right">&#8734;</span>
+                  <span class="text-sm text-gray-700">연락처 연결 <span class="text-gray-400 text-xs">(Free: 10개)</span></span>
+                </div>
+                <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg">
+                  <span class="text-amber-500 font-bold text-xs w-6 text-right">&#8734;</span>
+                  <span class="text-sm text-gray-700">소중한 사람 <span class="text-gray-400 text-xs">(Free: 10명)</span></span>
+                </div>
+                <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg">
+                  <span class="text-amber-500 font-bold text-xs w-6 text-right">&#8734;</span>
+                  <span class="text-sm text-gray-700">관심 기록 <span class="text-gray-400 text-xs">(Free: 30개)</span></span>
+                </div>
+                <div class="flex items-center gap-2 p-2.5 bg-green-50 rounded-lg border border-green-200">
+                  <span class="text-green-500 font-bold text-sm w-6 text-right">&#10003;</span>
+                  <span class="text-sm text-gray-700 font-medium">통계 & 인사이트</span>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- 단계 2: 플랜 선택 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <details open>
+            <summary class="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition">
+              <span class="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">2</span>
+              <span class="text-sm font-semibold text-gray-800">플랜 선택</span>
+            </summary>
+            <div class="px-5 pb-5 border-t">
+              <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                <!-- 월간 -->
+                <label class="relative flex flex-col items-center border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-blue-300 transition has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                  <input type="radio" name="c-plan" class="absolute top-3 right-3 w-4 h-4 text-blue-600" />
+                  <span class="text-xs text-gray-400 font-medium">월간</span>
+                  <span class="text-2xl font-extrabold text-gray-900 mt-1">&#8361;5,500<span class="text-sm font-normal text-gray-400">/월</span></span>
+                </label>
+                <!-- 연간 -->
+                <label class="relative flex flex-col items-center border-2 border-blue-400 rounded-xl p-5 cursor-pointer hover:border-blue-500 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 bg-blue-50/30">
+                  <input type="radio" name="c-plan" class="absolute top-3 right-3 w-4 h-4 text-blue-600" checked />
+                  <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap">추천 &middot; 33% 할인</span>
+                  <span class="text-xs text-blue-500 font-medium">연간</span>
+                  <span class="text-2xl font-extrabold text-gray-900 mt-1">&#8361;44,000<span class="text-sm font-normal text-gray-400">/년</span></span>
+                  <span class="text-xs text-gray-400">월 &#8361;3,667</span>
+                </label>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- 단계 3: 결제 -->
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <details open>
+            <summary class="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 transition">
+              <span class="w-7 h-7 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">3</span>
+              <span class="text-sm font-semibold text-gray-800">결제하기</span>
+            </summary>
+            <div class="px-5 pb-5 border-t mt-1">
+              <button class="w-full mt-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3.5 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-lg shadow-blue-200">
+                Pro 구독 시작하기
+              </button>
+              <div class="flex items-center justify-center gap-3 mt-3 text-[11px] text-gray-400">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  안전한 결제
+                </span>
+                <span>&middot;</span>
+                <span>7일 이내 전액 환불</span>
+                <span>&middot;</span>
+                <a href="/refund" class="underline hover:text-gray-600">환불 정책</a>
+              </div>
+              <p class="text-center text-[10px] text-gray-300 mt-2">
+                구독 시 <a href="/terms" class="underline">이용약관</a> 및 <a href="/privacy" class="underline">개인정보 처리방침</a>에 동의합니다
+              </p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 현재 문제점 요약 (하단) -->
+  <div class="max-w-4xl mx-auto px-4 pb-8 pt-4">
+    <div class="bg-gray-900 text-gray-300 rounded-xl p-5 text-xs space-y-3">
+      <h3 class="text-white font-bold text-sm">현재 SubscriptionView.tsx 문제점 요약</h3>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div>
+          <p class="text-red-400 font-semibold mb-1">치명적</p>
+          <ul class="space-y-1 text-gray-400">
+            <li>&bull; 환불/취소 경로 부재 &mdash; /refund 링크 없음, 이메일 문의처 없음</li>
+            <li>&bull; 웹 구독자에게 "영수증 이메일 확인" 간접 안내만 제공</li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-amber-400 font-semibold mb-1">UX 개선 필요</p>
+          <ul class="space-y-1 text-gray-400">
+            <li>&bull; Pro 기능 3/8만 표시 (관계 관리 중심)</li>
+            <li>&bull; 구독 유형/금액/다음 결제일 미표시</li>
+            <li>&bull; 헤더 "잠금 해제하세요" &mdash; Pro 구독자에게도 동일 문구</li>
+            <li>&bull; Paddle 결제 + 하단 비활성 버튼 가격 중복</li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-700 pt-2">
+        <p class="text-gray-500">3가지 시안 모두 공통 개선: 8개 기능 전체 표시 + 환불/취소 경로 명확화 + 헤더 맥락화 + 결제 UI 단일화 + 환불 정책 링크</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 상태 관리
+    let isSubscribed = true;
+    let currentTab = 'a';
+
+    function switchTab(tab) {
+      currentTab = tab;
+      // 탭 스타일
+      document.querySelectorAll('#tabs button').forEach(btn => {
+        btn.className = btn.id === `tab-${tab}` ? 'tab-active px-5 py-3 text-sm transition-all' : 'tab-inactive px-5 py-3 text-sm transition-all';
+      });
+      // 패널 전환
+      ['a', 'b', 'c'].forEach(t => {
+        const panel = document.getElementById(`panel-${t}`);
+        panel.classList.toggle('hidden', t !== tab);
+        if (t === tab) { panel.classList.add('fade-in'); }
+      });
+      updateStateView();
+    }
+
+    function toggleState() {
+      isSubscribed = !isSubscribed;
+      const toggle = document.getElementById('state-toggle');
+      const dot = document.getElementById('state-dot');
+      const label = document.getElementById('state-label');
+
+      if (isSubscribed) {
+        toggle.className = 'relative inline-flex h-7 w-14 items-center rounded-full transition-colors bg-green-500';
+        dot.className = 'inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform translate-x-8';
+        label.textContent = 'Pro 구독 중';
+        label.className = 'text-sm font-semibold text-green-700';
+      } else {
+        toggle.className = 'relative inline-flex h-7 w-14 items-center rounded-full transition-colors bg-gray-300';
+        dot.className = 'inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform translate-x-1';
+        label.textContent = '무료 사용자';
+        label.className = 'text-sm font-semibold text-gray-500';
+      }
+
+      updateStateView();
+    }
+
+    function updateStateView() {
+      ['a', 'b', 'c'].forEach(tab => {
+        const sub = document.getElementById(`${tab}-subscribed`);
+        const unsub = document.getElementById(`${tab}-unsubscribed`);
+        if (sub && unsub) {
+          sub.classList.toggle('hidden', !isSubscribed);
+          unsub.classList.toggle('hidden', isSubscribed);
+        }
+      });
+    }
+
+    // 시안 A 플랜 토글
+    function togglePlanA(plan) {
+      const monthly = document.getElementById('a-plan-monthly');
+      const yearly = document.getElementById('a-plan-yearly');
+      const priceMonthly = document.getElementById('a-price-monthly');
+      const priceYearly = document.getElementById('a-price-yearly');
+
+      if (plan === 'monthly') {
+        monthly.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-white text-blue-700';
+        yearly.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-white/20 text-white';
+        priceMonthly.classList.remove('hidden');
+        priceYearly.classList.add('hidden');
+      } else {
+        yearly.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-white text-blue-700';
+        monthly.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-white/20 text-white';
+        priceYearly.classList.remove('hidden');
+        priceMonthly.classList.add('hidden');
+      }
+    }
+  </script>
+
+</body>
+</html>
