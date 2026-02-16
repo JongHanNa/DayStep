@@ -201,8 +201,8 @@ export default function RefundPage() {
             Paddle 고객 지원을 통해 환불을 요청하실 수 있습니다.
           </p>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
-            <li>결제 시 수신한 영수증 이메일에서 &quot;Manage Subscription&quot; 또는 &quot;Contact Support&quot; 링크 클릭</li>
-            <li>또는 Paddle 고객 포털에서 직접 환불 요청</li>
+            <li>영수증 이메일 하단의 &quot;PADDLE.NET&quot; 링크 클릭 → Paddle 고객지원 페이지에서 &quot;Look up my purchase&quot; 클릭 → 이메일 인증 후 환불 요청</li>
+            <li>또는 skwhdgks@gmail.com으로 환불 요청 이메일 발송</li>
           </ul>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
@@ -313,9 +313,9 @@ export default function RefundPage() {
             웹에서 결제한 경우 (Paddle)
           </h3>
           <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
-            <li>결제 시 수신한 영수증 이메일 확인</li>
-            <li>&quot;Manage Subscription&quot; 링크 클릭</li>
-            <li>Paddle 고객 포털에서 구독 취소</li>
+            <li>구독 확인 이메일에서 &quot;구독을 취소하려면 여기를 클릭하세요&quot; 링크 클릭</li>
+            <li>또는 <a href="https://www.paddle.net" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">paddle.net</a> 방문 → &quot;Look up my purchase&quot; → 이메일 인증 → 구독 취소</li>
+            <li>또는 skwhdgks@gmail.com으로 취소 요청</li>
           </ol>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">

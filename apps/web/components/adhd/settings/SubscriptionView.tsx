@@ -377,48 +377,53 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                 {/* 결제 수단 변경 */}
                 <button
                   className="flex items-center gap-3 w-full px-4 py-3 text-left bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors"
-                  onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                  onClick={() => window.open('https://www.paddle.net', '_blank')}
                 >
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
                     <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">결제 수단 변경</p>
-                    <p className="text-xs text-muted-foreground">카드 정보 수정, 영수증 확인</p>
+                    <p className="text-xs text-muted-foreground">Paddle 고객지원에서 결제 정보 변경</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </button>
 
                 {/* 플랜 변경 */}
-                <button
+                <a
                   className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
-                  onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                  href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
                 >
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                     <RefreshCw className="w-4 h-4 text-muted-foreground" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">플랜 변경</p>
-                    <p className="text-xs text-muted-foreground">월간 ↔ 연간 전환</p>
+                    <p className="text-xs text-muted-foreground">이메일로 플랜 변경 요청</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                </button>
+                </a>
 
                 {/* 구독 취소 */}
                 <button
                   className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border-t"
-                  onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                  onClick={() => window.open('https://www.paddle.net', '_blank')}
                 >
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
                     <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
-                    <p className="text-xs text-muted-foreground">다음 결제일까지 Pro 이용 가능</p>
+                    <p className="text-xs text-muted-foreground">Paddle 고객지원에서 구독 취소</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
                 </button>
               </div>
+
+              {/* 안내 문구 */}
+              <p className="text-xs text-muted-foreground mt-3">
+                구독 시 수신한 이메일의 관리 링크를 통해서도 결제 수단 변경, 구독 취소가 가능합니다.
+              </p>
             </div>
           </details>
 
@@ -435,7 +440,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                 <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">환불 정책</p>
                 <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-0.5 list-disc list-inside">
                   <li>구독 후 <strong>7일 이내</strong>: 전액 환불 가능</li>
-                  <li>7일 이후: 남은 기간 비례 환불</li>
+                  <li>7일 이후: 환불 불가 (구독 취소 시 현재 기간까지 이용 가능)</li>
                 </ul>
                 <a
                   href="/refund"
@@ -448,7 +453,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
 
               {/* 환불 요청하기 */}
               <button
-                onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                onClick={() => window.open('https://www.paddle.net', '_blank')}
                 className="flex items-center gap-3 rounded-lg bg-red-50 dark:bg-red-950/30 p-3 text-sm hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors w-full text-left"
               >
                 <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center">
@@ -456,7 +461,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-red-700 dark:text-red-300">환불 요청하기</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Paddle 고객 포털에서 환불 신청</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Paddle 고객지원에서 환불 요청</p>
                 </div>
                 <ExternalLink className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
               </button>
