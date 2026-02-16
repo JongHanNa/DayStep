@@ -14,13 +14,13 @@ import { FREE_TIER_LIMITS } from '@/lib/featureFlags';
 import { useUsageStats } from '@/hooks/useUsageStats';
 import type { UserUsageStats } from '@/lib/supabase/usage';
 
-// Paddle 설정
+// Paddle 설정 (환경변수 기반 — .env.development: sandbox, .env.production: production)
 const PADDLE_CONFIG = {
-  clientToken: 'live_f3f52a96a4d916a1382ee66aaa1',
-  environment: 'production' as const,
+  clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || '',
+  environment: (process.env.NEXT_PUBLIC_PADDLE_ENV || 'production') as 'sandbox' | 'production',
   prices: {
-    monthly: 'pri_01kbgwtw6fdknst82vxc9sjg3s',
-    yearly: 'pri_01kbgx1kbjmtw96e0fkjg46j1r',
+    monthly: process.env.NEXT_PUBLIC_PADDLE_PRICE_MONTHLY || 'pri_01kbgwtw6fdknst82vxc9sjg3s',
+    yearly: process.env.NEXT_PUBLIC_PADDLE_PRICE_YEARLY || 'pri_01kbgx1kbjmtw96e0fkjg46j1r',
   },
 };
 
@@ -30,6 +30,7 @@ declare global {
     Paddle?: {
       Initialize: (config: {
         token: string;
+        environment?: 'sandbox' | 'production';
         eventCallback?: (event: any) => void;
       }) => void;
       Checkout: {
@@ -139,7 +140,10 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const initializePaddle = useCallback(() => {
     if (window.Paddle && !isPaddleReady) {
       try {
-        window.Paddle.Initialize({ token: PADDLE_CONFIG.clientToken });
+        window.Paddle.Initialize({
+          token: PADDLE_CONFIG.clientToken,
+          environment: PADDLE_CONFIG.environment,
+        });
         setIsPaddleReady(true);
         console.log('Paddle initialized successfully');
       } catch (error) {
