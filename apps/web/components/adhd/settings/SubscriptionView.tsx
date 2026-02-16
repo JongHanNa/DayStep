@@ -438,7 +438,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                   <li>7일 이후: 남은 기간 비례 환불</li>
                 </ul>
                 <a
-                  href="/refund-policy"
+                  href="/refund"
                   className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline mt-1"
                 >
                   환불 정책 전문 보기
@@ -447,19 +447,19 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               </div>
 
               {/* 환불 요청하기 */}
-              <a
-                href="/refund"
-                className="flex items-center gap-3 rounded-lg bg-red-50 dark:bg-red-950/30 p-3 text-sm hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
+              <button
+                onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                className="flex items-center gap-3 rounded-lg bg-red-50 dark:bg-red-950/30 p-3 text-sm hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors w-full text-left"
               >
                 <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center">
                   <HelpCircle className="w-4 h-4 text-red-700 dark:text-red-300" />
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-red-700 dark:text-red-300">환불 요청하기</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">환불 신청 페이지로 이동합니다</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Paddle 고객 포털에서 환불 신청</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
-              </a>
+                <ExternalLink className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
+              </button>
 
               {/* 이메일 문의 */}
               <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3 text-sm">
@@ -476,7 +476,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 <a href="/terms" className="underline hover:text-foreground">이용약관</a>
                 <a href="/privacy" className="underline hover:text-foreground">개인정보 처리방침</a>
-                <a href="/refund-policy" className="underline hover:text-foreground">환불 정책</a>
+                <a href="/refund" className="underline hover:text-foreground">환불 정책</a>
               </div>
             </div>
           </details>
@@ -690,7 +690,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                 <span>·</span>
                 <span>7일 이내 전액 환불</span>
                 <span>·</span>
-                <a href="/refund-policy" className="underline hover:text-foreground">환불 정책</a>
+                <a href="/refund" className="underline hover:text-foreground">환불 정책</a>
               </div>
 
               {/* 동의 문구 */}
