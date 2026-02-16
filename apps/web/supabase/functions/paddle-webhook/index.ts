@@ -15,6 +15,7 @@ import { createHmac } from 'https://deno.land/std@0.168.0/crypto/mod.ts';
  * - subscription.paused: 구독 일시정지
  * - subscription.resumed: 구독 재개
  * - transaction.completed: 거래 완료
+ * - transaction.refunded: 환불 처리
  */
 
 interface PaddleWebhookEvent {
@@ -184,6 +185,10 @@ serve(async (req) => {
         await handleTransactionCompleted(supabase, data, appUserId, revenueCatPaddleApiKey);
         break;
 
+      case 'transaction.refunded':
+        await handleTransactionRefunded(supabase, data, appUserId);
+        break;
+
       default:
         console.log(`Unhandled event type: ${event_type}`);
     }
@@ -349,15 +354,16 @@ async function handleSubscriptionUpdated(
     .from('users')
     .update({
       has_active_subscription: data.status === 'active',
-      subscription_type: normalizedProductId,
+      subscription_type: data.status === 'active' ? normalizedProductId : 'free',
       subscription_expires_at: expiresAt,
     })
     .eq('id', appUserId);
 
-  // 히스토리 기록
+  // 히스토리 기록 — cancel/pause 등으로 인한 updated 이벤트 구분
+  const historyEventType = data.status === 'active' ? 'subscription_renewed' : 'subscription_updated';
   await insertSubscriptionHistory(supabase, {
     user_id: appUserId,
-    event_type: 'subscription_renewed',
+    event_type: historyEventType,
     platform: 'web',
     product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
@@ -382,7 +388,7 @@ async function handleSubscriptionCanceled(
     ? new Date(data.current_billing_period.ends_at)
     : null;
 
-  // 구독 상태 업데이트 (만료일까지는 active 유지)
+  // 구독 상태 업데이트
   await supabase
     .from('subscriptions')
     .update({
@@ -392,6 +398,15 @@ async function handleSubscriptionCanceled(
       updated_at: new Date(),
     })
     .eq('user_id', appUserId);
+
+  // users 테이블 캐시 업데이트
+  await supabase
+    .from('users')
+    .update({
+      has_active_subscription: false,
+      subscription_type: 'free',
+    })
+    .eq('id', appUserId);
 
   // 히스토리 기록
   await insertSubscriptionHistory(supabase, {
@@ -523,6 +538,50 @@ async function handleTransactionCompleted(
   });
 
   console.log(`Transaction completed for user ${appUserId}: ${transactionId}`);
+}
+
+/**
+ * 환불 처리
+ */
+async function handleTransactionRefunded(
+  supabase: any,
+  data: PaddleWebhookEvent['data'],
+  appUserId: string
+) {
+  const transactionId = data.id;
+  const productId = data.items[0]?.price?.product_id || '';
+  const priceId = data.items[0]?.price?.id || '';
+  const normalizedProductId = normalizeProductId(productId, priceId);
+
+  // 구독 상태를 cancelled로 변경
+  await supabase
+    .from('subscriptions')
+    .update({
+      status: 'cancelled',
+      cancelled_at: new Date(),
+      updated_at: new Date(),
+    })
+    .eq('user_id', appUserId);
+
+  // users 테이블 캐시 업데이트
+  await supabase
+    .from('users')
+    .update({
+      has_active_subscription: false,
+      subscription_type: 'free',
+    })
+    .eq('id', appUserId);
+
+  // 히스토리 기록
+  await insertSubscriptionHistory(supabase, {
+    user_id: appUserId,
+    event_type: 'payment_refunded',
+    platform: 'web',
+    product_id: normalizedProductId,
+    paddle_transaction_id: transactionId,
+  });
+
+  console.log(`Transaction refunded for user ${appUserId}: ${transactionId}`);
 }
 
 /**
