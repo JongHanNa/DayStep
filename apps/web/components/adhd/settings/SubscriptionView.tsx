@@ -25,10 +25,10 @@ const PADDLE_CONFIG = {
 declare global {
   interface Window {
     Paddle?: {
-      Environment: {
-        set: (env: 'sandbox' | 'production') => void;
-      };
-      Setup: (config: { token: string }) => void;
+      Initialize: (config: {
+        token: string;
+        eventCallback?: (event: any) => void;
+      }) => void;
       Checkout: {
         open: (options: {
           items: Array<{ priceId: string; quantity: number }>;
@@ -79,12 +79,11 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   // 개발 환경 여부
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  // Paddle 초기화
+  // Paddle 초기화 (v2 Initialize API 사용, production이 기본값)
   const initializePaddle = useCallback(() => {
     if (window.Paddle && !isPaddleReady) {
       try {
-        window.Paddle.Environment.set(PADDLE_CONFIG.environment);
-        window.Paddle.Setup({ token: PADDLE_CONFIG.clientToken });
+        window.Paddle.Initialize({ token: PADDLE_CONFIG.clientToken });
         setIsPaddleReady(true);
         console.log('Paddle initialized successfully');
       } catch (error) {
