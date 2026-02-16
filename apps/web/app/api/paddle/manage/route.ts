@@ -116,6 +116,8 @@ export async function POST(req: NextRequest) {
           .from('subscriptions')
           .update({ cancelled_at: new Date().toISOString() })
           .eq('paddle_subscription_id', paddleSubId);
+      } else {
+        console.error('[Paddle manage] SUPABASE_SERVICE_ROLE_KEY not configured - cancelled_at DB update skipped for:', paddleSubId);
       }
 
       return NextResponse.json({
@@ -144,6 +146,12 @@ export async function POST(req: NextRequest) {
       if (!paddleRes.ok) {
         const errData = await paddleRes.json().catch(() => ({}));
         console.error('Paddle reactivate error:', errData);
+        if (paddleRes.status === 403) {
+          console.error(
+            'Paddle 403 Forbidden: API 키에 Subscriptions Write 권한이 필요합니다. ' +
+            'Paddle Dashboard → Developer Tools → Authentication에서 키 권한을 확인하세요.'
+          );
+        }
         return NextResponse.json(
           { error: `취소 철회 실패: ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`, details: errData },
           { status: paddleRes.status }
@@ -156,6 +164,8 @@ export async function POST(req: NextRequest) {
           .from('subscriptions')
           .update({ cancelled_at: null })
           .eq('paddle_subscription_id', paddleSubId);
+      } else {
+        console.error('[Paddle manage] SUPABASE_SERVICE_ROLE_KEY not configured - cancelled_at clear skipped for:', paddleSubId);
       }
 
       return NextResponse.json({
