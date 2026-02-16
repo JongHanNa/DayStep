@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Crown, RefreshCw, Wrench, XCircle, CheckCircle, CreditCard, ChevronDown, Mail, ExternalLink, HelpCircle, Shield, Sparkles } from 'lucide-react';
+import { Crown, RefreshCw, Wrench, XCircle, CheckCircle, CreditCard, ChevronDown, ChevronRight, Mail, ExternalLink, HelpCircle, Shield, Sparkles } from 'lucide-react';
 import Script from 'next/script';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { devCancelSubscription, devActivateSubscription } from '@/lib/supabase/subscription';
 import { FREE_TIER_LIMITS } from '@/lib/featureFlags';
+import { useUsageStats } from '@/hooks/useUsageStats';
+import type { UserUsageStats } from '@/lib/supabase/usage';
 
 // Paddle 설정
 const PADDLE_CONFIG = {
@@ -51,13 +53,18 @@ interface SubscriptionViewProps {
 
 // 플랜 정보 헬퍼
 function getPlanInfo(productId?: string) {
-  if (productId === PADDLE_CONFIG.prices.monthly) {
-    return { label: '월간', price: '₩5,500/월' };
-  }
-  if (productId === PADDLE_CONFIG.prices.yearly) {
-    return { label: '연간', price: '₩44,000/년' };
-  }
-  return { label: productId || '구독 중', price: '-' };
+  if (!productId) return { label: '구독 중', price: '-' };
+
+  // Paddle price ID 정확 매칭
+  if (productId === PADDLE_CONFIG.prices.monthly) return { label: '월간', price: '₩5,500/월' };
+  if (productId === PADDLE_CONFIG.prices.yearly) return { label: '연간', price: '₩44,000/년' };
+
+  // 문자열 패턴 매칭 (개발 환경, 스토어 productId 등)
+  const lower = productId.toLowerCase();
+  if (lower.includes('yearly') || lower.includes('annual')) return { label: '연간', price: '₩44,000/년' };
+  if (lower.includes('monthly')) return { label: '월간', price: '₩5,500/월' };
+
+  return { label: '구독 중', price: '-' };
 }
 
 // 플랫폼 표시명 헬퍼
@@ -71,16 +78,22 @@ function getPlatformLabel(platform?: string) {
 }
 
 // Free vs Pro 비교 테이블 데이터
-const FEATURE_COMPARISON = [
-  { name: '할일', free: `${FREE_TIER_LIMITS.MAX_TODOS}개`, pro: '무제한' },
-  { name: '습관', free: `${FREE_TIER_LIMITS.MAX_HABITS}개`, pro: '무제한' },
-  { name: '프로젝트', free: `${FREE_TIER_LIMITS.MAX_PROJECTS}개`, pro: '무제한' },
-  { name: '노트', free: `${FREE_TIER_LIMITS.MAX_NOTES}개`, pro: '무제한' },
-  { name: '연락처 연결', free: `${FREE_TIER_LIMITS.MAX_CONTACTS}개`, pro: '무제한' },
-  { name: '소중한 사람', free: `${FREE_TIER_LIMITS.MAX_CHERISHED_PEOPLE}명`, pro: '무제한' },
-  { name: '관심 기록', free: `${FREE_TIER_LIMITS.MAX_CARE_INTERACTIONS}개`, pro: '무제한' },
-  { name: '통계 & 인사이트', free: null, pro: true },
-] as const;
+const FEATURE_COMPARISON: Array<{
+  name: string;
+  freeLimit: number;
+  unit: string;
+  pro: string | true;
+  statsKey: keyof UserUsageStats | null;
+}> = [
+  { name: '할일', freeLimit: FREE_TIER_LIMITS.MAX_TODOS, unit: '개', pro: '무제한', statsKey: 'todoCount' },
+  { name: '습관', freeLimit: FREE_TIER_LIMITS.MAX_HABITS, unit: '개', pro: '무제한', statsKey: 'habitCount' },
+  { name: '프로젝트', freeLimit: FREE_TIER_LIMITS.MAX_PROJECTS, unit: '개', pro: '무제한', statsKey: 'projectCount' },
+  { name: '노트', freeLimit: FREE_TIER_LIMITS.MAX_NOTES, unit: '개', pro: '무제한', statsKey: 'noteCount' },
+  { name: '연락처 연결', freeLimit: FREE_TIER_LIMITS.MAX_CONTACTS, unit: '개', pro: '무제한', statsKey: 'contactCount' },
+  { name: '소중한 사람', freeLimit: FREE_TIER_LIMITS.MAX_CHERISHED_PEOPLE, unit: '명', pro: '무제한', statsKey: 'cherishedPeopleCount' },
+  { name: '관심 기록', freeLimit: FREE_TIER_LIMITS.MAX_CARE_INTERACTIONS, unit: '개', pro: '무제한', statsKey: 'careInteractionCount' },
+  { name: '통계 & 인사이트', freeLimit: 0, unit: '', pro: true, statsKey: null },
+];
 
 /**
  * 구독 관리 뷰
@@ -101,6 +114,8 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     isNative,
     paymentsEnabled,
   } = useSubscription();
+
+  const { stats: usageStats } = useUsageStats();
 
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -357,61 +372,53 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               <span className="font-semibold text-base flex-1">구독 관리</span>
               <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform group-open:rotate-180" />
             </summary>
-            <div className="px-4 pb-4 pt-2 border-t space-y-3">
-              {subscriptionInfo?.platform && subscriptionInfo.platform !== 'web' ? (
-                /* iOS / Android 스토어 관리 */
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    결제 관리, 구독 취소가 가능합니다.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between"
-                    onClick={() => {
-                      if (subscriptionInfo.platform === 'ios') {
-                        window.open('https://apps.apple.com/account/subscriptions', '_blank');
-                      } else {
-                        window.open('https://play.google.com/store/account/subscriptions', '_blank');
-                      }
-                    }}
-                  >
-                    <span>{subscriptionInfo.platform === 'ios' ? 'App Store' : 'Play Store'}에서 관리</span>
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : (
-                /* 웹 (Paddle) 관리 */
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <button
-                    className="flex flex-col items-center gap-2 rounded-lg border p-4 text-sm hover:bg-accent transition-colors"
-                    onClick={() => {
-                      // Paddle 고객 포털 — 구독 이메일로 매직링크 전송
-                      window.open('https://customer-portal.paddle.com', '_blank');
-                    }}
-                  >
-                    <CreditCard className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-medium">결제 수단 변경</span>
-                  </button>
-                  <button
-                    className="flex flex-col items-center gap-2 rounded-lg border p-4 text-sm hover:bg-accent transition-colors"
-                    onClick={() => {
-                      window.open('https://customer-portal.paddle.com', '_blank');
-                    }}
-                  >
-                    <RefreshCw className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-medium">플랜 변경</span>
-                  </button>
-                  <button
-                    className="flex flex-col items-center gap-2 rounded-lg border p-4 text-sm hover:bg-accent transition-colors text-red-600 dark:text-red-400"
-                    onClick={() => {
-                      window.open('https://customer-portal.paddle.com', '_blank');
-                    }}
-                  >
-                    <XCircle className="w-5 h-5" />
-                    <span className="font-medium">구독 취소</span>
-                  </button>
-                </div>
-              )}
+            <div className="px-4 pb-4 pt-2 border-t">
+              <div className="rounded-xl border overflow-hidden">
+                {/* 결제 수단 변경 */}
+                <button
+                  className="flex items-center gap-3 w-full px-4 py-3 text-left bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors"
+                  onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                >
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">결제 수단 변경</p>
+                    <p className="text-xs text-muted-foreground">카드 정보 수정, 영수증 확인</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </button>
+
+                {/* 플랜 변경 */}
+                <button
+                  className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
+                  onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                >
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">플랜 변경</p>
+                    <p className="text-xs text-muted-foreground">월간 ↔ 연간 전환</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </button>
+
+                {/* 구독 취소 */}
+                <button
+                  className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border-t"
+                  onClick={() => window.open('https://customer-portal.paddle.com', '_blank')}
+                >
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                    <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
+                    <p className="text-xs text-muted-foreground">다음 결제일까지 Pro 이용 가능</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
+                </button>
+              </div>
             </div>
           </details>
 
@@ -424,37 +431,45 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
             </summary>
             <div className="px-4 pb-4 pt-2 border-t space-y-4">
               {/* 환불 정책 요약 */}
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
-                <div className="flex items-start gap-2">
-                  <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    구독 시작일로부터 <strong>7일 이내</strong> 전액 환불이 가능합니다.
-                  </p>
-                </div>
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 space-y-1.5">
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">환불 정책</p>
+                <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-0.5 list-disc list-inside">
+                  <li>구독 후 <strong>7일 이내</strong>: 전액 환불 가능</li>
+                  <li>7일 이후: 남은 기간 비례 환불</li>
+                </ul>
+                <a
+                  href="/refund-policy"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline mt-1"
+                >
+                  환불 정책 전문 보기
+                  <ChevronRight className="w-3 h-3" />
+                </a>
               </div>
 
-              {/* 환불 요청 & 이메일 */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <a
-                  href="/refund"
-                  className="flex items-center gap-3 rounded-lg border p-3 text-sm hover:bg-accent transition-colors"
-                >
-                  <HelpCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">환불 요청</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">온라인으로 환불 신청</p>
-                  </div>
-                </a>
-                <a
-                  href="mailto:skwhdgks@gmail.com"
-                  className="flex items-center gap-3 rounded-lg border p-3 text-sm hover:bg-accent transition-colors"
-                >
-                  <Mail className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">이메일 문의</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">skwhdgks@gmail.com</p>
-                  </div>
-                </a>
+              {/* 환불 요청하기 */}
+              <a
+                href="/refund"
+                className="flex items-center gap-3 rounded-lg bg-red-50 dark:bg-red-950/30 p-3 text-sm hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
+              >
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center">
+                  <HelpCircle className="w-4 h-4 text-red-700 dark:text-red-300" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-red-700 dark:text-red-300">환불 요청하기</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">환불 신청 페이지로 이동합니다</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
+              </a>
+
+              {/* 이메일 문의 */}
+              <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3 text-sm">
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">이메일 문의</p>
+                  <a href="mailto:skwhdgks@gmail.com" className="text-xs text-primary hover:underline">skwhdgks@gmail.com</a>
+                </div>
               </div>
 
               {/* 정책 링크 */}
@@ -465,6 +480,35 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               </div>
             </div>
           </details>
+          {/* 다른 플랫폼에서 구독하셨나요? */}
+          <div className="rounded-xl border bg-muted/50 p-4 space-y-3">
+            <p className="text-sm font-semibold">다른 플랫폼에서 구독하셨나요?</p>
+            <div className="space-y-2">
+              <a
+                href="https://apps.apple.com/account/subscriptions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <span>🍎</span>
+                <span className="flex-1 font-medium">App Store에서 관리</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </a>
+              <a
+                href="https://play.google.com/store/account/subscriptions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <span>🤖</span>
+                <span className="flex-1 font-medium">Play Store에서 관리</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </a>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              iOS/Android에서 구독하신 경우 해당 스토어에서 결제 관리, 구독 취소가 가능합니다.
+            </p>
+          </div>
         </>
       )}
 
@@ -494,25 +538,32 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {FEATURE_COMPARISON.map((feat) => (
-                      <tr key={feat.name} className="border-b last:border-0">
-                        <td className="py-2.5 pr-4">{feat.name}</td>
-                        <td className="py-2.5 px-3 text-center text-muted-foreground">
-                          {feat.free === null ? (
-                            <span className="text-red-400 dark:text-red-500">✕</span>
-                          ) : (
-                            feat.free
-                          )}
-                        </td>
-                        <td className="py-2.5 pl-3 text-center font-medium text-primary">
-                          {feat.pro === true ? (
-                            <span className="text-green-600 dark:text-green-400">✓</span>
-                          ) : (
-                            feat.pro
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {FEATURE_COMPARISON.map((feat) => {
+                      const currentCount = feat.statsKey && usageStats
+                        ? (usageStats[feat.statsKey] as number) || 0
+                        : null;
+                      return (
+                        <tr key={feat.name} className="border-b last:border-0">
+                          <td className="py-2.5 pr-4">{feat.name}</td>
+                          <td className="py-2.5 px-3 text-center text-muted-foreground">
+                            {feat.statsKey === null ? (
+                              <span className="text-red-400 dark:text-red-500">✕</span>
+                            ) : currentCount !== null ? (
+                              `${currentCount}/${feat.freeLimit}${feat.unit}`
+                            ) : (
+                              `${feat.freeLimit}${feat.unit}`
+                            )}
+                          </td>
+                          <td className="py-2.5 pl-3 text-center font-medium text-primary">
+                            {feat.pro === true ? (
+                              <span className="text-green-600 dark:text-green-400">✓</span>
+                            ) : (
+                              feat.pro
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
