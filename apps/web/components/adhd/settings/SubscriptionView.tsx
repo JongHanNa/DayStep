@@ -130,6 +130,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isReactivating, setIsReactivating] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [isUpgradingPlan, setIsUpgradingPlan] = useState(false);
 
   // 개발 환경 여부
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -381,6 +382,51 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     }
   };
 
+  // Paddle API를 통한 월간→연간 업그레이드
+  const handleUpgradeToYearly = async () => {
+    if (!window.confirm('연간 플랜으로 업그레이드하시겠습니까?\n\n• 즉시 연간 플랜으로 전환됩니다\n• 미사용 월간 기간은 비례 차감됩니다')) {
+      return;
+    }
+
+    setIsUpgradingPlan(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('로그인이 필요합니다.');
+        return;
+      }
+
+      const res = await fetch('/api/paddle/manage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'change-plan',
+          newPriceId: PADDLE_CONFIG.prices.yearly,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || '플랜 변경 실패');
+      }
+
+      toast.success('연간 플랜으로 업그레이드되었습니다! 🎉');
+
+      if (user?.id) {
+        await syncSubscription(user.id);
+      }
+    } catch (error: any) {
+      console.error('Paddle change-plan error:', error);
+      toast.error(error.message || '플랜 변경 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpgradingPlan(false);
+    }
+  };
+
   // [개발 전용] 구독 취소 핸들러
   const handleDevCancel = async () => {
     if (!user?.id) {
@@ -534,20 +580,33 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                       )}
                     </button>
 
-                    {/* 플랜 변경 */}
-                    <a
-                      className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
-                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
-                    >
-                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                        <RefreshCw className="w-4 h-4 text-muted-foreground" />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">플랜 변경</p>
-                        <p className="text-xs text-muted-foreground">이메일로 플랜 변경 요청</p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    </a>
+                    {/* 플랜 변경: 월간 사용자만 연간 업그레이드 버튼 표시 */}
+                    {subscriptionInfo?.productId?.includes('monthly') && (
+                      <button
+                        onClick={handleUpgradeToYearly}
+                        disabled={isUpgradingPlan || !!subscriptionInfo?.cancelledAt}
+                        className="flex items-center gap-3 w-full px-4 py-3 text-left bg-primary/5 hover:bg-primary/10 transition-colors border-t disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                          {isUpgradingPlan ? (
+                            <RefreshCw className="w-4 h-4 text-primary animate-spin" />
+                          ) : (
+                            <Sparkles className="w-4 h-4 text-primary" />
+                          )}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-primary">연간 플랜으로 업그레이드</p>
+                          <p className="text-xs text-muted-foreground">
+                            {isUpgradingPlan
+                              ? '변경 처리 중...'
+                              : subscriptionInfo?.cancelledAt
+                                ? '취소 예약 상태에서는 변경할 수 없습니다'
+                                : '₩44,000/년 (33% 할인) · 미사용분 비례 차감'}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      </button>
+                    )}
 
                     {/* 구독 취소 / 취소 철회 */}
                     {subscriptionInfo?.cancelledAt ? (

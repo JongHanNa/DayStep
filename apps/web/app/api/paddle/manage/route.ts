@@ -3,6 +3,7 @@
  * - 구독 취소 (cancel)
  * - 취소 철회 (reactivate)
  * - 결제 수단 변경 트랜잭션 생성 (update-payment)
+ * - 플랜 변경 (change-plan): 월간→연간 업그레이드
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -55,9 +56,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action } = body as { action: string };
 
-    if (!action || !['cancel', 'reactivate', 'update-payment'].includes(action)) {
+    if (!action || !['cancel', 'reactivate', 'update-payment', 'change-plan'].includes(action)) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "cancel", "reactivate", or "update-payment"' },
+        { error: 'Invalid action. Must be "cancel", "reactivate", "update-payment", or "change-plan"' },
         { status: 400 }
       );
     }
@@ -208,6 +209,61 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         transactionId,
+      });
+    }
+
+    if (action === 'change-plan') {
+      const YEARLY_PRICE_ID = 'pri_01kbgx1kbjmtw96e0fkjg46j1r';
+      const { newPriceId } = body as { newPriceId?: string };
+
+      // 연간 price_id만 허용 (월간→연간 업그레이드만 지원)
+      if (!newPriceId || newPriceId !== YEARLY_PRICE_ID) {
+        return NextResponse.json(
+          { error: '연간 플랜으로의 업그레이드만 지원됩니다.' },
+          { status: 400 }
+        );
+      }
+
+      const paddleRes = await fetch(
+        `${PADDLE_API_BASE}/subscriptions/${paddleSubId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${PADDLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: [{ price_id: newPriceId, quantity: 1 }],
+            proration_billing_mode: 'prorated_immediately',
+          }),
+        }
+      );
+
+      if (!paddleRes.ok) {
+        const errData = await paddleRes.json().catch(() => ({}));
+        console.error('Paddle change-plan error:', errData);
+        return NextResponse.json(
+          { error: `플랜 변경 실패: ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`, details: errData },
+          { status: paddleRes.status }
+        );
+      }
+
+      // 성공 시 DB 업데이트 (webhook 도착 전 즉시 반영)
+      if (serviceClient) {
+        await serviceClient
+          .from('subscriptions')
+          .update({
+            paddle_price_id: newPriceId,
+            product_id: 'pro_yearly',
+          })
+          .eq('paddle_subscription_id', paddleSubId);
+      } else {
+        console.error('[Paddle manage] SUPABASE_SERVICE_ROLE_KEY not configured - change-plan DB update skipped for:', paddleSubId);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Plan changed to yearly',
       });
     }
   } catch (error) {
