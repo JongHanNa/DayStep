@@ -101,6 +101,11 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
 
   // Paddle Checkout 열기
   const openPaddleCheckout = useCallback((plan: 'monthly' | 'yearly') => {
+    if (hasActiveSubscription) {
+      toast.error('이미 Pro 구독이 활성화되어 있습니다.');
+      return;
+    }
+
     if (!window.Paddle) {
       toast.error('결제 시스템을 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
@@ -125,7 +130,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
           displayMode: 'overlay',
           theme: 'light',
           locale: 'ko',
-          successUrl: `${window.location.origin}/?settings=subscription&success=true`,
+          successUrl: `${window.location.origin}/adhd/settings/subscription?success=true`,
         },
       });
     } catch (error) {
@@ -134,7 +139,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     } finally {
       setIsPaddleLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, hasActiveSubscription]);
 
   // 결제 성공 처리
   useEffect(() => {
@@ -299,7 +304,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                   </p>
                 </div>
               )}
-              {subscriptionInfo?.platform && (
+              {subscriptionInfo?.platform && subscriptionInfo.platform !== 'web' && (
                 <div>
                   <span className="font-medium text-muted-foreground">플랫폼:</span>
                   <p className="mt-1 font-semibold text-foreground">
@@ -460,7 +465,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {subscriptionInfo?.platform && (
+            {subscriptionInfo?.platform && subscriptionInfo.platform !== 'web' && (
               <Button
                 variant="outline"
                 className="w-full"
@@ -477,7 +482,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               </Button>
             )}
 
-            {!subscriptionInfo?.platform && (
+            {(!subscriptionInfo?.platform || subscriptionInfo.platform === 'web') && (
               <div className="text-sm text-muted-foreground space-y-2">
                 <p className="font-medium text-foreground">웹에서 결제하셨다면:</p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
