@@ -394,7 +394,7 @@ export function AuthProvider({
       }
 
       console.log('[Auth] 테스트 계정 로그인 성공:', data.user?.id);
-      window.location.href = '/graph';
+      window.location.href = '/';
 
     } catch (error) {
       console.error('[Auth] 테스트 계정 로그인 실패:', error);
