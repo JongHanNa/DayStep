@@ -375,19 +375,15 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
             <div className="px-4 pb-4 pt-2 border-t">
               <div className="rounded-xl border overflow-hidden">
                 {/* 결제 수단 변경 */}
-                <button
-                  className="flex items-center gap-3 w-full px-4 py-3 text-left bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors"
-                  onClick={() => window.open('https://www.paddle.net', '_blank')}
-                >
+                <div className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30">
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
                     <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">결제 수단 변경</p>
-                    <p className="text-xs text-muted-foreground">Paddle 고객지원에서 결제 정보 변경</p>
+                    <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;결제 방법 업데이트&rsquo; 링크를 이용해주세요</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                </button>
+                </div>
 
                 {/* 플랜 변경 */}
                 <a
@@ -405,25 +401,17 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                 </a>
 
                 {/* 구독 취소 */}
-                <button
-                  className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border-t"
-                  onClick={() => window.open('https://www.paddle.net', '_blank')}
-                >
+                <div className="flex items-center gap-3 w-full px-4 py-3 border-t">
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
                     <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
-                    <p className="text-xs text-muted-foreground">Paddle 고객지원에서 구독 취소</p>
+                    <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;구독 취소&rsquo; 링크를 이용해주세요</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
-                </button>
+                </div>
               </div>
 
-              {/* 안내 문구 */}
-              <p className="text-xs text-muted-foreground mt-3">
-                구독 시 수신한 이메일의 관리 링크를 통해서도 결제 수단 변경, 구독 취소가 가능합니다.
-              </p>
             </div>
           </details>
 
