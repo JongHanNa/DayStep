@@ -35,6 +35,7 @@ export interface SubscriptionInfo {
   legacyGracePeriodEnd: string | null;
   promoCode: string | null;
   autoRenewEnabled: boolean;
+  paddleSubscriptionId: string | null;
   createdAt: string;
   updatedAt: string;
 }

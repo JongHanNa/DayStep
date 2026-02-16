@@ -8,6 +8,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 import { devCancelSubscription, devActivateSubscription } from '@/lib/supabase/subscription';
 import { FREE_TIER_LIMITS } from '@/lib/featureFlags';
 import { useUsageStats } from '@/hooks/useUsageStats';
@@ -33,7 +34,8 @@ declare global {
       }) => void;
       Checkout: {
         open: (options: {
-          items: Array<{ priceId: string; quantity: number }>;
+          items?: Array<{ priceId: string; quantity: number }>;
+          transactionId?: string;
           customData?: Record<string, any>;
           settings?: {
             displayMode?: 'overlay' | 'inline';
@@ -111,6 +113,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     isLoading,
     purchasePackage,
     restoreSubscription,
+    syncSubscription,
     isNative,
     paymentsEnabled,
   } = useSubscription();
@@ -124,6 +127,8 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const [isPaddleReady, setIsPaddleReady] = useState(false);
   const [isPaddleLoading, setIsPaddleLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
 
   // 개발 환경 여부
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -243,6 +248,97 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
       toast.error(error.message || '복원 중 오류가 발생했습니다.');
     } finally {
       setIsRestoring(false);
+    }
+  };
+
+  // Paddle API를 통한 구독 취소
+  const handlePaddleCancel = async () => {
+    if (!window.confirm('현재 결제 기간까지 이용 가능합니다. 구독을 취소하시겠습니까?')) {
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('로그인이 필요합니다.');
+        return;
+      }
+
+      const res = await fetch('/api/paddle/manage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: 'cancel' }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || '구독 취소 실패');
+      }
+
+      const endDate = data.subscriptionEndDate
+        ? new Date(data.subscriptionEndDate).toLocaleDateString('ko-KR')
+        : '';
+      toast.success(`구독 취소가 예약되었습니다.${endDate ? ` ${endDate}까지 이용 가능합니다.` : ''}`);
+
+      if (user?.id) {
+        await syncSubscription(user.id);
+      }
+    } catch (error: any) {
+      console.error('Paddle cancel error:', error);
+      toast.error(error.message || '구독 취소 중 오류가 발생했습니다.');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // Paddle API를 통한 결제 수단 변경
+  const handlePaddleUpdatePayment = async () => {
+    setIsUpdatingPayment(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('로그인이 필요합니다.');
+        return;
+      }
+
+      const res = await fetch('/api/paddle/manage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: 'update-payment' }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || '결제 수단 변경 요청 실패');
+      }
+
+      if (!window.Paddle) {
+        toast.error('결제 시스템을 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+
+      window.Paddle.Checkout.open({
+        transactionId: data.transactionId,
+        settings: {
+          displayMode: 'overlay',
+          theme: 'light',
+          locale: 'ko',
+        },
+      });
+    } catch (error: any) {
+      console.error('Paddle update payment error:', error);
+      toast.error(error.message || '결제 수단 변경 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpdatingPayment(false);
     }
   };
 
@@ -375,15 +471,38 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
             <div className="px-4 pb-4 pt-2 border-t">
               <div className="rounded-xl border overflow-hidden">
                 {/* 결제 수단 변경 */}
-                <div className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30">
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">결제 수단 변경</p>
-                    <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;결제 방법 업데이트&rsquo; 링크를 이용해주세요</p>
+                {subscriptionInfo?.paddleSubscriptionId ? (
+                  <button
+                    onClick={handlePaddleUpdatePayment}
+                    disabled={isUpdatingPayment}
+                    className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left"
+                  >
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">결제 수단 변경</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isUpdatingPayment ? '처리 중...' : '클릭하여 결제 수단을 변경하세요'}
+                      </p>
+                    </div>
+                    {isUpdatingPayment ? (
+                      <RefreshCw className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">결제 수단 변경</p>
+                      <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;결제 방법 업데이트&rsquo; 링크를 이용해주세요</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* 플랜 변경 */}
                 <a
@@ -401,15 +520,38 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                 </a>
 
                 {/* 구독 취소 */}
-                <div className="flex items-center gap-3 w-full px-4 py-3 border-t">
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                    <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
-                    <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;구독 취소&rsquo; 링크를 이용해주세요</p>
+                {subscriptionInfo?.paddleSubscriptionId ? (
+                  <button
+                    onClick={handlePaddleCancel}
+                    disabled={isCancelling}
+                    className="flex items-center gap-3 w-full px-4 py-3 border-t hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+                  >
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                      {isCancelling ? (
+                        <RefreshCw className="w-4 h-4 text-red-600 dark:text-red-400 animate-spin" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      )}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isCancelling ? '취소 처리 중...' : '현재 결제 기간까지 이용 가능합니다'}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3 w-full px-4 py-3 border-t">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                      <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
+                      <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;구독 취소&rsquo; 링크를 이용해주세요</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
             </div>

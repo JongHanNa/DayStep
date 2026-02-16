@@ -76,6 +76,7 @@ export const useSubscription = () => {
           legacyGracePeriodEnd: data.legacy_grace_period_end,
           promoCode: data.promo_code,
           autoRenewEnabled: data.auto_renew_enabled,
+          paddleSubscriptionId: data.paddle_subscription_id || null,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         };
