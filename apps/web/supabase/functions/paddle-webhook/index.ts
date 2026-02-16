@@ -267,11 +267,13 @@ async function handleSubscriptionActivated(
     .eq('user_id', appUserId)
     .single();
 
+  const normalizedProductId = normalizeProductId(productId, priceId);
+
   const subscriptionData = {
     user_id: appUserId,
     status: 'active',
     platform: 'web',
-    product_id: productId,
+    product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
     paddle_price_id: priceId,
     subscription_start_date: new Date(),
@@ -293,7 +295,7 @@ async function handleSubscriptionActivated(
     .from('users')
     .update({
       has_active_subscription: true,
-      subscription_type: normalizeProductId(productId, priceId),
+      subscription_type: normalizedProductId,
       subscription_expires_at: expiresAt,
     })
     .eq('id', appUserId);
@@ -303,7 +305,7 @@ async function handleSubscriptionActivated(
     user_id: appUserId,
     event_type: 'subscription_started',
     platform: 'web',
-    product_id: productId,
+    product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
   });
 
@@ -329,12 +331,14 @@ async function handleSubscriptionUpdated(
   // RevenueCat에 토큰 전송 (갱신)
   await sendToRevenueCat(subscriptionId, appUserId, revenueCatApiKey);
 
+  const normalizedProductId = normalizeProductId(productId, priceId);
+
   // Supabase 업데이트
   await supabase
     .from('subscriptions')
     .update({
       status: data.status === 'active' ? 'active' : data.status,
-      product_id: productId,
+      product_id: normalizedProductId,
       paddle_price_id: priceId,
       subscription_end_date: expiresAt,
       updated_at: new Date(),
@@ -345,7 +349,7 @@ async function handleSubscriptionUpdated(
     .from('users')
     .update({
       has_active_subscription: data.status === 'active',
-      subscription_type: normalizeProductId(productId, priceId),
+      subscription_type: normalizedProductId,
       subscription_expires_at: expiresAt,
     })
     .eq('id', appUserId);
@@ -355,7 +359,7 @@ async function handleSubscriptionUpdated(
     user_id: appUserId,
     event_type: 'subscription_renewed',
     platform: 'web',
-    product_id: productId,
+    product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
   });
 
@@ -371,6 +375,9 @@ async function handleSubscriptionCanceled(
   appUserId: string
 ) {
   const subscriptionId = data.id;
+  const productId = data.items[0]?.price?.product_id || '';
+  const priceId = data.items[0]?.price?.id || '';
+  const normalizedProductId = normalizeProductId(productId, priceId);
   const expiresAt = data.current_billing_period?.ends_at
     ? new Date(data.current_billing_period.ends_at)
     : null;
@@ -391,7 +398,7 @@ async function handleSubscriptionCanceled(
     user_id: appUserId,
     event_type: 'subscription_cancelled',
     platform: 'web',
-    product_id: data.items[0]?.price?.product_id || '',
+    product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
   });
 
@@ -407,6 +414,9 @@ async function handleSubscriptionPaused(
   appUserId: string
 ) {
   const subscriptionId = data.id;
+  const productId = data.items[0]?.price?.product_id || '';
+  const priceId = data.items[0]?.price?.id || '';
+  const normalizedProductId = normalizeProductId(productId, priceId);
 
   await supabase
     .from('subscriptions')
@@ -428,7 +438,7 @@ async function handleSubscriptionPaused(
     user_id: appUserId,
     event_type: 'subscription_paused',
     platform: 'web',
-    product_id: data.items[0]?.price?.product_id || '',
+    product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
   });
 
@@ -469,12 +479,16 @@ async function handleSubscriptionResumed(
     })
     .eq('id', appUserId);
 
+  const productId = data.items[0]?.price?.product_id || '';
+  const priceId = data.items[0]?.price?.id || '';
+  const normalizedProductId = normalizeProductId(productId, priceId);
+
   // 히스토리 기록
   await insertSubscriptionHistory(supabase, {
     user_id: appUserId,
     event_type: 'subscription_resumed',
     platform: 'web',
-    product_id: data.items[0]?.price?.product_id || '',
+    product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
   });
 
@@ -495,12 +509,16 @@ async function handleTransactionCompleted(
   // 구독 관련 거래인 경우 RevenueCat에 전송
   await sendToRevenueCat(transactionId, appUserId, revenueCatApiKey);
 
+  const productId = data.items[0]?.price?.product_id || '';
+  const priceId = data.items[0]?.price?.id || '';
+  const normalizedProductId = normalizeProductId(productId, priceId);
+
   // 히스토리 기록
   await insertSubscriptionHistory(supabase, {
     user_id: appUserId,
     event_type: 'payment_completed',
     platform: 'web',
-    product_id: data.items[0]?.price?.product_id || '',
+    product_id: normalizedProductId,
     paddle_transaction_id: transactionId,
   });
 
