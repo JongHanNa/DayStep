@@ -857,9 +857,7 @@ export type Database = {
           id: string
           name: string | null
           subscription_expires_at: string | null
-          subscription_type:
-            | Database["public"]["Enums"]["subscription_type_enum"]
-            | null
+          subscription_type: Database["public"]["Enums"]["subscription_type_enum"]
           updated_at: string
         }
         Insert: {
@@ -869,9 +867,7 @@ export type Database = {
           id: string
           name?: string | null
           subscription_expires_at?: string | null
-          subscription_type?:
-            | Database["public"]["Enums"]["subscription_type_enum"]
-            | null
+          subscription_type?: Database["public"]["Enums"]["subscription_type_enum"]
           updated_at?: string
         }
         Update: {
@@ -881,9 +877,7 @@ export type Database = {
           id?: string
           name?: string | null
           subscription_expires_at?: string | null
-          subscription_type?:
-            | Database["public"]["Enums"]["subscription_type_enum"]
-            | null
+          subscription_type?: Database["public"]["Enums"]["subscription_type_enum"]
           updated_at?: string
         }
         Relationships: []

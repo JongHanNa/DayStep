@@ -12,7 +12,7 @@ export class User {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly hasActiveSubscription: boolean | null = false,
-    public readonly subscriptionType: 'free' | 'trial' | 'pro_monthly' | 'pro_yearly' | null = 'free',
+    public readonly subscriptionType: 'free' | 'trial' | 'pro_monthly' | 'pro_yearly' = 'free',
     public readonly subscriptionExpiresAt: Date | null = null
   ) {}
 
