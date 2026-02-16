@@ -28,9 +28,11 @@ const PADDLE_CONFIG = {
 declare global {
   interface Window {
     Paddle?: {
+      Environment: {
+        set: (environment: 'sandbox' | 'production') => void;
+      };
       Initialize: (config: {
         token: string;
-        environment?: 'sandbox' | 'production';
         eventCallback?: (event: any) => void;
       }) => void;
       Checkout: {
@@ -140,9 +142,16 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const initializePaddle = useCallback(() => {
     if (window.Paddle && !isPaddleReady) {
       try {
+        if (PADDLE_CONFIG.environment === 'sandbox') {
+          window.Paddle.Environment.set('sandbox');
+        }
         window.Paddle.Initialize({
           token: PADDLE_CONFIG.clientToken,
-          environment: PADDLE_CONFIG.environment,
+          eventCallback: (event: any) => {
+            if (event.name === 'checkout.error') {
+              console.error('[Paddle Error]', event.detail, event);
+            }
+          },
         });
         setIsPaddleReady(true);
         console.log('Paddle initialized successfully');
