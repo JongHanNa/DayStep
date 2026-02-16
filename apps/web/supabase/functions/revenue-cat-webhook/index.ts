@@ -191,7 +191,7 @@ async function handleInitialPurchase(supabase: any, event: any) {
     .from('users')
     .update({
       has_active_subscription: true,
-      subscription_type: isTrial ? 'trial' : normalizeProductId(productId),
+      subscription_type: normalizeProductId(productId),
       subscription_expires_at: expiresAt,
     })
     .eq('id', userId);

@@ -948,7 +948,7 @@ export type Database = {
         | "cancelled"
         | "expired"
         | "paused"
-      subscription_type_enum: "free" | "trial" | "pro_monthly" | "pro_yearly"
+      subscription_type_enum: "free" | "pro_monthly" | "pro_yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1116,7 +1116,7 @@ export const Constants = {
         "expired",
         "paused",
       ],
-      subscription_type_enum: ["free", "trial", "pro_monthly", "pro_yearly"],
+      subscription_type_enum: ["free", "pro_monthly", "pro_yearly"],
     },
   },
 } as const
