@@ -77,6 +77,7 @@ export const useSubscription = () => {
           promoCode: data.promo_code,
           autoRenewEnabled: data.auto_renew_enabled,
           paddleSubscriptionId: data.paddle_subscription_id || null,
+          cancelledAt: data.cancelled_at || null,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         };

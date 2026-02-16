@@ -128,6 +128,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const [isPaddleLoading, setIsPaddleLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
 
   // 개발 환경 여부
@@ -293,6 +294,44 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
       toast.error(error.message || '구독 취소 중 오류가 발생했습니다.');
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  // Paddle API를 통한 취소 철회 (Reactivate)
+  const handlePaddleReactivate = async () => {
+    setIsReactivating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('로그인이 필요합니다.');
+        return;
+      }
+
+      const res = await fetch('/api/paddle/manage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: 'reactivate' }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || '취소 철회 실패');
+      }
+
+      toast.success('구독 취소가 철회되었습니다.');
+
+      if (user?.id) {
+        await syncSubscription(user.id);
+      }
+    } catch (error: any) {
+      console.error('Paddle reactivate error:', error);
+      toast.error(error.message || '취소 철회 중 오류가 발생했습니다.');
+    } finally {
+      setIsReactivating(false);
     }
   };
 
@@ -510,27 +549,62 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                       <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     </a>
 
-                    {/* 구독 취소 */}
-                    <button
-                      onClick={handlePaddleCancel}
-                      disabled={isCancelling}
-                      className="flex items-center gap-3 w-full px-4 py-3 border-t hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
-                    >
-                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                        {isCancelling ? (
-                          <RefreshCw className="w-4 h-4 text-red-600 dark:text-red-400 animate-spin" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        )}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
-                        <p className="text-xs text-muted-foreground">
-                          {isCancelling ? '취소 처리 중...' : '현재 결제 기간까지 이용 가능합니다'}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    </button>
+                    {/* 구독 취소 / 취소 철회 */}
+                    {subscriptionInfo?.cancelledAt ? (
+                      /* 취소 예약 상태 → 취소 철회 버튼 */
+                      <>
+                        <div className="px-4 py-3 border-t bg-amber-50 dark:bg-amber-950/30">
+                          <p className="text-sm text-amber-800 dark:text-amber-200">
+                            구독 취소가 예약되었습니다.
+                            {subscriptionExpiresAt
+                              ? ` ${new Date(subscriptionExpiresAt).toLocaleDateString('ko-KR')}까지 이용 가능합니다.`
+                              : ''}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handlePaddleReactivate}
+                          disabled={isReactivating}
+                          className="flex items-center gap-3 w-full px-4 py-3 border-t bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors text-left"
+                        >
+                          <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center">
+                            {isReactivating ? (
+                              <RefreshCw className="w-4 h-4 text-green-600 dark:text-green-400 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            )}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-green-700 dark:text-green-400">취소 철회</p>
+                            <p className="text-xs text-muted-foreground">
+                              {isReactivating ? '철회 처리 중...' : '구독을 계속 유지합니다'}
+                            </p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        </button>
+                      </>
+                    ) : (
+                      /* 일반 상태 → 구독 취소 버튼 */
+                      <button
+                        onClick={handlePaddleCancel}
+                        disabled={isCancelling}
+                        className="flex items-center gap-3 w-full px-4 py-3 border-t hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+                      >
+                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                          {isCancelling ? (
+                            <RefreshCw className="w-4 h-4 text-red-600 dark:text-red-400 animate-spin" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          )}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
+                          <p className="text-xs text-muted-foreground">
+                            {isCancelling ? '취소 처리 중...' : '현재 결제 기간까지 이용 가능합니다'}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      </button>
+                    )}
                   </>
                 ) : subscriptionInfo?.platform === 'ios' ? (
                   /* Case B: App Store 구독 */

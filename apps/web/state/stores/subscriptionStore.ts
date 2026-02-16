@@ -36,6 +36,7 @@ export interface SubscriptionInfo {
   promoCode: string | null;
   autoRenewEnabled: boolean;
   paddleSubscriptionId: string | null;
+  cancelledAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

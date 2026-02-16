@@ -1,6 +1,7 @@
 /**
  * Paddle 구독 관리 API Route
  * - 구독 취소 (cancel)
+ * - 취소 철회 (reactivate)
  * - 결제 수단 변경 트랜잭션 생성 (update-payment)
  */
 
@@ -9,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const PADDLE_API_KEY = process.env.PADDLE_API_KEY;
 const PADDLE_API_BASE = 'https://api.paddle.com';
 
@@ -53,9 +55,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action } = body as { action: string };
 
-    if (!action || !['cancel', 'update-payment'].includes(action)) {
+    if (!action || !['cancel', 'reactivate', 'update-payment'].includes(action)) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "cancel" or "update-payment"' },
+        { error: 'Invalid action. Must be "cancel", "reactivate", or "update-payment"' },
         { status: 400 }
       );
     }
@@ -78,6 +80,11 @@ export async function POST(req: NextRequest) {
 
     const paddleSubId = subscription.paddle_subscription_id;
 
+    // service_role 클라이언트 (DB 직접 업데이트용)
+    const serviceClient = SUPABASE_SERVICE_ROLE_KEY
+      ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+      : null;
+
     // action에 따라 Paddle API 호출
     if (action === 'cancel') {
       const paddleRes = await fetch(
@@ -98,15 +105,62 @@ export async function POST(req: NextRequest) {
         const errData = await paddleRes.json().catch(() => ({}));
         console.error('Paddle cancel error:', errData);
         return NextResponse.json(
-          { error: 'Failed to cancel subscription', details: errData },
+          { error: `구독 취소 실패: ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`, details: errData },
           { status: paddleRes.status }
         );
+      }
+
+      // cancel 성공 시 DB에 cancelled_at 즉시 설정 (webhook 도착 전 UI 반영용)
+      if (serviceClient) {
+        await serviceClient
+          .from('subscriptions')
+          .update({ cancelled_at: new Date().toISOString() })
+          .eq('paddle_subscription_id', paddleSubId);
       }
 
       return NextResponse.json({
         success: true,
         message: 'Subscription cancellation scheduled',
         subscriptionEndDate: subscription.subscription_end_date,
+      });
+    }
+
+    if (action === 'reactivate') {
+      // Paddle API: scheduled_change를 null로 설정하여 취소 예약 해제
+      const paddleRes = await fetch(
+        `${PADDLE_API_BASE}/subscriptions/${paddleSubId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${PADDLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            scheduled_change: null,
+          }),
+        }
+      );
+
+      if (!paddleRes.ok) {
+        const errData = await paddleRes.json().catch(() => ({}));
+        console.error('Paddle reactivate error:', errData);
+        return NextResponse.json(
+          { error: `취소 철회 실패: ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`, details: errData },
+          { status: paddleRes.status }
+        );
+      }
+
+      // reactivate 성공 시 DB에서 cancelled_at 클리어
+      if (serviceClient) {
+        await serviceClient
+          .from('subscriptions')
+          .update({ cancelled_at: null })
+          .eq('paddle_subscription_id', paddleSubId);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Subscription reactivated',
       });
     }
 
@@ -126,7 +180,7 @@ export async function POST(req: NextRequest) {
         const errData = await paddleRes.json().catch(() => ({}));
         console.error('Paddle update-payment error:', errData);
         return NextResponse.json(
-          { error: 'Failed to create update payment transaction', details: errData },
+          { error: `결제 수단 변경 실패: ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`, details: errData },
           { status: paddleRes.status }
         );
       }
