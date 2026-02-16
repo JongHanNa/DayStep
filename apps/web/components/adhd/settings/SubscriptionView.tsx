@@ -470,87 +470,175 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
             </summary>
             <div className="px-4 pb-4 pt-2 border-t">
               <div className="rounded-xl border overflow-hidden">
-                {/* 결제 수단 변경 */}
                 {subscriptionInfo?.paddleSubscriptionId ? (
-                  <button
-                    onClick={handlePaddleUpdatePayment}
-                    disabled={isUpdatingPayment}
-                    className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left"
-                  >
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
-                      <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">결제 수단 변경</p>
-                      <p className="text-xs text-muted-foreground">
-                        {isUpdatingPayment ? '처리 중...' : '클릭하여 결제 수단을 변경하세요'}
-                      </p>
-                    </div>
-                    {isUpdatingPayment ? (
-                      <RefreshCw className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    )}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
-                      <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">결제 수단 변경</p>
-                      <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;결제 방법 업데이트&rsquo; 링크를 이용해주세요</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 플랜 변경 */}
-                <a
-                  className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
-                  href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
-                >
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                    <RefreshCw className="w-4 h-4 text-muted-foreground" />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">플랜 변경</p>
-                    <p className="text-xs text-muted-foreground">이메일로 플랜 변경 요청</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                </a>
-
-                {/* 구독 취소 */}
-                {subscriptionInfo?.paddleSubscriptionId ? (
-                  <button
-                    onClick={handlePaddleCancel}
-                    disabled={isCancelling}
-                    className="flex items-center gap-3 w-full px-4 py-3 border-t hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
-                  >
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                      {isCancelling ? (
-                        <RefreshCw className="w-4 h-4 text-red-600 dark:text-red-400 animate-spin" />
+                  /* Case A: 웹 Paddle 구독 — 결제 수단 변경 + 구독 취소 버튼 */
+                  <>
+                    {/* 결제 수단 변경 */}
+                    <button
+                      onClick={handlePaddleUpdatePayment}
+                      disabled={isUpdatingPayment}
+                      className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">결제 수단 변경</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isUpdatingPayment ? '처리 중...' : '클릭하여 결제 수단을 변경하세요'}
+                        </p>
+                      </div>
+                      {isUpdatingPayment ? (
+                        <RefreshCw className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
                       ) : (
-                        <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       )}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
-                      <p className="text-xs text-muted-foreground">
-                        {isCancelling ? '취소 처리 중...' : '현재 결제 기간까지 이용 가능합니다'}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  </button>
+                    </button>
+
+                    {/* 플랜 변경 */}
+                    <a
+                      className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
+                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">플랜 변경</p>
+                        <p className="text-xs text-muted-foreground">이메일로 플랜 변경 요청</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </a>
+
+                    {/* 구독 취소 */}
+                    <button
+                      onClick={handlePaddleCancel}
+                      disabled={isCancelling}
+                      className="flex items-center gap-3 w-full px-4 py-3 border-t hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                        {isCancelling ? (
+                          <RefreshCw className="w-4 h-4 text-red-600 dark:text-red-400 animate-spin" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        )}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isCancelling ? '취소 처리 중...' : '현재 결제 기간까지 이용 가능합니다'}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </button>
+                  </>
+                ) : subscriptionInfo?.platform === 'ios' ? (
+                  /* Case B: App Store 구독 */
+                  <>
+                    <a
+                      href="https://apps.apple.com/account/subscriptions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">App Store에서 구독 관리</p>
+                        <p className="text-xs text-muted-foreground">결제 수단 변경, 구독 취소 등은 App Store에서 관리할 수 있습니다</p>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </a>
+
+                    {/* 플랜 변경 */}
+                    <a
+                      className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
+                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">플랜 변경</p>
+                        <p className="text-xs text-muted-foreground">이메일로 플랜 변경 요청</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </a>
+                  </>
+                ) : subscriptionInfo?.platform === 'android' ? (
+                  /* Case C: Play Store 구독 */
+                  <>
+                    <a
+                      href="https://play.google.com/store/account/subscriptions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 transition-colors text-left"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">Play Store에서 구독 관리</p>
+                        <p className="text-xs text-muted-foreground">결제 수단 변경, 구독 취소 등은 Play Store에서 관리할 수 있습니다</p>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </a>
+
+                    {/* 플랜 변경 */}
+                    <a
+                      className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
+                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">플랜 변경</p>
+                        <p className="text-xs text-muted-foreground">이메일로 플랜 변경 요청</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </a>
+                  </>
                 ) : (
-                  <div className="flex items-center gap-3 w-full px-4 py-3 border-t">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                      <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
-                      <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;구독 취소&rsquo; 링크를 이용해주세요</p>
+                  /* Fallback: platform 미지정 (web이지만 paddleSubscriptionId 없는 경우 등) */
+                  <>
+                    <div className="flex items-center gap-3 w-full px-4 py-3 bg-blue-50 dark:bg-blue-950/30">
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-blue-700 dark:text-blue-300" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">결제 수단 변경</p>
+                        <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;결제 방법 업데이트&rsquo; 링크를 이용해주세요</p>
+                      </div>
                     </div>
-                  </div>
+
+                    {/* 플랜 변경 */}
+                    <a
+                      className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
+                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">플랜 변경</p>
+                        <p className="text-xs text-muted-foreground">이메일로 플랜 변경 요청</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    </a>
+
+                    {/* 구독 취소 */}
+                    <div className="flex items-center gap-3 w-full px-4 py-3 border-t">
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                        <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-red-600 dark:text-red-400">구독 취소</p>
+                        <p className="text-xs text-muted-foreground">구독 확인 이메일의 &lsquo;구독 취소&rsquo; 링크를 이용해주세요</p>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 
