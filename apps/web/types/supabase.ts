@@ -856,6 +856,7 @@ export type Database = {
           has_active_subscription: boolean | null
           id: string
           name: string | null
+          refund_count: number
           subscription_expires_at: string | null
           subscription_type: Database["public"]["Enums"]["subscription_type_enum"]
           updated_at: string
@@ -866,6 +867,7 @@ export type Database = {
           has_active_subscription?: boolean | null
           id: string
           name?: string | null
+          refund_count?: number
           subscription_expires_at?: string | null
           subscription_type?: Database["public"]["Enums"]["subscription_type_enum"]
           updated_at?: string
@@ -876,6 +878,7 @@ export type Database = {
           has_active_subscription?: boolean | null
           id?: string
           name?: string | null
+          refund_count?: number
           subscription_expires_at?: string | null
           subscription_type?: Database["public"]["Enums"]["subscription_type_enum"]
           updated_at?: string
@@ -941,6 +944,7 @@ export type Database = {
         | "subscription_resumed"
         | "product_changed"
         | "refund_issued"
+        | "payment_refunded"
         | "billing_issue"
       subscription_status_enum:
         | "trial"
@@ -1107,6 +1111,7 @@ export const Constants = {
         "subscription_resumed",
         "product_changed",
         "refund_issued",
+        "payment_refunded",
         "billing_issue",
       ],
       subscription_status_enum: [

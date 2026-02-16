@@ -12,7 +12,7 @@ export default function RefundPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
           환불 정책
         </h1>
-        <p className="text-sm text-gray-500 mb-8">최종 수정일: 2025년 12월 30일</p>
+        <p className="text-sm text-gray-500 mb-8">최종 수정일: 2026년 2월 17일</p>
 
         {/* 목차 */}
         <nav className="bg-gray-50 rounded-lg p-5 mb-8">
@@ -25,7 +25,7 @@ export default function RefundPage() {
             </li>
             <li>
               <a href="#section2" className="hover:underline">
-                2. 14일 취소 권리
+                2. 7일 취소 권리
               </a>
             </li>
             <li>
@@ -95,21 +95,21 @@ export default function RefundPage() {
         {/* 제2조 */}
         <section id="section2" className="mb-10">
           <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-gray-200 pb-2 mb-4">
-            2. 14일 취소 권리
+            2. 7일 취소 권리
           </h2>
 
           <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
             <h3 className="font-semibold text-gray-900 mb-2">
-              14일 전액 환불 보장
+              최초 구독 7일 전액 환불 보장
             </h3>
             <p className="text-gray-600">
-              거래 완료 후 <strong>14일 이내</strong>에는 별도의 사유 없이 취소하고
-              전액 환불을 받으실 수 있습니다.
+              <strong>최초 구독에 한해</strong>, 거래 완료 후 <strong>7일 이내</strong>에는
+              별도의 사유 없이 취소하고 전액 환불을 받으실 수 있습니다.
             </p>
           </div>
 
           <p className="text-gray-600 mb-4">
-            14일 취소 기간은 거래가 완료된 다음 날부터 시작되며,
+            7일 취소 기간은 거래가 완료된 다음 날부터 시작되며,
             취소 기간 만료 전에 취소 의사를 전달해 주시면 됩니다.
           </p>
 
@@ -160,8 +160,16 @@ export default function RefundPage() {
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
             <h3 className="font-semibold text-gray-900 mb-2">구독 취소 권리</h3>
             <p className="text-gray-600">
-              최초 구독 시 14일 취소 권리가 적용됩니다.
-              단, 자동 갱신 시에는 14일 취소 권리가 적용되지 않습니다.
+              최초 구독 시 7일 취소 권리가 적용됩니다.
+              단, 자동 갱신 시에는 7일 취소 권리가 적용되지 않습니다.
+            </p>
+          </div>
+
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+            <h3 className="font-semibold text-gray-900 mb-2">재구독 환불 정책</h3>
+            <p className="text-gray-600">
+              이전에 환불을 받은 이력이 있는 계정의 재구독에는 환불 정책이 적용되지 않습니다.
+              환불 보장은 <strong>최초 1회 구독에 한해</strong> 제공됩니다.
             </p>
           </div>
 
@@ -413,7 +421,7 @@ export default function RefundPage() {
         <section className="mt-12 pt-8 border-t border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">부칙</h2>
           <p className="text-gray-600 mb-4">
-            본 환불 정책은 2025년 12월 30일부터 시행됩니다.
+            본 환불 정책은 2026년 2월 17일부터 시행됩니다.
           </p>
           <p className="text-gray-600">
             환불 정책은 서비스 운영 상황에 따라 변경될 수 있으며, 변경 시
@@ -422,7 +430,7 @@ export default function RefundPage() {
         </section>
 
         <p className="text-center text-gray-400 text-sm mt-10">
-          본 환불 정책은 2025년 12월 30일부터 시행됩니다.
+          본 환불 정책은 2026년 2월 17일부터 시행됩니다.
         </p>
       </div>
     </div>

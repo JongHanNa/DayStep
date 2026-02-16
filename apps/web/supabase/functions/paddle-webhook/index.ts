@@ -563,16 +563,23 @@ async function handleTransactionRefunded(
     })
     .eq('user_id', appUserId);
 
-  // users 테이블 캐시 업데이트
+  // users 테이블 캐시 업데이트 + refund_count 증가
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('refund_count')
+    .eq('id', appUserId)
+    .single();
+
   await supabase
     .from('users')
     .update({
       has_active_subscription: false,
       subscription_type: 'free',
+      refund_count: (currentUser?.refund_count ?? 0) + 1,
     })
     .eq('id', appUserId);
 
-  // 히스토리 기록
+  // 히스토리 기록 (payment_refunded enum 값 사용)
   await insertSubscriptionHistory(supabase, {
     user_id: appUserId,
     event_type: 'payment_refunded',
@@ -581,7 +588,7 @@ async function handleTransactionRefunded(
     paddle_transaction_id: transactionId,
   });
 
-  console.log(`Transaction refunded for user ${appUserId}: ${transactionId}`);
+  console.log(`Transaction refunded for user ${appUserId}: ${transactionId} (refund_count: ${(currentUser?.refund_count ?? 0) + 1})`);
 }
 
 /**
