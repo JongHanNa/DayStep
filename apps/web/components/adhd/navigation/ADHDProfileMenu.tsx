@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Sun, Moon, Settings, Crown, LogOut } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
-import { useADHDStore } from '@/state/stores/adhdStore';
 import { AvatarImage } from '@/components/ui/optimized-image';
 
 type ADHDProfileMenuVariant = 'sidebar' | 'tabbar';
@@ -24,7 +23,6 @@ export default function ADHDProfileMenu({ variant }: ADHDProfileMenuProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
-  const { enterSettingsMode } = useADHDStore();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -54,12 +52,12 @@ export default function ADHDProfileMenu({ variant }: ADHDProfileMenuProps) {
 
   const handleSettings = () => {
     setIsDropdownOpen(false);
-    enterSettingsMode('main');
+    router.push('/adhd/settings');
   };
 
   const handlePremium = () => {
     setIsDropdownOpen(false);
-    enterSettingsMode('subscription');
+    router.push('/adhd/settings/subscription');
   };
 
   const handleToggleTheme = () => {
