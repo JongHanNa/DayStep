@@ -1,16 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Crown, RefreshCw, Wrench, XCircle, CheckCircle, CreditCard, ChevronDown, ChevronRight, Mail, ExternalLink, HelpCircle, Shield, Sparkles } from 'lucide-react';
+import { Crown, RefreshCw, XCircle, CheckCircle, CreditCard, ChevronDown, ChevronRight, Mail, ExternalLink, HelpCircle, Shield, Sparkles } from 'lucide-react';
 import Script from 'next/script';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useSubscriptionStore } from '@/state/stores/subscriptionStore';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { devCancelSubscription, devActivateSubscription } from '@/lib/supabase/subscription';
 import { FREE_TIER_LIMITS } from '@/lib/featureFlags';
 import { useUsageStats } from '@/hooks/useUsageStats';
 import type { UserUsageStats } from '@/lib/supabase/usage';
@@ -128,8 +126,6 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
 
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [isDevCancelling, setIsDevCancelling] = useState(false);
-  const [isDevActivating, setIsDevActivating] = useState(false);
   const [isPaddleReady, setIsPaddleReady] = useState(false);
   const [isPaddleLoading, setIsPaddleLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
@@ -137,9 +133,6 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const [isReactivating, setIsReactivating] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [isUpgradingPlan, setIsUpgradingPlan] = useState(false);
-
-  // 개발 환경 여부
-  const isDevelopment = process.env.NODE_ENV === 'development';
 
   // Paddle 초기화 (v2 Initialize API 사용, production이 기본값)
   const initializePaddle = useCallback(() => {
@@ -441,56 +434,6 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
       toast.error(error.message || '플랜 변경 중 오류가 발생했습니다.');
     } finally {
       setIsUpgradingPlan(false);
-    }
-  };
-
-  // [개발 전용] 구독 취소 핸들러
-  const handleDevCancel = async () => {
-    if (!user?.id) {
-      toast.error('로그인이 필요합니다.');
-      return;
-    }
-
-    setIsDevCancelling(true);
-    try {
-      const result = await devCancelSubscription(user.id);
-
-      if (result.success) {
-        toast.success('구독이 취소되었습니다. (개발 테스트)');
-        window.location.reload();
-      } else {
-        toast.error(result.error || '구독 취소 실패');
-      }
-    } catch (error: any) {
-      console.error('[DEV] 구독 취소 오류:', error);
-      toast.error(error.message || '구독 취소 중 오류 발생');
-    } finally {
-      setIsDevCancelling(false);
-    }
-  };
-
-  // [개발 전용] 구독 활성화 핸들러
-  const handleDevActivate = async () => {
-    if (!user?.id) {
-      toast.error('로그인이 필요합니다.');
-      return;
-    }
-
-    setIsDevActivating(true);
-    try {
-      const result = await devActivateSubscription(user.id);
-
-      if (result.success) {
-        toast.success('구독이 활성화되었습니다. (개발 테스트)');
-        window.location.reload();
-      } else {
-        toast.error(result.error || '구독 활성화 실패');
-      }
-    } catch (error: any) {
-      console.error('[DEV] 구독 활성화 오류:', error);
-      toast.error(error.message || '구독 활성화 중 오류 발생');
-    } finally {
-      setIsDevActivating(false);
     }
   };
 
@@ -1101,71 +1044,6 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
             </div>
           )}
         </>
-      )}
-
-      {/* 개발자 옵션 (개발 환경에서만 표시) */}
-      {isDevelopment && (
-        <Card className="border-dashed border-2 border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/30">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Wrench className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <div>
-                <CardTitle className="text-lg text-purple-800 dark:text-purple-200">
-                  개발자 옵션
-                </CardTitle>
-                <CardDescription className="text-purple-600 dark:text-purple-400">
-                  개발 테스트 전용 (프로덕션에서는 표시되지 않음)
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-3">
-              {hasActiveSubscription ? (
-                <Button
-                  onClick={handleDevCancel}
-                  disabled={isDevCancelling}
-                  variant="outline"
-                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
-                >
-                  {isDevCancelling ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      취소 중...
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-4 h-4 mr-2" />
-                      구독 취소 (Free 전환)
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleDevActivate}
-                  disabled={isDevActivating}
-                  variant="outline"
-                  className="flex-1 border-green-300 text-green-600 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950"
-                >
-                  {isDevActivating ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      활성화 중...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      구독 활성화 (Pro 전환)
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-            <p className="text-xs text-purple-600 dark:text-purple-400">
-              * DB 상태만 변경됩니다. RevenueCat에는 반영되지 않습니다.
-            </p>
-          </CardContent>
-        </Card>
       )}
 
       {/* Paddle.js 스크립트 로드 (웹에서만) */}
