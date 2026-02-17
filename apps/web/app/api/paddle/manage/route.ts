@@ -310,6 +310,30 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // 재구독 환불 제한: refund_count > 0이면 환불 불가
+      const refundCheckClient = serviceClient || supabase;
+      const { data: userData, error: userError } = await refundCheckClient
+        .from('users')
+        .select('refund_count')
+        .eq('id', user.id)
+        .single();
+
+      if (userError) {
+        console.error('[Paddle manage] refund_count check failed:', userError);
+        // DB 조회 실패 시에도 환불 진행 차단 (안전 측)
+        return NextResponse.json(
+          { error: '사용자 정보를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.' },
+          { status: 500 }
+        );
+      }
+
+      if (userData && (userData.refund_count ?? 0) > 0) {
+        return NextResponse.json(
+          { error: '이전에 환불을 받은 이력이 있어 환불이 불가합니다. 환불 보장은 최초 1회 구독에 한해 제공됩니다.' },
+          { status: 400 }
+        );
+      }
+
       // 1. 모든 completed 트랜잭션 조회
       const txRes = await fetch(
         `${PADDLE_API_BASE}/transactions?subscription_id=${paddleSubId}&status=completed&order_by=created_at[DESC]&per_page=50`,

@@ -133,6 +133,22 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const [isUpgradingPlan, setIsUpgradingPlan] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [hasRefundHistory, setHasRefundHistory] = useState(false);
+
+  // users.refund_count 조회 (환불 이력 확인)
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('users')
+      .select('refund_count')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data && (data.refund_count ?? 0) > 0) {
+          setHasRefundHistory(true);
+        }
+      });
+  }, [user?.id]);
 
   // Paddle 초기화 (v2 Initialize API 사용, production이 기본값)
   const initializePaddle = useCallback(() => {
@@ -516,7 +532,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
         throw new Error(data.error || '환불 요청 실패');
       }
 
-      toast.success('환불 요청이 접수되었습니다. Paddle 승인 후 환불이 처리됩니다.');
+      toast.success('환불 요청이 접수되었습니다. 구독이 즉시 취소되며, Paddle 승인 후 환불이 처리됩니다.');
 
       // Optimistic update: 구독 즉시 취소 상태로 변경
       const currentInfo = useSubscriptionStore.getState().subscriptionInfo;
@@ -869,7 +885,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               </div>
 
               {/* 환불 요청하기 */}
-              {subscriptionInfo?.paddleSubscriptionId && isWithinRefundPeriod ? (
+              {subscriptionInfo?.paddleSubscriptionId && isWithinRefundPeriod && !hasRefundHistory ? (
                 <button
                   onClick={handlePaddleRefund}
                   disabled={isRefunding}
@@ -890,6 +906,18 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                   </div>
                   <ChevronRight className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
                 </button>
+              ) : subscriptionInfo?.paddleSubscriptionId && isWithinRefundPeriod && hasRefundHistory ? (
+                <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3 text-sm">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-muted-foreground">환불 불가</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      이전 환불 이력이 있어 환불이 불가합니다. 환불 보장은 최초 1회 구독에 한해 제공됩니다.
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3 text-sm">
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
