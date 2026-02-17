@@ -283,6 +283,7 @@ async function handleSubscriptionActivated(
     paddle_price_id: priceId,
     subscription_start_date: new Date(),
     subscription_end_date: expiresAt,
+    cancelled_at: null,
     updated_at: new Date(),
   };
 
