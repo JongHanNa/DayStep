@@ -4,6 +4,7 @@
  * - 취소 철회 (reactivate)
  * - 결제 수단 변경 트랜잭션 생성 (update-payment)
  * - 플랜 변경 (change-plan): 월간→연간 업그레이드
+ * - 환불 (refund): 7일 이내 전액 환불
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -58,9 +59,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action } = body as { action: string };
 
-    if (!action || !['cancel', 'reactivate', 'update-payment', 'change-plan'].includes(action)) {
+    if (!action || !['cancel', 'reactivate', 'update-payment', 'change-plan', 'refund'].includes(action)) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "cancel", "reactivate", "update-payment", or "change-plan"' },
+        { error: 'Invalid action. Must be "cancel", "reactivate", "update-payment", "change-plan", or "refund"' },
         { status: 400 }
       );
     }
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
     // subscriptions 테이블에서 paddle_subscription_id 조회
     const { data: subscription, error: subError } = await supabase
       .from('subscriptions')
-      .select('paddle_subscription_id, subscription_end_date')
+      .select('paddle_subscription_id, subscription_end_date, subscription_start_date')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -288,6 +289,136 @@ export async function POST(req: NextRequest) {
         message: 'Plan changed to yearly',
         subscriptionEndDate: newEndDate,
         nextBilledAt: nextBilledAt,
+      });
+    }
+
+    if (action === 'refund') {
+      // 7일 이내 검증
+      const startDate = subscription.subscription_start_date;
+      if (!startDate) {
+        return NextResponse.json(
+          { error: '구독 시작일 정보가 없습니다.' },
+          { status: 400 }
+        );
+      }
+
+      const daysSinceStart = (Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceStart > 7) {
+        return NextResponse.json(
+          { error: '환불 가능 기간(7일)이 지났습니다.' },
+          { status: 400 }
+        );
+      }
+
+      // 1. 최신 completed 트랜잭션 조회
+      const txRes = await fetch(
+        `${PADDLE_API_BASE}/transactions?subscription_id=${paddleSubId}&status=completed&order_by=created_at[DESC]&per_page=1`,
+        {
+          headers: {
+            'Authorization': `Bearer ${PADDLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!txRes.ok) {
+        const errData = await txRes.json().catch(() => ({}));
+        console.error('Paddle transactions fetch error:', errData);
+        return NextResponse.json(
+          { error: `트랜잭션 조회 실패: ${errData?.error?.detail || '알 수 없는 오류'}` },
+          { status: txRes.status }
+        );
+      }
+
+      const txData = await txRes.json();
+      const transaction = txData.data?.[0];
+      if (!transaction) {
+        return NextResponse.json(
+          { error: '환불할 트랜잭션을 찾을 수 없습니다.' },
+          { status: 404 }
+        );
+      }
+
+      // 2. line_items에서 item_id 추출
+      const lineItems = transaction.details?.line_items || [];
+      if (lineItems.length === 0) {
+        return NextResponse.json(
+          { error: '트랜잭션에 환불 가능한 항목이 없습니다.' },
+          { status: 400 }
+        );
+      }
+
+      const refundItems = lineItems.map((item: any) => ({
+        item_id: item.id,
+        type: 'full' as const,
+      }));
+
+      // 3. Paddle Adjustments API 호출 (환불)
+      const adjustRes = await fetch(
+        `${PADDLE_API_BASE}/adjustments`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${PADDLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'refund',
+            transaction_id: transaction.id,
+            reason: 'customer request within 7-day policy',
+            items: refundItems,
+          }),
+        }
+      );
+
+      if (!adjustRes.ok) {
+        const errData = await adjustRes.json().catch(() => ({}));
+        console.error('Paddle adjustment error:', errData);
+        return NextResponse.json(
+          { error: `환불 요청 실패: ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`, details: errData },
+          { status: adjustRes.status }
+        );
+      }
+
+      const adjustData = await adjustRes.json();
+      const refundStatus = adjustData.data?.status || 'pending_approval';
+
+      // 4. DB 업데이트: 구독 취소 처리
+      const refundClient = serviceClient || supabase;
+      const { error: refundDbError } = await refundClient
+        .from('subscriptions')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+        })
+        .eq('paddle_subscription_id', paddleSubId);
+
+      if (refundDbError) {
+        console.error('[Paddle manage] refund DB update failed:', refundDbError, 'for:', paddleSubId);
+      }
+
+      // 5. Paddle 구독도 즉시 취소
+      await fetch(
+        `${PADDLE_API_BASE}/subscriptions/${paddleSubId}/cancel`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${PADDLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            effective_from: 'immediately',
+          }),
+        }
+      ).catch((err) => {
+        console.error('[Paddle manage] subscription cancel after refund failed:', err);
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: '환불 요청이 처리되었습니다.',
+        refundStatus,
+        cancelledAt: new Date().toISOString(),
       });
     }
   } catch (error) {

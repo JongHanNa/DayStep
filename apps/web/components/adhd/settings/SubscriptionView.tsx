@@ -131,6 +131,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const [isReactivating, setIsReactivating] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [isUpgradingPlan, setIsUpgradingPlan] = useState(false);
+  const [isRefunding, setIsRefunding] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
   // Paddle 초기화 (v2 Initialize API 사용, production이 기본값)
@@ -486,6 +487,62 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     }
   };
 
+  // Paddle API를 통한 환불 요청 (7일 이내)
+  const handlePaddleRefund = async () => {
+    if (!window.confirm('환불 시 구독이 즉시 취소됩니다. 환불을 요청하시겠습니까?')) {
+      return;
+    }
+
+    setIsRefunding(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('로그인이 필요합니다.');
+        return;
+      }
+
+      const res = await fetch('/api/paddle/manage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: 'refund' }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || '환불 요청 실패');
+      }
+
+      toast.success('환불 요청이 접수되었습니다. Paddle 승인 후 환불이 처리됩니다.');
+
+      // Optimistic update: 구독 즉시 취소 상태로 변경
+      const currentInfo = useSubscriptionStore.getState().subscriptionInfo;
+      if (currentInfo) {
+        useSubscriptionStore.getState().setSubscriptionInfo({
+          ...currentInfo,
+          status: 'cancelled',
+          cancelledAt: data.cancelledAt || new Date().toISOString(),
+        });
+      }
+    } catch (error: any) {
+      console.error('Paddle refund error:', error);
+      toast.error(error.message || '환불 요청 중 오류가 발생했습니다.');
+    } finally {
+      setIsRefunding(false);
+    }
+  };
+
+  // 7일 이내 환불 가능 여부 계산
+  const isWithinRefundPeriod = (() => {
+    const startDate = subscriptionInfo?.subscriptionStartDate;
+    if (!startDate) return false;
+    const daysSinceStart = (Date.now() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceStart <= 7;
+  })();
+
   // 로딩 중
   if (isLoading) {
     return (
@@ -812,19 +869,49 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               </div>
 
               {/* 환불 요청하기 */}
-              <button
-                onClick={() => window.open('https://www.paddle.net', '_blank')}
-                className="flex items-center gap-3 rounded-lg bg-red-50 dark:bg-red-950/30 p-3 text-sm hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors w-full text-left"
-              >
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center">
-                  <HelpCircle className="w-4 h-4 text-red-700 dark:text-red-300" />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-red-700 dark:text-red-300">환불 요청하기</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Paddle 고객지원에서 환불 요청</p>
+              {subscriptionInfo?.paddleSubscriptionId && isWithinRefundPeriod ? (
+                <button
+                  onClick={handlePaddleRefund}
+                  disabled={isRefunding}
+                  className="flex items-center gap-3 rounded-lg bg-red-50 dark:bg-red-950/30 p-3 text-sm hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center">
+                    {isRefunding ? (
+                      <RefreshCw className="w-4 h-4 text-red-700 dark:text-red-300 animate-spin" />
+                    ) : (
+                      <HelpCircle className="w-4 h-4 text-red-700 dark:text-red-300" />
+                    )}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-red-700 dark:text-red-300">환불 요청하기</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {isRefunding ? '환불 처리 중...' : '7일 이내 전액 환불'}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
+                </button>
+              ) : (
+                <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3 text-sm">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-muted-foreground">환불 기간 만료</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      구독 후 7일이 경과하여 앱 내 환불이 불가합니다.{' '}
+                      <a
+                        href="https://www.paddle.net"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-foreground"
+                      >
+                        Paddle 고객지원
+                      </a>
+                      으로 문의해주세요.
+                    </p>
+                  </div>
                 </div>
-                <ExternalLink className="w-4 h-4 text-red-400 dark:text-red-500 flex-shrink-0" />
-              </button>
+              )}
 
               {/* 이메일 문의 */}
               <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3 text-sm">
