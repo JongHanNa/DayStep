@@ -436,6 +436,16 @@ export async function POST(req: NextRequest) {
         console.error('[Paddle manage] refund DB update failed:', refundDbError, 'for:', paddleSubId);
       }
 
+      // 4-1. users 테이블의 refund_count 즉시 증가 (webhook 미도착 대비)
+      const { error: refundCountError } = await refundClient
+        .from('users')
+        .update({ refund_count: (userData?.refund_count ?? 0) + 1 })
+        .eq('id', user.id);
+
+      if (refundCountError) {
+        console.error('[Paddle manage] refund_count update failed:', refundCountError, 'for user:', user.id);
+      }
+
       // 5. Paddle 구독도 즉시 취소
       await fetch(
         `${PADDLE_API_BASE}/subscriptions/${paddleSubId}/cancel`,
