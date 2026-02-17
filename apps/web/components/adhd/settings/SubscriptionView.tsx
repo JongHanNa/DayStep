@@ -5,7 +5,6 @@ import { Crown, RefreshCw, XCircle, CheckCircle, CreditCard, ChevronDown, Chevro
 import Script from 'next/script';
 import { useAuth } from '@/app/context/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useSubscriptionStore } from '@/state/stores/subscriptionStore';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -119,8 +118,6 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     isNative,
     paymentsEnabled,
   } = useSubscription();
-
-  const setSubscriptionInfo = useSubscriptionStore((s) => s.setSubscriptionInfo);
 
   const { stats: usageStats } = useUsageStats();
 
@@ -334,9 +331,8 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
 
       toast.success('구독 취소가 철회되었습니다.');
 
-      // 즉시 UI 업데이트 (optimistic) — DB는 route에서 이미 업데이트됨
-      if (subscriptionInfo) {
-        setSubscriptionInfo({ ...subscriptionInfo, cancelledAt: null });
+      if (user?.id) {
+        await syncSubscription(user.id);
       }
     } catch (error: any) {
       console.error('Paddle reactivate error:', error);
