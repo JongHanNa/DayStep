@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Crown, RefreshCw, XCircle, CheckCircle, CreditCard, ChevronDown, ChevronRight, Mail, ExternalLink, HelpCircle, Shield, Sparkles } from 'lucide-react';
 import Script from 'next/script';
 import { useAuth } from '@/app/context/AuthContext';
@@ -130,6 +130,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const [isReactivating, setIsReactivating] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [isUpgradingPlan, setIsUpgradingPlan] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
   // Paddle 초기화 (v2 Initialize API 사용, production이 기본값)
   const initializePaddle = useCallback(() => {
@@ -141,6 +142,9 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
         window.Paddle.Initialize({
           token: PADDLE_CONFIG.clientToken,
           eventCallback: (event: any) => {
+            if (event.name === 'checkout.completed') {
+              setCheckoutSuccess(true);
+            }
             if (event.name === 'checkout.error') {
               console.error('[Paddle Error]', event.detail, event);
             }
@@ -208,10 +212,35 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('success') === 'true') {
       toast.success('결제가 완료되었습니다! 구독이 곧 활성화됩니다.');
-      // URL에서 success 파라미터 제거
       window.history.replaceState({}, '', window.location.pathname);
+      setCheckoutSuccess(true);
     }
   }, []);
+
+  // 결제 완료 후 구독 상태 폴링
+  const syncSubscriptionRef = useRef(syncSubscription);
+  syncSubscriptionRef.current = syncSubscription;
+
+  useEffect(() => {
+    if (!checkoutSuccess || !user?.id || hasActiveSubscription) return;
+
+    let attempt = 0;
+    const maxAttempts = 5;
+
+    const intervalId = setInterval(async () => {
+      attempt++;
+      try {
+        await syncSubscriptionRef.current(user.id);
+      } catch (e) {
+        console.error('[Subscription Polling] sync error:', e);
+      }
+      if (attempt >= maxAttempts) {
+        clearInterval(intervalId);
+      }
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [checkoutSuccess, user?.id, hasActiveSubscription]);
 
   // 결제 기능 비활성화 시 알림
   useEffect(() => {
