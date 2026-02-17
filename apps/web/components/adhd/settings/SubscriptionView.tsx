@@ -845,35 +845,37 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               </div>
             </div>
           </details>
-          {/* 다른 플랫폼에서 구독하셨나요? */}
-          <div className="rounded-xl border bg-muted/50 p-4 space-y-3">
-            <p className="text-sm font-semibold">다른 플랫폼에서 구독하셨나요?</p>
-            <div className="space-y-2">
-              <a
-                href="https://apps.apple.com/account/subscriptions"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
-              >
-                <span>🍎</span>
-                <span className="flex-1 font-medium">App Store에서 관리</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </a>
-              <a
-                href="https://play.google.com/store/account/subscriptions"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
-              >
-                <span>🤖</span>
-                <span className="flex-1 font-medium">Play Store에서 관리</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </a>
+          {/* 다른 플랫폼에서 구독하셨나요? — Paddle(web) 구독자에게는 숨김 */}
+          {subscriptionInfo?.platform && subscriptionInfo.platform !== 'web' && (
+            <div className="rounded-xl border bg-muted/50 p-4 space-y-3">
+              <p className="text-sm font-semibold">다른 플랫폼에서 구독하셨나요?</p>
+              <div className="space-y-2">
+                <a
+                  href="https://apps.apple.com/account/subscriptions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
+                >
+                  <span>🍎</span>
+                  <span className="flex-1 font-medium">App Store에서 관리</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </a>
+                <a
+                  href="https://play.google.com/store/account/subscriptions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
+                >
+                  <span>🤖</span>
+                  <span className="flex-1 font-medium">Play Store에서 관리</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </a>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                iOS/Android에서 구독하신 경우 해당 스토어에서 결제 관리, 구독 취소가 가능합니다.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              iOS/Android에서 구독하신 경우 해당 스토어에서 결제 관리, 구독 취소가 가능합니다.
-            </p>
-          </div>
+          )}
         </>
       )}
 
@@ -1092,6 +1094,36 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
               </Button>
             </div>
           )}
+
+          {/* 다른 플랫폼에서 구독하셨나요? — 비구독자에게 표시 */}
+          <div className="rounded-xl border bg-muted/50 p-4 space-y-3">
+            <p className="text-sm font-semibold">다른 플랫폼에서 구독하셨나요?</p>
+            <div className="space-y-2">
+              <a
+                href="https://apps.apple.com/account/subscriptions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <span>🍎</span>
+                <span className="flex-1 font-medium">App Store에서 관리</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </a>
+              <a
+                href="https://play.google.com/store/account/subscriptions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-card border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <span>🤖</span>
+                <span className="flex-1 font-medium">Play Store에서 관리</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </a>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              iOS/Android에서 구독하신 경우 해당 스토어에서 결제 관리, 구독 취소가 가능합니다.
+            </p>
+          </div>
         </>
       )}
 
