@@ -603,14 +603,28 @@ async function handleTransactionRefunded(
  * Product/Price ID를 구독 타입으로 정규화
  */
 function normalizeProductId(productId: string, priceId: string): string {
-  // Price ID 기반으로 월간/연간 구분
-  if (priceId.includes('monthly') || priceId === 'pri_01kbgwtw6fdknst82vxc9sjg3s') {
+  // Price ID 기반으로 월간/연간 구분 (프로덕션 + 개발 환경 모두 지원)
+  const MONTHLY_PRICE_IDS = [
+    'pri_01kbgwtw6fdknst82vxc9sjg3s',  // production
+    'pri_01khkk299azmxcvh3g518xemss',  // sandbox/development
+  ];
+  const YEARLY_PRICE_IDS = [
+    'pri_01kbgx1kbjmtw96e0fkjg46j1r',  // production
+    'pri_01khkjyjbww8j0dx4gwhbfyth8',  // sandbox/development
+  ];
+
+  if (priceId.includes('monthly') || MONTHLY_PRICE_IDS.includes(priceId)) {
     return 'pro_monthly';
   }
-  if (priceId.includes('yearly') || priceId === 'pri_01kbgx1kbjmtw96e0fkjg46j1r') {
+  if (priceId.includes('yearly') || YEARLY_PRICE_IDS.includes(priceId)) {
     return 'pro_yearly';
   }
-  // 기본값
+
+  // 알 수 없는 Price ID — Paddle product_id 기반 폴백
+  console.warn(`Unknown priceId: ${priceId}, productId: ${productId}. Falling back to productId-based detection.`);
+  if (productId.includes('yearly') || productId.includes('annual')) {
+    return 'pro_yearly';
+  }
   return 'pro_monthly';
 }
 
