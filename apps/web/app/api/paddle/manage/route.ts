@@ -84,6 +84,9 @@ export async function POST(req: NextRequest) {
     const paddleSubId = subscription.paddle_subscription_id;
 
     // service_role 클라이언트 (DB 직접 업데이트용)
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      console.warn('[Paddle manage] SUPABASE_SERVICE_ROLE_KEY not set — DB updates will use anon key and may fail due to RLS');
+    }
     const serviceClient = SUPABASE_SERVICE_ROLE_KEY
       ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
       : null;
@@ -128,6 +131,8 @@ export async function POST(req: NextRequest) {
         success: true,
         message: 'Subscription cancellation scheduled',
         subscriptionEndDate: subscription.subscription_end_date,
+        cancelledAt: new Date().toISOString(),
+        dbUpdated: !cancelDbError,
       });
     }
 

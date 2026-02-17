@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { FREE_TIER_LIMITS } from '@/lib/featureFlags';
 import { useUsageStats } from '@/hooks/useUsageStats';
+import { useSubscriptionStore } from '@/state/stores/subscriptionStore';
 import type { UserUsageStats } from '@/lib/supabase/usage';
 
 // Paddle 설정 (환경변수 기반 — .env.development: sandbox, .env.production: production)
@@ -322,6 +323,15 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
         : '';
       toast.success(`구독 취소가 예약되었습니다.${endDate ? ` ${endDate}까지 이용 가능합니다.` : ''}`);
 
+      // Optimistic update: DB sync 실패에 관계없이 즉시 UI 반영
+      const currentInfo = useSubscriptionStore.getState().subscriptionInfo;
+      if (currentInfo) {
+        useSubscriptionStore.getState().setSubscriptionInfo({
+          ...currentInfo,
+          cancelledAt: data.cancelledAt || new Date().toISOString(),
+        });
+      }
+
       if (user?.id) {
         await syncSubscription(user.id);
       }
@@ -359,6 +369,15 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
       }
 
       toast.success('구독 취소가 철회되었습니다.');
+
+      // Optimistic update: 즉시 cancelledAt 제거
+      const currentInfo = useSubscriptionStore.getState().subscriptionInfo;
+      if (currentInfo) {
+        useSubscriptionStore.getState().setSubscriptionInfo({
+          ...currentInfo,
+          cancelledAt: null,
+        });
+      }
 
       if (user?.id) {
         await syncSubscription(user.id);
