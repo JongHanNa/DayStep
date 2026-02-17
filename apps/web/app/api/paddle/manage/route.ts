@@ -310,9 +310,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // 1. 최신 completed 트랜잭션 조회
+      // 1. 모든 completed 트랜잭션 조회
       const txRes = await fetch(
-        `${PADDLE_API_BASE}/transactions?subscription_id=${paddleSubId}&status=completed&order_by=created_at[DESC]&per_page=1`,
+        `${PADDLE_API_BASE}/transactions?subscription_id=${paddleSubId}&status=completed&order_by=created_at[DESC]&per_page=50`,
         {
           headers: {
             'Authorization': `Bearer ${PADDLE_API_KEY}`,
@@ -331,57 +331,72 @@ export async function POST(req: NextRequest) {
       }
 
       const txData = await txRes.json();
-      const transaction = txData.data?.[0];
-      if (!transaction) {
+      const transactions = txData.data || [];
+      if (transactions.length === 0) {
         return NextResponse.json(
           { error: '환불할 트랜잭션을 찾을 수 없습니다.' },
           { status: 404 }
         );
       }
 
-      // 2. line_items에서 item_id 추출
-      const lineItems = transaction.details?.line_items || [];
-      if (lineItems.length === 0) {
+      // 2. 각 트랜잭션마다 Paddle Adjustments API 호출 (전액 환불)
+      const refundResults: Array<{ transactionId: string; status: string }> = [];
+
+      for (const transaction of transactions) {
+        const lineItems = transaction.details?.line_items || [];
+        if (lineItems.length === 0) {
+          console.warn(`[Paddle refund] Transaction ${transaction.id} has no line items, skipping`);
+          continue;
+        }
+
+        const refundItems = lineItems.map((item: any) => ({
+          item_id: item.id,
+          type: 'full' as const,
+        }));
+
+        const adjustRes = await fetch(
+          `${PADDLE_API_BASE}/adjustments`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${PADDLE_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'refund',
+              transaction_id: transaction.id,
+              reason: 'customer request within 7-day policy',
+              items: refundItems,
+            }),
+          }
+        );
+
+        if (!adjustRes.ok) {
+          const errData = await adjustRes.json().catch(() => ({}));
+          console.error(`Paddle adjustment error for transaction ${transaction.id}:`, errData);
+          return NextResponse.json(
+            {
+              error: `환불 요청 실패 (트랜잭션 ${transaction.id}): ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`,
+              details: errData,
+              partialRefunds: refundResults,
+            },
+            { status: adjustRes.status }
+          );
+        }
+
+        const adjustData = await adjustRes.json();
+        refundResults.push({
+          transactionId: transaction.id,
+          status: adjustData.data?.status || 'pending_approval',
+        });
+      }
+
+      if (refundResults.length === 0) {
         return NextResponse.json(
-          { error: '트랜잭션에 환불 가능한 항목이 없습니다.' },
+          { error: '환불 가능한 트랜잭션이 없습니다.' },
           { status: 400 }
         );
       }
-
-      const refundItems = lineItems.map((item: any) => ({
-        item_id: item.id,
-        type: 'full' as const,
-      }));
-
-      // 3. Paddle Adjustments API 호출 (환불)
-      const adjustRes = await fetch(
-        `${PADDLE_API_BASE}/adjustments`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${PADDLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'refund',
-            transaction_id: transaction.id,
-            reason: 'customer request within 7-day policy',
-            items: refundItems,
-          }),
-        }
-      );
-
-      if (!adjustRes.ok) {
-        const errData = await adjustRes.json().catch(() => ({}));
-        console.error('Paddle adjustment error:', errData);
-        return NextResponse.json(
-          { error: `환불 요청 실패: ${errData?.error?.detail || errData?.error?.type || '알 수 없는 오류'}`, details: errData },
-          { status: adjustRes.status }
-        );
-      }
-
-      const adjustData = await adjustRes.json();
-      const refundStatus = adjustData.data?.status || 'pending_approval';
 
       // 4. DB 업데이트: 구독 취소 처리
       const refundClient = serviceClient || supabase;
@@ -416,8 +431,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: '환불 요청이 처리되었습니다.',
-        refundStatus,
+        message: `환불 요청이 처리되었습니다. (${refundResults.length}건)`,
+        refundResults,
         cancelledAt: new Date().toISOString(),
       });
     }
