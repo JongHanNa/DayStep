@@ -259,14 +259,24 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Paddle 응답에서 새 billing period 추출
+      const paddleData = await paddleRes.json();
+      const newEndDate = paddleData?.data?.current_billing_period?.ends_at || null;
+      const nextBilledAt = paddleData?.data?.next_billed_at || null;
+
       // 성공 시 DB 업데이트 (webhook 도착 전 즉시 반영)
       const changePlanClient = serviceClient || supabase;
+      const updateFields: Record<string, any> = {
+        paddle_price_id: newPriceId,
+        product_id: 'pro_yearly',
+      };
+      if (newEndDate) {
+        updateFields.subscription_end_date = new Date(newEndDate).toISOString();
+      }
+
       const { error: changePlanDbError } = await changePlanClient
         .from('subscriptions')
-        .update({
-          paddle_price_id: newPriceId,
-          product_id: 'pro_yearly',
-        })
+        .update(updateFields)
         .eq('paddle_subscription_id', paddleSubId);
 
       if (changePlanDbError) {
@@ -276,6 +286,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Plan changed to yearly',
+        subscriptionEndDate: newEndDate,
+        nextBilledAt: nextBilledAt,
       });
     }
   } catch (error) {

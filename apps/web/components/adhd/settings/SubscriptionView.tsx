@@ -464,6 +464,17 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
 
       toast.success('연간 플랜으로 업그레이드되었습니다! 🎉');
 
+      // Optimistic update: API 응답의 새 billing date 즉시 반영
+      const currentInfo = useSubscriptionStore.getState().subscriptionInfo;
+      if (currentInfo) {
+        useSubscriptionStore.getState().setSubscriptionInfo({
+          ...currentInfo,
+          productId: 'pro_yearly',
+          subscriptionEndDate: data.subscriptionEndDate || currentInfo.subscriptionEndDate,
+        });
+      }
+
+      // DB sync (webhook이 이미 업데이트했을 수 있음)
       if (user?.id) {
         await syncSubscription(user.id);
       }
