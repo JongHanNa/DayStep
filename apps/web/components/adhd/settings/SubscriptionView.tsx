@@ -499,7 +499,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   const platformLabel = getPlatformLabel(subscriptionInfo?.platform);
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
+    <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
       {/* 헤더 */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">구독 관리</h1>
@@ -556,7 +556,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
           </details>
 
           {/* 섹션 2 — 구독 관리 */}
-          <details className="group rounded-xl border bg-card text-card-foreground shadow-sm">
+          <details open className="group rounded-xl border bg-card text-card-foreground shadow-sm">
             <summary className="flex items-center gap-3 cursor-pointer p-4 select-none list-none [&::-webkit-details-marker]:hidden">
               <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center">2</span>
               <span className="font-semibold text-base flex-1">구독 관리</span>
@@ -788,7 +788,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
           </details>
 
           {/* 섹션 3 — 도움말 & 환불 */}
-          <details className="group rounded-xl border bg-card text-card-foreground shadow-sm">
+          <details open className="group rounded-xl border bg-card text-card-foreground shadow-sm">
             <summary className="flex items-center gap-3 cursor-pointer p-4 select-none list-none [&::-webkit-details-marker]:hidden">
               <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center">3</span>
               <span className="font-semibold text-base flex-1">도움말 & 환불</span>
