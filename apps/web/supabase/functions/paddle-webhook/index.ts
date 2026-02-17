@@ -339,15 +339,22 @@ async function handleSubscriptionUpdated(
   const normalizedProductId = normalizeProductId(productId, priceId);
 
   // Supabase 업데이트
+  const updateData: Record<string, any> = {
+    status: data.status === 'active' ? 'active' : data.status,
+    product_id: normalizedProductId,
+    paddle_price_id: priceId,
+    subscription_end_date: expiresAt,
+    updated_at: new Date(),
+  };
+
+  // 취소 철회 시 cancelled_at 클리어 (active 상태 + scheduled_change 없음 = 취소 철회 완료)
+  if (data.status === 'active' && !data.scheduled_change) {
+    updateData.cancelled_at = null;
+  }
+
   await supabase
     .from('subscriptions')
-    .update({
-      status: data.status === 'active' ? 'active' : data.status,
-      product_id: normalizedProductId,
-      paddle_price_id: priceId,
-      subscription_end_date: expiresAt,
-      updated_at: new Date(),
-    })
+    .update(updateData)
     .eq('user_id', appUserId);
 
   await supabase

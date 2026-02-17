@@ -114,13 +114,14 @@ export async function POST(req: NextRequest) {
       }
 
       // cancel 성공 시 DB에 cancelled_at 즉시 설정 (webhook 도착 전 UI 반영용)
-      if (serviceClient) {
-        await serviceClient
-          .from('subscriptions')
-          .update({ cancelled_at: new Date().toISOString() })
-          .eq('paddle_subscription_id', paddleSubId);
-      } else {
-        console.error('[Paddle manage] SUPABASE_SERVICE_ROLE_KEY not configured - cancelled_at DB update skipped for:', paddleSubId);
+      const cancelClient = serviceClient || supabase;
+      const { error: cancelDbError } = await cancelClient
+        .from('subscriptions')
+        .update({ cancelled_at: new Date().toISOString() })
+        .eq('paddle_subscription_id', paddleSubId);
+
+      if (cancelDbError) {
+        console.error('[Paddle manage] cancel DB update failed:', cancelDbError, 'for:', paddleSubId);
       }
 
       return NextResponse.json({
@@ -162,18 +163,21 @@ export async function POST(req: NextRequest) {
       }
 
       // reactivate 성공 시 DB에서 cancelled_at 클리어
-      if (serviceClient) {
-        await serviceClient
-          .from('subscriptions')
-          .update({ cancelled_at: null })
-          .eq('paddle_subscription_id', paddleSubId);
-      } else {
-        console.error('[Paddle manage] SUPABASE_SERVICE_ROLE_KEY not configured - cancelled_at clear skipped for:', paddleSubId);
+      const reactivateClient = serviceClient || supabase;
+      const { error: dbError } = await reactivateClient
+        .from('subscriptions')
+        .update({ cancelled_at: null })
+        .eq('paddle_subscription_id', paddleSubId);
+
+      if (dbError) {
+        console.error('[Paddle manage] reactivate DB update failed:', dbError, 'for:', paddleSubId);
       }
+      const dbUpdated = !dbError;
 
       return NextResponse.json({
         success: true,
         message: 'Subscription reactivated',
+        dbUpdated,
       });
     }
 
@@ -251,16 +255,17 @@ export async function POST(req: NextRequest) {
       }
 
       // 성공 시 DB 업데이트 (webhook 도착 전 즉시 반영)
-      if (serviceClient) {
-        await serviceClient
-          .from('subscriptions')
-          .update({
-            paddle_price_id: newPriceId,
-            product_id: 'pro_yearly',
-          })
-          .eq('paddle_subscription_id', paddleSubId);
-      } else {
-        console.error('[Paddle manage] SUPABASE_SERVICE_ROLE_KEY not configured - change-plan DB update skipped for:', paddleSubId);
+      const changePlanClient = serviceClient || supabase;
+      const { error: changePlanDbError } = await changePlanClient
+        .from('subscriptions')
+        .update({
+          paddle_price_id: newPriceId,
+          product_id: 'pro_yearly',
+        })
+        .eq('paddle_subscription_id', paddleSubId);
+
+      if (changePlanDbError) {
+        console.error('[Paddle manage] change-plan DB update failed:', changePlanDbError, 'for:', paddleSubId);
       }
 
       return NextResponse.json({
