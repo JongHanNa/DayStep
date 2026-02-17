@@ -323,17 +323,14 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
         : '';
       toast.success(`구독 취소가 예약되었습니다.${endDate ? ` ${endDate}까지 이용 가능합니다.` : ''}`);
 
-      // Optimistic update: DB sync 실패에 관계없이 즉시 UI 반영
+      // Optimistic update: Paddle API 성공 = 확실한 상태 변경
+      // syncSubscription 호출 제거 — DB cancelled_at이 아직 null이면 optimistic update를 덮어씀
       const currentInfo = useSubscriptionStore.getState().subscriptionInfo;
       if (currentInfo) {
         useSubscriptionStore.getState().setSubscriptionInfo({
           ...currentInfo,
           cancelledAt: data.cancelledAt || new Date().toISOString(),
         });
-      }
-
-      if (user?.id) {
-        await syncSubscription(user.id);
       }
     } catch (error: any) {
       console.error('Paddle cancel error:', error);
@@ -370,17 +367,14 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
 
       toast.success('구독 취소가 철회되었습니다.');
 
-      // Optimistic update: 즉시 cancelledAt 제거
+      // Optimistic update: Paddle API 성공 = 확실한 상태 변경
+      // syncSubscription 호출 제거 — DB cancelled_at이 아직 null이면 optimistic update를 덮어씀
       const currentInfo = useSubscriptionStore.getState().subscriptionInfo;
       if (currentInfo) {
         useSubscriptionStore.getState().setSubscriptionInfo({
           ...currentInfo,
           cancelledAt: null,
         });
-      }
-
-      if (user?.id) {
-        await syncSubscription(user.id);
       }
     } catch (error: any) {
       console.error('Paddle reactivate error:', error);
