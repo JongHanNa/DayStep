@@ -1,12 +1,12 @@
 /**
- * ContactNudge — 연락 추천 인라인 카드
- * BannerPage.tsx pink 카드를 독립 컴포넌트로 추출
+ * ContactNudge — 연락 추천 리스트
+ * 전체 추천 목록을 세로 리스트로 표시 (웹 ContactRecommendationScroll 참고)
  */
 import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {GradientBackground} from '@/components/core';
-import {Heart, Phone} from 'lucide-react-native';
+import {AnimatedPressable} from '@/components/core';
+import {HeartHandshake, Phone} from 'lucide-react-native';
 
 interface ContactRecommendation {
   person: {
@@ -19,62 +19,156 @@ interface ContactRecommendation {
 }
 
 interface ContactNudgeProps {
-  recommendation: ContactRecommendation | null;
+  recommendations: ContactRecommendation[];
   enterDelay?: number;
 }
 
-export function ContactNudge({recommendation, enterDelay = 0}: ContactNudgeProps) {
+const PRIORITY_COLORS: Record<string, string> = {
+  high: '#EF4444',
+  medium: '#F59E0B',
+  normal: '#22C55E',
+};
+
+export function ContactNudge({
+  recommendations,
+  enterDelay = 0,
+}: ContactNudgeProps) {
   return (
-    <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
-      <GradientBackground
-        colors={['#FCE7F3', '#FBCFE8', '#F9A8D4']}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
-        style={{borderRadius: 16, padding: 16, marginHorizontal: 16}}>
-        <View className="flex-row items-center mb-3">
-          <Heart size={22} color="#9D174D" />
-          <Text className="text-lg font-semibold text-pink-900 ml-2">
-            소중한 사람
+    <Animated.View
+      entering={FadeInDown.delay(enterDelay).duration(400)}
+      className="mx-4">
+      {/* 헤더 */}
+      <View className="flex-row items-center mb-3">
+        <HeartHandshake size={22} color="#EC4899" />
+        <Text className="text-lg font-semibold text-gray-800 ml-2">
+          연락할 사람
+        </Text>
+        {recommendations.length > 0 && (
+          <View
+            style={{
+              backgroundColor: '#FCE7F3',
+              borderRadius: 10,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              marginLeft: 8,
+            }}>
+            <Text className="text-xs font-medium" style={{color: '#EC4899'}}>
+              {recommendations.length}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* 추천 리스트 */}
+      {recommendations.length > 0 ? (
+        <View style={{gap: 10}}>
+          {recommendations.map((rec, index) => (
+            <Animated.View
+              key={`${rec.person.name}-${index}`}
+              entering={FadeInDown.delay(
+                enterDelay + 80 + index * 60,
+              ).duration(350)}>
+              <View
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 14,
+                  padding: 14,
+                  shadowColor: '#000',
+                  shadowOffset: {width: 0, height: 1},
+                  shadowOpacity: 0.06,
+                  shadowRadius: 3,
+                  elevation: 2,
+                  borderWidth: 1,
+                  borderColor: '#F3F4F6',
+                }}>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 mr-3">
+                    {/* 이름 + 우선순위 dot */}
+                    <View className="flex-row items-center mb-1">
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor:
+                            PRIORITY_COLORS[rec.priority] || '#22C55E',
+                          marginRight: 8,
+                        }}
+                      />
+                      <Text className="text-sm font-semibold text-gray-800">
+                        {rec.person.name}
+                        {rec.person.nickname
+                          ? ` (${rec.person.nickname})`
+                          : ''}
+                      </Text>
+                    </View>
+                    {/* 연락 상태 */}
+                    <Text className="text-xs text-gray-400 ml-4">
+                      {rec.daysSinceContact >= 999
+                        ? '아직 연락한 기록이 없어요'
+                        : `${rec.daysSinceContact}일 전 마지막 연락`}
+                    </Text>
+                    {/* 관계 태그 */}
+                    {(rec.person.relationships?.length ?? 0) > 0 && (
+                      <View className="flex-row flex-wrap ml-4 mt-1" style={{gap: 4}}>
+                        {rec.person.relationships.map((rel, i) => (
+                          <View
+                            key={i}
+                            style={{
+                              backgroundColor: '#FCE7F3',
+                              borderRadius: 8,
+                              paddingHorizontal: 6,
+                              paddingVertical: 2,
+                            }}>
+                            <Text className="text-xs" style={{color: '#9D174D'}}>
+                              {rel}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                  {/* 안부 전하기 버튼 */}
+                  <AnimatedPressable
+                    onPress={() => {}}
+                    hapticType="light"
+                    scaleValue={0.95}
+                    style={{
+                      backgroundColor: '#FCE7F3',
+                      borderRadius: 10,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}>
+                    <Phone size={14} color="#EC4899" />
+                    <Text
+                      className="text-xs font-medium ml-1"
+                      style={{color: '#EC4899'}}>
+                      안부
+                    </Text>
+                  </AnimatedPressable>
+                </View>
+              </View>
+            </Animated.View>
+          ))}
+        </View>
+      ) : (
+        <View
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: 14,
+            padding: 20,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#F3F4F6',
+          }}>
+          <HeartHandshake size={32} color="#D1D5DB" />
+          <Text className="text-sm text-gray-400 mt-2 text-center">
+            소중한 사람을 등록하면{'\n'}연락 리마인더를 받을 수 있어요
           </Text>
         </View>
-        {recommendation ? (
-          <View>
-            <Text className="text-base font-medium text-pink-900 mb-1">
-              {recommendation.person.name}
-              {recommendation.person.nickname
-                ? ` (${recommendation.person.nickname})`
-                : ''}
-            </Text>
-            <Text className="text-sm text-pink-800/80 mb-2">
-              {recommendation.daysSinceContact >= 999
-                ? '아직 연락한 기록이 없어요'
-                : `${recommendation.daysSinceContact}일 전에 마지막으로 연락했어요`}
-            </Text>
-            {(recommendation.person.relationships?.length ?? 0) > 0 && (
-              <View className="flex-row flex-wrap gap-1">
-                {recommendation.person.relationships.map((rel, i) => (
-                  <View
-                    key={i}
-                    className="bg-pink-200/50 rounded-full px-2 py-0.5">
-                    <Text className="text-xs text-pink-800">{rel}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            <View className="flex-row items-center mt-3">
-              <Phone size={14} color="#9D174D" />
-              <Text className="text-xs text-pink-800/70 ml-1">
-                오늘 안부를 전해보는 건 어떨까요?
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <Text className="text-sm text-pink-800/60">
-            소중한 사람을 등록하면{'\n'}
-            연락 리마인더를 받을 수 있어요.
-          </Text>
-        )}
-      </GradientBackground>
+      )}
     </Animated.View>
   );
 }

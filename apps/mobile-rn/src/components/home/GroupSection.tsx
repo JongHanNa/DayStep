@@ -1,17 +1,19 @@
 /**
  * GroupSection — 3그룹 공용 섹션 컴포넌트
- * 컬러 도트 + 제목 + 기능 그리드
+ * 컬러 도트 + 제목 + 2열 기능 그리드 (웹 스타일: 흰 배경 + Lucide 아이콘 + 제목 + 설명)
  */
 import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {AnimatedPressable, GradientBackground} from '@/components/core';
+import {AnimatedPressable} from '@/components/core';
 
 export interface FeatureItem {
   id: string;
-  emoji: string;
+  icon: React.ReactNode;
   label: string;
-  gradientColors: string[];
+  description: string;
+  iconBgColor: string;
+  iconColor: string;
   onPress: () => void;
 }
 
@@ -27,11 +29,9 @@ export function GroupSection({
   dotColor,
   title,
   items,
-  numColumns = 3,
+  numColumns = 2,
   enterDelay = 0,
 }: GroupSectionProps) {
-  const itemWidth = numColumns === 2 ? '48%' : '31%';
-
   return (
     <Animated.View
       entering={FadeInDown.delay(enterDelay).duration(400)}
@@ -59,35 +59,57 @@ export function GroupSection({
         }}
       />
 
-      {/* 기능 그리드 */}
-      <View className="flex-row flex-wrap" style={{gap: 8}}>
+      {/* 2열 기능 그리드 */}
+      <View className="flex-row flex-wrap" style={{gap: 10}}>
         {items.map((item, index) => (
           <Animated.View
             key={item.id}
-            entering={FadeInDown.delay(enterDelay + 50 + index * 60).duration(350)}
-            style={{width: itemWidth}}>
+            entering={FadeInDown.delay(
+              enterDelay + 50 + index * 60,
+            ).duration(350)}
+            style={{width: '48%'}}>
             <AnimatedPressable
               onPress={item.onPress}
               hapticType="light"
               scaleValue={0.97}
-              style={{borderRadius: 14, overflow: 'hidden'}}>
-              <GradientBackground
-                colors={item.gradientColors}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 1}}
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: 14,
+                padding: 14,
+                minHeight: 100,
+                shadowColor: '#000',
+                shadowOffset: {width: 0, height: 1},
+                shadowOpacity: 0.06,
+                shadowRadius: 3,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: '#F3F4F6',
+              }}>
+              {/* 아이콘 박스 */}
+              <View
                 style={{
-                  borderRadius: 14,
-                  paddingVertical: 16,
-                  paddingHorizontal: 8,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: item.iconBgColor,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  minHeight: 80,
+                  marginBottom: 10,
                 }}>
-                <Text style={{fontSize: 24, marginBottom: 6}}>{item.emoji}</Text>
-                <Text className="text-xs font-medium text-white text-center">
-                  {item.label}
-                </Text>
-              </GradientBackground>
+                {item.icon}
+              </View>
+              {/* 라벨 */}
+              <Text
+                className="text-sm font-semibold text-gray-800"
+                numberOfLines={1}>
+                {item.label}
+              </Text>
+              {/* 설명 */}
+              <Text
+                className="text-xs text-gray-400 mt-0.5"
+                numberOfLines={2}>
+                {item.description}
+              </Text>
             </AnimatedPressable>
           </Animated.View>
         ))}

@@ -1,12 +1,13 @@
 /**
- * Home Dashboard — 하이브리드 리디자인
- * 단일 ScrollView: 인사 → 진행률 → 원동력 → 미션 → 3그룹 허브 → 연락 추천 → 푸터
+ * Home Dashboard — SwipeablePages 리디자인
+ * Page 0: 메인 허브 (인사 → 진행률 → 미션 → 3그룹 그리드)
+ * Page 1: 영감 페이지 (원동력 → 연락할 사람 → 하루 한 줄)
  */
 import React, {useEffect, useMemo} from 'react';
 import {Text, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {ScreenContainer, AnimatedCard} from '@/components/core';
+import {ScreenContainer, AnimatedCard, SwipeablePages} from '@/components/core';
 import {ProgressRing} from '@/components/home/ProgressRing';
 import {FuelCard} from '@/components/home/FuelCard';
 import {MissionCard} from '@/components/home/MissionCard';
@@ -19,23 +20,64 @@ import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
-import {Moon, Sun, CloudSun, Sparkles} from 'lucide-react-native';
+import {
+  Moon,
+  Sun,
+  CloudSun,
+  Sparkles,
+  Calendar,
+  FolderKanban,
+  Link,
+  Lightbulb,
+  PenLine,
+  MessageCircle,
+  Users,
+  Heart,
+  BarChart3,
+} from 'lucide-react-native';
 
 function getGreeting(): {text: string; Icon: React.FC<any>; gradient: string[]} {
   const hour = new Date().getHours();
-  if (hour < 6) return {text: '아직 이른 새벽이에요', Icon: Moon, gradient: ['#1E1B4B', '#312E81']};
-  if (hour < 12) return {text: '좋은 아침이에요', Icon: Sun, gradient: ['#FEF3C7', '#FDE68A']};
-  if (hour < 18) return {text: '좋은 오후예요', Icon: CloudSun, gradient: ['#DBEAFE', '#93C5FD']};
-  return {text: '편안한 저녁이에요', Icon: Moon, gradient: ['#EDE9FE', '#C4B5FD']};
+  if (hour < 6)
+    return {
+      text: '아직 이른 새벽이에요',
+      Icon: Moon,
+      gradient: ['#1E1B4B', '#312E81'],
+    };
+  if (hour < 12)
+    return {
+      text: '좋은 아침이에요',
+      Icon: Sun,
+      gradient: ['#FEF3C7', '#FDE68A'],
+    };
+  if (hour < 18)
+    return {
+      text: '좋은 오후예요',
+      Icon: CloudSun,
+      gradient: ['#DBEAFE', '#93C5FD'],
+    };
+  return {
+    text: '편안한 저녁이에요',
+    Icon: Moon,
+    gradient: ['#EDE9FE', '#C4B5FD'],
+  };
 }
+
+// 영감 문구 목록
+const INSPIRATION_QUOTES = [
+  '작은 한 걸음이 큰 변화를 만듭니다.',
+  '오늘의 나를 위해 할 수 있는 가장 좋은 일을 하세요.',
+  '완벽하지 않아도 괜찮아요. 시작한 것만으로 충분해요.',
+  '당신의 속도로 괜찮습니다.',
+  '어제보다 오늘 더 나은 내가 되는 것, 그것으로 충분합니다.',
+];
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const {todos} = useTodoStore();
   const user = useAuthStore(s => s.user);
   const {notes, fetchFuelNotes, getRandomFuelNote} = useNoteStore();
-  const {recommendations, loadRecommendations, getRandomRecommendation} =
-    useCherishedPeopleStore();
+  const {recommendations, loadRecommendations} = useCherishedPeopleStore();
 
   // 원동력 + 연락 추천 데이터 로딩
   useEffect(() => {
@@ -48,7 +90,6 @@ export default function HomeScreen() {
   const greeting = useMemo(() => getGreeting(), []);
   const today = format(new Date(), 'M월 d일 EEEE', {locale: ko});
   const fuelNote = useMemo(() => getRandomFuelNote(), [notes]);
-  const recommendation = useMemo(() => getRandomRecommendation(), [recommendations]);
 
   const completedCount = todos.filter(t => t.completed).length;
   const totalCount = todos.length;
@@ -56,206 +97,277 @@ export default function HomeScreen() {
 
   const GreetingIcon = greeting.Icon;
 
-  // ── 그룹 아이템 정의 ──
+  // 영감 문구 (날짜 기반 고정)
+  const inspirationQuote = useMemo(() => {
+    const dayIndex = new Date().getDate() % INSPIRATION_QUOTES.length;
+    return INSPIRATION_QUOTES[dayIndex];
+  }, []);
 
-  const planItems: FeatureItem[] = useMemo(() => [
-    {
-      id: 'plan-day',
-      emoji: '📋',
-      label: '하루 계획하기',
-      gradientColors: ['#BFDBFE', '#3B82F6'],
-      onPress: () => navigation.navigate('Planner'),
-    },
-    {
-      id: 'plan-schedule',
-      emoji: '📅',
-      label: '일정 계획하기',
-      gradientColors: ['#93C5FD', '#2563EB'],
-      onPress: () => navigation.navigate('Planner'),
-    },
-    {
-      id: 'plan-view',
-      emoji: '👀',
-      label: '내 계획 보기',
-      gradientColors: ['#60A5FA', '#1D4ED8'],
-      onPress: () => navigation.navigate('Planner'),
-    },
-    {
-      id: 'plan-ai',
-      emoji: '🤖',
-      label: 'AI로 계획하기',
-      gradientColors: ['#BFDBFE', '#60A5FA'],
-      onPress: () => navigation.navigate('Planner'),
-    },
-    {
-      id: 'plan-claude',
-      emoji: '🔗',
-      label: 'Claude 연결하기',
-      gradientColors: ['#93C5FD', '#3B82F6'],
-      onPress: () => navigation.navigate('Settings'),
-    },
-  ], [navigation]);
+  // ── 그룹 아이템 정의 (Lucide 아이콘 + 설명) ──
 
-  const thoughtItems: FeatureItem[] = useMemo(() => [
-    {
-      id: 'thought-fuel',
-      emoji: '🔥',
-      label: '원동력 새기기',
-      gradientColors: ['#C4B5FD', '#7C3AED'],
-      onPress: () => navigation.navigate('Notes'),
-    },
-    {
-      id: 'thought-people',
-      emoji: '💕',
-      label: '관계 기록하기',
-      gradientColors: ['#8B5CF6', '#5B21B6'],
-      onPress: () => navigation.navigate('Notes'),
-    },
-    {
-      id: 'thought-news',
-      emoji: '📰',
-      label: '소식 챙기기',
-      gradientColors: ['#A78BFA', '#6D28D9'],
-      onPress: () => navigation.navigate('Notes'),
-    },
-  ], [navigation]);
+  const BLUE_BG = '#EFF6FF';
+  const BLUE_ICON = '#3B82F6';
+  const VIOLET_BG = '#F5F3FF';
+  const VIOLET_ICON = '#8B5CF6';
+  const EMERALD_BG = '#ECFDF5';
+  const EMERALD_ICON = '#22C55E';
 
-  const careItems: FeatureItem[] = useMemo(() => [
-    {
-      id: 'care-gratitude',
-      emoji: '🙏',
-      label: '감사 기록하기',
-      gradientColors: ['#BBF7D0', '#22C55E'],
-      onPress: () => navigation.navigate('Notes'),
-    },
-    {
-      id: 'care-activity',
-      emoji: '📊',
-      label: '활동 살펴보기',
-      gradientColors: ['#6EE7B7', '#10B981'],
-      onPress: () => navigation.navigate('Settings'),
-    },
-  ], [navigation]);
+  const planItems: FeatureItem[] = useMemo(
+    () => [
+      {
+        id: 'daily-planner',
+        icon: <Calendar size={20} color={BLUE_ICON} />,
+        label: '하루 계획하기',
+        description: '오늘 할일을 시간별로 배치',
+        iconBgColor: BLUE_BG,
+        iconColor: BLUE_ICON,
+        onPress: () => navigation.navigate('Planner'),
+      },
+      {
+        id: 'timeline',
+        icon: <Calendar size={20} color={BLUE_ICON} />,
+        label: '일정 계획하기',
+        description: '타임라인으로 한눈에 보기',
+        iconBgColor: BLUE_BG,
+        iconColor: BLUE_ICON,
+        onPress: () => navigation.navigate('Planner'),
+      },
+      {
+        id: 'ai-plan',
+        icon: <FolderKanban size={20} color={BLUE_ICON} />,
+        label: '내 계획 보기',
+        description: '프로젝트 목록과 진행 상황 확인',
+        iconBgColor: BLUE_BG,
+        iconColor: BLUE_ICON,
+        onPress: () => navigation.navigate('Planner'),
+      },
+      {
+        id: 'ai-chat',
+        icon: <Sparkles size={20} color={BLUE_ICON} />,
+        label: 'AI로 계획하기',
+        description: 'AI와 대화하며 할일 계획',
+        iconBgColor: BLUE_BG,
+        iconColor: BLUE_ICON,
+        onPress: () => navigation.navigate('Planner'),
+      },
+      {
+        id: 'guide',
+        icon: <Link size={20} color={BLUE_ICON} />,
+        label: 'Claude 연결하기',
+        description: 'Claude Desktop 연결',
+        iconBgColor: BLUE_BG,
+        iconColor: BLUE_ICON,
+        onPress: () => navigation.navigate('Settings'),
+      },
+    ],
+    [navigation],
+  );
+
+  const thoughtItems: FeatureItem[] = useMemo(
+    () => [
+      {
+        id: 'motivation',
+        icon: <Lightbulb size={20} color={VIOLET_ICON} />,
+        label: '원동력 새기기',
+        description: '왜 해야 하는지 기록',
+        iconBgColor: VIOLET_BG,
+        iconColor: VIOLET_ICON,
+        onPress: () => navigation.navigate('Notes'),
+      },
+      {
+        id: 'record',
+        icon: <PenLine size={20} color={VIOLET_ICON} />,
+        label: '관계 기록하기',
+        description: '소중한 만남과 대화 기록',
+        iconBgColor: VIOLET_BG,
+        iconColor: VIOLET_ICON,
+        onPress: () => navigation.navigate('Notes'),
+      },
+      {
+        id: 'news',
+        icon: <MessageCircle size={20} color={VIOLET_ICON} />,
+        label: '소식 챙기기',
+        description: '소식 흐름 시간순 보기',
+        iconBgColor: VIOLET_BG,
+        iconColor: VIOLET_ICON,
+        onPress: () => navigation.navigate('Notes'),
+      },
+      {
+        id: 'contact',
+        icon: <Users size={20} color={VIOLET_ICON} />,
+        label: '연락 돌아보기',
+        description: '연락 빈도와 관계 돌아보기',
+        iconBgColor: VIOLET_BG,
+        iconColor: VIOLET_ICON,
+        onPress: () => navigation.navigate('Notes'),
+      },
+    ],
+    [navigation],
+  );
+
+  const careItems: FeatureItem[] = useMemo(
+    () => [
+      {
+        id: 'gratitude',
+        icon: <Heart size={20} color={EMERALD_ICON} />,
+        label: '감사 기록하기',
+        description: '감사한 순간 기록',
+        iconBgColor: EMERALD_BG,
+        iconColor: EMERALD_ICON,
+        onPress: () => navigation.navigate('Notes'),
+      },
+      {
+        id: 'activity',
+        icon: <BarChart3 size={20} color={EMERALD_ICON} />,
+        label: '활동 살펴보기',
+        description: '활동 패턴과 생산성 분석',
+        iconBgColor: EMERALD_BG,
+        iconColor: EMERALD_ICON,
+        onPress: () => navigation.navigate('Settings'),
+      },
+    ],
+    [navigation],
+  );
 
   return (
     <ScreenContainer gradient="warmBackground">
-      <ScrollView
-        contentContainerStyle={{paddingBottom: 100}}
-        showsVerticalScrollIndicator={false}>
-
-        {/* 1. 날짜 + 인사말 */}
-        <View className="px-4 pt-4 pb-2">
-          <Animated.Text
-            entering={FadeIn.duration(600)}
-            className="text-sm text-gray-500 mb-1">
-            {today}
-          </Animated.Text>
-          <View className="flex-row items-center">
+      <SwipeablePages>
+        {/* ═══ Page 0: 메인 허브 ═══ */}
+        <ScrollView
+          contentContainerStyle={{paddingBottom: 100}}
+          showsVerticalScrollIndicator={false}>
+          {/* 1. 날짜 + 인사말 */}
+          <View className="px-4 pt-4 pb-2">
             <Animated.Text
-              entering={FadeInDown.delay(100).duration(500)}
-              className="text-3xl font-bold text-gray-900 mr-2">
-              {greeting.text}
+              entering={FadeIn.duration(600)}
+              className="text-sm text-gray-500 mb-1">
+              {today}
             </Animated.Text>
-            <GreetingIcon size={28} color="#F59E0B" />
-          </View>
-        </View>
-
-        {/* 2. 진행률 카드 */}
-        <View className="px-4 mt-4">
-          <AnimatedCard enterDelay={200}>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1 mr-4">
-                <Text className="text-lg font-semibold text-gray-800 mb-1">
-                  오늘의 진행률
-                </Text>
-                <Text className="text-sm text-gray-500">
-                  {totalCount > 0
-                    ? `${completedCount}개 완료 / ${totalCount}개 중`
-                    : '오늘의 할일을 추가해보세요'}
-                </Text>
-                {totalCount > 0 && (
-                  <View className="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <View
-                      className="bg-blue-500 h-full rounded-full"
-                      style={{width: `${Math.round(progress * 100)}%`}}
-                    />
-                  </View>
-                )}
-              </View>
-              <ProgressRing
-                progress={progress}
-                size={80}
-                strokeWidth={6}
-                completed={completedCount}
-                total={totalCount}
-              />
+            <View className="flex-row items-center">
+              <Animated.Text
+                entering={FadeInDown.delay(100).duration(500)}
+                className="text-3xl font-bold text-gray-900 mr-2">
+                {greeting.text}
+              </Animated.Text>
+              <GreetingIcon size={28} color="#F59E0B" />
             </View>
-          </AnimatedCard>
-        </View>
+          </View>
 
-        {/* 3. 원동력 인라인 카드 */}
-        <View className="mt-5">
-          <FuelCard note={fuelNote} enterDelay={300} />
-        </View>
+          {/* 2. 진행률 카드 */}
+          <View className="px-4 mt-4">
+            <AnimatedCard enterDelay={200}>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 mr-4">
+                  <Text className="text-lg font-semibold text-gray-800 mb-1">
+                    오늘의 진행률
+                  </Text>
+                  <Text className="text-sm text-gray-500">
+                    {totalCount > 0
+                      ? `${completedCount}개 완료 / ${totalCount}개 중`
+                      : '오늘의 할일을 추가해보세요'}
+                  </Text>
+                  {totalCount > 0 && (
+                    <View className="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <View
+                        className="bg-blue-500 h-full rounded-full"
+                        style={{width: `${Math.round(progress * 100)}%`}}
+                      />
+                    </View>
+                  )}
+                </View>
+                <ProgressRing
+                  progress={progress}
+                  size={80}
+                  strokeWidth={6}
+                  completed={completedCount}
+                  total={totalCount}
+                />
+              </View>
+            </AnimatedCard>
+          </View>
 
-        {/* 4. 오늘의 미션 */}
-        <View className="mt-5">
-          <MissionCard
-            todos={todos}
-            onNavigateToExecute={() => navigation.navigate('Execute')}
-            onNavigateToPlanner={() => navigation.navigate('Planner')}
-            enterDelay={400}
-          />
-        </View>
+          {/* 3. 오늘의 미션 */}
+          <View className="mt-5">
+            <MissionCard
+              todos={todos}
+              onNavigateToExecute={() => navigation.navigate('Execute')}
+              onNavigateToPlanner={() => navigation.navigate('Planner')}
+              enterDelay={300}
+            />
+          </View>
 
-        {/* 5. 계획 세우기 (Blue) */}
-        <View className="mt-6">
-          <GroupSection
-            dotColor="#3B82F6"
-            title="계획 세우기"
-            items={planItems}
-            numColumns={3}
-            enterDelay={500}
-          />
-        </View>
+          {/* 4. 계획 세우기 (Blue) */}
+          <View className="mt-6">
+            <GroupSection
+              dotColor="#3B82F6"
+              title="계획 세우기"
+              items={planItems}
+              enterDelay={400}
+            />
+          </View>
 
-        {/* 6. 생각과 기억 (Violet) */}
-        <View className="mt-6">
-          <GroupSection
-            dotColor="#8B5CF6"
-            title="생각과 기억"
-            items={thoughtItems}
-            numColumns={3}
-            enterDelay={600}
-          />
-        </View>
+          {/* 5. 생각과 기억 (Violet) */}
+          <View className="mt-6">
+            <GroupSection
+              dotColor="#8B5CF6"
+              title="생각과 기억"
+              items={thoughtItems}
+              enterDelay={500}
+            />
+          </View>
 
-        {/* 7. 연락 추천 인라인 (Pink) */}
-        <View className="mt-5">
-          <ContactNudge recommendation={recommendation} enterDelay={700} />
-        </View>
+          {/* 6. 일상 돌보기 (Emerald) */}
+          <View className="mt-6">
+            <GroupSection
+              dotColor="#22C55E"
+              title="일상 돌보기"
+              items={careItems}
+              enterDelay={600}
+            />
+          </View>
 
-        {/* 8. 일상 돌보기 (Emerald) */}
-        <View className="mt-6">
-          <GroupSection
-            dotColor="#22C55E"
-            title="일상 돌보기"
-            items={careItems}
-            numColumns={2}
-            enterDelay={800}
-          />
-        </View>
+          {/* 7. 푸터 */}
+          <Animated.View
+            entering={FadeInDown.delay(700).duration(400)}
+            className="items-center py-8 mt-4">
+            <Sparkles size={20} color="#8B5CF6" />
+            <Text className="text-xs text-gray-400 mt-2 text-center leading-4">
+              오늘도 DayStep이 함께할게요
+            </Text>
+          </Animated.View>
+        </ScrollView>
 
-        {/* 9. 푸터 */}
-        <Animated.View
-          entering={FadeInDown.delay(900).duration(400)}
-          className="items-center py-8 mt-4">
-          <Sparkles size={20} color="#8B5CF6" />
-          <Text className="text-xs text-gray-400 mt-2 text-center leading-4">
-            오늘도 DayStep이 함께할게요
-          </Text>
-        </Animated.View>
-      </ScrollView>
+        {/* ═══ Page 1: 영감 (peek으로 살짝 노출) ═══ */}
+        <ScrollView
+          contentContainerStyle={{paddingBottom: 100, paddingTop: 16}}
+          showsVerticalScrollIndicator={false}>
+          {/* 1. 원동력 카드 */}
+          <View className="px-4">
+            <FuelCard note={fuelNote} enterDelay={100} />
+          </View>
+
+          {/* 2. 연락할 사람 */}
+          <View className="mt-6">
+            <ContactNudge
+              recommendations={recommendations}
+              enterDelay={200}
+            />
+          </View>
+
+          {/* 3. 하루 한 줄 영감 */}
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(400)}
+            className="mx-4 mt-8 items-center">
+            <Sparkles size={24} color="#8B5CF6" />
+            <Text className="text-base text-gray-600 mt-3 text-center leading-6 italic">
+              "{inspirationQuote}"
+            </Text>
+            <Text className="text-xs text-gray-400 mt-2">
+              오늘의 한 줄
+            </Text>
+          </Animated.View>
+        </ScrollView>
+      </SwipeablePages>
     </ScreenContainer>
   );
 }

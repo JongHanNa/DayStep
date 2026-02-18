@@ -21,7 +21,7 @@ export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
         colors={['#FEF3C7', '#FDE68A', '#FBBF24']}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
-        style={{borderRadius: 16, padding: 16, marginHorizontal: 16}}>
+        style={{borderRadius: 16, padding: 16}}>
         <View className="flex-row items-center mb-3">
           <Flame size={22} color="#92400E" />
           <Text className="text-lg font-semibold text-amber-900 ml-2">
