@@ -83,7 +83,7 @@ function handleManageSubscription(platform: SubPlatform | undefined) {
   let url: string;
   switch (platform) {
     case 'web':
-      url = 'https://daystep.app/settings';
+      url = 'https://daystep.app/adhd/settings/subscription';
       break;
     case 'ios':
       url = 'https://apps.apple.com/account/subscriptions';
@@ -92,7 +92,7 @@ function handleManageSubscription(platform: SubPlatform | undefined) {
       url = 'https://play.google.com/store/account/subscriptions';
       break;
     default:
-      url = 'https://daystep.app/settings';
+      url = 'https://daystep.app/adhd/settings/subscription';
   }
   Linking.openURL(url);
 }
@@ -324,7 +324,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                   </Text>
                 </AnimatedPressable>
                 <AnimatedPressable
-                  onPress={() => Linking.openURL('mailto:support@daystep.app')}
+                  onPress={() => Linking.openURL('mailto:skwhdgks@gmail.com')}
                   hapticType="light"
                   scaleValue={0.95}
                   style={styles.secondaryActionBtn}>
