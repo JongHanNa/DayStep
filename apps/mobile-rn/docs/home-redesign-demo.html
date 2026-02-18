@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DayStep 모바일 홈화면 리디자인 시안</title>
+<style>
+  :root {
+    --blue: #3B82F6;
+    --blue-dark: #2563EB;
+    --violet: #8B5CF6;
+    --violet-dark: #7C3AED;
+    --emerald: #22C55E;
+    --emerald-dark: #16A34A;
+    --amber: #F59E0B;
+    --amber-dark: #D97706;
+    --pink: #EC4899;
+    --pink-dark: #DB2777;
+    --orange: #F97316;
+    --orange-dark: #EA580C;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+    --warm-bg: #FFF7ED;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    background: #F0F0F5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    color: var(--gray-800);
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--gray-900);
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--gray-500);
+    margin-bottom: 20px;
+  }
+
+  /* ===== Tab Navigation ===== */
+  .tab-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 4px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tab-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--gray-500);
+    transition: all 0.25s ease;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { background: var(--gray-100); color: var(--gray-700); }
+  .tab-btn.active { background: var(--gray-900); color: white; }
+  .tab-btn.active-problem { background: #EF4444; color: white; }
+  .tab-btn.active-a { background: var(--blue); color: white; }
+  .tab-btn.active-b { background: var(--orange); color: white; }
+  .tab-btn.active-c { background: var(--violet); color: white; }
+
+  /* ===== Main Container ===== */
+  .demo-container {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ===== iPhone Frame ===== */
+  .iphone-frame {
+    width: 375px;
+    height: 812px;
+    background: #000;
+    border-radius: 48px;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 2px #333, inset 0 0 0 2px #1a1a1a;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .iphone-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 38px;
+    overflow: hidden;
+    position: relative;
+    background: var(--warm-bg);
+  }
+
+  /* Notch */
+  .iphone-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 32px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 10;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 54px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 24px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-800);
+    position: relative;
+    z-index: 5;
+  }
+
+  .status-bar .time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 4px; font-size: 12px; }
+
+  /* Screen content scroller */
+  .screen-content {
+    height: calc(100% - 54px - 72px);
+    overflow-y: auto;
+    padding: 0 16px 16px;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  .screen-content::-webkit-scrollbar { display: none; }
+
+  /* Bottom Tab Bar */
+  .tab-bar-mock {
+    height: 72px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+    padding-bottom: 16px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0 0 38px 38px;
+  }
+
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: var(--gray-400);
+  }
+
+  .tab-item.active-tab { color: var(--blue); }
+  .tab-icon { font-size: 20px; }
+
+  /* ===== Analysis Panel ===== */
+  .analysis-panel {
+    max-width: 440px;
+    flex: 1;
+    min-width: 320px;
+  }
+
+  .analysis-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .analysis-badge {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+  }
+
+  .analysis-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border-left: 3px solid var(--gray-200);
+  }
+
+  .analysis-card h4 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .analysis-card p, .analysis-card li {
+    font-size: 12px;
+    color: var(--gray-600);
+    line-height: 1.6;
+  }
+
+  .analysis-card ul {
+    padding-left: 16px;
+    margin-top: 4px;
+  }
+
+  .analysis-card.problem { border-left-color: #EF4444; }
+  .analysis-card.solution-a { border-left-color: var(--blue); }
+  .analysis-card.solution-b { border-left-color: var(--orange); }
+  .analysis-card.solution-c { border-left-color: var(--violet); }
+
+  .mapping-table {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+
+  .mapping-table th {
+    text-align: left;
+    padding: 6px 8px;
+    background: var(--gray-50);
+    font-weight: 600;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 11px;
+    color: var(--gray-500);
+  }
+
+  .mapping-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-700);
+    line-height: 1.4;
+    vertical-align: top;
+  }
+
+  .mapping-table tr:last-child td { border-bottom: none; }
+
+  /* ===== Tab Content Visibility ===== */
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; }
+
+  /* ===== Common Mobile UI Elements ===== */
+  .greeting { font-size: 13px; color: var(--gray-500); margin-bottom: 2px; }
+  .date-text { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 12px; }
+
+  .section-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 10px;
+  }
+
+  .card-sm {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 8px;
+  }
+
+  /* Grid items */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  .grid-item {
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .grid-item:hover { transform: scale(0.97); }
+  .grid-item:active { transform: scale(0.94); }
+
+  .grid-item .icon { font-size: 22px; margin-bottom: 2px; }
+  .grid-item .label { font-size: 11px; font-weight: 600; color: white; }
+
+  /* Gradient helpers */
+  .bg-blue { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+  .bg-blue-light { background: linear-gradient(135deg, #EFF6FF, #DBEAFE); }
+  .bg-violet { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+  .bg-violet-light { background: linear-gradient(135deg, #F5F3FF, #EDE9FE); }
+  .bg-emerald { background: linear-gradient(135deg, #22C55E, #16A34A); }
+  .bg-emerald-light { background: linear-gradient(135deg, #ECFDF5, #D1FAE5); }
+  .bg-amber { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
+  .bg-orange { background: linear-gradient(135deg, #F97316, #EA580C); }
+  .bg-pink { background: linear-gradient(135deg, #FCE7F3, #FBCFE8); }
+
+  /* Fuel card */
+  .fuel-card {
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+  }
+
+  .fuel-card .fuel-icon { font-size: 18px; margin-right: 6px; }
+  .fuel-card .fuel-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #92400E;
+    line-height: 1.5;
+  }
+
+  /* Contact nudge */
+  .contact-card {
+    background: linear-gradient(135deg, #FCE7F3, #FBCFE8);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(236, 72, 153, 0.15);
+  }
+
+  .contact-card .contact-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #9D174D;
+  }
+
+  .contact-card .contact-sub {
+    font-size: 12px;
+    color: #BE185D;
+    margin-top: 2px;
+  }
+
+  /* Progress ring */
+  .progress-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 10px;
+  }
+
+  .ring-container {
+    width: 72px;
+    height: 72px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .ring-container svg { width: 100%; height: 100%; }
+
+  .ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .ring-text .big { font-size: 18px; font-weight: 800; color: var(--blue); display: block; line-height: 1; }
+  .ring-text .small { font-size: 10px; color: var(--gray-400); }
+
+  .progress-details { flex: 1; }
+  .progress-details .label { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+  .progress-details .sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--gray-100);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--blue), #60A5FA);
+    transition: width 0.5s ease;
+  }
+
+  /* Section header with color dot */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 8px;
+    padding-bottom: 6px;
+  }
+
+  .section-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .section-header .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    flex: 1;
+  }
+
+  .section-header .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--gray-200);
+  }
+
+  .section-header .section-color-label {
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.7;
+  }
+
+  /* Color chips */
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px 0;
+  }
+
+  .chip {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    color: white;
+  }
+
+  .chip:hover { transform: scale(0.96); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .chip:active { transform: scale(0.92); }
+
+  .chip-blue { background: var(--blue); }
+  .chip-violet { background: var(--violet); }
+  .chip-emerald { background: var(--emerald); }
+
+  /* Mission card (Plan B) */
+  .mission-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 2px solid #FDE68A;
+    margin-bottom: 12px;
+  }
+
+  .mission-card .star { font-size: 18px; }
+  .mission-card .mission-title { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+  .mission-card .mission-meta { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+  .mission-card .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--amber), var(--amber-dark));
+    color: white;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    border: none;
+  }
+
+  .mission-card .cta-btn:hover { transform: scale(0.97); }
+
+  /* Streak */
+  .streak-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .streak-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .streak-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--gray-200);
+  }
+
+  .streak-dot.filled { background: var(--blue); }
+  .streak-label { font-size: 11px; color: var(--gray-500); }
+  .streak-fire { font-size: 13px; }
+
+  /* Time section (Plan B) */
+  .time-section {
+    margin: 12px 0 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .time-morning { background: #FEF9C3; color: #A16207; }
+  .time-afternoon { background: #FFEDD5; color: #C2410C; }
+  .time-evening { background: #EDE9FE; color: #6D28D9; }
+
+  /* Current design problem markers */
+  .problem-marker {
+    position: absolute;
+    right: 8px;
+    padding: 2px 6px;
+    background: #EF4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  /* Quick action current */
+  .quick-action-current {
+    border-radius: 16px;
+    padding: 14px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: white;
+    position: relative;
+  }
+
+  .quick-action-current .qa-title { font-size: 14px; font-weight: 700; }
+  .quick-action-current .qa-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+  .quick-action-current .qa-icon { font-size: 24px; margin-bottom: 4px; }
+
+  /* Hero card for C */
+  .hero-card {
+    background: linear-gradient(135deg, #F8FAFC, #EFF6FF);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 10px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+  }
+
+  .mini-badges {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .mini-badge {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+  }
+
+  /* Section row with arrow */
+  .section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .section-row:hover { transform: scale(0.98); }
+  .section-row:active { transform: scale(0.96); }
+
+  .section-row-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .section-row .arrow { color: var(--gray-400); font-size: 16px; }
+
+  /* Swipe indicator for current design */
+  .swipe-hint {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0;
+  }
+
+  .swipe-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gray-300);
+  }
+
+  .swipe-dot.active { width: 8px; height: 8px; background: var(--blue); }
+
+  /* Time indicator (Plan B) */
+  .time-indicator {
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #92400E;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  /* Footer text */
+  .footer-text {
+    text-align: center;
+    font-size: 12px;
+    color: var(--gray-400);
+    padding: 12px 0 4px;
+  }
+
+  /* Fuel banner top (Plan B) */
+  .fuel-banner-top {
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    padding: 10px 14px;
+    margin: -0px -16px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #92400E;
+    border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+  }
+
+  /* Compact group header for C */
+  .compact-group {
+    background: white;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .compact-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+
+  .compact-group-header .left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .compact-group-header .arrow {
+    color: var(--gray-400);
+    font-size: 14px;
+    transition: transform 0.2s ease;
+  }
+
+  /* Contact inline for C */
+  .contact-inline {
+    background: linear-gradient(135deg, #FDF2F8, #FCE7F3);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid rgba(236, 72, 153, 0.1);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .contact-inline:hover { transform: scale(0.98); }
+
+  .contact-inline-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .contact-inline .name { font-size: 13px; font-weight: 700; color: #9D174D; }
+  .contact-inline .meta { font-size: 11px; color: #BE185D; }
+  .contact-inline .action-text { font-size: 12px; font-weight: 600; color: #DB2777; }
+
+  /* Responsive */
+  @media (max-width: 880px) {
+    .demo-container { flex-direction: column; align-items: center; }
+    .analysis-panel { max-width: 375px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>DayStep 모바일 홈화면 리디자인</h1>
+<p class="page-subtitle">3가지 시안 비교 데모 &mdash; 탭을 클릭하여 전환</p>
+
+<nav class="tab-nav">
+  <button class="tab-btn active-problem active" data-tab="current" onclick="switchTab('current')">현재 (문제점)</button>
+  <button class="tab-btn" data-tab="plan-a" onclick="switchTab('plan-a')">시안 A: 그룹 허브</button>
+  <button class="tab-btn" data-tab="plan-b" onclick="switchTab('plan-b')">시안 B: 데일리 미션</button>
+  <button class="tab-btn" data-tab="plan-c" onclick="switchTab('plan-c')">시안 C: 스마트 카드</button>
+</nav>
+
+<!-- ============================================ -->
+<!-- TAB: Current (Problems)                      -->
+<!-- ============================================ -->
+<div class="tab-content active" id="tab-current">
+  <div class="demo-container">
+    <!-- iPhone -->
+    <div class="iphone-frame">
+      <div class="iphone-screen">
+        <div class="iphone-notch"></div>
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <span class="status-icons">
+            <span>&#9679;&#9679;&#9679;&#9679;</span>
+            <span>WiFi</span>
+            <span>100%</span>
+          </span>
+        </div>
+        <div class="screen-content">
+          <!-- Greeting -->
+          <p class="greeting">좋은 아침이에요 ☀️</p>
+          <p class="date-text">2월 18일 화요일</p>
+
+          <!-- Progress Card -->
+          <div class="progress-hero">
+            <div class="ring-container">
+              <svg viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#F1F5F9" stroke-width="6"/>
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#3B82F6" stroke-width="6"
+                  stroke-dasharray="176" stroke-dashoffset="70"
+                  stroke-linecap="round" transform="rotate(-90 36 36)"/>
+              </svg>
+              <div class="ring-text">
+                <span class="big">3</span>
+                <span class="small">/ 5</span>
+              </div>
+            </div>
+            <div class="progress-details">
+              <div class="label">오늘의 진행률</div>
+              <div class="sub">3개 완료 / 5개 중</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 60%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="section-label">바로 시작하기</div>
+          <div class="grid-2">
+            <div class="quick-action-current bg-blue" style="position:relative">
+              <span class="qa-icon">📋</span>
+              <span class="qa-title">계획 세우기</span>
+              <span class="qa-sub">오늘의 할일 정리</span>
+              <span class="problem-marker" style="top:6px">탭바 중복</span>
+            </div>
+            <div class="quick-action-current bg-orange" style="position:relative">
+              <span class="qa-icon">⚡</span>
+              <span class="qa-title">실행하기</span>
+              <span class="qa-sub">집중 모드 시작</span>
+              <span class="problem-marker" style="top:6px">탭바 중복</span>
+            </div>
+            <div class="quick-action-current bg-violet" style="position:relative">
+              <span class="qa-icon">💬</span>
+              <span class="qa-title">생각과 기억</span>
+              <span class="qa-sub">아이디어 기록</span>
+              <span class="problem-marker" style="top:6px">탭바 중복</span>
+            </div>
+            <div class="quick-action-current bg-emerald" style="position:relative">
+              <span class="qa-icon">🌿</span>
+              <span class="qa-title">일상 돌보기</span>
+              <span class="qa-sub">소중한 일상</span>
+              <span class="problem-marker" style="top:6px; background:#DC2626">onPress 없음!</span>
+            </div>
+          </div>
+
+          <!-- Swipe indicator -->
+          <div class="swipe-hint" style="margin-top: 16px; position:relative;">
+            <div class="swipe-dot active"></div>
+            <div class="swipe-dot"></div>
+            <span class="problem-marker" style="position:static; font-size:10px; margin-left:8px">발견 어려움</span>
+          </div>
+
+          <div style="text-align:center; font-size:11px; color:var(--gray-400); margin-top:4px;">
+            ← 스와이프하면 원동력/연락 추천 →
+          </div>
+
+          <!-- Hidden page indicator -->
+          <div class="card-sm" style="margin-top: 12px; border: 2px dashed #EF4444; background: #FEF2F2;">
+            <div style="font-size: 12px; color: #991B1B; font-weight: 600;">
+              ⚠️ Page 1 (숨겨진 영역)
+            </div>
+            <div style="font-size: 11px; color: #B91C1C; margin-top: 4px; line-height: 1.5;">
+              원동력, 연락 추천, 응원 문구가<br>
+              스와이프 뒤에 숨겨져 있음<br>
+              → ADHD 사용자에게 가장 필요한<br>
+              동기부여 요소에 접근 불가
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-bar-mock">
+          <div class="tab-item active-tab">
+            <span class="tab-icon">🏠</span>
+            <span>홈</span>
+          </div>
+          <div class="tab-item">
+            <span class="tab-icon">📋</span>
+            <span>계획</span>
+          </div>
+          <div class="tab-item">
+            <span class="tab-icon">⚡</span>
+            <span>실행</span>
+          </div>
+          <div class="tab-item">
+            <span class="tab-icon">📝</span>
+            <span>기록</span>
+          </div>
+          <div class="tab-item">
+            <span class="tab-icon">⚙️</span>
+            <span>설정</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis -->
+    <div class="analysis-panel">
+      <div class="analysis-title">
+        <span class="analysis-badge" style="background:#EF4444">문제 분석</span>
+        현재 홈화면 문제점
+      </div>
+
+      <div class="analysis-card problem">
+        <h4>🎨 시각적 스타일링</h4>
+        <ul>
+          <li>4개 버튼이 동일 크기/형태 → 단조로운 시각 리듬</li>
+          <li>웹의 3그룹 색상 코딩(Blue/Violet/Emerald) 완전 상실</li>
+          <li>진행률 카드가 시각적으로 플랫 → 성취감 부여 미흡</li>
+          <li>Banner Page가 스와이프 뒤에 숨겨져 발견 불가</li>
+        </ul>
+      </div>
+
+      <div class="analysis-card problem">
+        <h4>👆 인터랙션 결함</h4>
+        <ul>
+          <li><strong>"일상 돌보기" onPress: () => {}</strong> → 아무 동작 없음 (버그)</li>
+          <li>스와이프로 Page 1 발견하는 어포던스 부재</li>
+          <li>퀵액션이 하단 탭바 네비게이션을 중복</li>
+          <li>그래디언트 버튼 간 인터랙션 차별화 없음</li>
+        </ul>
+      </div>
+
+      <div class="analysis-card problem">
+        <h4>📊 정보 구조</h4>
+        <ul>
+          <li>웹: 12개+ 기능 → 모바일: 4개 버튼으로 <strong>11개 기능 유실</strong></li>
+          <li>하위 기능 미리보기 없음 → 내부 콘텐츠 불명확</li>
+          <li>"실행하기"는 웹 구조에 없는 모바일 전용 추가 → 일관성 깨짐</li>
+          <li>원동력/연락 추천이 Page 1에 격리 → 핵심 정보 접근성 저하</li>
+        </ul>
+      </div>
+
+      <div class="analysis-card problem">
+        <h4>🧠 ADHD 행동 설계</h4>
+        <ul>
+          <li>원동력(Fuel)이 숨겨짐 → 동기부여 요소 접근 불가</li>
+          <li>"가장 중요한 할일" 하이라이트 없음 → 우선순위 결정 미지원</li>
+          <li>연속 기록(Streak) 시각화 없음 → 긍정 강화 부재</li>
+          <li>시간 인식 단서 부족 → Time Blindness 대응 미흡</li>
+          <li>연락 추천 숨겨짐 → 관계 돌봄 넛지 효과 상실</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB: Plan A - Grouped Hub                    -->
+<!-- ============================================ -->
+<div class="tab-content" id="tab-plan-a">
+  <div class="demo-container">
+    <div class="iphone-frame">
+      <div class="iphone-screen">
+        <div class="iphone-notch"></div>
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <span class="status-icons">
+            <span>&#9679;&#9679;&#9679;&#9679;</span>
+            <span>WiFi</span>
+            <span>100%</span>
+          </span>
+        </div>
+        <div class="screen-content">
+          <!-- Date + Greeting + Ring -->
+          <p style="font-size:12px; color:var(--gray-400); margin-bottom:1px;">2월 18일 화요일</p>
+          <p style="font-size:18px; font-weight:700; color:var(--gray-900); margin-bottom:12px;">좋은 아침이에요 ☀️</p>
+
+          <!-- Progress -->
+          <div class="progress-hero">
+            <div class="ring-container">
+              <svg viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#F1F5F9" stroke-width="6"/>
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#3B82F6" stroke-width="6"
+                  stroke-dasharray="176" stroke-dashoffset="70"
+                  stroke-linecap="round" transform="rotate(-90 36 36)"/>
+              </svg>
+              <div class="ring-text">
+                <span class="big">3</span>
+                <span class="small">/ 5</span>
+              </div>
+            </div>
+            <div class="progress-details">
+              <div class="label">오늘의 진행률</div>
+              <div class="sub">3개 완료 / 5개 중</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 60%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fuel Card (inline) -->
+          <div class="fuel-card">
+            <div style="display:flex; align-items:flex-start; gap:8px;">
+              <span class="fuel-icon">🔥</span>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#B45309; margin-bottom:2px;">나의 원동력</div>
+                <div class="fuel-text">"왜 해야 하는지 기억하면, 어떻게든 방법을 찾게 된다."</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Group 1: 계획 세우기 (Blue) -->
+          <div class="section-header">
+            <div class="section-dot" style="background:var(--blue)"></div>
+            <span class="section-title">계획 세우기</span>
+            <div class="section-line"></div>
+            <span class="section-color-label" style="color:var(--blue)">Blue</span>
+          </div>
+          <div class="grid-3">
+            <div class="grid-item bg-blue">
+              <span class="icon">📋</span>
+              <span class="label">하루 계획</span>
+            </div>
+            <div class="grid-item bg-blue">
+              <span class="icon">📅</span>
+              <span class="label">일정 계획</span>
+            </div>
+            <div class="grid-item bg-blue">
+              <span class="icon">👁️</span>
+              <span class="label">내 계획 보기</span>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top: 8px;">
+            <div class="grid-item bg-blue">
+              <span class="icon">✨</span>
+              <span class="label">AI로 계획</span>
+            </div>
+            <div class="grid-item bg-blue">
+              <span class="icon">🤖</span>
+              <span class="label">Claude 연결</span>
+            </div>
+          </div>
+
+          <!-- Group 2: 생각과 기억 (Violet) -->
+          <div class="section-header">
+            <div class="section-dot" style="background:var(--violet)"></div>
+            <span class="section-title">생각과 기억</span>
+            <div class="section-line"></div>
+            <span class="section-color-label" style="color:var(--violet)">Violet</span>
+          </div>
+          <div class="grid-3">
+            <div class="grid-item bg-violet">
+              <span class="icon">🔥</span>
+              <span class="label">원동력 새기기</span>
+            </div>
+            <div class="grid-item bg-violet">
+              <span class="icon">👥</span>
+              <span class="label">관계 기록</span>
+            </div>
+            <div class="grid-item bg-violet">
+              <span class="icon">📰</span>
+              <span class="label">소식 챙기기</span>
+            </div>
+          </div>
+
+          <!-- Contact nudge (inline) -->
+          <div class="contact-card" style="margin-top: 10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">❤️</span>
+              <div>
+                <div class="contact-name">소중한 사람: 어머니</div>
+                <div class="contact-sub">15일 전 마지막 연락 · 안부 전하기 →</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Group 3: 일상 돌보기 (Emerald) -->
+          <div class="section-header">
+            <div class="section-dot" style="background:var(--emerald)"></div>
+            <span class="section-title">일상 돌보기</span>
+            <div class="section-line"></div>
+            <span class="section-color-label" style="color:var(--emerald)">Emerald</span>
+          </div>
+          <div class="grid-2">
+            <div class="grid-item bg-emerald">
+              <span class="icon">💚</span>
+              <span class="label">감사 기록</span>
+            </div>
+            <div class="grid-item bg-emerald">
+              <span class="icon">📊</span>
+              <span class="label">활동 살펴보기</span>
+            </div>
+          </div>
+
+          <div class="footer-text">✨ DayStep이 오늘도 함께할게요</div>
+        </div>
+
+        <div class="tab-bar-mock">
+          <div class="tab-item active-tab"><span class="tab-icon">🏠</span><span>홈</span></div>
+          <div class="tab-item"><span class="tab-icon">📋</span><span>계획</span></div>
+          <div class="tab-item"><span class="tab-icon">⚡</span><span>실행</span></div>
+          <div class="tab-item"><span class="tab-icon">📝</span><span>기록</span></div>
+          <div class="tab-item"><span class="tab-icon">⚙️</span><span>설정</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis Panel A -->
+    <div class="analysis-panel">
+      <div class="analysis-title">
+        <span class="analysis-badge" style="background:var(--blue)">시안 A</span>
+        그룹 허브 (Grouped Hub)
+      </div>
+
+      <div class="analysis-card solution-a">
+        <h4>💡 컨셉</h4>
+        <p>웹의 3그룹 정보구조(계획/생각/돌봄)를 모바일에 자연스럽게 이식. 색상 코딩으로 그룹 구분, 원동력과 연락추천을 메인 스크롤에 인라인 배치.</p>
+      </div>
+
+      <div class="analysis-card solution-a">
+        <h4>✅ 문제 해결 매핑</h4>
+        <table class="mapping-table">
+          <thead>
+            <tr><th style="width:35%">문제</th><th>해결</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>시각적 단조로움</td><td>3그룹 색상 코딩(Blue/Violet/Emerald) + 섹션 구분선</td></tr>
+            <tr><td>인터랙션 결함</td><td>각 기능 카드가 직접 화면 이동 (빈 onPress 제거)</td></tr>
+            <tr><td>정보 유실</td><td>12개 기능 모두 그리드로 노출</td></tr>
+            <tr><td>태스크 흐름</td><td>계획→생각→돌봄 자연 순서, 위→아래 스크롤</td></tr>
+            <tr><td>ADHD 설계</td><td>원동력+연락추천 메인 인라인, 진행률 상단 고정</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="analysis-card solution-a">
+        <h4>👍 장점</h4>
+        <ul>
+          <li>웹과 모바일 간 정보구조 일관성 확보</li>
+          <li>모든 기능에 1-tap 접근 가능</li>
+          <li>직관적인 색상 그룹 분류</li>
+          <li>원동력이 항상 보이는 위치에 배치</li>
+        </ul>
+      </div>
+
+      <div class="analysis-card solution-a">
+        <h4>⚠️ 고려사항</h4>
+        <ul>
+          <li>스크롤 길이가 다소 길어짐 → 하단 그룹 발견 위해 스크롤 필요</li>
+          <li>ADHD 특화 행동 유도 요소가 약함 (시간 인식, 스트릭 없음)</li>
+          <li>모든 기능이 동일 가중치로 보임 → 우선순위 불분명</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB: Plan B - Daily Mission                  -->
+<!-- ============================================ -->
+<div class="tab-content" id="tab-plan-b">
+  <div class="demo-container">
+    <div class="iphone-frame">
+      <div class="iphone-screen">
+        <div class="iphone-notch"></div>
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <span class="status-icons">
+            <span>&#9679;&#9679;&#9679;&#9679;</span>
+            <span>WiFi</span>
+            <span>100%</span>
+          </span>
+        </div>
+        <div class="screen-content">
+          <!-- Fuel Banner Top -->
+          <div class="fuel-banner-top">
+            <span>🔥</span>
+            <span>"중요한 건 시작이야. 완벽하지 않아도 괜찮아."</span>
+          </div>
+
+          <!-- Greeting -->
+          <p style="font-size:18px; font-weight:700; color:var(--gray-900); margin-bottom:1px;">좋은 아침이에요 ☀️</p>
+          <p style="font-size:12px; color:var(--gray-400); margin-bottom:14px;">2월 18일 화요일</p>
+
+          <!-- Today's Mission -->
+          <div style="font-size:14px; font-weight:700; color:var(--gray-800); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            🎯 오늘의 미션
+          </div>
+          <div class="mission-card">
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+              <span class="star">⭐</span>
+              <div style="flex:1">
+                <div class="mission-title">프로젝트 기획서 작성</div>
+                <div class="mission-meta">예상 시간: 2시간 · 높은 중요도</div>
+                <button class="cta-btn">지금 시작하기 →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress + Streak -->
+          <div class="card" style="padding:12px 14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div style="font-size:13px; font-weight:600; color:var(--gray-700);">📊 오늘의 진행</div>
+              <div style="font-size:12px; color:var(--gray-500);">3 / 5 완료</div>
+            </div>
+            <div class="streak-row">
+              <div class="streak-dots">
+                <div class="streak-dot filled"></div>
+                <div class="streak-dot filled"></div>
+                <div class="streak-dot filled"></div>
+                <div class="streak-dot"></div>
+                <div class="streak-dot"></div>
+              </div>
+              <span class="streak-label">60%</span>
+              <span style="margin-left:auto; font-size:12px; color:var(--amber);">🔥 3일 연속 달성!</span>
+            </div>
+            <div class="progress-bar" style="margin-top:6px;">
+              <div class="progress-fill" style="width:60%"></div>
+            </div>
+          </div>
+
+          <!-- Time Indicator -->
+          <div class="time-indicator">
+            ⏰ 지금은 오전이에요 &mdash; 집중하기 좋은 시간!
+          </div>
+
+          <!-- Morning Routine -->
+          <div class="time-section time-morning">
+            <span>🌅</span> 아침 루틴
+          </div>
+          <div class="grid-2">
+            <div class="grid-item bg-blue">
+              <span class="icon">📋</span>
+              <span class="label">계획 세우기</span>
+            </div>
+            <div class="grid-item" style="background:linear-gradient(135deg, #60A5FA, #3B82F6);">
+              <span class="icon">✨</span>
+              <span class="label">AI 계획하기</span>
+            </div>
+          </div>
+
+          <!-- Afternoon Focus -->
+          <div class="time-section time-afternoon">
+            <span>☀️</span> 오후 집중
+          </div>
+          <div class="grid-2">
+            <div class="grid-item bg-orange">
+              <span class="icon">⚡</span>
+              <span class="label">실행하기</span>
+            </div>
+            <div class="grid-item bg-violet">
+              <span class="icon">📝</span>
+              <span class="label">기록하기</span>
+            </div>
+          </div>
+
+          <!-- Evening Wind Down -->
+          <div class="time-section time-evening">
+            <span>🌙</span> 저녁 정리
+          </div>
+          <div class="grid-2">
+            <div class="grid-item bg-emerald">
+              <span class="icon">💚</span>
+              <span class="label">감사 기록</span>
+            </div>
+            <div class="grid-item" style="background:linear-gradient(135deg, #34D399, #22C55E);">
+              <span class="icon">📊</span>
+              <span class="label">활동 살펴보기</span>
+            </div>
+          </div>
+
+          <!-- Contact Nudge -->
+          <div class="contact-card" style="margin-top: 12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:18px;">❤️</span>
+              <div>
+                <div class="contact-name">어머니에게 안부 전하기</div>
+                <div class="contact-sub">15일째 연락이 없어요 · 전화하기 →</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-text" style="padding-bottom:8px;">✨ 오늘도 한 걸음씩, 함께 해요</div>
+        </div>
+
+        <div class="tab-bar-mock">
+          <div class="tab-item active-tab"><span class="tab-icon">🏠</span><span>홈</span></div>
+          <div class="tab-item"><span class="tab-icon">📋</span><span>계획</span></div>
+          <div class="tab-item"><span class="tab-icon">⚡</span><span>실행</span></div>
+          <div class="tab-item"><span class="tab-icon">📝</span><span>기록</span></div>
+          <div class="tab-item"><span class="tab-icon">⚙️</span><span>설정</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis Panel B -->
+    <div class="analysis-panel">
+      <div class="analysis-title">
+        <span class="analysis-badge" style="background:var(--orange)">시안 B</span>
+        데일리 미션 (Daily Mission)
+      </div>
+
+      <div class="analysis-card solution-b">
+        <h4>💡 컨셉</h4>
+        <p>게이미피케이션 + 시간 인식으로 ADHD 행동 설계 극대화. "오늘의 미션" CTA로 즉시 실행 유도, 시간대별 기능 분류로 Time Blindness 대응.</p>
+      </div>
+
+      <div class="analysis-card solution-b">
+        <h4>✅ 문제 해결 매핑</h4>
+        <table class="mapping-table">
+          <thead>
+            <tr><th style="width:35%">문제</th><th>해결</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>시각적 단조로움</td><td>시간대별 색상 분류 + 미션 카드 강조 + 스트릭 시각화</td></tr>
+            <tr><td>인터랙션 결함</td><td>모든 카드에 명확한 목적지 연결 + CTA 버튼</td></tr>
+            <tr><td>정보 유실</td><td>시간대별 기능 분류로 자연 정보구조 형성</td></tr>
+            <tr><td>태스크 흐름</td><td>"지금 시작하기" CTA → 즉시 실행 유도</td></tr>
+            <tr><td>ADHD 설계</td><td>최중요 할일 강조, 스트릭, 시간 인식, 원동력 상단</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="analysis-card solution-b">
+        <h4>👍 장점</h4>
+        <ul>
+          <li>ADHD 특화: 시간 인식, 스트릭, 즉시 실행 CTA</li>
+          <li>"가장 중요한 일" 하이라이트 → 우선순위 결정 지원</li>
+          <li>게이미피케이션으로 지속 동기 부여</li>
+          <li>시간대별 분류 → 하루 구조화 지원</li>
+          <li>원동력이 최상단 배너에 항상 노출</li>
+        </ul>
+      </div>
+
+      <div class="analysis-card solution-b">
+        <h4>⚠️ 고려사항</h4>
+        <ul>
+          <li>웹의 3그룹 정보구조와 다른 분류 체계 → 플랫폼 간 불일치</li>
+          <li>"오늘의 미션" 데이터 소스 필요 (중요도 기반 자동 선정 로직)</li>
+          <li>시간대별 기능 분류가 모든 사용자에게 맞지 않을 수 있음</li>
+          <li>전체 기능 12개 중 일부만 시간대 카테고리에 노출</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB: Plan C - Smart Cards                    -->
+<!-- ============================================ -->
+<div class="tab-content" id="tab-plan-c">
+  <div class="demo-container">
+    <div class="iphone-frame">
+      <div class="iphone-screen">
+        <div class="iphone-notch"></div>
+        <div class="status-bar">
+          <span class="time">9:41</span>
+          <span class="status-icons">
+            <span>&#9679;&#9679;&#9679;&#9679;</span>
+            <span>WiFi</span>
+            <span>100%</span>
+          </span>
+        </div>
+        <div class="screen-content">
+          <!-- Greeting -->
+          <p style="font-size:18px; font-weight:700; color:var(--gray-900); margin-bottom:1px;">좋은 아침이에요 ☀️</p>
+          <p style="font-size:12px; color:var(--gray-400); margin-bottom:12px;">2월 18일 화요일</p>
+
+          <!-- Hero Card with Ring + Badges -->
+          <div class="hero-card">
+            <div class="ring-container" style="margin: 0 auto 6px;">
+              <svg viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#E2E8F0" stroke-width="6"/>
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#3B82F6" stroke-width="6"
+                  stroke-dasharray="176" stroke-dashoffset="70"
+                  stroke-linecap="round" transform="rotate(-90 36 36)"/>
+              </svg>
+              <div class="ring-text">
+                <span class="big">3</span>
+                <span class="small">/ 5</span>
+              </div>
+            </div>
+            <div style="font-size:14px; font-weight:700; color:var(--gray-700);">60% 달성!</div>
+            <div class="mini-badges">
+              <div class="mini-badge"><span style="color:var(--amber)">🔥</span> 2</div>
+              <div class="mini-badge"><span style="color:var(--pink)">❤️</span> 1</div>
+              <div class="mini-badge"><span style="color:var(--blue)">📋</span> 5</div>
+            </div>
+          </div>
+
+          <!-- Fuel Card -->
+          <div class="fuel-card">
+            <div style="display:flex; align-items:flex-start; gap:8px;">
+              <span style="font-size:16px;">💡</span>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#B45309; margin-bottom:2px;">오늘의 원동력</div>
+                <div style="font-size:13px; color:#92400E; line-height:1.5; font-weight:500;">"시작이 반이다. 나머지 반은 끝까지 해내는 거야."</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Group 1: 계획 세우기 -->
+          <div class="compact-group">
+            <div class="compact-group-header">
+              <div class="left">
+                <div class="section-dot" style="background:var(--blue)"></div>
+                <span>계획 세우기</span>
+              </div>
+              <span class="arrow">→</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip chip-blue">🗓️ 하루계획</span>
+              <span class="chip chip-blue">📅 일정</span>
+              <span class="chip chip-blue">✨ AI계획</span>
+              <span class="chip chip-blue">👁️ 내계획</span>
+              <span class="chip chip-blue">🤖 Claude</span>
+            </div>
+          </div>
+
+          <!-- Group 2: 생각과 기억 -->
+          <div class="compact-group">
+            <div class="compact-group-header">
+              <div class="left">
+                <div class="section-dot" style="background:var(--violet)"></div>
+                <span>생각과 기억</span>
+              </div>
+              <span class="arrow">→</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip chip-violet">🔥 원동력</span>
+              <span class="chip chip-violet">👥 관계기록</span>
+              <span class="chip chip-violet">📰 소식</span>
+            </div>
+          </div>
+
+          <!-- Contact Inline -->
+          <div class="contact-inline">
+            <div class="contact-inline-left">
+              <span class="name">❤️ 어머니 (가족)</span>
+              <span class="meta">15일 전 연락</span>
+            </div>
+            <span class="action-text">안부 전하기 →</span>
+          </div>
+
+          <!-- Group 3: 일상 돌보기 -->
+          <div class="compact-group">
+            <div class="compact-group-header">
+              <div class="left">
+                <div class="section-dot" style="background:var(--emerald)"></div>
+                <span>일상 돌보기</span>
+              </div>
+              <span class="arrow">→</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip chip-emerald">💚 감사기록</span>
+              <span class="chip chip-emerald">📊 활동살펴</span>
+            </div>
+          </div>
+
+          <div class="footer-text">✨ DayStep이 함께할게요</div>
+        </div>
+
+        <div class="tab-bar-mock">
+          <div class="tab-item active-tab"><span class="tab-icon">🏠</span><span>홈</span></div>
+          <div class="tab-item"><span class="tab-icon">📋</span><span>계획</span></div>
+          <div class="tab-item"><span class="tab-icon">⚡</span><span>실행</span></div>
+          <div class="tab-item"><span class="tab-icon">📝</span><span>기록</span></div>
+          <div class="tab-item"><span class="tab-icon">⚙️</span><span>설정</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis Panel C -->
+    <div class="analysis-panel">
+      <div class="analysis-title">
+        <span class="analysis-badge" style="background:var(--violet)">시안 C</span>
+        스마트 카드 (Smart Cards)
+      </div>
+
+      <div class="analysis-card solution-c">
+        <h4>💡 컨셉</h4>
+        <p>컨텍스트 기반 동적 카드 순서 + 컴팩트한 정보 밀도. 컬러 칩으로 12개 기능을 최소 공간에 모두 노출하면서 그룹 구조 유지.</p>
+      </div>
+
+      <div class="analysis-card solution-c">
+        <h4>✅ 문제 해결 매핑</h4>
+        <table class="mapping-table">
+          <thead>
+            <tr><th style="width:35%">문제</th><th>해결</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>시각적 단조로움</td><td>그룹 컬러칩 + 카드 계층 + 미니뱃지 시스템</td></tr>
+            <tr><td>인터랙션 결함</td><td>칩 직접 탭 → 기능 진입, 섹션 헤더 탭 → 그룹 진입</td></tr>
+            <tr><td>정보 유실</td><td>12개 기능을 컬러칩으로 모두 노출 (컴팩트)</td></tr>
+            <tr><td>태스크 흐름</td><td>위→아래 자연 스크롤, 그룹 간 흐름 유지</td></tr>
+            <tr><td>ADHD 설계</td><td>원동력 상단, 연락 인라인, 미니뱃지로 전체 현황 한눈에</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="analysis-card solution-c">
+        <h4>👍 장점</h4>
+        <ul>
+          <li>가장 컴팩트한 레이아웃 → 스크롤 최소화</li>
+          <li>웹 정보구조와 일관된 3그룹 유지</li>
+          <li>칩 기반 UX → 빠른 탐색, 직관적 탭 인터랙션</li>
+          <li>미니뱃지로 전체 현황을 한눈에 파악</li>
+          <li>연락 추천이 그룹 사이에 자연스럽게 배치</li>
+        </ul>
+      </div>
+
+      <div class="analysis-card solution-c">
+        <h4>⚠️ 고려사항</h4>
+        <ul>
+          <li>칩 크기가 작아 터치 타깃 최소 44px 확보 필요</li>
+          <li>ADHD 사용자에게 칩이 많으면 선택 마비(Choice Overload) 우려</li>
+          <li>시간 인식/스트릭 등 ADHD 특화 요소가 B 대비 약함</li>
+          <li>"가장 중요한 할일" 하이라이트가 없음</li>
+        </ul>
+      </div>
+
+      <div class="analysis-card solution-c" style="border-left-color: #10B981;">
+        <h4>🔄 최적 조합 제안</h4>
+        <p style="line-height: 1.7;">
+          <strong>시안 B + C 하이브리드</strong>가 이상적일 수 있습니다:<br>
+          &bull; B의 "오늘의 미션" + 스트릭 + 시간 인식<br>
+          &bull; C의 컬러칩 그룹 구조 + 컴팩트 레이아웃<br>
+          &bull; 두 시안 모두의 인라인 원동력 + 연락 넛지
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tabId) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(el => {
+    el.classList.remove('active');
+  });
+
+  // Deactivate all buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active', 'active-problem', 'active-a', 'active-b', 'active-c');
+  });
+
+  // Show selected tab
+  document.getElementById('tab-' + tabId).classList.add('active');
+
+  // Activate button
+  const btn = document.querySelector(`[data-tab="${tabId}"]`);
+  const classMap = {
+    'current': 'active-problem',
+    'plan-a': 'active-a',
+    'plan-b': 'active-b',
+    'plan-c': 'active-c'
+  };
+  btn.classList.add('active', classMap[tabId]);
+}
+
+// Add hover effects to grid items and chips
+document.querySelectorAll('.grid-item, .chip, .mission-card .cta-btn, .contact-card, .contact-inline, .compact-group-header').forEach(el => {
+  el.style.cursor = 'pointer';
+});
+</script>
+</body>
+</html>
