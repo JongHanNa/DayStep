@@ -305,6 +305,27 @@
     font-size: 12px; color: #64748B; text-decoration: none; cursor: pointer;
   }
 
+  /* ─── Screen C: Usage Table ─── */
+  .c-usage-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 24px;
+    font-size: 13px; color: #CBD5E1;
+  }
+  .c-usage-table th {
+    font-size: 12px; font-weight: 600; color: #64748B;
+    padding: 8px 6px; border-bottom: 1px solid #334155;
+    text-align: left;
+  }
+  .c-usage-table th:nth-child(2),
+  .c-usage-table th:nth-child(3) { text-align: center; }
+  .c-usage-table td {
+    padding: 10px 6px; border-bottom: 1px solid rgba(51,65,85,0.5);
+  }
+  .c-usage-table td:nth-child(2),
+  .c-usage-table td:nth-child(3) { text-align: center; }
+  .c-usage-table .over { color: #F87171; font-weight: 600; }
+  .c-usage-table .pro-val { color: #60A5FA; font-weight: 600; }
+  .c-usage-table .pro-header { color: #F59E0B; }
+
   /* ─── Utility ─── */
   .mb-8 { margin-bottom: 8px; }
   .mb-12 { margin-bottom: 12px; }
@@ -501,39 +522,58 @@
           <p>하루 관리의 모든 것, 제한 없이</p>
         </div>
 
-        <!-- Features -->
-        <div class="c-features">
-          <div class="c-feat-item">
-            <div class="c-feat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-            </div>
-            <div><div class="name">무제한 할일 & 습관</div><div class="desc">더 이상 개수 제한 없이 자유롭게</div></div>
-          </div>
-          <div class="c-feat-item">
-            <div class="c-feat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            </div>
-            <div><div class="name">무제한 프로젝트 & 노트</div><div class="desc">목표와 생각을 체계적으로 관리</div></div>
-          </div>
-          <div class="c-feat-item">
-            <div class="c-feat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-            </div>
-            <div><div class="name">상세 통계 & 인사이트</div><div class="desc">나의 패턴을 데이터로 확인</div></div>
-          </div>
-          <div class="c-feat-item">
-            <div class="c-feat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-            </div>
-            <div><div class="name">소중한 사람 무제한</div><div class="desc">중요한 관계를 빠짐없이 챙기세요</div></div>
-          </div>
-          <div class="c-feat-item">
-            <div class="c-feat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            </div>
-            <div><div class="name">앞으로 추가되는 모든 Pro 기능</div><div class="desc">새 기능 출시 시 자동 해금</div></div>
-          </div>
-        </div>
+        <!-- Usage Comparison Table -->
+        <table class="c-usage-table">
+          <thead>
+            <tr>
+              <th>기능</th>
+              <th>Free</th>
+              <th class="pro-header">♛ Pro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>할일</td>
+              <td class="over">185/60개</td>
+              <td class="pro-val">무제한</td>
+            </tr>
+            <tr>
+              <td>습관</td>
+              <td class="over">23/5개</td>
+              <td class="pro-val">무제한</td>
+            </tr>
+            <tr>
+              <td>프로젝트</td>
+              <td>0/15개</td>
+              <td class="pro-val">무제한</td>
+            </tr>
+            <tr>
+              <td>노트</td>
+              <td>0/40개</td>
+              <td class="pro-val">무제한</td>
+            </tr>
+            <tr>
+              <td>연락처 연결</td>
+              <td>0/10개</td>
+              <td class="pro-val">무제한</td>
+            </tr>
+            <tr>
+              <td>소중한 사람</td>
+              <td class="over">30/10명</td>
+              <td class="pro-val">무제한</td>
+            </tr>
+            <tr>
+              <td>관심 기록</td>
+              <td class="over">31/30개</td>
+              <td class="pro-val">무제한</td>
+            </tr>
+            <tr>
+              <td>통계 & 인사이트</td>
+              <td style="color:#64748B;">✕</td>
+              <td class="pro-val">✓</td>
+            </tr>
+          </tbody>
+        </table>
 
         <!-- Plan Selector -->
         <div class="c-plan-select">
