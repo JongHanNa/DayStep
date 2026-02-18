@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import Config from 'react-native-config';
 import {AnimatedPressable, AnimatedCard} from '@/components/core';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import type {Platform as SubPlatform} from '@/stores/subscriptionStore';
@@ -78,12 +79,13 @@ function getStatusLabel(status: string) {
   }
 }
 
-/** 플랫폼별 관리 URL 분기 (핵심 버그 수정) */
+/** 플랫폼별 관리 URL 분기 */
 function handleManageSubscription(platform: SubPlatform | undefined) {
+  const webBase = Config.WEB_BASE_URL ?? 'https://daystep.app';
   let url: string;
   switch (platform) {
     case 'web':
-      url = 'https://daystep.app/adhd/settings/subscription';
+      url = `${webBase}/adhd/settings/subscription`;
       break;
     case 'ios':
       url = 'https://apps.apple.com/account/subscriptions';
@@ -92,7 +94,7 @@ function handleManageSubscription(platform: SubPlatform | undefined) {
       url = 'https://play.google.com/store/account/subscriptions';
       break;
     default:
-      url = 'https://daystep.app/adhd/settings/subscription';
+      url = `${webBase}/adhd/settings/subscription`;
   }
   Linking.openURL(url);
 }
