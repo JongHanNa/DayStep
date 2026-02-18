@@ -4,7 +4,7 @@
  * Page 1: 영감 페이지 (원동력 → 연락할 사람 → 하루 한 줄)
  */
 import React, {useCallback, useEffect, useMemo} from 'react';
-import {Text, View, ScrollView, Alert} from 'react-native';
+import {Text, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, SwipeablePages} from '@/components/core';
@@ -112,10 +112,6 @@ export default function HomeScreen() {
   const EMERALD_BG = '#ECFDF5';
   const EMERALD_ICON = '#22C55E';
 
-  const showComingSoon = useCallback(() => {
-    Alert.alert('준비 중', '준비 중인 기능이에요');
-  }, []);
-
   const planItems: FeatureItem[] = useMemo(
     () => [
       {
@@ -134,7 +130,7 @@ export default function HomeScreen() {
         description: '타임라인으로 한눈에 보기',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Planner', {initialPage: 1}),
+        onPress: () => navigation.navigate('Timeline'),
       },
       {
         id: 'ai-plan',
@@ -143,7 +139,7 @@ export default function HomeScreen() {
         description: '프로젝트 목록과 진행 상황 확인',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Planner', {initialPage: 1}),
+        onPress: () => navigation.navigate('AIPlan'),
       },
       {
         id: 'ai-chat',
@@ -152,7 +148,7 @@ export default function HomeScreen() {
         description: 'AI와 대화하며 할일 계획',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: showComingSoon,
+        onPress: () => navigation.navigate('AIChat'),
       },
       {
         id: 'guide',
@@ -161,10 +157,10 @@ export default function HomeScreen() {
         description: 'Claude Desktop 연결',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: showComingSoon,
+        onPress: () => navigation.navigate('Guide'),
       },
     ],
-    [navigation, showComingSoon],
+    [navigation],
   );
 
   const thoughtItems: FeatureItem[] = useMemo(
@@ -185,7 +181,7 @@ export default function HomeScreen() {
         description: '소중한 만남과 대화 기록',
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
-        onPress: showComingSoon,
+        onPress: () => navigation.navigate('Record'),
       },
       {
         id: 'news',
@@ -194,7 +190,7 @@ export default function HomeScreen() {
         description: '소식 흐름 시간순 보기',
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
-        onPress: showComingSoon,
+        onPress: () => navigation.navigate('News'),
       },
       {
         id: 'contact',
@@ -203,10 +199,10 @@ export default function HomeScreen() {
         description: '연락 빈도와 관계 돌아보기',
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
-        onPress: showComingSoon,
+        onPress: () => navigation.navigate('Contact'),
       },
     ],
-    [navigation, showComingSoon],
+    [navigation],
   );
 
   const careItems: FeatureItem[] = useMemo(
@@ -218,7 +214,7 @@ export default function HomeScreen() {
         description: '감사한 순간 기록',
         iconBgColor: EMERALD_BG,
         iconColor: EMERALD_ICON,
-        onPress: showComingSoon,
+        onPress: () => navigation.navigate('Gratitude'),
       },
       {
         id: 'activity',
@@ -227,10 +223,10 @@ export default function HomeScreen() {
         description: '활동 패턴과 생산성 분석',
         iconBgColor: EMERALD_BG,
         iconColor: EMERALD_ICON,
-        onPress: showComingSoon,
+        onPress: () => navigation.navigate('Activity'),
       },
     ],
-    [navigation, showComingSoon],
+    [navigation],
   );
 
   return (

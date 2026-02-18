@@ -1,6 +1,7 @@
 /**
  * Main Tab Navigator
  * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 설정
+ * Home 탭은 HomeStack (메인 + 9개 전용 화면)
  * Execute 탭은 스택 네비게이터로 실행모드 + 포모도로 지원
  */
 import React from 'react';
@@ -13,6 +14,17 @@ import ExecutionScreen from '../screens/ExecutionScreen';
 import PomodoroScreen from '../screens/PomodoroScreen';
 import NotesScreen from '../screens/NotesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+
+// Home Stack 전용 화면
+import TimelineScreen from '../screens/TimelineScreen';
+import AIPlanScreen from '../screens/AIPlanScreen';
+import AIChatScreen from '../screens/AIChatScreen';
+import GuideScreen from '../screens/GuideScreen';
+import RecordScreen from '../screens/RecordScreen';
+import NewsScreen from '../screens/NewsScreen';
+import ContactScreen from '../screens/ContactScreen';
+import GratitudeScreen from '../screens/GratitudeScreen';
+import ActivityScreen from '../screens/ActivityScreen';
 
 // Execute Stack (실행 모드 + 포모도로)
 const ExecuteStack = createNativeStackNavigator();
@@ -30,6 +42,30 @@ function ExecuteStackNavigator() {
   );
 }
 
+// Home Stack (메인 + 9개 전용 화면)
+const HomeStack = createNativeStackNavigator();
+
+function HomeStackNavigator() {
+  return (
+    <HomeStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}>
+      <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStack.Screen name="Timeline" component={TimelineScreen} />
+      <HomeStack.Screen name="AIPlan" component={AIPlanScreen} />
+      <HomeStack.Screen name="AIChat" component={AIChatScreen} />
+      <HomeStack.Screen name="Guide" component={GuideScreen} />
+      <HomeStack.Screen name="Record" component={RecordScreen} />
+      <HomeStack.Screen name="News" component={NewsScreen} />
+      <HomeStack.Screen name="Contact" component={ContactScreen} />
+      <HomeStack.Screen name="Gratitude" component={GratitudeScreen} />
+      <HomeStack.Screen name="Activity" component={ActivityScreen} />
+    </HomeStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
@@ -39,7 +75,7 @@ export default function MainTabNavigator() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Planner" component={TodoListScreen} />
       <Tab.Screen name="Execute" component={ExecuteStackNavigator} />
       <Tab.Screen name="Notes" component={NotesScreen} />

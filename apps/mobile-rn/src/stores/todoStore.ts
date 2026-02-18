@@ -57,6 +57,7 @@ interface TodoState {
 
   // 액션
   fetchTodosForDate: (date: string) => Promise<void>;
+  fetchAllTodos: (userId: string, days?: number) => Promise<Todo[]>;
   createTodo: (input: CreateTodoInput) => Promise<Todo | null>;
   updateTodo: (id: string, updates: Partial<Todo>) => Promise<boolean>;
   deleteTodo: (id: string) => Promise<boolean>;
@@ -548,6 +549,26 @@ export const useTodoStore = create<TodoState>()(
             a => !processed.includes(a.id),
           ),
         }));
+      },
+
+      fetchAllTodos: async (userId: string, days = 30) => {
+        try {
+          const since = new Date();
+          since.setDate(since.getDate() - days);
+
+          const {data, error} = await supabase
+            .from('todos')
+            .select('*')
+            .eq('user_id', userId)
+            .gte('created_at', since.toISOString())
+            .order('created_at', {ascending: false});
+
+          if (error) throw error;
+          return (data ?? []) as Todo[];
+        } catch (err: any) {
+          console.error('[TodoStore] fetchAllTodos error:', err);
+          return [];
+        }
       },
 
       clearError: () => set({error: null}),
