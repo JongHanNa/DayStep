@@ -8,7 +8,7 @@ export const defaultSEO = {
   keywords:
     "할일 관리, 생산성, 목표 관리, 템플릿, 보관함, todo, productivity",
   author: "DayStep Team",
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://daystep.vercel.app",
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://daystep.app",
   locale: "ko_KR",
 };
 

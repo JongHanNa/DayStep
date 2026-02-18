@@ -78,7 +78,7 @@ DayStep/
 
 **Vercel 배포**:
 - Vercel 루트 디렉터리: 프로젝트 루트 (vercel.json에서 buildCommand로 apps/web 지정)
-- **Production**: main 브랜치 → 프로덕션 DB → `daystep.vercel.app`
+- **Production**: main 브랜치 → 프로덕션 DB → `daystep.app`
 - **Preview**: develop/feature 브랜치 → 개발 DB → 자동 생성 URL
 
 ## MCP 서버
