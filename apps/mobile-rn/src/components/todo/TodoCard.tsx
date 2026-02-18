@@ -14,21 +14,25 @@ import Animated, {
 } from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
 import {format} from 'date-fns';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
+import {Play} from 'lucide-react-native';
 
 interface TodoCardProps {
   todo: Todo;
   index?: number;
   onToggle: (id: string) => void;
   onPress?: (todo: Todo) => void;
+  onFocus?: (todo: Todo) => void;
 }
 
-export function TodoCard({todo, index = 0, onToggle, onPress}: TodoCardProps) {
+export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCardProps) {
   const haptic = useHaptic();
+  const {primaryColor} = useTheme();
   const checkScale = useSharedValue(1);
 
   const handleToggle = useCallback(() => {
@@ -139,6 +143,20 @@ export function TodoCard({todo, index = 0, onToggle, onPress}: TodoCardProps) {
             )}
           </View>
         </View>
+
+        {/* 포커스 타이머 버튼 (미완료 할일만) */}
+        {onFocus && !todo.completed && (
+          <AnimatedPressable
+            onPress={() => {
+              haptic.medium();
+              onFocus(todo);
+            }}
+            haptic={false}
+            scaleValue={0.85}
+            style={[styles.focusBtn, {backgroundColor: primaryColor}]}>
+            <Play size={12} color="#FFFFFF" strokeWidth={3} fill="#FFFFFF" />
+          </AnimatedPressable>
+        )}
       </AnimatedPressable>
     </Animated.View>
   );
@@ -241,5 +259,13 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     color: '#6B7280',
+  },
+  focusBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
 });

@@ -1,40 +1,47 @@
-import React from 'react';
-import {Text, View} from 'react-native';
+/**
+ * SettingsScreen — 전체 설정 화면
+ * 서브뷰 관리: main / font / theme / subscription / account
+ */
+import React, {useState, useCallback} from 'react';
+import {Text} from 'react-native';
 import {ScreenContainer} from '@/components/core';
-import {AnimatedCard} from '@/components/core';
-import {useTheme} from '@/theme';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import {SettingsMainView} from '@/components/settings/SettingsMainView';
+import {FontSettingsView} from '@/components/settings/FontSettingsView';
+import {ThemeSettingsView} from '@/components/settings/ThemeSettingsView';
+import {SubscriptionView} from '@/components/settings/SubscriptionView';
+import {AccountView} from '@/components/settings/AccountView';
+import Animated, {FadeIn} from 'react-native-reanimated';
+
+type SettingsView = 'main' | 'font' | 'theme' | 'subscription' | 'account';
 
 export default function SettingsScreen() {
-  const {colorTheme} = useTheme();
+  const [view, setView] = useState<SettingsView>('main');
+
+  const goBack = useCallback(() => setView('main'), []);
 
   return (
     <ScreenContainer>
-      <View className="flex-1 px-4">
+      {/* 메인 제목 (main 뷰에서만) */}
+      {view === 'main' && (
         <Animated.Text
-          entering={FadeInDown.duration(500)}
-          className="text-2xl font-bold text-gray-800 mt-4 mb-6">
+          entering={FadeIn.duration(400)}
+          style={{
+            fontSize: 22,
+            fontWeight: '700',
+            color: '#1F2937',
+            paddingHorizontal: 20,
+            paddingTop: 12,
+            paddingBottom: 4,
+          }}>
           ⚙️ 설정
         </Animated.Text>
+      )}
 
-        <AnimatedCard enterDelay={100} style={{marginBottom: 12}}>
-          <Text className="text-base font-medium text-gray-700">
-            현재 테마
-          </Text>
-          <Text className="text-sm text-gray-500 mt-1">
-            {colorTheme.icon} {colorTheme.nameKo}
-          </Text>
-        </AnimatedCard>
-
-        <AnimatedCard enterDelay={200} style={{marginBottom: 12}}>
-          <Text className="text-base font-medium text-gray-700">
-            Phase 6에서 전체 설정 구현
-          </Text>
-          <Text className="text-sm text-gray-500 mt-1">
-            테마, 폰트, 알림, 구독 관리
-          </Text>
-        </AnimatedCard>
-      </View>
+      {view === 'main' && <SettingsMainView onNavigate={setView} />}
+      {view === 'font' && <FontSettingsView onBack={goBack} />}
+      {view === 'theme' && <ThemeSettingsView onBack={goBack} />}
+      {view === 'subscription' && <SubscriptionView onBack={goBack} />}
+      {view === 'account' && <AccountView onBack={goBack} />}
     </ScreenContainer>
   );
 }

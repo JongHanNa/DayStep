@@ -12,6 +12,10 @@ import {
   TodoFormBottomSheet,
   type TodoFormBottomSheetRef,
 } from '@/components/todo/TodoFormBottomSheet';
+import {
+  FocusTimerBottomSheet,
+  type FocusTimerBottomSheetRef,
+} from '@/components/planner/FocusTimerBottomSheet';
 import {SwipeablePages, type SwipeablePagesRef} from '@/components/core/SwipeablePages';
 import {PlannerPage2} from '@/components/planner/PlannerPage2';
 import {DndProvider, useDnd} from '@/components/planner/DndContext';
@@ -78,6 +82,7 @@ function TodoListScreenInner() {
     useTodoStore();
   const {primaryColor} = useTheme();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
+  const focusTimerRef = useRef<FocusTimerBottomSheetRef>(null);
   const pagesRef = useRef<SwipeablePagesRef>(null);
   const {dragState, setPagesRef, currentPageRef, triggerRemeasure} = useDnd();
 
@@ -151,6 +156,10 @@ function TodoListScreenInner() {
     formRef.current?.openEdit(todo);
   }, []);
 
+  const handleFocusTodo = useCallback((todo: Todo) => {
+    focusTimerRef.current?.open(todo);
+  }, []);
+
   const handleAddTodo = useCallback(() => {
     formRef.current?.openCreate(selectedDate);
   }, [selectedDate]);
@@ -215,6 +224,7 @@ function TodoListScreenInner() {
                   index={index}
                   onToggle={handleToggle}
                   onPress={handleTodoPress}
+                  onFocus={handleFocusTodo}
                 />
               </DraggableTodoChip>
             )}
@@ -249,6 +259,9 @@ function TodoListScreenInner() {
 
       {/* 할일 폼 바텀시트 */}
       <TodoFormBottomSheet ref={formRef} />
+
+      {/* 포커스 타이머 바텀시트 */}
+      <FocusTimerBottomSheet ref={focusTimerRef} />
     </ScreenContainer>
   );
 }

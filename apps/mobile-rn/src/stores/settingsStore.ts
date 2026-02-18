@@ -27,6 +27,9 @@ interface SettingsState {
   notificationsEnabled: boolean;
   pomodoroReminders: boolean;
 
+  // 할일 설정
+  celebrationEffects: boolean;
+
   // 동기화
   _lastSyncedAt: string | null;
 
@@ -40,6 +43,7 @@ interface SettingsState {
   setHapticEnabled: (enabled: boolean) => void;
   setAnimationsEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
+  setCelebrationEffects: (enabled: boolean) => void;
   loadFromDB: (settings: Record<string, any>) => void;
 }
 
@@ -56,6 +60,7 @@ export const useSettingsStore = create<SettingsState>()(
       animationsEnabled: true,
       notificationsEnabled: true,
       pomodoroReminders: true,
+      celebrationEffects: true,
       _lastSyncedAt: null,
 
       setTimeFormat: (format) => set({timeFormat: format}),
@@ -67,6 +72,7 @@ export const useSettingsStore = create<SettingsState>()(
       setHapticEnabled: (enabled) => set({hapticEnabled: enabled}),
       setAnimationsEnabled: (enabled) => set({animationsEnabled: enabled}),
       setNotificationsEnabled: (enabled) => set({notificationsEnabled: enabled}),
+      setCelebrationEffects: (enabled) => set({celebrationEffects: enabled}),
       loadFromDB: (settings) =>
         set((state) => ({
           ...state,

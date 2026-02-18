@@ -5,7 +5,6 @@
  */
 import React, {useCallback, useEffect, useRef} from 'react';
 import {Text, View, StyleSheet} from 'react-native';
-import {Canvas, Path, Skia, Shadow, BlurMask} from '@shopify/react-native-skia';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -16,92 +15,10 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useHaptic} from '@/hooks/useHaptic';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useTheme} from '@/theme';
-
-// ============================================
-// Timer Ring (Skia)
-// ============================================
-
-interface TimerRingProps {
-  progress: number;
-  size: number;
-  strokeWidth: number;
-  color: string;
-  isRunning: boolean;
-}
-
-function TimerRing({progress, size, strokeWidth, color, isRunning}: TimerRingProps) {
-  const center = size / 2;
-  const radius = center - strokeWidth - 8; // 글로우 여백
-
-  // 배경 원
-  const bgPath = Skia.Path.Make();
-  bgPath.addCircle(center, center, radius);
-
-  // 진행 아크
-  const sweepAngle = 360 * Math.min(Math.max(progress, 0), 1);
-  const progressPath = Skia.Path.Make();
-  if (sweepAngle > 0) {
-    progressPath.addArc(
-      {
-        x: center - radius,
-        y: center - radius,
-        width: radius * 2,
-        height: radius * 2,
-      },
-      -90,
-      sweepAngle,
-    );
-  }
-
-  return (
-    <Canvas style={{width: size, height: size}}>
-      {/* 배경 링 */}
-      <Path
-        path={bgPath}
-        style="stroke"
-        strokeWidth={strokeWidth}
-        color="#E5E7EB"
-        strokeCap="round"
-      />
-      {/* 진행 링 + 글로우 */}
-      {sweepAngle > 0 && (
-        <>
-          {/* 글로우 레이어 */}
-          <Path
-            path={progressPath}
-            style="stroke"
-            strokeWidth={strokeWidth + 6}
-            color={color}
-            strokeCap="round"
-            opacity={0.3}>
-            <BlurMask blur={8} style="normal" />
-          </Path>
-          {/* 메인 링 */}
-          <Path
-            path={progressPath}
-            style="stroke"
-            strokeWidth={strokeWidth}
-            color={color}
-            strokeCap="round"
-          />
-        </>
-      )}
-    </Canvas>
-  );
-}
-
-// ============================================
-// Helpers
-// ============================================
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
 
 function getTimerTypeLabel(type: string): string {
   switch (type) {
