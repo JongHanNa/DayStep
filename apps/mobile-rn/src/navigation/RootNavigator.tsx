@@ -2,10 +2,15 @@
  * Root Navigator
  * 인증 상태 기반 분기: Login ↔ Main
  */
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {ActivityIndicator, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useAuthStore} from '@/stores/authStore';
+import {
+  initRevenueCat,
+  loginRevenueCat,
+  logoutRevenueCat,
+} from '@/lib/revenueCat';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
@@ -20,11 +25,29 @@ function LoadingScreen() {
 }
 
 export default function RootNavigator() {
-  const {isAuthenticated, initializing, initialize} = useAuthStore();
+  const {isAuthenticated, initializing, initialize, user} = useAuthStore();
+  const rcInitialized = useRef(false);
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // RevenueCat SDK 초기화 (1회)
+  useEffect(() => {
+    if (!rcInitialized.current) {
+      initRevenueCat();
+      rcInitialized.current = true;
+    }
+  }, []);
+
+  // 인증 상태 변경 시 RevenueCat 로그인/로그아웃
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      loginRevenueCat(user.id);
+    } else if (!isAuthenticated && rcInitialized.current) {
+      logoutRevenueCat();
+    }
+  }, [isAuthenticated, user?.id]);
 
   if (initializing) {
     return <LoadingScreen />;

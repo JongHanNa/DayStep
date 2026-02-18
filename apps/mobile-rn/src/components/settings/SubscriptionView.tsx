@@ -6,11 +6,12 @@ import {
   View,
   Text,
   Linking,
-  Platform,
+  Alert,
   ScrollView,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import Purchases, {type PurchasesPackage} from 'react-native-purchases';
 import Config from 'react-native-config';
 import LinearGradient from 'react-native-linear-gradient';
 import {AnimatedPressable, AnimatedCard} from '@/components/core';
@@ -24,6 +25,10 @@ import {
   ENTITY_LIMIT_MAP,
   type UsageEntityType,
 } from '@/lib/featureFlags';
+import {
+  purchaseSelectedPackage,
+  restorePurchases,
+} from '@/lib/revenueCat';
 import {ArrowLeft, Crown, Check, X} from 'lucide-react-native';
 
 interface SubscriptionViewProps {
@@ -145,10 +150,23 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     'yearly',
   );
   const [showComparison, setShowComparison] = useState(false);
+  const [monthlyPkg, setMonthlyPkg] = useState<PurchasesPackage | null>(null);
+  const [annualPkg, setAnnualPkg] = useState<PurchasesPackage | null>(null);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     if (user?.id) fetchSubscription(user.id);
   }, [user?.id, fetchSubscription]);
+
+  // RevenueCat offerings 로딩
+  useEffect(() => {
+    Purchases.getOfferings()
+      .then(offerings => {
+        setMonthlyPkg(offerings.current?.monthly ?? null);
+        setAnnualPkg(offerings.current?.annual ?? null);
+      })
+      .catch(e => console.warn('[RevenueCat] getOfferings error:', e));
+  }, []);
 
   const status = subscriptionInfo?.status ?? 'free';
   const subPlatform = subscriptionInfo?.platform;
@@ -324,7 +342,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
               </View>
               <View style={{flex: 1}}>
                 <Text style={styles.planName}>월간</Text>
-                <Text style={styles.planPrice}>₩5,500/월</Text>
+                <Text style={styles.planPrice}>
+                  {monthlyPkg?.product.priceString ?? '₩5,500'}/월
+                </Text>
               </View>
             </AnimatedPressable>
 
@@ -349,7 +369,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                     <Text style={styles.popularBadgeText}>인기</Text>
                   </View>
                 </View>
-                <Text style={styles.planPrice}>₩44,000/년</Text>
+                <Text style={styles.planPrice}>
+                  {annualPkg?.product.priceString ?? '₩44,000'}/년
+                </Text>
                 <Text style={styles.planSub}>월 ₩3,667 · 33% 할인</Text>
               </View>
             </AnimatedPressable>
@@ -362,30 +384,55 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
 
           {/* ── CTA 버튼 ── */}
           <AnimatedPressable
-            onPress={() => {
-              const url =
-                Platform.OS === 'ios'
-                  ? 'https://apps.apple.com/account/subscriptions'
-                  : 'https://play.google.com/store/account/subscriptions';
-              Linking.openURL(url);
+            onPress={async () => {
+              const pkg =
+                selectedPlan === 'yearly' ? annualPkg : monthlyPkg;
+              if (!pkg) {
+                Alert.alert(
+                  '구독 정보 로딩 중',
+                  '잠시 후 다시 시도해 주세요.',
+                );
+                return;
+              }
+              setPurchasing(true);
+              const result = await purchaseSelectedPackage(pkg);
+              setPurchasing(false);
+              if (result.success) {
+                if (user?.id) fetchSubscription(user.id);
+              } else if (!result.cancelled) {
+                Alert.alert(
+                  '구매 실패',
+                  '결제 중 문제가 발생했습니다. 다시 시도해 주세요.',
+                );
+              }
             }}
             hapticType="medium"
-            scaleValue={0.96}>
+            scaleValue={0.96}
+            disabled={purchasing}>
             <LinearGradient
-              colors={['#3B82F6', '#6366F1']}
+              colors={purchasing ? ['#94A3B8', '#94A3B8'] : ['#3B82F6', '#6366F1']}
               start={{x: 0, y: 0}}
               end={{x: 1, y: 0}}
               style={styles.ctaBtn}>
-              <Crown size={18} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.ctaBtnText}>구독하기</Text>
+              {purchasing ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Crown size={18} color="#FFFFFF" strokeWidth={2} />
+              )}
+              <Text style={styles.ctaBtnText}>
+                {purchasing ? '처리 중...' : '구독하기'}
+              </Text>
             </LinearGradient>
           </AnimatedPressable>
 
           {/* ── 하단 링크 ── */}
           <View style={styles.footerLinks}>
             <AnimatedPressable
-              onPress={() => {
-                if (user?.id) fetchSubscription(user.id);
+              onPress={async () => {
+                const info = await restorePurchases();
+                if (info && user?.id) {
+                  fetchSubscription(user.id);
+                }
               }}
               hapticType="light"
               scaleValue={0.95}>
