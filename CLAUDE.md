@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 정보
 
-**저장소**: DayStep - 할일 관리 및 템플릿 기반 생산성 앱
+**저장소**: DayStep - 성인 ADHD 일상 관리 시스템
 **배포**: 웹 (Vercel) + Desktop (Electron) + React Native (iOS/Android)
+→ [앱 철학 상세](docs/APP_PHILOSOPHY.md)
 
 ## 모노레포 구조 (Turborepo + npm Workspaces)
 

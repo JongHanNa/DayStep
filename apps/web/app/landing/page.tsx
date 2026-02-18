@@ -378,9 +378,9 @@ export default function LandingPage() {
             DayStep과 함께 시작하세요
           </h2>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            작은 시작이 변화를 만듭니다.
+            ADHD가 있어도 일상을 잘 돌볼 수 있습니다.
             <br />
-            오늘 할 수 있는 것부터 시작하세요.
+            DayStep이 함께할게요.
           </p>
           <button
             onClick={handleGetStarted}

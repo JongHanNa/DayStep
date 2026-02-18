@@ -138,8 +138,8 @@ export function BannerPage() {
           <View className="items-center py-4">
             <Sparkles size={24} color="#8B5CF6" />
             <Text className="text-sm text-gray-500 mt-3 text-center leading-5">
-              "작은 시작이 큰 변화를 만듭니다"{'\n'}
-              오늘도 한 걸음씩 나아가봐요.
+              "ADHD가 있어도 일상을 잘 돌볼 수 있어요"{'\n'}
+              DayStep이 오늘도 함께할게요.
             </Text>
           </View>
         </AnimatedCard>

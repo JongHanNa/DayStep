@@ -253,10 +253,10 @@ export default function SystemSection() {
             transition={{ delay: 0.3 }}
           >
             <p className="text-white text-lg font-medium">
-              작은 시작이 변화를 만듭니다.
+              ADHD가 있어도 일상을 잘 돌볼 수 있습니다.
               <br className="sm:hidden" />
               <span className="hidden sm:inline"> </span>
-              오늘 할 수 있는 것부터 시작하세요.
+              DayStep이 함께할게요.
             </p>
           </motion.div>
         </div>
