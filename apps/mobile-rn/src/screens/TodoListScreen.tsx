@@ -6,6 +6,7 @@
 import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {Text, View, SectionList, RefreshControl, StyleSheet} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import {useRoute, useFocusEffect} from '@react-navigation/native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TodoCard} from '@/components/todo/TodoCard';
 import {
@@ -81,6 +82,7 @@ function TodoListScreenInner() {
   const {todos, selectedDate, loading, setSelectedDate, fetchTodosForDate, toggleTodoCompletion, updateTodo} =
     useTodoStore();
   const {primaryColor} = useTheme();
+  const route = useRoute<any>();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
   const focusTimerRef = useRef<FocusTimerBottomSheetRef>(null);
   const pagesRef = useRef<SwipeablePagesRef>(null);
@@ -89,6 +91,16 @@ function TodoListScreenInner() {
   useEffect(() => {
     fetchTodosForDate(selectedDate);
   }, []);
+
+  // HomeScreen에서 initialPage param으로 특정 페이지 이동
+  useFocusEffect(
+    useCallback(() => {
+      const page = route.params?.initialPage;
+      if (page != null && pagesRef.current) {
+        pagesRef.current.scrollTo(page);
+      }
+    }, [route.params?.initialPage]),
+  );
 
   // DnD에 SwipeablePages ref 등록
   useEffect(() => {

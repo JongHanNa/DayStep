@@ -3,8 +3,8 @@
  * Page 0: 메인 허브 (인사 → 진행률 → 미션 → 3그룹 그리드)
  * Page 1: 영감 페이지 (원동력 → 연락할 사람 → 하루 한 줄)
  */
-import React, {useEffect, useMemo} from 'react';
-import {Text, View, ScrollView} from 'react-native';
+import React, {useCallback, useEffect, useMemo} from 'react';
+import {Text, View, ScrollView, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, SwipeablePages} from '@/components/core';
@@ -112,6 +112,10 @@ export default function HomeScreen() {
   const EMERALD_BG = '#ECFDF5';
   const EMERALD_ICON = '#22C55E';
 
+  const showComingSoon = useCallback(() => {
+    Alert.alert('준비 중', '준비 중인 기능이에요');
+  }, []);
+
   const planItems: FeatureItem[] = useMemo(
     () => [
       {
@@ -121,7 +125,7 @@ export default function HomeScreen() {
         description: '오늘 할일을 시간별로 배치',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Planner'),
+        onPress: () => navigation.navigate('Planner', {initialPage: 0}),
       },
       {
         id: 'timeline',
@@ -130,7 +134,7 @@ export default function HomeScreen() {
         description: '타임라인으로 한눈에 보기',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Planner'),
+        onPress: () => navigation.navigate('Planner', {initialPage: 1}),
       },
       {
         id: 'ai-plan',
@@ -139,7 +143,7 @@ export default function HomeScreen() {
         description: '프로젝트 목록과 진행 상황 확인',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Planner'),
+        onPress: () => navigation.navigate('Planner', {initialPage: 1}),
       },
       {
         id: 'ai-chat',
@@ -148,7 +152,7 @@ export default function HomeScreen() {
         description: 'AI와 대화하며 할일 계획',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Planner'),
+        onPress: showComingSoon,
       },
       {
         id: 'guide',
@@ -157,10 +161,10 @@ export default function HomeScreen() {
         description: 'Claude Desktop 연결',
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Settings'),
+        onPress: showComingSoon,
       },
     ],
-    [navigation],
+    [navigation, showComingSoon],
   );
 
   const thoughtItems: FeatureItem[] = useMemo(
@@ -181,7 +185,7 @@ export default function HomeScreen() {
         description: '소중한 만남과 대화 기록',
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
-        onPress: () => navigation.navigate('Notes'),
+        onPress: showComingSoon,
       },
       {
         id: 'news',
@@ -190,7 +194,7 @@ export default function HomeScreen() {
         description: '소식 흐름 시간순 보기',
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
-        onPress: () => navigation.navigate('Notes'),
+        onPress: showComingSoon,
       },
       {
         id: 'contact',
@@ -199,10 +203,10 @@ export default function HomeScreen() {
         description: '연락 빈도와 관계 돌아보기',
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
-        onPress: () => navigation.navigate('Notes'),
+        onPress: showComingSoon,
       },
     ],
-    [navigation],
+    [navigation, showComingSoon],
   );
 
   const careItems: FeatureItem[] = useMemo(
@@ -214,7 +218,7 @@ export default function HomeScreen() {
         description: '감사한 순간 기록',
         iconBgColor: EMERALD_BG,
         iconColor: EMERALD_ICON,
-        onPress: () => navigation.navigate('Notes'),
+        onPress: showComingSoon,
       },
       {
         id: 'activity',
@@ -223,10 +227,10 @@ export default function HomeScreen() {
         description: '활동 패턴과 생산성 분석',
         iconBgColor: EMERALD_BG,
         iconColor: EMERALD_ICON,
-        onPress: () => navigation.navigate('Settings'),
+        onPress: showComingSoon,
       },
     ],
-    [navigation],
+    [navigation, showComingSoon],
   );
 
   return (
