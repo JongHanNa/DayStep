@@ -54,7 +54,17 @@ Figma/Canva에서 직접 디자인하거나, 레퍼런스와 프롬프트를 조
 
 ### 1단계: AI 생성
 
-ChatGPT (이미지 생성 내장) 또는 [Recraft.ai](https://www.recraft.ai)에 프롬프트:
+아래 추천 도구 중 하나를 선택해 프롬프트를 입력합니다:
+
+| 도구 | 특징 | 비고 |
+|------|------|------|
+| [ChatGPT](https://chat.openai.com) | 대화형 반복 수정 편리, 접근성 좋음 | 이미지 생성 내장 |
+| [Gemini (나노 바나나 프로)](https://gemini.google.com) | 텍스트 렌더링 정확, 4K 고해상도, 캐릭터 일관성 | 제미나이 앱에서 바로 사용 |
+| [Recraft.ai](https://www.recraft.ai) | 벡터/SVG 출력, 아이콘 전용 모드, 일관된 스타일 | 아이콘 특화 |
+| [Midjourney](https://www.midjourney.com) | 예술적 퀄리티 최상 | 후보정 필요할 수 있음 |
+| [IconMaker.studio](https://iconmaker.studio) | iOS/Android 사이즈 자동 생성 | 앱 아이콘 전용 |
+
+프롬프트:
 
 > "DayStep"이라는 성인 ADHD 일상 관리 앱의 아이콘을 만들어줘.
 > 이 앱은 ADHD의 신경생물학적 어려움(과제 시작 어려움, 동기 유지 불가, 시간 감각 왜곡, 작업 기억 결함 등)을 실질적으로 해결하여 일상을 더 잘 돌보고 할일을 미루지 않게 돕는 앱이야.
