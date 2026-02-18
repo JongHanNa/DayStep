@@ -2,1705 +2,606 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DayStep 구독 관리 리디자인 데모</title>
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>DayStep SubscriptionView 리디자인 — 3시안 비교</title>
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --surface2: #1a1a25;
-    --surface3: #222233;
-    --border: #2a2a3d;
-    --text: #e8e8f0;
-    --text2: #9898b0;
-    --text3: #6868a0;
-    --accent: #7c5cff;
-    --accent2: #9b7cff;
-    --accent-bg: rgba(124,92,255,0.12);
-    --green: #34d399;
-    --green-bg: rgba(52,211,153,0.12);
-    --yellow: #fbbf24;
-    --yellow-bg: rgba(251,191,36,0.12);
-    --red: #f87171;
-    --red-bg: rgba(248,113,113,0.12);
-    --blue: #60a5fa;
-    --blue-bg: rgba(96,165,250,0.12);
-    --orange: #fb923c;
-    --orange-bg: rgba(251,146,60,0.12);
-    --crown: #fbbf24;
+  /* ─── Reset & Base ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    background: #F1F5F9;
+    color: #1A1A2E;
+    -webkit-font-smoothing: antialiased;
   }
 
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #050508;
-    color: var(--text);
+  /* ─── Tab Navigation (top bar) ─── */
+  .tab-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    display: flex; background: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .tab-bar button {
+    flex: 1; padding: 14px 8px 12px;
+    font-size: 12.5px; font-weight: 600;
+    border: none; background: none;
+    color: #94A3B8; cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-bar button.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+  }
+  .tab-bar button:hover:not(.active) { color: #64748B; }
+
+  /* ─── Phone Frame ─── */
+  .phone-wrap {
+    display: flex; justify-content: center;
+    padding: 64px 0 32px;
     min-height: 100vh;
   }
-
-  /* ========== Layout ========== */
-  .page-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 20px 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+  .phone-frame {
+    width: 390px; height: 844px;
+    background: #FFFFFF;
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05);
+    position: relative;
   }
-  .page-header h1 {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .page-header p {
-    font-size: 13px;
-    color: var(--text2);
+  .phone-frame .notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 126px; height: 34px;
+    background: #000; border-radius: 0 0 20px 20px; z-index: 10;
   }
 
-  .main-tabs {
-    display: flex;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 68px;
-    z-index: 99;
-    overflow-x: auto;
+  /* ─── Screen Content ─── */
+  .screen { display: none; height: 100%; }
+  .screen.active { display: block; }
+  .screen-scroll {
+    padding: 54px 20px 40px;
+    overflow-y: auto; height: 844px;
   }
-  .main-tab {
-    flex: 1;
-    min-width: 120px;
-    padding: 12px 16px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text3);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-  .main-tab:hover { color: var(--text2); }
-  .main-tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
+  .screen-scroll::-webkit-scrollbar { display: none; }
 
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  .content-area {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px;
-  }
-
-  /* ========== Analysis Section ========== */
-  .analysis-section {
-    margin-bottom: 32px;
-  }
-  .analysis-section h2 {
-    font-size: 18px;
-    font-weight: 700;
+  /* ─── Shared: Back Row ─── */
+  .back-row {
+    display: flex; align-items: center; gap: 6px;
     margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
-  .analysis-section h2 .num {
-    background: var(--accent);
-    color: white;
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 800;
+  .back-row .back-icon {
+    width: 20px; height: 20px; color: #3B82F6;
   }
-  .analysis-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 12px;
-  }
-  .issue-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  .issue-card .label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-  }
-  .issue-card .label.critical { color: var(--red); }
-  .issue-card .label.warning { color: var(--yellow); }
-  .issue-card .label.info { color: var(--blue); }
-  .issue-card h3 {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-  .issue-card p {
-    font-size: 12px;
-    color: var(--text2);
-    line-height: 1.5;
-  }
-  .issue-card .impact {
-    margin-top: 8px;
-    padding: 8px;
-    background: var(--red-bg);
-    border-radius: 6px;
-    font-size: 11px;
-    color: var(--red);
-    font-weight: 500;
+  .back-row span { font-size: 17px; color: #3B82F6; }
+
+  /* ─── Shared: Section Title ─── */
+  .section-title {
+    font-size: 22px; font-weight: 700; line-height: 1.3;
+    margin-bottom: 16px;
   }
 
-  .flow-diagram {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
+  /* ─── Shared: Card, Badge, Buttons ─── */
+  .card {
+    background: #FFFFFF;
+    border: 1px solid #F0F0F5;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .btn-primary {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 16px;
+    background: #3B82F6; color: #FFFFFF;
+    border: none; border-radius: 12px;
+    font-size: 17px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .btn-primary:active { background: #2563EB; }
+  .link-sm {
+    font-size: 13px; color: #94A3B8; text-decoration: underline;
+    cursor: pointer; text-align: center;
+    display: inline-block;
+  }
+  .legal-text {
+    font-size: 11px; color: #94A3B8; text-align: center; line-height: 1.5;
     margin-top: 12px;
   }
-  .flow-diagram h4 {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-  .flow-steps {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 12px;
-  }
-  .flow-step {
-    padding: 6px 10px;
-    background: var(--surface2);
-    border-radius: 6px;
-    white-space: nowrap;
-  }
-  .flow-step.fail {
-    background: var(--red-bg);
-    color: var(--red);
-    font-weight: 600;
-  }
-  .flow-step.success {
-    background: var(--green-bg);
-    color: var(--green);
-  }
-  .flow-arrow { color: var(--text3); font-size: 14px; }
+  .legal-text u { cursor: pointer; }
 
-  /* ========== Demo Layout ========== */
-  .demo-layout {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
+  /* check icon */
+  .chk-circle {
+    width: 20px; height: 20px; flex-shrink: 0;
+    background: #DCFCE7; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
   }
-  .demo-sidebar {
-    width: 280px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 120px;
+  .chk-circle svg { width: 12px; height: 12px; color: #16A34A; }
+
+  /* ═══════════════════════════════════════ */
+  /*  Screen A: Clean Clarity               */
+  /* ═══════════════════════════════════════ */
+  .a-status-card {
+    background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+    border: 1px solid #DBEAFE; border-radius: 16px;
+    padding: 20px; text-align: center; margin-bottom: 20px;
   }
-  .demo-main {
-    flex: 1;
-    display: flex;
-    justify-content: center;
+  .a-crown { width: 40px; height: 40px; color: #3B82F6; }
+  .a-plan-label { font-size: 22px; font-weight: 700; margin: 8px 0 4px; }
+  .a-usage-text { font-size: 14px; color: #64748B; }
+
+  .a-pricing-label { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .a-pricing-row { display: flex; gap: 12px; margin-bottom: 20px; }
+  .a-price-card {
+    flex: 1; border-radius: 16px; padding: 16px; text-align: center;
+    border: 2px solid #E5E7EB; cursor: pointer; transition: all 0.2s;
+    position: relative; background: #FFF;
+  }
+  .a-price-card.selected {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 1px #3B82F6, 0 4px 12px rgba(59,130,246,0.12);
+  }
+  .a-price-card .period { font-size: 13px; font-weight: 600; color: #64748B; margin-bottom: 6px; }
+  .a-price-card .amount { font-size: 24px; font-weight: 700; color: #1A1A2E; }
+  .a-price-card .per { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+  .a-save-badge {
+    position: absolute; top: -10px; right: -4px;
+    background: #F59E0B; color: #FFF; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
   }
 
-  .sidebar-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .sidebar-section h3 {
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: var(--text2);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .state-btn {
-    display: block;
-    width: 100%;
-    padding: 10px 12px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: left;
-    margin-bottom: 6px;
-    transition: all 0.2s;
-  }
-  .state-btn:hover { border-color: var(--accent); }
-  .state-btn.active {
-    border-color: var(--accent);
-    background: var(--accent-bg);
-  }
-  .state-btn .sub { color: var(--text3); font-size: 11px; display: block; margin-top: 2px; }
-
-  .concept-desc {
-    font-size: 12px;
-    color: var(--text2);
-    line-height: 1.6;
-  }
-  .concept-desc strong { color: var(--text); }
-
-  .improvement-list {
-    list-style: none;
-    padding: 0;
-  }
-  .improvement-list li {
-    font-size: 12px;
-    padding: 6px 0;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 6px;
-    align-items: flex-start;
-  }
-  .improvement-list li:last-child { border-bottom: none; }
-  .improvement-list .check { color: var(--green); flex-shrink: 0; }
-
-  /* ========== Phone Frame ========== */
-  .phone-frame {
-    width: 375px;
-    height: 812px;
-    background: var(--bg);
-    border-radius: 40px;
-    border: 3px solid #333;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    flex-shrink: 0;
-  }
-  .phone-notch {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 160px;
-    height: 34px;
-    background: #000;
-    border-radius: 0 0 20px 20px;
-    z-index: 10;
-  }
-  .phone-screen {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    padding: 54px 0 34px 0;
-    -webkit-overflow-scrolling: touch;
-  }
-  .phone-screen::-webkit-scrollbar { display: none; }
-  .phone-home-bar {
-    position: absolute;
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 134px;
-    height: 5px;
-    background: #555;
-    border-radius: 3px;
-  }
-
-  /* ========== Common Phone UI ========== */
-  .screen-header {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    gap: 8px;
-  }
-  .screen-header .back-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: var(--surface2);
-    border: none;
-    color: var(--text);
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-  .screen-header h1 {
-    font-size: 17px;
-    font-weight: 700;
-  }
-
-  .screen-body { padding: 0 16px 24px; }
-
-  /* ========== Design A: Platform-Aware Card ========== */
-  .da-status-card {
-    background: linear-gradient(135deg, #1a1033 0%, #0f0f20 100%);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-  .da-status-card::before {
-    content: '';
-    position: absolute;
-    top: -40px;
-    right: -40px;
-    width: 120px;
-    height: 120px;
-    background: radial-gradient(circle, rgba(124,92,255,0.15) 0%, transparent 70%);
-  }
-  .da-platform-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-  .da-platform-badge.web { background: var(--blue-bg); color: var(--blue); }
-  .da-platform-badge.ios { background: var(--accent-bg); color: var(--accent2); }
-  .da-platform-badge.free { background: var(--surface3); color: var(--text3); }
-  .da-plan-name {
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 2px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .da-plan-name .crown { color: var(--crown); font-size: 18px; }
-  .da-plan-detail {
-    font-size: 13px;
-    color: var(--text2);
-    margin-bottom: 16px;
-  }
-  .da-info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .da-info-item {
-    background: rgba(255,255,255,0.04);
-    border-radius: 10px;
-    padding: 10px 12px;
-  }
-  .da-info-item .label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-  .da-info-item .value { font-size: 14px; font-weight: 600; }
-
-  .da-alert-banner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 500;
-    margin-bottom: 12px;
-  }
-  .da-alert-banner.info { background: var(--blue-bg); color: var(--blue); }
-  .da-alert-banner.warning { background: var(--yellow-bg); color: var(--yellow); }
-  .da-alert-banner.cancel { background: var(--orange-bg); color: var(--orange); }
-
-  .da-action-btn {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    border: none;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 8px;
-    transition: all 0.2s;
-  }
-  .da-action-btn.primary {
-    background: var(--accent);
-    color: white;
-  }
-  .da-action-btn.secondary {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .da-action-btn.upgrade {
-    background: linear-gradient(135deg, var(--accent) 0%, #9b5cff 100%);
-    color: white;
-  }
-
-  .da-compare-toggle {
-    text-align: center;
-    padding: 12px;
-    color: var(--text3);
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .da-compare-toggle:hover { color: var(--text2); }
-
-  /* ========== Design B: Smart Dashboard ========== */
-  .db-accordion {
-    margin-bottom: 12px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    background: var(--surface);
-  }
-  .db-accordion-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .db-accordion-header .icon { font-size: 12px; color: var(--text3); transition: transform 0.2s; }
-  .db-accordion-header .icon.open { transform: rotate(180deg); }
-  .db-accordion-body { padding: 0 16px 16px; }
-
-  .db-info-row {
-    display: flex;
-    justify-content: space-between;
+  .a-feature-list { margin-bottom: 24px; }
+  .a-feat-item {
+    display: flex; align-items: flex-start; gap: 10px;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    font-size: 13px;
+    border-bottom: 1px solid #F3F4F6;
   }
-  .db-info-row:last-child { border-bottom: none; }
-  .db-info-row .label { color: var(--text3); }
-  .db-info-row .value { font-weight: 600; text-align: right; }
+  .a-feat-item:last-child { border-bottom: none; }
+  .a-feat-label { font-size: 15px; color: #1A1A2E; line-height: 1.4; }
+  .a-feat-free { font-size: 13px; color: #94A3B8; }
 
-  .db-action-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  /* ═══════════════════════════════════════ */
+  /*  Screen B: ADHD Motivator              */
+  /* ═══════════════════════════════════════ */
+  .b-hero {
+    background: linear-gradient(160deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%);
+    margin: -54px -20px 0; padding: 64px 24px 32px;
+    text-align: center; color: #FFF;
   }
-  .db-action-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    background: var(--surface2);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: background 0.2s;
-  }
-  .db-action-item:hover { background: var(--surface3); }
-  .db-action-item .arrow { color: var(--text3); }
-  .db-action-item.danger { color: var(--red); }
-  .db-action-item.upgrade-item {
-    background: var(--accent-bg);
-    color: var(--accent2);
-    font-weight: 600;
-  }
+  .b-hero .crown { width: 40px; height: 40px; margin-bottom: 8px; }
+  .b-hero h1 { font-size: 22px; font-weight: 700; line-height: 1.35; margin-bottom: 6px; }
+  .b-hero p { font-size: 14px; opacity: 0.85; }
 
-  .db-help-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    font-size: 13px;
-    color: var(--text2);
-    cursor: pointer;
-  }
-  .db-help-link:last-child { border-bottom: none; }
-  .db-help-link:hover { color: var(--text); }
+  .b-body { padding: 0 0 20px; }
 
-  .db-cross-platform {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    margin-top: 16px;
-    text-align: center;
+  .b-usage-card {
+    background: #FFF; border-radius: 16px; padding: 16px;
+    margin: -18px 0 20px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    position: relative; z-index: 2;
   }
-  .db-cross-platform p {
-    font-size: 12px;
-    color: var(--text3);
-    margin-bottom: 8px;
+  .b-usage-label {
+    font-size: 13px; font-weight: 600; color: #64748B;
+    margin-bottom: 8px; display: flex; justify-content: space-between;
   }
-  .db-cross-platform a {
-    font-size: 12px;
-    color: var(--accent2);
-    text-decoration: none;
+  .b-usage-label strong { color: #1A1A2E; }
+  .b-progress-bg {
+    height: 10px; background: #F1F5F9; border-radius: 5px; overflow: hidden;
   }
+  .b-progress-fill {
+    height: 100%; border-radius: 5px;
+    background: linear-gradient(90deg, #3B82F6, #F59E0B);
+  }
+  .b-usage-warn { font-size: 12px; color: #D97706; margin-top: 6px; font-weight: 500; }
 
-  /* ========== Design C: Contextual Guide ========== */
-  .dc-hero {
-    background: linear-gradient(135deg, #1a1040 0%, #0a0a1a 100%);
-    border-radius: 20px;
-    padding: 24px 20px;
-    margin-bottom: 16px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+  .b-hl-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .b-hl-card {
+    flex: 1; background: #F8FAFC; border-radius: 14px;
+    padding: 14px 10px; text-align: center;
+    border: 1px solid #F0F0F5;
   }
-  .dc-hero::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(circle at 50% 30%, rgba(124,92,255,0.12) 0%, transparent 60%);
+  .b-hl-card .icon { font-size: 24px; margin-bottom: 6px; }
+  .b-hl-card .name { font-size: 13px; font-weight: 600; color: #1A1A2E; }
+  .b-hl-card .desc { font-size: 11px; color: #94A3B8; margin-top: 2px; }
+
+  .b-toggle-wrap {
+    display: flex; background: #F1F5F9; border-radius: 12px;
+    padding: 3px; margin-bottom: 16px;
   }
-  .dc-hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    background: rgba(251,191,36,0.15);
-    border: 1px solid rgba(251,191,36,0.3);
-    border-radius: 24px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--crown);
-    margin-bottom: 12px;
-    position: relative;
+  .b-toggle-btn {
+    flex: 1; padding: 10px; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    background: transparent; color: #64748B; transition: all 0.2s;
   }
-  .dc-hero-badge.free-badge {
-    background: rgba(150,150,180,0.1);
-    border-color: rgba(150,150,180,0.2);
-    color: var(--text3);
-  }
-  .dc-hero-price {
-    font-size: 28px;
-    font-weight: 800;
-    margin-bottom: 2px;
-    position: relative;
-  }
-  .dc-hero-price .per { font-size: 14px; color: var(--text3); font-weight: 500; }
-  .dc-hero-detail {
-    font-size: 12px;
-    color: var(--text3);
-    position: relative;
+  .b-toggle-btn.active {
+    background: #FFF; color: #1A1A2E;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
 
-  .dc-guide-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
+  .b-price-display { text-align: center; margin-bottom: 20px; }
+  .b-price-display .amount { font-size: 36px; font-weight: 700; color: #1A1A2E; }
+  .b-price-display .period { font-size: 14px; color: #94A3B8; }
+  .b-save-note {
+    display: inline-block; margin-top: 4px;
+    font-size: 12px; font-weight: 600; color: #F59E0B;
+    background: #FEF3C7; padding: 2px 10px; border-radius: 10px;
   }
-  .dc-guide-card .header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .dc-guide-card .header .icon-circle {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-  .dc-guide-card .header .icon-circle.blue { background: var(--blue-bg); }
-  .dc-guide-card .header .icon-circle.purple { background: var(--accent-bg); }
-  .dc-guide-card .header .icon-circle.green { background: var(--green-bg); }
-  .dc-guide-card .header .icon-circle.orange { background: var(--orange-bg); }
-  .dc-guide-card .header h3 {
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .dc-guide-card .header p {
-    font-size: 11px;
-    color: var(--text3);
+  .b-reward-text {
+    font-size: 13px; color: #16A34A; font-weight: 500;
+    margin-top: 10px; text-align: center;
   }
 
-  .dc-step {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: var(--surface2);
-    border-radius: 10px;
-    margin-bottom: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.2s;
+  /* ═══════════════════════════════════════ */
+  /*  Screen C: Premium Paywall             */
+  /* ═══════════════════════════════════════ */
+  .c-paywall {
+    min-height: 844px;
+    background: linear-gradient(180deg, #1E293B 0%, #0F172A 40%, #0F172A 100%);
+    color: #F1F5F9;
+    padding: 54px 20px 40px;
   }
-  .dc-step:hover { background: var(--surface3); }
-  .dc-step:last-child { margin-bottom: 0; }
-  .dc-step .num-circle {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--accent-bg);
-    color: var(--accent2);
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+  .c-close-btn {
+    position: absolute; top: 54px; right: 20px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 5;
   }
-  .dc-step .arrow { color: var(--text3); margin-left: auto; }
+  .c-close-btn svg { width: 16px; height: 16px; color: #94A3B8; }
 
-  .dc-faq {
-    margin-top: 16px;
+  .c-hero { text-align: center; margin-bottom: 28px; }
+  .c-crown-wrap {
+    width: 72px; height: 72px; margin: 0 auto 12px;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 32px rgba(245,158,11,0.3);
   }
-  .dc-faq-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 8px;
-    overflow: hidden;
-  }
-  .dc-faq-q {
-    padding: 14px 16px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .dc-faq-q .arrow { color: var(--text3); font-size: 12px; }
-  .dc-faq-a {
-    padding: 0 16px 14px;
-    font-size: 12px;
-    color: var(--text2);
-    line-height: 1.6;
-    display: none;
-  }
-  .dc-faq-item.open .dc-faq-a { display: block; }
-  .dc-faq-item.open .dc-faq-q .arrow { transform: rotate(180deg); }
+  .c-crown-wrap svg { width: 36px; height: 36px; color: #FFF; }
+  .c-hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; color: #F1F5F9; }
+  .c-hero p { font-size: 15px; color: #94A3B8; }
 
-  .dc-expire-warning {
-    background: var(--orange-bg);
-    border: 1px solid rgba(251,146,60,0.3);
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    font-size: 12px;
-    color: var(--orange);
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
+  .c-features { margin-bottom: 24px; }
+  .c-feat-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+  .c-feat-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(59,130,246,0.15);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
+  .c-feat-icon svg { width: 18px; height: 18px; color: #60A5FA; }
+  .c-feat-item .name { font-size: 15px; font-weight: 600; color: #F1F5F9; }
+  .c-feat-item .desc { font-size: 13px; color: #94A3B8; }
 
-  .dc-upgrade-hero {
-    background: linear-gradient(135deg, var(--accent) 0%, #9b5cff 100%);
-    border-radius: 14px;
-    padding: 20px;
-    text-align: center;
-    margin-bottom: 12px;
-    color: white;
+  .c-plan-select { display: flex; gap: 12px; margin-bottom: 20px; }
+  .c-plan-card {
+    flex: 1; border: 2px solid #334155; border-radius: 14px;
+    padding: 14px; text-align: center; cursor: pointer;
+    position: relative; transition: all 0.2s;
   }
-  .dc-upgrade-hero h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-  .dc-upgrade-hero p { font-size: 12px; opacity: 0.85; margin-bottom: 14px; }
-  .dc-upgrade-hero button {
-    background: white;
-    color: var(--accent);
-    border: none;
-    padding: 12px 32px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
+  .c-plan-card.selected {
+    border-color: #3B82F6;
+    background: rgba(59,130,246,0.08);
+  }
+  .c-pop-badge {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: #3B82F6; color: #FFF; font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 10px; white-space: nowrap;
+  }
+  .c-plan-card .period { font-size: 13px; color: #94A3B8; margin-bottom: 4px; }
+  .c-plan-card .amount { font-size: 22px; font-weight: 700; color: #F1F5F9; }
+  .c-plan-card .per { font-size: 12px; color: #64748B; margin-top: 2px; }
+
+  .c-social { text-align: center; font-size: 13px; color: #64748B; margin-bottom: 16px; }
+
+  .c-cta-primary {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #3B82F6, #6366F1);
+    color: #FFFFFF; border: none; border-radius: 12px;
+    font-size: 17px; font-weight: 600; cursor: pointer;
+  }
+  .c-bottom-links {
+    display: flex; justify-content: center; gap: 16px; margin-top: 14px;
+  }
+  .c-bottom-links a {
+    font-size: 12px; color: #64748B; text-decoration: none; cursor: pointer;
   }
 
-  /* ========== Comparison Table (shared) ========== */
-  .compare-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .compare-table th {
-    text-align: left;
-    padding: 8px 0;
-    color: var(--text3);
-    font-size: 11px;
-    font-weight: 600;
-    border-bottom: 1px solid var(--border);
-  }
-  .compare-table td {
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
-  }
-  .compare-table td:nth-child(2),
-  .compare-table td:nth-child(3),
-  .compare-table th:nth-child(2),
-  .compare-table th:nth-child(3) {
-    text-align: center;
-    width: 70px;
-  }
-  .compare-table .check-icon { color: var(--green); }
-  .compare-table .x-icon { color: var(--text3); }
-
-  /* ========== Helpers ========== */
-  .badge {
-    display: inline-flex;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .badge.active { background: var(--green-bg); color: var(--green); }
-  .badge.trial { background: var(--blue-bg); color: var(--blue); }
-  .badge.cancelled { background: var(--orange-bg); color: var(--orange); }
-  .badge.free-b { background: var(--surface3); color: var(--text3); }
-
-  .hidden { display: none !important; }
-
-  /* ========== Responsive ========== */
-  @media (max-width: 900px) {
-    .demo-layout { flex-direction: column; align-items: center; }
-    .demo-sidebar { width: 100%; position: static; order: 2; }
-    .demo-main { order: 1; }
-  }
+  /* ─── Utility ─── */
+  .mb-8 { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .text-center { text-align: center; }
 </style>
 </head>
 <body>
 
-<div class="page-header">
-  <h1>DayStep 구독 관리 — 모바일 UX 리디자인 데모</h1>
-  <p>현재 문제점 분석 + 3가지 리디자인 시안 (상태 전환 데모 포함)</p>
+<!-- ═══ Tab Bar ═══ -->
+<div class="tab-bar">
+  <button class="active" onclick="showTab('a')">A &middot; Clean Clarity</button>
+  <button onclick="showTab('b')">B &middot; ADHD Motivator</button>
+  <button onclick="showTab('c')">C &middot; Premium Paywall</button>
 </div>
 
-<div class="main-tabs">
-  <div class="main-tab active" onclick="switchMainTab('analysis')">📊 문제점 분석</div>
-  <div class="main-tab" onclick="switchMainTab('designA')">시안 A · 플랫폼 인식 카드</div>
-  <div class="main-tab" onclick="switchMainTab('designB')">시안 B · 스마트 대시보드</div>
-  <div class="main-tab" onclick="switchMainTab('designC')">시안 C · 컨텍스트 가이드</div>
-</div>
+<!-- ═══ Phone Frame ═══ -->
+<div class="phone-wrap">
+<div class="phone-frame">
+  <div class="notch"></div>
 
-<!-- ============================== -->
-<!-- TAB: Analysis                  -->
-<!-- ============================== -->
-<div id="tab-analysis" class="tab-content active">
-  <div class="content-area">
+  <!-- ════════════════════════════════════ -->
+  <!--  Screen A: Clean Clarity            -->
+  <!-- ════════════════════════════════════ -->
+  <div id="screen-a" class="screen active">
+    <div class="screen-scroll">
+      <!-- Back -->
+      <div class="back-row">
+        <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>설정</span>
+      </div>
 
-    <!-- 1. Visual Styling -->
-    <div class="analysis-section">
-      <h2><span class="num">1</span> 시각적 스타일링 (Visual Styling)</h2>
-      <div class="analysis-grid">
-        <div class="issue-card">
-          <div class="label critical">Critical</div>
-          <h3>플랫폼 구분 부재</h3>
-          <p>구독이 웹(Paddle), App Store, Play Store 중 어디서 결제되었는지 시각적 표시가 전혀 없음. <code>subscriptionInfo.platform</code> 필드가 존재하지만 UI에 미반영.</p>
-          <div class="impact">→ 사용자가 자신의 구독 출처를 인지하지 못해 관리 불가</div>
+      <h2 class="section-title">구독 관리</h2>
+
+      <!-- Status Card — Free -->
+      <div class="a-status-card">
+        <svg class="a-crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 4l3 12h14l3-12-6 7-4-9-4 9-6-7z"/>
+          <path d="M5 16h14v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z"/>
+        </svg>
+        <div class="a-plan-label">DayStep Free</div>
+        <div class="a-usage-text">할일 45개 &middot; 프로젝트 2개 사용 중</div>
+      </div>
+
+      <!-- Pricing Cards -->
+      <div class="a-pricing-label">Pro 플랜 선택</div>
+      <div class="a-pricing-row">
+        <div class="a-price-card" onclick="selectPriceA(this)">
+          <div class="period">월간</div>
+          <div class="amount">₩5,500</div>
+          <div class="per">/월</div>
         </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>플랜 정보 미표시</h3>
-          <p>월간(₩5,500)/연간(₩44,000) 플랜 구분과 가격 정보 미표시. <code>productId</code> 필드(pro_monthly/pro_yearly) 미활용.</p>
-          <div class="impact">→ "DayStep Pro"만 표시되어 어떤 플랜인지 알 수 없음</div>
+        <div class="a-price-card selected" onclick="selectPriceA(this)">
+          <div class="a-save-badge">33% 할인</div>
+          <div class="period">연간</div>
+          <div class="amount">₩44,000</div>
+          <div class="per">월 ₩3,667</div>
         </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>상태 카드 정보 빈약</h3>
-          <p>Crown 아이콘 + 제목 + 날짜만 표시. 웹은 가격·플랫폼·플랜·자동갱신·결제수단 등 풍부한 정보 제공.</p>
-          <div class="impact">→ 웹 대비 정보 밀도가 현저히 낮음</div>
+      </div>
+
+      <!-- Feature Checklist -->
+      <div class="a-feature-list">
+        <div class="a-feat-item">
+          <div class="chk-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><div class="a-feat-label">무제한 할일</div><div class="a-feat-free">Free: 최대 60개</div></div>
         </div>
-        <div class="issue-card">
-          <div class="label info">Info</div>
-          <h3>Pro/Free 비교표 과잉</h3>
-          <p>이미 Pro인 사용자에게도 비교표가 화면의 대부분을 차지. 하드코딩된 문자열("60개", "무제한")로 현재 사용량 미반영.</p>
-          <div class="impact">→ 이미 Pro 구독 중인 사용자에게 불필요한 정보 강조</div>
+        <div class="a-feat-item">
+          <div class="chk-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><div class="a-feat-label">무제한 프로젝트</div><div class="a-feat-free">Free: 최대 3개</div></div>
         </div>
+        <div class="a-feat-item">
+          <div class="chk-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><div class="a-feat-label">상세 통계 &middot; 인사이트</div><div class="a-feat-free">Free: 기본 통계만</div></div>
+        </div>
+        <div class="a-feat-item">
+          <div class="chk-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><div class="a-feat-label">무제한 습관 &middot; 노트 &middot; 연락처</div><div class="a-feat-free">Free: 각 3~5개 제한</div></div>
+        </div>
+        <div class="a-feat-item">
+          <div class="chk-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><div class="a-feat-label">소중한 사람 무제한 등록</div><div class="a-feat-free">Free: 최대 3명</div></div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <button class="btn-primary mb-12">Pro 시작하기</button>
+      <div class="text-center mb-16">
+        <span class="link-sm">이전 구독 복원하기</span>
+      </div>
+      <div class="legal-text">
+        구독은 언제든 해지 가능합니다. 결제는 Apple ID 계정으로 청구됩니다.<br>
+        <u>이용약관</u> &middot; <u>개인정보처리방침</u>
       </div>
     </div>
-
-    <!-- 2. Interaction Pattern -->
-    <div class="analysis-section">
-      <h2><span class="num">2</span> 인터랙션 패턴 (Interaction Pattern)</h2>
-      <div class="analysis-grid">
-        <div class="issue-card">
-          <div class="label critical">Critical · Core Bug</div>
-          <h3>"구독 관리" 버튼 오작동</h3>
-          <p><code>openSubscriptionManagement()</code>가 <code>Platform.OS</code>만 참조. iOS이면 무조건 App Store로, Android이면 Play Store로 이동. <code>subscriptionInfo.platform</code> 완전 무시.</p>
-          <div class="impact">→ 웹 구독자가 "구독 관리" 누르면 App Store(구독 없음)로 이동 → Dead End</div>
-        </div>
-        <div class="issue-card">
-          <div class="label critical">Critical</div>
-          <h3>업그레이드 CTA도 동일 문제</h3>
-          <p>Free 사용자의 "Pro로 업그레이드" 버튼도 무조건 App Store/Play Store로만 이동. Paddle(웹) 결제 경로 없음.</p>
-          <div class="impact">→ 인앱 구매가 구현되지 않은 상태에서 Store로 보내면 구매 불가</div>
-        </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>구독 복원 기능 없음</h3>
-          <p>웹의 <code>handleRestore()</code>에 대응하는 기능 미구현. 기기 변경 시 구독 복원 불가.</p>
-          <div class="impact">→ 기기 교체 후 Pro 상태 인식 실패 가능성</div>
-        </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>구독 취소/변경 불가</h3>
-          <p>웹의 Paddle API(<code>/api/paddle/manage</code>) 연동 없음. 결제수단 변경, 플랜 업/다운그레이드 불가.</p>
-          <div class="impact">→ 모든 관리 행위가 외부 링크에 의존</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. Information Architecture -->
-    <div class="analysis-section">
-      <h2><span class="num">3</span> 정보 구조 (Information Architecture)</h2>
-      <div class="analysis-grid">
-        <div class="issue-card">
-          <div class="label critical">Critical</div>
-          <h3>결제 플랫폼 미표시</h3>
-          <p>DB에 <code>platform</code> 필드('web'/'ios'/'android') 존재하지만 UI에 표시 안 됨.</p>
-          <div class="impact">→ 웹: "Paddle (웹)" 명시 vs RN: 아무 표시 없음</div>
-        </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>도움말/환불 섹션 없음</h3>
-          <p>환불 정책(7일 이내), 이메일 문의 경로, 이용약관 링크 없음.</p>
-          <div class="impact">→ 웹: 섹션 3에서 환불 정책 + 이메일 안내 제공</div>
-        </div>
-        <div class="issue-card">
-          <div class="label info">Info</div>
-          <h3>크로스 플랫폼 안내 부재</h3>
-          <p>"다른 플랫폼에서 구독하셨나요?" 안내 없음. 웹에서는 비구독자에게 App Store/Play Store 안내.</p>
-          <div class="impact">→ 플랫폼 간 구독 인식 경로 부재</div>
-        </div>
-        <div class="issue-card">
-          <div class="label info">Info</div>
-          <h3>단일 계층 구조</h3>
-          <p>모든 정보가 평면적으로 나열. 웹은 3섹션 아코디언으로 체계적 분류.</p>
-          <div class="impact">→ 필요한 정보를 찾기 어려움</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. Task Flow -->
-    <div class="analysis-section">
-      <h2><span class="num">4</span> 태스크 플로우 (Task Flow)</h2>
-      <div class="flow-diagram">
-        <h4>🔴 현재: 웹 구독자의 모바일 여정</h4>
-        <div class="flow-steps">
-          <span class="flow-step">Settings</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step">구독 관리</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step">"DayStep Pro" 확인</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step">"구독 관리" 클릭</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step fail">App Store 열림</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step fail">구독 없음 😕</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step fail">돌아옴... 어디서 관리?</span>
-        </div>
-      </div>
-      <div class="flow-diagram" style="margin-top: 8px;">
-        <h4>🟢 이상적: 플랫폼 인식 여정</h4>
-        <div class="flow-steps">
-          <span class="flow-step">Settings</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step">구독 관리</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step success">"Pro · 연간 · 웹 결제" 확인</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step success">"웹에서 결제됨" 안내</span>
-          <span class="flow-arrow">→</span>
-          <span class="flow-step success">웹 관리 링크 or 이메일 문의</span>
-        </div>
-      </div>
-      <div class="analysis-grid" style="margin-top: 12px;">
-        <div class="issue-card">
-          <div class="label critical">Task Failure</div>
-          <h3>구독 상태 확인</h3>
-          <p>부분 성공 — Pro인 건 알지만 플랜(월간/연간), 가격, 결제 플랫폼을 알 수 없음.</p>
-        </div>
-        <div class="issue-card">
-          <div class="label critical">Task Failure</div>
-          <h3>구독 관리</h3>
-          <p>완전 실패 — 잘못된 목적지(App Store)로 이동. 관리 불가.</p>
-        </div>
-        <div class="issue-card">
-          <div class="label critical">Task Failure</div>
-          <h3>플랜 변경</h3>
-          <p>불가 — 월간↔연간 변경 경로 자체가 없음.</p>
-        </div>
-        <div class="issue-card">
-          <div class="label critical">Task Failure</div>
-          <h3>도움 요청</h3>
-          <p>불가 — 이메일 연락처, 고객센터 링크 없음.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. Behavioral Design -->
-    <div class="analysis-section">
-      <h2><span class="num">5</span> 행동 설계 (Behavioral Design)</h2>
-      <div class="analysis-grid">
-        <div class="issue-card">
-          <div class="label critical">Critical</div>
-          <h3>거짓 행동유도성 (False Affordance)</h3>
-          <p>"구독 관리" 버튼이 구독을 관리할 것으로 기대시키지만, 전혀 관계없는 App Store로 이동.</p>
-          <div class="impact">→ 시스템에 대한 신뢰 상실</div>
-        </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>학습된 무력감</h3>
-          <p>반복적 실패 → "모바일에서는 관리가 안 되는구나" 체념.</p>
-          <div class="impact">→ 사용자가 구독 관리를 포기</div>
-        </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>인지 부하 가중</h3>
-          <p>자신의 구독이 어디서 결제됐는지 사용자가 직접 기억해야 함. 시스템이 알려주지 않음.</p>
-          <div class="impact">→ 불필요한 인지 부하 → 오류 유발</div>
-        </div>
-        <div class="issue-card">
-          <div class="label warning">Warning</div>
-          <h3>복구 경로 부재</h3>
-          <p>잘못된 곳(App Store)으로 갔을 때 되돌아올 안내 없음.</p>
-          <div class="impact">→ 이탈 → 고객 문의 증가</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Code Reference -->
-    <div class="analysis-section">
-      <h2>🔧 근본 원인 코드</h2>
-      <div class="issue-card" style="background: var(--surface2); font-family: 'SF Mono', monospace;">
-        <pre style="font-size: 12px; line-height: 1.6; overflow-x: auto; color: var(--text2);">
-<span style="color: var(--text3);">// SubscriptionView.tsx 26-32행</span>
-<span style="color: var(--blue);">function</span> <span style="color: var(--yellow);">openSubscriptionManagement</span>() {
-  <span style="color: var(--blue);">const</span> url =
-    <span style="color: var(--accent2);">Platform</span>.OS === <span style="color: var(--green);">'ios'</span>
-      ? <span style="color: var(--green);">'https://apps.apple.com/account/subscriptions'</span>
-      : <span style="color: var(--green);">'https://play.google.com/store/account/subscriptions'</span>;
-  <span style="color: var(--accent2);">Linking</span>.openURL(url);
-}
-
-<span style="color: var(--red);">// ❌ subscriptionInfo.platform 완전 무시!</span>
-<span style="color: var(--red);">// ❌ 'web' 플랫폼 처리 없음!</span>
-<span style="color: var(--red);">// ❌ Paddle 관리 URL 연동 없음!</span></pre>
-      </div>
-    </div>
-
   </div>
-</div>
 
-<!-- ============================== -->
-<!-- TAB: Design A                  -->
-<!-- ============================== -->
-<div id="tab-designA" class="tab-content">
-  <div class="content-area">
-    <div class="demo-layout">
-      <div class="demo-main">
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen" id="screenA">
-            <!-- Populated by JS -->
+  <!-- ════════════════════════════════════ -->
+  <!--  Screen B: ADHD Motivator           -->
+  <!-- ════════════════════════════════════ -->
+  <div id="screen-b" class="screen">
+    <div class="screen-scroll" style="padding:0;">
+      <!-- Hero -->
+      <div class="b-hero">
+        <svg class="crown" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 4l3 12h14l3-12-6 7-4-9-4 9-6-7z"/>
+          <path d="M5 16h14v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z"/>
+        </svg>
+        <h1>당신의 하루를<br>제한 없이 관리하세요</h1>
+        <p>DayStep Pro로 모든 기능을 잠금 해제</p>
+      </div>
+
+      <div class="b-body" style="padding:0 20px 40px;">
+        <!-- Usage Progress -->
+        <div class="b-usage-card">
+          <div class="b-usage-label">
+            <span>할일 사용량</span>
+            <strong>45 / 60</strong>
           </div>
-          <div class="phone-home-bar"></div>
-        </div>
-      </div>
-      <div class="demo-sidebar">
-        <div class="sidebar-section">
-          <h3>상태 전환</h3>
-          <button class="state-btn active" onclick="setDesignState('A','webYearly')">
-            🌐 웹 연간 구독자
-            <span class="sub">platform='web' · pro_yearly · active</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('A','iosMonthly')">
-            🍎 App Store 월간 구독자
-            <span class="sub">platform='ios' · pro_monthly · active</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('A','free')">
-            👤 Free 사용자
-            <span class="sub">status='free'</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('A','cancelled')">
-            ⏳ 취소 예약 상태
-            <span class="sub">platform='web' · cancelledAt 존재</span>
-          </button>
-        </div>
-        <div class="sidebar-section">
-          <h3>시안 A 컨셉</h3>
-          <p class="concept-desc"><strong>"플랫폼 인식 카드"</strong> — 구독 플랫폼을 최우선으로 인식시키고, 플랫폼별 적절한 관리 경로를 제공합니다.</p>
-        </div>
-        <div class="sidebar-section">
-          <h3>핵심 개선점</h3>
-          <ul class="improvement-list">
-            <li><span class="check">✓</span> 플랫폼 배지 ("웹 결제" / "App Store")</li>
-            <li><span class="check">✓</span> 플랜 유형 + 가격 표시</li>
-            <li><span class="check">✓</span> 결제일·자동갱신 정보 그리드</li>
-            <li><span class="check">✓</span> 플랫폼별 관리 버튼 분기</li>
-            <li><span class="check">✓</span> 알림 배너 (결제 출처 안내)</li>
-            <li><span class="check">✓</span> 비교표 접힌 상태로 이동</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ============================== -->
-<!-- TAB: Design B                  -->
-<!-- ============================== -->
-<div id="tab-designB" class="tab-content">
-  <div class="content-area">
-    <div class="demo-layout">
-      <div class="demo-main">
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen" id="screenB">
-            <!-- Populated by JS -->
+          <div class="b-progress-bg">
+            <div class="b-progress-fill" style="width:75%;"></div>
           </div>
-          <div class="phone-home-bar"></div>
+          <div class="b-usage-warn">&#9888; 75% 사용 &mdash; 곧 한계에 도달합니다</div>
         </div>
-      </div>
-      <div class="demo-sidebar">
-        <div class="sidebar-section">
-          <h3>상태 전환</h3>
-          <button class="state-btn active" onclick="setDesignState('B','webYearly')">
-            🌐 웹 연간 구독자
-            <span class="sub">platform='web' · pro_yearly · active</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('B','iosMonthly')">
-            🍎 App Store 월간 구독자
-            <span class="sub">platform='ios' · pro_monthly · active</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('B','free')">
-            👤 Free 사용자
-            <span class="sub">status='free'</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('B','cancelled')">
-            ⏳ 취소 예약 상태
-            <span class="sub">platform='web' · cancelledAt 존재</span>
-          </button>
-        </div>
-        <div class="sidebar-section">
-          <h3>시안 B 컨셉</h3>
-          <p class="concept-desc"><strong>"스마트 대시보드"</strong> — 웹 버전과 동일한 3섹션 아코디언 구조를 모바일에 최적화하여 제공합니다.</p>
-        </div>
-        <div class="sidebar-section">
-          <h3>핵심 개선점</h3>
-          <ul class="improvement-list">
-            <li><span class="check">✓</span> 3섹션 아코디언 (정보·관리·도움말)</li>
-            <li><span class="check">✓</span> 플랫폼별 액션 버튼 분기</li>
-            <li><span class="check">✓</span> 환불 정책 + 이메일 문의 섹션</li>
-            <li><span class="check">✓</span> 크로스 플랫폼 안내 하단</li>
-            <li><span class="check">✓</span> 웹과 일관된 정보 구조</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- ============================== -->
-<!-- TAB: Design C                  -->
-<!-- ============================== -->
-<div id="tab-designC" class="tab-content">
-  <div class="content-area">
-    <div class="demo-layout">
-      <div class="demo-main">
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen" id="screenC">
-            <!-- Populated by JS -->
+        <!-- 3 Highlight Features -->
+        <div class="b-hl-row">
+          <div class="b-hl-card">
+            <div class="icon">&#10003;</div>
+            <div class="name">무제한 할일</div>
+            <div class="desc">제한 없이 자유롭게</div>
           </div>
-          <div class="phone-home-bar"></div>
+          <div class="b-hl-card">
+            <div class="icon">&#128202;</div>
+            <div class="name">상세 통계</div>
+            <div class="desc">패턴을 시각화</div>
+          </div>
+          <div class="b-hl-card">
+            <div class="icon">&#128193;</div>
+            <div class="name">무제한 프로젝트</div>
+            <div class="desc">목표를 체계적으로</div>
+          </div>
         </div>
-      </div>
-      <div class="demo-sidebar">
-        <div class="sidebar-section">
-          <h3>상태 전환</h3>
-          <button class="state-btn active" onclick="setDesignState('C','webYearly')">
-            🌐 웹 연간 구독자
-            <span class="sub">platform='web' · pro_yearly · active</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('C','iosMonthly')">
-            🍎 App Store 월간 구독자
-            <span class="sub">platform='ios' · pro_monthly · active</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('C','free')">
-            👤 Free 사용자
-            <span class="sub">status='free'</span>
-          </button>
-          <button class="state-btn" onclick="setDesignState('C','cancelled')">
-            ⏳ 취소 예약 상태
-            <span class="sub">platform='web' · cancelledAt 존재</span>
-          </button>
+
+        <!-- Toggle Monthly / Yearly -->
+        <div class="b-toggle-wrap">
+          <button class="b-toggle-btn" onclick="togglePlanB('monthly', this)">월간</button>
+          <button class="b-toggle-btn active" onclick="togglePlanB('yearly', this)">연간</button>
         </div>
-        <div class="sidebar-section">
-          <h3>시안 C 컨셉</h3>
-          <p class="concept-desc"><strong>"컨텍스트 가이드"</strong> — 상태 기반 적응형 UI. 사용자의 구독 플랫폼에 따라 화면 전체가 달라집니다.</p>
+
+        <!-- Price Display -->
+        <div class="b-price-display" id="b-price-area">
+          <div class="amount">₩44,000</div>
+          <div class="period">/년 (월 ₩3,667)</div>
+          <div class="b-save-note">연간 결제 시 33% 할인</div>
         </div>
-        <div class="sidebar-section">
-          <h3>핵심 개선점</h3>
-          <ul class="improvement-list">
-            <li><span class="check">✓</span> 히어로 상태 카드 (가격 강조)</li>
-            <li><span class="check">✓</span> 플랫폼별 "다음 단계" 가이드</li>
-            <li><span class="check">✓</span> 적응형 UI (상태마다 다른 화면)</li>
-            <li><span class="check">✓</span> FAQ 아코디언</li>
-            <li><span class="check">✓</span> 만료 임박 시 경고 색상 변화</li>
-            <li><span class="check">✓</span> Free → 업그레이드 히어로 CTA</li>
-          </ul>
+
+        <!-- CTA -->
+        <button class="btn-primary">Pro로 업그레이드</button>
+        <div class="b-reward-text">&#10024; 지금 바꾸면 바로 모든 제한이 해제됩니다!</div>
+
+        <div class="text-center" style="margin-top:20px;">
+          <span class="link-sm">이전 구독 복원하기</span>
+        </div>
+        <div class="legal-text">
+          구독은 언제든 해지 가능 &middot; 7일 무료체험 포함<br>
+          <u>이용약관</u> &middot; <u>개인정보처리방침</u>
         </div>
       </div>
     </div>
   </div>
-</div>
+
+  <!-- ════════════════════════════════════ -->
+  <!--  Screen C: Premium Paywall          -->
+  <!-- ════════════════════════════════════ -->
+  <div id="screen-c" class="screen">
+    <div class="screen-scroll" style="padding:0;">
+      <div class="c-paywall" style="position:relative;">
+        <!-- Close -->
+        <button class="c-close-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Hero -->
+        <div class="c-hero">
+          <div class="c-crown-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 4l3 12h14l3-12-6 7-4-9-4 9-6-7z"/>
+              <path d="M5 16h14v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z"/>
+            </svg>
+          </div>
+          <h1>DayStep Pro</h1>
+          <p>하루 관리의 모든 것, 제한 없이</p>
+        </div>
+
+        <!-- Features -->
+        <div class="c-features">
+          <div class="c-feat-item">
+            <div class="c-feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            </div>
+            <div><div class="name">무제한 할일 & 습관</div><div class="desc">더 이상 개수 제한 없이 자유롭게</div></div>
+          </div>
+          <div class="c-feat-item">
+            <div class="c-feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </div>
+            <div><div class="name">무제한 프로젝트 & 노트</div><div class="desc">목표와 생각을 체계적으로 관리</div></div>
+          </div>
+          <div class="c-feat-item">
+            <div class="c-feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            </div>
+            <div><div class="name">상세 통계 & 인사이트</div><div class="desc">나의 패턴을 데이터로 확인</div></div>
+          </div>
+          <div class="c-feat-item">
+            <div class="c-feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </div>
+            <div><div class="name">소중한 사람 무제한</div><div class="desc">중요한 관계를 빠짐없이 챙기세요</div></div>
+          </div>
+          <div class="c-feat-item">
+            <div class="c-feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div><div class="name">앞으로 추가되는 모든 Pro 기능</div><div class="desc">새 기능 출시 시 자동 해금</div></div>
+          </div>
+        </div>
+
+        <!-- Plan Selector -->
+        <div class="c-plan-select">
+          <div class="c-plan-card" onclick="selectPlanC(this)">
+            <div class="period">월간</div>
+            <div class="amount">₩5,500</div>
+            <div class="per">/월</div>
+          </div>
+          <div class="c-plan-card selected" onclick="selectPlanC(this)">
+            <div class="c-pop-badge">인기</div>
+            <div class="period">연간</div>
+            <div class="amount">₩44,000</div>
+            <div class="per">월 ₩3,667</div>
+          </div>
+        </div>
+
+        <!-- Social Proof -->
+        <div class="c-social">&#11088; 1,000명 이상의 사용자가 Pro를 사용 중</div>
+
+        <!-- CTA -->
+        <button class="c-cta-primary">구독하기</button>
+
+        <!-- Bottom Links -->
+        <div class="c-bottom-links">
+          <a>구독 복원</a>
+          <a>이용약관</a>
+          <a>개인정보처리방침</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /phone-frame -->
+</div><!-- /phone-wrap -->
 
 <script>
-// ============================
-// State Data
-// ============================
-const states = {
-  webYearly: {
-    status: 'active', platform: 'web', productId: 'pro_yearly',
-    planName: 'DayStep Pro', planDetail: '연간 플랜',
-    price: '₩44,000', priceUnit: '/년', monthlyEquiv: '월 ₩3,667',
-    nextBilling: '2027-02-19', startDate: '2026-02-19',
-    autoRenew: true, cancelledAt: null,
-    platformLabel: '웹 결제 (Paddle)', platformIcon: '🌐',
-    manageAction: 'daystep.app에서 관리', manageDesc: '웹 브라우저에서 구독을 관리할 수 있습니다.',
-  },
-  iosMonthly: {
-    status: 'active', platform: 'ios', productId: 'pro_monthly',
-    planName: 'DayStep Pro', planDetail: '월간 플랜',
-    price: '₩5,500', priceUnit: '/월', monthlyEquiv: null,
-    nextBilling: '2026-03-19', startDate: '2026-02-19',
-    autoRenew: true, cancelledAt: null,
-    platformLabel: 'App Store', platformIcon: '🍎',
-    manageAction: 'App Store에서 관리', manageDesc: 'App Store 구독 설정에서 관리할 수 있습니다.',
-  },
-  free: {
-    status: 'free', platform: null, productId: null,
-    planName: 'DayStep Free', planDetail: '무료 플랜',
-    price: '₩0', priceUnit: '', monthlyEquiv: null,
-    nextBilling: null, startDate: null,
-    autoRenew: false, cancelledAt: null,
-    platformLabel: null, platformIcon: '👤',
-    manageAction: null, manageDesc: null,
-  },
-  cancelled: {
-    status: 'cancelled', platform: 'web', productId: 'pro_yearly',
-    planName: 'DayStep Pro', planDetail: '연간 플랜 · 취소 예약',
-    price: '₩44,000', priceUnit: '/년', monthlyEquiv: '월 ₩3,667',
-    nextBilling: null, startDate: '2026-02-19',
-    autoRenew: false, cancelledAt: '2026-02-15',
-    expiresAt: '2027-02-19',
-    platformLabel: '웹 결제 (Paddle)', platformIcon: '🌐',
-    manageAction: 'daystep.app에서 재구독', manageDesc: '구독이 취소 예약되었습니다. 만료일까지 Pro를 이용할 수 있습니다.',
-  },
-};
+  /* ─── Tab Switching ─── */
+  function showTab(id) {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    document.getElementById('screen-' + id).classList.add('active');
+    document.querySelectorAll('.tab-bar button').forEach(function(b, i) {
+      b.classList.toggle('active', 'abc'[i] === id);
+    });
+  }
 
-let currentStates = { A: 'webYearly', B: 'webYearly', C: 'webYearly' };
+  /* ─── Screen A: Price Card Selection ─── */
+  function selectPriceA(el) {
+    document.querySelectorAll('.a-price-card').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+  }
 
-// ============================
-// Tab Switching
-// ============================
-function switchMainTab(tabId) {
-  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('tab-' + tabId).classList.add('active');
-}
-
-function setDesignState(design, stateKey) {
-  currentStates[design] = stateKey;
-  // Update sidebar buttons
-  const tabEl = document.getElementById('tab-design' + design);
-  tabEl.querySelectorAll('.state-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.closest('.state-btn').classList.add('active');
-  renderDesign(design);
-}
-
-// ============================
-// Design A Renderer
-// ============================
-function renderDesignA(s) {
-  const isPro = s.status !== 'free';
-  const isCancelled = s.status === 'cancelled';
-
-  let html = `
-    <div class="screen-header">
-      <button class="back-btn">←</button>
-      <h1>구독 관리</h1>
-    </div>
-    <div class="screen-body">`;
-
-  if (isPro) {
-    html += `
-      <div class="da-status-card">
-        ${s.platformLabel ? `<div class="da-platform-badge ${s.platform === 'web' ? 'web' : 'ios'}">${s.platformIcon} ${s.platformLabel}</div>` : ''}
-        <div class="da-plan-name"><span class="crown">♛</span> ${s.planName}</div>
-        <div class="da-plan-detail">${s.planDetail} · ${s.price}${s.priceUnit}${s.monthlyEquiv ? ` (${s.monthlyEquiv})` : ''}</div>
-        <div class="da-info-grid">
-          <div class="da-info-item">
-            <div class="label">상태</div>
-            <div class="value">${isCancelled ? '<span style="color:var(--orange)">취소 예약</span>' : '<span style="color:var(--green)">활성</span>'}</div>
-          </div>
-          <div class="da-info-item">
-            <div class="label">${isCancelled ? '만료일' : '다음 결제일'}</div>
-            <div class="value">${isCancelled ? (s.expiresAt || '-') : (s.nextBilling || '-')}</div>
-          </div>
-          <div class="da-info-item">
-            <div class="label">시작일</div>
-            <div class="value">${s.startDate || '-'}</div>
-          </div>
-          <div class="da-info-item">
-            <div class="label">자동 갱신</div>
-            <div class="value">${s.autoRenew ? '<span style="color:var(--green)">켜짐</span>' : '<span style="color:var(--text3)">꺼짐</span>'}</div>
-          </div>
-        </div>
-      </div>`;
-
-    // Alert banner
-    if (s.platform === 'web' && !isCancelled) {
-      html += `<div class="da-alert-banner info">ℹ️ 이 구독은 웹(daystep.app)에서 결제되었습니다</div>`;
-    }
-    if (isCancelled) {
-      html += `<div class="da-alert-banner cancel">⚠️ 구독이 취소 예약되었습니다. ${s.expiresAt || '만료일'}까지 Pro를 이용할 수 있습니다.</div>`;
-    }
-
-    // Action buttons
-    if (s.platform === 'web') {
-      html += `<button class="da-action-btn primary" onclick="alert('daystep.app으로 이동합니다')">🌐 ${s.manageAction}</button>`;
-      html += `<button class="da-action-btn secondary" onclick="alert('support@daystep.app으로 이메일')">📧 이메일 문의</button>`;
+  /* ─── Screen B: Toggle Monthly / Yearly ─── */
+  function togglePlanB(plan, btn) {
+    document.querySelectorAll('.b-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    var area = document.getElementById('b-price-area');
+    if (plan === 'monthly') {
+      area.innerHTML = '<div class="amount">\u20a95,500</div><div class="period">/월</div>';
     } else {
-      html += `<button class="da-action-btn primary" onclick="alert('App Store 구독 설정으로 이동합니다')">🍎 ${s.manageAction}</button>`;
+      area.innerHTML = '<div class="amount">\u20a944,000</div><div class="period">/년 (월 \u20a93,667)</div><div class="b-save-note">연간 결제 시 33% 할인</div>';
     }
-
-    if (isCancelled && s.platform === 'web') {
-      html += `<button class="da-action-btn upgrade" style="margin-top:4px" onclick="alert('재구독 페이지로 이동')">🔄 구독 재활성화</button>`;
-    }
-
-  } else {
-    // Free user
-    html += `
-      <div class="da-status-card">
-        <div class="da-platform-badge free">👤 무료 플랜</div>
-        <div class="da-plan-name">${s.planName}</div>
-        <div class="da-plan-detail">Pro로 업그레이드하여 모든 기능을 이용해보세요</div>
-      </div>
-      <button class="da-action-btn upgrade" onclick="alert('업그레이드 화면으로 이동')">✨ Pro로 업그레이드</button>`;
   }
 
-  // Collapsible comparison
-  html += `
-    <div class="da-compare-toggle" onclick="toggleCompare('A')">
-      <span id="compareToggleA">▼ 플랜 비교 보기</span>
-    </div>
-    <div id="compareTableA" style="display:none;">
-      ${getCompareTable()}
-    </div>
-  </div>`;
-
-  document.getElementById('screenA').innerHTML = html;
-}
-
-// ============================
-// Design B Renderer
-// ============================
-function renderDesignB(s) {
-  const isPro = s.status !== 'free';
-  const isCancelled = s.status === 'cancelled';
-
-  let html = `
-    <div class="screen-header">
-      <button class="back-btn">←</button>
-      <h1>구독 관리</h1>
-    </div>
-    <div class="screen-body">`;
-
-  // Section 1: 구독 정보
-  html += `
-    <div class="db-accordion">
-      <div class="db-accordion-header" onclick="toggleAccordion(this)">
-        <span>📋 구독 정보</span>
-        <span class="icon open">▼</span>
-      </div>
-      <div class="db-accordion-body">`;
-
-  if (isPro) {
-    html += `
-        <div class="db-info-row">
-          <span class="label">플랜</span>
-          <span class="value">${s.planName} <span class="badge ${isCancelled ? 'cancelled' : 'active'}">${isCancelled ? '취소예약' : '활성'}</span></span>
-        </div>
-        <div class="db-info-row">
-          <span class="label">유형</span>
-          <span class="value">${s.planDetail}</span>
-        </div>
-        <div class="db-info-row">
-          <span class="label">가격</span>
-          <span class="value">${s.price}${s.priceUnit}${s.monthlyEquiv ? ` (${s.monthlyEquiv})` : ''}</span>
-        </div>
-        <div class="db-info-row">
-          <span class="label">결제 플랫폼</span>
-          <span class="value">${s.platformIcon} ${s.platformLabel}</span>
-        </div>
-        <div class="db-info-row">
-          <span class="label">${isCancelled ? '만료일' : '다음 결제일'}</span>
-          <span class="value">${isCancelled ? (s.expiresAt || '-') : (s.nextBilling || '-')}</span>
-        </div>
-        <div class="db-info-row">
-          <span class="label">자동 갱신</span>
-          <span class="value">${s.autoRenew ? '✅ 켜짐' : '꺼짐'}</span>
-        </div>`;
-  } else {
-    html += `
-        <div class="db-info-row">
-          <span class="label">플랜</span>
-          <span class="value">DayStep Free <span class="badge free-b">무료</span></span>
-        </div>
-        <div class="db-info-row">
-          <span class="label">상태</span>
-          <span class="value">기본 기능 사용 중</span>
-        </div>`;
+  /* ─── Screen C: Plan Card Selection ─── */
+  function selectPlanC(el) {
+    document.querySelectorAll('.c-plan-card').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
   }
-
-  html += `</div></div>`;
-
-  // Section 2: 구독 관리
-  html += `
-    <div class="db-accordion">
-      <div class="db-accordion-header" onclick="toggleAccordion(this)">
-        <span>⚙️ 구독 관리</span>
-        <span class="icon open">▼</span>
-      </div>
-      <div class="db-accordion-body">
-        <div class="db-action-group">`;
-
-  if (isPro) {
-    if (s.platform === 'web') {
-      html += `
-          <div class="db-action-item" onclick="alert('daystep.app 결제수단 변경 페이지')">
-            <span>💳 결제수단 변경</span><span class="arrow">→</span>
-          </div>
-          <div class="db-action-item" onclick="alert('daystep.app 플랜 변경 페이지')">
-            <span>🔄 플랜 변경 (월간 ↔ 연간)</span><span class="arrow">→</span>
-          </div>`;
-      if (isCancelled) {
-        html += `
-          <div class="db-action-item" style="color:var(--green)" onclick="alert('재구독')">
-            <span>♻️ 구독 재활성화</span><span class="arrow">→</span>
-          </div>`;
-      } else {
-        html += `
-          <div class="db-action-item danger" onclick="alert('구독 취소 확인')">
-            <span>⛔ 구독 취소</span><span class="arrow">→</span>
-          </div>`;
-      }
-      html += `
-          <div style="margin-top:8px; padding:10px; background:var(--blue-bg); border-radius:8px; font-size:11px; color:var(--blue);">
-            ℹ️ 웹(Paddle)에서 결제하셨습니다. 일부 작업은 daystep.app에서 진행됩니다.
-          </div>`;
-    } else {
-      html += `
-          <div class="db-action-item" onclick="alert('App Store 구독 설정으로 이동')">
-            <span>🍎 App Store에서 관리</span><span class="arrow">→</span>
-          </div>
-          <div style="margin-top:8px; padding:10px; background:var(--accent-bg); border-radius:8px; font-size:11px; color:var(--accent2);">
-            ℹ️ App Store에서 결제하셨습니다. 결제수단 변경, 취소 등은 App Store 설정에서 가능합니다.
-          </div>`;
-    }
-  } else {
-    html += `
-          <div class="db-action-item upgrade-item" onclick="alert('업그레이드 화면')">
-            <span>✨ Pro로 업그레이드</span><span class="arrow">→</span>
-          </div>
-          <div class="db-action-item" onclick="alert('구독 복원')">
-            <span>🔄 이전 구독 복원</span><span class="arrow">→</span>
-          </div>`;
-  }
-
-  html += `</div></div></div>`;
-
-  // Section 3: 도움말 & 환불
-  html += `
-    <div class="db-accordion">
-      <div class="db-accordion-header" onclick="toggleAccordion(this)">
-        <span>❓ 도움말 & 환불</span>
-        <span class="icon">▼</span>
-      </div>
-      <div class="db-accordion-body" style="display:none;">
-        <div class="db-help-link" onclick="alert('환불 정책')">📄 환불 정책 (결제 후 7일 이내)</div>
-        <div class="db-help-link" onclick="alert('support@daystep.app')">📧 이메일 문의 (support@daystep.app)</div>
-        <div class="db-help-link" onclick="alert('이용약관')">📜 이용약관</div>
-        <div class="db-help-link" onclick="alert('개인정보 처리방침')">🔒 개인정보 처리방침</div>
-      </div>
-    </div>`;
-
-  // Cross-platform notice
-  if (!isPro) {
-    html += `
-    <div class="db-cross-platform">
-      <p>다른 기기나 플랫폼에서 구독하셨나요?</p>
-      <a onclick="alert('구독 복원 프로세스')">구독 복원하기 →</a>
-    </div>`;
-  }
-
-  html += `</div>`;
-
-  document.getElementById('screenB').innerHTML = html;
-}
-
-// ============================
-// Design C Renderer
-// ============================
-function renderDesignC(s) {
-  const isPro = s.status !== 'free';
-  const isCancelled = s.status === 'cancelled';
-
-  let html = `
-    <div class="screen-header">
-      <button class="back-btn">←</button>
-      <h1>구독 관리</h1>
-    </div>
-    <div class="screen-body">`;
-
-  // Hero Card
-  if (isPro) {
-    html += `
-      <div class="dc-hero">
-        <div class="dc-hero-badge">♛ ${s.planName} · ${s.planDetail.split(' ·')[0]}</div>
-        <div class="dc-hero-price">${s.price}<span class="per">${s.priceUnit}</span></div>
-        <div class="dc-hero-detail">${s.platformIcon} ${s.platformLabel} · ${isCancelled ? '만료: ' + (s.expiresAt || '-') : '다음 결제: ' + (s.nextBilling || '-')}</div>
-      </div>`;
-  } else {
-    html += `
-      <div class="dc-hero">
-        <div class="dc-hero-badge free-badge">👤 DayStep Free</div>
-        <div class="dc-hero-price" style="font-size:22px;">무료 플랜</div>
-        <div class="dc-hero-detail">기본 기능을 사용 중입니다</div>
-      </div>`;
-  }
-
-  // Cancelled warning
-  if (isCancelled) {
-    html += `
-      <div class="dc-expire-warning">
-        <span>⚠️</span>
-        <div>
-          <strong>구독 취소가 예약되었습니다</strong><br>
-          ${s.expiresAt || '만료일'}까지 Pro 기능을 계속 이용할 수 있습니다. 이후 Free 플랜으로 전환됩니다.
-        </div>
-      </div>`;
-  }
-
-  // Platform-specific guide
-  if (isPro && s.platform === 'web') {
-    html += `
-      <div class="dc-guide-card">
-        <div class="header">
-          <div class="icon-circle blue">🌐</div>
-          <div>
-            <h3>웹에서 결제하셨어요</h3>
-            <p>Paddle을 통해 daystep.app에서 결제됨</p>
-          </div>
-        </div>
-        <div class="dc-step" onclick="alert('daystep.app/settings 으로 이동')">
-          <span class="num-circle">1</span>
-          <span>daystep.app에서 구독 관리</span>
-          <span class="arrow">→</span>
-        </div>
-        <div class="dc-step" onclick="alert('결제수단 변경 페이지')">
-          <span class="num-circle">2</span>
-          <span>결제수단 변경</span>
-          <span class="arrow">→</span>
-        </div>
-        <div class="dc-step" onclick="alert('support@daystep.app 이메일 열기')">
-          <span class="num-circle">3</span>
-          <span>이메일로 문의하기</span>
-          <span class="arrow">→</span>
-        </div>
-      </div>`;
-
-    if (isCancelled) {
-      html += `
-      <div class="dc-guide-card">
-        <div class="header">
-          <div class="icon-circle orange">🔄</div>
-          <div>
-            <h3>구독을 다시 시작하시겠어요?</h3>
-            <p>만료 전 재구독하면 중단 없이 이용 가능</p>
-          </div>
-        </div>
-        <div class="dc-step" onclick="alert('재구독 페이지')">
-          <span class="num-circle">✓</span>
-          <span>구독 재활성화</span>
-          <span class="arrow">→</span>
-        </div>
-      </div>`;
-    }
-
-  } else if (isPro && s.platform === 'ios') {
-    html += `
-      <div class="dc-guide-card">
-        <div class="header">
-          <div class="icon-circle purple">🍎</div>
-          <div>
-            <h3>App Store에서 결제하셨어요</h3>
-            <p>Apple을 통해 결제 및 관리</p>
-          </div>
-        </div>
-        <div class="dc-step" onclick="alert('App Store 구독 설정')">
-          <span class="num-circle">1</span>
-          <span>App Store 구독 관리 열기</span>
-          <span class="arrow">→</span>
-        </div>
-        <div class="dc-step" onclick="alert('Apple 지원')">
-          <span class="num-circle">2</span>
-          <span>환불은 Apple에 요청</span>
-          <span class="arrow">→</span>
-        </div>
-      </div>`;
-
-  } else {
-    // Free user
-    html += `
-      <div class="dc-upgrade-hero">
-        <h3>Pro로 업그레이드</h3>
-        <p>할일 무제한, 습관 무제한, 통계/인사이트 등<br>모든 프리미엄 기능을 이용하세요</p>
-        <button onclick="alert('업그레이드 화면')">업그레이드하기</button>
-      </div>`;
-
-    html += `
-      <div class="dc-guide-card">
-        <div class="header">
-          <div class="icon-circle green">💡</div>
-          <div>
-            <h3>이미 구독 중이신가요?</h3>
-            <p>다른 기기나 플랫폼에서 구독했다면</p>
-          </div>
-        </div>
-        <div class="dc-step" onclick="alert('구독 복원')">
-          <span class="num-circle">1</span>
-          <span>구독 복원하기</span>
-          <span class="arrow">→</span>
-        </div>
-        <div class="dc-step" onclick="alert('support@daystep.app')">
-          <span class="num-circle">2</span>
-          <span>이메일로 문의하기</span>
-          <span class="arrow">→</span>
-        </div>
-      </div>`;
-  }
-
-  // FAQ
-  html += `
-    <div class="dc-faq">
-      <div class="dc-faq-item" onclick="toggleFaq(this)">
-        <div class="dc-faq-q">
-          <span>구독을 어디서 했는지 모르겠어요</span>
-          <span class="arrow">▼</span>
-        </div>
-        <div class="dc-faq-a">
-          구독 정보 카드의 결제 플랫폼 표시를 확인하세요. "웹 결제 (Paddle)"이면 daystep.app에서, "App Store"이면 iPhone의 설정 → Apple ID → 구독에서 관리할 수 있습니다.
-        </div>
-      </div>
-      <div class="dc-faq-item" onclick="toggleFaq(this)">
-        <div class="dc-faq-q">
-          <span>환불은 어떻게 받나요?</span>
-          <span class="arrow">▼</span>
-        </div>
-        <div class="dc-faq-a">
-          웹 결제(Paddle): 결제 후 7일 이내 support@daystep.app으로 환불 요청 가능합니다.<br>
-          App Store: Apple 지원 (reportaproblem.apple.com)을 통해 환불 요청하세요.
-        </div>
-      </div>
-      <div class="dc-faq-item" onclick="toggleFaq(this)">
-        <div class="dc-faq-q">
-          <span>기기를 바꿨는데 Pro가 안 돼요</span>
-          <span class="arrow">▼</span>
-        </div>
-        <div class="dc-faq-a">
-          같은 계정으로 로그인하면 자동으로 Pro가 적용됩니다. 적용되지 않으면 "구독 복원"을 시도해 보세요. 그래도 안 되면 support@daystep.app으로 문의해 주세요.
-        </div>
-      </div>
-    </div>`;
-
-  html += `</div>`;
-
-  document.getElementById('screenC').innerHTML = html;
-}
-
-// ============================
-// Helpers
-// ============================
-function getCompareTable() {
-  return `
-    <table class="compare-table">
-      <tr><th>기능</th><th>Free</th><th>Pro</th></tr>
-      <tr><td>할일</td><td>60개</td><td>무제한</td></tr>
-      <tr><td>습관</td><td>5개</td><td>무제한</td></tr>
-      <tr><td>프로젝트</td><td>15개</td><td>무제한</td></tr>
-      <tr><td>노트</td><td>40개</td><td>무제한</td></tr>
-      <tr><td>연락처</td><td>10개</td><td>무제한</td></tr>
-      <tr><td>소중한 사람</td><td>10명</td><td>무제한</td></tr>
-      <tr><td>통계/인사이트</td><td class="x-icon">✕</td><td class="check-icon">✓</td></tr>
-    </table>`;
-}
-
-function toggleCompare(design) {
-  const table = document.getElementById('compareTable' + design);
-  const toggle = document.getElementById('compareToggle' + design);
-  if (table.style.display === 'none') {
-    table.style.display = 'block';
-    toggle.textContent = '▲ 플랜 비교 접기';
-  } else {
-    table.style.display = 'none';
-    toggle.textContent = '▼ 플랜 비교 보기';
-  }
-}
-
-function toggleAccordion(header) {
-  const body = header.nextElementSibling;
-  const icon = header.querySelector('.icon');
-  if (body.style.display === 'none') {
-    body.style.display = 'block';
-    icon.classList.add('open');
-  } else {
-    body.style.display = 'none';
-    icon.classList.remove('open');
-  }
-}
-
-function toggleFaq(item) {
-  item.classList.toggle('open');
-}
-
-function renderDesign(design) {
-  const s = states[currentStates[design]];
-  switch(design) {
-    case 'A': renderDesignA(s); break;
-    case 'B': renderDesignB(s); break;
-    case 'C': renderDesignC(s); break;
-  }
-}
-
-// ============================
-// Initial render
-// ============================
-renderDesign('A');
-renderDesign('B');
-renderDesign('C');
 </script>
-
 </body>
 </html>
