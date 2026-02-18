@@ -1,5 +1,5 @@
 /**
- * SubscriptionView — 구독 상태 표시, Free vs Pro 비교, 플랫폼 인식 관리 링크
+ * SubscriptionView — 시안 C: Premium Paywall (Free) + 기존 관리 화면 (Pro)
  */
 import React, {useEffect, useState} from 'react';
 import {
@@ -12,30 +12,52 @@ import {
   StyleSheet,
 } from 'react-native';
 import Config from 'react-native-config';
+import LinearGradient from 'react-native-linear-gradient';
 import {AnimatedPressable, AnimatedCard} from '@/components/core';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import type {Platform as SubPlatform} from '@/stores/subscriptionStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTheme} from '@/theme';
+import {useUsageStats} from '@/hooks/useUsageStats';
+import type {UserUsageStats} from '@/hooks/useUsageStats';
+import {
+  ENTITY_LIMIT_MAP,
+  type UsageEntityType,
+} from '@/lib/featureFlags';
 import {ArrowLeft, Crown, Check, X} from 'lucide-react-native';
 
 interface SubscriptionViewProps {
   onBack: () => void;
 }
 
-const FEATURES = [
-  {name: '할일', free: '60개', pro: '무제한'},
-  {name: '습관', free: '5개', pro: '무제한'},
-  {name: '프로젝트', free: '15개', pro: '무제한'},
-  {name: '노트', free: '40개', pro: '무제한'},
-  {name: '연락처', free: '10개', pro: '무제한'},
-  {name: '소중한 사람', free: '10명', pro: '무제한'},
-  {name: '통계/인사이트', free: false, pro: true},
+// ─── 사용량 비교 테이블 데이터 ────────────────────────
+
+const USAGE_FEATURES: {
+  name: string;
+  entity: UsageEntityType;
+  unit: string;
+}[] = [
+  {name: '할일', entity: 'todo', unit: '개'},
+  {name: '습관', entity: 'habit', unit: '개'},
+  {name: '프로젝트', entity: 'project', unit: '개'},
+  {name: '노트', entity: 'note', unit: '개'},
+  {name: '연락처 연결', entity: 'contact', unit: '개'},
+  {name: '소중한 사람', entity: 'cherished_people', unit: '명'},
+  {name: '관심 기록', entity: 'care_interaction', unit: '개'},
 ];
 
-// ─── 헬퍼 함수 ──────────────────────────────────────
+const entityToField: Record<UsageEntityType, keyof UserUsageStats> = {
+  todo: 'todoCount',
+  habit: 'habitCount',
+  project: 'projectCount',
+  note: 'noteCount',
+  contact: 'contactCount',
+  cherished_people: 'cherishedPeopleCount',
+  care_interaction: 'careInteractionCount',
+};
 
-/** 플랫폼 → 한글 라벨 + 아이콘 + 배지 색상 */
+// ─── 헬퍼 함수 (Pro 뷰용) ────────────────────────────
+
 function getPlatformLabel(platform: SubPlatform | undefined) {
   switch (platform) {
     case 'web':
@@ -49,7 +71,6 @@ function getPlatformLabel(platform: SubPlatform | undefined) {
   }
 }
 
-/** productId → 플랜 이름, 가격 */
 function getPlanInfo(productId: string | undefined) {
   switch (productId) {
     case 'pro_yearly':
@@ -61,7 +82,6 @@ function getPlanInfo(productId: string | undefined) {
   }
 }
 
-/** 구독 상태 → 한글 */
 function getStatusLabel(status: string) {
   switch (status) {
     case 'active':
@@ -79,7 +99,6 @@ function getStatusLabel(status: string) {
   }
 }
 
-/** 플랫폼별 관리 URL 분기 */
 function handleManageSubscription(platform: SubPlatform | undefined) {
   const webBase = Config.WEB_BASE_URL ?? 'https://daystep.app';
   let url: string;
@@ -104,7 +123,7 @@ function formatDate(dateStr: string | null | undefined): string {
   return new Date(dateStr).toLocaleDateString('ko-KR');
 }
 
-// ─── 컴포넌트 ───────────────────────────────────────
+// ─── 메인 컴포넌트 ───────────────────────────────────
 
 export function SubscriptionView({onBack}: SubscriptionViewProps) {
   const {primaryColor} = useTheme();
@@ -120,6 +139,11 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     clearError,
   } = useSubscriptionStore();
 
+  const {stats, isLoading: usageLoading} = useUsageStats();
+
+  const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>(
+    'yearly',
+  );
   const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
@@ -181,6 +205,219 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     );
   }
 
+  // ══════════════════════════════════════════════════
+  // Free 사용자 → 시안 C (Premium Paywall)
+  // ══════════════════════════════════════════════════
+  if (!hasActiveSubscription) {
+    return (
+      <LinearGradient
+        colors={['#1E293B', '#0F172A']}
+        start={{x: 0, y: 0}}
+        end={{x: 0, y: 1}}
+        style={styles.paywallContainer}>
+        {/* 닫기 버튼 */}
+        <AnimatedPressable
+          onPress={onBack}
+          hapticType="light"
+          scaleValue={0.9}
+          style={styles.closeBtn}>
+          <X size={20} color="#94A3B8" strokeWidth={2} />
+        </AnimatedPressable>
+
+        <ScrollView
+          contentContainerStyle={styles.paywallScroll}
+          showsVerticalScrollIndicator={false}>
+          {/* ── 히어로 ── */}
+          <View style={styles.heroSection}>
+            {/* 골드 왕관 원형 */}
+            <View style={styles.crownCircle}>
+              <Crown size={32} color="#F59E0B" strokeWidth={2.5} />
+            </View>
+            <Text style={styles.heroTitle}>DayStep Pro</Text>
+            <Text style={styles.heroSubtitle}>
+              하루 관리의 모든 것, 제한 없이
+            </Text>
+          </View>
+
+          {/* ── 사용량 비교 테이블 ── */}
+          <View style={styles.usageTable}>
+            {/* 헤더 */}
+            <View style={styles.usageHeaderRow}>
+              <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageHeaderText]}>
+                기능
+              </Text>
+              <Text style={[styles.usageCell, styles.usageHeaderText]}>
+                Free
+              </Text>
+              <Text style={[styles.usageCell, styles.usageHeaderText, {color: '#F59E0B'}]}>
+                ♛ Pro
+              </Text>
+            </View>
+
+            {/* 사용량 행 */}
+            {USAGE_FEATURES.map((feat, i) => {
+              const current = stats[entityToField[feat.entity]] ?? 0;
+              const limit = ENTITY_LIMIT_MAP[feat.entity];
+              const isOver = current > limit;
+
+              return (
+                <View
+                  key={feat.entity}
+                  style={[
+                    styles.usageRow,
+                    i % 2 === 0 && {backgroundColor: 'rgba(255,255,255,0.03)'},
+                  ]}>
+                  <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>
+                    {feat.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.usageCell,
+                      styles.usageCellValue,
+                      isOver && {color: '#F87171'},
+                    ]}>
+                    {current}/{limit}
+                    {feat.unit}
+                  </Text>
+                  <Text style={[styles.usageCell, styles.usageCellPro]}>
+                    무제한
+                  </Text>
+                </View>
+              );
+            })}
+
+            {/* 통계&인사이트 행 */}
+            <View
+              style={[
+                styles.usageRow,
+                USAGE_FEATURES.length % 2 === 0 && {
+                  backgroundColor: 'rgba(255,255,255,0.03)',
+                },
+              ]}>
+              <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>
+                통계&인사이트
+              </Text>
+              <View style={styles.usageCell}>
+                <X size={14} color="#64748B" strokeWidth={2.5} />
+              </View>
+              <View style={styles.usageCell}>
+                <Check size={14} color="#60A5FA" strokeWidth={2.5} />
+              </View>
+            </View>
+          </View>
+
+          {/* ── 플랜 셀렉터 ── */}
+          <View style={styles.planSelector}>
+            {/* 월간 */}
+            <AnimatedPressable
+              onPress={() => setSelectedPlan('monthly')}
+              hapticType="light"
+              scaleValue={0.97}
+              style={[
+                styles.planCard,
+                selectedPlan === 'monthly' && styles.planCardSelected,
+              ]}>
+              <View style={styles.planRadio}>
+                {selectedPlan === 'monthly' && (
+                  <View style={styles.planRadioInner} />
+                )}
+              </View>
+              <View style={{flex: 1}}>
+                <Text style={styles.planName}>월간</Text>
+                <Text style={styles.planPrice}>₩5,500/월</Text>
+              </View>
+            </AnimatedPressable>
+
+            {/* 연간 */}
+            <AnimatedPressable
+              onPress={() => setSelectedPlan('yearly')}
+              hapticType="light"
+              scaleValue={0.97}
+              style={[
+                styles.planCard,
+                selectedPlan === 'yearly' && styles.planCardSelected,
+              ]}>
+              <View style={styles.planRadio}>
+                {selectedPlan === 'yearly' && (
+                  <View style={styles.planRadioInner} />
+                )}
+              </View>
+              <View style={{flex: 1}}>
+                <View style={styles.planNameRow}>
+                  <Text style={styles.planName}>연간</Text>
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularBadgeText}>인기</Text>
+                  </View>
+                </View>
+                <Text style={styles.planPrice}>₩44,000/년</Text>
+                <Text style={styles.planSub}>월 ₩3,667 · 33% 할인</Text>
+              </View>
+            </AnimatedPressable>
+          </View>
+
+          {/* ── 소셜 프루프 ── */}
+          <Text style={styles.socialProof}>
+            ⭐ 1,000명 이상의 사용자가 Pro를 사용 중
+          </Text>
+
+          {/* ── CTA 버튼 ── */}
+          <AnimatedPressable
+            onPress={() => {
+              const url =
+                Platform.OS === 'ios'
+                  ? 'https://apps.apple.com/account/subscriptions'
+                  : 'https://play.google.com/store/account/subscriptions';
+              Linking.openURL(url);
+            }}
+            hapticType="medium"
+            scaleValue={0.96}>
+            <LinearGradient
+              colors={['#3B82F6', '#6366F1']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 0}}
+              style={styles.ctaBtn}>
+              <Crown size={18} color="#FFFFFF" strokeWidth={2} />
+              <Text style={styles.ctaBtnText}>구독하기</Text>
+            </LinearGradient>
+          </AnimatedPressable>
+
+          {/* ── 하단 링크 ── */}
+          <View style={styles.footerLinks}>
+            <AnimatedPressable
+              onPress={() => {
+                if (user?.id) fetchSubscription(user.id);
+              }}
+              hapticType="light"
+              scaleValue={0.95}>
+              <Text style={styles.footerLink}>구독 복원</Text>
+            </AnimatedPressable>
+            <Text style={styles.footerDot}>·</Text>
+            <AnimatedPressable
+              onPress={() =>
+                Linking.openURL('https://daystep.app/terms')
+              }
+              hapticType="light"
+              scaleValue={0.95}>
+              <Text style={styles.footerLink}>이용약관</Text>
+            </AnimatedPressable>
+            <Text style={styles.footerDot}>·</Text>
+            <AnimatedPressable
+              onPress={() =>
+                Linking.openURL('https://daystep.app/privacy')
+              }
+              hapticType="light"
+              scaleValue={0.95}>
+              <Text style={styles.footerLink}>개인정보처리방침</Text>
+            </AnimatedPressable>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    );
+  }
+
+  // ══════════════════════════════════════════════════
+  // Pro 사용자 → 기존 관리 화면
+  // ══════════════════════════════════════════════════
   return (
     <View style={styles.container}>
       {/* 헤더 */}
@@ -197,32 +434,19 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
         showsVerticalScrollIndicator={false}>
         {/* ── 상태 카드 ── */}
         <AnimatedCard enterDelay={0} style={styles.statusCard}>
-          {/* 플랫폼 배지 */}
           {platformLabel && (
             <View
-              style={[
-                styles.platformBadge,
-                {backgroundColor: platformLabel.bg},
-              ]}>
-              <Text
-                style={[styles.platformBadgeText, {color: platformLabel.color}]}>
+              style={[styles.platformBadge, {backgroundColor: platformLabel.bg}]}>
+              <Text style={[styles.platformBadgeText, {color: platformLabel.color}]}>
                 {platformLabel.icon} {platformLabel.label}
               </Text>
             </View>
           )}
 
-          {/* Crown + 타이틀 */}
-          <Crown
-            size={28}
-            color={hasActiveSubscription ? '#F59E0B' : '#9CA3AF'}
-            strokeWidth={2}
-          />
-          <Text style={styles.statusTitle}>
-            {hasActiveSubscription ? 'DayStep Pro' : 'DayStep Free'}
-          </Text>
+          <Crown size={28} color="#F59E0B" strokeWidth={2} />
+          <Text style={styles.statusTitle}>DayStep Pro</Text>
 
-          {/* 플랜 이름 + 가격 */}
-          {hasActiveSubscription && planInfo.price ? (
+          {planInfo.price ? (
             <Text style={styles.planInfoText}>
               {planInfo.name} · {planInfo.price}
             </Text>
@@ -231,7 +455,6 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             <Text style={styles.planSubText}>{planInfo.sub}</Text>
           )}
 
-          {/* 트라이얼 배지 */}
           {isInTrial && daysRemainingInTrial != null && (
             <View
               style={[styles.trialBadge, {backgroundColor: primaryColor + '20'}]}>
@@ -241,50 +464,47 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             </View>
           )}
 
-          {/* 정보 그리드 2×2 */}
-          {hasActiveSubscription && (
-            <View style={styles.infoGrid}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>상태</Text>
-                <Text
-                  style={[
-                    styles.infoValue,
-                    status === 'cancelled' && {color: '#D97706'},
-                    (status === 'active' || status === 'trial') && {
-                      color: '#059669',
-                    },
-                  ]}>
-                  {getStatusLabel(status)}
-                </Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>다음 결제일</Text>
-                <Text style={styles.infoValue}>
-                  {formatDate(subscriptionInfo?.subscriptionEndDate)}
-                </Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>시작일</Text>
-                <Text style={styles.infoValue}>
-                  {formatDate(subscriptionInfo?.subscriptionStartDate)}
-                </Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>자동 갱신</Text>
-                <Text
-                  style={[
-                    styles.infoValue,
-                    {
-                      color: subscriptionInfo?.autoRenewEnabled
-                        ? '#059669'
-                        : '#D97706',
-                    },
-                  ]}>
-                  {subscriptionInfo?.autoRenewEnabled ? '활성' : '비활성'}
-                </Text>
-              </View>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>상태</Text>
+              <Text
+                style={[
+                  styles.infoValue,
+                  status === 'cancelled' && {color: '#D97706'},
+                  (status === 'active' || status === 'trial') && {
+                    color: '#059669',
+                  },
+                ]}>
+                {getStatusLabel(status)}
+              </Text>
             </View>
-          )}
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>다음 결제일</Text>
+              <Text style={styles.infoValue}>
+                {formatDate(subscriptionInfo?.subscriptionEndDate)}
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>시작일</Text>
+              <Text style={styles.infoValue}>
+                {formatDate(subscriptionInfo?.subscriptionStartDate)}
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>자동 갱신</Text>
+              <Text
+                style={[
+                  styles.infoValue,
+                  {
+                    color: subscriptionInfo?.autoRenewEnabled
+                      ? '#059669'
+                      : '#D97706',
+                  },
+                ]}>
+                {subscriptionInfo?.autoRenewEnabled ? '활성' : '비활성'}
+              </Text>
+            </View>
+          </View>
         </AnimatedCard>
 
         {/* ── 알림 배너 ── */}
@@ -308,103 +528,81 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           </View>
         )}
 
-        {/* ── 관리 버튼 (플랫폼별 분기) ── */}
-        {hasActiveSubscription && (
-          <View style={styles.actionSection}>
-            {subPlatform === 'web' ? (
-              <>
+        {/* ── 관리 버튼 ── */}
+        <View style={styles.actionSection}>
+          {subPlatform === 'web' ? (
+            <>
+              <AnimatedPressable
+                onPress={() => handleManageSubscription('web')}
+                hapticType="light"
+                scaleValue={0.95}
+                style={[styles.primaryActionBtn, {backgroundColor: primaryColor}]}>
+                <Text style={styles.primaryActionBtnText}>
+                  🌐 daystep.app에서 관리
+                </Text>
+              </AnimatedPressable>
+              <AnimatedPressable
+                onPress={() => Linking.openURL('mailto:skwhdgks@gmail.com')}
+                hapticType="light"
+                scaleValue={0.95}
+                style={styles.secondaryActionBtn}>
+                <Text
+                  style={[styles.secondaryActionBtnText, {color: primaryColor}]}>
+                  📧 이메일 문의
+                </Text>
+              </AnimatedPressable>
+              {status === 'cancelled' && (
                 <AnimatedPressable
                   onPress={() => handleManageSubscription('web')}
                   hapticType="light"
                   scaleValue={0.95}
-                  style={[
-                    styles.primaryActionBtn,
-                    {backgroundColor: primaryColor},
-                  ]}>
-                  <Text style={styles.primaryActionBtnText}>
-                    🌐 daystep.app에서 관리
-                  </Text>
-                </AnimatedPressable>
-                <AnimatedPressable
-                  onPress={() => Linking.openURL('mailto:skwhdgks@gmail.com')}
-                  hapticType="light"
-                  scaleValue={0.95}
-                  style={styles.secondaryActionBtn}>
+                  style={[styles.secondaryActionBtn, {borderColor: primaryColor}]}>
                   <Text
                     style={[
                       styles.secondaryActionBtnText,
                       {color: primaryColor},
                     ]}>
-                    📧 이메일 문의
+                    🔄 구독 재활성화
                   </Text>
                 </AnimatedPressable>
-                {status === 'cancelled' && (
-                  <AnimatedPressable
-                    onPress={() => handleManageSubscription('web')}
-                    hapticType="light"
-                    scaleValue={0.95}
-                    style={[
-                      styles.secondaryActionBtn,
-                      {borderColor: primaryColor},
-                    ]}>
-                    <Text
-                      style={[
-                        styles.secondaryActionBtnText,
-                        {color: primaryColor},
-                      ]}>
-                      🔄 구독 재활성화
-                    </Text>
-                  </AnimatedPressable>
-                )}
-              </>
-            ) : subPlatform === 'ios' ? (
-              <AnimatedPressable
-                onPress={() => handleManageSubscription('ios')}
-                hapticType="light"
-                scaleValue={0.95}
-                style={[
-                  styles.primaryActionBtn,
-                  {backgroundColor: primaryColor},
-                ]}>
-                <Text style={styles.primaryActionBtnText}>
-                  🍎 App Store에서 관리
-                </Text>
-              </AnimatedPressable>
-            ) : subPlatform === 'android' ? (
-              <AnimatedPressable
-                onPress={() => handleManageSubscription('android')}
-                hapticType="light"
-                scaleValue={0.95}
-                style={[
-                  styles.primaryActionBtn,
-                  {backgroundColor: primaryColor},
-                ]}>
-                <Text style={styles.primaryActionBtnText}>
-                  🤖 Play Store에서 관리
-                </Text>
-              </AnimatedPressable>
-            ) : null}
-          </View>
-        )}
+              )}
+            </>
+          ) : subPlatform === 'ios' ? (
+            <AnimatedPressable
+              onPress={() => handleManageSubscription('ios')}
+              hapticType="light"
+              scaleValue={0.95}
+              style={[styles.primaryActionBtn, {backgroundColor: primaryColor}]}>
+              <Text style={styles.primaryActionBtnText}>
+                🍎 App Store에서 관리
+              </Text>
+            </AnimatedPressable>
+          ) : subPlatform === 'android' ? (
+            <AnimatedPressable
+              onPress={() => handleManageSubscription('android')}
+              hapticType="light"
+              scaleValue={0.95}
+              style={[styles.primaryActionBtn, {backgroundColor: primaryColor}]}>
+              <Text style={styles.primaryActionBtnText}>
+                🤖 Play Store에서 관리
+              </Text>
+            </AnimatedPressable>
+          ) : null}
+        </View>
 
-        {/* ── 플랜 비교 (Pro: 접기/펼치기, Free: 항상 표시) ── */}
-        {hasActiveSubscription ? (
-          <AnimatedPressable
-            onPress={() => setShowComparison(prev => !prev)}
-            hapticType="light"
-            scaleValue={0.98}
-            style={styles.comparisonToggle}>
-            <Text style={styles.comparisonToggleText}>
-              플랜 비교 보기 {showComparison ? '▲' : '▼'}
-            </Text>
-          </AnimatedPressable>
-        ) : (
-          <Text style={styles.sectionTitle}>플랜 비교</Text>
-        )}
+        {/* ── 플랜 비교 (접기/펼치기) ── */}
+        <AnimatedPressable
+          onPress={() => setShowComparison(prev => !prev)}
+          hapticType="light"
+          scaleValue={0.98}
+          style={styles.comparisonToggle}>
+          <Text style={styles.comparisonToggleText}>
+            플랜 비교 보기 {showComparison ? '▲' : '▼'}
+          </Text>
+        </AnimatedPressable>
 
-        {(!hasActiveSubscription || showComparison) && (
+        {showComparison && (
           <View style={styles.comparisonTable}>
-            {/* 헤더 행 */}
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.tableCell, styles.tableCellFirst]}>
                 기능
@@ -421,11 +619,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                 Pro
               </Text>
             </View>
-
-            {/* 데이터 행 */}
-            {FEATURES.map((feat, i) => (
+            {USAGE_FEATURES.map((feat, i) => (
               <View
-                key={feat.name}
+                key={feat.entity}
                 style={[
                   styles.tableRow,
                   i % 2 === 0 && {backgroundColor: '#F9FAFB'},
@@ -433,73 +629,36 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                 <Text style={[styles.tableCell, styles.tableCellFirst]}>
                   {feat.name}
                 </Text>
-                <View style={styles.tableCell}>
-                  {typeof feat.free === 'boolean' ? (
-                    feat.free ? (
-                      <Check size={16} color="#22C55E" strokeWidth={2.5} />
-                    ) : (
-                      <X size={16} color="#D1D5DB" strokeWidth={2.5} />
-                    )
-                  ) : (
-                    <Text style={styles.tableCellText}>{feat.free}</Text>
-                  )}
-                </View>
-                <View style={styles.tableCell}>
-                  {typeof feat.pro === 'boolean' ? (
-                    feat.pro ? (
-                      <Check size={16} color="#22C55E" strokeWidth={2.5} />
-                    ) : (
-                      <X size={16} color="#D1D5DB" strokeWidth={2.5} />
-                    )
-                  ) : (
-                    <Text
-                      style={[
-                        styles.tableCellText,
-                        {color: primaryColor, fontWeight: '600'},
-                      ]}>
-                      {feat.pro}
-                    </Text>
-                  )}
-                </View>
+                <Text style={[styles.tableCell, styles.tableCellText]}>
+                  {ENTITY_LIMIT_MAP[feat.entity]}
+                  {feat.unit}
+                </Text>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.tableCellText,
+                    {color: primaryColor, fontWeight: '600'},
+                  ]}>
+                  무제한
+                </Text>
               </View>
             ))}
-          </View>
-        )}
-
-        {/* ── 업그레이드 CTA (Free 사용자) ── */}
-        {!hasActiveSubscription && (
-          <>
-            <AnimatedPressable
-              onPress={() => {
-                const url =
-                  Platform.OS === 'ios'
-                    ? 'https://apps.apple.com/account/subscriptions'
-                    : 'https://play.google.com/store/account/subscriptions';
-                Linking.openURL(url);
-              }}
-              haptic={false}
-              scaleValue={0.95}
-              style={[styles.upgradeBtn, {backgroundColor: primaryColor}]}>
-              <Crown size={18} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.upgradeBtnText}>Pro로 업그레이드</Text>
-            </AnimatedPressable>
-
-            <View style={styles.restoreSection}>
-              <Text style={styles.restoreHint}>
-                이미 다른 기기에서 구독하셨나요?
+            <View
+              style={[
+                styles.tableRow,
+                USAGE_FEATURES.length % 2 === 0 && {backgroundColor: '#F9FAFB'},
+              ]}>
+              <Text style={[styles.tableCell, styles.tableCellFirst]}>
+                통계/인사이트
               </Text>
-              <AnimatedPressable
-                onPress={() => {
-                  if (user?.id) fetchSubscription(user.id);
-                }}
-                hapticType="light"
-                scaleValue={0.95}>
-                <Text style={[styles.restoreLink, {color: primaryColor}]}>
-                  구독 복원
-                </Text>
-              </AnimatedPressable>
+              <View style={styles.tableCell}>
+                <X size={16} color="#D1D5DB" strokeWidth={2.5} />
+              </View>
+              <View style={styles.tableCell}>
+                <Check size={16} color="#22C55E" strokeWidth={2.5} />
+              </View>
             </View>
-          </>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -509,6 +668,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
 // ─── 스타일 ─────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  // ── 공통 ──
   container: {
     flex: 1,
   },
@@ -524,8 +684,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
   },
-
-  // 로딩 / 에러
   centerContent: {
     flex: 1,
     alignItems: 'center',
@@ -559,7 +717,224 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // 상태 카드
+  // ══════════════════════════════════════════════
+  // Free — 시안 C Paywall
+  // ══════════════════════════════════════════════
+  paywallContainer: {
+    flex: 1,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 56,
+    right: 16,
+    zIndex: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paywallScroll: {
+    paddingTop: 80,
+    paddingHorizontal: 20,
+    paddingBottom: 60,
+  },
+
+  // 히어로
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  crownCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(245,158,11,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    // 글로우 효과 (iOS shadow)
+    shadowColor: '#F59E0B',
+    shadowOffset: {width: 0, height: 0},
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    fontSize: 15,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+
+  // 사용량 비교 테이블
+  usageTable: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  usageHeaderRow: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  usageRow: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+  },
+  usageCell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  usageCellFirst: {
+    flex: 1.5,
+    paddingLeft: 14,
+    alignItems: 'flex-start',
+  },
+  usageHeaderText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+  },
+  usageCellName: {
+    fontSize: 13,
+    color: '#CBD5E1',
+    fontWeight: '500',
+  },
+  usageCellValue: {
+    fontSize: 13,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  usageCellPro: {
+    fontSize: 13,
+    color: '#60A5FA',
+    fontWeight: '600',
+  },
+
+  // 플랜 셀렉터
+  planSelector: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  planCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  planCardSelected: {
+    borderColor: '#3B82F6',
+    backgroundColor: 'rgba(59,130,246,0.08)',
+  },
+  planRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#475569',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#3B82F6',
+  },
+  planNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  planName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#E2E8F0',
+  },
+  planPrice: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  planSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  popularBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: '#F59E0B',
+  },
+  popularBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+
+  // 소셜 프루프
+  socialProof: {
+    textAlign: 'center',
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: 20,
+  },
+
+  // CTA
+  ctaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  ctaBtnText: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+
+  // 하단 링크
+  footerLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  footerLink: {
+    fontSize: 12,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  footerDot: {
+    fontSize: 12,
+    color: '#334155',
+  },
+
+  // ══════════════════════════════════════════════
+  // Pro — 기존 관리 화면
+  // ══════════════════════════════════════════════
   statusCard: {
     marginHorizontal: 16,
     marginBottom: 16,
@@ -602,8 +977,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-
-  // 정보 그리드
   infoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -628,8 +1001,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
   },
-
-  // 알림 배너
   infoBanner: {
     marginHorizontal: 16,
     marginBottom: 12,
@@ -656,8 +1027,6 @@ const styles = StyleSheet.create({
     color: '#92400E',
     lineHeight: 18,
   },
-
-  // 관리 버튼
   actionSection: {
     marginHorizontal: 16,
     marginBottom: 20,
@@ -687,8 +1056,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-
-  // 비교표 토글
   comparisonToggle: {
     alignItems: 'center',
     paddingVertical: 10,
@@ -700,15 +1067,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginLeft: 20,
-    marginBottom: 8,
-  },
-
-  // 비교표
   comparisonTable: {
     marginHorizontal: 16,
     backgroundColor: '#FFFFFF',
@@ -744,37 +1102,5 @@ const styles = StyleSheet.create({
   tableCellText: {
     fontSize: 13,
     color: '#4B5563',
-  },
-
-  // 업그레이드 CTA
-  upgradeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 20,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  upgradeBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
-  // 구독 복원
-  restoreSection: {
-    alignItems: 'center',
-    marginTop: 16,
-    gap: 4,
-  },
-  restoreHint: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  restoreLink: {
-    fontSize: 13,
-    fontWeight: '600',
   },
 });
