@@ -235,26 +235,27 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   // ══════════════════════════════════════════════════
   if (!hasActiveSubscription) {
     return (
-      <View style={{flex: 1}}>
+      <View style={{flex: 1, backgroundColor: '#0F172A'}}>
         <StatusBar barStyle="light-content" />
         <LinearGradient
           colors={['#1E293B', '#0F172A']}
           start={{x: 0, y: 0}}
           end={{x: 0, y: 1}}
-          style={styles.paywallContainer}>
-          {/* 닫기 버튼 */}
-          <AnimatedPressable
-            onPress={onBack}
-            hapticType="light"
-            scaleValue={0.9}
-            style={[styles.closeBtn, {top: insets.top + 16}]}>
-            <X size={20} color="#94A3B8" strokeWidth={2} />
-          </AnimatedPressable>
+          style={StyleSheet.absoluteFillObject}
+        />
+        {/* 닫기 버튼 */}
+        <AnimatedPressable
+          onPress={onBack}
+          hapticType="light"
+          scaleValue={0.9}
+          style={[styles.closeBtn, {top: insets.top + 16}]}>
+          <X size={20} color="#94A3B8" strokeWidth={2} />
+        </AnimatedPressable>
 
-          <ScrollView
-            style={{flex: 1}}
-            contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24}]}
-            showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{flex: 1}}
+          contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: 16}]}
+          showsVerticalScrollIndicator={false}>
           {/* ── 히어로 ── */}
           <View style={styles.heroSection}>
             {/* 골드 왕관 원형 */}
@@ -387,8 +388,10 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             </AnimatedPressable>
           </View>
 
-          {/* ── CTA + Footer (ScrollView 안) ── */}
-          <View style={{paddingTop: 24}}>
+        </ScrollView>
+
+        {/* ── CTA + Footer (하단 고정) ── */}
+        <View style={{paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 16}}>
           {/* ── CTA 버튼 ── */}
           <AnimatedPressable
             onPress={async () => {
@@ -475,8 +478,6 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             </AnimatedPressable>
           </View>
           </View>
-          </ScrollView>
-        </LinearGradient>
       </View>
     );
   }
