@@ -10,10 +10,12 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  StatusBar,
 } from 'react-native';
 import Purchases, {type PurchasesPackage} from 'react-native-purchases';
 import Config from 'react-native-config';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AnimatedPressable, AnimatedCard} from '@/components/core';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import type {Platform as SubPlatform} from '@/stores/subscriptionStore';
@@ -141,8 +143,12 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     loading,
     error,
     fetchSubscription,
+    applyRevenueCatPurchase,
     clearError,
   } = useSubscriptionStore();
+
+  const insets = useSafeAreaInsets();
+  const TAB_BAR_TOTAL_HEIGHT = 58 + Math.max(insets.bottom, 8) + 48;
 
   const {stats, isLoading: usageLoading} = useUsageStats();
 
@@ -228,23 +234,25 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   // ══════════════════════════════════════════════════
   if (!hasActiveSubscription) {
     return (
-      <LinearGradient
-        colors={['#1E293B', '#0F172A']}
-        start={{x: 0, y: 0}}
-        end={{x: 0, y: 1}}
-        style={styles.paywallContainer}>
-        {/* 닫기 버튼 */}
-        <AnimatedPressable
-          onPress={onBack}
-          hapticType="light"
-          scaleValue={0.9}
-          style={styles.closeBtn}>
-          <X size={20} color="#94A3B8" strokeWidth={2} />
-        </AnimatedPressable>
+      <View style={{flex: 1, marginTop: -insets.top}}>
+        <StatusBar barStyle="light-content" />
+        <LinearGradient
+          colors={['#1E293B', '#0F172A']}
+          start={{x: 0, y: 0}}
+          end={{x: 0, y: 1}}
+          style={styles.paywallContainer}>
+          {/* 닫기 버튼 */}
+          <AnimatedPressable
+            onPress={onBack}
+            hapticType="light"
+            scaleValue={0.9}
+            style={[styles.closeBtn, {top: insets.top + 16}]}>
+            <X size={20} color="#94A3B8" strokeWidth={2} />
+          </AnimatedPressable>
 
-        <ScrollView
-          contentContainerStyle={styles.paywallScroll}
-          showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: TAB_BAR_TOTAL_HEIGHT}]}
+            showsVerticalScrollIndicator={false}>
           {/* ── 히어로 ── */}
           <View style={styles.heroSection}>
             {/* 골드 왕관 원형 */}
@@ -398,6 +406,12 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
               const result = await purchaseSelectedPackage(pkg);
               setPurchasing(false);
               if (result.success) {
+                // RevenueCat customerInfo에서 즉시 구독 상태 반영
+                const active = result.customerInfo.entitlements.active;
+                if (active && Object.keys(active).length > 0) {
+                  applyRevenueCatPurchase(active);
+                }
+                // Supabase도 배경에서 갱신 시도
                 if (user?.id) fetchSubscription(user.id);
               } else if (!result.cancelled) {
                 Alert.alert(
@@ -430,8 +444,12 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             <AnimatedPressable
               onPress={async () => {
                 const info = await restorePurchases();
-                if (info && user?.id) {
-                  fetchSubscription(user.id);
+                if (info) {
+                  const active = info.entitlements.active;
+                  if (active && Object.keys(active).length > 0) {
+                    applyRevenueCatPurchase(active);
+                  }
+                  if (user?.id) fetchSubscription(user.id);
                 }
               }}
               hapticType="light"
@@ -457,8 +475,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
               <Text style={styles.footerLink}>개인정보처리방침</Text>
             </AnimatedPressable>
           </View>
-        </ScrollView>
-      </LinearGradient>
+          </ScrollView>
+        </LinearGradient>
+      </View>
     );
   }
 
@@ -772,7 +791,6 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     position: 'absolute',
-    top: 56,
     right: 16,
     zIndex: 10,
     width: 36,
@@ -783,9 +801,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   paywallScroll: {
-    paddingTop: 80,
     paddingHorizontal: 20,
-    paddingBottom: 60,
   },
 
   // 히어로

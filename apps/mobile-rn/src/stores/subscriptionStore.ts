@@ -65,6 +65,7 @@ interface SubscriptionState {
 
   // 액션
   fetchSubscription: (userId: string) => Promise<void>;
+  applyRevenueCatPurchase: (entitlements: Record<string, any>) => void;
   updateComputedStates: () => void;
   reset: () => void;
   clearError: () => void;
@@ -125,6 +126,36 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         } finally {
           set({loading: false});
         }
+      },
+
+      applyRevenueCatPurchase: (entitlements: Record<string, any>) => {
+        const entitlementKeys = Object.keys(entitlements);
+        if (entitlementKeys.length === 0) return;
+
+        const ent = entitlements[entitlementKeys[0]];
+        set({
+          hasActiveSubscription: true,
+          subscriptionInfo: {
+            ...(get().subscriptionInfo ?? {
+              id: '',
+              userId: '',
+              trialStartDate: null,
+              trialEndDate: null,
+              isLegacyUser: false,
+              legacyGracePeriodEnd: null,
+              promoCode: null,
+              cancelledAt: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }),
+            status: 'active',
+            platform: 'ios',
+            productId: ent.productIdentifier ?? '',
+            subscriptionStartDate: ent.originalPurchaseDate ?? new Date().toISOString(),
+            subscriptionEndDate: ent.expirationDate ?? null,
+            autoRenewEnabled: ent.willRenew ?? true,
+          } as SubscriptionInfo,
+        });
       },
 
       updateComputedStates: () => {
