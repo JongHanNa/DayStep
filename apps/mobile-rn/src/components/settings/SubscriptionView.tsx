@@ -15,7 +15,7 @@ import {
 import Purchases, {type PurchasesPackage} from 'react-native-purchases';
 import Config from 'react-native-config';
 import LinearGradient from 'react-native-linear-gradient';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useSafeAreaInsets, SafeAreaView} from 'react-native-safe-area-context';
 import {AnimatedPressable, AnimatedCard} from '@/components/core';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import type {Platform as SubPlatform} from '@/stores/subscriptionStore';
@@ -148,7 +148,6 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   } = useSubscriptionStore();
 
   const insets = useSafeAreaInsets();
-  const TAB_BAR_TOTAL_HEIGHT = 58 + Math.max(insets.bottom, 8) + 48;
 
   const {stats, isLoading: usageLoading} = useUsageStats();
 
@@ -182,7 +181,8 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   // ── 로딩 상태 ──
   if (loading && !subscriptionInfo) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, {backgroundColor: '#FFFFFF'}]}>
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <AnimatedPressable onPress={onBack} hapticType="light" scaleValue={0.9}>
             <ArrowLeft size={24} color="#1F2937" strokeWidth={2} />
@@ -194,14 +194,15 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           <ActivityIndicator size="large" color={primaryColor} />
           <Text style={styles.loadingText}>구독 정보를 불러오는 중...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   // ── 에러 상태 ──
   if (error && !subscriptionInfo) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, {backgroundColor: '#FFFFFF'}]}>
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <AnimatedPressable onPress={onBack} hapticType="light" scaleValue={0.9}>
             <ArrowLeft size={24} color="#1F2937" strokeWidth={2} />
@@ -225,7 +226,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             </Text>
           </AnimatedPressable>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -234,7 +235,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   // ══════════════════════════════════════════════════
   if (!hasActiveSubscription) {
     return (
-      <View style={{flex: 1, marginTop: -insets.top}}>
+      <View style={{flex: 1}}>
         <StatusBar barStyle="light-content" />
         <LinearGradient
           colors={['#1E293B', '#0F172A']}
@@ -251,7 +252,8 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           </AnimatedPressable>
 
           <ScrollView
-            contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: TAB_BAR_TOTAL_HEIGHT}]}
+            style={{flex: 1}}
+            contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24}]}
             showsVerticalScrollIndicator={false}>
           {/* ── 히어로 ── */}
           <View style={styles.heroSection}>
@@ -385,11 +387,8 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             </AnimatedPressable>
           </View>
 
-          {/* ── 소셜 프루프 ── */}
-          <Text style={styles.socialProof}>
-            ⭐ 1,000명 이상의 사용자가 Pro를 사용 중
-          </Text>
-
+          {/* ── CTA + Footer (ScrollView 안) ── */}
+          <View style={{paddingTop: 24}}>
           {/* ── CTA 버튼 ── */}
           <AnimatedPressable
             onPress={async () => {
@@ -475,6 +474,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
               <Text style={styles.footerLink}>개인정보처리방침</Text>
             </AnimatedPressable>
           </View>
+          </View>
           </ScrollView>
         </LinearGradient>
       </View>
@@ -485,7 +485,8 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   // Pro 사용자 → 기존 관리 화면
   // ══════════════════════════════════════════════════
   return (
-    <View style={styles.container}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, {backgroundColor: '#FFFFFF'}]}>
+      <StatusBar barStyle="dark-content" />
       {/* 헤더 */}
       <View style={styles.header}>
         <AnimatedPressable onPress={onBack} hapticType="light" scaleValue={0.9}>
@@ -496,7 +497,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
       </View>
 
       <ScrollView
-        contentContainerStyle={{paddingBottom: 120}}
+        contentContainerStyle={{paddingBottom: insets.bottom + 24}}
         showsVerticalScrollIndicator={false}>
         {/* ── 상태 카드 ── */}
         <AnimatedCard enterDelay={0} style={styles.statusCard}>
@@ -727,7 +728,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -954,14 +955,6 @@ const styles = StyleSheet.create({
     color: '#1E293B',
   },
 
-  // 소셜 프루프
-  socialProof: {
-    textAlign: 'center',
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 20,
-  },
-
   // CTA
   ctaBtn: {
     flexDirection: 'row',
@@ -970,7 +963,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     borderRadius: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   ctaBtnText: {
     fontSize: 17,

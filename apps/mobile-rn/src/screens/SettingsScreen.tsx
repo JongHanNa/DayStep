@@ -2,8 +2,9 @@
  * SettingsScreen — 전체 설정 화면
  * 서브뷰 관리: main / font / theme / subscription / account
  */
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useLayoutEffect} from 'react';
 import {Text} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {ScreenContainer} from '@/components/core';
 import {SettingsMainView} from '@/components/settings/SettingsMainView';
 import {FontSettingsView} from '@/components/settings/FontSettingsView';
@@ -15,9 +16,24 @@ import Animated, {FadeIn} from 'react-native-reanimated';
 type SettingsView = 'main' | 'font' | 'theme' | 'subscription' | 'account';
 
 export default function SettingsScreen() {
+  const navigation = useNavigation();
   const [view, setView] = useState<SettingsView>('main');
 
   const goBack = useCallback(() => setView('main'), []);
+
+  // 구독 화면일 때 탭 바 숨기기
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: view === 'subscription'
+        ? {display: 'none' as const}
+        : undefined,
+    });
+  }, [view, navigation]);
+
+  // SubscriptionView는 전체 화면 Paywall이므로 ScreenContainer 밖에서 렌더링
+  if (view === 'subscription') {
+    return <SubscriptionView onBack={goBack} />;
+  }
 
   return (
     <ScreenContainer>
@@ -40,7 +56,6 @@ export default function SettingsScreen() {
       {view === 'main' && <SettingsMainView onNavigate={setView} />}
       {view === 'font' && <FontSettingsView onBack={goBack} />}
       {view === 'theme' && <ThemeSettingsView onBack={goBack} />}
-      {view === 'subscription' && <SubscriptionView onBack={goBack} />}
       {view === 'account' && <AccountView onBack={goBack} />}
     </ScreenContainer>
   );

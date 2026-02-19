@@ -4,7 +4,7 @@
  * Liquid Glass 플로팅 탭바 — 아이콘만 표시, 화이트 글래스
  */
 import React from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, type ViewStyle} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -28,6 +28,14 @@ const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const {primaryColor} = useTheme();
+
+  // 포커스된 화면이 탭 바 숨김을 요청하면 렌더링하지 않음
+  const focusedRoute = state.routes[state.index];
+  const focusedOptions = descriptors[focusedRoute.key].options;
+  const tabBarStyle = focusedOptions.tabBarStyle as ViewStyle | undefined;
+  if (tabBarStyle?.display === 'none') {
+    return null;
+  }
 
   return (
     <GlassBackground
