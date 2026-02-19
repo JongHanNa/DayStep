@@ -254,7 +254,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
 
         <ScrollView
           style={{flex: 1}}
-          contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: 16}]}
+          contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: insets.bottom + 140}]}
           showsVerticalScrollIndicator={false}>
           {/* ── 히어로 ── */}
           <View style={styles.heroSection}>
@@ -391,7 +391,16 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
         </ScrollView>
 
         {/* ── CTA + Footer (하단 고정) ── */}
-        <View style={{paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 16}}>
+        <View style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: insets.bottom + 16,
+          backgroundColor: '#0F172A',
+        }}>
           {/* ── CTA 버튼 ── */}
           <AnimatedPressable
             onPress={async () => {
