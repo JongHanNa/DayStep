@@ -1,0 +1,38 @@
+appId: com.daystep.app.dev
+---
+# DayStep App Store 스크린샷 자동 촬영
+# 탭 바: 아이콘만 표시 (라벨 없음), 좌표 기반 탭
+# 화면: 440x956 pt (iPhone 16 Pro Max)
+# 탭 5개 균등 배치, Y ≈ 93% 위치
+
+# 1. 홈 화면
+- launchApp
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+- takeScreenshot: "01_home"
+
+# 2. Planner 탭 (2번째 탭)
+- tapOn:
+    point: "30%,93%"
+- waitForAnimationToEnd
+- takeScreenshot: "02_planner"
+
+# 3. Execute 탭 (3번째 탭, 가운데)
+- tapOn:
+    point: "50%,93%"
+- waitForAnimationToEnd
+- takeScreenshot: "03_execute"
+
+# 4. Notes 탭 (4번째 탭)
+- tapOn:
+    point: "70%,93%"
+- waitForAnimationToEnd
+- takeScreenshot: "04_notes"
+
+# 5. Settings 탭 (5번째 탭)
+- tapOn:
+    point: "90%,93%"
+- waitForAnimationToEnd
+- takeScreenshot: "05_settings"
