@@ -106,6 +106,7 @@ npx supabase functions deploy mcp-server --project-ref <PROJECT_REF> --no-verify
 - **한글로 대답하세요**
 - **커밋은 사용자에게 허락 확인 받고 하세요**
 - **CLAUDE.md 업데이트 시 핵심만 작성, 예제 코드는 최소화하세요**
+- **3회 이상 같은 문제 해결 실패 시 → 추측 중단, 소거법(variant 분리/A/B 테스트)으로 전환**
 
 ### 환경별 절대원칙
 
