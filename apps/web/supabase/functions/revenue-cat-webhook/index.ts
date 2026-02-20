@@ -14,6 +14,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0';
  * - PRODUCT_CHANGE: 상품 변경 (월→년 등)
  * - BILLING_ISSUE: 결제 문제
  * - REFUND: 환불
+ * - UNCANCELLATION: 취소 철회 (자동 갱신 재활성화)
  */
 
 interface RevenueCatWebhookEvent {
@@ -103,6 +104,10 @@ serve(async (req) => {
         await handleRefund(supabase, event);
         break;
 
+      case 'UNCANCELLATION':
+        await handleUncancellation(supabase, event);
+        break;
+
       default:
         console.warn(`Unhandled event type: ${event.type}`);
     }
@@ -129,6 +134,35 @@ serve(async (req) => {
  */
 function normalizeProductId(productId: string): string {
   return productId.replace(/_(dev|prod)$/, '');
+}
+
+/**
+ * subscription 레코드가 없으면 기본값으로 생성하는 방어 로직
+ * INITIAL_PURCHASE 이벤트가 누락된 경우(인증 오류 등)를 대비
+ */
+async function ensureSubscriptionExists(supabase: any, event: any) {
+  const userId = event.app_user_id;
+
+  const { data } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!data) {
+    console.log(`Subscription record missing for user ${userId}, creating from ${event.type} event`);
+    const platform = mapStoreToPlatform(event.store);
+    await supabase.from('subscriptions').insert({
+      user_id: userId,
+      status: 'active',
+      platform,
+      product_id: event.product_id,
+      revenue_cat_subscriber_id: userId,
+      revenue_cat_original_transaction_id: event.original_transaction_id,
+      subscription_start_date: new Date(event.purchased_at_ms),
+      subscription_end_date: event.expiration_at_ms ? new Date(event.expiration_at_ms) : null,
+    });
+  }
 }
 
 /**
@@ -219,6 +253,8 @@ async function handleRenewal(supabase: any, event: any) {
   const expiresAt = event.expiration_at_ms ? new Date(event.expiration_at_ms) : null;
   const platform = mapStoreToPlatform(event.store);
 
+  await ensureSubscriptionExists(supabase, event);
+
   // subscriptions 테이블 업데이트
   await supabase
     .from('subscriptions')
@@ -261,6 +297,8 @@ async function handleCancellation(supabase: any, event: any) {
   const expiresAt = event.expiration_at_ms ? new Date(event.expiration_at_ms) : null;
   const platform = mapStoreToPlatform(event.store);
 
+  await ensureSubscriptionExists(supabase, event);
+
   // subscriptions 테이블 업데이트 (상태는 active 유지, cancelled_at 기록)
   await supabase
     .from('subscriptions')
@@ -296,6 +334,8 @@ async function handleExpiration(supabase: any, event: any) {
   const userId = event.app_user_id;
   const productId = event.product_id;
   const platform = mapStoreToPlatform(event.store);
+
+  await ensureSubscriptionExists(supabase, event);
 
   // subscriptions 테이블 업데이트
   await supabase
@@ -339,6 +379,8 @@ async function handleProductChange(supabase: any, event: any) {
   const expiresAt = event.expiration_at_ms ? new Date(event.expiration_at_ms) : null;
   const platform = mapStoreToPlatform(event.store);
 
+  await ensureSubscriptionExists(supabase, event);
+
   // subscriptions 테이블 업데이트
   await supabase
     .from('subscriptions')
@@ -380,6 +422,8 @@ async function handleBillingIssue(supabase: any, event: any) {
   const productId = event.product_id;
   const platform = mapStoreToPlatform(event.store);
 
+  await ensureSubscriptionExists(supabase, event);
+
   // 히스토리 기록만 (상태는 유지)
   await insertSubscriptionHistory(supabase, {
     user_id: userId,
@@ -401,6 +445,8 @@ async function handleRefund(supabase: any, event: any) {
   const userId = event.app_user_id;
   const productId = event.product_id;
   const platform = mapStoreToPlatform(event.store);
+
+  await ensureSubscriptionExists(supabase, event);
 
   // subscriptions 테이블 업데이트 (즉시 만료)
   await supabase
@@ -433,6 +479,53 @@ async function handleRefund(supabase: any, event: any) {
   });
 
   console.log(`Refund processed for user ${userId}: ${productId}`);
+}
+
+/**
+ * 취소 철회 처리 (자동 갱신 재활성화)
+ */
+async function handleUncancellation(supabase: any, event: any) {
+  const userId = event.app_user_id;
+  const productId = event.product_id;
+  const expiresAt = event.expiration_at_ms ? new Date(event.expiration_at_ms) : null;
+  const platform = mapStoreToPlatform(event.store);
+
+  await ensureSubscriptionExists(supabase, event);
+
+  // subscriptions 테이블 업데이트 (active로 복원, 취소 기록 제거)
+  await supabase
+    .from('subscriptions')
+    .update({
+      status: 'active',
+      cancelled_at: null,
+      auto_renew_enabled: true,
+      subscription_end_date: expiresAt,
+      updated_at: new Date(),
+    })
+    .eq('user_id', userId);
+
+  // users 테이블 업데이트
+  await supabase
+    .from('users')
+    .update({
+      has_active_subscription: true,
+      subscription_type: normalizeProductId(productId),
+      subscription_expires_at: expiresAt,
+    })
+    .eq('id', userId);
+
+  // 히스토리 기록
+  await insertSubscriptionHistory(supabase, {
+    user_id: userId,
+    event_type: 'subscription_reactivated',
+    platform,
+    product_id: productId,
+    revenue_cat_event_id: event.id,
+    revenue_cat_transaction_id: event.transaction_id,
+    metadata: event,
+  });
+
+  console.log(`Uncancellation processed for user ${userId}: ${productId}`);
 }
 
 /**
