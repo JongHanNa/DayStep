@@ -30,6 +30,7 @@ import {
 import {
   purchaseSelectedPackage,
   restorePurchases,
+  showManageSubscriptions,
 } from '@/lib/revenueCat';
 import {ArrowLeft, Crown, Check, X} from 'lucide-react-native';
 
@@ -106,16 +107,14 @@ function getStatusLabel(status: string) {
   }
 }
 
-function handleManageSubscription(platform: SubPlatform | undefined) {
+async function handleManageSubscription(platform: SubPlatform | undefined) {
+  if (platform === 'ios') {
+    await showManageSubscriptions();
+    return;
+  }
   const webBase = Config.WEB_BASE_URL ?? 'https://daystep.app';
   let url: string;
   switch (platform) {
-    case 'web':
-      url = `${webBase}/adhd/settings/subscription`;
-      break;
-    case 'ios':
-      url = 'https://apps.apple.com/account/subscriptions';
-      break;
     case 'android':
       url = 'https://play.google.com/store/account/subscriptions';
       break;

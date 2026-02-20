@@ -68,6 +68,15 @@ export async function purchaseSelectedPackage(
   }
 }
 
+/** 네이티브 구독 관리 시트 표시 (iOS 13+) */
+export async function showManageSubscriptions(): Promise<void> {
+  try {
+    await Purchases.showManageSubscriptions();
+  } catch (e) {
+    console.warn('[RevenueCat] showManageSubscriptions error:', e);
+  }
+}
+
 /** 구독 복원 */
 export async function restorePurchases(): Promise<CustomerInfo | null> {
   try {
