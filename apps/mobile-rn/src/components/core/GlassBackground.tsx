@@ -51,7 +51,5 @@ const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
   },
-  overlay: {
-    flex: 1,
-  },
+  overlay: {},
 });

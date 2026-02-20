@@ -74,6 +74,12 @@ export default function MainTabNavigator() {
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
       }}>
       <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Planner" component={TodoListScreen} />

@@ -148,7 +148,6 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   } = useSubscriptionStore();
 
   const insets = useSafeAreaInsets();
-
   const {stats, isLoading: usageLoading} = useUsageStats();
 
   const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>(
@@ -177,6 +176,134 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   const subPlatform = subscriptionInfo?.platform;
   const platformLabel = getPlatformLabel(subPlatform);
   const planInfo = getPlanInfo(subscriptionInfo?.productId);
+
+  // ── 공통 렌더 헬퍼 (Free Paywall A/B/C 테스트용) ──
+
+  const handlePurchase = async () => {
+    const pkg = selectedPlan === 'yearly' ? annualPkg : monthlyPkg;
+    if (!pkg) {
+      Alert.alert('구독 정보 로딩 중', '잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    setPurchasing(true);
+    const result = await purchaseSelectedPackage(pkg);
+    setPurchasing(false);
+    if (result.success) {
+      const active = result.customerInfo.entitlements.active;
+      if (active && Object.keys(active).length > 0) {
+        applyRevenueCatPurchase(active);
+      }
+      if (user?.id) fetchSubscription(user.id);
+    } else if (!result.cancelled) {
+      Alert.alert('구매 실패', '결제 중 문제가 발생했습니다. 다시 시도해 주세요.');
+    }
+  };
+
+  const handleRestore = async () => {
+    const info = await restorePurchases();
+    if (info) {
+      const active = info.entitlements.active;
+      if (active && Object.keys(active).length > 0) {
+        applyRevenueCatPurchase(active);
+      }
+      if (user?.id) fetchSubscription(user.id);
+    }
+  };
+
+  const renderPaywallHero = () => (
+    <View style={styles.heroSection}>
+      <View style={styles.crownCircle}>
+        <Crown size={32} color="#F59E0B" strokeWidth={2.5} />
+      </View>
+      <Text style={styles.heroTitle}>DayStep Pro</Text>
+      <Text style={styles.heroSubtitle}>하루 관리의 모든 것, 제한 없이</Text>
+    </View>
+  );
+
+  const renderPaywallTable = () => (
+    <View style={styles.usageTable}>
+      <View style={styles.usageHeaderRow}>
+        <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageHeaderText]}>기능</Text>
+        <Text style={[styles.usageCell, styles.usageHeaderText]}>Free</Text>
+        <Text style={[styles.usageCell, styles.usageHeaderText, {color: '#F59E0B'}]}>♛ Pro</Text>
+      </View>
+      {USAGE_FEATURES.map((feat, i) => {
+        const current = stats[entityToField[feat.entity]] ?? 0;
+        const limit = ENTITY_LIMIT_MAP[feat.entity];
+        const isOver = current > limit;
+        return (
+          <View key={feat.entity} style={[styles.usageRow, i % 2 === 0 && {backgroundColor: 'rgba(255,255,255,0.03)'}]}>
+            <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>{feat.name}</Text>
+            <Text style={[styles.usageCell, styles.usageCellValue, isOver && {color: '#F87171'}]}>{current}/{limit}{feat.unit}</Text>
+            <Text style={[styles.usageCell, styles.usageCellPro]}>무제한</Text>
+          </View>
+        );
+      })}
+      <View style={[styles.usageRow, USAGE_FEATURES.length % 2 === 0 && {backgroundColor: 'rgba(255,255,255,0.03)'}]}>
+        <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>통계&인사이트</Text>
+        <View style={styles.usageCell}><X size={14} color="#64748B" strokeWidth={2.5} /></View>
+        <View style={styles.usageCell}><Check size={14} color="#60A5FA" strokeWidth={2.5} /></View>
+      </View>
+    </View>
+  );
+
+  const renderPaywallPlans = () => (
+    <View style={styles.planSelector}>
+      <AnimatedPressable onPress={() => setSelectedPlan('monthly')} hapticType="light" scaleValue={0.97}
+        style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}>
+        <View style={styles.planRadio}>
+          {selectedPlan === 'monthly' && <View style={styles.planRadioInner} />}
+        </View>
+        <View style={{flex: 1}}>
+          <Text style={styles.planName}>월간</Text>
+          <Text style={styles.planPrice}>{monthlyPkg?.product.priceString ?? '₩5,500'}/월</Text>
+        </View>
+      </AnimatedPressable>
+      <AnimatedPressable onPress={() => setSelectedPlan('yearly')} hapticType="light" scaleValue={0.97}
+        style={[styles.planCard, selectedPlan === 'yearly' && styles.planCardSelected]}>
+        <View style={styles.planRadio}>
+          {selectedPlan === 'yearly' && <View style={styles.planRadioInner} />}
+        </View>
+        <View style={{flex: 1}}>
+          <View style={styles.planNameRow}>
+            <Text style={styles.planName}>연간</Text>
+            <View style={styles.popularBadge}><Text style={styles.popularBadgeText}>인기</Text></View>
+          </View>
+          <Text style={styles.planPrice}>{annualPkg?.product.priceString ?? '₩44,000'}/년</Text>
+          <Text style={styles.planSub}>월 ₩3,667 · 33% 할인</Text>
+        </View>
+      </AnimatedPressable>
+    </View>
+  );
+
+  const renderPaywallCta = () => (
+    <AnimatedPressable onPress={handlePurchase} hapticType="medium" scaleValue={0.96} disabled={purchasing}>
+      <View style={[styles.ctaBtn, purchasing && {backgroundColor: '#94A3B8'}]}>
+        {purchasing ? (
+          <ActivityIndicator size="small" color="#FFFFFF" />
+        ) : (
+          <Crown size={18} color="#FFFFFF" strokeWidth={2} />
+        )}
+        <Text style={styles.ctaBtnText}>{purchasing ? '처리 중...' : '구독하기'}</Text>
+      </View>
+    </AnimatedPressable>
+  );
+
+  const renderPaywallFooter = () => (
+    <View style={styles.footerLinks}>
+      <AnimatedPressable onPress={handleRestore} hapticType="light" scaleValue={0.95}>
+        <Text style={styles.footerLink}>구독 복원</Text>
+      </AnimatedPressable>
+      <Text style={styles.footerDot}>·</Text>
+      <AnimatedPressable onPress={() => Linking.openURL('https://daystep.app/terms')} hapticType="light" scaleValue={0.95}>
+        <Text style={styles.footerLink}>이용약관</Text>
+      </AnimatedPressable>
+      <Text style={styles.footerDot}>·</Text>
+      <AnimatedPressable onPress={() => Linking.openURL('https://daystep.app/privacy')} hapticType="light" scaleValue={0.95}>
+        <Text style={styles.footerLink}>개인정보처리방침</Text>
+      </AnimatedPressable>
+    </View>
+  );
 
   // ── 로딩 상태 ──
   if (loading && !subscriptionInfo) {
@@ -252,9 +379,11 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           <X size={20} color="#94A3B8" strokeWidth={2} />
         </AnimatedPressable>
 
+        <SafeAreaView style={{flex: 1}} edges={['top', 'bottom']}>
+        <View style={{flex: 1, paddingTop: 40}}>
         <ScrollView
           style={{flex: 1}}
-          contentContainerStyle={[styles.paywallScroll, {paddingTop: insets.top + 40, paddingBottom: insets.bottom + 140}]}
+          contentContainerStyle={[styles.paywallScroll, {paddingBottom: 16}]}
           showsVerticalScrollIndicator={false}>
           {/* ── 히어로 ── */}
           <View style={styles.heroSection}>
@@ -390,15 +519,11 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
 
         </ScrollView>
 
-        {/* ── CTA + Footer (하단 고정) ── */}
+        {/* ── CTA + Footer ── */}
         <View style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
           paddingHorizontal: 20,
           paddingTop: 16,
-          paddingBottom: insets.bottom + 16,
+          paddingBottom: 16,
           backgroundColor: '#0F172A',
         }}>
           {/* ── CTA 버튼 ── */}
@@ -434,11 +559,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             hapticType="medium"
             scaleValue={0.96}
             disabled={purchasing}>
-            <LinearGradient
-              colors={purchasing ? ['#94A3B8', '#94A3B8'] : ['#3B82F6', '#6366F1']}
-              start={{x: 0, y: 0}}
-              end={{x: 1, y: 0}}
-              style={styles.ctaBtn}>
+            <View style={[styles.ctaBtn, purchasing && {backgroundColor: '#94A3B8'}]}>
               {purchasing ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
@@ -447,7 +568,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
               <Text style={styles.ctaBtnText}>
                 {purchasing ? '처리 중...' : '구독하기'}
               </Text>
-            </LinearGradient>
+            </View>
           </AnimatedPressable>
 
           {/* ── 하단 링크 ── */}
@@ -487,6 +608,8 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             </AnimatedPressable>
           </View>
           </View>
+        </View>
+      </SafeAreaView>
       </View>
     );
   }
@@ -974,6 +1097,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 16,
     marginBottom: 12,
+    backgroundColor: '#3B82F6',
   },
   ctaBtnText: {
     fontSize: 17,

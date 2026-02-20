@@ -45,7 +45,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       style={[
         styles.container,
         {
-          bottom: Math.max(insets.bottom, 8),
+          marginBottom: Math.max(insets.bottom, 8),
           borderRadius: 32,
           borderWidth: 1,
           borderColor: 'rgba(255, 255, 255, 0.4)',
@@ -125,9 +125,7 @@ function TabButton({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
+    marginHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.12,

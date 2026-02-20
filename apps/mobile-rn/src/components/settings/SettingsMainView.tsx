@@ -22,10 +22,8 @@ import {
   LogOut,
 } from 'lucide-react-native';
 
-type SettingsSubView = 'font' | 'theme' | 'subscription' | 'account';
-
 interface SettingsMainViewProps {
-  onNavigate: (view: SettingsSubView) => void;
+  onNavigate: (view: string) => void;
 }
 
 export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
