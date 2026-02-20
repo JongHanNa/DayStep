@@ -62,6 +62,7 @@ interface SubscriptionState {
   hasActiveSubscription: boolean;
   isInTrial: boolean;
   daysRemainingInTrial: number | null;
+  _recentPurchase: boolean; // RevenueCat 구매 직후 플래그 (MMKV 미저장)
 
   // 액션
   fetchSubscription: (userId: string) => Promise<void>;
@@ -80,6 +81,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       hasActiveSubscription: false,
       isInTrial: false,
       daysRemainingInTrial: null,
+      _recentPurchase: false,
 
       fetchSubscription: async (userId: string) => {
         try {
@@ -114,12 +116,19 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               createdAt: data.created_at,
               updatedAt: data.updated_at,
             };
-            set({subscriptionInfo: info});
+            set({subscriptionInfo: info, _recentPurchase: false});
           } else {
-            set({subscriptionInfo: null});
+            // _recentPurchase=true (방금 RevenueCat 구매)일 때만 로컬 상태 보존
+            // MMKV 리하이드레이션된 stale 상태(_recentPurchase=false)는 리셋
+            if (!get()._recentPurchase) {
+              set({subscriptionInfo: null});
+            }
           }
 
-          get().updateComputedStates();
+          // DB 레코드가 있거나, 방금 구매한 상태가 아닐 때만 computed states 갱신
+          if (data || !get()._recentPurchase) {
+            get().updateComputedStates();
+          }
         } catch (err: any) {
           console.error('[SubscriptionStore] Fetch error:', err);
           set({error: err.message ?? 'Failed to fetch subscription'});
@@ -135,6 +144,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const ent = entitlements[entitlementKeys[0]];
         set({
           hasActiveSubscription: true,
+          _recentPurchase: true,
           subscriptionInfo: {
             ...(get().subscriptionInfo ?? {
               id: '',
@@ -185,6 +195,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           hasActiveSubscription: false,
           isInTrial: false,
           daysRemainingInTrial: null,
+          _recentPurchase: false,
         });
       },
 

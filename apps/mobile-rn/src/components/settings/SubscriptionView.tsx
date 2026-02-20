@@ -214,7 +214,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
       if (active && Object.keys(active).length > 0) {
         applyRevenueCatPurchase(active);
       }
-      if (user?.id) fetchSubscription(user.id);
+      if (user?.id) {
+        setTimeout(() => fetchSubscription(user.id), 5000);
+      }
     } else if (!result.cancelled) {
       Alert.alert('구매 실패', '결제 중 문제가 발생했습니다. 다시 시도해 주세요.');
     }
@@ -227,7 +229,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
       if (active && Object.keys(active).length > 0) {
         applyRevenueCatPurchase(active);
       }
-      if (user?.id) fetchSubscription(user.id);
+      if (user?.id) {
+        setTimeout(() => fetchSubscription(user.id), 5000);
+      }
     }
   };
 
@@ -570,8 +574,10 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                 if (active && Object.keys(active).length > 0) {
                   applyRevenueCatPurchase(active);
                 }
-                // Supabase도 배경에서 갱신 시도
-                if (user?.id) fetchSubscription(user.id);
+                // Supabase도 배경에서 갱신 시도 (webhook 처리 시간 확보)
+                if (user?.id) {
+                  setTimeout(() => fetchSubscription(user.id), 5000);
+                }
               } else if (!result.cancelled) {
                 Alert.alert(
                   '구매 실패',
@@ -604,7 +610,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                   if (active && Object.keys(active).length > 0) {
                     applyRevenueCatPurchase(active);
                   }
-                  if (user?.id) fetchSubscription(user.id);
+                  if (user?.id) {
+                    setTimeout(() => fetchSubscription(user.id), 5000);
+                  }
                 }
               }}
               hapticType="light"
