@@ -157,6 +157,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
   const [monthlyPkg, setMonthlyPkg] = useState<PurchasesPackage | null>(null);
   const [annualPkg, setAnnualPkg] = useState<PurchasesPackage | null>(null);
   const [purchasing, setPurchasing] = useState(false);
+  const [offeringsLoading, setOfferingsLoading] = useState(true);
+  const [offeringsError, setOfferingsError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (user?.id) fetchSubscription(user.id);
@@ -164,12 +167,30 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
 
   // RevenueCat offerings 로딩
   useEffect(() => {
+    setOfferingsLoading(true);
+    setOfferingsError(null);
     Purchases.getOfferings()
       .then(offerings => {
         setMonthlyPkg(offerings.current?.monthly ?? null);
         setAnnualPkg(offerings.current?.annual ?? null);
+        if (!offerings.current) {
+          const msg = '[RevenueCat] No current offering found';
+          console.warn(msg);
+          setOfferingsError(msg);
+          if (__DEV__) {
+            Alert.alert('RevenueCat Debug', msg + '\n\nOfferings 객체: ' + JSON.stringify(Object.keys(offerings)));
+          }
+        }
       })
-      .catch(e => console.warn('[RevenueCat] getOfferings error:', e));
+      .catch(e => {
+        const msg = e?.message ?? String(e);
+        console.warn('[RevenueCat] getOfferings error:', e);
+        setOfferingsError(msg);
+        if (__DEV__) {
+          Alert.alert('RevenueCat Offerings Error', msg + '\n\nCode: ' + (e?.code ?? 'N/A'));
+        }
+      })
+      .finally(() => setOfferingsLoading(false));
   }, []);
 
   const status = subscriptionInfo?.status ?? 'free';
@@ -209,6 +230,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
       if (user?.id) fetchSubscription(user.id);
     }
   };
+
 
   const renderPaywallHero = () => (
     <View style={styles.heroSection}>
@@ -516,6 +538,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
               </View>
             </AnimatedPressable>
           </View>
+
 
         </ScrollView>
 
@@ -1121,6 +1144,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#334155',
   },
+
 
   // ══════════════════════════════════════════════
   // Pro — 기존 관리 화면
