@@ -83,8 +83,16 @@ function calculateDaysRemainingInTrial(trialEndDate: string | null): number | nu
 /**
  * 구독 활성 여부 확인
  */
-function checkActiveSubscription(status: SubscriptionStatus): boolean {
-  return status === 'trial' || status === 'active';
+function checkActiveSubscription(
+  status: SubscriptionStatus,
+  subscriptionEndDate?: string | null
+): boolean {
+  if (status === 'trial' || status === 'active') return true;
+  // cancelled 상태지만 구독 기간이 남아있으면 여전히 활성
+  if (status === 'cancelled' && subscriptionEndDate) {
+    return new Date(subscriptionEndDate) > new Date();
+  }
+  return false;
 }
 
 /**
@@ -161,7 +169,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             customerInfo?.entitlements?.active?.['pro'] !== undefined;
 
           // DB의 구독 상태 확인
-          const hasDbSubscription = checkActiveSubscription(subscriptionInfo.status);
+          const hasDbSubscription = checkActiveSubscription(
+            subscriptionInfo.status,
+            subscriptionInfo.subscriptionEndDate
+          );
 
           // 개발 환경에서는 DB 상태만 체크 (RevenueCat 무시 - 테스트 편의)
           // 프로덕션에서는 둘 중 하나라도 활성이면 구독 활성으로 간주

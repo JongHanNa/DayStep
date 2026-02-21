@@ -407,13 +407,20 @@ async function handleSubscriptionCanceled(
     })
     .eq('user_id', appUserId);
 
-  // users 테이블 캐시 업데이트
+  // users 테이블 캐시 업데이트: 만료일이 지난 경우에만 비활성화
+  const now = new Date();
+  const isExpired = !expiresAt || expiresAt <= now;
+
+  const userUpdate: Record<string, any> = {
+    has_active_subscription: !isExpired,
+  };
+  if (isExpired) {
+    userUpdate.subscription_type = 'free';
+  }
+
   await supabase
     .from('users')
-    .update({
-      has_active_subscription: false,
-      subscription_type: 'free',
-    })
+    .update(userUpdate)
     .eq('id', appUserId);
 
   // 히스토리 기록

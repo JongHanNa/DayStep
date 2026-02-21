@@ -44,8 +44,16 @@ function calculateDaysRemainingInTrial(trialEndDate: string | null): number | nu
   return diffDays > 0 ? diffDays : 0;
 }
 
-function checkActiveSubscription(status: SubscriptionStatus): boolean {
-  return status === 'trial' || status === 'active';
+function checkActiveSubscription(
+  status: SubscriptionStatus,
+  subscriptionEndDate?: string | null,
+): boolean {
+  if (status === 'trial' || status === 'active') return true;
+  // cancelled 상태지만 구독 기간이 남아있으면 여전히 활성
+  if (status === 'cancelled' && subscriptionEndDate) {
+    return new Date(subscriptionEndDate) > new Date();
+  }
+  return false;
 }
 
 function checkInTrial(status: SubscriptionStatus, trialEndDate: string | null): boolean {
@@ -181,7 +189,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         }
 
         set({
-          hasActiveSubscription: checkActiveSubscription(subscriptionInfo.status),
+          hasActiveSubscription: checkActiveSubscription(
+            subscriptionInfo.status,
+            subscriptionInfo.subscriptionEndDate,
+          ),
           isInTrial: checkInTrial(subscriptionInfo.status, subscriptionInfo.trialEndDate),
           daysRemainingInTrial: calculateDaysRemainingInTrial(subscriptionInfo.trialEndDate),
         });
