@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sun, Moon, Settings, Crown, LogOut } from 'lucide-react';
+import { Sun, Moon, Settings, Crown, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
 import { AvatarImage } from '@/components/ui/optimized-image';
@@ -21,7 +21,7 @@ interface ADHDProfileMenuProps {
  */
 export default function ADHDProfileMenu({ variant }: ADHDProfileMenuProps) {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, appUser, signOut } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -48,6 +48,11 @@ export default function ADHDProfileMenu({ variant }: ADHDProfileMenuProps) {
     setIsDropdownOpen(false);
     await signOut();
     router.push('/');
+  };
+
+  const handleAdmin = () => {
+    setIsDropdownOpen(false);
+    router.push('/admin');
   };
 
   const handleSettings = () => {
@@ -100,9 +105,18 @@ export default function ADHDProfileMenu({ variant }: ADHDProfileMenuProps) {
           <div
             className={`absolute ${dropdownPositionClasses} w-44 bg-base-100 rounded-lg shadow-lg border border-base-300 z-50`}
           >
+            {appUser?.isAdmin && (
+              <button
+                onClick={handleAdmin}
+                className="flex items-center gap-3 w-full px-4 py-3 hover:bg-base-200 rounded-t-lg transition-colors"
+              >
+                <Shield className="w-4 h-4 text-primary" />
+                <span className="text-sm">관리자</span>
+              </button>
+            )}
             <button
               onClick={handleSettings}
-              className="flex items-center gap-3 w-full px-4 py-3 hover:bg-base-200 rounded-t-lg transition-colors"
+              className={`flex items-center gap-3 w-full px-4 py-3 hover:bg-base-200 ${appUser?.isAdmin ? '' : 'rounded-t-lg'} transition-colors`}
             >
               <Settings className="w-4 h-4" />
               <span className="text-sm">설정</span>
