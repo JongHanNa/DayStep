@@ -13,7 +13,8 @@ export class User {
     public readonly updatedAt: Date,
     public readonly hasActiveSubscription: boolean | null = false,
     public readonly subscriptionType: 'free' | 'pro_monthly' | 'pro_yearly' = 'free',
-    public readonly subscriptionExpiresAt: Date | null = null
+    public readonly subscriptionExpiresAt: Date | null = null,
+    public readonly role: 'user' | 'admin' = 'user'
   ) {}
 
   /**
@@ -28,7 +29,8 @@ export class User {
       new Date(data.updated_at),
       data.has_active_subscription,
       data.subscription_type,
-      data.subscription_expires_at ? new Date(data.subscription_expires_at) : null
+      data.subscription_expires_at ? new Date(data.subscription_expires_at) : null,
+      data.role ?? 'user'
     );
   }
 
@@ -59,6 +61,13 @@ export class User {
   }
 
   /**
+   * 관리자 여부 확인
+   */
+  get isAdmin(): boolean {
+    return this.role === 'admin';
+  }
+
+  /**
    * 사용자 계정 생성 후 경과 일수
    */
   get daysSinceJoined(): number {
@@ -83,6 +92,7 @@ export class User {
       has_active_subscription: this.hasActiveSubscription,
       subscription_type: this.subscriptionType,
       subscription_expires_at: this.subscriptionExpiresAt?.toISOString() || null,
+      role: this.role,
     };
   }
 
@@ -95,7 +105,11 @@ export class User {
       this.email,
       name,
       this.createdAt,
-      new Date() // 업데이트 시간 갱신
+      new Date(), // 업데이트 시간 갱신
+      this.hasActiveSubscription,
+      this.subscriptionType,
+      this.subscriptionExpiresAt,
+      this.role
     );
   }
 }
