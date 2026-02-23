@@ -29,7 +29,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
@@ -133,6 +133,7 @@ export default function FocusTimerScreen() {
   const route = useRoute();
   const haptic = useHaptic();
   const params = route.params as FocusTimerParams | undefined;
+  const insets = useSafeAreaInsets();
 
   // pomodoroStore 구독
   const {
@@ -309,7 +310,12 @@ export default function FocusTimerScreen() {
 
   return (
     <LinearGradient colors={gradientColors} style={styles.flex}>
-      <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.flex}>
+      <View style={[styles.flex, {
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}>
@@ -414,7 +420,7 @@ export default function FocusTimerScreen() {
             <CelebrationOverlay onDismiss={handleCelebrationDismiss} />
           )}
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </LinearGradient>
   );
 }
