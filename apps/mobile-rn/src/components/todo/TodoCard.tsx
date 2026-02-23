@@ -51,7 +51,8 @@ export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCard
   }));
 
   const timeStr = todo.start_time
-    ? format(new Date(todo.start_time), 'HH:mm')
+    ? format(new Date(todo.start_time), 'HH:mm') +
+      (todo.end_time ? ` ~ ${format(new Date(todo.end_time), 'HH:mm')}` : '')
     : null;
 
   const priorityColor = getPriorityColor(todo.importance, todo.urgency);

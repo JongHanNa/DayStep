@@ -395,7 +395,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
                     placeholderTextColor="#9CA3AF"
                     style={styles.titleInput}
                     returnKeyType="done"
-                    autoFocus={mode === 'create'}
+
                   />
                 </View>
               </View>
