@@ -92,9 +92,6 @@ function QuickNotePrompt({
       entering={FadeInUp.duration(400)}
       style={styles.notePromptContainer}>
       <Text style={styles.notePromptTitle}>방금 무슨 일을 했나요?</Text>
-      <Text style={styles.notePromptSubtitle}>
-        간단히 기록해두면 나중에 도움이 돼요
-      </Text>
       <TextInput
         style={styles.noteInput}
         placeholder="예: 이메일 정리, 아이디어 정리..."
@@ -154,6 +151,7 @@ export default function FocusTimerScreen() {
   const [showNotePrompt, setShowNotePrompt] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const initializedRef = useRef(false);
+  const completedModeRef = useRef<'todo' | 'quick' | null>(null);
 
   // 새 세션 시작 또는 기존 세션 이어감
   useEffect(() => {
@@ -221,6 +219,7 @@ export default function FocusTimerScreen() {
   useEffect(() => {
     if (timerState.status === 'completed' && timerState.remainingTime <= 0 && timerState.elapsed > 0) {
       if (!showCelebration && !showNotePrompt) {
+        completedModeRef.current = focusMode;
         Vibration.vibrate([0, 200, 100, 200]);
         haptic.success();
         if (isTodo && connectedTodoId) {
@@ -259,6 +258,7 @@ export default function FocusTimerScreen() {
   // 완료(✓) 버튼 — 세션 기록 + 할일 완료
   const handleMarkComplete = useCallback(() => {
     haptic.success();
+    completedModeRef.current = focusMode;
 
     // store의 completeSession으로 세션 기록
     if (timerState.elapsed > 0 || timerState.isRunning) {
@@ -286,12 +286,12 @@ export default function FocusTimerScreen() {
 
   const handleCelebrationDismiss = useCallback(() => {
     setShowCelebration(false);
-    if (!isTodo) {
+    if (completedModeRef.current !== 'todo') {
       setShowNotePrompt(true);
     } else {
       navigation.goBack();
     }
-  }, [isTodo, navigation]);
+  }, [navigation]);
 
   const handleNoteSave = useCallback(
     (_text: string) => {
@@ -580,11 +580,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
     marginBottom: 6,
-  },
-  notePromptSubtitle: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginBottom: 16,
   },
   noteInput: {
     width: '100%',
