@@ -22,6 +22,7 @@ import {
 
 interface CreateTodoInput {
   title: string;
+  content?: string | null;
   schedule_type?: string;
   start_time?: string;
   end_time?: string;
@@ -33,6 +34,7 @@ interface CreateTodoInput {
   recurrence_pattern?: string;
   recurrence_days_of_week?: number[];
   project_ids?: string[];
+  alarm_offset_minutes?: number | null;
 }
 
 interface TodoCompletion {

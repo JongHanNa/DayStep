@@ -670,6 +670,8 @@ export type Database = {
           recurrence_interval: number | null
           recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type: Database["public"]["Enums"]["schedule_type_enum"]
+          content: string | null
+          alarm_offset_minutes: number | null
           skip_status: string | null
           start_time: string | null
           title: string
@@ -704,6 +706,8 @@ export type Database = {
           recurrence_interval?: number | null
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
+          content?: string | null
+          alarm_offset_minutes?: number | null
           skip_status?: string | null
           start_time?: string | null
           title: string
@@ -738,6 +742,8 @@ export type Database = {
           recurrence_interval?: number | null
           recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern_enum"]
           schedule_type?: Database["public"]["Enums"]["schedule_type_enum"]
+          content?: string | null
+          alarm_offset_minutes?: number | null
           skip_status?: string | null
           start_time?: string | null
           title?: string

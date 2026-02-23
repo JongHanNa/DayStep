@@ -60,7 +60,11 @@ export class Todo {
     // Daily Planner 필드들
     public readonly importance: boolean | null = null,
     public readonly urgency: boolean | null = null,
-    public readonly isReluctantMustDo: boolean = false
+    public readonly isReluctantMustDo: boolean = false,
+
+    // 설명 및 알람
+    public readonly content: string | null = null,
+    public readonly alarmOffsetMinutes: number | null = null
   ) {}
 
   /**
@@ -118,6 +122,10 @@ export class Todo {
     const importance = record.importance ?? null;
     const urgency = record.urgency ?? null;
     const isReluctantMustDo = record.isReluctantMustDo ?? record.is_reluctant_must_do ?? false;
+
+    // 설명 및 알람
+    const content = record.content ?? null;
+    const alarmOffsetMinutes = record.alarmOffsetMinutes ?? record.alarm_offset_minutes ?? null;
 
     // title 필드
     const title = data.title;
@@ -179,7 +187,11 @@ export class Todo {
       // Daily Planner 필드들
       importance,
       urgency,
-      isReluctantMustDo
+      isReluctantMustDo,
+
+      // 설명 및 알람
+      content,
+      alarmOffsetMinutes
     );
   }
 
@@ -601,6 +613,10 @@ export class Todo {
       importance: this.importance,
       urgency: this.urgency,
       is_reluctant_must_do: this.isReluctantMustDo,
+
+      // 설명 및 알람
+      content: this.content,
+      alarm_offset_minutes: this.alarmOffsetMinutes,
 
       created_at: this.createdAt.toISOString(),
       updated_at: this.updatedAt.toISOString(),

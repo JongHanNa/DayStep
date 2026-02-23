@@ -1,8 +1,9 @@
 /**
  * TodoFormBottomSheet
- * 할일 생성/편집 바텀시트
- * - @gorhom/bottom-sheet 기반
- * - 요약 뷰 + 서브시트 패턴 (시간, 반복, 우선순위, 아이콘)
+ * 할일 생성/편집 바텀시트 — Progressive Disclosure 패턴
+ * - Create: 제목 auto-focus + 설명 + AttributeToolbar
+ * - Edit: 날짜 요약 + Hero 제목 + 설명 + AttributeToolbar + 완료 토글
+ * - 기본값: timed(다음 정시 ~ +1hr), 알람 정각
  */
 import React, {
   useCallback,
@@ -20,29 +21,25 @@ import {
   Keyboard,
   Alert,
   StyleSheet,
+  Switch,
 } from 'react-native';
 import BottomSheet, {BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
-import {SummaryRow} from './SummaryRow';
+import {AttributeToolbar} from './AttributeToolbar';
 import {TimePickerSheet, type TimePickerSheetRef} from './sheets/TimePickerSheet';
 import {RecurrencePickerSheet, type RecurrencePickerSheetRef} from './sheets/RecurrencePickerSheet';
 import {PriorityPickerSheet, type PriorityPickerSheetRef} from './sheets/PriorityPickerSheet';
 import {IconPickerSheet, type IconPickerSheetRef} from './sheets/IconPickerSheet';
+import {AlarmPickerSheet, type AlarmPickerSheetRef} from './sheets/AlarmPickerSheet';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
-import {format, addHours, parseISO} from 'date-fns';
+import {format, addHours, parseISO, isToday} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {
-  ClipboardList,
-  Calendar,
-  Clock,
-  Repeat,
-  Flag,
-  CheckCircle,
-} from 'lucide-react-native';
+import {getAlarmLabel} from '@/lib/notifications';
+import {ClipboardList} from 'lucide-react-native';
 
 // ============================================
 // Types
@@ -59,12 +56,14 @@ type RecurrencePattern = 'none' | 'daily' | 'weekly' | 'monthly';
 
 interface FormData {
   title: string;
+  content: string;
   icon: string;
   scheduledDate: string; // yyyy-MM-dd
   scheduleType: ScheduleType;
   startTime: Date | null;
   endTime: Date | null;
   anytimeDuration: number | null; // minutes
+  alarmOffsetMinutes: number | null;
   importance: boolean;
   urgency: boolean;
   isReluctantMustDo: boolean;
@@ -73,14 +72,25 @@ interface FormData {
   completed: boolean;
 }
 
+/** 다음 정시 계산 */
+function getNextHour(): Date {
+  const now = new Date();
+  const next = new Date(now);
+  next.setMinutes(0, 0, 0);
+  next.setHours(now.getHours() + 1);
+  return next;
+}
+
 const DEFAULT_FORM: FormData = {
   title: '',
+  content: '',
   icon: '',
   scheduledDate: format(new Date(), 'yyyy-MM-dd'),
-  scheduleType: 'anytime',
-  startTime: null,
-  endTime: null,
+  scheduleType: 'timed',
+  startTime: getNextHour(),
+  endTime: addHours(getNextHour(), 1),
   anytimeDuration: null,
+  alarmOffsetMinutes: 0, // 정각에
   importance: false,
   urgency: false,
   isReluctantMustDo: false,
@@ -93,37 +103,6 @@ const DEFAULT_FORM: FormData = {
 // Helpers
 // ============================================
 
-function getTimeLabel(form: FormData): string {
-  if (form.scheduleType === 'timed' && form.startTime) {
-    const start = format(form.startTime, 'HH:mm');
-    const end = form.endTime ? format(form.endTime, 'HH:mm') : '';
-    return end ? `${start} ~ ${end}` : start;
-  }
-  if (form.scheduleType === 'all_day') return '종일';
-  if (form.scheduleType === 'anytime') {
-    return form.anytimeDuration
-      ? `시간 미정 (${form.anytimeDuration >= 60 ? `${form.anytimeDuration / 60}시간` : `${form.anytimeDuration}분`})`
-      : '시간 미정';
-  }
-  return '시간 설정';
-}
-
-function getTimeSuffix(form: FormData): string | undefined {
-  if (form.scheduleType === 'timed' && form.startTime && form.endTime) {
-    const diffMin = Math.round(
-      (form.endTime.getTime() - form.startTime.getTime()) / 60000,
-    );
-    if (diffMin > 0) {
-      const h = Math.floor(diffMin / 60);
-      const m = diffMin % 60;
-      if (h > 0 && m > 0) return `${h}시간 ${m}분`;
-      if (h > 0) return `${h}시간`;
-      return `${m}분`;
-    }
-  }
-  return undefined;
-}
-
 function getRecurrenceLabel(form: FormData): string {
   if (form.recurrencePattern === 'daily') return '매일';
   if (form.recurrencePattern === 'weekly') {
@@ -135,21 +114,38 @@ function getRecurrenceLabel(form: FormData): string {
     return days ? `매주 ${days}` : '매주';
   }
   if (form.recurrencePattern === 'monthly') return '매월';
-  return '반복 없음';
+  return '';
 }
 
-function getPriorityLabel(form: FormData): string {
-  if (form.importance && form.urgency) return '🔴 긴급 + 중요';
-  if (form.importance) return '🟡 중요';
-  if (form.urgency) return '🔵 긴급';
-  return '⚪ 보통';
+function getDateSummary(form: FormData): string {
+  const parts: string[] = [];
+
+  // 날짜
+  const date = parseISO(form.scheduledDate);
+  if (isToday(date)) {
+    parts.push(`오늘, ${format(date, 'M월 d일', {locale: ko})}`);
+  } else {
+    parts.push(format(date, 'M월 d일 (EEE)', {locale: ko}));
+  }
+
+  // 시간
+  if (form.scheduleType === 'timed' && form.startTime) {
+    parts[0] += ` ${format(form.startTime, 'HH:mm')}`;
+  }
+
+  return parts.join(' ');
 }
 
-function getPriorityIconColor(form: FormData): string {
-  if (form.importance && form.urgency) return '#EF4444';
-  if (form.importance) return '#F59E0B';
-  if (form.urgency) return '#3B82F6';
-  return '#9CA3AF';
+function getDateSummaryExtras(form: FormData): string[] {
+  const extras: string[] = [];
+  if (form.alarmOffsetMinutes !== null) {
+    extras.push(`🔔 ${getAlarmLabel(form.alarmOffsetMinutes)}`);
+  }
+  const recLabel = getRecurrenceLabel(form);
+  if (recLabel) {
+    extras.push(`🔄 ${recLabel}`);
+  }
+  return extras;
 }
 
 // ============================================
@@ -168,6 +164,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     const recurrenceSheetRef = useRef<RecurrencePickerSheetRef>(null);
     const prioritySheetRef = useRef<PriorityPickerSheetRef>(null);
     const iconSheetRef = useRef<IconPickerSheetRef>(null);
+    const alarmSheetRef = useRef<AlarmPickerSheetRef>(null);
 
     const {createTodo, updateTodo, selectedDate} = useTodoStore();
 
@@ -176,7 +173,10 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     const [form, setForm] = useState<FormData>({...DEFAULT_FORM});
     const [saving, setSaving] = useState(false);
 
-    const snapPoints = useMemo(() => ['55%', '75%'], []);
+    const snapPoints = useMemo(
+      () => (mode === 'create' ? ['50%'] : ['55%', '85%']),
+      [mode],
+    );
 
     // ------------------------------------------
     // Imperative handle
@@ -184,9 +184,15 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     useImperativeHandle(ref, () => ({
       openCreate: (date?: string) => {
         const targetDate = date ?? selectedDate;
+        const nextHour = getNextHour();
         setMode('create');
         setEditingTodo(null);
-        setForm({...DEFAULT_FORM, scheduledDate: targetDate});
+        setForm({
+          ...DEFAULT_FORM,
+          scheduledDate: targetDate,
+          startTime: nextHour,
+          endTime: addHours(nextHour, 1),
+        });
         bottomSheetRef.current?.snapToIndex(0);
         setTimeout(() => titleInputRef.current?.focus(), 300);
       },
@@ -195,24 +201,26 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
         setEditingTodo(todo);
         setForm({
           title: todo.title,
+          content: (todo as any).content ?? '',
           icon: todo.icon ?? '',
           scheduledDate: todo.start_time
             ? format(new Date(todo.start_time), 'yyyy-MM-dd')
             : selectedDate,
-          scheduleType: (todo.schedule_type as ScheduleType) ?? 'anytime',
+          scheduleType: (todo.schedule_type as ScheduleType) ?? 'timed',
           startTime: todo.start_time ? new Date(todo.start_time) : null,
           endTime: todo.end_time ? new Date(todo.end_time) : null,
           anytimeDuration: todo.anytime_duration ?? null,
-          importance: todo.importance ?? false,
-          urgency: todo.urgency ?? false,
-          isReluctantMustDo: todo.is_reluctant_must_do ?? false,
+          alarmOffsetMinutes: (todo as any).alarm_offset_minutes ?? null,
+          importance: (todo as any).importance ?? false,
+          urgency: (todo as any).urgency ?? false,
+          isReluctantMustDo: (todo as any).is_reluctant_must_do ?? false,
           recurrencePattern: (todo.recurrence_pattern as RecurrencePattern) ?? 'none',
           recurrenceDaysOfWeek: Array.isArray(todo.recurrence_days_of_week)
-            ? todo.recurrence_days_of_week
+            ? (todo.recurrence_days_of_week as number[])
             : [],
           completed: todo.completed ?? false,
         });
-        // timed인데 endTime이 없으면 자동 설정 (startTime + 1시간)
+        // timed인데 endTime이 없으면 자동 설정
         if (todo.schedule_type === 'timed' && todo.start_time && !todo.end_time) {
           const start = new Date(todo.start_time);
           setForm(prev => ({...prev, endTime: addHours(start, 1)}));
@@ -250,6 +258,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
       try {
         const baseData: Record<string, any> = {
           title: trimmed,
+          content: form.content.trim() || null,
           icon: form.icon || null,
           schedule_type: form.scheduleType,
           importance: form.importance || null,
@@ -257,6 +266,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           is_reluctant_must_do: form.isReluctantMustDo,
           recurrence_pattern: form.recurrencePattern,
           completed: form.completed,
+          alarm_offset_minutes: form.alarmOffsetMinutes,
         };
 
         if (form.scheduleType === 'timed' && form.startTime) {
@@ -275,10 +285,33 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           baseData.recurrence_days_of_week = form.recurrenceDaysOfWeek;
         }
 
+        let savedTodoId: string | null = null;
+
         if (mode === 'create') {
-          await createTodo(baseData as any);
+          const result = await createTodo(baseData as any);
+          savedTodoId = result?.id ?? null;
         } else if (editingTodo) {
           await updateTodo(editingTodo.id, baseData as Partial<Todo>);
+          savedTodoId = editingTodo.id;
+        }
+
+        // 알림 스케줄링
+        if (savedTodoId) {
+          const {scheduleTodoAlarm, cancelTodoAlarm} = await import('@/lib/notifications');
+          if (
+            form.alarmOffsetMinutes !== null &&
+            form.scheduleType === 'timed' &&
+            form.startTime
+          ) {
+            await scheduleTodoAlarm(
+              savedTodoId,
+              trimmed,
+              form.startTime,
+              form.alarmOffsetMinutes,
+            );
+          } else {
+            await cancelTodoAlarm(savedTodoId);
+          }
         }
 
         haptic.success();
@@ -301,6 +334,10 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           text: '삭제',
           style: 'destructive',
           onPress: async () => {
+            // 알림 취소
+            const {cancelTodoAlarm} = await import('@/lib/notifications');
+            await cancelTodoAlarm(editingTodo.id);
+
             await deleteTodo(editingTodo.id);
             haptic.medium();
             bottomSheetRef.current?.close();
@@ -324,6 +361,9 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
       [],
     );
 
+    const dateSummary = getDateSummary(form);
+    const dateSummaryExtras = getDateSummaryExtras(form);
+
     return (
       <>
         <BottomSheet
@@ -338,11 +378,23 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           backgroundStyle={styles.sheetBg}
           onClose={() => Keyboard.dismiss()}>
           <BottomSheetView style={styles.container}>
-            {/* 헤더 */}
+            {/* ──────── 헤더 ──────── */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>
-                {mode === 'create' ? '새 할일' : '할일 편집'}
-              </Text>
+              {mode === 'edit' ? (
+                <View style={styles.headerLeft}>
+                  {(() => {
+                    const ResolvedIcon = resolveTodoIcon(form.icon);
+                    return ResolvedIcon ? (
+                      <ResolvedIcon size={20} color="#6B7280" />
+                    ) : (
+                      <ClipboardList size={20} color="#9CA3AF" />
+                    );
+                  })()}
+                  <Text style={styles.headerTitle}>할일 편집</Text>
+                </View>
+              ) : (
+                <Text style={styles.headerTitle}>새 할일</Text>
+              )}
               <View style={styles.headerActions}>
                 {mode === 'edit' && (
                   <AnimatedPressable
@@ -368,96 +420,121 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
               contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
-              {/* 제목 입력 */}
-              <View style={styles.section}>
-                <View style={styles.titleRow}>
-                  <AnimatedPressable
-                    onPress={() => {
-                      haptic.selection();
-                      iconSheetRef.current?.open();
-                    }}
-                    haptic={false}
-                    style={styles.iconBtn}>
-                    {(() => {
-                      const ResolvedIcon = resolveTodoIcon(form.icon);
-                      return ResolvedIcon ? (
-                        <ResolvedIcon size={24} color="#6B7280" />
-                      ) : (
-                        <ClipboardList size={24} color="#9CA3AF" />
-                      );
-                    })()}
-                  </AnimatedPressable>
+
+              {/* ──────── Edit: 날짜/시간 요약 라인 ──────── */}
+              {mode === 'edit' && (
+                <View style={styles.dateSummaryRow}>
+                  <Text style={styles.dateSummaryText}>
+                    📅 {dateSummary}
+                  </Text>
+                  {dateSummaryExtras.map((extra, i) => (
+                    <React.Fragment key={i}>
+                      <Text style={styles.dateSummaryDot}>·</Text>
+                      <Text style={styles.dateSummaryText}>{extra}</Text>
+                    </React.Fragment>
+                  ))}
+                </View>
+              )}
+
+              {/* ──────── 제목 입력 ──────── */}
+              {mode === 'create' ? (
+                <View style={styles.titleSection}>
+                  <View style={styles.titleRow}>
+                    <AnimatedPressable
+                      onPress={() => {
+                        haptic.selection();
+                        iconSheetRef.current?.open();
+                      }}
+                      haptic={false}
+                      style={styles.iconBtn}>
+                      {(() => {
+                        const ResolvedIcon = resolveTodoIcon(form.icon);
+                        return ResolvedIcon ? (
+                          <ResolvedIcon size={24} color="#6B7280" />
+                        ) : (
+                          <ClipboardList size={24} color="#9CA3AF" />
+                        );
+                      })()}
+                    </AnimatedPressable>
+                    <TextInput
+                      ref={titleInputRef}
+                      value={form.title}
+                      onChangeText={v => updateField('title', v)}
+                      placeholder="할일을 입력하세요"
+                      placeholderTextColor="#9CA3AF"
+                      style={styles.titleInput}
+                      returnKeyType="next"
+                    />
+                  </View>
+                </View>
+              ) : (
+                /* Edit: Hero Title */
+                <View style={styles.heroSection}>
                   <TextInput
                     ref={titleInputRef}
                     value={form.title}
                     onChangeText={v => updateField('title', v)}
                     placeholder="할일을 입력하세요"
                     placeholderTextColor="#9CA3AF"
-                    style={styles.titleInput}
-                    returnKeyType="done"
-
+                    style={styles.heroTitle}
+                    multiline
                   />
                 </View>
+              )}
+
+              {/* ──────── 설명 입력 ──────── */}
+              <View style={styles.descSection}>
+                <TextInput
+                  value={form.content}
+                  onChangeText={v => updateField('content', v)}
+                  placeholder="설명"
+                  placeholderTextColor="#D1D5DB"
+                  style={styles.descInput}
+                  multiline
+                  numberOfLines={2}
+                />
               </View>
 
-              {/* ──────── SummaryRow 섹션 ──────── */}
-              <View style={styles.summarySection}>
-                {/* 날짜 행 */}
-                <SummaryRow
-                  Icon={Calendar}
-                  iconColor="#3B82F6"
-                  label={format(parseISO(form.scheduledDate), 'yyyy년 M월 d일 (EEE)', {locale: ko})}
-                  suffix={form.scheduledDate === format(new Date(), 'yyyy-MM-dd') ? '오늘' : undefined}
-                  showChevron={false}
-                />
+              {/* ──────── 속성 툴바 ──────── */}
+              <View style={styles.toolbarBorder} />
+              <AttributeToolbar
+                form={form}
+                onDatePress={() => {
+                  haptic.selection();
+                  // TODO: DatePickerSheet (현재는 날짜 고정)
+                }}
+                onTimePress={() => {
+                  haptic.selection();
+                  timeSheetRef.current?.open();
+                }}
+                onAlarmPress={() => {
+                  haptic.selection();
+                  alarmSheetRef.current?.open();
+                }}
+                onRecurrencePress={() => {
+                  haptic.selection();
+                  recurrenceSheetRef.current?.open();
+                }}
+                onPriorityPress={() => {
+                  haptic.selection();
+                  prioritySheetRef.current?.open();
+                }}
+              />
 
-                {/* 시간 행 → TimePickerSheet */}
-                <SummaryRow
-                  Icon={Clock}
-                  iconColor="#F59E0B"
-                  label={getTimeLabel(form)}
-                  suffix={getTimeSuffix(form)}
-                  onPress={() => {
-                    haptic.selection();
-                    timeSheetRef.current?.open();
-                  }}
-                />
-
-                {/* 반복 행 → RecurrencePickerSheet */}
-                <SummaryRow
-                  Icon={Repeat}
-                  iconColor="#8B5CF6"
-                  label={getRecurrenceLabel(form)}
-                  onPress={() => {
-                    haptic.selection();
-                    recurrenceSheetRef.current?.open();
-                  }}
-                />
-
-                {/* 우선순위 행 → PriorityPickerSheet */}
-                <SummaryRow
-                  Icon={Flag}
-                  iconColor={getPriorityIconColor(form)}
-                  label={getPriorityLabel(form)}
-                  onPress={() => {
-                    haptic.selection();
-                    prioritySheetRef.current?.open();
-                  }}
-                />
-
-                {/* 완료 토글 (편집 모드만) */}
-                {mode === 'edit' && (
-                  <SummaryRow
-                    Icon={CheckCircle}
-                    iconColor={form.completed ? '#22C55E' : '#9CA3AF'}
-                    label={form.completed ? '완료됨' : '미완료'}
-                    switchValue={form.completed}
-                    onSwitchChange={v => updateField('completed', v)}
-                    primaryColor={primaryColor}
-                    showChevron={false}
+              {/* ──────── 완료 토글 (편집 모드만) ──────── */}
+              {mode === 'edit' && (
+                <View style={styles.completionRow}>
+                  <Text style={styles.completionLabel}>
+                    {form.completed ? '✅ 완료됨' : '⭕ 미완료'}
+                  </Text>
+                  <Switch
+                    value={form.completed}
+                    onValueChange={v => updateField('completed', v)}
+                    trackColor={{false: '#E5E7EB', true: primaryColor}}
+                    thumbColor="#FFFFFF"
                   />
-                )}
-              </View>
+                </View>
+              )}
             </ScrollView>
           </BottomSheetView>
         </BottomSheet>
@@ -498,6 +575,12 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           selectedIcon={form.icon}
           onIconChange={v => updateField('icon', v)}
         />
+
+        <AlarmPickerSheet
+          ref={alarmSheetRef}
+          alarmOffsetMinutes={form.alarmOffsetMinutes}
+          onAlarmChange={v => updateField('alarmOffsetMinutes', v)}
+        />
       </>
     );
   },
@@ -518,6 +601,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -526,6 +610,11 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   headerTitle: {
     fontSize: 18,
@@ -562,19 +651,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
     paddingBottom: 40,
   },
-  section: {
-    marginTop: 20,
+  // Date summary (edit mode)
+  dateSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    gap: 6,
   },
-  summarySection: {
-    marginTop: 12,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+  dateSummaryText: {
+    fontSize: 13,
+    color: '#6B7280',
   },
-  // Title
+  dateSummaryDot: {
+    fontSize: 13,
+    color: '#D1D5DB',
+  },
+  // Create: Title row
+  titleSection: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+  },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -596,5 +698,47 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     paddingVertical: 10,
     marginLeft: 4,
+  },
+  // Edit: Hero title
+  heroSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1F2937',
+    paddingVertical: 4,
+  },
+  // Description
+  descSection: {
+    paddingHorizontal: 20,
+  },
+  descInput: {
+    fontSize: 14,
+    color: '#6B7280',
+    paddingVertical: 6,
+    textAlignVertical: 'top',
+  },
+  // Toolbar border
+  toolbarBorder: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+  },
+  // Completion toggle
+  completionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  completionLabel: {
+    fontSize: 15,
+    color: '#4B5563',
+    fontWeight: '500',
   },
 });

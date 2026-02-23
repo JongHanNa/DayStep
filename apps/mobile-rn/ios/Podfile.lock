@@ -2864,6 +2864,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNPurchases (9.7.6):
     - PurchasesHybridCommon (= 17.31.0)
     - React-Core
@@ -3254,6 +3259,7 @@ DEPENDENCIES:
   - "RNCClipboard (from `../../../node_modules/@react-native-clipboard/clipboard`)"
   - RNGestureHandler (from `../../../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../../../node_modules/@react-native-google-signin/google-signin`)"
+  - "RNNotifee (from `../../../node_modules/@notifee/react-native`)"
   - RNPurchases (from `../../../node_modules/react-native-purchases`)
   - RNReactNativeHapticFeedback (from `../../../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../../../node_modules/react-native-reanimated`)
@@ -3457,6 +3463,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native-gesture-handler"
   RNGoogleSignin:
     :path: "../../../node_modules/@react-native-google-signin/google-signin"
+  RNNotifee:
+    :path: "../../../node_modules/@notifee/react-native"
   RNPurchases:
     :path: "../../../node_modules/react-native-purchases"
   RNReactNativeHapticFeedback:
@@ -3571,6 +3579,7 @@ SPEC CHECKSUMS:
   RNCClipboard: 4b58c780f63676367640f23c8e114e9bd0cf86ac
   RNGestureHandler: cd4be101cfa17ea6bbd438710caa02e286a84381
   RNGoogleSignin: 4122717989e2544988cb4cec3e917da3ebc969a5
+  RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNPurchases: 462fb7edb0304dba1db46e3d38368a271ebe4cc2
   RNReactNativeHapticFeedback: be4f1b4bf0398c30b59b76ed92ecb0a2ff3a69c6
   RNReanimated: 129c0d33cccde1f48756850142ac51f64819358d
