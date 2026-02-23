@@ -15,6 +15,7 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTodoStore} from '@/stores/todoStore';
@@ -161,11 +162,11 @@ function TodoRadioItem({
 // Stats Bar
 // ============================================
 
-function StatsBar() {
+function StatsBar({bottomInset}: {bottomInset: number}) {
   const {stats} = usePomodoroStore();
 
   return (
-    <Animated.View entering={FadeInUp.delay(400).duration(400)} style={styles.statsBar}>
+    <Animated.View entering={FadeInUp.delay(400).duration(400)} style={[styles.statsBar, {paddingBottom: Math.max(bottomInset, 8) + 70}]}>
       <View style={styles.statItem}>
         <Text style={styles.statNumber}>{stats.todaySessions}</Text>
         <Text style={styles.statLabel}>오늘 집중</Text>
@@ -191,6 +192,7 @@ function StatsBar() {
 export default function ExecutionScreen() {
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
   const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
 
   // pomodoroStore에서 활성 세션 구독
@@ -392,8 +394,8 @@ export default function ExecutionScreen() {
         )}
       </View>
 
-      {/* 통계 바 — Fix 3: paddingBottom 증가 */}
-      <StatsBar />
+      {/* 통계 바 — 동적 paddingBottom으로 탭바 가림 방지 */}
+      <StatsBar bottomInset={insets.bottom} />
     </ScreenContainer>
   );
 }
@@ -619,13 +621,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Stats bar — Fix 3: paddingBottom 70
+  // Stats bar — paddingBottom은 인라인으로 동적 적용
   statsBar: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingBottom: 70,
     gap: 20,
   },
   statItem: {
