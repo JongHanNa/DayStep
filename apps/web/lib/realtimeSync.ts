@@ -82,6 +82,24 @@ export function setupRealtimeSync() {
         });
       }
     })
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'todo_completions'
+    }, (payload: any) => {
+      console.log(`📡 완료 기록 변경 감지:`, {
+        event: payload.eventType,
+        table: payload.table,
+        todoId: payload.new?.todo_id || payload.old?.todo_id,
+        timestamp: new Date().toLocaleTimeString()
+      });
+
+      // todos 배열 참조를 갱신하여 useTimelineData의 반복 인스턴스+완료 상태 재로드 트리거
+      const currentState = useTodoStore.getState();
+      useTodoStore.setState({
+        todos: [...currentState.todos]
+      });
+    })
     .subscribe((status) => {
       console.log(`📡 할일 채널 상태:`, status);
 
