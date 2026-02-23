@@ -25,7 +25,7 @@ interface QuadrantConfig {
 
 const QUADRANTS: QuadrantConfig[] = [
   {
-    title: '긴급 + 중요',
+    title: '중요O 긴급O',
     Icon: AlertTriangle,
     color: '#DC2626',
     bgColor: '#FEF2F2',
@@ -34,31 +34,31 @@ const QUADRANTS: QuadrantConfig[] = [
     filter: (t: any) => t.importance === true && t.urgency === true,
   },
   {
-    title: '중요 (비긴급)',
+    title: '중요O 긴급X',
     Icon: Target,
     color: '#2563EB',
     bgColor: '#EFF6FF',
     importance: true,
     urgency: false,
-    filter: (t: any) => t.importance === true && !t.urgency,
+    filter: (t: any) => t.importance === true && t.urgency === false,
   },
   {
-    title: '긴급 (비중요)',
+    title: '중요X 긴급O',
     Icon: Clock,
     color: '#F59E0B',
     bgColor: '#FFFBEB',
     importance: false,
     urgency: true,
-    filter: (t: any) => !t.importance && t.urgency === true,
+    filter: (t: any) => t.importance === false && t.urgency === true,
   },
   {
-    title: '나중에',
+    title: '중요X 긴급X',
     Icon: Coffee,
     color: '#6B7280',
     bgColor: '#F9FAFB',
     importance: false,
     urgency: false,
-    filter: (t: any) => !t.importance && !t.urgency,
+    filter: (t: any) => t.importance === false && t.urgency === false,
   },
 ];
 

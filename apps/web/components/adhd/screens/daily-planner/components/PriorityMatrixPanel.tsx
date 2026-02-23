@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Target, Flame, Zap, ClipboardList, MessageCircle } from 'lucide-react';
+import { Plus, Target } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import type { Todo } from '@/entities/todo/Todo';
@@ -104,8 +104,8 @@ export function PriorityMatrixPanel({ todos, projectMap, departmentMap, highligh
       <div className="grid grid-cols-2 gap-2">
         <Quadrant
           id="matrix-q1"
-          label={<><Flame className="w-3.5 h-3.5 text-error inline" /> 지금!</>}
-          sublabel="중요O 긴급O"
+          label="중요O 긴급O"
+          sublabel=""
           todos={q1}
           bgColor="bg-error/5"
           hideOverdue
@@ -121,8 +121,8 @@ export function PriorityMatrixPanel({ todos, projectMap, departmentMap, highligh
         />
         <Quadrant
           id="matrix-q2"
-          label={<><Zap className="w-3.5 h-3.5 text-warning inline" /> 빠르게</>}
-          sublabel="중요X 긴급O"
+          label="중요X 긴급O"
+          sublabel=""
           todos={q2}
           bgColor="bg-warning/5"
           hideOverdue
@@ -138,8 +138,8 @@ export function PriorityMatrixPanel({ todos, projectMap, departmentMap, highligh
         />
         <Quadrant
           id="matrix-q3"
-          label={<><ClipboardList className="w-3.5 h-3.5 text-info inline" /> 계획</>}
-          sublabel="중요O 긴급X"
+          label="중요O 긴급X"
+          sublabel=""
           todos={q3}
           bgColor="bg-info/5"
           hideOverdue
@@ -155,8 +155,8 @@ export function PriorityMatrixPanel({ todos, projectMap, departmentMap, highligh
         />
         <Quadrant
           id="matrix-q4"
-          label={<><MessageCircle className="w-3.5 h-3.5 text-base-content/50 inline" /> 나중에</>}
-          sublabel="중요X 긴급X"
+          label="중요X 긴급X"
+          sublabel=""
           todos={q4}
           bgColor="bg-base-100"
           hideOverdue

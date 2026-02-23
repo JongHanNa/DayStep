@@ -42,6 +42,8 @@ interface TodoCompletion {
   completion_date: string;
 }
 
+type PostponeAction = 'reschedule' | 'anytime' | 'start_now';
+
 interface TodoState {
   // 데이터
   todos: Todo[];
@@ -69,6 +71,11 @@ interface TodoState {
     updates: Partial<Todo>,
     updateType: 'this' | 'future' | 'all',
     occurrenceDate: string,
+  ) => Promise<boolean>;
+  postponeTodo: (
+    id: string,
+    action: PostponeAction,
+    newTime?: string,
   ) => Promise<boolean>;
   processOfflineQueue: () => Promise<void>;
   clearError: () => void;
@@ -508,6 +515,139 @@ export const useTodoStore = create<TodoState>()(
         } catch (err: any) {
           console.error('[TodoStore] updateRecurringTodo error:', err);
           set({error: err.message ?? 'Failed to update recurring todo'});
+          return false;
+        }
+      },
+
+      postponeTodo: async (id, action, newTime) => {
+        try {
+          const userId = await getCurrentUserId();
+          if (!userId) throw new Error('Not authenticated');
+
+          const todo = get().todos.find(t => t.id === id);
+          if (!todo) throw new Error('Todo not found');
+
+          const isRecurring =
+            todo.recurrence_pattern &&
+            todo.recurrence_pattern !== 'none';
+          const selectedDate = get().selectedDate;
+
+          if (action === 'start_now' && !isRecurring) {
+            // 비반복 + start_now: DB 변경 없이 true 리턴 (FocusTimer 이동은 UI에서 처리)
+            return true;
+          }
+
+          /** HH:mm → 해당 날짜의 ISO string */
+          const toISO = (time: string) => {
+            const [h, m] = time.split(':').map(Number);
+            const d = new Date(selectedDate + 'T00:00:00+09:00');
+            d.setHours(h, m, 0, 0);
+            return d.toISOString();
+          };
+
+          /** 원본 duration (ms) 계산 */
+          const getDurationMs = () => {
+            if (todo.start_time && todo.end_time) {
+              return (
+                new Date(todo.end_time).getTime() -
+                new Date(todo.start_time).getTime()
+              );
+            }
+            return 0;
+          };
+
+          if (!isRecurring) {
+            // ── 비반복 할일 ──
+            if (action === 'reschedule' && newTime) {
+              const newStart = toISO(newTime);
+              const durationMs = getDurationMs();
+              const updates: any = {start_time: newStart};
+              if (durationMs > 0) {
+                updates.end_time = new Date(
+                  new Date(newStart).getTime() + durationMs,
+                ).toISOString();
+              }
+              return get().updateTodo(id, updates);
+            }
+            if (action === 'anytime') {
+              return get().updateTodo(id, {
+                schedule_type: 'anytime',
+                start_time: null,
+                end_time: null,
+              } as any);
+            }
+          } else {
+            // ── 반복 할일: exclusion + 독립 할일 생성 ──
+            // 1. exclusion 생성
+            await supabase.from('todo_exclusions').insert({
+              parent_todo_id: id,
+              excluded_date: selectedDate,
+              user_id: userId,
+              exclusion_reason: 'postponed',
+            });
+
+            // 2. 독립 할일 데이터 구성
+            const newTodoData: Record<string, any> = {
+              title: todo.title,
+              icon: todo.icon,
+              color: todo.color,
+              user_id: userId,
+              recurrence_pattern: 'none',
+              completed: false,
+              order_index: (todo as any).order_index || 0,
+              importance: (todo as any).importance ?? null,
+              urgency: (todo as any).urgency ?? null,
+              is_reluctant_must_do: (todo as any).is_reluctant_must_do ?? false,
+              parent_recurring_todo_id: id,
+              occurrence_date: selectedDate,
+            };
+
+            if (action === 'reschedule' && newTime) {
+              newTodoData.schedule_type = 'timed';
+              newTodoData.start_time = toISO(newTime);
+              const durationMs = getDurationMs();
+              if (durationMs > 0) {
+                newTodoData.end_time = new Date(
+                  new Date(newTodoData.start_time).getTime() + durationMs,
+                ).toISOString();
+              }
+            } else if (action === 'anytime') {
+              newTodoData.schedule_type = 'anytime';
+              newTodoData.start_time = null;
+              newTodoData.end_time = null;
+            } else if (action === 'start_now') {
+              const now = new Date();
+              newTodoData.schedule_type = 'timed';
+              newTodoData.start_time = now.toISOString();
+              const durationMs = getDurationMs();
+              if (durationMs > 0) {
+                newTodoData.end_time = new Date(
+                  now.getTime() + durationMs,
+                ).toISOString();
+              }
+            }
+
+            const {data: newTodo, error: createErr} = await supabase
+              .from('todos')
+              .insert(newTodoData)
+              .select()
+              .single();
+
+            if (createErr) throw createErr;
+
+            // 로컬 상태: 원본 제거 + 새 할일 추가
+            set(state => ({
+              todos: [
+                ...state.todos.filter(t => t.id !== id),
+                parseTodo(newTodo),
+              ],
+            }));
+          }
+
+          return true;
+        } catch (err: any) {
+          console.error('[TodoStore] postponeTodo error:', err);
+          set({error: err.message ?? 'Failed to postpone todo'});
           return false;
         }
       },

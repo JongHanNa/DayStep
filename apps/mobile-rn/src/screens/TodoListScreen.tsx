@@ -3,7 +3,7 @@
  * - Page 0: 시간대별 할일 (오전/오후/저녁) + 날짜 네비게이션 + FAB + 바텀시트
  * - Page 1: 우선순위 매트릭스 + 하기 싫어도 해야 할 일 + 보상/칭찬/감사
  */
-import React, {useCallback, useEffect, useMemo, useRef} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Text, View, SectionList, RefreshControl, StyleSheet} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -13,6 +13,10 @@ import {
   TodoFormBottomSheet,
   type TodoFormBottomSheetRef,
 } from '@/components/todo/TodoFormBottomSheet';
+import {
+  PostponeBottomSheet,
+  type PostponeAction,
+} from '@/components/todo/PostponeBottomSheet';
 import {SwipeablePages, type SwipeablePagesRef} from '@/components/core/SwipeablePages';
 import {PlannerPage2} from '@/components/planner/PlannerPage2';
 import {DndProvider, useDnd} from '@/components/planner/DndContext';
@@ -75,14 +79,26 @@ export default function TodoListScreen() {
 }
 
 function TodoListScreenInner() {
-  const {todos, selectedDate, loading, setSelectedDate, fetchTodosForDate, toggleTodoCompletion, updateTodo} =
-    useTodoStore();
+  const {
+    todos,
+    selectedDate,
+    loading,
+    setSelectedDate,
+    fetchTodosForDate,
+    toggleTodoCompletion,
+    updateTodo,
+    postponeTodo,
+  } = useTodoStore();
   const {primaryColor} = useTheme();
   const route = useRoute<any>();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
   const navigation = useNavigation<any>();
   const pagesRef = useRef<SwipeablePagesRef>(null);
   const {dragState, setPagesRef, currentPageRef, triggerRemeasure} = useDnd();
+
+  // PostponeBottomSheet 상태
+  const [postponingTodo, setPostponingTodo] = useState<Todo | null>(null);
+  const [showPostponeSheet, setShowPostponeSheet] = useState(false);
 
   useEffect(() => {
     fetchTodosForDate(selectedDate);
@@ -188,6 +204,50 @@ function TodoListScreenInner() {
     formRef.current?.openCreate(selectedDate);
   }, [selectedDate]);
 
+  // skip 핸들러
+  const handleSkipTodo = useCallback(
+    (id: string, reason: 'not_needed' | 'missed') => {
+      updateTodo(id, {skip_status: reason} as any);
+    },
+    [updateTodo],
+  );
+
+  // postpone 핸들러: 바텀시트 열기
+  const handlePostpone = useCallback((todo: Todo) => {
+    setPostponingTodo(todo);
+    setShowPostponeSheet(true);
+  }, []);
+
+  // postpone 확인 핸들러
+  const handlePostponeConfirm = useCallback(
+    async (action: PostponeAction, newTime?: string) => {
+      if (!postponingTodo) return;
+
+      if (action === 'start_now') {
+        // FocusTimer로 이동
+        setShowPostponeSheet(false);
+        setPostponingTodo(null);
+
+        const isRecurring =
+          postponingTodo.recurrence_pattern &&
+          postponingTodo.recurrence_pattern !== 'none';
+        if (isRecurring) {
+          // 반복 할일: exclusion + 독립 할일 생성 후 FocusTimer
+          await postponeTodo(postponingTodo.id, 'start_now');
+        }
+        handleFocusTodo(postponingTodo);
+        return;
+      }
+
+      await postponeTodo(postponingTodo.id, action, newTime);
+      setShowPostponeSheet(false);
+      setPostponingTodo(null);
+      // 데이터 새로고침
+      fetchTodosForDate(selectedDate);
+    },
+    [postponingTodo, postponeTodo, handleFocusTodo, fetchTodosForDate, selectedDate],
+  );
+
   return (
     <ScreenContainer gradient="calmBackground">
       {/* 날짜 네비게이터 */}
@@ -249,6 +309,8 @@ function TodoListScreenInner() {
                   onToggle={handleToggle}
                   onPress={handleTodoPress}
                   onFocus={handleFocusTodo}
+                  onSkipTodo={handleSkipTodo}
+                  onPostpone={handlePostpone}
                 />
               </DraggableTodoChip>
             )}
@@ -284,6 +346,16 @@ function TodoListScreenInner() {
       {/* 할일 폼 바텀시트 */}
       <TodoFormBottomSheet ref={formRef} />
 
+      {/* 미루기 바텀시트 */}
+      <PostponeBottomSheet
+        visible={showPostponeSheet}
+        todo={postponingTodo}
+        onClose={() => {
+          setShowPostponeSheet(false);
+          setPostponingTodo(null);
+        }}
+        onConfirm={handlePostponeConfirm}
+      />
     </ScreenContainer>
   );
 }

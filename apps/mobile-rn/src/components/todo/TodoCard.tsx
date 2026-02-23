@@ -1,8 +1,8 @@
 /**
  * TodoCard
- * 할일 카드 — 애니메이션 체크박스 + 스와이프 액션 + 우선순위 표시
+ * 할일 카드 — 애니메이션 체크박스 + 우선순위 표시 + 종료시간 초과 프롬프트
  */
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import Animated, {
   useSharedValue,
@@ -20,6 +20,8 @@ import type {Todo} from '@daystep/shared-core';
 import {format} from 'date-fns';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
+import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
+import {MissedTodoActionPanel} from './MissedTodoActionPanel';
 import {Play} from 'lucide-react-native';
 
 interface TodoCardProps {
@@ -28,9 +30,19 @@ interface TodoCardProps {
   onToggle: (id: string) => void;
   onPress?: (todo: Todo) => void;
   onFocus?: (todo: Todo) => void;
+  onSkipTodo?: (id: string, reason: 'not_needed' | 'missed') => void;
+  onPostpone?: (todo: Todo) => void;
 }
 
-export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCardProps) {
+export function TodoCard({
+  todo,
+  index = 0,
+  onToggle,
+  onPress,
+  onFocus,
+  onSkipTodo,
+  onPostpone,
+}: TodoCardProps) {
   const haptic = useHaptic();
   const {primaryColor} = useTheme();
   const checkScale = useSharedValue(1);
@@ -57,6 +69,21 @@ export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCard
 
   const priorityColor = getPriorityColor(todo.importance, todo.urgency);
 
+  // 시간 상태 계산
+  const timeStatus = useMemo(
+    () => getTimeStatus(todo.start_time, todo.end_time, !!todo.completed),
+    [todo.start_time, todo.end_time, todo.completed],
+  );
+
+  const timeStatusText = useMemo(
+    () => getTimeStatusText(timeStatus),
+    [timeStatus],
+  );
+
+  const isSkipped = !!(todo as any).skip_status;
+  const isMissed =
+    timeStatus.status === 'missed' && !todo.completed && !isSkipped;
+
   return (
     <Animated.View
       entering={FadeInDown.delay(index * 50).duration(300)}
@@ -68,6 +95,7 @@ export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCard
         style={[
           styles.container,
           todo.completed && styles.containerCompleted,
+          isMissed && styles.containerMissed,
         ]}>
         {/* 우선순위 인디케이터 */}
         {priorityColor && (
@@ -88,9 +116,7 @@ export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCard
               todo.completed && styles.checkboxChecked,
               checkAnimatedStyle,
             ]}>
-            {todo.completed && (
-              <Text style={styles.checkmark}>✓</Text>
-            )}
+            {todo.completed && <Text style={styles.checkmark}>✓</Text>}
           </Animated.View>
         </AnimatedPressable>
 
@@ -99,12 +125,11 @@ export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCard
           {/* 시간 + 반복 */}
           {(timeStr || todo.recurrence_pattern !== 'none') && (
             <View style={styles.metaRow}>
-              {timeStr && (
-                <Text style={styles.timeText}>{timeStr}</Text>
-              )}
-              {todo.recurrence_pattern && todo.recurrence_pattern !== 'none' && (
-                <Text style={styles.recurrenceIcon}>⇄</Text>
-              )}
+              {timeStr && <Text style={styles.timeText}>{timeStr}</Text>}
+              {todo.recurrence_pattern &&
+                todo.recurrence_pattern !== 'none' && (
+                  <Text style={styles.recurrenceIcon}>⇄</Text>
+                )}
             </View>
           )}
 
@@ -143,10 +168,21 @@ export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCard
               </View>
             )}
           </View>
+
+          {/* 종료시간 초과 액션 패널 */}
+          {isMissed && (
+            <MissedTodoActionPanel
+              overdueText={timeStatusText.primary ?? '종료 시간 지남'}
+              onComplete={() => onToggle(todo.id)}
+              onPostpone={() => onPostpone?.(todo)}
+              onSkipNotNeeded={() => onSkipTodo?.(todo.id, 'not_needed')}
+              onSkipMissed={() => onSkipTodo?.(todo.id, 'missed')}
+            />
+          )}
         </View>
 
-        {/* 포커스 타이머 버튼 (미완료 할일만) */}
-        {onFocus && !todo.completed && (
+        {/* 포커스 타이머 버튼 (미완료 + 미놓침 할일만) */}
+        {onFocus && !todo.completed && !isMissed && (
           <AnimatedPressable
             onPress={() => {
               haptic.medium();
@@ -166,7 +202,7 @@ export function TodoCard({todo, index = 0, onToggle, onPress, onFocus}: TodoCard
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingVertical: 12,
@@ -182,6 +218,10 @@ const styles = StyleSheet.create({
   containerCompleted: {
     opacity: 0.6,
   },
+  containerMissed: {
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
   priorityBar: {
     position: 'absolute',
     left: 0,
@@ -194,6 +234,7 @@ const styles = StyleSheet.create({
   checkboxArea: {
     padding: 4,
     marginRight: 8,
+    marginTop: 2,
   },
   checkbox: {
     width: 24,
@@ -268,5 +309,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
+    marginTop: 2,
   },
 });
