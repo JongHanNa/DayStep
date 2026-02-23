@@ -1540,6 +1540,8 @@ function setExampleTab(tab,btn){
     let tagHtml=ex.tags.map(t=>'<span class="tag '+t+'">'+t.toUpperCase()+'</span>').join('');
     div.innerHTML=tagHtml+ex.text;
     div.addEventListener('click',()=>{
+      const sel=window.getSelection();
+      if(sel && sel.toString().length>0) return;
       const target=document.getElementById(ex.target);
       if(target){
         target.scrollIntoView({behavior:'smooth',block:'center'});
