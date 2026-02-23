@@ -59,9 +59,12 @@ interface PomodoroState {
   stats: PomodoroStats;
   connectedTodoId: string | null;
   consecutivePomodoros: number;
+  focusMode: 'todo' | 'quick' | null;
+  focusTodoTitle: string | null;
 
   // Timer control
   startTimer: (timerType?: TimerType, todoId?: string | null) => void;
+  startFocusTimer: (durationSeconds: number, mode: 'todo' | 'quick', todoId?: string, todoTitle?: string) => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
   stopTimer: () => void;
@@ -177,6 +180,8 @@ export const usePomodoroStore = create<PomodoroState>()(
       stats: {...DEFAULT_STATS},
       connectedTodoId: null,
       consecutivePomodoros: 0,
+      focusMode: null,
+      focusTodoTitle: null,
 
       startTimer: (timerType?: TimerType, todoId?: string | null) => {
         const {settings} = get();
@@ -195,6 +200,24 @@ export const usePomodoroStore = create<PomodoroState>()(
             status: 'running',
           },
           connectedTodoId: todoId ?? get().connectedTodoId,
+        });
+      },
+
+      startFocusTimer: (durationSeconds: number, mode: 'todo' | 'quick', todoId?: string, todoTitle?: string) => {
+        set({
+          timerState: {
+            isRunning: true,
+            isPaused: false,
+            remainingTime: durationSeconds,
+            elapsed: 0,
+            progress: 0,
+            duration: durationSeconds,
+            timerType: 'POMODORO',
+            status: 'running',
+          },
+          connectedTodoId: todoId ?? null,
+          focusMode: mode,
+          focusTodoTitle: todoTitle ?? null,
         });
       },
 
@@ -240,6 +263,8 @@ export const usePomodoroStore = create<PomodoroState>()(
         set({
           timerState: {...DEFAULT_TIMER},
           connectedTodoId: null,
+          focusMode: null,
+          focusTodoTitle: null,
         });
       },
 
@@ -297,6 +322,8 @@ export const usePomodoroStore = create<PomodoroState>()(
             ...DEFAULT_TIMER,
             status: 'completed',
           },
+          focusMode: null,
+          focusTodoTitle: null,
         });
 
         // 자동 시작
@@ -336,6 +363,10 @@ export const usePomodoroStore = create<PomodoroState>()(
         sessions: state.sessions,
         stats: state.stats,
         consecutivePomodoros: state.consecutivePomodoros,
+        timerState: state.timerState,
+        connectedTodoId: state.connectedTodoId,
+        focusMode: state.focusMode,
+        focusTodoTitle: state.focusTodoTitle,
       }),
     },
   ),

@@ -2,6 +2,9 @@
  * FocusTimerScreen — 풀스크린 카운트다운 타이머
  * 할일 집중 / 빠른 집중 모드 공통 사용
  * 배경 그라데이션 + 큰 타이머 링 + 컨트롤 버튼
+ *
+ * params가 있으면 → 새 세션 시작 (startFocusTimer)
+ * params가 없으면 → 기존 세션 이어감 (store의 timerState 사용)
  */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
@@ -39,9 +42,7 @@ import {useTodoStore} from '@/stores/todoStore';
 // ============================================
 
 const MINT = '#14B8A6';
-const MINT_DARK = '#0D9488';
 const VIOLET = '#8B5CF6';
-const VIOLET_DARK = '#7C3AED';
 
 type FocusTimerParams = {
   mode: 'todo' | 'quick';
@@ -49,8 +50,6 @@ type FocusTimerParams = {
   todoTitle?: string;
   durationSeconds: number;
 };
-
-type TimerStatus = 'ready' | 'running' | 'paused' | 'completed';
 
 // ============================================
 // Celebration Overlay
@@ -133,32 +132,59 @@ export default function FocusTimerScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const haptic = useHaptic();
-  const params = route.params as FocusTimerParams;
+  const params = route.params as FocusTimerParams | undefined;
 
-  const {mode, todoId, todoTitle, durationSeconds} = params;
-  const isTodo = mode === 'todo';
+  // pomodoroStore 구독
+  const {
+    timerState,
+    focusMode,
+    focusTodoTitle,
+    connectedTodoId,
+    tick,
+    pauseTimer,
+    resumeTimer,
+    stopTimer,
+    startFocusTimer,
+    completeSession,
+  } = usePomodoroStore();
+  const {toggleTodoCompletion} = useTodoStore();
+
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [showNotePrompt, setShowNotePrompt] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const initializedRef = useRef(false);
+
+  // 새 세션 시작 또는 기존 세션 이어감
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    if (params?.durationSeconds) {
+      // params가 있으면 → 새 세션 시작
+      startFocusTimer(
+        params.durationSeconds,
+        params.mode,
+        params.todoId,
+        params.todoTitle,
+      );
+      haptic.medium();
+    }
+    // params가 없으면 → 기존 세션 이어감 (store 상태 그대로 사용)
+  }, []);
+
+  // 현재 모드/색상은 store에서 가져옴
+  const isTodo = focusMode === 'todo';
   const activeColor = isTodo ? MINT : VIOLET;
   const gradientColors = isTodo
     ? ['#CCFBF1', '#F0FDFA', '#FFFFFF']
     : ['#EDE9FE', '#F5F3FF', '#FFFFFF'];
 
-  // Timer state
-  const [status, setStatus] = useState<TimerStatus>('ready');
-  const [remainingTime, setRemainingTime] = useState(durationSeconds);
-  const [elapsed, setElapsed] = useState(0);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [showNotePrompt, setShowNotePrompt] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const {completeSession, startTimer: pomodoroStart} = usePomodoroStore();
-  const {toggleTodoCompletion} = useTodoStore();
-
-  const progress = durationSeconds > 0 ? elapsed / durationSeconds : 0;
+  const displayTitle = isTodo && focusTodoTitle ? focusTodoTitle : '집중 중...';
 
   // 호흡 애니메이션 (실행 중)
   const breathScale = useSharedValue(1);
   useEffect(() => {
-    if (status === 'running') {
+    if (timerState.isRunning) {
       breathScale.value = withRepeat(
         withTiming(1.03, {duration: 2000, easing: Easing.inOut(Easing.ease)}),
         -1,
@@ -167,29 +193,17 @@ export default function FocusTimerScreen() {
     } else {
       breathScale.value = withTiming(1, {duration: 300});
     }
-  }, [status, breathScale]);
+  }, [timerState.isRunning, breathScale]);
 
   const breathStyle = useAnimatedStyle(() => ({
     transform: [{scale: breathScale.value}],
   }));
 
-  // 자동 시작
+  // tick 인터벌 — store의 isRunning 감시
   useEffect(() => {
-    startFocus();
-  }, []);
-
-  // 타이머 인터벌
-  useEffect(() => {
-    if (status === 'running') {
+    if (timerState.isRunning) {
       intervalRef.current = setInterval(() => {
-        setRemainingTime(prev => {
-          if (prev <= 1) {
-            handleComplete();
-            return 0;
-          }
-          return prev - 1;
-        });
-        setElapsed(prev => prev + 1);
+        tick();
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -200,99 +214,74 @@ export default function FocusTimerScreen() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [status]);
+  }, [timerState.isRunning, tick]);
 
-  const startFocus = useCallback(() => {
-    setStatus('running');
-    haptic.medium();
-  }, [haptic]);
+  // 타이머 완료 감지
+  useEffect(() => {
+    if (timerState.status === 'completed' && timerState.remainingTime <= 0 && timerState.elapsed > 0) {
+      if (!showCelebration && !showNotePrompt) {
+        Vibration.vibrate([0, 200, 100, 200]);
+        haptic.success();
+        if (isTodo && connectedTodoId) {
+          toggleTodoCompletion(connectedTodoId);
+        }
+        setShowCelebration(true);
+      }
+    }
+  }, [timerState.status]);
 
-  const handlePause = useCallback(() => {
-    setStatus('paused');
+  // X 버튼 — 세션 유지하고 뒤로가기
+  const handleClose = useCallback(() => {
     haptic.light();
-  }, [haptic]);
-
-  const handleResume = useCallback(() => {
-    setStatus('running');
-    haptic.light();
-  }, [haptic]);
-
-  const handleComplete = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setStatus('completed');
-    Vibration.vibrate([0, 200, 100, 200]);
-    haptic.success();
-
-    // 포모도로 세션 기록
-    pomodoroStart('POMODORO', todoId);
-    // elapsed를 전체 duration으로 강제 설정하여 completeSession이 제대로 동작하도록
-    usePomodoroStore.setState(state => ({
-      timerState: {
-        ...state.timerState,
-        isRunning: false,
-        elapsed: durationSeconds,
-        remainingTime: 0,
-        progress: 1,
-        duration: durationSeconds,
-        status: 'completed',
-      },
-    }));
-    usePomodoroStore.getState().completeSession();
-
-    // 할일 집중이면 할일 완료 처리
-    if (isTodo && todoId) {
-      toggleTodoCompletion(todoId);
-      setShowCelebration(true);
-    } else {
-      // 빠른 집중이면 노트 프롬프트
-      setShowCelebration(true);
-    }
-  }, [haptic, isTodo, todoId, durationSeconds, toggleTodoCompletion, pomodoroStart]);
-
-  const handleStop = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    haptic.warning();
     navigation.goBack();
   }, [haptic, navigation]);
 
+  // 종료(⏹) 버튼 — 세션 완전 종료
+  const handleStop = useCallback(() => {
+    haptic.warning();
+    stopTimer();
+    navigation.goBack();
+  }, [haptic, stopTimer, navigation]);
+
+  // 일시정지
+  const handlePause = useCallback(() => {
+    pauseTimer();
+    haptic.light();
+  }, [pauseTimer, haptic]);
+
+  // 재개
+  const handleResume = useCallback(() => {
+    resumeTimer();
+    haptic.light();
+  }, [resumeTimer, haptic]);
+
+  // 완료(✓) 버튼 — 세션 기록 + 할일 완료
   const handleMarkComplete = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
     haptic.success();
 
-    // 세션 기록
-    if (elapsed > 0) {
-      pomodoroStart('POMODORO', todoId);
+    // store의 completeSession으로 세션 기록
+    if (timerState.elapsed > 0 || timerState.isRunning) {
+      // 먼저 타이머를 completed 상태로 설정
       usePomodoroStore.setState(state => ({
         timerState: {
           ...state.timerState,
           isRunning: false,
-          elapsed,
+          isPaused: false,
           remainingTime: 0,
           progress: 1,
-          duration: durationSeconds,
           status: 'completed',
         },
       }));
-      usePomodoroStore.getState().completeSession();
+      completeSession();
     }
 
     // 할일 완료
-    if (isTodo && todoId) {
-      toggleTodoCompletion(todoId);
+    if (isTodo && connectedTodoId) {
+      toggleTodoCompletion(connectedTodoId);
     }
 
-    setStatus('completed');
     setShowCelebration(true);
-  }, [haptic, elapsed, isTodo, todoId, durationSeconds, toggleTodoCompletion, pomodoroStart]);
+  }, [haptic, timerState.elapsed, timerState.isRunning, isTodo, connectedTodoId, toggleTodoCompletion, completeSession]);
 
   const handleCelebrationDismiss = useCallback(() => {
     setShowCelebration(false);
@@ -315,6 +304,7 @@ export default function FocusTimerScreen() {
     navigation.goBack();
   }, [navigation]);
 
+  const isRunningOrPaused = timerState.isRunning || timerState.isPaused;
   const RING_SIZE = 280;
 
   return (
@@ -323,10 +313,10 @@ export default function FocusTimerScreen() {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}>
-          {/* 닫기 버튼 */}
+          {/* 닫기(X) 버튼 — 세션 유지 */}
           <Animated.View entering={FadeIn.duration(300)} style={styles.topBar}>
             <AnimatedPressable
-              onPress={handleStop}
+              onPress={handleClose}
               hapticType="light"
               style={styles.closeBtn}>
               <Text style={styles.closeBtnText}>✕</Text>
@@ -336,7 +326,7 @@ export default function FocusTimerScreen() {
           {/* 할일 이름 또는 "집중 중..." */}
           <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.titleArea}>
             <Text style={styles.focusTitle} numberOfLines={2}>
-              {isTodo && todoTitle ? todoTitle : '집중 중...'}
+              {displayTitle}
             </Text>
           </Animated.View>
 
@@ -344,22 +334,22 @@ export default function FocusTimerScreen() {
           <View style={styles.ringContainer}>
             <Animated.View style={breathStyle}>
               <TimerRing
-                progress={progress}
+                progress={timerState.progress}
                 size={RING_SIZE}
                 strokeWidth={10}
                 color={activeColor}
-                isRunning={status === 'running'}
+                isRunning={timerState.isRunning}
               />
               <View style={[styles.centerOverlay, {width: RING_SIZE, height: RING_SIZE}]}>
                 <Text style={styles.timeDisplay}>
-                  {formatTime(remainingTime)}
+                  {formatTime(timerState.remainingTime)}
                 </Text>
-                {status === 'running' && (
+                {timerState.isRunning && (
                   <Text style={styles.elapsedLabel}>
-                    {formatTime(elapsed)} 경과
+                    {formatTime(timerState.elapsed)} 경과
                   </Text>
                 )}
-                {status === 'paused' && (
+                {timerState.isPaused && (
                   <Text style={[styles.elapsedLabel, {color: '#F59E0B'}]}>
                     일시정지
                   </Text>
@@ -369,10 +359,10 @@ export default function FocusTimerScreen() {
           </View>
 
           {/* 컨트롤 버튼 */}
-          {status !== 'completed' && !showNotePrompt && (
+          {isRunningOrPaused && !showNotePrompt && (
             <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.controls}>
               <View style={styles.controlRow}>
-                {/* 종료 */}
+                {/* 종료(⏹) — 세션 완전 종료 */}
                 <AnimatedPressable
                   onPress={handleStop}
                   hapticType="medium"
@@ -383,7 +373,7 @@ export default function FocusTimerScreen() {
                 </AnimatedPressable>
 
                 {/* 재생/일시정지 */}
-                {status === 'running' ? (
+                {timerState.isRunning ? (
                   <AnimatedPressable
                     onPress={handlePause}
                     hapticType="light"
@@ -401,7 +391,7 @@ export default function FocusTimerScreen() {
                   </AnimatedPressable>
                 )}
 
-                {/* 완료 */}
+                {/* 완료(✓) — 세션 기록 + 할일 완료 */}
                 <AnimatedPressable
                   onPress={handleMarkComplete}
                   hapticType="medium"

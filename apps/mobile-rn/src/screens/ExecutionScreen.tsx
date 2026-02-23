@@ -14,11 +14,12 @@ import Animated, {
   Easing,
   interpolateColor,
 } from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useIsFocused} from '@react-navigation/native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTodoStore} from '@/stores/todoStore';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
+import {resolveTodoIcon} from '@/lib/iconMap';
 import {useTheme} from '@/theme';
 import type {Todo} from '@daystep/shared-core';
 
@@ -118,7 +119,7 @@ function SegmentControl({
 }
 
 // ============================================
-// Todo List Item (Radio)
+// Todo List Item (Radio) — Fix 2: Lucide 아이콘 렌더링
 // ============================================
 
 function TodoRadioItem({
@@ -143,9 +144,13 @@ function TodoRadioItem({
         {selected && <View style={styles.radioInner} />}
       </View>
       <View style={styles.todoContent}>
-        <Text style={styles.todoTitle} numberOfLines={1}>
-          {todo.icon ? `${todo.icon} ` : ''}{todo.title}
-        </Text>
+        <View style={styles.todoTitleRow}>
+          {(() => {
+            const Icon = resolveTodoIcon(todo.icon);
+            return Icon ? <Icon size={16} color="#6B7280" style={{marginRight: 6}} /> : null;
+          })()}
+          <Text style={styles.todoTitle} numberOfLines={1}>{todo.title}</Text>
+        </View>
         <Text style={styles.todoDuration}>{formatDurationLabel(duration)}</Text>
       </View>
     </AnimatedPressable>
@@ -185,7 +190,12 @@ function StatsBar() {
 
 export default function ExecutionScreen() {
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
+
+  // pomodoroStore에서 활성 세션 구독
+  const {timerState, focusMode, focusTodoTitle, connectedTodoId, tick} = usePomodoroStore();
+  const hasActiveSession = timerState.isRunning || timerState.isPaused;
 
   const [mode, setMode] = useState<FocusMode>('todo');
   const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null);
@@ -194,6 +204,15 @@ export default function ExecutionScreen() {
   useEffect(() => {
     fetchTodosForDate(selectedDate);
   }, [selectedDate, fetchTodosForDate]);
+
+  // 활성 세션이 있을 때 tick 인터벌 실행 (FocusTimer가 닫혀있을 때만 — 이중 틱 방지)
+  useEffect(() => {
+    if (!timerState.isRunning || !isFocused) return;
+    const interval = setInterval(() => {
+      tick();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerState.isRunning, isFocused, tick]);
 
   // 미완료 할일만
   const incompleteTodos = useMemo(
@@ -241,6 +260,14 @@ export default function ExecutionScreen() {
     }
   }, [mode, selectedTodo, navigation]);
 
+  // 활성 세션 재진입 (params 없이 — 기존 세션 이어감)
+  const handleResumeSession = useCallback(() => {
+    navigation.navigate('FocusTimer');
+  }, [navigation]);
+
+  // 활성 세션 색상
+  const sessionColor = focusMode === 'todo' ? MINT : VIOLET;
+
   return (
     <ScreenContainer gradient="executionBackground">
       {/* 헤더 */}
@@ -248,31 +275,69 @@ export default function ExecutionScreen() {
         <Text style={styles.headerTitle}>⏱ 실행</Text>
       </Animated.View>
 
-      {/* 타이머 링 (idle) */}
+      {/* 타이머 링 영역 — Fix 1: 래퍼로 중앙정렬 + Fix 5: 활성 세션 표시 */}
       <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.ringArea}>
-        <TimerRing
-          progress={0}
-          size={180}
-          strokeWidth={8}
-          color={activeColor}
-          isRunning={false}
-        />
-        <View style={[styles.ringOverlay, {width: 180, height: 180}]}>
-          <Text style={styles.ringTime}>{formatTime(displayDuration)}</Text>
-          <Text style={[styles.ringLabel, {color: activeColor}]}>
-            {mode === 'todo' ? '준비' : '자유 모드'}
-          </Text>
-        </View>
+        {hasActiveSession ? (
+          /* 활성 세션이 있을 때 — 진행 중 상태 표시 + 탭으로 재진입 */
+          <AnimatedPressable onPress={handleResumeSession} hapticType="light" scaleValue={0.97}>
+            <View style={{width: 180, height: 180}}>
+              <TimerRing
+                progress={timerState.progress}
+                size={180}
+                strokeWidth={8}
+                color={sessionColor}
+                isRunning={timerState.isRunning}
+              />
+              <View style={styles.ringOverlay}>
+                <Text style={styles.ringTime}>{formatTime(timerState.remainingTime)}</Text>
+                <Text style={[styles.ringLabel, {color: sessionColor}]}>
+                  {timerState.isPaused ? '일시정지' : '진행 중'}
+                </Text>
+                {focusTodoTitle && (
+                  <Text style={styles.ringSubLabel} numberOfLines={1}>
+                    {focusTodoTitle}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </AnimatedPressable>
+        ) : (
+          /* idle 상태 */
+          <View style={{width: 180, height: 180}}>
+            <TimerRing
+              progress={0}
+              size={180}
+              strokeWidth={8}
+              color={activeColor}
+              isRunning={false}
+            />
+            <View style={styles.ringOverlay}>
+              <Text style={styles.ringTime}>{formatTime(displayDuration)}</Text>
+              <Text style={[styles.ringLabel, {color: activeColor}]}>
+                {mode === 'todo' ? '준비' : '자유 모드'}
+              </Text>
+            </View>
+          </View>
+        )}
       </Animated.View>
 
-      {/* 세그먼트 컨트롤 */}
-      <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.segmentWrapper}>
-        <SegmentControl mode={mode} onChangeMode={setMode} />
-      </Animated.View>
+      {/* 세그먼트 컨트롤 — 활성 세션이 없을 때만 */}
+      {!hasActiveSession && (
+        <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.segmentWrapper}>
+          <SegmentControl mode={mode} onChangeMode={setMode} />
+        </Animated.View>
+      )}
 
       {/* 모드별 콘텐츠 */}
       <View style={styles.contentArea}>
-        {mode === 'todo' ? (
+        {hasActiveSession ? (
+          /* 활성 세션이 있을 때 — 재진입 안내 */
+          <Animated.View entering={FadeIn.duration(250)} style={styles.activeSessionContainer}>
+            <Text style={styles.activeSessionText}>
+              집중 세션이 진행 중이에요.{'\n'}타이머를 탭하면 돌아갈 수 있어요.
+            </Text>
+          </Animated.View>
+        ) : mode === 'todo' ? (
           <Animated.View entering={FadeIn.duration(250)} style={styles.todoModeContainer}>
             {incompleteTodos.length === 0 ? (
               <View style={styles.emptyTodoContainer}>
@@ -327,7 +392,7 @@ export default function ExecutionScreen() {
         )}
       </View>
 
-      {/* 통계 바 */}
+      {/* 통계 바 — Fix 3: paddingBottom 증가 */}
       <StatsBar />
     </ScreenContainer>
   );
@@ -350,17 +415,20 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
 
-  // Timer Ring
+  // Timer Ring — Fix 1: ringOverlay에서 absoluteFillObject 제거
   ringArea: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
   },
   ringOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'absolute',
   },
   ringTime: {
     fontSize: 36,
@@ -372,6 +440,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     marginTop: 2,
+  },
+  ringSubLabel: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 2,
+    maxWidth: 120,
+    textAlign: 'center',
   },
 
   // Segment Control
@@ -413,6 +488,20 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
     paddingHorizontal: 24,
+  },
+
+  // Active session
+  activeSessionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 24,
+  },
+  activeSessionText: {
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 
   // Todo mode
@@ -465,12 +554,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  todoTitleRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
   todoTitle: {
     flex: 1,
     fontSize: 15,
     fontWeight: '500',
     color: '#1F2937',
-    marginRight: 8,
   },
   todoDuration: {
     fontSize: 13,
@@ -525,13 +619,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Stats bar
+  // Stats bar — Fix 3: paddingBottom 70
   statsBar: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingBottom: 20,
+    paddingBottom: 70,
     gap: 20,
   },
   statItem: {
