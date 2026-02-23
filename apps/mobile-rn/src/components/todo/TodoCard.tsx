@@ -70,7 +70,8 @@ export function TodoCard({
     transform: [{scale: checkScale.value}],
   }));
 
-  const timeStr = todo.start_time
+  const isAnytime = todo.schedule_type === 'anytime' || !todo.start_time;
+  const timeStr = (!isAnytime && todo.start_time)
     ? format(new Date(todo.start_time), 'HH:mm') +
       (todo.end_time ? ` ~ ${format(new Date(todo.end_time), 'HH:mm')}` : '')
     : null;
@@ -91,7 +92,7 @@ export function TodoCard({
   const isSkipped = !!(todo as any).skip_status;
   const skipReason = (todo as any).skip_status as string | undefined;
   const isMissed =
-    timeStatus.status === 'missed' && !todo.completed && !isSkipped;
+    !isAnytime && timeStatus.status === 'missed' && !todo.completed && !isSkipped;
 
   const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
 
