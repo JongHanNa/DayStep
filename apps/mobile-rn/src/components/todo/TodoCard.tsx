@@ -2,8 +2,8 @@
  * TodoCard
  * 할일 카드 — 애니메이션 체크박스 + 우선순위 표시 + 종료시간 초과 프롬프트
  */
-import React, {useCallback, useMemo} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import React, {useCallback, useMemo, useState} from 'react';
+import {View, Text, StyleSheet, Pressable} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,6 +24,12 @@ import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
 import {MissedTodoActionPanel} from './MissedTodoActionPanel';
 import {Play} from 'lucide-react-native';
 
+interface LinkedFuel {
+  id: string;
+  title: string;
+  content: string;
+}
+
 interface TodoCardProps {
   todo: Todo;
   index?: number;
@@ -32,6 +38,7 @@ interface TodoCardProps {
   onFocus?: (todo: Todo) => void;
   onSkipTodo?: (id: string, reason: 'not_needed' | 'missed') => void;
   onPostpone?: (todo: Todo) => void;
+  linkedFuels?: LinkedFuel[];
 }
 
 export function TodoCard({
@@ -42,6 +49,7 @@ export function TodoCard({
   onFocus,
   onSkipTodo,
   onPostpone,
+  linkedFuels,
 }: TodoCardProps) {
   const haptic = useHaptic();
   const {primaryColor} = useTheme();
@@ -81,8 +89,11 @@ export function TodoCard({
   );
 
   const isSkipped = !!(todo as any).skip_status;
+  const skipReason = (todo as any).skip_status as string | undefined;
   const isMissed =
     timeStatus.status === 'missed' && !todo.completed && !isSkipped;
+
+  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
 
   return (
     <Animated.View
@@ -95,6 +106,7 @@ export function TodoCard({
         style={[
           styles.container,
           todo.completed && styles.containerCompleted,
+          isSkipped && styles.containerSkipped,
           isMissed && styles.containerMissed,
         ]}>
         {/* 우선순위 인디케이터 */}
@@ -149,6 +161,7 @@ export function TodoCard({
               style={[
                 styles.title,
                 todo.completed && styles.titleCompleted,
+                isSkipped && styles.titleSkipped,
               ]}
               numberOfLines={2}>
               {todo.title}
@@ -167,7 +180,63 @@ export function TodoCard({
                 <Text style={styles.tagText}>⏱ {todo.anytime_duration}분</Text>
               </View>
             )}
+            {/* skip 상태 배지 */}
+            {isSkipped && (
+              <View style={[
+                styles.tag,
+                skipReason === 'missed' ? styles.skipTagMissed : styles.skipTagNotNeeded,
+              ]}>
+                <Text style={[
+                  styles.tagText,
+                  skipReason === 'missed' ? styles.skipTagMissedText : styles.skipTagNotNeededText,
+                ]}>
+                  {skipReason === 'missed' ? '놓침' : '필요없었음'}
+                </Text>
+              </View>
+            )}
           </View>
+
+          {/* 진행률 바 + 남은 시간 */}
+          {timeStatus.status === 'in_progress' && (
+            <View style={styles.progressSection}>
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {width: `${timeStatus.progressPercent ?? 0}%`},
+                  ]}
+                />
+              </View>
+              {timeStatusText.secondary && (
+                <Text style={styles.remainingText}>{timeStatusText.secondary}</Text>
+              )}
+            </View>
+          )}
+
+          {/* 연결된 원동력(fuel) 배지 */}
+          {linkedFuels && linkedFuels.length > 0 && (
+            <View style={styles.fuelRow}>
+              {linkedFuels.map(fuel => {
+                const text = fuel.title && fuel.content
+                  ? `${fuel.title} - ${fuel.content}`
+                  : fuel.title || fuel.content;
+                const isExpanded = expandedFuelId === fuel.id;
+                return (
+                  <Pressable
+                    key={fuel.id}
+                    onPress={() => setExpandedFuelId(isExpanded ? null : fuel.id)}
+                    style={styles.fuelBadge}>
+                    <Text style={styles.fuelIcon}>⚡</Text>
+                    <Text
+                      style={styles.fuelText}
+                      numberOfLines={isExpanded ? undefined : 1}>
+                      {text}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
           {/* 종료시간 초과 액션 패널 */}
           {isMissed && (
@@ -301,6 +370,65 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     color: '#6B7280',
+  },
+  containerSkipped: {
+    opacity: 0.6,
+  },
+  titleSkipped: {
+    textDecorationLine: 'line-through',
+    color: '#9CA3AF',
+  },
+  skipTagMissed: {
+    backgroundColor: '#FEE2E2',
+  },
+  skipTagMissedText: {
+    color: '#DC2626',
+  },
+  skipTagNotNeeded: {
+    backgroundColor: '#F3F4F6',
+  },
+  skipTagNotNeededText: {
+    color: '#6B7280',
+  },
+  progressSection: {
+    marginTop: 6,
+  },
+  progressBarBg: {
+    height: 4,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#3B82F6',
+    borderRadius: 2,
+  },
+  remainingText: {
+    fontSize: 10,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  fuelRow: {
+    marginTop: 6,
+    gap: 4,
+  },
+  fuelBadge: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(249, 115, 22, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    gap: 2,
+  },
+  fuelIcon: {
+    fontSize: 11,
+  },
+  fuelText: {
+    fontSize: 11,
+    color: '#EA580C',
+    flex: 1,
   },
   focusBtn: {
     width: 28,

@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
-import { CheckCircle2, Circle, MinusCircle, XCircle, Repeat, Clock, Play, X, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Circle, MinusCircle, XCircle, Repeat, Clock, Play, X, RotateCcw, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { MissedTodoActionPanel } from '@/components/shared/MissedTodoActionPanel';
 import type { Todo } from '@/entities/todo/Todo';
@@ -21,6 +21,12 @@ const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null 
   return iconData?.component || null;
 };
 
+interface LinkedFuel {
+  id: string;
+  title: string;
+  content: string;
+}
+
 interface DraggableTodoChipProps {
   todo: Todo;
   showTime?: boolean;
@@ -28,6 +34,9 @@ interface DraggableTodoChipProps {
   projectMap?: Map<string, ProjectMapValue>;
   departmentMap?: Map<string, DepartmentMapValue>;
   highlightProjectId?: string | null;
+  linkedFuels?: LinkedFuel[];
+  expandedFuelId?: string | null;
+  onExpandFuel?: (id: string | null) => void;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -38,7 +47,7 @@ interface DraggableTodoChipProps {
   onUnassign?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, projectMap, departmentMap, highlightProjectId, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, projectMap, departmentMap, highlightProjectId, linkedFuels, expandedFuelId, onExpandFuel, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const hasSubtasks = useTodoStore(s => s.hasSubtasks);
   const getSubtaskProgress = useTodoStore(s => s.getSubtaskProgress);
@@ -263,6 +272,48 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
                   {departmentInfo.name}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* 진행률 바 */}
+          {timeStatus?.status === 'in_progress' && (
+            <div className="ml-7 mt-1">
+              <div className="h-1 bg-base-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: `${timeStatus.progressPercent}%` }}
+                />
+              </div>
+              {timeStatusText?.secondary && (
+                <span className="text-[10px] text-base-content/50">{timeStatusText.secondary}</span>
+              )}
+            </div>
+          )}
+
+          {/* 연결된 원동력(fuel) 배지 */}
+          {linkedFuels && linkedFuels.length > 0 && (
+            <div className="flex flex-col gap-0.5 ml-7 mt-1 overflow-hidden">
+              {linkedFuels.map(fuel => {
+                const text = fuel.title && fuel.content
+                  ? `${fuel.title} - ${fuel.content}`
+                  : fuel.title || fuel.content;
+                const isExpanded = expandedFuelId === fuel.id;
+
+                return (
+                  <div
+                    key={fuel.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onExpandFuel?.(isExpanded ? null : fuel.id);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className="inline-flex items-start gap-0.5 px-2 py-0.5 rounded-full text-xs bg-orange-500/20 text-orange-600 dark:text-orange-400 cursor-pointer hover:bg-orange-500/30 transition-all"
+                  >
+                    <Zap className={`w-3 h-3 flex-shrink-0 ${isExpanded ? 'mt-0.5' : ''}`} />
+                    <span className={isExpanded ? '' : 'line-clamp-1'}>{text}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

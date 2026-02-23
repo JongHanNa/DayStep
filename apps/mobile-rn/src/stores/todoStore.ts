@@ -44,11 +44,18 @@ interface TodoCompletion {
 
 type PostponeAction = 'reschedule' | 'anytime' | 'start_now';
 
+interface LinkedFuel {
+  id: string;
+  title: string;
+  content: string;
+}
+
 interface TodoState {
   // 데이터
   todos: Todo[];
   completions: TodoCompletion[]; // 반복할일 날짜별 완료 기록
   selectedDate: string; // ISO date string (YYYY-MM-DD)
+  fuelMap: Record<string, LinkedFuel[]>; // todoId → linked fuels
 
   // 로딩 상태
   loading: boolean;
@@ -59,6 +66,7 @@ interface TodoState {
 
   // 액션
   fetchTodosForDate: (date: string) => Promise<void>;
+  fetchFuelsForTodos: (todoIds: string[]) => Promise<void>;
   fetchAllTodos: (userId: string, days?: number) => Promise<Todo[]>;
   createTodo: (input: CreateTodoInput) => Promise<Todo | null>;
   updateTodo: (id: string, updates: Partial<Todo>) => Promise<boolean>;
@@ -114,6 +122,7 @@ export const useTodoStore = create<TodoState>()(
       todos: [],
       completions: [],
       selectedDate: format(new Date(), 'yyyy-MM-dd'),
+      fuelMap: {},
       loading: false,
       error: null,
       offlineQueue: [],
@@ -173,12 +182,25 @@ export const useTodoStore = create<TodoState>()(
               .in('parent_todo_id', recurringIds);
 
             if (exclusions && exclusions.length > 0) {
+              // deleted/postponed → 목록에서 제거
               const excludedIds = new Set(
                 exclusions
                   .filter(e => e.exclusion_reason === 'deleted' || e.exclusion_reason === 'postponed')
                   .map(e => e.parent_todo_id),
               );
               filteredData = filteredData.filter(t => !excludedIds.has(t.id));
+
+              // not_needed/missed → skip_status 적용 (제거 안 함, 배지로 표시)
+              const skipMap = new Map<string, string>();
+              exclusions
+                .filter(e => e.exclusion_reason === 'not_needed' || e.exclusion_reason === 'missed')
+                .forEach(e => skipMap.set(e.parent_todo_id, e.exclusion_reason));
+
+              if (skipMap.size > 0) {
+                filteredData = filteredData.map(t =>
+                  skipMap.has(t.id) ? {...t, skip_status: skipMap.get(t.id)} : t,
+                );
+              }
             }
           }
 
@@ -209,8 +231,34 @@ export const useTodoStore = create<TodoState>()(
             return t;
           });
 
+          // 반복할일 시간 정규화: 원본 시간대(hour:min)를 조회 날짜에 맞춤
+          const normalizedData = enrichedData.map(t => {
+            const isRecurring = t.recurrence_pattern && t.recurrence_pattern !== 'none';
+            if (!isRecurring || !t.start_time) return t;
+
+            const originalStart = new Date(t.start_time);
+            const viewDate = new Date(date + 'T00:00:00');
+
+            const normalizedStart = new Date(viewDate);
+            normalizedStart.setHours(originalStart.getHours(), originalStart.getMinutes(), originalStart.getSeconds());
+
+            let normalizedEnd: string | null = null;
+            if (t.end_time) {
+              const originalEnd = new Date(t.end_time);
+              const endDate = new Date(viewDate);
+              endDate.setHours(originalEnd.getHours(), originalEnd.getMinutes(), originalEnd.getSeconds());
+              normalizedEnd = endDate.toISOString();
+            }
+
+            return {
+              ...t,
+              start_time: normalizedStart.toISOString(),
+              end_time: normalizedEnd,
+            };
+          });
+
           set({
-            todos: enrichedData.map(parseTodo),
+            todos: normalizedData.map(parseTodo),
             completions: completionData,
             selectedDate: date,
           });
@@ -711,6 +759,57 @@ export const useTodoStore = create<TodoState>()(
         }
       },
 
+      fetchFuelsForTodos: async (todoIds: string[]) => {
+        if (todoIds.length === 0) {
+          set({fuelMap: {}});
+          return;
+        }
+        try {
+          // 1. todo_notes에서 fuel 카테고리 노트 링크 조회
+          const {data: links, error: linkErr} = await supabase
+            .from('todo_notes')
+            .select('todo_id, note_id')
+            .in('todo_id', todoIds);
+
+          if (linkErr || !links || links.length === 0) {
+            set({fuelMap: {}});
+            return;
+          }
+
+          // 2. 연결된 노트 ID로 fuel 노트만 조회
+          const noteIds = [...new Set(links.map((l: any) => l.note_id))];
+          const {data: notes, error: noteErr} = await supabase
+            .from('notes')
+            .select('id, title, content, note_category')
+            .in('id', noteIds)
+            .eq('note_category', 'fuel');
+
+          if (noteErr || !notes || notes.length === 0) {
+            set({fuelMap: {}});
+            return;
+          }
+
+          // 3. todoId → fuel notes 매핑 구성
+          const fuelNoteMap = new Map(notes.map((n: any) => [n.id, n]));
+          const map: Record<string, LinkedFuel[]> = {};
+
+          for (const link of links) {
+            const note = fuelNoteMap.get(link.note_id);
+            if (!note) continue;
+            if (!map[link.todo_id]) map[link.todo_id] = [];
+            map[link.todo_id].push({
+              id: note.id,
+              title: note.title || '',
+              content: note.content || '',
+            });
+          }
+
+          set({fuelMap: map});
+        } catch (err) {
+          console.error('[TodoStore] fetchFuelsForTodos error:', err);
+        }
+      },
+
       clearError: () => set({error: null}),
     }),
     {
@@ -720,6 +819,7 @@ export const useTodoStore = create<TodoState>()(
         todos: state.todos,
         completions: state.completions,
         selectedDate: state.selectedDate,
+        fuelMap: state.fuelMap,
         offlineQueue: state.offlineQueue,
       }),
     },

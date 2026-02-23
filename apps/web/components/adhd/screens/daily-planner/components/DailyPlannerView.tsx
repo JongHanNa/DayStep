@@ -36,12 +36,15 @@ import { ProjectSummaryBar } from './ProjectSummaryBar';
 import RecurringUpdateDialog from '@/components/todos/RecurringUpdateDialog';
 import { useSubtaskPreload } from '@/hooks/useSubtaskPreload';
 import type { Todo } from '@/entities/todo/Todo';
+import type { Note } from '@/types/domain';
 import type { TimelineItem } from '../../timeline/types';
 
 interface DailyPlannerViewProps {
   userId: string;
   date: Date;
   timelineItems: TimelineItem[];
+  showFuelBadges?: boolean;
+  getLinkedFuels?: (item: TimelineItem) => Note[];
   onEditClick?: (item: TimelineItem) => void;
   onToggleComplete?: (item: TimelineItem) => void;
   onUnskipTodo?: (item: TimelineItem) => void;
@@ -51,7 +54,7 @@ interface DailyPlannerViewProps {
   onAddTodo?: (prefillStart?: Date, prefillEnd?: Date, mode?: 'detailed' | 'new') => void;
 }
 
-export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onRestoreOriginal, onAddTodo }: DailyPlannerViewProps) {
+export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, getLinkedFuels, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onRestoreOriginal, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
   const updateRecurringTodo = useTodoStore(s => s.updateRecurringTodo);
   const todos = useTodoStore(s => s.todos);
@@ -79,6 +82,21 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
 
   // 프로젝트 하이라이트 필터 상태
   const [highlightProjectId, setHighlightProjectId] = useState<string | null>(null);
+  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
+
+  // todoId → linked fuels 매핑
+  const todoFuelMap = useMemo(() => {
+    if (!showFuelBadges || !getLinkedFuels) return {};
+    const map: Record<string, { id: string; title: string; content: string }[]> = {};
+    for (const item of timelineItems) {
+      const fuels = getLinkedFuels(item);
+      if (fuels.length > 0) {
+        map[item.id] = fuels.map(f => ({ id: f.id, title: f.title, content: f.content }));
+      }
+    }
+    return map;
+  }, [showFuelBadges, getLinkedFuels, timelineItems]);
+
   const focusSession = useFocusSession(todayTodos);
 
   // 칩에서 포커스 시작
@@ -494,6 +512,9 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         projectMap={projectMap}
         departmentMap={departmentMap}
         highlightProjectId={highlightProjectId}
+        todoFuelMap={todoFuelMap}
+        expandedFuelId={expandedFuelId}
+        onExpandFuel={setExpandedFuelId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
@@ -516,6 +537,9 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         projectMap={projectMap}
         departmentMap={departmentMap}
         highlightProjectId={highlightProjectId}
+        todoFuelMap={todoFuelMap}
+        expandedFuelId={expandedFuelId}
+        onExpandFuel={setExpandedFuelId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
@@ -529,6 +553,9 @@ export function DailyPlannerView({ userId, date, timelineItems, onEditClick, onT
         projectMap={projectMap}
         departmentMap={departmentMap}
         highlightProjectId={highlightProjectId}
+        todoFuelMap={todoFuelMap}
+        expandedFuelId={expandedFuelId}
+        onExpandFuel={setExpandedFuelId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
