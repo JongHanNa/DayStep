@@ -1,228 +1,180 @@
 /**
- * ADHD Execution Mode Screen
- * 단일 작업 집중 — 스마트 추천 → 완료/스킵 → 다음
- * "한 번에 하나"를 시각적으로 강조하는 ADHD 친화적 인터페이스
+ * Execute Tab — 시안 3: 통합 타이머 + 모드 토글
+ * 할일 집중 / 빠른 집중 세그먼트 컨트롤 + 타이머 링 + 통계 바
  */
-import React, {useCallback, useEffect} from 'react';
-import {Text, View, StyleSheet} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {Text, View, StyleSheet, ScrollView} from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
   FadeInUp,
-  FadeOut,
-  SlideInRight,
-  SlideOutLeft,
   useSharedValue,
   useAnimatedStyle,
-  withSequence,
-  withSpring,
-  withDelay,
   withTiming,
-  runOnJS,
+  Easing,
+  interpolateColor,
 } from 'react-native-reanimated';
-import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
-import {ScreenContainer, AnimatedPressable, AnimatedCard} from '@/components/core';
-import {useHaptic} from '@/hooks/useHaptic';
+import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTodoStore} from '@/stores/todoStore';
-import {useADHDStore} from '@/stores/adhdStore';
+import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useTheme} from '@/theme';
-import {springs} from '@/theme/animations';
-import {format} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
 
 // ============================================
-// Sub-Components
+// Constants
 // ============================================
 
-function SessionHeader({completedCount}: {completedCount: number}) {
-  return (
-    <Animated.View entering={FadeIn.duration(300)} style={styles.sessionHeader}>
-      <Text style={styles.sessionLabel}>집중 모드</Text>
-      <View style={styles.sessionBadge}>
-        <Text style={styles.sessionCount}>
-          {completedCount > 0 ? `🔥 ${completedCount}개 완료` : '🎯 시작하기'}
-        </Text>
-      </View>
-    </Animated.View>
-  );
+const MINT = '#14B8A6';
+const MINT_LIGHT = '#CCFBF1';
+const VIOLET = '#8B5CF6';
+const VIOLET_LIGHT = '#EDE9FE';
+const QUICK_FOCUS_SECONDS = 20 * 60; // 20분
+const DEFAULT_FOCUS_SECONDS = 25 * 60; // 25분
+
+type FocusMode = 'todo' | 'quick';
+
+// ============================================
+// Duration Helpers
+// ============================================
+
+function calcTodoDuration(todo: Todo): number {
+  if (todo.start_time && todo.end_time) {
+    const diff = new Date(todo.end_time).getTime() - new Date(todo.start_time).getTime();
+    return Math.max(Math.round(diff / 1000), 60); // 최소 1분
+  }
+  if ((todo as any).anytime_duration) {
+    return (todo as any).anytime_duration * 60;
+  }
+  return DEFAULT_FOCUS_SECONDS;
 }
 
-function CelebrationOverlay({count}: {count: number}) {
-  if (count <= 0) return null;
-
-  const messages = [
-    '잘했어요! 👏',
-    '좋아요! 계속 가봐요 💪',
-    '대단해요! 🌟',
-    '멋져요! 흐름을 타고 있어요 🔥',
-    '와! 진짜 잘하고 있어요 ✨',
-  ];
-  const msg = messages[Math.min(count - 1, messages.length - 1)];
-
-  return (
-    <Animated.View
-      entering={FadeInUp.duration(400).springify()}
-      exiting={FadeOut.duration(200)}
-      style={styles.celebration}>
-      <Text style={styles.celebrationText}>{msg}</Text>
-    </Animated.View>
-  );
-}
-
-function EmptyState({onEnd}: {onEnd: () => void}) {
-  return (
-    <Animated.View
-      entering={FadeInDown.duration(500)}
-      style={styles.emptyContainer}>
-      <Text style={styles.emptyEmoji}>🎉</Text>
-      <Text style={styles.emptyTitle}>모든 할일을 처리했어요!</Text>
-      <Text style={styles.emptySubtitle}>
-        대단해요. 잠시 쉬거나{'\n'}새로운 할일을 추가해보세요.
-      </Text>
-      <AnimatedPressable
-        onPress={onEnd}
-        hapticType="medium"
-        style={styles.endBtn}>
-        <Text style={styles.endBtnText}>돌아가기</Text>
-      </AnimatedPressable>
-    </Animated.View>
-  );
+function formatDurationLabel(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}시간 ${m > 0 ? `${m}분` : ''}`;
+  return `${m}분`;
 }
 
 // ============================================
-// Task Card (swipeable)
+// Segment Control
 // ============================================
 
-interface TaskCardProps {
-  todo: Todo;
-  onComplete: () => void;
-  onSkip: () => void;
-  primaryColor: string;
-}
+function SegmentControl({
+  mode,
+  onChangeMode,
+}: {
+  mode: FocusMode;
+  onChangeMode: (m: FocusMode) => void;
+}) {
+  const progress = useSharedValue(mode === 'todo' ? 0 : 1);
 
-function TaskCard({todo, onComplete, onSkip, primaryColor}: TaskCardProps) {
-  const haptic = useHaptic();
-  const translateX = useSharedValue(0);
-  const cardScale = useSharedValue(1);
-
-  const timeStr = todo.start_time
-    ? format(new Date(todo.start_time), 'HH:mm')
-    : null;
-
-  const durationStr = todo.anytime_duration
-    ? `${todo.anytime_duration}분`
-    : null;
-
-  const handleComplete = useCallback(() => {
-    haptic.success();
-    cardScale.value = withSequence(
-      withSpring(1.05, springs.bouncy),
-      withSpring(0, springs.snappy),
-    );
-    // 애니메이션 끝나고 콜백
-    setTimeout(onComplete, 300);
-  }, [onComplete, haptic, cardScale]);
-
-  const handleSkip = useCallback(() => {
-    haptic.light();
-    onSkip();
-  }, [onSkip, haptic]);
-
-  // 스와이프 제스처 (오른쪽 → 스킵)
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-20, 20])
-    .onUpdate(e => {
-      translateX.value = e.translationX;
-    })
-    .onEnd(e => {
-      if (e.translationX > 120 || e.velocityX > 800) {
-        // 오른쪽 스와이프 → 스킵
-        translateX.value = withTiming(400, {duration: 200});
-        runOnJS(handleSkip)();
-      } else if (e.translationX < -120 || e.velocityX < -800) {
-        // 왼쪽 스와이프 → 완료
-        translateX.value = withTiming(-400, {duration: 200});
-        runOnJS(handleComplete)();
-      } else {
-        translateX.value = withSpring(0, springs.snappy);
-      }
+  useEffect(() => {
+    progress.value = withTiming(mode === 'todo' ? 0 : 1, {
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
     });
+  }, [mode, progress]);
 
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {translateX: translateX.value},
-      {scale: cardScale.value},
-      {
-        rotate: `${translateX.value * 0.02}deg`,
-      },
-    ],
+  const indicatorStyle = useAnimatedStyle(() => ({
+    left: `${progress.value * 50}%` as any,
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [MINT, VIOLET],
+    ),
   }));
 
   return (
-    <Animated.View
-      entering={SlideInRight.duration(400).springify()}
-      exiting={SlideOutLeft.duration(300)}>
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.taskCard, cardAnimatedStyle]}>
-          {/* 아이콘 + 제목 */}
-          <View style={styles.taskMain}>
-            {todo.icon && (
-              <Text style={styles.taskIcon}>{todo.icon}</Text>
-            )}
-            <Text style={styles.taskTitle} numberOfLines={3}>
-              {todo.title}
-            </Text>
-          </View>
+    <View style={styles.segmentContainer}>
+      <Animated.View style={[styles.segmentIndicator, indicatorStyle]} />
+      <AnimatedPressable
+        onPress={() => onChangeMode('todo')}
+        hapticType="selection"
+        style={styles.segmentBtn}>
+        <Text
+          style={[
+            styles.segmentText,
+            mode === 'todo' && styles.segmentTextActive,
+          ]}>
+          📋 할일 집중
+        </Text>
+      </AnimatedPressable>
+      <AnimatedPressable
+        onPress={() => onChangeMode('quick')}
+        hapticType="selection"
+        style={styles.segmentBtn}>
+        <Text
+          style={[
+            styles.segmentText,
+            mode === 'quick' && styles.segmentTextActive,
+          ]}>
+          ⚡ 빠른 집중
+        </Text>
+      </AnimatedPressable>
+    </View>
+  );
+}
 
-          {/* 메타 정보 */}
-          <View style={styles.taskMeta}>
-            {timeStr && (
-              <View style={styles.metaChip}>
-                <Text style={styles.metaText}>🕐 {timeStr}</Text>
-              </View>
-            )}
-            {durationStr && (
-              <View style={styles.metaChip}>
-                <Text style={styles.metaText}>⏱ {durationStr}</Text>
-              </View>
-            )}
-            {todo.importance && (
-              <View style={[styles.metaChip, {backgroundColor: '#FEF3C7'}]}>
-                <Text style={styles.metaText}>⭐ 중요</Text>
-              </View>
-            )}
-            {todo.urgency && (
-              <View style={[styles.metaChip, {backgroundColor: '#DBEAFE'}]}>
-                <Text style={styles.metaText}>⚡ 긴급</Text>
-              </View>
-            )}
-          </View>
+// ============================================
+// Todo List Item (Radio)
+// ============================================
 
-          {/* 힌트 */}
-          <Text style={styles.swipeHint}>
-            ← 완료  |  스킵 →
-          </Text>
+function TodoRadioItem({
+  todo,
+  selected,
+  onSelect,
+  duration,
+}: {
+  todo: Todo;
+  selected: boolean;
+  onSelect: () => void;
+  duration: number;
+}) {
+  return (
+    <AnimatedPressable
+      onPress={onSelect}
+      hapticType="selection"
+      scaleValue={0.98}
+      style={[styles.todoItem, selected && styles.todoItemSelected]}>
+      <View
+        style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
+        {selected && <View style={styles.radioInner} />}
+      </View>
+      <View style={styles.todoContent}>
+        <Text style={styles.todoTitle} numberOfLines={1}>
+          {todo.icon ? `${todo.icon} ` : ''}{todo.title}
+        </Text>
+        <Text style={styles.todoDuration}>{formatDurationLabel(duration)}</Text>
+      </View>
+    </AnimatedPressable>
+  );
+}
 
-          {/* 액션 버튼 */}
-          <View style={styles.taskActions}>
-            <AnimatedPressable
-              onPress={handleComplete}
-              hapticType="medium"
-              scaleValue={0.95}
-              style={[styles.actionBtn, {backgroundColor: primaryColor}]}>
-              <Text style={styles.actionBtnText}>✓ 완료!</Text>
-            </AnimatedPressable>
-            <AnimatedPressable
-              onPress={handleSkip}
-              hapticType="light"
-              scaleValue={0.95}
-              style={styles.skipBtn}>
-              <Text style={styles.skipBtnText}>나중에 →</Text>
-            </AnimatedPressable>
-          </View>
-        </Animated.View>
-      </GestureDetector>
+// ============================================
+// Stats Bar
+// ============================================
+
+function StatsBar() {
+  const {stats} = usePomodoroStore();
+
+  return (
+    <Animated.View entering={FadeInUp.delay(400).duration(400)} style={styles.statsBar}>
+      <View style={styles.statItem}>
+        <Text style={styles.statNumber}>{stats.todaySessions}</Text>
+        <Text style={styles.statLabel}>오늘 집중</Text>
+      </View>
+      <View style={styles.statDivider} />
+      <View style={styles.statItem}>
+        <Text style={styles.statNumber}>{stats.totalFocusTime}분</Text>
+        <Text style={styles.statLabel}>총 시간</Text>
+      </View>
+      <View style={styles.statDivider} />
+      <View style={styles.statItem}>
+        <Text style={styles.statNumber}>{stats.currentStreak}</Text>
+        <Text style={styles.statLabel}>연속</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -232,145 +184,151 @@ function TaskCard({todo, onComplete, onSkip, primaryColor}: TaskCardProps) {
 // ============================================
 
 export default function ExecutionScreen() {
-  const {primaryColor} = useTheme();
   const navigation = useNavigation<any>();
-  const {todos, selectedDate, fetchTodosForDate, toggleTodoCompletion} = useTodoStore();
-  const {
-    execution,
-    isExecutionActive,
-    startExecution,
-    endExecution,
-    recommendNext,
-    markCompleted,
-    markSkipped,
-  } = useADHDStore();
+  const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
+
+  const [mode, setMode] = useState<FocusMode>('todo');
+  const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null);
 
   // 데이터 로드
   useEffect(() => {
     fetchTodosForDate(selectedDate);
-  }, [selectedDate]);
+  }, [selectedDate, fetchTodosForDate]);
 
-  // 미완료 할일만 필터
-  const incompleteTodos = todos.filter(t => !t.completed);
+  // 미완료 할일만
+  const incompleteTodos = useMemo(
+    () => todos.filter(t => !t.completed),
+    [todos],
+  );
 
-  const handleStart = useCallback(() => {
-    startExecution(incompleteTodos);
-  }, [incompleteTodos, startExecution]);
+  // 선택된 할일
+  const selectedTodo = useMemo(
+    () => incompleteTodos.find(t => t.id === selectedTodoId) ?? null,
+    [incompleteTodos, selectedTodoId],
+  );
 
-  const handleComplete = useCallback(async () => {
-    if (!execution.currentTodo) return;
-    const todoId = execution.currentTodo.id;
+  // 첫 번째 할일 자동 선택
+  useEffect(() => {
+    if (incompleteTodos.length > 0 && !selectedTodo) {
+      setSelectedTodoId(incompleteTodos[0].id);
+    }
+  }, [incompleteTodos, selectedTodo]);
 
-    // 스토어에서 완료 처리
-    await toggleTodoCompletion(todoId);
-    markCompleted(todoId);
+  // 타이머 링에 표시할 시간 (초)
+  const displayDuration = useMemo(() => {
+    if (mode === 'quick') return QUICK_FOCUS_SECONDS;
+    if (selectedTodo) return calcTodoDuration(selectedTodo);
+    return DEFAULT_FOCUS_SECONDS;
+  }, [mode, selectedTodo]);
 
-    // 다음 추천
-    const remaining = incompleteTodos.filter(t => t.id !== todoId);
-    setTimeout(() => recommendNext(remaining), 400);
-  }, [execution.currentTodo, incompleteTodos, toggleTodoCompletion, markCompleted, recommendNext]);
+  // 색상
+  const activeColor = mode === 'todo' ? MINT : VIOLET;
 
-  const handleSkip = useCallback(() => {
-    markSkipped();
-    setTimeout(() => recommendNext(incompleteTodos), 300);
-  }, [incompleteTodos, markSkipped, recommendNext]);
+  // 타이머 시작
+  const handleStartFocus = useCallback(() => {
+    if (mode === 'todo' && selectedTodo) {
+      navigation.navigate('FocusTimer', {
+        mode: 'todo',
+        todoId: selectedTodo.id,
+        todoTitle: selectedTodo.title,
+        durationSeconds: calcTodoDuration(selectedTodo),
+      });
+    } else if (mode === 'quick') {
+      navigation.navigate('FocusTimer', {
+        mode: 'quick',
+        durationSeconds: QUICK_FOCUS_SECONDS,
+      });
+    }
+  }, [mode, selectedTodo, navigation]);
 
-  // ------------------------------------------
-  // 시작 전 화면
-  // ------------------------------------------
-  if (!isExecutionActive) {
-    return (
-      <ScreenContainer gradient="executionBackground">
-        <View style={styles.startContainer}>
-          <Animated.Text
-            entering={FadeInDown.duration(500)}
-            style={styles.startEmoji}>
-            🎯
-          </Animated.Text>
-          <Animated.Text
-            entering={FadeInDown.delay(100).duration(500)}
-            style={styles.startTitle}>
-            실행 모드
-          </Animated.Text>
-          <Animated.Text
-            entering={FadeInDown.delay(200).duration(500)}
-            style={styles.startSubtitle}>
-            AI가 지금 가장 적합한 할일을 추천해드려요{'\n'}
-            한 번에 하나씩, 부담 없이 시작하세요
-          </Animated.Text>
-
-          <Animated.View entering={FadeInDown.delay(300).duration(500)}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{incompleteTodos.length}</Text>
-                <Text style={styles.statLabel}>남은 할일</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>
-                  {todos.filter(t => t.completed).length}
-                </Text>
-                <Text style={styles.statLabel}>완료</Text>
-              </View>
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(400).duration(500)} style={{gap: 12}}>
-            <AnimatedPressable
-              onPress={handleStart}
-              hapticType="medium"
-              scaleValue={0.95}
-              style={[styles.startBtn, {backgroundColor: primaryColor}]}>
-              <Text style={styles.startBtnText}>
-                {incompleteTodos.length > 0 ? '시작하기' : '할일이 없어요'}
-              </Text>
-            </AnimatedPressable>
-
-            <AnimatedPressable
-              onPress={() => navigation.navigate('Pomodoro')}
-              hapticType="light"
-              scaleValue={0.95}
-              style={styles.pomodoroBtn}>
-              <Text style={styles.pomodoroBtnText}>🍅 포모도로 타이머</Text>
-            </AnimatedPressable>
-          </Animated.View>
-        </View>
-      </ScreenContainer>
-    );
-  }
-
-  // ------------------------------------------
-  // 실행 중 화면
-  // ------------------------------------------
   return (
     <ScreenContainer gradient="executionBackground">
-      <SessionHeader completedCount={execution.completedInSession} />
+      {/* 헤더 */}
+      <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
+        <Text style={styles.headerTitle}>⏱ 실행</Text>
+      </Animated.View>
 
-      <CelebrationOverlay count={execution.completedInSession} />
+      {/* 타이머 링 (idle) */}
+      <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.ringArea}>
+        <TimerRing
+          progress={0}
+          size={180}
+          strokeWidth={8}
+          color={activeColor}
+          isRunning={false}
+        />
+        <View style={[styles.ringOverlay, {width: 180, height: 180}]}>
+          <Text style={styles.ringTime}>{formatTime(displayDuration)}</Text>
+          <Text style={[styles.ringLabel, {color: activeColor}]}>
+            {mode === 'todo' ? '준비' : '자유 모드'}
+          </Text>
+        </View>
+      </Animated.View>
 
-      <View style={styles.cardArea}>
-        {execution.currentTodo ? (
-          <TaskCard
-            key={execution.currentTodo.id}
-            todo={execution.currentTodo}
-            onComplete={handleComplete}
-            onSkip={handleSkip}
-            primaryColor={primaryColor}
-          />
+      {/* 세그먼트 컨트롤 */}
+      <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.segmentWrapper}>
+        <SegmentControl mode={mode} onChangeMode={setMode} />
+      </Animated.View>
+
+      {/* 모드별 콘텐츠 */}
+      <View style={styles.contentArea}>
+        {mode === 'todo' ? (
+          <Animated.View entering={FadeIn.duration(250)} style={styles.todoModeContainer}>
+            {incompleteTodos.length === 0 ? (
+              <View style={styles.emptyTodoContainer}>
+                <Text style={styles.emptyTodoText}>
+                  오늘 할일이 없어요.{'\n'}플래너에서 할일을 추가해보세요!
+                </Text>
+              </View>
+            ) : (
+              <ScrollView
+                style={styles.todoList}
+                contentContainerStyle={styles.todoListContent}
+                showsVerticalScrollIndicator={false}>
+                {incompleteTodos.map(todo => (
+                  <TodoRadioItem
+                    key={todo.id}
+                    todo={todo}
+                    selected={selectedTodoId === todo.id}
+                    onSelect={() => setSelectedTodoId(todo.id)}
+                    duration={calcTodoDuration(todo)}
+                  />
+                ))}
+              </ScrollView>
+            )}
+
+            <AnimatedPressable
+              onPress={handleStartFocus}
+              hapticType="medium"
+              scaleValue={0.95}
+              style={[
+                styles.startBtn,
+                {backgroundColor: MINT},
+                (!selectedTodo || incompleteTodos.length === 0) && styles.startBtnDisabled,
+              ]}
+              disabled={!selectedTodo || incompleteTodos.length === 0}>
+              <Text style={styles.startBtnText}>집중 시작</Text>
+            </AnimatedPressable>
+          </Animated.View>
         ) : (
-          <EmptyState onEnd={endExecution} />
+          <Animated.View entering={FadeIn.duration(250)} style={styles.quickModeContainer}>
+            <Text style={styles.quickDesc}>
+              할일을 정하지 않고 바로 시작해요.{'\n'}끝나면 무엇을 했는지 기록할 수 있어요.
+            </Text>
+
+            <AnimatedPressable
+              onPress={handleStartFocus}
+              hapticType="medium"
+              scaleValue={0.95}
+              style={[styles.startBtn, {backgroundColor: VIOLET}]}>
+              <Text style={styles.startBtnText}>바로 시작</Text>
+            </AnimatedPressable>
+          </Animated.View>
         )}
       </View>
 
-      {/* 하단 종료 버튼 */}
-      <Animated.View entering={FadeIn.delay(500).duration(300)} style={styles.footer}>
-        <AnimatedPressable
-          onPress={endExecution}
-          hapticType="light"
-          style={styles.exitBtn}>
-          <Text style={styles.exitBtnText}>세션 종료</Text>
-        </AnimatedPressable>
-      </Animated.View>
+      {/* 통계 바 */}
+      <StatsBar />
     </ScreenContainer>
   );
 }
@@ -380,261 +338,218 @@ export default function ExecutionScreen() {
 // ============================================
 
 const styles = StyleSheet.create({
-  // Start screen
-  startContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  // Header
+  header: {
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
-  startEmoji: {
-    fontSize: 60,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+
+  // Timer Ring
+  ringArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  ringOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+  },
+  ringTime: {
+    fontSize: 36,
+    fontWeight: '200',
+    color: '#1F2937',
+    fontVariant: ['tabular-nums'],
+  },
+  ringLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+
+  // Segment Control
+  segmentWrapper: {
+    paddingHorizontal: 24,
     marginBottom: 16,
   },
-  startTitle: {
-    fontSize: 28,
-    fontWeight: '800',
+  segmentContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    padding: 4,
+    position: 'relative',
+  },
+  segmentIndicator: {
+    position: 'absolute',
+    top: 4,
+    width: '50%',
+    height: '100%',
+    borderRadius: 12,
+    opacity: 0.15,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  segmentText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  segmentTextActive: {
     color: '#1F2937',
-    marginBottom: 8,
   },
-  startSubtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
+
+  // Content area
+  contentArea: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
-  statsRow: {
+
+  // Todo mode
+  todoModeContainer: {
+    flex: 1,
+  },
+  todoList: {
+    flex: 1,
+    marginBottom: 12,
+  },
+  todoListContent: {
+    gap: 8,
+    paddingBottom: 8,
+  },
+  todoItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+  },
+  todoItemSelected: {
+    borderColor: MINT,
+    backgroundColor: MINT_LIGHT,
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  radioOuterSelected: {
+    borderColor: MINT,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: MINT,
+  },
+  todoContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  todoTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1F2937',
+    marginRight: 8,
+  },
+  todoDuration: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#9CA3AF',
+  },
+
+  emptyTodoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyTodoText: {
+    fontSize: 15,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Quick mode
+  quickModeContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 24,
+  },
+  quickDesc: {
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+
+  // Start button
+  startBtn: {
     paddingVertical: 16,
-    paddingHorizontal: 32,
-    marginBottom: 24,
+    borderRadius: 16,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  startBtnDisabled: {
+    opacity: 0.4,
+  },
+  startBtnText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Stats bar
+  statsBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingBottom: 20,
+    gap: 20,
   },
   statItem: {
     alignItems: 'center',
-    paddingHorizontal: 16,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9CA3AF',
     marginTop: 2,
   },
   statDivider: {
     width: 1,
-    height: 32,
+    height: 28,
     backgroundColor: '#E5E7EB',
-  },
-  startBtn: {
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  startBtnText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  pomodoroBtn: {
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: '#FEF2F2',
-    alignItems: 'center',
-  },
-  pomodoroBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#DC2626',
-  },
-
-  // Session header
-  sessionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  sessionLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  sessionBadge: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  sessionCount: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#92400E',
-  },
-
-  // Celebration
-  celebration: {
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  celebrationText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#F59E0B',
-  },
-
-  // Card area
-  cardArea: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-
-  // Task card
-  taskCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 28,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 8},
-    shadowOpacity: 0.1,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  taskMain: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  taskIcon: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  taskTitle: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1F2937',
-    lineHeight: 30,
-  },
-  taskMeta: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  metaChip: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  metaText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#4B5563',
-  },
-  swipeHint: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: '#D1D5DB',
-    marginBottom: 20,
-  },
-  taskActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionBtn: {
-    flex: 2,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  actionBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  skipBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-  },
-  skipBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-
-  // Empty state
-  emptyContainer: {
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyEmoji: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  endBtn: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  endBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-
-  // Footer
-  footer: {
-    alignItems: 'center',
-    paddingBottom: 24,
-    paddingTop: 8,
-  },
-  exitBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-  },
-  exitBtnText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#9CA3AF',
   },
 });

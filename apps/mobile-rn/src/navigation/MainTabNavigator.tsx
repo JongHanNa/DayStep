@@ -2,7 +2,7 @@
  * Main Tab Navigator
  * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 설정
  * Home 탭은 HomeStack (메인 + 9개 전용 화면)
- * Execute 탭은 스택 네비게이터로 실행모드 + 포모도로 지원
+ * Execute 탭은 스택 네비게이터로 실행 랜딩 + 풀스크린 타이머
  */
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -11,7 +11,7 @@ import {CustomTabBar} from '@/components/navigation/CustomTabBar';
 import HomeScreen from '../screens/HomeScreen';
 import TodoListScreen from '../screens/TodoListScreen';
 import ExecutionScreen from '../screens/ExecutionScreen';
-import PomodoroScreen from '../screens/PomodoroScreen';
+import FocusTimerScreen from '../screens/FocusTimerScreen';
 import NotesScreen from '../screens/NotesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
@@ -34,9 +34,9 @@ function ExecuteStackNavigator() {
     <ExecuteStack.Navigator screenOptions={{headerShown: false}}>
       <ExecuteStack.Screen name="ExecutionMain" component={ExecutionScreen} />
       <ExecuteStack.Screen
-        name="Pomodoro"
-        component={PomodoroScreen}
-        options={{presentation: 'modal', animation: 'slide_from_bottom'}}
+        name="FocusTimer"
+        component={FocusTimerScreen}
+        options={{presentation: 'fullScreenModal', animation: 'fade'}}
       />
     </ExecuteStack.Navigator>
   );
