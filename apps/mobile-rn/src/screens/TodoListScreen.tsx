@@ -6,17 +6,13 @@
 import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {Text, View, SectionList, RefreshControl, StyleSheet} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {useRoute, useFocusEffect} from '@react-navigation/native';
+import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TodoCard} from '@/components/todo/TodoCard';
 import {
   TodoFormBottomSheet,
   type TodoFormBottomSheetRef,
 } from '@/components/todo/TodoFormBottomSheet';
-import {
-  FocusTimerBottomSheet,
-  type FocusTimerBottomSheetRef,
-} from '@/components/planner/FocusTimerBottomSheet';
 import {SwipeablePages, type SwipeablePagesRef} from '@/components/core/SwipeablePages';
 import {PlannerPage2} from '@/components/planner/PlannerPage2';
 import {DndProvider, useDnd} from '@/components/planner/DndContext';
@@ -84,7 +80,7 @@ function TodoListScreenInner() {
   const {primaryColor} = useTheme();
   const route = useRoute<any>();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
-  const focusTimerRef = useRef<FocusTimerBottomSheetRef>(null);
+  const navigation = useNavigation<any>();
   const pagesRef = useRef<SwipeablePagesRef>(null);
   const {dragState, setPagesRef, currentPageRef, triggerRemeasure} = useDnd();
 
@@ -169,8 +165,24 @@ function TodoListScreenInner() {
   }, []);
 
   const handleFocusTodo = useCallback((todo: Todo) => {
-    focusTimerRef.current?.open(todo);
-  }, []);
+    let durationSeconds = 25 * 60; // 기본 25분
+    if (todo.start_time && todo.end_time) {
+      const diff = new Date(todo.end_time).getTime() - new Date(todo.start_time).getTime();
+      durationSeconds = Math.max(Math.round(diff / 1000), 60);
+    } else if ((todo as any).anytime_duration) {
+      durationSeconds = (todo as any).anytime_duration * 60;
+    }
+
+    navigation.navigate('Execute', {
+      screen: 'FocusTimer',
+      params: {
+        mode: 'todo',
+        todoId: todo.id,
+        todoTitle: todo.title,
+        durationSeconds,
+      },
+    });
+  }, [navigation]);
 
   const handleAddTodo = useCallback(() => {
     formRef.current?.openCreate(selectedDate);
@@ -272,8 +284,6 @@ function TodoListScreenInner() {
       {/* 할일 폼 바텀시트 */}
       <TodoFormBottomSheet ref={formRef} />
 
-      {/* 포커스 타이머 바텀시트 */}
-      <FocusTimerBottomSheet ref={focusTimerRef} />
     </ScreenContainer>
   );
 }
