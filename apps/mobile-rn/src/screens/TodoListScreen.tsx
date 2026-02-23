@@ -27,7 +27,7 @@ import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
-import {Sunrise, Sun, Moon, ClipboardList, Inbox} from 'lucide-react-native';
+import {Sunrise, Sun, Moon, Infinity, Inbox} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
 
 type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime';
@@ -36,7 +36,7 @@ const SECTION_ICONS: Record<TimePeriod, {Icon: LucideIcon; color: string}> = {
   morning: {Icon: Sunrise, color: '#F59E0B'},
   afternoon: {Icon: Sun, color: '#F97316'},
   evening: {Icon: Moon, color: '#8B5CF6'},
-  anytime: {Icon: ClipboardList, color: '#6B7280'},
+  anytime: {Icon: Infinity, color: '#10B981'},
 };
 
 interface TodoSection {
@@ -63,10 +63,10 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   }
 
   const sections: TodoSection[] = [];
+  if (anytime.length > 0) sections.push({title: '언제든지', period: 'anytime', data: anytime});
   if (morning.length > 0) sections.push({title: '오전', period: 'morning', data: morning});
   if (afternoon.length > 0) sections.push({title: '오후', period: 'afternoon', data: afternoon});
   if (evening.length > 0) sections.push({title: '저녁', period: 'evening', data: evening});
-  if (anytime.length > 0) sections.push({title: '시간 미정', period: 'anytime', data: anytime});
 
   return sections;
 }
