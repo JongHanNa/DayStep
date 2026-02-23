@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>할일 추가 패널 UI/UX 리디자인 — 3가지 시안</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+  /* Design Tabs */
+  .design-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .design-tab {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1.5px solid #333;
+    background: #222;
+    color: #aaa;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .design-tab:hover { border-color: #555; color: #ddd; }
+  .design-tab.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+    color: #fff;
+  }
+  .design-tab .tab-label { display: block; font-size: 11px; font-weight: 400; opacity: 0.8; margin-top: 2px; }
+
+  /* iPhone Frame */
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    border-radius: 48px;
+    background: #000;
+    border: 3px solid #333;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .phone-notch {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 126px; height: 34px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 100;
+  }
+  .phone-home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: #555;
+    border-radius: 3px;
+    z-index: 100;
+  }
+
+  /* Screen */
+  .screen {
+    width: 100%;
+    height: 100%;
+    background: #121212;
+    display: none;
+    flex-direction: column;
+    position: relative;
+  }
+  .screen.active { display: flex; }
+
+  /* Common: background dimmed area */
+  .bg-area {
+    flex: 1;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 20px 16px;
+  }
+  .bg-hint {
+    color: #666;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* ==================== */
+  /* Panel base styles    */
+  /* ==================== */
+  .panel {
+    background: #1e1e1e;
+    border-radius: 20px 20px 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .title-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 500;
+    outline: none;
+    padding: 8px 0;
+  }
+  .title-input::placeholder { color: #666; }
+  .desc-input {
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 14px;
+    outline: none;
+    padding: 4px 0;
+  }
+  .desc-input::placeholder { color: #555; }
+  .save-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+  .save-btn:active { opacity: 0.7; }
+
+  /* Toolbar chips */
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: #2a2a2a;
+    color: #bbb;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid transparent;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .chip:active { transform: scale(0.95); }
+  .chip.active {
+    border-color: #667eea;
+    background: rgba(102,126,234,0.15);
+    color: #99b0ff;
+  }
+  .chip .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #667eea;
+    display: none;
+  }
+  .chip.active .dot { display: block; }
+
+  /* Keyboard mockup */
+  .keyboard {
+    background: #2c2c2e;
+    padding: 8px 4px;
+    flex-shrink: 0;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+  .keyboard.hidden {
+    height: 0 !important;
+    padding: 0;
+    opacity: 0;
+  }
+  .kb-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+  .kb-key {
+    background: #4a4a4c;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 0;
+    font-size: 16px;
+    cursor: pointer;
+    flex: 1;
+    max-width: 36px;
+    text-align: center;
+    transition: background 0.1s;
+  }
+  .kb-key:active { background: #666; }
+  .kb-key.wide { max-width: 52px; font-size: 12px; }
+  .kb-key.space { max-width: none; flex: 5; font-size: 13px; }
+  .kb-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px 20px;
+  }
+  .kb-bar span {
+    color: #667eea;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  /* ==================== */
+  /* Design A Specific    */
+  /* ==================== */
+  .schedule-panel-a {
+    background: #1a1a1a;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .schedule-panel-a.hidden {
+    height: 0 !important;
+    opacity: 0;
+  }
+  .panel-header-a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 8px;
+  }
+  .panel-header-a .close-btn {
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .panel-header-a .confirm-btn {
+    color: #667eea;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .tab-switch {
+    display: flex;
+    background: #2a2a2a;
+    border-radius: 10px;
+    padding: 3px;
+  }
+  .tab-switch-item {
+    padding: 6px 20px;
+    border-radius: 8px;
+    color: #888;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-switch-item.active {
+    background: #3a3a3a;
+    color: #fff;
+  }
+
+  /* Calendar */
+  .calendar {
+    padding: 8px 16px;
+  }
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+  }
+  .cal-nav .arrow {
+    color: #667eea;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .cal-nav .month { color: #fff; font-size: 16px; font-weight: 600; }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+  .cal-day-header {
+    color: #666;
+    font-size: 12px;
+    padding: 6px 0;
+    font-weight: 500;
+  }
+  .cal-day {
+    padding: 8px 0;
+    font-size: 14px;
+    color: #aaa;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cal-day:hover { background: #333; }
+  .cal-day.today {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    font-weight: 700;
+  }
+  .cal-day.empty { cursor: default; }
+  .cal-day.empty:hover { background: transparent; }
+
+  /* Setting rows */
+  .setting-rows {
+    padding: 4px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #2a2a2a;
+    cursor: pointer;
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-row .label {
+    display: flex; align-items: center; gap: 8px;
+    color: #ccc; font-size: 14px;
+  }
+  .setting-row .value {
+    color: #888; font-size: 14px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .setting-row .chevron { color: #555; font-size: 12px; }
+
+  /* Icon panel */
+  .icon-panel {
+    background: #1a1a1a;
+    padding: 12px 16px;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .icon-panel.hidden {
+    height: 0 !important;
+    padding: 0;
+    opacity: 0;
+  }
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+  .icon-item {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border-radius: 12px;
+    background: #2a2a2a;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .icon-item:active { transform: scale(0.9); background: #3a3a3a; }
+  .icon-item.selected {
+    background: rgba(102,126,234,0.2);
+    box-shadow: 0 0 0 2px #667eea;
+  }
+
+  /* ==================== */
+  /* Design B Specific    */
+  /* ==================== */
+  .combined-chip-b {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: #2a2a2a;
+    color: #bbb;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.25s;
+    border: 1.5px solid transparent;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+  .combined-chip-b.active {
+    border-color: #667eea;
+    background: rgba(102,126,234,0.12);
+    color: #99b0ff;
+  }
+  .chip-sep { color: #555; }
+
+  .expand-area-b {
+    background: #1a1a1a;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .expand-area-b.hidden {
+    max-height: 0 !important;
+    padding: 0;
+    opacity: 0;
+  }
+  .date-time-cards {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px 8px;
+  }
+  .dt-card {
+    flex: 1;
+    background: #2a2a2a;
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid transparent;
+  }
+  .dt-card:active { transform: scale(0.97); }
+  .dt-card.active { border-color: #667eea; }
+  .dt-card .dt-label {
+    font-size: 12px; color: #888; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .dt-card .dt-value {
+    font-size: 18px; font-weight: 600; color: #fff;
+  }
+  .dt-card .dt-sub { font-size: 12px; color: #667eea; margin-top: 2px; }
+
+  .allday-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+  }
+  .allday-row span { color: #ccc; font-size: 14px; }
+  .toggle {
+    width: 46px; height: 28px;
+    border-radius: 14px;
+    background: #3a3a3a;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #888;
+    transition: all 0.2s;
+  }
+  .toggle.on { background: #667eea; }
+  .toggle.on::after { left: 21px; background: #fff; }
+
+  /* ==================== */
+  /* Design C Specific    */
+  /* ==================== */
+  .mode-tabbar {
+    display: flex;
+    background: #252525;
+    border-top: 1px solid #333;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 20px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    opacity: 0.5;
+  }
+  .mode-tab.active {
+    opacity: 1;
+  }
+  .mode-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 24px; height: 3px;
+    border-radius: 2px;
+    background: #667eea;
+  }
+
+  .mode-content {
+    background: #1a1a1a;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mode-pane {
+    display: none;
+  }
+  .mode-pane.active { display: block; }
+
+  /* Schedule mode C */
+  .schedule-mode-c {
+    padding: 12px 16px;
+  }
+  .inline-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .inline-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: #2a2a2a;
+    color: #aaa;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid transparent;
+  }
+  .inline-chip.selected {
+    background: rgba(102,126,234,0.15);
+    border-color: #667eea;
+    color: #99b0ff;
+  }
+  .cal-open-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 12px;
+    background: #2a2a2a;
+    color: #667eea;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cal-open-btn:active { background: #333; }
+
+  /* Priority mode C */
+  .priority-mode-c {
+    padding: 16px;
+  }
+  .priority-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #2a2a2a;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid transparent;
+  }
+  .priority-option.selected {
+    border-color: #667eea;
+    background: rgba(102,126,234,0.1);
+  }
+  .priority-option .p-icon { font-size: 20px; }
+  .priority-option .p-label { color: #ccc; font-size: 14px; flex: 1; }
+  .priority-option .p-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  .priority-option.selected .p-check {
+    background: #667eea;
+    border-color: #667eea;
+    color: #fff;
+  }
+
+  /* Icon categories */
+  .icon-categories {
+    display: flex;
+    gap: 4px;
+    padding: 8px 16px;
+    overflow-x: auto;
+  }
+  .icon-cat {
+    padding: 5px 12px;
+    border-radius: 14px;
+    background: transparent;
+    color: #888;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .icon-cat.active { background: #333; color: #fff; }
+
+  /* Comparison table */
+  .comparison {
+    margin-top: 24px;
+    width: 100%;
+    max-width: 800px;
+    background: #1e1e1e;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #333;
+  }
+  .comparison h3 {
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .comparison table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .comparison th {
+    text-align: left;
+    padding: 8px 10px;
+    color: #888;
+    font-weight: 500;
+    border-bottom: 1px solid #333;
+  }
+  .comparison td {
+    padding: 8px 10px;
+    color: #ccc;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .comparison td:first-child { color: #aaa; font-weight: 500; }
+
+  /* Description block */
+  .desc-block {
+    margin-top: 16px;
+    max-width: 800px;
+    width: 100%;
+    background: #1e1e1e;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #333;
+  }
+  .desc-block h3 { color: #fff; font-size: 15px; margin-bottom: 8px; }
+  .desc-block p { color: #aaa; font-size: 13px; line-height: 1.6; }
+  .desc-block ul { list-style: none; padding-left: 0; margin-top: 8px; }
+  .desc-block li {
+    color: #aaa;
+    font-size: 13px;
+    padding: 3px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+  .desc-block li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #667eea;
+  }
+</style>
+</head>
+<body>
+
+<h1>할일 추가 패널 — UI/UX 리디자인</h1>
+<p class="subtitle">3가지 인터랙티브 모의 시안 · 칩/버튼을 탭하여 인터랙션 확인</p>
+
+<!-- Design Tabs -->
+<div class="design-tabs">
+  <div class="design-tab active" onclick="switchDesign('a')">
+    A: 통합 일정 패널
+    <span class="tab-label">TickTick 충실형</span>
+  </div>
+  <div class="design-tab" onclick="switchDesign('b')">
+    B: 인라인 확장형
+    <span class="tab-label">패널 내부 확장</span>
+  </div>
+  <div class="design-tab" onclick="switchDesign('c')">
+    C: 모드 전환형
+    <span class="tab-label">iOS 키보드 패턴</span>
+  </div>
+</div>
+
+<!-- Phone Frame -->
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+  <div class="phone-home-indicator"></div>
+
+  <!-- ========== Design A ========== -->
+  <div class="screen active" id="screen-a">
+    <!-- BG -->
+    <div class="bg-area">
+      <span class="bg-hint">기존 할일 목록 영역</span>
+    </div>
+
+    <!-- Panel -->
+    <div class="panel" id="panel-a">
+      <!-- Input -->
+      <div class="input-area">
+        <div class="input-row">
+          <input type="text" class="title-input" placeholder="제목을 입력하세요" readonly>
+          <button class="save-btn">저장</button>
+        </div>
+        <input type="text" class="desc-input" placeholder="설명 추가" readonly>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar" id="toolbar-a">
+        <div class="chip" id="chip-a-date" onclick="toggleA('date')">📅 오늘</div>
+        <div class="chip" id="chip-a-priority" onclick="toggleA('priority')">🚩 보통</div>
+        <div class="chip" id="chip-a-icon" onclick="toggleA('icon')">😀</div>
+        <div class="chip">⋯</div>
+      </div>
+
+      <!-- Schedule Panel (hidden by default) -->
+      <div class="schedule-panel-a hidden" id="schedule-a" style="height: 340px;">
+        <div class="panel-header-a">
+          <span class="close-btn" onclick="toggleA('date')">✕</span>
+          <div class="tab-switch">
+            <div class="tab-switch-item active">날짜</div>
+            <div class="tab-switch-item">지속 시간</div>
+          </div>
+          <span class="confirm-btn" onclick="toggleA('date')">✓</span>
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar">
+          <div class="cal-nav">
+            <span class="arrow">‹</span>
+            <span class="month">2026년 2월</span>
+            <span class="arrow">›</span>
+          </div>
+          <div class="cal-grid" id="cal-grid-a">
+            <span class="cal-day-header">일</span><span class="cal-day-header">월</span>
+            <span class="cal-day-header">화</span><span class="cal-day-header">수</span>
+            <span class="cal-day-header">목</span><span class="cal-day-header">금</span>
+            <span class="cal-day-header">토</span>
+          </div>
+        </div>
+
+        <!-- Setting Rows -->
+        <div class="setting-rows">
+          <div class="setting-row">
+            <span class="label">⏰ 시간</span>
+            <span class="value">없음 <span class="chevron">›</span></span>
+          </div>
+          <div class="setting-row">
+            <span class="label">🔔 알림</span>
+            <span class="value">없음 <span class="chevron">›</span></span>
+          </div>
+          <div class="setting-row">
+            <span class="label">🔄 반복</span>
+            <span class="value">없음 <span class="chevron">›</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Icon Panel (hidden by default) -->
+      <div class="icon-panel hidden" id="icons-a" style="height: 110px;">
+        <div class="icon-grid">
+          <div class="icon-item" onclick="selectIcon(this)">📝</div>
+          <div class="icon-item" onclick="selectIcon(this)">📌</div>
+          <div class="icon-item" onclick="selectIcon(this)">💡</div>
+          <div class="icon-item" onclick="selectIcon(this)">🎯</div>
+          <div class="icon-item" onclick="selectIcon(this)">⚡</div>
+          <div class="icon-item" onclick="selectIcon(this)">🔧</div>
+          <div class="icon-item" onclick="selectIcon(this)">📦</div>
+          <div class="icon-item" onclick="selectIcon(this)">🎨</div>
+          <div class="icon-item" onclick="selectIcon(this)">🏃</div>
+          <div class="icon-item" onclick="selectIcon(this)">💊</div>
+          <div class="icon-item" onclick="selectIcon(this)">🍎</div>
+          <div class="icon-item" onclick="selectIcon(this)">📚</div>
+        </div>
+      </div>
+
+      <!-- Keyboard -->
+      <div class="keyboard" id="kb-a" style="height: 260px;">
+        <div class="kb-row">
+          <button class="kb-key">ㅂ</button><button class="kb-key">ㅈ</button>
+          <button class="kb-key">ㄷ</button><button class="kb-key">ㄱ</button>
+          <button class="kb-key">ㅅ</button><button class="kb-key">ㅛ</button>
+          <button class="kb-key">ㅕ</button><button class="kb-key">ㅑ</button>
+          <button class="kb-key">ㅐ</button><button class="kb-key">ㅔ</button>
+        </div>
+        <div class="kb-row">
+          <button class="kb-key">ㅁ</button><button class="kb-key">ㄴ</button>
+          <button class="kb-key">ㅇ</button><button class="kb-key">ㄹ</button>
+          <button class="kb-key">ㅎ</button><button class="kb-key">ㅗ</button>
+          <button class="kb-key">ㅓ</button><button class="kb-key">ㅏ</button>
+          <button class="kb-key">ㅣ</button>
+        </div>
+        <div class="kb-row">
+          <button class="kb-key wide">⇧</button>
+          <button class="kb-key">ㅋ</button><button class="kb-key">ㅌ</button>
+          <button class="kb-key">ㅊ</button><button class="kb-key">ㅍ</button>
+          <button class="kb-key">ㅠ</button><button class="kb-key">ㅜ</button>
+          <button class="kb-key">ㅡ</button>
+          <button class="kb-key wide">⌫</button>
+        </div>
+        <div class="kb-row">
+          <button class="kb-key wide">123</button>
+          <button class="kb-key">🌐</button>
+          <button class="kb-key space">space</button>
+          <button class="kb-key wide">완료</button>
+        </div>
+        <div class="kb-bar">
+          <span>😊</span><span>🎤</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Design B ========== -->
+  <div class="screen" id="screen-b">
+    <div class="bg-area">
+      <span class="bg-hint">기존 할일 목록 영역</span>
+    </div>
+
+    <div class="panel" id="panel-b">
+      <!-- Input -->
+      <div class="input-area" id="input-area-b">
+        <div class="input-row">
+          <input type="text" class="title-input" placeholder="제목을 입력하세요" readonly>
+          <button class="save-btn">저장</button>
+        </div>
+        <input type="text" class="desc-input" placeholder="설명 추가" readonly id="desc-b">
+      </div>
+
+      <!-- Combined chip + other chips -->
+      <div class="toolbar" id="toolbar-b">
+        <div class="combined-chip-b" id="chip-b-combined" onclick="toggleB('expand')">
+          📅 오늘 <span class="chip-sep">·</span> 14:00~15:00 <span class="chip-sep">·</span> 🔔정각
+        </div>
+        <div class="chip" id="chip-b-repeat">🔄 없음</div>
+        <div class="chip" id="chip-b-priority" onclick="toggleB('priority')">🚩 보통</div>
+        <div class="chip" id="chip-b-icon" onclick="toggleB('icon')">😀</div>
+      </div>
+
+      <!-- Expand area -->
+      <div class="expand-area-b hidden" id="expand-b" style="max-height: 320px;">
+        <div class="date-time-cards">
+          <div class="dt-card active">
+            <div class="dt-label">📅 날짜</div>
+            <div class="dt-value">2월 24일</div>
+            <div class="dt-sub">화, 오늘</div>
+          </div>
+          <div class="dt-card">
+            <div class="dt-label">⏰ 시간</div>
+            <div class="dt-value">14:00</div>
+            <div class="dt-sub">~15:00</div>
+          </div>
+        </div>
+        <div class="allday-row">
+          <span>전체(종일)</span>
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="setting-rows" style="padding-top: 0;">
+          <div class="setting-row">
+            <span class="label">🔔 알림</span>
+            <span class="value">정각에 <span style="color: #e55; cursor: pointer; margin-left: 4px;">✕</span></span>
+          </div>
+          <div class="setting-row">
+            <span class="label">🔄 반복</span>
+            <span class="value">없음 <span class="chevron">›</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Icon Panel (shared style) -->
+      <div class="icon-panel hidden" id="icons-b" style="height: 110px;">
+        <div class="icon-grid">
+          <div class="icon-item" onclick="selectIcon(this)">📝</div>
+          <div class="icon-item" onclick="selectIcon(this)">📌</div>
+          <div class="icon-item" onclick="selectIcon(this)">💡</div>
+          <div class="icon-item" onclick="selectIcon(this)">🎯</div>
+          <div class="icon-item" onclick="selectIcon(this)">⚡</div>
+          <div class="icon-item" onclick="selectIcon(this)">🔧</div>
+          <div class="icon-item" onclick="selectIcon(this)">📦</div>
+          <div class="icon-item" onclick="selectIcon(this)">🎨</div>
+          <div class="icon-item" onclick="selectIcon(this)">🏃</div>
+          <div class="icon-item" onclick="selectIcon(this)">💊</div>
+          <div class="icon-item" onclick="selectIcon(this)">🍎</div>
+          <div class="icon-item" onclick="selectIcon(this)">📚</div>
+        </div>
+      </div>
+
+      <!-- Keyboard -->
+      <div class="keyboard" id="kb-b" style="height: 260px;">
+        <div class="kb-row">
+          <button class="kb-key">ㅂ</button><button class="kb-key">ㅈ</button>
+          <button class="kb-key">ㄷ</button><button class="kb-key">ㄱ</button>
+          <button class="kb-key">ㅅ</button><button class="kb-key">ㅛ</button>
+          <button class="kb-key">ㅕ</button><button class="kb-key">ㅑ</button>
+          <button class="kb-key">ㅐ</button><button class="kb-key">ㅔ</button>
+        </div>
+        <div class="kb-row">
+          <button class="kb-key">ㅁ</button><button class="kb-key">ㄴ</button>
+          <button class="kb-key">ㅇ</button><button class="kb-key">ㄹ</button>
+          <button class="kb-key">ㅎ</button><button class="kb-key">ㅗ</button>
+          <button class="kb-key">ㅓ</button><button class="kb-key">ㅏ</button>
+          <button class="kb-key">ㅣ</button>
+        </div>
+        <div class="kb-row">
+          <button class="kb-key wide">⇧</button>
+          <button class="kb-key">ㅋ</button><button class="kb-key">ㅌ</button>
+          <button class="kb-key">ㅊ</button><button class="kb-key">ㅍ</button>
+          <button class="kb-key">ㅠ</button><button class="kb-key">ㅜ</button>
+          <button class="kb-key">ㅡ</button>
+          <button class="kb-key wide">⌫</button>
+        </div>
+        <div class="kb-row">
+          <button class="kb-key wide">123</button>
+          <button class="kb-key">🌐</button>
+          <button class="kb-key space">space</button>
+          <button class="kb-key wide">완료</button>
+        </div>
+        <div class="kb-bar">
+          <span>😊</span><span>🎤</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Design C ========== -->
+  <div class="screen" id="screen-c">
+    <div class="bg-area">
+      <span class="bg-hint">기존 할일 목록 영역</span>
+    </div>
+
+    <div class="panel" id="panel-c">
+      <!-- Input -->
+      <div class="input-area">
+        <div class="input-row">
+          <input type="text" class="title-input" placeholder="제목을 입력하세요" readonly>
+          <button class="save-btn">저장</button>
+        </div>
+        <input type="text" class="desc-input" placeholder="설명 추가" readonly>
+      </div>
+
+      <!-- Mode Tabbar -->
+      <div class="mode-tabbar" id="mode-tabbar-c">
+        <div class="mode-tab active" onclick="switchModeC('keyboard')">⌨️</div>
+        <div class="mode-tab" onclick="switchModeC('schedule')">📅</div>
+        <div class="mode-tab" onclick="switchModeC('icon')">😀</div>
+        <div class="mode-tab" onclick="switchModeC('priority')">🚩</div>
+      </div>
+
+      <!-- Mode Content Area -->
+      <div class="mode-content" id="mode-content-c" style="height: 296px;">
+        <!-- Keyboard Mode -->
+        <div class="mode-pane active" id="mode-c-keyboard">
+          <div class="keyboard" style="height: 296px;">
+            <div class="kb-row">
+              <button class="kb-key">ㅂ</button><button class="kb-key">ㅈ</button>
+              <button class="kb-key">ㄷ</button><button class="kb-key">ㄱ</button>
+              <button class="kb-key">ㅅ</button><button class="kb-key">ㅛ</button>
+              <button class="kb-key">ㅕ</button><button class="kb-key">ㅑ</button>
+              <button class="kb-key">ㅐ</button><button class="kb-key">ㅔ</button>
+            </div>
+            <div class="kb-row">
+              <button class="kb-key">ㅁ</button><button class="kb-key">ㄴ</button>
+              <button class="kb-key">ㅇ</button><button class="kb-key">ㄹ</button>
+              <button class="kb-key">ㅎ</button><button class="kb-key">ㅗ</button>
+              <button class="kb-key">ㅓ</button><button class="kb-key">ㅏ</button>
+              <button class="kb-key">ㅣ</button>
+            </div>
+            <div class="kb-row">
+              <button class="kb-key wide">⇧</button>
+              <button class="kb-key">ㅋ</button><button class="kb-key">ㅌ</button>
+              <button class="kb-key">ㅊ</button><button class="kb-key">ㅍ</button>
+              <button class="kb-key">ㅠ</button><button class="kb-key">ㅜ</button>
+              <button class="kb-key">ㅡ</button>
+              <button class="kb-key wide">⌫</button>
+            </div>
+            <div class="kb-row">
+              <button class="kb-key wide">123</button>
+              <button class="kb-key">🌐</button>
+              <button class="kb-key space">space</button>
+              <button class="kb-key wide">완료</button>
+            </div>
+            <div class="kb-bar">
+              <span>😊</span><span>🎤</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule Mode -->
+        <div class="mode-pane" id="mode-c-schedule">
+          <div class="schedule-mode-c">
+            <div class="date-time-cards" style="padding: 0;">
+              <div class="dt-card active">
+                <div class="dt-label">📅 날짜</div>
+                <div class="dt-value">2/24(화)</div>
+                <div class="dt-sub">오늘</div>
+              </div>
+              <div class="dt-card">
+                <div class="dt-label">⏰ 시간</div>
+                <div class="dt-value">14:00</div>
+                <div class="dt-sub">~15:00</div>
+              </div>
+            </div>
+
+            <div class="setting-row" style="border-color: #2a2a2a;">
+              <span class="label">🔔 알림</span>
+              <div></div>
+            </div>
+            <div class="inline-chips">
+              <div class="inline-chip selected">없음</div>
+              <div class="inline-chip" onclick="selectInlineChip(this)">정각</div>
+              <div class="inline-chip" onclick="selectInlineChip(this)">5분 전</div>
+              <div class="inline-chip" onclick="selectInlineChip(this)">15분 전</div>
+            </div>
+
+            <div class="setting-row" style="border-color: #2a2a2a; margin-top: 4px;">
+              <span class="label">🔄 반복</span>
+              <div></div>
+            </div>
+            <div class="inline-chips">
+              <div class="inline-chip selected">없음</div>
+              <div class="inline-chip" onclick="selectInlineChip(this)">매일</div>
+              <div class="inline-chip" onclick="selectInlineChip(this)">매주</div>
+              <div class="inline-chip" onclick="selectInlineChip(this)">매월</div>
+            </div>
+
+            <div class="cal-open-btn">📅 캘린더 열기</div>
+          </div>
+        </div>
+
+        <!-- Icon Mode -->
+        <div class="mode-pane" id="mode-c-icon">
+          <div class="icon-categories">
+            <div class="icon-cat active">일상</div>
+            <div class="icon-cat" onclick="selectCat(this)">업무</div>
+            <div class="icon-cat" onclick="selectCat(this)">건강</div>
+            <div class="icon-cat" onclick="selectCat(this)">이동</div>
+            <div class="icon-cat" onclick="selectCat(this)">기타</div>
+          </div>
+          <div style="padding: 8px 16px;">
+            <div class="icon-grid">
+              <div class="icon-item" onclick="selectIcon(this)">📝</div>
+              <div class="icon-item" onclick="selectIcon(this)">📌</div>
+              <div class="icon-item" onclick="selectIcon(this)">💡</div>
+              <div class="icon-item" onclick="selectIcon(this)">🎯</div>
+              <div class="icon-item" onclick="selectIcon(this)">⚡</div>
+              <div class="icon-item" onclick="selectIcon(this)">🔧</div>
+              <div class="icon-item" onclick="selectIcon(this)">📦</div>
+              <div class="icon-item" onclick="selectIcon(this)">🎨</div>
+              <div class="icon-item" onclick="selectIcon(this)">🏃</div>
+              <div class="icon-item" onclick="selectIcon(this)">💊</div>
+              <div class="icon-item" onclick="selectIcon(this)">🍎</div>
+              <div class="icon-item" onclick="selectIcon(this)">📚</div>
+              <div class="icon-item" onclick="selectIcon(this)">📖</div>
+              <div class="icon-item" onclick="selectIcon(this)">🎵</div>
+              <div class="icon-item" onclick="selectIcon(this)">🎮</div>
+              <div class="icon-item" onclick="selectIcon(this)">☕</div>
+              <div class="icon-item" onclick="selectIcon(this)">🏠</div>
+              <div class="icon-item" onclick="selectIcon(this)">✈️</div>
+              <div class="icon-item" onclick="selectIcon(this)">🎂</div>
+              <div class="icon-item" onclick="selectIcon(this)">🌈</div>
+              <div class="icon-item" onclick="selectIcon(this)">⭐</div>
+              <div class="icon-item" onclick="selectIcon(this)">🔑</div>
+              <div class="icon-item" onclick="selectIcon(this)">💰</div>
+              <div class="icon-item" onclick="selectIcon(this)">📱</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority Mode -->
+        <div class="mode-pane" id="mode-c-priority">
+          <div class="priority-mode-c">
+            <div class="priority-option selected" onclick="selectPriority(this)">
+              <span class="p-icon">🚩</span>
+              <span class="p-label">보통</span>
+              <span class="p-check">✓</span>
+            </div>
+            <div class="priority-option" onclick="selectPriority(this)">
+              <span class="p-icon">🔴</span>
+              <span class="p-label">높음</span>
+              <span class="p-check">✓</span>
+            </div>
+            <div class="priority-option" onclick="selectPriority(this)">
+              <span class="p-icon">🟡</span>
+              <span class="p-label">중간</span>
+              <span class="p-check">✓</span>
+            </div>
+            <div class="priority-option" onclick="selectPriority(this)">
+              <span class="p-icon">🔵</span>
+              <span class="p-label">낮음</span>
+              <span class="p-check">✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Design Description -->
+<div class="desc-block" id="desc-a-block">
+  <h3>Design A: 통합 일정 패널 (TickTick 충실형)</h3>
+  <p>TickTick과 동일한 검증된 UX 패턴 적용. 날짜+시간+알림+반복을 하나의 통합 패널로 관리합니다.</p>
+  <ul>
+    <li>📅 "오늘" 탭 → 키보드 사라지고 캘린더 패널 등장 (gap 없음)</li>
+    <li>😀 아이콘 탭 → 키보드 유지 + 위에 아이콘 그리드 오버레이</li>
+    <li>긴 컨텐츠(캘린더) → 키보드 숨김 / 짧은 컨텐츠(아이콘) → 키보드 유지</li>
+    <li>아이콘을 제목 옆에서 툴바로 이동</li>
+  </ul>
+</div>
+
+<div class="desc-block" id="desc-b-block" style="display:none;">
+  <h3>Design B: 인라인 확장형 (패널 내부 확장)</h3>
+  <p>날짜+시간+알림을 하나의 요약 칩으로 통합하여 정보 밀도를 높입니다. 패널이 아래서 위로 확장됩니다.</p>
+  <ul>
+    <li>통합 칩 탭 → 패널 확장되며 날짜/시간 카드 노출</li>
+    <li>날짜/시간 카드를 탭하면 인라인 피커 등장</li>
+    <li>확장 시 키보드 자연스럽게 내려감</li>
+    <li>아이콘/우선순위는 짧으므로 키보드 위에 오버레이</li>
+  </ul>
+</div>
+
+<div class="desc-block" id="desc-c-block" style="display:none;">
+  <h3>Design C: 모드 전환형 (iOS 키보드 패턴)</h3>
+  <p>하단 영역이 [키보드/일정/아이콘/우선순위] 모드를 전환합니다. iOS 이모지 키보드와 동일한 패턴.</p>
+  <ul>
+    <li>키보드와 설정 패널이 동일한 높이로 매끄러운 전환</li>
+    <li>⌨️ 탭으로 언제든 키보드 복귀</li>
+    <li>알림/반복은 인라인 칩으로 즉시 선택 (서브시트 없음)</li>
+    <li>가장 빠른 워크플로우 (모드 전환만으로 모든 설정 접근)</li>
+  </ul>
+</div>
+
+<!-- Comparison Table -->
+<div class="comparison">
+  <h3>3가지 비교 요약</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>항목</th>
+        <th>A: 통합 일정 패널</th>
+        <th>B: 인라인 확장형</th>
+        <th>C: 모드 전환형</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>기반 패턴</td>
+        <td>TickTick 충실</td>
+        <td>패널 내 확장</td>
+        <td>iOS 키보드 전환</td>
+      </tr>
+      <tr>
+        <td>키보드 gap 해결</td>
+        <td>✅ 패널이 대체</td>
+        <td>✅ 확장이 대체</td>
+        <td>✅ 같은 높이 전환</td>
+      </tr>
+      <tr>
+        <td>아이콘 키보드 유지</td>
+        <td>✅</td>
+        <td>✅</td>
+        <td>✅ (별도 모드)</td>
+      </tr>
+      <tr>
+        <td>터치 횟수 (날짜)</td>
+        <td>2회</td>
+        <td>2~3회</td>
+        <td>2회</td>
+      </tr>
+      <tr>
+        <td>학습 비용</td>
+        <td>낮음</td>
+        <td>중간</td>
+        <td>낮음</td>
+      </tr>
+      <tr>
+        <td>구현 복잡도</td>
+        <td>중간</td>
+        <td>높음</td>
+        <td>중간</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Generate calendar days for Feb 2026
+  function generateCalendar(containerId) {
+    const container = document.getElementById(containerId);
+    // Feb 2026 starts on Sunday (0), 28 days
+    const startDay = 0;
+    const daysInMonth = 28;
+    const today = 24;
+
+    for (let i = 0; i < startDay; i++) {
+      const el = document.createElement('span');
+      el.className = 'cal-day empty';
+      container.appendChild(el);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const el = document.createElement('span');
+      el.className = 'cal-day' + (d === today ? ' today' : '');
+      el.textContent = d;
+      el.onclick = function() {
+        container.querySelectorAll('.cal-day.today').forEach(e => e.classList.remove('today'));
+        this.classList.add('today');
+      };
+      container.appendChild(el);
+    }
+  }
+  generateCalendar('cal-grid-a');
+
+  // ===== Design Switching =====
+  function switchDesign(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.design-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+
+    // Description blocks
+    document.querySelectorAll('.desc-block').forEach(b => b.style.display = 'none');
+    document.getElementById('desc-' + id + '-block').style.display = 'block';
+
+    // Reset states
+    if (id === 'a') resetA();
+    if (id === 'b') resetB();
+    if (id === 'c') resetModeC();
+  }
+
+  // ===== Design A Logic =====
+  let stateA = { active: null }; // 'date', 'icon', 'priority', or null
+
+  function toggleA(type) {
+    const kb = document.getElementById('kb-a');
+    const schedule = document.getElementById('schedule-a');
+    const icons = document.getElementById('icons-a');
+    const chips = {
+      date: document.getElementById('chip-a-date'),
+      icon: document.getElementById('chip-a-icon'),
+      priority: document.getElementById('chip-a-priority'),
+    };
+
+    // Deactivate all chips
+    Object.values(chips).forEach(c => c.classList.remove('active'));
+
+    if (stateA.active === type) {
+      // Toggle off → show keyboard
+      stateA.active = null;
+      kb.classList.remove('hidden');
+      schedule.classList.add('hidden');
+      icons.classList.add('hidden');
+      return;
+    }
+
+    stateA.active = type;
+    chips[type]?.classList.add('active');
+
+    if (type === 'date') {
+      // Long content → hide keyboard, show schedule panel
+      kb.classList.add('hidden');
+      schedule.classList.remove('hidden');
+      icons.classList.add('hidden');
+    } else if (type === 'icon') {
+      // Short content → keep keyboard, show icon overlay
+      kb.classList.remove('hidden');
+      schedule.classList.add('hidden');
+      icons.classList.remove('hidden');
+    } else if (type === 'priority') {
+      // Just highlight chip (no panel in this demo)
+      kb.classList.remove('hidden');
+      schedule.classList.add('hidden');
+      icons.classList.add('hidden');
+    }
+  }
+
+  function resetA() {
+    stateA.active = null;
+    document.getElementById('kb-a').classList.remove('hidden');
+    document.getElementById('schedule-a').classList.add('hidden');
+    document.getElementById('icons-a').classList.add('hidden');
+    document.querySelectorAll('#toolbar-a .chip').forEach(c => c.classList.remove('active'));
+  }
+
+  // ===== Design B Logic =====
+  let stateB = { active: null };
+
+  function toggleB(type) {
+    const kb = document.getElementById('kb-b');
+    const expand = document.getElementById('expand-b');
+    const icons = document.getElementById('icons-b');
+    const combinedChip = document.getElementById('chip-b-combined');
+    const descInput = document.getElementById('desc-b');
+
+    // Reset
+    combinedChip.classList.remove('active');
+    document.querySelectorAll('#toolbar-b .chip').forEach(c => c.classList.remove('active'));
+
+    if (stateB.active === type) {
+      stateB.active = null;
+      kb.classList.remove('hidden');
+      expand.classList.add('hidden');
+      icons.classList.add('hidden');
+      descInput.style.display = '';
+      return;
+    }
+
+    stateB.active = type;
+
+    if (type === 'expand') {
+      combinedChip.classList.add('active');
+      kb.classList.add('hidden');
+      expand.classList.remove('hidden');
+      icons.classList.add('hidden');
+      descInput.style.display = 'none'; // collapse desc to save space
+    } else if (type === 'icon') {
+      document.getElementById('chip-b-icon').classList.add('active');
+      kb.classList.remove('hidden');
+      expand.classList.add('hidden');
+      icons.classList.remove('hidden');
+      descInput.style.display = '';
+    } else if (type === 'priority') {
+      document.getElementById('chip-b-priority').classList.add('active');
+      kb.classList.remove('hidden');
+      expand.classList.add('hidden');
+      icons.classList.add('hidden');
+      descInput.style.display = '';
+    }
+  }
+
+  function resetB() {
+    stateB.active = null;
+    document.getElementById('kb-b').classList.remove('hidden');
+    document.getElementById('expand-b').classList.add('hidden');
+    document.getElementById('icons-b').classList.add('hidden');
+    document.getElementById('desc-b').style.display = '';
+    document.getElementById('chip-b-combined').classList.remove('active');
+    document.querySelectorAll('#toolbar-b .chip').forEach(c => c.classList.remove('active'));
+  }
+
+  // ===== Design C Logic =====
+  function switchModeC(mode) {
+    const tabs = document.querySelectorAll('#mode-tabbar-c .mode-tab');
+    const panes = document.querySelectorAll('#mode-content-c .mode-pane');
+    const modes = ['keyboard', 'schedule', 'icon', 'priority'];
+
+    tabs.forEach((t, i) => {
+      t.classList.toggle('active', modes[i] === mode);
+    });
+    panes.forEach(p => p.classList.remove('active'));
+    document.getElementById('mode-c-' + mode).classList.add('active');
+  }
+
+  function resetModeC() {
+    switchModeC('keyboard');
+  }
+
+  // ===== Shared helpers =====
+  function selectIcon(el) {
+    const grid = el.closest('.icon-grid');
+    grid.querySelectorAll('.icon-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function selectInlineChip(el) {
+    const row = el.closest('.inline-chips');
+    row.querySelectorAll('.inline-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function selectCat(el) {
+    const row = el.closest('.icon-categories');
+    row.querySelectorAll('.icon-cat').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectPriority(el) {
+    const container = el.closest('.priority-mode-c');
+    container.querySelectorAll('.priority-option').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+</script>
+
+</body>
+</html>

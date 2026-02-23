@@ -102,11 +102,11 @@ export function getDateSummary(form: FormData): string {
 export function getDateSummaryExtras(form: FormData): string[] {
   const extras: string[] = [];
   if (form.alarmOffsetMinutes !== null) {
-    extras.push(`🔔 ${getAlarmLabel(form.alarmOffsetMinutes)}`);
+    extras.push(getAlarmLabel(form.alarmOffsetMinutes));
   }
   const recLabel = getRecurrenceLabel(form);
   if (recLabel) {
-    extras.push(`🔄 ${recLabel}`);
+    extras.push(recLabel);
   }
   return extras;
 }

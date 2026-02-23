@@ -1,7 +1,7 @@
 /**
  * TodoFormBottomSheet — Orchestrator
  * 같은 ref API (TodoFormBottomSheetRef) 유지, 내부는 Create/Edit 분리
- * - Create: TodoCreatePanel (키보드 위 인라인 패널)
+ * - Create: TodoCreatePanel (키보드 위 인라인 패널 + 통합 일정 패널)
  * - Edit: TodoEditOverlay (풀스크린 오버레이)
  * - 서브시트 5개는 동일 레벨에서 렌더
  */
@@ -72,10 +72,35 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     }));
 
     // ------------------------------------------
-    // 서브시트 공통 콜백
+    // Create 모드 콜백 (일정 패널 내에서 서브시트 열기)
     // ------------------------------------------
-    const makeToolbarCallbacks = useCallback(
-      (includeIcon: boolean) => ({
+    const createToolbarCallbacks = useCallback(
+      () => ({
+        onPriorityPress: () => {
+          haptic.selection();
+          prioritySheetRef.current?.open();
+        },
+        onTimePress: () => {
+          haptic.selection();
+          timeSheetRef.current?.open();
+        },
+        onAlarmPress: () => {
+          haptic.selection();
+          alarmSheetRef.current?.open();
+        },
+        onRecurrencePress: () => {
+          haptic.selection();
+          recurrenceSheetRef.current?.open();
+        },
+      }),
+      [haptic],
+    );
+
+    // ------------------------------------------
+    // Edit 모드 콜백 (기존 방식 유지)
+    // ------------------------------------------
+    const editToolbarCallbacks = useCallback(
+      () => ({
         onDatePress: () => {
           haptic.selection();
           // TODO: DatePickerSheet
@@ -96,25 +121,17 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           haptic.selection();
           prioritySheetRef.current?.open();
         },
-        ...(includeIcon && {
-          onIconPress: () => {
-            haptic.selection();
-            iconSheetRef.current?.open();
-          },
-        }),
       }),
       [haptic],
     );
 
     return (
       <>
-        {/* Create: 키보드 위 패널 */}
+        {/* Create: 키보드 위 패널 + 통합 일정 패널 */}
         <TodoCreatePanel
           visible={createVisible}
           onClose={() => setCreateVisible(false)}
-          toolbarCallbacks={
-            makeToolbarCallbacks(true) as any
-          }
+          toolbarCallbacks={createToolbarCallbacks()}
           {...formHook}
         />
 
@@ -122,7 +139,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
         <TodoEditOverlay
           visible={editVisible}
           onClose={() => setEditVisible(false)}
-          toolbarCallbacks={makeToolbarCallbacks(false)}
+          toolbarCallbacks={editToolbarCallbacks()}
           {...formHook}
         />
 

@@ -8,7 +8,7 @@ import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bo
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
-import {Flag} from 'lucide-react-native';
+import {Flag, AlertTriangle, Star, Zap, Minus, AlertCircle} from 'lucide-react-native';
 
 export interface PriorityPickerSheetRef {
   open: () => void;
@@ -41,11 +41,11 @@ export const PriorityPickerSheet = forwardRef<
     close: () => bottomSheetRef.current?.dismiss(),
   }));
 
-  const priorityLabel = useMemo(() => {
-    if (importance && urgency) return '🔴 긴급 + 중요';
-    if (importance) return '🟡 중요';
-    if (urgency) return '🔵 긴급';
-    return '⚪ 보통';
+  const priorityInfo = useMemo(() => {
+    if (importance && urgency) return {icon: AlertTriangle, color: '#DC2626', label: '긴급 + 중요'};
+    if (importance) return {icon: Star, color: '#B45309', label: '중요'};
+    if (urgency) return {icon: Zap, color: '#1D4ED8', label: '긴급'};
+    return {icon: Minus, color: '#6B7280', label: '보통'};
   }, [importance, urgency]);
 
   const renderBackdrop = useCallback(
@@ -76,7 +76,10 @@ export const PriorityPickerSheet = forwardRef<
         </View>
 
         {/* 현재 상태 뱃지 */}
-        <Text style={[styles.badge, {color: primaryColor}]}>{priorityLabel}</Text>
+        <View style={styles.badgeRow}>
+          <priorityInfo.icon size={14} color={priorityInfo.color} />
+          <Text style={[styles.badge, {color: priorityInfo.color}]}>{priorityInfo.label}</Text>
+        </View>
 
         {/* 3개 토글 버튼 */}
         <View style={styles.row}>
@@ -91,7 +94,10 @@ export const PriorityPickerSheet = forwardRef<
               importance && styles.btnActive,
               importance && {borderColor: '#F59E0B'},
             ]}>
-            <Text style={styles.btnText}>⭐ 중요</Text>
+            <View style={styles.btnContent}>
+              <Star size={14} color={importance ? '#F59E0B' : '#4B5563'} />
+              <Text style={styles.btnText}>중요</Text>
+            </View>
           </AnimatedPressable>
           <AnimatedPressable
             onPress={() => {
@@ -104,7 +110,10 @@ export const PriorityPickerSheet = forwardRef<
               urgency && styles.btnActive,
               urgency && {borderColor: '#3B82F6'},
             ]}>
-            <Text style={styles.btnText}>⚡ 긴급</Text>
+            <View style={styles.btnContent}>
+              <Zap size={14} color={urgency ? '#3B82F6' : '#4B5563'} />
+              <Text style={styles.btnText}>긴급</Text>
+            </View>
           </AnimatedPressable>
           <AnimatedPressable
             onPress={() => {
@@ -117,7 +126,10 @@ export const PriorityPickerSheet = forwardRef<
               isReluctantMustDo && styles.btnActive,
               isReluctantMustDo && {borderColor: '#EF4444'},
             ]}>
-            <Text style={styles.btnText}>😤 해야 할 일</Text>
+            <View style={styles.btnContent}>
+              <AlertCircle size={14} color={isReluctantMustDo ? '#EF4444' : '#4B5563'} />
+              <Text style={styles.btnText}>해야 할 일</Text>
+            </View>
           </AnimatedPressable>
         </View>
       </BottomSheetView>
@@ -140,10 +152,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerTitle: {fontSize: 17, fontWeight: '600', color: '#1F2937'},
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
   badge: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 16,
   },
   row: {
     flexDirection: 'row',
@@ -160,6 +177,11 @@ const styles = StyleSheet.create({
   },
   btnActive: {
     backgroundColor: '#FFF7ED',
+  },
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   btnText: {
     fontSize: 13,

@@ -27,7 +27,7 @@ import {AttributeToolbar} from './AttributeToolbar';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList} from 'lucide-react-native';
+import {ClipboardList, Calendar, CheckCircle, Circle} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
@@ -135,7 +135,8 @@ export function TodoEditOverlay({
 
         {/* ──────── 날짜 요약 ──────── */}
         <View style={styles.dateSummaryRow}>
-          <Text style={styles.dateSummaryText}>📅 {dateSummary}</Text>
+          <Calendar size={13} color="#6B7280" />
+          <Text style={styles.dateSummaryText}>{dateSummary}</Text>
           {dateSummaryExtras.map((extra, i) => (
             <React.Fragment key={i}>
               <Text style={styles.dateSummaryDot}>·</Text>
@@ -185,9 +186,16 @@ export function TodoEditOverlay({
 
           {/* 완료 토글 */}
           <View style={styles.completionRow}>
-            <Text style={styles.completionLabel}>
-              {form.completed ? '✅ 완료됨' : '⭕ 미완료'}
-            </Text>
+            <View style={styles.completionLabelRow}>
+              {form.completed ? (
+                <CheckCircle size={16} color="#22C55E" />
+              ) : (
+                <Circle size={16} color="#9CA3AF" />
+              )}
+              <Text style={styles.completionLabel}>
+                {form.completed ? '완료됨' : '미완료'}
+              </Text>
+            </View>
             <Switch
               value={form.completed}
               onValueChange={v => updateField('completed', v)}
@@ -349,6 +357,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
+  },
+  completionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   completionLabel: {
     fontSize: 15,

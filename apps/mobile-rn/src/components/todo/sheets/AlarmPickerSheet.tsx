@@ -8,7 +8,7 @@ import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bo
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
-import {Bell} from 'lucide-react-native';
+import {Bell, BellOff} from 'lucide-react-native';
 import {ALARM_OPTIONS, type AlarmOffsetValue} from '@/lib/notifications';
 
 export interface AlarmPickerSheetRef {
@@ -68,9 +68,16 @@ export const AlarmPickerSheet = forwardRef<
         </View>
 
         {/* 현재 상태 뱃지 */}
-        <Text style={[styles.badge, {color: primaryColor}]}>
-          {alarmOffsetMinutes !== null ? `🔔 ${currentLabel}` : '🔕 알림 없음'}
-        </Text>
+        <View style={styles.badgeRow}>
+          {alarmOffsetMinutes !== null ? (
+            <Bell size={14} color={primaryColor} />
+          ) : (
+            <BellOff size={14} color={primaryColor} />
+          )}
+          <Text style={[styles.badge, {color: primaryColor}]}>
+            {alarmOffsetMinutes !== null ? currentLabel : '알림 없음'}
+          </Text>
+        </View>
 
         {/* 옵션 칩 */}
         <View style={styles.chipRow}>
@@ -120,10 +127,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerTitle: {fontSize: 17, fontWeight: '600', color: '#1F2937'},
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
   badge: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 16,
   },
   chipRow: {
     flexDirection: 'row',

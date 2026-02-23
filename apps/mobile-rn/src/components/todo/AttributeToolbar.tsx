@@ -1,14 +1,24 @@
 /**
  * AttributeToolbar
  * 할일 속성 요약 가로 스크롤 툴바
- * 각 칩: 아이콘 + 현재값, 누르면 서브시트 열림
+ * 각 칩: lucide 아이콘 + 현재값, 누르면 서브시트 열림
  */
 import React from 'react';
-import {ScrollView, Text, StyleSheet} from 'react-native';
+import {ScrollView, View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {format, parseISO, isToday, isTomorrow} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {getAlarmLabel} from '@/lib/notifications';
+import {
+  Calendar,
+  Clock,
+  Bell,
+  Repeat,
+  Flag,
+  Sparkles,
+  MoreHorizontal,
+} from 'lucide-react-native';
+import type {LucideIcon} from 'lucide-react-native';
 
 // ============================================
 // Types
@@ -33,10 +43,15 @@ interface ToolbarForm {
 interface AttributeToolbarProps {
   form: ToolbarForm;
   onDatePress: () => void;
-  onTimePress: () => void;
-  onAlarmPress: () => void;
-  onRecurrencePress: () => void;
   onPriorityPress: () => void;
+  onIconPress?: () => void;
+  onMorePress?: () => void;
+  // Legacy: 기존 Edit 모드에서 사용 (서브시트 직접 열기)
+  onTimePress?: () => void;
+  onAlarmPress?: () => void;
+  onRecurrencePress?: () => void;
+  /** true면 4-chip 모드 (Create), false면 기존 5-chip 모드 (Edit) */
+  compact?: boolean;
 }
 
 // ============================================
@@ -95,36 +110,76 @@ function getPriorityChipStyle(form: ToolbarForm): {bg: string; border: string; t
 export function AttributeToolbar({
   form,
   onDatePress,
+  onPriorityPress,
+  onIconPress,
+  onMorePress,
   onTimePress,
   onAlarmPress,
   onRecurrencePress,
-  onPriorityPress,
+  compact = false,
 }: AttributeToolbarProps) {
   const priorityStyle = getPriorityChipStyle(form);
 
+  if (compact) {
+    // Create 모드: 4칩 (날짜, 우선순위, 아이콘, 더보기)
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.toolbar}
+        keyboardShouldPersistTaps="handled">
+        <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
+
+        <AnimatedPressable
+          onPress={onPriorityPress}
+          hapticType="selection"
+          style={[
+            styles.chip,
+            {
+              backgroundColor: priorityStyle.bg,
+              borderColor: priorityStyle.border,
+              borderWidth: 1.5,
+            },
+          ]}>
+          <Flag size={14} color={priorityStyle.text} />
+          <Text style={[styles.chipText, {color: priorityStyle.text}]}>
+            {getPriorityChipLabel(form)}
+          </Text>
+        </AnimatedPressable>
+
+        {onIconPress && (
+          <Chip icon={Sparkles} label="" onPress={onIconPress} />
+        )}
+
+        {onMorePress && (
+          <Chip icon={MoreHorizontal} label="" onPress={onMorePress} />
+        )}
+      </ScrollView>
+    );
+  }
+
+  // Edit 모드: 기존 5칩 (날짜, 시간, 알람, 반복, 우선순위) — lucide 아이콘
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.toolbar}
       keyboardShouldPersistTaps="handled">
-      {/* 날짜 */}
-      <Chip icon="📅" label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
+      <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
+      {onTimePress && (
+        <Chip icon={Clock} label={getTimeChipLabel(form)} onPress={onTimePress} />
+      )}
+      {onAlarmPress && (
+        <Chip
+          icon={Bell}
+          label={getAlarmLabel(form.alarmOffsetMinutes)}
+          onPress={onAlarmPress}
+        />
+      )}
+      {onRecurrencePress && (
+        <Chip icon={Repeat} label={getRecurrenceChipLabel(form)} onPress={onRecurrencePress} />
+      )}
 
-      {/* 시간 */}
-      <Chip icon="⏰" label={getTimeChipLabel(form)} onPress={onTimePress} />
-
-      {/* 알람 */}
-      <Chip
-        icon="🔔"
-        label={getAlarmLabel(form.alarmOffsetMinutes)}
-        onPress={onAlarmPress}
-      />
-
-      {/* 반복 */}
-      <Chip icon="🔄" label={getRecurrenceChipLabel(form)} onPress={onRecurrencePress} />
-
-      {/* 우선순위 */}
       <AnimatedPressable
         onPress={onPriorityPress}
         hapticType="selection"
@@ -136,8 +191,9 @@ export function AttributeToolbar({
             borderWidth: 1.5,
           },
         ]}>
+        <Flag size={14} color={priorityStyle.text} />
         <Text style={[styles.chipText, {color: priorityStyle.text}]}>
-          🚩 {getPriorityChipLabel(form)}
+          {getPriorityChipLabel(form)}
         </Text>
       </AnimatedPressable>
     </ScrollView>
@@ -149,19 +205,18 @@ export function AttributeToolbar({
 // ============================================
 
 function Chip({
-  icon,
+  icon: IconComponent,
   label,
   onPress,
 }: {
-  icon: string;
+  icon: LucideIcon;
   label: string;
   onPress: () => void;
 }) {
   return (
     <AnimatedPressable onPress={onPress} hapticType="selection" style={styles.chip}>
-      <Text style={styles.chipText}>
-        {icon} {label}
-      </Text>
+      <IconComponent size={14} color="#4B5563" />
+      {label ? <Text style={styles.chipText}>{label}</Text> : null}
     </AnimatedPressable>
   );
 }
@@ -180,6 +235,7 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,

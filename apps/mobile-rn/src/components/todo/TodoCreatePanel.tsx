@@ -2,10 +2,13 @@
  * TodoCreatePanel
  * TickTick 스타일 — 키보드 바로 위에 붙는 인라인 입력 패널
  * - 반투명 backdrop (탭하면 닫기)
- * - 제목 + 설명 + AttributeToolbar
- * - 키보드 위치에 따라 패널 bottom 위치 애니메이션
+ * - 제목 + 설명 + 4칩 툴바
+ * - activePanel 상태로 키보드/패널 전환
+ *   'none': 키보드 표시
+ *   'schedule': 키보드 숨김, 통합 일정 패널
+ *   'icon': 키보드 유지, 인라인 아이콘 피커
  */
-import React, {useCallback, useEffect, useRef} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -22,23 +25,23 @@ import Animated, {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AnimatedPressable} from '@/components/core';
 import {AttributeToolbar} from './AttributeToolbar';
+import {SchedulePanel} from './SchedulePanel';
+import {InlineIconPicker} from './InlineIconPicker';
 import {useKeyboardHeight} from '@/hooks/useKeyboardHeight';
 import {useTheme} from '@/theme';
-import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
 // Types
 // ============================================
 
+type ActivePanel = 'none' | 'schedule' | 'icon';
+
 interface ToolbarCallbacks {
-  onDatePress: () => void;
+  onPriorityPress: () => void;
   onTimePress: () => void;
   onAlarmPress: () => void;
   onRecurrencePress: () => void;
-  onPriorityPress: () => void;
-  onIconPress: () => void;
 }
 
 interface TodoCreatePanelProps extends UseTodoFormReturn {
@@ -64,51 +67,87 @@ export function TodoCreatePanel({
   const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
   const titleInputRef = useRef<TextInput>(null);
+  const [activePanel, setActivePanel] = useState<ActivePanel>('none');
 
-  // 열리면 auto-focus
+  // 열리면 auto-focus + 패널 리셋
   useEffect(() => {
     if (visible) {
+      setActivePanel('none');
       const timer = setTimeout(() => titleInputRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     }
   }, [visible]);
 
-  // 패널 bottom 위치: 키보드 높이 - safe area bottom (키보드가 이미 safe area를 포함)
+  // 패널 bottom 위치:
+  // schedule 패널 → bottom = insets.bottom (키보드 없음)
+  // icon 패널 → 키보드 위
+  // none → 키보드 위
   const panelAnimatedStyle = useAnimatedStyle(() => {
+    if (activePanel === 'schedule') {
+      return {transform: [{translateY: -insets.bottom}]};
+    }
     const kbHeight = keyboardHeight.value;
-    // 키보드가 있으면 키보드 위, 없으면 safe area bottom 위
     const bottom = kbHeight > 0 ? kbHeight : insets.bottom;
-    return {
-      transform: [{translateY: -bottom}],
-    };
+    return {transform: [{translateY: -bottom}]};
   });
 
   const handleBackdropPress = useCallback(() => {
     Keyboard.dismiss();
-    // 키보드가 사라진 후 닫기
+    setActivePanel('none');
     setTimeout(() => onClose(), 100);
   }, [onClose]);
 
   const handleSavePress = useCallback(() => {
     handleSave(() => {
       Keyboard.dismiss();
+      setActivePanel('none');
       onClose();
     });
   }, [handleSave, onClose]);
 
-  // 서브시트 콜백 래퍼: 키보드 닫고 서브시트 열기
-  const wrapToolbarCallback = useCallback(
-    (cb: () => void) => () => {
+  // 날짜 칩 → 일정 패널 토글
+  const handleDatePress = useCallback(() => {
+    if (activePanel === 'schedule') {
+      // 패널 닫고 키보드 복귀
+      setActivePanel('none');
+      titleInputRef.current?.focus();
+    } else {
       Keyboard.dismiss();
-      // 키보드가 내려간 후 서브시트 열기
-      setTimeout(cb, 200);
+      setActivePanel('schedule');
+    }
+  }, [activePanel]);
+
+  // 아이콘 칩 → 인라인 아이콘 피커 토글
+  const handleIconPress = useCallback(() => {
+    if (activePanel === 'icon') {
+      setActivePanel('none');
+    } else {
+      // 키보드 유지하면서 아이콘 패널 표시
+      setActivePanel('icon');
+    }
+  }, [activePanel]);
+
+  // 일정 패널 닫기
+  const handleScheduleClose = useCallback(() => {
+    setActivePanel('none');
+    titleInputRef.current?.focus();
+  }, []);
+
+  // 일정 패널 확인
+  const handleScheduleConfirm = useCallback(() => {
+    setActivePanel('none');
+    titleInputRef.current?.focus();
+  }, []);
+
+  // 서브시트 콜백 래퍼: 일정 패널에서 서브시트 열 때
+  const handleSubsheetOpen = useCallback(
+    (cb: () => void) => () => {
+      cb();
     },
     [],
   );
 
   if (!visible) return null;
-
-  const ResolvedIcon = resolveTodoIcon(form.icon);
 
   return (
     <>
@@ -123,19 +162,8 @@ export function TodoCreatePanel({
       {/* Panel */}
       <Animated.View style={[styles.panelWrapper, panelAnimatedStyle]}>
         <View style={styles.panel}>
-          {/* 제목 행 */}
+          {/* 제목 행 (아이콘 버튼 제거됨) */}
           <View style={styles.titleRow}>
-            <AnimatedPressable
-              onPress={wrapToolbarCallback(toolbarCallbacks.onIconPress)}
-              hapticType="selection"
-              style={styles.iconBtn}>
-              {ResolvedIcon ? (
-                <ResolvedIcon size={22} color="#6B7280" />
-              ) : (
-                <ClipboardList size={22} color="#9CA3AF" />
-              )}
-            </AnimatedPressable>
-
             <TextInput
               ref={titleInputRef}
               value={form.title}
@@ -167,17 +195,38 @@ export function TodoCreatePanel({
             numberOfLines={1}
           />
 
-          {/* 구분선 + 툴바 */}
+          {/* 구분선 + 4칩 툴바 */}
           <View style={styles.divider} />
           <AttributeToolbar
             form={form}
-            onDatePress={wrapToolbarCallback(toolbarCallbacks.onDatePress)}
-            onTimePress={wrapToolbarCallback(toolbarCallbacks.onTimePress)}
-            onAlarmPress={wrapToolbarCallback(toolbarCallbacks.onAlarmPress)}
-            onRecurrencePress={wrapToolbarCallback(toolbarCallbacks.onRecurrencePress)}
-            onPriorityPress={wrapToolbarCallback(toolbarCallbacks.onPriorityPress)}
+            compact
+            onDatePress={handleDatePress}
+            onPriorityPress={toolbarCallbacks.onPriorityPress}
+            onIconPress={handleIconPress}
+            onMorePress={() => {}}
           />
+
+          {/* 조건부 패널 영역 */}
+          {activePanel === 'icon' && (
+            <InlineIconPicker
+              selectedIcon={form.icon}
+              onIconChange={v => updateField('icon', v)}
+            />
+          )}
         </View>
+
+        {/* 일정 패널 — 패널 아래 (키보드 대체 영역) */}
+        {activePanel === 'schedule' && (
+          <SchedulePanel
+            form={form}
+            updateField={updateField}
+            onClose={handleScheduleClose}
+            onConfirm={handleScheduleConfirm}
+            onTimePress={handleSubsheetOpen(toolbarCallbacks.onTimePress)}
+            onAlarmPress={handleSubsheetOpen(toolbarCallbacks.onAlarmPress)}
+            onRecurrencePress={handleSubsheetOpen(toolbarCallbacks.onRecurrencePress)}
+          />
+        )}
       </Animated.View>
     </>
   );
@@ -213,16 +262,10 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 4,
-    gap: 4,
-  },
-  iconBtn: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
   },
   titleInput: {
     flex: 1,
