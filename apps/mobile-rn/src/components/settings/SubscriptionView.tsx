@@ -1,7 +1,7 @@
 /**
  * SubscriptionView — 시안 C: Premium Paywall (Free) + 기존 관리 화면 (Pro)
  */
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -164,33 +164,27 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     if (user?.id) fetchSubscription(user.id);
   }, [user?.id, fetchSubscription]);
 
-  // RevenueCat offerings 로딩
-  useEffect(() => {
+  // RevenueCat offerings 로딩 (재시도 가능)
+  const loadOfferings = useCallback(async () => {
     setOfferingsLoading(true);
     setOfferingsError(null);
-    Purchases.getOfferings()
-      .then(offerings => {
-        setMonthlyPkg(offerings.current?.monthly ?? null);
-        setAnnualPkg(offerings.current?.annual ?? null);
-        if (!offerings.current) {
-          const msg = '[RevenueCat] No current offering found';
-          console.warn(msg);
-          setOfferingsError(msg);
-          if (__DEV__) {
-            Alert.alert('RevenueCat Debug', msg + '\n\nOfferings 객체: ' + JSON.stringify(Object.keys(offerings)));
-          }
-        }
-      })
-      .catch(e => {
-        const msg = e?.message ?? String(e);
-        console.warn('[RevenueCat] getOfferings error:', e);
-        setOfferingsError(msg);
-        if (__DEV__) {
-          Alert.alert('RevenueCat Offerings Error', msg + '\n\nCode: ' + (e?.code ?? 'N/A'));
-        }
-      })
-      .finally(() => setOfferingsLoading(false));
+    try {
+      const offerings = await Purchases.getOfferings();
+      setMonthlyPkg(offerings.current?.monthly ?? null);
+      setAnnualPkg(offerings.current?.annual ?? null);
+      if (!offerings.current) {
+        setOfferingsError('구독 상품을 불러올 수 없습니다');
+        console.warn('[RevenueCat] No current offering found. Keys:', JSON.stringify(Object.keys(offerings)));
+      }
+    } catch (e: any) {
+      setOfferingsError(e?.message ?? String(e));
+      console.warn('[RevenueCat] getOfferings error:', e);
+    } finally {
+      setOfferingsLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadOfferings(); }, [loadOfferings]);
 
   const status = subscriptionInfo?.status ?? 'free';
   const subPlatform = subscriptionInfo?.platform;
@@ -201,10 +195,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
 
   const handlePurchase = async () => {
     const pkg = selectedPlan === 'yearly' ? annualPkg : monthlyPkg;
-    if (!pkg) {
-      Alert.alert('구독 정보 로딩 중', '잠시 후 다시 시도해 주세요.');
-      return;
-    }
+    if (!pkg) return;
     setPurchasing(true);
     const result = await purchaseSelectedPackage(pkg);
     setPurchasing(false);
@@ -272,7 +263,28 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     </View>
   );
 
-  const renderPaywallPlans = () => (
+  const renderPaywallPlans = () => {
+    if (offeringsLoading) {
+      return (
+        <View style={styles.offeringsStatusBox}>
+          <ActivityIndicator size="small" color="#60A5FA" />
+          <Text style={styles.offeringsStatusText}>구독 상품 불러오는 중...</Text>
+        </View>
+      );
+    }
+    if (offeringsError && !monthlyPkg && !annualPkg) {
+      return (
+        <View style={styles.offeringsStatusBox}>
+          <Text style={styles.offeringsErrorText}>{offeringsError}</Text>
+          <AnimatedPressable onPress={loadOfferings} hapticType="light" scaleValue={0.95}>
+            <View style={styles.offeringsRetryBtn}>
+              <Text style={styles.offeringsRetryText}>다시 시도</Text>
+            </View>
+          </AnimatedPressable>
+        </View>
+      );
+    }
+    return (
     <View style={styles.planSelector}>
       <AnimatedPressable onPress={() => setSelectedPlan('monthly')} hapticType="light" scaleValue={0.97}
         style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}>
@@ -299,20 +311,26 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
         </View>
       </AnimatedPressable>
     </View>
-  );
+    );
+  };
 
-  const renderPaywallCta = () => (
-    <AnimatedPressable onPress={handlePurchase} hapticType="medium" scaleValue={0.96} disabled={purchasing}>
-      <View style={[styles.ctaBtn, purchasing && {backgroundColor: '#94A3B8'}]}>
+  const renderPaywallCta = () => {
+    const ctaDisabled = purchasing || offeringsLoading || (!monthlyPkg && !annualPkg);
+    return (
+    <AnimatedPressable onPress={handlePurchase} hapticType="medium" scaleValue={0.96} disabled={ctaDisabled}>
+      <View style={[styles.ctaBtn, ctaDisabled && {backgroundColor: '#94A3B8'}]}>
         {purchasing ? (
           <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
           <Crown size={18} color="#FFFFFF" strokeWidth={2} />
         )}
-        <Text style={styles.ctaBtnText}>{purchasing ? '처리 중...' : '구독하기'}</Text>
+        <Text style={styles.ctaBtnText}>
+          {purchasing ? '처리 중...' : offeringsLoading ? '불러오는 중...' : (!monthlyPkg && !annualPkg) ? '구독 상품 로딩 실패' : '구독하기'}
+        </Text>
       </View>
     </AnimatedPressable>
-  );
+    );
+  };
 
   const renderPaywallFooter = () => (
     <View style={styles.footerLinks}>
@@ -490,6 +508,21 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           </View>
 
           {/* ── 플랜 셀렉터 ── */}
+          {offeringsLoading ? (
+            <View style={styles.offeringsStatusBox}>
+              <ActivityIndicator size="small" color="#60A5FA" />
+              <Text style={styles.offeringsStatusText}>구독 상품 불러오는 중...</Text>
+            </View>
+          ) : offeringsError && !monthlyPkg && !annualPkg ? (
+            <View style={styles.offeringsStatusBox}>
+              <Text style={styles.offeringsErrorText}>{offeringsError}</Text>
+              <AnimatedPressable onPress={loadOfferings} hapticType="light" scaleValue={0.95}>
+                <View style={styles.offeringsRetryBtn}>
+                  <Text style={styles.offeringsRetryText}>다시 시도</Text>
+                </View>
+              </AnimatedPressable>
+            </View>
+          ) : (
           <View style={styles.planSelector}>
             {/* 월간 */}
             <AnimatedPressable
@@ -541,6 +574,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
               </View>
             </AnimatedPressable>
           </View>
+          )}
 
 
         </ScrollView>
@@ -554,47 +588,18 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
         }}>
           {/* ── CTA 버튼 ── */}
           <AnimatedPressable
-            onPress={async () => {
-              const pkg =
-                selectedPlan === 'yearly' ? annualPkg : monthlyPkg;
-              if (!pkg) {
-                Alert.alert(
-                  '구독 정보 로딩 중',
-                  '잠시 후 다시 시도해 주세요.',
-                );
-                return;
-              }
-              setPurchasing(true);
-              const result = await purchaseSelectedPackage(pkg);
-              setPurchasing(false);
-              if (result.success) {
-                // RevenueCat customerInfo에서 즉시 구독 상태 반영
-                const active = result.customerInfo.entitlements.active;
-                if (active && Object.keys(active).length > 0) {
-                  applyRevenueCatPurchase(active);
-                }
-                // Supabase도 배경에서 갱신 시도 (webhook 처리 시간 확보)
-                if (user?.id) {
-                  setTimeout(() => fetchSubscription(user.id), 5000);
-                }
-              } else if (!result.cancelled) {
-                Alert.alert(
-                  '구매 실패',
-                  '결제 중 문제가 발생했습니다. 다시 시도해 주세요.',
-                );
-              }
-            }}
+            onPress={handlePurchase}
             hapticType="medium"
             scaleValue={0.96}
-            disabled={purchasing}>
-            <View style={[styles.ctaBtn, purchasing && {backgroundColor: '#94A3B8'}]}>
+            disabled={purchasing || offeringsLoading || (!monthlyPkg && !annualPkg)}>
+            <View style={[styles.ctaBtn, (purchasing || offeringsLoading || (!monthlyPkg && !annualPkg)) && {backgroundColor: '#94A3B8'}]}>
               {purchasing ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <Crown size={18} color="#FFFFFF" strokeWidth={2} />
               )}
               <Text style={styles.ctaBtnText}>
-                {purchasing ? '처리 중...' : '구독하기'}
+                {purchasing ? '처리 중...' : offeringsLoading ? '불러오는 중...' : (!monthlyPkg && !annualPkg) ? '구독 상품 로딩 실패' : '구독하기'}
               </Text>
             </View>
           </AnimatedPressable>
@@ -1049,6 +1054,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#60A5FA',
     fontWeight: '600',
+  },
+
+  // Offerings 로딩/에러 상태
+  offeringsStatusBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 28,
+    gap: 12,
+    marginBottom: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  offeringsStatusText: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  offeringsErrorText: {
+    fontSize: 13,
+    color: '#F87171',
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  offeringsRetryBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  offeringsRetryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#60A5FA',
   },
 
   // 플랜 셀렉터

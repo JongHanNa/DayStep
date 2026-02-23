@@ -23,7 +23,10 @@ export function initRevenueCat() {
   }
 
   Purchases.configure({apiKey});
-  console.log('[RevenueCat] configure done');
+  console.log(
+    '[RevenueCat] configure done, key:',
+    apiKey.substring(0, 10) + '...',
+  );
 }
 
 /** 인증 후 호출 — RevenueCat에 사용자 식별 */
