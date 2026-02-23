@@ -3,7 +3,7 @@
  * 글로벌 동기화 훅 — Layer 1 (AppState) + Layer 2 (Supabase Realtime) 통합.
  *
  * - AppState: background → active 전환 시 debounced refetch
- * - Supabase Realtime: todos 테이블 postgres_changes 구독 → debounced refetch
+ * - Supabase Realtime: todos + todo_completions 테이블 postgres_changes 구독 → debounced refetch
  * - 인증 상태 기반 자동 구독/해제
  * - 에러 시 채널 제거 후 3초 뒤 재구독
  */
@@ -85,15 +85,31 @@ export function useRealtimeSync() {
             event: '*',
             schema: 'public',
             table: 'todos',
-            filter: `user_id=eq.${user.id}`,
           },
-          () => {
+          (payload) => {
+            console.log('[RealtimeSync] todos event:', payload.eventType);
             debouncedRefetch();
           },
         )
-        .subscribe((status) => {
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'todo_completions',
+          },
+          (payload) => {
+            console.log('[RealtimeSync] todo_completions event:', payload.eventType);
+            debouncedRefetch();
+          },
+        )
+        .subscribe((status, err) => {
+          console.log('[RealtimeSync] subscription status:', status, err ?? '');
+          if (status === 'SUBSCRIBED') {
+            console.log('[RealtimeSync] listening on todos + todo_completions');
+          }
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            // 에러 시 채널 제거 후 재구독
+            console.warn('[RealtimeSync] channel error, reconnecting in', RECONNECT_DELAY_MS, 'ms');
             if (channelRef.current) {
               supabase.removeChannel(channelRef.current);
               channelRef.current = null;
