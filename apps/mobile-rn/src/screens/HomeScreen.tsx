@@ -3,9 +3,10 @@
  * Page 0: 메인 허브 (인사 → 진행률 → 미션 → 3그룹 그리드)
  * Page 1: 영감 페이지 (원동력 → 연락할 사람 → 하루 한 줄)
  */
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {Text, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {useFocusRefetch} from '@/hooks/useFocusRefetch';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, SwipeablePages} from '@/components/core';
 import {ProgressRing} from '@/components/home/ProgressRing';
@@ -74,18 +75,19 @@ const INSPIRATION_QUOTES = [
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
-  const {todos} = useTodoStore();
+  const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
   const user = useAuthStore(s => s.user);
   const {notes, fetchFuelNotes, getRandomFuelNote} = useNoteStore();
   const {recommendations, loadRecommendations} = useCherishedPeopleStore();
 
-  // 원동력 + 연락 추천 데이터 로딩
-  useEffect(() => {
+  // 화면 포커스 시 todo + 부가 데이터 재조회
+  useFocusRefetch(useCallback(() => {
+    fetchTodosForDate(selectedDate);
     if (user?.id) {
       fetchFuelNotes(user.id);
       loadRecommendations(user.id);
     }
-  }, [user?.id]);
+  }, [selectedDate, fetchTodosForDate, user?.id, fetchFuelNotes, loadRecommendations]));
 
   const greeting = useMemo(() => getGreeting(), []);
   const today = format(new Date(), 'M월 d일 EEEE', {locale: ko});

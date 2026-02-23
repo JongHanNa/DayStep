@@ -8,6 +8,7 @@ import {Text, View, SectionList, RefreshControl, StyleSheet} from 'react-native'
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {useFocusRefetch} from '@/hooks/useFocusRefetch';
 import {TodoCard} from '@/components/todo/TodoCard';
 import {
   TodoFormBottomSheet,
@@ -105,6 +106,11 @@ function TodoListScreenInner() {
   useEffect(() => {
     fetchTodosForDate(selectedDate);
   }, []);
+
+  // 화면 포커스 시 데이터 재조회 (다른 탭 갔다 돌아올 때)
+  useFocusRefetch(useCallback(() => {
+    fetchTodosForDate(selectedDate);
+  }, [selectedDate, fetchTodosForDate]));
 
   // todos 변경 시 fuel 데이터 로드
   useEffect(() => {

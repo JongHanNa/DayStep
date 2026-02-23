@@ -11,10 +11,20 @@ import {
   loginRevenueCat,
   logoutRevenueCat,
 } from '@/lib/revenueCat';
+import {useRealtimeSync} from '@/hooks/useRealtimeSync';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
 const Stack = createNativeStackNavigator();
+
+/**
+ * 인증된 사용자 전용 래퍼 — 글로벌 동기화 훅 마운트.
+ * isAuthenticated=true 일 때만 렌더되므로 로그아웃 시 자동 cleanup.
+ */
+function AuthenticatedApp() {
+  useRealtimeSync();
+  return <MainTabNavigator />;
+}
 
 function LoadingScreen() {
   return (
@@ -56,7 +66,7 @@ export default function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false, animation: 'fade'}}>
       {isAuthenticated ? (
-        <Stack.Screen name="Main" component={MainTabNavigator} />
+        <Stack.Screen name="Main" component={AuthenticatedApp} />
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}
