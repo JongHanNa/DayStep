@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DayStep — 포커스 타이머 통합 UX 데모</title>
+<style>
+  /* ─── Reset & Base ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --mint-50: #f0fdfa; --mint-100: #ccfbf1; --mint-200: #99f6e4;
+    --mint-300: #5eead4; --mint-400: #2dd4bf; --mint-500: #14b8a6;
+    --mint-600: #0d9488; --mint-700: #0f766e;
+    --violet-50: #f5f3ff; --violet-100: #ede9fe; --violet-200: #ddd6fe;
+    --violet-400: #a78bfa; --violet-500: #8b5cf6; --violet-600: #7c3aed;
+    --teal-400: #2dd4bf; --teal-500: #14b8a6; --teal-600: #0d9488;
+    --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280;
+    --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937;
+    --gray-900: #111827;
+    --green-400: #4ade80; --green-500: #22c55e;
+    --amber-400: #fbbf24; --amber-500: #f59e0b;
+    --red-400: #f87171; --red-500: #ef4444;
+    --radius: 12px; --radius-lg: 16px; --radius-xl: 20px; --radius-full: 9999px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+    --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,.1), 0 4px 6px rgba(0,0,0,.05);
+    --shadow-xl: 0 20px 25px rgba(0,0,0,.1), 0 8px 10px rgba(0,0,0,.04);
+    --transition: .3s cubic-bezier(.4,0,.2,1);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--gray-100); color: var(--gray-800);
+    line-height: 1.5; min-height: 100vh;
+  }
+
+  /* ─── Layout ─── */
+  .app-shell {
+    max-width: 440px; margin: 0 auto;
+    min-height: 100vh; display: flex; flex-direction: column;
+    background: #fff;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ─── Demo Header ─── */
+  .demo-header {
+    text-align: center; padding: 20px 16px 12px;
+    background: linear-gradient(135deg, var(--violet-50), var(--mint-50));
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .demo-header h1 {
+    font-size: 18px; font-weight: 700; color: var(--gray-900);
+    margin-bottom: 2px;
+  }
+  .demo-header p {
+    font-size: 12px; color: var(--gray-500);
+  }
+
+  /* ─── Tab Navigation ─── */
+  .tab-nav {
+    display: flex; background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .tab-btn {
+    flex: 1; padding: 12px 8px; text-align: center;
+    font-size: 13px; font-weight: 500; color: var(--gray-500);
+    background: none; border: none; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--gray-700); background: var(--gray-100); }
+  .tab-btn.active {
+    color: var(--mint-600); border-bottom-color: var(--mint-500);
+    font-weight: 600;
+  }
+  .tab-btn .tab-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+
+  /* ─── Tab Content ─── */
+  .tab-content { display: none; flex: 1; flex-direction: column; }
+  .tab-content.active { display: flex; }
+
+  /* ─── Scenario Container ─── */
+  .scenario-body {
+    flex: 1; overflow-y: auto; position: relative;
+  }
+
+  /* ═══ SCENARIO 1: Banner ═══ */
+  .focus-banner {
+    background: linear-gradient(135deg, var(--mint-500), var(--teal-600));
+    color: #fff; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+  .focus-banner::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+    animation: banner-shimmer 3s infinite;
+  }
+  @keyframes banner-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .focus-banner:hover { filter: brightness(1.05); }
+  .focus-banner .banner-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,.2); display: flex;
+    align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    backdrop-filter: blur(4px);
+  }
+  .focus-banner .banner-info { flex: 1; min-width: 0; }
+  .focus-banner .banner-title {
+    font-size: 14px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .focus-banner .banner-sub {
+    font-size: 11px; opacity: .85;
+  }
+  .focus-banner .banner-cta {
+    background: rgba(255,255,255,.25); color: #fff;
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 6px 14px; border-radius: var(--radius-full);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: var(--transition);
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .focus-banner .banner-cta:hover {
+    background: rgba(255,255,255,.4);
+  }
+
+  .focus-banner.completed {
+    background: linear-gradient(135deg, var(--green-400), var(--green-500));
+  }
+  .focus-banner.hidden { display: none; }
+
+  /* ─── Home Screen Mock (Scenario 1) ─── */
+  .home-screen { padding: 16px; }
+  .home-greeting {
+    font-size: 20px; font-weight: 700; color: var(--gray-900);
+    margin-bottom: 4px;
+  }
+  .home-date { font-size: 13px; color: var(--gray-500); margin-bottom: 20px; }
+
+  .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--gray-50); border-radius: var(--radius);
+    padding: 14px 12px; text-align: center;
+    border: 1px solid var(--gray-200);
+  }
+  .stat-card .stat-value {
+    font-size: 22px; font-weight: 700; color: var(--mint-600);
+  }
+  .stat-card .stat-label {
+    font-size: 11px; color: var(--gray-500); margin-top: 2px;
+  }
+
+  .section-title {
+    font-size: 15px; font-weight: 600; color: var(--gray-800);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+
+  .upcoming-list { display: flex; flex-direction: column; gap: 8px; }
+  .upcoming-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--gray-50); border-radius: var(--radius);
+    padding: 12px; border: 1px solid var(--gray-200);
+  }
+  .upcoming-item .time-badge {
+    font-size: 12px; font-weight: 600; color: var(--mint-600);
+    background: var(--mint-50); padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap;
+  }
+  .upcoming-item .item-name {
+    font-size: 14px; color: var(--gray-700); flex: 1;
+  }
+
+  /* ═══ SCENARIO 2: Todo Card ═══ */
+  .todo-list-screen { padding: 16px; }
+  .todo-list-header {
+    font-size: 18px; font-weight: 700; color: var(--gray-900);
+    margin-bottom: 4px;
+  }
+  .todo-list-sub {
+    font-size: 13px; color: var(--gray-500); margin-bottom: 16px;
+  }
+
+  .todo-cards { display: flex; flex-direction: column; gap: 8px; }
+
+  .todo-card {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff; border-radius: var(--radius);
+    padding: 14px; border: 1px solid var(--gray-200);
+    cursor: pointer; transition: var(--transition);
+    position: relative;
+  }
+  .todo-card:hover { border-color: var(--gray-300); box-shadow: var(--shadow-sm); }
+  .todo-card.current {
+    border-color: var(--mint-300); background: var(--mint-50);
+    box-shadow: 0 0 0 1px var(--mint-200);
+  }
+  .todo-card.current:hover { border-color: var(--mint-400); }
+  .todo-card.done { opacity: .5; }
+  .todo-card.done .todo-title { text-decoration: line-through; }
+
+  .todo-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--gray-300); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: transparent;
+    transition: var(--transition);
+  }
+  .todo-card.done .todo-check {
+    background: var(--green-500); border-color: var(--green-500);
+    color: #fff;
+  }
+
+  .todo-info { flex: 1; min-width: 0; }
+  .todo-title { font-size: 14px; font-weight: 500; color: var(--gray-800); }
+  .todo-time { font-size: 12px; color: var(--gray-500); margin-top: 1px; }
+
+  /* Mini progress ring */
+  .mini-ring-wrap {
+    position: relative; width: 38px; height: 38px; flex-shrink: 0;
+  }
+  .mini-ring-wrap svg { width: 38px; height: 38px; transform: rotate(-90deg); }
+  .mini-ring-bg { fill: none; stroke: var(--gray-200); stroke-width: 3; }
+  .mini-ring-progress { fill: none; stroke: var(--mint-500); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+  .mini-ring-text {
+    position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--mint-600);
+  }
+
+  .now-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: var(--mint-500); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 8px;
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-sm);
+    animation: pulse-badge 2s ease-in-out infinite;
+  }
+  @keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* ═══ SCENARIO 3: Quick Start ═══ */
+  .quick-screen { padding: 16px; padding-bottom: 100px; }
+  .quick-empty {
+    text-align: center; padding: 48px 24px;
+  }
+  .quick-empty-icon { font-size: 56px; margin-bottom: 12px; }
+  .quick-empty-title {
+    font-size: 18px; font-weight: 700; color: var(--gray-800);
+    margin-bottom: 6px;
+  }
+  .quick-empty-desc {
+    font-size: 14px; color: var(--gray-500); line-height: 1.6;
+  }
+
+  .quick-history { margin-top: 24px; }
+  .quick-history-title {
+    font-size: 14px; font-weight: 600; color: var(--gray-600);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .history-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--gray-100);
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--mint-400); flex-shrink: 0;
+  }
+  .history-text { font-size: 13px; color: var(--gray-600); flex: 1; }
+  .history-time { font-size: 12px; color: var(--gray-400); }
+
+  /* FAB */
+  .fab {
+    position: absolute; bottom: 24px; right: 24px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--violet-500), var(--mint-500));
+    color: #fff; border: none; cursor: pointer;
+    font-size: 26px; display: flex;
+    align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(139,92,246,.35);
+    transition: var(--transition);
+    z-index: 40;
+  }
+  .fab:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(139,92,246,.45); }
+  .fab:active { transform: translateY(0); }
+
+  /* ═══ Fullscreen Focus Mode ═══ */
+  .fullscreen-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+  .fullscreen-overlay.show {
+    display: flex;
+    opacity: 1;
+  }
+  .fullscreen-overlay.entering {
+    display: flex;
+    opacity: 0;
+  }
+
+  .fs-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9, #0d9488, #14b8a6);
+    background-size: 400% 400%;
+    animation: gradient-shift 20s ease infinite;
+  }
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .fs-particles {
+    position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  }
+  .fs-particle {
+    position: absolute; width: 4px; height: 4px;
+    background: rgba(255,255,255,.15); border-radius: 50%;
+    animation: float-particle linear infinite;
+  }
+  @keyframes float-particle {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+  }
+
+  .fs-content {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 24px;
+    padding: 40px 24px;
+    width: 100%; max-width: 400px;
+  }
+
+  .fs-close-btn {
+    position: absolute; top: 16px; left: 16px; z-index: 3;
+    background: rgba(255,255,255,.15); border: none;
+    color: rgba(255,255,255,.7); width: 40px; height: 40px;
+    border-radius: 50%; font-size: 20px; cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: var(--transition);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fs-close-btn:hover { background: rgba(255,255,255,.25); color: #fff; }
+
+  /* Timer Ring */
+  .timer-ring-container {
+    position: relative; width: 200px; height: 200px;
+  }
+  .timer-ring-container svg {
+    width: 200px; height: 200px; transform: rotate(-90deg);
+  }
+  .timer-ring-bg {
+    fill: none; stroke: rgba(255,255,255,.15); stroke-width: 6;
+  }
+  .timer-ring-progress {
+    fill: none; stroke: rgba(255,255,255,.9); stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .5s ease;
+    filter: drop-shadow(0 0 8px rgba(255,255,255,.3));
+  }
+  .timer-ring-inner {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .timer-display {
+    font-size: 48px; font-weight: 200; color: #fff;
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer-status {
+    font-size: 13px; color: rgba(255,255,255,.7);
+    margin-top: 4px; font-weight: 500;
+  }
+
+  /* Focus Task Name */
+  .fs-task-name {
+    font-size: 18px; font-weight: 600; color: #fff;
+    text-align: center; max-width: 300px;
+    text-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  .fs-task-sub {
+    font-size: 13px; color: rgba(255,255,255,.6);
+    margin-top: 4px;
+  }
+
+  /* Controls */
+  .fs-controls {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 12px;
+  }
+  .fs-ctrl-btn {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: none; cursor: pointer; font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+  }
+  .fs-ctrl-btn:hover { transform: scale(1.08); }
+  .fs-ctrl-btn:active { transform: scale(.95); }
+
+  .btn-play {
+    width: 64px; height: 64px;
+    background: rgba(255,255,255,.95); color: var(--violet-600);
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+    font-size: 26px;
+  }
+  .btn-play:hover { background: #fff; }
+
+  .btn-stop {
+    background: rgba(255,255,255,.15); color: rgba(255,255,255,.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.2);
+  }
+  .btn-stop:hover { background: rgba(255,255,255,.25); }
+
+  .btn-complete {
+    background: rgba(74,222,128,.25); color: #fff;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(74,222,128,.3);
+  }
+  .btn-complete:hover { background: rgba(74,222,128,.4); }
+
+  .btn-end {
+    background: rgba(248,113,113,.2); color: rgba(255,255,255,.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(248,113,113,.25);
+  }
+  .btn-end:hover { background: rgba(248,113,113,.35); }
+
+  .fs-ctrl-label {
+    font-size: 10px; color: rgba(255,255,255,.5);
+    text-align: center; margin-top: 4px;
+  }
+  .fs-ctrl-group { display: flex; flex-direction: column; align-items: center; }
+
+  /* ═══ Celebration Overlay ═══ */
+  .celebrate-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(8px);
+  }
+  .celebrate-overlay.show { display: flex; }
+
+  .celebrate-content {
+    text-align: center; color: #fff;
+    animation: celebrate-pop .5s cubic-bezier(.175,.885,.32,1.275);
+  }
+  @keyframes celebrate-pop {
+    0% { transform: scale(.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .celebrate-icon { font-size: 64px; margin-bottom: 16px; }
+  .celebrate-title {
+    font-size: 24px; font-weight: 700; margin-bottom: 6px;
+  }
+  .celebrate-sub { font-size: 15px; opacity: .8; margin-bottom: 24px; }
+  .celebrate-btn {
+    background: rgba(255,255,255,.2); color: #fff;
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 10px 28px; border-radius: var(--radius-full);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    backdrop-filter: blur(4px); transition: var(--transition);
+  }
+  .celebrate-btn:hover { background: rgba(255,255,255,.3); }
+
+  /* Confetti */
+  .confetti-container {
+    position: fixed; inset: 0; pointer-events: none; z-index: 2001;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute; width: 10px; height: 10px;
+    top: -10px;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(0) rotateZ(0deg) rotateX(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotateZ(720deg) rotateX(360deg); opacity: 0; }
+  }
+
+  /* ═══ Quick Start: Save Prompt ═══ */
+  .save-prompt-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(8px);
+  }
+  .save-prompt-overlay.show { display: flex; }
+
+  .save-prompt-card {
+    background: #fff; border-radius: var(--radius-xl);
+    padding: 28px 24px; width: 90%; max-width: 360px;
+    box-shadow: var(--shadow-xl);
+    animation: celebrate-pop .4s cubic-bezier(.175,.885,.32,1.275);
+  }
+  .save-prompt-icon { font-size: 40px; text-align: center; margin-bottom: 12px; }
+  .save-prompt-title {
+    font-size: 18px; font-weight: 700; color: var(--gray-900);
+    text-align: center; margin-bottom: 4px;
+  }
+  .save-prompt-sub {
+    font-size: 13px; color: var(--gray-500); text-align: center;
+    margin-bottom: 20px;
+  }
+  .save-prompt-input {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius); font-size: 15px;
+    outline: none; transition: var(--transition);
+    margin-bottom: 16px;
+  }
+  .save-prompt-input:focus { border-color: var(--mint-400); box-shadow: 0 0 0 3px rgba(20,184,166,.1); }
+  .save-prompt-input::placeholder { color: var(--gray-400); }
+
+  .save-prompt-actions {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .save-btn {
+    width: 100%; padding: 12px; border-radius: var(--radius);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: var(--transition); border: none;
+  }
+  .save-btn-primary {
+    background: linear-gradient(135deg, var(--mint-500), var(--teal-600));
+    color: #fff;
+  }
+  .save-btn-primary:hover { filter: brightness(1.05); }
+  .save-btn-primary:disabled {
+    opacity: .5; cursor: not-allowed; filter: none;
+  }
+  .save-btn-skip {
+    background: none; color: var(--gray-500);
+    font-size: 13px; font-weight: 500;
+  }
+  .save-btn-skip:hover { color: var(--gray-700); }
+
+  .save-elapsed {
+    text-align: center; margin-bottom: 16px;
+  }
+  .save-elapsed-time {
+    font-size: 28px; font-weight: 700; color: var(--mint-600);
+  }
+  .save-elapsed-label { font-size: 12px; color: var(--gray-500); }
+
+  /* ─── Scenario Reset Button ─── */
+  .reset-btn {
+    position: absolute; bottom: 16px; left: 16px;
+    background: var(--gray-100); border: 1px solid var(--gray-200);
+    color: var(--gray-500); padding: 6px 14px;
+    border-radius: var(--radius-full); font-size: 12px;
+    cursor: pointer; transition: var(--transition);
+    z-index: 30;
+  }
+  .reset-btn:hover { background: var(--gray-200); color: var(--gray-700); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 480px) {
+    .app-shell { max-width: 100%; box-shadow: none; }
+    .tab-btn { font-size: 12px; padding: 10px 6px; }
+    .timer-ring-container { width: 170px; height: 170px; }
+    .timer-ring-container svg { width: 170px; height: 170px; }
+    .timer-display { font-size: 40px; }
+    .fs-controls { gap: 12px; }
+    .fs-ctrl-btn { width: 46px; height: 46px; font-size: 20px; }
+    .btn-play { width: 56px; height: 56px; font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- Demo Header -->
+  <div class="demo-header">
+    <h1>포커스 타이머 통합 UX</h1>
+    <p>3가지 진입 시나리오 — 하나의 집중 모드</p>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-banner">
+      <span class="tab-icon">📢</span>배너에서 시작
+    </button>
+    <button class="tab-btn" data-tab="tab-card">
+      <span class="tab-icon">📋</span>할일 카드에서 시작
+    </button>
+    <button class="tab-btn" data-tab="tab-quick">
+      <span class="tab-icon">⚡</span>빠른 시작
+    </button>
+  </div>
+
+  <!-- ═══ TAB 1: 배너에서 시작 ═══ -->
+  <div class="tab-content active" id="tab-banner">
+    <!-- Focus Banner -->
+    <div class="focus-banner" id="banner1" onclick="openFullscreen('banner')">
+      <div class="banner-icon">🎯</div>
+      <div class="banner-info">
+        <div class="banner-title">프로젝트 기획서 작성</div>
+        <div class="banner-sub">09:00 - 10:30 · 예정된 집중 시간</div>
+      </div>
+      <button class="banner-cta" onclick="event.stopPropagation(); openFullscreen('banner')">집중하기</button>
+    </div>
+
+    <div class="scenario-body">
+      <div class="home-screen">
+        <div class="home-greeting">좋은 아침이에요 👋</div>
+        <div class="home-date">2026년 2월 23일 일요일</div>
+
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-value">3</div>
+            <div class="stat-label">오늘 할일</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">1h</div>
+            <div class="stat-label">집중 시간</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">67%</div>
+            <div class="stat-label">달성률</div>
+          </div>
+        </div>
+
+        <div class="section-title">📌 다음 일정</div>
+        <div class="upcoming-list">
+          <div class="upcoming-item">
+            <span class="time-badge">09:00</span>
+            <span class="item-name">프로젝트 기획서 작성</span>
+          </div>
+          <div class="upcoming-item">
+            <span class="time-badge">11:00</span>
+            <span class="item-name">팀 미팅 준비</span>
+          </div>
+          <div class="upcoming-item">
+            <span class="time-badge">14:00</span>
+            <span class="item-name">디자인 리뷰 피드백</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetScenario('banner')">↻ 시나리오 초기화</button>
+  </div>
+
+  <!-- ═══ TAB 2: 할일 카드에서 시작 ═══ -->
+  <div class="tab-content" id="tab-card">
+    <div class="scenario-body">
+      <div class="todo-list-screen">
+        <div class="todo-list-header">오늘의 할일</div>
+        <div class="todo-list-sub">2026년 2월 23일 · 3개의 할일</div>
+
+        <div class="todo-cards">
+          <!-- Done item -->
+          <div class="todo-card done">
+            <div class="todo-check">✓</div>
+            <div class="todo-info">
+              <div class="todo-title">아침 루틴 완료</div>
+              <div class="todo-time">07:00 - 07:30 · 완료됨</div>
+            </div>
+          </div>
+
+          <!-- Current item with mini ring -->
+          <div class="todo-card current" id="todoCard1" onclick="openFullscreen('card')">
+            <div class="todo-check"></div>
+            <div class="todo-info">
+              <div class="todo-title">프로젝트 기획서 작성</div>
+              <div class="todo-time">09:00 - 10:30 · 진행 가능</div>
+            </div>
+            <div class="mini-ring-wrap" id="miniRing1">
+              <svg viewBox="0 0 38 38">
+                <circle class="mini-ring-bg" cx="19" cy="19" r="15"/>
+                <circle class="mini-ring-progress" cx="19" cy="19" r="15"
+                  stroke-dasharray="94.25" stroke-dashoffset="94.25" id="miniRingProgress1"/>
+              </svg>
+              <div class="mini-ring-text" id="miniRingText1">0%</div>
+              <div class="now-badge">지금</div>
+            </div>
+          </div>
+
+          <!-- Future item -->
+          <div class="todo-card" id="todoCard2">
+            <div class="todo-check"></div>
+            <div class="todo-info">
+              <div class="todo-title">팀 미팅 준비</div>
+              <div class="todo-time">11:00 - 12:00</div>
+            </div>
+          </div>
+
+          <div class="todo-card">
+            <div class="todo-check"></div>
+            <div class="todo-info">
+              <div class="todo-title">디자인 리뷰 피드백</div>
+              <div class="todo-time">14:00 - 15:00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetScenario('card')">↻ 시나리오 초기화</button>
+  </div>
+
+  <!-- ═══ TAB 3: 빠른 시작 ═══ -->
+  <div class="tab-content" id="tab-quick">
+    <div class="scenario-body">
+      <div class="quick-screen">
+        <div class="quick-empty">
+          <div class="quick-empty-icon">🚀</div>
+          <div class="quick-empty-title">지금 바로 시작하세요</div>
+          <div class="quick-empty-desc">
+            할일을 정하지 않았어도 괜찮아요.<br>
+            먼저 집중하고, 나중에 기록하세요.
+          </div>
+        </div>
+
+        <div class="quick-history">
+          <div class="quick-history-title">📊 최근 집중 기록</div>
+          <div class="history-item">
+            <div class="history-dot"></div>
+            <div class="history-text">이메일 정리</div>
+            <div class="history-time">25분 · 어제</div>
+          </div>
+          <div class="history-item">
+            <div class="history-dot"></div>
+            <div class="history-text">아이디어 브레인스토밍</div>
+            <div class="history-time">40분 · 2일 전</div>
+          </div>
+          <div class="history-item">
+            <div class="history-dot"></div>
+            <div class="history-text">자료 조사</div>
+            <div class="history-time">15분 · 3일 전</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="fab" onclick="openFullscreen('quick')" title="지금 시작">▶</button>
+    <button class="reset-btn" onclick="resetScenario('quick')">↻ 시나리오 초기화</button>
+  </div>
+</div>
+
+<!-- ═══ Fullscreen Focus Mode (Shared) ═══ -->
+<div class="fullscreen-overlay" id="fullscreenOverlay">
+  <div class="fs-bg"></div>
+
+  <!-- Particles -->
+  <div class="fs-particles" id="fsParticles"></div>
+
+  <button class="fs-close-btn" onclick="exitFullscreen()" title="나가기">✕</button>
+
+  <div class="fs-content">
+    <div class="fs-task-name" id="fsTaskName">프로젝트 기획서 작성</div>
+    <div class="fs-task-sub" id="fsTaskSub">09:00 - 10:30</div>
+
+    <!-- Timer Ring -->
+    <div class="timer-ring-container">
+      <svg viewBox="0 0 200 200">
+        <circle class="timer-ring-bg" cx="100" cy="100" r="90"/>
+        <circle class="timer-ring-progress" cx="100" cy="100" r="90"
+          stroke-dasharray="565.49" stroke-dashoffset="565.49" id="timerRingProgress"/>
+      </svg>
+      <div class="timer-ring-inner">
+        <div class="timer-display" id="timerDisplay">00:00</div>
+        <div class="timer-status" id="timerStatus">준비</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="fs-controls">
+      <div class="fs-ctrl-group">
+        <button class="fs-ctrl-btn btn-end" onclick="endTimer()" title="종료">⏹</button>
+        <div class="fs-ctrl-label">종료</div>
+      </div>
+      <div class="fs-ctrl-group">
+        <button class="fs-ctrl-btn btn-play" onclick="togglePlay()" id="playBtn" title="재생">▶</button>
+        <div class="fs-ctrl-label" id="playLabel">재생</div>
+      </div>
+      <div class="fs-ctrl-group">
+        <button class="fs-ctrl-btn btn-complete" onclick="completeTimer()" title="완료">✓</button>
+        <div class="fs-ctrl-label">완료</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Celebration Overlay ═══ -->
+<div class="celebrate-overlay" id="celebrateOverlay">
+  <div class="celebrate-content">
+    <div class="celebrate-icon">🎉</div>
+    <div class="celebrate-title">잘했어요!</div>
+    <div class="celebrate-sub" id="celebrateSub">집중 시간을 완료했어요</div>
+    <button class="celebrate-btn" onclick="closeCelebration()">확인</button>
+  </div>
+</div>
+
+<!-- ═══ Confetti Container ═══ -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<!-- ═══ Save Prompt (Quick Start) ═══ -->
+<div class="save-prompt-overlay" id="savePromptOverlay">
+  <div class="save-prompt-card">
+    <div class="save-prompt-icon">📝</div>
+    <div class="save-prompt-title">방금 무슨 일을 했나요?</div>
+    <div class="save-prompt-sub">집중한 내용을 기록해두면 나중에 도움이 돼요</div>
+
+    <div class="save-elapsed">
+      <div class="save-elapsed-time" id="saveElapsedTime">00:00</div>
+      <div class="save-elapsed-label">집중한 시간</div>
+    </div>
+
+    <input type="text" class="save-prompt-input" id="saveInput"
+      placeholder="예: 이메일 정리, 자료 조사..." maxlength="100"
+      oninput="updateSaveBtn()">
+
+    <div class="save-prompt-actions">
+      <button class="save-btn save-btn-primary" id="savePrimaryBtn" onclick="saveQuickTask()" disabled>저장하기</button>
+      <button class="save-btn save-btn-skip" onclick="skipSave()">저장 안함</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───
+let activeTab = 'tab-banner';
+let timerInterval = null;
+let elapsedSeconds = 0;
+let isPlaying = false;
+let currentSource = null; // 'banner' | 'card' | 'quick'
+
+// ─── Tab Navigation ───
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tabId = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    activeTab = tabId;
+  });
+});
+
+// ─── Particles ───
+function createParticles() {
+  const container = document.getElementById('fsParticles');
+  container.innerHTML = '';
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'fs-particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+    p.style.animationDuration = (8 + Math.random() * 12) + 's';
+    p.style.animationDelay = Math.random() * 10 + 's';
+    container.appendChild(p);
+  }
+}
+
+// ─── Fullscreen Focus Mode ───
+function openFullscreen(source) {
+  currentSource = source;
+  const overlay = document.getElementById('fullscreenOverlay');
+  const taskName = document.getElementById('fsTaskName');
+  const taskSub = document.getElementById('fsTaskSub');
+
+  if (source === 'banner' || source === 'card') {
+    taskName.textContent = '프로젝트 기획서 작성';
+    taskSub.textContent = '09:00 - 10:30';
+  } else {
+    taskName.textContent = '지금 집중 중...';
+    taskSub.textContent = '할일 없이 시작';
+  }
+
+  createParticles();
+
+  // Reset timer display but keep elapsed if re-entering
+  updateTimerDisplay();
+  updateTimerRing();
+
+  overlay.classList.add('entering');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.classList.remove('entering');
+      overlay.classList.add('show');
+    });
+  });
+}
+
+function exitFullscreen() {
+  const overlay = document.getElementById('fullscreenOverlay');
+  overlay.classList.remove('show');
+  // Don't stop timer — it keeps running in "background" (banner shows it)
+}
+
+// ─── Timer Logic ───
+function togglePlay() {
+  if (isPlaying) {
+    pauseTimer();
+  } else {
+    startTimer();
+  }
+}
+
+function startTimer() {
+  if (isPlaying) return;
+  isPlaying = true;
+  updatePlayButton();
+  document.getElementById('timerStatus').textContent = '집중 중';
+
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    updateTimerDisplay();
+    updateTimerRing();
+    updateMiniRing();
+    updateBannerTime();
+  }, 1000);
+}
+
+function pauseTimer() {
+  isPlaying = false;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  updatePlayButton();
+  document.getElementById('timerStatus').textContent = '일시정지';
+}
+
+function endTimer() {
+  pauseTimer();
+  const overlay = document.getElementById('fullscreenOverlay');
+  overlay.classList.remove('show');
+
+  if (currentSource === 'quick' && elapsedSeconds > 0) {
+    showSavePrompt();
+  } else {
+    resetTimerState();
+  }
+}
+
+function completeTimer() {
+  pauseTimer();
+  const overlay = document.getElementById('fullscreenOverlay');
+  overlay.classList.remove('show');
+
+  if (currentSource === 'quick' && elapsedSeconds > 0) {
+    showSavePrompt();
+  } else {
+    showCelebration();
+    handleCompletion();
+  }
+}
+
+function resetTimerState() {
+  elapsedSeconds = 0;
+  isPlaying = false;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  updateTimerDisplay();
+  updateTimerRing();
+  updatePlayButton();
+  document.getElementById('timerStatus').textContent = '준비';
+}
+
+function updatePlayButton() {
+  const btn = document.getElementById('playBtn');
+  const label = document.getElementById('playLabel');
+  if (isPlaying) {
+    btn.textContent = '⏸';
+    btn.title = '일시정지';
+    label.textContent = '일시정지';
+  } else {
+    btn.textContent = '▶';
+    btn.title = '재생';
+    label.textContent = '재생';
+  }
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(elapsedSeconds / 60);
+  const s = elapsedSeconds % 60;
+  const display = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  document.getElementById('timerDisplay').textContent = display;
+}
+
+function updateTimerRing() {
+  // For demo, ring fills over 25 min (1500s)
+  const maxSeconds = 1500;
+  const progress = Math.min(elapsedSeconds / maxSeconds, 1);
+  const circumference = 2 * Math.PI * 90; // 565.49
+  const offset = circumference * (1 - progress);
+  document.getElementById('timerRingProgress').style.strokeDashoffset = offset;
+}
+
+function updateMiniRing() {
+  if (currentSource !== 'card') return;
+  const maxSeconds = 1500;
+  const progress = Math.min(elapsedSeconds / maxSeconds, 1);
+  const circumference = 2 * Math.PI * 15; // 94.25
+  const offset = circumference * (1 - progress);
+  const el = document.getElementById('miniRingProgress1');
+  if (el) el.style.strokeDashoffset = offset;
+  const textEl = document.getElementById('miniRingText1');
+  if (textEl) textEl.textContent = Math.round(progress * 100) + '%';
+}
+
+function updateBannerTime() {
+  if (currentSource !== 'banner') return;
+  const banner = document.getElementById('banner1');
+  if (!banner || banner.classList.contains('hidden')) return;
+  const sub = banner.querySelector('.banner-sub');
+  const m = Math.floor(elapsedSeconds / 60);
+  const s = elapsedSeconds % 60;
+  sub.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + ' 경과 · 집중 진행 중';
+}
+
+// ─── Completion Handling ───
+function handleCompletion() {
+  if (currentSource === 'banner') {
+    const banner = document.getElementById('banner1');
+    banner.classList.add('completed');
+    banner.querySelector('.banner-title').textContent = '✓ 프로젝트 기획서 작성 완료!';
+    banner.querySelector('.banner-sub').textContent = formatElapsed() + ' 집중 완료';
+    banner.querySelector('.banner-cta').style.display = 'none';
+    banner.onclick = null;
+    banner.style.cursor = 'default';
+    setTimeout(() => {
+      banner.classList.add('hidden');
+    }, 3000);
+  } else if (currentSource === 'card') {
+    const card = document.getElementById('todoCard1');
+    card.classList.remove('current');
+    card.classList.add('done');
+    card.onclick = null;
+    card.style.cursor = 'default';
+    const ring = document.getElementById('miniRing1');
+    if (ring) ring.style.display = 'none';
+    // Highlight next
+    const nextCard = document.getElementById('todoCard2');
+    if (nextCard) {
+      nextCard.classList.add('current');
+      nextCard.onclick = () => openFullscreen('card');
+    }
+  }
+  resetTimerState();
+}
+
+function formatElapsed() {
+  const m = Math.floor(elapsedSeconds / 60);
+  const s = elapsedSeconds % 60;
+  if (m > 0) return m + '분 ' + s + '초';
+  return s + '초';
+}
+
+// ─── Celebration ───
+function showCelebration() {
+  const el = document.getElementById('celebrateOverlay');
+  const sub = document.getElementById('celebrateSub');
+  sub.textContent = formatElapsed() + ' 동안 집중했어요!';
+  el.classList.add('show');
+  spawnConfetti();
+}
+
+function closeCelebration() {
+  document.getElementById('celebrateOverlay').classList.remove('show');
+  document.getElementById('confettiContainer').innerHTML = '';
+}
+
+function spawnConfetti() {
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  const colors = ['#8b5cf6', '#14b8a6', '#f59e0b', '#ef4444', '#22c55e', '#ec4899', '#3b82f6'];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    piece.style.animationDelay = Math.random() * .8 + 's';
+    piece.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = (6 + Math.random() * 8) + 'px';
+    container.appendChild(piece);
+  }
+}
+
+// ─── Quick Start: Save Prompt ───
+function showSavePrompt() {
+  const overlay = document.getElementById('savePromptOverlay');
+  document.getElementById('saveElapsedTime').textContent =
+    String(Math.floor(elapsedSeconds / 60)).padStart(2, '0') + ':' +
+    String(elapsedSeconds % 60).padStart(2, '0');
+  document.getElementById('saveInput').value = '';
+  updateSaveBtn();
+  overlay.classList.add('show');
+  setTimeout(() => document.getElementById('saveInput').focus(), 300);
+}
+
+function updateSaveBtn() {
+  const input = document.getElementById('saveInput');
+  const btn = document.getElementById('savePrimaryBtn');
+  btn.disabled = !input.value.trim();
+}
+
+function saveQuickTask() {
+  const title = document.getElementById('saveInput').value.trim();
+  if (!title) return;
+  document.getElementById('savePromptOverlay').classList.remove('show');
+
+  // Add to history
+  const historyContainer = document.querySelector('.quick-history');
+  if (historyContainer) {
+    const items = historyContainer.querySelectorAll('.history-item');
+    const newItem = document.createElement('div');
+    newItem.className = 'history-item';
+    newItem.style.animation = 'celebrate-pop .3s ease';
+    const m = Math.floor(elapsedSeconds / 60);
+    newItem.innerHTML = `
+      <div class="history-dot" style="background: var(--violet-400);"></div>
+      <div class="history-text">${escapeHtml(title)}</div>
+      <div class="history-time">${m}분 · 방금</div>
+    `;
+    const titleEl = historyContainer.querySelector('.quick-history-title');
+    if (titleEl && titleEl.nextSibling) {
+      historyContainer.insertBefore(newItem, titleEl.nextSibling);
+    } else {
+      historyContainer.appendChild(newItem);
+    }
+  }
+
+  showCelebration();
+  resetTimerState();
+}
+
+function skipSave() {
+  document.getElementById('savePromptOverlay').classList.remove('show');
+  resetTimerState();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ─── Scenario Reset ───
+function resetScenario(source) {
+  resetTimerState();
+
+  if (source === 'banner') {
+    const banner = document.getElementById('banner1');
+    banner.className = 'focus-banner';
+    banner.querySelector('.banner-title').textContent = '프로젝트 기획서 작성';
+    banner.querySelector('.banner-sub').textContent = '09:00 - 10:30 · 예정된 집중 시간';
+    banner.querySelector('.banner-cta').style.display = '';
+    banner.onclick = () => openFullscreen('banner');
+    banner.style.cursor = 'pointer';
+  } else if (source === 'card') {
+    const card1 = document.getElementById('todoCard1');
+    card1.className = 'todo-card current';
+    card1.onclick = () => openFullscreen('card');
+    card1.style.cursor = 'pointer';
+    const ring = document.getElementById('miniRing1');
+    if (ring) ring.style.display = '';
+    document.getElementById('miniRingProgress1').style.strokeDashoffset = '94.25';
+    document.getElementById('miniRingText1').textContent = '0%';
+
+    const card2 = document.getElementById('todoCard2');
+    card2.className = 'todo-card';
+    card2.onclick = null;
+  }
+}
+
+// ─── Keyboard Shortcuts ───
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('savePromptOverlay').classList.contains('show')) {
+      skipSave();
+    } else if (document.getElementById('celebrateOverlay').classList.contains('show')) {
+      closeCelebration();
+    } else if (document.getElementById('fullscreenOverlay').classList.contains('show')) {
+      exitFullscreen();
+    }
+  }
+  if (e.key === ' ' && document.getElementById('fullscreenOverlay').classList.contains('show')) {
+    e.preventDefault();
+    togglePlay();
+  }
+  if (e.key === 'Enter' && document.getElementById('savePromptOverlay').classList.contains('show')) {
+    const input = document.getElementById('saveInput');
+    if (input.value.trim()) saveQuickTask();
+  }
+});
+
+// ─── Save Input: Enter key ───
+document.getElementById('saveInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    e.preventDefault();
+    saveQuickTask();
+  }
+});
+</script>
+
+</body>
+</html>
