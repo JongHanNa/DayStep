@@ -14,7 +14,7 @@ import {useAuthStore} from '@/stores/authStore';
 import {useTodoStore} from '@/stores/todoStore';
 import type {RealtimeChannel} from '@supabase/supabase-js';
 
-const DEBOUNCE_MS = 5000;
+const THROTTLE_MS = 2000;
 const RECONNECT_DELAY_MS = 3000;
 
 export function useRealtimeSync() {
@@ -26,6 +26,7 @@ export function useRealtimeSync() {
   const fetchRef = useRef(fetchTodosForDate);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const lastFetchRef = useRef(0);
+  const trailingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
@@ -40,9 +41,24 @@ export function useRealtimeSync() {
 
   const debouncedRefetch = useCallback(() => {
     const now = Date.now();
-    if (now - lastFetchRef.current > DEBOUNCE_MS) {
+    const elapsed = now - lastFetchRef.current;
+
+    if (elapsed > THROTTLE_MS) {
+      // Leading edge: 즉시 실행
+      if (trailingTimerRef.current) {
+        clearTimeout(trailingTimerRef.current);
+        trailingTimerRef.current = null;
+      }
       lastFetchRef.current = now;
       fetchRef.current(selectedDateRef.current);
+    } else {
+      // Trailing edge: 윈도우 종료 후 실행 예약
+      if (trailingTimerRef.current) clearTimeout(trailingTimerRef.current);
+      trailingTimerRef.current = setTimeout(() => {
+        trailingTimerRef.current = null;
+        lastFetchRef.current = Date.now();
+        fetchRef.current(selectedDateRef.current);
+      }, THROTTLE_MS - elapsed);
     }
   }, []);
 
@@ -126,7 +142,11 @@ export function useRealtimeSync() {
     setupChannel();
 
     return () => {
-      // cleanup: 채널 제거 + 재연결 타이머 취소
+      // cleanup: 채널 제거 + 타이머 취소
+      if (trailingTimerRef.current) {
+        clearTimeout(trailingTimerRef.current);
+        trailingTimerRef.current = null;
+      }
       if (reconnectTimerRef.current) {
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
