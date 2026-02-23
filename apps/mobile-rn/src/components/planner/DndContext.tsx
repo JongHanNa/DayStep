@@ -22,7 +22,7 @@ import Animated, {
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import type {Todo} from '@daystep/shared-core';
 import type {SwipeablePagesRef} from '@/components/core/SwipeablePages';
-import {PAGE_WIDTH} from '@/components/core/SwipeablePages';
+import {PAGE_WIDTH, PEEK_WIDTH} from '@/components/core/SwipeablePages';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
 
@@ -215,8 +215,9 @@ export function DndProvider({children}: {children: React.ReactNode}) {
       ? currentPageRef.current + 1
       : currentPageRef.current - 1;
     const startPage = currentPageRef.current;
-    const targetPosition = targetPage * PAGE_WIDTH;
-    const midpoint = (startPage + (direction === 'next' ? 0.5 : -0.5)) * PAGE_WIDTH;
+    const snapOffset = (page: number) => page === 0 ? 0 : page * PAGE_WIDTH - PEEK_WIDTH;
+    const targetPosition = snapOffset(targetPage);
+    const midpoint = (snapOffset(startPage) + snapOffset(targetPage)) / 2;
     let pageChangeCommitted = false;
 
     edgeScrollIntervalRef.current = setInterval(() => {

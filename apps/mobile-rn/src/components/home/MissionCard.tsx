@@ -5,7 +5,7 @@
 import React, {useMemo} from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {AnimatedPressable, GradientBackground} from '@/components/core';
+import {AnimatedPressable} from '@/components/core';
 import {Target, ArrowRight, CalendarPlus} from 'lucide-react-native';
 import type {Todo} from '@daystep/shared-core';
 
@@ -82,12 +82,10 @@ export function MissionCard({
             <AnimatedPressable
               onPress={onNavigateToExecute}
               hapticType="light"
-              style={{borderRadius: 12, overflow: 'hidden'}}>
-              <GradientBackground
-                colors={['#3B82F6', '#2563EB']}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 0}}
+              style={{borderRadius: 12}}>
+              <View
                 style={{
+                  backgroundColor: '#3B82F6',
                   borderRadius: 12,
                   paddingVertical: 12,
                   paddingHorizontal: 16,
@@ -99,7 +97,7 @@ export function MissionCard({
                   지금 시작하기
                 </Text>
                 <ArrowRight size={16} color="#FFFFFF" />
-              </GradientBackground>
+              </View>
             </AnimatedPressable>
           </>
         ) : (

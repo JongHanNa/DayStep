@@ -3,7 +3,7 @@
  * RN ScrollView (horizontal + snapToInterval) 기반
  * — 옆 페이지 peek 노출 + DnD 제스처 충돌 없음
  */
-import React, {useState, useCallback, useRef, useImperativeHandle, forwardRef} from 'react';
+import React, {useState, useCallback, useRef, useImperativeHandle, forwardRef, useMemo} from 'react';
 import {View, ScrollView, StyleSheet, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent} from 'react-native';
 import Animated, {
   useSharedValue,
@@ -13,8 +13,17 @@ import Animated, {
 import {useTheme} from '@/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const PEEK_WIDTH = 40;
+export const PEEK_WIDTH = 40;
 export const PAGE_WIDTH = SCREEN_WIDTH - PEEK_WIDTH;
+
+/** 비균일 snap offsets: 페이지 0은 0, 페이지 i≥1은 i*PAGE_WIDTH - PEEK_WIDTH */
+function computeSnapOffsets(pageCount: number): number[] {
+  const offsets: number[] = [];
+  for (let i = 0; i < pageCount; i++) {
+    offsets.push(i === 0 ? 0 : i * PAGE_WIDTH - PEEK_WIDTH);
+  }
+  return offsets;
+}
 const DOTS_HEIGHT = 30;
 
 export interface SwipeablePagesRef {
@@ -45,36 +54,46 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [containerHeight, setContainerHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
-  const scrollPositionRef = useRef(initialPage * PAGE_WIDTH);
   const {primaryColor} = useTheme();
+
+  const pages = React.Children.toArray(children);
+  const pageCount = pages.length;
+  const snapOffsets = useMemo(() => computeSnapOffsets(pageCount), [pageCount]);
+
+  const scrollPositionRef = useRef(snapOffsets[initialPage] ?? 0);
 
   useImperativeHandle(ref, () => ({
     scrollTo: (index: number) => {
-      scrollRef.current?.scrollTo({x: index * PAGE_WIDTH, animated: true});
+      const x = snapOffsets[index] ?? 0;
+      scrollRef.current?.scrollTo({x, animated: true});
       setCurrentPage(index);
       onPageChange?.(index);
     },
     scrollByPixels: (dx: number) => {
-      const maxScroll = (pageCount - 1) * PAGE_WIDTH;
+      const maxScroll = snapOffsets[pageCount - 1] ?? 0;
       const newX = Math.max(0, Math.min(maxScroll, scrollPositionRef.current + dx));
       scrollPositionRef.current = newX;
       scrollRef.current?.scrollTo({x: newX, animated: false});
     },
     snapToNearestPage: () => {
-      const page = Math.round(scrollPositionRef.current / PAGE_WIDTH);
-      const clampedPage = Math.max(0, Math.min(pageCount - 1, page));
-      scrollRef.current?.scrollTo({x: clampedPage * PAGE_WIDTH, animated: true});
-      if (clampedPage !== currentPage) {
-        setCurrentPage(clampedPage);
-        onPageChange?.(clampedPage);
+      let closest = 0;
+      let minDist = Infinity;
+      for (let i = 0; i < snapOffsets.length; i++) {
+        const dist = Math.abs(scrollPositionRef.current - snapOffsets[i]);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = i;
+        }
+      }
+      scrollRef.current?.scrollTo({x: snapOffsets[closest], animated: true});
+      if (closest !== currentPage) {
+        setCurrentPage(closest);
+        onPageChange?.(closest);
       }
     },
     getScrollPosition: () => scrollPositionRef.current,
     currentPage,
   }));
-
-  const pages = React.Children.toArray(children);
-  const pageCount = pages.length;
 
   const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
     setContainerHeight(e.nativeEvent.layout.height);
@@ -87,14 +106,22 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   const handleMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const offsetX = e.nativeEvent.contentOffset.x;
-      const page = Math.round(offsetX / PAGE_WIDTH);
-      // 중복 방지 가드
+      // 가장 가까운 snap offset으로 페이지 인덱스 계산
+      let page = 0;
+      let minDist = Infinity;
+      for (let i = 0; i < snapOffsets.length; i++) {
+        const dist = Math.abs(offsetX - snapOffsets[i]);
+        if (dist < minDist) {
+          minDist = dist;
+          page = i;
+        }
+      }
       if (page !== currentPage) {
         setCurrentPage(page);
         onPageChange?.(page);
       }
     },
-    [onPageChange, currentPage],
+    [onPageChange, currentPage, snapOffsets],
   );
 
   const scrollViewHeight =
@@ -109,11 +136,11 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
           ref={scrollRef}
           horizontal
           pagingEnabled={false}
-          snapToInterval={isDragging ? undefined : PAGE_WIDTH}
+          snapToOffsets={isDragging ? undefined : snapOffsets}
           decelerationRate="fast"
           showsHorizontalScrollIndicator={false}
           scrollEnabled={!isDragging}
-          contentOffset={{x: initialPage * PAGE_WIDTH, y: 0}}
+          contentOffset={{x: snapOffsets[initialPage] ?? 0, y: 0}}
           scrollEventThrottle={16}
           onScroll={handleScroll}
           onMomentumScrollEnd={handleMomentumScrollEnd}
