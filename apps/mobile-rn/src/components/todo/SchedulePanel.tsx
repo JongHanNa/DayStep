@@ -1,13 +1,13 @@
 /**
  * SchedulePanel
  * 통합 일정 패널 — BottomSheetModal로 독립 시트
- * 캘린더 + 지속시간 탭 + 설정 행 (시간/알림/반복)
+ * 캘린더 + 설정 행 (시간/알림/반복) + 인라인 팝오버
  * TodoCreatePanel 위에 별도 시트로 열림 → create UI를 완전히 덮음
  */
 import React, {useCallback, useMemo, useState, useRef, forwardRef, useImperativeHandle} from 'react';
 import {View, Text, StyleSheet, Pressable} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
-import {AnimatedPressable} from '@/components/core';
+import {AnimatedPressable, Popover} from '@/components/core';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
 import {
@@ -34,7 +34,7 @@ import {
   isToday,
 } from 'date-fns';
 import {ko} from 'date-fns/locale';
-import {getAlarmLabel} from '@/lib/notifications';
+import {ALARM_OPTIONS, getAlarmLabel} from '@/lib/notifications';
 import type {FormData} from './useTodoForm';
 
 // ============================================
@@ -46,14 +46,9 @@ export interface SchedulePanelRef {
   close: () => void;
 }
 
-type TabType = 'date' | 'duration';
-
 interface SchedulePanelProps {
   form: FormData;
   updateField: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
-  onTimePress: () => void;
-  onAlarmPress: () => void;
-  onRecurrencePress: () => void;
 }
 
 // ============================================
@@ -256,169 +251,10 @@ const calStyles = StyleSheet.create({
 });
 
 // ============================================
-// Component — BottomSheetModal 래핑
+// TimePopoverContent
 // ============================================
 
-export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
-  function SchedulePanel(
-    {form, updateField, onTimePress, onAlarmPress, onRecurrencePress},
-    ref,
-  ) {
-    const bottomSheetRef = useRef<BottomSheetModal>(null);
-    const {primaryColor} = useTheme();
-    const haptic = useHaptic();
-    const [activeTab, setActiveTab] = useState<TabType>('date');
-    const snapPoints = useMemo(() => ['75%'], []);
-
-    useImperativeHandle(ref, () => ({
-      open: () => bottomSheetRef.current?.present(),
-      close: () => bottomSheetRef.current?.dismiss(),
-    }));
-
-    const handleClose = useCallback(() => {
-      bottomSheetRef.current?.dismiss();
-    }, []);
-
-    const handleConfirm = useCallback(() => {
-      bottomSheetRef.current?.dismiss();
-    }, []);
-
-    const handleDateSelect = useCallback(
-      (dateStr: string) => {
-        updateField('scheduledDate', dateStr);
-      },
-      [updateField],
-    );
-
-    const renderBackdrop = useCallback(
-      (props: any) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          opacity={0.3}
-        />
-      ),
-      [],
-    );
-
-    return (
-      <BottomSheetModal
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        handleComponent={null}
-        backgroundStyle={sheetStyles.sheetBg}>
-        <BottomSheetView style={sheetStyles.sheetContent}>
-          {/* Tab Header */}
-          <View style={styles.tabHeader}>
-            <AnimatedPressable onPress={handleClose} hapticType="light" style={styles.headerBtn}>
-              <X size={20} color="#6B7280" />
-            </AnimatedPressable>
-
-            <View style={styles.tabGroup}>
-              <Pressable
-                onPress={() => {
-                  haptic.selection();
-                  setActiveTab('date');
-                }}
-                style={[
-                  styles.tab,
-                  activeTab === 'date' && {borderBottomColor: primaryColor},
-                ]}>
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === 'date' && {color: primaryColor, fontWeight: '700'},
-                  ]}>
-                  날짜
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  haptic.selection();
-                  setActiveTab('duration');
-                }}
-                style={[
-                  styles.tab,
-                  activeTab === 'duration' && {borderBottomColor: primaryColor},
-                ]}>
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === 'duration' && {color: primaryColor, fontWeight: '700'},
-                  ]}>
-                  지속 시간
-                </Text>
-              </Pressable>
-            </View>
-
-            <AnimatedPressable onPress={handleConfirm} hapticType="light" style={styles.headerBtn}>
-              <Check size={20} color={primaryColor} />
-            </AnimatedPressable>
-          </View>
-
-          {/* Tab Content */}
-          <View style={styles.tabContent}>
-            {activeTab === 'date' ? (
-              <CalendarGrid
-                selectedDate={form.scheduledDate}
-                onSelectDate={handleDateSelect}
-                primaryColor={primaryColor}
-              />
-            ) : (
-              <DurationTab
-                form={form}
-                updateField={updateField}
-                primaryColor={primaryColor}
-              />
-            )}
-          </View>
-
-          {/* Setting Rows */}
-          <View style={styles.settingsSection}>
-            <SettingRow
-              icon={Clock}
-              label="시간"
-              value={getTimeLabel(form)}
-              onPress={onTimePress}
-            />
-            <SettingRow
-              icon={Bell}
-              label="알림"
-              value={getAlarmLabel(form.alarmOffsetMinutes)}
-              onPress={onAlarmPress}
-            />
-            <SettingRow
-              icon={Repeat}
-              label="반복"
-              value={getRecurrenceLabel(form)}
-              onPress={onRecurrencePress}
-            />
-          </View>
-        </BottomSheetView>
-      </BottomSheetModal>
-    );
-  },
-);
-
-const sheetStyles = StyleSheet.create({
-  sheetBg: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  sheetContent: {
-    flex: 1,
-  },
-});
-
-// ============================================
-// DurationTab — 스케줄타입 칩 + 시간/소요시간 인라인
-// ============================================
-
-function DurationTab({
+function TimePopoverContent({
   form,
   updateField,
   primaryColor,
@@ -440,28 +276,28 @@ function DurationTab({
         nextHour.setMinutes(0, 0, 0);
         nextHour.setHours(now.getHours() + 1);
         updateField('startTime', nextHour);
-                updateField('endTime', addHours(nextHour, 1));
+        updateField('endTime', addHours(nextHour, 1));
       }
     },
     [haptic, updateField, form.startTime],
   );
 
   return (
-    <View>
+    <View style={popContentStyles.container}>
       {/* Schedule type chips */}
-      <View style={durationStyles.chipRow}>
+      <View style={popContentStyles.chipRow}>
         {(['anytime', 'timed', 'all_day'] as const).map(type => (
           <AnimatedPressable
             key={type}
             onPress={() => handleTypeChange(type)}
             haptic={false}
             style={[
-              durationStyles.chip,
+              popContentStyles.chip,
               form.scheduleType === type && {backgroundColor: primaryColor},
             ]}>
             <Text
               style={[
-                durationStyles.chipText,
+                popContentStyles.chipText,
                 form.scheduleType === type && {color: '#FFFFFF'},
               ]}>
               {type === 'anytime' ? '시간 미정' : type === 'timed' ? '시간 지정' : '종일'}
@@ -470,25 +306,25 @@ function DurationTab({
         ))}
       </View>
 
-      {/* Timed: time display */}
+      {/* Timed: time display with +/- */}
       {form.scheduleType === 'timed' && form.startTime && (
-        <View style={durationStyles.timeRow}>
+        <View style={popContentStyles.timeRow}>
           <AnimatedPressable
             onPress={() => {
               haptic.selection();
-                            updateField('startTime', addHours(form.startTime!, -1));
+              updateField('startTime', addHours(form.startTime!, -1));
               if (form.endTime) updateField('endTime', addHours(form.endTime, -1));
             }}
             hapticType="selection"
-            style={durationStyles.timeBtn}>
-            <Text style={durationStyles.timeBtnText}>-</Text>
+            style={popContentStyles.timeBtn}>
+            <Text style={popContentStyles.timeBtnText}>−</Text>
           </AnimatedPressable>
-          <View style={durationStyles.timeDisplay}>
-            <Text style={durationStyles.timeText}>
+          <View style={popContentStyles.timeDisplay}>
+            <Text style={popContentStyles.timeText}>
               {format(form.startTime, 'HH:mm')}
             </Text>
             {form.endTime && (
-              <Text style={durationStyles.timeSep}>
+              <Text style={popContentStyles.timeSep}>
                 {' ~ '}{format(form.endTime, 'HH:mm')}
               </Text>
             )}
@@ -496,19 +332,19 @@ function DurationTab({
           <AnimatedPressable
             onPress={() => {
               haptic.selection();
-                            updateField('startTime', addHours(form.startTime!, 1));
+              updateField('startTime', addHours(form.startTime!, 1));
               if (form.endTime) updateField('endTime', addHours(form.endTime, 1));
             }}
             hapticType="selection"
-            style={durationStyles.timeBtn}>
-            <Text style={durationStyles.timeBtnText}>+</Text>
+            style={popContentStyles.timeBtn}>
+            <Text style={popContentStyles.timeBtnText}>+</Text>
           </AnimatedPressable>
         </View>
       )}
 
       {/* Anytime: duration chips */}
       {form.scheduleType === 'anytime' && (
-        <View style={durationStyles.durationGrid}>
+        <View style={popContentStyles.durationGrid}>
           {DURATIONS.map(d => (
             <AnimatedPressable
               key={d}
@@ -518,12 +354,12 @@ function DurationTab({
               }}
               haptic={false}
               style={[
-                durationStyles.durationChip,
+                popContentStyles.durationChip,
                 form.anytimeDuration === d && {backgroundColor: primaryColor},
               ]}>
               <Text
                 style={[
-                  durationStyles.chipText,
+                  popContentStyles.chipText,
                   form.anytimeDuration === d && {color: '#FFFFFF'},
                 ]}>
                 {d >= 60 ? `${d / 60}시간` : `${d}분`}
@@ -536,20 +372,160 @@ function DurationTab({
   );
 }
 
-const durationStyles = StyleSheet.create({
+// ============================================
+// AlarmPopoverContent
+// ============================================
+
+function AlarmPopoverContent({
+  alarmOffsetMinutes,
+  onSelect,
+  primaryColor,
+}: {
+  alarmOffsetMinutes: number | null;
+  onSelect: (value: number | null) => void;
+  primaryColor: string;
+}) {
+  const haptic = useHaptic();
+
+  return (
+    <View style={popContentStyles.listContainer}>
+      {ALARM_OPTIONS.map(option => {
+        const selected = option.value === alarmOffsetMinutes;
+        return (
+          <Pressable
+            key={String(option.value)}
+            onPress={() => {
+              haptic.selection();
+              onSelect(option.value);
+            }}
+            style={popContentStyles.listRow}>
+            <Text
+              style={[
+                popContentStyles.listLabel,
+                selected && {color: primaryColor, fontWeight: '600'},
+              ]}>
+              {option.label}
+            </Text>
+            {selected && <Check size={16} color={primaryColor} />}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// ============================================
+// RecurrencePopoverContent
+// ============================================
+
+function RecurrencePopoverContent({
+  form,
+  updateField,
+  onClose,
+  primaryColor,
+}: {
+  form: FormData;
+  updateField: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
+  onClose: () => void;
+  primaryColor: string;
+}) {
+  const haptic = useHaptic();
+  const patterns = [
+    {label: '없음', value: 'none'},
+    {label: '매일', value: 'daily'},
+    {label: '매주', value: 'weekly'},
+    {label: '매월', value: 'monthly'},
+  ] as const;
+
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+  const toggleDay = useCallback(
+    (dayIndex: number) => {
+      haptic.selection();
+      const current = form.recurrenceDaysOfWeek;
+      const next = current.includes(dayIndex)
+        ? current.filter(d => d !== dayIndex)
+        : [...current, dayIndex].sort();
+      updateField('recurrenceDaysOfWeek', next);
+    },
+    [haptic, form.recurrenceDaysOfWeek, updateField],
+  );
+
+  return (
+    <View style={popContentStyles.listContainer}>
+      {patterns.map(p => {
+        const selected = form.recurrencePattern === p.value;
+        return (
+          <Pressable
+            key={p.value}
+            onPress={() => {
+              haptic.selection();
+              updateField('recurrencePattern', p.value);
+              // "매주" 외 패턴 선택 시 즉시 닫힘
+              if (p.value !== 'weekly') {
+                onClose();
+              }
+            }}
+            style={popContentStyles.listRow}>
+            <Text
+              style={[
+                popContentStyles.listLabel,
+                selected && {color: primaryColor, fontWeight: '600'},
+              ]}>
+              {p.label}
+            </Text>
+            {selected && <Check size={16} color={primaryColor} />}
+          </Pressable>
+        );
+      })}
+
+      {/* "매주" 선택 시 요일 토글 */}
+      {form.recurrencePattern === 'weekly' && (
+        <View style={popContentStyles.dayToggleRow}>
+          {dayNames.map((name, i) => {
+            const active = form.recurrenceDaysOfWeek.includes(i);
+            return (
+              <Pressable
+                key={i}
+                onPress={() => toggleDay(i)}
+                style={[
+                  popContentStyles.dayToggle,
+                  active && {backgroundColor: primaryColor},
+                ]}>
+                <Text
+                  style={[
+                    popContentStyles.dayToggleText,
+                    active && {color: '#FFFFFF'},
+                  ]}>
+                  {name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const popContentStyles = StyleSheet.create({
+  // Time popover
+  container: {
+    padding: 12,
+  },
   chipRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+    gap: 6,
+    marginBottom: 12,
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: '#F3F4F6',
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
     color: '#4B5563',
   },
@@ -557,18 +533,18 @@ const durationStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
+    gap: 12,
   },
   timeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   timeBtnText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#4B5563',
   },
@@ -577,24 +553,62 @@ const durationStyles = StyleSheet.create({
     alignItems: 'center',
   },
   timeText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
   },
   timeSep: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#9CA3AF',
   },
   durationGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   durationChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
     backgroundColor: '#F3F4F6',
+  },
+  // List popovers (alarm, recurrence)
+  listContainer: {
+    paddingVertical: 4,
+  },
+  listRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  listLabel: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  // Recurrence day toggles
+  dayToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#F3F4F6',
+  },
+  dayToggle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayToggleText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6B7280',
   },
 });
 
@@ -628,11 +642,193 @@ function SettingRow({
 }
 
 // ============================================
+// Component — BottomSheetModal 래핑
+// ============================================
+
+export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
+  function SchedulePanel({form, updateField}, ref) {
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
+    const {primaryColor} = useTheme();
+    const haptic = useHaptic();
+    const snapPoints = useMemo(() => ['90%'], []);
+
+    // 팝오버 state
+    const [activePopover, setActivePopover] = useState<'none' | 'time' | 'alarm' | 'recurrence'>('none');
+    const [popoverAnchor, setPopoverAnchor] = useState({x: 0, y: 0, width: 0, height: 0});
+
+    // 각 행의 위치 측정용 refs
+    const timeRowRef = useRef<View>(null);
+    const alarmRowRef = useRef<View>(null);
+    const recurrenceRowRef = useRef<View>(null);
+
+    useImperativeHandle(ref, () => ({
+      open: () => bottomSheetRef.current?.present(),
+      close: () => bottomSheetRef.current?.dismiss(),
+    }));
+
+    const handleClose = useCallback(() => {
+      bottomSheetRef.current?.dismiss();
+    }, []);
+
+    const handleConfirm = useCallback(() => {
+      bottomSheetRef.current?.dismiss();
+    }, []);
+
+    const handleDateSelect = useCallback(
+      (dateStr: string) => {
+        updateField('scheduledDate', dateStr);
+      },
+      [updateField],
+    );
+
+    // 팝오버 열기/닫기
+    const openPopover = useCallback(
+      (type: 'time' | 'alarm' | 'recurrence', rowRef: React.RefObject<View | null>) => {
+        haptic.selection();
+        rowRef.current?.measureInWindow((x, y, width, height) => {
+          setPopoverAnchor({x, y, width, height});
+          setActivePopover(type);
+        });
+      },
+      [haptic],
+    );
+
+    const closePopover = useCallback(() => setActivePopover('none'), []);
+
+    // 알림 선택 콜백
+    const handleAlarmSelect = useCallback(
+      (value: number | null) => {
+        updateField('alarmOffsetMinutes', value);
+        closePopover();
+      },
+      [updateField, closePopover],
+    );
+
+    const renderBackdrop = useCallback(
+      (props: any) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          opacity={0.3}
+        />
+      ),
+      [],
+    );
+
+    return (
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        handleComponent={null}
+        backgroundStyle={sheetStyles.sheetBg}>
+        <BottomSheetView style={sheetStyles.sheetContent}>
+          {/* Header */}
+          <View style={styles.tabHeader}>
+            <AnimatedPressable onPress={handleClose} hapticType="light" style={styles.headerBtn}>
+              <X size={20} color="#6B7280" />
+            </AnimatedPressable>
+            <Text style={styles.headerTitle}>날짜</Text>
+            <AnimatedPressable onPress={handleConfirm} hapticType="light" style={styles.headerBtn}>
+              <Check size={20} color={primaryColor} />
+            </AnimatedPressable>
+          </View>
+
+          {/* Calendar */}
+          <View style={styles.tabContent}>
+            <CalendarGrid
+              selectedDate={form.scheduledDate}
+              onSelectDate={handleDateSelect}
+              primaryColor={primaryColor}
+            />
+          </View>
+
+          {/* Setting Rows */}
+          <View style={styles.settingsSection}>
+            <View ref={timeRowRef}>
+              <SettingRow
+                icon={Clock}
+                label="시간"
+                value={getTimeLabel(form)}
+                onPress={() => openPopover('time', timeRowRef)}
+              />
+            </View>
+            <View ref={alarmRowRef}>
+              <SettingRow
+                icon={Bell}
+                label="알림"
+                value={getAlarmLabel(form.alarmOffsetMinutes)}
+                onPress={() => openPopover('alarm', alarmRowRef)}
+              />
+            </View>
+            <View ref={recurrenceRowRef}>
+              <SettingRow
+                icon={Repeat}
+                label="반복"
+                value={getRecurrenceLabel(form)}
+                onPress={() => openPopover('recurrence', recurrenceRowRef)}
+              />
+            </View>
+          </View>
+
+          {/* 팝오버들 — Modal이므로 BottomSheetModal 위에 렌더됨 */}
+          <Popover
+            visible={activePopover === 'time'}
+            onClose={closePopover}
+            anchorPosition={popoverAnchor}
+            width={260}>
+            <TimePopoverContent form={form} updateField={updateField} primaryColor={primaryColor} />
+          </Popover>
+
+          <Popover
+            visible={activePopover === 'alarm'}
+            onClose={closePopover}
+            anchorPosition={popoverAnchor}
+            width={200}>
+            <AlarmPopoverContent
+              alarmOffsetMinutes={form.alarmOffsetMinutes}
+              onSelect={handleAlarmSelect}
+              primaryColor={primaryColor}
+            />
+          </Popover>
+
+          <Popover
+            visible={activePopover === 'recurrence'}
+            onClose={closePopover}
+            anchorPosition={popoverAnchor}
+            width={220}>
+            <RecurrencePopoverContent
+              form={form}
+              updateField={updateField}
+              onClose={closePopover}
+              primaryColor={primaryColor}
+            />
+          </Popover>
+        </BottomSheetView>
+      </BottomSheetModal>
+    );
+  },
+);
+
+const sheetStyles = StyleSheet.create({
+  sheetBg: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  sheetContent: {
+    flex: 1,
+  },
+});
+
+// ============================================
 // Styles
 // ============================================
 
 const styles = StyleSheet.create({
-  // Tab header
+  // Header
   tabHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -648,20 +844,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabGroup: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  tab: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#9CA3AF',
+  headerTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
   },
   // Tab content
   tabContent: {

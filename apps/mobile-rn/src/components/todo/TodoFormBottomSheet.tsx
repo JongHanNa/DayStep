@@ -124,24 +124,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
       [haptic],
     );
 
-    // ------------------------------------------
-    // 일정 패널 내 서브시트 콜백
-    // ------------------------------------------
-    const handleScheduleTimePress = useCallback(() => {
-      haptic.selection();
-      timeSheetRef.current?.open();
-    }, [haptic]);
-
-    const handleScheduleAlarmPress = useCallback(() => {
-      haptic.selection();
-      alarmSheetRef.current?.open();
-    }, [haptic]);
-
-    const handleScheduleRecurrencePress = useCallback(() => {
-      haptic.selection();
-      recurrenceSheetRef.current?.open();
-    }, [haptic]);
-
     return (
       <>
         {/* Create: BottomSheet (non-modal, 키보드 동기화) */}
@@ -164,9 +146,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           ref={scheduleModalRef}
           form={formHook.form}
           updateField={formHook.updateField}
-          onTimePress={handleScheduleTimePress}
-          onAlarmPress={handleScheduleAlarmPress}
-          onRecurrencePress={handleScheduleRecurrencePress}
         />
 
         {/* ──────── 서브시트 5개 (같은 레벨) ──────── */}
