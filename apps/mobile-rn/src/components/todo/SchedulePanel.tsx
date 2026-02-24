@@ -1,10 +1,12 @@
 /**
  * SchedulePanel
- * 통합 일정 패널 — 캘린더 + 지속시간 탭 + 설정 행 (시간/알림/반복)
- * TodoCreatePanel 하단에 키보드를 대체하여 표시
+ * 통합 일정 패널 — BottomSheetModal로 독립 시트
+ * 캘린더 + 지속시간 탭 + 설정 행 (시간/알림/반복)
+ * TodoCreatePanel 위에 별도 시트로 열림 → create UI를 완전히 덮음
  */
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState, useRef, forwardRef, useImperativeHandle} from 'react';
 import {View, Text, StyleSheet, Pressable} from 'react-native';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -39,13 +41,16 @@ import type {FormData} from './useTodoForm';
 // Types
 // ============================================
 
+export interface SchedulePanelRef {
+  open: () => void;
+  close: () => void;
+}
+
 type TabType = 'date' | 'duration';
 
 interface SchedulePanelProps {
   form: FormData;
   updateField: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
-  onClose: () => void;
-  onConfirm: () => void;
   onTimePress: () => void;
   onAlarmPress: () => void;
   onRecurrencePress: () => void;
@@ -251,120 +256,163 @@ const calStyles = StyleSheet.create({
 });
 
 // ============================================
-// Component
+// Component — BottomSheetModal 래핑
 // ============================================
 
-export function SchedulePanel({
-  form,
-  updateField,
-  onClose,
-  onConfirm,
-  onTimePress,
-  onAlarmPress,
-  onRecurrencePress,
-}: SchedulePanelProps) {
-  const {primaryColor} = useTheme();
-  const haptic = useHaptic();
-  const [activeTab, setActiveTab] = useState<TabType>('date');
+export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
+  function SchedulePanel(
+    {form, updateField, onTimePress, onAlarmPress, onRecurrencePress},
+    ref,
+  ) {
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
+    const {primaryColor} = useTheme();
+    const haptic = useHaptic();
+    const [activeTab, setActiveTab] = useState<TabType>('date');
+    const snapPoints = useMemo(() => ['75%'], []);
 
-  const handleDateSelect = useCallback(
-    (dateStr: string) => {
-      updateField('scheduledDate', dateStr);
-    },
-    [updateField],
-  );
+    useImperativeHandle(ref, () => ({
+      open: () => bottomSheetRef.current?.present(),
+      close: () => bottomSheetRef.current?.dismiss(),
+    }));
 
-  return (
-    <View style={styles.container}>
-      {/* Tab Header */}
-      <View style={styles.tabHeader}>
-        <AnimatedPressable onPress={onClose} hapticType="light" style={styles.headerBtn}>
-          <X size={20} color="#6B7280" />
-        </AnimatedPressable>
+    const handleClose = useCallback(() => {
+      bottomSheetRef.current?.dismiss();
+    }, []);
 
-        <View style={styles.tabGroup}>
-          <Pressable
-            onPress={() => {
-              haptic.selection();
-              setActiveTab('date');
-            }}
-            style={[
-              styles.tab,
-              activeTab === 'date' && {borderBottomColor: primaryColor},
-            ]}>
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'date' && {color: primaryColor, fontWeight: '700'},
-              ]}>
-              날짜
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              haptic.selection();
-              setActiveTab('duration');
-            }}
-            style={[
-              styles.tab,
-              activeTab === 'duration' && {borderBottomColor: primaryColor},
-            ]}>
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'duration' && {color: primaryColor, fontWeight: '700'},
-              ]}>
-              지속 시간
-            </Text>
-          </Pressable>
-        </View>
+    const handleConfirm = useCallback(() => {
+      bottomSheetRef.current?.dismiss();
+    }, []);
 
-        <AnimatedPressable onPress={onConfirm} hapticType="light" style={styles.headerBtn}>
-          <Check size={20} color={primaryColor} />
-        </AnimatedPressable>
-      </View>
+    const handleDateSelect = useCallback(
+      (dateStr: string) => {
+        updateField('scheduledDate', dateStr);
+      },
+      [updateField],
+    );
 
-      {/* Tab Content */}
-      <View style={styles.tabContent}>
-        {activeTab === 'date' ? (
-          <CalendarGrid
-            selectedDate={form.scheduledDate}
-            onSelectDate={handleDateSelect}
-            primaryColor={primaryColor}
-          />
-        ) : (
-          <DurationTab
-            form={form}
-            updateField={updateField}
-            primaryColor={primaryColor}
-          />
-        )}
-      </View>
-
-      {/* Setting Rows */}
-      <View style={styles.settingsSection}>
-        <SettingRow
-          icon={Clock}
-          label="시간"
-          value={getTimeLabel(form)}
-          onPress={onTimePress}
+    const renderBackdrop = useCallback(
+      (props: any) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          opacity={0.3}
         />
-        <SettingRow
-          icon={Bell}
-          label="알림"
-          value={getAlarmLabel(form.alarmOffsetMinutes)}
-          onPress={onAlarmPress}
-        />
-        <SettingRow
-          icon={Repeat}
-          label="반복"
-          value={getRecurrenceLabel(form)}
-          onPress={onRecurrencePress}
-        />
-      </View>
-    </View>
-  );
-}
+      ),
+      [],
+    );
+
+    return (
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        handleComponent={null}
+        backgroundStyle={sheetStyles.sheetBg}>
+        <BottomSheetView style={sheetStyles.sheetContent}>
+          {/* Tab Header */}
+          <View style={styles.tabHeader}>
+            <AnimatedPressable onPress={handleClose} hapticType="light" style={styles.headerBtn}>
+              <X size={20} color="#6B7280" />
+            </AnimatedPressable>
+
+            <View style={styles.tabGroup}>
+              <Pressable
+                onPress={() => {
+                  haptic.selection();
+                  setActiveTab('date');
+                }}
+                style={[
+                  styles.tab,
+                  activeTab === 'date' && {borderBottomColor: primaryColor},
+                ]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'date' && {color: primaryColor, fontWeight: '700'},
+                  ]}>
+                  날짜
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  haptic.selection();
+                  setActiveTab('duration');
+                }}
+                style={[
+                  styles.tab,
+                  activeTab === 'duration' && {borderBottomColor: primaryColor},
+                ]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'duration' && {color: primaryColor, fontWeight: '700'},
+                  ]}>
+                  지속 시간
+                </Text>
+              </Pressable>
+            </View>
+
+            <AnimatedPressable onPress={handleConfirm} hapticType="light" style={styles.headerBtn}>
+              <Check size={20} color={primaryColor} />
+            </AnimatedPressable>
+          </View>
+
+          {/* Tab Content */}
+          <View style={styles.tabContent}>
+            {activeTab === 'date' ? (
+              <CalendarGrid
+                selectedDate={form.scheduledDate}
+                onSelectDate={handleDateSelect}
+                primaryColor={primaryColor}
+              />
+            ) : (
+              <DurationTab
+                form={form}
+                updateField={updateField}
+                primaryColor={primaryColor}
+              />
+            )}
+          </View>
+
+          {/* Setting Rows */}
+          <View style={styles.settingsSection}>
+            <SettingRow
+              icon={Clock}
+              label="시간"
+              value={getTimeLabel(form)}
+              onPress={onTimePress}
+            />
+            <SettingRow
+              icon={Bell}
+              label="알림"
+              value={getAlarmLabel(form.alarmOffsetMinutes)}
+              onPress={onAlarmPress}
+            />
+            <SettingRow
+              icon={Repeat}
+              label="반복"
+              value={getRecurrenceLabel(form)}
+              onPress={onRecurrencePress}
+            />
+          </View>
+        </BottomSheetView>
+      </BottomSheetModal>
+    );
+  },
+);
+
+const sheetStyles = StyleSheet.create({
+  sheetBg: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  sheetContent: {
+    flex: 1,
+  },
+});
 
 // ============================================
 // DurationTab — 스케줄타입 칩 + 시간/소요시간 인라인
@@ -584,11 +632,6 @@ function SettingRow({
 // ============================================
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
   // Tab header
   tabHeader: {
     flexDirection: 'row',

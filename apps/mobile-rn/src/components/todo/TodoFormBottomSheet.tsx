@@ -1,8 +1,9 @@
 /**
  * TodoFormBottomSheet — Orchestrator
  * 같은 ref API (TodoFormBottomSheetRef) 유지, 내부는 Create/Edit 분리
- * - Create: TodoCreatePanel (키보드 위 인라인 패널 + 통합 일정 패널)
+ * - Create: TodoCreatePanel (BottomSheet non-modal, 키보드 동기화)
  * - Edit: TodoEditOverlay (풀스크린 오버레이)
+ * - SchedulePanel: 별도 BottomSheetModal (create 위에 독립적으로 열림)
  * - 서브시트 5개는 동일 레벨에서 렌더
  */
 import React, {
@@ -14,8 +15,9 @@ import React, {
 } from 'react';
 import {Keyboard} from 'react-native';
 import {useTodoForm} from './useTodoForm';
-import {TodoCreatePanel} from './TodoCreatePanel';
+import {TodoCreatePanel, type TodoCreatePanelRef} from './TodoCreatePanel';
 import {TodoEditOverlay} from './TodoEditOverlay';
+import {SchedulePanel, type SchedulePanelRef} from './SchedulePanel';
 import {TimePickerSheet, type TimePickerSheetRef} from './sheets/TimePickerSheet';
 import {RecurrencePickerSheet, type RecurrencePickerSheetRef} from './sheets/RecurrencePickerSheet';
 import {PriorityPickerSheet, type PriorityPickerSheetRef} from './sheets/PriorityPickerSheet';
@@ -42,8 +44,12 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
   (_props, ref) => {
     const formHook = useTodoForm();
     const haptic = useHaptic();
-    const [createVisible, setCreateVisible] = useState(false);
     const [editVisible, setEditVisible] = useState(false);
+
+    // Create 패널 ref (BottomSheet non-modal)
+    const createSheetRef = useRef<TodoCreatePanelRef>(null);
+    // 일정 패널 ref (BottomSheetModal)
+    const scheduleModalRef = useRef<SchedulePanelRef>(null);
 
     // 서브시트 refs
     const timeSheetRef = useRef<TimePickerSheetRef>(null);
@@ -58,21 +64,21 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     useImperativeHandle(ref, () => ({
       openCreate: (date?: string) => {
         formHook.resetForCreate(date);
-        setCreateVisible(true);
+        createSheetRef.current?.expand();
       },
       openEdit: (todo: Todo) => {
         formHook.loadForEdit(todo);
         setEditVisible(true);
       },
       close: () => {
-        setCreateVisible(false);
+        createSheetRef.current?.close();
         setEditVisible(false);
         Keyboard.dismiss();
       },
     }));
 
     // ------------------------------------------
-    // Create 모드 콜백 (일정 패널 내에서 서브시트 열기)
+    // Create 모드 콜백
     // ------------------------------------------
     const createToolbarCallbacks = useCallback(
       () => ({
@@ -80,17 +86,10 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           haptic.selection();
           prioritySheetRef.current?.open();
         },
-        onTimePress: () => {
+        onDatePress: () => {
           haptic.selection();
-          timeSheetRef.current?.open();
-        },
-        onAlarmPress: () => {
-          haptic.selection();
-          alarmSheetRef.current?.open();
-        },
-        onRecurrencePress: () => {
-          haptic.selection();
-          recurrenceSheetRef.current?.open();
+          Keyboard.dismiss();
+          scheduleModalRef.current?.open();
         },
       }),
       [haptic],
@@ -125,12 +124,29 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
       [haptic],
     );
 
+    // ------------------------------------------
+    // 일정 패널 내 서브시트 콜백
+    // ------------------------------------------
+    const handleScheduleTimePress = useCallback(() => {
+      haptic.selection();
+      timeSheetRef.current?.open();
+    }, [haptic]);
+
+    const handleScheduleAlarmPress = useCallback(() => {
+      haptic.selection();
+      alarmSheetRef.current?.open();
+    }, [haptic]);
+
+    const handleScheduleRecurrencePress = useCallback(() => {
+      haptic.selection();
+      recurrenceSheetRef.current?.open();
+    }, [haptic]);
+
     return (
       <>
-        {/* Create: 키보드 위 패널 + 통합 일정 패널 */}
+        {/* Create: BottomSheet (non-modal, 키보드 동기화) */}
         <TodoCreatePanel
-          visible={createVisible}
-          onClose={() => setCreateVisible(false)}
+          ref={createSheetRef}
           toolbarCallbacks={createToolbarCallbacks()}
           {...formHook}
         />
@@ -141,6 +157,16 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           onClose={() => setEditVisible(false)}
           toolbarCallbacks={editToolbarCallbacks()}
           {...formHook}
+        />
+
+        {/* 일정 패널 — 별도 BottomSheetModal (create 위에 독립적으로 열림) */}
+        <SchedulePanel
+          ref={scheduleModalRef}
+          form={formHook.form}
+          updateField={formHook.updateField}
+          onTimePress={handleScheduleTimePress}
+          onAlarmPress={handleScheduleAlarmPress}
+          onRecurrencePress={handleScheduleRecurrencePress}
         />
 
         {/* ──────── 서브시트 5개 (같은 레벨) ──────── */}
