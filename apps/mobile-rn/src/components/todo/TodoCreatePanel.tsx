@@ -69,6 +69,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
 
     useImperativeHandle(ref, () => ({
       expand: () => {
+        Keyboard.dismiss();
         setActivePanel('none');
         bottomSheetRef.current?.expand();
         setIsOpen(true);
@@ -84,6 +85,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
 
     const handleSheetChange = useCallback((index: number) => {
       if (index === -1) {
+        Keyboard.dismiss();
         setIsOpen(false);
         setActivePanel('none');
       }
