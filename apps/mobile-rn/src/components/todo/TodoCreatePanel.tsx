@@ -2,7 +2,7 @@
  * TodoCreatePanel
  * TickTick 스타일 — @gorhom/bottom-sheet (non-modal) 기반 인라인 입력 패널
  * - 핸들 숨김 (패널처럼 보이게)
- * - keyboardBehavior="interactive" → iOS 키보드와 네이티브 동기화
+ * - keyboardBehavior="interactive" → iOS 키보드와 네이티브 동기화 (key remount로 stale state 방지)
  * - BottomSheetTextInput → 키보드-패널 gap 해소
  * - enableDynamicSizing → 아이콘 피커 등 콘텐츠에 따른 자동 높이
  * - enablePanDownToClose → 아래로 스와이프하면 닫기
@@ -66,6 +66,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const titleInputRef = useRef<any>(null);
     const [activePanel, setActivePanel] = useState<ActivePanel>('none');
     const [isOpen, setIsOpen] = useState(false);
+    const [sheetKey, setSheetKey] = useState(0);
 
     useImperativeHandle(ref, () => ({
       expand: () => {
@@ -73,7 +74,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         setActivePanel('none');
         bottomSheetRef.current?.expand();
         setIsOpen(true);
-        setTimeout(() => titleInputRef.current?.focus(), 150);
+        setTimeout(() => titleInputRef.current?.focus(), 400);
       },
       close: () => {
         Keyboard.dismiss();
@@ -88,6 +89,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         Keyboard.dismiss();
         setIsOpen(false);
         setActivePanel('none');
+        setSheetKey(prev => prev + 1);
       }
     }, []);
 
@@ -120,12 +122,12 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
 
     return (
       <BottomSheet
+        key={sheetKey}
         ref={bottomSheetRef}
         index={-1}
         enableDynamicSizing
         enablePanDownToClose
         keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
         handleComponent={null}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.sheetBg}
