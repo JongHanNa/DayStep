@@ -4,7 +4,7 @@
  * - Create: TodoCreatePanel (BottomSheet non-modal, 키보드 동기화)
  * - Edit: TodoEditOverlay (풀스크린 오버레이)
  * - SchedulePanel: 별도 BottomSheetModal (create 위에 독립적으로 열림)
- * - 서브시트: PriorityPickerSheet (create 전용)
+ * - 우선순위/아이콘: TodoCreatePanel 내부 Popover로 처리
  */
 import React, {
   useCallback,
@@ -18,7 +18,6 @@ import {useTodoForm} from './useTodoForm';
 import {TodoCreatePanel, type TodoCreatePanelRef} from './TodoCreatePanel';
 import {TodoEditOverlay} from './TodoEditOverlay';
 import {SchedulePanel, type SchedulePanelRef} from './SchedulePanel';
-import {PriorityPickerSheet, type PriorityPickerSheetRef} from './sheets/PriorityPickerSheet';
 import {useHaptic} from '@/hooks/useHaptic';
 import type {Todo} from '@daystep/shared-core';
 
@@ -47,9 +46,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     // 일정 패널 ref (BottomSheetModal)
     const scheduleModalRef = useRef<SchedulePanelRef>(null);
 
-    // 서브시트 refs
-    const prioritySheetRef = useRef<PriorityPickerSheetRef>(null);
-
     // ------------------------------------------
     // Imperative handle (기존 API 유지)
     // ------------------------------------------
@@ -74,10 +70,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     // ------------------------------------------
     const createToolbarCallbacks = useCallback(
       () => ({
-        onPriorityPress: () => {
-          haptic.selection();
-          prioritySheetRef.current?.open();
-        },
         onDatePress: () => {
           haptic.selection();
           Keyboard.dismiss();
@@ -111,18 +103,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           updateField={formHook.updateField}
         />
 
-        {/* ──────── 서브시트 (같은 레벨) ──────── */}
-        <PriorityPickerSheet
-          ref={prioritySheetRef}
-          importance={formHook.form.importance}
-          urgency={formHook.form.urgency}
-          isReluctantMustDo={formHook.form.isReluctantMustDo}
-          onImportanceChange={v => formHook.updateField('importance', v)}
-          onUrgencyChange={v => formHook.updateField('urgency', v)}
-          onReluctantChange={v =>
-            formHook.updateField('isReluctantMustDo', v)
-          }
-        />
       </>
     );
   },

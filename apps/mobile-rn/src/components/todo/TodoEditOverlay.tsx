@@ -132,7 +132,7 @@ export function TodoEditOverlay({
               pressed && styles.dateSummaryRowPressed,
             ]}>
             <View style={styles.dateSummaryContent}>
-              <Text style={styles.dateSummaryText}>{dateSummary}</Text>
+              <Text style={styles.dateSummaryText} numberOfLines={1}>{dateSummary}</Text>
               {dateSummaryExtras.map((extra, i) => (
                 <React.Fragment key={i}>
                   <Text style={styles.dateSummaryDot}>·</Text>
@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
   dateSummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     flex: 1,
-    gap: 4,
     backgroundColor: '#F9FAFB',
     borderRadius: 8,
     paddingHorizontal: 10,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   dateSummaryContent: {
-    flex: 1,
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,

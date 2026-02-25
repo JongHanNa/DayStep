@@ -24,6 +24,8 @@ interface PopoverProps {
   anchorPosition: {x: number; y: number; width: number; height: number};
   children: React.ReactNode;
   width?: number;
+  /** 'left': 앵커 왼쪽 정렬 (칩처럼 좌측 앵커에 적합) | 'right': 앵커 오른쪽 정렬 (기본) */
+  horizontalAlign?: 'left' | 'right';
 }
 
 export function Popover({
@@ -32,17 +34,20 @@ export function Popover({
   anchorPosition,
   children,
   width = 200,
+  horizontalAlign = 'right',
 }: PopoverProps) {
   if (!visible) return null;
 
   // 항상 앵커 위에 표시
   const showAbove = true;
+  const screenW = Dimensions.get('window').width;
 
   const cardStyle: ViewStyle = {
     position: 'absolute',
     width,
-    // 앵커 오른쪽 정렬
-    right: Dimensions.get('window').width - (anchorPosition.x + anchorPosition.width),
+    ...(horizontalAlign === 'left'
+      ? {left: anchorPosition.x}
+      : {right: screenW - (anchorPosition.x + anchorPosition.width)}),
     ...(showAbove
       ? {bottom: SCREEN_HEIGHT - anchorPosition.y + CARD_MARGIN}
       : {top: anchorPosition.y + anchorPosition.height + CARD_MARGIN}),
