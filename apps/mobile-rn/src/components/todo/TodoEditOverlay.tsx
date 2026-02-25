@@ -131,14 +131,16 @@ export function TodoEditOverlay({
               styles.dateSummaryRow,
               pressed && styles.dateSummaryRowPressed,
             ]}>
-            <Text style={styles.dateSummaryText}>{dateSummary}</Text>
-            {dateSummaryExtras.map((extra, i) => (
-              <React.Fragment key={i}>
-                <Text style={styles.dateSummaryDot}>·</Text>
-                <Text style={styles.dateSummaryText}>{extra}</Text>
-              </React.Fragment>
-            ))}
-            <ChevronRight size={14} color="#C4C9D4" style={{marginLeft: 'auto'}} />
+            <View style={styles.dateSummaryContent}>
+              <Text style={styles.dateSummaryText}>{dateSummary}</Text>
+              {dateSummaryExtras.map((extra, i) => (
+                <React.Fragment key={i}>
+                  <Text style={styles.dateSummaryDot}>·</Text>
+                  <Text style={styles.dateSummaryText}>{extra}</Text>
+                </React.Fragment>
+              ))}
+            </View>
+            <ChevronRight size={14} color="#C4C9D4" />
           </Pressable>
         </View>
 
@@ -265,7 +267,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 6,
+    gap: 4,
     backgroundColor: '#F9FAFB',
     borderRadius: 8,
     paddingHorizontal: 10,
@@ -273,6 +275,12 @@ const styles = StyleSheet.create({
   },
   dateSummaryRowPressed: {
     backgroundColor: '#F3F4F6',
+  },
+  dateSummaryContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   dateSummaryText: {
     fontSize: 13,

@@ -64,6 +64,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const {primaryColor} = useTheme();
     const bottomSheetRef = useRef<BottomSheet>(null);
     const titleInputRef = useRef<any>(null);
+    const pendingFocusRef = useRef(false);
     const [activePanel, setActivePanel] = useState<ActivePanel>('none');
     const [isOpen, setIsOpen] = useState(false);
     const [sheetKey, setSheetKey] = useState(0);
@@ -72,9 +73,9 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
       expand: () => {
         Keyboard.dismiss();
         setActivePanel('none');
+        pendingFocusRef.current = true;
         bottomSheetRef.current?.expand();
         setIsOpen(true);
-        setTimeout(() => titleInputRef.current?.focus(), 400);
       },
       close: () => {
         Keyboard.dismiss();
@@ -90,6 +91,9 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         setIsOpen(false);
         setActivePanel('none');
         setSheetKey(prev => prev + 1);
+      } else if (index >= 0 && pendingFocusRef.current) {
+        pendingFocusRef.current = false;
+        setTimeout(() => titleInputRef.current?.focus(), 100);
       }
     }, []);
 
