@@ -10,6 +10,7 @@
  */
 import React, {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -20,6 +21,7 @@ import {
   View,
   Text,
   Keyboard,
+  AppState,
   StyleSheet,
   Dimensions,
 } from 'react-native';
@@ -78,6 +80,16 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const [popAnchor, setPopAnchor] = useState<AnchorRect | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [sheetKey, setSheetKey] = useState(0);
+
+    useEffect(() => {
+      const sub = AppState.addEventListener('change', nextState => {
+        if (nextState === 'background' || nextState === 'inactive') {
+          Keyboard.dismiss();
+          titleInputRef.current?.blur();
+        }
+      });
+      return () => sub.remove();
+    }, []);
 
     useImperativeHandle(ref, () => ({
       expand: () => {
