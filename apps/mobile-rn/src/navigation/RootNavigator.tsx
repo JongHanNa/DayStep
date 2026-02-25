@@ -23,6 +23,17 @@ const Stack = createNativeStackNavigator();
  */
 function AuthenticatedApp() {
   useRealtimeSync();
+
+  // 알림 채널 생성(Android) + 권한 요청(iOS/Android 13+)
+  useEffect(() => {
+    import('@/lib/notifications').then(
+      ({setupNotificationChannel, requestNotificationPermission}) => {
+        setupNotificationChannel();
+        requestNotificationPermission();
+      },
+    );
+  }, []);
+
   return <MainTabNavigator />;
 }
 
