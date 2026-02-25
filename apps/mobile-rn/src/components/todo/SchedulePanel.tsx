@@ -265,6 +265,80 @@ function TimePopoverContent({
 }) {
   const haptic = useHaptic();
   const DURATIONS = [5, 10, 15, 20, 30, 45, 60, 90, 120];
+  const TIMED_DURATIONS = [15, 30, 60, 90, 120];
+
+  const [directDurOpen, setDirectDurOpen] = useState(false);
+
+  // 현재 소요 시간 (분)
+  const durMins =
+    form.startTime && form.endTime
+      ? Math.round((form.endTime.getTime() - form.startTime.getTime()) / 60000)
+      : 60;
+  const durHours = Math.floor(durMins / 60);
+  const durRemMins = durMins % 60;
+
+  function getDurLabel(mins: number): string {
+    if (mins < 60) return `${mins}분`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
+  }
+
+  // 시작 시간 조정 (소요 시간 유지 = endTime도 동량 이동)
+  const adjustStartHour = useCallback(
+    (delta: number) => {
+      haptic.selection();
+      const ms = delta * 3600000;
+      const newStart = new Date(form.startTime!.getTime() + ms);
+      updateField('startTime', newStart);
+      if (form.endTime) updateField('endTime', new Date(form.endTime.getTime() + ms));
+    },
+    [haptic, form.startTime, form.endTime, updateField],
+  );
+
+  const adjustStartMin = useCallback(
+    (delta: number) => {
+      haptic.selection();
+      const ms = delta * 60000;
+      const newStart = new Date(form.startTime!.getTime() + ms);
+      updateField('startTime', newStart);
+      if (form.endTime) updateField('endTime', new Date(form.endTime.getTime() + ms));
+    },
+    [haptic, form.startTime, form.endTime, updateField],
+  );
+
+  // 소요 시간 칩 설정
+  const setTimedDur = useCallback(
+    (mins: number) => {
+      haptic.selection();
+      if (!form.startTime) return;
+      updateField('endTime', new Date(form.startTime.getTime() + mins * 60000));
+      setDirectDurOpen(false);
+    },
+    [haptic, form.startTime, updateField],
+  );
+
+  // 소요 시간 직접 조정
+  const adjustDurHour = useCallback(
+    (delta: number) => {
+      haptic.selection();
+      const newH = Math.max(0, Math.min(23, durHours + delta));
+      const newDur = Math.max(1, newH * 60 + durRemMins);
+      if (form.startTime)
+        updateField('endTime', new Date(form.startTime.getTime() + newDur * 60000));
+    },
+    [haptic, durHours, durRemMins, form.startTime, updateField],
+  );
+
+  const adjustDurMin = useCallback(
+    (delta: number) => {
+      haptic.selection();
+      const newDur = Math.max(1, Math.min(23 * 60 + 59, durMins + delta));
+      if (form.startTime)
+        updateField('endTime', new Date(form.startTime.getTime() + newDur * 60000));
+    },
+    [haptic, durMins, form.startTime, updateField],
+  );
 
   const handleTypeChange = useCallback(
     (type: 'anytime' | 'timed' | 'all_day') => {
@@ -306,40 +380,145 @@ function TimePopoverContent({
         ))}
       </View>
 
-      {/* Timed: time display with +/- */}
+      {/* Timed: 시작 시간 + 소요 시간 */}
       {form.scheduleType === 'timed' && form.startTime && (
-        <View style={popContentStyles.timeRow}>
-          <AnimatedPressable
-            onPress={() => {
-              haptic.selection();
-              updateField('startTime', addHours(form.startTime!, -1));
-              if (form.endTime) updateField('endTime', addHours(form.endTime, -1));
-            }}
-            hapticType="selection"
-            style={popContentStyles.timeBtn}>
-            <Text style={popContentStyles.timeBtnText}>−</Text>
-          </AnimatedPressable>
-          <View style={popContentStyles.timeDisplay}>
-            <Text style={popContentStyles.timeText}>
+        <>
+          {/* 시작 시간 */}
+          <Text style={popContentStyles.sectionLabel}>시작 시간</Text>
+          <View style={popContentStyles.startTimeBlock}>
+            {/* 시간 stepper */}
+            <View style={popContentStyles.startTimeRow}>
+              <Text style={popContentStyles.startTimeLabel}>시간</Text>
+              <View style={popContentStyles.stepperCenter}>
+                <AnimatedPressable
+                  onPress={() => adjustStartHour(-1)}
+                  haptic={false}
+                  style={popContentStyles.stepBtn}>
+                  <Text style={popContentStyles.stepBtnText}>−</Text>
+                </AnimatedPressable>
+                <Text style={popContentStyles.stepValue}>
+                  {format(form.startTime, 'H')}시
+                </Text>
+                <AnimatedPressable
+                  onPress={() => adjustStartHour(1)}
+                  haptic={false}
+                  style={popContentStyles.stepBtn}>
+                  <Text style={popContentStyles.stepBtnText}>+</Text>
+                </AnimatedPressable>
+              </View>
+            </View>
+            {/* 분 stepper */}
+            <View style={popContentStyles.startTimeRow}>
+              <Text style={popContentStyles.startTimeLabel}>분</Text>
+              <View style={popContentStyles.stepperCenter}>
+                <AnimatedPressable
+                  onPress={() => adjustStartMin(-1)}
+                  haptic={false}
+                  style={popContentStyles.stepBtn}>
+                  <Text style={popContentStyles.stepBtnText}>−</Text>
+                </AnimatedPressable>
+                <Text style={popContentStyles.stepValue}>
+                  {format(form.startTime, 'mm')}분
+                </Text>
+                <AnimatedPressable
+                  onPress={() => adjustStartMin(1)}
+                  haptic={false}
+                  style={popContentStyles.stepBtn}>
+                  <Text style={popContentStyles.stepBtnText}>+</Text>
+                </AnimatedPressable>
+              </View>
+            </View>
+          </View>
+
+          {/* 소요 시간 */}
+          <Text style={popContentStyles.sectionLabel}>소요 시간</Text>
+          <View style={popContentStyles.durChipRow}>
+            {TIMED_DURATIONS.map(d => (
+              <AnimatedPressable
+                key={d}
+                onPress={() => setTimedDur(d)}
+                haptic={false}
+                style={[
+                  popContentStyles.durationChip,
+                  durMins === d && {backgroundColor: primaryColor},
+                ]}>
+                <Text
+                  style={[
+                    popContentStyles.chipText,
+                    durMins === d && {color: '#FFFFFF'},
+                  ]}>
+                  {d >= 60 ? `${d / 60}시간` : `${d}분`}
+                </Text>
+              </AnimatedPressable>
+            ))}
+          </View>
+
+          {/* 직접 입력 토글 */}
+          <Pressable
+            onPress={() => setDirectDurOpen(o => !o)}
+            style={popContentStyles.directToggle}>
+            <Text style={popContentStyles.directToggleText}>직접 입력</Text>
+            <Text style={popContentStyles.directToggleText}>
+              {directDurOpen ? '▴' : '▾'}
+            </Text>
+          </Pressable>
+          {directDurOpen && (
+            <View style={popContentStyles.startTimeBlock}>
+              <View style={popContentStyles.startTimeRow}>
+                <Text style={popContentStyles.startTimeLabel}>시간</Text>
+                <View style={popContentStyles.stepperCenter}>
+                  <AnimatedPressable
+                    onPress={() => adjustDurHour(-1)}
+                    haptic={false}
+                    style={popContentStyles.stepBtn}>
+                    <Text style={popContentStyles.stepBtnText}>−</Text>
+                  </AnimatedPressable>
+                  <Text style={popContentStyles.stepValue}>{durHours}시간</Text>
+                  <AnimatedPressable
+                    onPress={() => adjustDurHour(1)}
+                    haptic={false}
+                    style={popContentStyles.stepBtn}>
+                    <Text style={popContentStyles.stepBtnText}>+</Text>
+                  </AnimatedPressable>
+                </View>
+              </View>
+              <View style={popContentStyles.startTimeRow}>
+                <Text style={popContentStyles.startTimeLabel}>분</Text>
+                <View style={popContentStyles.stepperCenter}>
+                  <AnimatedPressable
+                    onPress={() => adjustDurMin(-1)}
+                    haptic={false}
+                    style={popContentStyles.stepBtn}>
+                    <Text style={popContentStyles.stepBtnText}>−</Text>
+                  </AnimatedPressable>
+                  <Text style={popContentStyles.stepValue}>{durRemMins}분</Text>
+                  <AnimatedPressable
+                    onPress={() => adjustDurMin(1)}
+                    haptic={false}
+                    style={popContentStyles.stepBtn}>
+                    <Text style={popContentStyles.stepBtnText}>+</Text>
+                  </AnimatedPressable>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Preview bar */}
+          <View
+            style={[
+              popContentStyles.previewBar,
+              {borderColor: primaryColor + '33', backgroundColor: primaryColor + '14'},
+            ]}>
+            <Text style={[popContentStyles.previewText, {color: primaryColor}]}>
               {format(form.startTime, 'HH:mm')}
             </Text>
-            {form.endTime && (
-              <Text style={popContentStyles.timeSep}>
-                {' ~ '}{format(form.endTime, 'HH:mm')}
-              </Text>
-            )}
+            <Text style={popContentStyles.previewSep}> ~ </Text>
+            <Text style={[popContentStyles.previewText, {color: primaryColor}]}>
+              {form.endTime ? format(form.endTime, 'HH:mm') : '--:--'}
+            </Text>
+            <Text style={popContentStyles.previewDur}> ({getDurLabel(durMins)})</Text>
           </View>
-          <AnimatedPressable
-            onPress={() => {
-              haptic.selection();
-              updateField('startTime', addHours(form.startTime!, 1));
-              if (form.endTime) updateField('endTime', addHours(form.endTime, 1));
-            }}
-            hapticType="selection"
-            style={popContentStyles.timeBtn}>
-            <Text style={popContentStyles.timeBtnText}>+</Text>
-          </AnimatedPressable>
-        </View>
+        </>
       )}
 
       {/* Anytime: duration chips */}
@@ -571,6 +750,99 @@ const popContentStyles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 14,
     backgroundColor: '#F3F4F6',
+  },
+  // Timed time stepper
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  startTimeBlock: {
+    flexDirection: 'column',
+    gap: 4,
+    marginBottom: 10,
+  },
+  startTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.04)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  startTimeLabel: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    minWidth: 20,
+  },
+  stepperCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stepBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  stepValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1F2937',
+    minWidth: 42,
+    textAlign: 'center',
+  },
+  durChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginBottom: 6,
+  },
+  directToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    marginBottom: 4,
+  },
+  directToggleText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+  },
+  previewBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 8,
+  },
+  previewText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  previewSep: {
+    fontSize: 11,
+    color: '#9CA3AF',
+  },
+  previewDur: {
+    fontSize: 11,
+    color: '#9CA3AF',
   },
   // List popovers (alarm, recurrence)
   listContainer: {
