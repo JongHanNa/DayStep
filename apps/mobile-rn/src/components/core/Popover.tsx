@@ -46,7 +46,7 @@ export function Popover({
     position: 'absolute',
     width,
     ...(horizontalAlign === 'left'
-      ? {left: anchorPosition.x}
+      ? {left: Math.min(anchorPosition.x, screenW - width - 8)}
       : {right: screenW - (anchorPosition.x + anchorPosition.width)}),
     ...(showAbove
       ? {bottom: SCREEN_HEIGHT - anchorPosition.y + CARD_MARGIN}

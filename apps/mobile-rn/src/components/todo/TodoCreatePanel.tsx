@@ -78,8 +78,6 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const [popAnchor, setPopAnchor] = useState<AnchorRect | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [sheetKey, setSheetKey] = useState(0);
-    const [descHeight, setDescHeight] = useState(32);
-    const MAX_DESC_HEIGHT = 120; // 약 5줄 (line 20px × 5 + padding 12 + 여유 8)
 
     useImperativeHandle(ref, () => ({
       expand: () => {
@@ -184,15 +182,8 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
                 onChangeText={(v: string) => updateField('content', v)}
                 placeholder="설명 추가"
                 placeholderTextColor="#D1D5DB"
-                style={[styles.descInput, {height: descHeight}]}
+                style={styles.descInput}
                 multiline
-                onContentSizeChange={e => {
-                  const newH = Math.min(
-                    Math.max(e.nativeEvent.contentSize.height + 12, 32),
-                    MAX_DESC_HEIGHT,
-                  );
-                  setDescHeight(newH);
-                }}
               />
 
               {/* 구분선 + 3칩 툴바 */}
@@ -390,6 +381,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingBottom: 8,
     textAlignVertical: 'top',
+    minHeight: 32,
+    maxHeight: 120,
   },
   divider: {
     height: 1,

@@ -4,7 +4,7 @@
  * - 아래→위 슬라이드 진입 애니메이션
  * - Header → 날짜요약+체크박스 → ScrollView(제목+설명)
  */
-import React, {useCallback, useRef} from 'react';
+import {useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -131,15 +131,9 @@ export function TodoEditOverlay({
               styles.dateSummaryRow,
               pressed && styles.dateSummaryRowPressed,
             ]}>
-            <View style={styles.dateSummaryContent}>
-              <Text style={styles.dateSummaryText} numberOfLines={1}>{dateSummary}</Text>
-              {dateSummaryExtras.map((extra, i) => (
-                <React.Fragment key={i}>
-                  <Text style={styles.dateSummaryDot}>·</Text>
-                  <Text style={styles.dateSummaryText}>{extra}</Text>
-                </React.Fragment>
-              ))}
-            </View>
+            <Text style={[styles.dateSummaryText, {flex: 1}]} numberOfLines={1}>
+              {[dateSummary, ...dateSummaryExtras].join(' · ')}
+            </Text>
             <ChevronRight size={14} color="#C4C9D4" />
           </Pressable>
         </View>
@@ -276,19 +270,9 @@ const styles = StyleSheet.create({
   dateSummaryRowPressed: {
     backgroundColor: '#F3F4F6',
   },
-  dateSummaryContent: {
-    flexShrink: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
   dateSummaryText: {
     fontSize: 13,
     color: '#6B7280',
-  },
-  dateSummaryDot: {
-    fontSize: 13,
-    color: '#D1D5DB',
   },
   // Title
   titleSection: {

@@ -143,26 +143,22 @@ export function AttributeToolbar({
         keyboardShouldPersistTaps="handled">
         <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
 
-        <View ref={priorityChipRef} collapsable={false}>
-          <AnimatedPressable
-            onPress={handlePriorityMeasure}
-            hapticType="selection"
-            style={[
-              styles.chip,
-              {
-                backgroundColor: priorityStyle.bg,
-                borderColor: priorityStyle.border,
-                borderWidth: 1.5,
-              },
-            ]}>
-            <Flag size={14} color={priorityStyle.text} />
-            {(form.importance || form.urgency) && (
+        {(form.importance || form.urgency) && (
+          <View ref={priorityChipRef} collapsable={false}>
+            <AnimatedPressable
+              onPress={handlePriorityMeasure}
+              hapticType="selection"
+              style={[
+                styles.chip,
+                {backgroundColor: priorityStyle.bg, borderColor: priorityStyle.border, borderWidth: 1.5},
+              ]}>
+              <Flag size={14} color={priorityStyle.text} />
               <Text style={[styles.chipText, {color: priorityStyle.text}]}>
                 {getPriorityChipLabel(form)}
               </Text>
-            )}
-          </AnimatedPressable>
-        </View>
+            </AnimatedPressable>
+          </View>
+        )}
 
         {onIconPress && (
           <View ref={iconChipRef} collapsable={false}>
