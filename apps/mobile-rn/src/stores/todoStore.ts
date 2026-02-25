@@ -7,6 +7,7 @@
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase, fetchWithJWT} from '@/lib/supabase';
+import {syncWidgetData} from '@/lib/widgetBridge';
 import {zustandMMKVStorage} from '@/lib/mmkv';
 import type {Todo} from '@daystep/shared-core';
 import {
@@ -14,6 +15,10 @@ import {
   endOfDay,
   format,
   getDay,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  parseISO,
 } from 'date-fns';
 
 // ============================================
@@ -46,6 +51,17 @@ interface TodoCompletion {
 
 type PostponeAction = 'reschedule' | 'anytime' | 'start_now';
 
+export interface MonthTodoSummary {
+  id: string;
+  title: string;
+  start_time: string | null;
+  schedule_type: string;
+  recurrence_pattern: string;
+  recurrence_days_of_week: number[] | null;
+  recurrence_end_date: string | null;
+  color: string | null;
+}
+
 interface LinkedFuel {
   id: string;
   title: string;
@@ -63,11 +79,16 @@ interface TodoState {
   loading: boolean;
   error: string | null;
 
+  // 월간 뷰
+  monthViewData: Record<string, MonthTodoSummary[]> | null;
+  monthViewLoading: boolean;
+
   // 오프라인 큐
   offlineQueue: OfflineAction[];
 
   // 액션
   fetchTodosForDate: (date: string) => Promise<void>;
+  fetchTodosForMonthView: (year: number, month: number) => Promise<void>;
   fetchFuelsForTodos: (todoIds: string[]) => Promise<void>;
   fetchAllTodos: (userId: string, days?: number) => Promise<Todo[]>;
   createTodo: (input: CreateTodoInput) => Promise<Todo | null>;
@@ -129,6 +150,8 @@ export const useTodoStore = create<TodoState>()(
       loading: false,
       error: null,
       offlineQueue: [],
+      monthViewData: null,
+      monthViewLoading: false,
 
       setSelectedDate: (date: string) => {
         set({selectedDate: date});
@@ -856,6 +879,84 @@ export const useTodoStore = create<TodoState>()(
           set({fuelMap: map});
         } catch (err) {
           console.error('[TodoStore] fetchFuelsForTodos error:', err);
+        }
+      },
+
+      fetchTodosForMonthView: async (year: number, month: number) => {
+        try {
+          set({monthViewLoading: true});
+
+          const userId = await getCurrentUserId();
+          if (!userId) {
+            set({monthViewLoading: false});
+            return;
+          }
+
+          const monthStart = startOfMonth(new Date(year, month - 1));
+          const monthEnd = endOfMonth(new Date(year, month - 1));
+          const monthStartISO = monthStart.toISOString();
+          const monthEndISO = monthEnd.toISOString();
+          const monthStartDate = format(monthStart, 'yyyy-MM-dd');
+
+          const {data, error} = await supabase
+            .from('todos')
+            .select('id, title, start_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
+            .eq('user_id', userId)
+            .or(
+              [
+                `and(schedule_type.eq.timed,start_time.gte.${monthStartISO},start_time.lte.${monthEndISO})`,
+                `and(schedule_type.eq.anytime,start_time.gte.${monthStartISO},start_time.lte.${monthEndISO})`,
+                `and(recurrence_pattern.eq.daily,start_time.lte.${monthEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${monthStartDate}))`,
+                `and(recurrence_pattern.eq.weekly,start_time.lte.${monthEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${monthStartDate}))`,
+              ].join(','),
+            );
+
+          if (error) throw error;
+
+          const todos = (data ?? []) as MonthTodoSummary[];
+          const monthDays = eachDayOfInterval({start: monthStart, end: monthEnd});
+          const result: Record<string, MonthTodoSummary[]> = {};
+
+          for (const day of monthDays) {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const dayOfWeek = getDay(day);
+
+            result[dateStr] = todos.filter(todo => {
+              if (todo.recurrence_pattern === 'daily') {
+                if (!todo.start_time) return false;
+                const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (startDate > dateStr) return false;
+                if (todo.recurrence_end_date && todo.recurrence_end_date <= dateStr) return false;
+                return true;
+              }
+              if (todo.recurrence_pattern === 'weekly') {
+                if (!todo.start_time) return false;
+                const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (startDate > dateStr) return false;
+                if (todo.recurrence_end_date && todo.recurrence_end_date <= dateStr) return false;
+                return todo.recurrence_days_of_week?.includes(dayOfWeek) ?? false;
+              }
+              // timed / anytime
+              if (todo.start_time) {
+                return format(parseISO(todo.start_time), 'yyyy-MM-dd') === dateStr;
+              }
+              return false;
+            });
+          }
+
+          set({monthViewData: result});
+
+          // iOS 홈 화면 위젯 동기화
+          const widgetDays = Object.entries(result).map(([date, dayTodos]) => ({
+            date,
+            count: dayTodos.length,
+            colors: [...new Set(dayTodos.map(t => t.color || '#3B82F6'))].slice(0, 4),
+          }));
+          syncWidgetData({year, month, days: widgetDays}).catch(() => {/* 위젯 실패는 조용히 */});
+        } catch (err: any) {
+          console.error('[TodoStore] fetchTodosForMonthView error:', err);
+        } finally {
+          set({monthViewLoading: false});
         }
       },
 

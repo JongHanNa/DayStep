@@ -27,6 +27,7 @@ import {
   CloudSun,
   Sparkles,
   Calendar,
+  CalendarRange,
   FolderKanban,
   Link,
   Lightbulb,
@@ -124,6 +125,15 @@ export default function HomeScreen() {
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
         onPress: () => navigation.navigate('Planner', {initialPage: 0}),
+      },
+      {
+        id: 'monthly-planner',
+        icon: <CalendarRange size={20} color={BLUE_ICON} />,
+        label: '월간 계획하기',
+        description: '한 달 일정을 한눈에 보기',
+        iconBgColor: BLUE_BG,
+        iconColor: BLUE_ICON,
+        onPress: () => navigation.navigate('MonthlyPlanner'),
       },
       {
         id: 'timeline',
