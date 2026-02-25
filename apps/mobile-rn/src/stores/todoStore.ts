@@ -87,6 +87,7 @@ interface TodoState {
     action: PostponeAction,
     newTime?: string,
   ) => Promise<boolean>;
+  skipTodo: (id: string, reason: 'not_needed' | 'missed') => Promise<boolean>;
   processOfflineQueue: () => Promise<void>;
   clearError: () => void;
 }
@@ -183,27 +184,27 @@ export const useTodoStore = create<TodoState>()(
               .eq('excluded_date', date)
               .in('parent_todo_id', recurringIds);
 
-            if (exclusions && exclusions.length > 0) {
-              // deleted/postponed → 목록에서 제거
-              const excludedIds = new Set(
-                exclusions
-                  .filter(e => e.exclusion_reason === 'deleted' || e.exclusion_reason === 'postponed')
-                  .map(e => e.parent_todo_id),
-              );
-              filteredData = filteredData.filter(t => !excludedIds.has(t.id));
+            // deleted/postponed exclusion 빌드 (exclusions 없을 수도 있으므로 항상 실행)
+            const excludedIds = new Set(
+              (exclusions ?? [])
+                .filter(e => e.exclusion_reason === 'deleted' || e.exclusion_reason === 'postponed')
+                .map(e => e.parent_todo_id),
+            );
+            filteredData = filteredData.filter(t => !excludedIds.has(t.id));
 
-              // not_needed/missed → skip_status 적용 (제거 안 함, 배지로 표시)
-              const skipMap = new Map<string, string>();
-              exclusions
-                .filter(e => e.exclusion_reason === 'not_needed' || e.exclusion_reason === 'missed')
-                .forEach(e => skipMap.set(e.parent_todo_id, e.exclusion_reason));
+            // not_needed/missed → todo_exclusions 기준으로 skip_status 결정
+            // (DB의 stale skip_status 초기화 포함 — 반복 할일은 항상 exclusion 기준)
+            const skipMap = new Map<string, string>();
+            (exclusions ?? [])
+              .filter(e => e.exclusion_reason === 'not_needed' || e.exclusion_reason === 'missed')
+              .forEach(e => skipMap.set(e.parent_todo_id, e.exclusion_reason));
 
-              if (skipMap.size > 0) {
-                filteredData = filteredData.map(t =>
-                  skipMap.has(t.id) ? {...t, skip_status: skipMap.get(t.id)} : t,
-                );
-              }
-            }
+            filteredData = filteredData.map(t => {
+              const isRecurring = t.recurrence_pattern && t.recurrence_pattern !== 'none';
+              if (!isRecurring) return t; // 일반 할일: DB skip_status 그대로 사용
+              // 반복 할일: exclusion에 있으면 적용, 없으면 null로 초기화 (stale 데이터 방지)
+              return {...t, skip_status: skipMap.get(t.id) ?? null};
+            });
           }
 
           // 반복할일 날짜별 완료 상태 조회
@@ -699,6 +700,52 @@ export const useTodoStore = create<TodoState>()(
           console.error('[TodoStore] postponeTodo error:', err);
           set({error: err.message ?? 'Failed to postpone todo'});
           return false;
+        }
+      },
+
+      skipTodo: async (id, reason) => {
+        const todo = get().todos.find(t => t.id === id);
+        if (!todo) return false;
+
+        const isRecurring = todo.recurrence_pattern && todo.recurrence_pattern !== 'none';
+
+        if (isRecurring) {
+          // 반복 할일: todo_exclusions에 날짜별 기록 (부모 레코드 수정 안 함)
+          const userId = await getCurrentUserId();
+          if (!userId) return false;
+
+          const selectedDate = get().selectedDate;
+
+          // Optimistic update
+          set(state => ({
+            todos: state.todos.map(t =>
+              t.id === id ? {...t, skip_status: reason} : t,
+            ),
+          }));
+
+          const {error} = await supabase
+            .from('todo_exclusions')
+            .insert({
+              parent_todo_id: id,
+              excluded_date: selectedDate,
+              user_id: userId,
+              exclusion_reason: reason,
+            });
+
+          if (error) {
+            // 롤백
+            set(state => ({
+              todos: state.todos.map(t =>
+                t.id === id ? {...t, skip_status: null} : t,
+              ),
+            }));
+            console.error('[TodoStore] skipTodo error:', error);
+            return false;
+          }
+          return true;
+        } else {
+          // 일반 할일: skip_status 직접 업데이트
+          return get().updateTodo(id, {skip_status: reason} as any);
         }
       },
 

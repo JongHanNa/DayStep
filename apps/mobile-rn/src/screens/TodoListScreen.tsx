@@ -90,6 +90,7 @@ function TodoListScreenInner() {
     fetchFuelsForTodos,
     toggleTodoCompletion,
     updateTodo,
+    skipTodo,
     postponeTodo,
   } = useTodoStore();
   const {primaryColor} = useTheme();
@@ -223,9 +224,9 @@ function TodoListScreenInner() {
   // skip 핸들러
   const handleSkipTodo = useCallback(
     (id: string, reason: 'not_needed' | 'missed') => {
-      updateTodo(id, {skip_status: reason} as any);
+      skipTodo(id, reason);
     },
-    [updateTodo],
+    [skipTodo],
   );
 
   // postpone 핸들러: 바텀시트 열기
