@@ -22,7 +22,7 @@ import {AnimatedPressable} from '@/components/core';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList, ChevronRight, Square, CheckSquare} from 'lucide-react-native';
+import {ClipboardList, Square, CheckSquare} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
@@ -134,7 +134,6 @@ export function TodoEditOverlay({
             <Text style={[styles.dateSummaryText, {flex: 1}]} numberOfLines={1}>
               {[dateSummary, ...dateSummaryExtras].join(' · ')}
             </Text>
-            <ChevronRight size={14} color="#C4C9D4" />
           </Pressable>
         </View>
 
