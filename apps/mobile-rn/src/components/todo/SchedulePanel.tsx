@@ -650,7 +650,7 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
     const bottomSheetRef = useRef<BottomSheetModal>(null);
     const {primaryColor} = useTheme();
     const haptic = useHaptic();
-    const snapPoints = useMemo(() => ['90%'], []);
+    const snapPoints = useMemo(() => ['75%'], []);
 
     // 팝오버 state
     const [activePopover, setActivePopover] = useState<'none' | 'time' | 'alarm' | 'recurrence'>('none');
@@ -720,6 +720,7 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
       <BottomSheetModal
         ref={bottomSheetRef}
         snapPoints={snapPoints}
+        enableDynamicSizing={false}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         handleComponent={null}

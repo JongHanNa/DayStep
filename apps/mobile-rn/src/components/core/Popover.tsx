@@ -51,8 +51,8 @@ export function Popover({
 
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose}>
-      {/* 백드롭 — 탭 시 닫기 */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      {/* 백드롭 — 반투명 오버레이 + 탭 시 닫기 */}
+      <Pressable style={[StyleSheet.absoluteFill, {backgroundColor: 'rgba(0,0,0,0.15)'}]} onPress={onClose} />
       {/* 카드 */}
       <Animated.View
         entering={FadeIn.duration(150)}
@@ -68,6 +68,8 @@ const popStyles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     ...shadows.lg,
     overflow: 'hidden',
   },
