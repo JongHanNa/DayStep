@@ -95,35 +95,6 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
       [haptic],
     );
 
-    // ------------------------------------------
-    // Edit 모드 콜백 (기존 방식 유지)
-    // ------------------------------------------
-    const editToolbarCallbacks = useCallback(
-      () => ({
-        onDatePress: () => {
-          haptic.selection();
-          // TODO: DatePickerSheet
-        },
-        onTimePress: () => {
-          haptic.selection();
-          timeSheetRef.current?.open();
-        },
-        onAlarmPress: () => {
-          haptic.selection();
-          alarmSheetRef.current?.open();
-        },
-        onRecurrencePress: () => {
-          haptic.selection();
-          recurrenceSheetRef.current?.open();
-        },
-        onPriorityPress: () => {
-          haptic.selection();
-          prioritySheetRef.current?.open();
-        },
-      }),
-      [haptic],
-    );
-
     return (
       <>
         {/* Create: BottomSheet (non-modal, 키보드 동기화) */}
@@ -137,7 +108,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
         <TodoEditOverlay
           visible={editVisible}
           onClose={() => setEditVisible(false)}
-          toolbarCallbacks={editToolbarCallbacks()}
+          onSchedulePress={() => scheduleModalRef.current?.open()}
           {...formHook}
         />
 

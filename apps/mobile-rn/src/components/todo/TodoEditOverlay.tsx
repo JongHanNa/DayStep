@@ -2,7 +2,7 @@
  * TodoEditOverlay
  * 풀스크린 편집 오버레이 — TickTick Edit 스타일
  * - 아래→위 슬라이드 진입 애니메이션
- * - Header → ScrollView(제목+설명+완료토글) → AttributeToolbar(키보드 위)
+ * - Header → 날짜요약+체크박스 → ScrollView(제목+설명)
  * - KeyboardAvoidingView로 키보드 대응
  */
 import React, {useCallback, useRef} from 'react';
@@ -12,7 +12,7 @@ import {
   TextInput,
   Keyboard,
   ScrollView,
-  Switch,
+  Pressable,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -23,29 +23,20 @@ import Animated, {
 } from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AnimatedPressable} from '@/components/core';
-import {AttributeToolbar} from './AttributeToolbar';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList, Calendar, CheckCircle, Circle} from 'lucide-react-native';
+import {ClipboardList, Calendar, Square, CheckSquare} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
 // Types
 // ============================================
 
-interface ToolbarCallbacks {
-  onDatePress: () => void;
-  onTimePress: () => void;
-  onAlarmPress: () => void;
-  onRecurrencePress: () => void;
-  onPriorityPress: () => void;
-}
-
 interface TodoEditOverlayProps extends UseTodoFormReturn {
   visible: boolean;
   onClose: () => void;
-  toolbarCallbacks: ToolbarCallbacks;
+  onSchedulePress: () => void;
 }
 
 // ============================================
@@ -55,12 +46,12 @@ interface TodoEditOverlayProps extends UseTodoFormReturn {
 export function TodoEditOverlay({
   visible,
   onClose,
+  onSchedulePress,
   form,
   updateField,
   saving,
   handleSave,
   handleDelete,
-  toolbarCallbacks,
 }: TodoEditOverlayProps) {
   const {primaryColor} = useTheme();
   const insets = useSafeAreaInsets();
@@ -80,14 +71,10 @@ export function TodoEditOverlay({
     onClose();
   }, [onClose]);
 
-  // 서브시트 콜백 래퍼
-  const wrapToolbarCallback = useCallback(
-    (cb: () => void) => () => {
-      Keyboard.dismiss();
-      setTimeout(cb, 200);
-    },
-    [],
-  );
+  const handleSchedulePress = useCallback(() => {
+    Keyboard.dismiss();
+    setTimeout(onSchedulePress, 200);
+  }, [onSchedulePress]);
 
   if (!visible) return null;
 
@@ -113,8 +100,6 @@ export function TodoEditOverlay({
             <Text style={styles.closeBtnText}>← 닫기</Text>
           </AnimatedPressable>
 
-          <Text style={styles.headerTitle}>할일 편집</Text>
-
           <View style={styles.headerActions}>
             <AnimatedPressable
               onPress={handleDeletePress}
@@ -133,22 +118,42 @@ export function TodoEditOverlay({
           </View>
         </View>
 
-        {/* ──────── 날짜 요약 ──────── */}
-        <View style={styles.dateSummaryRow}>
-          <Calendar size={13} color="#6B7280" />
-          <Text style={styles.dateSummaryText}>{dateSummary}</Text>
-          {dateSummaryExtras.map((extra, i) => (
-            <React.Fragment key={i}>
-              <Text style={styles.dateSummaryDot}>·</Text>
-              <Text style={styles.dateSummaryText}>{extra}</Text>
-            </React.Fragment>
-          ))}
+        {/* ──────── 날짜 요약 + 체크박스 ──────── */}
+        <View style={styles.dateSummaryOuter}>
+          {/* 체크박스 (완료 토글) */}
+          <Pressable
+            onPress={() => updateField('completed', !form.completed)}
+            style={styles.checkboxBtn}
+            hitSlop={8}>
+            {form.completed ? (
+              <CheckSquare size={20} color={primaryColor} />
+            ) : (
+              <Square size={20} color="#9CA3AF" />
+            )}
+          </Pressable>
+
+          {/* 날짜 요약 → SchedulePanel 열기 */}
+          <Pressable
+            onPress={handleSchedulePress}
+            style={styles.dateSummaryRow}>
+            <Calendar size={13} color="#6B7280" />
+            <Text style={styles.dateSummaryText}>{dateSummary}</Text>
+            {dateSummaryExtras.map((extra, i) => (
+              <React.Fragment key={i}>
+                <Text style={styles.dateSummaryDot}>·</Text>
+                <Text style={styles.dateSummaryText}>{extra}</Text>
+              </React.Fragment>
+            ))}
+          </Pressable>
         </View>
 
         {/* ──────── 본문 (ScrollView) ──────── */}
         <ScrollView
           style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {paddingBottom: insets.bottom + 20},
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           {/* 아이콘 + 제목 */}
@@ -183,46 +188,7 @@ export function TodoEditOverlay({
               numberOfLines={3}
             />
           </View>
-
-          {/* 완료 토글 */}
-          <View style={styles.completionRow}>
-            <View style={styles.completionLabelRow}>
-              {form.completed ? (
-                <CheckCircle size={16} color="#22C55E" />
-              ) : (
-                <Circle size={16} color="#9CA3AF" />
-              )}
-              <Text style={styles.completionLabel}>
-                {form.completed ? '완료됨' : '미완료'}
-              </Text>
-            </View>
-            <Switch
-              value={form.completed}
-              onValueChange={v => updateField('completed', v)}
-              trackColor={{false: '#E5E7EB', true: primaryColor}}
-              thumbColor="#FFFFFF"
-            />
-          </View>
         </ScrollView>
-
-        {/* ──────── 속성 툴바 (ScrollView 바깥, KAV 안) ──────── */}
-        <View style={styles.toolbarContainer}>
-          <View style={styles.toolbarBorder} />
-          <AttributeToolbar
-            form={form}
-            onDatePress={wrapToolbarCallback(toolbarCallbacks.onDatePress)}
-            onTimePress={wrapToolbarCallback(toolbarCallbacks.onTimePress)}
-            onAlarmPress={wrapToolbarCallback(toolbarCallbacks.onAlarmPress)}
-            onRecurrencePress={wrapToolbarCallback(
-              toolbarCallbacks.onRecurrencePress,
-            )}
-            onPriorityPress={wrapToolbarCallback(
-              toolbarCallbacks.onPriorityPress,
-            )}
-          />
-          {/* safe area bottom */}
-          <View style={{height: insets.bottom}} />
-        </View>
       </KeyboardAvoidingView>
     </Animated.View>
   );
@@ -260,11 +226,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontWeight: '500',
   },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -291,15 +252,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  // Date summary
+  // Date summary + checkbox
+  dateSummaryOuter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    gap: 8,
+  },
+  checkboxBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dateSummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    flex: 1,
     gap: 6,
   },
   dateSummaryText: {
@@ -345,35 +316,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   scrollContent: {
-    paddingBottom: 20,
-  },
-  // Completion toggle
-  completionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  completionLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  completionLabel: {
-    fontSize: 15,
-    color: '#4B5563',
-    fontWeight: '500',
-  },
-  // Toolbar
-  toolbarContainer: {
-    backgroundColor: '#FFFFFF',
-  },
-  toolbarBorder: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
+    // paddingBottom은 인라인으로 insets.bottom + 20 처리
   },
 });
