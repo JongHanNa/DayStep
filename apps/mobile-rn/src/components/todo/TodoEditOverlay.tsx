@@ -260,7 +260,6 @@ const styles = StyleSheet.create({
   dateSummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     flex: 1,
     backgroundColor: '#F9FAFB',
     borderRadius: 8,
