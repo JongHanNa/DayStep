@@ -3,7 +3,6 @@
  * 풀스크린 편집 오버레이 — TickTick Edit 스타일
  * - 아래→위 슬라이드 진입 애니메이션
  * - Header → 날짜요약+체크박스 → ScrollView(제목+설명)
- * - KeyboardAvoidingView로 키보드 대응
  */
 import React, {useCallback, useRef} from 'react';
 import {
@@ -14,19 +13,16 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import Animated, {
   SlideInDown,
-  SlideOutDown,
 } from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AnimatedPressable} from '@/components/core';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList, Calendar, Square, CheckSquare} from 'lucide-react-native';
+import {ClipboardList, ChevronRight, Square, CheckSquare} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
@@ -85,12 +81,8 @@ export function TodoEditOverlay({
   return (
     <Animated.View
       entering={SlideInDown.duration(300)}
-      exiting={SlideOutDown.duration(250)}
       style={[styles.overlay, {paddingTop: insets.top}]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-        keyboardVerticalOffset={0}>
+      <View style={styles.flex}>
         {/* ──────── 헤더 ──────── */}
         <View style={styles.header}>
           <AnimatedPressable
@@ -135,8 +127,10 @@ export function TodoEditOverlay({
           {/* 날짜 요약 → SchedulePanel 열기 */}
           <Pressable
             onPress={handleSchedulePress}
-            style={styles.dateSummaryRow}>
-            <Calendar size={13} color="#6B7280" />
+            style={({pressed}) => [
+              styles.dateSummaryRow,
+              pressed && styles.dateSummaryRowPressed,
+            ]}>
             <Text style={styles.dateSummaryText}>{dateSummary}</Text>
             {dateSummaryExtras.map((extra, i) => (
               <React.Fragment key={i}>
@@ -144,6 +138,7 @@ export function TodoEditOverlay({
                 <Text style={styles.dateSummaryText}>{extra}</Text>
               </React.Fragment>
             ))}
+            <ChevronRight size={14} color="#C4C9D4" style={{marginLeft: 'auto'}} />
           </Pressable>
         </View>
 
@@ -189,7 +184,7 @@ export function TodoEditOverlay({
             />
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </View>
     </Animated.View>
   );
 }
@@ -269,9 +264,15 @@ const styles = StyleSheet.create({
   dateSummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
     flex: 1,
     gap: 6,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  dateSummaryRowPressed: {
+    backgroundColor: '#F3F4F6',
   },
   dateSummaryText: {
     fontSize: 13,
