@@ -156,9 +156,11 @@ export function AttributeToolbar({
               },
             ]}>
             <Flag size={14} color={priorityStyle.text} />
-            <Text style={[styles.chipText, {color: priorityStyle.text}]}>
-              {getPriorityChipLabel(form)}
-            </Text>
+            {(form.importance || form.urgency) && (
+              <Text style={[styles.chipText, {color: priorityStyle.text}]}>
+                {getPriorityChipLabel(form)}
+              </Text>
+            )}
           </AnimatedPressable>
         </View>
 

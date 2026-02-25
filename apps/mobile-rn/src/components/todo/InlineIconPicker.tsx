@@ -13,15 +13,39 @@ import {ICON_CATEGORIES} from '@/lib/iconMap';
 interface InlineIconPickerProps {
   selectedIcon: string;
   onIconChange: (icon: string) => void;
+  /** true면 팝오버 모드 (flexWrap 그리드 + 세로 스크롤) */
+  popover?: boolean;
 }
 
-export function InlineIconPicker({selectedIcon, onIconChange}: InlineIconPickerProps) {
+export function InlineIconPicker({selectedIcon, onIconChange, popover}: InlineIconPickerProps) {
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
   const [categoryIndex, setCategoryIndex] = useState(0);
 
+  const iconItems = ICON_CATEGORIES[categoryIndex]?.icons.map(({key, Icon}) => (
+    <AnimatedPressable
+      key={key}
+      onPress={() => {
+        haptic.selection();
+        onIconChange(key === selectedIcon ? '' : key);
+      }}
+      haptic={false}
+      style={[
+        styles.iconOption,
+        key === selectedIcon && {
+          backgroundColor: primaryColor + '20',
+          borderColor: primaryColor,
+        },
+      ]}>
+      <Icon
+        size={20}
+        color={key === selectedIcon ? primaryColor : '#6B7280'}
+      />
+    </AnimatedPressable>
+  ));
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, popover && styles.containerPopover]}>
       {/* 카테고리 가로 스크롤 */}
       <ScrollView
         horizontal
@@ -51,32 +75,23 @@ export function InlineIconPicker({selectedIcon, onIconChange}: InlineIconPickerP
       </ScrollView>
 
       {/* 아이콘 그리드 */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.gridContent}>
-        {ICON_CATEGORIES[categoryIndex]?.icons.map(({key, Icon}) => (
-          <AnimatedPressable
-            key={key}
-            onPress={() => {
-              haptic.selection();
-              onIconChange(key === selectedIcon ? '' : key);
-            }}
-            haptic={false}
-            style={[
-              styles.iconOption,
-              key === selectedIcon && {
-                backgroundColor: primaryColor + '20',
-                borderColor: primaryColor,
-              },
-            ]}>
-            <Icon
-              size={20}
-              color={key === selectedIcon ? primaryColor : '#6B7280'}
-            />
-          </AnimatedPressable>
-        ))}
-      </ScrollView>
+      {popover ? (
+        // 팝오버 모드: flexWrap 그리드 + 세로 스크롤
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.popoverGrid}
+          contentContainerStyle={styles.popoverGridContent}>
+          {iconItems}
+        </ScrollView>
+      ) : (
+        // 인라인 모드: 가로 스크롤
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.gridContent}>
+          {iconItems}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -87,6 +102,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     paddingVertical: 8,
+  },
+  containerPopover: {
+    borderTopWidth: 0,
   },
   categoryContent: {
     gap: 6,
@@ -107,6 +125,16 @@ const styles = StyleSheet.create({
   gridContent: {
     gap: 6,
     paddingHorizontal: 16,
+  },
+  popoverGrid: {
+    maxHeight: 200,
+  },
+  popoverGridContent: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
   },
   iconOption: {
     width: 40,

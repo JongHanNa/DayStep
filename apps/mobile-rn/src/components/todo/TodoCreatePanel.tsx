@@ -78,6 +78,8 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const [popAnchor, setPopAnchor] = useState<AnchorRect | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [sheetKey, setSheetKey] = useState(0);
+    const [descHeight, setDescHeight] = useState(32);
+    const MAX_DESC_HEIGHT = 120; // 약 5줄 (line 20px × 5 + padding 12 + 여유 8)
 
     useImperativeHandle(ref, () => ({
       expand: () => {
@@ -182,9 +184,15 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
                 onChangeText={(v: string) => updateField('content', v)}
                 placeholder="설명 추가"
                 placeholderTextColor="#D1D5DB"
-                style={styles.descInput}
+                style={[styles.descInput, {height: descHeight}]}
                 multiline
-                numberOfLines={1}
+                onContentSizeChange={e => {
+                  const newH = Math.min(
+                    Math.max(e.nativeEvent.contentSize.height + 12, 32),
+                    MAX_DESC_HEIGHT,
+                  );
+                  setDescHeight(newH);
+                }}
               />
 
               {/* 구분선 + 3칩 툴바 */}
@@ -226,10 +234,11 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
             onClose={() => setActivePop('none')}
             anchorPosition={popAnchor}
             horizontalAlign="left"
-            width={Math.min(Dimensions.get('window').width - 32, 340)}>
+            width={Math.min(Dimensions.get('window').width - 32, 320)}>
             <InlineIconPicker
               selectedIcon={form.icon}
               onIconChange={v => updateField('icon', v)}
+              popover
             />
           </Popover>
         )}
