@@ -35,9 +35,8 @@ export function Popover({
 }: PopoverProps) {
   if (!visible) return null;
 
-  // 앵커 아래 공간 vs 위 공간 비교
-  const spaceBelow = SCREEN_HEIGHT - (anchorPosition.y + anchorPosition.height);
-  const showAbove = spaceBelow < 200;
+  // 항상 앵커 위에 표시
+  const showAbove = true;
 
   const cardStyle: ViewStyle = {
     position: 'absolute',
