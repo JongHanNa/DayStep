@@ -62,6 +62,14 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
     else evening.push(todo);
   }
 
+  // 시간순 정렬 헬퍼
+  const byStartTime = (a: Todo, b: Todo) =>
+    new Date(a.start_time!).getTime() - new Date(b.start_time!).getTime();
+
+  morning.sort(byStartTime);
+  afternoon.sort(byStartTime);
+  evening.sort(byStartTime);
+
   const sections: TodoSection[] = [];
   if (anytime.length > 0) sections.push({title: '언제든지', period: 'anytime', data: anytime});
   if (morning.length > 0) sections.push({title: '오전', period: 'morning', data: morning});
