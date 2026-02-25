@@ -125,7 +125,7 @@ export const TimePickerSheet = forwardRef<TimePickerSheetRef, TimePickerSheetPro
                     styles.chipText,
                     scheduleType === type && styles.chipTextActive,
                   ]}>
-                  {type === 'anytime' ? '시간 미정' : type === 'timed' ? '시간 지정' : '종일'}
+                  {type === 'anytime' ? '언제든지' : type === 'timed' ? '시간 지정' : '종일'}
                 </Text>
               </AnimatedPressable>
             ))}

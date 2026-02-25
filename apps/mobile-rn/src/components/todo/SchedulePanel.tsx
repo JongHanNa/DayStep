@@ -300,7 +300,7 @@ function TimePopoverContent({
                 popContentStyles.chipText,
                 form.scheduleType === type && {color: '#FFFFFF'},
               ]}>
-              {type === 'anytime' ? '시간 미정' : type === 'timed' ? '시간 지정' : '종일'}
+              {type === 'anytime' ? '언제든지' : type === 'timed' ? '시간 지정' : '종일'}
             </Text>
           </AnimatedPressable>
         ))}

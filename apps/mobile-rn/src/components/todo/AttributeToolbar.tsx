@@ -72,7 +72,7 @@ function getTimeChipLabel(form: ToolbarForm): string {
     return end ? `${start}~${end}` : start;
   }
   if (form.scheduleType === 'all_day') return '종일';
-  return '시간 미정';
+  return '언제든지';
 }
 
 function getRecurrenceChipLabel(form: ToolbarForm): string {
