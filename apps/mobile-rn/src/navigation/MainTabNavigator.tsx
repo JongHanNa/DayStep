@@ -51,7 +51,7 @@ function HomeStackNavigator() {
     <HomeStack.Navigator
       screenOptions={{
         headerShown: false,
-        animation: 'slide_from_right',
+        animation: 'fade',
       }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="MonthlyPlanner" component={MonthlyPlannerScreen} />

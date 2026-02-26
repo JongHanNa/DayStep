@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import {ScreenContainer} from '@/components/core';
 import {
@@ -69,21 +68,6 @@ export default function MonthlyPlannerScreen() {
 
   return (
     <ScreenContainer gradient="warmBackground">
-      {/* 헤더 */}
-      <Animated.View
-        entering={FadeInDown.duration(400)}
-        className="px-4 pt-2 pb-2 flex-row items-center">
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="flex-row items-center"
-          hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-          <ChevronLeft size={24} color="#374151" />
-          <Text className="text-lg font-bold text-gray-800 ml-1">
-            월간 계획하기
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
-
       {/* 월 네비게이터 */}
       <View className="flex-row items-center justify-between px-4 py-2">
         <TouchableOpacity

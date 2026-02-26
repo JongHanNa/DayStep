@@ -13,7 +13,6 @@ import {
   Alert,
 } from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {
   ChevronLeft,
@@ -188,7 +187,6 @@ function ProjectCard({
 }
 
 export default function AIPlanScreen() {
-  const navigation = useNavigation();
   const user = useAuthStore(s => s.user);
   const {
     projects,
@@ -385,19 +383,10 @@ export default function AIPlanScreen() {
   // ── 메인 목록 ──
   return (
     <ScreenContainer gradient="warmBackground">
-      {/* 뒤로가기 헤더 */}
+      {/* 헤더 */}
       <Animated.View
         entering={FadeInDown.duration(400)}
-        className="px-4 pt-2 pb-2 flex-row items-center justify-between">
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="flex-row items-center"
-          hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-          <ChevronLeft size={24} color="#374151" />
-          <Text className="text-lg font-bold text-gray-800 ml-1">
-            내 계획 보기
-          </Text>
-        </TouchableOpacity>
+        className="px-4 pt-2 pb-2 flex-row items-center justify-end">
         <TouchableOpacity
           onPress={handleCreate}
           className="bg-blue-500 rounded-full w-9 h-9 items-center justify-center">

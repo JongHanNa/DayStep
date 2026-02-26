@@ -13,10 +13,8 @@ import {
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedCard} from '@/components/core';
 import {
-  ChevronLeft,
   ChevronDown,
   ChevronUp,
   Key,
@@ -83,7 +81,6 @@ function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: 
 }
 
 export default function GuideScreen() {
-  const navigation = useNavigation();
   const [expandedStep, setExpandedStep] = useState<number | null>(1);
   const [copiedConfig, setCopiedConfig] = useState(false);
 
@@ -111,21 +108,6 @@ export default function GuideScreen() {
       <ScrollView
         contentContainerStyle={{paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
-        {/* 뒤로가기 헤더 */}
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          className="px-4 pt-2 pb-4 flex-row items-center">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="flex-row items-center"
-            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-            <ChevronLeft size={24} color="#374151" />
-            <Text className="text-lg font-bold text-gray-800 ml-1">
-              Claude 연결하기
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-
         {/* 안내 */}
         <Animated.View
           entering={FadeInDown.delay(50).duration(400)}

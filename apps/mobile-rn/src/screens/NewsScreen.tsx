@@ -5,9 +5,8 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {Text, View, ScrollView, FlatList, TouchableOpacity, Alert} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedCard} from '@/components/core';
-import {ChevronLeft, MessageCircle, Trash2, Edit3} from 'lucide-react-native';
+import {MessageCircle, Trash2, Edit3} from 'lucide-react-native';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {INTERACTION_TYPE_LABELS} from '@/types/cherished-people';
@@ -62,7 +61,6 @@ function PersonFilterChips({
 }
 
 export default function NewsScreen() {
-  const navigation = useNavigation();
   const user = useAuthStore(s => s.user);
   const {people, getRecentNewsNotes, deleteInteraction, loadPeople} =
     useCherishedPeopleStore();
@@ -149,19 +147,6 @@ export default function NewsScreen() {
 
   return (
     <ScreenContainer gradient="warmBackground">
-      {/* 뒤로가기 헤더 */}
-      <Animated.View
-        entering={FadeInDown.duration(400)}
-        className="px-4 pt-2 pb-4 flex-row items-center">
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="flex-row items-center"
-          hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-          <ChevronLeft size={24} color="#374151" />
-          <Text className="text-lg font-bold text-gray-800 ml-1">소식 챙기기</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
       {/* 사람별 필터 */}
       <PersonFilterChips
         people={people.map(p => ({id: p.id, name: p.name}))}

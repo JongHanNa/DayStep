@@ -4,10 +4,9 @@
  */
 import React, {useEffect, useState, useMemo} from 'react';
 import {Text, View, ScrollView, TouchableOpacity} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedCard} from '@/components/core';
-import {ChevronLeft, BarChart3, Clock, TrendingUp, Lock} from 'lucide-react-native';
+import {BarChart3, Clock, TrendingUp, Lock} from 'lucide-react-native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
@@ -130,17 +129,6 @@ export default function ActivityScreen() {
   if (!hasActiveSubscription) {
     return (
       <ScreenContainer gradient="warmBackground">
-        <View className="px-4 pt-2 pb-4 flex-row items-center">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="flex-row items-center"
-            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-            <ChevronLeft size={24} color="#374151" />
-            <Text className="text-lg font-bold text-gray-800 ml-1">
-              활동 살펴보기
-            </Text>
-          </TouchableOpacity>
-        </View>
         <View className="flex-1 items-center justify-center px-8">
           <Lock size={48} color="#9CA3AF" />
           <Text className="text-lg font-bold text-gray-700 mt-4">
@@ -164,21 +152,6 @@ export default function ActivityScreen() {
       <ScrollView
         contentContainerStyle={{paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
-        {/* 뒤로가기 헤더 */}
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          className="px-4 pt-2 pb-4 flex-row items-center">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="flex-row items-center"
-            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-            <ChevronLeft size={24} color="#374151" />
-            <Text className="text-lg font-bold text-gray-800 ml-1">
-              활동 살펴보기
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-
         {/* 이번 주 완료 요약 */}
         <View className="px-4 mb-4">
           <AnimatedCard enterDelay={100}>

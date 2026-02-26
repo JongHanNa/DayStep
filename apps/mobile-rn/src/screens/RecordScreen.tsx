@@ -14,7 +14,6 @@ import {
   Platform,
 } from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {
   ChevronLeft,
@@ -81,7 +80,6 @@ function InteractionTypeGrid({
 }
 
 export default function RecordScreen() {
-  const navigation = useNavigation();
   const user = useAuthStore(s => s.user);
   const {
     people,
@@ -248,9 +246,6 @@ export default function RecordScreen() {
               <Text className="text-white font-semibold">또 기록하기</Text>
             </TouchableOpacity>
           </Animated.View>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text className="text-gray-400 text-sm">홈으로 돌아가기</Text>
-          </TouchableOpacity>
         </View>
       </ScreenContainer>
     );
@@ -425,21 +420,6 @@ export default function RecordScreen() {
       <ScrollView
         contentContainerStyle={{paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
-        {/* 헤더 */}
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          className="px-4 pt-2 pb-4 flex-row items-center">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="flex-row items-center"
-            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-            <ChevronLeft size={24} color="#374151" />
-            <Text className="text-lg font-bold text-gray-800 ml-1">
-              관계 기록하기
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-
         {/* 검색 */}
         <View className="px-4 mb-4">
           <View className="flex-row items-center bg-white rounded-xl px-4 py-3">
