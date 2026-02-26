@@ -26,6 +26,7 @@ export function useRealtimeSync() {
   const fetchRef = useRef(fetchTodosForDate);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const lastFetchRef = useRef(0);
+  const lastScheduleDateRef = useRef<string>('');
   const trailingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
@@ -38,6 +39,18 @@ export function useRealtimeSync() {
   useEffect(() => {
     fetchRef.current = fetchTodosForDate;
   }, [fetchTodosForDate]);
+
+  // 오늘 날짜가 바뀌었을 때만 반복 알람 재스케줄 (date-based throttle)
+  const debouncedRescheduleRecurringAlarms = useCallback(async () => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (lastScheduleDateRef.current === todayStr) return;
+    lastScheduleDateRef.current = todayStr;
+    const {scheduleExistingRecurringAlarms} = await import(
+      '@/lib/notifications'
+    );
+    await scheduleExistingRecurringAlarms();
+  }, []);
 
   const debouncedRefetch = useCallback(() => {
     const now = Date.now();
@@ -72,6 +85,7 @@ export function useRealtimeSync() {
           nextState === 'active'
         ) {
           debouncedRefetch();
+          debouncedRescheduleRecurringAlarms();
         }
         appStateRef.current = nextState;
       },
@@ -80,7 +94,7 @@ export function useRealtimeSync() {
     return () => {
       subscription.remove();
     };
-  }, [debouncedRefetch]);
+  }, [debouncedRefetch, debouncedRescheduleRecurringAlarms]);
 
   // --- Layer 2: Supabase Realtime 구독 ---
   useEffect(() => {

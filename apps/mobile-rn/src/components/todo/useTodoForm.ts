@@ -239,22 +239,45 @@ export function useTodoForm() {
 
         // 알림 스케줄링
         if (savedTodoId) {
-          const {scheduleTodoAlarm, cancelTodoAlarm} = await import(
-            '@/lib/notifications'
-          );
+          const {
+            scheduleTodoAlarm,
+            cancelTodoAlarm,
+            cancelAllRecurringAlarms,
+            scheduleRecurringAlarmsForRange,
+          } = await import('@/lib/notifications');
+
+          const isRecurring = form.recurrencePattern !== 'none';
+
           if (
             form.alarmOffsetMinutes !== null &&
             form.scheduleType === 'timed' &&
             form.startTime
           ) {
-            await scheduleTodoAlarm(
-              savedTodoId,
-              trimmed,
-              form.startTime,
-              form.alarmOffsetMinutes,
-            );
+            if (isRecurring) {
+              await cancelAllRecurringAlarms(savedTodoId);
+              await scheduleRecurringAlarmsForRange([{
+                id: savedTodoId,
+                title: trimmed,
+                startTime: form.startTime.toISOString(),
+                offsetMinutes: form.alarmOffsetMinutes,
+                recurrencePattern: form.recurrencePattern,
+                recurrenceDaysOfWeek: form.recurrenceDaysOfWeek,
+                recurrenceEndDate: null,
+              }]);
+            } else {
+              await scheduleTodoAlarm(
+                savedTodoId,
+                trimmed,
+                form.startTime,
+                form.alarmOffsetMinutes,
+              );
+            }
           } else {
-            await cancelTodoAlarm(savedTodoId);
+            if (isRecurring) {
+              await cancelAllRecurringAlarms(savedTodoId);
+            } else {
+              await cancelTodoAlarm(savedTodoId);
+            }
           }
         }
 
@@ -281,8 +304,16 @@ export function useTodoForm() {
           text: '삭제',
           style: 'destructive',
           onPress: async () => {
-            const {cancelTodoAlarm} = await import('@/lib/notifications');
-            await cancelTodoAlarm(editingTodo.id);
+            const {cancelTodoAlarm, cancelAllRecurringAlarms} = await import(
+              '@/lib/notifications'
+            );
+            const isRecurring =
+              (editingTodo.recurrence_pattern ?? 'none') !== 'none';
+            if (isRecurring) {
+              await cancelAllRecurringAlarms(editingTodo.id);
+            } else {
+              await cancelTodoAlarm(editingTodo.id);
+            }
             await deleteTodo(editingTodo.id);
             haptic.medium();
             onSuccess?.();
