@@ -10,6 +10,23 @@ import RootNavigator from './src/navigation/RootNavigator';
 import {setupNotificationChannel} from './src/lib/notifications';
 import {reloadWidgetTimelines} from './src/lib/widgetBridge';
 
+const linking = {
+  prefixes: ['daystep://'],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          Home: {
+            screens: {
+              MonthlyPlanner: 'monthly',
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 function App() {
   useEffect(() => {
     setupNotificationChannel();
@@ -31,6 +48,7 @@ function App() {
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
           <ThemeProvider>
             <NavigationContainer
+              linking={linking}
               theme={{
                 dark: false,
                 colors: {

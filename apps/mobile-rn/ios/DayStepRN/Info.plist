@@ -60,6 +60,12 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>daystep</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
 				<string>com.googleusercontent.apps.757915574433-ksm0oaisr0e8heoi4c1ffld3v0jvqkr5</string>
 			</array>
 		</dict>

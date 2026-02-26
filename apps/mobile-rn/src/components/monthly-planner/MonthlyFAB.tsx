@@ -1,6 +1,7 @@
 import React from 'react';
-import {TouchableOpacity, StyleSheet} from 'react-native';
-import {Plus} from 'lucide-react-native';
+import Animated, {FadeIn} from 'react-native-reanimated';
+import {Text, StyleSheet} from 'react-native';
+import {AnimatedPressable} from '@/components/core';
 
 interface MonthlyFABProps {
   onPress: () => void;
@@ -8,30 +9,41 @@ interface MonthlyFABProps {
 
 export function MonthlyFAB({onPress}: MonthlyFABProps) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.85}
-      style={styles.fab}>
-      <Plus size={24} color="#FFFFFF" />
-    </TouchableOpacity>
+    <Animated.View entering={FadeIn.delay(400).duration(300)} style={styles.fabContainer}>
+      <AnimatedPressable
+        onPress={onPress}
+        hapticType="medium"
+        scaleValue={0.9}
+        style={styles.fab}>
+        <Text style={styles.fabText}>+</Text>
+      </AnimatedPressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: {
+  fabContainer: {
     position: 'absolute',
     right: 20,
-    bottom: 32,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    bottom: 100,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#3B82F6',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#3B82F6',
+    shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
+  },
+  fabText: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#FFFFFF',
+    marginTop: -2,
   },
 });

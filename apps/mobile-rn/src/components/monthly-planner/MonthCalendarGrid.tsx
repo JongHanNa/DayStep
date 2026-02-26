@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {View, FlatList, Dimensions} from 'react-native';
+import {View} from 'react-native';
 import {
   startOfWeek,
   endOfWeek,
@@ -10,8 +10,6 @@ import {
 } from 'date-fns';
 import {CalendarDayCell} from './CalendarDayCell';
 import type {MonthTodoSummary} from '@/stores/todoStore';
-
-const CELL_WIDTH = (Dimensions.get('window').width - 16) / 7;
 
 interface MonthCalendarGridProps {
   currentMonth: Date;
@@ -24,30 +22,41 @@ export function MonthCalendarGrid({
   monthViewData,
   onDayPress,
 }: MonthCalendarGridProps) {
-  const calendarDays = useMemo(() => {
+  const rows = useMemo(() => {
     const gridStart = startOfWeek(startOfMonth(currentMonth), {weekStartsOn: 0});
     const gridEnd = endOfWeek(endOfMonth(currentMonth), {weekStartsOn: 0});
-    return eachDayOfInterval({start: gridStart, end: gridEnd}).map(d =>
+    const days = eachDayOfInterval({start: gridStart, end: gridEnd}).map(d =>
       format(d, 'yyyy-MM-dd'),
     );
+    const result: string[][] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      result.push(days.slice(i, i + 7));
+    }
+    return result;
   }, [currentMonth]);
 
   return (
-    <FlatList
-      data={calendarDays}
-      numColumns={7}
-      keyExtractor={item => item}
-      scrollEnabled={false}
-      renderItem={({item}) => (
-        <CalendarDayCell
-          dateStr={item}
-          currentMonth={currentMonth}
-          todos={monthViewData[item] ?? []}
-          onPress={onDayPress}
-        />
-      )}
-      contentContainerStyle={{paddingHorizontal: 8}}
-      columnWrapperStyle={{borderBottomWidth: 0.5, borderBottomColor: '#F3F4F6'}}
-    />
+    <View style={{flex: 1, paddingHorizontal: 8}}>
+      {rows.map((row, rowIdx) => (
+        <View
+          key={rowIdx}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            borderBottomWidth: rowIdx < rows.length - 1 ? 0.5 : 0,
+            borderBottomColor: '#F3F4F6',
+          }}>
+          {row.map(dateStr => (
+            <CalendarDayCell
+              key={dateStr}
+              dateStr={dateStr}
+              currentMonth={currentMonth}
+              todos={monthViewData[dateStr] ?? []}
+              onPress={onDayPress}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
   );
 }

@@ -1,10 +1,8 @@
 import React from 'react';
-import {Text, View, TouchableOpacity, Dimensions} from 'react-native';
+import {Text, View, TouchableOpacity} from 'react-native';
 import {isToday, isSameMonth, parseISO} from 'date-fns';
 import {TodoChip} from './TodoChip';
 import type {MonthTodoSummary} from '@/stores/todoStore';
-
-const CELL_WIDTH = (Dimensions.get('window').width - 16) / 7;
 
 interface CalendarDayCellProps {
   dateStr: string; // 'YYYY-MM-DD'
@@ -29,7 +27,7 @@ export function CalendarDayCell({
     <TouchableOpacity
       onPress={() => onPress(dateStr)}
       activeOpacity={0.7}
-      style={{width: CELL_WIDTH, minHeight: 62, paddingHorizontal: 2, paddingBottom: 4}}>
+      style={{flex: 1, paddingHorizontal: 2, paddingBottom: 4}}>
       {/* 날짜 숫자 */}
       <View className="items-center mb-1 pt-1">
         <View

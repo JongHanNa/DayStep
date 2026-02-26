@@ -161,7 +161,7 @@ export async function scheduleTodoAlarm(
       },
       ios: {
         sound: 'default',
-        interruptionLevel: IOSNotificationInterruptionLevel.TIME_SENSITIVE,
+        interruptionLevel: IOSNotificationInterruptionLevel?.TIME_SENSITIVE,
       },
     },
     trigger,

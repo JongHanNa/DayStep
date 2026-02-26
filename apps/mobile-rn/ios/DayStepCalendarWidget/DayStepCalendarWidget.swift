@@ -388,7 +388,7 @@ struct DayStepCalendarWidget: Widget {
         StaticConfiguration(kind: kind, provider: DayStepCalendarProvider()) { entry in
             DayStepCalendarWidgetView(entry: entry)
                 .containerBackground(Color.white, for: .widget)
-                .widgetURL(URL(string: "daystep://home"))
+                .widgetURL(URL(string: "daystep://monthly"))
         }
         .configurationDisplayName("DayStep 월간 캘린더")
         .description("이번 달 할일을 한눈에 확인하세요.")

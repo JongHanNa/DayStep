@@ -6,7 +6,6 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -21,7 +20,7 @@ import {MonthCalendarGrid, MonthlyFAB} from '@/components/monthly-planner';
 import {useTodoStore} from '@/stores/todoStore';
 import {format, addMonths, subMonths} from 'date-fns';
 import {ko} from 'date-fns/locale';
-import {ChevronLeft, ChevronRight, CalendarRange} from 'lucide-react-native';
+import {ChevronLeft, ChevronRight} from 'lucide-react-native';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -121,9 +120,7 @@ export default function MonthlyPlannerScreen() {
       </View>
 
       {/* 캘린더 그리드 */}
-      <ScrollView
-        contentContainerStyle={{paddingBottom: 100}}
-        showsVerticalScrollIndicator={false}>
+      <View style={{flex: 1}}>
         {monthViewLoading || !monthViewData ? (
           <View className="py-20 items-center">
             <ActivityIndicator size="large" color="#3B82F6" />
@@ -135,17 +132,7 @@ export default function MonthlyPlannerScreen() {
             onDayPress={handleDayPress}
           />
         )}
-
-        {/* 안내 문구 */}
-        {!monthViewLoading && (
-          <View className="items-center mt-6">
-            <CalendarRange size={20} color="#D1D5DB" />
-            <Text className="text-xs text-gray-400 mt-2 text-center">
-              날짜를 탭하면 해당 날의 플래너로 이동해요
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+      </View>
 
       {/* FAB */}
       <MonthlyFAB onPress={handleFABPress} />
