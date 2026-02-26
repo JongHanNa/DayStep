@@ -139,8 +139,8 @@ struct CalendarDayCellLarge: View {
     let colIdx: Int
 
     var body: some View {
-        VStack(spacing: 2) {
-            if let day = dayNumber {
+        if let day = dayNumber {
+            VStack(alignment: .leading, spacing: 2) {
                 ZStack {
                     if isToday {
                         Circle()
@@ -155,37 +155,24 @@ struct CalendarDayCellLarge: View {
                             colIdx == 6 ? Color(hexString: "2563EB") : .primary
                         )
                 }
-
                 let todos = info?.todos ?? []
-                if todos.isEmpty {
-                    Spacer().frame(height: 14)
-                } else {
-                    TodoChipView(todo: todos[0])
-                    if todos.count >= 2 {
-                        TodoChipView(todo: todos[1])
-                    } else {
-                        Spacer().frame(height: 14)
-                    }
-                    if todos.count > 2 {
-                        Text(verbatim: "+\(todos.count - 2)")
-                            .font(.system(size: 7, weight: .medium))
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 4)
-                    } else {
-                        Spacer().frame(height: 9)
-                    }
+                let count = min(todos.count, 3)
+                ForEach(0..<count, id: \.self) { i in
+                    TodoChipView(todo: todos[i])
                 }
-            } else {
-                // 빈 칸
-                Color.clear
-                    .frame(height: 18)
-                Spacer().frame(height: 14)
-                Spacer().frame(height: 14)
-                Spacer().frame(height: 9)
+                if todos.count > 3 {
+                    Text(verbatim: "+\(todos.count - 3)")
+                        .font(.system(size: 7, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 4)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        } else {
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity)
     }
 }
 
@@ -268,7 +255,7 @@ struct DayStepCalendarWidgetView: View {
                 // 날짜 그리드
                 let rows = monthDates.chunked(into: 7)
                 ForEach(0..<rows.count, id: \.self) { rowIdx in
-                    HStack(spacing: 2) {
+                    HStack(alignment: .top, spacing: 0) {
                         ForEach(0..<rows[rowIdx].count, id: \.self) { colIdx in
                             let date = rows[rowIdx][colIdx]
                             let ds = date.map { dateString($0) }
@@ -285,14 +272,12 @@ struct DayStepCalendarWidgetView: View {
                             )
                         }
                     }
+                    .frame(maxHeight: .infinity)
 
                     if rowIdx < rows.count - 1 {
                         Divider()
-                            .padding(.vertical, 2)
                     }
                 }
-
-                Spacer(minLength: 0)
             }
             .padding(10)
 
