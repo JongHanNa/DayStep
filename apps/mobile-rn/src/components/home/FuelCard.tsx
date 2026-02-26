@@ -1,13 +1,17 @@
 /**
  * FuelCard — 원동력 인라인 카드
  * BannerPage.tsx amber 카드를 독립 컴포넌트로 추출
+ *
+ * iOS 26+: 네이티브 Liquid Glass morph (컴팩트 ↔ 확장 패널 인라인 전환)
+ * iOS 25-: 기존 LinearGradient amber 카드 (passive, 탭 없음)
  */
-import React from 'react';
+import React, {useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import {Flame} from 'lucide-react-native';
 import type {Note} from '@/stores/noteStore';
+import {LiquidGlassFuelCardNative, isIOS26Plus} from '@/components/native';
 
 interface FuelCardProps {
   note: Note | null;
@@ -15,6 +19,26 @@ interface FuelCardProps {
 }
 
 export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // iOS 26+: 네이티브 Liquid Glass morph 카드
+  if (isIOS26Plus) {
+    return (
+      <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
+        <LiquidGlassFuelCardNative
+          noteTitle={note?.title ?? ''}
+          noteContent={note?.content ?? ''}
+          hasNote={!!note}
+          isExpanded={isExpanded}
+          onExpand={() => setIsExpanded(true)}
+          onCollapse={() => setIsExpanded(false)}
+          style={styles.nativeCard}
+        />
+      </Animated.View>
+    );
+  }
+
+  // iOS 25 이하: 기존 LinearGradient amber 카드 (passive)
   return (
     <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
       <View style={styles.card}>
@@ -61,5 +85,9 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 16,
+  },
+  // iOS 26 네이티브 카드: 최소 높이 설정 (SwiftUI 내부에서 자동 확장)
+  nativeCard: {
+    minHeight: 64,
   },
 });

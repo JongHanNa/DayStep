@@ -2,6 +2,9 @@
  * Custom Bottom Tab Bar
  * 5탭: 홈 / 플래너 / 실행 / 노트 / 설정
  * Liquid Glass 플로팅 탭바 — 아이콘만 표시, 화이트 글래스
+ *
+ * iOS 26+: 네이티브 SwiftUI .glassEffect(in: .capsule) 탭바
+ * iOS 25-: JS GlassBackground 폴백
  */
 import React from 'react';
 import {View, StyleSheet, type ViewStyle} from 'react-native';
@@ -16,6 +19,11 @@ import {GlassBackground} from '@/components/core';
 import {useTheme} from '@/theme';
 import {Home, Calendar, Zap, Flame, Settings} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
+import {
+  LiquidGlassTabBarNative,
+  isIOS26Plus,
+  type NativeTabData,
+} from '@/components/native';
 
 const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
   Home: {Icon: Home},
@@ -23,6 +31,15 @@ const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
   Execute: {Icon: Zap},
   Notes: {Icon: Flame},
   Settings: {Icon: Settings},
+};
+
+// iOS 26 네이티브 탭바용 SF Symbol 매핑
+const SF_SYMBOL_MAP: Record<string, string> = {
+  Home: 'house',
+  Planner: 'calendar',
+  Execute: 'bolt',
+  Notes: 'flame',
+  Settings: 'gearshape',
 };
 
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
@@ -37,6 +54,44 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     return null;
   }
 
+  // iOS 26+: 네이티브 Liquid Glass 탭바
+  if (isIOS26Plus) {
+    const nativeTabs: NativeTabData[] = state.routes.map(route => ({
+      name: route.name,
+      sfSymbol: SF_SYMBOL_MAP[route.name] ?? 'circle',
+    }));
+
+    const handleNativeTabPress = (event: {nativeEvent: {index: number}}) => {
+      const index = event.nativeEvent.index;
+      const route = state.routes[index];
+      const isFocused = state.index === index;
+
+      const navEvent = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (!isFocused && !navEvent.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    };
+
+    return (
+      <LiquidGlassTabBarNative
+        tabs={nativeTabs}
+        selectedIndex={state.index}
+        primaryColor={primaryColor}
+        onTabPress={handleNativeTabPress}
+        style={[
+          styles.container,
+          styles.nativeContainer,
+          {bottom: Math.max(insets.bottom, 8)},
+        ]}
+      />
+    );
+  }
+
+  // iOS 25 이하: JS GlassBackground 폴백
   return (
     <GlassBackground
       blurType="chromeMaterialLight"
@@ -133,6 +188,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 24,
     elevation: 12,
+  },
+  // iOS 26 네이티브 탭바: 높이 고정 (SwiftUI 내부 레이아웃에 맞춤)
+  nativeContainer: {
+    height: 64,
   },
   tabRow: {
     flexDirection: 'row',
