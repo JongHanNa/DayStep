@@ -5,10 +5,14 @@
  */
 import {NativeModules, Platform} from 'react-native';
 
+export interface WidgetTodoItem {
+  title: string;
+  color: string;
+}
+
 export interface WidgetCalendarDay {
-  date: string;       // 'YYYY-MM-DD'
-  count: number;      // 할일 개수
-  colors: string[];   // 대표 색상 (최대 4개)
+  date: string;           // 'YYYY-MM-DD'
+  todos: WidgetTodoItem[]; // 할일 목록 (최대 5개)
 }
 
 export interface WidgetCalendarPayload {

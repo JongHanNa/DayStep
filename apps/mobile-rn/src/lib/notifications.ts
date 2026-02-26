@@ -7,6 +7,7 @@ import notifee, {
   TimestampTrigger,
   TriggerType,
   AuthorizationStatus,
+  IOSNotificationInterruptionLevel,
 } from '@notifee/react-native';
 import {Platform} from 'react-native';
 
@@ -160,6 +161,7 @@ export async function scheduleTodoAlarm(
       },
       ios: {
         sound: 'default',
+        interruptionLevel: IOSNotificationInterruptionLevel.TIME_SENSITIVE,
       },
     },
     trigger,

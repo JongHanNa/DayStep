@@ -10,10 +10,25 @@ import SwiftUI
 
 // MARK: - 데이터 모델
 
+struct WidgetTodoItem: Codable {
+    var title: String
+    var color: String
+}
+
 struct WidgetCalendarDay: Codable {
     var date: String    // 'YYYY-MM-DD'
-    var count: Int
-    var colors: [String]
+    var todos: [WidgetTodoItem]
+
+    // 구버전 JSON 호환 (todos 필드 없는 캐시 대비)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        date = try container.decode(String.self, forKey: .date)
+        todos = (try? container.decode([WidgetTodoItem].self, forKey: .todos)) ?? []
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case date, todos
+    }
 }
 
 struct WidgetCalendarPayload: Codable {
@@ -77,6 +92,101 @@ extension Color {
             blue: Double(b) / 255
         )
     }
+
+    static func fromHex(_ hex: String) -> Color {
+        let cleaned = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
+        return Color(hexString: cleaned)
+    }
+}
+
+// MARK: - 할일 칩 뷰
+
+struct TodoChipView: View {
+    let todo: WidgetTodoItem
+
+    private var chipColor: Color {
+        Color.fromHex(todo.color)
+    }
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Circle()
+                .fill(chipColor)
+                .frame(width: 5, height: 5)
+            Text(todo.title)
+                .font(.system(size: 8, weight: .medium))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .foregroundColor(chipColor)
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(chipColor.opacity(0.15))
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - 날짜 셀 (Large — 칩 레이아웃)
+
+struct CalendarDayCellLarge: View {
+    let date: Date?
+    let info: WidgetCalendarDay?
+    let isToday: Bool
+    let dayNumber: Int?
+    let colIdx: Int
+
+    var body: some View {
+        VStack(spacing: 2) {
+            if let day = dayNumber {
+                ZStack {
+                    if isToday {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 18, height: 18)
+                    }
+                    Text(verbatim: "\(day)")
+                        .font(.system(size: 10, weight: isToday ? .bold : .regular))
+                        .foregroundColor(
+                            isToday ? .white :
+                            colIdx == 0 ? .red :
+                            colIdx == 6 ? Color(hexString: "2563EB") : .primary
+                        )
+                }
+
+                let todos = info?.todos ?? []
+                if todos.isEmpty {
+                    Spacer().frame(height: 14)
+                } else {
+                    TodoChipView(todo: todos[0])
+                    if todos.count >= 2 {
+                        TodoChipView(todo: todos[1])
+                    } else {
+                        Spacer().frame(height: 14)
+                    }
+                    if todos.count > 2 {
+                        Text(verbatim: "+\(todos.count - 2)")
+                            .font(.system(size: 7, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 4)
+                    } else {
+                        Spacer().frame(height: 9)
+                    }
+                }
+            } else {
+                // 빈 칸
+                Color.clear
+                    .frame(height: 18)
+                Spacer().frame(height: 14)
+                Spacer().frame(height: 14)
+                Spacer().frame(height: 9)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
 }
 
 // MARK: - WidgetView
@@ -126,27 +236,101 @@ struct DayStepCalendarWidgetView: View {
         return result
     }
 
-    var body: some View {
+    // MARK: Large 레이아웃 (칩)
+
+    var largeBody: some View {
+        ZStack(alignment: .bottomTrailing) {
+            VStack(alignment: .leading, spacing: 0) {
+                // 헤더: 파란 월 제목
+                let headerText = "\(displayYear)년 \(displayMonth)월"
+                Text(verbatim: headerText)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.blue)
+                    .padding(.bottom, 6)
+
+                // 요일 레이블
+                HStack(spacing: 0) {
+                    ForEach(Array(["일","월","화","수","목","금","토"].enumerated()), id: \.offset) { idx, label in
+                        Text(verbatim: label)
+                            .font(.system(size: 9, weight: .medium))
+                            .frame(maxWidth: .infinity)
+                            .foregroundColor(
+                                idx == 0 ? .red :
+                                idx == 6 ? Color(hexString: "2563EB") : .secondary
+                            )
+                    }
+                }
+                .padding(.bottom, 4)
+
+                Divider()
+                    .padding(.bottom, 4)
+
+                // 날짜 그리드
+                let rows = monthDates.chunked(into: 7)
+                ForEach(0..<rows.count, id: \.self) { rowIdx in
+                    HStack(spacing: 2) {
+                        ForEach(0..<rows[rowIdx].count, id: \.self) { colIdx in
+                            let date = rows[rowIdx][colIdx]
+                            let ds = date.map { dateString($0) }
+                            let info = ds.flatMap { dayMap[$0] }
+                            let isToday = ds == todayString
+                            let dayNum = date.map { cal.component(.day, from: $0) }
+
+                            CalendarDayCellLarge(
+                                date: date,
+                                info: info,
+                                isToday: isToday,
+                                dayNumber: dayNum,
+                                colIdx: colIdx
+                            )
+                        }
+                    }
+
+                    if rowIdx < rows.count - 1 {
+                        Divider()
+                            .padding(.vertical, 2)
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(10)
+
+            // 우하단 "+" 버튼
+            Circle()
+                .fill(Color.blue)
+                .frame(width: 28, height: 28)
+                .overlay(
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                )
+                .padding(10)
+        }
+        .background(Color.white)
+    }
+
+    // MARK: Medium 레이아웃 (기존 dot 방식)
+
+    var mediumBody: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // 헤더
-            Text("\(displayYear)년 \(displayMonth)월")
+            let headerText = "\(displayYear)년 \(displayMonth)월"
+            Text(verbatim: headerText)
                 .font(.caption.bold())
                 .foregroundColor(.primary)
 
-            // 요일 레이블
             HStack(spacing: 0) {
-                ForEach(["일", "월", "화", "수", "목", "금", "토"], id: \.self) { label in
-                    Text(label)
+                ForEach(Array(["일","월","화","수","목","금","토"].enumerated()), id: \.offset) { idx, label in
+                    Text(verbatim: label)
                         .font(.system(size: 9, weight: .medium))
                         .frame(maxWidth: .infinity)
                         .foregroundColor(
-                            label == "일" ? .red :
-                            label == "토" ? .blue : .secondary
+                            idx == 0 ? .red :
+                            idx == 6 ? .blue : .secondary
                         )
                 }
             }
 
-            // 날짜 그리드
             let rows = monthDates.chunked(into: 7)
             ForEach(0..<rows.count, id: \.self) { rowIdx in
                 HStack(spacing: 0) {
@@ -162,16 +346,16 @@ struct DayStepCalendarWidgetView: View {
                                             .fill(Color.blue)
                                             .frame(width: 18, height: 18)
                                     }
-                                    Text("\(cal.component(.day, from: date))")
+                                    Text(verbatim: "\(cal.component(.day, from: date))")
                                         .font(.system(size: 10, weight: isToday ? .bold : .regular))
                                         .foregroundColor(isToday ? .white : .primary)
                                 }
-                                // 할일 색상 dot
-                                if let colors = info?.colors, !colors.isEmpty {
+                                let todos = info?.todos ?? []
+                                if !todos.isEmpty {
                                     HStack(spacing: 2) {
-                                        ForEach(colors.prefix(3), id: \.self) { hex in
+                                        ForEach(0..<min(todos.count, 3), id: \.self) { i in
                                             Circle()
-                                                .fill(Color(hexString: hex.hasPrefix("#") ? String(hex.dropFirst()) : hex))
+                                                .fill(Color.fromHex(todos[i].color))
                                                 .frame(width: 4, height: 4)
                                         }
                                     }
@@ -188,6 +372,15 @@ struct DayStepCalendarWidgetView: View {
             }
         }
         .padding(8)
+    }
+
+    var body: some View {
+        switch family {
+        case .systemLarge:
+            largeBody
+        default:
+            mediumBody
+        }
     }
 }
 
@@ -209,7 +402,8 @@ struct DayStepCalendarWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: DayStepCalendarProvider()) { entry in
             DayStepCalendarWidgetView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(Color.white, for: .widget)
+                .widgetURL(URL(string: "daystep://home"))
         }
         .configurationDisplayName("DayStep 월간 캘린더")
         .description("이번 달 할일을 한눈에 확인하세요.")
@@ -219,7 +413,7 @@ struct DayStepCalendarWidget: Widget {
 
 // MARK: - Preview
 
-#Preview(as: .systemMedium) {
+#Preview(as: .systemLarge) {
     DayStepCalendarWidget()
 } timeline: {
     CalendarEntry(date: .now, payload: nil)

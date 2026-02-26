@@ -949,8 +949,10 @@ export const useTodoStore = create<TodoState>()(
           // iOS 홈 화면 위젯 동기화
           const widgetDays = Object.entries(result).map(([date, dayTodos]) => ({
             date,
-            count: dayTodos.length,
-            colors: [...new Set(dayTodos.map(t => t.color || '#3B82F6'))].slice(0, 4),
+            todos: dayTodos.slice(0, 5).map(t => ({
+              title: t.title,
+              color: t.color || '#3B82F6',
+            })),
           }));
           syncWidgetData({year, month, days: widgetDays}).catch(() => {/* 위젯 실패는 조용히 */});
         } catch (err: any) {
