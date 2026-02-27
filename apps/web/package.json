@@ -94,6 +94,7 @@
     "googleapis": "^160.0.0",
     "gsap": "^3.13.0",
     "immer": "^10.1.1",
+    "isomorphic-dompurify": "^3.0.0",
     "lucide-react": "^0.525.0",
     "motion": "^12.23.12",
     "next": "^15.5.7",
@@ -122,6 +123,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@electron/rebuild": "^3.7.0",
     "@next/bundle-analyzer": "^15.4.4",
     "@playwright/test": "^1.54.1",
     "@testing-library/jest-dom": "^6.6.3",
@@ -136,6 +138,10 @@
     "cross-env": "^10.1.0",
     "daisyui": "^5.1.28",
     "dotenv": "^17.2.1",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.0.0",
     "env-cmd": "^11.0.0",
     "eslint": "^8",
     "eslint-config-next": "15.1.5",
@@ -150,11 +156,6 @@
     "ts-jest": "^29.4.0",
     "tsx": "^4.20.4",
     "typescript": "^5",
-    "xcode": "^3.0.1",
-    "electron": "^33.0.0",
-    "electron-builder": "^25.0.0",
-    "electron-store": "^8.2.0",
-    "electron-updater": "^6.0.0",
-    "@electron/rebuild": "^3.7.0"
+    "xcode": "^3.0.1"
   }
 }

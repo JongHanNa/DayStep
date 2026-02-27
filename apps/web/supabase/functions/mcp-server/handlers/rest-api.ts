@@ -21,6 +21,38 @@ import { createJsonResponse, createHttpErrorResponse } from '../utils/response.t
 import { getCurrentDateContext, resolveDate, toKSTMidnight, addDays } from '../utils/date.ts';
 
 // ============================================================================
+// 입력 검증 유틸리티
+// ============================================================================
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(value: string): boolean {
+  return UUID_REGEX.test(value);
+}
+
+const SCHEDULE_TYPES = ['none', 'timed', 'anytime', 'all_day'] as const;
+const PROJECT_STATUSES = ['active', 'completed', 'archived'] as const;
+
+function isValidScheduleType(value: string): boolean {
+  return (SCHEDULE_TYPES as readonly string[]).includes(value);
+}
+
+function isValidProjectStatus(value: string): boolean {
+  return (PROJECT_STATUSES as readonly string[]).includes(value);
+}
+
+function sanitizeString(value: string, maxLength: number = 1000): string {
+  return value.slice(0, maxLength);
+}
+
+function parsePositiveInt(value: string | null, defaultValue: number, max: number): number {
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed) || parsed < 0) return defaultValue;
+  return Math.min(parsed, max);
+}
+
+// ============================================================================
 // 응답 헬퍼
 // ============================================================================
 
@@ -50,15 +82,25 @@ export async function handleListTodos(
   const url = new URL(req.url);
   const dateContext = getCurrentDateContext();
 
-  // 쿼리 파라미터 파싱
+  // 쿼리 파라미터 파싱 + 검증
   const date = url.searchParams.get('date');
   const startDate = url.searchParams.get('start_date');
   const endDate = url.searchParams.get('end_date');
   const completed = url.searchParams.get('completed');
   const projectId = url.searchParams.get('project_id');
   const scheduleType = url.searchParams.get('schedule_type');
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
-  const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+  const limit = parsePositiveInt(url.searchParams.get('limit'), 50, 100);
+  const offset = parsePositiveInt(url.searchParams.get('offset'), 0, 10000);
+
+  // UUID 형식 검증
+  if (projectId && !isValidUUID(projectId)) {
+    return createRestErrorResponse(400, 'project_id는 유효한 UUID 형식이어야 합니다.');
+  }
+
+  // enum 검증
+  if (scheduleType && !isValidScheduleType(scheduleType)) {
+    return createRestErrorResponse(400, `schedule_type은 ${SCHEDULE_TYPES.join(', ')} 중 하나여야 합니다.`);
+  }
 
   let query = supabase
     .from('todos')
@@ -139,8 +181,17 @@ export async function handleCreateTodo(
     return createRestErrorResponse(400, '유효하지 않은 JSON 요청입니다.');
   }
 
-  if (!body.title) {
-    return createRestErrorResponse(400, 'title은 필수입니다.');
+  if (!body.title || typeof body.title !== 'string') {
+    return createRestErrorResponse(400, 'title은 필수 문자열입니다.');
+  }
+  body.title = sanitizeString(body.title, 500);
+
+  if (body.schedule_type && !isValidScheduleType(body.schedule_type)) {
+    return createRestErrorResponse(400, `schedule_type은 ${SCHEDULE_TYPES.join(', ')} 중 하나여야 합니다.`);
+  }
+
+  if (body.project_id && !isValidUUID(body.project_id)) {
+    return createRestErrorResponse(400, 'project_id는 유효한 UUID 형식이어야 합니다.');
   }
 
   // 시간 처리
@@ -408,10 +459,14 @@ export async function handleListProjects(
 ): Promise<Response> {
   const url = new URL(req.url);
 
-  // 쿼리 파라미터 파싱
+  // 쿼리 파라미터 파싱 + 검증
   const status = url.searchParams.get('status');
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
-  const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+  const limit = parsePositiveInt(url.searchParams.get('limit'), 50, 100);
+  const offset = parsePositiveInt(url.searchParams.get('offset'), 0, 10000);
+
+  if (status && !isValidProjectStatus(status)) {
+    return createRestErrorResponse(400, `status는 ${PROJECT_STATUSES.join(', ')} 중 하나여야 합니다.`);
+  }
 
   let query = supabase
     .from('projects')
@@ -458,8 +513,17 @@ export async function handleCreateProject(
     return createRestErrorResponse(400, '유효하지 않은 JSON 요청입니다.');
   }
 
-  if (!body.title) {
-    return createRestErrorResponse(400, 'title은 필수입니다.');
+  if (!body.title || typeof body.title !== 'string') {
+    return createRestErrorResponse(400, 'title은 필수 문자열입니다.');
+  }
+  body.title = sanitizeString(body.title, 200);
+
+  if (body.description && typeof body.description === 'string') {
+    body.description = sanitizeString(body.description, 2000);
+  }
+
+  if (body.status && !isValidProjectStatus(body.status)) {
+    return createRestErrorResponse(400, `status는 ${PROJECT_STATUSES.join(', ')} 중 하나여야 합니다.`);
   }
 
   // 최대 order_index 조회
@@ -817,6 +881,9 @@ export async function handleRestApi(
   const todosMatch = apiPath.match(/^todos\/([^/]+)$/);
   if (todosMatch) {
     const todoId = todosMatch[1];
+    if (!isValidUUID(todoId)) {
+      return createRestErrorResponse(400, 'todo ID는 유효한 UUID 형식이어야 합니다.');
+    }
     if (method === 'GET') {
       return handleGetTodo(req, supabase, userId, todoId);
     }
@@ -833,6 +900,9 @@ export async function handleRestApi(
   const completeMatch = apiPath.match(/^todos\/([^/]+)\/complete$/);
   if (completeMatch) {
     const todoId = completeMatch[1];
+    if (!isValidUUID(todoId)) {
+      return createRestErrorResponse(400, 'todo ID는 유효한 UUID 형식이어야 합니다.');
+    }
     if (method === 'POST') {
       return handleCompleteTodo(req, supabase, userId, todoId);
     }
@@ -862,6 +932,9 @@ export async function handleRestApi(
   const projectsMatch = apiPath.match(/^projects\/([^/]+)$/);
   if (projectsMatch) {
     const projectId = projectsMatch[1];
+    if (!isValidUUID(projectId)) {
+      return createRestErrorResponse(400, 'project ID는 유효한 UUID 형식이어야 합니다.');
+    }
     if (method === 'GET') {
       return handleGetProject(req, supabase, userId, projectId);
     }
@@ -878,6 +951,9 @@ export async function handleRestApi(
   const projectCompleteMatch = apiPath.match(/^projects\/([^/]+)\/complete$/);
   if (projectCompleteMatch) {
     const projectId = projectCompleteMatch[1];
+    if (!isValidUUID(projectId)) {
+      return createRestErrorResponse(400, 'project ID는 유효한 UUID 형식이어야 합니다.');
+    }
     if (method === 'POST') {
       return handleCompleteProject(req, supabase, userId, projectId);
     }

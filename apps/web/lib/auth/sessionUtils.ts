@@ -352,43 +352,10 @@ export const restoreLocalStorageUser = async (): Promise<{
     localStorage.removeItem('ios_test_user');
   }
 
+  // 기존 kakao_user 가짜 세션 데이터가 있으면 정리
   if (kakaoUserData) {
-    try {
-      const kakaoUser = JSON.parse(kakaoUserData);
-      console.log('localStorage에서 카카오 사용자 발견:', kakaoUser);
-
-      // 가짜 User 객체 생성
-      const fakeUser = {
-        id: `kakao_${kakaoUser.id}`,
-        email: kakaoUser.email,
-        user_metadata: {
-          name: kakaoUser.name,
-          avatar_url: kakaoUser.avatar_url,
-          provider: 'kakao'
-        }
-      } as unknown as User;
-
-      // 완전한 AppUser 인스턴스 생성을 위해 fromDatabase 사용
-      const fakeAppUser = AppUser.fromDatabase({
-        id: `kakao_${kakaoUser.id}`,
-        email: kakaoUser.email,
-        name: kakaoUser.name,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as any);
-
-      // 미들웨어에서 인식할 수 있도록 쿠키 설정
-      document.cookie = `kakao_temp_session=${JSON.stringify({
-        user_id: `kakao_${kakaoUser.id}`,
-        authenticated: true
-      })}; path=/; max-age=86400`; // 24시간
-
-      console.log('카카오 임시 세션 생성 완료 - isAuthenticated:', !!fakeUser);
-      return { user: fakeUser, appUser: fakeAppUser, provider: 'kakao' };
-    } catch (error) {
-      console.log('카카오 사용자 정보 파싱 오류:', error);
-      localStorage.removeItem('kakao_user');
-    }
+    console.log('레거시 kakao_user 데이터 발견 — 정리합니다');
+    localStorage.removeItem('kakao_user');
   }
 
   return { user: null, appUser: null, provider: null };

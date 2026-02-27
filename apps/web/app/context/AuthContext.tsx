@@ -276,15 +276,6 @@ export function AuthProvider({
         }
 
         if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
-          const kakaoUserData = localStorage.getItem('kakao_user');
-          const iosTestUserData = localStorage.getItem('ios_test_user');
-
-          if (!session?.user && (kakaoUserData || iosTestUserData)) {
-            console.log('임시 세션 유지 - Supabase 세션 변경 무시');
-            setLoading(false);
-            return;
-          }
-
           setSession(null);
           setUser(null);
           setAppUser(null);

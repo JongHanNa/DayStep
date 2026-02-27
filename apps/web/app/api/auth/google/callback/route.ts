@@ -78,13 +78,20 @@ export async function GET(request: NextRequest) {
       expiry_date: tokens.expiry_date || Date.now() + 3600000 // 1시간 후 만료
     };
 
-    // 성공 페이지로 리다이렉트 (토큰 정보를 안전하게 전달)
-    const successParams = new URLSearchParams({
-      platform,
-      tokens: Buffer.from(JSON.stringify(tokenData)).toString('base64') // Base64로 인코딩
+    // 토큰을 HttpOnly 쿠키에 저장 (URL 노출 방지)
+    const response = NextResponse.redirect(
+      `${siteUrl}/settings/google-calendar?success=true&platform=${platform}`
+    );
+
+    response.cookies.set('google_calendar_tokens', JSON.stringify(tokenData), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60, // 1분 — 클라이언트가 즉시 읽어서 DB에 저장 후 쿠키 삭제
     });
 
-    return NextResponse.redirect(`${siteUrl}/auth/google/success?${successParams.toString()}`);
+    return response;
 
   } catch (error) {
     console.error('Google OAuth 콜백 처리 실패:', error);

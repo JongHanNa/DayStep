@@ -71,12 +71,10 @@ export async function handleKakaoSignIn(): Promise<OAuthResult> {
 
     const kakaoClientId = "b00dcde236c2f8b028a981303aeb4253";
     const redirectUri = `${window.location.origin}/auth/kakao-callback`;
-    const state = btoa(
-      JSON.stringify({
-        timestamp: Date.now(),
-        origin: window.location.origin,
-      })
-    );
+    // 암호학적으로 안전한 랜덤 state 생성 (CSRF 방지)
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const state = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
 
     const kakaoAuthUrl =
       `https://kauth.kakao.com/oauth/authorize?` +

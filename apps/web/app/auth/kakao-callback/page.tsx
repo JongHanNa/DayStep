@@ -17,7 +17,7 @@ function KakaoCallbackContent() {
 
         if (error) {
           console.error("Kakao OAuth 오류:", error);
-          router.push(`/login?error=${error}`);
+          router.push(`/login?error=${encodeURIComponent(error)}`);
           return;
         }
 
@@ -38,8 +38,8 @@ function KakaoCallbackContent() {
         // sessionStorage 정리
         sessionStorage.removeItem("kakao_oauth_state");
 
-        // 2단계: 인증 코드로 액세스 토큰 교환
-        const tokenResponse = await fetch("/api/auth/kakao-token", {
+        // 서버사이드에서 토큰 교환 + 사용자 인증을 한번에 처리
+        const authResponse = await fetch("/api/auth/kakao-auth", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -47,76 +47,29 @@ function KakaoCallbackContent() {
           body: JSON.stringify({ code }),
         });
 
-        if (!tokenResponse.ok) {
-          throw new Error("토큰 교환 실패");
+        if (!authResponse.ok) {
+          const authError = await authResponse.json().catch(() => ({}));
+          throw new Error(authError.error || "카카오 인증 처리 실패");
         }
 
-        const tokenData = await tokenResponse.json();
+        const authData = await authResponse.json();
 
-        if (tokenData.error) {
-          throw new Error(tokenData.error);
+        if (authData.error) {
+          throw new Error(authData.error);
         }
 
-        // 3단계: 사용자 정보 가져오기
-        const userInfoResponse = await fetch("/api/auth/kakao-user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ accessToken: tokenData.access_token }),
-        });
+        // 서버에서 받은 세션으로 Supabase 클라이언트 세션 설정
+        if (authData.session) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: authData.session.access_token,
+            refresh_token: authData.session.refresh_token,
+          });
 
-        if (!userInfoResponse.ok) {
-          throw new Error("사용자 정보 조회 실패");
-        }
-
-        const userInfo = await userInfoResponse.json();
-
-        if (userInfo.error) {
-          throw new Error(userInfo.error);
-        }
-
-        console.log("카카오 사용자 정보:", userInfo);
-
-        // 4단계: Supabase 세션 생성
-        const email = `kakao_${userInfo.id}@daystep.com`;
-        const password = `kakao_${userInfo.id}_temp_password`;
-
-        console.log("로그인 시도:", email);
-
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) {
-          console.log("로그인 실패, 간단한 해결책 시도:", signInError.message);
-
-          // 이미 카카오에서 인증된 사용자이므로,
-          // 가짜 세션을 만들어서 직접 메인 페이지로 이동
-          try {
-            // localStorage에 카카오 사용자 정보 저장 (임시 해결책)
-            localStorage.setItem(
-              "kakao_user",
-              JSON.stringify({
-                id: userInfo.id,
-                name:
-                  userInfo.kakao_account?.profile?.nickname || "카카오 사용자",
-                avatar_url: userInfo.kakao_account?.profile?.profile_image_url,
-                provider: "kakao",
-                email: email,
-              })
-            );
-
-            console.log("카카오 사용자 정보 저장 완료, 메인 페이지로 이동");
-
-            // 강제로 AuthContext 상태 업데이트를 위해 페이지 새로고침
-            window.location.href = "/";
-            return;
-          } catch (tempError) {
-            console.error("임시 로그인 처리 오류:", tempError);
-            throw tempError;
+          if (sessionError) {
+            throw new Error(`세션 설정 실패: ${sessionError.message}`);
           }
+        } else {
+          throw new Error("서버에서 세션을 받지 못했습니다");
         }
 
         console.log("카카오 로그인 성공!");

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface MarkdownViewerProps {
   content: string;
@@ -133,7 +134,15 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
       }
     });
 
-    return html;
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'strong', 'em', 'code', 'a', 'mark', 'span', 'div',
+        'blockquote', 'br',
+      ],
+      ALLOWED_ATTR: ['class', 'href', 'target', 'rel', 'data-line-index', 'data-checked'],
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
   }, [content, interactive]);
 
   // 체크박스 클릭 이벤트 핸들러
