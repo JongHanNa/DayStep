@@ -27,7 +27,7 @@ import type {Todo} from '@daystep/shared-core';
 
 export interface TodoFormBottomSheetRef {
   openCreate: (date?: string) => void;
-  openEdit: (todo: Todo) => void;
+  openEdit: (todo: Todo) => Promise<void>;
   close: () => void;
 }
 
@@ -54,8 +54,8 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
         formHook.resetForCreate(date);
         createSheetRef.current?.expand();
       },
-      openEdit: (todo: Todo) => {
-        formHook.loadForEdit(todo);
+      openEdit: async (todo: Todo) => {
+        await formHook.loadForEdit(todo);
         setEditVisible(true);
       },
       close: () => {

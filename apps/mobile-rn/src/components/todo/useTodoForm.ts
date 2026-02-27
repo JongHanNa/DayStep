@@ -3,7 +3,7 @@
  * 할일 생성/편집 공유 폼 로직 훅
  * — TodoCreatePanel, TodoEditOverlay 양쪽에서 사용
  */
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useState} from 'react';
 import {Alert} from 'react-native';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
@@ -148,9 +148,19 @@ export function useTodoForm() {
   );
 
   const loadForEdit = useCallback(
-    (todo: Todo) => {
+    async (todo: Todo) => {
       setMode('edit');
       setEditingTodo(todo);
+
+      // todo_alarms를 먼저 로드하여 레이스 컨디션 방지
+      const {supabase} = await import('@/lib/supabase');
+      const {data: alarmData} = await supabase
+        .from('todo_alarms')
+        .select('offset_minutes')
+        .eq('todo_id', todo.id)
+        .order('offset_minutes', {ascending: false});
+      const alarmOffsets = alarmData?.map(r => r.offset_minutes) ?? [];
+
       const startTime = todo.start_time ? new Date(todo.start_time) : null;
       const endTime = todo.end_time ? new Date(todo.end_time) : null;
 
@@ -171,7 +181,7 @@ export function useTodoForm() {
         startTime,
         endTime: resolvedEndTime,
         anytimeDuration: todo.anytime_duration ?? null,
-        alarmOffsets: [],
+        alarmOffsets,
         importance: (todo as any).importance ?? false,
         urgency: (todo as any).urgency ?? false,
         isReluctantMustDo: (todo as any).is_reluctant_must_do ?? false,
@@ -185,29 +195,6 @@ export function useTodoForm() {
     },
     [selectedDate],
   );
-
-  // edit 모드: todo_alarms 비동기 로드
-  useEffect(() => {
-    if (mode !== 'edit' || !editingTodo) return;
-    let cancelled = false;
-    (async () => {
-      const {supabase} = await import('@/lib/supabase');
-      const {data} = await supabase
-        .from('todo_alarms')
-        .select('offset_minutes')
-        .eq('todo_id', editingTodo.id)
-        .order('offset_minutes', {ascending: false});
-      if (!cancelled) {
-        setForm(prev => ({
-          ...prev,
-          alarmOffsets: data?.map(r => r.offset_minutes) ?? [],
-        }));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [mode, editingTodo?.id]);
 
   const handleSave = useCallback(
     async (onSuccess?: () => void) => {
@@ -266,15 +253,23 @@ export function useTodoForm() {
           const user = useAuthStore.getState().user;
 
           // todo_alarms 테이블 sync
-          await supabase.from('todo_alarms').delete().eq('todo_id', savedTodoId);
+          const {error: deleteError} = await supabase
+            .from('todo_alarms')
+            .delete()
+            .eq('todo_id', savedTodoId);
+          if (deleteError) throw deleteError;
+
           if (form.alarmOffsets.length > 0 && user) {
-            await supabase.from('todo_alarms').insert(
-              form.alarmOffsets.map(offset => ({
-                todo_id: savedTodoId!,
-                user_id: user.id,
-                offset_minutes: offset,
-              })),
-            );
+            const {error: insertError} = await supabase
+              .from('todo_alarms')
+              .insert(
+                form.alarmOffsets.map(offset => ({
+                  todo_id: savedTodoId!,
+                  user_id: user.id,
+                  offset_minutes: offset,
+                })),
+              );
+            if (insertError) throw insertError;
           }
 
           // 알림 스케줄링
