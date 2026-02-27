@@ -85,11 +85,14 @@ export function getTimeStatus(
   // endTime이 있는 경우: 기존 로직
   const endMs = end.getTime();
 
+  // 크로스데이 보정: endTime이 startTime보다 이전인 경우 (자정을 넘는 할일, 예: 22:30~05:30)
+  const adjustedEndMs = endMs < startMs ? endMs + 24 * 60 * 60 * 1000 : endMs;
+
   // 진행 중
-  if (nowMs >= startMs && nowMs < endMs) {
-    const totalDuration = endMs - startMs;
+  if (nowMs >= startMs && nowMs < adjustedEndMs) {
+    const totalDuration = adjustedEndMs - startMs;
     const elapsed = nowMs - startMs;
-    const remaining = endMs - nowMs;
+    const remaining = adjustedEndMs - nowMs;
 
     return {
       status: 'in_progress',
@@ -100,7 +103,7 @@ export function getTimeStatus(
   }
 
   // 놓침 (종료 시간 지남 && 미완료)
-  const overdue = nowMs - endMs;
+  const overdue = nowMs - adjustedEndMs;
   return {
     status: 'missed',
     overdueMinutes: Math.floor(overdue / (1000 * 60)),
