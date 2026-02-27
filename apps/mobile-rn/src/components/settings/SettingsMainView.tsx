@@ -167,7 +167,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       </View>
 
       {/* 로그아웃 */}
-      <View style={[styles.section, {marginTop: 16, marginBottom: 40}]}>
+      <View style={[styles.section, {marginTop: 16, marginBottom: __DEV__ ? 16 : 40}]}>
         <SettingsRow
           icon={LogOut}
           iconColor="#EF4444"
@@ -175,6 +175,23 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           onPress={handleSignOut}
         />
       </View>
+
+      {/* 개발자 도구 (DEV 빌드 전용) */}
+      {__DEV__ && (
+        <>
+          <Text style={styles.sectionTitle}>🛠️ 개발자 도구</Text>
+          <View style={[styles.section, {marginBottom: 40}]}>
+            <SettingsRow
+              icon={Bell}
+              iconColor="#F59E0B"
+              title="알림 스케줄"
+              subtitle="스케줄된 알림 목록 확인"
+              onPress={() => onNavigate('devNotifications')}
+              showChevron
+            />
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }

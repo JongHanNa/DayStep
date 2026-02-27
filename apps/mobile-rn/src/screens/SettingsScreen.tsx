@@ -1,6 +1,6 @@
 /**
  * SettingsScreen — 전체 설정 화면
- * 서브뷰 관리: main / font / theme / subscription / account
+ * 서브뷰 관리: main / font / theme / subscription / account / devNotifications(DEV)
  */
 import React, {useState, useCallback} from 'react';
 import {Modal} from 'react-native';
@@ -10,6 +10,7 @@ import {FontSettingsView} from '@/components/settings/FontSettingsView';
 import {ThemeSettingsView} from '@/components/settings/ThemeSettingsView';
 import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import {AccountView} from '@/components/settings/AccountView';
+import {DevNotificationsView} from '@/components/settings/DevNotificationsView';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import Animated, {FadeIn} from 'react-native-reanimated';
 
@@ -18,7 +19,8 @@ type SettingsView =
   | 'font'
   | 'theme'
   | 'subscription'
-  | 'account';
+  | 'account'
+  | 'devNotifications';
 
 export default function SettingsScreen() {
   const [view, setView] = useState<SettingsView>('main');
@@ -52,6 +54,9 @@ export default function SettingsScreen() {
         {view === 'font' && <FontSettingsView onBack={goBack} />}
         {view === 'theme' && <ThemeSettingsView onBack={goBack} />}
         {view === 'account' && <AccountView onBack={goBack} />}
+        {__DEV__ && view === 'devNotifications' && (
+          <DevNotificationsView onBack={goBack} />
+        )}
       </ScreenContainer>
 
       {/* 구독 관리 — Modal fullScreen */}
