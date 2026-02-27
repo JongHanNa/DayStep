@@ -22,7 +22,7 @@ import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
 import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
 import {MissedTodoActionPanel} from './MissedTodoActionPanel';
-import {Play} from 'lucide-react-native';
+import {Play, XCircle, MinusCircle} from 'lucide-react-native';
 
 interface LinkedFuel {
   id: string;
@@ -37,6 +37,7 @@ interface TodoCardProps {
   onPress?: (todo: Todo) => void;
   onFocus?: (todo: Todo) => void;
   onSkipTodo?: (id: string, reason: 'not_needed' | 'missed') => void;
+  onUnskipTodo?: (todo: Todo) => void;
   onPostpone?: (todo: Todo) => void;
   linkedFuels?: LinkedFuel[];
 }
@@ -48,6 +49,7 @@ export function TodoCard({
   onPress,
   onFocus,
   onSkipTodo,
+  onUnskipTodo,
   onPostpone,
   linkedFuels,
 }: TodoCardProps) {
@@ -119,7 +121,7 @@ export function TodoCard({
 
         {/* 체크박스 */}
         <AnimatedPressable
-          onPress={handleToggle}
+          onPress={isSkipped ? () => { haptic.light(); onUnskipTodo?.(todo); } : handleToggle}
           haptic={false}
           scaleValue={0.85}
           style={styles.checkboxArea}>
@@ -127,9 +129,19 @@ export function TodoCard({
             style={[
               styles.checkbox,
               todo.completed && styles.checkboxChecked,
+              isSkipped && skipReason === 'missed' && styles.checkboxMissed,
+              isSkipped && skipReason === 'not_needed' && styles.checkboxNotNeeded,
               checkAnimatedStyle,
             ]}>
-            {todo.completed && <Text style={styles.checkmark}>✓</Text>}
+            {isSkipped ? (
+              skipReason === 'missed' ? (
+                <XCircle size={18} color="#DC2626" strokeWidth={2} />
+              ) : (
+                <MinusCircle size={18} color="#6B7280" strokeWidth={2} />
+              )
+            ) : todo.completed ? (
+              <Text style={styles.checkmark}>✓</Text>
+            ) : null}
           </Animated.View>
         </AnimatedPressable>
 
@@ -252,7 +264,7 @@ export function TodoCard({
         </View>
 
         {/* 포커스 타이머 버튼 (미완료 + 미놓침 할일만) */}
-        {onFocus && !todo.completed && !isMissed && (
+        {onFocus && !todo.completed && !isMissed && !isSkipped && (
           <AnimatedPressable
             onPress={() => {
               haptic.medium();
@@ -318,6 +330,14 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: '#3B82F6',
     borderColor: '#3B82F6',
+  },
+  checkboxMissed: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#FCA5A5',
+  },
+  checkboxNotNeeded: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#D1D5DB',
   },
   checkmark: {
     color: '#FFFFFF',

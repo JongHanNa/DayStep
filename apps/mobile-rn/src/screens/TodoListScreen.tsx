@@ -99,6 +99,7 @@ function TodoListScreenInner() {
     toggleTodoCompletion,
     updateTodo,
     skipTodo,
+    unskipTodo,
     postponeTodo,
   } = useTodoStore();
   const {primaryColor} = useTheme();
@@ -237,6 +238,14 @@ function TodoListScreenInner() {
     [skipTodo],
   );
 
+  // unskip 핸들러
+  const handleUnskipTodo = useCallback(
+    (todo: Todo) => {
+      unskipTodo(todo.id);
+    },
+    [unskipTodo],
+  );
+
   // postpone 핸들러: 바텀시트 열기
   const handlePostpone = useCallback((todo: Todo) => {
     setPostponingTodo(todo);
@@ -335,6 +344,7 @@ function TodoListScreenInner() {
                   onPress={handleTodoPress}
                   onFocus={handleFocusTodo}
                   onSkipTodo={handleSkipTodo}
+                  onUnskipTodo={handleUnskipTodo}
                   onPostpone={handlePostpone}
                   linkedFuels={fuelMap[item.id]}
                 />

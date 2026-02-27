@@ -109,6 +109,7 @@ interface TodoState {
     newTime?: string,
   ) => Promise<boolean>;
   skipTodo: (id: string, reason: 'not_needed' | 'missed') => Promise<boolean>;
+  unskipTodo: (id: string) => Promise<boolean>;
   processOfflineQueue: () => Promise<void>;
   clearError: () => void;
 }
@@ -769,6 +770,47 @@ export const useTodoStore = create<TodoState>()(
         } else {
           // 일반 할일: skip_status 직접 업데이트
           return get().updateTodo(id, {skip_status: reason} as any);
+        }
+      },
+
+      unskipTodo: async (id) => {
+        const todo = get().todos.find(t => t.id === id);
+        if (!todo) return false;
+
+        const previousStatus = (todo as any).skip_status;
+        const isRecurring = todo.recurrence_pattern && todo.recurrence_pattern !== 'none';
+
+        // Optimistic update
+        set(state => ({
+          todos: state.todos.map(t =>
+            t.id === id ? {...t, skip_status: null} : t,
+          ),
+        }));
+
+        if (isRecurring) {
+          const userId = await getCurrentUserId();
+          if (!userId) return false;
+          const selectedDate = get().selectedDate;
+
+          const {error} = await supabase
+            .from('todo_exclusions')
+            .delete()
+            .eq('parent_todo_id', id)
+            .eq('excluded_date', selectedDate)
+            .in('exclusion_reason', ['missed', 'not_needed']);
+
+          if (error) {
+            set(state => ({
+              todos: state.todos.map(t =>
+                t.id === id ? {...t, skip_status: previousStatus} : t,
+              ),
+            }));
+            console.error('[TodoStore] unskipTodo error:', error);
+            return false;
+          }
+          return true;
+        } else {
+          return get().updateTodo(id, {skip_status: null} as any);
         }
       },
 
