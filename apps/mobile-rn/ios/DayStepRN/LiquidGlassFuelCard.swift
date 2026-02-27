@@ -166,12 +166,8 @@ class LiquidGlassFuelCardUIView: UIView {
   // MARK: - 높이 측정 및 이벤트 발행
   private func emitHeight() {
     guard let hc = hostingController, bounds.width > 0 else { return }
-    let targetSize = CGSize(
-      width: bounds.width,
-      height: UIView.layoutFittingCompressedSize.height
-    )
-    let fitted = hc.view.systemLayoutSizeFitting(targetSize)
-    onHeightChange?(["height": fitted.height])
+    let size = hc.sizeThatFits(in: CGSize(width: bounds.width, height: .greatestFiniteMagnitude))
+    onHeightChange?(["height": size.height])
   }
 
   // MARK: - 1회 초기화 (@Namespace 유지를 위해 UIHostingController 재생성 금지)
