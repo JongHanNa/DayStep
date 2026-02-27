@@ -186,7 +186,13 @@ export function generateRecurrenceInstances({
         const endTimeValue = originalTodo.end_time || originalTodo.endTime;
         if (endTimeValue) {
           const originalEnd = new Date(endTimeValue);
-          const duration = originalEnd.getTime() - originalStart.getTime();
+          let duration = originalEnd.getTime() - originalStart.getTime();
+
+          // 크로스데이 보정: duration이 음수면 24시간 추가 (자정을 넘는 할일, 예: 22:30~05:30)
+          if (duration < 0) {
+            duration += 24 * 60 * 60 * 1000;
+          }
+
           instanceEndTime = new Date(instanceStartTime.getTime() + duration);
 
           // 종료 시간 계산 완료
