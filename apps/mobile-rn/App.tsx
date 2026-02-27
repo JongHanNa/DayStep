@@ -5,6 +5,7 @@ import {SafeAreaProvider, initialWindowMetrics} from 'react-native-safe-area-con
 import {NavigationContainer, DefaultTheme} from '@react-navigation/native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
+import notifee from '@notifee/react-native';
 import {ThemeProvider} from './src/theme/ThemeProvider';
 import RootNavigator from './src/navigation/RootNavigator';
 import {setupNotificationChannel} from './src/lib/notifications';
@@ -30,6 +31,14 @@ const linking = {
 function App() {
   useEffect(() => {
     setupNotificationChannel();
+  }, []);
+
+  // 포그라운드 이벤트 핸들러 등록 → iOS UNUserNotificationCenterDelegate가 배너+소리 표시
+  useEffect(() => {
+    const unsubscribe = notifee.onForegroundEvent(({type, detail}) => {
+      // 포그라운드 알림 이벤트 수신 시 iOS가 자동으로 배너+소리 표시
+    });
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
