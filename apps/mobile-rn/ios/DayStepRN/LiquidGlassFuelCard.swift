@@ -131,6 +131,7 @@ class LiquidGlassFuelCardUIView: UIView {
   // RN Props
   @objc var onExpand: RCTDirectEventBlock?
   @objc var onCollapse: RCTDirectEventBlock?
+  @objc var onHeightChange: RCTDirectEventBlock?
 
   private let cardState = FuelCardState()
   private var hostingController: UIHostingController<AnyView>?
@@ -144,6 +145,9 @@ class LiquidGlassFuelCardUIView: UIView {
 
   @objc func setNoteContent(_ value: NSString) {
     cardState.noteContent = value as String
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+      self?.emitHeight()
+    }
   }
 
   @objc func setHasNote(_ value: Bool) {
@@ -153,6 +157,21 @@ class LiquidGlassFuelCardUIView: UIView {
 
   @objc func setIsExpanded(_ value: Bool) {
     cardState.isExpanded = value
+    // 애니메이션 완료 후 높이 보고 (spring response 0.4 + 여유)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+      self?.emitHeight()
+    }
+  }
+
+  // MARK: - 높이 측정 및 이벤트 발행
+  private func emitHeight() {
+    guard let hc = hostingController, bounds.width > 0 else { return }
+    let targetSize = CGSize(
+      width: bounds.width,
+      height: UIView.layoutFittingCompressedSize.height
+    )
+    let fitted = hc.view.systemLayoutSizeFitting(targetSize)
+    onHeightChange?(["height": fitted.height])
   }
 
   // MARK: - 1회 초기화 (@Namespace 유지를 위해 UIHostingController 재생성 금지)
@@ -188,6 +207,11 @@ class LiquidGlassFuelCardUIView: UIView {
       hc.view.topAnchor.constraint(equalTo: topAnchor),
       hc.view.bottomAnchor.constraint(equalTo: bottomAnchor),
     ])
+
+    // 초기 렌더링 완료 후 높이 보고
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+      self?.emitHeight()
+    }
   }
 }
 

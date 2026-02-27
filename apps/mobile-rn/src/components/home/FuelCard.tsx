@@ -19,7 +19,8 @@ interface FuelCardProps {
 }
 
 export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [nativeCardHeight, setNativeCardHeight] = useState(200);
 
   // iOS 26+: 네이티브 Liquid Glass morph 카드
   if (isIOS26Plus) {
@@ -32,7 +33,8 @@ export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
           isExpanded={isExpanded}
           onExpand={() => setIsExpanded(true)}
           onCollapse={() => setIsExpanded(false)}
-          style={styles.nativeCard}
+          onHeightChange={e => setNativeCardHeight(e.nativeEvent.height)}
+          style={[styles.nativeCard, {height: nativeCardHeight}]}
         />
       </Animated.View>
     );
@@ -86,8 +88,8 @@ const styles = StyleSheet.create({
   cardContent: {
     padding: 16,
   },
-  // iOS 26 네이티브 카드: 최소 높이 설정 (SwiftUI 내부에서 자동 확장)
+  // iOS 26 네이티브 카드: 높이는 onHeightChange로 동적 설정
   nativeCard: {
-    minHeight: 64,
+    width: '100%',
   },
 });

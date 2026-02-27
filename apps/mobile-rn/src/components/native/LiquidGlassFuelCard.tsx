@@ -14,7 +14,8 @@ interface NativeLiquidGlassFuelCardProps {
   isExpanded: boolean;
   onExpand?: (event: {nativeEvent: Record<string, never>}) => void;
   onCollapse?: (event: {nativeEvent: Record<string, never>}) => void;
-  style?: ViewStyle;
+  onHeightChange?: (event: {nativeEvent: {height: number}}) => void;
+  style?: ViewStyle | ViewStyle[];
 }
 
 // 모듈 레벨에서 1회 등록
