@@ -641,6 +641,45 @@ export type Database = {
           },
         ]
       }
+      todo_alarms: {
+        Row: {
+          id: string
+          todo_id: string
+          user_id: string
+          offset_minutes: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          todo_id: string
+          user_id: string
+          offset_minutes: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          todo_id?: string
+          user_id?: string
+          offset_minutes?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_alarms_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_alarms_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           anytime_duration: number | null

@@ -3,13 +3,13 @@
  * 할일 생성/편집 공유 폼 로직 훅
  * — TodoCreatePanel, TodoEditOverlay 양쪽에서 사용
  */
-import {useCallback, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {Alert} from 'react-native';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
 import {format, addHours, parseISO, isToday} from 'date-fns';
 import {ko} from 'date-fns/locale';
-import {getAlarmLabel} from '@/lib/notifications';
+import {getAlarmsLabel} from '@/lib/notifications';
 import type {Todo} from '@daystep/shared-core';
 
 // ============================================
@@ -28,7 +28,7 @@ export interface FormData {
   startTime: Date | null;
   endTime: Date | null;
   anytimeDuration: number | null; // minutes
-  alarmOffsetMinutes: number | null;
+  alarmOffsets: number[];         // 복수 알람 오프셋 (분)
   importance: boolean;
   urgency: boolean;
   isReluctantMustDo: boolean;
@@ -55,7 +55,7 @@ export const DEFAULT_FORM: FormData = {
   startTime: getNextHour(),
   endTime: addHours(getNextHour(), 1),
   anytimeDuration: null,
-  alarmOffsetMinutes: 0,
+  alarmOffsets: [],
   importance: false,
   urgency: false,
   isReluctantMustDo: false,
@@ -101,8 +101,8 @@ export function getDateSummary(form: FormData): string {
 
 export function getDateSummaryExtras(form: FormData): string[] {
   const extras: string[] = [];
-  if (form.alarmOffsetMinutes !== null) {
-    extras.push(getAlarmLabel(form.alarmOffsetMinutes));
+  if (form.alarmOffsets.length > 0) {
+    extras.push(getAlarmsLabel(form.alarmOffsets));
   }
   const recLabel = getRecurrenceLabel(form);
   if (recLabel) {
@@ -171,7 +171,7 @@ export function useTodoForm() {
         startTime,
         endTime: resolvedEndTime,
         anytimeDuration: todo.anytime_duration ?? null,
-        alarmOffsetMinutes: (todo as any).alarm_offset_minutes ?? null,
+        alarmOffsets: [],
         importance: (todo as any).importance ?? false,
         urgency: (todo as any).urgency ?? false,
         isReluctantMustDo: (todo as any).is_reluctant_must_do ?? false,
@@ -185,6 +185,29 @@ export function useTodoForm() {
     },
     [selectedDate],
   );
+
+  // edit 모드: todo_alarms 비동기 로드
+  useEffect(() => {
+    if (mode !== 'edit' || !editingTodo) return;
+    let cancelled = false;
+    (async () => {
+      const {supabase} = await import('@/lib/supabase');
+      const {data} = await supabase
+        .from('todo_alarms')
+        .select('offset_minutes')
+        .eq('todo_id', editingTodo.id)
+        .order('offset_minutes', {ascending: false});
+      if (!cancelled) {
+        setForm(prev => ({
+          ...prev,
+          alarmOffsets: data?.map(r => r.offset_minutes) ?? [],
+        }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, editingTodo?.id]);
 
   const handleSave = useCallback(
     async (onSuccess?: () => void) => {
@@ -208,7 +231,6 @@ export function useTodoForm() {
           is_reluctant_must_do: form.isReluctantMustDo,
           recurrence_pattern: form.recurrencePattern,
           completed: form.completed,
-          alarm_offset_minutes: form.alarmOffsetMinutes,
         };
 
         if (form.scheduleType === 'timed' && form.startTime) {
@@ -237,46 +259,56 @@ export function useTodoForm() {
           savedTodoId = editingTodo.id;
         }
 
-        // 알림 스케줄링
+        // todo_alarms 테이블 sync + 알림 스케줄링
         if (savedTodoId) {
+          const {supabase} = await import('@/lib/supabase');
+          const {useAuthStore} = await import('@/stores/authStore');
+          const user = useAuthStore.getState().user;
+
+          // todo_alarms 테이블 sync
+          await supabase.from('todo_alarms').delete().eq('todo_id', savedTodoId);
+          if (form.alarmOffsets.length > 0 && user) {
+            await supabase.from('todo_alarms').insert(
+              form.alarmOffsets.map(offset => ({
+                todo_id: savedTodoId!,
+                user_id: user.id,
+                offset_minutes: offset,
+              })),
+            );
+          }
+
+          // 알림 스케줄링
           const {
-            scheduleTodoAlarm,
-            cancelTodoAlarm,
-            cancelAllRecurringAlarms,
+            cancelAllTodoAlarms,
+            scheduleAllTodoAlarms,
             scheduleRecurringAlarmsForRange,
           } = await import('@/lib/notifications');
 
-          const isRecurring = form.recurrencePattern !== 'none';
+          await cancelAllTodoAlarms(savedTodoId);
 
           if (
-            form.alarmOffsetMinutes !== null &&
+            form.alarmOffsets.length > 0 &&
             form.scheduleType === 'timed' &&
             form.startTime
           ) {
+            const isRecurring = form.recurrencePattern !== 'none';
             if (isRecurring) {
-              await cancelAllRecurringAlarms(savedTodoId);
               await scheduleRecurringAlarmsForRange([{
                 id: savedTodoId,
                 title: trimmed,
                 startTime: form.startTime.toISOString(),
-                offsetMinutes: form.alarmOffsetMinutes,
+                offsets: form.alarmOffsets,
                 recurrencePattern: form.recurrencePattern,
                 recurrenceDaysOfWeek: form.recurrenceDaysOfWeek,
                 recurrenceEndDate: null,
               }]);
             } else {
-              await scheduleTodoAlarm(
+              await scheduleAllTodoAlarms(
                 savedTodoId,
                 trimmed,
                 form.startTime,
-                form.alarmOffsetMinutes,
+                form.alarmOffsets,
               );
-            }
-          } else {
-            if (isRecurring) {
-              await cancelAllRecurringAlarms(savedTodoId);
-            } else {
-              await cancelTodoAlarm(savedTodoId);
             }
           }
         }
@@ -304,16 +336,8 @@ export function useTodoForm() {
           text: '삭제',
           style: 'destructive',
           onPress: async () => {
-            const {cancelTodoAlarm, cancelAllRecurringAlarms} = await import(
-              '@/lib/notifications'
-            );
-            const isRecurring =
-              (editingTodo.recurrence_pattern ?? 'none') !== 'none';
-            if (isRecurring) {
-              await cancelAllRecurringAlarms(editingTodo.id);
-            } else {
-              await cancelTodoAlarm(editingTodo.id);
-            }
+            const {cancelAllTodoAlarms} = await import('@/lib/notifications');
+            await cancelAllTodoAlarms(editingTodo.id);
             await deleteTodo(editingTodo.id);
             haptic.medium();
             onSuccess?.();

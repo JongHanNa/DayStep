@@ -8,7 +8,7 @@ import {ScrollView, View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {format, parseISO, isToday, isTomorrow} from 'date-fns';
 import {ko} from 'date-fns/locale';
-import {getAlarmLabel} from '@/lib/notifications';
+import {getAlarmsLabel} from '@/lib/notifications';
 import {
   Calendar,
   Clock,
@@ -34,7 +34,7 @@ interface ToolbarForm {
   startTime: Date | null;
   endTime: Date | null;
   anytimeDuration: number | null;
-  alarmOffsetMinutes: number | null;
+  alarmOffsets: number[];
   recurrencePattern: RecurrencePattern;
   recurrenceDaysOfWeek: number[];
   importance: boolean;
@@ -183,7 +183,7 @@ export function AttributeToolbar({
       {onAlarmPress && (
         <Chip
           icon={Bell}
-          label={getAlarmLabel(form.alarmOffsetMinutes)}
+          label={getAlarmsLabel(form.alarmOffsets)}
           onPress={onAlarmPress}
         />
       )}

@@ -34,7 +34,7 @@ import {
   isToday,
 } from 'date-fns';
 import {ko} from 'date-fns/locale';
-import {ALARM_OPTIONS, getAlarmLabel} from '@/lib/notifications';
+import {ALARM_OPTIONS, getAlarmsLabel} from '@/lib/notifications';
 import type {FormData} from './useTodoForm';
 
 // ============================================
@@ -556,12 +556,12 @@ function TimePopoverContent({
 // ============================================
 
 function AlarmPopoverContent({
-  alarmOffsetMinutes,
-  onSelect,
+  alarmOffsets,
+  onToggle,
   primaryColor,
 }: {
-  alarmOffsetMinutes: number | null;
-  onSelect: (value: number | null) => void;
+  alarmOffsets: number[];
+  onToggle: (value: number | null) => void;
   primaryColor: string;
 }) {
   const haptic = useHaptic();
@@ -569,13 +569,16 @@ function AlarmPopoverContent({
   return (
     <View style={popContentStyles.listContainer}>
       {ALARM_OPTIONS.map(option => {
-        const selected = option.value === alarmOffsetMinutes;
+        const selected =
+          option.value === null
+            ? alarmOffsets.length === 0
+            : alarmOffsets.includes(option.value);
         return (
           <Pressable
             key={String(option.value)}
             onPress={() => {
               haptic.selection();
-              onSelect(option.value);
+              onToggle(option.value);
             }}
             style={popContentStyles.listRow}>
             <Text
@@ -967,13 +970,23 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
 
     const closePopover = useCallback(() => setActivePopover('none'), []);
 
-    // 알림 선택 콜백
-    const handleAlarmSelect = useCallback(
+    // 알림 토글 콜백 (다중 선택)
+    const handleAlarmToggle = useCallback(
       (value: number | null) => {
-        updateField('alarmOffsetMinutes', value);
-        closePopover();
+        if (value === null) {
+          // '없음' 선택 시 전체 초기화 + 팝오버 닫기
+          updateField('alarmOffsets', []);
+          closePopover();
+        } else {
+          const cur = form.alarmOffsets;
+          const next = cur.includes(value)
+            ? cur.filter(o => o !== value)
+            : [...cur, value].sort((a, b) => b - a);
+          updateField('alarmOffsets', next);
+          // 팝오버 유지 (다중 선택)
+        }
       },
-      [updateField, closePopover],
+      [updateField, closePopover, form.alarmOffsets],
     );
 
     const renderBackdrop = useCallback(
@@ -1032,7 +1045,7 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
               <SettingRow
                 icon={Bell}
                 label="알림"
-                value={getAlarmLabel(form.alarmOffsetMinutes)}
+                value={getAlarmsLabel(form.alarmOffsets)}
                 onPress={() => openPopover('alarm', alarmRowRef)}
               />
             </View>
@@ -1061,8 +1074,8 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
             anchorPosition={popoverAnchor}
             width={200}>
             <AlarmPopoverContent
-              alarmOffsetMinutes={form.alarmOffsetMinutes}
-              onSelect={handleAlarmSelect}
+              alarmOffsets={form.alarmOffsets}
+              onToggle={handleAlarmToggle}
               primaryColor={primaryColor}
             />
           </Popover>

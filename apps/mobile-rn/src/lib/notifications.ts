@@ -36,7 +36,7 @@ export interface RecurringTodoAlarmInfo {
   id: string;
   title: string;
   startTime: string;           // 원본 start_time (시:분 추출용, ISO string)
-  offsetMinutes: number;
+  offsets: number[];           // 복수 알람 오프셋
   recurrencePattern: string;   // 'daily' | 'weekly'
   recurrenceDaysOfWeek: number[];
   recurrenceEndDate: string | null;
@@ -129,10 +129,10 @@ export async function scheduleTodoAlarm(
     triggerTime = new Date(
       occurrenceDateTime.getTime() - offsetMinutes * 60 * 1000,
     );
-    notificationId = `todo-${todoId}-${occurrenceDate}`;
+    notificationId = `todo-${todoId}-o${offsetMinutes}-${occurrenceDate}`;
   } else {
     triggerTime = new Date(start.getTime() - offsetMinutes * 60 * 1000);
-    notificationId = `todo-${todoId}`;
+    notificationId = `todo-${todoId}-o${offsetMinutes}`;
   }
 
   // 과거 시간이면 스킵
@@ -169,29 +169,9 @@ export async function scheduleTodoAlarm(
 }
 
 /**
- * 할일 알람 취소
+ * 할일의 모든 알람 취소 (todo-${id}-* prefix 일괄 취소)
  */
-export async function cancelTodoAlarm(todoId: string): Promise<void> {
-  await notifee.cancelNotification(`todo-${todoId}`);
-}
-
-/**
- * 특정 날짜의 반복 할일 알람 취소
- */
-export async function cancelTodoAlarmForDate(
-  todoId: string,
-  occurrenceDate?: string,
-): Promise<void> {
-  const id = occurrenceDate
-    ? `todo-${todoId}-${occurrenceDate}`
-    : `todo-${todoId}`;
-  await notifee.cancelNotification(id);
-}
-
-/**
- * 반복 할일의 모든 날짜별 알람 취소 (todo-${id}-* 패턴 일괄 취소)
- */
-export async function cancelAllRecurringAlarms(todoId: string): Promise<void> {
+export async function cancelAllTodoAlarms(todoId: string): Promise<void> {
   const notifications = await notifee.getTriggerNotifications();
   const prefix = `todo-${todoId}-`;
   const toCancel = notifications
@@ -199,8 +179,37 @@ export async function cancelAllRecurringAlarms(todoId: string): Promise<void> {
     .map(n => n.notification.id!);
 
   await Promise.all(toCancel.map(id => notifee.cancelNotification(id)));
-  // 날짜 없는 기본 ID도 취소 (이전 방식으로 등록된 것 대비)
-  await notifee.cancelNotification(`todo-${todoId}`);
+}
+
+/**
+ * @deprecated cancelAllTodoAlarms 사용
+ */
+export async function cancelTodoAlarm(todoId: string): Promise<void> {
+  await cancelAllTodoAlarms(todoId);
+}
+
+/**
+ * @deprecated cancelAllTodoAlarms 사용
+ */
+export async function cancelAllRecurringAlarms(todoId: string): Promise<void> {
+  await cancelAllTodoAlarms(todoId);
+}
+
+/**
+ * 단일 todo에 복수 offset 알람을 한 번에 스케줄
+ */
+export async function scheduleAllTodoAlarms(
+  todoId: string,
+  title: string,
+  startTime: string | Date,
+  offsets: number[],
+  occurrenceDate?: string,
+): Promise<void> {
+  await Promise.all(
+    offsets.map(offset =>
+      scheduleTodoAlarm(todoId, title, startTime, offset, occurrenceDate),
+    ),
+  );
 }
 
 /**
@@ -225,11 +234,11 @@ export async function scheduleRecurringAlarmsForRange(
           date,
         )
       ) {
-        await scheduleTodoAlarm(
+        await scheduleAllTodoAlarms(
           todo.id,
           todo.title,
           todo.startTime,
-          todo.offsetMinutes,
+          todo.offsets,
           formatDateStr(date),
         );
       }
@@ -251,11 +260,10 @@ export async function scheduleExistingRecurringAlarms(): Promise<void> {
   const {data, error} = await supabase
     .from('todos')
     .select(
-      'id, title, start_time, alarm_offset_minutes, recurrence_pattern, recurrence_days_of_week, recurrence_end_date',
+      'id, title, start_time, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, todo_alarms(offset_minutes)',
     )
     .eq('user_id', user.id)
     .neq('recurrence_pattern', 'none')
-    .not('alarm_offset_minutes', 'is', null)
     .eq('schedule_type', 'timed');
 
   if (error) {
@@ -269,12 +277,12 @@ export async function scheduleExistingRecurringAlarms(): Promise<void> {
   if (!data || data.length === 0) return;
 
   const todosInfo: RecurringTodoAlarmInfo[] = data
-    .filter(t => t.start_time && t.alarm_offset_minutes !== null)
+    .filter(t => t.start_time && Array.isArray((t as any).todo_alarms) && (t as any).todo_alarms.length > 0)
     .map(t => ({
       id: t.id as string,
       title: t.title as string,
       startTime: t.start_time as string,
-      offsetMinutes: t.alarm_offset_minutes as number,
+      offsets: ((t as any).todo_alarms as {offset_minutes: number}[]).map(a => a.offset_minutes),
       recurrencePattern: t.recurrence_pattern as string,
       recurrenceDaysOfWeek: Array.isArray(t.recurrence_days_of_week)
         ? (t.recurrence_days_of_week as number[])
@@ -293,9 +301,18 @@ export async function scheduleExistingRecurringAlarms(): Promise<void> {
 // ============================================
 
 /**
- * 알람 오프셋 라벨 반환
+ * 알람 오프셋 라벨 반환 (단일)
  */
 export function getAlarmLabel(offsetMinutes: number | null): string {
   const option = ALARM_OPTIONS.find(o => o.value === offsetMinutes);
   return option?.label ?? '없음';
+}
+
+/**
+ * 복수 알람 오프셋 요약 라벨 반환
+ */
+export function getAlarmsLabel(offsets: number[]): string {
+  if (offsets.length === 0) return '없음';
+  if (offsets.length === 1) return getAlarmLabel(offsets[0]);
+  return `알림 ${offsets.length}개`;
 }
