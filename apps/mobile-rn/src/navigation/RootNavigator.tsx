@@ -12,6 +12,7 @@ import {
   logoutRevenueCat,
 } from '@/lib/revenueCat';
 import {useRealtimeSync} from '@/hooks/useRealtimeSync';
+import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
@@ -23,6 +24,17 @@ const Stack = createNativeStackNavigator();
  */
 function AuthenticatedApp() {
   useRealtimeSync();
+
+  // plan_limits fetch + Realtime 구독 (인증 완료 시 1회)
+  const {fetchLimits, subscribeLimits, unsubscribeLimits} = usePlanLimitsStore();
+  useEffect(() => {
+    fetchLimits();
+    subscribeLimits();
+    return () => {
+      unsubscribeLimits();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 알림 채널 생성(Android) + 권한 요청(iOS/Android 13+) + 반복 알람 초기 스케줄
   useEffect(() => {

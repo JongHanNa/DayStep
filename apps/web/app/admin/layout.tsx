@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/subscriptions', label: 'Subscriptions' },
+  { href: '/admin/plan-limits', label: '플랜 한도' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

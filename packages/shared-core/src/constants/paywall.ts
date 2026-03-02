@@ -2,6 +2,10 @@
  * Paywall 비교 테이블 — 단일 소스 (웹·모바일 공유)
  *
  * entity: null → 불리언 항목 (Free X / Pro ✓)
+ *
+ * ※ proValue / proLabel 는 코드 fallback 값.
+ *    실제 표시 값은 Supabase plan_limits 테이블(DB)이 우선.
+ *    관리자 화면(/admin/plan-limits)에서 수정 → Realtime으로 전 클라이언트 반영.
  */
 
 export interface PaywallComparisonFeature {

@@ -27,6 +27,7 @@ import {
   ENTITY_LIMIT_MAP,
   type UsageEntityType,
 } from '@/lib/featureFlags';
+import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import {PAYWALL_COMPARISON_FEATURES} from '@daystep/shared-core/constants';
 import {
   purchaseSelectedPackage,
@@ -140,6 +141,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
 
   const insets = useSafeAreaInsets();
   const {stats, isLoading: usageLoading} = useUsageStats();
+  const {getLimit, getFreeMaxCount} = usePlanLimitsStore();
 
   const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>(
     'yearly',
@@ -237,13 +239,14 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
       </View>
       {USAGE_FEATURES.map((feat, i) => {
         const current = stats[entityToField[feat.entity]] ?? 0;
-        const limit = ENTITY_LIMIT_MAP[feat.entity];
+        const limit = getFreeMaxCount(feat.entity);
         const isOver = current > limit;
+        const proDisplayText = getLimit(feat.entity, 'pro').displayText || feat.proValue;
         return (
           <View key={feat.entity} style={[styles.usageRow, i % 2 === 0 && {backgroundColor: 'rgba(255,255,255,0.03)'}]}>
             <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>{feat.name}</Text>
             <Text style={[styles.usageCell, styles.usageCellValue, isOver && {color: '#F87171'}]}>{current}/{limit}{feat.unit}</Text>
-            <Text style={[styles.usageCell, styles.usageCellPro]}>{feat.proValue}</Text>
+            <Text style={[styles.usageCell, styles.usageCellPro]}>{proDisplayText}</Text>
           </View>
         );
       })}
@@ -450,8 +453,9 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             {/* 사용량 행 */}
             {USAGE_FEATURES.map((feat, i) => {
               const current = stats[entityToField[feat.entity]] ?? 0;
-              const limit = ENTITY_LIMIT_MAP[feat.entity];
+              const limit = getFreeMaxCount(feat.entity);
               const isOver = current > limit;
+              const proDisplayText = getLimit(feat.entity, 'pro').displayText || feat.proValue;
 
               return (
                 <View
@@ -473,7 +477,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                     {feat.unit}
                   </Text>
                   <Text style={[styles.usageCell, styles.usageCellPro]}>
-                    {feat.proValue}
+                    {proDisplayText}
                   </Text>
                 </View>
               );
@@ -846,30 +850,34 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                 Pro
               </Text>
             </View>
-            {USAGE_FEATURES.map((feat, i) => (
-              <View
-                key={feat.entity}
-                style={[
-                  styles.tableRow,
-                  i % 2 === 0 && {backgroundColor: '#F9FAFB'},
-                ]}>
-                <Text style={[styles.tableCell, styles.tableCellFirst]}>
-                  {feat.name}
-                </Text>
-                <Text style={[styles.tableCell, styles.tableCellText]}>
-                  {ENTITY_LIMIT_MAP[feat.entity]}
-                  {feat.unit}
-                </Text>
-                <Text
+            {USAGE_FEATURES.map((feat, i) => {
+              const freeMax = getFreeMaxCount(feat.entity);
+              const proDisplayText = getLimit(feat.entity, 'pro').displayText || feat.proValue;
+              return (
+                <View
+                  key={feat.entity}
                   style={[
-                    styles.tableCell,
-                    styles.tableCellText,
-                    {color: primaryColor, fontWeight: '600'},
+                    styles.tableRow,
+                    i % 2 === 0 && {backgroundColor: '#F9FAFB'},
                   ]}>
-                  {feat.proValue}
-                </Text>
-              </View>
-            ))}
+                  <Text style={[styles.tableCell, styles.tableCellFirst]}>
+                    {feat.name}
+                  </Text>
+                  <Text style={[styles.tableCell, styles.tableCellText]}>
+                    {freeMax}
+                    {feat.unit}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tableCell,
+                      styles.tableCellText,
+                      {color: primaryColor, fontWeight: '600'},
+                    ]}>
+                    {proDisplayText}
+                  </Text>
+                </View>
+              );
+            })}
             <View
               style={[
                 styles.tableRow,

@@ -33,6 +33,19 @@ export const ENTITY_LIMIT_MAP: Record<UsageEntityType, number> = {
   care_interaction: FREE_TIER_LIMITS.MAX_CARE_INTERACTIONS,
 };
 
+/**
+ * DB plan_limits store에서 Free 한도 조회 (store 값 우선, 없으면 ENTITY_LIMIT_MAP fallback)
+ */
+export function getEntityFreeLimit(entity: UsageEntityType): number {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const {usePlanLimitsStore} = require('@/stores/planLimitsStore');
+    return usePlanLimitsStore.getState().getFreeMaxCount(entity);
+  } catch {
+    return ENTITY_LIMIT_MAP[entity];
+  }
+}
+
 export const ENTITY_DISPLAY_NAME: Record<UsageEntityType, string> = {
   todo: '할일',
   habit: '습관',

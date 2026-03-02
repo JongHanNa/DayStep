@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { ADHDSidebar, ADHDBottomTabBar } from '@/components/adhd/navigation';
 import { useEffect, useState } from 'react';
+import { usePlanLimitsStore } from '@/state/stores/planLimitsStore';
 
 /**
  * ADHD 모드 레이아웃
@@ -13,10 +14,19 @@ import { useEffect, useState } from 'react';
 export default function ADHDLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const { fetchLimits, subscribeLimits, unsubscribeLimits } = usePlanLimitsStore();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 인증 완료 후 plan_limits fetch + Realtime 구독
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchLimits();
+    subscribeLimits();
+    return () => { unsubscribeLimits(); };
+  }, [isAuthenticated, fetchLimits, subscribeLimits, unsubscribeLimits]);
 
   // 마운트 전 또는 로딩 중
   if (!mounted || loading) {

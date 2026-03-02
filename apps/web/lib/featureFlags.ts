@@ -144,6 +144,20 @@ export const ENTITY_LIMIT_MAP: Record<UsageEntityType, number> = {
 };
 
 /**
+ * DB plan_limits store에서 엔티티 한도 조회 (store 값 우선, 없으면 ENTITY_LIMIT_MAP fallback)
+ * store import는 런타임 순환 참조 방지를 위해 lazy하게 처리
+ */
+export function getEntityFreeLimit(entity: UsageEntityType): number {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { usePlanLimitsStore } = require('@/state/stores/planLimitsStore');
+    return usePlanLimitsStore.getState().getFreeMaxCount(entity);
+  } catch {
+    return ENTITY_LIMIT_MAP[entity];
+  }
+}
+
+/**
  * 엔티티 한글명 매핑
  */
 export const ENTITY_DISPLAY_NAME: Record<UsageEntityType, string> = {

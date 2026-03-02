@@ -1,13 +1,14 @@
 /**
  * SettingsMainView — 메인 설정 목록 (섹션별 그룹핑)
  */
-import React, {useCallback} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {View, Text, ScrollView, Alert, StyleSheet} from 'react-native';
 import {AnimatedCard} from '@/components/core';
 import {SettingsRow} from './SettingsRow';
 import {useSettingsStore} from '@/stores/settingsStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTheme} from '@/theme';
+import {supabase} from '@/lib/supabase';
 import {
   User,
   Type,
@@ -20,6 +21,7 @@ import {
   PartyPopper,
   CreditCard,
   LogOut,
+  ShieldCheck,
 } from 'lucide-react-native';
 
 interface SettingsMainViewProps {
@@ -30,6 +32,19 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const {primaryColor} = useTheme();
   const {user, signOut} = useAuthStore();
   const settings = useSettingsStore();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+      .then(({data}) => {
+        setIsAdmin(data?.role === 'admin');
+      });
+  }, [user?.id]);
 
   const handleSignOut = useCallback(() => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠어요?', [
@@ -165,6 +180,23 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           onPress={() => onNavigate('subscription')}
         />
       </View>
+
+      {/* 관리자 섹션 (admin 역할만) */}
+      {isAdmin && (
+        <>
+          <Text style={styles.sectionTitle}>🛡️ 관리자</Text>
+          <View style={[styles.section, {marginBottom: 16}]}>
+            <SettingsRow
+              icon={ShieldCheck}
+              iconColor="#6366F1"
+              title="플랜 한도 관리"
+              subtitle="Free/Pro 엔티티 한도 설정"
+              showChevron
+              onPress={() => onNavigate('adminPlanLimits')}
+            />
+          </View>
+        </>
+      )}
 
       {/* 로그아웃 */}
       <View style={[styles.section, {marginTop: 16, marginBottom: __DEV__ ? 16 : 40}]}>

@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { ENTITY_LIMIT_MAP } from '@/lib/featureFlags';
 import type { UsageEntityType } from '@/lib/featureFlags';
+import { usePlanLimitsStore } from '@/state/stores/planLimitsStore';
 import { useUsageStats } from '@/hooks/useUsageStats';
 import { useSubscriptionStore } from '@/state/stores/subscriptionStore';
 import type { UserUsageStats } from '@/lib/supabase/usage';
@@ -115,6 +116,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
   } = useSubscription();
 
   const { stats: usageStats } = useUsageStats();
+  const { getLimit, getFreeMaxCount } = usePlanLimitsStore();
 
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -1017,7 +1019,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                     {PAYWALL_COMPARISON_FEATURES.map((feat) => {
                       const isBoolean = feat.entity === null;
                       const statsKey = feat.entity ? STATS_KEY_MAP[feat.entity] : null;
-                      const freeLimit = feat.entity ? ENTITY_LIMIT_MAP[feat.entity as UsageEntityType] : 0;
+                      const freeLimit = feat.entity ? getFreeMaxCount(feat.entity as UsageEntityType) : 0;
                       const currentCount = statsKey && usageStats
                         ? (usageStats[statsKey] as number) || 0
                         : null;
@@ -1037,7 +1039,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                             {isBoolean ? (
                               <span className="text-green-600 dark:text-green-400">✓</span>
                             ) : (
-                              feat.proValue ?? '무제한'
+                              (feat.entity ? getLimit(feat.entity, 'pro').displayText : null) ?? feat.proValue ?? '무제한'
                             )}
                           </td>
                         </tr>
