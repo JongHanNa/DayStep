@@ -1037,7 +1037,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                             {isBoolean ? (
                               <span className="text-green-600 dark:text-green-400">✓</span>
                             ) : (
-                              '무제한'
+                              feat.proValue ?? '무제한'
                             )}
                           </td>
                         </tr>

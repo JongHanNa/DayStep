@@ -243,7 +243,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           <View key={feat.entity} style={[styles.usageRow, i % 2 === 0 && {backgroundColor: 'rgba(255,255,255,0.03)'}]}>
             <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>{feat.name}</Text>
             <Text style={[styles.usageCell, styles.usageCellValue, isOver && {color: '#F87171'}]}>{current}/{limit}{feat.unit}</Text>
-            <Text style={[styles.usageCell, styles.usageCellPro]}>무제한</Text>
+            <Text style={[styles.usageCell, styles.usageCellPro]}>{feat.proValue}</Text>
           </View>
         );
       })}
@@ -473,7 +473,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                     {feat.unit}
                   </Text>
                   <Text style={[styles.usageCell, styles.usageCellPro]}>
-                    무제한
+                    {feat.proValue}
                   </Text>
                 </View>
               );
@@ -866,7 +866,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                     styles.tableCellText,
                     {color: primaryColor, fontWeight: '600'},
                   ]}>
-                  무제한
+                  {feat.proValue}
                 </Text>
               </View>
             ))}
