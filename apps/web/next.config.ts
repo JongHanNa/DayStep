@@ -64,6 +64,8 @@ const nextConfig: NextConfig = {
   
   // 환경별 필요한 패키지만 트랜스파일 (성능 최적화)
   transpilePackages: [
+    // 모노레포 내부 패키지
+    '@daystep/shared-core',
     // 필수 Supabase 패키지만 포함
     '@supabase/supabase-js',
     '@supabase/realtime-js',

@@ -27,6 +27,7 @@ import {
   ENTITY_LIMIT_MAP,
   type UsageEntityType,
 } from '@/lib/featureFlags';
+import {PAYWALL_COMPARISON_FEATURES} from '@daystep/shared-core/constants';
 import {
   purchaseSelectedPackage,
   restorePurchases,
@@ -38,20 +39,12 @@ interface SubscriptionViewProps {
   onBack: () => void;
 }
 
-// ─── 사용량 비교 테이블 데이터 ────────────────────────
+// ─── 사용량 비교 테이블 데이터 (단일 소스: @daystep/shared-core) ──────
 
-const USAGE_FEATURES: {
-  name: string;
-  entity: UsageEntityType;
-  unit: string;
-}[] = [
-  {name: '할일', entity: 'todo', unit: '개'},
-  {name: '습관', entity: 'habit', unit: '개'},
-  {name: '프로젝트', entity: 'project', unit: '개'},
-  {name: '원동력', entity: 'note', unit: '개'},
-  {name: '소중한 사람', entity: 'cherished_people', unit: '명'},
-  {name: '관심 기록', entity: 'care_interaction', unit: '개'},
-];
+// entity !== null 인 항목만 usage table에 사용 (통계&인사이트는 불리언 행으로 별도 처리)
+const USAGE_FEATURES = PAYWALL_COMPARISON_FEATURES.filter(
+  f => f.entity !== null,
+).map(f => ({...f, entity: f.entity as UsageEntityType}));
 
 const entityToField: Record<UsageEntityType, keyof UserUsageStats> = {
   todo: 'todoCount',

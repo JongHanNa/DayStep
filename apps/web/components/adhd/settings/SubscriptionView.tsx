@@ -8,10 +8,12 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { FREE_TIER_LIMITS } from '@/lib/featureFlags';
+import { ENTITY_LIMIT_MAP } from '@/lib/featureFlags';
+import type { UsageEntityType } from '@/lib/featureFlags';
 import { useUsageStats } from '@/hooks/useUsageStats';
 import { useSubscriptionStore } from '@/state/stores/subscriptionStore';
 import type { UserUsageStats } from '@/lib/supabase/usage';
+import { PAYWALL_COMPARISON_FEATURES } from '@daystep/shared-core/constants';
 
 // Paddle 설정 (환경변수 기반 — .env.development: sandbox, .env.production: production)
 const PADDLE_CONFIG = {
@@ -81,23 +83,15 @@ function getPlatformLabel(platform?: string) {
   }
 }
 
-// Free vs Pro 비교 테이블 데이터
-const FEATURE_COMPARISON: Array<{
-  name: string;
-  freeLimit: number;
-  unit: string;
-  pro: string | true;
-  statsKey: keyof UserUsageStats | null;
-}> = [
-  { name: '할일', freeLimit: FREE_TIER_LIMITS.MAX_TODOS, unit: '개', pro: '무제한', statsKey: 'todoCount' },
-  { name: '습관', freeLimit: FREE_TIER_LIMITS.MAX_HABITS, unit: '개', pro: '무제한', statsKey: 'habitCount' },
-  { name: '프로젝트', freeLimit: FREE_TIER_LIMITS.MAX_PROJECTS, unit: '개', pro: '무제한', statsKey: 'projectCount' },
-  { name: '노트', freeLimit: FREE_TIER_LIMITS.MAX_NOTES, unit: '개', pro: '무제한', statsKey: 'noteCount' },
-  { name: '연락처 연결', freeLimit: FREE_TIER_LIMITS.MAX_CONTACTS, unit: '개', pro: '무제한', statsKey: 'contactCount' },
-  { name: '소중한 사람', freeLimit: FREE_TIER_LIMITS.MAX_CHERISHED_PEOPLE, unit: '명', pro: '무제한', statsKey: 'cherishedPeopleCount' },
-  { name: '관심 기록', freeLimit: FREE_TIER_LIMITS.MAX_CARE_INTERACTIONS, unit: '개', pro: '무제한', statsKey: 'careInteractionCount' },
-  { name: '통계 & 인사이트', freeLimit: 0, unit: '', pro: true, statsKey: null },
-];
+// Free vs Pro 비교 테이블 — entity → statsKey 매핑 (웹 전용)
+const STATS_KEY_MAP: Record<string, keyof UserUsageStats> = {
+  todo: 'todoCount',
+  habit: 'habitCount',
+  project: 'projectCount',
+  note: 'noteCount',
+  cherished_people: 'cherishedPeopleCount',
+  care_interaction: 'careInteractionCount',
+};
 
 /**
  * 구독 관리 뷰
@@ -1020,27 +1014,30 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {FEATURE_COMPARISON.map((feat) => {
-                      const currentCount = feat.statsKey && usageStats
-                        ? (usageStats[feat.statsKey] as number) || 0
+                    {PAYWALL_COMPARISON_FEATURES.map((feat) => {
+                      const isBoolean = feat.entity === null;
+                      const statsKey = feat.entity ? STATS_KEY_MAP[feat.entity] : null;
+                      const freeLimit = feat.entity ? ENTITY_LIMIT_MAP[feat.entity as UsageEntityType] : 0;
+                      const currentCount = statsKey && usageStats
+                        ? (usageStats[statsKey] as number) || 0
                         : null;
                       return (
                         <tr key={feat.name} className="border-b last:border-0">
                           <td className="py-2.5 pr-4">{feat.name}</td>
                           <td className="py-2.5 px-3 text-center text-muted-foreground">
-                            {feat.statsKey === null ? (
+                            {isBoolean ? (
                               <span className="text-red-400 dark:text-red-500">✕</span>
                             ) : currentCount !== null ? (
-                              `${currentCount}/${feat.freeLimit}${feat.unit}`
+                              `${currentCount}/${freeLimit}${feat.unit}`
                             ) : (
-                              `${feat.freeLimit}${feat.unit}`
+                              `${freeLimit}${feat.unit}`
                             )}
                           </td>
                           <td className="py-2.5 pl-3 text-center font-medium text-primary">
-                            {feat.pro === true ? (
+                            {isBoolean ? (
                               <span className="text-green-600 dark:text-green-400">✓</span>
                             ) : (
-                              feat.pro
+                              '무제한'
                             )}
                           </td>
                         </tr>

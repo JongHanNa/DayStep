@@ -43,6 +43,7 @@
     "package:electron:win": "electron-builder --win"
   },
   "dependencies": {
+    "@daystep/shared-core": "*",
     "@codemirror/commands": "^6.8.1",
     "@codemirror/lang-markdown": "^6.3.4",
     "@codemirror/state": "^6.5.2",

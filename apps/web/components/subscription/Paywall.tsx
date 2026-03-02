@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PRO_FEATURES } from '@/lib/featureFlags';
+import { PAYWALL_COMPARISON_FEATURES } from '@daystep/shared-core/constants';
 import { useSubscription } from '@/hooks/useSubscription';
 
 interface PaywallProps {
@@ -126,22 +127,18 @@ export function Paywall({
               Pro 구독으로 잠금 해제
             </h3>
             <div className="space-y-3">
-              {PRO_FEATURES.map((feature) => (
+              {PAYWALL_COMPARISON_FEATURES.map((feat) => (
                 <div
-                  key={feature.id}
-                  className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                    feature.id === featureId
-                      ? 'bg-primary/10'
-                      : 'bg-muted/50'
-                  }`}
+                  key={feat.name}
+                  className="flex items-start gap-3 p-3 rounded-lg transition-colors bg-muted/50"
                 >
                   <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <h4 className="font-medium text-foreground text-sm">
-                      {feature.name}
+                      {feat.proLabel}
                     </h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {feature.description}
+                      {feat.description}
                     </p>
                   </div>
                 </div>
