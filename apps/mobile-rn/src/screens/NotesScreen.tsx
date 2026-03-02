@@ -21,6 +21,8 @@ import {
 import {MotivationEmptyState} from '@/components/motivation/MotivationEmptyState';
 import {useNoteStore} from '@/stores/noteStore';
 import {useAuthStore} from '@/stores/authStore';
+import {useLimitCheck} from '@/hooks/useLimitCheck';
+import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {
   calculateStreak,
   calculateXP,
@@ -41,6 +43,7 @@ export default function NotesScreen() {
     deleteNote,
     setBannerPinned,
   } = useNoteStore();
+  const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
 
   const inputSheetRef = useRef<FuelInputBottomSheetRef>(null);
   const detailSheetRef = useRef<FuelDetailBottomSheetRef>(null);
@@ -96,17 +99,21 @@ export default function NotesScreen() {
   }, [user?.id, fetchFuelNotes]);
 
   const handleInlineSubmit = useCallback(
-    (content: string, emotionTag?: EmotionTag) => {
+    async (content: string, emotionTag?: EmotionTag) => {
+      const allowed = await checkLimit('note');
+      if (!allowed) return;
       createFuelNote({content, emotion_tag: emotionTag});
     },
-    [createFuelNote],
+    [createFuelNote, checkLimit],
   );
 
   const handleSheetSubmit = useCallback(
-    (input: {content: string; title?: string; emotion_tag?: EmotionTag}) => {
+    async (input: {content: string; title?: string; emotion_tag?: EmotionTag}) => {
+      const allowed = await checkLimit('note');
+      if (!allowed) return;
       createFuelNote(input);
     },
-    [createFuelNote],
+    [createFuelNote, checkLimit],
   );
 
   const handleNotePress = useCallback(
@@ -183,6 +190,13 @@ export default function NotesScreen() {
         onUpdate={handleUpdate}
         onPin={handlePin}
         onDelete={handleDelete}
+      />
+      <LimitReachedModal
+        visible={isLimitReached}
+        onClose={closeLimitModal}
+        entityType={limitedEntity}
+        currentCount={currentCount}
+        maxCount={maxCount}
       />
     </ScreenContainer>
   );

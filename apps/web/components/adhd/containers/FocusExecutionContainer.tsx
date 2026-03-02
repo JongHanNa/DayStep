@@ -38,6 +38,8 @@ import {
   AdhocNoteConnectionView,
 } from '../screens/execute/components';
 import { useExecutionRecommendation } from '../hooks/useExecutionRecommendation';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 
 interface ExecutionContainerProps {
   onExit: () => void;
@@ -98,6 +100,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
 
   const { todos, toggleTodo, deleteTodo, createTodo, updateTodo, fetchTodoById } = useTodoStore();
   const { getTodayTodos, getTodayCompletedTodos } = useExecutionRecommendation();
+  const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 상태
   const [viewState, setViewState] = useState<ExecutionViewState>('distraction-plan');
@@ -411,38 +414,42 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
     const { sessionId } = executionMode.adhocMode;
     const titleToSave = inlineTodoInput.trim();
     setInlineTodoInput('');
-    setIsCreatingTodo(true);
 
-    try {
-      let startTime = new Date().toISOString();
-      let endTime = startTime;
+    await checkAndProceed('todo', async () => {
+      setIsCreatingTodo(true);
+      try {
+        let startTime = new Date().toISOString();
+        let endTime = startTime;
 
-      if (sessionId) {
-        const session = await PomodoroSessionService.getSession(sessionId);
-        if (session) {
-          startTime = session.start_time;
-          endTime = new Date(new Date(session.start_time).getTime() + session.duration).toISOString();
+        if (sessionId) {
+          const session = await PomodoroSessionService.getSession(sessionId);
+          if (session) {
+            startTime = session.start_time;
+            endTime = new Date(new Date(session.start_time).getTime() + session.duration).toISOString();
+          }
         }
-      }
 
-      const newTodo = await createTodo({
-        title: titleToSave,
-        completed: false,
-        schedule_type: 'timed',
-        start_time: startTime,
-        end_time: endTime,
-        user_id: userId,
-      });
+        const newTodo = await createTodo({
+          title: titleToSave,
+          completed: false,
+          schedule_type: 'timed',
+          start_time: startTime,
+          end_time: endTime,
+          user_id: userId,
+        });
 
-      if (sessionId && newTodo?.id) {
-        await PomodoroSessionService.linkTodo(sessionId, newTodo.id);
-        setLinkedTodo(newTodo.id, titleToSave);
+        onCreateSuccess('todo');
+
+        if (sessionId && newTodo?.id) {
+          await PomodoroSessionService.linkTodo(sessionId, newTodo.id);
+          setLinkedTodo(newTodo.id, titleToSave);
+        }
+      } catch (error) {
+        console.error('할일 생성 실패:', error);
+      } finally {
+        setIsCreatingTodo(false);
       }
-    } catch (error) {
-      console.error('할일 생성 실패:', error);
-    } finally {
-      setIsCreatingTodo(false);
-    }
+    });
   };
 
   // 연결된 할일 제목 수정
@@ -529,15 +536,24 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
       });
       todoIdForNote = linkedTodoId;
     } else {
-      const newTodo = await createTodo({
-        title: adhocCaptureTitle.trim(),
-        completed: true,
-        schedule_type: 'timed',
-        start_time: sessionStartTime.toISOString(),
-        end_time: sessionEndTime.toISOString(),
-        user_id: userId,
+      let wasBlocked = true;
+      await checkAndProceed('todo', async () => {
+        wasBlocked = false;
+        const newTodo = await createTodo({
+          title: adhocCaptureTitle.trim(),
+          completed: true,
+          schedule_type: 'timed',
+          start_time: sessionStartTime.toISOString(),
+          end_time: sessionEndTime.toISOString(),
+          user_id: userId,
+        });
+        if (newTodo) {
+          todoIdForNote = newTodo.id;
+          onCreateSuccess('todo');
+        }
       });
-      if (newTodo) todoIdForNote = newTodo.id;
+      // 한도 초과로 차단된 경우 이후 로직 중단
+      if (wasBlocked) { setIsAnimating(false); return; }
     }
 
     if (sessionId) {
@@ -930,6 +946,15 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
             <button onClick={() => setShowStopConfirmModal(false)}>close</button>
           </form>
         </dialog>
+      )}
+
+      {/* 용량 제한 모달 */}
+      {limitResult && (
+        <UsageLimitModal
+          isOpen={isLimitModalOpen}
+          onClose={closeLimitModal}
+          result={limitResult}
+        />
       )}
     </div>
   );

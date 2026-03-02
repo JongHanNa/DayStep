@@ -11,6 +11,8 @@ import { useAuth } from '@/app/context/AuthContext';
 import type { Project, Todo, ProjectStatus } from '@/types';
 import type { Note } from '@/types/domain';
 import { fetchNotesWithJWT } from '@/lib/supabase/notes';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import SubtaskList from '@/components/todos/SubtaskList';
 import TodoEditModal from '@/components/todos/TodoEditModal';
 import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
@@ -79,6 +81,8 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
     fetchProjects,
     projects,
   } = useProjectStore();
+
+  const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 연결된 실행 원동력을 위한 fuel 노트 상태
   const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
@@ -152,9 +156,10 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
   const handleSave = async () => {
     if (!userId || !title.trim()) return;
 
-    setIsLoading(true);
-    try {
-      if (isEditing && project) {
+    if (isEditing && project) {
+      // 편집: 한도 체크 없이 저장
+      setIsLoading(true);
+      try {
         await updateProject(userId, {
           id: project.id,
           title: title.trim(),
@@ -162,20 +167,32 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
           color,
           icon: icon || null,
         });
-      } else {
-        await createProject(userId, {
-          title: title.trim(),
-          description: description.trim() || null,
-          color,
-          icon: icon || null,
-          status: status, // 사용자가 선택한 상태 사용
-        });
+        onClose();
+      } catch (error) {
+        console.error('프로젝트 저장 오류:', error);
+      } finally {
+        setIsLoading(false);
       }
-      onClose();
-    } catch (error) {
-      console.error('프로젝트 저장 오류:', error);
-    } finally {
-      setIsLoading(false);
+    } else {
+      // 신규 생성: 한도 체크
+      await checkAndProceed('project', async () => {
+        setIsLoading(true);
+        try {
+          await createProject(userId, {
+            title: title.trim(),
+            description: description.trim() || null,
+            color,
+            icon: icon || null,
+            status: status,
+          });
+          onCreateSuccess('project');
+          onClose();
+        } catch (error) {
+          console.error('프로젝트 저장 오류:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      });
     }
   };
 
@@ -693,6 +710,15 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
       <form method="dialog" className="modal-backdrop">
         <button onClick={onClose}>close</button>
       </form>
+
+      {/* 용량 제한 모달 */}
+      {limitResult && (
+        <UsageLimitModal
+          isOpen={isLimitModalOpen}
+          onClose={closeLimitModal}
+          result={limitResult}
+        />
+      )}
 
       {/* 할일 편집 모달 */}
       {editingTodo && editFormData && (

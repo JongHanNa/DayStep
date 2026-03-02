@@ -16,6 +16,7 @@ import React, {
 import {Keyboard} from 'react-native';
 import {useTodoForm} from './useTodoForm';
 import {TodoCreatePanel, type TodoCreatePanelRef} from './TodoCreatePanel';
+import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {TodoEditOverlay} from './TodoEditOverlay';
 import {SchedulePanel, type SchedulePanelRef} from './SchedulePanel';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -103,6 +104,14 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           updateField={formHook.updateField}
         />
 
+        {/* 한도 초과 모달 */}
+        <LimitReachedModal
+          visible={formHook.isLimitReached}
+          onClose={formHook.closeLimitModal}
+          entityType={formHook.limitedEntity}
+          currentCount={formHook.currentCount}
+          maxCount={formHook.maxCount}
+        />
       </>
     );
   },

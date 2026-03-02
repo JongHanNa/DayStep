@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, Check, CalendarPlus } from 'lucide-react';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { CreateTodoInput } from '@/types';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { format, subMinutes } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -36,6 +38,7 @@ export default function QuickLogModal({
   initialMode,
 }: QuickLogModalProps) {
   const { createTodo } = useTodoStore();
+  const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 모달 모드: select(선택), detailed(상세), new(새 일정)
   // initialMode가 있으면 사용, 없으면 prefillStartTime 기반 기존 로직
@@ -115,68 +118,74 @@ export default function QuickLogModal({
   const handleDetailedSave = async () => {
     if (!title.trim()) return;
 
-    setIsLoading(true);
-    try {
-      const [hours, minutes] = startTime.split(':').map(Number);
-      const startDate = new Date();
-      startDate.setHours(hours, minutes, 0, 0);
-      const endDate = calculateEndTime(startTime, effectiveDuration);
+    await checkAndProceed('todo', async () => {
+      setIsLoading(true);
+      try {
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = calculateEndTime(startTime, effectiveDuration);
 
-      const todoInput: CreateTodoInput = {
-        title: title.trim(),
-        schedule_type: 'timed',
-        start_time: startDate.toISOString(),
-        end_time: endDate.toISOString(),
-        completed: true, // 이미 완료한 일이므로
-      };
+        const todoInput: CreateTodoInput = {
+          title: title.trim(),
+          schedule_type: 'timed',
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
+          completed: true, // 이미 완료한 일이므로
+        };
 
-      await createTodo(todoInput);
+        await createTodo(todoInput);
+        onCreateSuccess('todo');
 
-      // 성공 피드백
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        handleClose();
-      }, 1000);
-    } catch (error) {
-      console.error('사후 기록 저장 실패:', error);
-    } finally {
-      setIsLoading(false);
-    }
+        // 성공 피드백
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          handleClose();
+        }, 1000);
+      } catch (error) {
+        console.error('사후 기록 저장 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    });
   };
 
   // 새 일정/할일 등록으로 저장 (미완료 상태)
   const handleNewSave = async () => {
     if (!title.trim()) return;
 
-    setIsLoading(true);
-    try {
-      const [hours, minutes] = startTime.split(':').map(Number);
-      const startDate = new Date();
-      startDate.setHours(hours, minutes, 0, 0);
-      const endDate = calculateEndTime(startTime, effectiveDuration);
+    await checkAndProceed('todo', async () => {
+      setIsLoading(true);
+      try {
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes, 0, 0);
+        const endDate = calculateEndTime(startTime, effectiveDuration);
 
-      const todoInput: CreateTodoInput = {
-        title: title.trim(),
-        schedule_type: 'timed',
-        start_time: startDate.toISOString(),
-        end_time: endDate.toISOString(),
-        completed: false, // 미완료 상태로 등록
-      };
+        const todoInput: CreateTodoInput = {
+          title: title.trim(),
+          schedule_type: 'timed',
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
+          completed: false, // 미완료 상태로 등록
+        };
 
-      await createTodo(todoInput);
+        await createTodo(todoInput);
+        onCreateSuccess('todo');
 
-      // 성공 피드백
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        handleClose();
-      }, 1000);
-    } catch (error) {
-      console.error('새 일정 등록 실패:', error);
-    } finally {
-      setIsLoading(false);
-    }
+        // 성공 피드백
+        setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          handleClose();
+        }, 1000);
+      } catch (error) {
+        console.error('새 일정 등록 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    });
   };
 
   // 모달 닫기 (상태 초기화)
@@ -492,6 +501,15 @@ export default function QuickLogModal({
           <button onClick={handleClose}>close</button>
         </form>
       </dialog>
+
+      {/* 용량 제한 모달 */}
+      {limitResult && (
+        <UsageLimitModal
+          isOpen={isLimitModalOpen}
+          onClose={closeLimitModal}
+          result={limitResult}
+        />
+      )}
     </AnimatePresence>
   );
 }

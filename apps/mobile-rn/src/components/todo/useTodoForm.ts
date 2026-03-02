@@ -7,6 +7,7 @@ import {useCallback, useState} from 'react';
 import {Alert} from 'react-native';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
+import {useLimitCheck} from '@/hooks/useLimitCheck';
 import {format, addHours, parseISO, isToday} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {getAlarmsLabel} from '@/lib/notifications';
@@ -118,6 +119,7 @@ export function getDateSummaryExtras(form: FormData): string[] {
 export function useTodoForm() {
   const haptic = useHaptic();
   const {createTodo, updateTodo, selectedDate} = useTodoStore();
+  const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
 
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
@@ -239,6 +241,12 @@ export function useTodoForm() {
         let savedTodoId: string | null = null;
 
         if (mode === 'create') {
+          const entityType = form.recurrencePattern !== 'none' ? 'habit' : 'todo';
+          const allowed = await checkLimit(entityType);
+          if (!allowed) {
+            setSaving(false);
+            return;
+          }
           const result = await createTodo(baseData as any);
           savedTodoId = result?.id ?? null;
         } else if (editingTodo) {
@@ -356,6 +364,12 @@ export function useTodoForm() {
     handleDelete,
     resetForCreate,
     loadForEdit,
+    // 한도 체크 관련
+    isLimitReached,
+    limitedEntity,
+    currentCount,
+    maxCount,
+    closeLimitModal,
   };
 }
 

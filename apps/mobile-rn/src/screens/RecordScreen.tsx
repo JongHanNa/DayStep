@@ -26,6 +26,8 @@ import {
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
+import {useLimitCheck} from '@/hooks/useLimitCheck';
+import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {
   INTERACTION_TYPE_LABELS,
   type InteractionType,
@@ -90,6 +92,7 @@ export default function RecordScreen() {
     addInteraction,
     addInteractionWithTodo,
   } = useCherishedPeopleStore();
+  const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
 
   const [step, setStep] = useState<Step>('select-person');
   const [selectedPerson, setSelectedPerson] = useState<CherishedPerson | null>(null);
@@ -129,41 +132,39 @@ export default function RecordScreen() {
   const handleAddNewPerson = useCallback(async () => {
     if (!user?.id || !searchQuery.trim()) return;
 
+    const doAddPerson = async (name: string) => {
+      const allowed = await checkLimit('cherished_people');
+      if (!allowed) return;
+      const person = await addPerson(user.id, {name: name.trim()});
+      if (person) {
+        setSelectedPerson(person);
+        setStep('write-news');
+      }
+    };
+
     Alert.prompt
       ? Alert.prompt(
           '새 사람 추가',
           '이름을 입력하세요',
           async (name: string) => {
-            if (name.trim()) {
-              const person = await addPerson(user.id, {name: name.trim()});
-              if (person) {
-                setSelectedPerson(person);
-                setStep('write-news');
-              }
-            }
+            if (name.trim()) await doAddPerson(name);
           },
           'plain-text',
           searchQuery,
         )
       : Alert.alert('새 사람 추가', `"${searchQuery}" 님을 추가할까요?`, [
           {text: '취소', style: 'cancel'},
-          {
-            text: '추가',
-            onPress: async () => {
-              const person = await addPerson(user.id, {
-                name: searchQuery.trim(),
-              });
-              if (person) {
-                setSelectedPerson(person);
-                setStep('write-news');
-              }
-            },
-          },
+          {text: '추가', onPress: () => doAddPerson(searchQuery)},
         ]);
-  }, [user?.id, searchQuery, addPerson]);
+  }, [user?.id, searchQuery, addPerson, checkLimit]);
 
   const handleSave = useCallback(async () => {
     if (!user?.id || !selectedPerson) return;
+
+    // 관심 기록 한도 체크
+    const allowed = await checkLimit('care_interaction');
+    if (!allowed) return;
+
     setSaving(true);
 
     const input: CareInteractionInput = {
@@ -203,6 +204,7 @@ export default function RecordScreen() {
     meetingNote,
     wantToCreateTodo,
     todoTitle,
+    checkLimit,
   ]);
 
   const handleRecordAgain = useCallback(() => {
@@ -520,6 +522,8 @@ export default function RecordScreen() {
               Alert.prompt
                 ? Alert.prompt('새 사람 추가', '이름을 입력하세요', async (name: string) => {
                     if (name.trim() && user?.id) {
+                      const allowed = await checkLimit('cherished_people');
+                      if (!allowed) return;
                       const person = await addPerson(user.id, {name: name.trim()});
                       if (person) handleSelectPerson(person);
                     }
@@ -532,6 +536,13 @@ export default function RecordScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <LimitReachedModal
+        visible={isLimitReached}
+        onClose={closeLimitModal}
+        entityType={limitedEntity}
+        currentCount={currentCount}
+        maxCount={maxCount}
+      />
     </ScreenContainer>
   );
 }

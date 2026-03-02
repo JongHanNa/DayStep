@@ -122,15 +122,18 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
 
   // 인라인 빠른 생성
   const handleQuickCreate = useCallback(async (content: string, emotionTag?: EmotionTag) => {
-    try {
-      await createFuelNote({
-        content,
-        emotion_tag: emotionTag,
-      });
-    } catch (error) {
-      console.error('원동력 저장 실패:', error);
-    }
-  }, [createFuelNote]);
+    await checkAndProceed('note', async () => {
+      try {
+        await createFuelNote({
+          content,
+          emotion_tag: emotionTag,
+        });
+        onCreateSuccess('note');
+      } catch (error) {
+        console.error('원동력 저장 실패:', error);
+      }
+    });
+  }, [createFuelNote, checkAndProceed, onCreateSuccess]);
 
   // 배너 고정 토글
   const handleToggleBannerPin = useCallback(async (note: Note) => {
@@ -237,17 +240,20 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     if (!draftContent.trim()) return;
     setIsSaving(true);
     try {
-      const note = await createFuelNote({
-        title: draftTitle.trim() || undefined,
-        content: draftContent.trim(),
-        emotion_tag: modalEmotion ?? undefined,
+      await checkAndProceed('note', async () => {
+        const note = await createFuelNote({
+          title: draftTitle.trim() || undefined,
+          content: draftContent.trim(),
+          emotion_tag: modalEmotion ?? undefined,
+        });
+        if (note) {
+          onCreateSuccess('note');
+          resetFuelDraft();
+          setModalEmotion(null);
+          enterExecuteMode(userId);
+          goFuel('execute');
+        }
       });
-      if (note) {
-        resetFuelDraft();
-        setModalEmotion(null);
-        enterExecuteMode(userId);
-        goFuel('execute');
-      }
     } catch (error) {
       console.error('원동력 저장 실패:', error);
     } finally {
@@ -259,15 +265,18 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     if (!draftContent.trim()) return;
     setIsSaving(true);
     try {
-      const note = await createFuelNote({
-        title: draftTitle.trim() || undefined,
-        content: draftContent.trim(),
-        emotion_tag: modalEmotion ?? undefined,
+      await checkAndProceed('note', async () => {
+        const note = await createFuelNote({
+          title: draftTitle.trim() || undefined,
+          content: draftContent.trim(),
+          emotion_tag: modalEmotion ?? undefined,
+        });
+        if (note) {
+          onCreateSuccess('note');
+          resetFuelDraft();
+          setModalEmotion(null);
+        }
       });
-      if (note) {
-        resetFuelDraft();
-        setModalEmotion(null);
-      }
     } catch (error) {
       console.error('원동력 저장 실패:', error);
     } finally {
@@ -279,13 +288,16 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     if (!draftContent.trim()) return;
     setIsSaving(true);
     try {
-      await createFuelNote({
-        title: draftTitle.trim() || undefined,
-        content: draftContent.trim(),
-        emotion_tag: modalEmotion ?? undefined,
+      await checkAndProceed('note', async () => {
+        await createFuelNote({
+          title: draftTitle.trim() || undefined,
+          content: draftContent.trim(),
+          emotion_tag: modalEmotion ?? undefined,
+        });
+        onCreateSuccess('note');
+        resetFuelDraft();
+        setModalEmotion(null);
       });
-      resetFuelDraft();
-      setModalEmotion(null);
     } catch (error) {
       console.error('원동력 저장 실패:', error);
     } finally {

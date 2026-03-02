@@ -13,6 +13,8 @@ import SubtaskSection from '@/components/todos/SubtaskSection';
 import { useModalStore } from '@/state/stores/modalStore';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 import { useNoteStore } from '@/state/stores/noteStore';
+import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
+import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import type { Note } from '@/types/domain';
 import type { Todo, Project } from '@/types';
 
@@ -98,6 +100,7 @@ export default function TodoEditModal({
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
   const { createFuelNote } = useNoteStore();
+  const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 삭제 확인 다이얼로그 상태
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -134,7 +137,7 @@ export default function TodoEditModal({
   }, [originalStartTime, todo?.startTime]);
 
   // 저장 버튼 클릭 핸들러
-  const handleSaveClick = useCallback(() => {
+  const handleSaveClick = useCallback(async () => {
     if (!todo) return;
 
     // 원본이 반복 할일이었는지 확인 (폼 값이 아닌 원본 값 사용)
@@ -147,6 +150,22 @@ export default function TodoEditModal({
     const titleChanged = hasTitleChanged();
     const timeChanged = hasTimeChanged();
 
+    // 신규 생성 시 (todoId 없음) 한도 체크
+    if (!todoId) {
+      const entityType = isNowRecurring ? 'habit' : 'todo';
+      await checkAndProceed(entityType, async () => {
+        if (wasRecurring && !isConvertingToNonRecurring && (titleChanged || timeChanged) && onRecurringSave) {
+          setChangedFields({ title: titleChanged, time: timeChanged });
+          setShowTimeChangeDialog(true);
+        } else {
+          onSave(todo);
+          onCreateSuccess(entityType);
+        }
+      });
+      return;
+    }
+
+    // 편집 시 (todoId 있음): 한도 체크 없이 저장
     // 원본이 반복 할일이고 제목 또는 시간이 변경된 경우에만 다이얼로그 표시
     // 단, 반복 → 반복 안함 변환 시에는 모달 없이 저장 (선택지 불필요)
     if (wasRecurring && !isConvertingToNonRecurring && (titleChanged || timeChanged) && onRecurringSave) {
@@ -156,7 +175,7 @@ export default function TodoEditModal({
       // 일반 저장 (일반 → 반복 변환 포함, 반복 → 반복 안함 변환 포함)
       onSave(todo);
     }
-  }, [todo, originalRecurrencePattern, hasTitleChanged, hasTimeChanged, onRecurringSave, onSave]);
+  }, [todo, todoId, originalRecurrencePattern, hasTitleChanged, hasTimeChanged, onRecurringSave, onSave, checkAndProceed, onCreateSuccess]);
 
   // 반복 시간 변경 확인 핸들러
   const handleTimeChangeConfirm = useCallback(async (updateType: 'this' | 'future' | 'all') => {
@@ -405,6 +424,15 @@ export default function TodoEditModal({
       <form method="dialog" className="modal-backdrop">
         <button onClick={onClose}>close</button>
       </form>
+
+      {/* 용량 제한 모달 */}
+      {limitResult && (
+        <UsageLimitModal
+          isOpen={isLimitModalOpen}
+          onClose={closeLimitModal}
+          result={limitResult}
+        />
+      )}
 
       {/* 노트 편집 모달 */}
       <NoteEditModal

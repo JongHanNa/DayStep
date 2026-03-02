@@ -27,6 +27,8 @@ import {
 } from 'lucide-react-native';
 import {useProjectStore} from '@/stores/projectStore';
 import {useAuthStore} from '@/stores/authStore';
+import {useLimitCheck} from '@/hooks/useLimitCheck';
+import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import type {Project, ProjectStatus} from '@/types/project';
 import {PROJECT_COLORS, PROJECT_ICONS} from '@/types/project';
 
@@ -202,6 +204,7 @@ export default function AIPlanScreen() {
     resumeProject,
     setStatusFilter,
   } = useProjectStore();
+  const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
 
   // 생성/편집 폼
   const [showForm, setShowForm] = useState(false);
@@ -283,17 +286,19 @@ export default function AIPlanScreen() {
         color: formColor,
         icon: formIcon,
       });
+      setShowForm(false);
     } else {
+      const allowed = await checkLimit('project');
+      if (!allowed) return;
       await createProject(user.id, {
         title: formTitle.trim(),
         description: formDesc.trim() || null,
         color: formColor,
         icon: formIcon,
       });
+      setShowForm(false);
     }
-
-    setShowForm(false);
-  }, [user?.id, editingProject, formTitle, formDesc, formColor, formIcon]);
+  }, [user?.id, editingProject, formTitle, formDesc, formColor, formIcon, checkLimit]);
 
   // ── 생성/편집 폼 ──
   if (showForm) {
@@ -419,6 +424,13 @@ export default function AIPlanScreen() {
             </Text>
           </View>
         }
+      />
+      <LimitReachedModal
+        visible={isLimitReached}
+        onClose={closeLimitModal}
+        entityType={limitedEntity}
+        currentCount={currentCount}
+        maxCount={maxCount}
       />
     </ScreenContainer>
   );
