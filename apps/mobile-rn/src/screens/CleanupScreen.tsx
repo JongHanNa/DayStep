@@ -7,7 +7,6 @@
  * [습관] 반복 종료된 할일
  * [프로젝트] 완료·보류 중 프로젝트
  * [원동력] 전체 원동력 노트 (선택 삭제)
- * [소중한 사람] 비활성 인물
  * [관심기록] 90일 이상 지난 기록
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
@@ -50,7 +49,6 @@ type CategoryKey =
   | 'completedProjects'
   | 'onHoldProjects'
   | 'allNotes'
-  | 'inactivePeople'
   | 'oldInteractions';
 
 interface CategoryDef {
@@ -133,19 +131,6 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
         description: '기록된 원동력 노트 전체 목록이에요. 정리할 항목을 선택하세요.',
         color: '#7C3AED',
         bgColor: '#EDE9FE',
-      },
-    ],
-  },
-  {
-    groupTitle: '👥 소중한 사람',
-    categories: [
-      {
-        key: 'inactivePeople',
-        icon: '🚫',
-        title: '비활성 인물',
-        description: '비활성 상태로 표시된 인물이에요. 완전히 삭제할 수 있어요.',
-        color: '#6B7280',
-        bgColor: '#F3F4F6',
       },
     ],
   },
@@ -574,7 +559,6 @@ const ITEM_LABEL: Record<CategoryKey, string> = {
   completedProjects: '프로젝트',
   onHoldProjects: '프로젝트',
   allNotes: '원동력',
-  inactivePeople: '인물',
   oldInteractions: '기록',
 };
 
@@ -591,7 +575,6 @@ const EMPTY_DATA: CategorizedData = {
   completedProjects: [],
   onHoldProjects: [],
   allNotes: [],
-  inactivePeople: [],
   oldInteractions: [],
 };
 
@@ -626,7 +609,6 @@ export default function CleanupScreen() {
         completedProjectsRes,
         onHoldProjectsRes,
         notesRes,
-        inactivePeopleRes,
         oldInteractionsRes,
       ] = await Promise.all([
         // 종료일 지난 미완료 일반 할일
@@ -682,14 +664,6 @@ export default function CleanupScreen() {
           .eq('user_id', user.id)
           .eq('note_category', 'fuel')
           .order('created_at', {ascending: false}),
-
-        // 비활성 소중한 사람
-        supabase
-          .from('cherished_people')
-          .select('id, name, updated_at')
-          .eq('user_id', user.id)
-          .eq('is_active', false)
-          .order('updated_at', {ascending: false}),
 
         // 90일 이상 지난 관심기록
         supabase
@@ -748,11 +722,6 @@ export default function CleanupScreen() {
           title: n.title ?? n.content?.slice(0, 40) ?? '(내용 없음)',
           subtitle: fmtDate(n.created_at, ''),
         })),
-        inactivePeople: (inactivePeopleRes.data ?? []).map((p: any) => ({
-          id: p.id,
-          title: p.name,
-          subtitle: '비활성',
-        })),
         oldInteractions: (oldInteractionsRes.data ?? []).map((i: any) => ({
           id: i.id,
           title: `${interactionTypeLabel[i.interaction_type] ?? i.interaction_type}`,
@@ -783,7 +752,6 @@ export default function CleanupScreen() {
       {icon: '🔁', label: '습관', count: categorized.pastRecurring.length},
       {icon: '📁', label: '프로젝트', count: categorized.completedProjects.length + categorized.onHoldProjects.length},
       {icon: '💡', label: '원동력', count: categorized.allNotes.length},
-      {icon: '👥', label: '소중한 사람', count: categorized.inactivePeople.length},
       {icon: '📅', label: '관심기록', count: categorized.oldInteractions.length},
     ],
     [categorized],
@@ -814,19 +782,6 @@ export default function CleanupScreen() {
         }
         case 'allNotes': {
           await Promise.allSettled(ids.map(id => deleteNote(id)));
-          break;
-        }
-        case 'inactivePeople': {
-          // 스토어에 hard delete 없음 → 직접 Supabase 호출
-          await Promise.allSettled(
-            ids.map(id =>
-              supabase
-                .from('cherished_people')
-                .delete()
-                .eq('id', id)
-                .eq('user_id', user.id!),
-            ),
-          );
           break;
         }
         case 'oldInteractions': {
@@ -948,7 +903,7 @@ export default function CleanupScreen() {
                     count={categorized[cat.key].length}
                     onPress={() => openSheet(cat)}
                     enterDelay={groupDelay + i * 80}
-                    unit={cat.key === 'inactivePeople' ? '명' : '개'}
+                    unit="개"
                   />
                 ))}
               </View>

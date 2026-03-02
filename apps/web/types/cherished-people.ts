@@ -29,7 +29,6 @@ export interface CherishedPerson {
   nickname: string | null;
   relationships: string[];    // 복수 관계 (배열) - 자유 입력
   roles: string[];            // 역할/직분 (배열) - 자유 입력
-  is_active: boolean;
   last_interaction_at: string | null;
   interaction_count: number;
   created_at: string;

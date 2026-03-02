@@ -83,7 +83,6 @@ export type Database = {
           departments: string[] | null
           id: string
           interaction_count: number | null
-          is_active: boolean | null
           last_interaction_at: string | null
           name: string
           nickname: string | null
@@ -97,7 +96,6 @@ export type Database = {
           departments?: string[] | null
           id?: string
           interaction_count?: number | null
-          is_active?: boolean | null
           last_interaction_at?: string | null
           name: string
           nickname?: string | null
@@ -111,7 +109,6 @@ export type Database = {
           departments?: string[] | null
           id?: string
           interaction_count?: number | null
-          is_active?: boolean | null
           last_interaction_at?: string | null
           name?: string
           nickname?: string | null

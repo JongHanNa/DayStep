@@ -35,7 +35,6 @@ export class CherishedPeopleService {
     try {
       const data = await queryRLSTableWithJWT('cherished_people', [
         { column: 'user_id', operator: 'eq', value: userId },
-        { column: 'is_active', operator: 'eq', value: true },
       ], { order: 'name.asc' });
 
       console.log('👥 소중한 사람 목록 조회:', data?.length || 0, '명');
@@ -57,7 +56,6 @@ export class CherishedPeopleService {
       user_id: userId,
       name: input.name.trim(),
       nickname: input.nickname?.trim() || null,
-      is_active: true,
       interaction_count: 0,
     };
 
@@ -92,30 +90,6 @@ export class CherishedPeopleService {
       return true;
     } catch (error) {
       console.error('❌ 소중한 사람 수정 오류:', error);
-      return false;
-    }
-  }
-
-  /**
-   * 소중한 사람 비활성화 (소프트 삭제)
-   */
-  static async deactivatePerson(
-    personId: string,
-    userId: string
-  ): Promise<boolean> {
-    try {
-      await updateWithJWT(
-        'cherished_people',
-        [
-          { column: 'id', operator: 'eq', value: personId },
-          { column: 'user_id', operator: 'eq', value: userId },
-        ],
-        { is_active: false, updated_at: new Date().toISOString() }
-      );
-      console.log('🗑️ 소중한 사람 비활성화:', personId);
-      return true;
-    } catch (error) {
-      console.error('❌ 소중한 사람 비활성화 오류:', error);
       return false;
     }
   }

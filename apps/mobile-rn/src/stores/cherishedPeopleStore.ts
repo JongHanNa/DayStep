@@ -23,7 +23,6 @@ export interface CherishedPerson {
   nickname?: string;
   relationships: string[];
   roles: string[];
-  is_active: boolean;
   last_interaction_at?: string;
   interaction_count: number;
   created_at: string;
@@ -51,7 +50,6 @@ interface CherishedPeopleState {
   // 사람 CRUD (신규)
   addPerson: (userId: string, data: {name: string; nickname?: string}) => Promise<CherishedPerson | null>;
   updatePerson: (userId: string, personId: string, data: Partial<{name: string; nickname: string}>) => Promise<boolean>;
-  deactivatePerson: (personId: string, userId: string) => Promise<boolean>;
 
   // CareInteraction CRUD (신규)
   addInteraction: (userId: string, input: CareInteractionInput) => Promise<CareInteraction | null>;
@@ -95,8 +93,7 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           const {data, error} = await supabase
             .from('cherished_people')
             .select('*')
-            .eq('user_id', userId)
-            .eq('is_active', true);
+            .eq('user_id', userId);
 
           if (error) throw error;
 
@@ -168,7 +165,6 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
               user_id: userId,
               name: data.name,
               nickname: data.nickname ?? null,
-              is_active: true,
               interaction_count: 0,
               relationships: [],
               roles: [],
@@ -211,26 +207,6 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           return true;
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Update person error:', err);
-          return false;
-        }
-      },
-
-      deactivatePerson: async (personId, userId) => {
-        try {
-          const {error} = await supabase
-            .from('cherished_people')
-            .update({is_active: false, updated_at: new Date().toISOString()})
-            .eq('id', personId)
-            .eq('user_id', userId);
-
-          if (error) throw error;
-
-          set(state => ({
-            people: state.people.filter(p => p.id !== personId),
-          }));
-          return true;
-        } catch (err: any) {
-          console.error('[CherishedPeopleStore] Deactivate error:', err);
           return false;
         }
       },
