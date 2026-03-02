@@ -5,7 +5,7 @@
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
-import {zustandMMKVStorage} from '@/lib/mmkv';
+import {zustandMMKVStorage, sessionStorage} from '@/lib/mmkv';
 import type {Session, User, AuthChangeEvent} from '@supabase/supabase-js';
 
 interface AuthState {
@@ -70,8 +70,16 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({initializing: true, error: null});
 
-          // 1. 기존 세션 복원
-          const {data: {session}, error} = await supabase.auth.getSession();
+          // 1. 기존 세션 복원 (10초 타임아웃: 만료 세션의 refreshSession hang 방지)
+          const sessionPromise = supabase.auth.getSession();
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Auth init timeout (10s)')), 10_000),
+          );
+
+          const {data: {session}, error} = await Promise.race([
+            sessionPromise,
+            timeoutPromise,
+          ]);
           if (error) throw error;
 
           if (session) {
@@ -122,6 +130,12 @@ export const useAuthStore = create<AuthState>()(
           );
         } catch (err: any) {
           console.error('[Auth] Initialize error:', err);
+          // 타임아웃 시 stale 세션 초기화 → 다음 실행에서 즉시 getSession null 반환
+          if (err.message?.includes('timeout')) {
+            try {
+              sessionStorage.clearAll();
+            } catch {}
+          }
           set({error: err.message ?? 'Failed to initialize auth'});
         } finally {
           set({initializing: false});

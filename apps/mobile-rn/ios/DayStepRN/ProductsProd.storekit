@@ -1,0 +1,73 @@
+{
+  "identifier" : "F2G3H4I5",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_developerTeamID" : "5SSJ3GPKAR"
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "B2C3D4E5",
+      "localizations" : [],
+      "name" : "daystep_pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "G6H7I8J9",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Monthly access to DayStep Pro",
+              "displayName" : "Pro Monthly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "DayStep Pro 월간 구독",
+              "displayName" : "Pro 월간",
+              "locale" : "ko_KR"
+            }
+          ],
+          "productID" : "pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Monthly",
+          "subscriptionGroupID" : "B2C3D4E5",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "E1F2G3H4",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Yearly access to DayStep Pro",
+              "displayName" : "Pro Yearly",
+              "locale" : "en_US"
+            },
+            {
+              "description" : "DayStep Pro 연간 구독",
+              "displayName" : "Pro 연간",
+              "locale" : "ko_KR"
+            }
+          ],
+          "productID" : "pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro Yearly",
+          "subscriptionGroupID" : "B2C3D4E5",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}
