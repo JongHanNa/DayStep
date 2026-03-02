@@ -83,6 +83,12 @@ export function AdminPlanLimitsScreen({onBack}: Props) {
     return row ? String(row[field]) : '';
   };
 
+  const getUnit = (entity: string, tier: 'free' | 'pro'): string => {
+    const base = getRow(entity, tier);
+    if (!base) return '개';
+    return base.display_text.replace(/[\d,]/g, '') || '개';
+  };
+
   const handleChange = (
     entity: string,
     tier: 'free' | 'pro',
@@ -90,13 +96,18 @@ export function AdminPlanLimitsScreen({onBack}: Props) {
     value: string,
   ) => {
     const key = editKey(entity, tier);
-    setEdits(prev => ({
-      ...prev,
-      [key]: {
+    setEdits(prev => {
+      const updates: {max_count?: number; display_text?: string} = {
         ...prev[key],
         [field]: field === 'max_count' ? Number(value) : value,
-      },
-    }));
+      };
+      if (field === 'max_count') {
+        const unit = getUnit(entity, tier);
+        const num = Number(value);
+        updates.display_text = `${num.toLocaleString('ko-KR')}${unit}`;
+      }
+      return {...prev, [key]: updates};
+    });
   };
 
   const handleSave = async (entity: string, tier: 'free' | 'pro') => {
