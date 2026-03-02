@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { NewsScreen } from '@/components/adhd/screens';
+import { ProPageGuard } from '@/components/subscription/ProPageGuard';
 
 /**
  * /adhd/news - 소식 챙기기 페이지
@@ -27,5 +28,9 @@ export default function NewsPage() {
     );
   }
 
-  return <NewsScreen userId={user.id} />;
+  return (
+    <ProPageGuard screenId="news">
+      <NewsScreen userId={user.id} />
+    </ProPageGuard>
+  );
 }

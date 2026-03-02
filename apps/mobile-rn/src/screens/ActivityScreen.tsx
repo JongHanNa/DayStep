@@ -3,13 +3,12 @@
  * 이번 주 완료 요약 + 요일별/시간대별 패턴
  */
 import React, {useEffect, useState, useMemo} from 'react';
-import {Text, View, ScrollView, TouchableOpacity} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {Text, View, ScrollView} from 'react-native';
 import {ScreenContainer, AnimatedCard} from '@/components/core';
-import {BarChart3, Clock, TrendingUp, Lock} from 'lucide-react-native';
+import {BarChart3, Clock, TrendingUp} from 'lucide-react-native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useAuthStore} from '@/stores/authStore';
-import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {ProScreenGuard} from '@/components/subscription/ProScreenGuard';
 import {format, startOfWeek, endOfWeek, getDay, getHours, isWithinInterval} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
@@ -72,10 +71,8 @@ function HourlyChart({data}: {data: number[]}) {
 }
 
 export default function ActivityScreen() {
-  const navigation = useNavigation();
   const user = useAuthStore(s => s.user);
   const {fetchAllTodos} = useTodoStore();
-  const {hasActiveSubscription} = useSubscriptionStore();
   const [allTodos, setAllTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -125,29 +122,8 @@ export default function ActivityScreen() {
     };
   }, [allTodos]);
 
-  // Pro 가드
-  if (!hasActiveSubscription) {
-    return (
-      <ScreenContainer gradient="warmBackground">
-        <View className="flex-1 items-center justify-center px-8">
-          <Lock size={48} color="#9CA3AF" />
-          <Text className="text-lg font-bold text-gray-700 mt-4">
-            Pro 기능입니다
-          </Text>
-          <Text className="text-sm text-gray-500 text-center mt-2 leading-5">
-            활동 패턴과 생산성 분석은{'\n'}Pro 구독에서 이용할 수 있어요.
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Settings' as never)}
-            className="bg-blue-500 rounded-xl py-3 px-6 mt-6">
-            <Text className="text-white font-semibold">구독 알아보기</Text>
-          </TouchableOpacity>
-        </View>
-      </ScreenContainer>
-    );
-  }
-
   return (
+    <ProScreenGuard screenId="activity">
     <ScreenContainer gradient="warmBackground">
       <ScrollView
         contentContainerStyle={{paddingBottom: 100}}
@@ -202,5 +178,6 @@ export default function ActivityScreen() {
         </View>
       </ScrollView>
     </ScreenContainer>
+    </ProScreenGuard>
   );
 }

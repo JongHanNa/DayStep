@@ -7,6 +7,7 @@ import {Text, View, ScrollView, FlatList, TouchableOpacity, Alert} from 'react-n
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard} from '@/components/core';
 import {Heart, Trash2} from 'lucide-react-native';
+import {ProScreenGuard} from '@/components/subscription/ProScreenGuard';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {INTERACTION_TYPE_LABELS} from '@/types/cherished-people';
@@ -145,30 +146,32 @@ export default function GratitudeScreen() {
   };
 
   return (
-    <ScreenContainer gradient="warmBackground">
-      {/* 사람별 필터 */}
-      <PersonFilterChips
-        people={people.map(p => ({id: p.id, name: p.name}))}
-        selectedId={selectedPersonId}
-        onSelect={setSelectedPersonId}
-      />
+    <ProScreenGuard screenId="gratitude">
+      <ScreenContainer gradient="warmBackground">
+        {/* 사람별 필터 */}
+        <PersonFilterChips
+          people={people.map(p => ({id: p.id, name: p.name}))}
+          selectedId={selectedPersonId}
+          onSelect={setSelectedPersonId}
+        />
 
-      {/* 감사 기록 목록 */}
-      <FlatList
-        data={notes}
-        keyExtractor={item => item.id}
-        renderItem={renderNote}
-        contentContainerStyle={{paddingBottom: 100, paddingTop: 8}}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View className="items-center justify-center py-20">
-            <Heart size={48} color="#D1D5DB" />
-            <Text className="text-gray-400 mt-4 text-center">
-              {loading ? '로딩 중...' : '아직 감사 기록이 없어요\n관계 기록에서 감사한 점을 남겨보세요'}
-            </Text>
-          </View>
-        }
-      />
-    </ScreenContainer>
+        {/* 감사 기록 목록 */}
+        <FlatList
+          data={notes}
+          keyExtractor={item => item.id}
+          renderItem={renderNote}
+          contentContainerStyle={{paddingBottom: 100, paddingTop: 8}}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View className="items-center justify-center py-20">
+              <Heart size={48} color="#D1D5DB" />
+              <Text className="text-gray-400 mt-4 text-center">
+                {loading ? '로딩 중...' : '아직 감사 기록이 없어요\n관계 기록에서 감사한 점을 남겨보세요'}
+              </Text>
+            </View>
+          }
+        />
+      </ScreenContainer>
+    </ProScreenGuard>
   );
 }

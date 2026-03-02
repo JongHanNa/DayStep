@@ -38,6 +38,7 @@ import {
   BarChart3,
   Trash2,
 } from 'lucide-react-native';
+import {SCREEN_REGISTRY} from '@daystep/shared-core/constants';
 
 function getGreeting(): {text: string; Icon: React.FC<any>; gradient: string[]} {
   const hour = new Date().getHours();
@@ -213,6 +214,7 @@ export default function HomeScreen() {
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
         onPress: () => navigation.navigate('News'),
+        isPro: SCREEN_REGISTRY.news.isPro,
       },
       {
         id: 'contact',
@@ -222,6 +224,7 @@ export default function HomeScreen() {
         iconBgColor: VIOLET_BG,
         iconColor: VIOLET_ICON,
         onPress: () => navigation.navigate('Contact'),
+        isPro: SCREEN_REGISTRY.contact.isPro,
       },
     ],
     [navigation],
@@ -237,6 +240,7 @@ export default function HomeScreen() {
         iconBgColor: EMERALD_BG,
         iconColor: EMERALD_ICON,
         onPress: () => navigation.navigate('Gratitude'),
+        isPro: SCREEN_REGISTRY.gratitude.isPro,
       },
       {
         id: 'activity',
@@ -246,6 +250,7 @@ export default function HomeScreen() {
         iconBgColor: EMERALD_BG,
         iconColor: EMERALD_ICON,
         onPress: () => navigation.navigate('Activity'),
+        isPro: SCREEN_REGISTRY.activity.isPro,
       },
     ],
     [navigation],

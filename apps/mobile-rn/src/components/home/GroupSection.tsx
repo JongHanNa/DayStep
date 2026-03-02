@@ -6,6 +6,7 @@ import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
+import {Crown} from 'lucide-react-native';
 
 export interface FeatureItem {
   id: string;
@@ -15,6 +16,7 @@ export interface FeatureItem {
   iconBgColor: string;
   iconColor: string;
   onPress: () => void;
+  isPro?: boolean;
 }
 
 interface GroupSectionProps {
@@ -85,6 +87,32 @@ export function GroupSection({
                 borderWidth: 1,
                 borderColor: '#F3F4F6',
               }}>
+              {/* PRO 배지 */}
+              {item.isPro && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#FEF3C7',
+                    borderRadius: 8,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                  }}>
+                  <Crown size={10} color="#D97706" />
+                  <Text
+                    style={{
+                      fontSize: 9,
+                      color: '#D97706',
+                      fontWeight: '600',
+                      marginLeft: 2,
+                    }}>
+                    PRO
+                  </Text>
+                </View>
+              )}
               {/* 아이콘 박스 */}
               <View
                 style={{

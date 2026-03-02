@@ -7,6 +7,7 @@ import {Text, View, ScrollView, FlatList, TouchableOpacity, Alert} from 'react-n
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard} from '@/components/core';
 import {MessageCircle, Trash2, Edit3} from 'lucide-react-native';
+import {ProScreenGuard} from '@/components/subscription/ProScreenGuard';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {INTERACTION_TYPE_LABELS} from '@/types/cherished-people';
@@ -146,32 +147,34 @@ export default function NewsScreen() {
   };
 
   return (
-    <ScreenContainer gradient="warmBackground">
-      {/* 사람별 필터 */}
-      <PersonFilterChips
-        people={people.map(p => ({id: p.id, name: p.name}))}
-        selectedId={selectedPersonId}
-        onSelect={setSelectedPersonId}
-      />
+    <ProScreenGuard screenId="news">
+      <ScreenContainer gradient="warmBackground">
+        {/* 사람별 필터 */}
+        <PersonFilterChips
+          people={people.map(p => ({id: p.id, name: p.name}))}
+          selectedId={selectedPersonId}
+          onSelect={setSelectedPersonId}
+        />
 
-      {/* 소식 목록 */}
-      <FlatList
-        data={notes}
-        keyExtractor={item => item.id}
-        renderItem={renderNote}
-        contentContainerStyle={{paddingBottom: 100, paddingTop: 8}}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View className="items-center justify-center py-20">
-            <MessageCircle size={48} color="#D1D5DB" />
-            <Text className="text-gray-400 mt-4 text-center">
-              {loading
-                ? '로딩 중...'
-                : '아직 소식 기록이 없어요\n관계 기록에서 소식을 남겨보세요'}
-            </Text>
-          </View>
-        }
-      />
-    </ScreenContainer>
+        {/* 소식 목록 */}
+        <FlatList
+          data={notes}
+          keyExtractor={item => item.id}
+          renderItem={renderNote}
+          contentContainerStyle={{paddingBottom: 100, paddingTop: 8}}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View className="items-center justify-center py-20">
+              <MessageCircle size={48} color="#D1D5DB" />
+              <Text className="text-gray-400 mt-4 text-center">
+                {loading
+                  ? '로딩 중...'
+                  : '아직 소식 기록이 없어요\n관계 기록에서 소식을 남겨보세요'}
+              </Text>
+            </View>
+          }
+        />
+      </ScreenContainer>
+    </ProScreenGuard>
   );
 }

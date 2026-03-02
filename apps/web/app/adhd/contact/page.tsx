@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { ContactScreen } from '@/components/adhd/screens';
+import { ProPageGuard } from '@/components/subscription/ProPageGuard';
 
 /**
  * /adhd/contact - 연락 돌아보기 페이지 (Pro 전용)
@@ -27,5 +28,9 @@ export default function ContactPage() {
     );
   }
 
-  return <ContactScreen userId={user.id} />;
+  return (
+    <ProPageGuard screenId="contact">
+      <ContactScreen userId={user.id} />
+    </ProPageGuard>
+  );
 }

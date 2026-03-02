@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { GratitudeScreen } from '@/components/adhd/screens';
+import { ProPageGuard } from '@/components/subscription/ProPageGuard';
 
 /**
  * /adhd/gratitude - 감사 기록하기 페이지
@@ -27,5 +28,9 @@ export default function GratitudePage() {
     );
   }
 
-  return <GratitudeScreen userId={user.id} />;
+  return (
+    <ProPageGuard screenId="gratitude">
+      <GratitudeScreen userId={user.id} />
+    </ProPageGuard>
+  );
 }

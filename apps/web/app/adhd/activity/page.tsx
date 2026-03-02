@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { ActivityScreen } from '@/components/adhd/screens';
+import { ProPageGuard } from '@/components/subscription/ProPageGuard';
 
 /**
  * /adhd/activity - 활동 살펴보기 페이지 (Pro 전용)
@@ -27,5 +28,9 @@ export default function ActivityPage() {
     );
   }
 
-  return <ActivityScreen userId={user.id} />;
+  return (
+    <ProPageGuard screenId="activity">
+      <ActivityScreen userId={user.id} />
+    </ProPageGuard>
+  );
 }
