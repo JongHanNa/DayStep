@@ -49,11 +49,25 @@ export function useUsageStats() {
 
     setIsLoading(true);
     try {
-      const {data, error} = await supabase
-        .from('user_usage_stats')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      // user_usage_stats에 project_count/note_count 컬럼 없음 → 직접 COUNT
+      const [usageResult, projectResult, noteResult] = await Promise.all([
+        supabase
+          .from('user_usage_stats')
+          .select('*')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('projects')
+          .select('*', {count: 'exact', head: true})
+          .eq('user_id', user.id),
+        supabase
+          .from('notes')
+          .select('*', {count: 'exact', head: true})
+          .eq('user_id', user.id)
+          .eq('note_category', 'fuel'),
+      ]);
+
+      const {data, error} = usageResult;
 
       if (error && error.code === 'PGRST116') {
         // 행이 없으면 초기화 후 재조회
@@ -64,12 +78,22 @@ export function useUsageStats() {
           .eq('user_id', user.id)
           .single();
 
-        setStats(retryData ? mapRow(retryData) : DEFAULT_STATS);
+        const base = retryData ? mapRow(retryData) : DEFAULT_STATS;
+        setStats({
+          ...base,
+          projectCount: projectResult.count ?? 0,
+          noteCount: noteResult.count ?? 0,
+        });
       } else if (error) {
         console.warn('[useUsageStats] 조회 실패:', error.message);
         setStats(DEFAULT_STATS);
       } else {
-        setStats(data ? mapRow(data) : DEFAULT_STATS);
+        const base = data ? mapRow(data) : DEFAULT_STATS;
+        setStats({
+          ...base,
+          projectCount: projectResult.count ?? 0,
+          noteCount: noteResult.count ?? 0,
+        });
       }
     } catch (err) {
       console.warn('[useUsageStats] 예외:', err);

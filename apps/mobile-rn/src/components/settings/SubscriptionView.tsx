@@ -48,8 +48,7 @@ const USAGE_FEATURES: {
   {name: '할일', entity: 'todo', unit: '개'},
   {name: '습관', entity: 'habit', unit: '개'},
   {name: '프로젝트', entity: 'project', unit: '개'},
-  {name: '노트', entity: 'note', unit: '개'},
-  {name: '연락처 연결', entity: 'contact', unit: '개'},
+  {name: '원동력', entity: 'note', unit: '개'},
   {name: '소중한 사람', entity: 'cherished_people', unit: '명'},
   {name: '관심 기록', entity: 'care_interaction', unit: '개'},
 ];

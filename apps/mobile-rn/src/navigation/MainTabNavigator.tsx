@@ -26,6 +26,7 @@ import NewsScreen from '../screens/NewsScreen';
 import ContactScreen from '../screens/ContactScreen';
 import GratitudeScreen from '../screens/GratitudeScreen';
 import ActivityScreen from '../screens/ActivityScreen';
+import CleanupScreen from '../screens/CleanupScreen';
 
 // Execute Stack (실행 모드 + 포모도로)
 const ExecuteStack = createNativeStackNavigator();
@@ -64,6 +65,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Contact" component={ContactScreen} />
       <HomeStack.Screen name="Gratitude" component={GratitudeScreen} />
       <HomeStack.Screen name="Activity" component={ActivityScreen} />
+      <HomeStack.Screen name="Cleanup" component={CleanupScreen} />
     </HomeStack.Navigator>
   );
 }

@@ -37,7 +37,7 @@ export const ENTITY_DISPLAY_NAME: Record<UsageEntityType, string> = {
   todo: '할일',
   habit: '습관',
   project: '프로젝트',
-  note: '노트',
+  note: '원동력',
   contact: '연락처',
   cherished_people: '소중한 사람',
   care_interaction: '관심 기록',

@@ -36,6 +36,7 @@ import {
   Users,
   Heart,
   BarChart3,
+  Trash2,
 } from 'lucide-react-native';
 
 function getGreeting(): {text: string; Icon: React.FC<any>; gradient: string[]} {
@@ -170,6 +171,15 @@ export default function HomeScreen() {
         iconBgColor: BLUE_BG,
         iconColor: BLUE_ICON,
         onPress: () => navigation.navigate('Guide'),
+      },
+      {
+        id: 'data-cleanup',
+        icon: <Trash2 size={20} color={BLUE_ICON} />,
+        label: '데이터 정리하기',
+        description: '할일·프로젝트·원동력 등을 정리해 공간 확보',
+        iconBgColor: BLUE_BG,
+        iconColor: BLUE_ICON,
+        onPress: () => navigation.navigate('Cleanup'),
       },
     ],
     [navigation],
