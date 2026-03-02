@@ -21,8 +21,6 @@ import {
   View,
 } from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
-import {ChevronLeft} from 'lucide-react-native';
 import {ScreenContainer} from '@/components/core';
 import {useTodoStore} from '@/stores/todoStore';
 import {useProjectStore} from '@/stores/projectStore';
@@ -30,8 +28,6 @@ import {useNoteStore} from '@/stores/noteStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
-
-const FREE_TIER_MAX = 60;
 
 // ────────────────────────────────────────────────
 // Generic Item (모든 카테고리 공통 표시용)
@@ -600,7 +596,6 @@ const EMPTY_DATA: CategorizedData = {
 };
 
 export default function CleanupScreen() {
-  const navigation = useNavigation();
   const user = useAuthStore(s => s.user);
   const {deleteTodo} = useTodoStore();
   const {deleteProject} = useProjectStore();
@@ -608,7 +603,6 @@ export default function CleanupScreen() {
   const {deleteInteraction} = useCherishedPeopleStore();
 
   const [loading, setLoading] = useState(true);
-  const [todoCount, setTodoCount] = useState(0); // 도넛 차트용 (일반 할일만)
   const [categorized, setCategorized] = useState<CategorizedData>(EMPTY_DATA);
   const [activeCategory, setActiveCategory] = useState<CategoryDef | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -626,7 +620,6 @@ export default function CleanupScreen() {
         .slice(0, 10);
 
       const [
-        totalCountRes,
         pastDueRes,
         completedRes,
         pastRecurringRes,
@@ -636,13 +629,6 @@ export default function CleanupScreen() {
         inactivePeopleRes,
         oldInteractionsRes,
       ] = await Promise.all([
-        // 전체 일반 할일 수 (도넛 차트)
-        supabase
-          .from('todos')
-          .select('*', {count: 'exact', head: true})
-          .eq('user_id', user.id)
-          .eq('recurrence_pattern', 'none'),
-
         // 종료일 지난 미완료 일반 할일
         supabase
           .from('todos')
@@ -713,8 +699,6 @@ export default function CleanupScreen() {
           .lt('interaction_date', ninetyDaysAgo)
           .order('interaction_date', {ascending: true}),
       ]);
-
-      setTodoCount(totalCountRes.count ?? 0);
 
       const fmtDate = (iso: string | null | undefined, suffix: string) =>
         iso
@@ -792,6 +776,19 @@ export default function CleanupScreen() {
     [categorized],
   );
 
+  // ── 타입별 집계 ───────────────────────────────
+  const typeSummary = useMemo(
+    () => [
+      {icon: '⏰', label: '할일', count: categorized.pastDue.length + categorized.completed.length},
+      {icon: '🔁', label: '습관', count: categorized.pastRecurring.length},
+      {icon: '📁', label: '프로젝트', count: categorized.completedProjects.length + categorized.onHoldProjects.length},
+      {icon: '💡', label: '원동력', count: categorized.allNotes.length},
+      {icon: '👥', label: '소중한 사람', count: categorized.inactivePeople.length},
+      {icon: '📅', label: '관심기록', count: categorized.oldInteractions.length},
+    ],
+    [categorized],
+  );
+
   // ── 시트 열기 ─────────────────────────────────
   const openSheet = (cat: CategoryDef) => {
     setActiveCategory(cat);
@@ -849,10 +846,6 @@ export default function CleanupScreen() {
         ...prev,
         [categoryKey]: prev[categoryKey].filter(item => !idSet.has(item.id)),
       }));
-      // 일반 할일만 도넛 차트 차감
-      if (categoryKey === 'pastDue' || categoryKey === 'completed') {
-        setTodoCount(prev => Math.max(0, prev - deletedIds.length));
-      }
     },
     [],
   );
@@ -872,60 +865,60 @@ export default function CleanupScreen() {
           borderBottomLeftRadius: 32,
           borderBottomRightRadius: 32,
         }}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 16,
-          }}>
-          <ChevronLeft size={20} color="white" />
-        </TouchableOpacity>
-
         <Text style={{fontSize: 22, fontWeight: '700', color: 'white', marginBottom: 20}}>
           데이터 정리 💎
         </Text>
 
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 20}}>
-          <DonutChart usedCount={todoCount} maxCount={Math.max(FREE_TIER_MAX, todoCount)} />
-          <View style={{flex: 1}}>
-            <Text style={{fontSize: 16, fontWeight: '700', color: 'white', marginBottom: 6}}>
-              현재 {todoCount}/{FREE_TIER_MAX}개 할일 사용 중
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 16}}>
+          {/* 왼쪽: 큰 숫자 */}
+          <View style={{alignItems: 'center', minWidth: 72}}>
+            <Text style={{fontSize: 52, fontWeight: '800', color: 'white', lineHeight: 60}}>
+              {totalCleanable}
             </Text>
+            <Text style={{fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2}}>
+              개 정리 가능
+            </Text>
+          </View>
+
+          {/* 구분선 */}
+          <View
+            style={{
+              width: 1,
+              height: 80,
+              backgroundColor: 'rgba(255,255,255,0.25)',
+            }}
+          />
+
+          {/* 오른쪽: 타입별 칩 */}
+          <View style={{flex: 1}}>
             {totalCleanable > 0 ? (
-              <Text style={{fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 20}}>
-                {totalCleanable}개를 정리해{'\n'}공간을 확보해보세요
-              </Text>
+              <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
+                {typeSummary
+                  .filter(item => item.count > 0)
+                  .map(item => (
+                    <View
+                      key={item.label}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(255,255,255,0.18)',
+                        borderRadius: 20,
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        gap: 4,
+                      }}>
+                      <Text style={{fontSize: 12}}>{item.icon}</Text>
+                      <Text style={{fontSize: 12, color: 'white', fontWeight: '600'}}>
+                        {item.label} {item.count}
+                      </Text>
+                    </View>
+                  ))}
+              </View>
             ) : (
-              <Text style={{fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 20}}>
-                정리할 항목이 없어요{'\n'}깔끔하게 관리되고 있어요 ✨
+              <Text style={{fontSize: 14, color: 'rgba(255,255,255,0.9)', lineHeight: 22}}>
+                깔끔하게{'\n'}관리되고 있어요 ✨
               </Text>
             )}
-            <View
-              style={{
-                marginTop: 10,
-                height: 6,
-                backgroundColor: 'rgba(255,255,255,0.25)',
-                borderRadius: 99,
-                overflow: 'hidden',
-                width: 160,
-              }}>
-              <View
-                style={{
-                  height: '100%',
-                  backgroundColor: 'white',
-                  borderRadius: 99,
-                  width: `${Math.min(100, (todoCount / FREE_TIER_MAX) * 100)}%`,
-                }}
-              />
-            </View>
-            <Text style={{fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 4}}>
-              무료 플랜 · {FREE_TIER_MAX}개 한도
-            </Text>
           </View>
         </View>
       </View>
