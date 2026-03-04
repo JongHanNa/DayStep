@@ -31,6 +31,37 @@ target 'DayStepRN' do
       # :ccache_enabled => true
     )
 
+    # react-native-config ENVFILE: /tmp/envfile 의존 제거 → xcconfig build setting으로 대체
+    # pod install 이후에도 ENVFILE 설정이 유지되도록 영속성 확보
+    installer.pods_project.targets.each do |target|
+      if target.name == 'react-native-config'
+        target.build_configurations.each do |config|
+          if config.name == 'Debug'
+            config.build_settings['ENVFILE'] = '.env'
+          elsif config.name == 'Release'
+            config.build_settings['ENVFILE'] = '.env.production'
+          end
+        end
+
+        # v17: Run Script 완료 후 RNCConfig.m 재컴파일 강제
+        # alwaysOutOfDate=1로 Run Script가 항상 실행되지만, RNCConfig.m 컴파일은
+        # planning time에 "up-to-date"로 결정됨. outputPaths에 RNCConfig.m 추가 +
+        # touch로 타임스탬프 갱신 → Run Script 완료 후 XCBuild가 재컴파일 평가
+        target.build_phases.each do |phase|
+          next unless phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase)
+          next unless phase.shell_script.include?('BuildDotenvConfig.rb')
+
+          rnc_path = '${PODS_TARGET_SRCROOT}/ios/ReactNativeConfig/RNCConfig.m'
+
+          unless phase.shell_script.include?('touch "${PODS_TARGET_SRCROOT}/ios/ReactNativeConfig/RNCConfig.m"')
+            phase.shell_script += "\ntouch \"${PODS_TARGET_SRCROOT}/ios/ReactNativeConfig/RNCConfig.m\""
+          end
+
+          phase.output_paths << rnc_path unless phase.output_paths.include?(rnc_path)
+        end
+      end
+    end
+
     # Fix: RCTSwiftUI modulemap not found during Xcode Clang dependency scanning.
     # The scanner runs BEFORE build phases, so it can't find the modulemap
     # at ${PODS_CONFIGURATION_BUILD_DIR}/RCTSwiftUI/ (only exists after building).

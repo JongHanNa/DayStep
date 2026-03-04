@@ -9,8 +9,8 @@
          <ExecutionAction
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
-               title = "Clear envfile for dev"
-               scriptText = "rm -f /tmp/envfile&#10;touch &quot;$SRCROOT/../.env&quot;">
+               title = "Set envfile for dev"
+               scriptText = "echo &quot;.env&quot; &gt; /tmp/envfile&#10;rm -f &quot;$SRCROOT/../../../node_modules/react-native-config/ios/ReactNativeConfig/GeneratedDotEnv.m&quot; 2&gt;/dev/null || true&#10;rm -f &quot;$BUILD_DIR/GeneratedInfoPlistDotEnv.h&quot; 2&gt;/dev/null || true&#10;find &quot;$HOME/Library/Developer/Xcode/DerivedData&quot; -maxdepth 8 -path &quot;*/DayStepRN-*/Build/Intermediates.noindex/Pods.build/*/react-native-config.build&quot; -type d -exec rm -rf {} + 2&gt;/dev/null || true&#10;find &quot;$HOME/Library/Developer/Xcode/DerivedData&quot; -maxdepth 10 -name &quot;main.jsbundle&quot; -path &quot;*/DayStepRN-*/Build/*&quot; -delete 2&gt;/dev/null || true">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"

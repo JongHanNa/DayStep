@@ -12,6 +12,8 @@ import Config from 'react-native-config';
 
 /** 앱 시작 시 1회 호출 */
 export function initRevenueCat() {
+  // Config는 native 모듈 → JS 번들 캐시와 무관하게 항상 올바른 값 반환
+  // DayStepRN(Debug) → .env → appl_mUUew..., DayStepProd(Release) → .env.production → appl_Rwbvt...
   const apiKey = Config.REVENUECAT_IOS_API_KEY;
   if (!apiKey) {
     console.warn('[RevenueCat] REVENUECAT_IOS_API_KEY is not set');
