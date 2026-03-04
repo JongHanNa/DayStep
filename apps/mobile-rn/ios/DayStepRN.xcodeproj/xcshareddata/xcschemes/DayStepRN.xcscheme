@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Clear envfile for dev"
-               scriptText = "rm -f /tmp/envfile">
+               scriptText = "rm -f /tmp/envfile&#10;touch &quot;$SRCROOT/../.env&quot;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"

@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Set env for production"
-               scriptText = "echo &quot;.env.production&quot; &gt; /tmp/envfile">
+               scriptText = "echo &quot;.env.production&quot; &gt; /tmp/envfile&#10;touch &quot;$SRCROOT/../.env.production&quot;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
