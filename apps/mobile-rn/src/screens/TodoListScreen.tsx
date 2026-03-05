@@ -20,6 +20,10 @@ import {
 } from '@/components/todo/PostponeBottomSheet';
 import {SwipeablePages, type SwipeablePagesRef} from '@/components/core/SwipeablePages';
 import {PlannerPage2} from '@/components/planner/PlannerPage2';
+import {
+  TodoPickerSheet,
+  type TodoPickerSheetRef,
+} from '@/components/planner/TodoPickerSheet';
 import {DndProvider, useDnd} from '@/components/planner/DndContext';
 import {DraggableTodoChip} from '@/components/planner/DraggableTodoChip';
 import {useTodoStore} from '@/stores/todoStore';
@@ -105,6 +109,7 @@ function TodoListScreenInner() {
   const {primaryColor} = useTheme();
   const route = useRoute<any>();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
+  const pickerRef = useRef<TodoPickerSheetRef>(null);
   const navigation = useNavigation<any>();
   const pagesRef = useRef<SwipeablePagesRef>(null);
   const {dragState, setPagesRef, currentPageRef, triggerRemeasure} = useDnd();
@@ -229,6 +234,18 @@ function TodoListScreenInner() {
   const handleAddTodo = useCallback(() => {
     formRef.current?.openCreate(selectedDate);
   }, [selectedDate]);
+
+  // TodoPickerSheet 콜백 (PlannerPage2 → ScreenContainer 레벨)
+  const handleMatrixAdd = useCallback(
+    (importance: boolean, urgency: boolean) => {
+      pickerRef.current?.open({type: 'matrix', importance, urgency});
+    },
+    [],
+  );
+
+  const handleReluctantAdd = useCallback(() => {
+    pickerRef.current?.open({type: 'reluctant'});
+  }, []);
 
   // skip 핸들러
   const handleSkipTodo = useCallback(
@@ -365,7 +382,7 @@ function TodoListScreenInner() {
         </View>
 
         {/* Page 1: 우선순위 매트릭스 + 하기 싫지만 해야 할 일 + 보상/칭찬/감사 */}
-        <PlannerPage2 />
+        <PlannerPage2 onMatrixAdd={handleMatrixAdd} onReluctantAdd={handleReluctantAdd} />
       </SwipeablePages>
 
       {/* FAB (할일 추가) */}
@@ -378,6 +395,9 @@ function TodoListScreenInner() {
           <Text style={styles.fabText}>+</Text>
         </AnimatedPressable>
       </Animated.View>
+
+      {/* 할일 피커 바텀시트 (우선순위 매트릭스/하기 싫은 일) */}
+      <TodoPickerSheet ref={pickerRef} />
 
       {/* 할일 폼 바텀시트 */}
       <TodoFormBottomSheet ref={formRef} />

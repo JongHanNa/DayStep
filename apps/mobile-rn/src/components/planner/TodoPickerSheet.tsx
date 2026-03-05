@@ -7,11 +7,12 @@ import React, {
   useCallback,
   useMemo,
   useRef,
+  useState,
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import {View, Text, FlatList, StyleSheet} from 'react-native';
-import BottomSheet, {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
+import {View, Text, StyleSheet} from 'react-native';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
@@ -33,25 +34,24 @@ interface TodoPickerSheetProps {
 
 export const TodoPickerSheet = forwardRef<TodoPickerSheetRef, TodoPickerSheetProps>(
   function TodoPickerSheet({onRecurringTodo}, ref) {
-    const bottomSheetRef = useRef<BottomSheet>(null);
-    const modeRef = useRef<PickerMode | null>(null);
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
+    const [mode, setMode] = useState<PickerMode | null>(null);
     const {todos, updateTodo} = useTodoStore();
     const {primaryColor} = useTheme();
 
     const snapPoints = useMemo(() => ['50%', '80%'], []);
 
     useImperativeHandle(ref, () => ({
-      open: (mode: PickerMode) => {
-        modeRef.current = mode;
-        bottomSheetRef.current?.snapToIndex(0);
+      open: (m: PickerMode) => {
+        setMode(m);
+        bottomSheetRef.current?.present();
       },
       close: () => {
-        bottomSheetRef.current?.close();
+        bottomSheetRef.current?.dismiss();
       },
     }));
 
     const availableTodos = useMemo(() => {
-      const mode = modeRef.current;
       return todos.filter((t: any) => {
         if (t.completed) return false;
         if (mode?.type === 'reluctant') {
@@ -60,11 +60,10 @@ export const TodoPickerSheet = forwardRef<TodoPickerSheetRef, TodoPickerSheetPro
         // matrix: 미배치 할일 (importance/urgency 둘 다 null)
         return t.importance === null || t.importance === undefined;
       });
-    }, [todos, modeRef.current]);
+    }, [todos, mode]);
 
     const handleSelect = useCallback(
       async (todo: Todo) => {
-        const mode = modeRef.current;
         if (!mode) return;
 
         let updates: Partial<any>;
@@ -80,19 +79,18 @@ export const TodoPickerSheet = forwardRef<TodoPickerSheetRef, TodoPickerSheetPro
           todo.recurrence_pattern !== 'none' &&
           onRecurringTodo
         ) {
-          bottomSheetRef.current?.close();
+          bottomSheetRef.current?.dismiss();
           onRecurringTodo(todo, updates);
           return;
         }
 
         await updateTodo(todo.id, updates);
-        bottomSheetRef.current?.close();
+        bottomSheetRef.current?.dismiss();
       },
-      [updateTodo, onRecurringTodo],
+      [mode, updateTodo, onRecurringTodo],
     );
 
     const getTitle = () => {
-      const mode = modeRef.current;
       if (!mode) return '할일 선택';
       if (mode.type === 'reluctant') return '하기 싫어도 해야 할 일 추가';
       const {importance, urgency} = mode;
@@ -136,11 +134,11 @@ export const TodoPickerSheet = forwardRef<TodoPickerSheetRef, TodoPickerSheetPro
     );
 
     return (
-      <BottomSheet
+      <BottomSheetModal
         ref={bottomSheetRef}
-        index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose
+        onDismiss={() => setMode(null)}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.handleIndicator}>
@@ -150,7 +148,7 @@ export const TodoPickerSheet = forwardRef<TodoPickerSheetRef, TodoPickerSheetPro
             {availableTodos.length}개 할일
           </Text>
         </View>
-        <FlatList
+        <BottomSheetFlatList
           data={availableTodos}
           keyExtractor={item => item.id}
           renderItem={renderItem}
@@ -161,7 +159,7 @@ export const TodoPickerSheet = forwardRef<TodoPickerSheetRef, TodoPickerSheetPro
             </View>
           }
         />
-      </BottomSheet>
+      </BottomSheetModal>
     );
   },
 );

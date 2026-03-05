@@ -233,7 +233,7 @@ struct DayStepCalendarWidgetView: View {
                 Text(verbatim: headerText)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.blue)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 4)
 
                 // 요일 레이블
                 HStack(spacing: 0) {
@@ -247,10 +247,10 @@ struct DayStepCalendarWidgetView: View {
                             )
                     }
                 }
-                .padding(.bottom, 4)
+                .padding(.bottom, 2)
 
                 Divider()
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 2)
 
                 // 날짜 그리드
                 let rows = monthDates.chunked(into: 7)
@@ -279,7 +279,9 @@ struct DayStepCalendarWidgetView: View {
                     }
                 }
             }
-            .padding(10)
+            .padding(.horizontal, 6)
+            .padding(.top, 10)
+            .padding(.bottom, 6)
 
             // 우하단 "+" 버튼
             Circle()
@@ -290,7 +292,7 @@ struct DayStepCalendarWidgetView: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                 )
-                .padding(10)
+                .padding(6)
         }
         .background(Color.white)
     }
