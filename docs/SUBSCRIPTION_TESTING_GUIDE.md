@@ -8,8 +8,8 @@
 |------|------------|------------------------|
 | 구독 관리 주체 | Paddle 대시보드 | Apple (App Store) |
 | 즉시 취소 | O (대시보드에서 직접) | X (개발자가 직접 불가) |
-| DB 자동 반영 | O (webhook 즉시) | 부분적 (webhook 지연 가능) |
-| 재결제 테스트 | Cancel 후 바로 가능 | Xcode Transaction Manager (권장) 또는 3단계 초기화 |
+| DB 자동 반영 | O (webhook 즉시) | 결제만 자동 (Xcode 환경), 전체 자동 (TestFlight) |
+| 재결제 테스트 | Cancel 후 바로 가능 | Xcode Delete Transaction + DB 수동 만료 |
 | Source of Truth | Supabase `subscriptions` | Supabase `subscriptions` |
 
 ---
@@ -39,20 +39,30 @@
 
 ## 3. Apple/RevenueCat (모바일) 구독 테스트
 
-### 핵심 차이점
+### Xcode 실행 환경의 한계
 
-- **Apple이 구독 생명주기를 관리**하므로 개발자가 즉시 취소할 수 없다
-- RevenueCat 대시보드에서는 **Extend subscription만 가능** (Revoke/Expire 없음)
-- 샌드박스 구독은 갱신 주기가 짧음 (월간 → 5분, 연간 → 1시간)
+> **중요**: Xcode를 통해 실행한 앱에서는 구독 취소/만료 시 **RevenueCat Webhook이 발생하지 않는다.**
+> Xcode가 StoreKit을 로컬로 관리하므로, 앱 내 "App Store에서 관리" 버튼이나 Xcode의 "Edit Subscription" UI에서 Cancel Subscription을 눌러도 Apple 서버를 거치지 않는다.
+
+| 실행 방식 | 구독 관리 주체 | Cancel 시 Webhook 발생 |
+|-----------|-------------|---------------------|
+| **Xcode로 실행** | Xcode (로컬 StoreKit) | X |
+| **TestFlight / 직접 설치** | Apple 서버 | O |
+
+따라서 Xcode 개발 환경에서의 구독 테스트는 **결제(INITIAL_PURCHASE)만 Webhook 자동 동기화**되고, 취소/만료는 DB 수동 처리가 필요하다.
 
 ### 비구독 상태 테스트
 
-**가장 빠른 방법: Supabase DB 직접 수정**
+**Supabase DB 직접 수정** (Xcode 환경에서 유일한 방법):
 
 ```sql
--- 구독 만료 처리
+-- subscriptions 만료 처리
 UPDATE subscriptions SET status = 'expired', updated_at = now()
 WHERE user_id = '...' AND platform = 'ios';
+
+-- users 캐시 갱신
+UPDATE users SET has_active_subscription = false, subscription_type = 'free', subscription_expires_at = null
+WHERE id = '...';
 ```
 
 > **`cancelled` 상태 주의**: `cancelled` + `subscriptionEndDate > now()` 조합일 경우 앱이 여전히 활성 구독으로 판단한다.
@@ -64,62 +74,34 @@ WHERE user_id = '...' AND platform = 'ios';
 > ```
 > 따라서 비구독 테스트 시 반드시 `status = 'expired'`로 변경해야 한다. `cancelled`로는 불충분하다.
 
-**샌드박스 자동 만료 방법 (시간 소요)**
-
-1. 기기 설정 → App Store → 샌드박스 계정 → Manage Subscriptions → Cancel
-2. Opted-out of renewal 상태가 됨
-3. 다음 renewal date에 자동 만료 (샌드박스 갱신 주기에 따라 수 분~1시간)
-
-### 새 구독 결제 테스트
+### 재결제 테스트
 
 기존 구독 이력이 남아있으면 Apple이 "이미 구독 중"으로 판단하므로 초기화가 필요하다.
 
 #### 권장: Xcode Transaction Manager + DB 수동 초기화
 
-가장 확실한 방법. StoreKit 레벨에서 트랜잭션을 직접 삭제하므로 샌드박스 캐싱 문제를 우회한다.
-
-> **주의**: Xcode Delete Transaction은 **로컬 StoreKit만 초기화**한다. RevenueCat과 Supabase DB에는 기존 구독 상태가 그대로 남아있으므로, 앱에서 여전히 "구독 중"으로 표시되어 재결제가 불가능하다. 반드시 DB도 함께 초기화해야 한다.
-
-1. 실기기를 Mac에 연결하고 Xcode에서 앱 실행
-2. Xcode 메뉴 → **Debug** → **StoreKit** → **Manage Transactions**
-3. 해당 트랜잭션 우클릭 → **Delete Transaction**
-4. **Supabase DB 수동 만료 처리** (필수):
-   ```sql
-   -- 구독 만료 처리
-   UPDATE subscriptions SET status = 'expired', updated_at = now()
-   WHERE user_id = '...' AND platform = 'ios';
-
-   -- users 캐시 갱신
-   UPDATE users SET has_active_subscription = false, subscription_type = 'free', subscription_expires_at = null
-   WHERE id = '...';
-   ```
-5. 앱 재실행 → 비구독 상태 확인 → 구독 화면에서 새로 결제
-
-- 샌드박스 계정 재생성 불필요
-- 재결제 시 새 INITIAL_PURCHASE webhook이 발생하여 RevenueCat/DB가 자동 갱신됨
+1. Xcode 메뉴 → **Debug** → **StoreKit** → **Manage Transactions**
+2. 해당 트랜잭션 우클릭 → **Delete Transaction**
+3. **Supabase DB 수동 만료 처리** (위 SQL 실행)
+4. 앱 재실행 → 비구독 상태 확인 → 구독 화면에서 새로 결제
+5. 재결제 시 새 INITIAL_PURCHASE webhook이 발생하여 RevenueCat/DB 자동 갱신
 
 #### 보조: 3단계 초기화
 
-> **주의**: Apple 샌드박스는 Apple ID 레벨에서 구독을 캐싱한다. 아래 3단계를 모두 수행해도 Apple이 구독을 캐싱하여 "이미 구독 중" 오류가 발생할 수 있다. 이 경우 위의 **Xcode Transaction Manager**를 사용하라.
+> Apple 샌드박스 캐싱으로 "이미 구독 중" 오류가 발생할 수 있다. 이 경우 위의 Xcode Transaction Manager를 우선 사용하라.
 
-**Step 1: Apple 구매 이력 초기화**
-- App Store Connect → Users and Access → **Sandbox** → 해당 테스터 → **Clear Purchase History**
-- 이것은 Apple 측만 초기화하며, RevenueCat/Supabase에는 영향 없음
+1. **Apple 구매 이력 초기화**: App Store Connect → Users and Access → Sandbox → 해당 테스터 → Clear Purchase History
+2. **RevenueCat 고객 삭제**: RevenueCat 대시보드 → Customers → 해당 App User ID → Delete
+3. **앱에서 재결제**: 앱 재로그인 후 구독 화면에서 결제
 
-**Step 2: RevenueCat 고객 정보 삭제**
-- RevenueCat 대시보드 → **Customers** → 해당 App User ID 검색 → **Delete**
-- 삭제하면 RevenueCat이 해당 유저를 새 고객으로 인식
+### Webhook 자동 동기화 테스트 (취소/만료 포함)
 
-**Step 3: 앱에서 재결제**
-- 앱 재로그인 (또는 앱 재설치)
-- 구독 화면에서 새로 결제
+Xcode 없이 앱을 설치해야 Apple 서버 경로를 타서 모든 이벤트의 Webhook이 발생한다.
 
-### 주의사항
-
-- **Clear Purchase History만으로는 부족**: Apple만 초기화되고 RevenueCat/Supabase는 기존 구독 상태 유지
-- **RevenueCat Delete만으로는 부족**: Apple에 구매 이력이 남아있으면 결제 시 "이미 구독 중" 오류
-- **반드시 Step 1 + Step 2 모두 수행** 후 재결제해야 깨끗한 테스트 가능
-- **3단계 초기화가 실패하면**: Xcode Transaction Manager 사용 (Apple 샌드박스 캐싱 우회)
+1. **TestFlight에 빌드 업로드** 후 설치
+2. 샌드박스 계정으로 결제 → INITIAL_PURCHASE webhook → DB 자동 동기화
+3. 기기 설정에서 구독 취소 → CANCELLATION webhook → DB 자동 동기화
+4. 샌드박스 가속 주기(월간 ~5분) 후 → EXPIRATION webhook → DB 자동 동기화
 
 ---
 
@@ -153,9 +135,8 @@ DELETE FROM subscriptions WHERE user_id = '...' AND platform = 'ios';
 
 | 증상 | 원인 | 해결 |
 |------|------|------|
-| Cancel 했는데 앱에서 여전히 구독 상태 | Webhook 미처리 또는 클라이언트 캐시 | DB 직접 확인 후 수동 갱신 |
-| 재결제 시 "이미 구독 중" (Apple) | Apple/RevenueCat에 이전 이력 잔존 | Xcode Transaction Manager로 트랜잭션 삭제 |
-| 3단계 초기화 후에도 "이미 구독 중" | Apple 샌드박스가 Apple ID 레벨에서 구독 캐싱 | Xcode → Debug → StoreKit → Manage Transactions → Delete Transaction + DB 수동 만료 처리 |
+| Xcode에서 Cancel 했는데 DB 변화 없음 | Xcode 실행 시 StoreKit이 로컬 관리됨 → Webhook 미발생 | DB 수동 만료 처리 (Xcode 환경의 정상 동작) |
+| 재결제 시 "이미 구독 중" (Apple) | Apple/Xcode에 이전 트랜잭션 잔존 | Xcode Transaction Manager → Delete Transaction + DB 수동 만료 |
 | DB는 expired인데 앱에서 구독 표시 | 클라이언트 store 캐시 | 앱 재로그인 또는 store 초기화 |
 | cancelled인데 앱에서 구독 활성 표시 | `cancelled` + 만료일 미도래 시 활성 판단 로직 | DB에서 `status`를 `expired`로 변경 |
 | RevenueCat에서 Delete 후에도 구독 유지 | Supabase DB 미정리 | DB에서 해당 레코드 삭제/만료 처리 |
