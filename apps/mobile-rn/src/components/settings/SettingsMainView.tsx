@@ -91,20 +91,6 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
         />
       </View>
 
-      {/* 알림 */}
-      <Text style={styles.sectionTitle}>알림</Text>
-      <View style={styles.section}>
-        <SettingsRow
-          icon={Bell}
-          iconColor="#22C55E"
-          title="알림 활성화"
-          isToggle
-          toggleValue={settings.notificationsEnabled}
-          onToggle={settings.setNotificationsEnabled}
-          primaryColor={primaryColor}
-        />
-      </View>
-
       {/* 관리자 섹션 (admin 역할만) */}
       {isAdmin && (
         <>
