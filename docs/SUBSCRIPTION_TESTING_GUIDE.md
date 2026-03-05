@@ -96,12 +96,26 @@ WHERE id = '...';
 
 ### Webhook 자동 동기화 테스트 (취소/만료 포함)
 
-Xcode 없이 앱을 설치해야 Apple 서버 경로를 타서 모든 이벤트의 Webhook이 발생한다.
+구독의 전체 라이프사이클(결제 → 취소 → 만료)을 Webhook으로 자동 테스트하려면 **TestFlight**을 사용해야 한다. Xcode 없이 앱을 설치해야 Apple 서버 경로를 타서 모든 이벤트의 Webhook이 발생한다.
 
-1. **TestFlight에 빌드 업로드** 후 설치
+**TestFlight 결제는 샌드박스이므로 실제 과금되지 않는다.**
+
+| 항목 | Xcode 실행 | TestFlight |
+|------|-----------|------------|
+| 실제 과금 | X (샌드박스) | X (샌드박스) |
+| 결제 Webhook | O | O |
+| 취소/만료 Webhook | **X** | **O** |
+| 갱신 주기 | 샌드박스 가속 | 매일 갱신, 1주 내 최대 6회 |
+| 구독 관리 | Xcode 로컬 UI | Apple 서버 (기기 설정) |
+
+**TestFlight 테스트 절차**:
+
+1. **TestFlight에 빌드 업로드** 후 설치 (Xcode 연결 없이)
 2. 샌드박스 계정으로 결제 → INITIAL_PURCHASE webhook → DB 자동 동기화
 3. 기기 설정에서 구독 취소 → CANCELLATION webhook → DB 자동 동기화
-4. 샌드박스 가속 주기(월간 ~5분) 후 → EXPIRATION webhook → DB 자동 동기화
+4. 다음 갱신 시점에 → EXPIRATION webhook → DB 자동 동기화
+
+> **팁**: TestFlight에서 샌드박스 계정을 사용하려면 기기 설정 → Media & Purchases에서 프로덕션 Apple ID 로그아웃 후 샌드박스 계정으로 로그인한다.
 
 ---
 
