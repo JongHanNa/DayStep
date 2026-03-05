@@ -11,14 +11,8 @@ import {useTheme} from '@/theme';
 import {supabase} from '@/lib/supabase';
 import {
   User,
-  Type,
   Palette,
-  Clock,
-  Vibrate,
-  Sparkles,
   Bell,
-  Timer,
-  PartyPopper,
   CreditCard,
   LogOut,
   ShieldCheck,
@@ -77,55 +71,11 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       <Text style={styles.sectionTitle}>앱 설정</Text>
       <View style={styles.section}>
         <SettingsRow
-          icon={Type}
-          iconColor="#3B82F6"
-          title="폰트 설정"
-          value={settings.fontFamily === 'system' ? '시스템 기본' : 'OpenDyslexic'}
-          showChevron
-          onPress={() => onNavigate('font')}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
           icon={Palette}
           iconColor="#9333EA"
           title="테마/색상"
           showChevron
           onPress={() => onNavigate('theme')}
-          primaryColor={primaryColor}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          icon={Clock}
-          iconColor="#F59E0B"
-          title="시간 형식"
-          isToggle
-          toggleValue={settings.timeFormat === '12h'}
-          onToggle={v => settings.setTimeFormat(v ? '12h' : '24h')}
-          subtitle={settings.timeFormat === '12h' ? '12시간제 (AM/PM)' : '24시간제'}
-          primaryColor={primaryColor}
-        />
-      </View>
-
-      {/* ADHD 설정 */}
-      <Text style={styles.sectionTitle}>ADHD 설정</Text>
-      <View style={styles.section}>
-        <SettingsRow
-          icon={Vibrate}
-          iconColor="#EC4899"
-          title="햅틱 피드백"
-          isToggle
-          toggleValue={settings.hapticEnabled}
-          onToggle={settings.setHapticEnabled}
-          primaryColor={primaryColor}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          icon={Sparkles}
-          iconColor="#8B5CF6"
-          title="애니메이션"
-          isToggle
-          toggleValue={settings.animationsEnabled}
-          onToggle={settings.setAnimationsEnabled}
           primaryColor={primaryColor}
         />
       </View>
@@ -140,32 +90,6 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           isToggle
           toggleValue={settings.notificationsEnabled}
           onToggle={settings.setNotificationsEnabled}
-          primaryColor={primaryColor}
-        />
-        <View style={styles.divider} />
-        <SettingsRow
-          icon={Timer}
-          iconColor="#F97316"
-          title="포모도로 알림"
-          isToggle
-          toggleValue={settings.pomodoroReminders}
-          onToggle={v =>
-            useSettingsStore.setState({pomodoroReminders: v})
-          }
-          primaryColor={primaryColor}
-        />
-      </View>
-
-      {/* 할일 */}
-      <Text style={styles.sectionTitle}>할일</Text>
-      <View style={styles.section}>
-        <SettingsRow
-          icon={PartyPopper}
-          iconColor="#F59E0B"
-          title="완료 축하 효과"
-          isToggle
-          toggleValue={settings.celebrationEffects}
-          onToggle={settings.setCelebrationEffects}
           primaryColor={primaryColor}
         />
       </View>
