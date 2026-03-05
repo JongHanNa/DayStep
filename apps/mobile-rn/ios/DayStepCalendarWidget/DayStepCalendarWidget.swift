@@ -7,6 +7,45 @@
 
 import WidgetKit
 import SwiftUI
+import AppIntents
+
+// MARK: - 월 이동 Intent
+
+struct ChangeMonthIntent: AppIntent {
+    static var title: LocalizedStringResource = "월 변경"
+
+    @Parameter(title: "Delta")
+    var delta: Int
+
+    init() { delta = 0 }
+    init(delta: Int) { self.delta = delta }
+
+    func perform() async throws -> some IntentResult {
+        let appGroupID = "group.com.daystep.app"
+        guard let defaults = UserDefaults(suiteName: appGroupID) else {
+            return .result()
+        }
+
+        let cal = Calendar.current
+        let now = Date()
+        let curY = defaults.object(forKey: "widget_display_year") as? Int
+            ?? cal.component(.year, from: now)
+        let curM = defaults.object(forKey: "widget_display_month") as? Int
+            ?? cal.component(.month, from: now)
+
+        var comps = DateComponents()
+        comps.year = curY
+        comps.month = curM + delta
+        comps.day = 1
+        if let newDate = cal.date(from: comps) {
+            defaults.set(cal.component(.year, from: newDate), forKey: "widget_display_year")
+            defaults.set(cal.component(.month, from: newDate), forKey: "widget_display_month")
+        }
+
+        WidgetCenter.shared.reloadAllTimelines()
+        return .result()
+    }
+}
 
 // MARK: - 데이터 모델
 
@@ -188,8 +227,16 @@ struct DayStepCalendarWidgetView: View {
         return c
     }
 
-    private var displayYear: Int  { entry.payload?.year  ?? cal.component(.year,  from: Date()) }
-    private var displayMonth: Int { entry.payload?.month ?? cal.component(.month, from: Date()) }
+    private var displayYear: Int {
+        if let y = UserDefaults(suiteName: "group.com.daystep.app")?
+            .object(forKey: "widget_display_year") as? Int { return y }
+        return entry.payload?.year ?? cal.component(.year, from: Date())
+    }
+    private var displayMonth: Int {
+        if let m = UserDefaults(suiteName: "group.com.daystep.app")?
+            .object(forKey: "widget_display_month") as? Int { return m }
+        return entry.payload?.month ?? cal.component(.month, from: Date())
+    }
 
     private var dayMap: [String: WidgetCalendarDay] {
         guard let days = entry.payload?.days else { return [:] }
@@ -228,12 +275,29 @@ struct DayStepCalendarWidgetView: View {
     var largeBody: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(alignment: .leading, spacing: 0) {
-                // 헤더: 파란 월 제목
-                let headerText = "\(displayYear)년 \(displayMonth)월"
-                Text(verbatim: headerText)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.blue)
-                    .padding(.bottom, 4)
+                // 헤더: < 년월 > 이동 버튼
+                HStack {
+                    Button(intent: ChangeMonthIntent(delta: -1)) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.blue)
+                    }
+                    .buttonStyle(.plain)
+
+                    Text(verbatim: "\(displayYear)년 \(displayMonth)월")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.blue)
+
+                    Button(intent: ChangeMonthIntent(delta: 1)) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.blue)
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer()
+                }
+                .padding(.bottom, 4)
 
                 // 요일 레이블
                 HStack(spacing: 0) {
@@ -279,9 +343,9 @@ struct DayStepCalendarWidgetView: View {
                     }
                 }
             }
-            .padding(.horizontal, 6)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
+            .padding(.horizontal, 4)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
 
             // 우하단 "+" 버튼
             Circle()
@@ -292,7 +356,7 @@ struct DayStepCalendarWidgetView: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                 )
-                .padding(6)
+                .padding(4)
         }
         .background(Color.white)
     }
@@ -392,6 +456,7 @@ struct DayStepCalendarWidget: Widget {
                 .containerBackground(Color.white, for: .widget)
                 .widgetURL(URL(string: "daystep://monthly"))
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("DayStep 월간 캘린더")
         .description("이번 달 할일을 한눈에 확인하세요.")
         .supportedFamilies([.systemMedium, .systemLarge])

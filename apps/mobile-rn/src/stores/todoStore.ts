@@ -19,6 +19,8 @@ import {
   endOfMonth,
   eachDayOfInterval,
   parseISO,
+  subMonths,
+  addMonths,
 } from 'date-fns';
 
 // ============================================
@@ -936,34 +938,38 @@ export const useTodoStore = create<TodoState>()(
 
           const monthStart = startOfMonth(new Date(year, month - 1));
           const monthEnd = endOfMonth(new Date(year, month - 1));
-          const monthStartISO = monthStart.toISOString();
-          const monthEndISO = monthEnd.toISOString();
-          const monthStartDate = format(monthStart, 'yyyy-MM-dd');
 
+          // 위젯용 ±1개월 확장 범위
+          const prevMonthStart = startOfMonth(subMonths(new Date(year, month - 1), 1));
+          const nextMonthEnd = endOfMonth(addMonths(new Date(year, month - 1), 1));
+          const rangeStartISO = prevMonthStart.toISOString();
+          const rangeEndISO = nextMonthEnd.toISOString();
+          const rangeStartDate = format(prevMonthStart, 'yyyy-MM-dd');
+
+          // 3개월 범위 쿼리 (전월~익월)
           const {data, error} = await supabase
             .from('todos')
             .select('id, title, start_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
             .eq('user_id', userId)
             .or(
               [
-                `and(schedule_type.eq.timed,start_time.gte.${monthStartISO},start_time.lte.${monthEndISO})`,
-                `and(schedule_type.eq.anytime,start_time.gte.${monthStartISO},start_time.lte.${monthEndISO})`,
-                `and(recurrence_pattern.eq.daily,start_time.lte.${monthEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${monthStartDate}))`,
-                `and(recurrence_pattern.eq.weekly,start_time.lte.${monthEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${monthStartDate}))`,
+                `and(schedule_type.eq.timed,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
+                `and(schedule_type.eq.anytime,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
+                `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
+                `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
               ].join(','),
             );
 
           if (error) throw error;
 
           const todos = (data ?? []) as MonthTodoSummary[];
+
+          // monthViewData: 현재 월만 (플래너용)
           const monthDays = eachDayOfInterval({start: monthStart, end: monthEnd});
           const result: Record<string, MonthTodoSummary[]> = {};
 
-          for (const day of monthDays) {
-            const dateStr = format(day, 'yyyy-MM-dd');
-            const dayOfWeek = getDay(day);
-
-            result[dateStr] = todos.filter(todo => {
+          const filterTodosForDay = (dateStr: string, dayOfWeek: number) => {
+            return todos.filter(todo => {
               if (todo.recurrence_pattern === 'daily') {
                 if (!todo.start_time) return false;
                 const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
@@ -978,18 +984,28 @@ export const useTodoStore = create<TodoState>()(
                 if (todo.recurrence_end_date && todo.recurrence_end_date <= dateStr) return false;
                 return todo.recurrence_days_of_week?.includes(dayOfWeek) ?? false;
               }
-              // timed / anytime
               if (todo.start_time) {
                 return format(parseISO(todo.start_time), 'yyyy-MM-dd') === dateStr;
               }
               return false;
             });
+          };
+
+          for (const day of monthDays) {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            result[dateStr] = filterTodosForDay(dateStr, getDay(day));
           }
 
           set({monthViewData: result});
 
-          // iOS 홈 화면 위젯 동기화
-          const widgetDays = Object.entries(result).map(([date, dayTodos]) => ({
+          // iOS 위젯 동기화: 3개월 범위
+          const allDays = eachDayOfInterval({start: prevMonthStart, end: nextMonthEnd});
+          const widgetResult: Record<string, MonthTodoSummary[]> = {};
+          for (const day of allDays) {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            widgetResult[dateStr] = filterTodosForDay(dateStr, getDay(day));
+          }
+          const widgetDays = Object.entries(widgetResult).map(([date, dayTodos]) => ({
             date,
             todos: dayTodos.slice(0, 5).map(t => ({
               title: t.title,
