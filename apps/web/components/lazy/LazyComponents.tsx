@@ -64,7 +64,7 @@ const LoginButtonComponent = lazy(() =>
 export function LazyLoginButton({
   provider,
 }: {
-  provider: "google" | "kakao";
+  provider: "google";
 }) {
   return (
     <Suspense fallback={<LoadingSkeleton className="h-12 w-full rounded-lg" />}>

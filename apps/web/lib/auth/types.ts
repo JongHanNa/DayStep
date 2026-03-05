@@ -22,7 +22,6 @@ export interface AuthContextType {
   
   // 인증 메서드
   signInWithGoogle: () => Promise<void>;
-  signInWithKakao: () => Promise<void>;
   signInWithTestAccount: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -46,7 +45,7 @@ export interface AuthProviderProps {
 /**
  * 지원되는 OAuth 제공자
  */
-export type OAuthProvider = 'google' | 'kakao';
+export type OAuthProvider = 'google';
 
 /**
  * OAuth 핸들러 함수의 반환 타입
@@ -60,5 +59,4 @@ export interface OAuthResult {
  */
 export interface OAuthHandlers {
   google: () => Promise<OAuthResult>;
-  kakao: () => Promise<OAuthResult>;
 }

@@ -302,7 +302,6 @@ export const restoreLocalStorageUser = async (): Promise<{
   appUser: AppUser | null;
   provider: string | null;
 }> => {
-  const kakaoUserData = localStorage.getItem('kakao_user');
   const iosTestUserData = localStorage.getItem('ios_test_user');
 
   // iOS 테스트 사용자는 개발 환경에서만 허용
@@ -350,12 +349,6 @@ export const restoreLocalStorageUser = async (): Promise<{
     // 프로덕션 환경에서 발견된 테스트 사용자 데이터는 제거
     console.log('프로덕션 환경에서 iOS 테스트 사용자 데이터 제거');
     localStorage.removeItem('ios_test_user');
-  }
-
-  // 기존 kakao_user 가짜 세션 데이터가 있으면 정리
-  if (kakaoUserData) {
-    console.log('레거시 kakao_user 데이터 발견 — 정리합니다');
-    localStorage.removeItem('kakao_user');
   }
 
   return { user: null, appUser: null, provider: null };

@@ -123,21 +123,14 @@ export default function PrivacyPage() {
                 <tr>
                   <td className="border border-gray-200 p-3">이메일 주소</td>
                   <td className="border border-gray-200 p-3">
-                    회원가입 (이메일, Google, Kakao OAuth)
+                    회원가입 (이메일, Google OAuth)
                   </td>
                   <td className="border border-gray-200 p-3">필수</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 p-3">이름 (닉네임)</td>
                   <td className="border border-gray-200 p-3">
-                    회원가입 (Google, Kakao OAuth)
-                  </td>
-                  <td className="border border-gray-200 p-3">선택</td>
-                </tr>
-                <tr>
-                  <td className="border border-gray-200 p-3">프로필 이미지</td>
-                  <td className="border border-gray-200 p-3">
-                    회원가입 (Kakao OAuth)
+                    회원가입 (Google OAuth)
                   </td>
                   <td className="border border-gray-200 p-3">선택</td>
                 </tr>
@@ -177,7 +170,7 @@ export default function PrivacyPage() {
           </h3>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
             <li>회원가입 및 서비스 이용 과정에서 정보주체가 직접 입력</li>
-            <li>소셜 로그인 (Google OAuth, Kakao OAuth) 연동</li>
+            <li>소셜 로그인 (Google OAuth) 연동</li>
             <li>서비스 이용 과정에서 자동 수집 (쿠키, 로그 분석 등)</li>
             <li>
               모바일 애플리케이션 권한 승인을 통한 수집 (연락처, 알림 등)
@@ -367,7 +360,7 @@ export default function PrivacyPage() {
           </ul>
 
           <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">
-            다. Google / Kakao (OAuth 인증)
+            다. Google (OAuth 인증)
           </h3>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
             <li>

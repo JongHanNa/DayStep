@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import type { AuthUser } from '@/types';
 
 // Sign in with OAuth provider
-export async function signInWithOAuth(provider: 'google' | 'kakao') {
+export async function signInWithOAuth(provider: 'google') {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {

@@ -5,7 +5,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { Button } from '@/components/ui/button';
 
 interface LoginButtonProps {
-  provider: 'google' | 'kakao' | 'test-account';
+  provider: 'google' | 'test-account';
   className?: string;
 }
 
@@ -13,14 +13,12 @@ interface LoginButtonProps {
  * 소셜 로그인 버튼 컴포넌트
  */
 export function LoginButton({ provider, className }: LoginButtonProps) {
-  const { signInWithGoogle, signInWithKakao, signInWithTestAccount } = useAuth();
+  const { signInWithGoogle, signInWithTestAccount } = useAuth();
 
   const handleLogin = async () => {
     try {
       if (provider === 'google') {
         await signInWithGoogle();
-      } else if (provider === 'kakao') {
-        await signInWithKakao();
       } else if (provider === 'test-account') {
         await signInWithTestAccount();
       }
@@ -33,8 +31,6 @@ export function LoginButton({ provider, className }: LoginButtonProps) {
     switch (provider) {
       case 'google':
         return 'Google로 로그인';
-      case 'kakao':
-        return 'Kakao로 로그인';
       case 'test-account':
         return '테스트 계정으로 로그인';
       default:
@@ -65,12 +61,6 @@ export function LoginButton({ provider, className }: LoginButtonProps) {
             />
           </svg>
         );
-      case 'kakao':
-        return (
-          <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="#000000">
-            <path d="M12 3C7.03 3 3 6.24 3 10.2c0 2.46 1.58 4.62 4.02 5.96L6.3 19.5c-.12.39.15.78.57.65L10.6 18c.45.04.9.06 1.4.06 4.97 0 9-3.24 9-7.2S16.97 3 12 3z"/>
-          </svg>
-        );
       case 'test-account':
         return (
           <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -87,8 +77,6 @@ export function LoginButton({ provider, className }: LoginButtonProps) {
     switch (provider) {
       case 'google':
         return 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-md hover:shadow-lg dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-600';
-      case 'kakao':
-        return 'bg-yellow-400 hover:bg-yellow-500 text-gray-900 border-0 shadow-md hover:shadow-lg';
       case 'test-account':
         return 'bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg';
       default:

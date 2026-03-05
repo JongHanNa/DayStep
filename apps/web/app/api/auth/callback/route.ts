@@ -8,7 +8,7 @@ export const revalidate = 0;
 
 /**
  * OAuth 콜백 API 라우트
- * Google, Kakao 등의 OAuth 프로바이더에서 인증 완료 후 콜백 처리
+ * Google OAuth 프로바이더에서 인증 완료 후 콜백 처리
  */
 export async function GET(request: NextRequest) {
   console.log('🔧 [서버 콜백] OAuth 콜백 처리 시작');

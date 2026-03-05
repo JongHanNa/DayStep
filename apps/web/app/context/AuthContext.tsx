@@ -11,7 +11,6 @@ import {
 } from '@/lib/auth/sessionUtils';
 import {
   handleGoogleSignIn,
-  handleKakaoSignIn,
   clearOAuthSessions
 } from '@/lib/auth/oauthHandlers';
 import { useAuthStore } from '@/state/stores/authStore';
@@ -41,7 +40,6 @@ const defaultContextValue: AuthContextType = {
   session: null,
   loading: false, // 하이드레이션 안전성을 위해 초기값을 false로 설정
   signInWithGoogle: async () => {},
-  signInWithKakao: async () => {},
   signInWithTestAccount: async () => {},
   signInWithEmail: async () => {},
   signOut: async () => {},
@@ -329,30 +327,6 @@ export function AuthProvider({
     }
   };
 
-  // Kakao OAuth 로그인
-  const signInWithKakao = async () => {
-    console.log('[Auth] Starting Kakao sign in...');
-    setLoading(true);
-
-    try {
-      const { error } = await handleKakaoSignIn();
-
-      if (error) {
-        console.error('[Auth] Kakao sign in error:', error);
-        alert(`카카오 로그인 오류: ${error.message}`);
-        setLoading(false);
-        return;
-      }
-
-      console.log('[Auth] Kakao sign in completed successfully');
-    } catch (error) {
-      console.error('[Auth] Kakao sign in failed:', error);
-      const errorMessage = error instanceof Error ? error.message : '카카오 로그인 중 알 수 없는 오류가 발생했습니다.';
-      alert(`카카오 로그인 오류: ${errorMessage}`);
-      setLoading(false);
-    }
-  };
-
   // 테스트 계정 로그인 (개발 환경 전용)
   const signInWithTestAccount = async () => {
     const isDevelopment = process.env.NODE_ENV === 'development';
@@ -453,7 +427,6 @@ export function AuthProvider({
       // localStorage 정리
       console.log('[Auth] Clearing localStorage...');
       const localStorageKeys = [
-        'kakao_user',
         'ios_test_user',
         'supabase.auth.token',
         'sb-simbmdvtiukdbjxeepic-auth-token'
@@ -470,7 +443,6 @@ export function AuthProvider({
 
       // 쿠키 정리
       try {
-        document.cookie = 'kakao_temp_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         document.cookie = 'supabase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         console.log('[Auth] Cookies cleared');
       } catch (cookieError) {
@@ -508,7 +480,6 @@ export function AuthProvider({
     session,
     loading,
     signInWithGoogle,
-    signInWithKakao,
     signInWithTestAccount,
     signInWithEmail,
     signOut,

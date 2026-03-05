@@ -105,7 +105,7 @@ export async function handleAuthInit(req: Request): Promise<Response> {
   const provider = url.searchParams.get('provider') || 'google';
 
   // 지원하는 프로바이더 확인
-  if (!['google', 'kakao'].includes(provider)) {
+  if (provider !== 'google') {
     return createHttpErrorResponse(400, -32602, '지원하지 않는 인증 프로바이더입니다.');
   }
 
@@ -146,7 +146,7 @@ function generateAuthInitPage(
   supabaseAnonKey: string,
   callbackUrl: string
 ): string {
-  const providerName = provider === 'google' ? 'Google' : 'Kakao';
+  const providerName = 'Google';
 
   return `
 <!DOCTYPE html>

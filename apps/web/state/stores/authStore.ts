@@ -31,7 +31,6 @@ interface AuthStoreState extends BaseStoreState {
   // 액션들
   initialize: () => Promise<void>;
   signInWithGoogle: () => Promise<boolean>;
-  signInWithKakao: () => Promise<boolean>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
   updateProfile: (data: { name?: string }) => Promise<boolean>;
@@ -171,19 +170,6 @@ export const useAuthStore = createStore<AuthStoreState>(
         });
         return false;
       }
-    },
-
-    /**
-     * Kakao OAuth 로그인 (추후 구현)
-     */
-    signInWithKakao: async () => {
-      logStoreAction("AuthStore", "signInWithKakao");
-
-      set((state: AuthStoreState) => {
-        loadingHelpers.setError(state, "Kakao 로그인은 현재 개발 중입니다.");
-      });
-
-      return false;
     },
 
     /**

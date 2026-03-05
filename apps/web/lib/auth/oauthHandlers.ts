@@ -1,7 +1,7 @@
 /**
  * OAuth Handlers
  *
- * Google/Kakao OAuth 로그인 핸들러를 모듈화하여 재사용성을 높입니다.
+ * Google OAuth 로그인 핸들러를 모듈화하여 재사용성을 높입니다.
  * AuthContext에서 분리된 순수 OAuth 로직을 처리합니다.
  */
 
@@ -53,46 +53,6 @@ export async function handleGoogleSignIn(): Promise<OAuthResult> {
     return { error: null };
   } catch (error) {
     console.error("[OAuth] Google sign in error:", error);
-    return { error: mapOAuthError(error) };
-  }
-}
-
-/**
- * Kakao OAuth 핸들러
- *
- * 웹 환경에서만 지원됩니다.
- */
-export async function handleKakaoSignIn(): Promise<OAuthResult> {
-  console.log("[OAuth] Starting Kakao sign in...");
-
-  try {
-    // 웹: 커스텀 OAuth 플로우
-    console.log("[OAuth] Using web Kakao OAuth flow");
-
-    const kakaoClientId = "b00dcde236c2f8b028a981303aeb4253";
-    const redirectUri = `${window.location.origin}/auth/kakao-callback`;
-    // 암호학적으로 안전한 랜덤 state 생성 (CSRF 방지)
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    const state = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-
-    const kakaoAuthUrl =
-      `https://kauth.kakao.com/oauth/authorize?` +
-      `client_id=${kakaoClientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `response_type=code&` +
-      `scope=profile_nickname profile_image&` +
-      `state=${state}`;
-
-    // 상태를 sessionStorage에 저장
-    globalThis.sessionStorage.setItem("kakao_oauth_state", state);
-
-    // Kakao 인증 페이지로 리다이렉트
-    window.location.href = kakaoAuthUrl;
-
-    return { error: null };
-  } catch (error) {
-    console.error("[OAuth] Kakao sign in error:", error);
     return { error: mapOAuthError(error) };
   }
 }
