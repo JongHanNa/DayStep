@@ -149,7 +149,6 @@ export const ENTITY_LIMIT_MAP: Record<UsageEntityType, number> = {
  */
 export function getEntityFreeLimit(entity: UsageEntityType): number {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { usePlanLimitsStore } = require('@/state/stores/planLimitsStore');
     return usePlanLimitsStore.getState().getFreeMaxCount(entity);
   } catch {
