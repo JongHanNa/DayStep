@@ -70,8 +70,8 @@ export const gradientPresets = {
 
 /** 배경 프리셋 선택 옵션 (설정 UI용) */
 export const backgroundPresetOptions = [
-{key: 'warmBackground' as const, label: '따뜻한 크림', description: '홈화면 배경', preview: ['#FFF7ED', '#FFFBEB']},
-  {key: 'calmBackground' as const, label: '차분한 블루', description: '하루계획하기 배경', preview: ['#F0F9FF', '#F5F3FF']},
+{key: 'calmBackground' as const, label: '차분한 블루', description: '하루계획하기 배경', preview: ['#F0F9FF', '#F5F3FF']},
+  {key: 'warmBackground' as const, label: '따뜻한 크림', description: '홈화면 배경', preview: ['#FFF7ED', '#FFFBEB']},
   {key: 'eveningBackground' as const, label: '저녁 보라', description: '저녁 시간 배경', preview: ['#EDE9FE', '#FCE7F3']},
   {key: 'executionBackground' as const, label: '실행 오렌지', description: '실행 모드 배경', preview: ['#FFF7ED', '#FEF3C7']},
 ] as const;

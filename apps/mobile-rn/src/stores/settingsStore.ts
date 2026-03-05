@@ -42,7 +42,7 @@ export const useSettingsStore = create<SettingsState>()(
       showDescriptions: true,
       showFuelBadges: true,
       notificationsEnabled: true,
-      backgroundPreset: 'warmBackground',
+      backgroundPreset: 'calmBackground',
       _lastSyncedAt: null,
 
       setColorTheme: (theme) => set({colorTheme: theme}),
