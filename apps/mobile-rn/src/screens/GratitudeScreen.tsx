@@ -27,6 +27,7 @@ function PersonFilterChips({
 }) {
   return (
     <ScrollView
+      style={{flexGrow: 0}}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 8}}>
@@ -157,6 +158,7 @@ export default function GratitudeScreen() {
 
         {/* 감사 기록 목록 */}
         <FlatList
+          style={{flex: 1}}
           data={notes}
           keyExtractor={item => item.id}
           renderItem={renderNote}

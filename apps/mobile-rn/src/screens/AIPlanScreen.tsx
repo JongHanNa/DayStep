@@ -56,6 +56,7 @@ function StatusFilterBar({
 }) {
   return (
     <ScrollView
+      style={{flexGrow: 0}}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 8}}>
@@ -404,6 +405,7 @@ export default function AIPlanScreen() {
 
       {/* 프로젝트 목록 */}
       <FlatList
+        style={{flex: 1}}
         data={filteredProjects}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
