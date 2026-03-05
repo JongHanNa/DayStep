@@ -13,6 +13,7 @@ import {
 } from '@/lib/revenueCat';
 import {useRealtimeSync} from '@/hooks/useRealtimeSync';
 import {usePlanLimitsStore} from '@/stores/planLimitsStore';
+import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
@@ -79,15 +80,26 @@ export default function RootNavigator() {
   }, []);
 
   // 인증 상태 변경 시 RevenueCat 로그인/로그아웃
+  const applyRevenueCatPurchase = useSubscriptionStore(
+    s => s.applyRevenueCatPurchase,
+  );
   useEffect(() => {
     if (isAuthenticated && user?.id) {
-      loginRevenueCat(user.id);
+      loginRevenueCat(user.id).then(customerInfo => {
+        // webhook 지연/실패 시에도 RevenueCat SDK 로컬 entitlement로 구독 상태 유지
+        if (customerInfo?.entitlements?.active) {
+          const active = customerInfo.entitlements.active;
+          if (Object.keys(active).length > 0) {
+            applyRevenueCatPurchase(active);
+          }
+        }
+      });
       wasAuthenticated.current = true;
     } else if (!isAuthenticated && wasAuthenticated.current) {
       logoutRevenueCat();
       wasAuthenticated.current = false;
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, applyRevenueCatPurchase]);
 
   if (initializing) {
     return <LoadingScreen />;

@@ -727,12 +727,19 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
                 style={[
                   styles.infoValue,
                   {
-                    color: subscriptionInfo?.autoRenewEnabled
-                      ? '#059669'
-                      : '#D97706',
+                    color:
+                      status !== 'cancelled' &&
+                      status !== 'expired' &&
+                      subscriptionInfo?.autoRenewEnabled
+                        ? '#059669'
+                        : '#D97706',
                   },
                 ]}>
-                {subscriptionInfo?.autoRenewEnabled ? '활성' : '비활성'}
+                {status !== 'cancelled' &&
+                status !== 'expired' &&
+                subscriptionInfo?.autoRenewEnabled
+                  ? '활성'
+                  : '비활성'}
               </Text>
             </View>
           </View>
