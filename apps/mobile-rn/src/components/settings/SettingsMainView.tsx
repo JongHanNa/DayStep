@@ -67,6 +67,17 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
         </View>
       </AnimatedCard>
 
+      {/* 구독 관리 */}
+      <View style={[styles.section, {marginTop: 16}]}>
+        <SettingsRow
+          icon={CreditCard}
+          iconColor="#6366F1"
+          title="구독 관리"
+          showChevron
+          onPress={() => onNavigate('subscription')}
+        />
+      </View>
+
       {/* 앱 설정 */}
       <Text style={styles.sectionTitle}>앱 설정</Text>
       <View style={styles.section}>
@@ -91,17 +102,6 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           toggleValue={settings.notificationsEnabled}
           onToggle={settings.setNotificationsEnabled}
           primaryColor={primaryColor}
-        />
-      </View>
-
-      {/* 구독 관리 */}
-      <View style={[styles.section, {marginTop: 16}]}>
-        <SettingsRow
-          icon={CreditCard}
-          iconColor="#6366F1"
-          title="구독 관리"
-          showChevron
-          onPress={() => onNavigate('subscription')}
         />
       </View>
 
