@@ -24,7 +24,7 @@ export const zustandMMKVStorage: StateStorage = {
     storage.set(name, value);
   },
   removeItem: (name: string): void => {
-    storage.delete(name);
+    storage.remove(name);
   },
 };
 
@@ -39,6 +39,6 @@ export const supabaseMMKVStorage = {
     sessionStorage.set(key, value);
   },
   removeItem: (key: string): void => {
-    sessionStorage.delete(key);
+    sessionStorage.remove(key);
   },
 };
