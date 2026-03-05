@@ -36,7 +36,7 @@ export function MonthCalendarGrid({
   }, [currentMonth]);
 
   return (
-    <View style={{flex: 1, paddingHorizontal: 8}}>
+    <View style={{flex: 1}}>
       {rows.map((row, rowIdx) => (
         <View
           key={rowIdx}

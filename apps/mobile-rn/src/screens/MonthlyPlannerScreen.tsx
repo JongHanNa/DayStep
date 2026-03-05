@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ScreenContainer} from '@/components/core';
 import {
   TodoFormBottomSheet,
@@ -28,6 +29,7 @@ export default function MonthlyPlannerScreen() {
   const {monthViewData, monthViewLoading, fetchTodosForMonthView, setSelectedDate} =
     useTodoStore();
 
+  const insets = useSafeAreaInsets();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const formSheetRef = useRef<TodoFormBottomSheetRef>(null);
 
@@ -88,7 +90,7 @@ export default function MonthlyPlannerScreen() {
       </View>
 
       {/* 요일 헤더 */}
-      <View className="flex-row px-2 pb-1">
+      <View className="flex-row pb-1">
         {DAY_LABELS.map((label, i) => (
           <View key={label} style={{flex: 1, alignItems: 'center'}}>
             <Text
@@ -104,7 +106,7 @@ export default function MonthlyPlannerScreen() {
       </View>
 
       {/* 캘린더 그리드 */}
-      <View style={{flex: 1}}>
+      <View style={{flex: 1, paddingBottom: 64 + insets.bottom}}>
         {monthViewLoading || !monthViewData ? (
           <View className="py-20 items-center">
             <ActivityIndicator size="large" color="#3B82F6" />
