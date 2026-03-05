@@ -9,7 +9,7 @@ import type {ColorTheme} from '@/theme/colors';
 
 type TimeFormat = '12h' | '24h';
 type FontFamily = 'system' | 'opendyslexic';
-export type BackgroundPreset = 'auto' | 'warmBackground' | 'calmBackground' | 'eveningBackground' | 'executionBackground';
+export type BackgroundPreset = 'warmBackground' | 'calmBackground' | 'eveningBackground' | 'executionBackground';
 
 interface SettingsState {
   // 표시 설정
@@ -65,7 +65,7 @@ export const useSettingsStore = create<SettingsState>()(
       animationsEnabled: true,
       notificationsEnabled: true,
       pomodoroReminders: true,
-      backgroundPreset: 'auto',
+      backgroundPreset: 'warmBackground',
       celebrationEffects: true,
       _lastSyncedAt: null,
 

@@ -35,7 +35,7 @@ export function ScreenContainer({
   style,
 }: ScreenContainerProps) {
   const backgroundPreset = useSettingsStore(s => s.backgroundPreset);
-  const effectiveGradient = backgroundPreset !== 'auto' ? backgroundPreset : gradient;
+  const effectiveGradient = backgroundPreset;
   const preset = effectiveGradient ? gradientPresets[effectiveGradient] : null;
   const colors = gradientColors ?? preset?.colors;
 
