@@ -74,7 +74,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       </AnimatedCard>
 
       {/* 앱 설정 */}
-      <Text style={styles.sectionTitle}>📱 앱 설정</Text>
+      <Text style={styles.sectionTitle}>앱 설정</Text>
       <View style={styles.section}>
         <SettingsRow
           icon={Type}
@@ -107,7 +107,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       </View>
 
       {/* ADHD 설정 */}
-      <Text style={styles.sectionTitle}>🧠 ADHD 설정</Text>
+      <Text style={styles.sectionTitle}>ADHD 설정</Text>
       <View style={styles.section}>
         <SettingsRow
           icon={Vibrate}
@@ -131,7 +131,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       </View>
 
       {/* 알림 */}
-      <Text style={styles.sectionTitle}>🔔 알림</Text>
+      <Text style={styles.sectionTitle}>알림</Text>
       <View style={styles.section}>
         <SettingsRow
           icon={Bell}
@@ -157,7 +157,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       </View>
 
       {/* 할일 */}
-      <Text style={styles.sectionTitle}>✅ 할일</Text>
+      <Text style={styles.sectionTitle}>할일</Text>
       <View style={styles.section}>
         <SettingsRow
           icon={PartyPopper}
@@ -184,7 +184,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       {/* 관리자 섹션 (admin 역할만) */}
       {isAdmin && (
         <>
-          <Text style={styles.sectionTitle}>🛡️ 관리자</Text>
+          <Text style={styles.sectionTitle}>관리자</Text>
           <View style={[styles.section, {marginBottom: 16}]}>
             <SettingsRow
               icon={ShieldCheck}
@@ -211,7 +211,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       {/* 개발자 도구 (DEV 빌드 전용) */}
       {__DEV__ && (
         <>
-          <Text style={styles.sectionTitle}>🛠️ 개발자 도구</Text>
+          <Text style={styles.sectionTitle}>개발자 도구</Text>
           <View style={[styles.section, {marginBottom: 40}]}>
             <SettingsRow
               icon={Bell}

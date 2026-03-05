@@ -9,6 +9,7 @@ import type {ColorTheme} from '@/theme/colors';
 
 type TimeFormat = '12h' | '24h';
 type FontFamily = 'system' | 'opendyslexic';
+export type BackgroundPreset = 'auto' | 'warmBackground' | 'calmBackground' | 'eveningBackground' | 'executionBackground';
 
 interface SettingsState {
   // 표시 설정
@@ -27,6 +28,9 @@ interface SettingsState {
   notificationsEnabled: boolean;
   pomodoroReminders: boolean;
 
+  // 배경 설정
+  backgroundPreset: BackgroundPreset;
+
   // 할일 설정
   celebrationEffects: boolean;
 
@@ -43,6 +47,7 @@ interface SettingsState {
   setHapticEnabled: (enabled: boolean) => void;
   setAnimationsEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
+  setBackgroundPreset: (preset: BackgroundPreset) => void;
   setCelebrationEffects: (enabled: boolean) => void;
   loadFromDB: (settings: Record<string, any>) => void;
 }
@@ -60,6 +65,7 @@ export const useSettingsStore = create<SettingsState>()(
       animationsEnabled: true,
       notificationsEnabled: true,
       pomodoroReminders: true,
+      backgroundPreset: 'auto',
       celebrationEffects: true,
       _lastSyncedAt: null,
 
@@ -72,6 +78,7 @@ export const useSettingsStore = create<SettingsState>()(
       setHapticEnabled: (enabled) => set({hapticEnabled: enabled}),
       setAnimationsEnabled: (enabled) => set({animationsEnabled: enabled}),
       setNotificationsEnabled: (enabled) => set({notificationsEnabled: enabled}),
+      setBackgroundPreset: (preset) => set({backgroundPreset: preset}),
       setCelebrationEffects: (enabled) => set({celebrationEffects: enabled}),
       loadFromDB: (settings) =>
         set((state) => ({

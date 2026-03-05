@@ -6,6 +6,7 @@ import React from 'react';
 import {StyleSheet, ViewStyle, StyleProp, StatusBar} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {GradientBackground, gradientPresets} from './GradientBackground';
+import {useSettingsStore} from '@/stores/settingsStore';
 
 type GradientPreset = keyof typeof gradientPresets;
 
@@ -33,7 +34,9 @@ export function ScreenContainer({
   statusBarStyle = 'dark-content',
   style,
 }: ScreenContainerProps) {
-  const preset = gradient ? gradientPresets[gradient] : null;
+  const backgroundPreset = useSettingsStore(s => s.backgroundPreset);
+  const effectiveGradient = backgroundPreset !== 'auto' ? backgroundPreset : gradient;
+  const preset = effectiveGradient ? gradientPresets[effectiveGradient] : null;
   const colors = gradientColors ?? preset?.colors;
 
   return (
