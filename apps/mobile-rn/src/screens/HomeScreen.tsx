@@ -138,15 +138,6 @@ export default function HomeScreen() {
         onPress: () => navigation.navigate('MonthlyPlanner'),
       },
       {
-        id: 'timeline',
-        icon: <Calendar size={20} color={BLUE_ICON} />,
-        label: '일정 계획하기',
-        description: '타임라인으로 한눈에 보기',
-        iconBgColor: BLUE_BG,
-        iconColor: BLUE_ICON,
-        onPress: () => navigation.navigate('Timeline'),
-      },
-      {
         id: 'ai-plan',
         icon: <FolderKanban size={20} color={BLUE_ICON} />,
         label: '내 계획 보기',

@@ -17,7 +17,6 @@ import SettingsScreen from '../screens/SettingsScreen';
 
 // Home Stack 전용 화면
 import MonthlyPlannerScreen from '../screens/MonthlyPlannerScreen';
-import TimelineScreen from '../screens/TimelineScreen';
 import AIPlanScreen from '../screens/AIPlanScreen';
 import AIChatScreen from '../screens/AIChatScreen';
 import GuideScreen from '../screens/GuideScreen';
@@ -56,7 +55,6 @@ function HomeStackNavigator() {
       }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="MonthlyPlanner" component={MonthlyPlannerScreen} />
-      <HomeStack.Screen name="Timeline" component={TimelineScreen} />
       <HomeStack.Screen name="AIPlan" component={AIPlanScreen} />
       <HomeStack.Screen name="AIChat" component={AIChatScreen} />
       <HomeStack.Screen name="Guide" component={GuideScreen} />
