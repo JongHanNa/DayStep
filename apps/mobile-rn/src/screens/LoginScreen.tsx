@@ -8,11 +8,56 @@ import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {GradientBackground} from '@/components/core';
 import {useAuthStore} from '@/stores/authStore';
-import {signInWithGoogle, signInWithApple} from '@/lib/auth';
+import {
+  signInWithGoogle,
+  signInWithApple,
+  extractEmailFromIdToken,
+  checkExistingAccount,
+} from '@/lib/auth';
+import {LinkAccountModal} from '@/components/auth/LinkAccountModal';
 
 export default function LoginScreen() {
   const {signInWithIdToken, loading, error, clearError} = useAuthStore();
   const [authProvider, setAuthProvider] = useState<string | null>(null);
+
+  // 계정 연결 모달 state
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [linkModalData, setLinkModalData] = useState<{
+    existingProvider: string | null;
+    newProvider: 'google' | 'apple';
+    idToken: string;
+    nonce?: string;
+  } | null>(null);
+  const [linkLoading, setLinkLoading] = useState(false);
+
+  /**
+   * OAuth 공통 플로우: idToken → 기존 계정 확인 → 모달 or 바로 로그인
+   */
+  const processOAuthSignIn = async (
+    provider: 'google' | 'apple',
+    idToken: string,
+    nonce?: string,
+  ) => {
+    const email = extractEmailFromIdToken(idToken);
+
+    if (email) {
+      const existing = await checkExistingAccount(email);
+      if (existing.exists && existing.provider && existing.provider !== provider) {
+        // 다른 프로바이더로 이미 가입됨 → 모달 표시
+        setLinkModalData({
+          existingProvider: existing.provider,
+          newProvider: provider,
+          idToken,
+          nonce,
+        });
+        setLinkModalVisible(true);
+        return;
+      }
+    }
+
+    // 새 계정이거나 같은 프로바이더 → 바로 로그인
+    await signInWithIdToken(provider, idToken, nonce);
+  };
 
   const handleGoogleSignIn = async () => {
     setAuthProvider('google');
@@ -20,7 +65,7 @@ export default function LoginScreen() {
     try {
       const result = await signInWithGoogle();
       if (result) {
-        await signInWithIdToken('google', result.idToken);
+        await processOAuthSignIn('google', result.idToken);
       }
     } catch (err: any) {
       Alert.alert('로그인 실패', err.message ?? 'Google 로그인 중 오류가 발생했습니다');
@@ -35,13 +80,36 @@ export default function LoginScreen() {
     try {
       const result = await signInWithApple();
       if (result) {
-        await signInWithIdToken('apple', result.idToken, result.nonce);
+        await processOAuthSignIn('apple', result.idToken, result.nonce);
       }
     } catch (err: any) {
       Alert.alert('로그인 실패', err.message ?? 'Apple 로그인 중 오류가 발생했습니다');
     } finally {
       setAuthProvider(null);
     }
+  };
+
+  const handleLinkConfirm = async () => {
+    if (!linkModalData) return;
+    setLinkLoading(true);
+    try {
+      await signInWithIdToken(
+        linkModalData.newProvider,
+        linkModalData.idToken,
+        linkModalData.nonce,
+      );
+      setLinkModalVisible(false);
+      setLinkModalData(null);
+    } catch (err: any) {
+      Alert.alert('연결 실패', err.message ?? '계정 연결 중 오류가 발생했습니다');
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleLinkCancel = () => {
+    setLinkModalVisible(false);
+    setLinkModalData(null);
   };
 
   // DEV: 개발용 스킵
@@ -157,6 +225,16 @@ export default function LoginScreen() {
           </Text>
         </Animated.View>
       </GradientBackground>
+
+      {/* 계정 연결 확인 모달 */}
+      <LinkAccountModal
+        visible={linkModalVisible}
+        existingProvider={linkModalData?.existingProvider ?? null}
+        newProvider={linkModalData?.newProvider ?? 'google'}
+        loading={linkLoading}
+        onConfirm={handleLinkConfirm}
+        onCancel={handleLinkCancel}
+      />
     </ScreenContainer>
   );
 }

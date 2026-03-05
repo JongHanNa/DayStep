@@ -79,6 +79,56 @@ export async function signInWithApple(): Promise<{
 }
 
 /**
+ * idToken(JWT)에서 이메일 추출 (base64url 디코드)
+ */
+export function extractEmailFromIdToken(idToken: string): string | null {
+  try {
+    const parts = idToken.split('.');
+    if (parts.length !== 3) return null;
+
+    // base64url → base64 변환
+    let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (payload.length % 4) payload += '=';
+
+    const decoded = JSON.parse(atob(payload));
+    return decoded.email ?? null;
+  } catch {
+    console.warn('[Auth] Failed to extract email from idToken');
+    return null;
+  }
+}
+
+/**
+ * Edge Function으로 기존 계정 존재 여부 확인
+ */
+export async function checkExistingAccount(
+  email: string,
+): Promise<{exists: boolean; provider: string | null}> {
+  try {
+    const response = await fetch(
+      `${Config.SUPABASE_URL}/functions/v1/check-existing-account`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: Config.SUPABASE_ANON_KEY!,
+        },
+        body: JSON.stringify({email}),
+      },
+    );
+
+    if (!response.ok) {
+      return {exists: false, provider: null};
+    }
+
+    return await response.json();
+  } catch {
+    console.warn('[Auth] Failed to check existing account');
+    return {exists: false, provider: null};
+  }
+}
+
+/**
  * Google 로그아웃
  */
 export async function signOutGoogle(): Promise<void> {
