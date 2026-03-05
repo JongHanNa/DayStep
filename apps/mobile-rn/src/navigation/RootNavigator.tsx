@@ -67,7 +67,7 @@ function LoadingScreen() {
 
 export default function RootNavigator() {
   const {isAuthenticated, initializing, initialize, user} = useAuthStore();
-  const rcInitialized = useRef(false);
+  const wasAuthenticated = useRef(false);
 
   useEffect(() => {
     initialize();
@@ -75,18 +75,17 @@ export default function RootNavigator() {
 
   // RevenueCat SDK 초기화 (1회)
   useEffect(() => {
-    if (!rcInitialized.current) {
-      initRevenueCat();
-      rcInitialized.current = true;
-    }
+    initRevenueCat();
   }, []);
 
   // 인증 상태 변경 시 RevenueCat 로그인/로그아웃
   useEffect(() => {
     if (isAuthenticated && user?.id) {
       loginRevenueCat(user.id);
-    } else if (!isAuthenticated && rcInitialized.current) {
+      wasAuthenticated.current = true;
+    } else if (!isAuthenticated && wasAuthenticated.current) {
       logoutRevenueCat();
+      wasAuthenticated.current = false;
     }
   }, [isAuthenticated, user?.id]);
 
