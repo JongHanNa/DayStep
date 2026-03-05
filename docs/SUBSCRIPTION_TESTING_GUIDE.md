@@ -74,17 +74,29 @@ WHERE user_id = '...' AND platform = 'ios';
 
 기존 구독 이력이 남아있으면 Apple이 "이미 구독 중"으로 판단하므로 초기화가 필요하다.
 
-#### 권장: Xcode Transaction Manager
+#### 권장: Xcode Transaction Manager + DB 수동 초기화
 
 가장 확실한 방법. StoreKit 레벨에서 트랜잭션을 직접 삭제하므로 샌드박스 캐싱 문제를 우회한다.
+
+> **주의**: Xcode Delete Transaction은 **로컬 StoreKit만 초기화**한다. RevenueCat과 Supabase DB에는 기존 구독 상태가 그대로 남아있으므로, 앱에서 여전히 "구독 중"으로 표시되어 재결제가 불가능하다. 반드시 DB도 함께 초기화해야 한다.
 
 1. 실기기를 Mac에 연결하고 Xcode에서 앱 실행
 2. Xcode 메뉴 → **Debug** → **StoreKit** → **Manage Transactions**
 3. 해당 트랜잭션 우클릭 → **Delete Transaction**
-4. 앱에서 구독 화면으로 이동 → 새로 결제
+4. **Supabase DB 수동 만료 처리** (필수):
+   ```sql
+   -- 구독 만료 처리
+   UPDATE subscriptions SET status = 'expired', updated_at = now()
+   WHERE user_id = '...' AND platform = 'ios';
+
+   -- users 캐시 갱신
+   UPDATE users SET has_active_subscription = false, subscription_type = 'free', subscription_expires_at = null
+   WHERE id = '...';
+   ```
+5. 앱 재실행 → 비구독 상태 확인 → 구독 화면에서 새로 결제
 
 - 샌드박스 계정 재생성 불필요
-- RevenueCat/Supabase 별도 초기화 불필요 (새 트랜잭션으로 webhook이 다시 처리)
+- 재결제 시 새 INITIAL_PURCHASE webhook이 발생하여 RevenueCat/DB가 자동 갱신됨
 
 #### 보조: 3단계 초기화
 
@@ -143,7 +155,7 @@ DELETE FROM subscriptions WHERE user_id = '...' AND platform = 'ios';
 |------|------|------|
 | Cancel 했는데 앱에서 여전히 구독 상태 | Webhook 미처리 또는 클라이언트 캐시 | DB 직접 확인 후 수동 갱신 |
 | 재결제 시 "이미 구독 중" (Apple) | Apple/RevenueCat에 이전 이력 잔존 | Xcode Transaction Manager로 트랜잭션 삭제 |
-| 3단계 초기화 후에도 "이미 구독 중" | Apple 샌드박스가 Apple ID 레벨에서 구독 캐싱 | Xcode → Debug → StoreKit → Manage Transactions → Delete Transaction |
+| 3단계 초기화 후에도 "이미 구독 중" | Apple 샌드박스가 Apple ID 레벨에서 구독 캐싱 | Xcode → Debug → StoreKit → Manage Transactions → Delete Transaction + DB 수동 만료 처리 |
 | DB는 expired인데 앱에서 구독 표시 | 클라이언트 store 캐시 | 앱 재로그인 또는 store 초기화 |
 | cancelled인데 앱에서 구독 활성 표시 | `cancelled` + 만료일 미도래 시 활성 판단 로직 | DB에서 `status`를 `expired`로 변경 |
 | RevenueCat에서 Delete 후에도 구독 유지 | Supabase DB 미정리 | DB에서 해당 레코드 삭제/만료 처리 |
