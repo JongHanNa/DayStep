@@ -3,14 +3,18 @@
  * 보상 + 칭찬(3개) + 감사(3개) 입력 패널
  */
 import React, {useEffect, useState, useCallback} from 'react';
-import {View, Text, TextInput, StyleSheet} from 'react-native';
+import {View, Text, TextInput, StyleSheet, ScrollView} from 'react-native';
 import {useReflectionStore} from '@/stores/reflectionStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {Gift, Star, Heart} from 'lucide-react-native';
 
-export function ReflectionPanels() {
+interface ReflectionPanelsProps {
+  scrollViewRef?: React.RefObject<ScrollView>;
+}
+
+export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
   const user = useAuthStore(s => s.user);
   const {selectedDate} = useTodoStore();
   const {getReflection, loadReflection, upsertReflection} =
@@ -65,6 +69,12 @@ export function ReflectionPanels() {
     setGratitudes(updated);
   };
 
+  const handleInputFocus = useCallback(() => {
+    setTimeout(() => {
+      scrollViewRef?.current?.scrollToEnd({animated: true});
+    }, 300);
+  }, [scrollViewRef]);
+
   return (
     <View>
       {/* 보상 */}
@@ -79,6 +89,7 @@ export function ReflectionPanels() {
           <TextInput
             value={reward}
             onChangeText={setReward}
+            onFocus={handleInputFocus}
             onBlur={() => handleSave('reward', reward)}
             placeholder="오늘 하루 수고한 나에게 줄 보상은?"
             placeholderTextColor="#D1A054"
@@ -106,6 +117,7 @@ export function ReflectionPanels() {
               <TextInput
                 value={praise}
                 onChangeText={text => updatePraise(index, text)}
+                onFocus={handleInputFocus}
                 onBlur={() => handleSave('praises', praises.filter(p => p.trim()))}
                 placeholder={`칭찬 ${index + 1}`}
                 placeholderTextColor="#A78BFA"
@@ -134,6 +146,7 @@ export function ReflectionPanels() {
               <TextInput
                 value={gratitude}
                 onChangeText={text => updateGratitude(index, text)}
+                onFocus={handleInputFocus}
                 onBlur={() =>
                   handleSave('gratitudes', gratitudes.filter(g => g.trim()))
                 }

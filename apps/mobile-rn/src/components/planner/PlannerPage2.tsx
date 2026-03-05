@@ -16,6 +16,7 @@ import {
 
 export function PlannerPage2() {
   const pickerRef = useRef<TodoPickerSheetRef>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const handleMatrixAdd = useCallback(
     (importance: boolean, urgency: boolean) => {
@@ -34,12 +35,13 @@ export function PlannerPage2() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1">
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           <PriorityMatrixPanel onAddPress={handleMatrixAdd} />
           <ReluctantTasksPanel onAddPress={handleReluctantAdd} />
-          <ReflectionPanels />
+          <ReflectionPanels scrollViewRef={scrollViewRef} />
         </ScrollView>
       </KeyboardAvoidingView>
       <TodoPickerSheet ref={pickerRef} />
