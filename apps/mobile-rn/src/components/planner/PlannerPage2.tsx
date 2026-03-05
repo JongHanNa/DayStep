@@ -5,7 +5,7 @@
  * TodoPickerSheet 연동
  */
 import React, {useRef, useCallback} from 'react';
-import {ScrollView} from 'react-native';
+import {KeyboardAvoidingView, Platform, ScrollView} from 'react-native';
 import {PriorityMatrixPanel} from './PriorityMatrixPanel';
 import {ReluctantTasksPanel} from './ReluctantTasksPanel';
 import {ReflectionPanels} from './ReflectionPanels';
@@ -30,13 +30,18 @@ export function PlannerPage2() {
 
   return (
     <>
-      <ScrollView
-        contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
-        showsVerticalScrollIndicator={false}>
-        <PriorityMatrixPanel onAddPress={handleMatrixAdd} />
-        <ReluctantTasksPanel onAddPress={handleReluctantAdd} />
-        <ReflectionPanels />
-      </ScrollView>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1">
+        <ScrollView
+          contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <PriorityMatrixPanel onAddPress={handleMatrixAdd} />
+          <ReluctantTasksPanel onAddPress={handleReluctantAdd} />
+          <ReflectionPanels />
+        </ScrollView>
+      </KeyboardAvoidingView>
       <TodoPickerSheet ref={pickerRef} />
     </>
   );
