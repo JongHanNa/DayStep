@@ -205,6 +205,7 @@ async function handleInitialPurchase(supabase: any, event: any) {
           subscription_start_date: purchasedAt,
           subscription_end_date: expiresAt,
         }),
+    auto_renew_enabled: true,
     updated_at: new Date(),
   };
 
@@ -261,6 +262,7 @@ async function handleRenewal(supabase: any, event: any) {
     .update({
       status: 'active',
       subscription_end_date: expiresAt,
+      auto_renew_enabled: true,
       updated_at: new Date(),
     })
     .eq('user_id', userId);
@@ -306,6 +308,7 @@ async function handleCancellation(supabase: any, event: any) {
       status: 'cancelled',
       cancelled_at: new Date(),
       subscription_end_date: expiresAt, // 만료일까지 유지
+      auto_renew_enabled: false,
       updated_at: new Date(),
     })
     .eq('user_id', userId);
