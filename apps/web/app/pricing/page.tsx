@@ -93,7 +93,7 @@ export default function PricingPage() {
             </ul>
 
             <Link
-              href="/settings/subscription"
+              href="/adhd/settings/subscription"
               className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors"
             >
               구독하기
@@ -133,7 +133,7 @@ export default function PricingPage() {
             </ul>
 
             <Link
-              href="/settings/subscription"
+              href="/adhd/settings/subscription"
               className="block w-full text-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
               구독하기

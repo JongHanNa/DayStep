@@ -73,7 +73,7 @@ export function UsageBanner({ className = '' }: UsageBannerProps) {
 
       <div className="flex items-center gap-2 flex-shrink-0">
         <Link
-          href="/settings/subscription"
+          href="/adhd/settings/subscription"
           className="btn btn-sm btn-primary gap-1.5 rounded-full"
         >
           <Crown className="w-4 h-4" />

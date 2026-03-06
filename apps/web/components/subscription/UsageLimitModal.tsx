@@ -102,7 +102,7 @@ export function UsageLimitModal({ isOpen, onClose, result }: UsageLimitModalProp
         {/* 버튼 */}
         <div className="flex flex-col gap-2">
           <Link
-            href="/settings/subscription"
+            href="/adhd/settings/subscription"
             className="btn btn-primary w-full gap-2"
             onClick={onClose}
           >
