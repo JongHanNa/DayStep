@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {Flame, Star, PenLine} from 'lucide-react-native';
 import {AnimatedCard} from '@/components/core';
 import {useTheme} from '@/theme';
 
@@ -21,7 +22,10 @@ export function MotivationHeader({streak, xp, totalNotes}: MotivationHeaderProps
         {/* 스트릭 */}
         <View style={styles.stat}>
           <Text style={styles.statNumber}>{streak}</Text>
-          <Text style={styles.statLabel}>🔥 연속 일</Text>
+          <View style={styles.statLabelRow}>
+            <Flame size={12} color="#6B7280" />
+            <Text style={styles.statLabel}>연속 일</Text>
+          </View>
         </View>
 
         <View style={styles.divider} />
@@ -29,7 +33,10 @@ export function MotivationHeader({streak, xp, totalNotes}: MotivationHeaderProps
         {/* 레벨 */}
         <View style={styles.stat}>
           <Text style={styles.statNumber}>Lv.{xp.level}</Text>
-          <Text style={styles.statLabel}>⭐ 레벨</Text>
+          <View style={styles.statLabelRow}>
+            <Star size={12} color="#6B7280" />
+            <Text style={styles.statLabel}>레벨</Text>
+          </View>
         </View>
 
         <View style={styles.divider} />
@@ -37,7 +44,10 @@ export function MotivationHeader({streak, xp, totalNotes}: MotivationHeaderProps
         {/* 총 노트 */}
         <View style={styles.stat}>
           <Text style={styles.statNumber}>{totalNotes}</Text>
-          <Text style={styles.statLabel}>📝 원동력</Text>
+          <View style={styles.statLabelRow}>
+            <PenLine size={12} color="#6B7280" />
+            <Text style={styles.statLabel}>원동력</Text>
+          </View>
         </View>
       </View>
 
@@ -80,10 +90,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
   },
+  statLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 2,
+  },
   statLabel: {
     fontSize: 12,
     color: '#6B7280',
-    marginTop: 2,
   },
   divider: {
     width: 1,

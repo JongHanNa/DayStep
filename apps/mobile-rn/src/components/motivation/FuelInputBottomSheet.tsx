@@ -12,6 +12,7 @@ import React, {
 } from 'react';
 import {View, Text, TextInput, StyleSheet, Keyboard} from 'react-native';
 import BottomSheet, {BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
+import {Sparkles} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
@@ -78,7 +79,10 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
         backdropComponent={renderBackdrop}
         handleIndicatorStyle={{backgroundColor: '#D1D5DB'}}>
         <BottomSheetView style={styles.container}>
-          <Text style={styles.sheetTitle}>✨ 원동력 새기기</Text>
+          <View style={styles.sheetTitleRow}>
+            <Sparkles size={18} color="#1F2937" />
+            <Text style={styles.sheetTitle}>원동력 새기기</Text>
+          </View>
 
           {/* 감정 태그 */}
           <View style={styles.emotionRow}>
@@ -162,11 +166,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 4,
   },
+  sheetTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
+  },
   sheetTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 16,
   },
   emotionRow: {
     flexDirection: 'row',

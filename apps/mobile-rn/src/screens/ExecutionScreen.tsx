@@ -16,6 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {Timer, ClipboardList, Zap} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTodoStore} from '@/stores/todoStore';
@@ -28,8 +29,6 @@ import type {Todo} from '@daystep/shared-core';
 // Constants
 // ============================================
 
-const MINT = '#14B8A6';
-const MINT_LIGHT = '#CCFBF1';
 const VIOLET = '#8B5CF6';
 const VIOLET_LIGHT = '#EDE9FE';
 const QUICK_FOCUS_SECONDS = 20 * 60; // 20분
@@ -66,9 +65,11 @@ function formatDurationLabel(seconds: number): string {
 function SegmentControl({
   mode,
   onChangeMode,
+  primaryColor,
 }: {
   mode: FocusMode;
   onChangeMode: (m: FocusMode) => void;
+  primaryColor: string;
 }) {
   const progress = useSharedValue(mode === 'todo' ? 0 : 1);
 
@@ -84,7 +85,7 @@ function SegmentControl({
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [MINT, VIOLET],
+      [primaryColor, VIOLET],
     ),
   }));
 
@@ -95,25 +96,31 @@ function SegmentControl({
         onPress={() => onChangeMode('todo')}
         hapticType="selection"
         style={styles.segmentBtn}>
-        <Text
-          style={[
-            styles.segmentText,
-            mode === 'todo' && styles.segmentTextActive,
-          ]}>
-          📋 할일 집중
-        </Text>
+        <View style={styles.segmentContent}>
+          <ClipboardList size={14} color={mode === 'todo' ? '#1F2937' : '#9CA3AF'} />
+          <Text
+            style={[
+              styles.segmentText,
+              mode === 'todo' && styles.segmentTextActive,
+            ]}>
+            할일 집중
+          </Text>
+        </View>
       </AnimatedPressable>
       <AnimatedPressable
         onPress={() => onChangeMode('quick')}
         hapticType="selection"
         style={styles.segmentBtn}>
-        <Text
-          style={[
-            styles.segmentText,
-            mode === 'quick' && styles.segmentTextActive,
-          ]}>
-          ⚡ 빠른 집중
-        </Text>
+        <View style={styles.segmentContent}>
+          <Zap size={14} color={mode === 'quick' ? '#1F2937' : '#9CA3AF'} />
+          <Text
+            style={[
+              styles.segmentText,
+              mode === 'quick' && styles.segmentTextActive,
+            ]}>
+            빠른 집중
+          </Text>
+        </View>
       </AnimatedPressable>
     </View>
   );
@@ -128,21 +135,23 @@ function TodoRadioItem({
   selected,
   onSelect,
   duration,
+  primaryColor,
 }: {
   todo: Todo;
   selected: boolean;
   onSelect: () => void;
   duration: number;
+  primaryColor: string;
 }) {
   return (
     <AnimatedPressable
       onPress={onSelect}
       hapticType="selection"
       scaleValue={0.98}
-      style={[styles.todoItem, selected && styles.todoItemSelected]}>
+      style={[styles.todoItem, selected && styles.todoItemSelected, selected && {borderColor: primaryColor, backgroundColor: `${primaryColor}15`}]}>
       <View
-        style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
-        {selected && <View style={styles.radioInner} />}
+        style={[styles.radioOuter, selected && styles.radioOuterSelected, selected && {borderColor: primaryColor}]}>
+        {selected && <View style={[styles.radioInner, {backgroundColor: primaryColor}]} />}
       </View>
       <View style={styles.todoContent}>
         <View style={styles.todoTitleRow}>
@@ -193,6 +202,7 @@ export default function ExecutionScreen() {
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
+  const {primaryColor} = useTheme();
   const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
 
   // pomodoroStore에서 활성 세션 구독
@@ -243,7 +253,7 @@ export default function ExecutionScreen() {
   }, [mode, selectedTodo]);
 
   // 색상
-  const activeColor = mode === 'todo' ? MINT : VIOLET;
+  const activeColor = mode === 'todo' ? primaryColor : VIOLET;
 
   // 타이머 시작
   const handleStartFocus = useCallback(() => {
@@ -268,13 +278,16 @@ export default function ExecutionScreen() {
   }, [navigation]);
 
   // 활성 세션 색상
-  const sessionColor = focusMode === 'todo' ? MINT : VIOLET;
+  const sessionColor = focusMode === 'todo' ? primaryColor : VIOLET;
 
   return (
     <ScreenContainer gradient="executionBackground">
       {/* 헤더 */}
       <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
-        <Text style={styles.headerTitle}>⏱ 실행</Text>
+        <View style={styles.headerRow}>
+          <Timer size={18} color="#1F2937" />
+          <Text style={styles.headerTitle}>실행</Text>
+        </View>
       </Animated.View>
 
       {/* 타이머 링 영역 — Fix 1: 래퍼로 중앙정렬 + Fix 5: 활성 세션 표시 */}
@@ -326,7 +339,7 @@ export default function ExecutionScreen() {
       {/* 세그먼트 컨트롤 — 활성 세션이 없을 때만 */}
       {!hasActiveSession && (
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.segmentWrapper}>
-          <SegmentControl mode={mode} onChangeMode={setMode} />
+          <SegmentControl mode={mode} onChangeMode={setMode} primaryColor={primaryColor} />
         </Animated.View>
       )}
 
@@ -359,6 +372,7 @@ export default function ExecutionScreen() {
                     selected={selectedTodoId === todo.id}
                     onSelect={() => setSelectedTodoId(todo.id)}
                     duration={calcTodoDuration(todo)}
+                    primaryColor={primaryColor}
                   />
                 ))}
               </ScrollView>
@@ -370,7 +384,7 @@ export default function ExecutionScreen() {
               scaleValue={0.95}
               style={[
                 styles.startBtn,
-                {backgroundColor: MINT},
+                {backgroundColor: primaryColor},
                 (!selectedTodo || incompleteTodos.length === 0) && styles.startBtnDisabled,
               ]}
               disabled={!selectedTodo || incompleteTodos.length === 0}>
@@ -410,6 +424,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 8,
     paddingBottom: 4,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   headerTitle: {
     fontSize: 18,
@@ -477,6 +496,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 12,
   },
+  segmentContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   segmentText: {
     fontSize: 14,
     fontWeight: '600',
@@ -528,8 +552,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   todoItemSelected: {
-    borderColor: MINT,
-    backgroundColor: MINT_LIGHT,
+    // borderColor & backgroundColor set inline with primaryColor
   },
   radioOuter: {
     width: 22,
@@ -542,13 +565,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   radioOuterSelected: {
-    borderColor: MINT,
+    // borderColor set inline with primaryColor
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: MINT,
+    // backgroundColor set inline with primaryColor
   },
   todoContent: {
     flex: 1,

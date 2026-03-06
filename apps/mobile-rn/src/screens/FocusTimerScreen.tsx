@@ -31,17 +31,18 @@ import Animated, {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
+import {Sparkles, Square, Pause, Play, Check} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useHaptic} from '@/hooks/useHaptic';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useTodoStore} from '@/stores/todoStore';
+import {useTheme} from '@/theme';
 
 // ============================================
 // Constants & Types
 // ============================================
 
-const MINT = '#14B8A6';
 const VIOLET = '#8B5CF6';
 
 type FocusTimerParams = {
@@ -61,7 +62,9 @@ function CelebrationOverlay({onDismiss}: {onDismiss: () => void}) {
       entering={ZoomIn.duration(400).springify()}
       exiting={FadeOut.duration(300)}
       style={styles.celebrationOverlay}>
-      <Text style={styles.celebrationEmoji}>🎉</Text>
+      <View style={styles.celebrationIconWrap}>
+        <Sparkles size={56} color="#F59E0B" />
+      </View>
       <Text style={styles.celebrationTitle}>집중 완료!</Text>
       <Text style={styles.celebrationSubtitle}>정말 잘했어요</Text>
       <AnimatedPressable
@@ -129,6 +132,7 @@ export default function FocusTimerScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const haptic = useHaptic();
+  const {primaryColor} = useTheme();
   const params = route.params as FocusTimerParams | undefined;
   const insets = useSafeAreaInsets();
 
@@ -173,9 +177,9 @@ export default function FocusTimerScreen() {
 
   // 현재 모드/색상은 store에서 가져옴
   const isTodo = focusMode === 'todo';
-  const activeColor = isTodo ? MINT : VIOLET;
+  const activeColor = isTodo ? primaryColor : VIOLET;
   const gradientColors = isTodo
-    ? ['#CCFBF1', '#F0FDFA', '#FFFFFF']
+    ? ['#DBEAFE', '#EFF6FF', '#FFFFFF']
     : ['#EDE9FE', '#F5F3FF', '#FFFFFF'];
 
   const displayTitle = isTodo && focusTodoTitle ? focusTodoTitle : '집중 중...';
@@ -374,7 +378,7 @@ export default function FocusTimerScreen() {
                   hapticType="medium"
                   scaleValue={0.9}
                   style={styles.controlBtn}>
-                  <Text style={styles.controlIcon}>⏹</Text>
+                  <Square size={22} color="#6B7280" />
                   <Text style={styles.controlLabel}>종료</Text>
                 </AnimatedPressable>
 
@@ -385,7 +389,7 @@ export default function FocusTimerScreen() {
                     hapticType="light"
                     scaleValue={0.9}
                     style={[styles.controlBtnLarge, {backgroundColor: activeColor}]}>
-                    <Text style={styles.controlIconLarge}>⏸</Text>
+                    <Pause size={28} color="#FFFFFF" fill="#FFFFFF" />
                   </AnimatedPressable>
                 ) : (
                   <AnimatedPressable
@@ -393,7 +397,7 @@ export default function FocusTimerScreen() {
                     hapticType="medium"
                     scaleValue={0.9}
                     style={[styles.controlBtnLarge, {backgroundColor: activeColor}]}>
-                    <Text style={styles.controlIconLarge}>▶</Text>
+                    <Play size={28} color="#FFFFFF" fill="#FFFFFF" />
                   </AnimatedPressable>
                 )}
 
@@ -403,7 +407,7 @@ export default function FocusTimerScreen() {
                   hapticType="medium"
                   scaleValue={0.9}
                   style={styles.controlBtn}>
-                  <Text style={styles.controlIcon}>✓</Text>
+                  <Check size={22} color="#6B7280" />
                   <Text style={styles.controlLabel}>완료</Text>
                 </AnimatedPressable>
               </View>
@@ -542,8 +546,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 100,
   },
-  celebrationEmoji: {
-    fontSize: 64,
+  celebrationIconWrap: {
     marginBottom: 16,
   },
   celebrationTitle: {

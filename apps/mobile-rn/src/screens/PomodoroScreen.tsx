@@ -14,6 +14,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import {Timer} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -146,7 +147,10 @@ export default function PomodoroScreen() {
     <ScreenContainer gradient="calmBackground">
       {/* 상단: 타이머 타입 */}
       <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
-        <Text style={styles.headerTitle}>🍅 포모도로</Text>
+        <View style={styles.headerRow}>
+          <Timer size={18} color="#1F2937" />
+          <Text style={styles.headerTitle}>포모도로</Text>
+        </View>
         <Text style={[styles.timerTypeLabel, {color: timerColor}]}>
           {getTimerTypeLabel(timerState.timerType)}
         </Text>
@@ -282,6 +286,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingTop: 12,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   headerTitle: {
     fontSize: 18,
