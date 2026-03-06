@@ -138,12 +138,14 @@ function AuthenticatedApp() {
     setShowTrialPaywall(true);
   }, []);
 
-  const handleTrialStart = useCallback(async () => {
+  const handleTrialStart = useCallback(async (plan: 'monthly' | 'yearly' = 'yearly') => {
     // App Store가 Introductory Offer를 자동 처리
-    // 기본적으로 연간 플랜으로 구매 시도
+    // 선택된 플랜에 따라 패키지 결정
     try {
       const offerings = await Purchases.getOfferings();
-      const pkg = offerings.current?.annual ?? offerings.current?.monthly;
+      const pkg = plan === 'yearly'
+        ? (offerings.current?.annual ?? offerings.current?.monthly)
+        : (offerings.current?.monthly ?? offerings.current?.annual);
       if (!pkg) return;
 
       const result = await purchaseSelectedPackage(pkg);

@@ -2,7 +2,7 @@
  * TrialOfferModal — 7일 무료 체험 제안 (RN)
  * 다크 배경 + 그라디언트 CTA, fullscreen Modal
  */
-import React from 'react';
+import React, {useState} from 'react';
 import {
   Modal,
   View,
@@ -24,7 +24,7 @@ const PRO_YEARLY_DISCOUNT = Config.PRO_YEARLY_DISCOUNT || '33';
 interface TrialOfferModalProps {
   visible: boolean;
   onClose: () => void;
-  onStartTrial: () => void;
+  onStartTrial: (plan: 'monthly' | 'yearly') => void;
   onShowDetails: () => void;
 }
 
@@ -35,6 +35,7 @@ export function TrialOfferModal({
   onShowDetails,
 }: TrialOfferModalProps) {
   const insets = useSafeAreaInsets();
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
   return (
     <Modal
@@ -74,21 +75,46 @@ export function TrialOfferModal({
             </Text>
           </View>
 
-          {/* 가격 정보 */}
+          {/* 가격 정보 — 플랜 선택 */}
           <View style={styles.priceBox}>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>월간 플랜</Text>
+            <AnimatedPressable
+              onPress={() => setSelectedPlan('monthly')}
+              hapticType="light"
+              scaleValue={0.98}
+              style={[
+                styles.priceRow,
+                selectedPlan === 'monthly' && styles.priceRowSelected,
+              ]}>
+              <View style={styles.radioRow}>
+                <View style={[styles.radio, selectedPlan === 'monthly' && styles.radioActive]}>
+                  {selectedPlan === 'monthly' && <View style={styles.radioDot} />}
+                </View>
+                <Text style={styles.priceLabel}>월간 플랜</Text>
+              </View>
               <Text style={styles.priceValue}>{PRO_MONTHLY_PRICE}/월</Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>연간 플랜</Text>
+            </AnimatedPressable>
+
+            <AnimatedPressable
+              onPress={() => setSelectedPlan('yearly')}
+              hapticType="light"
+              scaleValue={0.98}
+              style={[
+                styles.priceRow,
+                selectedPlan === 'yearly' && styles.priceRowSelected,
+              ]}>
+              <View style={styles.radioRow}>
+                <View style={[styles.radio, selectedPlan === 'yearly' && styles.radioActive]}>
+                  {selectedPlan === 'yearly' && <View style={styles.radioDot} />}
+                </View>
+                <Text style={styles.priceLabel}>연간 플랜</Text>
+              </View>
               <View style={styles.priceRight}>
                 <Text style={styles.priceValue}>{PRO_YEARLY_PRICE}/년</Text>
                 <View style={styles.discountBadge}>
                   <Text style={styles.discountText}>{PRO_YEARLY_DISCOUNT}% 할인</Text>
                 </View>
               </View>
-            </View>
+            </AnimatedPressable>
           </View>
 
           {/* 더보기 링크 */}
@@ -105,7 +131,7 @@ export function TrialOfferModal({
           {/* CTA 버튼 */}
           <View style={styles.ctaContainer}>
             <AnimatedPressable
-              onPress={onStartTrial}
+              onPress={() => onStartTrial(selectedPlan)}
               hapticType="medium"
               scaleValue={0.96}>
               <View style={styles.ctaBtn}>
@@ -192,6 +218,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  priceRowSelected: {
+    borderColor: '#F59E0B',
+    backgroundColor: 'rgba(245,158,11,0.08)',
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#475569',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioActive: {
+    borderColor: '#F59E0B',
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F59E0B',
   },
   priceLabel: {
     fontSize: 14,
