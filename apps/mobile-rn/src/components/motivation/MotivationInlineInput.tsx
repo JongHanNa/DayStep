@@ -50,7 +50,7 @@ export function MotivationInlineInput({onSubmit, onExpandPress}: MotivationInlin
                 styles.emotionChip,
                 isSelected && {backgroundColor: config.bgColor, borderColor: config.borderColor},
               ]}>
-              <Text style={styles.emotionEmoji}>{config.emoji}</Text>
+              <config.icon size={16} color={isSelected ? config.color : '#9CA3AF'} strokeWidth={2} />
               {isSelected && (
                 <Text style={[styles.emotionLabel, {color: config.color}]}>{config.label}</Text>
               )}
@@ -113,9 +113,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     backgroundColor: '#FAFAFA',
-  },
-  emotionEmoji: {
-    fontSize: 16,
   },
   emotionLabel: {
     fontSize: 12,

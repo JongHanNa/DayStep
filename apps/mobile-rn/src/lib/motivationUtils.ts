@@ -3,13 +3,14 @@
  * 웹의 motivation/utils.ts 포팅 — Tailwind → hex 컬러
  */
 import type {Note, EmotionTag} from '@/stores/noteStore';
+import {Heart, HeartHandshake, Zap, Target, type LucideIcon} from 'lucide-react-native';
 
 export type StatusFilter = 'all' | 'pending' | 'processed';
 
 export const EMOTION_CONFIG: Record<
   EmotionTag,
   {
-    emoji: string;
+    icon: LucideIcon;
     label: string;
     color: string;
     bgColor: string;
@@ -17,28 +18,28 @@ export const EMOTION_CONFIG: Record<
   }
 > = {
   joy: {
-    emoji: '💖',
+    icon: Heart,
     label: '기쁨',
     color: '#E11D48',
     bgColor: '#FFF1F2',
     borderColor: '#FECDD3',
   },
   gratitude: {
-    emoji: '🙏',
+    icon: HeartHandshake,
     label: '감사',
     color: '#2563EB',
     bgColor: '#EFF6FF',
     borderColor: '#BFDBFE',
   },
   awakening: {
-    emoji: '⚡',
+    icon: Zap,
     label: '각성',
     color: '#EA580C',
     bgColor: '#FFF7ED',
     borderColor: '#FED7AA',
   },
   determination: {
-    emoji: '💪',
+    icon: Target,
     label: '결단',
     color: '#9333EA',
     bgColor: '#FAF5FF',

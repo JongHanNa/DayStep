@@ -102,7 +102,7 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
                     styles.emotionChip,
                     isSelected && {backgroundColor: config.bgColor, borderColor: config.borderColor},
                   ]}>
-                  <Text style={styles.emotionEmoji}>{config.emoji}</Text>
+                  <config.icon size={16} color={isSelected ? config.color : '#6B7280'} strokeWidth={2} />
                   <Text
                     style={[
                       styles.emotionLabel,
@@ -192,9 +192,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     backgroundColor: '#FAFAFA',
     gap: 4,
-  },
-  emotionEmoji: {
-    fontSize: 16,
   },
   emotionLabel: {
     fontSize: 12,

@@ -156,7 +156,7 @@ export const FuelDetailBottomSheet = forwardRef<FuelDetailBottomSheetRef, FuelDe
                               borderColor: config.borderColor,
                             },
                           ]}>
-                          <Text>{config.emoji}</Text>
+                          <config.icon size={16} color={isSelected ? config.color : '#6B7280'} strokeWidth={2} />
                           {isSelected && (
                             <Text style={[styles.emotionLabel, {color: config.color}]}>
                               {config.label}
@@ -194,7 +194,7 @@ export const FuelDetailBottomSheet = forwardRef<FuelDetailBottomSheetRef, FuelDe
                   {/* 감정 뱃지 */}
                   {emotionConfig && (
                     <View style={[styles.emotionBadge, {backgroundColor: emotionConfig.bgColor}]}>
-                      <Text>{emotionConfig.emoji}</Text>
+                      <emotionConfig.icon size={14} color={emotionConfig.color} strokeWidth={2} />
                       <Text style={[styles.emotionLabel, {color: emotionConfig.color}]}>
                         {emotionConfig.label}
                       </Text>

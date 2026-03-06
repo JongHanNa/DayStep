@@ -90,7 +90,7 @@ export function MotivationFilterBar({
                 styles.emotionChip,
                 isActive && {backgroundColor: config.bgColor, borderColor: config.borderColor},
               ]}>
-              <Text style={styles.emotionEmoji}>{config.emoji}</Text>
+              <config.icon size={16} color={isActive ? config.color : '#9CA3AF'} strokeWidth={2} />
             </AnimatedPressable>
           );
         })}
@@ -149,8 +149,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emotionEmoji: {
-    fontSize: 16,
   },
 });

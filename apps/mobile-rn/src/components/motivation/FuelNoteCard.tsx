@@ -68,7 +68,7 @@ export function FuelNoteCard({note, index, onPress, onPin, onDelete}: FuelNoteCa
         <View style={styles.topRow}>
           {emotionConfig && (
             <View style={[styles.emotionBadge, {backgroundColor: emotionConfig.bgColor}]}>
-              <Text style={styles.emotionEmoji}>{emotionConfig.emoji}</Text>
+              <emotionConfig.icon size={13} color={emotionConfig.color} strokeWidth={2} />
               <Text style={[styles.emotionLabel, {color: emotionConfig.color}]}>
                 {emotionConfig.label}
               </Text>
@@ -130,9 +130,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 12,
     gap: 4,
-  },
-  emotionEmoji: {
-    fontSize: 13,
   },
   emotionLabel: {
     fontSize: 11,
