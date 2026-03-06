@@ -1,5 +1,12 @@
 import React, {useCallback, useState} from 'react';
-import {Text, View, TouchableOpacity, type LayoutChangeEvent} from 'react-native';
+import {Text, View, type LayoutChangeEvent} from 'react-native';
+import {Gesture, GestureDetector} from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 import {isToday, isSameMonth, parseISO} from 'date-fns';
 import {TodoChip} from './TodoChip';
 import type {MonthTodoSummary} from '@/stores/todoStore';
@@ -36,41 +43,60 @@ export function CalendarDayCell({
     setMaxWithout(Math.max(1, Math.floor(content / CHIP_HEIGHT)));
   }, []);
 
+  const opacity = useSharedValue(1);
+
+  const tap = Gesture.Tap()
+    .maxDist(10)
+    .onBegin(() => {
+      opacity.value = withTiming(0.7, {duration: 100});
+    })
+    .onFinalize(() => {
+      opacity.value = withTiming(1, {duration: 150});
+    })
+    .onEnd(() => {
+      runOnJS(onPress)(dateStr);
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({opacity: opacity.value}));
+
   const actualMax = todos.length <= maxWithout ? maxWithout : maxWithMore;
   const visibleTodos = todos.slice(0, actualMax);
   const extra = todos.length - actualMax;
 
   return (
-    <TouchableOpacity
-      onPress={() => onPress(dateStr)}
-      onLayout={handleLayout}
-      activeOpacity={0.7}
-      style={{flex: 1, paddingHorizontal: 2, paddingBottom: 4}}>
-      {/* 날짜 숫자 */}
-      <View className="items-center mb-1 pt-1">
-        <View
-          className="w-6 h-6 rounded-full items-center justify-center"
-          style={today ? {backgroundColor: '#3B82F6'} : undefined}>
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: today ? '700' : '400',
-              color: today ? '#FFFFFF' : inMonth ? '#1F2937' : '#D1D5DB',
-            }}>
-            {date.getDate()}
-          </Text>
+    <GestureDetector gesture={tap}>
+      <Animated.View
+        onLayout={handleLayout}
+        style={[
+          {flex: 1, paddingHorizontal: 2, paddingBottom: 4},
+          animatedStyle,
+        ]}>
+        {/* 날짜 숫자 */}
+        <View className="items-center mb-1 pt-1">
+          <View
+            className="w-6 h-6 rounded-full items-center justify-center"
+            style={today ? {backgroundColor: '#3B82F6'} : undefined}>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: today ? '700' : '400',
+                color: today ? '#FFFFFF' : inMonth ? '#1F2937' : '#D1D5DB',
+              }}>
+              {date.getDate()}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* Todo 칩 */}
-      {visibleTodos.map(todo => (
-        <TodoChip key={todo.id} todo={todo} />
-      ))}
-      {extra > 0 && (
-        <Text style={{fontSize: 9, color: '#9CA3AF', textAlign: 'center'}}>
-          +{extra} 더
-        </Text>
-      )}
-    </TouchableOpacity>
+        {/* Todo 칩 */}
+        {visibleTodos.map(todo => (
+          <TodoChip key={todo.id} todo={todo} />
+        ))}
+        {extra > 0 && (
+          <Text style={{fontSize: 9, color: '#9CA3AF', textAlign: 'center'}}>
+            +{extra} 더
+          </Text>
+        )}
+      </Animated.View>
+    </GestureDetector>
   );
 }
