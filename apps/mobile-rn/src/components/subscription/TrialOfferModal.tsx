@@ -9,11 +9,13 @@ import {
   Text,
   StyleSheet,
   StatusBar,
+  Switch,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {Crown, X, Sparkles} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
+import {requestNotificationPermission} from '@/lib/notifications';
 import Config from 'react-native-config';
 
 const TRIAL_DAYS = parseInt(Config.TRIAL_DAYS || '7', 10);
@@ -24,7 +26,7 @@ const PRO_YEARLY_DISCOUNT = Config.PRO_YEARLY_DISCOUNT || '33';
 interface TrialOfferModalProps {
   visible: boolean;
   onClose: () => void;
-  onStartTrial: (plan: 'monthly' | 'yearly') => void;
+  onStartTrial: (plan: 'monthly' | 'yearly', reminderEnabled: boolean) => void;
   onShowDetails: () => void;
 }
 
@@ -36,6 +38,7 @@ export function TrialOfferModal({
 }: TrialOfferModalProps) {
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
+  const [reminderEnabled, setReminderEnabled] = useState(false);
 
   return (
     <Modal
@@ -128,10 +131,28 @@ export function TrialOfferModal({
             </Text>
           </AnimatedPressable>
 
+          {/* 알림 토글 */}
+          <View style={styles.reminderRow}>
+            <Text style={styles.reminderText}>무료 체험이 끝나기 전에 알림</Text>
+            <Switch
+              value={reminderEnabled}
+              onValueChange={async (value) => {
+                if (value) {
+                  const granted = await requestNotificationPermission();
+                  setReminderEnabled(granted);
+                } else {
+                  setReminderEnabled(false);
+                }
+              }}
+              trackColor={{false: '#334155', true: '#F59E0B'}}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
           {/* CTA 버튼 */}
           <View style={styles.ctaContainer}>
             <AnimatedPressable
-              onPress={() => onStartTrial(selectedPlan)}
+              onPress={() => onStartTrial(selectedPlan, reminderEnabled)}
               hapticType="medium"
               scaleValue={0.96}>
               <View style={styles.ctaBtn}>
@@ -279,7 +300,18 @@ const styles = StyleSheet.create({
   detailsLink: {
     alignItems: 'center',
     paddingVertical: 8,
+    marginBottom: 8,
+  },
+  reminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
     marginBottom: 16,
+  },
+  reminderText: {
+    fontSize: 14,
+    color: '#94A3B8',
   },
   detailsLinkText: {
     fontSize: 14,

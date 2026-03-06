@@ -19,6 +19,10 @@ import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {supabase} from '@/lib/supabase';
 import {TrialOfferModal} from '@/components/subscription/TrialOfferModal';
+import {scheduleTrialExpiryReminder} from '@/lib/notifications';
+import Config from 'react-native-config';
+
+const TRIAL_DAYS = parseInt(Config.TRIAL_DAYS || '7', 10);
 import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
@@ -138,7 +142,10 @@ function AuthenticatedApp() {
     setShowTrialPaywall(true);
   }, []);
 
-  const handleTrialStart = useCallback(async (plan: 'monthly' | 'yearly' = 'yearly') => {
+  const handleTrialStart = useCallback(async (
+    plan: 'monthly' | 'yearly' = 'yearly',
+    reminderEnabled: boolean = false,
+  ) => {
     // App Store가 Introductory Offer를 자동 처리
     // 선택된 플랜에 따라 패키지 결정
     try {
@@ -156,6 +163,11 @@ function AuthenticatedApp() {
         }
         if (user?.id) {
           setTimeout(() => fetchSubscription(user.id), 5000);
+        }
+
+        // 알림 스케줄링
+        if (reminderEnabled) {
+          scheduleTrialExpiryReminder(TRIAL_DAYS);
         }
       }
     } catch (err) {

@@ -300,6 +300,52 @@ export async function scheduleExistingRecurringAlarms(): Promise<void> {
 // Utilities
 // ============================================
 
+// ============================================
+// Trial Expiry Reminder
+// ============================================
+
+const TRIAL_REMINDER_ID = 'trial-expiry-reminder';
+
+/**
+ * 무료체험 만료 1일 전 로컬 알림 스케줄링
+ * @param trialDays - 체험 기간 (기본 7일)
+ */
+export async function scheduleTrialExpiryReminder(trialDays: number = 7): Promise<void> {
+  // 만료 1일 전 = (trialDays - 1)일 후, 오전 10시
+  const triggerDate = new Date();
+  triggerDate.setDate(triggerDate.getDate() + (trialDays - 1));
+  triggerDate.setHours(10, 0, 0, 0);
+
+  // 이미 과거면 스킵
+  if (triggerDate.getTime() <= Date.now()) return;
+
+  const trigger: TimestampTrigger = {
+    type: TriggerType.TIMESTAMP,
+    timestamp: triggerDate.getTime(),
+  };
+
+  await notifee.createTriggerNotification(
+    {
+      id: TRIAL_REMINDER_ID,
+      title: 'DayStep Pro 무료 체험 안내',
+      body: '무료 체험이 내일 종료됩니다. 취소를 원하시면 설정에서 변경해주세요.',
+      android: {channelId: CHANNEL_ID, importance: AndroidImportance.HIGH},
+      ios: {sound: 'default'},
+    },
+    trigger,
+  );
+  console.log(`[Notifications] scheduled trial expiry reminder for ${triggerDate.toISOString()}`);
+}
+
+/** 트라이얼 만료 알림 취소 */
+export async function cancelTrialExpiryReminder(): Promise<void> {
+  await notifee.cancelNotification(TRIAL_REMINDER_ID);
+}
+
+// ============================================
+// Utilities
+// ============================================
+
 /**
  * 알람 오프셋 라벨 반환 (단일)
  */
