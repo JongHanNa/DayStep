@@ -7,59 +7,16 @@ import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage} from '@/lib/mmkv';
+import {
+  type SubscriptionStatus,
+  type Platform,
+  type SubscriptionInfo,
+  calculateDaysRemainingInTrial,
+  checkActiveSubscription,
+  checkInTrial,
+} from '@daystep/shared-core';
 
-export type SubscriptionStatus =
-  | 'trial'
-  | 'active'
-  | 'cancelled'
-  | 'expired'
-  | 'paused'
-  | 'free';
-
-export type Platform = 'ios' | 'android' | 'web';
-
-export interface SubscriptionInfo {
-  id: string;
-  userId: string;
-  status: SubscriptionStatus;
-  platform: Platform;
-  productId: string;
-  trialStartDate: string | null;
-  trialEndDate: string | null;
-  subscriptionStartDate: string | null;
-  subscriptionEndDate: string | null;
-  isLegacyUser: boolean;
-  legacyGracePeriodEnd: string | null;
-  promoCode: string | null;
-  autoRenewEnabled: boolean;
-  cancelledAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-function calculateDaysRemainingInTrial(trialEndDate: string | null): number | null {
-  if (!trialEndDate) return null;
-  const diffMs = new Date(trialEndDate).getTime() - Date.now();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 0;
-}
-
-function checkActiveSubscription(
-  status: SubscriptionStatus,
-  subscriptionEndDate?: string | null,
-): boolean {
-  if (status === 'trial' || status === 'active') return true;
-  // cancelled 상태지만 구독 기간이 남아있으면 여전히 활성
-  if (status === 'cancelled' && subscriptionEndDate) {
-    return new Date(subscriptionEndDate) > new Date();
-  }
-  return false;
-}
-
-function checkInTrial(status: SubscriptionStatus, trialEndDate: string | null): boolean {
-  if (status !== 'trial' || !trialEndDate) return false;
-  return Date.now() < new Date(trialEndDate).getTime();
-}
+export type {SubscriptionStatus, Platform, SubscriptionInfo};
 
 interface SubscriptionState {
   subscriptionInfo: SubscriptionInfo | null;

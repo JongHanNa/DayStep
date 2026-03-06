@@ -528,3 +528,8 @@ export interface DailyReflection {
 
 export type TimelineViewMode = 'agenda' | 'daily';
 
+// ============================================
+// Subscription Types (Re-export)
+// ============================================
+export * from './subscription';
+

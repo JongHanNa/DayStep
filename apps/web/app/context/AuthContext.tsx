@@ -404,7 +404,7 @@ export function AuthProvider({
       // Supabase 로그아웃 (타임아웃 포함)
       console.log('[Auth] Signing out from Supabase...');
       try {
-        const signOutPromise = supabase.auth.signOut();
+        const signOutPromise = supabase.auth.signOut({ scope: 'local' });
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Supabase signOut timeout')), 2000)
         );
@@ -441,9 +441,24 @@ export function AuthProvider({
         }
       });
 
-      // 쿠키 정리
+      // supabase_cookie_* 키도 정리 (Electron 폴백 스토리지)
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('supabase_cookie_')) {
+          localStorage.removeItem(key);
+        }
+      }
+
+      // 모든 Supabase 관련 쿠키 삭제 (SSR 청크 쿠키 포함)
       try {
-        document.cookie = 'supabase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        const allCookies = document.cookie.split(';');
+        allCookies.forEach(cookie => {
+          const name = cookie.split('=')[0].trim();
+          if (name.startsWith('sb-') || name.includes('supabase')) {
+            document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+            document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+          }
+        });
         console.log('[Auth] Cookies cleared');
       } catch (cookieError) {
         console.warn('[Auth] Cookie clearing failed:', cookieError);
