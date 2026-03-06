@@ -12,8 +12,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ScreenContainer} from '@/components/core';
 import {
   Send,
@@ -136,9 +138,26 @@ export default function AIChatScreen() {
     clearMessages,
   } = useAIPlanningStore();
 
+  const insets = useSafeAreaInsets();
+  const TAB_BAR_OFFSET = 60;
+  const bottomPadding = insets.bottom + TAB_BAR_OFFSET;
+
   const [inputText, setInputText] = useState('');
   const [showProviders, setShowProviders] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   useEffect(() => {
     setIsPro(hasActiveSubscription);
@@ -249,7 +268,7 @@ export default function AIChatScreen() {
         )}
 
         {/* 입력 바 */}
-        <View className="px-4 py-3 bg-white border-t border-gray-100">
+        <View style={{paddingHorizontal: 16, paddingTop: 12, paddingBottom: keyboardVisible ? 12 : bottomPadding + 12, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#F3F4F6'}}>
           <View className="flex-row items-end">
             <TextInput
               value={inputText}
