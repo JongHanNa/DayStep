@@ -176,6 +176,7 @@ struct CalendarDayCellLarge: View {
     let isToday: Bool
     let dayNumber: Int?
     let colIdx: Int
+    var maxTodos: Int = 3
 
     var body: some View {
         if let day = dayNumber {
@@ -195,12 +196,12 @@ struct CalendarDayCellLarge: View {
                         )
                 }
                 let todos = info?.todos ?? []
-                let count = min(todos.count, 3)
+                let count = min(todos.count, maxTodos)
                 ForEach(0..<count, id: \.self) { i in
                     TodoChipView(todo: todos[i])
                 }
-                if todos.count > 3 {
-                    Text(verbatim: "+\(todos.count - 3)")
+                if todos.count > maxTodos {
+                    Text(verbatim: "+\(todos.count - maxTodos)")
                         .font(.system(size: 7, weight: .medium))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -318,6 +319,7 @@ struct DayStepCalendarWidgetView: View {
 
                 // 날짜 그리드
                 let rows = monthDates.chunked(into: 7)
+                let maxTodos = rows.count <= 4 ? 3 : rows.count <= 5 ? 2 : 1
                 ForEach(0..<rows.count, id: \.self) { rowIdx in
                     HStack(alignment: .top, spacing: 0) {
                         ForEach(0..<rows[rowIdx].count, id: \.self) { colIdx in
@@ -332,11 +334,13 @@ struct DayStepCalendarWidgetView: View {
                                 info: info,
                                 isToday: isToday,
                                 dayNumber: dayNum,
-                                colIdx: colIdx
+                                colIdx: colIdx,
+                                maxTodos: maxTodos
                             )
                         }
                     }
                     .frame(maxHeight: .infinity)
+                    .clipped()
 
                     if rowIdx < rows.count - 1 {
                         Divider()
