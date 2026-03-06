@@ -112,6 +112,7 @@ interface TodoState {
   ) => Promise<boolean>;
   skipTodo: (id: string, reason: 'not_needed' | 'missed') => Promise<boolean>;
   unskipTodo: (id: string) => Promise<boolean>;
+  restoreDeferredTodo: (todoId: string) => Promise<boolean>;
   processOfflineQueue: () => Promise<void>;
   clearError: () => void;
 }
@@ -677,6 +678,9 @@ export const useTodoStore = create<TodoState>()(
               is_reluctant_must_do: (todo as any).is_reluctant_must_do ?? false,
               parent_recurring_todo_id: id,
               occurrence_date: selectedDate,
+              // 원본 시간 저장 (웹 todo-postpone.ts:116-121 참조)
+              original_start_time: todo.start_time ?? null,
+              original_end_time: todo.end_time ?? null,
             };
 
             if (action === 'reschedule' && newTime) {
@@ -813,6 +817,56 @@ export const useTodoStore = create<TodoState>()(
           return true;
         } else {
           return get().updateTodo(id, {skip_status: null} as any);
+        }
+      },
+
+      // 미룸 복원: 독립 할일 삭제 + exclusion 삭제 → 원본 반복 할일 복원
+      restoreDeferredTodo: async (todoId: string) => {
+        try {
+          // 1. 독립 할일 조회 (parent_recurring_todo_id, occurrence_date 필요)
+          const {data: todo, error: fetchErr} = await supabase
+            .from('todos')
+            .select('id, parent_recurring_todo_id, occurrence_date')
+            .eq('id', todoId)
+            .single();
+
+          if (fetchErr || !todo?.parent_recurring_todo_id || !todo?.occurrence_date) {
+            console.error('[TodoStore] restoreDeferredTodo: 독립 할일 조회 실패', fetchErr);
+            return false;
+          }
+
+          const userId = await getCurrentUserId();
+          if (!userId) return false;
+
+          // 2. 독립 할일 삭제
+          const {error: deleteErr} = await supabase
+            .from('todos')
+            .delete()
+            .eq('id', todoId);
+
+          if (deleteErr) {
+            console.error('[TodoStore] restoreDeferredTodo: 독립 할일 삭제 실패', deleteErr);
+            return false;
+          }
+
+          // 3. exclusion 삭제 (원본 반복 할일 복원)
+          await supabase
+            .from('todo_exclusions')
+            .delete()
+            .eq('parent_todo_id', todo.parent_recurring_todo_id)
+            .eq('excluded_date', todo.occurrence_date)
+            .eq('exclusion_reason', 'postponed');
+
+          // 4. 로컬 상태 업데이트 + 재조회
+          set(state => ({
+            todos: state.todos.filter(t => t.id !== todoId),
+          }));
+          await get().fetchTodosForDate(get().selectedDate);
+
+          return true;
+        } catch (err) {
+          console.error('[TodoStore] restoreDeferredTodo error:', err);
+          return false;
         }
       },
 

@@ -105,6 +105,7 @@ function TodoListScreenInner() {
     skipTodo,
     unskipTodo,
     postponeTodo,
+    restoreDeferredTodo,
   } = useTodoStore();
   const {primaryColor} = useTheme();
   const route = useRoute<any>();
@@ -263,6 +264,11 @@ function TodoListScreenInner() {
     [unskipTodo],
   );
 
+  // 미룸 복원 핸들러
+  const handleRestoreOriginal = useCallback(async (todo: Todo) => {
+    await restoreDeferredTodo(todo.id);
+  }, [restoreDeferredTodo]);
+
   // postpone 핸들러: 바텀시트 열기
   const handlePostpone = useCallback((todo: Todo) => {
     setPostponingTodo(todo);
@@ -363,6 +369,8 @@ function TodoListScreenInner() {
                   onSkipTodo={handleSkipTodo}
                   onUnskipTodo={handleUnskipTodo}
                   onPostpone={handlePostpone}
+                  onDeferComplete={(todo) => handleToggle(todo.id)}
+                  onRestoreOriginal={handleRestoreOriginal}
                   linkedFuels={fuelMap[item.id]}
                 />
               </DraggableTodoChip>

@@ -22,6 +22,7 @@ import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
 import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
 import {MissedTodoActionPanel} from './MissedTodoActionPanel';
+import {DeferredTodoActionPanel} from './DeferredTodoActionPanel';
 import {Play, XCircle, MinusCircle} from 'lucide-react-native';
 
 interface LinkedFuel {
@@ -39,6 +40,8 @@ interface TodoCardProps {
   onSkipTodo?: (id: string, reason: 'not_needed' | 'missed') => void;
   onUnskipTodo?: (todo: Todo) => void;
   onPostpone?: (todo: Todo) => void;
+  onDeferComplete?: (todo: Todo) => void;
+  onRestoreOriginal?: (todo: Todo) => void;
   linkedFuels?: LinkedFuel[];
 }
 
@@ -51,6 +54,8 @@ export function TodoCard({
   onSkipTodo,
   onUnskipTodo,
   onPostpone,
+  onDeferComplete,
+  onRestoreOriginal,
   linkedFuels,
 }: TodoCardProps) {
   const haptic = useHaptic();
@@ -95,6 +100,11 @@ export function TodoCard({
   const skipReason = (todo as any).skip_status as string | undefined;
   const isMissed =
     !isAnytime && timeStatus.status === 'missed' && !todo.completed && !isSkipped;
+
+  // 미뤄진 반복 할일 감지
+  const isDeferredTodo = !!(todo as any).parent_recurring_todo_id
+    && !!(todo as any).original_start_time
+    && !todo.completed;
 
   const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
 
@@ -249,6 +259,15 @@ export function TodoCard({
                 );
               })}
             </View>
+          )}
+
+          {/* 미뤄진 할일 액션 패널 */}
+          {isDeferredTodo && (
+            <DeferredTodoActionPanel
+              originalTime={format(new Date((todo as any).original_start_time), 'HH:mm')}
+              onComplete={() => onDeferComplete?.(todo)}
+              onRestore={() => onRestoreOriginal?.(todo)}
+            />
           )}
 
           {/* 종료시간 초과 액션 패널 */}
