@@ -104,8 +104,9 @@ function AuthenticatedApp() {
 
         if (data) {
           setTrialEligible(false);
+        } else {
+          setTrialEligible(true);
         }
-        // isTrialEligible은 updateComputedStates에서 이미 설정됨 (subscriptionInfo=null → true)
       } catch (err) {
         console.error('[Trial] eligibility check error:', err);
       }

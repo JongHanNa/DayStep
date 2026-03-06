@@ -212,7 +212,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           ),
           isInTrial: checkInTrial(subscriptionInfo.status, subscriptionInfo.trialEndDate),
           daysRemainingInTrial: calculateDaysRemainingInTrial(subscriptionInfo.trialEndDate),
-          isTrialEligible: false,
         });
       },
 
