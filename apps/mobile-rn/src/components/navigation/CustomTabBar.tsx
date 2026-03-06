@@ -17,7 +17,7 @@ import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {AnimatedPressable} from '@/components/core';
 import {GlassBackground} from '@/components/core';
 import {useTheme} from '@/theme';
-import {Home, Calendar, Zap, Flame, Settings} from 'lucide-react-native';
+import {Home, Calendar, Timer, Flame, Settings} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
 import {
   LiquidGlassTabBarNative,
@@ -28,7 +28,7 @@ import {
 const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
   Home: {Icon: Home},
   Planner: {Icon: Calendar},
-  Execute: {Icon: Zap},
+  Execute: {Icon: Timer},
   Notes: {Icon: Flame},
   Settings: {Icon: Settings},
 };
@@ -37,7 +37,7 @@ const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
 const SF_SYMBOL_MAP: Record<string, string> = {
   Home: 'house',
   Planner: 'calendar',
-  Execute: 'bolt',
+  Execute: 'timer',
   Notes: 'flame',
   Settings: 'gearshape',
 };
