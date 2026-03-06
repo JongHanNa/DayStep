@@ -167,6 +167,18 @@ export const useAIPlanningStore = create<AIPlanningState>()((set, get) => ({
                     case 'delta':
                       if (parsed.content) appendToLastMessage(parsed.content);
                       break;
+                    case 'tool_start':
+                      appendToLastMessage('할일을 생성하고 있습니다...\n');
+                      break;
+                    case 'tool_result':
+                      if (parsed.is_error) {
+                        appendToLastMessage('생성 중 오류가 발생했습니다.');
+                      } else {
+                        appendToLastMessage('프로젝트와 할일이 생성되었습니다.');
+                      }
+                      break;
+                    case 'tool_executing':
+                      break;
                     case 'done':
                       break;
                     case 'error':
