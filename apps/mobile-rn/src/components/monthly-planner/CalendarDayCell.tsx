@@ -1,8 +1,14 @@
-import React from 'react';
-import {Text, View, TouchableOpacity} from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {Text, View, TouchableOpacity, type LayoutChangeEvent} from 'react-native';
 import {isToday, isSameMonth, parseISO} from 'date-fns';
 import {TodoChip} from './TodoChip';
 import type {MonthTodoSummary} from '@/stores/todoStore';
+
+const DATE_HEADER_HEIGHT = 32; // pt-1(4) + h-6(24) + mb-1(4)
+const CHIP_HEIGHT = 14; // fontSize 9 ≈ 12px lineHeight + mb-0.5(2)
+const MORE_TEXT_HEIGHT = 14; // "+N 더" 텍스트 높이
+const CELL_PADDING_BOTTOM = 4;
+const DEFAULT_MAX = 2;
 
 interface CalendarDayCellProps {
   dateStr: string; // 'YYYY-MM-DD'
@@ -20,12 +26,24 @@ export function CalendarDayCell({
   const date = parseISO(dateStr);
   const today = isToday(date);
   const inMonth = isSameMonth(date, currentMonth);
-  const visibleTodos = todos.slice(0, 2);
-  const extra = todos.length - 2;
+  const [maxWithMore, setMaxWithMore] = useState(DEFAULT_MAX);
+  const [maxWithout, setMaxWithout] = useState(DEFAULT_MAX);
+
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    const content = h - CELL_PADDING_BOTTOM - DATE_HEADER_HEIGHT;
+    setMaxWithMore(Math.max(1, Math.floor((content - MORE_TEXT_HEIGHT) / CHIP_HEIGHT)));
+    setMaxWithout(Math.max(1, Math.floor(content / CHIP_HEIGHT)));
+  }, []);
+
+  const actualMax = todos.length <= maxWithout ? maxWithout : maxWithMore;
+  const visibleTodos = todos.slice(0, actualMax);
+  const extra = todos.length - actualMax;
 
   return (
     <TouchableOpacity
       onPress={() => onPress(dateStr)}
+      onLayout={handleLayout}
       activeOpacity={0.7}
       style={{flex: 1, paddingHorizontal: 2, paddingBottom: 4}}>
       {/* 날짜 숫자 */}
