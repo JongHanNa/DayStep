@@ -147,19 +147,18 @@ export const useSubscription = () => {
           return false;
         }
 
-        // subscriptions 테이블 레코드 존재 여부 확인
-        // subscriptionInfo가 null이면 구독 이력 없음 → 자격 있음
-        const { subscriptionInfo: currentInfo } = useSubscriptionStore.getState();
-        const eligible = !currentInfo;
-        setTrialEligible(eligible);
-        return eligible;
+        // trial_started 이력 없음 → 자격 있음
+        // (활성 구독 여부는 TrialOfferProvider의 !hasActiveSubscription 조건이 처리)
+        setTrialEligible(true);
+        return true;
       } catch (err) {
         console.error('💳 트라이얼 자격 확인 실패:', err);
-        // 에러 시 store의 기본 계산 결과 유지
-        return isTrialEligible;
+        // 에러 시 신규 유저에게 trial 기회 보장
+        setTrialEligible(true);
+        return true;
       }
     },
-    [setTrialEligible, isTrialEligible]
+    [setTrialEligible]
   );
 
   /**

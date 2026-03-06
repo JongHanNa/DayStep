@@ -33,7 +33,8 @@ export function TrialOfferProvider({ children }: { children: React.ReactNode }) 
 
   const [showModal, setShowModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-  const eligibilityChecked = useRef(false);
+  const [eligibilityChecked, setEligibilityChecked] = useState(false);
+  const checkInProgress = useRef(false);
 
   // 트라이얼 자격 확인 (로그인 후 1회)
   useEffect(() => {
@@ -43,12 +44,15 @@ export function TrialOfferProvider({ children }: { children: React.ReactNode }) 
       user?.id &&
       !isLoading &&
       !hasActiveSubscription &&
-      !eligibilityChecked.current
+      !eligibilityChecked &&
+      !checkInProgress.current
     ) {
-      eligibilityChecked.current = true;
-      checkTrialEligibility(user.id);
+      checkInProgress.current = true;
+      checkTrialEligibility(user.id).then(() => {
+        setEligibilityChecked(true);
+      });
     }
-  }, [paymentsEnabled, isAuthenticated, user?.id, isLoading, hasActiveSubscription, checkTrialEligibility]);
+  }, [paymentsEnabled, isAuthenticated, user?.id, isLoading, hasActiveSubscription, eligibilityChecked, checkTrialEligibility]);
 
   // 자격 확인 후 모달 표시
   useEffect(() => {
@@ -59,7 +63,7 @@ export function TrialOfferProvider({ children }: { children: React.ReactNode }) 
       hasSeenTrialOffer ||
       isLoading ||
       hasActiveSubscription ||
-      !eligibilityChecked.current
+      !eligibilityChecked
     ) {
       return;
     }
@@ -67,7 +71,7 @@ export function TrialOfferProvider({ children }: { children: React.ReactNode }) 
     // 약간의 딜레이 후 표시 (앱 로드 직후 바로 뜨지 않도록)
     const timer = setTimeout(() => setShowModal(true), 1500);
     return () => clearTimeout(timer);
-  }, [paymentsEnabled, isAuthenticated, isTrialEligible, hasSeenTrialOffer, isLoading, hasActiveSubscription]);
+  }, [paymentsEnabled, isAuthenticated, isTrialEligible, hasSeenTrialOffer, isLoading, hasActiveSubscription, eligibilityChecked]);
 
   const handleClose = useCallback(() => {
     setShowModal(false);

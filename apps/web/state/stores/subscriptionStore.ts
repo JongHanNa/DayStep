@@ -178,7 +178,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               isInTrial: false,
               daysRemainingInTrial: null,
               subscriptionExpiresAt: null,
-              isTrialEligible: true,
             });
             return;
           }
@@ -217,7 +216,6 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             isInTrial,
             daysRemainingInTrial,
             subscriptionExpiresAt,
-            isTrialEligible: false,
           });
 
           console.log('💳 계산된 구독 상태:', {
