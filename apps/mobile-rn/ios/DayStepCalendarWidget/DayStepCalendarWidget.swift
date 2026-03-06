@@ -343,9 +343,9 @@ struct DayStepCalendarWidgetView: View {
                     }
                 }
             }
-            .padding(.horizontal, 4)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
+            .padding(.horizontal, 8)
+            .padding(.top, 14)
+            .padding(.bottom, 8)
 
             // 우하단 "+" 버튼
             Circle()
@@ -356,7 +356,7 @@ struct DayStepCalendarWidgetView: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                 )
-                .padding(4)
+                .padding(12)
         }
         .background(Color.white)
     }

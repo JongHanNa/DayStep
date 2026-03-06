@@ -8,6 +8,7 @@
 RCT_EXPORT_VIEW_PROPERTY(tabs, NSArray)
 RCT_EXPORT_VIEW_PROPERTY(selectedIndex, NSNumber)
 RCT_EXPORT_VIEW_PROPERTY(primaryColor, NSString)
+RCT_EXPORT_VIEW_PROPERTY(timerProgress, NSNumber)
 RCT_EXPORT_VIEW_PROPERTY(onTabPress, RCTDirectEventBlock)
 
 @end

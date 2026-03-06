@@ -24,6 +24,8 @@ import {
   isIOS26Plus,
   type NativeTabData,
 } from '@/components/native';
+import {usePomodoroStore} from '@/stores/pomodoroStore';
+import {Canvas, Path, Skia} from '@shopify/react-native-skia';
 
 const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
   Home: {Icon: Home},
@@ -45,6 +47,8 @@ const SF_SYMBOL_MAP: Record<string, string> = {
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const {primaryColor} = useTheme();
+  const timerState = usePomodoroStore(s => s.timerState);
+  const isTimerActive = timerState.isRunning || timerState.isPaused;
 
   // 포커스된 화면이 탭 바 숨김을 요청하면 렌더링하지 않음
   const focusedRoute = state.routes[state.index];
@@ -81,6 +85,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
         tabs={nativeTabs}
         selectedIndex={state.index}
         primaryColor={primaryColor}
+        timerProgress={isTimerActive ? timerState.progress : -1}
         onTabPress={handleNativeTabPress}
         style={[
           styles.container,
@@ -131,6 +136,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
               isFocused={isFocused}
               primaryColor={primaryColor}
               onPress={onPress}
+              isTimerActive={route.name === 'Execute' && isTimerActive}
+              timerProgress={timerState.progress}
             />
           );
         })}
@@ -139,16 +146,67 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   );
 }
 
+function MiniTimerRing({
+  progress,
+  color,
+}: {
+  progress: number;
+  color: string;
+}) {
+  const size = 28;
+  const sw = 3;
+  const center = size / 2;
+  const radius = center - sw / 2;
+
+  const bgPath = Skia.Path.Make();
+  bgPath.addCircle(center, center, radius);
+
+  const sweepAngle = 360 * Math.min(Math.max(progress, 0), 1);
+  const progressPath = Skia.Path.Make();
+  if (sweepAngle > 0) {
+    progressPath.addArc(
+      {x: sw / 2, y: sw / 2, width: radius * 2, height: radius * 2},
+      -90,
+      sweepAngle,
+    );
+  }
+
+  return (
+    <Canvas style={{width: size, height: size}}>
+      <Path
+        path={bgPath}
+        style="stroke"
+        strokeWidth={sw}
+        color="#E5E7EB"
+        strokeCap="round"
+      />
+      {sweepAngle > 0 && (
+        <Path
+          path={progressPath}
+          style="stroke"
+          strokeWidth={sw}
+          color={color}
+          strokeCap="round"
+        />
+      )}
+    </Canvas>
+  );
+}
+
 function TabButton({
   Icon,
   isFocused,
   primaryColor,
   onPress,
+  isTimerActive,
+  timerProgress,
 }: {
   Icon: LucideIcon;
   isFocused: boolean;
   primaryColor: string;
   onPress: () => void;
+  isTimerActive: boolean;
+  timerProgress: number;
 }) {
   const scale = useSharedValue(1);
 
@@ -163,11 +221,18 @@ function TabButton({
       scaleValue={0.9}
       style={styles.tabButton}>
       <Animated.View style={[styles.tabContent, animatedStyle]}>
-        <Icon
-          size={22}
-          color={isFocused ? primaryColor : '#9CA3AF'}
-          strokeWidth={isFocused ? 2.2 : 1.8}
-        />
+        {isTimerActive ? (
+          <MiniTimerRing
+            progress={timerProgress}
+            color={isFocused ? primaryColor : '#9CA3AF'}
+          />
+        ) : (
+          <Icon
+            size={22}
+            color={isFocused ? primaryColor : '#9CA3AF'}
+            strokeWidth={isFocused ? 2.2 : 1.8}
+          />
+        )}
         {isFocused && (
           <Animated.View
             style={[styles.activeIndicator, {backgroundColor: primaryColor}]}

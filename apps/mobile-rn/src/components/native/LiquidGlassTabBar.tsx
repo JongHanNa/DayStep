@@ -17,6 +17,8 @@ interface NativeLiquidGlassTabBarProps {
   tabs: NativeTabData[];
   selectedIndex: number;
   primaryColor: string;
+  /** Timer progress 0~1 when active, -1 when inactive */
+  timerProgress?: number;
   onTabPress?: (event: {nativeEvent: {index: number}}) => void;
   style?: ViewStyle;
 }

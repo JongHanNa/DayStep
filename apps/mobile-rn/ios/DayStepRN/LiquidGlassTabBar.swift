@@ -19,6 +19,8 @@ class TabBarState: ObservableObject {
   @Published var tabs: [TabItem] = []
   @Published var selectedIndex: Int = 0
   @Published var primaryColor: Color = Color(hex: "#F97316")
+  /// Timer progress 0~1 when active, -1 when inactive
+  @Published var timerProgress: Double = -1
 }
 
 // MARK: - SwiftUI View (iOS 26+)
@@ -30,27 +32,47 @@ struct LiquidGlassTabBarContent: View {
   var body: some View {
     HStack(spacing: 0) {
       ForEach(Array(state.tabs.enumerated()), id: \.offset) { index, tab in
+        let isSelected = index == state.selectedIndex
+        let iconColor = isSelected
+          ? state.primaryColor
+          : Color(red: 0.612, green: 0.639, blue: 0.686)
+        let showTimerRing = index == 2 && state.timerProgress >= 0
+
         Button {
           onTabPress?(index)
         } label: {
           VStack(spacing: 4) {
-            Image(systemName: tab.sfSymbol)
-              .font(.system(
-                size: 22,
-                weight: index == state.selectedIndex ? .semibold : .regular
-              ))
-              .foregroundColor(
-                index == state.selectedIndex
-                  ? state.primaryColor
-                  : Color(red: 0.612, green: 0.639, blue: 0.686)
-              )
+            if showTimerRing {
+              ZStack {
+                Circle()
+                  .stroke(Color(red: 0.898, green: 0.906, blue: 0.922), lineWidth: 3)
+                  .frame(width: 24, height: 24)
+                Circle()
+                  .trim(from: 0, to: CGFloat(min(max(state.timerProgress, 0), 1)))
+                  .stroke(iconColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                  .rotationEffect(.degrees(-90))
+                  .frame(width: 24, height: 24)
+              }
               .frame(height: 24)
               .animation(
                 .spring(response: 0.3, dampingFraction: 0.8),
-                value: state.selectedIndex
+                value: state.timerProgress
               )
+            } else {
+              Image(systemName: tab.sfSymbol)
+                .font(.system(
+                  size: 22,
+                  weight: isSelected ? .semibold : .regular
+                ))
+                .foregroundColor(iconColor)
+                .frame(height: 24)
+                .animation(
+                  .spring(response: 0.3, dampingFraction: 0.8),
+                  value: state.selectedIndex
+                )
+            }
 
-            if index == state.selectedIndex {
+            if isSelected {
               Capsule()
                 .fill(state.primaryColor)
                 .frame(width: 20, height: 3)
@@ -106,6 +128,10 @@ class LiquidGlassTabBarUIView: UIView {
 
   @objc func setPrimaryColor(_ value: NSString) {
     tabState.primaryColor = Color(hex: value as String)
+  }
+
+  @objc func setTimerProgress(_ value: NSNumber) {
+    tabState.timerProgress = value.doubleValue
   }
 
   // MARK: - 1회 초기화
