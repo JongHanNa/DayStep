@@ -143,42 +143,74 @@ export const useAIPlanningStore = create<AIPlanningState>()((set, get) => ({
         .filter(m => !m.isStreaming)
         .map(m => ({role: m.role, content: m.content}));
 
-      const response = await fetch(`${API_BASE}/ai-chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      // XMLHttpRequest 기반 SSE 스트리밍 (RN은 fetch의 ReadableStream 미지원)
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API_BASE}/ai-gateway/chat`);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+        let buffer = '';
+        let lastIndex = 0;
+
+        const processLines = (lines: string[]) => {
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.startsWith('event: ')) {
+              const eventType = line.slice(7);
+              const dataLineIndex = i + 1;
+              if (dataLineIndex < lines.length && lines[dataLineIndex].startsWith('data: ')) {
+                const data = lines[dataLineIndex].slice(6);
+                try {
+                  const parsed = JSON.parse(data);
+                  switch (eventType) {
+                    case 'delta':
+                      if (parsed.content) appendToLastMessage(parsed.content);
+                      break;
+                    case 'done':
+                      break;
+                    case 'error':
+                      setError(parsed.message || 'Unknown error');
+                      break;
+                  }
+                } catch {}
+              }
+            }
+          }
+        };
+
+        xhr.onprogress = () => {
+          const newData = xhr.responseText.substring(lastIndex);
+          lastIndex = xhr.responseText.length;
+
+          buffer += newData;
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          processLines(lines);
+        };
+
+        xhr.onload = () => {
+          // 잔여 버퍼 처리
+          if (buffer.trim()) {
+            processLines(buffer.split('\n'));
+          }
+          if (xhr.status >= 400) {
+            reject(new Error(xhr.responseText || `API 오류 (${xhr.status})`));
+          } else {
+            resolve();
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.ontimeout = () => reject(new Error('Request timeout'));
+        xhr.timeout = 60000;
+
+        xhr.send(JSON.stringify({
           messages: history,
           provider,
           userId,
-        }),
+        }));
       });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(errText || `API 오류 (${response.status})`);
-      }
-
-      // 스트리밍 응답 처리
-      const reader = response.body?.getReader();
-      if (reader) {
-        const decoder = new TextDecoder();
-        let done = false;
-        while (!done) {
-          const {value, done: streamDone} = await reader.read();
-          done = streamDone;
-          if (value) {
-            const chunk = decoder.decode(value, {stream: true});
-            appendToLastMessage(chunk);
-          }
-        }
-      } else {
-        // 스트리밍 미지원 시 전체 응답
-        const data = await response.json();
-        appendToLastMessage(data.content ?? data.message ?? '');
-      }
     } catch (err: any) {
       console.error('[AIPlanningStore] Send error:', err);
       setError(err.message ?? 'Failed to send message');
@@ -196,7 +228,7 @@ export const useAIPlanningStore = create<AIPlanningState>()((set, get) => ({
       const token = session?.access_token;
       if (!token) return;
 
-      const response = await fetch(`${API_BASE}/ai-usage?userId=${userId}`, {
+      const response = await fetch(`${API_BASE}/ai-gateway/usage?userId=${userId}`, {
         headers: {Authorization: `Bearer ${token}`},
       });
 
