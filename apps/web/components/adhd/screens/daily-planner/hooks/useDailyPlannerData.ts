@@ -71,12 +71,17 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
     );
   }, [todayTodos]);
 
-  // 미뤄둔 할일 (schedule_type=anytime + originalStartTime 있음 = 미룸 처리된 것)
+  // 미뤄둔 할일: todos 스토어에서 직접 조회 (timelineItems에는 startTime=null이라 포함 안됨)
   const deferredTodos = useMemo(() => {
-    return todayTodos.filter((t: Todo) =>
-      t.scheduleType === 'anytime' && !!(t as any).originalStartTime
-    );
-  }, [todayTodos]);
+    return todos.filter((todo: Todo) => {
+      if (todo.scheduleType !== 'anytime') return false;
+      if (!todo.originalStartTime) return false;
+      // 날짜 매칭: occurrenceDate 우선 (반복할일 파생), 없으면 originalStartTime 날짜
+      const todoDate = (todo as any).occurrenceDate
+        ?? format(new Date(todo.originalStartTime), 'yyyy-MM-dd');
+      return todoDate === dateStr;
+    });
+  }, [todos, dateStr]);
 
   // 시간대별 그룹핑 (KST 기준, anytime 제외)
   const morningTodos = useMemo(() => {

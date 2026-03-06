@@ -142,7 +142,7 @@ export const useSubscription = () => {
         );
 
         // trial_started 이벤트가 있으면 이미 체험한 유저 → 자격 없음
-        if (historyData) {
+        if (historyData && historyData.length > 0) {
           setTrialEligible(false);
           return false;
         }
