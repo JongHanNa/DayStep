@@ -4,7 +4,7 @@
  * - Page 1: 우선순위 매트릭스 + 하기 싫어도 해야 할 일 + 보상/칭찬/감사
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Text, View, SectionList, RefreshControl, StyleSheet} from 'react-native';
+import {Text, View, SectionList, RefreshControl, StyleSheet, Alert} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
@@ -209,6 +209,19 @@ function TodoListScreenInner() {
   }, [selectedDate, fetchTodosForDate]);
 
   const handleTodoPress = useCallback((todo: Todo) => {
+    // 미뤄둔 할일 클릭 차단 (웹과 동일)
+    const isDeferred = !!(todo as any).parent_recurring_todo_id
+      && !!(todo as any).original_start_time;
+
+    if (isDeferred) {
+      if (todo.completed) {
+        Alert.alert('완료된 미룸 항목', '체크 버튼을 눌러 되돌릴 수 있어요');
+      } else {
+        Alert.alert('미룸 할일', '"미룸완료" 또는 "원래대로 복원"을 사용하세요');
+      }
+      return;
+    }
+
     formRef.current?.openEdit(todo);
   }, []);
 
