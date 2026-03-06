@@ -31,16 +31,17 @@ import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
-import {Sunrise, Sun, Moon, Infinity, Inbox} from 'lucide-react-native';
+import {Sunrise, Sun, Moon, Infinity, Inbox, PauseCircle} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
 
-type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime';
+type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime' | 'deferred';
 
 const SECTION_ICONS: Record<TimePeriod, {Icon: LucideIcon; color: string}> = {
   morning: {Icon: Sunrise, color: '#F59E0B'},
   afternoon: {Icon: Sun, color: '#F97316'},
   evening: {Icon: Moon, color: '#8B5CF6'},
   anytime: {Icon: Infinity, color: '#10B981'},
+  deferred: {Icon: PauseCircle, color: '#A855F7'},
 };
 
 interface TodoSection {
@@ -54,10 +55,15 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   const afternoon: Todo[] = [];
   const evening: Todo[] = [];
   const anytime: Todo[] = [];
+  const deferred: Todo[] = [];
 
   for (const todo of todos) {
     if (!todo.start_time || todo.schedule_type === 'anytime') {
-      anytime.push(todo);
+      if ((todo as any).original_start_time) {
+        deferred.push(todo);
+      } else {
+        anytime.push(todo);
+      }
       continue;
     }
     const hour = new Date(todo.start_time).getHours();
@@ -76,6 +82,7 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
 
   const sections: TodoSection[] = [];
   if (anytime.length > 0) sections.push({title: '언제든지', period: 'anytime', data: anytime});
+  if (deferred.length > 0) sections.push({title: '미룸', period: 'deferred', data: deferred});
   if (morning.length > 0) sections.push({title: '오전', period: 'morning', data: morning});
   if (afternoon.length > 0) sections.push({title: '오후', period: 'afternoon', data: afternoon});
   if (evening.length > 0) sections.push({title: '저녁', period: 'evening', data: evening});

@@ -70,11 +70,17 @@ interface SubscriptionState {
   hasActiveSubscription: boolean;
   isInTrial: boolean;
   daysRemainingInTrial: number | null;
+  isTrialEligible: boolean;
   _recentPurchase: boolean; // RevenueCat 구매 직후 플래그 (MMKV 미저장)
+
+  // 트라이얼 제안 UI 상태
+  hasSeenTrialOffer: boolean;
 
   // 액션
   fetchSubscription: (userId: string) => Promise<void>;
   applyRevenueCatPurchase: (entitlements: Record<string, any>) => void;
+  setHasSeenTrialOffer: (seen: boolean) => void;
+  setTrialEligible: (eligible: boolean) => void;
   updateComputedStates: () => void;
   reset: () => void;
   clearError: () => void;
@@ -89,7 +95,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       hasActiveSubscription: false,
       isInTrial: false,
       daysRemainingInTrial: null,
+      isTrialEligible: false,
       _recentPurchase: false,
+      hasSeenTrialOffer: false,
 
       fetchSubscription: async (userId: string) => {
         try {
@@ -176,6 +184,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         });
       },
 
+      setHasSeenTrialOffer: (seen: boolean) => {
+        set({hasSeenTrialOffer: seen});
+      },
+
+      setTrialEligible: (eligible: boolean) => {
+        set({isTrialEligible: eligible});
+      },
+
       updateComputedStates: () => {
         const {subscriptionInfo} = get();
 
@@ -184,6 +200,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             hasActiveSubscription: false,
             isInTrial: false,
             daysRemainingInTrial: null,
+            isTrialEligible: true,
           });
           return;
         }
@@ -195,6 +212,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           ),
           isInTrial: checkInTrial(subscriptionInfo.status, subscriptionInfo.trialEndDate),
           daysRemainingInTrial: calculateDaysRemainingInTrial(subscriptionInfo.trialEndDate),
+          isTrialEligible: false,
         });
       },
 
@@ -206,7 +224,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           hasActiveSubscription: false,
           isInTrial: false,
           daysRemainingInTrial: null,
+          isTrialEligible: false,
           _recentPurchase: false,
+          hasSeenTrialOffer: false,
         });
       },
 
@@ -217,6 +237,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       storage: createJSONStorage(() => zustandMMKVStorage),
       partialize: (state) => ({
         subscriptionInfo: state.subscriptionInfo,
+        hasSeenTrialOffer: state.hasSeenTrialOffer,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {

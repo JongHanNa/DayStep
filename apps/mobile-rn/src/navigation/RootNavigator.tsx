@@ -2,18 +2,24 @@
  * Root Navigator
  * 인증 상태 기반 분기: Login ↔ Main
  */
-import React, {useEffect, useRef} from 'react';
-import {ActivityIndicator, View} from 'react-native';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {ActivityIndicator, Modal, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {useAuthStore} from '@/stores/authStore';
 import {
   initRevenueCat,
   loginRevenueCat,
   logoutRevenueCat,
+  purchaseSelectedPackage,
 } from '@/lib/revenueCat';
+import Purchases from 'react-native-purchases';
 import {useRealtimeSync} from '@/hooks/useRealtimeSync';
 import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {supabase} from '@/lib/supabase';
+import {TrialOfferModal} from '@/components/subscription/TrialOfferModal';
+import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
@@ -55,7 +61,127 @@ function AuthenticatedApp() {
     );
   }, []);
 
-  return <MainTabNavigator />;
+  // ── 7일 무료 체험 제안 로직 ──
+  const {user} = useAuthStore();
+  const {
+    isTrialEligible,
+    hasSeenTrialOffer,
+    hasActiveSubscription,
+    loading: subLoading,
+    setHasSeenTrialOffer,
+    setTrialEligible,
+    fetchSubscription,
+    applyRevenueCatPurchase,
+  } = useSubscriptionStore();
+
+  const [showTrialModal, setShowTrialModal] = useState(false);
+  const [showTrialPaywall, setShowTrialPaywall] = useState(false);
+  const trialChecked = useRef(false);
+
+  // 트라이얼 자격 확인 (1회)
+  useEffect(() => {
+    if (
+      !user?.id ||
+      subLoading ||
+      hasActiveSubscription ||
+      trialChecked.current
+    ) {
+      return;
+    }
+
+    trialChecked.current = true;
+
+    // subscription_history에서 trial_started 이벤트 확인
+    (async () => {
+      try {
+        const {data} = await supabase
+          .from('subscription_history')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('event_type', 'trial_started')
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          setTrialEligible(false);
+        }
+        // isTrialEligible은 updateComputedStates에서 이미 설정됨 (subscriptionInfo=null → true)
+      } catch (err) {
+        console.error('[Trial] eligibility check error:', err);
+      }
+    })();
+  }, [user?.id, subLoading, hasActiveSubscription, setTrialEligible]);
+
+  // 자격 확인 후 모달 표시
+  useEffect(() => {
+    if (
+      isTrialEligible &&
+      !hasSeenTrialOffer &&
+      !hasActiveSubscription &&
+      !subLoading &&
+      trialChecked.current
+    ) {
+      const timer = setTimeout(() => setShowTrialModal(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isTrialEligible, hasSeenTrialOffer, hasActiveSubscription, subLoading]);
+
+  const handleTrialClose = useCallback(() => {
+    setShowTrialModal(false);
+    setShowTrialPaywall(false);
+    setHasSeenTrialOffer(true);
+  }, [setHasSeenTrialOffer]);
+
+  const handleTrialShowDetails = useCallback(() => {
+    setShowTrialModal(false);
+    setShowTrialPaywall(true);
+  }, []);
+
+  const handleTrialStart = useCallback(async () => {
+    // App Store가 Introductory Offer를 자동 처리
+    // 기본적으로 연간 플랜으로 구매 시도
+    try {
+      const offerings = await Purchases.getOfferings();
+      const pkg = offerings.current?.annual ?? offerings.current?.monthly;
+      if (!pkg) return;
+
+      const result = await purchaseSelectedPackage(pkg);
+      if (result.success) {
+        const active = result.customerInfo.entitlements.active;
+        if (active && Object.keys(active).length > 0) {
+          applyRevenueCatPurchase(active);
+        }
+        if (user?.id) {
+          setTimeout(() => fetchSubscription(user.id), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('[Trial] purchase error:', err);
+    }
+
+    handleTrialClose();
+  }, [user?.id, applyRevenueCatPurchase, fetchSubscription, handleTrialClose]);
+
+  return (
+    <>
+      <MainTabNavigator />
+      <TrialOfferModal
+        visible={showTrialModal}
+        onClose={handleTrialClose}
+        onStartTrial={handleTrialStart}
+        onShowDetails={handleTrialShowDetails}
+      />
+      <Modal
+        visible={showTrialPaywall}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleTrialClose}>
+        <SafeAreaProvider>
+          <SubscriptionView onBack={handleTrialClose} trialMode />
+        </SafeAreaProvider>
+      </Modal>
+    </>
+  );
 }
 
 function LoadingScreen() {

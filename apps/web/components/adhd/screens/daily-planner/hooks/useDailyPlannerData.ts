@@ -64,9 +64,18 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
       .map(timelineItemToTodo);
   }, [timelineItems, dateStr]);
 
-  // anytime 할일 분리 (시간표에서 제외)
+  // anytime 할일 분리 (시간표에서 제외, 미뤄둔 할일은 별도)
   const anytimeTodos = useMemo(() => {
-    return todayTodos.filter((t: Todo) => t.scheduleType === 'anytime');
+    return todayTodos.filter((t: Todo) =>
+      t.scheduleType === 'anytime' && !(t as any).originalStartTime
+    );
+  }, [todayTodos]);
+
+  // 미뤄둔 할일 (schedule_type=anytime + originalStartTime 있음 = 미룸 처리된 것)
+  const deferredTodos = useMemo(() => {
+    return todayTodos.filter((t: Todo) =>
+      t.scheduleType === 'anytime' && !!(t as any).originalStartTime
+    );
   }, [todayTodos]);
 
   // 시간대별 그룹핑 (KST 기준, anytime 제외)
@@ -149,6 +158,7 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
   return {
     todayTodos,
     anytimeTodos,
+    deferredTodos,
     morningTodos,
     afternoonTodos,
     eveningTodos,

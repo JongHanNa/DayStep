@@ -274,18 +274,28 @@ async function handleSubscriptionActivated(
 
   const normalizedProductId = normalizeProductId(productId, priceId);
 
-  const subscriptionData = {
+  // Paddle trialing 상태 감지 (7일 무료 체험)
+  const isTrialing = data.status === 'trialing';
+  const now = new Date();
+
+  const subscriptionData: Record<string, any> = {
     user_id: appUserId,
-    status: 'active',
+    status: isTrialing ? 'trial' : 'active',
     platform: 'web',
     product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
     paddle_price_id: priceId,
-    subscription_start_date: new Date(),
+    subscription_start_date: now,
     subscription_end_date: expiresAt,
     cancelled_at: null,
-    updated_at: new Date(),
+    updated_at: now,
   };
+
+  // 트라이얼인 경우 trial 날짜 설정
+  if (isTrialing) {
+    subscriptionData.trial_start_date = now;
+    subscriptionData.trial_end_date = expiresAt; // Paddle trial 기간의 ends_at
+  }
 
   if (existingSubscription) {
     await supabase
@@ -309,13 +319,13 @@ async function handleSubscriptionActivated(
   // 히스토리 기록
   await insertSubscriptionHistory(supabase, {
     user_id: appUserId,
-    event_type: 'subscription_started',
+    event_type: isTrialing ? 'trial_started' : 'subscription_started',
     platform: 'web',
     product_id: normalizedProductId,
     paddle_subscription_id: subscriptionId,
   });
 
-  console.log(`Subscription activated for user ${appUserId}: ${subscriptionId}`);
+  console.log(`Subscription ${isTrialing ? 'trial started' : 'activated'} for user ${appUserId}: ${subscriptionId}`);
 }
 
 /**
@@ -339,17 +349,33 @@ async function handleSubscriptionUpdated(
 
   const normalizedProductId = normalizeProductId(productId, priceId);
 
+  // 이전 상태 확인 (trialing → active 전환 감지용)
+  const { data: prevSubscription } = await supabase
+    .from('subscriptions')
+    .select('status')
+    .eq('user_id', appUserId)
+    .single();
+
+  const wasTrialing = prevSubscription?.status === 'trial';
+  const isTrialing = data.status === 'trialing';
+  const isActive = data.status === 'active';
+
   // Supabase 업데이트
   const updateData: Record<string, any> = {
-    status: data.status === 'active' ? 'active' : data.status,
+    status: isTrialing ? 'trial' : (isActive ? 'active' : data.status),
     product_id: normalizedProductId,
     paddle_price_id: priceId,
     subscription_end_date: expiresAt,
     updated_at: new Date(),
   };
 
+  // trialing → active 전환 시 trial 날짜 유지, status만 변경
+  if (wasTrialing && isActive) {
+    updateData.subscription_start_date = new Date();
+  }
+
   // 취소 철회 시 cancelled_at 클리어 (active 상태 + scheduled_change 없음 = 취소 철회 완료)
-  if (data.status === 'active' && !data.scheduled_change) {
+  if (isActive && !data.scheduled_change) {
     updateData.cancelled_at = null;
   }
 
@@ -361,14 +387,22 @@ async function handleSubscriptionUpdated(
   await supabase
     .from('users')
     .update({
-      has_active_subscription: data.status === 'active',
-      subscription_type: data.status === 'active' ? normalizedProductId : 'free',
+      has_active_subscription: isActive || isTrialing,
+      subscription_type: (isActive || isTrialing) ? normalizedProductId : 'free',
       subscription_expires_at: expiresAt,
     })
     .eq('id', appUserId);
 
-  // 히스토리 기록 — cancel/pause 등으로 인한 updated 이벤트 구분
-  const historyEventType = data.status === 'active' ? 'subscription_renewed' : 'subscription_updated';
+  // 히스토리 기록 — trialing→active 전환 감지
+  let historyEventType: string;
+  if (wasTrialing && isActive) {
+    historyEventType = 'trial_converted';
+  } else if (isActive) {
+    historyEventType = 'subscription_renewed';
+  } else {
+    historyEventType = 'subscription_updated';
+  }
+
   await insertSubscriptionHistory(supabase, {
     user_id: appUserId,
     event_type: historyEventType,
@@ -377,7 +411,7 @@ async function handleSubscriptionUpdated(
     paddle_subscription_id: subscriptionId,
   });
 
-  console.log(`Subscription updated for user ${appUserId}: ${subscriptionId}`);
+  console.log(`Subscription updated for user ${appUserId}: ${subscriptionId} (${historyEventType})`);
 }
 
 /**

@@ -477,11 +477,18 @@ export function useTimelineActions({
 
           await fetchAllTodos();
         } else if (action === 'anytime') {
-          await updateTodo(postponingItem.id, {
+          const anytimeData: Record<string, any> = {
             schedule_type: 'anytime',
             start_time: undefined,
             end_time: undefined,
-          });
+          };
+          if (postponingItem.startTime && !postponingItem.originalTodo?.originalStartTime) {
+            anytimeData.original_start_time = new Date(postponingItem.startTime).toISOString();
+          }
+          if (postponingItem.endTime && !postponingItem.originalTodo?.originalEndTime) {
+            anytimeData.original_end_time = new Date(postponingItem.endTime).toISOString();
+          }
+          await updateTodo(postponingItem.id, anytimeData);
 
           loadAnytimeCount(navigatedMonth);
           await fetchAllTodos();

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { format, isToday, startOfMonth, subMonths, differenceInMonths } from 'date-fns';
-import { Clock, ChevronUp, ChevronDown, Zap, Plus, Cloud } from 'lucide-react';
+import { Clock, ChevronUp, ChevronDown, Zap, Plus } from 'lucide-react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
 import { useProjectStore } from '@/state/stores/projectStore';
 import { useTodoStore } from '@/state/stores/todoStore';
@@ -10,7 +10,7 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import TodoEditModal from '@/components/todos/TodoEditModal';
 import QuickLogModal from '@/components/adhd/QuickLogModal';
 import PostponeOptionsSheet from '@/components/todos/PostponeOptionsSheet';
-import AnytimeInboxSheet from '@/components/todos/AnytimeInboxSheet';
+
 import { FocusOverlay } from '@/components/adhd/common/FocusOverlay';
 import { calculateTimeGaps, type TimeGap } from '@/lib/timeGapUtils';
 import { MonthNavigator } from './MonthNavigator';
@@ -75,9 +75,6 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
       goScreen('timeline');
     }
   }, [goScreen]);
-
-  // 시간 미정 인박스 상태
-  const [anytimeInboxOpen, setAnytimeInboxOpen] = useState(false);
 
   // 1. 데이터 훅
   const data = useTimelineData({ userId });
@@ -164,18 +161,6 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
           title={showFuelBadges ? '원동력 숨기기' : '원동력 표시'}
         >
           <Zap className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => setAnytimeInboxOpen(true)}
-          className="btn btn-ghost btn-sm btn-circle mr-2 text-purple-500 relative"
-          title="시간 미정 할일"
-        >
-          <Cloud className="w-4 h-4" />
-          {data.anytimeCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              {data.anytimeCount > 9 ? '9+' : data.anytimeCount}
-            </span>
-          )}
         </button>
       </div>
     </div>
@@ -278,13 +263,6 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
         />
       )}
 
-      {/* 시간 미정 인박스 시트 */}
-      <AnytimeInboxSheet
-        isOpen={anytimeInboxOpen}
-        onClose={() => setAnytimeInboxOpen(false)}
-        selectedDate={format(nav.navigatedMonth, 'yyyy-MM-dd')}
-        onRefresh={() => data.loadAnytimeCount(nav.navigatedMonth)}
-      />
     </>
   );
 

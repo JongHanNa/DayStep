@@ -63,6 +63,7 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
   const {
     todayTodos,
     anytimeTodos,
+    deferredTodos,
     morningTodos,
     afternoonTodos,
     eveningTodos,
@@ -506,6 +507,7 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
     <div className="space-y-3">
       <TimeSchedulePanel
         anytimeTodos={anytimeTodos}
+        deferredTodos={deferredTodos}
         morningTodos={morningTodos}
         afternoonTodos={afternoonTodos}
         eveningTodos={eveningTodos}

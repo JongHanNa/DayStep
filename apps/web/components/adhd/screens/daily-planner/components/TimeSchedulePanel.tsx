@@ -1,12 +1,13 @@
 'use client';
 
-import { Sunrise, Sun, Moon, Infinity } from 'lucide-react';
+import { Sunrise, Sun, Moon, Infinity, PauseCircle } from 'lucide-react';
 import { TimeSlotSection } from './TimeSlotSection';
 import type { Todo } from '@/entities/todo/Todo';
 import type { ProjectMapValue, DepartmentMapValue } from '../../timeline/types';
 
 interface TimeSchedulePanelProps {
   anytimeTodos: Todo[];
+  deferredTodos: Todo[];
   morningTodos: Todo[];
   afternoonTodos: Todo[];
   eveningTodos: Todo[];
@@ -30,6 +31,7 @@ interface TimeSchedulePanelProps {
 
 export function TimeSchedulePanel({
   anytimeTodos,
+  deferredTodos,
   morningTodos,
   afternoonTodos,
   eveningTodos,
@@ -59,6 +61,28 @@ export function TimeSchedulePanel({
           icon={<Infinity className="w-4 h-4 text-emerald-600" />}
           todos={anytimeTodos}
           accentColor="text-emerald-600"
+          projectMap={projectMap}
+          departmentMap={departmentMap}
+          highlightProjectId={highlightProjectId}
+          todoFuelMap={todoFuelMap}
+          expandedFuelId={expandedFuelId}
+          onExpandFuel={onExpandFuel}
+          onEditClick={onEditClick}
+          onToggle={onToggle}
+          onUnskip={onUnskip}
+          onSkipTodo={onSkipTodo}
+          onPostpone={onPostpone}
+          onRestoreOriginal={onRestoreOriginal}
+          onStartFocus={onStartFocus}
+        />
+      )}
+      {deferredTodos.length > 0 && (
+        <TimeSlotSection
+          id="schedule-deferred"
+          label="미룸"
+          icon={<PauseCircle className="w-4 h-4 text-purple-600" />}
+          todos={deferredTodos}
+          accentColor="text-purple-600"
           projectMap={projectMap}
           departmentMap={departmentMap}
           highlightProjectId={highlightProjectId}

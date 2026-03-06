@@ -25,10 +25,14 @@ export const useSubscription = () => {
     isInTrial,
     daysRemainingInTrial,
     subscriptionExpiresAt,
+    isTrialEligible,
+    hasSeenTrialOffer,
     setSubscriptionInfo,
     setCustomerInfo,
     setLoading,
     setError,
+    setHasSeenTrialOffer,
+    setTrialEligible,
     reset,
   } = useSubscriptionStore();
 
@@ -115,6 +119,47 @@ export const useSubscription = () => {
       }
     },
     [fetchSubscriptionFromDb, setLoading, setError, setSubscriptionInfo]
+  );
+
+  /**
+   * 트라이얼 자격 확인
+   * subscription_history에서 trial_started 이벤트가 있으면 이미 체험한 유저
+   */
+  const checkTrialEligibility = useCallback(
+    async (userId: string) => {
+      try {
+        // subscription_history에서 trial_started 이벤트 확인 (교차 플랫폼 악용 방지)
+        const historyData = await queryRLSTableWithJWT(
+          'subscription_history',
+          [
+            { column: 'user_id', operator: 'eq', value: userId },
+            { column: 'event_type', operator: 'eq', value: 'trial_started' },
+          ],
+          {
+            select: 'id',
+            limit: 1,
+          }
+        );
+
+        // trial_started 이벤트가 있으면 이미 체험한 유저 → 자격 없음
+        if (historyData) {
+          setTrialEligible(false);
+          return false;
+        }
+
+        // subscriptions 테이블 레코드 존재 여부 확인
+        // subscriptionInfo가 null이면 구독 이력 없음 → 자격 있음
+        const { subscriptionInfo: currentInfo } = useSubscriptionStore.getState();
+        const eligible = !currentInfo;
+        setTrialEligible(eligible);
+        return eligible;
+      } catch (err) {
+        console.error('💳 트라이얼 자격 확인 실패:', err);
+        // 에러 시 store의 기본 계산 결과 유지
+        return isTrialEligible;
+      }
+    },
+    [setTrialEligible, isTrialEligible]
   );
 
   /**
@@ -209,14 +254,18 @@ export const useSubscription = () => {
     isInTrial,
     daysRemainingInTrial,
     subscriptionExpiresAt,
+    isTrialEligible,
+    hasSeenTrialOffer,
 
     // Actions
     syncSubscription,
+    checkTrialEligibility,
     purchasePackage,
     restoreSubscription,
     linkUserToRevenueCat,
     unlinkUserFromRevenueCat,
     canAccessProFeature,
+    setHasSeenTrialOffer,
 
     // 환경 정보
     paymentsEnabled: FEATURE_FLAGS.PAYMENTS_ENABLED,

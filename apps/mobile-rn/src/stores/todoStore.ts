@@ -648,11 +648,18 @@ export const useTodoStore = create<TodoState>()(
               return get().updateTodo(id, updates);
             }
             if (action === 'anytime') {
-              return get().updateTodo(id, {
+              const anytimeUpdates: any = {
                 schedule_type: 'anytime',
                 start_time: null,
                 end_time: null,
-              } as any);
+              };
+              if (todo.start_time && !(todo as any).original_start_time) {
+                anytimeUpdates.original_start_time = todo.start_time;
+              }
+              if (todo.end_time && !(todo as any).original_end_time) {
+                anytimeUpdates.original_end_time = todo.end_time;
+              }
+              return get().updateTodo(id, anytimeUpdates);
             }
           } else {
             // ── 반복 할일: exclusion + 독립 할일 생성 ──

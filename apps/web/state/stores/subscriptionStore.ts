@@ -56,12 +56,18 @@ interface SubscriptionState {
   isInTrial: boolean;
   daysRemainingInTrial: number | null;
   subscriptionExpiresAt: Date | null;
+  isTrialEligible: boolean;
+
+  // 트라이얼 제안 UI 상태
+  hasSeenTrialOffer: boolean;
 
   // Actions
   setSubscriptionInfo: (info: SubscriptionInfo | null) => void;
   setCustomerInfo: (info: CustomerInfo | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setHasSeenTrialOffer: (seen: boolean) => void;
+  setTrialEligible: (eligible: boolean) => void;
   updateComputedStates: () => void;
   reset: () => void;
 }
@@ -122,6 +128,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         isInTrial: false,
         daysRemainingInTrial: null,
         subscriptionExpiresAt: null,
+        isTrialEligible: false,
+
+        // 트라이얼 제안 UI 상태
+        hasSeenTrialOffer: false,
 
         // Actions
         setSubscriptionInfo: (info: SubscriptionInfo | null) => {
@@ -147,6 +157,14 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           set({ error });
         },
 
+        setHasSeenTrialOffer: (seen: boolean) => {
+          set({ hasSeenTrialOffer: seen });
+        },
+
+        setTrialEligible: (eligible: boolean) => {
+          set({ isTrialEligible: eligible });
+        },
+
         /**
          * 계산된 상태 업데이트
          * subscriptionInfo 또는 customerInfo 변경 시 호출
@@ -160,6 +178,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               isInTrial: false,
               daysRemainingInTrial: null,
               subscriptionExpiresAt: null,
+              isTrialEligible: true,
             });
             return;
           }
@@ -198,6 +217,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             isInTrial,
             daysRemainingInTrial,
             subscriptionExpiresAt,
+            isTrialEligible: false,
           });
 
           console.log('💳 계산된 구독 상태:', {
@@ -219,6 +239,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             isInTrial: false,
             daysRemainingInTrial: null,
             subscriptionExpiresAt: null,
+            isTrialEligible: false,
+            hasSeenTrialOffer: false,
           });
         },
       }),
@@ -226,6 +248,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         name: 'subscription-store',
         partialize: (state) => ({
           subscriptionInfo: state.subscriptionInfo,
+          hasSeenTrialOffer: state.hasSeenTrialOffer,
           // customerInfo는 민감 정보이므로 persist에서 제외
         }),
         // persist 복원 완료 후 계산된 상태 업데이트
