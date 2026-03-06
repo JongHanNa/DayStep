@@ -270,8 +270,17 @@ export function TodoCard({
             />
           )}
 
-          {/* 종료시간 초과 액션 패널 */}
-          {isMissed && (
+          {/* 미뤄둔 할일이면서 종료시간 지남 → 텍스트만 표시 */}
+          {isMissed && isDeferredTodo && (
+            <View style={styles.overdueTextOnly}>
+              <Text style={styles.overdueText}>
+                {timeStatusText.primary ?? '종료 시간 지남'}
+              </Text>
+            </View>
+          )}
+
+          {/* 종료시간 초과 액션 패널 (미뤄둔 할일 제외) */}
+          {isMissed && !isDeferredTodo && (
             <MissedTodoActionPanel
               overdueText={timeStatusText.primary ?? '종료 시간 지남'}
               onComplete={() => onToggle(todo.id)}
@@ -315,6 +324,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
     overflow: 'hidden',
+  },
+  overdueTextOnly: {
+    marginTop: 4,
+  },
+  overdueText: {
+    fontSize: 12,
+    color: '#DC2626',
+    fontWeight: '500',
   },
   containerCompleted: {
     opacity: 0.6,
