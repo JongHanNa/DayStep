@@ -224,6 +224,7 @@ export default function RootNavigator() {
       wasAuthenticated.current = true;
     } else if (!isAuthenticated && wasAuthenticated.current) {
       logoutRevenueCat();
+      useSubscriptionStore.getState().reset();
       wasAuthenticated.current = false;
     }
   }, [isAuthenticated, user?.id, applyRevenueCatPurchase]);
