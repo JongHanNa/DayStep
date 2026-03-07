@@ -16,20 +16,27 @@ import Animated, {FadeInDown} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Plus,
   FolderKanban,
   Play,
   Pause,
   CheckCircle2,
   RotateCcw,
+  Square,
   Trash2,
   Edit3,
+  Link2Off,
+  ListTodo,
+  ActivitySquare,
 } from 'lucide-react-native';
 import {useProjectStore} from '@/stores/projectStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import type {Project, ProjectStatus} from '@/types/project';
+import type {Todo} from '@daystep/shared-core';
 import {PROJECT_COLORS, PROJECT_ICONS} from '@/types/project';
 
 const STATUS_FILTERS: {key: ProjectStatus | 'all'; label: string}[] = [
@@ -135,8 +142,9 @@ function ProjectCard({
 
         {/* 상태 전환 버튼 */}
         <View className="flex-row items-center justify-between border-t border-gray-100 pt-3 mt-1">
-          <View className="flex-row">
-            {project.status !== 'in_progress' && project.status !== 'completed' && (
+          <View className="flex-row flex-wrap">
+            {/* not_started → 시작 */}
+            {project.status === 'not_started' && (
               <TouchableOpacity
                 onPress={() => onStatusChange('in_progress')}
                 className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
@@ -144,8 +152,15 @@ function ProjectCard({
                 <Text className="text-xs text-blue-600 ml-1">시작</Text>
               </TouchableOpacity>
             )}
+            {/* in_progress → 시작안함 / 중단 / 완료 */}
             {project.status === 'in_progress' && (
               <>
+                <TouchableOpacity
+                  onPress={() => onStatusChange('not_started')}
+                  className="flex-row items-center bg-gray-50 rounded-lg px-3 py-1.5 mr-2">
+                  <Square size={14} color="#6B7280" />
+                  <Text className="text-xs text-gray-600 ml-1">시작안함</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => onStatusChange('on_hold')}
                   className="flex-row items-center bg-yellow-50 rounded-lg px-3 py-1.5 mr-2">
@@ -160,12 +175,30 @@ function ProjectCard({
                 </TouchableOpacity>
               </>
             )}
+            {/* on_hold → 재개 / 완료 */}
             {project.status === 'on_hold' && (
+              <>
+                <TouchableOpacity
+                  onPress={() => onStatusChange('in_progress')}
+                  className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
+                  <RotateCcw size={14} color="#3B82F6" />
+                  <Text className="text-xs text-blue-600 ml-1">재개</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => onStatusChange('completed')}
+                  className="flex-row items-center bg-green-50 rounded-lg px-3 py-1.5 mr-2">
+                  <CheckCircle2 size={14} color="#22C55E" />
+                  <Text className="text-xs text-green-600 ml-1">완료</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {/* completed → 다시 진행 */}
+            {project.status === 'completed' && (
               <TouchableOpacity
                 onPress={() => onStatusChange('in_progress')}
                 className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
                 <RotateCcw size={14} color="#3B82F6" />
-                <Text className="text-xs text-blue-600 ml-1">재개</Text>
+                <Text className="text-xs text-blue-600 ml-1">다시 진행</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -193,9 +226,11 @@ export default function AIPlanScreen() {
   const user = useAuthStore(s => s.user);
   const {
     projects,
+    projectTodos,
     statusFilter,
     loading,
     fetchProjects,
+    fetchProjectTodos,
     createProject,
     updateProject,
     deleteProject,
@@ -203,6 +238,8 @@ export default function AIPlanScreen() {
     holdProject,
     completeProject,
     resumeProject,
+    unstartProject,
+    unlinkTodoFromProject,
     setStatusFilter,
   } = useProjectStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
@@ -214,12 +251,28 @@ export default function AIPlanScreen() {
   const [formDesc, setFormDesc] = useState('');
   const [formColor, setFormColor] = useState<string>(PROJECT_COLORS[0]);
   const [formIcon, setFormIcon] = useState<string>(PROJECT_ICONS[0]);
+  const [linkedTodos, setLinkedTodos] = useState<Todo[]>([]);
+  const [isTodosExpanded, setIsTodosExpanded] = useState(false);
+  const [loadingTodos, setLoadingTodos] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
       fetchProjects(user.id);
     }
   }, [user?.id]);
+
+  // 편집 모드 진입 시 연결된 할일 로드
+  useEffect(() => {
+    if (editingProject && user?.id) {
+      setLoadingTodos(true);
+      fetchProjectTodos(user.id, editingProject.id)
+        .then(todos => setLinkedTodos(todos))
+        .finally(() => setLoadingTodos(false));
+    } else {
+      setLinkedTodos([]);
+      setIsTodosExpanded(false);
+    }
+  }, [editingProject?.id, user?.id]);
 
   const filteredProjects = useMemo(() => {
     if (statusFilter === 'all') return projects;
@@ -230,6 +283,9 @@ export default function AIPlanScreen() {
     async (projectId: string, status: ProjectStatus) => {
       if (!user?.id) return;
       switch (status) {
+        case 'not_started':
+          await unstartProject(user.id, projectId);
+          break;
         case 'in_progress':
           await startProject(user.id, projectId);
           break;
@@ -372,6 +428,180 @@ export default function AIPlanScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* ── 연결된 할일 (편집 모드에서만) ── */}
+            {editingProject && (
+              <View className="border-t border-gray-200 pt-4 mb-4">
+                <TouchableOpacity
+                  onPress={() => setIsTodosExpanded(!isTodosExpanded)}
+                  className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <ListTodo size={18} color="#6B7280" />
+                    <Text className="font-medium text-gray-700 ml-2">연결된 할일</Text>
+                    <View className="bg-gray-100 rounded-full px-2 py-0.5 ml-2">
+                      <Text className="text-xs text-gray-500">{linkedTodos.length}개</Text>
+                    </View>
+                  </View>
+                  {isTodosExpanded ? (
+                    <ChevronUp size={18} color="#9CA3AF" />
+                  ) : (
+                    <ChevronDown size={18} color="#9CA3AF" />
+                  )}
+                </TouchableOpacity>
+
+                {isTodosExpanded && (
+                  <View className="mt-3">
+                    {loadingTodos ? (
+                      <Text className="text-sm text-gray-400 text-center py-4">로딩 중...</Text>
+                    ) : linkedTodos.length === 0 ? (
+                      <Text className="text-sm text-gray-400 text-center py-2">
+                        연결된 할일이 없습니다
+                      </Text>
+                    ) : (
+                      linkedTodos.map(todo => (
+                        <View
+                          key={todo.id}
+                          className="flex-row items-center justify-between bg-gray-50 rounded-lg p-3 mb-2">
+                          <View className="flex-row items-center flex-1 mr-2">
+                            <View
+                              className="w-4 h-4 rounded-full border-2 mr-2 items-center justify-center"
+                              style={{
+                                backgroundColor: todo.completed ? '#22C55E' : 'transparent',
+                                borderColor: todo.completed ? '#22C55E' : '#D1D5DB',
+                              }}>
+                              {todo.completed && (
+                                <CheckCircle2 size={10} color="#FFFFFF" />
+                              )}
+                            </View>
+                            <Text
+                              className={`text-sm flex-1 ${
+                                todo.completed ? 'line-through text-gray-400' : 'text-gray-700'
+                              }`}
+                              numberOfLines={1}>
+                              {todo.title}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            onPress={async () => {
+                              if (!user?.id) return;
+                              const success = await unlinkTodoFromProject(user.id, todo.id);
+                              if (success) {
+                                setLinkedTodos(prev => prev.filter(t => t.id !== todo.id));
+                              }
+                            }}
+                            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                            <Link2Off size={14} color="#9CA3AF" />
+                          </TouchableOpacity>
+                        </View>
+                      ))
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* ── 상태 변경 (편집 모드에서만) ── */}
+            {editingProject && (
+              <View className="border-t border-gray-200 pt-4 mb-6">
+                <View className="flex-row items-center mb-3">
+                  <ActivitySquare size={18} color="#6B7280" />
+                  <Text className="font-medium text-gray-700 ml-2">상태</Text>
+                  <View
+                    className="rounded-full px-2 py-0.5 ml-2"
+                    style={{backgroundColor: STATUS_LABELS[editingProject.status]?.bg}}>
+                    <Text
+                      className="text-xs font-medium"
+                      style={{color: STATUS_LABELS[editingProject.status]?.color}}>
+                      {STATUS_LABELS[editingProject.status]?.label}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row flex-wrap">
+                  {editingProject.status === 'not_started' && (
+                    <TouchableOpacity
+                      onPress={async () => {
+                        if (!user?.id) return;
+                        await startProject(user.id, editingProject.id);
+                        setEditingProject({...editingProject, status: 'in_progress'});
+                      }}
+                      className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
+                      <Play size={14} color="#3B82F6" />
+                      <Text className="text-xs text-blue-600 ml-1">시작하기</Text>
+                    </TouchableOpacity>
+                  )}
+                  {editingProject.status === 'in_progress' && (
+                    <>
+                      <TouchableOpacity
+                        onPress={async () => {
+                          if (!user?.id) return;
+                          await unstartProject(user.id, editingProject.id);
+                          setEditingProject({...editingProject, status: 'not_started'});
+                        }}
+                        className="flex-row items-center bg-gray-50 rounded-lg px-3 py-2 mr-2 mb-2">
+                        <Square size={14} color="#6B7280" />
+                        <Text className="text-xs text-gray-600 ml-1">시작안함</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={async () => {
+                          if (!user?.id) return;
+                          await holdProject(user.id, editingProject.id);
+                          setEditingProject({...editingProject, status: 'on_hold'});
+                        }}
+                        className="flex-row items-center bg-yellow-50 rounded-lg px-3 py-2 mr-2 mb-2">
+                        <Pause size={14} color="#F59E0B" />
+                        <Text className="text-xs text-yellow-600 ml-1">중단</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={async () => {
+                          if (!user?.id) return;
+                          await completeProject(user.id, editingProject.id);
+                          setEditingProject({...editingProject, status: 'completed'});
+                        }}
+                        className="flex-row items-center bg-green-50 rounded-lg px-3 py-2 mr-2 mb-2">
+                        <CheckCircle2 size={14} color="#22C55E" />
+                        <Text className="text-xs text-green-600 ml-1">완료</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                  {editingProject.status === 'on_hold' && (
+                    <>
+                      <TouchableOpacity
+                        onPress={async () => {
+                          if (!user?.id) return;
+                          await resumeProject(user.id, editingProject.id);
+                          setEditingProject({...editingProject, status: 'in_progress'});
+                        }}
+                        className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
+                        <Play size={14} color="#3B82F6" />
+                        <Text className="text-xs text-blue-600 ml-1">재개</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={async () => {
+                          if (!user?.id) return;
+                          await completeProject(user.id, editingProject.id);
+                          setEditingProject({...editingProject, status: 'completed'});
+                        }}
+                        className="flex-row items-center bg-green-50 rounded-lg px-3 py-2 mr-2">
+                        <CheckCircle2 size={14} color="#22C55E" />
+                        <Text className="text-xs text-green-600 ml-1">완료</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                  {editingProject.status === 'completed' && (
+                    <TouchableOpacity
+                      onPress={async () => {
+                        if (!user?.id) return;
+                        await resumeProject(user.id, editingProject.id);
+                        setEditingProject({...editingProject, status: 'in_progress'});
+                      }}
+                      className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
+                      <RotateCcw size={14} color="#3B82F6" />
+                      <Text className="text-xs text-blue-600 ml-1">다시 진행</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
 
             <TouchableOpacity
               onPress={handleSaveForm}
