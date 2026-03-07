@@ -46,7 +46,7 @@ export function CalendarDayCell({
   const opacity = useSharedValue(1);
 
   const tap = Gesture.Tap()
-    .maxDist(10)
+    .maxDistance(10)
     .onBegin(() => {
       opacity.value = withTiming(0.7, {duration: 100});
     })
