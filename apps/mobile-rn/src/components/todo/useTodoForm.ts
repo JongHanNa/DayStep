@@ -102,6 +102,9 @@ export function getDateSummary(form: FormData): string {
 
 export function getDateSummaryExtras(form: FormData): string[] {
   const extras: string[] = [];
+  if (form.anytimeDuration) {
+    extras.push(`⏱ ${form.anytimeDuration}분`);
+  }
   if (form.alarmOffsets.length > 0) {
     extras.push(getAlarmsLabel(form.alarmOffsets));
   }

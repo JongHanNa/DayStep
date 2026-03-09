@@ -137,6 +137,27 @@ export function TodoEditOverlay({
           </Pressable>
         </View>
 
+        {/* ──────── 태그 행 ──────── */}
+        {(form.isReluctantMustDo || form.importance || form.urgency) && (
+          <View style={styles.tagRow}>
+            {form.isReluctantMustDo && (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>😤 해야 할 일</Text>
+              </View>
+            )}
+            {form.importance && (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>⭐ 중요</Text>
+              </View>
+            )}
+            {form.urgency && (
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>🔥 긴급</Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* ──────── 본문 (ScrollView) ──────── */}
         <ScrollView
           style={styles.flex}
@@ -270,6 +291,23 @@ const styles = StyleSheet.create({
   },
   dateSummaryText: {
     fontSize: 13,
+    color: '#6B7280',
+  },
+  // Tags
+  tagRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  tag: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  tagText: {
+    fontSize: 11,
     color: '#6B7280',
   },
   // Title
