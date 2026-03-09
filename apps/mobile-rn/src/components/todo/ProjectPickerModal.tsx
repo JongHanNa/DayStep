@@ -92,16 +92,18 @@ export function ProjectPickerModal({
       <Pressable
         onPress={() => handleSelect(item.id)}
         style={({pressed}) => [
-          styles.projectItem,
+          styles.projectItemPressable,
           pressed && styles.projectItemPressed,
         ]}>
-        <View style={[styles.colorDot, {backgroundColor: item.color ?? '#A8DADC'}]} />
-        {item.icon ? (
-          <Text style={styles.projectIcon}>{item.icon}</Text>
-        ) : null}
-        <Text style={styles.projectTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
+        <View style={styles.projectItemRow}>
+          <View style={[styles.colorDot, {backgroundColor: item.color ?? '#A8DADC'}]} />
+          {item.icon ? (
+            <Text style={styles.projectIcon}>{item.icon}</Text>
+          ) : null}
+          <Text style={styles.projectTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+        </View>
       </Pressable>
     ),
     [handleSelect],
@@ -140,7 +142,7 @@ export function ProjectPickerModal({
         {/* 연결된 프로젝트 */}
         {selectedProject && !search.trim() && (
           <View style={styles.selectedSection}>
-            <Text style={styles.sectionLabel}>연결된 프로젝트</Text>
+            <Text style={[styles.sectionLabel, {paddingHorizontal: 0}]}>연결된 프로젝트</Text>
             <View style={styles.selectedRow}>
               <View
                 style={[
@@ -279,11 +281,13 @@ const styles = StyleSheet.create({
   listContent: {
     paddingTop: 12,
   },
-  projectItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  projectItemPressable: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  projectItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   projectItemPressed: {
@@ -293,6 +297,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+    flexShrink: 0,
   },
   projectIcon: {
     fontSize: 16,

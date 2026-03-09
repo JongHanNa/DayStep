@@ -137,12 +137,14 @@ export function TodoEditOverlay({
               ]}>
               {linkedProject ? (
                 <>
-                  <View
-                    style={[
-                      styles.projectDot,
-                      {backgroundColor: linkedProject.color ?? '#A8DADC'},
-                    ]}
-                  />
+                  <View style={{height: 16, justifyContent: 'center', marginTop: 1}}>
+                    <View
+                      style={[
+                        styles.projectDot,
+                        {backgroundColor: linkedProject.color ?? '#A8DADC'},
+                      ]}
+                    />
+                  </View>
                   <Text style={styles.projectBadgeText} numberOfLines={1}>
                     {linkedProject.title}
                   </Text>
@@ -338,6 +340,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#374151',
     flexShrink: 1,
+    lineHeight: 16,
   },
   headerActions: {
     flexDirection: 'row',
