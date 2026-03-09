@@ -34,6 +34,7 @@ interface LinkedFuel {
 interface TodoCardProps {
   todo: Todo;
   index?: number;
+  projectMap?: Map<string, {title: string; color: string; icon?: string}>;
   onToggle: (id: string) => void;
   onPress?: (todo: Todo) => void;
   onFocus?: (todo: Todo) => void;
@@ -48,6 +49,7 @@ interface TodoCardProps {
 export function TodoCard({
   todo,
   index = 0,
+  projectMap,
   onToggle,
   onPress,
   onFocus,
@@ -218,6 +220,24 @@ export function TodoCard({
               </View>
             )}
           </View>
+
+          {/* 연결된 프로젝트 배지 */}
+          {projectMap && todo.project_id && projectMap.get(todo.project_id) && (() => {
+            const proj = projectMap.get(todo.project_id)!;
+            return (
+              <View style={[styles.projectBadge, {
+                backgroundColor: proj.color ? `${proj.color}20` : '#F3F4F6',
+                borderColor: proj.color || '#D1D5DB',
+              }]}>
+                {proj.icon && <Text style={styles.projectIcon}>{proj.icon}</Text>}
+                <Text
+                  style={[styles.projectText, {color: proj.color || '#6B7280'}]}
+                  numberOfLines={1}>
+                  {proj.title}
+                </Text>
+              </View>
+            );
+          })()}
 
           {/* 진행률 바 + 남은 시간 */}
           {timeStatus.status === 'in_progress' && (
@@ -486,6 +506,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#EA580C',
     flex: 1,
+  },
+  projectBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    gap: 2,
+  },
+  projectIcon: {
+    fontSize: 11,
+  },
+  projectText: {
+    fontSize: 11,
   },
   focusBtn: {
     width: 28,

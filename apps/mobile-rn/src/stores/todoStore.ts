@@ -191,6 +191,10 @@ export const useTodoStore = create<TodoState>()(
                 `and(recurrence_pattern.eq.weekly,recurrence_days_of_week.cs.[${dayOfWeek}],start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
                 // anytime (시간 미지정)
                 `and(schedule_type.eq.anytime,start_time.gte.${dayStart},start_time.lte.${dayEnd})`,
+                // 반복 할일에서 파생된 미룸 (occurrence_date로 날짜 매칭)
+                `and(parent_recurring_todo_id.not.is.null,occurrence_date.eq.${date})`,
+                // 비반복 미룸 (original_start_time으로 날짜 매칭)
+                `and(schedule_type.eq.anytime,start_time.is.null,original_start_time.gte.${dayStart},original_start_time.lte.${dayEnd})`,
               ].join(','),
             )
             .order('order_index', {ascending: true});

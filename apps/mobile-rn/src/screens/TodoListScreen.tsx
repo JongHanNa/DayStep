@@ -27,6 +27,8 @@ import {
 import {DndProvider, useDnd} from '@/components/planner/DndContext';
 import {DraggableTodoChip} from '@/components/planner/DraggableTodoChip';
 import {useTodoStore} from '@/stores/todoStore';
+import {useProjectStore} from '@/stores/projectStore';
+import {useAuthStore} from '@/stores/authStore';
 import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
 import {ko} from 'date-fns/locale';
@@ -115,6 +117,24 @@ function TodoListScreenInner() {
     restoreDeferredTodo,
   } = useTodoStore();
   const {primaryColor} = useTheme();
+  const {projects, fetchProjects} = useProjectStore();
+  const user = useAuthStore(s => s.user);
+
+  // 프로젝트 맵 생성
+  const projectMap = useMemo(() => {
+    const map = new Map<string, {title: string; color: string; icon?: string}>();
+    for (const p of projects) {
+      map.set(p.id, {title: p.title, color: p.color, icon: p.icon});
+    }
+    return map;
+  }, [projects]);
+
+  // 화면 포커스 시 프로젝트 데이터 로드
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) fetchProjects(user.id);
+    }, [user?.id, fetchProjects]),
+  );
   const route = useRoute<any>();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
   const pickerRef = useRef<TodoPickerSheetRef>(null);
@@ -383,6 +403,7 @@ function TodoListScreenInner() {
                 <TodoCard
                   todo={item}
                   index={index}
+                  projectMap={projectMap}
                   onToggle={handleToggle}
                   onPress={handleTodoPress}
                   onFocus={handleFocusTodo}
