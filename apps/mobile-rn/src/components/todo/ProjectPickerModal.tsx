@@ -142,7 +142,7 @@ export function ProjectPickerModal({
         {/* 연결된 프로젝트 */}
         {selectedProject && !search.trim() && (
           <View style={styles.selectedSection}>
-            <Text style={[styles.sectionLabel, {paddingHorizontal: 0}]}>연결된 프로젝트</Text>
+            <Text style={styles.sectionLabel}>연결된 프로젝트</Text>
             <View style={styles.selectedRow}>
               <View
                 style={[
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#9CA3AF',
     marginBottom: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
   },
   selectedRow: {
     flexDirection: 'row',
@@ -280,9 +280,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingTop: 12,
+    paddingHorizontal: 16,
   },
   projectItemPressable: {
-    paddingHorizontal: 28,
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
   projectItemRow: {
