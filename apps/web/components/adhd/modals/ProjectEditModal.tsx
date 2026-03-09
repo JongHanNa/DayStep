@@ -99,7 +99,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
 
   // 연결된 할일 상태
   const [linkedTodos, setLinkedTodos] = useState<Todo[]>([]);
-  const [isTodosExpanded, setIsTodosExpanded] = useState(false);
+  const [isTodosExpanded, setIsTodosExpanded] = useState(true);
   const [loadingTodos, setLoadingTodos] = useState(false);
 
   // 할일 편집 상태

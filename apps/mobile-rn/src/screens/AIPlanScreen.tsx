@@ -264,7 +264,7 @@ export default function AIPlanScreen() {
   const [formColor, setFormColor] = useState<string>(PROJECT_COLORS[0]);
   const [formIcon, setFormIcon] = useState<string>(PROJECT_ICONS[0]);
   const [linkedTodos, setLinkedTodos] = useState<Todo[]>([]);
-  const [isTodosExpanded, setIsTodosExpanded] = useState(false);
+  const [isTodosExpanded, setIsTodosExpanded] = useState(true);
   const [loadingTodos, setLoadingTodos] = useState(false);
 
   useEffect(() => {
@@ -277,6 +277,7 @@ export default function AIPlanScreen() {
   useEffect(() => {
     if (editingProject && user?.id) {
       setLoadingTodos(true);
+      setIsTodosExpanded(true);
       fetchProjectTodos(user.id, editingProject.id)
         .then(todos => setLinkedTodos(todos))
         .finally(() => setLoadingTodos(false));
