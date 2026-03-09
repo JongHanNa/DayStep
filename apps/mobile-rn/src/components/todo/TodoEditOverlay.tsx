@@ -22,7 +22,7 @@ import {AnimatedPressable} from '@/components/core';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList, Square, CheckSquare} from 'lucide-react-native';
+import {ClipboardList, Square, CheckSquare, Shield, Star, Zap} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
@@ -142,17 +142,20 @@ export function TodoEditOverlay({
           <View style={styles.tagRow}>
             {form.isReluctantMustDo && (
               <View style={styles.tag}>
-                <Text style={styles.tagText}>😤 해야 할 일</Text>
+                <Shield size={12} color="#6B7280" />
+                <Text style={styles.tagText}>해야 할 일</Text>
               </View>
             )}
             {form.importance && (
               <View style={styles.tag}>
-                <Text style={styles.tagText}>⭐ 중요</Text>
+                <Star size={12} color="#6B7280" />
+                <Text style={styles.tagText}>중요</Text>
               </View>
             )}
             {form.urgency && (
               <View style={styles.tag}>
-                <Text style={styles.tagText}>🔥 긴급</Text>
+                <Zap size={12} color="#6B7280" />
+                <Text style={styles.tagText}>긴급</Text>
               </View>
             )}
           </View>
@@ -301,6 +304,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 2,

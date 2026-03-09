@@ -62,6 +62,9 @@ function getTimeLabel(form: FormData): string {
     return end ? `${start} ~ ${end}` : start;
   }
   if (form.scheduleType === 'all_day') return '종일';
+  if (form.scheduleType === 'anytime') {
+    return form.anytimeDuration ? `언제든지 · ${form.anytimeDuration}분` : '언제든지';
+  }
   return '없음';
 }
 
