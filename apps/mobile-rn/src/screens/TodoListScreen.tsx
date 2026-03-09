@@ -29,6 +29,7 @@ import {DraggableTodoChip} from '@/components/planner/DraggableTodoChip';
 import {useTodoStore} from '@/stores/todoStore';
 import {useProjectStore} from '@/stores/projectStore';
 import {useAuthStore} from '@/stores/authStore';
+import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
 import {ko} from 'date-fns/locale';
@@ -261,15 +262,14 @@ function TodoListScreenInner() {
       durationSeconds = (todo as any).anytime_duration * 60;
     }
 
-    navigation.navigate('Execute', {
-      screen: 'FocusTimer',
-      params: {
-        mode: 'todo',
-        todoId: todo.id,
-        todoTitle: todo.title,
-        durationSeconds,
-      },
-    });
+    // pomodoroStore에서 직접 타이머 시작 후 Execute 탭으로 이동
+    usePomodoroStore.getState().startFocusTimer(
+      durationSeconds,
+      'todo',
+      todo.id,
+      todo.title,
+    );
+    navigation.navigate('Execute');
   }, [navigation]);
 
   const handleAddTodo = useCallback(() => {
