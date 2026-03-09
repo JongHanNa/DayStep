@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   projectItemPressable: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
   },
   projectItemRow: {

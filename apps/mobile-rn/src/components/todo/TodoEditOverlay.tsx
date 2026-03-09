@@ -131,24 +131,22 @@ export function TodoEditOverlay({
               onPress={() => setProjectPickerVisible(true)}
               hitSlop={4}
               style={({pressed}) => [
-                styles.projectBadge,
+                styles.projectBadgePressable,
                 linkedProject && {backgroundColor: (linkedProject.color ?? '#A8DADC') + '18'},
                 pressed && styles.projectBadgePressed,
               ]}>
               {linkedProject ? (
-                <>
-                  <View style={{height: 16, justifyContent: 'center', marginTop: 1}}>
-                    <View
-                      style={[
-                        styles.projectDot,
-                        {backgroundColor: linkedProject.color ?? '#A8DADC'},
-                      ]}
-                    />
-                  </View>
+                <View style={styles.projectBadgeRow}>
+                  <View
+                    style={[
+                      styles.projectDot,
+                      {backgroundColor: linkedProject.color ?? '#A8DADC'},
+                    ]}
+                  />
                   <Text style={styles.projectBadgeText} numberOfLines={1}>
                     {linkedProject.title}
                   </Text>
-                </>
+                </View>
               ) : (
                 <FolderOpen size={16} color="#D1D5DB" />
               )}
@@ -317,15 +315,17 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
-  projectBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  projectBadgePressable: {
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     maxWidth: 140,
+  },
+  projectBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   projectBadgePressed: {
     opacity: 0.7,
