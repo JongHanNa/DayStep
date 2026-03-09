@@ -1,0 +1,14 @@
+# Snapfile - Fastlane Snapshot Configuration
+# 앱스토어 심사용 스크린샷 자동화
+
+devices(["iPhone 16 Pro Max"])
+languages(["ko"])
+
+scheme("DayStepRN")
+workspace("ios/DayStepRN.xcworkspace")
+
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)
+
+# React Native 빌드 시간 고려
+launch_arguments(["--uitesting"])

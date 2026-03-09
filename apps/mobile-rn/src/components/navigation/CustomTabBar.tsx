@@ -138,6 +138,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
               onPress={onPress}
               isTimerActive={route.name === 'Execute' && isTimerActive}
               timerProgress={timerState.progress}
+              tabName={route.name}
             />
           );
         })}
@@ -200,6 +201,7 @@ function TabButton({
   onPress,
   isTimerActive,
   timerProgress,
+  tabName,
 }: {
   Icon: LucideIcon;
   isFocused: boolean;
@@ -207,6 +209,7 @@ function TabButton({
   onPress: () => void;
   isTimerActive: boolean;
   timerProgress: number;
+  tabName: string;
 }) {
   const scale = useSharedValue(1);
 
@@ -219,6 +222,8 @@ function TabButton({
       onPress={onPress}
       hapticType="selection"
       scaleValue={0.9}
+      testID={`tab_${tabName}`}
+      accessibilityIdentifier={`tab_${tabName}`}
       style={styles.tabButton}>
       <Animated.View style={[styles.tabContent, animatedStyle]}>
         {isTimerActive ? (

@@ -2,6 +2,7 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import MMKV
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,6 +15,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // UI Test 모드: --uitesting launch argument 감지 시 MMKV에 세션 주입
+    if ProcessInfo.processInfo.arguments.contains("--uitesting") {
+      injectUITestSession()
+    }
+
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -30,6 +36,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     )
 
     return true
+  }
+
+  /// UI Test용 인증 세션을 MMKV에 주입
+  /// UITEST_SESSION 환경변수: JSON 문자열 (Supabase 세션)
+  /// UITEST_SESSION_KEY 환경변수: MMKV 키 이름 (예: "sb-xxxxx-auth-token")
+  private func injectUITestSession() {
+    guard let sessionJSON = ProcessInfo.processInfo.environment["UITEST_SESSION"],
+          let sessionKey = ProcessInfo.processInfo.environment["UITEST_SESSION_KEY"] else {
+      return
+    }
+
+    MMKV.initialize(rootDir: nil)
+    guard let mmkv = MMKV(mmapID: "daystep-session") else { return }
+    mmkv.set(sessionJSON, forKey: sessionKey)
   }
 }
 
