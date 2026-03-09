@@ -22,7 +22,7 @@ import {AnimatedPressable} from '@/components/core';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList, Square, CheckSquare, Shield, Star, Zap, FolderOpen} from 'lucide-react-native';
+import {ChevronLeft, ClipboardList, Square, CheckSquare, Shield, Star, Zap, FolderOpen} from 'lucide-react-native';
 import {useProjectStore} from '@/stores/projectStore';
 import {ProjectPickerModal} from './ProjectPickerModal';
 import type {UseTodoFormReturn} from './useTodoForm';
@@ -123,7 +123,7 @@ export function TodoEditOverlay({
               onPress={handleClosePress}
               hapticType="light"
               style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>← 닫기</Text>
+              <ChevronLeft size={20} color="#374151" strokeWidth={2.5} />
             </AnimatedPressable>
 
             {/* 프로젝트 배지 */}
@@ -308,13 +308,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   closeBtn: {
-    paddingVertical: 4,
-    paddingRight: 8,
-  },
-  closeBtnText: {
-    fontSize: 15,
-    color: '#6B7280',
-    fontWeight: '500',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
   projectBadge: {
     flexDirection: 'row',
