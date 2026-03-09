@@ -1,7 +1,8 @@
 /**
  * Main Tab Navigator
- * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 설정
- * Home 탭은 HomeStack (메인 + 9개 전용 화면)
+ * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 더 보기
+ * Home 탭은 HomeStack (메인 + 하위 화면)
+ * More 탭은 MoreStack (설정 + 부가 화면)
  * Execute 탭은 ExecutionScreen 직접 사용 (인플레이스 타이머)
  */
 import React from 'react';
@@ -14,7 +15,7 @@ import ExecutionScreen from '../screens/ExecutionScreen';
 import NotesScreen from '../screens/NotesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
-// Home Stack 전용 화면
+// Home Stack / More Stack 공유 화면
 import MonthlyPlannerScreen from '../screens/MonthlyPlannerScreen';
 import AIPlanScreen from '../screens/AIPlanScreen';
 import AIChatScreen from '../screens/AIChatScreen';
@@ -26,7 +27,7 @@ import GratitudeScreen from '../screens/GratitudeScreen';
 import ActivityScreen from '../screens/ActivityScreen';
 import CleanupScreen from '../screens/CleanupScreen';
 
-// Home Stack (메인 + 9개 전용 화면)
+// Home Stack (메인 + 하위 화면 — 기존 HomeScreen 내비게이션 호환)
 const HomeStack = createNativeStackNavigator();
 
 function HomeStackNavigator() {
@@ -51,6 +52,32 @@ function HomeStackNavigator() {
   );
 }
 
+// More Stack (설정 랜딩 + 모든 부가 화면)
+const MoreStack = createNativeStackNavigator();
+
+function MoreStackNavigator() {
+  return (
+    <MoreStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+      }}>
+      <MoreStack.Screen name="MoreLanding" component={SettingsScreen} />
+      <MoreStack.Screen name="Settings" component={SettingsScreen} />
+      <MoreStack.Screen name="MonthlyPlanner" component={MonthlyPlannerScreen} />
+      <MoreStack.Screen name="AIPlan" component={AIPlanScreen} />
+      <MoreStack.Screen name="AIChat" component={AIChatScreen} />
+      <MoreStack.Screen name="Guide" component={GuideScreen} />
+      <MoreStack.Screen name="Record" component={RecordScreen} />
+      <MoreStack.Screen name="News" component={NewsScreen} />
+      <MoreStack.Screen name="Contact" component={ContactScreen} />
+      <MoreStack.Screen name="Gratitude" component={GratitudeScreen} />
+      <MoreStack.Screen name="Activity" component={ActivityScreen} />
+      <MoreStack.Screen name="Cleanup" component={CleanupScreen} />
+    </MoreStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
@@ -64,7 +91,7 @@ export default function MainTabNavigator() {
       <Tab.Screen name="Planner" component={TodoListScreen} />
       <Tab.Screen name="Execute" component={ExecutionScreen} />
       <Tab.Screen name="Notes" component={NotesScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="More" component={MoreStackNavigator} />
     </Tab.Navigator>
   );
 }
