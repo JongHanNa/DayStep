@@ -4,7 +4,7 @@
  * - 아래→위 슬라이드 진입 애니메이션
  * - Header → 날짜요약+체크박스 → ScrollView(제목+설명)
  */
-import {useCallback, useRef} from 'react';
+import {useCallback, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,9 @@ import {AnimatedPressable} from '@/components/core';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {ClipboardList, Square, CheckSquare, Shield, Star, Zap} from 'lucide-react-native';
+import {ClipboardList, Square, CheckSquare, Shield, Star, Zap, FolderOpen} from 'lucide-react-native';
+import {useProjectStore} from '@/stores/projectStore';
+import {ProjectPickerModal} from './ProjectPickerModal';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
@@ -48,10 +50,41 @@ export function TodoEditOverlay({
   saving,
   handleSave,
   handleDelete,
+  mode,
+  editingTodo,
 }: TodoEditOverlayProps) {
   const {primaryColor} = useTheme();
   const insets = useSafeAreaInsets();
   const titleInputRef = useRef<TextInput>(null);
+  const [projectPickerVisible, setProjectPickerVisible] = useState(false);
+
+  const projects = useProjectStore(s => s.projects);
+  const linkedProject = useMemo(
+    () =>
+      form.projectId
+        ? projects.find(p => p.id === form.projectId) ?? null
+        : null,
+    [form.projectId, projects],
+  );
+
+  const handleProjectSelect = useCallback(
+    async (projectId: string | null) => {
+      updateField('projectId', projectId);
+      // edit 모드일 때 Supabase 즉시 저장
+      if (mode === 'edit' && editingTodo) {
+        try {
+          const {supabase} = await import('@/lib/supabase');
+          await supabase
+            .from('todos')
+            .update({project_id: projectId})
+            .eq('id', editingTodo.id);
+        } catch {
+          // 저장 실패 시 무시 (최종 저장 버튼에서 반영)
+        }
+      }
+    },
+    [updateField, mode, editingTodo],
+  );
 
   const handleSavePress = useCallback(() => {
     Keyboard.dismiss();
@@ -85,12 +118,40 @@ export function TodoEditOverlay({
       <View style={styles.flex}>
         {/* ──────── 헤더 ──────── */}
         <View style={styles.header}>
-          <AnimatedPressable
-            onPress={handleClosePress}
-            hapticType="light"
-            style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>← 닫기</Text>
-          </AnimatedPressable>
+          <View style={styles.headerLeft}>
+            <AnimatedPressable
+              onPress={handleClosePress}
+              hapticType="light"
+              style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>← 닫기</Text>
+            </AnimatedPressable>
+
+            {/* 프로젝트 배지 */}
+            <Pressable
+              onPress={() => setProjectPickerVisible(true)}
+              hitSlop={4}
+              style={({pressed}) => [
+                styles.projectBadge,
+                linkedProject && {backgroundColor: (linkedProject.color ?? '#A8DADC') + '18'},
+                pressed && styles.projectBadgePressed,
+              ]}>
+              {linkedProject ? (
+                <>
+                  <View
+                    style={[
+                      styles.projectDot,
+                      {backgroundColor: linkedProject.color ?? '#A8DADC'},
+                    ]}
+                  />
+                  <Text style={styles.projectBadgeText} numberOfLines={1}>
+                    {linkedProject.title}
+                  </Text>
+                </>
+              ) : (
+                <FolderOpen size={16} color="#D1D5DB" />
+              )}
+            </Pressable>
+          </View>
 
           <View style={styles.headerActions}>
             <AnimatedPressable
@@ -204,6 +265,14 @@ export function TodoEditOverlay({
           </View>
         </ScrollView>
       </View>
+
+      {/* 프로젝트 선택 모달 */}
+      <ProjectPickerModal
+        visible={projectPickerVisible}
+        selectedProjectId={form.projectId}
+        onSelect={handleProjectSelect}
+        onClose={() => setProjectPickerVisible(false)}
+      />
     </Animated.View>
   );
 }
@@ -231,6 +300,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    minWidth: 0,
+  },
   closeBtn: {
     paddingVertical: 4,
     paddingRight: 8,
@@ -239,6 +315,30 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#6B7280',
     fontWeight: '500',
+  },
+  projectBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    maxWidth: 140,
+  },
+  projectBadgePressed: {
+    opacity: 0.7,
+  },
+  projectDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  projectBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#374151',
+    flexShrink: 1,
   },
   headerActions: {
     flexDirection: 'row',

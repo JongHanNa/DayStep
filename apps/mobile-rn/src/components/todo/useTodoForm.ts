@@ -36,6 +36,7 @@ export interface FormData {
   recurrencePattern: RecurrencePattern;
   recurrenceDaysOfWeek: number[];
   completed: boolean;
+  projectId: string | null;
 }
 
 /** 다음 정시 계산 */
@@ -63,6 +64,7 @@ export const DEFAULT_FORM: FormData = {
   recurrencePattern: 'none',
   recurrenceDaysOfWeek: [],
   completed: false,
+  projectId: null,
 };
 
 // ============================================
@@ -147,6 +149,7 @@ export function useTodoForm() {
         scheduledDate: targetDate,
         startTime: nextHour,
         endTime: addHours(nextHour, 1),
+        projectId: null,
       });
     },
     [selectedDate],
@@ -196,6 +199,7 @@ export function useTodoForm() {
           ? (todo.recurrence_days_of_week as number[])
           : [],
         completed: todo.completed ?? false,
+        projectId: (todo as any).project_id ?? null,
       });
     },
     [selectedDate],
@@ -223,6 +227,7 @@ export function useTodoForm() {
           is_reluctant_must_do: form.isReluctantMustDo,
           recurrence_pattern: form.recurrencePattern,
           completed: form.completed,
+          project_id: form.projectId,
         };
 
         if (form.scheduleType === 'timed' && form.startTime) {
