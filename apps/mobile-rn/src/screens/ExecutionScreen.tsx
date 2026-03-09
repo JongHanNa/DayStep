@@ -150,7 +150,6 @@ function StatsBar({bottomInset}: {bottomInset: number}) {
 
 export default function ExecutionScreen() {
   const navigation = useNavigation<any>();
-  const tabNavigation = navigation.getParent();
   const insets = useSafeAreaInsets();
   const haptic = useHaptic();
   const {primaryColor} = useTheme();
@@ -185,11 +184,11 @@ export default function ExecutionScreen() {
   // ---- 탭바 숨김 ----
   useEffect(() => {
     if (hasActiveSession || showCelebration || showNotePrompt) {
-      tabNavigation?.setOptions({tabBarStyle: {display: 'none'}});
+      navigation.setOptions({tabBarStyle: {display: 'none'}});
     } else {
-      tabNavigation?.setOptions({tabBarStyle: undefined});
+      navigation.setOptions({tabBarStyle: undefined});
     }
-  }, [hasActiveSession, showCelebration, showNotePrompt, tabNavigation]);
+  }, [hasActiveSession, showCelebration, showNotePrompt, navigation]);
 
   // ---- tick 인터벌 (항상 이 화면에서 틱) ----
   useEffect(() => {
