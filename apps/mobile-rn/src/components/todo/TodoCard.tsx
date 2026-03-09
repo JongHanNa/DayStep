@@ -23,7 +23,7 @@ import {getPriorityColor} from '@/lib/todoUtils';
 import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
 import {MissedTodoActionPanel} from './MissedTodoActionPanel';
 import {DeferredTodoActionPanel} from './DeferredTodoActionPanel';
-import {Play, XCircle, MinusCircle} from 'lucide-react-native';
+import {Play, XCircle, MinusCircle, Shield, Clock} from 'lucide-react-native';
 
 interface LinkedFuel {
   id: string;
@@ -197,12 +197,14 @@ export function TodoCard({
           <View style={styles.tagRow}>
             {todo.is_reluctant_must_do && (
               <View style={styles.tag}>
-                <Text style={styles.tagText}>😤 해야 할 일</Text>
+                <Shield size={12} color="#6B7280" />
+                <Text style={styles.tagText}>해야 할 일</Text>
               </View>
             )}
             {todo.anytime_duration && (
               <View style={styles.tag}>
-                <Text style={styles.tagText}>⏱ {todo.anytime_duration}분</Text>
+                <Clock size={12} color="#6B7280" />
+                <Text style={styles.tagText}>{todo.anytime_duration}분</Text>
               </View>
             )}
             {/* skip 상태 배지 */}
@@ -439,6 +441,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 2,

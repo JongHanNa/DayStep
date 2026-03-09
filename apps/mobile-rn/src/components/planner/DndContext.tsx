@@ -25,6 +25,7 @@ import type {SwipeablePagesRef} from '@/components/core/SwipeablePages';
 import {PAGE_WIDTH, PEEK_WIDTH} from '@/components/core/SwipeablePages';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
+import {Shield} from 'lucide-react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const EDGE_ZONE = 80;           // 엣지 감지 거리 (px)
@@ -496,7 +497,8 @@ function DragOverlay({
       {todo.is_reluctant_must_do && (
         <View style={overlayStyles.tagRow}>
           <View style={overlayStyles.tag}>
-            <Text style={overlayStyles.tagText}>😤 해야 할 일</Text>
+            <Shield size={12} color="#6B7280" />
+            <Text style={overlayStyles.tagText}>해야 할 일</Text>
           </View>
         </View>
       )}
@@ -546,6 +548,9 @@ const overlayStyles = StyleSheet.create({
     gap: 6,
   },
   tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 2,
