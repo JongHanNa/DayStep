@@ -38,6 +38,18 @@ import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import type {Project, ProjectStatus} from '@/types/project';
 import type {Todo} from '@daystep/shared-core';
 import {PROJECT_COLORS, PROJECT_ICONS} from '@/types/project';
+import {format} from 'date-fns';
+
+function formatTodoDate(todo: Todo): string {
+  if (!todo.start_time) {
+    return todo.schedule_type === 'anytime' ? '언제든지' : '';
+  }
+  const date = new Date(todo.start_time);
+  const dateStr = format(date, 'M/d');
+  if (todo.schedule_type === 'anytime') return `${dateStr} · 언제든지`;
+  if (todo.schedule_type === 'all_day') return dateStr;
+  return `${dateStr} ${format(date, 'HH:mm')}`;
+}
 
 const STATUS_FILTERS: {key: ProjectStatus | 'all'; label: string}[] = [
   {key: 'all', label: '전체'},
@@ -473,13 +485,20 @@ export default function AIPlanScreen() {
                                 <CheckCircle2 size={10} color="#FFFFFF" />
                               )}
                             </View>
-                            <Text
-                              className={`text-sm flex-1 ${
-                                todo.completed ? 'line-through text-gray-400' : 'text-gray-700'
-                              }`}
-                              numberOfLines={1}>
-                              {todo.title}
-                            </Text>
+                            <View className="flex-1">
+                              <Text
+                                className={`text-sm ${
+                                  todo.completed ? 'line-through text-gray-400' : 'text-gray-700'
+                                }`}
+                                numberOfLines={1}>
+                                {todo.title}
+                              </Text>
+                              {formatTodoDate(todo) ? (
+                                <Text className="text-xs text-gray-400 mt-0.5">
+                                  {formatTodoDate(todo)}
+                                </Text>
+                              ) : null}
+                            </View>
                           </View>
                           <TouchableOpacity
                             onPress={async () => {
