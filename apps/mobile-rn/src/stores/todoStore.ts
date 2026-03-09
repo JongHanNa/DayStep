@@ -1093,6 +1093,12 @@ export const useTodoStore = create<TodoState>()(
         fuelMap: state.fuelMap,
         offlineQueue: state.offlineQueue,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          const today = format(new Date(), 'yyyy-MM-dd');
+          state.selectedDate = today;
+        }
+      },
     },
   ),
 );
