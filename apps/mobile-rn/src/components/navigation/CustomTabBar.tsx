@@ -57,12 +57,10 @@ const MORE_SCREENS = new Set([
 ]);
 
 const COLLAPSED_HEIGHT = 56;
-const EXPANDED_HEIGHT = COLLAPSED_HEIGHT + MORE_PANEL_CONTENT_HEIGHT;
 const SPRING_CONFIG = {damping: 20, stiffness: 300};
 
 // iOS 26+ 네이티브 탭바 확장 높이
 const NATIVE_COLLAPSED = 64;
-const NATIVE_EXPANDED = NATIVE_COLLAPSED + MORE_PANEL_CONTENT_HEIGHT;
 
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -70,22 +68,29 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const timerState = usePomodoroStore(s => s.timerState);
   const isTimerActive = timerState.isRunning || timerState.isPaused;
   const [morePanelVisible, setMorePanelVisible] = useState(false);
+  const [panelContentHeight, setPanelContentHeight] = useState(MORE_PANEL_CONTENT_HEIGHT);
 
   // JS 탭바 높이 애니메이션 (iOS 25-)
   const tabBarHeight = useSharedValue(COLLAPSED_HEIGHT);
   // 네이티브 탭바 높이 애니메이션 (iOS 26+)
   const nativeTabBarHeight = useSharedValue(NATIVE_COLLAPSED);
 
+  const handlePanelHeightChange = useCallback((height: number) => {
+    setPanelContentHeight(height);
+  }, []);
+
   useEffect(() => {
+    const expandedHeight = COLLAPSED_HEIGHT + panelContentHeight;
+    const nativeExpandedHeight = NATIVE_COLLAPSED + panelContentHeight;
     tabBarHeight.value = withSpring(
-      morePanelVisible ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT,
+      morePanelVisible ? expandedHeight : COLLAPSED_HEIGHT,
       SPRING_CONFIG,
     );
     nativeTabBarHeight.value = withSpring(
-      morePanelVisible ? NATIVE_EXPANDED : NATIVE_COLLAPSED,
+      morePanelVisible ? nativeExpandedHeight : NATIVE_COLLAPSED,
       SPRING_CONFIG,
     );
-  }, [morePanelVisible, tabBarHeight, nativeTabBarHeight]);
+  }, [morePanelVisible, panelContentHeight, tabBarHeight, nativeTabBarHeight]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     height: tabBarHeight.value,
@@ -229,6 +234,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
               onSelectScreen={handleSelectScreen}
               onClose={handleClosePanel}
               primaryColor={primaryColor}
+              onHeightChange={handlePanelHeightChange}
             />
           )}
 
