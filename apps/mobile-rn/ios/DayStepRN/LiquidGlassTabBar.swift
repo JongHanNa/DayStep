@@ -77,27 +77,27 @@ struct LiquidGlassTabBarContent: View {
                     value: state.selectedIndex
                   )
               }
-
-              if isSelected {
-                Capsule()
-                  .fill(state.primaryColor)
-                  .frame(width: 20, height: 3)
-                  .transition(.scale.combined(with: .opacity))
-              } else {
-                Color.clear.frame(height: 3)
-              }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .animation(
-              .spring(response: 0.3, dampingFraction: 0.8),
-              value: state.selectedIndex
-            )
           }
           .buttonStyle(.plain)
           .accessibilityIdentifier("tab_\(tab.name)")
         }
       }
+      .background {
+        GeometryReader { geo in
+          let count = max(state.tabs.count, 1)
+          let tabWidth = geo.size.width / CGFloat(count)
+          RoundedRectangle(cornerRadius: 18)
+            .fill(.clear)
+            .glassEffect(in: RoundedRectangle(cornerRadius: 18))
+            .frame(width: tabWidth - 8, height: geo.size.height - 8)
+            .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 4)
+        }
+      }
+      .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
+      .frame(height: 44)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .glassEffect(in: RoundedRectangle(cornerRadius: 32))
@@ -159,6 +159,7 @@ class LiquidGlassTabBarUIView: UIView {
 
     let hc = UIHostingController(rootView: AnyView(swiftUIView))
     hc.view.backgroundColor = .clear
+    hc.safeAreaRegions = []   // RN이 이미 safe area 처리
     hostingController = hc
 
     addSubview(hc.view)

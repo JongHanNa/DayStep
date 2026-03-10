@@ -11,12 +11,13 @@
  *            그리드 + 탭 아이콘이 함께 표시됨 (어두운 배경 없음)
  */
 import React, {useState, useCallback, useEffect} from 'react';
-import {View, Pressable, StyleSheet, type ViewStyle} from 'react-native';
+import {View, Pressable, StyleSheet, useWindowDimensions, type ViewStyle} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSpring,
   Easing,
 } from 'react-native-reanimated';
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
@@ -57,6 +58,7 @@ const MORE_SCREENS = new Set([
   'Record', 'News', 'Contact', 'Gratitude', 'Activity', 'Cleanup',
 ]);
 
+const TAB_COUNT = 5;
 const COLLAPSED_HEIGHT = 56;
 const TIMING_CONFIG = {duration: 250, easing: Easing.inOut(Easing.ease)};
 
@@ -116,6 +118,49 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     moreNestedState?.routes?.[moreNestedState.index ?? 0]?.name;
 
   const tabBarBottom = Math.max(insets.bottom, 8);
+
+  // 글래스 필 위치 계산
+  const {width: screenWidth} = useWindowDimensions();
+  const tabBarInnerWidth = screenWidth - 32; // container left:16 + right:16
+  const tabWidth = tabBarInnerWidth / TAB_COUNT;
+  const pillWidth = tabWidth - 12; // 탭 셀보다 약간 좁게
+
+  const effectiveFocusedIndex = isHomeShowingMoreScreen
+    ? state.routes.findIndex(r => r.name === 'More')
+    : state.index;
+
+  const initialPillX = effectiveFocusedIndex * tabWidth + (tabWidth - pillWidth) / 2;
+  const pillTranslateX = useSharedValue(initialPillX);
+  const pillScaleX = useSharedValue(1);
+  const isFirstRender = React.useRef(true);
+
+  useEffect(() => {
+    const targetX = effectiveFocusedIndex * tabWidth + (tabWidth - pillWidth) / 2;
+    if (isFirstRender.current) {
+      // 초기 마운트: 애니메이션 없이 즉시 배치
+      pillTranslateX.value = targetX;
+      isFirstRender.current = false;
+      return;
+    }
+    // 스퀴시: 수평 압축 → 복원 (관성 느낌)
+    pillScaleX.value = withSpring(0.85, {damping: 15, stiffness: 400}, () => {
+      pillScaleX.value = withSpring(1, {damping: 12, stiffness: 200});
+    });
+    // 슬라이딩
+    pillTranslateX.value = withSpring(targetX, {
+      damping: 22,
+      stiffness: 350,
+      mass: 0.5,
+    });
+  }, [effectiveFocusedIndex, tabWidth, pillWidth, pillTranslateX, pillScaleX]);
+
+  const glassPillStyle = useAnimatedStyle(() => ({
+    transform: [
+      {translateX: pillTranslateX.value},
+      {scaleX: pillScaleX.value},
+    ],
+    width: pillWidth,
+  }));
 
   // More 패널에서 화면 선택 시
   const handleSelectScreen = useCallback(
@@ -248,6 +293,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
           {/* 기존 탭 아이콘 행 */}
           <View style={styles.tabRow}>
+            {/* 글래스 필 — 활성 탭 위치에 슬라이딩 */}
+            <Animated.View style={[styles.glassPill, glassPillStyle]} />
             {state.routes.map((route, index) => {
               let isFocused = state.index === index;
               if (isHomeShowingMoreScreen) {
@@ -387,11 +434,6 @@ function TabButton({
             strokeWidth={isFocused ? 2.2 : 1.8}
           />
         )}
-        {isFocused && (
-          <Animated.View
-            style={[styles.activeIndicator, {backgroundColor: primaryColor}]}
-          />
-        )}
       </Animated.View>
     </AnimatedPressable>
   );
@@ -446,11 +488,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
   },
-  activeIndicator: {
-    width: 20,
-    height: 3,
-    borderRadius: 1.5,
-    marginTop: 5,
+  glassPill: {
+    position: 'absolute',
+    top: 7,
+    left: 0,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(120, 120, 128, 0.12)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
   topHighlight: {
     height: 1,
